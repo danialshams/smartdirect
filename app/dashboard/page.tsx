@@ -44,7 +44,6 @@ export default async function DashboardPage() {
                     </div>
                 </section>
 
-
                 {/* Instagram Accounts Section */}
                 <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
                     <div className="flex items-center justify-between mb-6">
