@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                String             @id @default(cuid())
+  email             String             @unique
+  name              String
+  password          String
+  role              Role               @default(USER)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  instagramAccounts InstagramAccount[]
+  comments          Comment[]
+}
+
+model InstagramAccount {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  igUserId       String   @unique
+  igUsername     String
+  accessToken    String
+  tokenExpiresAt DateTime?
+  isConnected    Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([userId, igUserId])
+}
+
+model Comment {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  igMediaId   String
+  igCommentId String   @unique
+  text        String
+  username    String
+  replied     Boolean  @default(false)
+  replyText   String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId, igMediaId])
+}
+
+enum Role {
+  USER
+  ADMIN
+}
