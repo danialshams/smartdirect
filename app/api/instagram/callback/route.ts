@@ -9,8 +9,16 @@ export async function GET(request: NextRequest) {
     const state = searchParams.get("state");
     const error = searchParams.get("error");
 
+    // =========================================================
+    // 1. Instagram OAuth Error
+    // =========================================================
+
     if (error) {
-      console.error("Instagram OAuth error:", error);
+      console.error("Instagram OAuth error:", {
+        error,
+        error_reason: searchParams.get("error_reason"),
+        error_description: searchParams.get("error_description"),
+      });
 
       return NextResponse.redirect(
         new URL(
@@ -20,16 +28,39 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // =========================================================
+    // 2. Check authorization code
+    // =========================================================
+
     if (!code) {
+      console.error("Instagram callback: code is missing");
+
       return NextResponse.json(
-        { error: "کد احراز هویت اینستاگرام دریافت نشد" },
+        {
+          error: "کد احراز هویت اینستاگرام دریافت نشد",
+        },
         { status: 400 },
       );
     }
 
+    // =========================================================
+    // 3. Check state
+    // =========================================================
+
     if (!state) {
-      return NextResponse.json({ error: "State دریافت نشد" }, { status: 400 });
+      console.error("Instagram callback: state is missing");
+
+      return NextResponse.json(
+        {
+          error: "State دریافت نشد",
+        },
+        { status: 400 },
+      );
     }
+
+    // =========================================================
+    // 4. Decode state
+    // =========================================================
 
     let stateData: {
       userId: string;
@@ -37,45 +68,98 @@ export async function GET(request: NextRequest) {
     };
 
     try {
-      stateData = JSON.parse(Buffer.from(state, "base64url").toString("utf-8"));
-    } catch {
-      return NextResponse.json({ error: "State نامعتبر است" }, { status: 400 });
-    }
+      stateData = JSON.parse(
+        Buffer.from(state, "base64url").toString("utf-8"),
+      );
+    } catch (error) {
+      console.error("Instagram callback: invalid state", error);
 
-    if (!stateData.userId) {
       return NextResponse.json(
-        { error: "شناسه کاربر در State وجود ندارد" },
+        {
+          error: "State نامعتبر است",
+        },
         { status: 400 },
       );
     }
 
-    // جلوگیری از استفاده از State قدیمی
+    // =========================================================
+    // 5. Validate state data
+    // =========================================================
+
+    if (!stateData.userId || !stateData.timestamp) {
+      console.error("Instagram callback: invalid state data");
+
+      return NextResponse.json(
+        {
+          error: "اطلاعات State ناقص یا نامعتبر است",
+        },
+        { status: 400 },
+      );
+    }
+
+    // =========================================================
+    // 6. Check state expiration
+    // =========================================================
+
     const stateAge = Date.now() - stateData.timestamp;
 
     if (stateAge > 10 * 60 * 1000) {
+      console.error("Instagram callback: state expired");
+
       return NextResponse.json(
-        { error: "درخواست اتصال منقضی شده است. دوباره تلاش کنید." },
+        {
+          error: "درخواست اتصال منقضی شده است. دوباره تلاش کنید.",
+        },
         { status: 400 },
       );
     }
+
+    // =========================================================
+    // 7. Check Instagram environment variables
+    // =========================================================
 
     const clientId = process.env.INSTAGRAM_CLIENT_ID;
     const clientSecret = process.env.INSTAGRAM_CLIENT_SECRET;
     const redirectUri = process.env.INSTAGRAM_REDIRECT_URI;
 
-    if (!clientId || !clientSecret || !redirectUri) {
-      console.error("Instagram environment variables are missing");
+    if (!clientId) {
+      console.error("INSTAGRAM_CLIENT_ID is missing");
 
       return NextResponse.json(
-        { error: "تنظیمات Instagram در سرور کامل نیست" },
+        {
+          error: "INSTAGRAM_CLIENT_ID تنظیم نشده است",
+        },
         { status: 500 },
       );
     }
 
-    /*
-     * Step 1:
-     * Exchange authorization code for short-lived access token
-     */
+    if (!clientSecret) {
+      console.error("INSTAGRAM_CLIENT_SECRET is missing");
+
+      return NextResponse.json(
+        {
+          error: "INSTAGRAM_CLIENT_SECRET تنظیم نشده است",
+        },
+        { status: 500 },
+      );
+    }
+
+    if (!redirectUri) {
+      console.error("INSTAGRAM_REDIRECT_URI is missing");
+
+      return NextResponse.json(
+        {
+          error: "INSTAGRAM_REDIRECT_URI تنظیم نشده است",
+        },
+        { status: 500 },
+      );
+    }
+
+    // =========================================================
+    // 8. Exchange authorization code for access token
+    // =========================================================
+
+    console.log("Instagram OAuth: exchanging authorization code...");
 
     const tokenResponse = await fetch(
       "https://api.instagram.com/oauth/access_token",
@@ -98,11 +182,20 @@ export async function GET(request: NextRequest) {
 
     console.log("Instagram token response:", {
       success: tokenResponse.ok,
+      status: tokenResponse.status,
       user_id: tokenData.user_id,
+      has_access_token: Boolean(tokenData.access_token),
     });
 
+    // =========================================================
+    // 9. Validate access token response
+    // =========================================================
+
     if (!tokenResponse.ok || !tokenData.access_token) {
-      console.error("Instagram token exchange failed:", tokenData);
+      console.error("Instagram token exchange failed:", {
+        status: tokenResponse.status,
+        data: tokenData,
+      });
 
       return NextResponse.redirect(
         new URL(
@@ -115,27 +208,40 @@ export async function GET(request: NextRequest) {
     const accessToken = tokenData.access_token;
     const instagramUserId = String(tokenData.user_id);
 
-    /*
-     * Step 2:
-     * Get Instagram account information
-     */
+    // =========================================================
+    // 10. Get Instagram profile
+    // =========================================================
 
-    const profileResponse = await fetch(
-      `https://graph.instagram.com/v26.0/${instagramUserId}?fields=id,username&access_token=${encodeURIComponent(
-        accessToken,
-      )}`,
-    );
+    console.log("Instagram OAuth: getting profile...");
+
+    const profileUrl =
+      `https://graph.instagram.com/v26.0/${instagramUserId}` +
+      `?fields=id,username&access_token=${encodeURIComponent(accessToken)}`;
+
+    const profileResponse = await fetch(profileUrl, {
+      method: "GET",
+      cache: "no-store",
+    });
 
     const profileData = await profileResponse.json();
 
     console.log("Instagram profile response:", {
       success: profileResponse.ok,
       status: profileResponse.status,
-      data: profileData,
+      id: profileData.id,
+      username: profileData.username,
+      has_error: Boolean(profileData.error),
     });
 
+    // =========================================================
+    // 11. Validate Instagram profile
+    // =========================================================
+
     if (!profileResponse.ok || !profileData.id) {
-      console.error("Instagram profile request failed:", profileData);
+      console.error("Instagram profile request failed:", {
+        status: profileResponse.status,
+        data: profileData,
+      });
 
       return NextResponse.redirect(
         new URL(
@@ -145,21 +251,24 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    /*
-     * Step 3:
-     * Save Instagram account in database
-     */
+    // =========================================================
+    // 12. Save Instagram account in database
+    // =========================================================
+
+    console.log("Instagram OAuth: saving account to database...");
 
     await prisma.instagramAccount.upsert({
       where: {
         igUserId: instagramUserId,
       },
+
       update: {
         userId: stateData.userId,
         igUsername: profileData.username || "",
         accessToken,
         isConnected: true,
       },
+
       create: {
         userId: stateData.userId,
         igUserId: instagramUserId,
@@ -169,10 +278,15 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    /*
-     * Step 4:
-     * Return user to dashboard
-     */
+    console.log("Instagram account saved successfully:", {
+      instagramUserId,
+      username: profileData.username,
+      userId: stateData.userId,
+    });
+
+    // =========================================================
+    // 13. Redirect user back to dashboard
+    // =========================================================
 
     return NextResponse.redirect(
       new URL(
@@ -181,7 +295,11 @@ export async function GET(request: NextRequest) {
       ),
     );
   } catch (error) {
-    console.error("Instagram callback error:", error);
+    // =========================================================
+    // 14. Unexpected error
+    // =========================================================
+
+    console.error("Instagram callback unexpected error:", error);
 
     return NextResponse.redirect(
       new URL(
