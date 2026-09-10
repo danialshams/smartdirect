@@ -40,17 +40,23 @@ model InstagramAccount {
 }
 
 model Automation {
-  id                String           @id @default(cuid())
+  id                  String           @id @default(cuid())
 
-  instagramAccountId String
-  instagramAccount InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
+  instagramAccountId  String
+  instagramAccount    InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
 
-  keyword           String
-  replyText         String
-  isActive          Boolean          @default(true)
+  keyword             String
 
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
+  // متن پاسخ عمومی زیر کامنت
+  commentReplyText    String?
+
+  // متن Private Reply داخل دایرکت
+  replyText           String
+
+  isActive            Boolean          @default(true)
+
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
 
   @@index([instagramAccountId])
   @@index([instagramAccountId, keyword])

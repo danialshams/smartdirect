@@ -787,6 +787,7 @@ export const AutomationScalarFieldEnum = {
   id: 'id',
   instagramAccountId: 'instagramAccountId',
   keyword: 'keyword',
+  commentReplyText: 'commentReplyText',
   replyText: 'replyText',
   isActive: 'isActive',
   createdAt: 'createdAt',

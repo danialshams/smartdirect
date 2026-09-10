@@ -27,15 +27,14 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const automations =
-      await prisma.automation.findMany({
-        where: {
-          instagramAccountId,
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-      });
+    const automations = await prisma.automation.findMany({
+      where: {
+        instagramAccountId,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
 
     return NextResponse.json({
       success: true,
@@ -71,25 +70,35 @@ export async function POST(request: NextRequest) {
     const {
       instagramAccountId,
       keyword,
+      commentReplyText,
       replyText,
     } = body;
+
+    // -------------------------------------------------------
+    // Validate required fields
+    // -------------------------------------------------------
 
     if (
       !instagramAccountId ||
       !keyword ||
+      !commentReplyText ||
       !replyText
     ) {
       return NextResponse.json(
         {
           success: false,
           message:
-            "instagramAccountId, keyword and replyText are required",
+            "instagramAccountId, keyword, commentReplyText and replyText are required",
         },
         {
           status: 400,
         },
       );
     }
+
+    // -------------------------------------------------------
+    // Find Instagram account
+    // -------------------------------------------------------
 
     const instagramAccount =
       await prisma.instagramAccount.findUnique({
@@ -110,11 +119,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // -------------------------------------------------------
+    // Create automation
+    // -------------------------------------------------------
+
     const automation =
       await prisma.automation.create({
         data: {
           instagramAccountId,
           keyword: keyword.trim(),
+          commentReplyText: commentReplyText.trim(),
           replyText: replyText.trim(),
           isActive: true,
         },

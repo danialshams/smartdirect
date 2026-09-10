@@ -28,6 +28,7 @@ export type AutomationMinAggregateOutputType = {
   id: string | null
   instagramAccountId: string | null
   keyword: string | null
+  commentReplyText: string | null
   replyText: string | null
   isActive: boolean | null
   createdAt: Date | null
@@ -38,6 +39,7 @@ export type AutomationMaxAggregateOutputType = {
   id: string | null
   instagramAccountId: string | null
   keyword: string | null
+  commentReplyText: string | null
   replyText: string | null
   isActive: boolean | null
   createdAt: Date | null
@@ -48,6 +50,7 @@ export type AutomationCountAggregateOutputType = {
   id: number
   instagramAccountId: number
   keyword: number
+  commentReplyText: number
   replyText: number
   isActive: number
   createdAt: number
@@ -60,6 +63,7 @@ export type AutomationMinAggregateInputType = {
   id?: true
   instagramAccountId?: true
   keyword?: true
+  commentReplyText?: true
   replyText?: true
   isActive?: true
   createdAt?: true
@@ -70,6 +74,7 @@ export type AutomationMaxAggregateInputType = {
   id?: true
   instagramAccountId?: true
   keyword?: true
+  commentReplyText?: true
   replyText?: true
   isActive?: true
   createdAt?: true
@@ -80,6 +85,7 @@ export type AutomationCountAggregateInputType = {
   id?: true
   instagramAccountId?: true
   keyword?: true
+  commentReplyText?: true
   replyText?: true
   isActive?: true
   createdAt?: true
@@ -163,6 +169,7 @@ export type AutomationGroupByOutputType = {
   id: string
   instagramAccountId: string
   keyword: string
+  commentReplyText: string | null
   replyText: string
   isActive: boolean
   createdAt: Date
@@ -194,6 +201,7 @@ export type AutomationWhereInput = {
   id?: Prisma.StringFilter<"Automation"> | string
   instagramAccountId?: Prisma.StringFilter<"Automation"> | string
   keyword?: Prisma.StringFilter<"Automation"> | string
+  commentReplyText?: Prisma.StringNullableFilter<"Automation"> | string | null
   replyText?: Prisma.StringFilter<"Automation"> | string
   isActive?: Prisma.BoolFilter<"Automation"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Automation"> | Date | string
@@ -205,6 +213,7 @@ export type AutomationOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   instagramAccountId?: Prisma.SortOrder
   keyword?: Prisma.SortOrder
+  commentReplyText?: Prisma.SortOrderInput | Prisma.SortOrder
   replyText?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -219,6 +228,7 @@ export type AutomationWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.AutomationWhereInput | Prisma.AutomationWhereInput[]
   instagramAccountId?: Prisma.StringFilter<"Automation"> | string
   keyword?: Prisma.StringFilter<"Automation"> | string
+  commentReplyText?: Prisma.StringNullableFilter<"Automation"> | string | null
   replyText?: Prisma.StringFilter<"Automation"> | string
   isActive?: Prisma.BoolFilter<"Automation"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Automation"> | Date | string
@@ -230,6 +240,7 @@ export type AutomationOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   instagramAccountId?: Prisma.SortOrder
   keyword?: Prisma.SortOrder
+  commentReplyText?: Prisma.SortOrderInput | Prisma.SortOrder
   replyText?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -246,6 +257,7 @@ export type AutomationScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"Automation"> | string
   instagramAccountId?: Prisma.StringWithAggregatesFilter<"Automation"> | string
   keyword?: Prisma.StringWithAggregatesFilter<"Automation"> | string
+  commentReplyText?: Prisma.StringNullableWithAggregatesFilter<"Automation"> | string | null
   replyText?: Prisma.StringWithAggregatesFilter<"Automation"> | string
   isActive?: Prisma.BoolWithAggregatesFilter<"Automation"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Automation"> | Date | string
@@ -255,6 +267,7 @@ export type AutomationScalarWhereWithAggregatesInput = {
 export type AutomationCreateInput = {
   id?: string
   keyword: string
+  commentReplyText?: string | null
   replyText: string
   isActive?: boolean
   createdAt?: Date | string
@@ -266,6 +279,7 @@ export type AutomationUncheckedCreateInput = {
   id?: string
   instagramAccountId: string
   keyword: string
+  commentReplyText?: string | null
   replyText: string
   isActive?: boolean
   createdAt?: Date | string
@@ -275,6 +289,7 @@ export type AutomationUncheckedCreateInput = {
 export type AutomationUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   keyword?: Prisma.StringFieldUpdateOperationsInput | string
+  commentReplyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   replyText?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -286,6 +301,7 @@ export type AutomationUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   instagramAccountId?: Prisma.StringFieldUpdateOperationsInput | string
   keyword?: Prisma.StringFieldUpdateOperationsInput | string
+  commentReplyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   replyText?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -296,6 +312,7 @@ export type AutomationCreateManyInput = {
   id?: string
   instagramAccountId: string
   keyword: string
+  commentReplyText?: string | null
   replyText: string
   isActive?: boolean
   createdAt?: Date | string
@@ -305,6 +322,7 @@ export type AutomationCreateManyInput = {
 export type AutomationUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   keyword?: Prisma.StringFieldUpdateOperationsInput | string
+  commentReplyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   replyText?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -315,6 +333,7 @@ export type AutomationUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   instagramAccountId?: Prisma.StringFieldUpdateOperationsInput | string
   keyword?: Prisma.StringFieldUpdateOperationsInput | string
+  commentReplyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   replyText?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -335,6 +354,7 @@ export type AutomationCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   instagramAccountId?: Prisma.SortOrder
   keyword?: Prisma.SortOrder
+  commentReplyText?: Prisma.SortOrder
   replyText?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -345,6 +365,7 @@ export type AutomationMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   instagramAccountId?: Prisma.SortOrder
   keyword?: Prisma.SortOrder
+  commentReplyText?: Prisma.SortOrder
   replyText?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -355,6 +376,7 @@ export type AutomationMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   instagramAccountId?: Prisma.SortOrder
   keyword?: Prisma.SortOrder
+  commentReplyText?: Prisma.SortOrder
   replyText?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -403,9 +425,14 @@ export type AutomationUncheckedUpdateManyWithoutInstagramAccountNestedInput = {
   deleteMany?: Prisma.AutomationScalarWhereInput | Prisma.AutomationScalarWhereInput[]
 }
 
+export type NullableStringFieldUpdateOperationsInput = {
+  set?: string | null
+}
+
 export type AutomationCreateWithoutInstagramAccountInput = {
   id?: string
   keyword: string
+  commentReplyText?: string | null
   replyText: string
   isActive?: boolean
   createdAt?: Date | string
@@ -415,6 +442,7 @@ export type AutomationCreateWithoutInstagramAccountInput = {
 export type AutomationUncheckedCreateWithoutInstagramAccountInput = {
   id?: string
   keyword: string
+  commentReplyText?: string | null
   replyText: string
   isActive?: boolean
   createdAt?: Date | string
@@ -454,6 +482,7 @@ export type AutomationScalarWhereInput = {
   id?: Prisma.StringFilter<"Automation"> | string
   instagramAccountId?: Prisma.StringFilter<"Automation"> | string
   keyword?: Prisma.StringFilter<"Automation"> | string
+  commentReplyText?: Prisma.StringNullableFilter<"Automation"> | string | null
   replyText?: Prisma.StringFilter<"Automation"> | string
   isActive?: Prisma.BoolFilter<"Automation"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Automation"> | Date | string
@@ -463,6 +492,7 @@ export type AutomationScalarWhereInput = {
 export type AutomationCreateManyInstagramAccountInput = {
   id?: string
   keyword: string
+  commentReplyText?: string | null
   replyText: string
   isActive?: boolean
   createdAt?: Date | string
@@ -472,6 +502,7 @@ export type AutomationCreateManyInstagramAccountInput = {
 export type AutomationUpdateWithoutInstagramAccountInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   keyword?: Prisma.StringFieldUpdateOperationsInput | string
+  commentReplyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   replyText?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -481,6 +512,7 @@ export type AutomationUpdateWithoutInstagramAccountInput = {
 export type AutomationUncheckedUpdateWithoutInstagramAccountInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   keyword?: Prisma.StringFieldUpdateOperationsInput | string
+  commentReplyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   replyText?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -490,6 +522,7 @@ export type AutomationUncheckedUpdateWithoutInstagramAccountInput = {
 export type AutomationUncheckedUpdateManyWithoutInstagramAccountInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   keyword?: Prisma.StringFieldUpdateOperationsInput | string
+  commentReplyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   replyText?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -502,6 +535,7 @@ export type AutomationSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   id?: boolean
   instagramAccountId?: boolean
   keyword?: boolean
+  commentReplyText?: boolean
   replyText?: boolean
   isActive?: boolean
   createdAt?: boolean
@@ -513,6 +547,7 @@ export type AutomationSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   id?: boolean
   instagramAccountId?: boolean
   keyword?: boolean
+  commentReplyText?: boolean
   replyText?: boolean
   isActive?: boolean
   createdAt?: boolean
@@ -524,6 +559,7 @@ export type AutomationSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   id?: boolean
   instagramAccountId?: boolean
   keyword?: boolean
+  commentReplyText?: boolean
   replyText?: boolean
   isActive?: boolean
   createdAt?: boolean
@@ -535,13 +571,14 @@ export type AutomationSelectScalar = {
   id?: boolean
   instagramAccountId?: boolean
   keyword?: boolean
+  commentReplyText?: boolean
   replyText?: boolean
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type AutomationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "instagramAccountId" | "keyword" | "replyText" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["automation"]>
+export type AutomationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "instagramAccountId" | "keyword" | "commentReplyText" | "replyText" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["automation"]>
 export type AutomationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
 }
@@ -561,6 +598,7 @@ export type $AutomationPayload<ExtArgs extends runtime.Types.Extensions.Internal
     id: string
     instagramAccountId: string
     keyword: string
+    commentReplyText: string | null
     replyText: string
     isActive: boolean
     createdAt: Date
@@ -992,6 +1030,7 @@ export interface AutomationFieldRefs {
   readonly id: Prisma.FieldRef<"Automation", 'String'>
   readonly instagramAccountId: Prisma.FieldRef<"Automation", 'String'>
   readonly keyword: Prisma.FieldRef<"Automation", 'String'>
+  readonly commentReplyText: Prisma.FieldRef<"Automation", 'String'>
   readonly replyText: Prisma.FieldRef<"Automation", 'String'>
   readonly isActive: Prisma.FieldRef<"Automation", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"Automation", 'DateTime'>
