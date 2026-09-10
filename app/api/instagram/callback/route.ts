@@ -161,31 +161,57 @@ export async function GET(request: NextRequest) {
 
     console.log("Instagram OAuth: exchanging authorization code...");
 
-    const tokenResponse = await fetch(
-      "https://api.instagram.com/oauth/access_token",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({
-          client_id: clientId,
-          client_secret: clientSecret,
-          grant_type: "authorization_code",
-          redirect_uri: redirectUri,
-          code,
-        }),
+    const tokenController = new AbortController();
+
+const tokenTimeout = setTimeout(() => {
+  tokenController.abort();
+}, 15000);
+
+let tokenResponse: Response;
+
+try {
+  tokenResponse = await fetch(
+    "https://api.instagram.com/oauth/access_token",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
       },
-    );
+      body: new URLSearchParams({
+        client_id: clientId,
+        client_secret: clientSecret,
+        grant_type: "authorization_code",
+        redirect_uri: redirectUri,
+        code,
+      }),
+      signal: tokenController.signal,
+      cache: "no-store",
+    },
+  );
+} catch (error) {
+  console.error("Instagram token exchange FETCH ERROR:", error);
 
-    const tokenData = await tokenResponse.json();
+  return NextResponse.redirect(
+    new URL(
+      "/dashboard?instagram=token_fetch_error",
+      process.env.NEXTAUTH_URL || request.url,
+    ),
+  );
+} finally {
+  clearTimeout(tokenTimeout);
+}
 
-    console.log("Instagram token response:", {
-      success: tokenResponse.ok,
-      status: tokenResponse.status,
-      user_id: tokenData.user_id,
-      has_access_token: Boolean(tokenData.access_token),
-    });
+const tokenData = await tokenResponse.json();
+
+console.log("Instagram token response:", {
+  success: tokenResponse.ok,
+  status: tokenResponse.status,
+  user_id: tokenData.user_id,
+  has_access_token: Boolean(tokenData.access_token),
+  error: tokenData.error,
+  error_type: tokenData.error_type,
+  error_message: tokenData.error_message,
+});
 
     // =========================================================
     // 9. Validate access token response
