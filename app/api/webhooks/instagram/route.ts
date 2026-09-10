@@ -5,6 +5,8 @@ export const dynamic = "force-dynamic";
 
 const INSTAGRAM_API_VERSION = "v26.0";
 
+const MAX_API_RETRIES = 3;
+
 function normalizeText(text: string): string {
   return text
     .trim()
@@ -19,6 +21,10 @@ function normalizeText(text: string): string {
     .replace(/۸/g, "8")
     .replace(/۹/g, "9")
     .toLowerCase();
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 // =========================================================
@@ -231,27 +237,20 @@ async function processMessagingEvent(
     console.log("========================================");
 
     const senderId = messagingEvent?.sender?.id;
-
     const recipientId = messagingEvent?.recipient?.id;
 
     const message = messagingEvent?.message;
 
     const messageId = message?.mid;
-
     const messageText = message?.text;
 
     const isEcho = message?.is_echo === true;
 
     console.log("Instagram account:", instagramUsername);
-
     console.log("Sender ID:", senderId);
-
     console.log("Recipient ID:", recipientId);
-
     console.log("Message ID:", messageId);
-
     console.log("Message text:", messageText);
-
     console.log("Is echo:", isEcho);
 
     // =======================================================
@@ -279,9 +278,7 @@ async function processMessagingEvent(
     }
 
     console.log("REAL INCOMING INSTAGRAM MESSAGE");
-
     console.log("Sender Instagram-scoped ID:", senderId);
-
     console.log("Incoming message:", messageText || "[non-text message]");
 
     // =======================================================
@@ -291,13 +288,6 @@ async function processMessagingEvent(
     if (message?.quick_reply) {
       console.log("Quick reply payload:", message.quick_reply.payload);
     }
-
-    // =======================================================
-    // Future:
-    // Save incoming DM to database
-    // Process DM automations
-    // Send quick replies
-    // =======================================================
 
     console.log("Incoming message received successfully.");
 
@@ -443,15 +433,10 @@ async function processCommentEvent(
     console.log("AUTOMATION MATCHED");
 
     console.log("Automation ID:", matchedAutomation.id);
-
     console.log("Keyword:", matchedAutomation.keyword);
-
     console.log("Comment reply text:", matchedAutomation.commentReplyText);
-
     console.log("Private reply text:", matchedAutomation.replyText);
-
     console.log("Instagram Comment ID:", igCommentId);
-
     console.log("Username:", username);
 
     console.log("========================================");
@@ -477,7 +462,16 @@ async function processCommentEvent(
     }
 
     // =======================================================
-    // 11. Send public comment reply
+    // 11. Small delay
+    // Give Instagram time to fully register the comment.
+    // =======================================================
+
+    console.log("Waiting 1000ms before sending Instagram replies...");
+
+    await sleep(1000);
+
+    // =======================================================
+    // 12. Send public comment reply
     // =======================================================
 
     let publicCommentReplySent = false;
@@ -498,7 +492,7 @@ async function processCommentEvent(
     }
 
     // =======================================================
-    // 12. Send private reply
+    // 13. Send private reply
     // =======================================================
 
     const privateReplySent = await sendPrivateReply({
@@ -509,7 +503,7 @@ async function processCommentEvent(
     });
 
     // =======================================================
-    // 13. Update database
+    // 14. Update database
     // =======================================================
 
     if (privateReplySent) {
@@ -526,11 +520,14 @@ async function processCommentEvent(
       console.log("Comment marked as replied.");
     }
 
+    // =======================================================
+    // 15. Final result
+    // =======================================================
+
     console.log("========================================");
     console.log("INSTAGRAM AUTOMATION RESULT");
 
     console.log("Public comment reply sent:", publicCommentReplySent);
-
     console.log("Private reply sent:", privateReplySent);
 
     console.log("========================================");
@@ -552,60 +549,81 @@ async function sendPublicCommentReply({
   accessToken: string;
   replyText: string;
 }): Promise<boolean> {
-  try {
-    console.log("========================================");
-    console.log("SENDING PUBLIC INSTAGRAM COMMENT REPLY");
+  const url = `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${igCommentId}/replies`;
 
-    const url = `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${igCommentId}/replies`;
+  console.log("========================================");
+  console.log("SENDING PUBLIC INSTAGRAM COMMENT REPLY");
+  console.log("Instagram comment reply URL:", url);
 
-    console.log("Instagram comment reply URL:", url);
-
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: new URLSearchParams({
-        message: replyText,
-      }),
-    });
-
-    const responseText = await response.text();
-
-    let responseData: unknown;
-
+  for (let attempt = 1; attempt <= MAX_API_RETRIES; attempt++) {
     try {
-      responseData = JSON.parse(responseText);
-    } catch {
-      responseData = responseText;
-    }
+      console.log(`Public comment reply attempt ${attempt}/${MAX_API_RETRIES}`);
 
-    if (!response.ok) {
-      console.error("========================================");
+      const body = new URLSearchParams({
+        message: replyText,
+      });
 
-      console.error("INSTAGRAM PUBLIC COMMENT REPLY FAILED");
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body,
+        cache: "no-store",
+      });
+
+      const responseText = await response.text();
+
+      let responseData: unknown;
+
+      try {
+        responseData = JSON.parse(responseText);
+      } catch {
+        responseData = responseText;
+      }
+
+      if (response.ok) {
+        console.log("INSTAGRAM PUBLIC COMMENT REPLY SENT SUCCESSFULLY");
+
+        console.log("Instagram API response:", responseData);
+
+        console.log("========================================");
+
+        return true;
+      }
+
+      console.error(`Public comment reply attempt ${attempt} failed.`);
 
       console.error("HTTP Status:", response.status);
-
       console.error("Instagram API response:", responseData);
 
-      console.error("========================================");
+      if (attempt < MAX_API_RETRIES) {
+        const delay = attempt * 1000;
 
-      return false;
+        console.log(`Waiting ${delay}ms before public reply retry...`);
+
+        await sleep(delay);
+      }
+    } catch (error) {
+      console.error(
+        `Public comment reply request error on attempt ${attempt}:`,
+        error,
+      );
+
+      if (attempt < MAX_API_RETRIES) {
+        const delay = attempt * 1000;
+
+        await sleep(delay);
+      }
     }
-
-    console.log("INSTAGRAM PUBLIC COMMENT REPLY SENT SUCCESSFULLY");
-
-    console.log("Instagram API response:", responseData);
-
-    console.log("========================================");
-
-    return true;
-  } catch (error) {
-    console.error("Instagram public comment reply request error:", error);
-
-    return false;
   }
+
+  console.error("INSTAGRAM PUBLIC COMMENT REPLY FAILED");
+
+  console.log("========================================");
+
+  return false;
 }
 
 // =========================================================
@@ -623,65 +641,84 @@ async function sendPrivateReply({
   accessToken: string;
   replyText: string;
 }): Promise<boolean> {
-  try {
-    console.log("========================================");
-    console.log("SENDING INSTAGRAM PRIVATE REPLY");
+  const url = `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${igUserId}/messages`;
 
-    const url = `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${igUserId}/messages`;
+  console.log("========================================");
+  console.log("SENDING INSTAGRAM PRIVATE REPLY");
+  console.log("Instagram Messages API URL:", url);
 
-    console.log("Instagram Messages API URL:", url);
+  const requestBody = {
+    recipient: {
+      comment_id: igCommentId,
+    },
+    message: {
+      text: replyText,
+    },
+  };
 
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify({
-        recipient: {
-          comment_id: igCommentId,
-        },
-        message: {
-          text: replyText,
-        },
-      }),
-    });
-
-    const responseText = await response.text();
-
-    let responseData: unknown;
-
+  for (let attempt = 1; attempt <= MAX_API_RETRIES; attempt++) {
     try {
-      responseData = JSON.parse(responseText);
-    } catch {
-      responseData = responseText;
-    }
+      console.log(`Private reply attempt ${attempt}/${MAX_API_RETRIES}`);
 
-    if (!response.ok) {
-      console.error("========================================");
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(requestBody),
+        cache: "no-store",
+      });
 
-      console.error("INSTAGRAM PRIVATE REPLY FAILED");
+      const responseText = await response.text();
+
+      let responseData: unknown;
+
+      try {
+        responseData = JSON.parse(responseText);
+      } catch {
+        responseData = responseText;
+      }
+
+      if (response.ok) {
+        console.log("INSTAGRAM PRIVATE REPLY SENT SUCCESSFULLY");
+
+        console.log("Instagram API response:", responseData);
+
+        console.log("========================================");
+
+        return true;
+      }
+
+      console.error(`Private reply attempt ${attempt} failed.`);
 
       console.error("HTTP Status:", response.status);
-
       console.error("Instagram API response:", responseData);
 
-      console.error("========================================");
+      if (attempt < MAX_API_RETRIES) {
+        const delay = attempt * 1000;
 
-      return false;
+        console.log(`Waiting ${delay}ms before private reply retry...`);
+
+        await sleep(delay);
+      }
+    } catch (error) {
+      console.error(
+        `Private reply request error on attempt ${attempt}:`,
+        error,
+      );
+
+      if (attempt < MAX_API_RETRIES) {
+        const delay = attempt * 1000;
+
+        await sleep(delay);
+      }
     }
-
-    console.log("========================================");
-    console.log("INSTAGRAM PRIVATE REPLY SENT SUCCESSFULLY");
-
-    console.log("Instagram API response:", responseData);
-
-    console.log("========================================");
-
-    return true;
-  } catch (error) {
-    console.error("Instagram private reply request error:", error);
-
-    return false;
   }
+
+  console.error("INSTAGRAM PRIVATE REPLY FAILED");
+
+  console.log("========================================");
+
+  return false;
 }
