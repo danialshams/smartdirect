@@ -10,5 +10,6 @@
  */
 export type * from './models/User'
 export type * from './models/InstagramAccount'
+export type * from './models/Automation'
 export type * from './models/Comment'
 export type * from './commonInputTypes'

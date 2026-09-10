@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
@@ -22,24 +23,26 @@ export async function GET(request: NextRequest) {
     console.log("challenge received:", Boolean(challenge));
     console.log("========================================");
 
-    const verifyToken = process.env.INSTAGRAM_WEBHOOK_VERIFY_TOKEN;
+    const verifyToken =
+      process.env.INSTAGRAM_WEBHOOK_VERIFY_TOKEN;
 
     if (!verifyToken) {
       console.error(
         "INSTAGRAM_WEBHOOK_VERIFY_TOKEN is not configured",
       );
 
-      return new NextResponse("Webhook verify token is not configured", {
-        status: 500,
-      });
+      return new NextResponse(
+        "Webhook verify token is not configured",
+        {
+          status: 500,
+        },
+      );
     }
 
-    // Meta expects:
-    // hub.mode === "subscribe"
-    // verify token matches our token
-
     if (mode === "subscribe" && token === verifyToken) {
-      console.log("Instagram webhook verification successful");
+      console.log(
+        "Instagram webhook verification successful",
+      );
 
       return new NextResponse(challenge || "", {
         status: 200,
@@ -49,7 +52,9 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    console.error("Instagram webhook verification failed");
+    console.error(
+      "Instagram webhook verification failed",
+    );
 
     return new NextResponse("Forbidden", {
       status: 403,
@@ -73,40 +78,175 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.text();
+    const body = await request.json();
 
     console.log("========================================");
     console.log("INSTAGRAM WEBHOOK EVENT");
     console.log("========================================");
 
-    console.log("Raw body:");
-    console.log(body);
+    console.log(
+      "Webhook body:",
+      JSON.stringify(body, null, 2),
+    );
 
-    let data: unknown;
+    // -------------------------------------------------------
+    // Validate basic webhook structure
+    // -------------------------------------------------------
 
-    try {
-      data = JSON.parse(body);
-    } catch {
+    if (
+      !body ||
+      body.object !== "instagram" ||
+      !Array.isArray(body.entry)
+    ) {
       console.error(
-        "Instagram webhook: invalid JSON",
+        "Invalid Instagram webhook payload",
       );
 
-      return new NextResponse("Invalid JSON", {
-        status: 400,
-      });
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Invalid webhook payload",
+        },
+        {
+          status: 400,
+        },
+      );
     }
 
-    console.log("Parsed webhook data:");
-    console.dir(data, {
-      depth: null,
-    });
+    // -------------------------------------------------------
+    // Process every entry
+    // -------------------------------------------------------
+
+    for (const entry of body.entry) {
+      const igUserId = entry.id;
+
+      if (!igUserId) {
+        console.error(
+          "Webhook entry does not contain Instagram user ID",
+        );
+
+        continue;
+      }
+
+      // -----------------------------------------------------
+      // Find connected Instagram account
+      // -----------------------------------------------------
+
+      const instagramAccount =
+        await prisma.instagramAccount.findUnique({
+          where: {
+            igUserId,
+          },
+        });
+
+      if (!instagramAccount) {
+        console.warn(
+          "Instagram account not found:",
+          igUserId,
+        );
+
+        continue;
+      }
+
+      console.log(
+        "Instagram account found:",
+        instagramAccount.igUsername,
+      );
+
+      // -----------------------------------------------------
+      // Process changes
+      // -----------------------------------------------------
+
+      if (!Array.isArray(entry.changes)) {
+        continue;
+      }
+
+      for (const change of entry.changes) {
+        if (change.field !== "comments") {
+          continue;
+        }
+
+        const value = change.value;
+
+        if (!value) {
+          continue;
+        }
+
+        const igCommentId = value.id;
+        const igMediaId = value.media?.id;
+        const text = value.text;
+        const username = value.from?.username;
+
+        if (
+          !igCommentId ||
+          !igMediaId ||
+          !text ||
+          !username
+        ) {
+          console.warn(
+            "Incomplete Instagram comment payload:",
+            value,
+          );
+
+          continue;
+        }
+
+        // ---------------------------------------------------
+        // Prevent duplicate comments
+        // ---------------------------------------------------
+
+        const existingComment =
+          await prisma.comment.findUnique({
+            where: {
+              igCommentId,
+            },
+          });
+
+        if (existingComment) {
+          console.log(
+            "Comment already exists:",
+            igCommentId,
+          );
+
+          continue;
+        }
+
+        // ---------------------------------------------------
+        // Save comment
+        // ---------------------------------------------------
+
+        const comment =
+          await prisma.comment.create({
+            data: {
+              userId: instagramAccount.userId,
+              igMediaId,
+              igCommentId,
+              text,
+              username,
+              replied: false,
+            },
+          });
+
+        console.log(
+          "Instagram comment saved:",
+          comment.id,
+        );
+
+        console.log({
+          username,
+          text,
+          igMediaId,
+          igCommentId,
+        });
+      }
+    }
 
     console.log("========================================");
 
+    // -------------------------------------------------------
     // IMPORTANT:
-    // We return 200 quickly.
-    // Later we will process the event asynchronously
-    // and send it to our automation engine.
+    // Return 200 quickly to Meta.
+    // -------------------------------------------------------
 
     return NextResponse.json(
       {
@@ -125,6 +265,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
+        message: "Internal server error",
       },
       {
         status: 500,

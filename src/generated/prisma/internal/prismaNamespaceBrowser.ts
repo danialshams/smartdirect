@@ -53,6 +53,7 @@ export const AnyNull = runtime.AnyNull
 export const ModelName = {
   User: 'User',
   InstagramAccount: 'InstagramAccount',
+  Automation: 'Automation',
   Comment: 'Comment'
 } as const
 
@@ -98,6 +99,19 @@ export const InstagramAccountScalarFieldEnum = {
 } as const
 
 export type InstagramAccountScalarFieldEnum = (typeof InstagramAccountScalarFieldEnum)[keyof typeof InstagramAccountScalarFieldEnum]
+
+
+export const AutomationScalarFieldEnum = {
+  id: 'id',
+  instagramAccountId: 'instagramAccountId',
+  keyword: 'keyword',
+  replyText: 'replyText',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AutomationScalarFieldEnum = (typeof AutomationScalarFieldEnum)[keyof typeof AutomationScalarFieldEnum]
 
 
 export const CommentScalarFieldEnum = {

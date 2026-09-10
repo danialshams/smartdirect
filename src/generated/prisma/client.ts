@@ -52,6 +52,11 @@ export type User = Prisma.UserModel
  */
 export type InstagramAccount = Prisma.InstagramAccountModel
 /**
+ * Model Automation
+ * 
+ */
+export type Automation = Prisma.AutomationModel
+/**
  * Model Comment
  * 
  */
