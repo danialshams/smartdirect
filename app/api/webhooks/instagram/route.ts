@@ -3,6 +3,24 @@ import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
+const INSTAGRAM_API_VERSION = "v26.0";
+
+function normalizeText(text: string): string {
+  return text
+    .trim()
+    .replace(/۰/g, "0")
+    .replace(/۱/g, "1")
+    .replace(/۲/g, "2")
+    .replace(/۳/g, "3")
+    .replace(/۴/g, "4")
+    .replace(/۵/g, "5")
+    .replace(/۶/g, "6")
+    .replace(/۷/g, "7")
+    .replace(/۸/g, "8")
+    .replace(/۹/g, "9")
+    .toLowerCase();
+}
+
 // =========================================================
 // GET
 // Meta uses this endpoint to verify the webhook.
@@ -90,7 +108,7 @@ export async function POST(request: NextRequest) {
     );
 
     // =======================================================
-    // 1. Validate basic webhook structure
+    // 1. Validate webhook structure
     // =======================================================
 
     if (
@@ -140,7 +158,7 @@ export async function POST(request: NextRequest) {
       const instagramAccount =
         await prisma.instagramAccount.findUnique({
           where: {
-            igUserId,
+            igUserId: igUserId,
           },
         });
 
@@ -180,10 +198,6 @@ export async function POST(request: NextRequest) {
       // =====================================================
 
       for (const change of entry.changes) {
-        // ---------------------------------------------------
-        // We only handle comment events for now.
-        // ---------------------------------------------------
-
         if (change.field !== "comments") {
           console.log(
             "Ignoring webhook field:",
@@ -241,7 +255,7 @@ export async function POST(request: NextRequest) {
         const existingComment =
           await prisma.comment.findUnique({
             where: {
-              igCommentId,
+              igCommentId: igCommentId,
             },
           });
 
@@ -262,10 +276,10 @@ export async function POST(request: NextRequest) {
           await prisma.comment.create({
             data: {
               userId: instagramAccount.userId,
-              igMediaId,
-              igCommentId,
-              text,
-              username,
+              igMediaId: igMediaId,
+              igCommentId: igCommentId,
+              text: text,
+              username: username,
               replied: false,
             },
           });
@@ -279,33 +293,8 @@ export async function POST(request: NextRequest) {
         // 9. Normalize comment text
         // ===================================================
 
-        /*
-         * برای اینکه مواردی مثل:
-         *
-         * "1"
-         * " 1 "
-         * "١"
-         *
-         * را راحت‌تر مدیریت کنیم، متن را trim می‌کنیم.
-         *
-         * فعلاً تبدیل اعداد فارسی به انگلیسی را هم انجام
-         * می‌دهیم تا Automation با keyword = "1" بتواند
-         * کامنت "۱" را نیز match کند.
-         */
-
-        const normalizedCommentText = text
-          .trim()
-          .replace(/۰/g, "0")
-          .replace(/۱/g, "1")
-          .replace(/۲/g, "2")
-          .replace(/۳/g, "3")
-          .replace(/۴/g, "4")
-          .replace(/۵/g, "5")
-          .replace(/۶/g, "6")
-          .replace(/۷/g, "7")
-          .replace(/۸/g, "8")
-          .replace(/۹/g, "9")
-          .toLowerCase();
+        const normalizedCommentText =
+          normalizeText(text);
 
         console.log(
           "Normalized comment text:",
@@ -313,7 +302,7 @@ export async function POST(request: NextRequest) {
         );
 
         // ===================================================
-        // 10. Find active automation
+        // 10. Find active automations
         // ===================================================
 
         console.log(
@@ -344,19 +333,7 @@ export async function POST(request: NextRequest) {
         const matchedAutomation =
           automations.find((automation) => {
             const normalizedKeyword =
-              automation.keyword
-                .trim()
-                .replace(/۰/g, "0")
-                .replace(/۱/g, "1")
-                .replace(/۲/g, "2")
-                .replace(/۳/g, "3")
-                .replace(/۴/g, "4")
-                .replace(/۵/g, "5")
-                .replace(/۶/g, "6")
-                .replace(/۷/g, "7")
-                .replace(/۸/g, "8")
-                .replace(/۹/g, "9")
-                .toLowerCase();
+              normalizeText(automation.keyword);
 
             return (
               normalizedCommentText ===
@@ -384,9 +361,7 @@ export async function POST(request: NextRequest) {
         // ===================================================
 
         console.log("========================================");
-        console.log(
-          "AUTOMATION MATCHED",
-        );
+        console.log("AUTOMATION MATCHED");
         console.log(
           "Automation ID:",
           matchedAutomation.id,
@@ -404,50 +379,188 @@ export async function POST(request: NextRequest) {
           comment.id,
         );
         console.log(
+          "Instagram Comment ID:",
+          igCommentId,
+        );
+        console.log(
           "Username:",
           username,
         );
         console.log("========================================");
 
         // ===================================================
-        // 14. IMPORTANT
+        // 14. Check if comment was already replied
         // ===================================================
 
-        /*
-         * در این مرحله هنوز DM ارسال نمی‌کنیم.
-         *
-         * فقط مشخص شده که:
-         *
-         * Comment
-         *     ↓
-         * Matching Automation
-         *     ↓
-         * replyText
-         *
-         * مرحله بعدی همین replyText را از طریق
-         * Instagram Messaging API برای کاربر ارسال می‌کند.
-         */
+        if (comment.replied) {
+          console.log(
+            "Comment already marked as replied. Skipping.",
+          );
+
+          continue;
+        }
+
+        // ===================================================
+        // 15. Check access token
+        // ===================================================
+
+        if (!instagramAccount.accessToken) {
+          console.error(
+            "Instagram access token is missing.",
+          );
+
+          continue;
+        }
+
+        // ===================================================
+        // 16. Build Instagram Messages API URL
+        // ===================================================
+
+        const instagramMessagesUrl =
+          `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${instagramAccount.igUserId}/messages`;
 
         console.log(
-          "DM sending is not implemented yet.",
+          "Sending Instagram private reply...",
         );
 
         console.log(
-          "Prepared reply:",
-          matchedAutomation.replyText,
+          "Instagram API URL:",
+          instagramMessagesUrl,
         );
+
+        // ===================================================
+        // 17. Send private reply
+        // ===================================================
+
+        try {
+          const instagramResponse =
+            await fetch(instagramMessagesUrl, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization:
+                  `Bearer ${instagramAccount.accessToken}`,
+              },
+              body: JSON.stringify({
+                recipient: {
+                  comment_id: igCommentId,
+                },
+                message: {
+                  text: matchedAutomation.replyText,
+                },
+              }),
+            });
+
+          const responseText =
+            await instagramResponse.text();
+
+          let responseData: unknown;
+
+          try {
+            responseData = JSON.parse(responseText);
+          } catch {
+            responseData = responseText;
+          }
+
+          // =================================================
+          // 18. Handle Instagram API error
+          // =================================================
+
+          if (!instagramResponse.ok) {
+            console.error(
+              "========================================",
+            );
+
+            console.error(
+              "INSTAGRAM PRIVATE REPLY FAILED",
+            );
+
+            console.error(
+              "HTTP Status:",
+              instagramResponse.status,
+            );
+
+            console.error(
+              "Instagram API response:",
+              responseData,
+            );
+
+            console.error(
+              "========================================",
+            );
+
+            continue;
+          }
+
+          // =================================================
+          // 19. Private reply sent successfully
+          // =================================================
+
+          console.log("========================================");
+          console.log(
+            "INSTAGRAM PRIVATE REPLY SENT SUCCESSFULLY",
+          );
+
+          console.log(
+            "Instagram API response:",
+            responseData,
+          );
+
+          console.log("========================================");
+
+          // =================================================
+          // 20. Update comment
+          // =================================================
+
+          await prisma.comment.update({
+            where: {
+              id: comment.id,
+            },
+            data: {
+              replied: true,
+              replyText:
+                matchedAutomation.replyText,
+            },
+          });
+
+          console.log(
+            "Comment marked as replied.",
+          );
+
+          console.log("========================================");
+          console.log(
+            "INSTAGRAM AUTOMATION COMPLETED",
+          );
+          console.log("========================================");
+        } catch (sendError) {
+          console.error(
+            "========================================",
+          );
+
+          console.error(
+            "INSTAGRAM PRIVATE REPLY REQUEST ERROR",
+          );
+
+          console.error(
+            sendError,
+          );
+
+          console.error(
+            "========================================",
+          );
+        }
       }
     }
+
+    // =======================================================
+    // 21. Processing complete
+    // =======================================================
 
     console.log("========================================");
     console.log(
       "INSTAGRAM WEBHOOK PROCESSING COMPLETE",
     );
     console.log("========================================");
-
-    // =======================================================
-    // 15. Return 200 quickly to Meta
-    // =======================================================
 
     return NextResponse.json(
       {
