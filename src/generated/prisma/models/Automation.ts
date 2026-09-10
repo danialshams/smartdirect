@@ -223,6 +223,7 @@ export type AutomationOrderByWithRelationInput = {
 
 export type AutomationWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  instagramAccountId_keyword?: Prisma.AutomationInstagramAccountIdKeywordCompoundUniqueInput
   AND?: Prisma.AutomationWhereInput | Prisma.AutomationWhereInput[]
   OR?: Prisma.AutomationWhereInput[]
   NOT?: Prisma.AutomationWhereInput | Prisma.AutomationWhereInput[]
@@ -234,7 +235,7 @@ export type AutomationWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"Automation"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Automation"> | Date | string
   instagramAccount?: Prisma.XOR<Prisma.InstagramAccountScalarRelationFilter, Prisma.InstagramAccountWhereInput>
-}, "id">
+}, "id" | "instagramAccountId_keyword">
 
 export type AutomationOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -348,6 +349,11 @@ export type AutomationListRelationFilter = {
 
 export type AutomationOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
+}
+
+export type AutomationInstagramAccountIdKeywordCompoundUniqueInput = {
+  instagramAccountId: string
+  keyword: string
 }
 
 export type AutomationCountOrderByAggregateInput = {
