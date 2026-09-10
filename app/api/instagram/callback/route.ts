@@ -293,11 +293,12 @@ export async function GET(request: NextRequest) {
     const instagramUserId = String(profileData.id);
     const instagramUsername = profileData.username || "";
 
-    console.log("Instagram profile validated:", {
-      tokenUserId,
-      profileUserId: instagramUserId,
-      username: instagramUsername,
-    });
+    console.log("========================================");
+console.log("INSTAGRAM OAUTH ID DEBUG");
+console.log("tokenUserId:", tokenUserId);
+console.log("profileUserId:", instagramUserId);
+console.log("username:", instagramUsername);
+console.log("========================================");
 
     // =========================================================
     // 14. Save Instagram account in database
