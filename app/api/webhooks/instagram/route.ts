@@ -89,9 +89,9 @@ export async function POST(request: NextRequest) {
       JSON.stringify(body, null, 2),
     );
 
-    // -------------------------------------------------------
-    // Validate basic webhook structure
-    // -------------------------------------------------------
+    // =======================================================
+    // 1. Validate basic webhook structure
+    // =======================================================
 
     if (
       !body ||
@@ -113,9 +113,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // -------------------------------------------------------
-    // Process every entry
-    // -------------------------------------------------------
+    // =======================================================
+    // 2. Process every entry
+    // =======================================================
 
     for (const entry of body.entry) {
       const igUserId = entry.id;
@@ -128,9 +128,14 @@ export async function POST(request: NextRequest) {
         continue;
       }
 
-      // -----------------------------------------------------
-      // Find connected Instagram account
-      // -----------------------------------------------------
+      console.log(
+        "Webhook Instagram User ID:",
+        igUserId,
+      );
+
+      // =====================================================
+      // 3. Find connected Instagram account
+      // =====================================================
 
       const instagramAccount =
         await prisma.instagramAccount.findUnique({
@@ -153,24 +158,54 @@ export async function POST(request: NextRequest) {
         instagramAccount.igUsername,
       );
 
-      // -----------------------------------------------------
-      // Process changes
-      // -----------------------------------------------------
+      console.log(
+        "Database Instagram Account ID:",
+        instagramAccount.id,
+      );
+
+      // =====================================================
+      // 4. Validate changes
+      // =====================================================
 
       if (!Array.isArray(entry.changes)) {
+        console.log(
+          "Webhook entry has no changes array",
+        );
+
         continue;
       }
 
+      // =====================================================
+      // 5. Process every change
+      // =====================================================
+
       for (const change of entry.changes) {
+        // ---------------------------------------------------
+        // We only handle comment events for now.
+        // ---------------------------------------------------
+
         if (change.field !== "comments") {
+          console.log(
+            "Ignoring webhook field:",
+            change.field,
+          );
+
           continue;
         }
 
         const value = change.value;
 
         if (!value) {
+          console.warn(
+            "Instagram comment webhook value is empty",
+          );
+
           continue;
         }
+
+        // ===================================================
+        // 6. Extract comment data
+        // ===================================================
 
         const igCommentId = value.id;
         const igMediaId = value.media?.id;
@@ -191,9 +226,17 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
-        // ---------------------------------------------------
-        // Prevent duplicate comments
-        // ---------------------------------------------------
+        console.log("========================================");
+        console.log("INSTAGRAM COMMENT");
+        console.log("commentId:", igCommentId);
+        console.log("mediaId:", igMediaId);
+        console.log("username:", username);
+        console.log("text:", text);
+        console.log("========================================");
+
+        // ===================================================
+        // 7. Prevent duplicate comments
+        // ===================================================
 
         const existingComment =
           await prisma.comment.findUnique({
@@ -211,9 +254,9 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
-        // ---------------------------------------------------
-        // Save comment
-        // ---------------------------------------------------
+        // ===================================================
+        // 8. Save comment
+        // ===================================================
 
         const comment =
           await prisma.comment.create({
@@ -232,21 +275,179 @@ export async function POST(request: NextRequest) {
           comment.id,
         );
 
-        console.log({
+        // ===================================================
+        // 9. Normalize comment text
+        // ===================================================
+
+        /*
+         * برای اینکه مواردی مثل:
+         *
+         * "1"
+         * " 1 "
+         * "١"
+         *
+         * را راحت‌تر مدیریت کنیم، متن را trim می‌کنیم.
+         *
+         * فعلاً تبدیل اعداد فارسی به انگلیسی را هم انجام
+         * می‌دهیم تا Automation با keyword = "1" بتواند
+         * کامنت "۱" را نیز match کند.
+         */
+
+        const normalizedCommentText = text
+          .trim()
+          .replace(/۰/g, "0")
+          .replace(/۱/g, "1")
+          .replace(/۲/g, "2")
+          .replace(/۳/g, "3")
+          .replace(/۴/g, "4")
+          .replace(/۵/g, "5")
+          .replace(/۶/g, "6")
+          .replace(/۷/g, "7")
+          .replace(/۸/g, "8")
+          .replace(/۹/g, "9")
+          .toLowerCase();
+
+        console.log(
+          "Normalized comment text:",
+          normalizedCommentText,
+        );
+
+        // ===================================================
+        // 10. Find active automation
+        // ===================================================
+
+        console.log(
+          "Looking for matching automation...",
+        );
+
+        const automations =
+          await prisma.automation.findMany({
+            where: {
+              instagramAccountId:
+                instagramAccount.id,
+              isActive: true,
+            },
+            orderBy: {
+              createdAt: "asc",
+            },
+          });
+
+        console.log(
+          "Active automations found:",
+          automations.length,
+        );
+
+        // ===================================================
+        // 11. Find matching automation
+        // ===================================================
+
+        const matchedAutomation =
+          automations.find((automation) => {
+            const normalizedKeyword =
+              automation.keyword
+                .trim()
+                .replace(/۰/g, "0")
+                .replace(/۱/g, "1")
+                .replace(/۲/g, "2")
+                .replace(/۳/g, "3")
+                .replace(/۴/g, "4")
+                .replace(/۵/g, "5")
+                .replace(/۶/g, "6")
+                .replace(/۷/g, "7")
+                .replace(/۸/g, "8")
+                .replace(/۹/g, "9")
+                .toLowerCase();
+
+            return (
+              normalizedCommentText ===
+              normalizedKeyword
+            );
+          });
+
+        // ===================================================
+        // 12. No automation matched
+        // ===================================================
+
+        if (!matchedAutomation) {
+          console.log(
+            "No matching automation found for comment:",
+            normalizedCommentText,
+          );
+
+          console.log("========================================");
+
+          continue;
+        }
+
+        // ===================================================
+        // 13. Automation matched
+        // ===================================================
+
+        console.log("========================================");
+        console.log(
+          "AUTOMATION MATCHED",
+        );
+        console.log(
+          "Automation ID:",
+          matchedAutomation.id,
+        );
+        console.log(
+          "Keyword:",
+          matchedAutomation.keyword,
+        );
+        console.log(
+          "Reply text:",
+          matchedAutomation.replyText,
+        );
+        console.log(
+          "Comment ID:",
+          comment.id,
+        );
+        console.log(
+          "Username:",
           username,
-          text,
-          igMediaId,
-          igCommentId,
-        });
+        );
+        console.log("========================================");
+
+        // ===================================================
+        // 14. IMPORTANT
+        // ===================================================
+
+        /*
+         * در این مرحله هنوز DM ارسال نمی‌کنیم.
+         *
+         * فقط مشخص شده که:
+         *
+         * Comment
+         *     ↓
+         * Matching Automation
+         *     ↓
+         * replyText
+         *
+         * مرحله بعدی همین replyText را از طریق
+         * Instagram Messaging API برای کاربر ارسال می‌کند.
+         */
+
+        console.log(
+          "DM sending is not implemented yet.",
+        );
+
+        console.log(
+          "Prepared reply:",
+          matchedAutomation.replyText,
+        );
       }
     }
 
     console.log("========================================");
+    console.log(
+      "INSTAGRAM WEBHOOK PROCESSING COMPLETE",
+    );
+    console.log("========================================");
 
-    // -------------------------------------------------------
-    // IMPORTANT:
-    // Return 200 quickly to Meta.
-    // -------------------------------------------------------
+    // =======================================================
+    // 15. Return 200 quickly to Meta
+    // =======================================================
 
     return NextResponse.json(
       {
