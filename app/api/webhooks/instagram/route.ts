@@ -41,26 +41,18 @@ export async function GET(request: NextRequest) {
     console.log("challenge received:", Boolean(challenge));
     console.log("========================================");
 
-    const verifyToken =
-      process.env.INSTAGRAM_WEBHOOK_VERIFY_TOKEN;
+    const verifyToken = process.env.INSTAGRAM_WEBHOOK_VERIFY_TOKEN;
 
     if (!verifyToken) {
-      console.error(
-        "INSTAGRAM_WEBHOOK_VERIFY_TOKEN is not configured",
-      );
+      console.error("INSTAGRAM_WEBHOOK_VERIFY_TOKEN is not configured");
 
-      return new NextResponse(
-        "Webhook verify token is not configured",
-        {
-          status: 500,
-        },
-      );
+      return new NextResponse("Webhook verify token is not configured", {
+        status: 500,
+      });
     }
 
     if (mode === "subscribe" && token === verifyToken) {
-      console.log(
-        "Instagram webhook verification successful",
-      );
+      console.log("Instagram webhook verification successful");
 
       return new NextResponse(challenge || "", {
         status: 200,
@@ -70,18 +62,13 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    console.error(
-      "Instagram webhook verification failed",
-    );
+    console.error("Instagram webhook verification failed");
 
     return new NextResponse("Forbidden", {
       status: 403,
     });
   } catch (error) {
-    console.error(
-      "Instagram webhook GET error:",
-      error,
-    );
+    console.error("Instagram webhook GET error:", error);
 
     return new NextResponse("Internal Server Error", {
       status: 500,
@@ -102,23 +89,14 @@ export async function POST(request: NextRequest) {
     console.log("INSTAGRAM WEBHOOK EVENT");
     console.log("========================================");
 
-    console.log(
-      "Webhook body:",
-      JSON.stringify(body, null, 2),
-    );
+    console.log("Webhook body:", JSON.stringify(body, null, 2));
 
     // =======================================================
     // 1. Validate webhook structure
     // =======================================================
 
-    if (
-      !body ||
-      body.object !== "instagram" ||
-      !Array.isArray(body.entry)
-    ) {
-      console.error(
-        "Invalid Instagram webhook payload",
-      );
+    if (!body || body.object !== "instagram" || !Array.isArray(body.entry)) {
+      console.error("Invalid Instagram webhook payload");
 
       return NextResponse.json(
         {
@@ -139,427 +117,81 @@ export async function POST(request: NextRequest) {
       const igUserId = entry.id;
 
       if (!igUserId) {
-        console.error(
-          "Webhook entry does not contain Instagram user ID",
-        );
+        console.error("Webhook entry does not contain Instagram user ID");
 
         continue;
       }
 
-      console.log(
-        "Webhook Instagram User ID:",
-        igUserId,
-      );
+      console.log("Webhook Instagram User ID:", igUserId);
 
       // =====================================================
       // 3. Find connected Instagram account
       // =====================================================
 
-      const instagramAccount =
-        await prisma.instagramAccount.findUnique({
-          where: {
-            igUserId: igUserId,
-          },
-        });
+      const instagramAccount = await prisma.instagramAccount.findUnique({
+        where: {
+          igUserId,
+        },
+      });
 
       if (!instagramAccount) {
-        console.warn(
-          "Instagram account not found:",
-          igUserId,
-        );
+        console.warn("Instagram account not found:", igUserId);
 
         continue;
       }
 
-      console.log(
-        "Instagram account found:",
-        instagramAccount.igUsername,
-      );
+      console.log("Instagram account found:", instagramAccount.igUsername);
 
-      console.log(
-        "Database Instagram Account ID:",
-        instagramAccount.id,
-      );
+      console.log("Database Instagram Account ID:", instagramAccount.id);
 
       // =====================================================
-      // 4. Validate changes
+      // 4. Process messaging events
       // =====================================================
 
-      if (!Array.isArray(entry.changes)) {
-        console.log(
-          "Webhook entry has no changes array",
-        );
+      if (Array.isArray(entry.messaging)) {
+        console.log("Messaging events received:", entry.messaging.length);
 
-        continue;
+        for (const messagingEvent of entry.messaging) {
+          await processMessagingEvent(
+            messagingEvent,
+            instagramAccount.igUsername,
+          );
+        }
       }
 
       // =====================================================
-      // 5. Process every change
+      // 5. Process comment changes
       // =====================================================
 
-      for (const change of entry.changes) {
-        if (change.field !== "comments") {
-          console.log(
-            "Ignoring webhook field:",
-            change.field,
-          );
+      if (Array.isArray(entry.changes)) {
+        console.log("Change events received:", entry.changes.length);
 
-          continue;
-        }
-
-        const value = change.value;
-
-        if (!value) {
-          console.warn(
-            "Instagram comment webhook value is empty",
-          );
-
-          continue;
-        }
-
-        // ===================================================
-        // 6. Extract comment data
-        // ===================================================
-
-        const igCommentId = value.id;
-        const igMediaId = value.media?.id;
-        const text = value.text;
-        const username = value.from?.username;
-
-        if (
-          !igCommentId ||
-          !igMediaId ||
-          !text ||
-          !username
-        ) {
-          console.warn(
-            "Incomplete Instagram comment payload:",
-            value,
-          );
-
-          continue;
-        }
-
-        console.log("========================================");
-        console.log("INSTAGRAM COMMENT");
-        console.log("commentId:", igCommentId);
-        console.log("mediaId:", igMediaId);
-        console.log("username:", username);
-        console.log("text:", text);
-        console.log("========================================");
-
-        // ===================================================
-        // 7. Prevent duplicate comments
-        // ===================================================
-
-        const existingComment =
-          await prisma.comment.findUnique({
-            where: {
-              igCommentId: igCommentId,
-            },
-          });
-
-        if (existingComment) {
-          console.log(
-            "Comment already exists:",
-            igCommentId,
-          );
-
-          continue;
-        }
-
-        // ===================================================
-        // 8. Save comment
-        // ===================================================
-
-        const comment =
-          await prisma.comment.create({
-            data: {
-              userId: instagramAccount.userId,
-              igMediaId: igMediaId,
-              igCommentId: igCommentId,
-              text: text,
-              username: username,
-              replied: false,
-            },
-          });
-
-        console.log(
-          "Instagram comment saved:",
-          comment.id,
-        );
-
-        // ===================================================
-        // 9. Normalize comment text
-        // ===================================================
-
-        const normalizedCommentText =
-          normalizeText(text);
-
-        console.log(
-          "Normalized comment text:",
-          normalizedCommentText,
-        );
-
-        // ===================================================
-        // 10. Find active automations
-        // ===================================================
-
-        console.log(
-          "Looking for matching automation...",
-        );
-
-        const automations =
-          await prisma.automation.findMany({
-            where: {
-              instagramAccountId:
-                instagramAccount.id,
-              isActive: true,
-            },
-            orderBy: {
-              createdAt: "asc",
-            },
-          });
-
-        console.log(
-          "Active automations found:",
-          automations.length,
-        );
-
-        // ===================================================
-        // 11. Find matching automation
-        // ===================================================
-
-        const matchedAutomation =
-          automations.find((automation) => {
-            const normalizedKeyword =
-              normalizeText(automation.keyword);
-
-            return (
-              normalizedCommentText ===
-              normalizedKeyword
-            );
-          });
-
-        // ===================================================
-        // 12. No automation matched
-        // ===================================================
-
-        if (!matchedAutomation) {
-          console.log(
-            "No matching automation found for comment:",
-            normalizedCommentText,
-          );
-
-          console.log("========================================");
-
-          continue;
-        }
-
-        // ===================================================
-        // 13. Automation matched
-        // ===================================================
-
-        console.log("========================================");
-        console.log("AUTOMATION MATCHED");
-        console.log(
-          "Automation ID:",
-          matchedAutomation.id,
-        );
-        console.log(
-          "Keyword:",
-          matchedAutomation.keyword,
-        );
-        console.log(
-          "Reply text:",
-          matchedAutomation.replyText,
-        );
-        console.log(
-          "Comment ID:",
-          comment.id,
-        );
-        console.log(
-          "Instagram Comment ID:",
-          igCommentId,
-        );
-        console.log(
-          "Username:",
-          username,
-        );
-        console.log("========================================");
-
-        // ===================================================
-        // 14. Check if comment was already replied
-        // ===================================================
-
-        if (comment.replied) {
-          console.log(
-            "Comment already marked as replied. Skipping.",
-          );
-
-          continue;
-        }
-
-        // ===================================================
-        // 15. Check access token
-        // ===================================================
-
-        if (!instagramAccount.accessToken) {
-          console.error(
-            "Instagram access token is missing.",
-          );
-
-          continue;
-        }
-
-        // ===================================================
-        // 16. Build Instagram Messages API URL
-        // ===================================================
-
-        const instagramMessagesUrl =
-          `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${instagramAccount.igUserId}/messages`;
-
-        console.log(
-          "Sending Instagram private reply...",
-        );
-
-        console.log(
-          "Instagram API URL:",
-          instagramMessagesUrl,
-        );
-
-        // ===================================================
-        // 17. Send private reply
-        // ===================================================
-
-        try {
-          const instagramResponse =
-            await fetch(instagramMessagesUrl, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization:
-                  `Bearer ${instagramAccount.accessToken}`,
-              },
-              body: JSON.stringify({
-                recipient: {
-                  comment_id: igCommentId,
-                },
-                message: {
-                  text: matchedAutomation.replyText,
-                },
-              }),
-            });
-
-          const responseText =
-            await instagramResponse.text();
-
-          let responseData: unknown;
-
-          try {
-            responseData = JSON.parse(responseText);
-          } catch {
-            responseData = responseText;
-          }
-
-          // =================================================
-          // 18. Handle Instagram API error
-          // =================================================
-
-          if (!instagramResponse.ok) {
-            console.error(
-              "========================================",
-            );
-
-            console.error(
-              "INSTAGRAM PRIVATE REPLY FAILED",
-            );
-
-            console.error(
-              "HTTP Status:",
-              instagramResponse.status,
-            );
-
-            console.error(
-              "Instagram API response:",
-              responseData,
-            );
-
-            console.error(
-              "========================================",
-            );
+        for (const change of entry.changes) {
+          if (change.field !== "comments") {
+            console.log("Ignoring webhook field:", change.field);
 
             continue;
           }
 
-          // =================================================
-          // 19. Private reply sent successfully
-          // =================================================
-
-          console.log("========================================");
-          console.log(
-            "INSTAGRAM PRIVATE REPLY SENT SUCCESSFULLY",
-          );
-
-          console.log(
-            "Instagram API response:",
-            responseData,
-          );
-
-          console.log("========================================");
-
-          // =================================================
-          // 20. Update comment
-          // =================================================
-
-          await prisma.comment.update({
-            where: {
-              id: comment.id,
-            },
-            data: {
-              replied: true,
-              replyText:
-                matchedAutomation.replyText,
-            },
-          });
-
-          console.log(
-            "Comment marked as replied.",
-          );
-
-          console.log("========================================");
-          console.log(
-            "INSTAGRAM AUTOMATION COMPLETED",
-          );
-          console.log("========================================");
-        } catch (sendError) {
-          console.error(
-            "========================================",
-          );
-
-          console.error(
-            "INSTAGRAM PRIVATE REPLY REQUEST ERROR",
-          );
-
-          console.error(
-            sendError,
-          );
-
-          console.error(
-            "========================================",
-          );
+          await processCommentEvent(change.value, instagramAccount);
         }
+      }
+
+      // =====================================================
+      // 6. No changes or messaging
+      // =====================================================
+
+      if (!Array.isArray(entry.changes) && !Array.isArray(entry.messaging)) {
+        console.log("Webhook entry has no changes or messaging array");
       }
     }
 
     // =======================================================
-    // 21. Processing complete
+    // 7. Processing complete
     // =======================================================
 
     console.log("========================================");
-    console.log(
-      "INSTAGRAM WEBHOOK PROCESSING COMPLETE",
-    );
+    console.log("INSTAGRAM WEBHOOK PROCESSING COMPLETE");
     console.log("========================================");
 
     return NextResponse.json(
@@ -571,10 +203,7 @@ export async function POST(request: NextRequest) {
       },
     );
   } catch (error) {
-    console.error(
-      "Instagram webhook POST error:",
-      error,
-    );
+    console.error("Instagram webhook POST error:", error);
 
     return NextResponse.json(
       {
@@ -585,5 +214,474 @@ export async function POST(request: NextRequest) {
         status: 500,
       },
     );
+  }
+}
+
+// =========================================================
+// Process Instagram messaging events
+// =========================================================
+
+async function processMessagingEvent(
+  messagingEvent: any,
+  instagramUsername: string,
+) {
+  try {
+    console.log("========================================");
+    console.log("INSTAGRAM MESSAGING EVENT");
+    console.log("========================================");
+
+    const senderId = messagingEvent?.sender?.id;
+
+    const recipientId = messagingEvent?.recipient?.id;
+
+    const message = messagingEvent?.message;
+
+    const messageId = message?.mid;
+
+    const messageText = message?.text;
+
+    const isEcho = message?.is_echo === true;
+
+    console.log("Instagram account:", instagramUsername);
+
+    console.log("Sender ID:", senderId);
+
+    console.log("Recipient ID:", recipientId);
+
+    console.log("Message ID:", messageId);
+
+    console.log("Message text:", messageText);
+
+    console.log("Is echo:", isEcho);
+
+    // =======================================================
+    // Outgoing message echo
+    // =======================================================
+
+    if (isEcho) {
+      console.log(
+        "This is an outgoing message echo. Ignoring as incoming message.",
+      );
+
+      console.log("========================================");
+
+      return;
+    }
+
+    // =======================================================
+    // Incoming message
+    // =======================================================
+
+    if (!senderId) {
+      console.warn("Incoming messaging event has no sender ID.");
+
+      return;
+    }
+
+    console.log("REAL INCOMING INSTAGRAM MESSAGE");
+
+    console.log("Sender Instagram-scoped ID:", senderId);
+
+    console.log("Incoming message:", messageText || "[non-text message]");
+
+    // =======================================================
+    // Quick reply
+    // =======================================================
+
+    if (message?.quick_reply) {
+      console.log("Quick reply payload:", message.quick_reply.payload);
+    }
+
+    // =======================================================
+    // Future:
+    // Save incoming DM to database
+    // Process DM automations
+    // Send quick replies
+    // =======================================================
+
+    console.log("Incoming message received successfully.");
+
+    console.log("========================================");
+  } catch (error) {
+    console.error("Error processing Instagram messaging event:", error);
+  }
+}
+
+// =========================================================
+// Process Instagram comment event
+// =========================================================
+
+async function processCommentEvent(
+  value: any,
+  instagramAccount: {
+    id: string;
+    userId: string;
+    igUserId: string;
+    igUsername: string;
+    accessToken: string;
+  },
+) {
+  try {
+    if (!value) {
+      console.warn("Instagram comment webhook value is empty");
+
+      return;
+    }
+
+    // =======================================================
+    // 1. Extract comment data
+    // =======================================================
+
+    const igCommentId = value.id;
+    const igMediaId = value.media?.id;
+    const text = value.text;
+    const username = value.from?.username;
+
+    if (!igCommentId || !igMediaId || !text || !username) {
+      console.warn("Incomplete Instagram comment payload:", value);
+
+      return;
+    }
+
+    console.log("========================================");
+    console.log("INSTAGRAM COMMENT");
+    console.log("commentId:", igCommentId);
+    console.log("mediaId:", igMediaId);
+    console.log("username:", username);
+    console.log("text:", text);
+    console.log("========================================");
+
+    // =======================================================
+    // 2. Prevent duplicate comments
+    // =======================================================
+
+    const existingComment = await prisma.comment.findUnique({
+      where: {
+        igCommentId,
+      },
+    });
+
+    if (existingComment) {
+      console.log("Comment already exists:", igCommentId);
+
+      return;
+    }
+
+    // =======================================================
+    // 3. Save comment
+    // =======================================================
+
+    const comment = await prisma.comment.create({
+      data: {
+        userId: instagramAccount.userId,
+        igMediaId,
+        igCommentId,
+        text,
+        username,
+        replied: false,
+      },
+    });
+
+    console.log("Instagram comment saved:", comment.id);
+
+    // =======================================================
+    // 4. Normalize comment text
+    // =======================================================
+
+    const normalizedCommentText = normalizeText(text);
+
+    console.log("Normalized comment text:", normalizedCommentText);
+
+    // =======================================================
+    // 5. Find active automations
+    // =======================================================
+
+    console.log("Looking for matching automation...");
+
+    const automations = await prisma.automation.findMany({
+      where: {
+        instagramAccountId: instagramAccount.id,
+        isActive: true,
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+    });
+
+    console.log("Active automations found:", automations.length);
+
+    // =======================================================
+    // 6. Find matching automation
+    // =======================================================
+
+    const matchedAutomation = automations.find((automation) => {
+      const normalizedKeyword = normalizeText(automation.keyword);
+
+      return normalizedCommentText === normalizedKeyword;
+    });
+
+    // =======================================================
+    // 7. No automation matched
+    // =======================================================
+
+    if (!matchedAutomation) {
+      console.log(
+        "No matching automation found for comment:",
+        normalizedCommentText,
+      );
+
+      console.log("========================================");
+
+      return;
+    }
+
+    // =======================================================
+    // 8. Automation matched
+    // =======================================================
+
+    console.log("========================================");
+    console.log("AUTOMATION MATCHED");
+
+    console.log("Automation ID:", matchedAutomation.id);
+
+    console.log("Keyword:", matchedAutomation.keyword);
+
+    console.log("Comment reply text:", matchedAutomation.commentReplyText);
+
+    console.log("Private reply text:", matchedAutomation.replyText);
+
+    console.log("Instagram Comment ID:", igCommentId);
+
+    console.log("Username:", username);
+
+    console.log("========================================");
+
+    // =======================================================
+    // 9. Check if already replied
+    // =======================================================
+
+    if (comment.replied) {
+      console.log("Comment already marked as replied. Skipping.");
+
+      return;
+    }
+
+    // =======================================================
+    // 10. Check access token
+    // =======================================================
+
+    if (!instagramAccount.accessToken) {
+      console.error("Instagram access token is missing.");
+
+      return;
+    }
+
+    // =======================================================
+    // 11. Send public comment reply
+    // =======================================================
+
+    let publicCommentReplySent = false;
+
+    if (
+      matchedAutomation.commentReplyText &&
+      matchedAutomation.commentReplyText.trim()
+    ) {
+      publicCommentReplySent = await sendPublicCommentReply({
+        igCommentId,
+        accessToken: instagramAccount.accessToken,
+        replyText: matchedAutomation.commentReplyText,
+      });
+    } else {
+      console.log(
+        "No public comment reply text configured. Skipping public reply.",
+      );
+    }
+
+    // =======================================================
+    // 12. Send private reply
+    // =======================================================
+
+    const privateReplySent = await sendPrivateReply({
+      igUserId: instagramAccount.igUserId,
+      igCommentId,
+      accessToken: instagramAccount.accessToken,
+      replyText: matchedAutomation.replyText,
+    });
+
+    // =======================================================
+    // 13. Update database
+    // =======================================================
+
+    if (privateReplySent) {
+      await prisma.comment.update({
+        where: {
+          id: comment.id,
+        },
+        data: {
+          replied: true,
+          replyText: matchedAutomation.replyText,
+        },
+      });
+
+      console.log("Comment marked as replied.");
+    }
+
+    console.log("========================================");
+    console.log("INSTAGRAM AUTOMATION RESULT");
+
+    console.log("Public comment reply sent:", publicCommentReplySent);
+
+    console.log("Private reply sent:", privateReplySent);
+
+    console.log("========================================");
+  } catch (error) {
+    console.error("Error processing Instagram comment:", error);
+  }
+}
+
+// =========================================================
+// Send public reply under Instagram comment
+// =========================================================
+
+async function sendPublicCommentReply({
+  igCommentId,
+  accessToken,
+  replyText,
+}: {
+  igCommentId: string;
+  accessToken: string;
+  replyText: string;
+}): Promise<boolean> {
+  try {
+    console.log("========================================");
+    console.log("SENDING PUBLIC INSTAGRAM COMMENT REPLY");
+
+    const url = `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${igCommentId}/replies`;
+
+    console.log("Instagram comment reply URL:", url);
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: new URLSearchParams({
+        message: replyText,
+      }),
+    });
+
+    const responseText = await response.text();
+
+    let responseData: unknown;
+
+    try {
+      responseData = JSON.parse(responseText);
+    } catch {
+      responseData = responseText;
+    }
+
+    if (!response.ok) {
+      console.error("========================================");
+
+      console.error("INSTAGRAM PUBLIC COMMENT REPLY FAILED");
+
+      console.error("HTTP Status:", response.status);
+
+      console.error("Instagram API response:", responseData);
+
+      console.error("========================================");
+
+      return false;
+    }
+
+    console.log("INSTAGRAM PUBLIC COMMENT REPLY SENT SUCCESSFULLY");
+
+    console.log("Instagram API response:", responseData);
+
+    console.log("========================================");
+
+    return true;
+  } catch (error) {
+    console.error("Instagram public comment reply request error:", error);
+
+    return false;
+  }
+}
+
+// =========================================================
+// Send private reply to Instagram commenter
+// =========================================================
+
+async function sendPrivateReply({
+  igUserId,
+  igCommentId,
+  accessToken,
+  replyText,
+}: {
+  igUserId: string;
+  igCommentId: string;
+  accessToken: string;
+  replyText: string;
+}): Promise<boolean> {
+  try {
+    console.log("========================================");
+    console.log("SENDING INSTAGRAM PRIVATE REPLY");
+
+    const url = `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${igUserId}/messages`;
+
+    console.log("Instagram Messages API URL:", url);
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({
+        recipient: {
+          comment_id: igCommentId,
+        },
+        message: {
+          text: replyText,
+        },
+      }),
+    });
+
+    const responseText = await response.text();
+
+    let responseData: unknown;
+
+    try {
+      responseData = JSON.parse(responseText);
+    } catch {
+      responseData = responseText;
+    }
+
+    if (!response.ok) {
+      console.error("========================================");
+
+      console.error("INSTAGRAM PRIVATE REPLY FAILED");
+
+      console.error("HTTP Status:", response.status);
+
+      console.error("Instagram API response:", responseData);
+
+      console.error("========================================");
+
+      return false;
+    }
+
+    console.log("========================================");
+    console.log("INSTAGRAM PRIVATE REPLY SENT SUCCESSFULLY");
+
+    console.log("Instagram API response:", responseData);
+
+    console.log("========================================");
+
+    return true;
+  } catch (error) {
+    console.error("Instagram private reply request error:", error);
+
+    return false;
   }
 }
