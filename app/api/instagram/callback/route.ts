@@ -15,23 +15,20 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(
         new URL(
           "/dashboard?instagram=error",
-          process.env.NEXTAUTH_URL || request.url
-        )
+          process.env.NEXTAUTH_URL || request.url,
+        ),
       );
     }
 
     if (!code) {
       return NextResponse.json(
         { error: "کد احراز هویت اینستاگرام دریافت نشد" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (!state) {
-      return NextResponse.json(
-        { error: "State دریافت نشد" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "State دریافت نشد" }, { status: 400 });
     }
 
     let stateData: {
@@ -40,20 +37,15 @@ export async function GET(request: NextRequest) {
     };
 
     try {
-      stateData = JSON.parse(
-        Buffer.from(state, "base64url").toString("utf-8")
-      );
+      stateData = JSON.parse(Buffer.from(state, "base64url").toString("utf-8"));
     } catch {
-      return NextResponse.json(
-        { error: "State نامعتبر است" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "State نامعتبر است" }, { status: 400 });
     }
 
     if (!stateData.userId) {
       return NextResponse.json(
         { error: "شناسه کاربر در State وجود ندارد" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -63,7 +55,7 @@ export async function GET(request: NextRequest) {
     if (stateAge > 10 * 60 * 1000) {
       return NextResponse.json(
         { error: "درخواست اتصال منقضی شده است. دوباره تلاش کنید." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -76,7 +68,7 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json(
         { error: "تنظیمات Instagram در سرور کامل نیست" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -99,7 +91,7 @@ export async function GET(request: NextRequest) {
           redirect_uri: redirectUri,
           code,
         }),
-      }
+      },
     );
 
     const tokenData = await tokenResponse.json();
@@ -115,8 +107,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(
         new URL(
           "/dashboard?instagram=token_error",
-          process.env.NEXTAUTH_URL || request.url
-        )
+          process.env.NEXTAUTH_URL || request.url,
+        ),
       );
     }
 
@@ -130,16 +122,16 @@ export async function GET(request: NextRequest) {
 
     const profileResponse = await fetch(
       `https://graph.instagram.com/v26.0/${instagramUserId}?fields=id,username&access_token=${encodeURIComponent(
-        accessToken
-      )}`
+        accessToken,
+      )}`,
     );
 
     const profileData = await profileResponse.json();
 
     console.log("Instagram profile response:", {
       success: profileResponse.ok,
-      id: profileData.id,
-      username: profileData.username,
+      status: profileResponse.status,
+      data: profileData,
     });
 
     if (!profileResponse.ok || !profileData.id) {
@@ -148,8 +140,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(
         new URL(
           "/dashboard?instagram=profile_error",
-          process.env.NEXTAUTH_URL || request.url
-        )
+          process.env.NEXTAUTH_URL || request.url,
+        ),
       );
     }
 
@@ -185,8 +177,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(
       new URL(
         "/dashboard?instagram=connected",
-        process.env.NEXTAUTH_URL || request.url
-      )
+        process.env.NEXTAUTH_URL || request.url,
+      ),
     );
   } catch (error) {
     console.error("Instagram callback error:", error);
@@ -194,8 +186,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(
       new URL(
         "/dashboard?instagram=error",
-        process.env.NEXTAUTH_URL || request.url
-      )
+        process.env.NEXTAUTH_URL || request.url,
+      ),
     );
   }
 }
