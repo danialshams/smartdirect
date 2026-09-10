@@ -106,7 +106,7 @@ export default async function DashboardPage() {
             </div>
 
             <Link
-              href="/api/auth/instagram"
+              href="/api/instagram/connect"
               className="inline-flex items-center justify-center text-sm bg-slate-900 text-white px-5 py-3 rounded-lg hover:bg-slate-800 transition"
             >
               افزودن اکانت جدید
