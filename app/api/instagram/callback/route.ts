@@ -68,9 +68,7 @@ export async function GET(request: NextRequest) {
     };
 
     try {
-      stateData = JSON.parse(
-        Buffer.from(state, "base64url").toString("utf-8"),
-      );
+      stateData = JSON.parse(Buffer.from(state, "base64url").toString("utf-8"));
     } catch (error) {
       console.error("Instagram callback: invalid state", error);
 
@@ -217,21 +215,34 @@ export async function GET(request: NextRequest) {
     const profileUrl =
       `https://graph.instagram.com/v26.0/${instagramUserId}` +
       `?fields=id,username&access_token=${encodeURIComponent(accessToken)}`;
-
     const profileResponse = await fetch(profileUrl, {
       method: "GET",
       cache: "no-store",
     });
 
-    const profileData = await profileResponse.json();
+    const profileText = await profileResponse.text();
 
-    console.log("Instagram profile response:", {
-      success: profileResponse.ok,
-      status: profileResponse.status,
-      id: profileData.id,
-      username: profileData.username,
-      has_error: Boolean(profileData.error),
-    });
+    console.log("========================================");
+    console.log("INSTAGRAM PROFILE RESPONSE");
+    console.log("status:", profileResponse.status);
+    console.log("ok:", profileResponse.ok);
+    console.log("body:", profileText);
+    console.log("========================================");
+
+    let profileData: any;
+
+    try {
+      profileData = JSON.parse(profileText);
+    } catch {
+      console.error("Instagram profile response is not valid JSON");
+
+      return NextResponse.redirect(
+        new URL(
+          "/dashboard?instagram=profile_invalid_json",
+          process.env.NEXTAUTH_URL || request.url,
+        ),
+      );
+    }
 
     // =========================================================
     // 11. Validate Instagram profile
