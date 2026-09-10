@@ -22,8 +22,7 @@ export async function GET() {
     }
 
     const url =
-      `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/me` +
-      `?fields=id,user_id,username`;
+      `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/me/permissions`;
 
     const response = await fetch(url, {
       method: "GET",
@@ -36,7 +35,7 @@ export async function GET() {
     const data = await response.json();
 
     console.log("========================================");
-    console.log("INSTAGRAM TOKEN TEST");
+    console.log("INSTAGRAM PERMISSIONS TEST");
     console.log("HTTP Status:", response.status);
     console.log("Response:", JSON.stringify(data, null, 2));
     console.log("========================================");
@@ -47,12 +46,12 @@ export async function GET() {
       data,
     });
   } catch (error) {
-    console.error("Instagram token test failed:", error);
+    console.error("Instagram permissions test failed:", error);
 
     return NextResponse.json(
       {
         success: false,
-        error: "Token test failed",
+        error: "Permission test failed",
       },
       { status: 500 }
     );
