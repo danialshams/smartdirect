@@ -211,10 +211,22 @@ export async function GET(request: NextRequest) {
     // =========================================================
 
     console.log("Instagram OAuth: getting profile...");
+    // =========================================================
+    // 10. Get Instagram profile
+    // =========================================================
+
+    console.log("Instagram OAuth: getting profile...");
 
     const profileUrl =
-      `https://graph.instagram.com/v26.0/${instagramUserId}` +
-      `?fields=id,username&access_token=${encodeURIComponent(accessToken)}`;
+      `https://graph.instagram.com/v26.0/me` +
+      `?fields=id,username` +
+      `&access_token=${encodeURIComponent(accessToken)}`;
+
+    console.log("Instagram profile URL:", {
+      endpoint: "https://graph.instagram.com/v26.0/me",
+      instagramUserId,
+    });
+
     const profileResponse = await fetch(profileUrl, {
       method: "GET",
       cache: "no-store",
@@ -248,10 +260,15 @@ export async function GET(request: NextRequest) {
     // 11. Validate Instagram profile
     // =========================================================
 
-    if (!profileResponse.ok || !profileData.id) {
+    if (
+      !profileResponse.ok ||
+      !profileData.id ||
+      String(profileData.id) !== instagramUserId
+    ) {
       console.error("Instagram profile request failed:", {
         status: profileResponse.status,
         data: profileData,
+        expectedUserId: instagramUserId,
       });
 
       return NextResponse.redirect(
