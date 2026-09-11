@@ -7,7 +7,6 @@ import { findMatchingAutomation } from "@/lib/automation/find-matching-automatio
 export const dynamic = "force-dynamic";
 
 const INSTAGRAM_API_VERSION = "v26.0";
-
 const MAX_API_RETRIES = 3;
 
 // =========================================================
@@ -155,7 +154,7 @@ export async function POST(request: NextRequest) {
 
       const instagramAccount = await prisma.instagramAccount.findUnique({
         where: {
-          igUserId,
+          igUserId: String(igUserId),
         },
       });
 
@@ -166,7 +165,6 @@ export async function POST(request: NextRequest) {
       }
 
       console.log("Instagram account found:", instagramAccount.igUsername);
-
       console.log("Database Instagram Account ID:", instagramAccount.id);
 
       // =====================================================
@@ -253,37 +251,68 @@ async function processMessagingEvent(
     console.log("========================================");
 
     const senderId = messagingEvent?.sender?.id;
-
     const recipientId = messagingEvent?.recipient?.id;
 
     const message = messagingEvent?.message;
 
-    const messageId = message?.mid;
+    // =======================================================
+    // IMPORTANT:
+    // Instagram can send read/delivery/etc events without
+    // a "message" object.
+    //
+    // Those events must NEVER enter the automation engine.
+    // =======================================================
 
-    const messageText = message?.text ?? null;
+    if (!message) {
+      console.log("IGNORING NON-MESSAGE INSTAGRAM EVENT");
+
+      console.log("Sender ID:", senderId ?? "undefined");
+      console.log("Recipient ID:", recipientId ?? "undefined");
+
+      if (messagingEvent?.read) {
+        console.log("Event type: READ");
+      } else if (messagingEvent?.delivery) {
+        console.log("Event type: DELIVERY");
+      } else if (messagingEvent?.reaction) {
+        console.log("Event type: REACTION");
+      } else if (messagingEvent?.postback) {
+        console.log("Event type: POSTBACK");
+      } else {
+        console.log("Event type: OTHER");
+      }
+
+      console.log("No message object exists. Skipping automation processing.");
+
+      console.log("========================================");
+
+      return;
+    }
+
+    // =======================================================
+    // Extract actual message data
+    // =======================================================
+
+    const messageId = message?.mid ? String(message.mid) : null;
+
+    const messageText = typeof message?.text === "string" ? message.text : null;
 
     const isEcho = message?.is_echo === true;
 
-    const quickReplyPayload = message?.quick_reply?.payload ?? null;
+    const quickReplyPayload = message?.quick_reply?.payload
+      ? String(message.quick_reply.payload)
+      : null;
 
     const attachments = Array.isArray(message?.attachments)
       ? message.attachments
       : [];
 
     console.log("Instagram account:", instagramAccount.igUsername);
-
     console.log("Sender ID:", senderId);
-
     console.log("Recipient ID:", recipientId);
-
     console.log("Message ID:", messageId);
-
     console.log("Message text:", messageText);
-
     console.log("Quick reply payload:", quickReplyPayload);
-
     console.log("Attachments:", attachments.length);
-
     console.log("Is echo:", isEcho);
 
     // =======================================================
@@ -291,9 +320,9 @@ async function processMessagingEvent(
     // =======================================================
 
     if (isEcho) {
-      console.log(
-        "This is an outgoing message echo. Ignoring as incoming message.",
-      );
+      console.log("This is an outgoing message echo.");
+
+      console.log("Ignoring as incoming message.");
 
       console.log("========================================");
 
@@ -305,9 +334,23 @@ async function processMessagingEvent(
     // =======================================================
 
     if (!senderId) {
-      console.warn("Incoming messaging event has no sender ID.");
+      console.warn("Incoming Instagram message has no sender ID.");
+
+      console.log("========================================");
 
       return;
+    }
+
+    // =======================================================
+    // 3. Strongly recommended:
+    // Real messages should have a message ID.
+    //
+    // If Instagram gives us a message without MID, we can
+    // still process it, but we log it clearly.
+    // =======================================================
+
+    if (!messageId) {
+      console.warn("Instagram message does not contain a message ID (mid).");
     }
 
     console.log("REAL INCOMING INSTAGRAM MESSAGE");
@@ -317,13 +360,13 @@ async function processMessagingEvent(
     console.log("Incoming message:", messageText || "[non-text message]");
 
     // =======================================================
-    // 3. Message ID is strongly recommended for idempotency
+    // 4. Prevent duplicate message processing
     // =======================================================
 
     if (messageId) {
       const existingMessage = await prisma.conversationMessage.findUnique({
         where: {
-          igMessageId: String(messageId),
+          igMessageId: messageId,
         },
       });
 
@@ -339,7 +382,7 @@ async function processMessagingEvent(
     }
 
     // =======================================================
-    // 4. Find / create conversation
+    // 5. Find / create conversation
     // =======================================================
 
     const participantId = String(senderId);
@@ -381,13 +424,14 @@ async function processMessagingEvent(
 
         data: {
           lastMessageAt: new Date(),
+
           isActive: true,
         },
       });
     }
 
     // =======================================================
-    // 5. Find DM automation
+    // 6. Find DM automation
     // =======================================================
 
     const automation = await findMatchingAutomation({
@@ -397,7 +441,7 @@ async function processMessagingEvent(
     });
 
     // =======================================================
-    // 6. Resolve Quick Reply
+    // 7. Resolve Quick Reply
     // =======================================================
 
     let selectedQuickReplyId: string | null = null;
@@ -405,7 +449,7 @@ async function processMessagingEvent(
     if (quickReplyPayload && automation) {
       const selectedQuickReply = automation.messages
         .flatMap((automationMessage) => automationMessage.quickReplies)
-        .find((quickReply) => quickReply.payload === String(quickReplyPayload));
+        .find((quickReply) => quickReply.payload === quickReplyPayload);
 
       if (selectedQuickReply) {
         selectedQuickReplyId = selectedQuickReply.id;
@@ -422,7 +466,7 @@ async function processMessagingEvent(
     }
 
     // =======================================================
-    // 7. Determine incoming message type
+    // 8. Determine incoming message type
     // =======================================================
 
     let incomingMessageType:
@@ -459,7 +503,7 @@ async function processMessagingEvent(
     }
 
     // =======================================================
-    // 8. Save incoming ConversationMessage
+    // 9. Save incoming ConversationMessage
     // =======================================================
 
     const incomingConversationMessage = await prisma.conversationMessage.create(
@@ -477,7 +521,7 @@ async function processMessagingEvent(
 
           mediaId: null,
 
-          igMessageId: messageId ? String(messageId) : null,
+          igMessageId: messageId,
 
           quickReplyId: selectedQuickReplyId,
 
@@ -494,7 +538,7 @@ async function processMessagingEvent(
     console.log("Incoming message type:", incomingMessageType);
 
     // =======================================================
-    // 9. No DM automation
+    // 10. No DM automation
     // =======================================================
 
     if (!automation) {
@@ -510,7 +554,7 @@ async function processMessagingEvent(
     console.log("DM automation matched:", automation.id);
 
     // =======================================================
-    // 10. Execute automation
+    // 11. Execute automation
     // =======================================================
 
     const result = await executeAutomation({
@@ -530,6 +574,8 @@ async function processMessagingEvent(
     console.log("========================================");
   } catch (error) {
     console.error("Error processing Instagram messaging event:", error);
+
+    console.log("========================================");
   }
 }
 
@@ -553,11 +599,8 @@ async function processCommentEvent(
     // =======================================================
 
     const igCommentId = value.id;
-
     const igMediaId = value.media?.id;
-
     const text = value.text;
-
     const username = value.from?.username;
 
     if (!igCommentId || !igMediaId || !text || !username) {
@@ -570,11 +613,8 @@ async function processCommentEvent(
     console.log("INSTAGRAM COMMENT");
 
     console.log("commentId:", igCommentId);
-
     console.log("mediaId:", igMediaId);
-
     console.log("username:", username);
-
     console.log("text:", text);
 
     console.log("========================================");
@@ -804,7 +844,10 @@ async function sendPublicCommentReply({
   accessToken: string;
   replyText: string;
 }): Promise<boolean> {
-  const url = `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${igCommentId}/replies`;
+  const url =
+    `https://graph.instagram.com/` +
+    `${INSTAGRAM_API_VERSION}/` +
+    `${igCommentId}/replies`;
 
   console.log("========================================");
   console.log("SENDING PUBLIC INSTAGRAM COMMENT REPLY");
@@ -838,7 +881,7 @@ async function sendPublicCommentReply({
       let responseData: unknown;
 
       try {
-        responseData = JSON.parse(responseText);
+        responseData = responseText ? JSON.parse(responseText) : null;
       } catch {
         responseData = responseText;
       }
@@ -902,7 +945,10 @@ async function sendPrivateReply({
   accessToken: string;
   replyText: string;
 }): Promise<boolean> {
-  const url = `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${igUserId}/messages`;
+  const url =
+    `https://graph.instagram.com/` +
+    `${INSTAGRAM_API_VERSION}/` +
+    `${igUserId}/messages`;
 
   console.log("========================================");
   console.log("SENDING INSTAGRAM PRIVATE REPLY");
@@ -942,7 +988,7 @@ async function sendPrivateReply({
       let responseData: unknown;
 
       try {
-        responseData = JSON.parse(responseText);
+        responseData = responseText ? JSON.parse(responseText) : null;
       } catch {
         responseData = responseText;
       }
