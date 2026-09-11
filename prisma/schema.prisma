@@ -7,80 +7,642 @@ datasource db {
   provider = "postgresql"
 }
 
+// ======================================================
+// USER
+// ======================================================
+
 model User {
-  id                String             @id @default(cuid())
-  email             String             @unique
-  name              String
-  password          String
-  role              Role               @default(USER)
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   instagramAccounts InstagramAccount[]
   comments          Comment[]
+  conversations     Conversation[]
+  showcases         Showcase[]
+  forms             Form[]
 }
 
-model InstagramAccount {
-  id             String   @id @default(cuid())
-  userId         String
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+// ======================================================
+// INSTAGRAM ACCOUNT
+// ======================================================
 
-  igUserId       String   @unique
+model InstagramAccount {
+  id     String @id @default(cuid())
+  userId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  igUserId       String    @unique
   igUsername     String
   accessToken    String
   tokenExpiresAt DateTime?
-  isConnected    Boolean  @default(false)
+  isConnected    Boolean   @default(false)
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  automations    Automation[]
+  automations   Automation[]
+  conversations Conversation[]
+  showcases     Showcase[]
+  forms         Form[]
 
   @@unique([userId, igUserId])
+  @@index([userId])
 }
 
+// ======================================================
+// AUTOMATION
+// ======================================================
+
 model Automation {
-  id                  String           @id @default(cuid())
+  id String @id @default(cuid())
 
-  instagramAccountId  String
-  instagramAccount    InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
+  instagramAccountId String
+  instagramAccount   InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
 
-  mediaId             String?
-  keyword             String
+  // ====================================================
+  // TRIGGER
+  // ====================================================
 
-  likeComment         Boolean          @default(false)
-  commentReplyText    String?
-  replyText           String?
+  triggerType AutomationTriggerType @default(COMMENT_KEYWORD)
 
-  isActive             Boolean         @default(true)
+  // برای COMMENT_KEYWORD و STORY_REPLY_KEYWORD
+  // مثال:
+  // 1
+  // قیمت
+  // info
+  keyword String?
 
-  createdAt            DateTime        @default(now())
-  updatedAt            DateTime        @updatedAt
+  // Post ID / Story ID
+  // null = همه Media های مربوط به Trigger
+  mediaId String?
+
+  // ====================================================
+  // COMMENT ACTIONS
+  // ====================================================
+
+  likeComment      Boolean @default(false)
+  commentReplyText String?
+
+  // ====================================================
+  // DM ACTIONS
+  // ====================================================
+
+  sendDm         Boolean @default(false)
+  likeIncomingDm Boolean @default(false)
+  replyText      String?
+
+  // ====================================================
+  // STATUS
+  // ====================================================
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // ====================================================
+  // FLOW
+  // ====================================================
+
+  messages AutomationMessage[]
 
   @@index([instagramAccountId])
   @@index([mediaId])
-  @@unique([instagramAccountId, keyword])
+  @@index([instagramAccountId, triggerType])
+  @@index([instagramAccountId, keyword])
 }
 
-model Comment {
-  id          String   @id @default(cuid())
+// ======================================================
+// AUTOMATION MESSAGE
+// ======================================================
 
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+model AutomationMessage {
+  id String @id @default(cuid())
+
+  automationId String
+  automation   Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
+
+  // ====================================================
+  // CONTENT TYPE
+  // ====================================================
+
+  messageType AutomationMessageType @default(TEXT)
+
+  // ====================================================
+  // TEXT
+  // ====================================================
+
+  text String?
+
+  // ====================================================
+  // MEDIA
+  // ====================================================
+
+  mediaUrl String?
+  mediaId  String?
+
+  // ====================================================
+  // SHOWCASE
+  // ====================================================
+
+  showcaseId String?
+  showcase   Showcase? @relation(fields: [showcaseId], references: [id], onDelete: SetNull)
+
+  // ====================================================
+  // FORM
+  // ====================================================
+
+  formId String?
+  form   Form?   @relation(fields: [formId], references: [id], onDelete: SetNull)
+
+  // ====================================================
+  // FLOW ORDER
+  // ====================================================
+
+  order Int
+
+  // ====================================================
+  // QUICK REPLIES
+  // ====================================================
+
+  quickReplies QuickReply[]
+
+  nextFromQuickReplies QuickReply[] @relation("QuickReplyNextMessage")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([automationId])
+  @@index([automationId, order])
+  @@index([showcaseId])
+  @@index([formId])
+}
+
+// ======================================================
+// QUICK REPLY
+// ======================================================
+
+model QuickReply {
+  id String @id @default(cuid())
+
+  // ====================================================
+  // SOURCE MESSAGE
+  // ====================================================
+
+  automationMessageId String
+  automationMessage   AutomationMessage @relation(fields: [automationMessageId], references: [id], onDelete: Cascade)
+
+  // ====================================================
+  // BUTTON
+  // ====================================================
+
+  title   String
+  payload String
+
+  // پاسخ متنی اختیاری قبل از رفتن به Message بعدی
+  replyText String?
+
+  // ====================================================
+  // NEXT MESSAGE
+  // ====================================================
+
+  nextMessageId String?
+
+  nextMessage AutomationMessage? @relation("QuickReplyNextMessage", fields: [nextMessageId], references: [id], onDelete: SetNull)
+
+  // ====================================================
+  // CONVERSATION
+  // ====================================================
+
+  conversationMessages ConversationMessage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([automationMessageId])
+  @@index([nextMessageId])
+  @@index([payload])
+}
+
+// ======================================================
+// CONVERSATION
+// ======================================================
+
+model Conversation {
+  id String @id @default(cuid())
+
+  // ====================================================
+  // SMARTDIRECT USER
+  // ====================================================
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // ====================================================
+  // INSTAGRAM ACCOUNT
+  // ====================================================
+
+  instagramAccountId String
+  instagramAccount   InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
+
+  // ====================================================
+  // INSTAGRAM PARTICIPANT
+  // ====================================================
+
+  igUserId      String
+  participantId String
+
+  // ====================================================
+  // STATUS
+  // ====================================================
+
+  isActive      Boolean   @default(true)
+  lastMessageAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // ====================================================
+  // MESSAGES
+  // ====================================================
+
+  messages ConversationMessage[]
+
+  @@unique([instagramAccountId, participantId])
+  @@index([userId])
+  @@index([instagramAccountId])
+  @@index([instagramAccountId, lastMessageAt])
+}
+
+// ======================================================
+// CONVERSATION MESSAGE
+// ======================================================
+
+model ConversationMessage {
+  id String @id @default(cuid())
+
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  // ====================================================
+  // DIRECTION
+  // ====================================================
+
+  direction MessageDirection
+
+  // ====================================================
+  // TYPE
+  // ====================================================
+
+  messageType MessageType
+
+  // ====================================================
+  // TEXT
+  // ====================================================
+
+  text String?
+
+  // ====================================================
+  // MEDIA
+  // ====================================================
+
+  mediaUrl String?
+  mediaId  String?
+
+  // ====================================================
+  // INSTAGRAM MESSAGE ID
+  // ====================================================
+
+  igMessageId String? @unique
+
+  // ====================================================
+  // QUICK REPLY
+  // ====================================================
+
+  quickReplyId String?
+
+  quickReply QuickReply? @relation(fields: [quickReplyId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([conversationId, createdAt])
+  @@index([quickReplyId])
+}
+
+// ======================================================
+// COMMENT
+// ======================================================
+
+model Comment {
+  id String @id @default(cuid())
+
+  // ====================================================
+  // SMARTDIRECT USER
+  // ====================================================
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // ====================================================
+  // INSTAGRAM
+  // ====================================================
 
   igMediaId   String
-  igCommentId String   @unique
+  igCommentId String @unique
 
-  text        String
-  username    String
+  text     String
+  username String
 
-  replied     Boolean  @default(false)
-  replyText   String?
+  // ====================================================
+  // RESULT
+  // ====================================================
 
-  createdAt   DateTime @default(now())
+  replied   Boolean @default(false)
+  replyText String?
+
+  createdAt DateTime @default(now())
 
   @@index([userId, igMediaId])
 }
+
+// ======================================================
+// SHOWCASE
+// ======================================================
+
+model Showcase {
+  id String @id @default(cuid())
+
+  // ====================================================
+  // OWNER
+  // ====================================================
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // ====================================================
+  // INSTAGRAM ACCOUNT
+  // ====================================================
+
+  instagramAccountId String
+
+  instagramAccount InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
+
+  // ====================================================
+  // INFO
+  // ====================================================
+
+  title       String
+  description String?
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // ====================================================
+  // ITEMS
+  // ====================================================
+
+  items ShowcaseItem[]
+
+  // Automation Messages that use this Showcase
+  messages AutomationMessage[]
+
+  @@index([userId])
+  @@index([instagramAccountId])
+}
+
+// ======================================================
+// SHOWCASE ITEM
+// ======================================================
+
+model ShowcaseItem {
+  id String @id @default(cuid())
+
+  showcaseId String
+  showcase   Showcase @relation(fields: [showcaseId], references: [id], onDelete: Cascade)
+
+  // ====================================================
+  // CONTENT
+  // ====================================================
+
+  title       String
+  description String?
+  imageUrl    String?
+
+  // ====================================================
+  // PRICE
+  // ====================================================
+
+  price         Decimal?
+  originalPrice Decimal?
+
+  // ====================================================
+  // ACTION
+  // ====================================================
+
+  linkUrl    String?
+  buttonText String?
+
+  // ====================================================
+  // ORDER / STATUS
+  // ====================================================
+
+  order    Int     @default(0)
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([showcaseId])
+  @@index([showcaseId, order])
+}
+
+// ======================================================
+// FORM
+// ======================================================
+
+model Form {
+  id String @id @default(cuid())
+
+  // ====================================================
+  // OWNER
+  // ====================================================
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // ====================================================
+  // INSTAGRAM ACCOUNT
+  // ====================================================
+
+  instagramAccountId String
+
+  instagramAccount InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
+
+  // ====================================================
+  // INFO
+  // ====================================================
+
+  title       String
+  description String?
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // ====================================================
+  // FIELDS
+  // ====================================================
+
+  fields FormField[]
+
+  // ====================================================
+  // SUBMISSIONS
+  // ====================================================
+
+  submissions FormSubmission[]
+
+  // Automation Messages that use this Form
+  messages AutomationMessage[]
+
+  @@index([userId])
+  @@index([instagramAccountId])
+}
+
+// ======================================================
+// FORM FIELD
+// ======================================================
+
+model FormField {
+  id String @id @default(cuid())
+
+  formId String
+  form   Form   @relation(fields: [formId], references: [id], onDelete: Cascade)
+
+  // ====================================================
+  // FIELD INFO
+  // ====================================================
+
+  label String
+  name  String
+
+  type FormFieldType
+
+  required    Boolean @default(false)
+  placeholder String?
+
+  // برای SELECT / RADIO / CHECKBOX
+  options Json?
+
+  order Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([formId])
+  @@index([formId, order])
+}
+
+// ======================================================
+// FORM SUBMISSION
+// ======================================================
+
+model FormSubmission {
+  id String @id @default(cuid())
+
+  formId String
+  form   Form   @relation(fields: [formId], references: [id], onDelete: Cascade)
+
+  // ====================================================
+  // INSTAGRAM CUSTOMER
+  // ====================================================
+
+  igUserId String?
+  username String?
+
+  // ====================================================
+  // ANSWERS
+  // ====================================================
+
+  answers Json
+
+  createdAt DateTime @default(now())
+
+  @@index([formId])
+  @@index([igUserId])
+}
+
+// ======================================================
+// ENUM: AUTOMATION TRIGGER
+// ======================================================
+
+enum AutomationTriggerType {
+  COMMENT_KEYWORD
+  DM
+  STORY_REPLY_KEYWORD
+}
+
+// ======================================================
+// ENUM: AUTOMATION MESSAGE TYPE
+// ======================================================
+
+enum AutomationMessageType {
+  TEXT
+  IMAGE
+  VIDEO
+  AUDIO
+  SHOWCASE
+  FORM
+}
+
+// ======================================================
+// ENUM: CONVERSATION DIRECTION
+// ======================================================
+
+enum MessageDirection {
+  INBOUND
+  OUTBOUND
+}
+
+// ======================================================
+// ENUM: CONVERSATION MESSAGE TYPE
+// ======================================================
+
+enum MessageType {
+  TEXT
+  QUICK_REPLY
+  IMAGE
+  VIDEO
+  AUDIO
+  STICKER
+  REACTION
+}
+
+// ======================================================
+// ENUM: FORM FIELD TYPE
+// ======================================================
+
+enum FormFieldType {
+  TEXT
+  TEXTAREA
+  PHONE
+  EMAIL
+  NUMBER
+  SELECT
+  RADIO
+  CHECKBOX
+}
+
+// ======================================================
+// ENUM: USER ROLE
+// ======================================================
 
 enum Role {
   USER

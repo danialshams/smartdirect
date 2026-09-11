@@ -1,11 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+import { executeAutomation } from "@/lib/automation/execute-automation";
+import { findMatchingAutomation } from "@/lib/automation/find-matching-automation";
+
 export const dynamic = "force-dynamic";
 
 const INSTAGRAM_API_VERSION = "v26.0";
 
 const MAX_API_RETRIES = 3;
+
+// =========================================================
+// Types
+// =========================================================
+
+type InstagramAccountData = {
+  id: string;
+  userId: string;
+  igUserId: string;
+  igUsername: string;
+  accessToken: string;
+};
+
+// =========================================================
+// Helpers
+// =========================================================
 
 function normalizeText(text: string): string {
   return text
@@ -158,10 +177,7 @@ export async function POST(request: NextRequest) {
         console.log("Messaging events received:", entry.messaging.length);
 
         for (const messagingEvent of entry.messaging) {
-          await processMessagingEvent(
-            messagingEvent,
-            instagramAccount.igUsername,
-          );
+          await processMessagingEvent(messagingEvent, instagramAccount);
         }
       }
 
@@ -229,7 +245,7 @@ export async function POST(request: NextRequest) {
 
 async function processMessagingEvent(
   messagingEvent: any,
-  instagramUsername: string,
+  instagramAccount: InstagramAccountData,
 ) {
   try {
     console.log("========================================");
@@ -237,24 +253,41 @@ async function processMessagingEvent(
     console.log("========================================");
 
     const senderId = messagingEvent?.sender?.id;
+
     const recipientId = messagingEvent?.recipient?.id;
 
     const message = messagingEvent?.message;
 
     const messageId = message?.mid;
-    const messageText = message?.text;
+
+    const messageText = message?.text ?? null;
 
     const isEcho = message?.is_echo === true;
 
-    console.log("Instagram account:", instagramUsername);
+    const quickReplyPayload = message?.quick_reply?.payload ?? null;
+
+    const attachments = Array.isArray(message?.attachments)
+      ? message.attachments
+      : [];
+
+    console.log("Instagram account:", instagramAccount.igUsername);
+
     console.log("Sender ID:", senderId);
+
     console.log("Recipient ID:", recipientId);
+
     console.log("Message ID:", messageId);
+
     console.log("Message text:", messageText);
+
+    console.log("Quick reply payload:", quickReplyPayload);
+
+    console.log("Attachments:", attachments.length);
+
     console.log("Is echo:", isEcho);
 
     // =======================================================
-    // Outgoing message echo
+    // 1. Ignore outgoing message echo
     // =======================================================
 
     if (isEcho) {
@@ -268,7 +301,7 @@ async function processMessagingEvent(
     }
 
     // =======================================================
-    // Incoming message
+    // 2. Incoming message must have sender
     // =======================================================
 
     if (!senderId) {
@@ -278,18 +311,221 @@ async function processMessagingEvent(
     }
 
     console.log("REAL INCOMING INSTAGRAM MESSAGE");
+
     console.log("Sender Instagram-scoped ID:", senderId);
+
     console.log("Incoming message:", messageText || "[non-text message]");
 
     // =======================================================
-    // Quick reply
+    // 3. Message ID is strongly recommended for idempotency
     // =======================================================
 
-    if (message?.quick_reply) {
-      console.log("Quick reply payload:", message.quick_reply.payload);
+    if (messageId) {
+      const existingMessage = await prisma.conversationMessage.findUnique({
+        where: {
+          igMessageId: String(messageId),
+        },
+      });
+
+      if (existingMessage) {
+        console.log("Incoming Instagram message already processed:", messageId);
+
+        console.log("Skipping duplicate webhook event.");
+
+        console.log("========================================");
+
+        return;
+      }
     }
 
-    console.log("Incoming message received successfully.");
+    // =======================================================
+    // 4. Find / create conversation
+    // =======================================================
+
+    const participantId = String(senderId);
+
+    let conversation = await prisma.conversation.findUnique({
+      where: {
+        instagramAccountId_participantId: {
+          instagramAccountId: instagramAccount.id,
+          participantId,
+        },
+      },
+    });
+
+    if (!conversation) {
+      conversation = await prisma.conversation.create({
+        data: {
+          userId: instagramAccount.userId,
+
+          instagramAccountId: instagramAccount.id,
+
+          igUserId: participantId,
+
+          participantId,
+
+          isActive: true,
+
+          lastMessageAt: new Date(),
+        },
+      });
+
+      console.log("New Instagram conversation created:", conversation.id);
+    } else {
+      console.log("Existing Instagram conversation found:", conversation.id);
+
+      await prisma.conversation.update({
+        where: {
+          id: conversation.id,
+        },
+
+        data: {
+          lastMessageAt: new Date(),
+          isActive: true,
+        },
+      });
+    }
+
+    // =======================================================
+    // 5. Find DM automation
+    // =======================================================
+
+    const automation = await findMatchingAutomation({
+      instagramAccountId: instagramAccount.id,
+
+      triggerType: "DM",
+    });
+
+    // =======================================================
+    // 6. Resolve Quick Reply
+    // =======================================================
+
+    let selectedQuickReplyId: string | null = null;
+
+    if (quickReplyPayload && automation) {
+      const selectedQuickReply = automation.messages
+        .flatMap((automationMessage) => automationMessage.quickReplies)
+        .find((quickReply) => quickReply.payload === String(quickReplyPayload));
+
+      if (selectedQuickReply) {
+        selectedQuickReplyId = selectedQuickReply.id;
+
+        console.log("Quick reply matched:", selectedQuickReply.id);
+
+        console.log("Quick reply title:", selectedQuickReply.title);
+      } else {
+        console.warn(
+          "Quick reply payload does not belong to this automation:",
+          quickReplyPayload,
+        );
+      }
+    }
+
+    // =======================================================
+    // 7. Determine incoming message type
+    // =======================================================
+
+    let incomingMessageType:
+      | "TEXT"
+      | "QUICK_REPLY"
+      | "IMAGE"
+      | "VIDEO"
+      | "AUDIO"
+      | "STICKER"
+      | "REACTION" = "TEXT";
+
+    let incomingMediaUrl: string | null = null;
+
+    if (quickReplyPayload) {
+      incomingMessageType = "QUICK_REPLY";
+    } else if (attachments.length > 0) {
+      const attachmentType = String(attachments[0]?.type ?? "").toLowerCase();
+
+      const attachmentUrl = attachments[0]?.payload?.url ?? null;
+
+      incomingMediaUrl = attachmentUrl;
+
+      if (attachmentType === "image") {
+        incomingMessageType = "IMAGE";
+      } else if (attachmentType === "video") {
+        incomingMessageType = "VIDEO";
+      } else if (attachmentType === "audio" || attachmentType === "voice") {
+        incomingMessageType = "AUDIO";
+      } else if (attachmentType === "sticker") {
+        incomingMessageType = "STICKER";
+      } else {
+        incomingMessageType = "TEXT";
+      }
+    }
+
+    // =======================================================
+    // 8. Save incoming ConversationMessage
+    // =======================================================
+
+    const incomingConversationMessage = await prisma.conversationMessage.create(
+      {
+        data: {
+          conversationId: conversation.id,
+
+          direction: "INBOUND",
+
+          messageType: incomingMessageType,
+
+          text: messageText,
+
+          mediaUrl: incomingMediaUrl,
+
+          mediaId: null,
+
+          igMessageId: messageId ? String(messageId) : null,
+
+          quickReplyId: selectedQuickReplyId,
+
+          createdAt: new Date(),
+        },
+      },
+    );
+
+    console.log(
+      "Incoming Instagram message saved:",
+      incomingConversationMessage.id,
+    );
+
+    console.log("Incoming message type:", incomingMessageType);
+
+    // =======================================================
+    // 9. No DM automation
+    // =======================================================
+
+    if (!automation) {
+      console.log("No active DM automation found.");
+
+      console.log("Message was still saved in conversation.");
+
+      console.log("========================================");
+
+      return;
+    }
+
+    console.log("DM automation matched:", automation.id);
+
+    // =======================================================
+    // 10. Execute automation
+    // =======================================================
+
+    const result = await executeAutomation({
+      automationId: automation.id,
+
+      instagramAccountId: instagramAccount.id,
+
+      participantId,
+
+      igUserId: participantId,
+
+      selectedQuickReplyId,
+    });
+
+    console.log("DM automation execution result:", result);
 
     console.log("========================================");
   } catch (error) {
@@ -303,13 +539,7 @@ async function processMessagingEvent(
 
 async function processCommentEvent(
   value: any,
-  instagramAccount: {
-    id: string;
-    userId: string;
-    igUserId: string;
-    igUsername: string;
-    accessToken: string;
-  },
+  instagramAccount: InstagramAccountData,
 ) {
   try {
     if (!value) {
@@ -323,8 +553,11 @@ async function processCommentEvent(
     // =======================================================
 
     const igCommentId = value.id;
+
     const igMediaId = value.media?.id;
+
     const text = value.text;
+
     const username = value.from?.username;
 
     if (!igCommentId || !igMediaId || !text || !username) {
@@ -335,10 +568,15 @@ async function processCommentEvent(
 
     console.log("========================================");
     console.log("INSTAGRAM COMMENT");
+
     console.log("commentId:", igCommentId);
+
     console.log("mediaId:", igMediaId);
+
     console.log("username:", username);
+
     console.log("text:", text);
+
     console.log("========================================");
 
     // =======================================================
@@ -364,10 +602,15 @@ async function processCommentEvent(
     const comment = await prisma.comment.create({
       data: {
         userId: instagramAccount.userId,
+
         igMediaId,
+
         igCommentId,
+
         text,
+
         username,
+
         replied: false,
       },
     });
@@ -375,48 +618,32 @@ async function processCommentEvent(
     console.log("Instagram comment saved:", comment.id);
 
     // =======================================================
-    // 4. Normalize comment text
+    // 4. Find matching COMMENT automation
     // =======================================================
 
     const normalizedCommentText = normalizeText(text);
 
     console.log("Normalized comment text:", normalizedCommentText);
 
-    // =======================================================
-    // 5. Find active automations
-    // =======================================================
+    console.log("Looking for matching COMMENT automation...");
 
-    console.log("Looking for matching automation...");
+    const matchedAutomation = await findMatchingAutomation({
+      instagramAccountId: instagramAccount.id,
 
-    const automations = await prisma.automation.findMany({
-      where: {
-        instagramAccountId: instagramAccount.id,
-        isActive: true,
-      },
-      orderBy: {
-        createdAt: "asc",
-      },
-    });
+      triggerType: "COMMENT_KEYWORD",
 
-    console.log("Active automations found:", automations.length);
+      keyword: normalizedCommentText,
 
-    // =======================================================
-    // 6. Find matching automation
-    // =======================================================
-
-    const matchedAutomation = automations.find((automation) => {
-      const normalizedKeyword = normalizeText(automation.keyword);
-
-      return normalizedCommentText === normalizedKeyword;
+      mediaId: igMediaId,
     });
 
     // =======================================================
-    // 7. No automation matched
+    // 5. No automation matched
     // =======================================================
 
     if (!matchedAutomation) {
       console.log(
-        "No matching automation found for comment:",
+        "No matching COMMENT automation found:",
         normalizedCommentText,
       );
 
@@ -426,52 +653,30 @@ async function processCommentEvent(
     }
 
     // =======================================================
-    // 8. Automation matched
+    // 6. Automation matched
     // =======================================================
 
     console.log("========================================");
-    console.log("AUTOMATION MATCHED");
+    console.log("COMMENT AUTOMATION MATCHED");
 
     console.log("Automation ID:", matchedAutomation.id);
+
+    console.log("Trigger type:", matchedAutomation.triggerType);
+
     console.log("Keyword:", matchedAutomation.keyword);
+
     console.log("Comment reply text:", matchedAutomation.commentReplyText);
+
     console.log("Private reply text:", matchedAutomation.replyText);
+
     console.log("Instagram Comment ID:", igCommentId);
+
     console.log("Username:", username);
 
     console.log("========================================");
 
     // =======================================================
-    // 9. Check if already replied
-    // =======================================================
-
-    if (comment.replied) {
-      console.log("Comment already marked as replied. Skipping.");
-
-      return;
-    }
-
-    // =======================================================
-    // 10. Check access token
-    // =======================================================
-
-    if (!instagramAccount.accessToken) {
-      console.error("Instagram access token is missing.");
-
-      return;
-    }
-
-    // =======================================================
-    // 11. Small delay
-    // Give Instagram time to fully register the comment.
-    // =======================================================
-
-    console.log("Waiting 1000ms before sending Instagram replies...");
-
-    await sleep(1000);
-
-    // =======================================================
-    // 12. Send public comment reply
+    // 7. Public comment reply
     // =======================================================
 
     let publicCommentReplySent = false;
@@ -482,7 +687,9 @@ async function processCommentEvent(
     ) {
       publicCommentReplySent = await sendPublicCommentReply({
         igCommentId,
+
         accessToken: instagramAccount.accessToken,
+
         replyText: matchedAutomation.commentReplyText,
       });
     } else {
@@ -492,34 +699,73 @@ async function processCommentEvent(
     }
 
     // =======================================================
-    // 13. Send private reply
+    // 8. Execute Flow
+    // =======================================================
+
+    let automationExecuted = false;
+
+    if (matchedAutomation.messages.length > 0) {
+      const commenterIgUserId = value.from?.id;
+
+      if (!commenterIgUserId) {
+        console.warn(
+          "Comment does not contain commenter Instagram-scoped ID. Flow cannot execute.",
+        );
+      } else {
+        const result = await executeAutomation({
+          automationId: matchedAutomation.id,
+
+          instagramAccountId: instagramAccount.id,
+
+          participantId: String(commenterIgUserId),
+
+          igUserId: String(commenterIgUserId),
+        });
+
+        automationExecuted = result.success && result.executed;
+
+        console.log("Comment automation engine result:", result);
+      }
+    }
+
+    // =======================================================
+    // 9. Legacy private reply
     // =======================================================
 
     let privateReplySent = false;
 
-    if (matchedAutomation.replyText && matchedAutomation.replyText.trim()) {
+    if (
+      matchedAutomation.messages.length === 0 &&
+      matchedAutomation.replyText &&
+      matchedAutomation.replyText.trim()
+    ) {
       privateReplySent = await sendPrivateReply({
         igUserId: instagramAccount.igUserId,
+
         igCommentId,
+
         accessToken: instagramAccount.accessToken,
+
         replyText: matchedAutomation.replyText,
       });
-    } else {
-      console.log("No private reply text configured. Skipping private reply.");
+    } else if (matchedAutomation.messages.length === 0) {
+      console.log("No legacy private reply configured. Skipping.");
     }
 
     // =======================================================
-    // 14. Update database
+    // 10. Update database
     // =======================================================
 
-    if (privateReplySent) {
+    if (privateReplySent || automationExecuted) {
       await prisma.comment.update({
         where: {
           id: comment.id,
         },
+
         data: {
           replied: true,
-          replyText: matchedAutomation.replyText,
+
+          replyText: matchedAutomation.replyText ?? null,
         },
       });
 
@@ -527,14 +773,17 @@ async function processCommentEvent(
     }
 
     // =======================================================
-    // 15. Final result
+    // 11. Final result
     // =======================================================
 
     console.log("========================================");
     console.log("INSTAGRAM AUTOMATION RESULT");
 
     console.log("Public comment reply sent:", publicCommentReplySent);
-    console.log("Private reply sent:", privateReplySent);
+
+    console.log("Automation engine executed:", automationExecuted);
+
+    console.log("Legacy private reply sent:", privateReplySent);
 
     console.log("========================================");
   } catch (error) {
@@ -559,6 +808,7 @@ async function sendPublicCommentReply({
 
   console.log("========================================");
   console.log("SENDING PUBLIC INSTAGRAM COMMENT REPLY");
+
   console.log("Instagram comment reply URL:", url);
 
   for (let attempt = 1; attempt <= MAX_API_RETRIES; attempt++) {
@@ -571,11 +821,15 @@ async function sendPublicCommentReply({
 
       const response = await fetch(url, {
         method: "POST",
+
         headers: {
           Authorization: `Bearer ${accessToken}`,
+
           "Content-Type": "application/x-www-form-urlencoded",
         },
+
         body,
+
         cache: "no-store",
       });
 
@@ -602,6 +856,7 @@ async function sendPublicCommentReply({
       console.error(`Public comment reply attempt ${attempt} failed.`);
 
       console.error("HTTP Status:", response.status);
+
       console.error("Instagram API response:", responseData);
 
       if (attempt < MAX_API_RETRIES) {
@@ -651,12 +906,14 @@ async function sendPrivateReply({
 
   console.log("========================================");
   console.log("SENDING INSTAGRAM PRIVATE REPLY");
+
   console.log("Instagram Messages API URL:", url);
 
   const requestBody = {
     recipient: {
       comment_id: igCommentId,
     },
+
     message: {
       text: replyText,
     },
@@ -668,11 +925,15 @@ async function sendPrivateReply({
 
       const response = await fetch(url, {
         method: "POST",
+
         headers: {
           "Content-Type": "application/json",
+
           Authorization: `Bearer ${accessToken}`,
         },
+
         body: JSON.stringify(requestBody),
+
         cache: "no-store",
       });
 
@@ -699,6 +960,7 @@ async function sendPrivateReply({
       console.error(`Private reply attempt ${attempt} failed.`);
 
       console.error("HTTP Status:", response.status);
+
       console.error("Instagram API response:", responseData);
 
       if (attempt < MAX_API_RETRIES) {

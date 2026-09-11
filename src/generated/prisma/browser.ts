@@ -33,7 +33,52 @@ export type InstagramAccount = Prisma.InstagramAccountModel
  */
 export type Automation = Prisma.AutomationModel
 /**
+ * Model AutomationMessage
+ * 
+ */
+export type AutomationMessage = Prisma.AutomationMessageModel
+/**
+ * Model QuickReply
+ * 
+ */
+export type QuickReply = Prisma.QuickReplyModel
+/**
+ * Model Conversation
+ * 
+ */
+export type Conversation = Prisma.ConversationModel
+/**
+ * Model ConversationMessage
+ * 
+ */
+export type ConversationMessage = Prisma.ConversationMessageModel
+/**
  * Model Comment
  * 
  */
 export type Comment = Prisma.CommentModel
+/**
+ * Model Showcase
+ * 
+ */
+export type Showcase = Prisma.ShowcaseModel
+/**
+ * Model ShowcaseItem
+ * 
+ */
+export type ShowcaseItem = Prisma.ShowcaseItemModel
+/**
+ * Model Form
+ * 
+ */
+export type Form = Prisma.FormModel
+/**
+ * Model FormField
+ * 
+ */
+export type FormField = Prisma.FormFieldModel
+/**
+ * Model FormSubmission
+ * 
+ */
+export type FormSubmission = Prisma.FormSubmissionModel

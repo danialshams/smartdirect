@@ -9,6 +9,62 @@
 * 🟢 You can import this file directly.
 */
 
+export const AutomationTriggerType = {
+  COMMENT_KEYWORD: 'COMMENT_KEYWORD',
+  DM: 'DM',
+  STORY_REPLY_KEYWORD: 'STORY_REPLY_KEYWORD'
+} as const
+
+export type AutomationTriggerType = (typeof AutomationTriggerType)[keyof typeof AutomationTriggerType]
+
+
+export const AutomationMessageType = {
+  TEXT: 'TEXT',
+  IMAGE: 'IMAGE',
+  VIDEO: 'VIDEO',
+  AUDIO: 'AUDIO',
+  SHOWCASE: 'SHOWCASE',
+  FORM: 'FORM'
+} as const
+
+export type AutomationMessageType = (typeof AutomationMessageType)[keyof typeof AutomationMessageType]
+
+
+export const MessageDirection = {
+  INBOUND: 'INBOUND',
+  OUTBOUND: 'OUTBOUND'
+} as const
+
+export type MessageDirection = (typeof MessageDirection)[keyof typeof MessageDirection]
+
+
+export const MessageType = {
+  TEXT: 'TEXT',
+  QUICK_REPLY: 'QUICK_REPLY',
+  IMAGE: 'IMAGE',
+  VIDEO: 'VIDEO',
+  AUDIO: 'AUDIO',
+  STICKER: 'STICKER',
+  REACTION: 'REACTION'
+} as const
+
+export type MessageType = (typeof MessageType)[keyof typeof MessageType]
+
+
+export const FormFieldType = {
+  TEXT: 'TEXT',
+  TEXTAREA: 'TEXTAREA',
+  PHONE: 'PHONE',
+  EMAIL: 'EMAIL',
+  NUMBER: 'NUMBER',
+  SELECT: 'SELECT',
+  RADIO: 'RADIO',
+  CHECKBOX: 'CHECKBOX'
+} as const
+
+export type FormFieldType = (typeof FormFieldType)[keyof typeof FormFieldType]
+
+
 export const Role = {
   USER: 'USER',
   ADMIN: 'ADMIN'

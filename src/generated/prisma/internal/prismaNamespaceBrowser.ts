@@ -54,7 +54,16 @@ export const ModelName = {
   User: 'User',
   InstagramAccount: 'InstagramAccount',
   Automation: 'Automation',
-  Comment: 'Comment'
+  AutomationMessage: 'AutomationMessage',
+  QuickReply: 'QuickReply',
+  Conversation: 'Conversation',
+  ConversationMessage: 'ConversationMessage',
+  Comment: 'Comment',
+  Showcase: 'Showcase',
+  ShowcaseItem: 'ShowcaseItem',
+  Form: 'Form',
+  FormField: 'FormField',
+  FormSubmission: 'FormSubmission'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -104,10 +113,13 @@ export type InstagramAccountScalarFieldEnum = (typeof InstagramAccountScalarFiel
 export const AutomationScalarFieldEnum = {
   id: 'id',
   instagramAccountId: 'instagramAccountId',
-  mediaId: 'mediaId',
+  triggerType: 'triggerType',
   keyword: 'keyword',
+  mediaId: 'mediaId',
   likeComment: 'likeComment',
   commentReplyText: 'commentReplyText',
+  sendDm: 'sendDm',
+  likeIncomingDm: 'likeIncomingDm',
   replyText: 'replyText',
   isActive: 'isActive',
   createdAt: 'createdAt',
@@ -115,6 +127,68 @@ export const AutomationScalarFieldEnum = {
 } as const
 
 export type AutomationScalarFieldEnum = (typeof AutomationScalarFieldEnum)[keyof typeof AutomationScalarFieldEnum]
+
+
+export const AutomationMessageScalarFieldEnum = {
+  id: 'id',
+  automationId: 'automationId',
+  messageType: 'messageType',
+  text: 'text',
+  mediaUrl: 'mediaUrl',
+  mediaId: 'mediaId',
+  showcaseId: 'showcaseId',
+  formId: 'formId',
+  order: 'order',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AutomationMessageScalarFieldEnum = (typeof AutomationMessageScalarFieldEnum)[keyof typeof AutomationMessageScalarFieldEnum]
+
+
+export const QuickReplyScalarFieldEnum = {
+  id: 'id',
+  automationMessageId: 'automationMessageId',
+  title: 'title',
+  payload: 'payload',
+  replyText: 'replyText',
+  nextMessageId: 'nextMessageId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type QuickReplyScalarFieldEnum = (typeof QuickReplyScalarFieldEnum)[keyof typeof QuickReplyScalarFieldEnum]
+
+
+export const ConversationScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  instagramAccountId: 'instagramAccountId',
+  igUserId: 'igUserId',
+  participantId: 'participantId',
+  isActive: 'isActive',
+  lastMessageAt: 'lastMessageAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ConversationScalarFieldEnum = (typeof ConversationScalarFieldEnum)[keyof typeof ConversationScalarFieldEnum]
+
+
+export const ConversationMessageScalarFieldEnum = {
+  id: 'id',
+  conversationId: 'conversationId',
+  direction: 'direction',
+  messageType: 'messageType',
+  text: 'text',
+  mediaUrl: 'mediaUrl',
+  mediaId: 'mediaId',
+  igMessageId: 'igMessageId',
+  quickReplyId: 'quickReplyId',
+  createdAt: 'createdAt'
+} as const
+
+export type ConversationMessageScalarFieldEnum = (typeof ConversationMessageScalarFieldEnum)[keyof typeof ConversationMessageScalarFieldEnum]
 
 
 export const CommentScalarFieldEnum = {
@@ -132,12 +206,103 @@ export const CommentScalarFieldEnum = {
 export type CommentScalarFieldEnum = (typeof CommentScalarFieldEnum)[keyof typeof CommentScalarFieldEnum]
 
 
+export const ShowcaseScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  instagramAccountId: 'instagramAccountId',
+  title: 'title',
+  description: 'description',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ShowcaseScalarFieldEnum = (typeof ShowcaseScalarFieldEnum)[keyof typeof ShowcaseScalarFieldEnum]
+
+
+export const ShowcaseItemScalarFieldEnum = {
+  id: 'id',
+  showcaseId: 'showcaseId',
+  title: 'title',
+  description: 'description',
+  imageUrl: 'imageUrl',
+  price: 'price',
+  originalPrice: 'originalPrice',
+  linkUrl: 'linkUrl',
+  buttonText: 'buttonText',
+  order: 'order',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ShowcaseItemScalarFieldEnum = (typeof ShowcaseItemScalarFieldEnum)[keyof typeof ShowcaseItemScalarFieldEnum]
+
+
+export const FormScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  instagramAccountId: 'instagramAccountId',
+  title: 'title',
+  description: 'description',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type FormScalarFieldEnum = (typeof FormScalarFieldEnum)[keyof typeof FormScalarFieldEnum]
+
+
+export const FormFieldScalarFieldEnum = {
+  id: 'id',
+  formId: 'formId',
+  label: 'label',
+  name: 'name',
+  type: 'type',
+  required: 'required',
+  placeholder: 'placeholder',
+  options: 'options',
+  order: 'order',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type FormFieldScalarFieldEnum = (typeof FormFieldScalarFieldEnum)[keyof typeof FormFieldScalarFieldEnum]
+
+
+export const FormSubmissionScalarFieldEnum = {
+  id: 'id',
+  formId: 'formId',
+  igUserId: 'igUserId',
+  username: 'username',
+  answers: 'answers',
+  createdAt: 'createdAt'
+} as const
+
+export type FormSubmissionScalarFieldEnum = (typeof FormSubmissionScalarFieldEnum)[keyof typeof FormSubmissionScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
 } as const
 
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
+
+
+export const NullableJsonNullValueInput = {
+  DbNull: DbNull,
+  JsonNull: JsonNull
+} as const
+
+export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
+
+
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
 export const QueryMode = {
@@ -154,4 +319,13 @@ export const NullsOrder = {
 } as const
 
 export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+export const JsonNullValueFilter = {
+  DbNull: DbNull,
+  JsonNull: JsonNull,
+  AnyNull: AnyNull
+} as const
+
+export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 
