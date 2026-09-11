@@ -76,12 +76,6 @@ export default function IceBreakerManager({
     const [success, setSuccess] =
         useState(false);
 
-    const selectedAccount =
-        connectedAccounts.find(
-            (account) =>
-                account.id === selectedAccountId,
-        );
-
     useEffect(() => {
         if (
             connectedAccounts.length > 0 &&
@@ -96,7 +90,8 @@ export default function IceBreakerManager({
             selectedAccountId &&
             !connectedAccounts.some(
                 (account) =>
-                    account.id === selectedAccountId,
+                    account.id ===
+                    selectedAccountId,
             )
         ) {
             setSelectedAccountId(
@@ -173,20 +168,32 @@ export default function IceBreakerManager({
 
                 if (cancelled) return;
 
-                setAutomations(
-                    (automationResult.data ?? []).filter(
-                        (automation: Automation) =>
+                const activeAutomations =
+                    (
+                        automationResult.data ??
+                        []
+                    ).filter(
+                        (
+                            automation: Automation,
+                        ) =>
                             automation.isActive,
-                    ),
+                    );
+
+                setAutomations(
+                    activeAutomations,
                 );
 
                 const serverItems =
-                    iceBreakerResult.data ?? [];
+                    iceBreakerResult.data ??
+                    [];
 
                 setItems(
                     serverItems.map(
-                        (item: IceBreakerItem) => ({
-                            question: item.question,
+                        (
+                            item: IceBreakerItem,
+                        ) => ({
+                            question:
+                                item.question,
                             automationId:
                                 item.automationId,
                         }),
@@ -197,7 +204,8 @@ export default function IceBreakerManager({
 
                 if (!cancelled) {
                     setError(
-                        loadError instanceof Error
+                        loadError instanceof
+                            Error
                             ? loadError.message
                             : "دریافت اطلاعات ناموفق بود.",
                     );
@@ -248,13 +256,14 @@ export default function IceBreakerManager({
         value: string,
     ) {
         setItems((current) =>
-            current.map((item, itemIndex) =>
-                itemIndex === index
-                    ? {
-                        ...item,
-                        [field]: value,
-                    }
-                    : item,
+            current.map(
+                (item, itemIndex) =>
+                    itemIndex === index
+                        ? {
+                            ...item,
+                            [field]: value,
+                        }
+                        : item,
             ),
         );
     }
@@ -266,6 +275,12 @@ export default function IceBreakerManager({
             setSaving(true);
             setError(null);
             setSuccess(false);
+
+            if (items.length > 4) {
+                throw new Error(
+                    "حداکثر ۴ Ice Breaker می‌توانید داشته باشید.",
+                );
+            }
 
             for (const item of items) {
                 if (!item.question.trim()) {
@@ -280,39 +295,63 @@ export default function IceBreakerManager({
                     );
                 }
 
-                if (item.question.trim().length > 80) {
+                if (
+                    item.question.trim()
+                        .length > 80
+                ) {
                     throw new Error(
                         "متن Ice Breaker نباید بیشتر از ۸۰ کاراکتر باشد.",
                     );
                 }
             }
 
-            const response = await fetch(
-                "/api/instagram/ice-breakers",
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type":
-                            "application/json",
+            const response =
+                await fetch(
+                    "/api/instagram/ice-breakers",
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type":
+                                "application/json",
+                        },
+                        credentials:
+                            "include",
+                        body: JSON.stringify({
+                            instagramAccountId:
+                                selectedAccountId,
+                            items,
+                        }),
                     },
-                    credentials: "include",
-                    body: JSON.stringify({
-                        instagramAccountId:
-                            selectedAccountId,
-                        enabled: items.length > 0,
-                        items,
-                    }),
-                },
-            );
+                );
 
-            const result = await response.json();
+            const result =
+                await response.json();
 
-            if (!response.ok || !result.success) {
+            if (
+                !response.ok ||
+                !result.success
+            ) {
                 throw new Error(
                     result.error ||
                     "ذخیره Ice Breakerها ناموفق بود.",
                 );
             }
+
+            const savedItems =
+                result.data ?? [];
+
+            setItems(
+                savedItems.map(
+                    (
+                        item: IceBreakerItem,
+                    ) => ({
+                        question:
+                            item.question,
+                        automationId:
+                            item.automationId,
+                    }),
+                ),
+            );
 
             setSuccess(true);
         } catch (saveError) {
@@ -336,19 +375,25 @@ export default function IceBreakerManager({
             setError(null);
             setSuccess(false);
 
-            const response = await fetch(
-                `/api/instagram/ice-breakers?instagramAccountId=${encodeURIComponent(
-                    selectedAccountId,
-                )}`,
-                {
-                    method: "DELETE",
-                    credentials: "include",
-                },
-            );
+            const response =
+                await fetch(
+                    `/api/instagram/ice-breakers?instagramAccountId=${encodeURIComponent(
+                        selectedAccountId,
+                    )}`,
+                    {
+                        method: "DELETE",
+                        credentials:
+                            "include",
+                    },
+                );
 
-            const result = await response.json();
+            const result =
+                await response.json();
 
-            if (!response.ok || !result.success) {
+            if (
+                !response.ok ||
+                !result.success
+            ) {
                 throw new Error(
                     result.error ||
                     "غیرفعال‌سازی ناموفق بود.",
@@ -391,45 +436,64 @@ export default function IceBreakerManager({
                         </h2>
 
                         <p className="mt-1.5 max-w-xl text-sm leading-6 text-slate-400">
-                            سوال‌هایی که کاربر هنگام شروع
-                            گفتگوی جدید با پیج شما می‌بیند.
-                            هر سوال به یک Automation متصل می‌شود.
+                            کاربر این سوال‌ها را هنگام
+                            شروع گفتگو می‌بیند. با انتخاب
+                            هر سوال، Automation متصل به آن
+                            اجرا می‌شود و پیام‌های همان Flow
+                            به کاربر ارسال می‌شوند.
                         </p>
                     </div>
 
-                    {connectedAccounts.length > 0 && (
-                        <div className="relative w-full sm:w-[280px]">
-                            <select
-                                value={selectedAccountId}
-                                onChange={(event) =>
-                                    setSelectedAccountId(
-                                        event.target.value,
-                                    )
-                                }
-                                className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 pl-10 text-sm font-medium text-slate-700 outline-none focus:border-slate-400"
-                            >
-                                {connectedAccounts.map(
-                                    (account) => (
-                                        <option
-                                            key={account.id}
-                                            value={account.id}
-                                        >
-                                            @{account.igUsername}
-                                        </option>
-                                    ),
-                                )}
-                            </select>
+                    {connectedAccounts.length >
+                        0 && (
+                            <div className="relative w-full sm:w-[280px]">
+                                <select
+                                    value={
+                                        selectedAccountId
+                                    }
+                                    onChange={(
+                                        event,
+                                    ) =>
+                                        setSelectedAccountId(
+                                            event
+                                                .target
+                                                .value,
+                                        )
+                                    }
+                                    className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 pl-10 text-sm font-medium text-slate-700 outline-none focus:border-slate-400"
+                                >
+                                    {connectedAccounts.map(
+                                        (
+                                            account,
+                                        ) => (
+                                            <option
+                                                key={
+                                                    account.id
+                                                }
+                                                value={
+                                                    account.id
+                                                }
+                                            >
+                                                @
+                                                {
+                                                    account.igUsername
+                                                }
+                                            </option>
+                                        ),
+                                    )}
+                                </select>
 
-                            <ChevronDown
-                                size={16}
-                                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                            />
-                        </div>
-                    )}
+                                <ChevronDown
+                                    size={16}
+                                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                                />
+                            </div>
+                        )}
                 </div>
             </div>
 
-            {connectedAccounts.length === 0 ? (
+            {connectedAccounts.length ===
+                0 ? (
                 <div className="px-6 py-16 text-center text-sm text-slate-400">
                     ابتدا یک پیج اینستاگرام متصل کنید.
                 </div>
@@ -440,152 +504,217 @@ export default function IceBreakerManager({
                         className="animate-spin text-slate-400"
                     />
                 </div>
-            ) : automations.length === 0 ? (
+            ) : automations.length ===
+                0 ? (
                 <div className="px-6 py-16 text-center">
                     <p className="text-sm font-semibold text-slate-700">
                         ابتدا حداقل یک Automation بسازید.
                     </p>
 
                     <p className="mx-auto mt-2 max-w-md text-xs leading-6 text-slate-400">
-                        هر Ice Breaker باید به یک Automation
-                        فعال متصل شود.
+                        پاسخ Ice Breaker از طریق Flow
+                        همان Automation ارسال می‌شود.
                     </p>
                 </div>
             ) : (
                 <div className="p-5 sm:p-7">
+                    <div className="mb-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                        <p className="text-sm font-semibold text-slate-800">
+                            پاسخ هر سوال کجاست؟
+                        </p>
+
+                        <p className="mt-1 text-xs leading-6 text-slate-500">
+                            برای هر سوال یک Automation
+                            انتخاب کنید. اولین پیام آن
+                            Automation جواب کاربر است و
+                            ادامه Flow نیز طبق تنظیمات
+                            همان Automation اجرا می‌شود.
+                        </p>
+                    </div>
+
                     <div className="space-y-3">
-                        {items.map((item, index) => (
-                            <div
-                                key={index}
-                                className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4"
-                            >
-                                <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
-                                    <div className="flex-1">
-                                        <label className="mb-2 block text-xs font-medium text-slate-500">
-                                            سوال
-                                        </label>
+                        {items.map(
+                            (
+                                item,
+                                index,
+                            ) => (
+                                <div
+                                    key={
+                                        index
+                                    }
+                                    className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4"
+                                >
+                                    <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
+                                        <div className="flex-1">
+                                            <label className="mb-2 block text-xs font-medium text-slate-500">
+                                                سوال
+                                            </label>
 
-                                        <input
-                                            value={item.question}
-                                            onChange={(event) =>
-                                                updateItem(
-                                                    index,
-                                                    "question",
-                                                    event.target.value,
-                                                )
-                                            }
-                                            maxLength={80}
-                                            placeholder="مثلاً: محصولات شما را ببینم"
-                                            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                                        />
+                                            <input
+                                                value={
+                                                    item.question
+                                                }
+                                                onChange={(
+                                                    event,
+                                                ) =>
+                                                    updateItem(
+                                                        index,
+                                                        "question",
+                                                        event
+                                                            .target
+                                                            .value,
+                                                    )
+                                                }
+                                                maxLength={
+                                                    80
+                                                }
+                                                placeholder="مثلاً: محصولات شما را ببینم"
+                                                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                                            />
 
-                                        <div className="mt-1 text-left text-[10px] text-slate-400">
-                                            {item.question.length}/80
+                                            <div className="mt-1 text-left text-[10px] text-slate-400">
+                                                {
+                                                    item
+                                                        .question
+                                                        .length
+                                                }
+                                                /80
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    <div className="w-full lg:w-[310px]">
-                                        <label className="mb-2 block text-xs font-medium text-slate-500">
-                                            Automation
-                                        </label>
+                                        <div className="w-full lg:w-[310px]">
+                                            <label className="mb-2 block text-xs font-medium text-slate-500">
+                                                Automation / پاسخ
+                                            </label>
 
-                                        <select
-                                            value={
-                                                item.automationId
-                                            }
-                                            onChange={(event) =>
-                                                updateItem(
+                                            <select
+                                                value={
+                                                    item.automationId
+                                                }
+                                                onChange={(
+                                                    event,
+                                                ) =>
+                                                    updateItem(
+                                                        index,
+                                                        "automationId",
+                                                        event
+                                                            .target
+                                                            .value,
+                                                    )
+                                                }
+                                                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400"
+                                            >
+                                                <option value="">
+                                                    انتخاب Automation
+                                                </option>
+
+                                                {automations.map(
+                                                    (
+                                                        automation,
+                                                    ) => (
+                                                        <option
+                                                            key={
+                                                                automation.id
+                                                            }
+                                                            value={
+                                                                automation.id
+                                                            }
+                                                        >
+                                                            {automation.triggerType ===
+                                                                "DM"
+                                                                ? "دایرکت"
+                                                                : automation.triggerType ===
+                                                                    "COMMENT_KEYWORD"
+                                                                    ? `کامنت: ${automation.keyword ?? ""}`
+                                                                    : `استوری: ${automation.keyword ?? ""}`}
+                                                        </option>
+                                                    ),
+                                                )}
+                                            </select>
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                removeItem(
                                                     index,
-                                                    "automationId",
-                                                    event.target.value,
                                                 )
                                             }
-                                            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400"
+                                            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                                            aria-label="حذف"
                                         >
-                                            <option value="">
-                                                انتخاب Automation
-                                            </option>
-
-                                            {automations.map(
-                                                (automation) => (
-                                                    <option
-                                                        key={
-                                                            automation.id
-                                                        }
-                                                        value={
-                                                            automation.id
-                                                        }
-                                                    >
-                                                        {automation.triggerType ===
-                                                            "DM"
-                                                            ? "دایرکت"
-                                                            : automation.triggerType ===
-                                                                "COMMENT_KEYWORD"
-                                                                ? `کامنت: ${automation.keyword ??
-                                                                ""
-                                                                }`
-                                                                : `استوری: ${automation.keyword ??
-                                                                ""
-                                                                }`}
-                                                    </option>
-                                                ),
-                                            )}
-                                        </select>
+                                            <Trash2
+                                                size={
+                                                    17
+                                                }
+                                            />
+                                        </button>
                                     </div>
-
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            removeItem(index)
-                                        }
-                                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
-                                        aria-label="حذف"
-                                    >
-                                        <Trash2 size={17} />
-                                    </button>
                                 </div>
-                            </div>
-                        ))}
+                            ),
+                        )}
                     </div>
 
                     <div className="mt-4 flex flex-col gap-3 sm:flex-row">
                         <button
                             type="button"
-                            onClick={addItem}
-                            disabled={items.length >= 4}
+                            onClick={
+                                addItem
+                            }
+                            disabled={
+                                items.length >=
+                                4
+                            }
                             className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
                         >
-                            <Plus size={16} />
+                            <Plus
+                                size={16}
+                            />
                             افزودن سوال
                         </button>
 
-                        {items.length > 0 && (
-                            <button
-                                type="button"
-                                onClick={handleDisable}
-                                disabled={saving}
-                                className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-3 text-sm font-medium text-slate-500 transition hover:bg-slate-50 disabled:opacity-50"
-                            >
-                                غیرفعال کردن
-                            </button>
-                        )}
+                        {items.length >
+                            0 && (
+                                <button
+                                    type="button"
+                                    onClick={
+                                        handleDisable
+                                    }
+                                    disabled={
+                                        saving
+                                    }
+                                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-3 text-sm font-medium text-slate-500 transition hover:bg-slate-50 disabled:opacity-50"
+                                >
+                                    غیرفعال کردن
+                                </button>
+                            )}
 
                         <button
                             type="button"
-                            onClick={handleSave}
-                            disabled={saving}
+                            onClick={
+                                handleSave
+                            }
+                            disabled={
+                                saving
+                            }
                             className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50 sm:mr-auto"
                         >
                             {saving ? (
                                 <Loader2
-                                    size={16}
+                                    size={
+                                        16
+                                    }
                                     className="animate-spin"
                                 />
                             ) : (
-                                <Save size={16} />
+                                <Save
+                                    size={
+                                        16
+                                    }
+                                />
                             )}
 
-                            ذخیره و اعمال روی اینستاگرام
+                            ذخیره Ice Breakerها
                         </button>
                     </div>
 
@@ -597,8 +726,7 @@ export default function IceBreakerManager({
 
                     {success && (
                         <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs leading-6 text-emerald-700">
-                            تنظیمات Ice Breaker با موفقیت ذخیره و
-                            روی اینستاگرام اعمال شد.
+                            تنظیمات Ice Breaker با موفقیت ذخیره شد.
                         </div>
                     )}
                 </div>

@@ -6,6 +6,11 @@ import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
+type IceBreakerItemInput = {
+  question: string;
+  automationId: string;
+};
+
 function generatePayload() {
   return `icebreaker_${crypto.randomUUID()}`;
 }
@@ -19,11 +24,14 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
+
     const instagramAccountId = searchParams.get("instagramAccountId");
 
     if (!instagramAccountId) {
       return NextResponse.json(
-        { error: "instagramAccountId is required" },
+        {
+          error: "instagramAccountId is required",
+        },
         { status: 400 },
       );
     }
@@ -37,7 +45,9 @@ export async function GET(request: NextRequest) {
 
     if (!account) {
       return NextResponse.json(
-        { error: "Instagram account not found" },
+        {
+          error: "Instagram account not found",
+        },
         { status: 404 },
       );
     }
@@ -62,7 +72,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      iceBreakers,
+      data: iceBreakers,
     });
   } catch (error) {
     console.error("[Ice Breakers GET]", error);
@@ -87,29 +97,36 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
+    const body = (await request.json()) as {
+      instagramAccountId?: string;
+      enabled?: boolean;
+      items?: IceBreakerItemInput[];
+    };
 
-    const {
-      instagramAccountId,
-      question,
-      automationId,
-      order = 0,
-      isActive = true,
-    } = body;
+    const { instagramAccountId, items = [] } = body;
 
-    if (!instagramAccountId || !question || !automationId) {
+    if (!instagramAccountId) {
       return NextResponse.json(
         {
-          error: "instagramAccountId, question and automationId are required",
+          error: "instagramAccountId is required",
         },
         { status: 400 },
       );
     }
 
-    if (question.trim().length > 80) {
+    if (!Array.isArray(items)) {
       return NextResponse.json(
         {
-          error: "Ice Breaker question must be 80 characters or less",
+          error: "items must be an array",
+        },
+        { status: 400 },
+      );
+    }
+
+    if (items.length > 4) {
+      return NextResponse.json(
+        {
+          error: "Instagram allows a maximum of 4 Ice Breakers",
         },
         { status: 400 },
       );
@@ -124,52 +141,114 @@ export async function POST(request: NextRequest) {
 
     if (!account) {
       return NextResponse.json(
-        { error: "Instagram account not found" },
-        { status: 404 },
-      );
-    }
-
-    const automation = await prisma.automation.findFirst({
-      where: {
-        id: automationId,
-        instagramAccountId,
-        isActive: true,
-      },
-    });
-
-    if (!automation) {
-      return NextResponse.json(
         {
-          error:
-            "Automation not found or does not belong to this Instagram account",
+          error: "Instagram account not found",
         },
         { status: 404 },
       );
     }
 
-    const count = await prisma.iceBreaker.count({
-      where: {
-        instagramAccountId,
-      },
-    });
+    /*
+     * Validate all questions first.
+     */
+    for (const item of items) {
+      if (!item.question?.trim()) {
+        return NextResponse.json(
+          {
+            error: "Ice Breaker question cannot be empty",
+          },
+          { status: 400 },
+        );
+      }
 
-    if (count >= 4) {
-      return NextResponse.json(
-        {
-          error: "Instagram allows a maximum of 4 Ice Breakers",
-        },
-        { status: 400 },
-      );
+      if (item.question.trim().length > 80) {
+        return NextResponse.json(
+          {
+            error: "Ice Breaker question must be 80 characters or less",
+          },
+          { status: 400 },
+        );
+      }
+
+      if (!item.automationId) {
+        return NextResponse.json(
+          {
+            error: "Every Ice Breaker must have an automation",
+          },
+          { status: 400 },
+        );
+      }
     }
 
-    const iceBreaker = await prisma.iceBreaker.create({
-      data: {
+    /*
+     * Validate all automations belong to this account
+     * and are active.
+     */
+    const automationIds = [
+      ...new Set(items.map((item) => item.automationId).filter(Boolean)),
+    ];
+
+    if (automationIds.length > 0) {
+      const automations = await prisma.automation.findMany({
+        where: {
+          id: {
+            in: automationIds,
+          },
+          instagramAccountId,
+          isActive: true,
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      const validAutomationIds = new Set(
+        automations.map((automation) => automation.id),
+      );
+
+      for (const automationId of automationIds) {
+        if (!validAutomationIds.has(automationId)) {
+          return NextResponse.json(
+            {
+              error: "One or more selected automations are invalid or inactive",
+            },
+            { status: 400 },
+          );
+        }
+      }
+    }
+
+    /*
+     * Replace the account's existing Ice Breakers
+     * with the new configuration.
+     *
+     * This keeps ordering predictable and prevents
+     * old deleted items from remaining in the DB.
+     */
+    await prisma.$transaction(async (tx) => {
+      await tx.iceBreaker.deleteMany({
+        where: {
+          instagramAccountId,
+        },
+      });
+
+      if (items.length > 0) {
+        await tx.iceBreaker.createMany({
+          data: items.map((item, index) => ({
+            instagramAccountId,
+            automationId: item.automationId,
+            question: item.question.trim(),
+            payload: generatePayload(),
+            order: index,
+            isActive: true,
+          })),
+        });
+      }
+    });
+
+    const iceBreakers = await prisma.iceBreaker.findMany({
+      where: {
         instagramAccountId,
-        automationId,
-        question: question.trim(),
-        payload: generatePayload(),
-        order,
-        isActive,
       },
       include: {
         automation: {
@@ -180,15 +259,15 @@ export async function POST(request: NextRequest) {
           },
         },
       },
+      orderBy: {
+        order: "asc",
+      },
     });
 
-    return NextResponse.json(
-      {
-        success: true,
-        iceBreaker,
-      },
-      { status: 201 },
-    );
+    return NextResponse.json({
+      success: true,
+      data: iceBreakers,
+    });
   } catch (error) {
     console.error("[Ice Breakers POST]", error);
 
@@ -197,7 +276,7 @@ export async function POST(request: NextRequest) {
         error:
           error instanceof Error
             ? error.message
-            : "Failed to create ice breaker",
+            : "Failed to save ice breakers",
       },
       { status: 500 },
     );
@@ -214,13 +293,12 @@ export async function DELETE(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
 
-    const id = searchParams.get("id");
     const instagramAccountId = searchParams.get("instagramAccountId");
 
-    if (!id || !instagramAccountId) {
+    if (!instagramAccountId) {
       return NextResponse.json(
         {
-          error: "id and instagramAccountId are required",
+          error: "instagramAccountId is required",
         },
         { status: 400 },
       );
@@ -235,14 +313,15 @@ export async function DELETE(request: NextRequest) {
 
     if (!account) {
       return NextResponse.json(
-        { error: "Instagram account not found" },
+        {
+          error: "Instagram account not found",
+        },
         { status: 404 },
       );
     }
 
     await prisma.iceBreaker.deleteMany({
       where: {
-        id,
         instagramAccountId,
       },
     });
@@ -258,7 +337,7 @@ export async function DELETE(request: NextRequest) {
         error:
           error instanceof Error
             ? error.message
-            : "Failed to delete ice breaker",
+            : "Failed to delete ice breakers",
       },
       { status: 500 },
     );

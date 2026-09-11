@@ -93,7 +93,8 @@ export default function PersistentMenuManager({
             selectedAccountId &&
             !connectedAccounts.some(
                 (account) =>
-                    account.id === selectedAccountId,
+                    account.id ===
+                    selectedAccountId,
             )
         ) {
             setSelectedAccountId(
@@ -172,8 +173,13 @@ export default function PersistentMenuManager({
                 if (cancelled) return;
 
                 setAutomations(
-                    (automationResult.data ?? []).filter(
-                        (automation: Automation) =>
+                    (
+                        automationResult.data ??
+                        []
+                    ).filter(
+                        (
+                            automation: Automation,
+                        ) =>
                             automation.isActive,
                     ),
                 );
@@ -182,15 +188,24 @@ export default function PersistentMenuManager({
                     menuResult.data;
 
                 setEnabled(
-                    Boolean(menu?.enabled),
+                    Boolean(
+                        menu?.enabled,
+                    ),
                 );
 
                 setItems(
-                    (menu?.items ?? []).map(
-                        (item: PersistentMenuItem) => ({
-                            title: item.title,
+                    (
+                        menu?.items ??
+                        []
+                    ).map(
+                        (
+                            item: PersistentMenuItem,
+                        ) => ({
+                            title:
+                                item.title,
                             automationId:
-                                item.automationId ?? "",
+                                item.automationId ??
+                                "",
                         }),
                     ),
                 );
@@ -199,7 +214,8 @@ export default function PersistentMenuManager({
 
                 if (!cancelled) {
                     setError(
-                        loadError instanceof Error
+                        loadError instanceof
+                            Error
                             ? loadError.message
                             : "دریافت اطلاعات ناموفق بود.",
                     );
@@ -219,7 +235,7 @@ export default function PersistentMenuManager({
     }, [selectedAccountId]);
 
     function addItem() {
-        if (items.length >= 5) return;
+        if (items.length >= 3) return;
 
         setItems((current) => [
             ...current,
@@ -244,17 +260,21 @@ export default function PersistentMenuManager({
 
     function updateItem(
         index: number,
-        field: "title" | "automationId",
+        field:
+            | "title"
+            | "automationId",
         value: string,
     ) {
         setItems((current) =>
-            current.map((item, itemIndex) =>
-                itemIndex === index
-                    ? {
-                        ...item,
-                        [field]: value,
-                    }
-                    : item,
+            current.map(
+                (item, itemIndex) =>
+                    itemIndex === index
+                        ? {
+                            ...item,
+                            [field]:
+                                value,
+                        }
+                        : item,
             ),
         );
     }
@@ -267,7 +287,10 @@ export default function PersistentMenuManager({
             setError(null);
             setSuccess(false);
 
-            if (enabled && items.length === 0) {
+            if (
+                enabled &&
+                items.length === 0
+            ) {
                 throw new Error(
                     "برای فعال کردن Persistent Menu حداقل یک آیتم اضافه کنید.",
                 );
@@ -286,47 +309,85 @@ export default function PersistentMenuManager({
                     );
                 }
 
-                if (item.title.trim().length > 30) {
+                if (
+                    item.title.trim()
+                        .length > 30
+                ) {
                     throw new Error(
                         "عنوان آیتم نباید بیشتر از ۳۰ کاراکتر باشد.",
                     );
                 }
             }
 
-            const response = await fetch(
-                "/api/instagram/persistent-menu",
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type":
-                            "application/json",
+            const response =
+                await fetch(
+                    "/api/instagram/persistent-menu",
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type":
+                                "application/json",
+                        },
+                        credentials:
+                            "include",
+                        body: JSON.stringify({
+                            instagramAccountId:
+                                selectedAccountId,
+                            enabled:
+                                enabled &&
+                                items.length >
+                                0,
+                            items,
+                        }),
                     },
-                    credentials: "include",
-                    body: JSON.stringify({
-                        instagramAccountId:
-                            selectedAccountId,
-                        enabled:
-                            enabled && items.length > 0,
-                        items,
-                    }),
-                },
-            );
+                );
 
-            const result = await response.json();
+            const result =
+                await response.json();
 
-            if (!response.ok || !result.success) {
+            if (
+                !response.ok ||
+                !result.success
+            ) {
                 throw new Error(
                     result.error ||
                     "ذخیره Persistent Menu ناموفق بود.",
                 );
             }
 
+            const savedMenu =
+                result.data;
+
+            setEnabled(
+                Boolean(
+                    savedMenu?.enabled,
+                ),
+            );
+
+            setItems(
+                (
+                    savedMenu?.items ??
+                    []
+                ).map(
+                    (
+                        item: PersistentMenuItem,
+                    ) => ({
+                        title:
+                            item.title,
+                        automationId:
+                            item.automationId ??
+                            "",
+                    }),
+                ),
+            );
+
             setSuccess(true);
         } catch (saveError) {
             console.error(saveError);
 
             setError(
-                saveError instanceof Error
+                saveError instanceof
+                    Error
                     ? saveError.message
                     : "ذخیره ناموفق بود.",
             );
@@ -343,19 +404,25 @@ export default function PersistentMenuManager({
             setError(null);
             setSuccess(false);
 
-            const response = await fetch(
-                `/api/instagram/persistent-menu?instagramAccountId=${encodeURIComponent(
-                    selectedAccountId,
-                )}`,
-                {
-                    method: "DELETE",
-                    credentials: "include",
-                },
-            );
+            const response =
+                await fetch(
+                    `/api/instagram/persistent-menu?instagramAccountId=${encodeURIComponent(
+                        selectedAccountId,
+                    )}`,
+                    {
+                        method: "DELETE",
+                        credentials:
+                            "include",
+                    },
+                );
 
-            const result = await response.json();
+            const result =
+                await response.json();
 
-            if (!response.ok || !result.success) {
+            if (
+                !response.ok ||
+                !result.success
+            ) {
                 throw new Error(
                     result.error ||
                     "غیرفعال‌سازی ناموفق بود.",
@@ -369,7 +436,8 @@ export default function PersistentMenuManager({
             console.error(disableError);
 
             setError(
-                disableError instanceof Error
+                disableError instanceof
+                    Error
                     ? disableError.message
                     : "غیرفعال‌سازی ناموفق بود.",
             );
@@ -399,45 +467,62 @@ export default function PersistentMenuManager({
                         </h2>
 
                         <p className="mt-1.5 max-w-xl text-sm leading-6 text-slate-400">
-                            منویی که کاربر در طول گفتگو می‌تواند
-                            به آن دسترسی داشته باشد. هر گزینه به
-                            یک Automation متصل می‌شود.
+                            هر گزینه به یک Automation
+                            متصل می‌شود و با انتخاب آن،
+                            Flow مربوطه اجرا خواهد شد.
                         </p>
                     </div>
 
-                    {connectedAccounts.length > 0 && (
-                        <div className="relative w-full sm:w-[280px]">
-                            <select
-                                value={selectedAccountId}
-                                onChange={(event) =>
-                                    setSelectedAccountId(
-                                        event.target.value,
-                                    )
-                                }
-                                className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 pl-10 text-sm font-medium text-slate-700 outline-none focus:border-slate-400"
-                            >
-                                {connectedAccounts.map(
-                                    (account) => (
-                                        <option
-                                            key={account.id}
-                                            value={account.id}
-                                        >
-                                            @{account.igUsername}
-                                        </option>
-                                    ),
-                                )}
-                            </select>
+                    {connectedAccounts.length >
+                        0 && (
+                            <div className="relative w-full sm:w-[280px]">
+                                <select
+                                    value={
+                                        selectedAccountId
+                                    }
+                                    onChange={(
+                                        event,
+                                    ) =>
+                                        setSelectedAccountId(
+                                            event
+                                                .target
+                                                .value,
+                                        )
+                                    }
+                                    className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 pl-10 text-sm font-medium text-slate-700 outline-none focus:border-slate-400"
+                                >
+                                    {connectedAccounts.map(
+                                        (
+                                            account,
+                                        ) => (
+                                            <option
+                                                key={
+                                                    account.id
+                                                }
+                                                value={
+                                                    account.id
+                                                }
+                                            >
+                                                @
+                                                {
+                                                    account.igUsername
+                                                }
+                                            </option>
+                                        ),
+                                    )}
+                                </select>
 
-                            <ChevronDown
-                                size={16}
-                                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                            />
-                        </div>
-                    )}
+                                <ChevronDown
+                                    size={16}
+                                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                                />
+                            </div>
+                        )}
                 </div>
             </div>
 
-            {connectedAccounts.length === 0 ? (
+            {connectedAccounts.length ===
+                0 ? (
                 <div className="px-6 py-16 text-center text-sm text-slate-400">
                     ابتدا یک پیج اینستاگرام متصل کنید.
                 </div>
@@ -448,14 +533,15 @@ export default function PersistentMenuManager({
                         className="animate-spin text-slate-400"
                     />
                 </div>
-            ) : automations.length === 0 ? (
+            ) : automations.length ===
+                0 ? (
                 <div className="px-6 py-16 text-center">
                     <p className="text-sm font-semibold text-slate-700">
                         ابتدا حداقل یک Automation بسازید.
                     </p>
 
                     <p className="mx-auto mt-2 max-w-md text-xs leading-6 text-slate-400">
-                        هر آیتم منو باید به یک Automation
+                        هر گزینه باید به یک Automation
                         فعال متصل شود.
                     </p>
                 </div>
@@ -476,7 +562,10 @@ export default function PersistentMenuManager({
                             type="button"
                             onClick={() =>
                                 setEnabled(
-                                    (current) => !current,
+                                    (
+                                        current,
+                                    ) =>
+                                        !current,
                                 )
                             }
                             className={[
@@ -499,138 +588,188 @@ export default function PersistentMenuManager({
                     </div>
 
                     <div className="space-y-3">
-                        {items.map((item, index) => (
-                            <div
-                                key={index}
-                                className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4"
-                            >
-                                <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
-                                    <div className="flex-1">
-                                        <label className="mb-2 block text-xs font-medium text-slate-500">
-                                            عنوان گزینه
-                                        </label>
+                        {items.map(
+                            (
+                                item,
+                                index,
+                            ) => (
+                                <div
+                                    key={
+                                        index
+                                    }
+                                    className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4"
+                                >
+                                    <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
+                                        <div className="flex-1">
+                                            <label className="mb-2 block text-xs font-medium text-slate-500">
+                                                عنوان گزینه
+                                            </label>
 
-                                        <input
-                                            value={item.title}
-                                            onChange={(event) =>
-                                                updateItem(
-                                                    index,
-                                                    "title",
-                                                    event.target.value,
-                                                )
-                                            }
-                                            maxLength={30}
-                                            placeholder="مثلاً: مشاهده محصولات"
-                                            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400"
-                                        />
+                                            <input
+                                                value={
+                                                    item.title
+                                                }
+                                                onChange={(
+                                                    event,
+                                                ) =>
+                                                    updateItem(
+                                                        index,
+                                                        "title",
+                                                        event
+                                                            .target
+                                                            .value,
+                                                    )
+                                                }
+                                                maxLength={
+                                                    30
+                                                }
+                                                placeholder="مثلاً: مشاهده محصولات"
+                                                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400"
+                                            />
 
-                                        <div className="mt-1 text-left text-[10px] text-slate-400">
-                                            {item.title.length}/30
+                                            <div className="mt-1 text-left text-[10px] text-slate-400">
+                                                {
+                                                    item
+                                                        .title
+                                                        .length
+                                                }
+                                                /30
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    <div className="w-full lg:w-[310px]">
-                                        <label className="mb-2 block text-xs font-medium text-slate-500">
-                                            Automation
-                                        </label>
+                                        <div className="w-full lg:w-[310px]">
+                                            <label className="mb-2 block text-xs font-medium text-slate-500">
+                                                Automation
+                                            </label>
 
-                                        <select
-                                            value={
-                                                item.automationId
-                                            }
-                                            onChange={(event) =>
-                                                updateItem(
+                                            <select
+                                                value={
+                                                    item.automationId
+                                                }
+                                                onChange={(
+                                                    event,
+                                                ) =>
+                                                    updateItem(
+                                                        index,
+                                                        "automationId",
+                                                        event
+                                                            .target
+                                                            .value,
+                                                    )
+                                                }
+                                                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400"
+                                            >
+                                                <option value="">
+                                                    انتخاب Automation
+                                                </option>
+
+                                                {automations.map(
+                                                    (
+                                                        automation,
+                                                    ) => (
+                                                        <option
+                                                            key={
+                                                                automation.id
+                                                            }
+                                                            value={
+                                                                automation.id
+                                                            }
+                                                        >
+                                                            {automation.triggerType ===
+                                                                "DM"
+                                                                ? "دایرکت"
+                                                                : automation.triggerType ===
+                                                                    "COMMENT_KEYWORD"
+                                                                    ? `کامنت: ${automation.keyword ?? ""}`
+                                                                    : `استوری: ${automation.keyword ?? ""}`}
+                                                        </option>
+                                                    ),
+                                                )}
+                                            </select>
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                removeItem(
                                                     index,
-                                                    "automationId",
-                                                    event.target.value,
                                                 )
                                             }
-                                            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400"
+                                            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                                            aria-label="حذف"
                                         >
-                                            <option value="">
-                                                انتخاب Automation
-                                            </option>
-
-                                            {automations.map(
-                                                (automation) => (
-                                                    <option
-                                                        key={
-                                                            automation.id
-                                                        }
-                                                        value={
-                                                            automation.id
-                                                        }
-                                                    >
-                                                        {automation.triggerType ===
-                                                            "DM"
-                                                            ? "دایرکت"
-                                                            : automation.triggerType ===
-                                                                "COMMENT_KEYWORD"
-                                                                ? `کامنت: ${automation.keyword ??
-                                                                ""
-                                                                }`
-                                                                : `استوری: ${automation.keyword ??
-                                                                ""
-                                                                }`}
-                                                    </option>
-                                                ),
-                                            )}
-                                        </select>
+                                            <Trash2
+                                                size={
+                                                    17
+                                                }
+                                            />
+                                        </button>
                                     </div>
-
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            removeItem(index)
-                                        }
-                                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
-                                        aria-label="حذف"
-                                    >
-                                        <Trash2 size={17} />
-                                    </button>
                                 </div>
-                            </div>
-                        ))}
+                            ),
+                        )}
                     </div>
 
                     <div className="mt-4 flex flex-col gap-3 sm:flex-row">
                         <button
                             type="button"
-                            onClick={addItem}
-                            disabled={items.length >= 5}
+                            onClick={
+                                addItem
+                            }
+                            disabled={
+                                items.length >=
+                                3
+                            }
                             className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
                         >
-                            <Plus size={16} />
+                            <Plus
+                                size={16}
+                            />
                             افزودن گزینه
                         </button>
 
-                        {items.length > 0 && (
-                            <button
-                                type="button"
-                                onClick={handleDisable}
-                                disabled={saving}
-                                className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-3 text-sm font-medium text-slate-500 transition hover:bg-slate-50 disabled:opacity-50"
-                            >
-                                غیرفعال کردن
-                            </button>
-                        )}
+                        {items.length >
+                            0 && (
+                                <button
+                                    type="button"
+                                    onClick={
+                                        handleDisable
+                                    }
+                                    disabled={
+                                        saving
+                                    }
+                                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-3 text-sm font-medium text-slate-500 transition hover:bg-slate-50 disabled:opacity-50"
+                                >
+                                    غیرفعال کردن
+                                </button>
+                            )}
 
                         <button
                             type="button"
-                            onClick={handleSave}
-                            disabled={saving}
+                            onClick={
+                                handleSave
+                            }
+                            disabled={
+                                saving
+                            }
                             className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50 sm:mr-auto"
                         >
                             {saving ? (
                                 <Loader2
-                                    size={16}
+                                    size={
+                                        16
+                                    }
                                     className="animate-spin"
                                 />
                             ) : (
-                                <Save size={16} />
+                                <Save
+                                    size={
+                                        16
+                                    }
+                                />
                             )}
 
-                            ذخیره و اعمال روی اینستاگرام
+                            ذخیره منو
                         </button>
                     </div>
 
@@ -642,8 +781,7 @@ export default function PersistentMenuManager({
 
                     {success && (
                         <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs leading-6 text-emerald-700">
-                            Persistent Menu با موفقیت ذخیره و
-                            روی اینستاگرام اعمال شد.
+                            تنظیمات Persistent Menu با موفقیت ذخیره شد.
                         </div>
                     )}
                 </div>

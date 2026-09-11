@@ -29,7 +29,9 @@ export async function GET(request: NextRequest) {
 
     if (!instagramAccountId) {
       return NextResponse.json(
-        { error: "instagramAccountId is required" },
+        {
+          error: "instagramAccountId is required",
+        },
         { status: 400 },
       );
     }
@@ -43,7 +45,9 @@ export async function GET(request: NextRequest) {
 
     if (!account) {
       return NextResponse.json(
-        { error: "Instagram account not found" },
+        {
+          error: "Instagram account not found",
+        },
         { status: 404 },
       );
     }
@@ -72,7 +76,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      menu,
+      data: menu,
     });
   } catch (error) {
     console.error("[Persistent Menu GET]", error);
@@ -89,7 +93,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function PUT(request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -97,28 +101,28 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
-
-    const {
-      instagramAccountId,
-      enabled = true,
-      items = [],
-    } = body as {
+    const body = (await request.json()) as {
       instagramAccountId?: string;
       enabled?: boolean;
       items?: MenuItemInput[];
     };
 
+    const { instagramAccountId, enabled = true, items = [] } = body;
+
     if (!instagramAccountId) {
       return NextResponse.json(
-        { error: "instagramAccountId is required" },
+        {
+          error: "instagramAccountId is required",
+        },
         { status: 400 },
       );
     }
 
     if (!Array.isArray(items)) {
       return NextResponse.json(
-        { error: "items must be an array" },
+        {
+          error: "items must be an array",
+        },
         { status: 400 },
       );
     }
@@ -126,7 +130,7 @@ export async function PUT(request: NextRequest) {
     if (items.length > 3) {
       return NextResponse.json(
         {
-          error: "Instagram persistent menu supports up to 3 top-level items",
+          error: "Persistent Menu supports up to 3 top-level items",
         },
         { status: 400 },
       );
@@ -141,42 +145,11 @@ export async function PUT(request: NextRequest) {
 
     if (!account) {
       return NextResponse.json(
-        { error: "Instagram account not found" },
+        {
+          error: "Instagram account not found",
+        },
         { status: 404 },
       );
-    }
-
-    const automationIds = items
-      .map((item) => item.automationId)
-      .filter((id): id is string => typeof id === "string" && id.length > 0);
-
-    if (automationIds.length > 0) {
-      const automations = await prisma.automation.findMany({
-        where: {
-          id: {
-            in: automationIds,
-          },
-          instagramAccountId,
-          isActive: true,
-        },
-        select: {
-          id: true,
-        },
-      });
-
-      const validIds = new Set(automations.map((automation) => automation.id));
-
-      for (const automationId of automationIds) {
-        if (!validIds.has(automationId)) {
-          return NextResponse.json(
-            {
-              error:
-                "One or more automations do not belong to this Instagram account",
-            },
-            { status: 400 },
-          );
-        }
-      }
     }
 
     for (const item of items) {
@@ -197,6 +170,55 @@ export async function PUT(request: NextRequest) {
           { status: 400 },
         );
       }
+
+      if (!item.automationId) {
+        return NextResponse.json(
+          {
+            error: "Every menu item must have an automation",
+          },
+          { status: 400 },
+        );
+      }
+    }
+
+    const automationIds = [
+      ...new Set(
+        items
+          .map((item) => item.automationId)
+          .filter(
+            (id): id is string => typeof id === "string" && id.length > 0,
+          ),
+      ),
+    ];
+
+    if (automationIds.length > 0) {
+      const automations = await prisma.automation.findMany({
+        where: {
+          id: {
+            in: automationIds,
+          },
+          instagramAccountId,
+          isActive: true,
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      const validAutomationIds = new Set(
+        automations.map((automation) => automation.id),
+      );
+
+      for (const automationId of automationIds) {
+        if (!validAutomationIds.has(automationId)) {
+          return NextResponse.json(
+            {
+              error: "One or more selected automations are invalid or inactive",
+            },
+            { status: 400 },
+          );
+        }
+      }
     }
 
     const menu = await prisma.persistentMenu.upsert({
@@ -205,7 +227,7 @@ export async function PUT(request: NextRequest) {
       },
       create: {
         instagramAccountId,
-        enabled,
+        enabled: enabled && items.length > 0,
         items: {
           create: items.map((item, index) => ({
             title: item.title.trim(),
@@ -216,7 +238,7 @@ export async function PUT(request: NextRequest) {
         },
       },
       update: {
-        enabled,
+        enabled: enabled && items.length > 0,
         items: {
           deleteMany: {},
           create: items.map((item, index) => ({
@@ -247,10 +269,10 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      menu,
+      data: menu,
     });
   } catch (error) {
-    console.error("[Persistent Menu PUT]", error);
+    console.error("[Persistent Menu POST]", error);
 
     return NextResponse.json(
       {
@@ -258,6 +280,78 @@ export async function PUT(request: NextRequest) {
           error instanceof Error
             ? error.message
             : "Failed to save persistent menu",
+      },
+      { status: 500 },
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+
+    const instagramAccountId = searchParams.get("instagramAccountId");
+
+    if (!instagramAccountId) {
+      return NextResponse.json(
+        {
+          error: "instagramAccountId is required",
+        },
+        { status: 400 },
+      );
+    }
+
+    const account = await prisma.instagramAccount.findFirst({
+      where: {
+        id: instagramAccountId,
+        userId: session.user.id,
+      },
+    });
+
+    if (!account) {
+      return NextResponse.json(
+        {
+          error: "Instagram account not found",
+        },
+        { status: 404 },
+      );
+    }
+
+    await prisma.persistentMenuItem.deleteMany({
+      where: {
+        persistentMenu: {
+          instagramAccountId,
+        },
+      },
+    });
+
+    await prisma.persistentMenu.updateMany({
+      where: {
+        instagramAccountId,
+      },
+      data: {
+        enabled: false,
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+    });
+  } catch (error) {
+    console.error("[Persistent Menu DELETE]", error);
+
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to disable persistent menu",
       },
       { status: 500 },
     );
