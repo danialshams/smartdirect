@@ -219,6 +219,8 @@ export type InstagramAccountWhereInput = {
   conversations?: Prisma.ConversationListRelationFilter
   showcases?: Prisma.ShowcaseListRelationFilter
   forms?: Prisma.FormListRelationFilter
+  iceBreakers?: Prisma.IceBreakerListRelationFilter
+  persistentMenu?: Prisma.XOR<Prisma.PersistentMenuNullableScalarRelationFilter, Prisma.PersistentMenuWhereInput> | null
 }
 
 export type InstagramAccountOrderByWithRelationInput = {
@@ -236,6 +238,8 @@ export type InstagramAccountOrderByWithRelationInput = {
   conversations?: Prisma.ConversationOrderByRelationAggregateInput
   showcases?: Prisma.ShowcaseOrderByRelationAggregateInput
   forms?: Prisma.FormOrderByRelationAggregateInput
+  iceBreakers?: Prisma.IceBreakerOrderByRelationAggregateInput
+  persistentMenu?: Prisma.PersistentMenuOrderByWithRelationInput
 }
 
 export type InstagramAccountWhereUniqueInput = Prisma.AtLeast<{
@@ -257,6 +261,8 @@ export type InstagramAccountWhereUniqueInput = Prisma.AtLeast<{
   conversations?: Prisma.ConversationListRelationFilter
   showcases?: Prisma.ShowcaseListRelationFilter
   forms?: Prisma.FormListRelationFilter
+  iceBreakers?: Prisma.IceBreakerListRelationFilter
+  persistentMenu?: Prisma.XOR<Prisma.PersistentMenuNullableScalarRelationFilter, Prisma.PersistentMenuWhereInput> | null
 }, "id" | "igUserId" | "userId_igUserId">
 
 export type InstagramAccountOrderByWithAggregationInput = {
@@ -303,6 +309,8 @@ export type InstagramAccountCreateInput = {
   conversations?: Prisma.ConversationCreateNestedManyWithoutInstagramAccountInput
   showcases?: Prisma.ShowcaseCreateNestedManyWithoutInstagramAccountInput
   forms?: Prisma.FormCreateNestedManyWithoutInstagramAccountInput
+  iceBreakers?: Prisma.IceBreakerCreateNestedManyWithoutInstagramAccountInput
+  persistentMenu?: Prisma.PersistentMenuCreateNestedOneWithoutInstagramAccountInput
 }
 
 export type InstagramAccountUncheckedCreateInput = {
@@ -319,6 +327,8 @@ export type InstagramAccountUncheckedCreateInput = {
   conversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutInstagramAccountInput
   showcases?: Prisma.ShowcaseUncheckedCreateNestedManyWithoutInstagramAccountInput
   forms?: Prisma.FormUncheckedCreateNestedManyWithoutInstagramAccountInput
+  iceBreakers?: Prisma.IceBreakerUncheckedCreateNestedManyWithoutInstagramAccountInput
+  persistentMenu?: Prisma.PersistentMenuUncheckedCreateNestedOneWithoutInstagramAccountInput
 }
 
 export type InstagramAccountUpdateInput = {
@@ -335,6 +345,8 @@ export type InstagramAccountUpdateInput = {
   conversations?: Prisma.ConversationUpdateManyWithoutInstagramAccountNestedInput
   showcases?: Prisma.ShowcaseUpdateManyWithoutInstagramAccountNestedInput
   forms?: Prisma.FormUpdateManyWithoutInstagramAccountNestedInput
+  iceBreakers?: Prisma.IceBreakerUpdateManyWithoutInstagramAccountNestedInput
+  persistentMenu?: Prisma.PersistentMenuUpdateOneWithoutInstagramAccountNestedInput
 }
 
 export type InstagramAccountUncheckedUpdateInput = {
@@ -351,6 +363,8 @@ export type InstagramAccountUncheckedUpdateInput = {
   conversations?: Prisma.ConversationUncheckedUpdateManyWithoutInstagramAccountNestedInput
   showcases?: Prisma.ShowcaseUncheckedUpdateManyWithoutInstagramAccountNestedInput
   forms?: Prisma.FormUncheckedUpdateManyWithoutInstagramAccountNestedInput
+  iceBreakers?: Prisma.IceBreakerUncheckedUpdateManyWithoutInstagramAccountNestedInput
+  persistentMenu?: Prisma.PersistentMenuUncheckedUpdateOneWithoutInstagramAccountNestedInput
 }
 
 export type InstagramAccountCreateManyInput = {
@@ -508,6 +522,34 @@ export type InstagramAccountUpdateOneRequiredWithoutAutomationsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.InstagramAccountUpdateToOneWithWhereWithoutAutomationsInput, Prisma.InstagramAccountUpdateWithoutAutomationsInput>, Prisma.InstagramAccountUncheckedUpdateWithoutAutomationsInput>
 }
 
+export type InstagramAccountCreateNestedOneWithoutIceBreakersInput = {
+  create?: Prisma.XOR<Prisma.InstagramAccountCreateWithoutIceBreakersInput, Prisma.InstagramAccountUncheckedCreateWithoutIceBreakersInput>
+  connectOrCreate?: Prisma.InstagramAccountCreateOrConnectWithoutIceBreakersInput
+  connect?: Prisma.InstagramAccountWhereUniqueInput
+}
+
+export type InstagramAccountUpdateOneRequiredWithoutIceBreakersNestedInput = {
+  create?: Prisma.XOR<Prisma.InstagramAccountCreateWithoutIceBreakersInput, Prisma.InstagramAccountUncheckedCreateWithoutIceBreakersInput>
+  connectOrCreate?: Prisma.InstagramAccountCreateOrConnectWithoutIceBreakersInput
+  upsert?: Prisma.InstagramAccountUpsertWithoutIceBreakersInput
+  connect?: Prisma.InstagramAccountWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.InstagramAccountUpdateToOneWithWhereWithoutIceBreakersInput, Prisma.InstagramAccountUpdateWithoutIceBreakersInput>, Prisma.InstagramAccountUncheckedUpdateWithoutIceBreakersInput>
+}
+
+export type InstagramAccountCreateNestedOneWithoutPersistentMenuInput = {
+  create?: Prisma.XOR<Prisma.InstagramAccountCreateWithoutPersistentMenuInput, Prisma.InstagramAccountUncheckedCreateWithoutPersistentMenuInput>
+  connectOrCreate?: Prisma.InstagramAccountCreateOrConnectWithoutPersistentMenuInput
+  connect?: Prisma.InstagramAccountWhereUniqueInput
+}
+
+export type InstagramAccountUpdateOneRequiredWithoutPersistentMenuNestedInput = {
+  create?: Prisma.XOR<Prisma.InstagramAccountCreateWithoutPersistentMenuInput, Prisma.InstagramAccountUncheckedCreateWithoutPersistentMenuInput>
+  connectOrCreate?: Prisma.InstagramAccountCreateOrConnectWithoutPersistentMenuInput
+  upsert?: Prisma.InstagramAccountUpsertWithoutPersistentMenuInput
+  connect?: Prisma.InstagramAccountWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.InstagramAccountUpdateToOneWithWhereWithoutPersistentMenuInput, Prisma.InstagramAccountUpdateWithoutPersistentMenuInput>, Prisma.InstagramAccountUncheckedUpdateWithoutPersistentMenuInput>
+}
+
 export type InstagramAccountCreateNestedOneWithoutConversationsInput = {
   create?: Prisma.XOR<Prisma.InstagramAccountCreateWithoutConversationsInput, Prisma.InstagramAccountUncheckedCreateWithoutConversationsInput>
   connectOrCreate?: Prisma.InstagramAccountCreateOrConnectWithoutConversationsInput
@@ -563,6 +605,8 @@ export type InstagramAccountCreateWithoutUserInput = {
   conversations?: Prisma.ConversationCreateNestedManyWithoutInstagramAccountInput
   showcases?: Prisma.ShowcaseCreateNestedManyWithoutInstagramAccountInput
   forms?: Prisma.FormCreateNestedManyWithoutInstagramAccountInput
+  iceBreakers?: Prisma.IceBreakerCreateNestedManyWithoutInstagramAccountInput
+  persistentMenu?: Prisma.PersistentMenuCreateNestedOneWithoutInstagramAccountInput
 }
 
 export type InstagramAccountUncheckedCreateWithoutUserInput = {
@@ -578,6 +622,8 @@ export type InstagramAccountUncheckedCreateWithoutUserInput = {
   conversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutInstagramAccountInput
   showcases?: Prisma.ShowcaseUncheckedCreateNestedManyWithoutInstagramAccountInput
   forms?: Prisma.FormUncheckedCreateNestedManyWithoutInstagramAccountInput
+  iceBreakers?: Prisma.IceBreakerUncheckedCreateNestedManyWithoutInstagramAccountInput
+  persistentMenu?: Prisma.PersistentMenuUncheckedCreateNestedOneWithoutInstagramAccountInput
 }
 
 export type InstagramAccountCreateOrConnectWithoutUserInput = {
@@ -634,6 +680,8 @@ export type InstagramAccountCreateWithoutAutomationsInput = {
   conversations?: Prisma.ConversationCreateNestedManyWithoutInstagramAccountInput
   showcases?: Prisma.ShowcaseCreateNestedManyWithoutInstagramAccountInput
   forms?: Prisma.FormCreateNestedManyWithoutInstagramAccountInput
+  iceBreakers?: Prisma.IceBreakerCreateNestedManyWithoutInstagramAccountInput
+  persistentMenu?: Prisma.PersistentMenuCreateNestedOneWithoutInstagramAccountInput
 }
 
 export type InstagramAccountUncheckedCreateWithoutAutomationsInput = {
@@ -649,6 +697,8 @@ export type InstagramAccountUncheckedCreateWithoutAutomationsInput = {
   conversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutInstagramAccountInput
   showcases?: Prisma.ShowcaseUncheckedCreateNestedManyWithoutInstagramAccountInput
   forms?: Prisma.FormUncheckedCreateNestedManyWithoutInstagramAccountInput
+  iceBreakers?: Prisma.IceBreakerUncheckedCreateNestedManyWithoutInstagramAccountInput
+  persistentMenu?: Prisma.PersistentMenuUncheckedCreateNestedOneWithoutInstagramAccountInput
 }
 
 export type InstagramAccountCreateOrConnectWithoutAutomationsInput = {
@@ -680,6 +730,8 @@ export type InstagramAccountUpdateWithoutAutomationsInput = {
   conversations?: Prisma.ConversationUpdateManyWithoutInstagramAccountNestedInput
   showcases?: Prisma.ShowcaseUpdateManyWithoutInstagramAccountNestedInput
   forms?: Prisma.FormUpdateManyWithoutInstagramAccountNestedInput
+  iceBreakers?: Prisma.IceBreakerUpdateManyWithoutInstagramAccountNestedInput
+  persistentMenu?: Prisma.PersistentMenuUpdateOneWithoutInstagramAccountNestedInput
 }
 
 export type InstagramAccountUncheckedUpdateWithoutAutomationsInput = {
@@ -695,6 +747,176 @@ export type InstagramAccountUncheckedUpdateWithoutAutomationsInput = {
   conversations?: Prisma.ConversationUncheckedUpdateManyWithoutInstagramAccountNestedInput
   showcases?: Prisma.ShowcaseUncheckedUpdateManyWithoutInstagramAccountNestedInput
   forms?: Prisma.FormUncheckedUpdateManyWithoutInstagramAccountNestedInput
+  iceBreakers?: Prisma.IceBreakerUncheckedUpdateManyWithoutInstagramAccountNestedInput
+  persistentMenu?: Prisma.PersistentMenuUncheckedUpdateOneWithoutInstagramAccountNestedInput
+}
+
+export type InstagramAccountCreateWithoutIceBreakersInput = {
+  id?: string
+  igUserId: string
+  igUsername: string
+  accessToken: string
+  tokenExpiresAt?: Date | string | null
+  isConnected?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  user: Prisma.UserCreateNestedOneWithoutInstagramAccountsInput
+  automations?: Prisma.AutomationCreateNestedManyWithoutInstagramAccountInput
+  conversations?: Prisma.ConversationCreateNestedManyWithoutInstagramAccountInput
+  showcases?: Prisma.ShowcaseCreateNestedManyWithoutInstagramAccountInput
+  forms?: Prisma.FormCreateNestedManyWithoutInstagramAccountInput
+  persistentMenu?: Prisma.PersistentMenuCreateNestedOneWithoutInstagramAccountInput
+}
+
+export type InstagramAccountUncheckedCreateWithoutIceBreakersInput = {
+  id?: string
+  userId: string
+  igUserId: string
+  igUsername: string
+  accessToken: string
+  tokenExpiresAt?: Date | string | null
+  isConnected?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  automations?: Prisma.AutomationUncheckedCreateNestedManyWithoutInstagramAccountInput
+  conversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutInstagramAccountInput
+  showcases?: Prisma.ShowcaseUncheckedCreateNestedManyWithoutInstagramAccountInput
+  forms?: Prisma.FormUncheckedCreateNestedManyWithoutInstagramAccountInput
+  persistentMenu?: Prisma.PersistentMenuUncheckedCreateNestedOneWithoutInstagramAccountInput
+}
+
+export type InstagramAccountCreateOrConnectWithoutIceBreakersInput = {
+  where: Prisma.InstagramAccountWhereUniqueInput
+  create: Prisma.XOR<Prisma.InstagramAccountCreateWithoutIceBreakersInput, Prisma.InstagramAccountUncheckedCreateWithoutIceBreakersInput>
+}
+
+export type InstagramAccountUpsertWithoutIceBreakersInput = {
+  update: Prisma.XOR<Prisma.InstagramAccountUpdateWithoutIceBreakersInput, Prisma.InstagramAccountUncheckedUpdateWithoutIceBreakersInput>
+  create: Prisma.XOR<Prisma.InstagramAccountCreateWithoutIceBreakersInput, Prisma.InstagramAccountUncheckedCreateWithoutIceBreakersInput>
+  where?: Prisma.InstagramAccountWhereInput
+}
+
+export type InstagramAccountUpdateToOneWithWhereWithoutIceBreakersInput = {
+  where?: Prisma.InstagramAccountWhereInput
+  data: Prisma.XOR<Prisma.InstagramAccountUpdateWithoutIceBreakersInput, Prisma.InstagramAccountUncheckedUpdateWithoutIceBreakersInput>
+}
+
+export type InstagramAccountUpdateWithoutIceBreakersInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  igUserId?: Prisma.StringFieldUpdateOperationsInput | string
+  igUsername?: Prisma.StringFieldUpdateOperationsInput | string
+  accessToken?: Prisma.StringFieldUpdateOperationsInput | string
+  tokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isConnected?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.UserUpdateOneRequiredWithoutInstagramAccountsNestedInput
+  automations?: Prisma.AutomationUpdateManyWithoutInstagramAccountNestedInput
+  conversations?: Prisma.ConversationUpdateManyWithoutInstagramAccountNestedInput
+  showcases?: Prisma.ShowcaseUpdateManyWithoutInstagramAccountNestedInput
+  forms?: Prisma.FormUpdateManyWithoutInstagramAccountNestedInput
+  persistentMenu?: Prisma.PersistentMenuUpdateOneWithoutInstagramAccountNestedInput
+}
+
+export type InstagramAccountUncheckedUpdateWithoutIceBreakersInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  igUserId?: Prisma.StringFieldUpdateOperationsInput | string
+  igUsername?: Prisma.StringFieldUpdateOperationsInput | string
+  accessToken?: Prisma.StringFieldUpdateOperationsInput | string
+  tokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isConnected?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  automations?: Prisma.AutomationUncheckedUpdateManyWithoutInstagramAccountNestedInput
+  conversations?: Prisma.ConversationUncheckedUpdateManyWithoutInstagramAccountNestedInput
+  showcases?: Prisma.ShowcaseUncheckedUpdateManyWithoutInstagramAccountNestedInput
+  forms?: Prisma.FormUncheckedUpdateManyWithoutInstagramAccountNestedInput
+  persistentMenu?: Prisma.PersistentMenuUncheckedUpdateOneWithoutInstagramAccountNestedInput
+}
+
+export type InstagramAccountCreateWithoutPersistentMenuInput = {
+  id?: string
+  igUserId: string
+  igUsername: string
+  accessToken: string
+  tokenExpiresAt?: Date | string | null
+  isConnected?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  user: Prisma.UserCreateNestedOneWithoutInstagramAccountsInput
+  automations?: Prisma.AutomationCreateNestedManyWithoutInstagramAccountInput
+  conversations?: Prisma.ConversationCreateNestedManyWithoutInstagramAccountInput
+  showcases?: Prisma.ShowcaseCreateNestedManyWithoutInstagramAccountInput
+  forms?: Prisma.FormCreateNestedManyWithoutInstagramAccountInput
+  iceBreakers?: Prisma.IceBreakerCreateNestedManyWithoutInstagramAccountInput
+}
+
+export type InstagramAccountUncheckedCreateWithoutPersistentMenuInput = {
+  id?: string
+  userId: string
+  igUserId: string
+  igUsername: string
+  accessToken: string
+  tokenExpiresAt?: Date | string | null
+  isConnected?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  automations?: Prisma.AutomationUncheckedCreateNestedManyWithoutInstagramAccountInput
+  conversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutInstagramAccountInput
+  showcases?: Prisma.ShowcaseUncheckedCreateNestedManyWithoutInstagramAccountInput
+  forms?: Prisma.FormUncheckedCreateNestedManyWithoutInstagramAccountInput
+  iceBreakers?: Prisma.IceBreakerUncheckedCreateNestedManyWithoutInstagramAccountInput
+}
+
+export type InstagramAccountCreateOrConnectWithoutPersistentMenuInput = {
+  where: Prisma.InstagramAccountWhereUniqueInput
+  create: Prisma.XOR<Prisma.InstagramAccountCreateWithoutPersistentMenuInput, Prisma.InstagramAccountUncheckedCreateWithoutPersistentMenuInput>
+}
+
+export type InstagramAccountUpsertWithoutPersistentMenuInput = {
+  update: Prisma.XOR<Prisma.InstagramAccountUpdateWithoutPersistentMenuInput, Prisma.InstagramAccountUncheckedUpdateWithoutPersistentMenuInput>
+  create: Prisma.XOR<Prisma.InstagramAccountCreateWithoutPersistentMenuInput, Prisma.InstagramAccountUncheckedCreateWithoutPersistentMenuInput>
+  where?: Prisma.InstagramAccountWhereInput
+}
+
+export type InstagramAccountUpdateToOneWithWhereWithoutPersistentMenuInput = {
+  where?: Prisma.InstagramAccountWhereInput
+  data: Prisma.XOR<Prisma.InstagramAccountUpdateWithoutPersistentMenuInput, Prisma.InstagramAccountUncheckedUpdateWithoutPersistentMenuInput>
+}
+
+export type InstagramAccountUpdateWithoutPersistentMenuInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  igUserId?: Prisma.StringFieldUpdateOperationsInput | string
+  igUsername?: Prisma.StringFieldUpdateOperationsInput | string
+  accessToken?: Prisma.StringFieldUpdateOperationsInput | string
+  tokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isConnected?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.UserUpdateOneRequiredWithoutInstagramAccountsNestedInput
+  automations?: Prisma.AutomationUpdateManyWithoutInstagramAccountNestedInput
+  conversations?: Prisma.ConversationUpdateManyWithoutInstagramAccountNestedInput
+  showcases?: Prisma.ShowcaseUpdateManyWithoutInstagramAccountNestedInput
+  forms?: Prisma.FormUpdateManyWithoutInstagramAccountNestedInput
+  iceBreakers?: Prisma.IceBreakerUpdateManyWithoutInstagramAccountNestedInput
+}
+
+export type InstagramAccountUncheckedUpdateWithoutPersistentMenuInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  igUserId?: Prisma.StringFieldUpdateOperationsInput | string
+  igUsername?: Prisma.StringFieldUpdateOperationsInput | string
+  accessToken?: Prisma.StringFieldUpdateOperationsInput | string
+  tokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isConnected?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  automations?: Prisma.AutomationUncheckedUpdateManyWithoutInstagramAccountNestedInput
+  conversations?: Prisma.ConversationUncheckedUpdateManyWithoutInstagramAccountNestedInput
+  showcases?: Prisma.ShowcaseUncheckedUpdateManyWithoutInstagramAccountNestedInput
+  forms?: Prisma.FormUncheckedUpdateManyWithoutInstagramAccountNestedInput
+  iceBreakers?: Prisma.IceBreakerUncheckedUpdateManyWithoutInstagramAccountNestedInput
 }
 
 export type InstagramAccountCreateWithoutConversationsInput = {
@@ -710,6 +932,8 @@ export type InstagramAccountCreateWithoutConversationsInput = {
   automations?: Prisma.AutomationCreateNestedManyWithoutInstagramAccountInput
   showcases?: Prisma.ShowcaseCreateNestedManyWithoutInstagramAccountInput
   forms?: Prisma.FormCreateNestedManyWithoutInstagramAccountInput
+  iceBreakers?: Prisma.IceBreakerCreateNestedManyWithoutInstagramAccountInput
+  persistentMenu?: Prisma.PersistentMenuCreateNestedOneWithoutInstagramAccountInput
 }
 
 export type InstagramAccountUncheckedCreateWithoutConversationsInput = {
@@ -725,6 +949,8 @@ export type InstagramAccountUncheckedCreateWithoutConversationsInput = {
   automations?: Prisma.AutomationUncheckedCreateNestedManyWithoutInstagramAccountInput
   showcases?: Prisma.ShowcaseUncheckedCreateNestedManyWithoutInstagramAccountInput
   forms?: Prisma.FormUncheckedCreateNestedManyWithoutInstagramAccountInput
+  iceBreakers?: Prisma.IceBreakerUncheckedCreateNestedManyWithoutInstagramAccountInput
+  persistentMenu?: Prisma.PersistentMenuUncheckedCreateNestedOneWithoutInstagramAccountInput
 }
 
 export type InstagramAccountCreateOrConnectWithoutConversationsInput = {
@@ -756,6 +982,8 @@ export type InstagramAccountUpdateWithoutConversationsInput = {
   automations?: Prisma.AutomationUpdateManyWithoutInstagramAccountNestedInput
   showcases?: Prisma.ShowcaseUpdateManyWithoutInstagramAccountNestedInput
   forms?: Prisma.FormUpdateManyWithoutInstagramAccountNestedInput
+  iceBreakers?: Prisma.IceBreakerUpdateManyWithoutInstagramAccountNestedInput
+  persistentMenu?: Prisma.PersistentMenuUpdateOneWithoutInstagramAccountNestedInput
 }
 
 export type InstagramAccountUncheckedUpdateWithoutConversationsInput = {
@@ -771,6 +999,8 @@ export type InstagramAccountUncheckedUpdateWithoutConversationsInput = {
   automations?: Prisma.AutomationUncheckedUpdateManyWithoutInstagramAccountNestedInput
   showcases?: Prisma.ShowcaseUncheckedUpdateManyWithoutInstagramAccountNestedInput
   forms?: Prisma.FormUncheckedUpdateManyWithoutInstagramAccountNestedInput
+  iceBreakers?: Prisma.IceBreakerUncheckedUpdateManyWithoutInstagramAccountNestedInput
+  persistentMenu?: Prisma.PersistentMenuUncheckedUpdateOneWithoutInstagramAccountNestedInput
 }
 
 export type InstagramAccountCreateWithoutShowcasesInput = {
@@ -786,6 +1016,8 @@ export type InstagramAccountCreateWithoutShowcasesInput = {
   automations?: Prisma.AutomationCreateNestedManyWithoutInstagramAccountInput
   conversations?: Prisma.ConversationCreateNestedManyWithoutInstagramAccountInput
   forms?: Prisma.FormCreateNestedManyWithoutInstagramAccountInput
+  iceBreakers?: Prisma.IceBreakerCreateNestedManyWithoutInstagramAccountInput
+  persistentMenu?: Prisma.PersistentMenuCreateNestedOneWithoutInstagramAccountInput
 }
 
 export type InstagramAccountUncheckedCreateWithoutShowcasesInput = {
@@ -801,6 +1033,8 @@ export type InstagramAccountUncheckedCreateWithoutShowcasesInput = {
   automations?: Prisma.AutomationUncheckedCreateNestedManyWithoutInstagramAccountInput
   conversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutInstagramAccountInput
   forms?: Prisma.FormUncheckedCreateNestedManyWithoutInstagramAccountInput
+  iceBreakers?: Prisma.IceBreakerUncheckedCreateNestedManyWithoutInstagramAccountInput
+  persistentMenu?: Prisma.PersistentMenuUncheckedCreateNestedOneWithoutInstagramAccountInput
 }
 
 export type InstagramAccountCreateOrConnectWithoutShowcasesInput = {
@@ -832,6 +1066,8 @@ export type InstagramAccountUpdateWithoutShowcasesInput = {
   automations?: Prisma.AutomationUpdateManyWithoutInstagramAccountNestedInput
   conversations?: Prisma.ConversationUpdateManyWithoutInstagramAccountNestedInput
   forms?: Prisma.FormUpdateManyWithoutInstagramAccountNestedInput
+  iceBreakers?: Prisma.IceBreakerUpdateManyWithoutInstagramAccountNestedInput
+  persistentMenu?: Prisma.PersistentMenuUpdateOneWithoutInstagramAccountNestedInput
 }
 
 export type InstagramAccountUncheckedUpdateWithoutShowcasesInput = {
@@ -847,6 +1083,8 @@ export type InstagramAccountUncheckedUpdateWithoutShowcasesInput = {
   automations?: Prisma.AutomationUncheckedUpdateManyWithoutInstagramAccountNestedInput
   conversations?: Prisma.ConversationUncheckedUpdateManyWithoutInstagramAccountNestedInput
   forms?: Prisma.FormUncheckedUpdateManyWithoutInstagramAccountNestedInput
+  iceBreakers?: Prisma.IceBreakerUncheckedUpdateManyWithoutInstagramAccountNestedInput
+  persistentMenu?: Prisma.PersistentMenuUncheckedUpdateOneWithoutInstagramAccountNestedInput
 }
 
 export type InstagramAccountCreateWithoutFormsInput = {
@@ -862,6 +1100,8 @@ export type InstagramAccountCreateWithoutFormsInput = {
   automations?: Prisma.AutomationCreateNestedManyWithoutInstagramAccountInput
   conversations?: Prisma.ConversationCreateNestedManyWithoutInstagramAccountInput
   showcases?: Prisma.ShowcaseCreateNestedManyWithoutInstagramAccountInput
+  iceBreakers?: Prisma.IceBreakerCreateNestedManyWithoutInstagramAccountInput
+  persistentMenu?: Prisma.PersistentMenuCreateNestedOneWithoutInstagramAccountInput
 }
 
 export type InstagramAccountUncheckedCreateWithoutFormsInput = {
@@ -877,6 +1117,8 @@ export type InstagramAccountUncheckedCreateWithoutFormsInput = {
   automations?: Prisma.AutomationUncheckedCreateNestedManyWithoutInstagramAccountInput
   conversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutInstagramAccountInput
   showcases?: Prisma.ShowcaseUncheckedCreateNestedManyWithoutInstagramAccountInput
+  iceBreakers?: Prisma.IceBreakerUncheckedCreateNestedManyWithoutInstagramAccountInput
+  persistentMenu?: Prisma.PersistentMenuUncheckedCreateNestedOneWithoutInstagramAccountInput
 }
 
 export type InstagramAccountCreateOrConnectWithoutFormsInput = {
@@ -908,6 +1150,8 @@ export type InstagramAccountUpdateWithoutFormsInput = {
   automations?: Prisma.AutomationUpdateManyWithoutInstagramAccountNestedInput
   conversations?: Prisma.ConversationUpdateManyWithoutInstagramAccountNestedInput
   showcases?: Prisma.ShowcaseUpdateManyWithoutInstagramAccountNestedInput
+  iceBreakers?: Prisma.IceBreakerUpdateManyWithoutInstagramAccountNestedInput
+  persistentMenu?: Prisma.PersistentMenuUpdateOneWithoutInstagramAccountNestedInput
 }
 
 export type InstagramAccountUncheckedUpdateWithoutFormsInput = {
@@ -923,6 +1167,8 @@ export type InstagramAccountUncheckedUpdateWithoutFormsInput = {
   automations?: Prisma.AutomationUncheckedUpdateManyWithoutInstagramAccountNestedInput
   conversations?: Prisma.ConversationUncheckedUpdateManyWithoutInstagramAccountNestedInput
   showcases?: Prisma.ShowcaseUncheckedUpdateManyWithoutInstagramAccountNestedInput
+  iceBreakers?: Prisma.IceBreakerUncheckedUpdateManyWithoutInstagramAccountNestedInput
+  persistentMenu?: Prisma.PersistentMenuUncheckedUpdateOneWithoutInstagramAccountNestedInput
 }
 
 export type InstagramAccountCreateManyUserInput = {
@@ -949,6 +1195,8 @@ export type InstagramAccountUpdateWithoutUserInput = {
   conversations?: Prisma.ConversationUpdateManyWithoutInstagramAccountNestedInput
   showcases?: Prisma.ShowcaseUpdateManyWithoutInstagramAccountNestedInput
   forms?: Prisma.FormUpdateManyWithoutInstagramAccountNestedInput
+  iceBreakers?: Prisma.IceBreakerUpdateManyWithoutInstagramAccountNestedInput
+  persistentMenu?: Prisma.PersistentMenuUpdateOneWithoutInstagramAccountNestedInput
 }
 
 export type InstagramAccountUncheckedUpdateWithoutUserInput = {
@@ -964,6 +1212,8 @@ export type InstagramAccountUncheckedUpdateWithoutUserInput = {
   conversations?: Prisma.ConversationUncheckedUpdateManyWithoutInstagramAccountNestedInput
   showcases?: Prisma.ShowcaseUncheckedUpdateManyWithoutInstagramAccountNestedInput
   forms?: Prisma.FormUncheckedUpdateManyWithoutInstagramAccountNestedInput
+  iceBreakers?: Prisma.IceBreakerUncheckedUpdateManyWithoutInstagramAccountNestedInput
+  persistentMenu?: Prisma.PersistentMenuUncheckedUpdateOneWithoutInstagramAccountNestedInput
 }
 
 export type InstagramAccountUncheckedUpdateManyWithoutUserInput = {
@@ -987,6 +1237,7 @@ export type InstagramAccountCountOutputType = {
   conversations: number
   showcases: number
   forms: number
+  iceBreakers: number
 }
 
 export type InstagramAccountCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -994,6 +1245,7 @@ export type InstagramAccountCountOutputTypeSelect<ExtArgs extends runtime.Types.
   conversations?: boolean | InstagramAccountCountOutputTypeCountConversationsArgs
   showcases?: boolean | InstagramAccountCountOutputTypeCountShowcasesArgs
   forms?: boolean | InstagramAccountCountOutputTypeCountFormsArgs
+  iceBreakers?: boolean | InstagramAccountCountOutputTypeCountIceBreakersArgs
 }
 
 /**
@@ -1034,6 +1286,13 @@ export type InstagramAccountCountOutputTypeCountFormsArgs<ExtArgs extends runtim
   where?: Prisma.FormWhereInput
 }
 
+/**
+ * InstagramAccountCountOutputType without action
+ */
+export type InstagramAccountCountOutputTypeCountIceBreakersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.IceBreakerWhereInput
+}
+
 
 export type InstagramAccountSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1050,6 +1309,8 @@ export type InstagramAccountSelect<ExtArgs extends runtime.Types.Extensions.Inte
   conversations?: boolean | Prisma.InstagramAccount$conversationsArgs<ExtArgs>
   showcases?: boolean | Prisma.InstagramAccount$showcasesArgs<ExtArgs>
   forms?: boolean | Prisma.InstagramAccount$formsArgs<ExtArgs>
+  iceBreakers?: boolean | Prisma.InstagramAccount$iceBreakersArgs<ExtArgs>
+  persistentMenu?: boolean | Prisma.InstagramAccount$persistentMenuArgs<ExtArgs>
   _count?: boolean | Prisma.InstagramAccountCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["instagramAccount"]>
 
@@ -1098,6 +1359,8 @@ export type InstagramAccountInclude<ExtArgs extends runtime.Types.Extensions.Int
   conversations?: boolean | Prisma.InstagramAccount$conversationsArgs<ExtArgs>
   showcases?: boolean | Prisma.InstagramAccount$showcasesArgs<ExtArgs>
   forms?: boolean | Prisma.InstagramAccount$formsArgs<ExtArgs>
+  iceBreakers?: boolean | Prisma.InstagramAccount$iceBreakersArgs<ExtArgs>
+  persistentMenu?: boolean | Prisma.InstagramAccount$persistentMenuArgs<ExtArgs>
   _count?: boolean | Prisma.InstagramAccountCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type InstagramAccountIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1115,6 +1378,8 @@ export type $InstagramAccountPayload<ExtArgs extends runtime.Types.Extensions.In
     conversations: Prisma.$ConversationPayload<ExtArgs>[]
     showcases: Prisma.$ShowcasePayload<ExtArgs>[]
     forms: Prisma.$FormPayload<ExtArgs>[]
+    iceBreakers: Prisma.$IceBreakerPayload<ExtArgs>[]
+    persistentMenu: Prisma.$PersistentMenuPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1525,6 +1790,8 @@ export interface Prisma__InstagramAccountClient<T, Null = never, ExtArgs extends
   conversations<T extends Prisma.InstagramAccount$conversationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.InstagramAccount$conversationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ConversationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   showcases<T extends Prisma.InstagramAccount$showcasesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.InstagramAccount$showcasesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShowcasePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   forms<T extends Prisma.InstagramAccount$formsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.InstagramAccount$formsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FormPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  iceBreakers<T extends Prisma.InstagramAccount$iceBreakersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.InstagramAccount$iceBreakersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$IceBreakerPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  persistentMenu<T extends Prisma.InstagramAccount$persistentMenuArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.InstagramAccount$persistentMenuArgs<ExtArgs>>): Prisma.Prisma__PersistentMenuClient<runtime.Types.Result.GetResult<Prisma.$PersistentMenuPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2057,6 +2324,49 @@ export type InstagramAccount$formsArgs<ExtArgs extends runtime.Types.Extensions.
   take?: number
   skip?: number
   distinct?: Prisma.FormScalarFieldEnum | Prisma.FormScalarFieldEnum[]
+}
+
+/**
+ * InstagramAccount.iceBreakers
+ */
+export type InstagramAccount$iceBreakersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the IceBreaker
+   */
+  select?: Prisma.IceBreakerSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the IceBreaker
+   */
+  omit?: Prisma.IceBreakerOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.IceBreakerInclude<ExtArgs> | null
+  where?: Prisma.IceBreakerWhereInput
+  orderBy?: Prisma.IceBreakerOrderByWithRelationInput | Prisma.IceBreakerOrderByWithRelationInput[]
+  cursor?: Prisma.IceBreakerWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.IceBreakerScalarFieldEnum | Prisma.IceBreakerScalarFieldEnum[]
+}
+
+/**
+ * InstagramAccount.persistentMenu
+ */
+export type InstagramAccount$persistentMenuArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PersistentMenu
+   */
+  select?: Prisma.PersistentMenuSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the PersistentMenu
+   */
+  omit?: Prisma.PersistentMenuOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PersistentMenuInclude<ExtArgs> | null
+  where?: Prisma.PersistentMenuWhereInput
 }
 
 /**

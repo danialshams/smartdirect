@@ -10,6 +10,7 @@ import {
     Settings,
     X,
     CreditCard,
+    Menu,
 } from "lucide-react";
 
 import SignOutButton from "../../components/auth/SignOutButton";
@@ -29,6 +30,16 @@ const menuItems = [
         title: "اتوماسیون‌ها",
         href: "/dashboard#automations",
         icon: Bot,
+    },
+    {
+        title: "Ice Breaker",
+        href: "/dashboard#ice-breakers",
+        icon: MessageCircle,
+    },
+    {
+        title: "منوی ثابت",
+        href: "/dashboard#persistent-menu",
+        icon: Menu,
     },
     {
         title: "پیام‌ها",

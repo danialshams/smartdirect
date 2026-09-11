@@ -67,6 +67,21 @@ export type AutomationMessage = Prisma.AutomationMessageModel
  */
 export type QuickReply = Prisma.QuickReplyModel
 /**
+ * Model IceBreaker
+ * 
+ */
+export type IceBreaker = Prisma.IceBreakerModel
+/**
+ * Model PersistentMenu
+ * 
+ */
+export type PersistentMenu = Prisma.PersistentMenuModel
+/**
+ * Model PersistentMenuItem
+ * 
+ */
+export type PersistentMenuItem = Prisma.PersistentMenuItemModel
+/**
  * Model Conversation
  * 
  */

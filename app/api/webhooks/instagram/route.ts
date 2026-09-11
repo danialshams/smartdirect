@@ -264,8 +264,56 @@ async function processMessagingEvent(
     const message = messagingEvent?.message;
 
     // =======================================================
+    // ENTRY POINT
+    //
+    // Instagram can send a POSTBACK event without a
+    // message object.
+    //
+    // This is used by:
+    //
+    // 1. Ice Breakers
+    // 2. Persistent Menu
+    //
+    // Therefore postback MUST be handled before the
+    // "message is required" check.
+    // =======================================================
+
+    const postbackPayload = messagingEvent?.postback?.payload
+      ? String(messagingEvent.postback.payload)
+      : null;
+
+    const postbackTitle = messagingEvent?.postback?.title
+      ? String(messagingEvent.postback.title)
+      : null;
+
+    if (postbackPayload) {
+      console.log("========================================");
+      console.log("INSTAGRAM POSTBACK EVENT");
+      console.log("========================================");
+
+      console.log("Sender ID:", senderId ?? "undefined");
+      console.log("Recipient ID:", recipientId ?? "undefined");
+      console.log("Postback title:", postbackTitle ?? "undefined");
+      console.log("Postback payload:", postbackPayload);
+
+      await processInstagramPostback(
+        {
+          senderId,
+          recipientId,
+          payload: postbackPayload,
+          title: postbackTitle,
+        },
+        instagramAccount,
+      );
+
+      console.log("========================================");
+
+      return;
+    }
+
+    // =======================================================
     // IMPORTANT:
-    // Ignore read / delivery / reaction / postback events
+    // Ignore read / delivery / reaction events
     // without a message object.
     // =======================================================
 
@@ -282,8 +330,6 @@ async function processMessagingEvent(
         console.log("Event type: DELIVERY");
       } else if (messagingEvent?.reaction) {
         console.log("Event type: REACTION");
-      } else if (messagingEvent?.postback) {
-        console.log("Event type: POSTBACK");
       } else {
         console.log("Event type: OTHER");
       }
@@ -642,6 +688,455 @@ async function processMessagingEvent(
     console.error("Error processing Instagram messaging event:", error);
 
     console.log("========================================");
+  }
+}
+
+// =========================================================
+// Process Instagram Ice Breaker / Persistent Menu
+// postback event
+// =========================================================
+
+async function processInstagramPostback(
+  {
+    senderId,
+    recipientId,
+    payload,
+    title,
+  }: {
+    senderId: any;
+    recipientId: any;
+    payload: string;
+    title: string | null;
+  },
+  instagramAccount: InstagramAccountData,
+) {
+  try {
+    // =======================================================
+    // 1. Validate sender
+    // =======================================================
+
+    if (!senderId) {
+      console.warn("Instagram postback has no sender ID.");
+
+      return;
+    }
+
+    const participantId = String(senderId);
+
+    console.log("Processing Instagram postback:", {
+      payload,
+      title,
+      participantId,
+      recipientId,
+      instagramAccountId: instagramAccount.id,
+    });
+
+    // =======================================================
+    // 2. Resolve Ice Breaker
+    // =======================================================
+
+    const iceBreaker = await prisma.iceBreaker.findFirst({
+      where: {
+        instagramAccountId: instagramAccount.id,
+        payload,
+        isActive: true,
+      },
+      include: {
+        automation: {
+          include: {
+            messages: {
+              orderBy: {
+                order: "asc",
+              },
+              include: {
+                quickReplies: {
+                  orderBy: {
+                    createdAt: "asc",
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (iceBreaker) {
+      console.log("========================================");
+      console.log("ICE BREAKER SELECTED");
+      console.log("========================================");
+
+      console.log("Ice Breaker ID:", iceBreaker.id);
+
+      console.log("Question:", iceBreaker.question);
+
+      console.log("Payload:", iceBreaker.payload);
+
+      console.log("Automation ID:", iceBreaker.automationId);
+
+      console.log("Automation active:", iceBreaker.automation.isActive);
+
+      console.log("========================================");
+
+      await executeEntryPointAutomation({
+        automationId: iceBreaker.automationId,
+        participantId,
+        igUserId: participantId,
+        instagramAccount,
+        source: "ICE_BREAKER",
+        sourceId: iceBreaker.id,
+        sourceTitle: iceBreaker.question,
+        payload,
+      });
+
+      return;
+    }
+
+    // =======================================================
+    // 3. Resolve Persistent Menu
+    // =======================================================
+
+    const persistentMenuItem = await prisma.persistentMenuItem.findFirst({
+      where: {
+        payload,
+        persistentMenu: {
+          instagramAccountId: instagramAccount.id,
+          enabled: true,
+        },
+      },
+      include: {
+        automation: {
+          include: {
+            messages: {
+              orderBy: {
+                order: "asc",
+              },
+              include: {
+                quickReplies: {
+                  orderBy: {
+                    createdAt: "asc",
+                  },
+                },
+              },
+            },
+          },
+        },
+        persistentMenu: true,
+      },
+    });
+
+    if (persistentMenuItem) {
+      console.log("========================================");
+      console.log("PERSISTENT MENU ITEM SELECTED");
+      console.log("========================================");
+
+      console.log("Persistent Menu Item ID:", persistentMenuItem.id);
+
+      console.log("Title:", persistentMenuItem.title);
+
+      console.log("Payload:", persistentMenuItem.payload);
+
+      console.log("Automation ID:", persistentMenuItem.automationId ?? "NONE");
+
+      console.log("Menu ID:", persistentMenuItem.persistentMenuId);
+
+      console.log("========================================");
+
+      if (!persistentMenuItem.automationId || !persistentMenuItem.automation) {
+        console.warn(
+          "Persistent Menu item is not connected to an active automation.",
+        );
+
+        await saveEntryPointInteraction({
+          instagramAccount,
+          participantId,
+          title: persistentMenuItem.title,
+          payload,
+          source: "PERSISTENT_MENU",
+        });
+
+        return;
+      }
+
+      await executeEntryPointAutomation({
+        automationId: persistentMenuItem.automationId,
+        participantId,
+        igUserId: participantId,
+        instagramAccount,
+        source: "PERSISTENT_MENU",
+        sourceId: persistentMenuItem.id,
+        sourceTitle: persistentMenuItem.title,
+        payload,
+      });
+
+      return;
+    }
+
+    // =======================================================
+    // 4. Unknown postback
+    // =======================================================
+
+    console.warn("Unknown Instagram postback payload:", payload);
+
+    console.log("No Ice Breaker or Persistent Menu item matched.");
+
+    // =======================================================
+    // 5. Still create/update conversation
+    // =======================================================
+
+    await saveEntryPointInteraction({
+      instagramAccount,
+      participantId,
+      title,
+      payload,
+      source: "UNKNOWN_POSTBACK",
+    });
+  } catch (error) {
+    console.error("Error processing Instagram postback:", error);
+  }
+}
+
+// =========================================================
+// Execute Automation triggered by Ice Breaker / Menu
+// =========================================================
+
+async function executeEntryPointAutomation({
+  automationId,
+  participantId,
+  igUserId,
+  instagramAccount,
+  source,
+  sourceId,
+  sourceTitle,
+  payload,
+}: {
+  automationId: string;
+  participantId: string;
+  igUserId: string;
+  instagramAccount: InstagramAccountData;
+  source: "ICE_BREAKER" | "PERSISTENT_MENU";
+  sourceId: string;
+  sourceTitle: string;
+  payload: string;
+}) {
+  try {
+    console.log("========================================");
+    console.log("EXECUTING ENTRY POINT AUTOMATION");
+    console.log("========================================");
+
+    console.log("Source:", source);
+
+    console.log("Source ID:", sourceId);
+
+    console.log("Source title:", sourceTitle);
+
+    console.log("Payload:", payload);
+
+    console.log("Automation ID:", automationId);
+
+    console.log("Participant ID:", participantId);
+
+    console.log("========================================");
+
+    // =======================================================
+    // 1. Make sure automation belongs to this Instagram
+    // account and is active.
+    // =======================================================
+
+    const automation = await prisma.automation.findFirst({
+      where: {
+        id: automationId,
+        instagramAccountId: instagramAccount.id,
+        isActive: true,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!automation) {
+      console.warn(
+        "Entry point automation not found or inactive:",
+        automationId,
+      );
+
+      await saveEntryPointInteraction({
+        instagramAccount,
+        participantId,
+        title: sourceTitle,
+        payload,
+        source,
+      });
+
+      return;
+    }
+
+    // =======================================================
+    // 2. Save / update conversation
+    // =======================================================
+
+    const conversation = await getOrCreateConversation({
+      instagramAccount,
+      participantId,
+      igUserId,
+    });
+
+    // =======================================================
+    // 3. Save entry point interaction
+    //
+    // The current schema does not have a dedicated source
+    // column for Ice Breaker / Persistent Menu.
+    //
+    // Therefore we store the interaction as an inbound TEXT
+    // message with the visible title.
+    // =======================================================
+
+    await prisma.conversationMessage.create({
+      data: {
+        conversationId: conversation.id,
+        direction: "INBOUND",
+        messageType: "TEXT",
+        text: sourceTitle || payload,
+        mediaUrl: null,
+        mediaId: null,
+        igMessageId: null,
+        quickReplyId: null,
+        createdAt: new Date(),
+      },
+    });
+
+    // =======================================================
+    // 4. Execute automation
+    // =======================================================
+
+    const result = await executeAutomation({
+      automationId,
+      instagramAccountId: instagramAccount.id,
+      participantId,
+      igUserId,
+      selectedQuickReplyId: null,
+    });
+
+    console.log("Entry point automation result:", {
+      source,
+      sourceId,
+      automationId,
+      payload,
+      result,
+    });
+
+    console.log("========================================");
+  } catch (error) {
+    console.error(`Error executing ${source} automation:`, error);
+  }
+}
+
+// =========================================================
+// Get or create Instagram conversation
+// =========================================================
+
+async function getOrCreateConversation({
+  instagramAccount,
+  participantId,
+  igUserId,
+}: {
+  instagramAccount: InstagramAccountData;
+  participantId: string;
+  igUserId: string;
+}) {
+  let conversation = await prisma.conversation.findUnique({
+    where: {
+      instagramAccountId_participantId: {
+        instagramAccountId: instagramAccount.id,
+        participantId,
+      },
+    },
+  });
+
+  if (!conversation) {
+    conversation = await prisma.conversation.create({
+      data: {
+        userId: instagramAccount.userId,
+        instagramAccountId: instagramAccount.id,
+        igUserId,
+        participantId,
+        isActive: true,
+        lastMessageAt: new Date(),
+      },
+    });
+
+    console.log(
+      "New Instagram conversation created for entry point:",
+      conversation.id,
+    );
+  } else {
+    conversation = await prisma.conversation.update({
+      where: {
+        id: conversation.id,
+      },
+      data: {
+        igUserId,
+        lastMessageAt: new Date(),
+        isActive: true,
+      },
+    });
+
+    console.log(
+      "Existing Instagram conversation updated for entry point:",
+      conversation.id,
+    );
+  }
+
+  return conversation;
+}
+
+// =========================================================
+// Save Ice Breaker / Persistent Menu interaction
+// when there is no automation.
+// =========================================================
+
+async function saveEntryPointInteraction({
+  instagramAccount,
+  participantId,
+  title,
+  payload,
+  source,
+}: {
+  instagramAccount: InstagramAccountData;
+  participantId: string;
+  title: string | null;
+  payload: string;
+  source: "ICE_BREAKER" | "PERSISTENT_MENU" | "UNKNOWN_POSTBACK";
+}) {
+  try {
+    const conversation = await getOrCreateConversation({
+      instagramAccount,
+      participantId,
+      igUserId: participantId,
+    });
+
+    await prisma.conversationMessage.create({
+      data: {
+        conversationId: conversation.id,
+        direction: "INBOUND",
+        messageType: "TEXT",
+        text: title || payload,
+        mediaUrl: null,
+        mediaId: null,
+        igMessageId: null,
+        quickReplyId: null,
+        createdAt: new Date(),
+      },
+    });
+
+    console.log("Entry point interaction saved:", {
+      source,
+      title,
+      payload,
+      conversationId: conversation.id,
+    });
+  } catch (error) {
+    console.error("Could not save Instagram entry point interaction:", error);
   }
 }
 

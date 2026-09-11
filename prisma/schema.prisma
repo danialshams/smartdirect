@@ -51,6 +51,13 @@ model InstagramAccount {
   showcases     Showcase[]
   forms         Form[]
 
+  // ====================================================
+  // INSTAGRAM MESSENGER PROFILE
+  // ====================================================
+
+  iceBreakers    IceBreaker[]
+  persistentMenu PersistentMenu?
+
   @@unique([userId, igUserId])
   @@index([userId])
 }
@@ -111,6 +118,13 @@ model Automation {
 
   messages AutomationMessage[]
 
+  // ====================================================
+  // INSTAGRAM ENTRY POINTS
+  // ====================================================
+
+  iceBreakers         IceBreaker[]
+  persistentMenuItems PersistentMenuItem[]
+
   @@index([instagramAccountId])
   @@index([mediaId])
   @@index([instagramAccountId, triggerType])
@@ -170,8 +184,7 @@ model AutomationMessage {
   // QUICK REPLIES
   // ====================================================
 
-  quickReplies QuickReply[]
-
+  quickReplies         QuickReply[]
   nextFromQuickReplies QuickReply[] @relation("QuickReplyNextMessage")
 
   createdAt DateTime @default(now())
@@ -212,8 +225,7 @@ model QuickReply {
   // ====================================================
 
   nextMessageId String?
-
-  nextMessage AutomationMessage? @relation("QuickReplyNextMessage", fields: [nextMessageId], references: [id], onDelete: SetNull)
+  nextMessage   AutomationMessage? @relation("QuickReplyNextMessage", fields: [nextMessageId], references: [id], onDelete: SetNull)
 
   // ====================================================
   // CONVERSATION
@@ -227,6 +239,169 @@ model QuickReply {
   @@index([automationMessageId])
   @@index([nextMessageId])
   @@index([payload])
+}
+
+// ======================================================
+// ICE BREAKER
+// ======================================================
+//
+// گزینه‌هایی که در شروع مکالمه Instagram نمایش داده می‌شوند.
+//
+// مثال:
+//
+// مشاهده محصولات -> Automation A
+// قیمت محصولات   -> Automation B
+// پشتیبانی       -> Automation C
+//
+// payload توسط Instagram به Webhook برمی‌گردد و SmartDirect
+// با استفاده از آن Automation مربوطه را اجرا می‌کند.
+// ======================================================
+
+model IceBreaker {
+  id String @id @default(cuid())
+
+  // ====================================================
+  // INSTAGRAM ACCOUNT
+  // ====================================================
+
+  instagramAccountId String
+  instagramAccount   InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
+
+  // ====================================================
+  // AUTOMATION
+  // ====================================================
+
+  automationId String
+  automation   Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
+
+  // ====================================================
+  // DISPLAY
+  // ====================================================
+
+  // متنی که مشتری در Instagram می‌بیند
+  question String
+
+  // مقدار داخلی که Instagram هنگام انتخاب برمی‌گرداند
+  payload String
+
+  // ترتیب نمایش
+  order Int @default(0)
+
+  // فعال / غیرفعال
+  isActive Boolean @default(true)
+
+  // ====================================================
+  // TIMESTAMPS
+  // ====================================================
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // ====================================================
+  // INDEXES
+  // ====================================================
+
+  @@unique([instagramAccountId, payload])
+  @@index([instagramAccountId])
+  @@index([automationId])
+  @@index([instagramAccountId, order])
+}
+
+// ======================================================
+// PERSISTENT MENU
+// ======================================================
+//
+// منوی دائمی Instagram DM.
+//
+// هر Instagram Account حداکثر یک Persistent Menu دارد.
+// ======================================================
+
+model PersistentMenu {
+  id String @id @default(cuid())
+
+  // ====================================================
+  // INSTAGRAM ACCOUNT
+  // ====================================================
+
+  instagramAccountId String           @unique
+  instagramAccount   InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
+
+  // ====================================================
+  // STATUS
+  // ====================================================
+
+  enabled Boolean @default(true)
+
+  // ====================================================
+  // ITEMS
+  // ====================================================
+
+  items PersistentMenuItem[]
+
+  // ====================================================
+  // TIMESTAMPS
+  // ====================================================
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ======================================================
+// PERSISTENT MENU ITEM
+// ======================================================
+//
+// هر گزینه از Persistent Menu.
+//
+// مثال:
+//
+// محصولات  -> Automation A
+// سفارش    -> Automation B
+// پشتیبانی -> Automation C
+// ======================================================
+
+model PersistentMenuItem {
+  id String @id @default(cuid())
+
+  // ====================================================
+  // MENU
+  // ====================================================
+
+  persistentMenuId String
+  persistentMenu   PersistentMenu @relation(fields: [persistentMenuId], references: [id], onDelete: Cascade)
+
+  // ====================================================
+  // DISPLAY
+  // ====================================================
+
+  title   String
+  payload String
+
+  // ====================================================
+  // AUTOMATION
+  // ====================================================
+
+  automationId String?
+  automation   Automation? @relation(fields: [automationId], references: [id], onDelete: SetNull)
+
+  // ====================================================
+  // ORDER
+  // ====================================================
+
+  order Int @default(0)
+
+  // ====================================================
+  // TIMESTAMPS
+  // ====================================================
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // ====================================================
+  // INDEXES
+  // ====================================================
+
+  @@index([persistentMenuId])
+  @@index([automationId])
 }
 
 // ======================================================
@@ -325,8 +500,7 @@ model ConversationMessage {
   // ====================================================
 
   quickReplyId String?
-
-  quickReply QuickReply? @relation(fields: [quickReplyId], references: [id], onDelete: SetNull)
+  quickReply   QuickReply? @relation(fields: [quickReplyId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
 
@@ -389,8 +563,7 @@ model Showcase {
   // ====================================================
 
   instagramAccountId String
-
-  instagramAccount InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
+  instagramAccount   InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
 
   // ====================================================
   // INFO
@@ -482,8 +655,7 @@ model Form {
   // ====================================================
 
   instagramAccountId String
-
-  instagramAccount InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
+  instagramAccount   InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
 
   // ====================================================
   // INFO

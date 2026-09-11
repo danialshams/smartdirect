@@ -402,6 +402,9 @@ export const ModelName = {
   Automation: 'Automation',
   AutomationMessage: 'AutomationMessage',
   QuickReply: 'QuickReply',
+  IceBreaker: 'IceBreaker',
+  PersistentMenu: 'PersistentMenu',
+  PersistentMenuItem: 'PersistentMenuItem',
   Conversation: 'Conversation',
   ConversationMessage: 'ConversationMessage',
   Comment: 'Comment',
@@ -425,7 +428,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "instagramAccount" | "automation" | "automationMessage" | "quickReply" | "conversation" | "conversationMessage" | "comment" | "showcase" | "showcaseItem" | "form" | "formField" | "formSubmission"
+    modelProps: "user" | "instagramAccount" | "automation" | "automationMessage" | "quickReply" | "iceBreaker" | "persistentMenu" | "persistentMenuItem" | "conversation" | "conversationMessage" | "comment" | "showcase" | "showcaseItem" | "form" | "formField" | "formSubmission"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -796,6 +799,228 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.QuickReplyCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.QuickReplyCountAggregateOutputType> | number
+        }
+      }
+    }
+    IceBreaker: {
+      payload: Prisma.$IceBreakerPayload<ExtArgs>
+      fields: Prisma.IceBreakerFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.IceBreakerFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IceBreakerPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.IceBreakerFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IceBreakerPayload>
+        }
+        findFirst: {
+          args: Prisma.IceBreakerFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IceBreakerPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.IceBreakerFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IceBreakerPayload>
+        }
+        findMany: {
+          args: Prisma.IceBreakerFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IceBreakerPayload>[]
+        }
+        create: {
+          args: Prisma.IceBreakerCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IceBreakerPayload>
+        }
+        createMany: {
+          args: Prisma.IceBreakerCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.IceBreakerCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IceBreakerPayload>[]
+        }
+        delete: {
+          args: Prisma.IceBreakerDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IceBreakerPayload>
+        }
+        update: {
+          args: Prisma.IceBreakerUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IceBreakerPayload>
+        }
+        deleteMany: {
+          args: Prisma.IceBreakerDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.IceBreakerUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.IceBreakerUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IceBreakerPayload>[]
+        }
+        upsert: {
+          args: Prisma.IceBreakerUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IceBreakerPayload>
+        }
+        aggregate: {
+          args: Prisma.IceBreakerAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateIceBreaker>
+        }
+        groupBy: {
+          args: Prisma.IceBreakerGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.IceBreakerGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.IceBreakerCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.IceBreakerCountAggregateOutputType> | number
+        }
+      }
+    }
+    PersistentMenu: {
+      payload: Prisma.$PersistentMenuPayload<ExtArgs>
+      fields: Prisma.PersistentMenuFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PersistentMenuFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PersistentMenuPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PersistentMenuFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PersistentMenuPayload>
+        }
+        findFirst: {
+          args: Prisma.PersistentMenuFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PersistentMenuPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PersistentMenuFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PersistentMenuPayload>
+        }
+        findMany: {
+          args: Prisma.PersistentMenuFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PersistentMenuPayload>[]
+        }
+        create: {
+          args: Prisma.PersistentMenuCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PersistentMenuPayload>
+        }
+        createMany: {
+          args: Prisma.PersistentMenuCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PersistentMenuCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PersistentMenuPayload>[]
+        }
+        delete: {
+          args: Prisma.PersistentMenuDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PersistentMenuPayload>
+        }
+        update: {
+          args: Prisma.PersistentMenuUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PersistentMenuPayload>
+        }
+        deleteMany: {
+          args: Prisma.PersistentMenuDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PersistentMenuUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PersistentMenuUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PersistentMenuPayload>[]
+        }
+        upsert: {
+          args: Prisma.PersistentMenuUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PersistentMenuPayload>
+        }
+        aggregate: {
+          args: Prisma.PersistentMenuAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePersistentMenu>
+        }
+        groupBy: {
+          args: Prisma.PersistentMenuGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PersistentMenuGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PersistentMenuCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PersistentMenuCountAggregateOutputType> | number
+        }
+      }
+    }
+    PersistentMenuItem: {
+      payload: Prisma.$PersistentMenuItemPayload<ExtArgs>
+      fields: Prisma.PersistentMenuItemFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PersistentMenuItemFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PersistentMenuItemPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PersistentMenuItemFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PersistentMenuItemPayload>
+        }
+        findFirst: {
+          args: Prisma.PersistentMenuItemFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PersistentMenuItemPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PersistentMenuItemFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PersistentMenuItemPayload>
+        }
+        findMany: {
+          args: Prisma.PersistentMenuItemFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PersistentMenuItemPayload>[]
+        }
+        create: {
+          args: Prisma.PersistentMenuItemCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PersistentMenuItemPayload>
+        }
+        createMany: {
+          args: Prisma.PersistentMenuItemCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PersistentMenuItemCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PersistentMenuItemPayload>[]
+        }
+        delete: {
+          args: Prisma.PersistentMenuItemDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PersistentMenuItemPayload>
+        }
+        update: {
+          args: Prisma.PersistentMenuItemUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PersistentMenuItemPayload>
+        }
+        deleteMany: {
+          args: Prisma.PersistentMenuItemDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PersistentMenuItemUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PersistentMenuItemUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PersistentMenuItemPayload>[]
+        }
+        upsert: {
+          args: Prisma.PersistentMenuItemUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PersistentMenuItemPayload>
+        }
+        aggregate: {
+          args: Prisma.PersistentMenuItemAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePersistentMenuItem>
+        }
+        groupBy: {
+          args: Prisma.PersistentMenuItemGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PersistentMenuItemGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PersistentMenuItemCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PersistentMenuItemCountAggregateOutputType> | number
         }
       }
     }
@@ -1508,6 +1733,46 @@ export const QuickReplyScalarFieldEnum = {
 export type QuickReplyScalarFieldEnum = (typeof QuickReplyScalarFieldEnum)[keyof typeof QuickReplyScalarFieldEnum]
 
 
+export const IceBreakerScalarFieldEnum = {
+  id: 'id',
+  instagramAccountId: 'instagramAccountId',
+  automationId: 'automationId',
+  question: 'question',
+  payload: 'payload',
+  order: 'order',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type IceBreakerScalarFieldEnum = (typeof IceBreakerScalarFieldEnum)[keyof typeof IceBreakerScalarFieldEnum]
+
+
+export const PersistentMenuScalarFieldEnum = {
+  id: 'id',
+  instagramAccountId: 'instagramAccountId',
+  enabled: 'enabled',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PersistentMenuScalarFieldEnum = (typeof PersistentMenuScalarFieldEnum)[keyof typeof PersistentMenuScalarFieldEnum]
+
+
+export const PersistentMenuItemScalarFieldEnum = {
+  id: 'id',
+  persistentMenuId: 'persistentMenuId',
+  title: 'title',
+  payload: 'payload',
+  automationId: 'automationId',
+  order: 'order',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PersistentMenuItemScalarFieldEnum = (typeof PersistentMenuItemScalarFieldEnum)[keyof typeof PersistentMenuItemScalarFieldEnum]
+
+
 export const ConversationScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
@@ -2014,6 +2279,9 @@ export type GlobalOmitConfig = {
   automation?: Prisma.AutomationOmit
   automationMessage?: Prisma.AutomationMessageOmit
   quickReply?: Prisma.QuickReplyOmit
+  iceBreaker?: Prisma.IceBreakerOmit
+  persistentMenu?: Prisma.PersistentMenuOmit
+  persistentMenuItem?: Prisma.PersistentMenuItemOmit
   conversation?: Prisma.ConversationOmit
   conversationMessage?: Prisma.ConversationMessageOmit
   comment?: Prisma.CommentOmit

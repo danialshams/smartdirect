@@ -248,6 +248,8 @@ export type AutomationWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"Automation"> | Date | string
   instagramAccount?: Prisma.XOR<Prisma.InstagramAccountScalarRelationFilter, Prisma.InstagramAccountWhereInput>
   messages?: Prisma.AutomationMessageListRelationFilter
+  iceBreakers?: Prisma.IceBreakerListRelationFilter
+  persistentMenuItems?: Prisma.PersistentMenuItemListRelationFilter
 }
 
 export type AutomationOrderByWithRelationInput = {
@@ -266,6 +268,8 @@ export type AutomationOrderByWithRelationInput = {
   updatedAt?: Prisma.SortOrder
   instagramAccount?: Prisma.InstagramAccountOrderByWithRelationInput
   messages?: Prisma.AutomationMessageOrderByRelationAggregateInput
+  iceBreakers?: Prisma.IceBreakerOrderByRelationAggregateInput
+  persistentMenuItems?: Prisma.PersistentMenuItemOrderByRelationAggregateInput
 }
 
 export type AutomationWhereUniqueInput = Prisma.AtLeast<{
@@ -287,6 +291,8 @@ export type AutomationWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"Automation"> | Date | string
   instagramAccount?: Prisma.XOR<Prisma.InstagramAccountScalarRelationFilter, Prisma.InstagramAccountWhereInput>
   messages?: Prisma.AutomationMessageListRelationFilter
+  iceBreakers?: Prisma.IceBreakerListRelationFilter
+  persistentMenuItems?: Prisma.PersistentMenuItemListRelationFilter
 }, "id">
 
 export type AutomationOrderByWithAggregationInput = {
@@ -342,6 +348,8 @@ export type AutomationCreateInput = {
   updatedAt?: Date | string
   instagramAccount: Prisma.InstagramAccountCreateNestedOneWithoutAutomationsInput
   messages?: Prisma.AutomationMessageCreateNestedManyWithoutAutomationInput
+  iceBreakers?: Prisma.IceBreakerCreateNestedManyWithoutAutomationInput
+  persistentMenuItems?: Prisma.PersistentMenuItemCreateNestedManyWithoutAutomationInput
 }
 
 export type AutomationUncheckedCreateInput = {
@@ -359,6 +367,8 @@ export type AutomationUncheckedCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   messages?: Prisma.AutomationMessageUncheckedCreateNestedManyWithoutAutomationInput
+  iceBreakers?: Prisma.IceBreakerUncheckedCreateNestedManyWithoutAutomationInput
+  persistentMenuItems?: Prisma.PersistentMenuItemUncheckedCreateNestedManyWithoutAutomationInput
 }
 
 export type AutomationUpdateInput = {
@@ -376,6 +386,8 @@ export type AutomationUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   instagramAccount?: Prisma.InstagramAccountUpdateOneRequiredWithoutAutomationsNestedInput
   messages?: Prisma.AutomationMessageUpdateManyWithoutAutomationNestedInput
+  iceBreakers?: Prisma.IceBreakerUpdateManyWithoutAutomationNestedInput
+  persistentMenuItems?: Prisma.PersistentMenuItemUpdateManyWithoutAutomationNestedInput
 }
 
 export type AutomationUncheckedUpdateInput = {
@@ -393,6 +405,8 @@ export type AutomationUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   messages?: Prisma.AutomationMessageUncheckedUpdateManyWithoutAutomationNestedInput
+  iceBreakers?: Prisma.IceBreakerUncheckedUpdateManyWithoutAutomationNestedInput
+  persistentMenuItems?: Prisma.PersistentMenuItemUncheckedUpdateManyWithoutAutomationNestedInput
 }
 
 export type AutomationCreateManyInput = {
@@ -505,6 +519,11 @@ export type AutomationScalarRelationFilter = {
   isNot?: Prisma.AutomationWhereInput
 }
 
+export type AutomationNullableScalarRelationFilter = {
+  is?: Prisma.AutomationWhereInput | null
+  isNot?: Prisma.AutomationWhereInput | null
+}
+
 export type AutomationCreateNestedManyWithoutInstagramAccountInput = {
   create?: Prisma.XOR<Prisma.AutomationCreateWithoutInstagramAccountInput, Prisma.AutomationUncheckedCreateWithoutInstagramAccountInput> | Prisma.AutomationCreateWithoutInstagramAccountInput[] | Prisma.AutomationUncheckedCreateWithoutInstagramAccountInput[]
   connectOrCreate?: Prisma.AutomationCreateOrConnectWithoutInstagramAccountInput | Prisma.AutomationCreateOrConnectWithoutInstagramAccountInput[]
@@ -569,6 +588,36 @@ export type AutomationUpdateOneRequiredWithoutMessagesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.AutomationUpdateToOneWithWhereWithoutMessagesInput, Prisma.AutomationUpdateWithoutMessagesInput>, Prisma.AutomationUncheckedUpdateWithoutMessagesInput>
 }
 
+export type AutomationCreateNestedOneWithoutIceBreakersInput = {
+  create?: Prisma.XOR<Prisma.AutomationCreateWithoutIceBreakersInput, Prisma.AutomationUncheckedCreateWithoutIceBreakersInput>
+  connectOrCreate?: Prisma.AutomationCreateOrConnectWithoutIceBreakersInput
+  connect?: Prisma.AutomationWhereUniqueInput
+}
+
+export type AutomationUpdateOneRequiredWithoutIceBreakersNestedInput = {
+  create?: Prisma.XOR<Prisma.AutomationCreateWithoutIceBreakersInput, Prisma.AutomationUncheckedCreateWithoutIceBreakersInput>
+  connectOrCreate?: Prisma.AutomationCreateOrConnectWithoutIceBreakersInput
+  upsert?: Prisma.AutomationUpsertWithoutIceBreakersInput
+  connect?: Prisma.AutomationWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AutomationUpdateToOneWithWhereWithoutIceBreakersInput, Prisma.AutomationUpdateWithoutIceBreakersInput>, Prisma.AutomationUncheckedUpdateWithoutIceBreakersInput>
+}
+
+export type AutomationCreateNestedOneWithoutPersistentMenuItemsInput = {
+  create?: Prisma.XOR<Prisma.AutomationCreateWithoutPersistentMenuItemsInput, Prisma.AutomationUncheckedCreateWithoutPersistentMenuItemsInput>
+  connectOrCreate?: Prisma.AutomationCreateOrConnectWithoutPersistentMenuItemsInput
+  connect?: Prisma.AutomationWhereUniqueInput
+}
+
+export type AutomationUpdateOneWithoutPersistentMenuItemsNestedInput = {
+  create?: Prisma.XOR<Prisma.AutomationCreateWithoutPersistentMenuItemsInput, Prisma.AutomationUncheckedCreateWithoutPersistentMenuItemsInput>
+  connectOrCreate?: Prisma.AutomationCreateOrConnectWithoutPersistentMenuItemsInput
+  upsert?: Prisma.AutomationUpsertWithoutPersistentMenuItemsInput
+  disconnect?: Prisma.AutomationWhereInput | boolean
+  delete?: Prisma.AutomationWhereInput | boolean
+  connect?: Prisma.AutomationWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AutomationUpdateToOneWithWhereWithoutPersistentMenuItemsInput, Prisma.AutomationUpdateWithoutPersistentMenuItemsInput>, Prisma.AutomationUncheckedUpdateWithoutPersistentMenuItemsInput>
+}
+
 export type AutomationCreateWithoutInstagramAccountInput = {
   id?: string
   triggerType?: $Enums.AutomationTriggerType
@@ -583,6 +632,8 @@ export type AutomationCreateWithoutInstagramAccountInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   messages?: Prisma.AutomationMessageCreateNestedManyWithoutAutomationInput
+  iceBreakers?: Prisma.IceBreakerCreateNestedManyWithoutAutomationInput
+  persistentMenuItems?: Prisma.PersistentMenuItemCreateNestedManyWithoutAutomationInput
 }
 
 export type AutomationUncheckedCreateWithoutInstagramAccountInput = {
@@ -599,6 +650,8 @@ export type AutomationUncheckedCreateWithoutInstagramAccountInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   messages?: Prisma.AutomationMessageUncheckedCreateNestedManyWithoutAutomationInput
+  iceBreakers?: Prisma.IceBreakerUncheckedCreateNestedManyWithoutAutomationInput
+  persistentMenuItems?: Prisma.PersistentMenuItemUncheckedCreateNestedManyWithoutAutomationInput
 }
 
 export type AutomationCreateOrConnectWithoutInstagramAccountInput = {
@@ -660,6 +713,8 @@ export type AutomationCreateWithoutMessagesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   instagramAccount: Prisma.InstagramAccountCreateNestedOneWithoutAutomationsInput
+  iceBreakers?: Prisma.IceBreakerCreateNestedManyWithoutAutomationInput
+  persistentMenuItems?: Prisma.PersistentMenuItemCreateNestedManyWithoutAutomationInput
 }
 
 export type AutomationUncheckedCreateWithoutMessagesInput = {
@@ -676,6 +731,8 @@ export type AutomationUncheckedCreateWithoutMessagesInput = {
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  iceBreakers?: Prisma.IceBreakerUncheckedCreateNestedManyWithoutAutomationInput
+  persistentMenuItems?: Prisma.PersistentMenuItemUncheckedCreateNestedManyWithoutAutomationInput
 }
 
 export type AutomationCreateOrConnectWithoutMessagesInput = {
@@ -708,6 +765,8 @@ export type AutomationUpdateWithoutMessagesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   instagramAccount?: Prisma.InstagramAccountUpdateOneRequiredWithoutAutomationsNestedInput
+  iceBreakers?: Prisma.IceBreakerUpdateManyWithoutAutomationNestedInput
+  persistentMenuItems?: Prisma.PersistentMenuItemUpdateManyWithoutAutomationNestedInput
 }
 
 export type AutomationUncheckedUpdateWithoutMessagesInput = {
@@ -724,6 +783,184 @@ export type AutomationUncheckedUpdateWithoutMessagesInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  iceBreakers?: Prisma.IceBreakerUncheckedUpdateManyWithoutAutomationNestedInput
+  persistentMenuItems?: Prisma.PersistentMenuItemUncheckedUpdateManyWithoutAutomationNestedInput
+}
+
+export type AutomationCreateWithoutIceBreakersInput = {
+  id?: string
+  triggerType?: $Enums.AutomationTriggerType
+  keyword?: string | null
+  mediaId?: string | null
+  likeComment?: boolean
+  commentReplyText?: string | null
+  sendDm?: boolean
+  likeIncomingDm?: boolean
+  replyText?: string | null
+  isActive?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  instagramAccount: Prisma.InstagramAccountCreateNestedOneWithoutAutomationsInput
+  messages?: Prisma.AutomationMessageCreateNestedManyWithoutAutomationInput
+  persistentMenuItems?: Prisma.PersistentMenuItemCreateNestedManyWithoutAutomationInput
+}
+
+export type AutomationUncheckedCreateWithoutIceBreakersInput = {
+  id?: string
+  instagramAccountId: string
+  triggerType?: $Enums.AutomationTriggerType
+  keyword?: string | null
+  mediaId?: string | null
+  likeComment?: boolean
+  commentReplyText?: string | null
+  sendDm?: boolean
+  likeIncomingDm?: boolean
+  replyText?: string | null
+  isActive?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  messages?: Prisma.AutomationMessageUncheckedCreateNestedManyWithoutAutomationInput
+  persistentMenuItems?: Prisma.PersistentMenuItemUncheckedCreateNestedManyWithoutAutomationInput
+}
+
+export type AutomationCreateOrConnectWithoutIceBreakersInput = {
+  where: Prisma.AutomationWhereUniqueInput
+  create: Prisma.XOR<Prisma.AutomationCreateWithoutIceBreakersInput, Prisma.AutomationUncheckedCreateWithoutIceBreakersInput>
+}
+
+export type AutomationUpsertWithoutIceBreakersInput = {
+  update: Prisma.XOR<Prisma.AutomationUpdateWithoutIceBreakersInput, Prisma.AutomationUncheckedUpdateWithoutIceBreakersInput>
+  create: Prisma.XOR<Prisma.AutomationCreateWithoutIceBreakersInput, Prisma.AutomationUncheckedCreateWithoutIceBreakersInput>
+  where?: Prisma.AutomationWhereInput
+}
+
+export type AutomationUpdateToOneWithWhereWithoutIceBreakersInput = {
+  where?: Prisma.AutomationWhereInput
+  data: Prisma.XOR<Prisma.AutomationUpdateWithoutIceBreakersInput, Prisma.AutomationUncheckedUpdateWithoutIceBreakersInput>
+}
+
+export type AutomationUpdateWithoutIceBreakersInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  triggerType?: Prisma.EnumAutomationTriggerTypeFieldUpdateOperationsInput | $Enums.AutomationTriggerType
+  keyword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  commentReplyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  replyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  instagramAccount?: Prisma.InstagramAccountUpdateOneRequiredWithoutAutomationsNestedInput
+  messages?: Prisma.AutomationMessageUpdateManyWithoutAutomationNestedInput
+  persistentMenuItems?: Prisma.PersistentMenuItemUpdateManyWithoutAutomationNestedInput
+}
+
+export type AutomationUncheckedUpdateWithoutIceBreakersInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  instagramAccountId?: Prisma.StringFieldUpdateOperationsInput | string
+  triggerType?: Prisma.EnumAutomationTriggerTypeFieldUpdateOperationsInput | $Enums.AutomationTriggerType
+  keyword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  commentReplyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  replyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  messages?: Prisma.AutomationMessageUncheckedUpdateManyWithoutAutomationNestedInput
+  persistentMenuItems?: Prisma.PersistentMenuItemUncheckedUpdateManyWithoutAutomationNestedInput
+}
+
+export type AutomationCreateWithoutPersistentMenuItemsInput = {
+  id?: string
+  triggerType?: $Enums.AutomationTriggerType
+  keyword?: string | null
+  mediaId?: string | null
+  likeComment?: boolean
+  commentReplyText?: string | null
+  sendDm?: boolean
+  likeIncomingDm?: boolean
+  replyText?: string | null
+  isActive?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  instagramAccount: Prisma.InstagramAccountCreateNestedOneWithoutAutomationsInput
+  messages?: Prisma.AutomationMessageCreateNestedManyWithoutAutomationInput
+  iceBreakers?: Prisma.IceBreakerCreateNestedManyWithoutAutomationInput
+}
+
+export type AutomationUncheckedCreateWithoutPersistentMenuItemsInput = {
+  id?: string
+  instagramAccountId: string
+  triggerType?: $Enums.AutomationTriggerType
+  keyword?: string | null
+  mediaId?: string | null
+  likeComment?: boolean
+  commentReplyText?: string | null
+  sendDm?: boolean
+  likeIncomingDm?: boolean
+  replyText?: string | null
+  isActive?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  messages?: Prisma.AutomationMessageUncheckedCreateNestedManyWithoutAutomationInput
+  iceBreakers?: Prisma.IceBreakerUncheckedCreateNestedManyWithoutAutomationInput
+}
+
+export type AutomationCreateOrConnectWithoutPersistentMenuItemsInput = {
+  where: Prisma.AutomationWhereUniqueInput
+  create: Prisma.XOR<Prisma.AutomationCreateWithoutPersistentMenuItemsInput, Prisma.AutomationUncheckedCreateWithoutPersistentMenuItemsInput>
+}
+
+export type AutomationUpsertWithoutPersistentMenuItemsInput = {
+  update: Prisma.XOR<Prisma.AutomationUpdateWithoutPersistentMenuItemsInput, Prisma.AutomationUncheckedUpdateWithoutPersistentMenuItemsInput>
+  create: Prisma.XOR<Prisma.AutomationCreateWithoutPersistentMenuItemsInput, Prisma.AutomationUncheckedCreateWithoutPersistentMenuItemsInput>
+  where?: Prisma.AutomationWhereInput
+}
+
+export type AutomationUpdateToOneWithWhereWithoutPersistentMenuItemsInput = {
+  where?: Prisma.AutomationWhereInput
+  data: Prisma.XOR<Prisma.AutomationUpdateWithoutPersistentMenuItemsInput, Prisma.AutomationUncheckedUpdateWithoutPersistentMenuItemsInput>
+}
+
+export type AutomationUpdateWithoutPersistentMenuItemsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  triggerType?: Prisma.EnumAutomationTriggerTypeFieldUpdateOperationsInput | $Enums.AutomationTriggerType
+  keyword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  commentReplyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  replyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  instagramAccount?: Prisma.InstagramAccountUpdateOneRequiredWithoutAutomationsNestedInput
+  messages?: Prisma.AutomationMessageUpdateManyWithoutAutomationNestedInput
+  iceBreakers?: Prisma.IceBreakerUpdateManyWithoutAutomationNestedInput
+}
+
+export type AutomationUncheckedUpdateWithoutPersistentMenuItemsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  instagramAccountId?: Prisma.StringFieldUpdateOperationsInput | string
+  triggerType?: Prisma.EnumAutomationTriggerTypeFieldUpdateOperationsInput | $Enums.AutomationTriggerType
+  keyword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  commentReplyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  replyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  messages?: Prisma.AutomationMessageUncheckedUpdateManyWithoutAutomationNestedInput
+  iceBreakers?: Prisma.IceBreakerUncheckedUpdateManyWithoutAutomationNestedInput
 }
 
 export type AutomationCreateManyInstagramAccountInput = {
@@ -755,6 +992,8 @@ export type AutomationUpdateWithoutInstagramAccountInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   messages?: Prisma.AutomationMessageUpdateManyWithoutAutomationNestedInput
+  iceBreakers?: Prisma.IceBreakerUpdateManyWithoutAutomationNestedInput
+  persistentMenuItems?: Prisma.PersistentMenuItemUpdateManyWithoutAutomationNestedInput
 }
 
 export type AutomationUncheckedUpdateWithoutInstagramAccountInput = {
@@ -771,6 +1010,8 @@ export type AutomationUncheckedUpdateWithoutInstagramAccountInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   messages?: Prisma.AutomationMessageUncheckedUpdateManyWithoutAutomationNestedInput
+  iceBreakers?: Prisma.IceBreakerUncheckedUpdateManyWithoutAutomationNestedInput
+  persistentMenuItems?: Prisma.PersistentMenuItemUncheckedUpdateManyWithoutAutomationNestedInput
 }
 
 export type AutomationUncheckedUpdateManyWithoutInstagramAccountInput = {
@@ -795,10 +1036,14 @@ export type AutomationUncheckedUpdateManyWithoutInstagramAccountInput = {
 
 export type AutomationCountOutputType = {
   messages: number
+  iceBreakers: number
+  persistentMenuItems: number
 }
 
 export type AutomationCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   messages?: boolean | AutomationCountOutputTypeCountMessagesArgs
+  iceBreakers?: boolean | AutomationCountOutputTypeCountIceBreakersArgs
+  persistentMenuItems?: boolean | AutomationCountOutputTypeCountPersistentMenuItemsArgs
 }
 
 /**
@@ -818,6 +1063,20 @@ export type AutomationCountOutputTypeCountMessagesArgs<ExtArgs extends runtime.T
   where?: Prisma.AutomationMessageWhereInput
 }
 
+/**
+ * AutomationCountOutputType without action
+ */
+export type AutomationCountOutputTypeCountIceBreakersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.IceBreakerWhereInput
+}
+
+/**
+ * AutomationCountOutputType without action
+ */
+export type AutomationCountOutputTypeCountPersistentMenuItemsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.PersistentMenuItemWhereInput
+}
+
 
 export type AutomationSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -835,6 +1094,8 @@ export type AutomationSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   updatedAt?: boolean
   instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
   messages?: boolean | Prisma.Automation$messagesArgs<ExtArgs>
+  iceBreakers?: boolean | Prisma.Automation$iceBreakersArgs<ExtArgs>
+  persistentMenuItems?: boolean | Prisma.Automation$persistentMenuItemsArgs<ExtArgs>
   _count?: boolean | Prisma.AutomationCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["automation"]>
 
@@ -892,6 +1153,8 @@ export type AutomationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs
 export type AutomationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
   messages?: boolean | Prisma.Automation$messagesArgs<ExtArgs>
+  iceBreakers?: boolean | Prisma.Automation$iceBreakersArgs<ExtArgs>
+  persistentMenuItems?: boolean | Prisma.Automation$persistentMenuItemsArgs<ExtArgs>
   _count?: boolean | Prisma.AutomationCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type AutomationIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -906,6 +1169,8 @@ export type $AutomationPayload<ExtArgs extends runtime.Types.Extensions.Internal
   objects: {
     instagramAccount: Prisma.$InstagramAccountPayload<ExtArgs>
     messages: Prisma.$AutomationMessagePayload<ExtArgs>[]
+    iceBreakers: Prisma.$IceBreakerPayload<ExtArgs>[]
+    persistentMenuItems: Prisma.$PersistentMenuItemPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1317,6 +1582,8 @@ export interface Prisma__AutomationClient<T, Null = never, ExtArgs extends runti
   readonly [Symbol.toStringTag]: "PrismaPromise"
   instagramAccount<T extends Prisma.InstagramAccountDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.InstagramAccountDefaultArgs<ExtArgs>>): Prisma.Prisma__InstagramAccountClient<runtime.Types.Result.GetResult<Prisma.$InstagramAccountPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   messages<T extends Prisma.Automation$messagesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Automation$messagesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AutomationMessagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  iceBreakers<T extends Prisma.Automation$iceBreakersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Automation$iceBreakersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$IceBreakerPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  persistentMenuItems<T extends Prisma.Automation$persistentMenuItemsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Automation$persistentMenuItemsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PersistentMenuItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1781,6 +2048,54 @@ export type Automation$messagesArgs<ExtArgs extends runtime.Types.Extensions.Int
   take?: number
   skip?: number
   distinct?: Prisma.AutomationMessageScalarFieldEnum | Prisma.AutomationMessageScalarFieldEnum[]
+}
+
+/**
+ * Automation.iceBreakers
+ */
+export type Automation$iceBreakersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the IceBreaker
+   */
+  select?: Prisma.IceBreakerSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the IceBreaker
+   */
+  omit?: Prisma.IceBreakerOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.IceBreakerInclude<ExtArgs> | null
+  where?: Prisma.IceBreakerWhereInput
+  orderBy?: Prisma.IceBreakerOrderByWithRelationInput | Prisma.IceBreakerOrderByWithRelationInput[]
+  cursor?: Prisma.IceBreakerWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.IceBreakerScalarFieldEnum | Prisma.IceBreakerScalarFieldEnum[]
+}
+
+/**
+ * Automation.persistentMenuItems
+ */
+export type Automation$persistentMenuItemsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PersistentMenuItem
+   */
+  select?: Prisma.PersistentMenuItemSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the PersistentMenuItem
+   */
+  omit?: Prisma.PersistentMenuItemOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PersistentMenuItemInclude<ExtArgs> | null
+  where?: Prisma.PersistentMenuItemWhereInput
+  orderBy?: Prisma.PersistentMenuItemOrderByWithRelationInput | Prisma.PersistentMenuItemOrderByWithRelationInput[]
+  cursor?: Prisma.PersistentMenuItemWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.PersistentMenuItemScalarFieldEnum | Prisma.PersistentMenuItemScalarFieldEnum[]
 }
 
 /**

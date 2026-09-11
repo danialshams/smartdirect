@@ -56,6 +56,9 @@ export const ModelName = {
   Automation: 'Automation',
   AutomationMessage: 'AutomationMessage',
   QuickReply: 'QuickReply',
+  IceBreaker: 'IceBreaker',
+  PersistentMenu: 'PersistentMenu',
+  PersistentMenuItem: 'PersistentMenuItem',
   Conversation: 'Conversation',
   ConversationMessage: 'ConversationMessage',
   Comment: 'Comment',
@@ -158,6 +161,46 @@ export const QuickReplyScalarFieldEnum = {
 } as const
 
 export type QuickReplyScalarFieldEnum = (typeof QuickReplyScalarFieldEnum)[keyof typeof QuickReplyScalarFieldEnum]
+
+
+export const IceBreakerScalarFieldEnum = {
+  id: 'id',
+  instagramAccountId: 'instagramAccountId',
+  automationId: 'automationId',
+  question: 'question',
+  payload: 'payload',
+  order: 'order',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type IceBreakerScalarFieldEnum = (typeof IceBreakerScalarFieldEnum)[keyof typeof IceBreakerScalarFieldEnum]
+
+
+export const PersistentMenuScalarFieldEnum = {
+  id: 'id',
+  instagramAccountId: 'instagramAccountId',
+  enabled: 'enabled',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PersistentMenuScalarFieldEnum = (typeof PersistentMenuScalarFieldEnum)[keyof typeof PersistentMenuScalarFieldEnum]
+
+
+export const PersistentMenuItemScalarFieldEnum = {
+  id: 'id',
+  persistentMenuId: 'persistentMenuId',
+  title: 'title',
+  payload: 'payload',
+  automationId: 'automationId',
+  order: 'order',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PersistentMenuItemScalarFieldEnum = (typeof PersistentMenuItemScalarFieldEnum)[keyof typeof PersistentMenuItemScalarFieldEnum]
 
 
 export const ConversationScalarFieldEnum = {
