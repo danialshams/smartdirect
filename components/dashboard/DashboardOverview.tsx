@@ -71,8 +71,8 @@ export default function DashboardOverview({
 
                     <p className="mt-3 max-w-xl text-sm leading-7 text-slate-400 sm:text-base">
                         اتوماسیون پاسخ‌گویی اینستاگرام را از یک
-                        نقطه مدیریت کنید؛ از کامنت‌های ورودی تا
-                        ارسال دایرکت خودکار.
+                        نقطه مدیریت کنید؛ از کامنت و دایرکت تا
+                        پاسخ به استوری و اجرای Flow های خودکار.
                     </p>
 
                     <div className="mt-7 flex flex-wrap gap-3">

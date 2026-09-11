@@ -8,7 +8,8 @@ import {
     MoreHorizontal,
     Pencil,
     Plus,
-    Trash2
+    Trash2,
+    MessageSquareText,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -22,21 +23,76 @@ type InstagramAccount = {
     createdAt: Date;
 };
 
+export type AutomationTriggerType =
+    | "COMMENT_KEYWORD"
+    | "DM"
+    | "STORY_REPLY_KEYWORD";
+
 export type Automation = {
     id: string;
     instagramAccountId: string;
+
+    triggerType: AutomationTriggerType;
+
     mediaId: string | null;
-    keyword: string;
+    keyword: string | null;
+
     commentReplyText: string | null;
     replyText: string | null;
+
     likeComment: boolean;
+    sendDm: boolean;
+    likeIncomingDm: boolean;
+
     isActive: boolean;
+
     createdAt: string;
     updatedAt: string;
+
+    messages?: unknown[];
 };
+
 type AutomationManagerProps = {
     accounts: InstagramAccount[];
 };
+
+function getTriggerLabel(
+    triggerType: AutomationTriggerType
+) {
+    switch (triggerType) {
+        case "COMMENT_KEYWORD":
+            return "کامنت";
+
+        case "DM":
+            return "دایرکت";
+
+        case "STORY_REPLY_KEYWORD":
+            return "پاسخ استوری";
+
+        default:
+            return "Automation";
+    }
+}
+
+function getTriggerDescription(
+    automation: Automation
+) {
+    switch (automation.triggerType) {
+        case "COMMENT_KEYWORD":
+            return `اگر کاربر در کامنت «${automation.keyword ?? ""
+                }» را بنویسد`;
+
+        case "DM":
+            return "وقتی کاربر وارد دایرکت شود";
+
+        case "STORY_REPLY_KEYWORD":
+            return `اگر کاربر در پاسخ استوری «${automation.keyword ?? ""
+                }» را ارسال کند`;
+
+        default:
+            return "Automation";
+    }
+}
 
 export default function AutomationManager({
     accounts,
@@ -44,9 +100,9 @@ export default function AutomationManager({
     const connectedAccounts = useMemo(
         () =>
             accounts.filter(
-                (account) => account.isConnected,
+                (account) => account.isConnected
             ),
-        [accounts],
+        [accounts]
     );
 
     const [selectedAccountId, setSelectedAccountId] =
@@ -57,18 +113,49 @@ export default function AutomationManager({
     >([]);
 
     const [loading, setLoading] = useState(false);
+
     const [formOpen, setFormOpen] = useState(false);
-    const [editingAutomation, setEditingAutomation] =
-        useState<Automation | null>(null);
+
+    const [
+        editingAutomation,
+        setEditingAutomation,
+    ] = useState<Automation | null>(null);
 
     const [menuId, setMenuId] = useState<string | null>(
-        null,
+        null
     );
 
-    const selectedAccount = connectedAccounts.find(
-        (account) => account.id === selectedAccountId,
-    );
+    const selectedAccount =
+        connectedAccounts.find(
+            (account) =>
+                account.id === selectedAccountId
+        );
 
+    useEffect(() => {
+        if (
+            connectedAccounts.length > 0 &&
+            !selectedAccountId
+        ) {
+            setSelectedAccountId(
+                connectedAccounts[0].id
+            );
+        }
+
+        if (
+            selectedAccountId &&
+            !connectedAccounts.some(
+                (account) =>
+                    account.id === selectedAccountId
+            )
+        ) {
+            setSelectedAccountId(
+                connectedAccounts[0]?.id ?? ""
+            );
+        }
+    }, [
+        connectedAccounts,
+        selectedAccountId,
+    ]);
 
     useEffect(() => {
         let cancelled = false;
@@ -88,28 +175,35 @@ export default function AutomationManager({
 
                 const response = await fetch(
                     `/api/automations?instagramAccountId=${encodeURIComponent(
-                        selectedAccountId,
+                        selectedAccountId
                     )}`,
                     {
                         method: "GET",
                         cache: "no-store",
-                    },
+                        credentials: "include",
+                    }
                 );
 
                 const result = await response.json();
 
                 if (!response.ok || !result.success) {
                     throw new Error(
+                        result.error ||
                         result.message ||
-                        "دریافت اتوماسیون‌ها ناموفق بود.",
+                        "دریافت اتوماسیون‌ها ناموفق بود."
                     );
                 }
 
                 if (!cancelled) {
-                    setAutomations(result.data ?? []);
+                    setAutomations(
+                        result.data ?? []
+                    );
                 }
             } catch (error) {
-                console.error(error);
+                console.error(
+                    "fetch automations error:",
+                    error
+                );
 
                 if (!cancelled) {
                     setAutomations([]);
@@ -129,7 +223,7 @@ export default function AutomationManager({
     }, [selectedAccountId]);
 
     async function handleToggle(
-        automation: Automation,
+        automation: Automation
     ) {
         try {
             const response = await fetch(
@@ -137,20 +231,24 @@ export default function AutomationManager({
                 {
                     method: "PATCH",
                     headers: {
-                        "Content-Type": "application/json",
+                        "Content-Type":
+                            "application/json",
                     },
+                    credentials: "include",
                     body: JSON.stringify({
-                        isActive: !automation.isActive,
+                        isActive:
+                            !automation.isActive,
                     }),
-                },
+                }
             );
 
             const result = await response.json();
 
             if (!response.ok || !result.success) {
                 throw new Error(
+                    result.error ||
                     result.message ||
-                    "تغییر وضعیت ناموفق بود.",
+                    "تغییر وضعیت ناموفق بود."
                 );
             }
 
@@ -159,26 +257,28 @@ export default function AutomationManager({
                     item.id === automation.id
                         ? {
                             ...item,
-                            isActive: !item.isActive,
+                            isActive:
+                                !item.isActive,
                         }
-                        : item,
-                ),
+                        : item
+                )
             );
         } catch (error) {
             console.error(error);
+
             alert(
                 error instanceof Error
                     ? error.message
-                    : "تغییر وضعیت ناموفق بود.",
+                    : "تغییر وضعیت ناموفق بود."
             );
         }
     }
 
     async function handleDelete(
-        automation: Automation,
+        automation: Automation
     ) {
         const confirmed = window.confirm(
-            `آیا از حذف اتوماسیون «${automation.keyword}» مطمئن هستید؟`,
+            "آیا از حذف این اتوماسیون مطمئن هستید؟"
         );
 
         if (!confirmed) {
@@ -190,22 +290,25 @@ export default function AutomationManager({
                 `/api/automations/${automation.id}`,
                 {
                     method: "DELETE",
-                },
+                    credentials: "include",
+                }
             );
 
             const result = await response.json();
 
             if (!response.ok || !result.success) {
                 throw new Error(
+                    result.error ||
                     result.message ||
-                    "حذف اتوماسیون ناموفق بود.",
+                    "حذف اتوماسیون ناموفق بود."
                 );
             }
 
             setAutomations((current) =>
                 current.filter(
-                    (item) => item.id !== automation.id,
-                ),
+                    (item) =>
+                        item.id !== automation.id
+                )
             );
 
             setMenuId(null);
@@ -215,13 +318,13 @@ export default function AutomationManager({
             alert(
                 error instanceof Error
                     ? error.message
-                    : "حذف اتوماسیون ناموفق بود.",
+                    : "حذف اتوماسیون ناموفق بود."
             );
         }
     }
 
     function handleCreated(
-        automation: Automation,
+        automation: Automation
     ) {
         setAutomations((current) => [
             automation,
@@ -232,17 +335,18 @@ export default function AutomationManager({
     }
 
     function handleUpdated(
-        automation: Automation,
+        automation: Automation
     ) {
         setAutomations((current) =>
             current.map((item) =>
                 item.id === automation.id
                     ? automation
-                    : item,
-            ),
+                    : item
+            )
         );
 
         setEditingAutomation(null);
+        setFormOpen(false);
     }
 
     return (
@@ -263,8 +367,9 @@ export default function AutomationManager({
                         </h2>
 
                         <p className="mt-1.5 max-w-xl text-sm leading-6 text-slate-400">
-                            مشخص کنید وقتی کاربر عبارت خاصی را در کامنت
-                            وارد کرد، چه پاسخی دریافت کند.
+                            رفتار SmartDirect را برای
+                            کامنت، دایرکت و پاسخ استوری
+                            مدیریت کنید.
                         </p>
                     </div>
 
@@ -272,12 +377,15 @@ export default function AutomationManager({
                         <button
                             type="button"
                             onClick={() => {
-                                setEditingAutomation(null);
+                                setEditingAutomation(
+                                    null
+                                );
                                 setFormOpen(true);
                             }}
                             className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
                         >
                             <Plus size={17} />
+
                             ساخت اتوماسیون
                         </button>
                     )}
@@ -298,19 +406,28 @@ export default function AutomationManager({
                                 }
                                 onChange={(event) =>
                                     setSelectedAccountId(
-                                        event.target.value,
+                                        event.target.value
                                     )
                                 }
                                 className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 pl-10 text-sm font-medium text-slate-700 outline-none transition focus:border-slate-400"
                             >
-                                {connectedAccounts.map((account) => (
-                                    <option
-                                        key={account.id}
-                                        value={account.id}
-                                    >
-                                        @{account.igUsername}
-                                    </option>
-                                ))}
+                                {connectedAccounts.map(
+                                    (account) => (
+                                        <option
+                                            key={
+                                                account.id
+                                            }
+                                            value={
+                                                account.id
+                                            }
+                                        >
+                                            @
+                                            {
+                                                account.igUsername
+                                            }
+                                        </option>
+                                    )
+                                )}
                             </select>
 
                             <ChevronDown
@@ -325,7 +442,7 @@ export default function AutomationManager({
             {connectedAccounts.length === 0 ? (
                 <div className="px-6 py-16 text-center">
                     <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
-                        <Bot size={24} />
+                        <MessageCircle size={24} />
                     </div>
 
                     <h3 className="mt-5 text-base font-bold text-slate-800">
@@ -333,8 +450,9 @@ export default function AutomationManager({
                     </h3>
 
                     <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-400">
-                        برای ساخت Automation حداقل یک اکانت
-                        اینستاگرام باید به SmartDirect متصل باشد.
+                        برای ساخت Automation حداقل
+                        یک اکانت اینستاگرام باید به
+                        SmartDirect متصل باشد.
                     </p>
                 </div>
             ) : loading ? (
@@ -347,7 +465,7 @@ export default function AutomationManager({
             ) : automations.length === 0 ? (
                 <div className="px-6 py-16 text-center">
                     <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
-                        <MessageCircle size={23} />
+                        <Bot size={23} />
                     </div>
 
                     <h3 className="mt-5 text-base font-bold text-slate-800">
@@ -355,63 +473,91 @@ export default function AutomationManager({
                     </h3>
 
                     <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-400">
-                        اولین Automation را بسازید تا SmartDirect
-                        به کامنت‌های کاربران به‌صورت خودکار پاسخ دهد.
+                        اولین Automation را بسازید
+                        تا SmartDirect رویدادهای
+                        اینستاگرام را به‌صورت خودکار
+                        پردازش کند.
                     </p>
 
                     <button
                         type="button"
                         onClick={() => {
-                            setEditingAutomation(null);
+                            setEditingAutomation(
+                                null
+                            );
                             setFormOpen(true);
                         }}
                         className="mt-6 inline-flex items-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white"
                     >
                         <Plus size={17} />
+
                         ساخت اولین اتوماسیون
                     </button>
                 </div>
             ) : (
                 <div className="divide-y divide-slate-100">
-                    {automations.map((automation) => (
-                        <AutomationCard
-                            key={automation.id}
-                            automation={automation}
-                            accountUsername={
-                                selectedAccount?.igUsername
-                            }
-                            menuOpen={menuId === automation.id}
-                            onMenuToggle={() =>
-                                setMenuId(
-                                    menuId === automation.id
-                                        ? null
-                                        : automation.id,
-                                )
-                            }
-                            onToggle={() =>
-                                handleToggle(automation)
-                            }
-                            onEdit={() => {
-                                setMenuId(null);
-                                setEditingAutomation(automation);
-                                setFormOpen(true);
-                            }}
-                            onDelete={() =>
-                                handleDelete(automation)
-                            }
-                        />
-                    ))}
+                    {automations.map(
+                        (automation) => (
+                            <AutomationCard
+                                key={automation.id}
+                                automation={
+                                    automation
+                                }
+                                accountUsername={
+                                    selectedAccount?.igUsername
+                                }
+                                menuOpen={
+                                    menuId ===
+                                    automation.id
+                                }
+                                onMenuToggle={() =>
+                                    setMenuId(
+                                        menuId ===
+                                            automation.id
+                                            ? null
+                                            : automation.id
+                                    )
+                                }
+                                onToggle={() =>
+                                    handleToggle(
+                                        automation
+                                    )
+                                }
+                                onEdit={() => {
+                                    setMenuId(null);
+
+                                    setEditingAutomation(
+                                        automation
+                                    );
+
+                                    setFormOpen(true);
+                                }}
+                                onDelete={() =>
+                                    handleDelete(
+                                        automation
+                                    )
+                                }
+                            />
+                        )
+                    )}
                 </div>
             )}
 
             {formOpen && selectedAccount && (
                 <AutomationForm
-                    key={editingAutomation?.id ?? "new"}
+                    key={
+                        editingAutomation?.id ??
+                        "new"
+                    }
                     account={selectedAccount}
-                    automation={editingAutomation}
+                    automation={
+                        editingAutomation
+                    }
                     onClose={() => {
                         setFormOpen(false);
-                        setEditingAutomation(null);
+                        setEditingAutomation(
+                            null
+                        );
                     }}
                     onCreated={handleCreated}
                     onUpdated={handleUpdated}
@@ -450,17 +596,24 @@ function AutomationCard({
                                 : "bg-slate-100 text-slate-400",
                         ].join(" ")}
                     >
-                        <Bot size={20} strokeWidth={1.7} />
+                        <Bot
+                            size={20}
+                            strokeWidth={1.7}
+                        />
                     </div>
 
                     <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-sm font-bold text-slate-900">
-                                اگر کامنت شامل
+                            <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
+                                {getTriggerLabel(
+                                    automation.triggerType
+                                )}
                             </span>
 
-                            <span className="rounded-lg bg-slate-100 px-2.5 py-1 font-mono text-xs font-semibold text-slate-700">
-                                {automation.keyword}
+                            <span className="text-sm font-bold text-slate-900">
+                                {getTriggerDescription(
+                                    automation
+                                )}
                             </span>
 
                             <span
@@ -482,26 +635,36 @@ function AutomationCard({
                         </p>
 
                         <div className="mt-4 grid gap-3 md:grid-cols-2">
+                            {automation.triggerType ===
+                                "COMMENT_KEYWORD" && (
+                                    <div className="rounded-xl border border-slate-100 bg-white p-3">
+                                        <div className="mb-1 flex items-center gap-2 text-[10px] font-medium text-slate-400">
+                                            <MessageCircle
+                                                size={13}
+                                            />
+
+                                            پاسخ عمومی
+                                        </div>
+
+                                        <p className="line-clamp-2 text-xs leading-6 text-slate-600">
+                                            {automation.commentReplyText ||
+                                                "بدون پاسخ عمومی"}
+                                        </p>
+                                    </div>
+                                )}
+
                             <div className="rounded-xl border border-slate-100 bg-white p-3">
                                 <div className="mb-1 flex items-center gap-2 text-[10px] font-medium text-slate-400">
-                                    <MessageCircle size={13} />
-                                    پاسخ عمومی کامنت
+                                    <MessageSquareText
+                                        size={13}
+                                    />
+
+                                    پاسخ دایرکت
                                 </div>
 
                                 <p className="line-clamp-2 text-xs leading-6 text-slate-600">
-                                    {automation.commentReplyText ||
-                                        "بدون پاسخ عمومی"}
-                                </p>
-                            </div>
-
-                            <div className="rounded-xl border border-slate-100 bg-white p-3">
-                                <div className="mb-1 flex items-center gap-2 text-[10px] font-medium text-slate-400">
-                                    <MessageCircle size={13} />
-                                    پاسخ خصوصی
-                                </div>
-
-                                <p className="line-clamp-2 text-xs leading-6 text-slate-600">
-                                    {automation.replyText}
+                                    {automation.replyText ||
+                                        "از Flow پیام استفاده می‌شود"}
                                 </p>
                             </div>
                         </div>
@@ -544,7 +707,9 @@ function AutomationCard({
                             className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-white hover:text-slate-700"
                             aria-label="گزینه‌ها"
                         >
-                            <MoreHorizontal size={19} />
+                            <MoreHorizontal
+                                size={19}
+                            />
                         </button>
 
                         {menuOpen && (
@@ -552,7 +717,9 @@ function AutomationCard({
                                 <button
                                     type="button"
                                     className="fixed inset-0 z-10 cursor-default"
-                                    onClick={onMenuToggle}
+                                    onClick={
+                                        onMenuToggle
+                                    }
                                     aria-label="بستن"
                                 />
 
@@ -562,16 +729,24 @@ function AutomationCard({
                                         onClick={onEdit}
                                         className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs text-slate-600 transition hover:bg-slate-50"
                                     >
-                                        <Pencil size={14} />
+                                        <Pencil
+                                            size={14}
+                                        />
+
                                         ویرایش
                                     </button>
 
                                     <button
                                         type="button"
-                                        onClick={onDelete}
+                                        onClick={
+                                            onDelete
+                                        }
                                         className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs text-red-600 transition hover:bg-red-50"
                                     >
-                                        <Trash2 size={14} />
+                                        <Trash2
+                                            size={14}
+                                        />
+
                                         حذف
                                     </button>
                                 </div>
