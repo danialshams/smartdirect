@@ -1,6 +1,6 @@
 import { AutomationMessageType } from "@/generated/prisma/client";
 
-const INSTAGRAM_API_VERSION = "v25.0";
+const INSTAGRAM_API_VERSION = "v26.0";
 
 const MAX_API_RETRIES = 2;
 
@@ -115,9 +115,7 @@ function validateQuickReplies(quickReplies: QuickReplyPayload[]) {
 
     return {
       content_type: "text",
-
       title,
-
       payload: quickReply.payload,
     };
   });
@@ -156,10 +154,7 @@ async function callInstagramMessagesApi({
 
   console.log("[Instagram Send API] URL:", url);
 
-  /*
-   * خیلی مهم:
-   * Access Token را هرگز در log چاپ نمی‌کنیم.
-   */
+  // Access Token را هرگز در log چاپ نمی‌کنیم.
   console.log(
     "[Instagram Send API] Request body:",
     JSON.stringify(body, null, 2),
@@ -246,16 +241,7 @@ async function callInstagramMessagesApi({
         response: responseData,
       });
 
-      /*
-       * 4xx معمولاً خطاهای:
-       * - access token
-       * - permission
-       * - recipient
-       * - payload
-       * - messaging window
-       *
-       * هستند و retry فایده‌ای ندارد.
-       */
+      // خطاهای 4xx را retry نمی‌کنیم.
       if (response.status >= 400 && response.status < 500) {
         return {
           success: false,
@@ -266,9 +252,7 @@ async function callInstagramMessagesApi({
         };
       }
 
-      /*
-       * برای 5xx فقط یک retry محدود انجام می‌دهیم.
-       */
+      // برای خطاهای 5xx یک retry محدود.
       if (attempt < MAX_API_RETRIES) {
         await sleep(attempt * 1000);
 
@@ -347,28 +331,10 @@ export async function sendAutomationMessage(
 
     const quickReplies = message.quickReplies ?? [];
 
-    /*
-     * ابتدا payload پایه.
-     *
-     * این ساختار مطابق Send API اینستاگرام است:
-     *
-     * {
-     *   recipient: {
-     *     id: "<IGSID>"
-     *   },
-     *   message: {
-     *     text: "..."
-     *   }
-     * }
-     */
     const messageBody: Record<string, unknown> = {
       text: message.text.trim(),
     };
 
-    /*
-     * اگر Quick Reply وجود داشت،
-     * بعد از صحت ارسال TEXT ساده به آن اضافه می‌شود.
-     */
     if (quickReplies.length > 0) {
       const formattedQuickReplies = validateQuickReplies(quickReplies);
 
@@ -380,10 +346,6 @@ export async function sendAutomationMessage(
         id: recipientId,
       },
 
-      /*
-       * طبق نمونه‌های Send API، RESPONSE
-       * برای پاسخ به پیام ورودی قابل استفاده است.
-       */
       messaging_type: "RESPONSE",
 
       message: messageBody,
