@@ -1,10 +1,8 @@
-import {
-  AutomationMessageType,
-} from "@/generated/prisma/client";
+import { AutomationMessageType } from "@/generated/prisma/client";
 
-const INSTAGRAM_API_VERSION = "v26.0";
+const INSTAGRAM_API_VERSION = "v25.0";
 
-const MAX_API_RETRIES = 3;
+const MAX_API_RETRIES = 2;
 
 const MAX_QUICK_REPLIES = 13;
 
@@ -21,16 +19,18 @@ export type AutomationMessagePayload = {
 
   accessToken: string;
 
-  /*
+  /**
    * Instagram-scoped ID شخصی که باید پیام را دریافت کند.
+   *
+   * این همان sender.id از پیام ورودی Webhook است.
    */
   recipientId: string;
 
-  /*
-   * ID اکانت Professional اینستاگرام
-   * که متعلق به SmartDirect است.
+  /**
+   * Instagram Professional Account ID
+   * متعلق به SmartDirect.
    *
-   * این ID همان InstagramAccount.igUserId است.
+   * این همان InstagramAccount.igUserId است.
    */
   instagramUserId: string;
 
@@ -68,9 +68,13 @@ type InstagramApiResponse = {
 
   error?: {
     message?: string;
+
     type?: string;
+
     code?: number;
+
     error_subcode?: number;
+
     fbtrace_id?: string;
   };
 };
@@ -81,63 +85,42 @@ function sleep(ms: number): Promise<void> {
   });
 }
 
-function truncateQuickReplyTitle(
-  title: string,
-): string {
+function truncateQuickReplyTitle(title: string): string {
   const normalized = title.trim();
 
-  if (
-    normalized.length <=
-    MAX_QUICK_REPLY_TITLE_LENGTH
-  ) {
+  if (normalized.length <= MAX_QUICK_REPLY_TITLE_LENGTH) {
     return normalized;
   }
 
-  return normalized.slice(
-    0,
-    MAX_QUICK_REPLY_TITLE_LENGTH,
-  );
+  return normalized.slice(0, MAX_QUICK_REPLY_TITLE_LENGTH);
 }
 
-function validateQuickReplies(
-  quickReplies: QuickReplyPayload[],
-) {
-  if (
-    quickReplies.length >
-    MAX_QUICK_REPLIES
-  ) {
+function validateQuickReplies(quickReplies: QuickReplyPayload[]) {
+  if (quickReplies.length > MAX_QUICK_REPLIES) {
     throw new Error(
       `Instagram supports a maximum of ${MAX_QUICK_REPLIES} quick replies`,
     );
   }
 
-  return quickReplies.map(
-    (quickReply) => {
-      const title =
-        truncateQuickReplyTitle(
-          quickReply.title,
-        );
+  return quickReplies.map((quickReply) => {
+    const title = truncateQuickReplyTitle(quickReply.title);
 
-      if (!title) {
-        throw new Error(
-          "Quick reply title cannot be empty",
-        );
-      }
+    if (!title) {
+      throw new Error("Quick reply title cannot be empty");
+    }
 
-      if (!quickReply.payload) {
-        throw new Error(
-          "Quick reply payload cannot be empty",
-        );
-      }
+    if (!quickReply.payload) {
+      throw new Error("Quick reply payload cannot be empty");
+    }
 
-      return {
-        content_type: "text",
-        title,
-        payload:
-          quickReply.payload,
-      };
-    },
-  );
+    return {
+      content_type: "text",
+
+      title,
+
+      payload: quickReply.payload,
+    };
+  });
 }
 
 function getMediaAttachmentType(
@@ -154,9 +137,7 @@ function getMediaAttachmentType(
       return "audio";
 
     default:
-      throw new Error(
-        `Unsupported media message type: ${messageType}`,
-      );
+      throw new Error(`Unsupported media message type: ${messageType}`);
   }
 }
 
@@ -171,143 +152,141 @@ async function callInstagramMessagesApi({
 
   body: Record<string, unknown>;
 }): Promise<SendAutomationMessageResult> {
-  const url =
-    `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${instagramUserId}/messages`;
+  const url = `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${instagramUserId}/messages`;
 
+  console.log("[Instagram Send API] URL:", url);
+
+  /*
+   * خیلی مهم:
+   * Access Token را هرگز در log چاپ نمی‌کنیم.
+   */
   console.log(
-    "[Instagram Send API] URL:",
-    url,
+    "[Instagram Send API] Request body:",
+    JSON.stringify(body, null, 2),
   );
 
-  for (
-    let attempt = 1;
-    attempt <= MAX_API_RETRIES;
-    attempt++
-  ) {
+  for (let attempt = 1; attempt <= MAX_API_RETRIES; attempt++) {
     try {
-      console.log(
-        `[Instagram Send API] Attempt ${attempt}/${MAX_API_RETRIES}`,
-      );
+      console.log(`[Instagram Send API] Attempt ${attempt}/${MAX_API_RETRIES}`);
 
-      const response =
-        await fetch(url, {
-          method: "POST",
+      const response = await fetch(url, {
+        method: "POST",
 
-          headers: {
-            Authorization:
-              `Bearer ${accessToken}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
 
-            "Content-Type":
-              "application/json",
-          },
+          "Content-Type": "application/json",
 
-          body: JSON.stringify(body),
+          Accept: "application/json",
+        },
 
-          cache: "no-store",
-        });
+        body: JSON.stringify(body),
 
-      const responseText =
-        await response.text();
+        cache: "no-store",
+      });
 
-      let responseData:
-        | InstagramApiResponse
-        | string;
+      const responseText = await response.text();
+
+      let responseData: InstagramApiResponse | string;
 
       try {
-        responseData =
-          JSON.parse(responseText);
+        responseData = JSON.parse(responseText);
       } catch {
-        responseData =
-          responseText;
+        responseData = responseText;
       }
 
+      console.log("[Instagram Send API] Response:", {
+        status: response.status,
+
+        ok: response.ok,
+
+        data: responseData,
+      });
+
       if (response.ok) {
-        const data =
-          responseData as InstagramApiResponse;
+        const data = responseData as InstagramApiResponse;
 
-        console.log(
-          "[Instagram Send API] Success:",
-          {
-            recipientId:
-              data.recipient_id,
+        console.log("[Instagram Send API] SUCCESS:", {
+          recipientId: data.recipient_id,
 
-            messageId:
-              data.message_id,
-          },
-        );
+          messageId: data.message_id,
+        });
 
         return {
           success: true,
 
-          igMessageId:
-            data.message_id,
+          igMessageId: data.message_id,
 
-          recipientId:
-            data.recipient_id,
+          recipientId: data.recipient_id,
 
-          response:
-            responseData,
+          response: responseData,
         };
       }
 
-      console.error(
-        "[Instagram Send API] Request failed",
-        {
-          attempt,
-          status:
-            response.status,
+      const errorData = responseData as InstagramApiResponse;
 
-          response:
-            responseData,
-        },
-      );
+      const apiError = errorData?.error;
+
+      const errorMessage =
+        apiError?.message ?? `Instagram API returned HTTP ${response.status}`;
+
+      console.error("[Instagram Send API] FAILED:", {
+        status: response.status,
+
+        errorMessage,
+
+        errorType: apiError?.type,
+
+        errorCode: apiError?.code,
+
+        errorSubcode: apiError?.error_subcode,
+
+        fbtraceId: apiError?.fbtrace_id,
+
+        response: responseData,
+      });
 
       /*
-       * 4xx خطاهای validation / permission / token
-       * معمولاً با retry حل نمی‌شوند.
+       * 4xx معمولاً خطاهای:
+       * - access token
+       * - permission
+       * - recipient
+       * - payload
+       * - messaging window
+       *
+       * هستند و retry فایده‌ای ندارد.
        */
-      if (
-        response.status >= 400 &&
-        response.status < 500
-      ) {
-        const errorData =
-          responseData as InstagramApiResponse;
-
+      if (response.status >= 400 && response.status < 500) {
         return {
           success: false,
 
-          error:
-            errorData?.error?.message ??
-            `Instagram API returned HTTP ${response.status}`,
+          error: errorMessage,
 
-          response:
-            responseData,
+          response: responseData,
         };
       }
 
-      if (
-        attempt <
-        MAX_API_RETRIES
-      ) {
-        const delay =
-          attempt * 1000;
+      /*
+       * برای 5xx فقط یک retry محدود انجام می‌دهیم.
+       */
+      if (attempt < MAX_API_RETRIES) {
+        await sleep(attempt * 1000);
 
-        await sleep(delay);
+        continue;
       }
+
+      return {
+        success: false,
+
+        error: errorMessage,
+
+        response: responseData,
+      };
     } catch (error) {
-      console.error(
-        "[Instagram Send API] Request error:",
-        error,
-      );
+      console.error("[Instagram Send API] Network error:", error);
 
-      if (
-        attempt <
-        MAX_API_RETRIES
-      ) {
-        const delay =
-          attempt * 1000;
-
-        await sleep(delay);
+      if (attempt < MAX_API_RETRIES) {
+        await sleep(attempt * 1000);
 
         continue;
       }
@@ -326,103 +305,89 @@ async function callInstagramMessagesApi({
   return {
     success: false,
 
-    error:
-      "Instagram API request failed after maximum retries",
+    error: "Instagram API request failed",
   };
 }
 
 export async function sendAutomationMessage(
   payload: AutomationMessagePayload,
 ): Promise<SendAutomationMessageResult> {
-  const {
-    accessToken,
-    recipientId,
-    instagramUserId,
-    message,
-  } = payload;
+  const { accessToken, recipientId, instagramUserId, message } = payload;
 
   if (!accessToken) {
-    throw new Error(
-      "Instagram access token is missing",
-    );
+    throw new Error("Instagram access token is missing");
   }
 
   if (!recipientId) {
-    throw new Error(
-      "Instagram recipient ID is missing",
-    );
+    throw new Error("Instagram recipient ID is missing");
   }
 
   if (!instagramUserId) {
-    throw new Error(
-      "Instagram professional account ID is missing",
-    );
+    throw new Error("Instagram professional account ID is missing");
   }
 
-  console.log(
-    "[Automation] Sending message:",
-    {
-      messageId:
-        message.id,
+  console.log("[Automation] Sending message:", {
+    messageId: message.id,
 
-      messageType:
-        message.messageType,
+    messageType: message.messageType,
 
-      recipientId,
+    recipientId,
 
-      instagramUserId,
-    },
-  );
+    instagramUserId,
+  });
 
   // =========================================================
   // TEXT
   // =========================================================
 
-  if (
-    message.messageType === "TEXT"
-  ) {
-    if (
-      !message.text ||
-      !message.text.trim()
-    ) {
-      throw new Error(
-        "TEXT automation message requires text",
-      );
+  if (message.messageType === "TEXT") {
+    if (!message.text || !message.text.trim()) {
+      throw new Error("TEXT automation message requires text");
     }
 
-    const quickReplies =
-      message.quickReplies ?? [];
+    const quickReplies = message.quickReplies ?? [];
 
-    const body: Record<
-      string,
-      unknown
-    > = {
+    /*
+     * ابتدا payload پایه.
+     *
+     * این ساختار مطابق Send API اینستاگرام است:
+     *
+     * {
+     *   recipient: {
+     *     id: "<IGSID>"
+     *   },
+     *   message: {
+     *     text: "..."
+     *   }
+     * }
+     */
+    const messageBody: Record<string, unknown> = {
+      text: message.text.trim(),
+    };
+
+    /*
+     * اگر Quick Reply وجود داشت،
+     * بعد از صحت ارسال TEXT ساده به آن اضافه می‌شود.
+     */
+    if (quickReplies.length > 0) {
+      const formattedQuickReplies = validateQuickReplies(quickReplies);
+
+      messageBody.quick_replies = formattedQuickReplies;
+    }
+
+    const body: Record<string, unknown> = {
       recipient: {
         id: recipientId,
       },
 
-      messaging_type:
-        "RESPONSE",
+      /*
+       * طبق نمونه‌های Send API، RESPONSE
+       * برای پاسخ به پیام ورودی قابل استفاده است.
+       */
+      messaging_type: "RESPONSE",
 
-      message: {
-        text: message.text,
-      },
+      message: messageBody,
     };
-
-    if (quickReplies.length > 0) {
-      const formattedQuickReplies =
-        validateQuickReplies(
-          quickReplies,
-        );
-
-      (
-        body.message as Record<
-          string,
-          unknown
-        >
-      ).quick_replies =
-        formattedQuickReplies;
-    }
 
     return callInstagramMessagesApi({
       instagramUserId,
@@ -438,60 +403,38 @@ export async function sendAutomationMessage(
   // =========================================================
 
   if (
-    message.messageType ===
-      "IMAGE" ||
-    message.messageType ===
-      "VIDEO" ||
-    message.messageType ===
-      "AUDIO"
+    message.messageType === "IMAGE" ||
+    message.messageType === "VIDEO" ||
+    message.messageType === "AUDIO"
   ) {
-    if (
-      !message.mediaUrl &&
-      !message.mediaId
-    ) {
+    if (!message.mediaUrl && !message.mediaId) {
       throw new Error(
         `${message.messageType} automation message requires mediaUrl or mediaId`,
       );
     }
 
-    const attachmentType =
-      getMediaAttachmentType(
-        message.messageType,
-      );
+    const attachmentType = getMediaAttachmentType(message.messageType);
 
-    const payloadData: Record<
-      string,
-      unknown
-    > = {};
+    const payloadData: Record<string, unknown> = {};
 
     if (message.mediaId) {
-      payloadData.attachment_id =
-        message.mediaId;
-    } else if (
-      message.mediaUrl
-    ) {
-      payloadData.url =
-        message.mediaUrl;
+      payloadData.attachment_id = message.mediaId;
+    } else if (message.mediaUrl) {
+      payloadData.url = message.mediaUrl;
     }
 
-    const body: Record<
-      string,
-      unknown
-    > = {
+    const body: Record<string, unknown> = {
       recipient: {
         id: recipientId,
       },
 
-      messaging_type:
-        "RESPONSE",
+      messaging_type: "RESPONSE",
 
       message: {
         attachment: {
-          type:
-            attachmentType,
+          type: attachmentType,
 
-          payload:
-            payloadData,
+          payload: payloadData,
         },
       },
     };
@@ -509,15 +452,12 @@ export async function sendAutomationMessage(
   // SHOWCASE
   // =========================================================
 
-  if (
-    message.messageType ===
-    "SHOWCASE"
-  ) {
+  if (message.messageType === "SHOWCASE") {
     return {
       success: false,
 
       error:
-        "SHOWCASE is not directly supported by the current automation sender. It must be converted to supported Instagram messages first.",
+        "SHOWCASE is not directly supported by the current automation sender.",
     };
   }
 
@@ -525,22 +465,17 @@ export async function sendAutomationMessage(
   // FORM
   // =========================================================
 
-  if (
-    message.messageType ===
-    "FORM"
-  ) {
+  if (message.messageType === "FORM") {
     return {
       success: false,
 
-      error:
-        "FORM is not directly supported by the current automation sender. It must be converted to supported Instagram messages first.",
+      error: "FORM is not directly supported by the current automation sender.",
     };
   }
 
   return {
     success: false,
 
-    error:
-      `Unsupported automation message type: ${message.messageType}`,
+    error: `Unsupported automation message type: ${message.messageType}`,
   };
 }
