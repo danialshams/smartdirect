@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { exchangeInstagramToken } from "@/lib/instagram/token-manager";
 
 export async function GET(request: NextRequest) {
   try {
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest) {
     }
 
     // =========================================================
-    // 2. Check authorization code
+    // 2. Authorization Code
     // =========================================================
 
     if (!code) {
@@ -44,7 +45,7 @@ export async function GET(request: NextRequest) {
     }
 
     // =========================================================
-    // 3. Check state
+    // 3. State
     // =========================================================
 
     if (!state) {
@@ -59,7 +60,7 @@ export async function GET(request: NextRequest) {
     }
 
     // =========================================================
-    // 4. Decode state
+    // 4. Decode State
     // =========================================================
 
     let stateData: {
@@ -68,9 +69,7 @@ export async function GET(request: NextRequest) {
     };
 
     try {
-      stateData = JSON.parse(
-        Buffer.from(state, "base64url").toString("utf-8"),
-      );
+      stateData = JSON.parse(Buffer.from(state, "base64url").toString("utf-8"));
     } catch (error) {
       console.error("Instagram callback: invalid state", error);
 
@@ -83,7 +82,7 @@ export async function GET(request: NextRequest) {
     }
 
     // =========================================================
-    // 5. Validate state data
+    // 5. Validate State
     // =========================================================
 
     if (!stateData.userId || !stateData.timestamp) {
@@ -98,7 +97,7 @@ export async function GET(request: NextRequest) {
     }
 
     // =========================================================
-    // 6. Check state expiration
+    // 6. State Expiration
     // =========================================================
 
     const stateAge = Date.now() - stateData.timestamp;
@@ -115,11 +114,13 @@ export async function GET(request: NextRequest) {
     }
 
     // =========================================================
-    // 7. Check environment variables
+    // 7. Environment
     // =========================================================
 
     const clientId = process.env.INSTAGRAM_CLIENT_ID;
+
     const clientSecret = process.env.INSTAGRAM_CLIENT_SECRET;
+
     const redirectUri = process.env.INSTAGRAM_REDIRECT_URI;
 
     if (!clientId) {
@@ -156,12 +157,10 @@ export async function GET(request: NextRequest) {
     }
 
     // =========================================================
-    // 8. Exchange authorization code for access token
+    // 8. Exchange Authorization Code
     // =========================================================
 
-    console.log(
-      "Instagram OAuth: exchanging authorization code...",
-    );
+    console.log("Instagram OAuth: exchanging authorization code...");
 
     const tokenController = new AbortController();
 
@@ -191,10 +190,7 @@ export async function GET(request: NextRequest) {
         },
       );
     } catch (error) {
-      console.error(
-        "Instagram token exchange FETCH ERROR:",
-        error,
-      );
+      console.error("Instagram token exchange FETCH ERROR:", error);
 
       return NextResponse.redirect(
         new URL(
@@ -208,7 +204,7 @@ export async function GET(request: NextRequest) {
 
     const tokenData = await tokenResponse.json();
 
-    console.log("Instagram token response:", {
+    console.log("Instagram short-lived token response:", {
       success: tokenResponse.ok,
       status: tokenResponse.status,
       user_id: tokenData.user_id,
@@ -219,17 +215,16 @@ export async function GET(request: NextRequest) {
     });
 
     // =========================================================
-    // 9. Validate access token response
+    // 9. Validate Short-Lived Token
     // =========================================================
 
     if (!tokenResponse.ok || !tokenData.access_token) {
-      console.error(
-        "Instagram token exchange failed:",
-        {
-          status: tokenResponse.status,
-          data: tokenData,
-        },
-      );
+      console.error("Instagram token exchange failed:", {
+        status: tokenResponse.status,
+        error: tokenData.error,
+        error_type: tokenData.error_type,
+        error_message: tokenData.error_message,
+      });
 
       return NextResponse.redirect(
         new URL(
@@ -239,54 +234,52 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const accessToken = tokenData.access_token;
+    const shortLivedToken = String(tokenData.access_token);
 
-    // این ID مربوط به token exchange است.
-    // برای Webhook از این ID استفاده نمی‌کنیم.
     const tokenUserId = String(tokenData.user_id);
 
-    console.log(
-      "Instagram OAuth: token received:",
-      {
-        tokenUserId,
-      },
-    );
-
     // =========================================================
-    // 10. Get Instagram profile + Instagram Professional User ID
+    // 10. Exchange Short-Lived → Long-Lived
     // =========================================================
 
     console.log(
-      "Instagram OAuth: getting Instagram professional account...",
+      "Instagram OAuth: exchanging short-lived token for long-lived token...",
     );
 
-    /*
-     * مهم:
-     *
-     * قبلاً این را داشتیم:
-     *
-     * fields=id,username
-     *
-     * که id آن شناسه app-scoped بود.
-     *
-     * برای Webhook باید user_id را بگیریم.
-     *
-     * user_id همان ID با فرمت 1784... است.
-     */
+    let longLivedTokenData;
+
+    try {
+      longLivedTokenData = await exchangeInstagramToken(shortLivedToken);
+    } catch (error) {
+      console.error("Instagram long-lived token exchange failed:", error);
+
+      return NextResponse.redirect(
+        new URL(
+          "/dashboard?instagram=long_lived_token_error",
+          process.env.NEXTAUTH_URL || request.url,
+        ),
+      );
+    }
+
+    const accessToken = longLivedTokenData.accessToken;
+
+    const tokenExpiresAt = longLivedTokenData.expiresAt;
+
+    console.log("Instagram OAuth: long-lived token ready:", {
+      tokenUserId,
+      tokenExpiresAt: tokenExpiresAt.toISOString(),
+    });
+
+    // =========================================================
+    // 11. Get Instagram Profile
+    // =========================================================
+
+    console.log("Instagram OAuth: getting Instagram professional account...");
 
     const profileUrl =
-      `https://graph.instagram.com/v26.0/me` +
+      `https://graph.instagram.com/${"v26.0"}/me` +
       `?fields=id,user_id,username` +
       `&access_token=${encodeURIComponent(accessToken)}`;
-
-    console.log(
-      "Instagram profile request:",
-      {
-        endpoint:
-          "https://graph.instagram.com/v26.0/me",
-        tokenUserId,
-      },
-    );
 
     const profileController = new AbortController();
 
@@ -303,10 +296,7 @@ export async function GET(request: NextRequest) {
         signal: profileController.signal,
       });
     } catch (error) {
-      console.error(
-        "Instagram profile FETCH ERROR:",
-        error,
-      );
+      console.error("Instagram profile FETCH ERROR:", error);
 
       return NextResponse.redirect(
         new URL(
@@ -328,7 +318,7 @@ export async function GET(request: NextRequest) {
     console.log("========================================");
 
     // =========================================================
-    // 11. Parse profile response
+    // 12. Parse Profile
     // =========================================================
 
     let profileData: {
@@ -340,9 +330,7 @@ export async function GET(request: NextRequest) {
     try {
       profileData = JSON.parse(profileText);
     } catch {
-      console.error(
-        "Instagram profile response is not valid JSON",
-      );
+      console.error("Instagram profile response is not valid JSON");
 
       return NextResponse.redirect(
         new URL(
@@ -353,18 +341,15 @@ export async function GET(request: NextRequest) {
     }
 
     // =========================================================
-    // 12. Validate profile response
+    // 13. Validate Profile
     // =========================================================
 
     if (!profileResponse.ok) {
-      console.error(
-        "Instagram profile request failed:",
-        {
-          status: profileResponse.status,
-          data: profileData,
-          tokenUserId,
-        },
-      );
+      console.error("Instagram profile request failed:", {
+        status: profileResponse.status,
+        data: profileData,
+        tokenUserId,
+      });
 
       return NextResponse.redirect(
         new URL(
@@ -389,165 +374,120 @@ export async function GET(request: NextRequest) {
     }
 
     // =========================================================
-    // 13. Get correct Instagram Professional Account ID
+    // 14. Instagram IDs
     // =========================================================
 
-    /*
-     * این ID همان IDای است که Webhook در entry.id می‌فرستد.
-     *
-     * مثال:
-     *
-     * tokenUserId:
-     * 29195065126747612
-     *
-     * app-scoped id:
-     * 29195065126747613
-     *
-     * professional user_id:
-     * 17841434583842416
-     *
-     * ما باید سومی را در دیتابیس ذخیره کنیم.
-     */
-
-    const instagramUserId = String(
-      profileData.user_id,
-    );
+    const instagramUserId = String(profileData.user_id);
 
     const instagramAppScopedId = profileData.id
       ? String(profileData.id)
       : undefined;
 
-    const instagramUsername =
-      profileData.username || "";
+    const instagramUsername = profileData.username || "";
 
     console.log("========================================");
     console.log("INSTAGRAM OAUTH ID DEBUG");
     console.log("tokenUserId:", tokenUserId);
-    console.log(
-      "appScopedId:",
-      instagramAppScopedId,
-    );
-    console.log(
-      "professionalUserId:",
-      instagramUserId,
-    );
-    console.log(
-      "username:",
-      instagramUsername,
-    );
+    console.log("appScopedId:", instagramAppScopedId);
+    console.log("professionalUserId:", instagramUserId);
+    console.log("username:", instagramUsername);
+    console.log("tokenExpiresAt:", tokenExpiresAt.toISOString());
     console.log("========================================");
 
     // =========================================================
-    // 14. Find existing account
+    // 15. Find Existing Account
     // =========================================================
 
-    /*
-     * رکورد قبلی ما با ID اشتباه ذخیره شده بود:
-     *
-     * 29195065126747613
-     *
-     * بنابراین فقط upsert بر اساس igUserId کافی نیست،
-     * چون در این حالت یک رکورد جدید ساخته می‌شود.
-     *
-     * ابتدا رکورد قبلی همین کاربر را بر اساس userId
-     * و username پیدا می‌کنیم تا ID آن را اصلاح کنیم.
-     */
+    console.log("Instagram OAuth: checking existing account...");
 
-    console.log(
-      "Instagram OAuth: checking existing account...",
-    );
-
-    const existingAccount =
-      await prisma.instagramAccount.findFirst({
-        where: {
-          userId: stateData.userId,
-          igUsername: instagramUsername,
-        },
-      });
+    const existingAccount = await prisma.instagramAccount.findFirst({
+      where: {
+        userId: stateData.userId,
+        OR: [
+          {
+            igUserId: instagramUserId,
+          },
+          {
+            igUsername: instagramUsername,
+          },
+        ],
+      },
+    });
 
     // =========================================================
-    // 15. Save Instagram account
+    // 16. Save Instagram Account
     // =========================================================
 
-    console.log(
-      "Instagram OAuth: saving account to database...",
-    );
+    console.log("Instagram OAuth: saving account to database...");
 
     let instagramAccount;
 
     if (existingAccount) {
-      console.log(
-        "Existing Instagram account found. Updating ID...",
-      );
+      console.log("Existing Instagram account found. Updating...");
 
-      instagramAccount =
-        await prisma.instagramAccount.update({
-          where: {
-            id: existingAccount.id,
-          },
+      instagramAccount = await prisma.instagramAccount.update({
+        where: {
+          id: existingAccount.id,
+        },
+        data: {
+          igUserId: instagramUserId,
 
-          data: {
-            igUserId: instagramUserId,
-            igUsername: instagramUsername,
-            accessToken,
-            isConnected: true,
-          },
-        });
+          igUsername: instagramUsername,
+
+          accessToken,
+
+          tokenExpiresAt,
+
+          isConnected: true,
+        },
+      });
     } else {
       console.log(
         "No existing Instagram account found. Creating new account...",
       );
 
-      instagramAccount =
-        await prisma.instagramAccount.create({
-          data: {
-            userId: stateData.userId,
-            igUserId: instagramUserId,
-            igUsername: instagramUsername,
-            accessToken,
-            isConnected: true,
-          },
-        });
+      instagramAccount = await prisma.instagramAccount.create({
+        data: {
+          userId: stateData.userId,
+
+          igUserId: instagramUserId,
+
+          igUsername: instagramUsername,
+
+          accessToken,
+
+          tokenExpiresAt,
+
+          isConnected: true,
+        },
+      });
     }
 
-    console.log(
-      "Instagram account saved successfully:",
-      {
-        databaseId: instagramAccount.id,
-        instagramUserId:
-          instagramAccount.igUserId,
-        username:
-          instagramAccount.igUsername,
-        userId: instagramAccount.userId,
-        isConnected:
-          instagramAccount.isConnected,
-      },
-    );
-
     // =========================================================
-    // 16. Final ID verification log
+    // 17. Final Log
     // =========================================================
 
     console.log("========================================");
+
+    console.log("INSTAGRAM CONNECTION COMPLETE");
+
+    console.log("Webhook-compatible Instagram ID:", instagramAccount.igUserId);
+
+    console.log("Instagram username:", instagramAccount.igUsername);
+
+    console.log("Database account ID:", instagramAccount.id);
+
     console.log(
-      "INSTAGRAM CONNECTION COMPLETE",
+      "Token expires at:",
+      instagramAccount.tokenExpiresAt?.toISOString(),
     );
-    console.log(
-      "Webhook-compatible Instagram ID:",
-      instagramAccount.igUserId,
-    );
-    console.log(
-      "Instagram username:",
-      instagramAccount.igUsername,
-    );
-    console.log(
-      "Database account ID:",
-      instagramAccount.id,
-    );
+
+    console.log("Connected:", instagramAccount.isConnected);
+
     console.log("========================================");
 
     // =========================================================
-    // 17. Redirect user back to dashboard
+    // 18. Redirect
     // =========================================================
 
     return NextResponse.redirect(
@@ -557,14 +497,7 @@ export async function GET(request: NextRequest) {
       ),
     );
   } catch (error) {
-    // =========================================================
-    // 18. Unexpected error
-    // =========================================================
-
-    console.error(
-      "Instagram callback unexpected error:",
-      error,
-    );
+    console.error("Instagram callback unexpected error:", error);
 
     return NextResponse.redirect(
       new URL(

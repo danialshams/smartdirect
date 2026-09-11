@@ -160,7 +160,6 @@ function getMessageTypeLabel(
         default:
             return "پیام";
     }
-
 }
 
 function getMessageIcon(
@@ -169,7 +168,6 @@ function getMessageIcon(
     switch (messageType) {
         case "IMAGE":
             return <ImageIcon size={15} />;
-
 
         case "VIDEO":
             return <Video size={15} />;
@@ -192,8 +190,6 @@ function getMessageIcon(
                 <MessageCircle size={15} />
             );
     }
-
-
 }
 
 function normalizeMessages(
@@ -202,7 +198,6 @@ function normalizeMessages(
     if (!Array.isArray(messages)) {
         return [];
     }
-
 
     return messages
         .map((rawMessage) => {
@@ -343,7 +338,6 @@ function normalizeMessages(
             ): item is MessageDraft =>
                 item !== null
         );
-
 }
 
 /* -------------------------------------------------------------------------- */
@@ -358,14 +352,13 @@ export default function AutomationForm({
     onUpdated,
 }: Props) {
     /*
-    * مهم:
-    * این مقدار را یک بار از prop استخراج می‌کنیم تا
-    * داخل async function دیگر TypeScript احتمال null بودن
-    * automation را مطرح نکند.
-    */
+     * مهم:
+     * این مقدار را یک بار از prop استخراج می‌کنیم تا
+     * داخل async function دیگر TypeScript احتمال null بودن
+     * automation را مطرح نکند.
+     */
     const automationId =
         automation?.id ?? null;
-
 
     const isEditing =
         automationId !== null;
@@ -492,10 +485,9 @@ export default function AutomationForm({
             try {
                 const response =
                     await fetch(
-                        `/ api / instagram / media ? instagramAccountId = ${encodeURIComponent(
+                        `/api/instagram/media?instagramAccountId=${encodeURIComponent(
                             account.id
-                        )
-                        }`,
+                        )}`,
                         {
                             cache: "no-store",
                             credentials:
@@ -565,10 +557,9 @@ export default function AutomationForm({
                     formResponse,
                 ] = await Promise.all([
                     fetch(
-                        `/ api / showcases ? instagramAccountId = ${encodeURIComponent(
+                        `/api/showcases?instagramAccountId=${encodeURIComponent(
                             account.id
-                        )
-                        }`,
+                        )}`,
                         {
                             cache: "no-store",
                             credentials:
@@ -577,10 +568,9 @@ export default function AutomationForm({
                     ),
 
                     fetch(
-                        `/ api / forms ? instagramAccountId = ${encodeURIComponent(
+                        `/api/forms?instagramAccountId=${encodeURIComponent(
                             account.id
-                        )
-                        }`,
+                        )}`,
                         {
                             cache: "no-store",
                             credentials:
@@ -675,7 +665,7 @@ export default function AutomationForm({
             try {
                 const response =
                     await fetch(
-                        `/ api / automations / ${automationId}`,
+                        `/api/automations/${automationId}`,
                         {
                             cache: "no-store",
                             credentials:
@@ -734,7 +724,7 @@ export default function AutomationForm({
     }, [automationId]);
 
     /* ---------------------------------------------------------------------- */
-    /* Trigger                                                                 */
+    /* Trigger                                                                */
     /* ---------------------------------------------------------------------- */
 
     function handleTriggerChange(
@@ -976,7 +966,7 @@ export default function AutomationForm({
     }
 
     /* ---------------------------------------------------------------------- */
-    /* Validate Flow                                                           */
+    /* Validate Flow                                                          */
     /* ---------------------------------------------------------------------- */
 
     function validateMessages() {
@@ -1214,7 +1204,7 @@ export default function AutomationForm({
     ) {
         const existingResponse =
             await fetch(
-                `/ api / automations / ${targetAutomationId}`,
+                `/api/automations/${targetAutomationId}`,
                 {
                     cache: "no-store",
                     credentials:
@@ -1262,7 +1252,7 @@ export default function AutomationForm({
 
             const deleteResponse =
                 await fetch(
-                    `/ api / automations / ${targetAutomationId} /messages/${existingMessage.id}`,
+                    `/api/automations/${targetAutomationId}/messages/${existingMessage.id}`,
                     {
                         method: "DELETE",
                         credentials:
@@ -1376,7 +1366,7 @@ export default function AutomationForm({
             >();
 
         /* ------------------------------------------------------------------ */
-        /* Step 1: Create Messages                                             */
+        /* Step 1: Create Messages                                            */
         /* ------------------------------------------------------------------ */
 
         for (
@@ -1393,7 +1383,7 @@ export default function AutomationForm({
 
             const response =
                 await fetch(
-                    `/ api / automations / ${targetAutomationId}/messages`,
+                    `/api/automations/${targetAutomationId}/messages`,
                     {
                         method: "POST",
                         headers: {
@@ -1542,7 +1532,7 @@ export default function AutomationForm({
     }
 
     /* ---------------------------------------------------------------------- */
-    /* Submit                                                                  */
+    /* Submit                                                                 */
     /* ---------------------------------------------------------------------- */
 
     async function handleSubmit(
@@ -2407,8 +2397,6 @@ export default function AutomationForm({
             </div>
         </div>
     );
-
-
 }
 
 /* -------------------------------------------------------------------------- */
@@ -2436,26 +2424,23 @@ function TriggerOption({
                     ? "border-slate-900 bg-slate-950 text-white"
                     : "border-slate-200 bg-white text-slate-800 hover:border-slate-400",
             ].join(" ")}
-        > <div className="text-sm font-semibold">
-                {title} </div>
+        >
+            <div className="text-sm font-semibold">
+                {title}
+            </div>
 
-            ```
-            < div
-                className={
-                    [
-                        "mt-1 text-xs leading-5",
-                        active
-                            ? "text-slate-300"
-                            : "text-slate-400",
-                    ].join(" ")
-                }
+            <div
+                className={[
+                    "mt-1 text-xs leading-5",
+                    active
+                        ? "text-slate-300"
+                        : "text-slate-400",
+                ].join(" ")}
             >
                 {description}
-            </div >
-        </button >
+            </div>
+        </button>
     );
-
-
 }
 
 /* -------------------------------------------------------------------------- */
@@ -2506,7 +2491,6 @@ function FlowMessageCard({
     const canAddQuickReply =
         messageOptions.length >= 2 &&
         message.quickReplies.length < 13;
-
 
     return (
         <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
@@ -3090,6 +3074,4 @@ function FlowMessageCard({
             </div>
         </div>
     );
-
-
 }

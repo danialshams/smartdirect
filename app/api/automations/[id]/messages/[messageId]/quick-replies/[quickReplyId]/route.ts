@@ -6,10 +6,42 @@ import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-// ======================================================
-// PATCH
-// ======================================================
+const MAX_TITLE_LENGTH = 20;
+const MAX_PAYLOAD_LENGTH = 1000;
 
+async function getOwnedQuickReply({
+  automationId,
+  messageId,
+  quickReplyId,
+  userId,
+}: {
+  automationId: string;
+  messageId: string;
+  quickReplyId: string;
+  userId: string;
+}) {
+  return prisma.quickReply.findFirst({
+    where: {
+      id: quickReplyId,
+
+      automationMessageId: messageId,
+
+      automationMessage: {
+        automationId,
+
+        automation: {
+          instagramAccount: {
+            userId,
+          },
+        },
+      },
+    },
+  });
+}
+
+/**
+ * PATCH
+ */
 export async function PATCH(
   request: NextRequest,
   {
@@ -23,66 +55,48 @@ export async function PATCH(
   },
 ) {
   try {
-    // --------------------------------------------------
-    // AUTH
-    // --------------------------------------------------
-
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
       return NextResponse.json(
         {
           success: false,
-          message: "احراز هویت انجام نشده است.",
+          error: "احراز هویت انجام نشده است",
         },
         { status: 401 },
       );
     }
 
-    const {
-      id,
+    const { id, messageId, quickReplyId } = await params;
+
+    const quickReply = await getOwnedQuickReply({
+      automationId: id,
       messageId,
       quickReplyId,
-    } = await params;
-
-    // --------------------------------------------------
-    // CHECK QUICK REPLY OWNERSHIP
-    // --------------------------------------------------
-
-    const quickReply =
-      await prisma.quickReply.findFirst({
-        where: {
-          id: quickReplyId,
-
-          automationMessageId: messageId,
-
-          automationMessage: {
-            automationId: id,
-
-            automation: {
-              instagramAccount: {
-                userId: session.user.id,
-              },
-            },
-          },
-        },
-      });
+      userId: session.user.id,
+    });
 
     if (!quickReply) {
       return NextResponse.json(
         {
           success: false,
-          message: "Quick Reply پیدا نشد.",
+          error: "Quick Reply پیدا نشد",
         },
         { status: 404 },
       );
     }
 
-    // --------------------------------------------------
-    // BODY
-    // --------------------------------------------------
-
     const body = await request.json();
+
+    if (!body || typeof body !== "object") {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "اطلاعات Quick Reply نامعتبر است",
+        },
+        { status: 400 },
+      );
+    }
 
     const data: {
       title?: string;
@@ -91,22 +105,27 @@ export async function PATCH(
       nextMessageId?: string | null;
     } = {};
 
-    // --------------------------------------------------
-    // TITLE
-    // --------------------------------------------------
-
+    /**
+     * TITLE
+     */
     if (body.title !== undefined) {
-      const title =
-        typeof body.title === "string"
-          ? body.title.trim()
-          : "";
+      const title = typeof body.title === "string" ? body.title.trim() : "";
 
       if (!title) {
         return NextResponse.json(
           {
             success: false,
-            message:
-              "عنوان Quick Reply نمی‌تواند خالی باشد.",
+            error: "عنوان Quick Reply نمی‌تواند خالی باشد",
+          },
+          { status: 400 },
+        );
+      }
+
+      if (title.length > MAX_TITLE_LENGTH) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `عنوان Quick Reply حداکثر ${MAX_TITLE_LENGTH} کاراکتر می‌تواند باشد`,
           },
           { status: 400 },
         );
@@ -115,147 +134,162 @@ export async function PATCH(
       data.title = title;
     }
 
-    // --------------------------------------------------
-    // PAYLOAD
-    // --------------------------------------------------
-
+    /**
+     * PAYLOAD
+     */
     if (body.payload !== undefined) {
       const payload =
-        typeof body.payload === "string"
-          ? body.payload.trim()
-          : "";
+        typeof body.payload === "string" ? body.payload.trim() : "";
 
       if (!payload) {
         return NextResponse.json(
           {
             success: false,
-            message:
-              "payload نمی‌تواند خالی باشد.",
+            error: "payload نمی‌تواند خالی باشد",
           },
           { status: 400 },
+        );
+      }
+
+      if (payload.length > MAX_PAYLOAD_LENGTH) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `payload حداکثر ${MAX_PAYLOAD_LENGTH} کاراکتر می‌تواند باشد`,
+          },
+          { status: 400 },
+        );
+      }
+
+      /**
+       * بررسی payload تکراری
+       */
+      const duplicate = await prisma.quickReply.findFirst({
+        where: {
+          payload,
+
+          id: {
+            not: quickReplyId,
+          },
+
+          automationMessage: {
+            automationId: id,
+          },
+        },
+      });
+
+      if (duplicate) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "این payload قبلاً در همین Automation استفاده شده است",
+          },
+          { status: 409 },
         );
       }
 
       data.payload = payload;
     }
 
-    // --------------------------------------------------
-    // REPLY TEXT
-    // --------------------------------------------------
-
+    /**
+     * REPLY TEXT
+     */
     if (body.replyText !== undefined) {
       data.replyText =
-        body.replyText
-          ? String(body.replyText).trim()
-          : null;
+        body.replyText === null
+          ? null
+          : typeof body.replyText === "string"
+            ? body.replyText.trim() || null
+            : null;
     }
 
-    // --------------------------------------------------
-    // NEXT MESSAGE
-    // --------------------------------------------------
+    /**
+     * NEXT MESSAGE
+     */
+    if (body.nextMessageId !== undefined) {
+      const nextMessageId = body.nextMessageId
+        ? String(body.nextMessageId).trim() || null
+        : null;
 
-    if (
-      body.nextMessageId !== undefined
-    ) {
-      const nextMessageId =
-        body.nextMessageId
-          ? String(
-              body.nextMessageId,
-            ).trim()
-          : null;
-
-      if (
-        nextMessageId ===
-        quickReply.automationMessageId
-      ) {
+      if (nextMessageId === messageId) {
         return NextResponse.json(
           {
             success: false,
-            message:
-              "Quick Reply نمی‌تواند به پیام فعلی متصل شود.",
+            error: "Quick Reply نمی‌تواند به پیام فعلی متصل شود",
           },
           { status: 400 },
         );
       }
 
       if (nextMessageId) {
-        const nextMessage =
-          await prisma.automationMessage.findFirst({
-            where: {
-              id: nextMessageId,
+        const nextMessage = await prisma.automationMessage.findFirst({
+          where: {
+            id: nextMessageId,
 
-              automationId: id,
-            },
-          });
+            automationId: id,
+          },
+        });
 
         if (!nextMessage) {
           return NextResponse.json(
             {
               success: false,
-              message:
-                "پیام مقصد متعلق به این Automation نیست.",
+              error: "پیام مقصد متعلق به این Automation نیست",
             },
             { status: 400 },
           );
         }
       }
 
-      data.nextMessageId =
-        nextMessageId;
+      data.nextMessageId = nextMessageId;
     }
 
-    // --------------------------------------------------
-    // UPDATE
-    // --------------------------------------------------
+    const updated = await prisma.quickReply.update({
+      where: {
+        id: quickReplyId,
+      },
 
-    const updated =
-      await prisma.quickReply.update({
-        where: {
-          id: quickReplyId,
-        },
+      data,
 
-        data,
-
-        include: {
-          nextMessage: {
-            select: {
-              id: true,
-              text: true,
-              order: true,
-            },
+      include: {
+        nextMessage: {
+          select: {
+            id: true,
+            messageType: true,
+            text: true,
+            mediaUrl: true,
+            mediaId: true,
+            showcaseId: true,
+            formId: true,
+            order: true,
           },
         },
-      });
+      },
+    });
 
     return NextResponse.json({
       success: true,
-      message:
-        "Quick Reply با موفقیت ویرایش شد.",
+      message: "Quick Reply با موفقیت ویرایش شد",
       data: updated,
     });
   } catch (error) {
-    console.error(
-      "PATCH quick reply error:",
-      error,
-    );
+    console.error("PATCH quick reply error:", error);
 
     return NextResponse.json(
       {
         success: false,
-        message:
-          "ویرایش Quick Reply ناموفق بود.",
+        error: "ویرایش Quick Reply ناموفق بود",
       },
       { status: 500 },
     );
   }
 }
 
-// ======================================================
-// DELETE
-// ======================================================
-
+/**
+ * DELETE
+ */
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   {
     params,
   }: {
@@ -267,64 +301,36 @@ export async function DELETE(
   },
 ) {
   try {
-    // --------------------------------------------------
-    // AUTH
-    // --------------------------------------------------
-
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
       return NextResponse.json(
         {
           success: false,
-          message: "احراز هویت انجام نشده است.",
+          error: "احراز هویت انجام نشده است",
         },
         { status: 401 },
       );
     }
 
-    const {
-      id,
+    const { id, messageId, quickReplyId } = await params;
+
+    const quickReply = await getOwnedQuickReply({
+      automationId: id,
       messageId,
       quickReplyId,
-    } = await params;
-
-    // --------------------------------------------------
-    // CHECK OWNERSHIP
-    // --------------------------------------------------
-
-    const quickReply =
-      await prisma.quickReply.findFirst({
-        where: {
-          id: quickReplyId,
-
-          automationMessageId: messageId,
-
-          automationMessage: {
-            automationId: id,
-
-            automation: {
-              instagramAccount: {
-                userId: session.user.id,
-              },
-            },
-          },
-        },
-      });
+      userId: session.user.id,
+    });
 
     if (!quickReply) {
       return NextResponse.json(
         {
           success: false,
-          message: "Quick Reply پیدا نشد.",
+          error: "Quick Reply پیدا نشد",
         },
         { status: 404 },
       );
     }
-
-    // --------------------------------------------------
-    // DELETE
-    // --------------------------------------------------
 
     await prisma.quickReply.delete({
       where: {
@@ -334,20 +340,15 @@ export async function DELETE(
 
     return NextResponse.json({
       success: true,
-      message:
-        "Quick Reply با موفقیت حذف شد.",
+      message: "Quick Reply با موفقیت حذف شد",
     });
   } catch (error) {
-    console.error(
-      "DELETE quick reply error:",
-      error,
-    );
+    console.error("DELETE quick reply error:", error);
 
     return NextResponse.json(
       {
         success: false,
-        message:
-          "حذف Quick Reply ناموفق بود.",
+        error: "حذف Quick Reply ناموفق بود",
       },
       { status: 500 },
     );

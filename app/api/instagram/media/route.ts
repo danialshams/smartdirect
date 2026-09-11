@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 
 export const dynamic = "force-dynamic";
 
@@ -23,8 +24,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
 
-    const instagramAccountId =
-      searchParams.get("instagramAccountId");
+    const instagramAccountId = searchParams.get("instagramAccountId");
 
     if (!instagramAccountId) {
       return NextResponse.json(
@@ -36,14 +36,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const account =
-      await prisma.instagramAccount.findFirst({
-        where: {
-          id: instagramAccountId,
-          userId: session.user.id,
-          isConnected: true,
-        },
-      });
+    const account = await prisma.instagramAccount.findFirst({
+      where: {
+        id: instagramAccountId,
+        userId: session.user.id,
+        isConnected: true,
+      },
+    });
 
     if (!account) {
       return NextResponse.json(
@@ -74,10 +73,9 @@ export async function GET(request: NextRequest) {
     );
 
     url.searchParams.set("limit", "50");
-    url.searchParams.set(
-      "access_token",
-      account.accessToken,
-    );
+    const accessToken = await getValidInstagramAccessToken(account.id);
+
+    url.searchParams.set("access_token", accessToken);
 
     const response = await fetch(url.toString(), {
       method: "GET",
@@ -87,17 +85,13 @@ export async function GET(request: NextRequest) {
     const result = await response.json();
 
     if (!response.ok) {
-      console.error(
-        "Instagram media error:",
-        result,
-      );
+      console.error("Instagram media error:", result);
 
       return NextResponse.json(
         {
           success: false,
           message:
-            result?.error?.message ||
-            "دریافت پست‌های Instagram ناموفق بود.",
+            result?.error?.message || "دریافت پست‌های Instagram ناموفق بود.",
         },
         { status: response.status },
       );
@@ -109,10 +103,7 @@ export async function GET(request: NextRequest) {
       paging: result.paging ?? null,
     });
   } catch (error) {
-    console.error(
-      "GET /api/instagram/media error:",
-      error,
-    );
+    console.error("GET /api/instagram/media error:", error);
 
     return NextResponse.json(
       {

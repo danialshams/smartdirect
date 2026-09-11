@@ -6,21 +6,15 @@ import { prisma } from "@/lib/prisma";
 
 function normalizePersianDigits(value: string) {
   return value
-    .replace(/[۰-۹]/g, (digit) =>
-      String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit))
-    )
-    .replace(/[٠-٩]/g, (digit) =>
-      String("٠١٢٣٤٥٦٧٨٩".indexOf(digit))
-    );
+    .replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
+    .replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)));
 }
 
 function normalizeKeyword(value: string) {
   return normalizePersianDigits(value).trim().toLowerCase();
 }
 
-function normalizeOptionalString(
-  value: unknown
-): string | null {
+function normalizeOptionalString(value: unknown): string | null {
   if (typeof value !== "string") {
     return null;
   }
@@ -38,41 +32,55 @@ const validTriggerTypes = [
 
 type TriggerType = (typeof validTriggerTypes)[number];
 
-function isValidTriggerType(
-  value: unknown
-): value is TriggerType {
+function isValidTriggerType(value: unknown): value is TriggerType {
   return (
     typeof value === "string" &&
     validTriggerTypes.includes(value as TriggerType)
   );
 }
 
-/**
- * Include مشترک برای Automation
- */
 const automationInclude = {
   messages: {
     orderBy: {
       order: "asc" as const,
     },
+
     include: {
       quickReplies: {
         orderBy: {
           createdAt: "asc" as const,
         },
+
         include: {
-          nextMessage: true,
+          nextMessage: {
+            select: {
+              id: true,
+              messageType: true,
+              text: true,
+              mediaUrl: true,
+              mediaId: true,
+              showcaseId: true,
+              formId: true,
+              order: true,
+            },
+          },
         },
       },
+
       showcase: {
         include: {
           items: {
+            where: {
+              isActive: true,
+            },
+
             orderBy: {
               order: "asc" as const,
             },
           },
         },
       },
+
       form: {
         include: {
           fields: {
@@ -91,7 +99,11 @@ const automationInclude = {
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  {
+    params,
+  }: {
+    params: Promise<{ id: string }>;
+  },
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -102,7 +114,7 @@ export async function GET(
           success: false,
           error: "احراز هویت انجام نشده است",
         },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -114,23 +126,32 @@ export async function GET(
           success: false,
           error: "شناسه Automation الزامی است",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    const automation =
-      await prisma.automation.findFirst({
-        where: {
-          id,
-          instagramAccount: {
-            userId: session.user.id,
+    const automation = await prisma.automation.findFirst({
+      where: {
+        id,
+
+        instagramAccount: {
+          userId: session.user.id,
+        },
+      },
+
+      include: {
+        instagramAccount: {
+          select: {
+            id: true,
+            igUserId: true,
+            igUsername: true,
+            isConnected: true,
           },
         },
-        include: {
-          instagramAccount: true,
-          ...automationInclude,
-        },
-      });
+
+        ...automationInclude,
+      },
+    });
 
     if (!automation) {
       return NextResponse.json(
@@ -138,7 +159,7 @@ export async function GET(
           success: false,
           error: "Automation پیدا نشد",
         },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -147,29 +168,28 @@ export async function GET(
       data: automation,
     });
   } catch (error) {
-    console.error(
-      "GET /api/automations/[id] error:",
-      error
-    );
+    console.error("GET /api/automations/[id] error:", error);
 
     return NextResponse.json(
       {
         success: false,
         error: "خطا در دریافت Automation",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 /**
  * PATCH /api/automations/[id]
- *
- * ویرایش Automation موجود
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  {
+    params,
+  }: {
+    params: Promise<{ id: string }>;
+  },
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -180,7 +200,7 @@ export async function PATCH(
           success: false,
           error: "احراز هویت انجام نشده است",
         },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -192,22 +212,19 @@ export async function PATCH(
           success: false,
           error: "شناسه Automation الزامی است",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    /**
-     * پیدا کردن Automation و اطمینان از مالکیت آن
-     */
-    const existingAutomation =
-      await prisma.automation.findFirst({
-        where: {
-          id,
-          instagramAccount: {
-            userId: session.user.id,
-          },
+    const existingAutomation = await prisma.automation.findFirst({
+      where: {
+        id,
+
+        instagramAccount: {
+          userId: session.user.id,
         },
-      });
+      },
+    });
 
     if (!existingAutomation) {
       return NextResponse.json(
@@ -215,7 +232,7 @@ export async function PATCH(
           success: false,
           error: "Automation پیدا نشد",
         },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -227,7 +244,7 @@ export async function PATCH(
           success: false,
           error: "اطلاعات ارسالی نامعتبر است",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -243,13 +260,8 @@ export async function PATCH(
       isActive,
     } = body;
 
-    /**
-     * Trigger Type
-     */
     const nextTriggerType: TriggerType =
-      triggerType !== undefined
-        ? triggerType
-        : existingAutomation.triggerType;
+      triggerType !== undefined ? triggerType : existingAutomation.triggerType;
 
     if (!isValidTriggerType(nextTriggerType)) {
       return NextResponse.json(
@@ -257,15 +269,10 @@ export async function PATCH(
           success: false,
           error: "نوع Trigger نامعتبر است",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    /**
-     * Keyword
-     *
-     * فقط Comment و Story نیاز به Keyword دارند.
-     */
     const requiresKeyword =
       nextTriggerType === "COMMENT_KEYWORD" ||
       nextTriggerType === "STORY_REPLY_KEYWORD";
@@ -274,17 +281,13 @@ export async function PATCH(
 
     if (requiresKeyword) {
       if (keyword !== undefined) {
-        if (
-          typeof keyword !== "string" ||
-          !keyword.trim()
-        ) {
+        if (typeof keyword !== "string" || !keyword.trim()) {
           return NextResponse.json(
             {
               success: false,
-              error:
-                "برای این Trigger وارد کردن Keyword الزامی است",
+              error: "برای این Trigger وارد کردن Keyword الزامی است",
             },
-            { status: 400 }
+            { status: 400 },
           );
         }
 
@@ -296,7 +299,7 @@ export async function PATCH(
               success: false,
               error: "Keyword معتبر نیست",
             },
-            { status: 400 }
+            { status: 400 },
           );
         }
       } else {
@@ -306,10 +309,9 @@ export async function PATCH(
           return NextResponse.json(
             {
               success: false,
-              error:
-                "برای این Trigger وارد کردن Keyword الزامی است",
+              error: "برای این Trigger وارد کردن Keyword الزامی است",
             },
-            { status: 400 }
+            { status: 400 },
           );
         }
 
@@ -317,56 +319,42 @@ export async function PATCH(
       }
     }
 
-    /**
-     * Media ID
-     */
     let nextMediaId: string | null = null;
 
     if (mediaId !== undefined) {
       nextMediaId =
-        typeof mediaId === "string" &&
-        mediaId.trim()
-          ? mediaId.trim()
-          : null;
+        typeof mediaId === "string" && mediaId.trim() ? mediaId.trim() : null;
     } else {
-      nextMediaId =
-        existingAutomation.mediaId;
+      nextMediaId = existingAutomation.mediaId;
     }
 
-    /**
-     * بررسی Duplicate
-     *
-     * خود Automation فعلی را نادیده می‌گیریم.
-     */
-    const duplicate =
-      await prisma.automation.findFirst({
-        where: {
-          id: {
-            not: id,
-          },
-          instagramAccountId:
-            existingAutomation.instagramAccountId,
-          triggerType: nextTriggerType,
-          keyword: nextKeyword,
-          mediaId: nextMediaId,
+    const duplicate = await prisma.automation.findFirst({
+      where: {
+        id: {
+          not: id,
         },
-      });
+
+        instagramAccountId: existingAutomation.instagramAccountId,
+
+        triggerType: nextTriggerType,
+
+        keyword: nextKeyword,
+
+        mediaId: nextMediaId,
+      },
+    });
 
     if (duplicate) {
       return NextResponse.json(
         {
           success: false,
-          error:
-            "Automation مشابه قبلاً وجود دارد",
+          error: "Automation مشابه قبلاً وجود دارد",
           data: duplicate,
         },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
-    /**
-     * Data برای Update
-     */
     const updateData: {
       triggerType?: TriggerType;
       keyword?: string | null;
@@ -379,111 +367,70 @@ export async function PATCH(
       isActive?: boolean;
     } = {};
 
-    /**
-     * Trigger
-     */
     if (triggerType !== undefined) {
-      updateData.triggerType =
-        nextTriggerType;
+      updateData.triggerType = nextTriggerType;
     }
 
-    /**
-     * Keyword
-     *
-     * اگر Trigger تغییر کرده یا Keyword ارسال شده،
-     * مقدار را ذخیره می‌کنیم.
-     */
-    if (
-      triggerType !== undefined ||
-      keyword !== undefined
-    ) {
+    if (triggerType !== undefined || keyword !== undefined) {
       updateData.keyword = nextKeyword;
     }
 
-    /**
-     * Media
-     */
     if (mediaId !== undefined) {
       updateData.mediaId = nextMediaId;
     }
 
-    /**
-     * Comment Like
-     */
     if (likeComment !== undefined) {
       updateData.likeComment =
-        Boolean(likeComment);
+        nextTriggerType === "COMMENT_KEYWORD" ? Boolean(likeComment) : false;
     }
 
-    /**
-     * Comment Public Reply
-     */
     if (commentReplyText !== undefined) {
       updateData.commentReplyText =
-        normalizeOptionalString(
-          commentReplyText
-        );
+        nextTriggerType === "COMMENT_KEYWORD"
+          ? normalizeOptionalString(commentReplyText)
+          : null;
     }
 
-    /**
-     * Send DM
-     */
     if (sendDm !== undefined) {
       updateData.sendDm = Boolean(sendDm);
     }
 
-    /**
-     * Incoming DM Like
-     */
     if (likeIncomingDm !== undefined) {
       updateData.likeIncomingDm =
-        Boolean(likeIncomingDm);
+        nextTriggerType === "DM" ? Boolean(likeIncomingDm) : false;
     }
 
-    /**
-     * Legacy direct reply text
-     */
     if (replyText !== undefined) {
-      updateData.replyText =
-        normalizeOptionalString(replyText);
+      updateData.replyText = normalizeOptionalString(replyText);
     }
 
-    /**
-     * Active
-     */
     if (isActive !== undefined) {
-      updateData.isActive =
-        Boolean(isActive);
+      updateData.isActive = Boolean(isActive);
     }
 
-    /**
-     * Update
-     */
-    const automation =
-      await prisma.automation.update({
-        where: {
-          id,
-        },
-        data: updateData,
-        include: automationInclude,
-      });
+    const automation = await prisma.automation.update({
+      where: {
+        id,
+      },
+
+      data: updateData,
+
+      include: automationInclude,
+    });
 
     return NextResponse.json({
       success: true,
       data: automation,
     });
   } catch (error) {
-    console.error(
-      "PATCH /api/automations/[id] error:",
-      error
-    );
+    console.error("PATCH /api/automations/[id] error:", error);
 
     return NextResponse.json(
       {
         success: false,
         error: "خطا در ویرایش Automation",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -493,7 +440,11 @@ export async function PATCH(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  {
+    params,
+  }: {
+    params: Promise<{ id: string }>;
+  },
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -504,7 +455,7 @@ export async function DELETE(
           success: false,
           error: "احراز هویت انجام نشده است",
         },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -516,19 +467,19 @@ export async function DELETE(
           success: false,
           error: "شناسه Automation الزامی است",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    const automation =
-      await prisma.automation.findFirst({
-        where: {
-          id,
-          instagramAccount: {
-            userId: session.user.id,
-          },
+    const automation = await prisma.automation.findFirst({
+      where: {
+        id,
+
+        instagramAccount: {
+          userId: session.user.id,
         },
-      });
+      },
+    });
 
     if (!automation) {
       return NextResponse.json(
@@ -536,7 +487,7 @@ export async function DELETE(
           success: false,
           error: "Automation پیدا نشد",
         },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -548,21 +499,17 @@ export async function DELETE(
 
     return NextResponse.json({
       success: true,
-      message:
-        "Automation با موفقیت حذف شد",
+      message: "Automation با موفقیت حذف شد",
     });
   } catch (error) {
-    console.error(
-      "DELETE /api/automations/[id] error:",
-      error
-    );
+    console.error("DELETE /api/automations/[id] error:", error);
 
     return NextResponse.json(
       {
         success: false,
         error: "خطا در حذف Automation",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

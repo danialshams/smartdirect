@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+
+export const dynamic = "force-dynamic";
 
 const validMessageTypes = [
   "TEXT",
@@ -21,38 +24,112 @@ function isValidMessageType(value: unknown): value is MessageType {
   );
 }
 
+function normalizeOptionalString(value: unknown): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const trimmed = value.trim();
+
+  return trimmed || null;
+}
+
+async function getOwnedAutomation(automationId: string, userId: string) {
+  return prisma.automation.findFirst({
+    where: {
+      id: automationId,
+
+      instagramAccount: {
+        userId,
+      },
+    },
+  });
+}
+
+async function getMessageInclude() {
+  return {
+    quickReplies: {
+      orderBy: {
+        createdAt: "asc" as const,
+      },
+
+      include: {
+        nextMessage: {
+          select: {
+            id: true,
+            messageType: true,
+            text: true,
+            mediaUrl: true,
+            mediaId: true,
+            showcaseId: true,
+            formId: true,
+            order: true,
+          },
+        },
+      },
+    },
+
+    showcase: {
+      include: {
+        items: {
+          where: {
+            isActive: true,
+          },
+
+          orderBy: {
+            order: "asc" as const,
+          },
+        },
+      },
+    },
+
+    form: {
+      include: {
+        fields: {
+          orderBy: {
+            order: "asc" as const,
+          },
+        },
+      },
+    },
+  };
+}
+
 /**
  * GET /api/automations/[id]/messages
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  {
+    params,
+  }: {
+    params: Promise<{ id: string }>;
+  },
 ) {
   try {
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
       return NextResponse.json(
-        { error: "احراز هویت انجام نشده است" },
-        { status: 401 }
+        {
+          success: false,
+          error: "احراز هویت انجام نشده است",
+        },
+        { status: 401 },
       );
     }
 
     const { id } = await params;
 
-    const automation = await prisma.automation.findFirst({
-      where: {
-        id,
-        instagramAccount: {
-          userId: session.user.id,
-        },
-      },
-    });
+    const automation = await getOwnedAutomation(id, session.user.id);
 
     if (!automation) {
       return NextResponse.json(
-        { error: "Automation پیدا نشد" },
-        { status: 404 }
+        {
+          success: false,
+          error: "Automation پیدا نشد",
+        },
+        { status: 404 },
       );
     }
 
@@ -60,49 +137,27 @@ export async function GET(
       where: {
         automationId: id,
       },
+
       orderBy: {
         order: "asc",
       },
-      include: {
-        quickReplies: {
-          orderBy: {
-            createdAt: "asc",
-          },
-          include: {
-            nextMessage: true,
-          },
-        },
-        showcase: {
-          include: {
-            items: {
-              orderBy: {
-                order: "asc",
-              },
-            },
-          },
-        },
-        form: {
-          include: {
-            fields: {
-              orderBy: {
-                order: "asc",
-              },
-            },
-          },
-        },
-      },
+
+      include: await getMessageInclude(),
     });
 
-    return NextResponse.json(messages);
+    return NextResponse.json({
+      success: true,
+      data: messages,
+    });
   } catch (error) {
-    console.error(
-      "GET /api/automations/[id]/messages error:",
-      error
-    );
+    console.error("GET /api/automations/[id]/messages error:", error);
 
     return NextResponse.json(
-      { error: "خطا در دریافت پیام‌ها" },
-      { status: 500 }
+      {
+        success: false,
+        error: "خطا در دریافت پیام‌ها",
+      },
+      { status: 500 },
     );
   }
 }
@@ -112,37 +167,50 @@ export async function GET(
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  {
+    params,
+  }: {
+    params: Promise<{ id: string }>;
+  },
 ) {
   try {
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
       return NextResponse.json(
-        { error: "احراز هویت انجام نشده است" },
-        { status: 401 }
+        {
+          success: false,
+          error: "احراز هویت انجام نشده است",
+        },
+        { status: 401 },
       );
     }
 
     const { id } = await params;
 
-    const automation = await prisma.automation.findFirst({
-      where: {
-        id,
-        instagramAccount: {
-          userId: session.user.id,
-        },
-      },
-    });
+    const automation = await getOwnedAutomation(id, session.user.id);
 
     if (!automation) {
       return NextResponse.json(
-        { error: "Automation پیدا نشد" },
-        { status: 404 }
+        {
+          success: false,
+          error: "Automation پیدا نشد",
+        },
+        { status: 404 },
       );
     }
 
     const body = await request.json();
+
+    if (!body || typeof body !== "object") {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "اطلاعات پیام نامعتبر است",
+        },
+        { status: 400 },
+      );
+    }
 
     const {
       messageType = "TEXT",
@@ -154,111 +222,143 @@ export async function POST(
       order,
     } = body;
 
-    /**
-     * بررسی Message Type
-     */
     if (!isValidMessageType(messageType)) {
       return NextResponse.json(
-        { error: "نوع پیام نامعتبر است" },
-        { status: 400 }
+        {
+          success: false,
+          error: "نوع پیام نامعتبر است",
+        },
+        { status: 400 },
       );
     }
+
+    const normalizedText = normalizeOptionalString(text);
+
+    const normalizedMediaUrl = normalizeOptionalString(mediaUrl);
+
+    const normalizedMediaId = normalizeOptionalString(mediaId);
 
     /**
      * TEXT
      */
-    if (messageType === "TEXT") {
-      if (typeof text !== "string" || !text.trim()) {
-        return NextResponse.json(
-          { error: "برای پیام متنی، text الزامی است" },
-          { status: 400 }
-        );
-      }
-    }
-
-    /**
-     * Media
-     */
-    if (
-      ["IMAGE", "VIDEO", "AUDIO"].includes(messageType) &&
-      !mediaUrl &&
-      !mediaId
-    ) {
+    if (messageType === "TEXT" && !normalizedText) {
       return NextResponse.json(
         {
-          error:
-            "برای پیام رسانه‌ای باید mediaUrl یا mediaId ارسال شود",
+          success: false,
+          error: "برای پیام متنی، text الزامی است",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     /**
-     * Showcase
+     * IMAGE / VIDEO / AUDIO
      */
+    if (
+      ["IMAGE", "VIDEO", "AUDIO"].includes(messageType) &&
+      !normalizedMediaUrl &&
+      !normalizedMediaId
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "برای پیام رسانه‌ای باید mediaUrl یا mediaId ارسال شود",
+        },
+        { status: 400 },
+      );
+    }
+
+    /**
+     * SHOWCASE
+     */
+    let normalizedShowcaseId: string | null = null;
+
     if (messageType === "SHOWCASE") {
-      if (!showcaseId) {
+      normalizedShowcaseId = normalizeOptionalString(showcaseId);
+
+      if (!normalizedShowcaseId) {
         return NextResponse.json(
-          { error: "برای پیام SHOWCASE، showcaseId الزامی است" },
-          { status: 400 }
+          {
+            success: false,
+            error: "برای پیام SHOWCASE، showcaseId الزامی است",
+          },
+          { status: 400 },
         );
       }
 
       const showcase = await prisma.showcase.findFirst({
         where: {
-          id: showcaseId,
+          id: normalizedShowcaseId,
+
           userId: session.user.id,
+
           instagramAccountId: automation.instagramAccountId,
         },
       });
 
       if (!showcase) {
         return NextResponse.json(
-          { error: "ویترین پیدا نشد یا متعلق به این اکانت نیست" },
-          { status: 404 }
+          {
+            success: false,
+            error: "ویترین پیدا نشد یا متعلق به این اکانت نیست",
+          },
+          { status: 404 },
         );
       }
     }
 
     /**
-     * Form
+     * FORM
      */
+    let normalizedFormId: string | null = null;
+
     if (messageType === "FORM") {
-      if (!formId) {
+      normalizedFormId = normalizeOptionalString(formId);
+
+      if (!normalizedFormId) {
         return NextResponse.json(
-          { error: "برای پیام FORM، formId الزامی است" },
-          { status: 400 }
+          {
+            success: false,
+            error: "برای پیام FORM، formId الزامی است",
+          },
+          { status: 400 },
         );
       }
 
       const form = await prisma.form.findFirst({
         where: {
-          id: formId,
+          id: normalizedFormId,
+
           userId: session.user.id,
+
           instagramAccountId: automation.instagramAccountId,
         },
       });
 
       if (!form) {
         return NextResponse.json(
-          { error: "فرم پیدا نشد یا متعلق به این اکانت نیست" },
-          { status: 404 }
+          {
+            success: false,
+            error: "فرم پیدا نشد یا متعلق به این اکانت نیست",
+          },
+          { status: 404 },
         );
       }
     }
 
     /**
-     * پیدا کردن Order
+     * Order
      */
     let messageOrder: number;
 
-    if (typeof order === "number" && Number.isInteger(order)) {
+    if (typeof order === "number" && Number.isInteger(order) && order >= 0) {
       messageOrder = order;
     } else {
       const lastMessage = await prisma.automationMessage.findFirst({
         where: {
           automationId: id,
         },
+
         orderBy: {
           order: "desc",
         },
@@ -268,62 +368,50 @@ export async function POST(
     }
 
     /**
-     * ساخت Message
+     * ساخت پیام
      */
     const message = await prisma.automationMessage.create({
       data: {
         automationId: id,
+
         messageType,
-        text:
-          typeof text === "string" && text.trim()
-            ? text.trim()
-            : null,
-        mediaUrl:
-          typeof mediaUrl === "string" && mediaUrl.trim()
-            ? mediaUrl.trim()
-            : null,
-        mediaId:
-          typeof mediaId === "string" && mediaId.trim()
-            ? mediaId.trim()
-            : null,
-        showcaseId:
-          messageType === "SHOWCASE" ? showcaseId : null,
-        formId: messageType === "FORM" ? formId : null,
+
+        text: messageType === "TEXT" ? normalizedText : normalizedText,
+
+        mediaUrl: ["IMAGE", "VIDEO", "AUDIO"].includes(messageType)
+          ? normalizedMediaUrl
+          : null,
+
+        mediaId: ["IMAGE", "VIDEO", "AUDIO"].includes(messageType)
+          ? normalizedMediaId
+          : null,
+
+        showcaseId: messageType === "SHOWCASE" ? normalizedShowcaseId : null,
+
+        formId: messageType === "FORM" ? normalizedFormId : null,
+
         order: messageOrder,
       },
-      include: {
-        quickReplies: true,
-        showcase: {
-          include: {
-            items: {
-              orderBy: {
-                order: "asc",
-              },
-            },
-          },
-        },
-        form: {
-          include: {
-            fields: {
-              orderBy: {
-                order: "asc",
-              },
-            },
-          },
-        },
-      },
+
+      include: await getMessageInclude(),
     });
 
-    return NextResponse.json(message, { status: 201 });
-  } catch (error) {
-    console.error(
-      "POST /api/automations/[id]/messages error:",
-      error
+    return NextResponse.json(
+      {
+        success: true,
+        data: message,
+      },
+      { status: 201 },
     );
+  } catch (error) {
+    console.error("POST /api/automations/[id]/messages error:", error);
 
     return NextResponse.json(
-      { error: "خطا در ساخت پیام" },
-      { status: 500 }
+      {
+        success: false,
+        error: "خطا در ساخت پیام",
+      },
+      { status: 500 },
     );
   }
 }

@@ -6,12 +6,8 @@ import { prisma } from "@/lib/prisma";
 
 function normalizePersianDigits(value: string) {
   return value
-    .replace(/[۰-۹]/g, (digit) =>
-      String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit))
-    )
-    .replace(/[٠-٩]/g, (digit) =>
-      String("٠١٢٣٤٥٦٧٨٩".indexOf(digit))
-    );
+    .replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
+    .replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)));
 }
 
 function normalizeKeyword(value: string) {
@@ -26,9 +22,7 @@ const validTriggerTypes = [
 
 type TriggerType = (typeof validTriggerTypes)[number];
 
-function isValidTriggerType(
-  value: unknown
-): value is TriggerType {
+function isValidTriggerType(value: unknown): value is TriggerType {
   return (
     typeof value === "string" &&
     validTriggerTypes.includes(value as TriggerType)
@@ -50,14 +44,13 @@ export async function GET(request: NextRequest) {
           success: false,
           error: "احراز هویت انجام نشده است",
         },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
     const { searchParams } = new URL(request.url);
 
-    const instagramAccountId =
-      searchParams.get("instagramAccountId");
+    const instagramAccountId = searchParams.get("instagramAccountId");
 
     if (!instagramAccountId) {
       return NextResponse.json(
@@ -65,17 +58,16 @@ export async function GET(request: NextRequest) {
           success: false,
           error: "instagramAccountId الزامی است",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    const instagramAccount =
-      await prisma.instagramAccount.findFirst({
-        where: {
-          id: instagramAccountId,
-          userId: session.user.id,
-        },
-      });
+    const instagramAccount = await prisma.instagramAccount.findFirst({
+      where: {
+        id: instagramAccountId,
+        userId: session.user.id,
+      },
+    });
 
     if (!instagramAccount) {
       return NextResponse.json(
@@ -83,57 +75,74 @@ export async function GET(request: NextRequest) {
           success: false,
           error: "اکانت اینستاگرام پیدا نشد",
         },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
-    const automations =
-      await prisma.automation.findMany({
-        where: {
-          instagramAccountId,
-        },
-        include: {
-          messages: {
-            orderBy: {
-              order: "asc",
-            },
-            include: {
-              quickReplies: {
-                orderBy: {
-                  createdAt: "asc",
-                },
-                include: {
-                  nextMessage: true,
-                },
+    const automations = await prisma.automation.findMany({
+      where: {
+        instagramAccountId,
+      },
+
+      include: {
+        messages: {
+          orderBy: {
+            order: "asc",
+          },
+
+          include: {
+            quickReplies: {
+              orderBy: {
+                createdAt: "asc",
               },
-              showcase: {
-                include: {
-                  items: {
-                    where: {
-                      isActive: true,
-                    },
-                    orderBy: {
-                      order: "asc",
-                    },
+
+              include: {
+                nextMessage: {
+                  select: {
+                    id: true,
+                    messageType: true,
+                    text: true,
+                    mediaUrl: true,
+                    mediaId: true,
+                    showcaseId: true,
+                    formId: true,
+                    order: true,
                   },
                 },
               },
-              form: {
-                include: {
-                  fields: {
-                    orderBy: {
-                      order: "asc",
-                    },
+            },
+
+            showcase: {
+              include: {
+                items: {
+                  where: {
+                    isActive: true,
+                  },
+
+                  orderBy: {
+                    order: "asc",
+                  },
+                },
+              },
+            },
+
+            form: {
+              include: {
+                fields: {
+                  orderBy: {
+                    order: "asc",
                   },
                 },
               },
             },
           },
         },
-        orderBy: {
-          createdAt: "desc",
-        },
-      });
+      },
+
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
 
     return NextResponse.json({
       success: true,
@@ -147,7 +156,7 @@ export async function GET(request: NextRequest) {
         success: false,
         error: "خطا در دریافت Automation ها",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -167,11 +176,21 @@ export async function POST(request: NextRequest) {
           success: false,
           error: "احراز هویت انجام نشده است",
         },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
     const body = await request.json();
+
+    if (!body || typeof body !== "object") {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "اطلاعات ارسالی نامعتبر است",
+        },
+        { status: 400 },
+      );
+    }
 
     const {
       instagramAccountId,
@@ -186,13 +205,13 @@ export async function POST(request: NextRequest) {
       isActive = true,
     } = body;
 
-    if (!instagramAccountId) {
+    if (typeof instagramAccountId !== "string" || !instagramAccountId.trim()) {
       return NextResponse.json(
         {
           success: false,
           error: "instagramAccountId الزامی است",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -202,17 +221,16 @@ export async function POST(request: NextRequest) {
           success: false,
           error: "نوع Trigger نامعتبر است",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    const instagramAccount =
-      await prisma.instagramAccount.findFirst({
-        where: {
-          id: instagramAccountId,
-          userId: session.user.id,
-        },
-      });
+    const instagramAccount = await prisma.instagramAccount.findFirst({
+      where: {
+        id: instagramAccountId,
+        userId: session.user.id,
+      },
+    });
 
     if (!instagramAccount) {
       return NextResponse.json(
@@ -220,7 +238,7 @@ export async function POST(request: NextRequest) {
           success: false,
           error: "اکانت اینستاگرام متعلق به این کاربر نیست",
         },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -231,17 +249,13 @@ export async function POST(request: NextRequest) {
     let normalizedKeyword: string | null = null;
 
     if (requiresKeyword) {
-      if (
-        typeof keyword !== "string" ||
-        !keyword.trim()
-      ) {
+      if (typeof keyword !== "string" || !keyword.trim()) {
         return NextResponse.json(
           {
             success: false,
-            error:
-              "برای این نوع Trigger وارد کردن Keyword الزامی است",
+            error: "برای این نوع Trigger وارد کردن Keyword الزامی است",
           },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -253,25 +267,22 @@ export async function POST(request: NextRequest) {
             success: false,
             error: "Keyword معتبر نیست",
           },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
 
     const normalizedMediaId =
-      typeof mediaId === "string" && mediaId.trim()
-        ? mediaId.trim()
-        : null;
+      typeof mediaId === "string" && mediaId.trim() ? mediaId.trim() : null;
 
-    const duplicate =
-      await prisma.automation.findFirst({
-        where: {
-          instagramAccountId,
-          triggerType,
-          keyword: normalizedKeyword,
-          mediaId: normalizedMediaId,
-        },
-      });
+    const duplicate = await prisma.automation.findFirst({
+      where: {
+        instagramAccountId,
+        triggerType,
+        keyword: normalizedKeyword,
+        mediaId: normalizedMediaId,
+      },
+    });
 
     if (duplicate) {
       return NextResponse.json(
@@ -280,64 +291,57 @@ export async function POST(request: NextRequest) {
           error: "Automation مشابه قبلاً وجود دارد",
           data: duplicate,
         },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
-    const automation =
-      await prisma.automation.create({
-        data: {
-          instagramAccountId,
+    const automation = await prisma.automation.create({
+      data: {
+        instagramAccountId,
 
-          triggerType,
+        triggerType,
 
-          keyword: normalizedKeyword,
+        keyword: normalizedKeyword,
 
-          mediaId: normalizedMediaId,
+        mediaId: normalizedMediaId,
 
-          likeComment:
-            triggerType === "COMMENT_KEYWORD"
-              ? Boolean(likeComment)
-              : false,
+        likeComment:
+          triggerType === "COMMENT_KEYWORD" ? Boolean(likeComment) : false,
 
-          commentReplyText:
-            triggerType === "COMMENT_KEYWORD" &&
-            typeof commentReplyText === "string" &&
-            commentReplyText.trim()
-              ? commentReplyText.trim()
-              : null,
+        commentReplyText:
+          triggerType === "COMMENT_KEYWORD" &&
+          typeof commentReplyText === "string" &&
+          commentReplyText.trim()
+            ? commentReplyText.trim()
+            : null,
 
-          sendDm: Boolean(sendDm),
+        sendDm: Boolean(sendDm),
 
-          likeIncomingDm:
-            triggerType === "DM"
-              ? Boolean(likeIncomingDm)
-              : false,
+        likeIncomingDm: triggerType === "DM" ? Boolean(likeIncomingDm) : false,
 
-          replyText:
-            typeof replyText === "string" &&
-            replyText.trim()
-              ? replyText.trim()
-              : null,
+        replyText:
+          typeof replyText === "string" && replyText.trim()
+            ? replyText.trim()
+            : null,
 
-          isActive: Boolean(isActive),
-        },
+        isActive: Boolean(isActive),
+      },
 
-        include: {
-          messages: {
-            orderBy: {
-              order: "asc",
-            },
+      include: {
+        messages: {
+          orderBy: {
+            order: "asc",
           },
         },
-      });
+      },
+    });
 
     return NextResponse.json(
       {
         success: true,
         data: automation,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     console.error("POST /api/automations error:", error);
@@ -347,7 +351,7 @@ export async function POST(request: NextRequest) {
         success: false,
         error: "خطا در ساخت Automation",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

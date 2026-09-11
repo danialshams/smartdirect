@@ -205,11 +205,8 @@ export async function executeAutomation(input: ExecuteAutomationInput) {
     // =======================================================
     // 9. Send message through Meta Adapter
     // =======================================================
-
     const result = await sendAutomationMessage({
       instagramAccountId: instagramAccount.id,
-
-      accessToken: instagramAccount.accessToken,
 
       recipientId: input.participantId,
 

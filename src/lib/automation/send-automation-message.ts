@@ -1,4 +1,5 @@
 import { AutomationMessageType } from "@/generated/prisma/client";
+import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 
 const INSTAGRAM_API_VERSION = "v26.0";
 
@@ -17,12 +18,8 @@ type QuickReplyPayload = {
 export type AutomationMessagePayload = {
   instagramAccountId: string;
 
-  accessToken: string;
-
   /**
    * Instagram-scoped ID شخصی که باید پیام را دریافت کند.
-   *
-   * این همان sender.id از پیام ورودی Webhook است.
    */
   recipientId: string;
 
@@ -296,15 +293,17 @@ async function callInstagramMessagesApi({
 export async function sendAutomationMessage(
   payload: AutomationMessagePayload,
 ): Promise<SendAutomationMessageResult> {
-  const { accessToken, recipientId, instagramUserId, message } = payload;
+  const { instagramAccountId, recipientId, instagramUserId, message } = payload;
 
-  if (!accessToken) {
-    throw new Error("Instagram access token is missing");
+  if (!instagramAccountId) {
+    throw new Error("Instagram account ID is missing");
   }
 
   if (!recipientId) {
     throw new Error("Instagram recipient ID is missing");
   }
+
+  const accessToken = await getValidInstagramAccessToken(instagramAccountId);
 
   if (!instagramUserId) {
     throw new Error("Instagram professional account ID is missing");
