@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { FormEvent } from "react";
@@ -161,6 +160,7 @@ function getMessageTypeLabel(
         default:
             return "پیام";
     }
+
 }
 
 function getMessageIcon(
@@ -169,6 +169,7 @@ function getMessageIcon(
     switch (messageType) {
         case "IMAGE":
             return <ImageIcon size={15} />;
+
 
         case "VIDEO":
             return <Video size={15} />;
@@ -191,6 +192,8 @@ function getMessageIcon(
                 <MessageCircle size={15} />
             );
     }
+
+
 }
 
 function normalizeMessages(
@@ -199,6 +202,7 @@ function normalizeMessages(
     if (!Array.isArray(messages)) {
         return [];
     }
+
 
     return messages
         .map((rawMessage) => {
@@ -339,6 +343,7 @@ function normalizeMessages(
             ): item is MessageDraft =>
                 item !== null
         );
+
 }
 
 /* -------------------------------------------------------------------------- */
@@ -352,8 +357,15 @@ export default function AutomationForm({
     onCreated,
     onUpdated,
 }: Props) {
+    /*
+    * مهم:
+    * این مقدار را یک بار از prop استخراج می‌کنیم تا
+    * داخل async function دیگر TypeScript احتمال null بودن
+    * automation را مطرح نکند.
+    */
     const automationId =
         automation?.id ?? null;
+
 
     const isEditing =
         automationId !== null;
@@ -419,8 +431,20 @@ export default function AutomationForm({
     const [loadingResources, setLoadingResources] =
         useState(false);
 
-    const [loadingMessages, setLoadingMessages] =
-        useState(false);
+    /*
+     * برای جلوگیری از هشدار React:
+     *
+     * Calling setState synchronously within an effect
+     *
+     * مقدار اولیه را از automation مشخص می‌کنیم.
+     * در effect دیگر setLoadingMessages(true) نداریم.
+     */
+    const [
+        loadingMessages,
+        setLoadingMessages,
+    ] = useState(
+        () => automationId !== null
+    );
 
     const [saving, setSaving] =
         useState(false);
@@ -450,7 +474,8 @@ export default function AutomationForm({
                     label: `پیام ${index + 1
                         } — ${getMessageTypeLabel(
                             message.messageType
-                        )}`,
+                        )
+                        }`,
                 })
             ),
         [messages]
@@ -465,13 +490,12 @@ export default function AutomationForm({
 
         async function loadMedia() {
             try {
-                setLoadingMedia(true);
-
                 const response =
                     await fetch(
-                        `/api/instagram/media?instagramAccountId=${encodeURIComponent(
+                        `/ api / instagram / media ? instagramAccountId = ${encodeURIComponent(
                             account.id
-                        )}`,
+                        )
+                        }`,
                         {
                             cache: "no-store",
                             credentials:
@@ -541,9 +565,10 @@ export default function AutomationForm({
                     formResponse,
                 ] = await Promise.all([
                     fetch(
-                        `/api/showcases?instagramAccountId=${encodeURIComponent(
+                        `/ api / showcases ? instagramAccountId = ${encodeURIComponent(
                             account.id
-                        )}`,
+                        )
+                        }`,
                         {
                             cache: "no-store",
                             credentials:
@@ -552,9 +577,10 @@ export default function AutomationForm({
                     ),
 
                     fetch(
-                        `/api/forms?instagramAccountId=${encodeURIComponent(
+                        `/ api / forms ? instagramAccountId = ${encodeURIComponent(
                             account.id
-                        )}`,
+                        )
+                        }`,
                         {
                             cache: "no-store",
                             credentials:
@@ -631,6 +657,14 @@ export default function AutomationForm({
     /* ---------------------------------------------------------------------- */
 
     useEffect(() => {
+        /*
+         * در حالت ساخت Automation چیزی برای Load کردن نداریم.
+         *
+         * مهم:
+         * اینجا دیگر setMessages([]) نداریم.
+         * چون React جدید آن را به عنوان synchronous
+         * state update داخل effect گزارش می‌کند.
+         */
         if (!automationId) {
             return;
         }
@@ -639,11 +673,9 @@ export default function AutomationForm({
 
         async function loadAutomation() {
             try {
-                setLoadingMessages(true);
-
                 const response =
                     await fetch(
-                        `/api/automations/${automationId}`,
+                        `/ api / automations / ${automationId}`,
                         {
                             cache: "no-store",
                             credentials:
@@ -694,7 +726,7 @@ export default function AutomationForm({
             }
         }
 
-        loadAutomation();
+        void loadAutomation();
 
         return () => {
             cancelled = true;
@@ -749,6 +781,10 @@ export default function AutomationForm({
                         messageId
                 );
 
+            /*
+             * اگر مقصد Quick Reply پیام حذف‌شده بوده،
+             * مقصد را null می‌کنیم.
+             */
             return filtered.map(
                 (message) => ({
                     ...message,
@@ -829,6 +865,10 @@ export default function AutomationForm({
                 1
             );
 
+            if (!movedMessage) {
+                return current;
+            }
+
             next.splice(
                 targetIndex,
                 0,
@@ -844,18 +884,34 @@ export default function AutomationForm({
     ) {
         setMessages((current) =>
             current.map(
-                (message) =>
-                    message.id ===
+                (message) => {
+                    if (
+                        message.id !==
                         messageId
-                        ? {
-                            ...message,
-                            quickReplies:
-                                [
-                                    ...message.quickReplies,
-                                    createEmptyQuickReply(),
-                                ],
-                        }
-                        : message
+                    ) {
+                        return message;
+                    }
+
+                    /*
+                     * Instagram حداکثر ۱۳ Quick Reply
+                     * را در هر پیام قبول می‌کند.
+                     */
+                    if (
+                        message.quickReplies.length >=
+                        13
+                    ) {
+                        return message;
+                    }
+
+                    return {
+                        ...message,
+                        quickReplies:
+                            [
+                                ...message.quickReplies,
+                                createEmptyQuickReply(),
+                            ],
+                    };
+                }
             )
         );
     }
@@ -932,6 +988,14 @@ export default function AutomationForm({
             const message =
                 messages[index];
 
+            if (!message) {
+                continue;
+            }
+
+            /* -------------------------------------------------------------- */
+            /* TEXT                                                            */
+            /* -------------------------------------------------------------- */
+
             if (
                 message.messageType ===
                 "TEXT" &&
@@ -940,6 +1004,10 @@ export default function AutomationForm({
                 return `متن پیام ${index + 1
                     } را وارد کنید.`;
             }
+
+            /* -------------------------------------------------------------- */
+            /* MEDIA                                                           */
+            /* -------------------------------------------------------------- */
 
             if (
                 (
@@ -957,6 +1025,10 @@ export default function AutomationForm({
                     } آدرس Media یا Media ID را وارد کنید.`;
             }
 
+            /* -------------------------------------------------------------- */
+            /* SHOWCASE                                                        */
+            /* -------------------------------------------------------------- */
+
             if (
                 message.messageType ===
                 "SHOWCASE" &&
@@ -966,6 +1038,10 @@ export default function AutomationForm({
                     } یک ویترین انتخاب کنید.`;
             }
 
+            /* -------------------------------------------------------------- */
+            /* FORM                                                            */
+            /* -------------------------------------------------------------- */
+
             if (
                 message.messageType ===
                 "FORM" &&
@@ -973,6 +1049,18 @@ export default function AutomationForm({
             ) {
                 return `برای پیام ${index + 1
                     } یک فرم انتخاب کنید.`;
+            }
+
+            /* -------------------------------------------------------------- */
+            /* Quick Replies                                                   */
+            /* -------------------------------------------------------------- */
+
+            if (
+                message.quickReplies.length >
+                13
+            ) {
+                return `پیام ${index + 1
+                    } نمی‌تواند بیشتر از ۱۳ Quick Reply داشته باشد.`;
             }
 
             for (
@@ -1118,106 +1206,164 @@ export default function AutomationForm({
     }
 
     /* ---------------------------------------------------------------------- */
-    /* Sync Messages                                                          */
+    /* Delete Existing Messages                                               */
     /* ---------------------------------------------------------------------- */
 
-    async function syncMessages(
-        automationId: string
+    async function deleteExistingMessages(
+        targetAutomationId: string
     ) {
+        const existingResponse =
+            await fetch(
+                `/ api / automations / ${targetAutomationId}`,
+                {
+                    cache: "no-store",
+                    credentials:
+                        "include",
+                }
+            );
+
+        const existingResult =
+            await existingResponse.json();
+
         if (
-            messages.length === 0
+            !existingResponse.ok ||
+            !existingResult.success
+        ) {
+            throw new Error(
+                existingResult.error ||
+                existingResult.message ||
+                "دریافت Flow قبلی ناموفق بود."
+            );
+        }
+
+        const existingMessages =
+            existingResult.data
+                ?.messages;
+
+        if (
+            !Array.isArray(
+                existingMessages
+            )
         ) {
             return;
         }
 
-        /*
-         * در حالت ویرایش:
-         * Message های قبلی حذف می‌شوند.
-         */
-        if (isEditing) {
-            const existingResponse =
+        for (
+            const existingMessage of
+            existingMessages
+        ) {
+            if (
+                !existingMessage ||
+                typeof existingMessage.id !==
+                "string"
+            ) {
+                continue;
+            }
+
+            const deleteResponse =
                 await fetch(
-                    `/api/automations/${automationId}`,
+                    `/ api / automations / ${targetAutomationId} /messages/${existingMessage.id}`,
                     {
-                        cache: "no-store",
+                        method: "DELETE",
                         credentials:
                             "include",
                     }
                 );
 
-            const existingResult =
-                await existingResponse.json();
-
             if (
-                !existingResponse.ok ||
-                !existingResult.success
+                !deleteResponse.ok
             ) {
+                let deleteResult:
+                    Record<
+                        string,
+                        unknown
+                    > = {};
+
+                try {
+                    deleteResult =
+                        await deleteResponse.json();
+                } catch {
+                    // Ignore invalid JSON.
+                }
+
                 throw new Error(
-                    existingResult.error ||
-                    existingResult.message ||
-                    "دریافت Flow قبلی ناموفق بود."
+                    typeof deleteResult.error ===
+                        "string"
+                        ? deleteResult.error
+                        : typeof deleteResult.message ===
+                            "string"
+                            ? deleteResult.message
+                            : "حذف Flow قبلی ناموفق بود."
                 );
             }
 
-            const existingMessages =
-                existingResult.data
-                    ?.messages;
+            let deleteResult:
+                Record<
+                    string,
+                    unknown
+                > = {};
+
+            try {
+                deleteResult =
+                    await deleteResponse.json();
+            } catch {
+                /*
+                 * بعضی DELETE endpoint ها ممکن است
+                 * body نداشته باشند.
+                 */
+            }
 
             if (
-                Array.isArray(
-                    existingMessages
-                )
+                Object.keys(
+                    deleteResult
+                ).length > 0 &&
+                deleteResult.success === false
             ) {
-                for (
-                    const existingMessage of
-                    existingMessages
-                ) {
-                    if (
-                        !existingMessage ||
-                        typeof existingMessage.id !==
+                throw new Error(
+                    typeof deleteResult.error ===
                         "string"
-                    ) {
-                        continue;
-                    }
-
-                    const deleteResponse =
-                        await fetch(
-                            `/api/automations/${automationId}/messages/${existingMessage.id}`,
-                            {
-                                method: "DELETE",
-                                credentials:
-                                    "include",
-                            }
-                        );
-
-                    if (
-                        !deleteResponse.ok
-                    ) {
-                        let deleteResult:
-                            Record<
-                                string,
-                                unknown
-                            > = {};
-
-                        try {
-                            deleteResult =
-                                await deleteResponse.json();
-                        } catch {
-                            // Ignore invalid JSON.
-                        }
-
-                        throw new Error(
-                            typeof deleteResult.error ===
-                                "string"
-                                ? deleteResult.error
-                                : typeof deleteResult.message ===
-                                    "string"
-                                    ? deleteResult.message
-                                    : "حذف Flow قبلی ناموفق بود."
-                        );
-                    }
-                }
+                        ? deleteResult.error
+                        : typeof deleteResult.message ===
+                            "string"
+                            ? deleteResult.message
+                            : "حذف Flow قبلی ناموفق بود."
+                );
             }
+        }
+    }
+
+    /* ---------------------------------------------------------------------- */
+    /* Sync Messages                                                          */
+    /* ---------------------------------------------------------------------- */
+
+    async function syncMessages(
+        targetAutomationId: string
+    ) {
+        /*
+         * در حالت ویرایش:
+         * ابتدا تمام Message های قبلی حذف می‌شوند.
+         *
+         * این کار باید حتی زمانی انجام شود که
+         * messages.length === 0 باشد.
+         *
+         * قبلاً این check اول تابع بود و باعث می‌شد
+         * اگر کاربر تمام Flow را پاک کند،
+         * Message های قبلی در DB باقی بمانند.
+         */
+        if (isEditing) {
+            await deleteExistingMessages(
+                targetAutomationId
+            );
+        }
+
+        /*
+         * اگر Flow جدید خالی است،
+         * بعد از حذف Flow قبلی کار دیگری نداریم.
+         */
+        if (
+            messages.length === 0
+        ) {
+            return;
         }
 
         /*
@@ -1241,9 +1387,13 @@ export default function AutomationForm({
             const message =
                 messages[index];
 
+            if (!message) {
+                continue;
+            }
+
             const response =
                 await fetch(
-                    `/api/automations/${automationId}/messages`,
+                    `/ api / automations / ${targetAutomationId}/messages`,
                     {
                         method: "POST",
                         headers: {
@@ -1320,6 +1470,10 @@ export default function AutomationForm({
         for (
             const message of messages
         ) {
+            if (!message) {
+                continue;
+            }
+
             const serverMessageId =
                 serverMessageIds.get(
                     message.id
@@ -1348,7 +1502,7 @@ export default function AutomationForm({
 
                 const response =
                     await fetch(
-                        `/api/automations/${automationId}/messages/${serverMessageId}/quick-replies`,
+                        `/api/automations/${targetAutomationId}/messages/${serverMessageId}/quick-replies`,
                         {
                             method: "POST",
                             headers: {
@@ -1395,6 +1549,10 @@ export default function AutomationForm({
         event: FormEvent<HTMLFormElement>
     ) {
         event.preventDefault();
+
+        if (saving) {
+            return;
+        }
 
         setError("");
 
@@ -1532,65 +1690,17 @@ export default function AutomationForm({
                 result.data as Automation;
 
             /*
-             * Flow
+             * Flow را Sync می‌کنیم.
+             *
+             * این تابع هم حالت:
+             * 1. Flow جدید
+             * 2. ویرایش Flow
+             * 3. حذف کامل Flow
+             * را پوشش می‌دهد.
              */
-            if (
-                messages.length > 0
-            ) {
-                await syncMessages(
-                    savedAutomation.id
-                );
-            } else if (
-                isEditing
-            ) {
-                /*
-                 * اگر کاربر تمام Flow را پاک
-                 * کرده باشد، باید Message های
-                 * قبلی هم حذف شوند.
-                 */
-                const existingResponse =
-                    await fetch(
-                        `/api/automations/${savedAutomation.id}`,
-                        {
-                            cache: "no-store",
-                            credentials:
-                                "include",
-                        }
-                    );
-
-                const existingResult =
-                    await existingResponse.json();
-
-                if (
-                    existingResponse.ok &&
-                    existingResult.success &&
-                    Array.isArray(
-                        existingResult.data
-                            ?.messages
-                    )
-                ) {
-                    for (
-                        const existingMessage of
-                        existingResult
-                            .data.messages
-                    ) {
-                        if (
-                            !existingMessage?.id
-                        ) {
-                            continue;
-                        }
-
-                        await fetch(
-                            `/api/automations/${savedAutomation.id}/messages/${existingMessage.id}`,
-                            {
-                                method: "DELETE",
-                                credentials:
-                                    "include",
-                            }
-                        );
-                    }
-                }
-            }
+            await syncMessages(
+                savedAutomation.id
+            );
 
             /*
              * Automation نهایی را دوباره
@@ -1668,7 +1778,8 @@ export default function AutomationForm({
                     <button
                         type="button"
                         onClick={onClose}
-                        className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-gray-900"
+                        disabled={saving}
+                        className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-50"
                         aria-label="بستن"
                     >
                         <X size={19} />
@@ -2296,6 +2407,8 @@ export default function AutomationForm({
             </div>
         </div>
     );
+
+
 }
 
 /* -------------------------------------------------------------------------- */
@@ -2323,23 +2436,26 @@ function TriggerOption({
                     ? "border-slate-900 bg-slate-950 text-white"
                     : "border-slate-200 bg-white text-slate-800 hover:border-slate-400",
             ].join(" ")}
-        >
-            <div className="text-sm font-semibold">
-                {title}
-            </div>
+        > <div className="text-sm font-semibold">
+                {title} </div>
 
-            <div
-                className={[
-                    "mt-1 text-xs leading-5",
-                    active
-                        ? "text-slate-300"
-                        : "text-slate-400",
-                ].join(" ")}
+            ```
+            < div
+                className={
+                    [
+                        "mt-1 text-xs leading-5",
+                        active
+                            ? "text-slate-300"
+                            : "text-slate-400",
+                    ].join(" ")
+                }
             >
                 {description}
-            </div>
-        </button>
+            </div >
+        </button >
     );
+
+
 }
 
 /* -------------------------------------------------------------------------- */
@@ -2387,6 +2503,11 @@ function FlowMessageCard({
         quickReplyId: string
     ) => void;
 }) {
+    const canAddQuickReply =
+        messageOptions.length >= 2 &&
+        message.quickReplies.length < 13;
+
+
     return (
         <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
             {/* Header */}
@@ -2702,8 +2823,9 @@ function FlowMessageCard({
                         )}
 
                         <p className="mt-2 text-[11px] leading-5 text-gray-400">
-                            ویترین مستقل ذخیره می‌شود و می‌تواند
-                            در چند Automation استفاده شود.
+                            ویترین مستقل ذخیره می‌شود. ارسال مستقیم
+                            ویترین به Instagram در Sender فعلی هنوز
+                            پیاده‌سازی نشده است.
                         </p>
                     </div>
                 )}
@@ -2779,8 +2901,10 @@ function FlowMessageCard({
                         )}
 
                         <p className="mt-2 text-[11px] leading-5 text-gray-400">
-                            فرم مستقل ذخیره می‌شود و پاسخ‌های
-                            مشتری در FormSubmission ثبت خواهند شد.
+                            فرم مستقل ذخیره می‌شود و پاسخ‌های مشتری
+                            در FormSubmission ثبت خواهند شد. ارسال
+                            مستقیم فرم به Instagram در Sender فعلی
+                            هنوز پیاده‌سازی نشده است.
                         </p>
                     </div>
                 )}
@@ -2806,8 +2930,7 @@ function FlowMessageCard({
                             onAddQuickReply
                         }
                         disabled={
-                            messageOptions.length <
-                            2
+                            !canAddQuickReply
                         }
                         className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-[11px] font-medium text-gray-600 transition hover:border-gray-400 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-40"
                     >
@@ -2817,7 +2940,10 @@ function FlowMessageCard({
                             }
                         />
 
-                        افزودن گزینه
+                        {message.quickReplies.length >=
+                            13
+                            ? "حداکثر ۱۳ گزینه"
+                            : "افزودن گزینه"}
                     </button>
                 </div>
 
@@ -2964,4 +3090,6 @@ function FlowMessageCard({
             </div>
         </div>
     );
+
+
 }
