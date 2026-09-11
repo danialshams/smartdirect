@@ -3,6 +3,10 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import {
+  deleteInstagramIceBreakers,
+  setInstagramIceBreakers,
+} from "@/lib/instagram/messenger-profile";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +17,35 @@ type IceBreakerItemInput = {
 
 function generatePayload() {
   return `icebreaker_${crypto.randomUUID()}`;
+}
+
+async function getAccountForUser(instagramAccountId: string, userId: string) {
+  return prisma.instagramAccount.findFirst({
+    where: {
+      id: instagramAccountId,
+      userId,
+    },
+  });
+}
+
+async function getIceBreakers(instagramAccountId: string) {
+  return prisma.iceBreaker.findMany({
+    where: {
+      instagramAccountId,
+    },
+    include: {
+      automation: {
+        select: {
+          id: true,
+          triggerType: true,
+          isActive: true,
+        },
+      },
+    },
+    orderBy: {
+      order: "asc",
+    },
+  });
 }
 
 export async function GET(request: NextRequest) {
@@ -36,12 +69,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const account = await prisma.instagramAccount.findFirst({
-      where: {
-        id: instagramAccountId,
-        userId: session.user.id,
-      },
-    });
+    const account = await getAccountForUser(
+      instagramAccountId,
+      session.user.id,
+    );
 
     if (!account) {
       return NextResponse.json(
@@ -52,23 +83,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const iceBreakers = await prisma.iceBreaker.findMany({
-      where: {
-        instagramAccountId,
-      },
-      include: {
-        automation: {
-          select: {
-            id: true,
-            triggerType: true,
-            isActive: true,
-          },
-        },
-      },
-      orderBy: {
-        order: "asc",
-      },
-    });
+    const iceBreakers = await getIceBreakers(instagramAccountId);
 
     return NextResponse.json({
       success: true,
@@ -132,12 +147,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const account = await prisma.instagramAccount.findFirst({
-      where: {
-        id: instagramAccountId,
-        userId: session.user.id,
-      },
-    });
+    const account = await getAccountForUser(
+      instagramAccountId,
+      session.user.id,
+    );
 
     if (!account) {
       return NextResponse.json(
@@ -149,7 +162,7 @@ export async function POST(request: NextRequest) {
     }
 
     /*
-     * Validate all questions first.
+     * Validate all Ice Breakers.
      */
     for (const item of items) {
       if (!item.question?.trim()) {
@@ -181,8 +194,7 @@ export async function POST(request: NextRequest) {
     }
 
     /*
-     * Validate all automations belong to this account
-     * and are active.
+     * Validate all selected automations.
      */
     const automationIds = [
       ...new Set(items.map((item) => item.automationId).filter(Boolean)),
@@ -219,11 +231,49 @@ export async function POST(request: NextRequest) {
     }
 
     /*
-     * Replace the account's existing Ice Breakers
-     * with the new configuration.
+     * Generate payloads BEFORE syncing with Meta.
      *
-     * This keeps ordering predictable and prevents
-     * old deleted items from remaining in the DB.
+     * The same payloads will be:
+     *
+     * 1. Saved in Prisma
+     * 2. Sent to Instagram
+     *
+     * This is important because the webhook
+     * later uses this payload to find the
+     * correct Automation.
+     */
+    const preparedItems = items.map((item, index) => ({
+      question: item.question.trim(),
+      automationId: item.automationId,
+      payload: generatePayload(),
+      order: index,
+    }));
+
+    /*
+     * First update Instagram itself.
+     *
+     * If Meta rejects the configuration,
+     * we don't change the database.
+     */
+    if (preparedItems.length > 0) {
+      await setInstagramIceBreakers({
+        instagramAccountId,
+        instagramUserId: account.igUserId,
+        iceBreakers: preparedItems.map((item) => ({
+          question: item.question,
+          payload: item.payload,
+        })),
+      });
+    } else {
+      await deleteInstagramIceBreakers({
+        instagramAccountId,
+        instagramUserId: account.igUserId,
+      });
+    }
+
+    /*
+     * Meta accepted the configuration.
+     * Now synchronize Prisma.
      */
     await prisma.$transaction(async (tx) => {
       await tx.iceBreaker.deleteMany({
@@ -232,37 +282,21 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      if (items.length > 0) {
+      if (preparedItems.length > 0) {
         await tx.iceBreaker.createMany({
-          data: items.map((item, index) => ({
+          data: preparedItems.map((item) => ({
             instagramAccountId,
             automationId: item.automationId,
-            question: item.question.trim(),
-            payload: generatePayload(),
-            order: index,
+            question: item.question,
+            payload: item.payload,
+            order: item.order,
             isActive: true,
           })),
         });
       }
     });
 
-    const iceBreakers = await prisma.iceBreaker.findMany({
-      where: {
-        instagramAccountId,
-      },
-      include: {
-        automation: {
-          select: {
-            id: true,
-            triggerType: true,
-            isActive: true,
-          },
-        },
-      },
-      orderBy: {
-        order: "asc",
-      },
-    });
+    const iceBreakers = await getIceBreakers(instagramAccountId);
 
     return NextResponse.json({
       success: true,
@@ -304,12 +338,10 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const account = await prisma.instagramAccount.findFirst({
-      where: {
-        id: instagramAccountId,
-        userId: session.user.id,
-      },
-    });
+    const account = await getAccountForUser(
+      instagramAccountId,
+      session.user.id,
+    );
 
     if (!account) {
       return NextResponse.json(
@@ -320,6 +352,17 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
+    /*
+     * Remove Ice Breakers from Instagram first.
+     */
+    await deleteInstagramIceBreakers({
+      instagramAccountId,
+      instagramUserId: account.igUserId,
+    });
+
+    /*
+     * Then remove them from Prisma.
+     */
     await prisma.iceBreaker.deleteMany({
       where: {
         instagramAccountId,

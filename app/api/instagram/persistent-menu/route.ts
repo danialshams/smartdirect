@@ -3,6 +3,10 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import {
+  deleteInstagramPersistentMenu,
+  setInstagramPersistentMenu,
+} from "@/lib/instagram/messenger-profile";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +17,39 @@ type MenuItemInput = {
 
 function generatePayload() {
   return `persistent_${crypto.randomUUID()}`;
+}
+
+async function getAccountForUser(instagramAccountId: string, userId: string) {
+  return prisma.instagramAccount.findFirst({
+    where: {
+      id: instagramAccountId,
+      userId,
+    },
+  });
+}
+
+async function getPersistentMenu(instagramAccountId: string) {
+  return prisma.persistentMenu.findUnique({
+    where: {
+      instagramAccountId,
+    },
+    include: {
+      items: {
+        include: {
+          automation: {
+            select: {
+              id: true,
+              triggerType: true,
+              isActive: true,
+            },
+          },
+        },
+        orderBy: {
+          order: "asc",
+        },
+      },
+    },
+  });
 }
 
 export async function GET(request: NextRequest) {
@@ -36,12 +73,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const account = await prisma.instagramAccount.findFirst({
-      where: {
-        id: instagramAccountId,
-        userId: session.user.id,
-      },
-    });
+    const account = await getAccountForUser(
+      instagramAccountId,
+      session.user.id,
+    );
 
     if (!account) {
       return NextResponse.json(
@@ -52,27 +87,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const menu = await prisma.persistentMenu.findUnique({
-      where: {
-        instagramAccountId,
-      },
-      include: {
-        items: {
-          include: {
-            automation: {
-              select: {
-                id: true,
-                triggerType: true,
-                isActive: true,
-              },
-            },
-          },
-          orderBy: {
-            order: "asc",
-          },
-        },
-      },
-    });
+    const menu = await getPersistentMenu(instagramAccountId);
 
     return NextResponse.json({
       success: true,
@@ -136,12 +151,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const account = await prisma.instagramAccount.findFirst({
-      where: {
-        id: instagramAccountId,
-        userId: session.user.id,
-      },
-    });
+    const account = await getAccountForUser(
+      instagramAccountId,
+      session.user.id,
+    );
 
     if (!account) {
       return NextResponse.json(
@@ -152,6 +165,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    /*
+     * Validate menu items.
+     */
     for (const item of items) {
       if (!item.title?.trim()) {
         return NextResponse.json(
@@ -181,6 +197,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    /*
+     * Validate selected automations.
+     */
     const automationIds = [
       ...new Set(
         items
@@ -221,31 +240,89 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    /*
+     * If the user disables the menu or removes
+     * all items, remove it from Instagram too.
+     */
+    if (!enabled || items.length === 0) {
+      await deleteInstagramPersistentMenu({
+        instagramAccountId,
+        instagramUserId: account.igUserId,
+      });
+
+      await prisma.persistentMenu.upsert({
+        where: {
+          instagramAccountId,
+        },
+        create: {
+          instagramAccountId,
+          enabled: false,
+        },
+        update: {
+          enabled: false,
+          items: {
+            deleteMany: {},
+          },
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+        data: await getPersistentMenu(instagramAccountId),
+      });
+    }
+
+    /*
+     * Generate payloads before sending to Meta.
+     */
+    const preparedItems = items.map((item, index) => ({
+      title: item.title.trim(),
+      automationId: item.automationId!,
+      payload: generatePayload(),
+      order: index,
+    }));
+
+    /*
+     * Sync with Instagram first.
+     */
+    await setInstagramPersistentMenu({
+      instagramAccountId,
+      instagramUserId: account.igUserId,
+      items: preparedItems.map((item) => ({
+        title: item.title,
+        payload: item.payload,
+      })),
+    });
+
+    /*
+     * Meta accepted it.
+     * Now synchronize Prisma.
+     */
     const menu = await prisma.persistentMenu.upsert({
       where: {
         instagramAccountId,
       },
       create: {
         instagramAccountId,
-        enabled: enabled && items.length > 0,
+        enabled: true,
         items: {
-          create: items.map((item, index) => ({
-            title: item.title.trim(),
-            payload: generatePayload(),
-            automationId: item.automationId || null,
-            order: index,
+          create: preparedItems.map((item) => ({
+            title: item.title,
+            payload: item.payload,
+            automationId: item.automationId,
+            order: item.order,
           })),
         },
       },
       update: {
-        enabled: enabled && items.length > 0,
+        enabled: true,
         items: {
           deleteMany: {},
-          create: items.map((item, index) => ({
-            title: item.title.trim(),
-            payload: generatePayload(),
-            automationId: item.automationId || null,
-            order: index,
+          create: preparedItems.map((item) => ({
+            title: item.title,
+            payload: item.payload,
+            automationId: item.automationId,
+            order: item.order,
           })),
         },
       },
@@ -307,12 +384,10 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const account = await prisma.instagramAccount.findFirst({
-      where: {
-        id: instagramAccountId,
-        userId: session.user.id,
-      },
-    });
+    const account = await getAccountForUser(
+      instagramAccountId,
+      session.user.id,
+    );
 
     if (!account) {
       return NextResponse.json(
@@ -323,20 +398,30 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    await prisma.persistentMenuItem.deleteMany({
-      where: {
-        persistentMenu: {
-          instagramAccountId,
-        },
-      },
+    /*
+     * Remove from Instagram first.
+     */
+    await deleteInstagramPersistentMenu({
+      instagramAccountId,
+      instagramUserId: account.igUserId,
     });
 
-    await prisma.persistentMenu.updateMany({
+    /*
+     * Then disable it locally.
+     */
+    await prisma.persistentMenu.upsert({
       where: {
         instagramAccountId,
       },
-      data: {
+      create: {
+        instagramAccountId,
         enabled: false,
+      },
+      update: {
+        enabled: false,
+        items: {
+          deleteMany: {},
+        },
       },
     });
 
