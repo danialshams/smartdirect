@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
+import EntryPointFlowBuilder from "./EntryPointFlowBuilder";
+
 type InstagramAccount = {
     id: string;
     igUsername: string;
@@ -18,22 +20,18 @@ type InstagramAccount = {
     createdAt: Date;
 };
 
-type Automation = {
-    id: string;
-    triggerType:
-    | "COMMENT_KEYWORD"
-    | "DM"
-    | "STORY_REPLY_KEYWORD";
-    keyword: string | null;
-    isActive: boolean;
-};
-
 type IceBreakerItem = {
     id: string;
     question: string;
     payload: string;
     automationId: string;
     order: number;
+};
+
+type IceBreakerDraft = {
+    id?: string;
+    question: string;
+    automationId: string | null;
 };
 
 type IceBreakerManagerProps = {
@@ -54,14 +52,8 @@ export default function IceBreakerManager({
     const [selectedAccountId, setSelectedAccountId] =
         useState("");
 
-    const [automations, setAutomations] =
-        useState<Automation[]>([]);
-
     const [items, setItems] = useState<
-        Array<{
-            question: string;
-            automationId: string;
-        }>
+        IceBreakerDraft[]
     >([]);
 
     const [loading, setLoading] =
@@ -76,6 +68,9 @@ export default function IceBreakerManager({
     const [success, setSuccess] =
         useState(false);
 
+    /*
+     * Select first connected Instagram account.
+     */
     useEffect(() => {
         if (
             connectedAccounts.length > 0 &&
@@ -103,12 +98,18 @@ export default function IceBreakerManager({
         selectedAccountId,
     ]);
 
+    /*
+     * Load Ice Breakers.
+     *
+     * We no longer load /api/automations here.
+     * Each Ice Breaker owns its own internal
+     * Automation and its Flow is edited inline.
+     */
     useEffect(() => {
         let cancelled = false;
 
         async function load() {
             if (!selectedAccountId) {
-                setAutomations([]);
                 setItems([]);
                 return;
             }
@@ -118,89 +119,60 @@ export default function IceBreakerManager({
                 setError(null);
                 setSuccess(false);
 
-                const [
-                    automationResponse,
-                    iceBreakerResponse,
-                ] = await Promise.all([
-                    fetch(
-                        `/api/automations?instagramAccountId=${encodeURIComponent(
-                            selectedAccountId,
-                        )}`,
-                        {
-                            cache: "no-store",
-                        },
-                    ),
-                    fetch(
+                const response =
+                    await fetch(
                         `/api/instagram/ice-breakers?instagramAccountId=${encodeURIComponent(
                             selectedAccountId,
                         )}`,
                         {
                             cache: "no-store",
+                            credentials:
+                                "include",
                         },
-                    ),
-                ]);
-
-                const automationResult =
-                    await automationResponse.json();
-
-                const iceBreakerResult =
-                    await iceBreakerResponse.json();
-
-                if (
-                    !automationResponse.ok ||
-                    !automationResult.success
-                ) {
-                    throw new Error(
-                        automationResult.error ||
-                        "دریافت Automationها ناموفق بود.",
                     );
-                }
+
+                const result =
+                    await response.json();
 
                 if (
-                    !iceBreakerResponse.ok ||
-                    !iceBreakerResult.success
+                    !response.ok ||
+                    !result.success
                 ) {
                     throw new Error(
-                        iceBreakerResult.error ||
+                        result.error ||
                         "دریافت Ice Breakerها ناموفق بود.",
                     );
                 }
 
-                if (cancelled) return;
-
-                const activeAutomations =
-                    (
-                        automationResult.data ??
-                        []
-                    ).filter(
-                        (
-                            automation: Automation,
-                        ) =>
-                            automation.isActive,
-                    );
-
-                setAutomations(
-                    activeAutomations,
-                );
+                if (cancelled) {
+                    return;
+                }
 
                 const serverItems =
-                    iceBreakerResult.data ??
-                    [];
+                    Array.isArray(
+                        result.data,
+                    )
+                        ? result.data
+                        : [];
 
                 setItems(
                     serverItems.map(
                         (
                             item: IceBreakerItem,
                         ) => ({
+                            id: item.id,
                             question:
                                 item.question,
                             automationId:
-                                item.automationId,
+                                item.automationId ??
+                                null,
                         }),
                     ),
                 );
             } catch (loadError) {
-                console.error(loadError);
+                console.error(
+                    loadError,
+                );
 
                 if (!cancelled) {
                     setError(
@@ -217,13 +189,20 @@ export default function IceBreakerManager({
             }
         }
 
-        load();
+        void load();
 
         return () => {
             cancelled = true;
         };
     }, [selectedAccountId]);
 
+    /*
+     * Add a new Ice Breaker.
+     *
+     * automationId starts as null.
+     * EntryPointFlowBuilder will create the
+     * internal Automation when its Flow is saved.
+     */
     function addItem() {
         if (items.length >= 4) {
             return;
@@ -233,8 +212,7 @@ export default function IceBreakerManager({
             ...current,
             {
                 question: "",
-                automationId:
-                    automations[0]?.id ?? "",
+                automationId: null,
             },
         ]);
     }
@@ -248,11 +226,8 @@ export default function IceBreakerManager({
         );
     }
 
-    function updateItem(
+    function updateQuestion(
         index: number,
-        field:
-            | "question"
-            | "automationId",
         value: string,
     ) {
         setItems((current) =>
@@ -261,7 +236,24 @@ export default function IceBreakerManager({
                     itemIndex === index
                         ? {
                             ...item,
-                            [field]: value,
+                            question: value,
+                        }
+                        : item,
+            ),
+        );
+    }
+
+    function updateAutomationId(
+        index: number,
+        automationId: string,
+    ) {
+        setItems((current) =>
+            current.map(
+                (item, itemIndex) =>
+                    itemIndex === index
+                        ? {
+                            ...item,
+                            automationId,
                         }
                         : item,
             ),
@@ -269,7 +261,9 @@ export default function IceBreakerManager({
     }
 
     async function handleSave() {
-        if (!selectedAccountId) return;
+        if (!selectedAccountId) {
+            return;
+        }
 
         try {
             setSaving(true);
@@ -282,16 +276,21 @@ export default function IceBreakerManager({
                 );
             }
 
-            for (const item of items) {
-                if (!item.question.trim()) {
-                    throw new Error(
-                        "متن همه Ice Breakerها را وارد کنید.",
-                    );
+            for (
+                let index = 0;
+                index < items.length;
+                index++
+            ) {
+                const item = items[index];
+
+                if (!item) {
+                    continue;
                 }
 
-                if (!item.automationId) {
+                if (!item.question.trim()) {
                     throw new Error(
-                        "برای همه Ice Breakerها Automation انتخاب کنید.",
+                        `متن سوال ${index + 1
+                        } را وارد کنید.`,
                     );
                 }
 
@@ -300,7 +299,15 @@ export default function IceBreakerManager({
                         .length > 80
                 ) {
                     throw new Error(
-                        "متن Ice Breaker نباید بیشتر از ۸۰ کاراکتر باشد.",
+                        `متن سوال ${index + 1
+                        } نباید بیشتر از ۸۰ کاراکتر باشد.`,
+                    );
+                }
+
+                if (!item.automationId) {
+                    throw new Error(
+                        `برای سوال ${index + 1
+                        } ابتدا پاسخ سفارشی آن را ذخیره کنید.`,
                     );
                 }
             }
@@ -319,7 +326,14 @@ export default function IceBreakerManager({
                         body: JSON.stringify({
                             instagramAccountId:
                                 selectedAccountId,
-                            items,
+                            items: items.map(
+                                (item) => ({
+                                    question:
+                                        item.question.trim(),
+                                    automationId:
+                                        item.automationId,
+                                }),
+                            ),
                         }),
                     },
                 );
@@ -338,27 +352,36 @@ export default function IceBreakerManager({
             }
 
             const savedItems =
-                result.data ?? [];
+                Array.isArray(
+                    result.data,
+                )
+                    ? result.data
+                    : [];
 
             setItems(
                 savedItems.map(
                     (
                         item: IceBreakerItem,
                     ) => ({
+                        id: item.id,
                         question:
                             item.question,
                         automationId:
-                            item.automationId,
+                            item.automationId ??
+                            null,
                     }),
                 ),
             );
 
             setSuccess(true);
         } catch (saveError) {
-            console.error(saveError);
+            console.error(
+                saveError,
+            );
 
             setError(
-                saveError instanceof Error
+                saveError instanceof
+                    Error
                     ? saveError.message
                     : "ذخیره ناموفق بود.",
             );
@@ -368,7 +391,9 @@ export default function IceBreakerManager({
     }
 
     async function handleDisable() {
-        if (!selectedAccountId) return;
+        if (!selectedAccountId) {
+            return;
+        }
 
         try {
             setSaving(true);
@@ -403,10 +428,13 @@ export default function IceBreakerManager({
             setItems([]);
             setSuccess(true);
         } catch (disableError) {
-            console.error(disableError);
+            console.error(
+                disableError,
+            );
 
             setError(
-                disableError instanceof Error
+                disableError instanceof
+                    Error
                     ? disableError.message
                     : "غیرفعال‌سازی ناموفق بود.",
             );
@@ -420,11 +448,17 @@ export default function IceBreakerManager({
             id="ice-breakers"
             className="scroll-mt-24 rounded-[26px] border border-slate-200 bg-white"
         >
+            {/* --------------------------------------------------------- */}
+            {/* Header                                                    */}
+            {/* --------------------------------------------------------- */}
+
             <div className="border-b border-slate-100 p-5 sm:p-7">
                 <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
                     <div>
                         <div className="flex items-center gap-2 text-slate-400">
-                            <HelpCircle size={16} />
+                            <HelpCircle
+                                size={16}
+                            />
 
                             <span className="text-[10px] font-semibold tracking-[0.16em]">
                                 ICE BREAKERS
@@ -436,11 +470,12 @@ export default function IceBreakerManager({
                         </h2>
 
                         <p className="mt-1.5 max-w-xl text-sm leading-6 text-slate-400">
-                            کاربر این سوال‌ها را هنگام
-                            شروع گفتگو می‌بیند. با انتخاب
-                            هر سوال، Automation متصل به آن
-                            اجرا می‌شود و پیام‌های همان Flow
-                            به کاربر ارسال می‌شوند.
+                            کاربر این سوال‌ها را
+                            هنگام شروع گفتگو
+                            می‌بیند. برای هر سوال
+                            می‌توانید پاسخ و Flow
+                            اختصاصی خودتان را
+                            مستقیماً همین‌جا بسازید.
                         </p>
                     </div>
 
@@ -492,6 +527,10 @@ export default function IceBreakerManager({
                 </div>
             </div>
 
+            {/* --------------------------------------------------------- */}
+            {/* Content                                                   */}
+            {/* --------------------------------------------------------- */}
+
             {connectedAccounts.length ===
                 0 ? (
                 <div className="px-6 py-16 text-center text-sm text-slate-400">
@@ -504,219 +543,233 @@ export default function IceBreakerManager({
                         className="animate-spin text-slate-400"
                     />
                 </div>
-            ) : automations.length ===
-                0 ? (
-                <div className="px-6 py-16 text-center">
-                    <p className="text-sm font-semibold text-slate-700">
-                        ابتدا حداقل یک Automation بسازید.
-                    </p>
-
-                    <p className="mx-auto mt-2 max-w-md text-xs leading-6 text-slate-400">
-                        پاسخ Ice Breaker از طریق Flow
-                        همان Automation ارسال می‌شود.
-                    </p>
-                </div>
             ) : (
                 <div className="p-5 sm:p-7">
-                    <div className="mb-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    {/* ------------------------------------------------- */}
+                    {/* Explanation                                       */}
+                    {/* ------------------------------------------------- */}
+
+                    <div className="mb-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
                         <p className="text-sm font-semibold text-slate-800">
-                            پاسخ هر سوال کجاست؟
+                            پاسخ هر سوال را همین‌جا بسازید
                         </p>
 
                         <p className="mt-1 text-xs leading-6 text-slate-500">
-                            برای هر سوال یک Automation
-                            انتخاب کنید. اولین پیام آن
-                            Automation جواب کاربر است و
-                            ادامه Flow نیز طبق تنظیمات
-                            همان Automation اجرا می‌شود.
+                            دیگر لازم نیست یک
+                            Automation را انتخاب
+                            کنید. برای هر سوال،
+                            Flow مخصوص خودش را
+                            بسازید؛ شامل چند پیام،
+                            عکس، ویدیو، صوت،
+                            Showcase، Form و
+                            Quick Reply.
                         </p>
                     </div>
 
-                    <div className="space-y-3">
-                        {items.map(
-                            (
-                                item,
-                                index,
-                            ) => (
-                                <div
-                                    key={
-                                        index
-                                    }
-                                    className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4"
-                                >
-                                    <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
-                                        <div className="flex-1">
-                                            <label className="mb-2 block text-xs font-medium text-slate-500">
-                                                سوال
-                                            </label>
+                    {/* ------------------------------------------------- */}
+                    {/* Items                                             */}
+                    {/* ------------------------------------------------- */}
 
-                                            <input
-                                                value={
-                                                    item.question
-                                                }
-                                                onChange={(
-                                                    event,
-                                                ) =>
-                                                    updateItem(
+                    {items.length === 0 ? (
+                        <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/50 px-6 py-12 text-center">
+                            <HelpCircle
+                                size={22}
+                                className="mx-auto text-slate-300"
+                            />
+
+                            <p className="mt-3 text-sm font-semibold text-slate-700">
+                                هنوز سوالی اضافه نشده است.
+                            </p>
+
+                            <p className="mt-1 text-xs leading-6 text-slate-400">
+                                اولین سوال را اضافه
+                                کنید و پاسخ
+                                اختصاصی آن را بسازید.
+                            </p>
+
+                            <button
+                                type="button"
+                                onClick={
+                                    addItem
+                                }
+                                className="mt-5 inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                            >
+                                <Plus
+                                    size={16}
+                                />
+                                افزودن سوال
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="space-y-5">
+                            {items.map(
+                                (
+                                    item,
+                                    index,
+                                ) => (
+                                    <div
+                                        key={
+                                            item.id ??
+                                            `new-${index}`
+                                        }
+                                        className="rounded-[22px] border border-slate-200 bg-slate-50/60 p-4 sm:p-5"
+                                    >
+                                        {/* Question header */}
+                                        <div className="flex items-start gap-3">
+                                            <div className="flex min-w-0 flex-1 flex-col">
+                                                <div className="mb-2 flex items-center justify-between gap-3">
+                                                    <label className="block text-xs font-semibold text-slate-600">
+                                                        سوال{" "}
+                                                        {
+                                                            index +
+                                                            1
+                                                        }
+                                                    </label>
+
+                                                    <span className="text-[10px] font-medium text-slate-400">
+                                                        {
+                                                            item
+                                                                .question
+                                                                .length
+                                                        }
+                                                        /80
+                                                    </span>
+                                                </div>
+
+                                                <input
+                                                    value={
+                                                        item.question
+                                                    }
+                                                    onChange={(
+                                                        event,
+                                                    ) =>
+                                                        updateQuestion(
+                                                            index,
+                                                            event
+                                                                .target
+                                                                .value,
+                                                        )
+                                                    }
+                                                    maxLength={
+                                                        80
+                                                    }
+                                                    placeholder="مثلاً: محصولات شما را ببینم"
+                                                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                                                />
+                                            </div>
+
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    removeItem(
                                                         index,
-                                                        "question",
-                                                        event
-                                                            .target
-                                                            .value,
                                                     )
                                                 }
-                                                maxLength={
-                                                    80
-                                                }
-                                                placeholder="مثلاً: محصولات شما را ببینم"
-                                                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-slate-400"
-                                            />
-
-                                            <div className="mt-1 text-left text-[10px] text-slate-400">
-                                                {
-                                                    item
-                                                        .question
-                                                        .length
-                                                }
-                                                /80
-                                            </div>
+                                                className="mt-6 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                                                aria-label="حذف سوال"
+                                            >
+                                                <Trash2
+                                                    size={
+                                                        17
+                                                    }
+                                                />
+                                            </button>
                                         </div>
 
-                                        <div className="w-full lg:w-[310px]">
-                                            <label className="mb-2 block text-xs font-medium text-slate-500">
-                                                Automation / پاسخ
-                                            </label>
-
-                                            <select
-                                                value={
+                                        {/* Inline Flow Builder */}
+                                        {selectedAccountId && (
+                                            <EntryPointFlowBuilder
+                                                accountId={
+                                                    selectedAccountId
+                                                }
+                                                automationId={
                                                     item.automationId
                                                 }
-                                                onChange={(
-                                                    event,
+                                                onAutomationReady={(
+                                                    automationId,
                                                 ) =>
-                                                    updateItem(
+                                                    updateAutomationId(
                                                         index,
-                                                        "automationId",
-                                                        event
-                                                            .target
-                                                            .value,
+                                                        automationId,
                                                     )
                                                 }
-                                                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400"
-                                            >
-                                                <option value="">
-                                                    انتخاب Automation
-                                                </option>
-
-                                                {automations.map(
-                                                    (
-                                                        automation,
-                                                    ) => (
-                                                        <option
-                                                            key={
-                                                                automation.id
-                                                            }
-                                                            value={
-                                                                automation.id
-                                                            }
-                                                        >
-                                                            {automation.triggerType ===
-                                                                "DM"
-                                                                ? "دایرکت"
-                                                                : automation.triggerType ===
-                                                                    "COMMENT_KEYWORD"
-                                                                    ? `کامنت: ${automation.keyword ?? ""}`
-                                                                    : `استوری: ${automation.keyword ?? ""}`}
-                                                        </option>
-                                                    ),
-                                                )}
-                                            </select>
-                                        </div>
-
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                removeItem(
-                                                    index,
-                                                )
-                                            }
-                                            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
-                                            aria-label="حذف"
-                                        >
-                                            <Trash2
-                                                size={
-                                                    17
-                                                }
                                             />
-                                        </button>
+                                        )}
                                     </div>
-                                </div>
-                            ),
-                        )}
-                    </div>
-
-                    <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-                        <button
-                            type="button"
-                            onClick={
-                                addItem
-                            }
-                            disabled={
-                                items.length >=
-                                4
-                            }
-                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
-                        >
-                            <Plus
-                                size={16}
-                            />
-                            افزودن سوال
-                        </button>
-
-                        {items.length >
-                            0 && (
-                                <button
-                                    type="button"
-                                    onClick={
-                                        handleDisable
-                                    }
-                                    disabled={
-                                        saving
-                                    }
-                                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-3 text-sm font-medium text-slate-500 transition hover:bg-slate-50 disabled:opacity-50"
-                                >
-                                    غیرفعال کردن
-                                </button>
+                                ),
                             )}
+                        </div>
+                    )}
 
-                        <button
-                            type="button"
-                            onClick={
-                                handleSave
-                            }
-                            disabled={
-                                saving
-                            }
-                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50 sm:mr-auto"
-                        >
-                            {saving ? (
-                                <Loader2
-                                    size={
-                                        16
-                                    }
-                                    className="animate-spin"
-                                />
-                            ) : (
-                                <Save
-                                    size={
-                                        16
-                                    }
-                                />
-                            )}
+                    {/* ------------------------------------------------- */}
+                    {/* Bottom actions                                     */}
+                    {/* ------------------------------------------------- */}
 
-                            ذخیره Ice Breakerها
-                        </button>
-                    </div>
+                    {items.length > 0 && (
+                        <div className="mt-5 flex flex-col gap-3 border-t border-slate-200 pt-5 sm:flex-row">
+                            <button
+                                type="button"
+                                onClick={
+                                    addItem
+                                }
+                                disabled={
+                                    items.length >=
+                                    4
+                                }
+                                className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                            >
+                                <Plus
+                                    size={16}
+                                />
+                                افزودن سوال
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={
+                                    handleDisable
+                                }
+                                disabled={
+                                    saving
+                                }
+                                className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-3 text-sm font-medium text-slate-500 transition hover:bg-slate-50 disabled:opacity-50"
+                            >
+                                غیرفعال کردن
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={
+                                    handleSave
+                                }
+                                disabled={
+                                    saving
+                                }
+                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50 sm:mr-auto"
+                            >
+                                {saving ? (
+                                    <Loader2
+                                        size={
+                                            16
+                                        }
+                                        className="animate-spin"
+                                    />
+                                ) : (
+                                    <Save
+                                        size={
+                                            16
+                                        }
+                                    />
+                                )}
+
+                                ذخیره Ice Breakerها
+                            </button>
+                        </div>
+                    )}
+
+                    {/* ------------------------------------------------- */}
+                    {/* Error / Success                                   */}
+                    {/* ------------------------------------------------- */}
 
                     {error && (
                         <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs leading-6 text-red-700">
@@ -726,7 +779,8 @@ export default function IceBreakerManager({
 
                     {success && (
                         <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs leading-6 text-emerald-700">
-                            تنظیمات Ice Breaker با موفقیت ذخیره شد.
+                            تنظیمات Ice Breaker با
+                            موفقیت ذخیره شد.
                         </div>
                     )}
                 </div>

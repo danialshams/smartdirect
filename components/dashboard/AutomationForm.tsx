@@ -27,6 +27,7 @@ import {
     createEmptyQuickReply,
     getDefaultTrigger,
     normalizeMessages,
+    validateMessages,
 } from "./automation-form-utils";
 
 import type {
@@ -72,7 +73,7 @@ export default function AutomationForm({
 
     const [triggerType, setTriggerType] =
         useState<AutomationTriggerType>(
-            getDefaultTrigger(automation)
+            getDefaultTrigger()
         );
 
     const [keyword, setKeyword] = useState(
@@ -669,219 +670,6 @@ export default function AutomationForm({
     /* Validate Flow                                                          */
     /* ---------------------------------------------------------------------- */
 
-    function validateMessages() {
-        for (
-            let index = 0;
-            index < messages.length;
-            index++
-        ) {
-            const message =
-                messages[index];
-
-            if (!message) {
-                continue;
-            }
-
-            /* TEXT */
-
-            if (
-                message.messageType ===
-                "TEXT" &&
-                !message.text.trim()
-            ) {
-                return `متن پیام ${index + 1
-                    } را وارد کنید.`;
-            }
-
-            /* MEDIA */
-
-            if (
-                (
-                    message.messageType ===
-                    "IMAGE" ||
-                    message.messageType ===
-                    "VIDEO" ||
-                    message.messageType ===
-                    "AUDIO"
-                ) &&
-                !message.mediaUrl.trim() &&
-                !message.mediaId.trim()
-            ) {
-                return `برای پیام ${index + 1
-                    } آدرس Media یا Media ID را وارد کنید.`;
-            }
-
-            /* SHOWCASE */
-
-            if (
-                message.messageType ===
-                "SHOWCASE" &&
-                !message.showcaseId
-            ) {
-                return `برای پیام ${index + 1
-                    } یک ویترین انتخاب کنید.`;
-            }
-
-            /* FORM */
-
-            if (
-                message.messageType ===
-                "FORM" &&
-                !message.formId
-            ) {
-                return `برای پیام ${index + 1
-                    } یک فرم انتخاب کنید.`;
-            }
-
-            /* Quick Replies */
-
-            if (
-                message.quickReplies.length >
-                13
-            ) {
-                return `پیام ${index + 1
-                    } نمی‌تواند بیشتر از ۱۳ Quick Reply داشته باشد.`;
-            }
-
-            for (
-                const quickReply of
-                message.quickReplies
-            ) {
-                if (
-                    !quickReply.title.trim()
-                ) {
-                    return `عنوان یکی از Quick Reply های پیام ${index + 1
-                        } را وارد کنید.`;
-                }
-
-                if (
-                    quickReply.title
-                        .trim()
-                        .length > 20
-                ) {
-                    return `عنوان Quick Reply پیام ${index + 1
-                        } نباید بیشتر از ۲۰ کاراکتر باشد.`;
-                }
-
-                if (
-                    !quickReply.nextMessageId
-                ) {
-                    return `برای Quick Reply «${quickReply.title}» مقصد پیام را انتخاب کنید.`;
-                }
-
-                if (
-                    quickReply.nextMessageId ===
-                    message.id
-                ) {
-                    return `Quick Reply «${quickReply.title}» نمی‌تواند به همان پیام برگردد.`;
-                }
-
-                const destinationExists =
-                    messages.some(
-                        (
-                            destination
-                        ) =>
-                            destination.id ===
-                            quickReply.nextMessageId
-                    );
-
-                if (
-                    !destinationExists
-                ) {
-                    return `مقصد Quick Reply «${quickReply.title}» معتبر نیست.`;
-                }
-            }
-        }
-
-        /* Cycle Detection */
-
-        const edges = new Map<
-            string,
-            string[]
-        >();
-
-        messages.forEach(
-            (message) => {
-                edges.set(
-                    message.id,
-                    message.quickReplies
-                        .map(
-                            (
-                                quickReply
-                            ) =>
-                                quickReply.nextMessageId
-                        )
-                        .filter(
-                            (
-                                id
-                            ): id is string =>
-                                Boolean(id)
-                        )
-                );
-            }
-        );
-
-        function hasCycle(
-            start: string,
-            current: string,
-            visited: Set<string>
-        ): boolean {
-            if (
-                current === start &&
-                visited.size > 0
-            ) {
-                return true;
-            }
-
-            if (
-                visited.has(current)
-            ) {
-                return false;
-            }
-
-            visited.add(current);
-
-            const destinations =
-                edges.get(
-                    current
-                ) ?? [];
-
-            for (
-                const destination of
-                destinations
-            ) {
-                if (
-                    hasCycle(
-                        start,
-                        destination,
-                        new Set(
-                            visited
-                        )
-                    )
-                ) {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        for (
-            const message of messages
-        ) {
-            if (
-                hasCycle(
-                    message.id,
-                    message.id,
-                    new Set()
-                )
-            ) {
-                return "در Flow یک چرخه بین پیام‌ها وجود دارد. مقصد Quick Reply ها را اصلاح کنید.";
-            }
-        }
-
-        return null;
-    }
 
     /* ---------------------------------------------------------------------- */
     /* Delete Existing Messages                                               */
@@ -1272,12 +1060,13 @@ export default function AutomationForm({
             return;
         }
 
-        const messageValidation =
-            validateMessages();
-
-        if (messageValidation) {
+        try {
+            validateMessages(messages);
+        } catch (error) {
             setError(
-                messageValidation
+                error instanceof Error
+                    ? error.message
+                    : "Flow نامعتبر است."
             );
             return;
         }

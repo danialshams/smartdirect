@@ -4,9 +4,13 @@ import {
     ArrowDown,
     ArrowUp,
     ChevronDown,
-    Loader2,
+    Image as ImageIcon,
+    MessageSquare,
     Plus,
     Trash2,
+    Video,
+    Volume2,
+    X,
 } from "lucide-react";
 
 import type {
@@ -17,7 +21,6 @@ import type {
 } from "./automation-form-utils";
 
 import {
-    getMessageIcon,
     getMessageTypeLabel,
 } from "./automation-form-utils";
 
@@ -25,28 +28,87 @@ type AutomationFlowMessageProps = {
     message: MessageDraft;
     index: number;
     total: number;
+
     messageOptions: {
         id: string;
         label: string;
     }[];
+
     showcases: Showcase[];
     forms: FormItem[];
     loadingResources: boolean;
+
     onUpdate: (
-        patch: Partial<MessageDraft>
+        patch: Partial<MessageDraft>,
     ) => void;
+
     onRemove: () => void;
+
     onMoveUp: () => void;
     onMoveDown: () => void;
+
     onAddQuickReply: () => void;
+
     onUpdateQuickReply: (
         quickReplyId: string,
-        patch: Partial<QuickReplyDraft>
+        patch: Partial<QuickReplyDraft>,
     ) => void;
+
     onRemoveQuickReply: (
-        quickReplyId: string
+        quickReplyId: string,
     ) => void;
 };
+
+function MessageIcon({
+    type,
+}: {
+    type: MessageDraft["messageType"];
+}) {
+    const className =
+        "text-slate-500";
+
+    switch (type) {
+        case "IMAGE":
+            return (
+                <ImageIcon
+                    size={16}
+                    className={
+                        className
+                    }
+                />
+            );
+
+        case "VIDEO":
+            return (
+                <Video
+                    size={16}
+                    className={
+                        className
+                    }
+                />
+            );
+
+        case "AUDIO":
+            return (
+                <Volume2
+                    size={16}
+                    className={
+                        className
+                    }
+                />
+            );
+
+        default:
+            return (
+                <MessageSquare
+                    size={16}
+                    className={
+                        className
+                    }
+                />
+            );
+    }
+}
 
 export default function AutomationFlowMessage({
     message,
@@ -64,140 +126,81 @@ export default function AutomationFlowMessage({
     onUpdateQuickReply,
     onRemoveQuickReply,
 }: AutomationFlowMessageProps) {
-    const canAddQuickReply =
-        messageOptions.length >= 2 &&
-        message.quickReplies.length < 13;
-
     return (
-        <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
-            {/* Header */}
+        <div className="space-y-4">
+            {/* ----------------------------------------------------- */}
+            {/* Message type */}
+            {/* ----------------------------------------------------- */}
 
-            <div className="flex items-start justify-between gap-3">
-                <div className="flex min-w-0 items-center gap-3">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-950 text-xs font-bold text-white">
-                        {index + 1}
-                    </div>
-
-                    <div className="min-w-0">
-                        <div className="text-sm font-semibold text-gray-900">
-                            پیام{" "}
-                            {index + 1}
-                        </div>
-
-                        <div className="mt-1 flex items-center gap-1.5 text-[11px] text-gray-400">
-                            {getMessageIcon(
-                                message.messageType
-                            )}
-
-                            {getMessageTypeLabel(
-                                message.messageType
-                            )}
-                        </div>
-                    </div>
-                </div>
-
-                <div className="flex shrink-0 items-center gap-1">
-                    <button
-                        type="button"
-                        onClick={onMoveUp}
-                        disabled={index === 0}
-                        className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-gray-800 disabled:cursor-not-allowed disabled:opacity-30"
-                        aria-label="انتقال به بالا"
-                    >
-                        <ArrowUp
-                            size={15}
-                        />
-                    </button>
-
-                    <button
-                        type="button"
-                        onClick={onMoveDown}
-                        disabled={
-                            index ===
-                            total - 1
-                        }
-                        className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-gray-800 disabled:cursor-not-allowed disabled:opacity-30"
-                        aria-label="انتقال به پایین"
-                    >
-                        <ArrowDown
-                            size={15}
-                        />
-                    </button>
-
-                    <button
-                        type="button"
-                        onClick={onRemove}
-                        className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition hover:bg-red-50 hover:text-red-600"
-                        aria-label="حذف پیام"
-                    >
-                        <Trash2
-                            size={15}
-                        />
-                    </button>
-                </div>
-            </div>
-
-            {/* Message Type */}
-
-            <div className="mt-5">
-                <label className="mb-2 block text-xs font-medium text-gray-700">
+            <div>
+                <label className="mb-2 block text-xs font-semibold text-slate-600">
                     نوع پیام
                 </label>
 
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                    {(
-                        [
-                            "TEXT",
-                            "IMAGE",
-                            "VIDEO",
-                            "AUDIO",
-                            "SHOWCASE",
-                            "FORM",
-                        ] as const
-                    ).map(
-                        (type) => (
-                            <button
-                                key={
-                                    type
-                                }
-                                type="button"
-                                onClick={() =>
-                                    onUpdate(
-                                        {
-                                            messageType:
-                                                type,
-                                        }
-                                    )
-                                }
-                                className={[
-                                    "flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-xs font-medium transition",
-                                    message.messageType ===
-                                        type
-                                        ? "border-slate-900 bg-slate-950 text-white"
-                                        : "border-gray-200 text-gray-600 hover:border-gray-400",
-                                ].join(
-                                    " "
-                                )}
-                            >
-                                {getMessageIcon(
-                                    type
-                                )}
+                <div className="relative">
+                    <select
+                        value={
+                            message.messageType
+                        }
+                        onChange={(
+                            event,
+                        ) =>
+                            onUpdate({
+                                messageType:
+                                    event
+                                        .target
+                                        .value as MessageDraft["messageType"],
+                                text: "",
+                                mediaUrl:
+                                    "",
+                                mediaId: "",
+                                showcaseId:
+                                    "",
+                                formId: "",
+                            })
+                        }
+                        className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 py-3 pl-10 text-sm text-slate-700 outline-none transition focus:border-slate-400"
+                    >
+                        <option value="TEXT">
+                            متن
+                        </option>
 
-                                {getMessageTypeLabel(
-                                    type
-                                )}
-                            </button>
-                        )
-                    )}
+                        <option value="IMAGE">
+                            تصویر
+                        </option>
+
+                        <option value="VIDEO">
+                            ویدیو
+                        </option>
+
+                        <option value="AUDIO">
+                            صوت
+                        </option>
+
+                        <option value="SHOWCASE">
+                            Showcase
+                        </option>
+
+                        <option value="FORM">
+                            Form
+                        </option>
+                    </select>
+
+                    <ChevronDown
+                        size={16}
+                        className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                    />
                 </div>
             </div>
 
-            {/* Text */}
+            {/* ----------------------------------------------------- */}
+            {/* Content */}
+            {/* ----------------------------------------------------- */}
 
             {message.messageType ===
                 "TEXT" && (
-                    <div className="mt-5">
-                        <label className="mb-2 block text-xs font-medium text-gray-700">
+                    <div>
+                        <label className="mb-2 block text-xs font-semibold text-slate-600">
                             متن پیام
                         </label>
 
@@ -206,23 +209,21 @@ export default function AutomationFlowMessage({
                                 message.text
                             }
                             onChange={(
-                                event
+                                event,
                             ) =>
-                                onUpdate(
-                                    {
-                                        text: event
+                                onUpdate({
+                                    text:
+                                        event
                                             .target
                                             .value,
-                                    }
-                                )
+                                })
                             }
-                            placeholder="متن پیامی که برای مشتری ارسال می‌شود..."
-                            className="min-h-28 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm leading-6 outline-none transition focus:border-gray-900"
+                            rows={4}
+                            placeholder="متن پاسخ را وارد کنید..."
+                            className="w-full resize-y rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm leading-7 text-slate-700 outline-none transition focus:border-slate-400"
                         />
                     </div>
                 )}
-
-            {/* Media */}
 
             {(message.messageType ===
                 "IMAGE" ||
@@ -230,9 +231,9 @@ export default function AutomationFlowMessage({
                 "VIDEO" ||
                 message.messageType ===
                 "AUDIO") && (
-                    <div className="mt-5 space-y-3">
+                    <div className="space-y-3">
                         <div>
-                            <label className="mb-2 block text-xs font-medium text-gray-700">
+                            <label className="mb-2 block text-xs font-semibold text-slate-600">
                                 Media URL
                             </label>
 
@@ -241,29 +242,27 @@ export default function AutomationFlowMessage({
                                     message.mediaUrl
                                 }
                                 onChange={(
-                                    event
+                                    event,
                                 ) =>
-                                    onUpdate(
-                                        {
-                                            mediaUrl:
-                                                event
-                                                    .target
-                                                    .value,
-                                        }
-                                    )
+                                    onUpdate({
+                                        mediaUrl:
+                                            event
+                                                .target
+                                                .value,
+                                    })
                                 }
                                 placeholder="https://..."
                                 dir="ltr"
-                                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-gray-900"
+                                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-slate-400"
                             />
                         </div>
 
-                        <div className="text-center text-[11px] text-gray-400">
+                        <div className="text-center text-[10px] text-slate-400">
                             یا
                         </div>
 
                         <div>
-                            <label className="mb-2 block text-xs font-medium text-gray-700">
+                            <label className="mb-2 block text-xs font-semibold text-slate-600">
                                 Media ID
                             </label>
 
@@ -272,80 +271,59 @@ export default function AutomationFlowMessage({
                                     message.mediaId
                                 }
                                 onChange={(
-                                    event
+                                    event,
                                 ) =>
-                                    onUpdate(
-                                        {
-                                            mediaId:
-                                                event
-                                                    .target
-                                                    .value,
-                                        }
-                                    )
+                                    onUpdate({
+                                        mediaId:
+                                            event
+                                                .target
+                                                .value,
+                                    })
                                 }
                                 placeholder="Instagram Media ID"
                                 dir="ltr"
-                                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-gray-900"
+                                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-slate-400"
                             />
                         </div>
-
-                        <p className="text-[11px] leading-5 text-gray-400">
-                            هنگام ارسال، یکی از URL یا
-                            Media ID استفاده خواهد شد.
-                        </p>
                     </div>
                 )}
 
-            {/* Showcase */}
-
             {message.messageType ===
                 "SHOWCASE" && (
-                    <div className="mt-5">
-                        <label className="mb-2 block text-xs font-medium text-gray-700">
-                            انتخاب ویترین
+                    <div>
+                        <label className="mb-2 block text-xs font-semibold text-slate-600">
+                            Showcase
                         </label>
 
-                        {loadingResources ? (
-                            <div className="flex items-center gap-2 rounded-xl border border-gray-200 p-4 text-xs text-gray-500">
-                                <Loader2
-                                    size={15}
-                                    className="animate-spin"
-                                />
-
-                                در حال دریافت ویترین‌ها...
-                            </div>
-                        ) : showcases.length ===
-                            0 ? (
-                            <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4 text-xs leading-5 text-gray-500">
-                                هنوز ویترینی برای این
-                                پیج ساخته نشده است.
-                            </div>
-                        ) : (
+                        <div className="relative">
                             <select
                                 value={
                                     message.showcaseId
                                 }
                                 onChange={(
-                                    event
+                                    event,
                                 ) =>
-                                    onUpdate(
-                                        {
-                                            showcaseId:
-                                                event
-                                                    .target
-                                                    .value,
-                                        }
-                                    )
+                                    onUpdate({
+                                        showcaseId:
+                                            event
+                                                .target
+                                                .value,
+                                    })
                                 }
-                                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-gray-900"
+                                disabled={
+                                    loadingResources
+                                }
+                                className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 py-3 pl-10 text-sm text-slate-700 outline-none focus:border-slate-400 disabled:opacity-50"
                             >
                                 <option value="">
-                                    انتخاب ویترین
+                                    {loadingResources
+                                        ? "در حال دریافت..."
+                                        : "انتخاب Showcase"}
                                 </option>
 
                                 {showcases.map(
                                     (
-                                        showcase
+                                        showcase,
                                     ) => (
                                         <option
                                             key={
@@ -359,69 +337,63 @@ export default function AutomationFlowMessage({
                                                 showcase.title
                                             }
                                         </option>
-                                    )
+                                    ),
                                 )}
                             </select>
-                        )}
 
-                        <p className="mt-2 text-[11px] leading-5 text-gray-400">
-                            ویترین مستقل ذخیره می‌شود. ارسال مستقیم
-                            ویترین به Instagram در Sender فعلی هنوز
-                            پیاده‌سازی نشده است.
-                        </p>
+                            <ChevronDown
+                                size={16}
+                                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                            />
+                        </div>
+
+                        {!loadingResources &&
+                            showcases.length ===
+                            0 && (
+                                <p className="mt-2 text-[11px] text-slate-400">
+                                    هنوز Showcase فعالی
+                                    برای این پیج وجود ندارد.
+                                </p>
+                            )}
                     </div>
                 )}
 
-            {/* Form */}
-
             {message.messageType ===
                 "FORM" && (
-                    <div className="mt-5">
-                        <label className="mb-2 block text-xs font-medium text-gray-700">
-                            انتخاب فرم
+                    <div>
+                        <label className="mb-2 block text-xs font-semibold text-slate-600">
+                            Form
                         </label>
 
-                        {loadingResources ? (
-                            <div className="flex items-center gap-2 rounded-xl border border-gray-200 p-4 text-xs text-gray-500">
-                                <Loader2
-                                    size={15}
-                                    className="animate-spin"
-                                />
-
-                                در حال دریافت فرم‌ها...
-                            </div>
-                        ) : forms.length ===
-                            0 ? (
-                            <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4 text-xs leading-5 text-gray-500">
-                                هنوز فرمی برای این پیج ساخته
-                                نشده است.
-                            </div>
-                        ) : (
+                        <div className="relative">
                             <select
                                 value={
                                     message.formId
                                 }
                                 onChange={(
-                                    event
+                                    event,
                                 ) =>
-                                    onUpdate(
-                                        {
-                                            formId:
-                                                event
-                                                    .target
-                                                    .value,
-                                        }
-                                    )
+                                    onUpdate({
+                                        formId:
+                                            event
+                                                .target
+                                                .value,
+                                    })
                                 }
-                                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-gray-900"
+                                disabled={
+                                    loadingResources
+                                }
+                                className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 py-3 pl-10 text-sm text-slate-700 outline-none focus:border-slate-400 disabled:opacity-50"
                             >
                                 <option value="">
-                                    انتخاب فرم
+                                    {loadingResources
+                                        ? "در حال دریافت..."
+                                        : "انتخاب Form"}
                                 </option>
 
                                 {forms.map(
                                     (
-                                        form
+                                        form,
                                     ) => (
                                         <option
                                             key={
@@ -435,54 +407,52 @@ export default function AutomationFlowMessage({
                                                 form.title
                                             }
                                         </option>
-                                    )
+                                    ),
                                 )}
                             </select>
-                        )}
 
-                        <p className="mt-2 text-[11px] leading-5 text-gray-400">
-                            فرم مستقل ذخیره می‌شود و پاسخ‌های مشتری
-                            در FormSubmission ثبت خواهند شد. ارسال
-                            مستقیم فرم به Instagram در Sender فعلی
-                            هنوز پیاده‌سازی نشده است.
-                        </p>
+                            <ChevronDown
+                                size={16}
+                                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                            />
+                        </div>
+
+                        {!loadingResources &&
+                            forms.length ===
+                            0 && (
+                                <p className="mt-2 text-[11px] text-slate-400">
+                                    هنوز Form فعالی برای این
+                                    پیج وجود ندارد.
+                                </p>
+                            )}
                     </div>
                 )}
 
+            {/* ----------------------------------------------------- */}
             {/* Quick Replies */}
+            {/* ----------------------------------------------------- */}
 
-            <div className="mt-6 border-t border-gray-100 pt-5">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="rounded-xl border border-slate-200 bg-white p-4">
+                <div className="flex items-center justify-between gap-3">
                     <div>
-                        <h4 className="text-xs font-semibold text-gray-900">
-                            Quick Reply
-                        </h4>
+                        <p className="text-xs font-semibold text-slate-700">
+                            Quick Replies
+                        </p>
 
-                        <p className="mt-1 text-[11px] leading-5 text-gray-400">
-                            هر گزینه باید مشتری را به یک
-                            پیام دیگر در همین Flow هدایت کند.
+                        <p className="mt-1 text-[10px] leading-5 text-slate-400">
+                            کاربر با انتخاب پاسخ سریع
+                            به پیام مقصد منتقل می‌شود.
                         </p>
                     </div>
 
-                    <button
-                        type="button"
-                        onClick={
-                            onAddQuickReply
+                    <span className="text-[10px] text-slate-400">
+                        {
+                            message
+                                .quickReplies
+                                .length
                         }
-                        disabled={
-                            !canAddQuickReply
-                        }
-                        className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-[11px] font-medium text-gray-600 transition hover:border-gray-400 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-40"
-                    >
-                        <Plus
-                            size={13}
-                        />
-
-                        {message.quickReplies.length >=
-                            13
-                            ? "حداکثر ۱۳ گزینه"
-                            : "افزودن گزینه"}
-                    </button>
+                        /13
+                    </span>
                 </div>
 
                 {message.quickReplies
@@ -490,18 +460,44 @@ export default function AutomationFlowMessage({
                         <div className="mt-4 space-y-3">
                             {message.quickReplies.map(
                                 (
-                                    quickReply
+                                    quickReply,
+                                    qrIndex,
                                 ) => (
                                     <div
                                         key={
                                             quickReply.id
                                         }
-                                        className="rounded-xl border border-gray-200 bg-gray-50/60 p-3"
+                                        className="rounded-xl border border-slate-200 bg-slate-50 p-3"
                                     >
-                                        <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
+                                        <div className="mb-3 flex items-center justify-between">
+                                            <span className="text-[10px] font-semibold text-slate-500">
+                                                پاسخ سریع{" "}
+                                                {qrIndex +
+                                                    1}
+                                            </span>
+
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    onRemoveQuickReply(
+                                                        quickReply.id,
+                                                    )
+                                                }
+                                                className="text-slate-400 transition hover:text-red-600"
+                                                aria-label="حذف Quick Reply"
+                                            >
+                                                <X
+                                                    size={
+                                                        15
+                                                    }
+                                                />
+                                            </button>
+                                        </div>
+
+                                        <div className="space-y-3">
                                             <div>
-                                                <label className="mb-1.5 block text-[10px] font-medium text-gray-500">
-                                                    عنوان گزینه
+                                                <label className="mb-1.5 block text-[10px] font-semibold text-slate-500">
+                                                    عنوان
                                                 </label>
 
                                                 <input
@@ -512,30 +508,35 @@ export default function AutomationFlowMessage({
                                                         20
                                                     }
                                                     onChange={(
-                                                        event
+                                                        event,
                                                     ) =>
                                                         onUpdateQuickReply(
                                                             quickReply.id,
                                                             {
-                                                                title: event
-                                                                    .target
-                                                                    .value,
-                                                            }
+                                                                title:
+                                                                    event
+                                                                        .target
+                                                                        .value,
+                                                            },
                                                         )
                                                     }
-                                                    placeholder="مثلاً قیمت محصولات"
-                                                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-xs outline-none focus:border-gray-900"
+                                                    placeholder="مثلاً: بله، نمایش بده"
+                                                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs outline-none focus:border-slate-400"
                                                 />
 
-                                                <p className="mt-1 text-[10px] text-gray-400">
-                                                    حداکثر ۲۰
-                                                    کاراکتر
-                                                </p>
+                                                <div className="mt-1 text-left text-[9px] text-slate-400">
+                                                    {
+                                                        quickReply
+                                                            .title
+                                                            .length
+                                                    }
+                                                    /20
+                                                </div>
                                             </div>
 
                                             <div>
-                                                <label className="mb-1.5 block text-[10px] font-medium text-gray-500">
-                                                    پیام مقصد
+                                                <label className="mb-1.5 block text-[10px] font-semibold text-slate-500">
+                                                    رفتن به
                                                 </label>
 
                                                 <div className="relative">
@@ -545,7 +546,7 @@ export default function AutomationFlowMessage({
                                                             ""
                                                         }
                                                         onChange={(
-                                                            event
+                                                            event,
                                                         ) =>
                                                             onUpdateQuickReply(
                                                                 quickReply.id,
@@ -555,26 +556,26 @@ export default function AutomationFlowMessage({
                                                                             .target
                                                                             .value ||
                                                                         null,
-                                                                }
+                                                                },
                                                             )
                                                         }
-                                                        className="w-full appearance-none rounded-lg border border-gray-200 bg-white px-3 py-2.5 pl-8 text-xs outline-none focus:border-gray-900"
+                                                        className="w-full appearance-none rounded-lg border border-slate-200 bg-white px-3 py-2.5 pl-8 text-xs outline-none focus:border-slate-400"
                                                     >
                                                         <option value="">
-                                                            انتخاب پیام
+                                                            انتخاب پیام مقصد
                                                         </option>
 
                                                         {messageOptions
                                                             .filter(
                                                                 (
-                                                                    option
+                                                                    option,
                                                                 ) =>
                                                                     option.id !==
-                                                                    message.id
+                                                                    message.id,
                                                             )
                                                             .map(
                                                                 (
-                                                                    option
+                                                                    option,
                                                                 ) => (
                                                                     <option
                                                                         key={
@@ -588,41 +589,103 @@ export default function AutomationFlowMessage({
                                                                             option.label
                                                                         }
                                                                     </option>
-                                                                )
+                                                                ),
                                                             )}
                                                     </select>
 
                                                     <ChevronDown
-                                                        size={14}
-                                                        className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400"
+                                                        size={
+                                                            14
+                                                        }
+                                                        className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"
                                                     />
                                                 </div>
                                             </div>
-
-                                            <div className="flex items-end">
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        onRemoveQuickReply(
-                                                            quickReply.id
-                                                        )
-                                                    }
-                                                    className="flex h-10 w-10 items-center justify-center rounded-lg text-gray-400 transition hover:bg-red-50 hover:text-red-600"
-                                                    aria-label="حذف Quick Reply"
-                                                >
-                                                    <Trash2
-                                                        size={
-                                                            15
-                                                        }
-                                                    />
-                                                </button>
-                                            </div>
                                         </div>
                                     </div>
-                                )
+                                ),
                             )}
                         </div>
                     )}
+
+                {message.quickReplies
+                    .length <
+                    13 && (
+                        <button
+                            type="button"
+                            onClick={
+                                onAddQuickReply
+                            }
+                            className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-slate-300 px-3 py-2.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50"
+                        >
+                            <Plus
+                                size={14}
+                            />
+                            افزودن Quick Reply
+                        </button>
+                    )}
+            </div>
+
+            {/* ----------------------------------------------------- */}
+            {/* Message controls */}
+            {/* ----------------------------------------------------- */}
+
+            <div className="flex items-center justify-between gap-2 border-t border-slate-200 pt-3">
+                <div className="flex items-center gap-1">
+                    <button
+                        type="button"
+                        disabled={
+                            index === 0
+                        }
+                        onClick={
+                            onMoveUp
+                        }
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-30"
+                        aria-label="انتقال به بالا"
+                    >
+                        <ArrowUp
+                            size={14}
+                        />
+                    </button>
+
+                    <button
+                        type="button"
+                        disabled={
+                            index ===
+                            total - 1
+                        }
+                        onClick={
+                            onMoveDown
+                        }
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-30"
+                        aria-label="انتقال به پایین"
+                    >
+                        <ArrowDown
+                            size={14}
+                        />
+                    </button>
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-slate-400">
+                        {getMessageTypeLabel(
+                            message.messageType,
+                        )}
+                    </span>
+
+                    <button
+                        type="button"
+                        onClick={
+                            onRemove
+                        }
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                        aria-label="حذف پیام"
+                    >
+                        <Trash2
+                            size={14}
+                        />
+                    </button>
+                </div>
             </div>
         </div>
     );

@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
+import EntryPointFlowBuilder from "./EntryPointFlowBuilder";
+
 type InstagramAccount = {
     id: string;
     igUsername: string;
@@ -18,22 +20,18 @@ type InstagramAccount = {
     createdAt: Date;
 };
 
-type Automation = {
-    id: string;
-    triggerType:
-    | "COMMENT_KEYWORD"
-    | "DM"
-    | "STORY_REPLY_KEYWORD";
-    keyword: string | null;
-    isActive: boolean;
-};
-
 type PersistentMenuItem = {
     id: string;
     title: string;
     payload: string;
     automationId: string | null;
     order: number;
+};
+
+type PersistentMenuDraft = {
+    id?: string;
+    title: string;
+    automationId: string | null;
 };
 
 type PersistentMenuManagerProps = {
@@ -54,14 +52,8 @@ export default function PersistentMenuManager({
     const [selectedAccountId, setSelectedAccountId] =
         useState("");
 
-    const [automations, setAutomations] =
-        useState<Automation[]>([]);
-
     const [items, setItems] = useState<
-        Array<{
-            title: string;
-            automationId: string;
-        }>
+        PersistentMenuDraft[]
     >([]);
 
     const [enabled, setEnabled] =
@@ -79,6 +71,9 @@ export default function PersistentMenuManager({
     const [success, setSuccess] =
         useState(false);
 
+    /*
+     * Select first connected account.
+     */
     useEffect(() => {
         if (
             connectedAccounts.length > 0 &&
@@ -106,12 +101,18 @@ export default function PersistentMenuManager({
         selectedAccountId,
     ]);
 
+    /*
+     * Load Persistent Menu.
+     *
+     * We no longer load /api/automations.
+     * The Automation behind each item is
+     * managed automatically by the Flow Builder.
+     */
     useEffect(() => {
         let cancelled = false;
 
         async function load() {
             if (!selectedAccountId) {
-                setAutomations([]);
                 setItems([]);
                 setEnabled(false);
                 return;
@@ -122,70 +123,37 @@ export default function PersistentMenuManager({
                 setError(null);
                 setSuccess(false);
 
-                const [
-                    automationResponse,
-                    menuResponse,
-                ] = await Promise.all([
-                    fetch(
-                        `/api/automations?instagramAccountId=${encodeURIComponent(
-                            selectedAccountId,
-                        )}`,
-                        {
-                            cache: "no-store",
-                        },
-                    ),
-                    fetch(
+                const response =
+                    await fetch(
                         `/api/instagram/persistent-menu?instagramAccountId=${encodeURIComponent(
                             selectedAccountId,
                         )}`,
                         {
                             cache: "no-store",
+                            credentials:
+                                "include",
                         },
-                    ),
-                ]);
-
-                const automationResult =
-                    await automationResponse.json();
-
-                const menuResult =
-                    await menuResponse.json();
-
-                if (
-                    !automationResponse.ok ||
-                    !automationResult.success
-                ) {
-                    throw new Error(
-                        automationResult.error ||
-                        "دریافت Automationها ناموفق بود.",
                     );
-                }
+
+                const result =
+                    await response.json();
 
                 if (
-                    !menuResponse.ok ||
-                    !menuResult.success
+                    !response.ok ||
+                    !result.success
                 ) {
                     throw new Error(
-                        menuResult.error ||
+                        result.error ||
                         "دریافت Persistent Menu ناموفق بود.",
                     );
                 }
 
-                if (cancelled) return;
-
-                setAutomations(
-                    (
-                        automationResult.data ??
-                        []
-                    ).filter(
-                        (
-                            automation: Automation,
-                        ) =>
-                            automation.isActive,
-                    ),
-                );
+                if (cancelled) {
+                    return;
+                }
 
                 const menu =
-                    menuResult.data;
+                    result.data;
 
                 setEnabled(
                     Boolean(
@@ -193,24 +161,31 @@ export default function PersistentMenuManager({
                     ),
                 );
 
+                const serverItems =
+                    Array.isArray(
+                        menu?.items,
+                    )
+                        ? menu.items
+                        : [];
+
                 setItems(
-                    (
-                        menu?.items ??
-                        []
-                    ).map(
+                    serverItems.map(
                         (
                             item: PersistentMenuItem,
                         ) => ({
+                            id: item.id,
                             title:
                                 item.title,
                             automationId:
                                 item.automationId ??
-                                "",
+                                null,
                         }),
                     ),
                 );
             } catch (loadError) {
-                console.error(loadError);
+                console.error(
+                    loadError,
+                );
 
                 if (!cancelled) {
                     setError(
@@ -227,22 +202,26 @@ export default function PersistentMenuManager({
             }
         }
 
-        load();
+        void load();
 
         return () => {
             cancelled = true;
         };
     }, [selectedAccountId]);
 
+    /*
+     * Add a new menu item.
+     */
     function addItem() {
-        if (items.length >= 3) return;
+        if (items.length >= 3) {
+            return;
+        }
 
         setItems((current) => [
             ...current,
             {
                 title: "",
-                automationId:
-                    automations[0]?.id ?? "",
+                automationId: null,
             },
         ]);
 
@@ -258,11 +237,8 @@ export default function PersistentMenuManager({
         );
     }
 
-    function updateItem(
+    function updateTitle(
         index: number,
-        field:
-            | "title"
-            | "automationId",
         value: string,
     ) {
         setItems((current) =>
@@ -271,8 +247,24 @@ export default function PersistentMenuManager({
                     itemIndex === index
                         ? {
                             ...item,
-                            [field]:
-                                value,
+                            title: value,
+                        }
+                        : item,
+            ),
+        );
+    }
+
+    function updateAutomationId(
+        index: number,
+        automationId: string,
+    ) {
+        setItems((current) =>
+            current.map(
+                (item, itemIndex) =>
+                    itemIndex === index
+                        ? {
+                            ...item,
+                            automationId,
                         }
                         : item,
             ),
@@ -280,7 +272,9 @@ export default function PersistentMenuManager({
     }
 
     async function handleSave() {
-        if (!selectedAccountId) return;
+        if (!selectedAccountId) {
+            return;
+        }
 
         try {
             setSaving(true);
@@ -296,16 +290,27 @@ export default function PersistentMenuManager({
                 );
             }
 
-            for (const item of items) {
-                if (!item.title.trim()) {
-                    throw new Error(
-                        "عنوان همه آیتم‌ها را وارد کنید.",
-                    );
+            if (items.length > 3) {
+                throw new Error(
+                    "حداکثر ۳ گزینه برای Persistent Menu مجاز است.",
+                );
+            }
+
+            for (
+                let index = 0;
+                index < items.length;
+                index++
+            ) {
+                const item = items[index];
+
+                if (!item) {
+                    continue;
                 }
 
-                if (!item.automationId) {
+                if (!item.title.trim()) {
                     throw new Error(
-                        "برای همه آیتم‌ها Automation انتخاب کنید.",
+                        `عنوان گزینه ${index + 1
+                        } را وارد کنید.`,
                     );
                 }
 
@@ -314,7 +319,15 @@ export default function PersistentMenuManager({
                         .length > 30
                 ) {
                     throw new Error(
-                        "عنوان آیتم نباید بیشتر از ۳۰ کاراکتر باشد.",
+                        `عنوان گزینه ${index + 1
+                        } نباید بیشتر از ۳۰ کاراکتر باشد.`,
+                    );
+                }
+
+                if (!item.automationId) {
+                    throw new Error(
+                        `برای گزینه ${index + 1
+                        } ابتدا پاسخ سفارشی آن را ذخیره کنید.`,
                     );
                 }
             }
@@ -337,7 +350,14 @@ export default function PersistentMenuManager({
                                 enabled &&
                                 items.length >
                                 0,
-                            items,
+                            items: items.map(
+                                (item) => ({
+                                    title:
+                                        item.title.trim(),
+                                    automationId:
+                                        item.automationId,
+                                }),
+                            ),
                         }),
                     },
                 );
@@ -364,26 +384,33 @@ export default function PersistentMenuManager({
                 ),
             );
 
+            const savedItems =
+                Array.isArray(
+                    savedMenu?.items,
+                )
+                    ? savedMenu.items
+                    : [];
+
             setItems(
-                (
-                    savedMenu?.items ??
-                    []
-                ).map(
+                savedItems.map(
                     (
                         item: PersistentMenuItem,
                     ) => ({
+                        id: item.id,
                         title:
                             item.title,
                         automationId:
                             item.automationId ??
-                            "",
+                            null,
                     }),
                 ),
             );
 
             setSuccess(true);
         } catch (saveError) {
-            console.error(saveError);
+            console.error(
+                saveError,
+            );
 
             setError(
                 saveError instanceof
@@ -397,7 +424,9 @@ export default function PersistentMenuManager({
     }
 
     async function handleDisable() {
-        if (!selectedAccountId) return;
+        if (!selectedAccountId) {
+            return;
+        }
 
         try {
             setSaving(true);
@@ -433,7 +462,9 @@ export default function PersistentMenuManager({
             setItems([]);
             setSuccess(true);
         } catch (disableError) {
-            console.error(disableError);
+            console.error(
+                disableError,
+            );
 
             setError(
                 disableError instanceof
@@ -451,11 +482,17 @@ export default function PersistentMenuManager({
             id="persistent-menu"
             className="scroll-mt-24 rounded-[26px] border border-slate-200 bg-white"
         >
+            {/* --------------------------------------------------------- */}
+            {/* Header                                                    */}
+            {/* --------------------------------------------------------- */}
+
             <div className="border-b border-slate-100 p-5 sm:p-7">
                 <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
                     <div>
                         <div className="flex items-center gap-2 text-slate-400">
-                            <Menu size={16} />
+                            <Menu
+                                size={16}
+                            />
 
                             <span className="text-[10px] font-semibold tracking-[0.16em]">
                                 PERSISTENT MENU
@@ -467,9 +504,10 @@ export default function PersistentMenuManager({
                         </h2>
 
                         <p className="mt-1.5 max-w-xl text-sm leading-6 text-slate-400">
-                            هر گزینه به یک Automation
-                            متصل می‌شود و با انتخاب آن،
-                            Flow مربوطه اجرا خواهد شد.
+                            برای هر گزینه منو،
+                            پاسخ و Flow اختصاصی
+                            خودتان را مستقیماً
+                            داخل همان گزینه بسازید.
                         </p>
                     </div>
 
@@ -521,6 +559,10 @@ export default function PersistentMenuManager({
                 </div>
             </div>
 
+            {/* --------------------------------------------------------- */}
+            {/* Content                                                   */}
+            {/* --------------------------------------------------------- */}
+
             {connectedAccounts.length ===
                 0 ? (
                 <div className="px-6 py-16 text-center text-sm text-slate-400">
@@ -533,20 +575,12 @@ export default function PersistentMenuManager({
                         className="animate-spin text-slate-400"
                     />
                 </div>
-            ) : automations.length ===
-                0 ? (
-                <div className="px-6 py-16 text-center">
-                    <p className="text-sm font-semibold text-slate-700">
-                        ابتدا حداقل یک Automation بسازید.
-                    </p>
-
-                    <p className="mx-auto mt-2 max-w-md text-xs leading-6 text-slate-400">
-                        هر گزینه باید به یک Automation
-                        فعال متصل شود.
-                    </p>
-                </div>
             ) : (
                 <div className="p-5 sm:p-7">
+                    {/* ------------------------------------------------- */}
+                    {/* Enabled                                            */}
+                    {/* ------------------------------------------------- */}
+
                     <div className="mb-6 flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 p-4">
                         <div>
                             <p className="text-sm font-semibold text-slate-800">
@@ -554,7 +588,8 @@ export default function PersistentMenuManager({
                             </p>
 
                             <p className="mt-1 text-xs text-slate-400">
-                                منو در چت اینستاگرام نمایش داده شود.
+                                منو در چت اینستاگرام
+                                نمایش داده شود.
                             </p>
                         </div>
 
@@ -587,191 +622,230 @@ export default function PersistentMenuManager({
                         </button>
                     </div>
 
-                    <div className="space-y-3">
-                        {items.map(
-                            (
-                                item,
-                                index,
-                            ) => (
-                                <div
-                                    key={
-                                        index
-                                    }
-                                    className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4"
-                                >
-                                    <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
-                                        <div className="flex-1">
-                                            <label className="mb-2 block text-xs font-medium text-slate-500">
-                                                عنوان گزینه
-                                            </label>
+                    {/* ------------------------------------------------- */}
+                    {/* Explanation                                       */}
+                    {/* ------------------------------------------------- */}
 
-                                            <input
-                                                value={
-                                                    item.title
-                                                }
-                                                onChange={(
-                                                    event,
-                                                ) =>
-                                                    updateItem(
+                    <div className="mb-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                        <p className="text-sm font-semibold text-slate-800">
+                            پاسخ هر گزینه را همین‌جا بسازید
+                        </p>
+
+                        <p className="mt-1 text-xs leading-6 text-slate-500">
+                            دیگر لازم نیست برای
+                            گزینه منو یک Automation
+                            انتخاب کنید. برای هر
+                            گزینه یک Flow اختصاصی
+                            بسازید؛ شامل چند پیام،
+                            Media، Showcase، Form و
+                            Quick Reply.
+                        </p>
+                    </div>
+
+                    {/* ------------------------------------------------- */}
+                    {/* Empty state                                       */}
+                    {/* ------------------------------------------------- */}
+
+                    {items.length === 0 ? (
+                        <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/50 px-6 py-12 text-center">
+                            <Menu
+                                size={22}
+                                className="mx-auto text-slate-300"
+                            />
+
+                            <p className="mt-3 text-sm font-semibold text-slate-700">
+                                هنوز گزینه‌ای برای منو اضافه نشده است.
+                            </p>
+
+                            <p className="mt-1 text-xs leading-6 text-slate-400">
+                                اولین گزینه را اضافه
+                                کنید و پاسخ
+                                اختصاصی آن را بسازید.
+                            </p>
+
+                            <button
+                                type="button"
+                                onClick={
+                                    addItem
+                                }
+                                className="mt-5 inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                            >
+                                <Plus
+                                    size={16}
+                                />
+                                افزودن گزینه
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="space-y-5">
+                            {items.map(
+                                (
+                                    item,
+                                    index,
+                                ) => (
+                                    <div
+                                        key={
+                                            item.id ??
+                                            `new-${index}`
+                                        }
+                                        className="rounded-[22px] border border-slate-200 bg-slate-50/60 p-4 sm:p-5"
+                                    >
+                                        {/* Menu title */}
+                                        <div className="flex items-start gap-3">
+                                            <div className="flex min-w-0 flex-1 flex-col">
+                                                <div className="mb-2 flex items-center justify-between gap-3">
+                                                    <label className="block text-xs font-semibold text-slate-600">
+                                                        عنوان گزینه{" "}
+                                                        {
+                                                            index +
+                                                            1
+                                                        }
+                                                    </label>
+
+                                                    <span className="text-[10px] font-medium text-slate-400">
+                                                        {
+                                                            item
+                                                                .title
+                                                                .length
+                                                        }
+                                                        /30
+                                                    </span>
+                                                </div>
+
+                                                <input
+                                                    value={
+                                                        item.title
+                                                    }
+                                                    onChange={(
+                                                        event,
+                                                    ) =>
+                                                        updateTitle(
+                                                            index,
+                                                            event
+                                                                .target
+                                                                .value,
+                                                        )
+                                                    }
+                                                    maxLength={
+                                                        30
+                                                    }
+                                                    placeholder="مثلاً: مشاهده محصولات"
+                                                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                                                />
+                                            </div>
+
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    removeItem(
                                                         index,
-                                                        "title",
-                                                        event
-                                                            .target
-                                                            .value,
                                                     )
                                                 }
-                                                maxLength={
-                                                    30
-                                                }
-                                                placeholder="مثلاً: مشاهده محصولات"
-                                                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400"
-                                            />
-
-                                            <div className="mt-1 text-left text-[10px] text-slate-400">
-                                                {
-                                                    item
-                                                        .title
-                                                        .length
-                                                }
-                                                /30
-                                            </div>
+                                                className="mt-6 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                                                aria-label="حذف گزینه"
+                                            >
+                                                <Trash2
+                                                    size={
+                                                        17
+                                                    }
+                                                />
+                                            </button>
                                         </div>
 
-                                        <div className="w-full lg:w-[310px]">
-                                            <label className="mb-2 block text-xs font-medium text-slate-500">
-                                                Automation
-                                            </label>
-
-                                            <select
-                                                value={
+                                        {/* Inline Flow Builder */}
+                                        {selectedAccountId && (
+                                            <EntryPointFlowBuilder
+                                                accountId={
+                                                    selectedAccountId
+                                                }
+                                                automationId={
                                                     item.automationId
                                                 }
-                                                onChange={(
-                                                    event,
+                                                onAutomationReady={(
+                                                    automationId,
                                                 ) =>
-                                                    updateItem(
+                                                    updateAutomationId(
                                                         index,
-                                                        "automationId",
-                                                        event
-                                                            .target
-                                                            .value,
+                                                        automationId,
                                                     )
                                                 }
-                                                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400"
-                                            >
-                                                <option value="">
-                                                    انتخاب Automation
-                                                </option>
-
-                                                {automations.map(
-                                                    (
-                                                        automation,
-                                                    ) => (
-                                                        <option
-                                                            key={
-                                                                automation.id
-                                                            }
-                                                            value={
-                                                                automation.id
-                                                            }
-                                                        >
-                                                            {automation.triggerType ===
-                                                                "DM"
-                                                                ? "دایرکت"
-                                                                : automation.triggerType ===
-                                                                    "COMMENT_KEYWORD"
-                                                                    ? `کامنت: ${automation.keyword ?? ""}`
-                                                                    : `استوری: ${automation.keyword ?? ""}`}
-                                                        </option>
-                                                    ),
-                                                )}
-                                            </select>
-                                        </div>
-
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                removeItem(
-                                                    index,
-                                                )
-                                            }
-                                            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
-                                            aria-label="حذف"
-                                        >
-                                            <Trash2
-                                                size={
-                                                    17
-                                                }
                                             />
-                                        </button>
+                                        )}
                                     </div>
-                                </div>
-                            ),
-                        )}
-                    </div>
-
-                    <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-                        <button
-                            type="button"
-                            onClick={
-                                addItem
-                            }
-                            disabled={
-                                items.length >=
-                                3
-                            }
-                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
-                        >
-                            <Plus
-                                size={16}
-                            />
-                            افزودن گزینه
-                        </button>
-
-                        {items.length >
-                            0 && (
-                                <button
-                                    type="button"
-                                    onClick={
-                                        handleDisable
-                                    }
-                                    disabled={
-                                        saving
-                                    }
-                                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-3 text-sm font-medium text-slate-500 transition hover:bg-slate-50 disabled:opacity-50"
-                                >
-                                    غیرفعال کردن
-                                </button>
+                                ),
                             )}
+                        </div>
+                    )}
 
-                        <button
-                            type="button"
-                            onClick={
-                                handleSave
-                            }
-                            disabled={
-                                saving
-                            }
-                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50 sm:mr-auto"
-                        >
-                            {saving ? (
-                                <Loader2
-                                    size={
-                                        16
-                                    }
-                                    className="animate-spin"
-                                />
-                            ) : (
-                                <Save
-                                    size={
-                                        16
-                                    }
-                                />
-                            )}
+                    {/* ------------------------------------------------- */}
+                    {/* Bottom actions                                     */}
+                    {/* ------------------------------------------------- */}
 
-                            ذخیره منو
-                        </button>
-                    </div>
+                    {items.length > 0 && (
+                        <div className="mt-5 flex flex-col gap-3 border-t border-slate-200 pt-5 sm:flex-row">
+                            <button
+                                type="button"
+                                onClick={
+                                    addItem
+                                }
+                                disabled={
+                                    items.length >=
+                                    3
+                                }
+                                className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                            >
+                                <Plus
+                                    size={16}
+                                />
+                                افزودن گزینه
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={
+                                    handleDisable
+                                }
+                                disabled={
+                                    saving
+                                }
+                                className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-3 text-sm font-medium text-slate-500 transition hover:bg-slate-50 disabled:opacity-50"
+                            >
+                                غیرفعال کردن
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={
+                                    handleSave
+                                }
+                                disabled={
+                                    saving
+                                }
+                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50 sm:mr-auto"
+                            >
+                                {saving ? (
+                                    <Loader2
+                                        size={
+                                            16
+                                        }
+                                        className="animate-spin"
+                                    />
+                                ) : (
+                                    <Save
+                                        size={
+                                            16
+                                        }
+                                    />
+                                )}
+
+                                ذخیره منو
+                            </button>
+                        </div>
+                    )}
+
+                    {/* ------------------------------------------------- */}
+                    {/* Error / Success                                   */}
+                    {/* ------------------------------------------------- */}
 
                     {error && (
                         <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs leading-6 text-red-700">
@@ -781,7 +855,8 @@ export default function PersistentMenuManager({
 
                     {success && (
                         <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs leading-6 text-emerald-700">
-                            تنظیمات Persistent Menu با موفقیت ذخیره شد.
+                            تنظیمات Persistent Menu
+                            با موفقیت ذخیره شد.
                         </div>
                     )}
                 </div>

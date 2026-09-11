@@ -1,16 +1,3 @@
-import {
-    Image as ImageIcon,
-    MessageCircle,
-    MessageSquareText,
-    Video,
-    Volume2,
-} from "lucide-react";
-
-import type {
-    Automation,
-    AutomationTriggerType,
-} from "./AutomationManager";
-
 export type InstagramAccount = {
     id: string;
     igUsername: string;
@@ -69,6 +56,22 @@ export type MessageDraft = {
     quickReplies: QuickReplyDraft[];
 };
 
+export type Automation = {
+    id: string;
+    instagramAccountId: string;
+    triggerType: string;
+    keyword?: string | null;
+    mediaId?: string | null;
+    commentReplyText?: string | null;
+    replyText?: string | null;
+    likeComment?: boolean;
+    sendDm?: boolean;
+    likeIncomingDm?: boolean;
+    isActive?: boolean;
+    messages?: unknown;
+    [key: string]: unknown;
+};
+
 export type AutomationFormProps = {
     account: InstagramAccount;
     automation?: Automation | null;
@@ -77,14 +80,27 @@ export type AutomationFormProps = {
     onUpdated: (automation: Automation) => void;
 };
 
-/* -------------------------------------------------------------------------- */
-/* Helpers                                                                    */
-/* -------------------------------------------------------------------------- */
+/* ---------------------------------------------------------
+ * Local IDs
+ * --------------------------------------------------------- */
 
-export function createLocalId(prefix: string) {
-    return `${prefix}-${Date.now()}-${Math.random()
-        .toString(36)
-        .slice(2, 9)}`;
+export function createLocalId(
+    prefix = "local",
+) {
+    return `${prefix}_${crypto.randomUUID()}`;
+}
+
+/* ---------------------------------------------------------
+ * Empty drafts
+ * --------------------------------------------------------- */
+
+export function createEmptyQuickReply(): QuickReplyDraft {
+    return {
+        id: createLocalId("quick_reply"),
+        title: "",
+        payload: createLocalId("payload"),
+        nextMessageId: null,
+    };
 }
 
 export function createEmptyMessage(): MessageDraft {
@@ -100,42 +116,57 @@ export function createEmptyMessage(): MessageDraft {
     };
 }
 
-export function createEmptyQuickReply(): QuickReplyDraft {
-    return {
-        id: createLocalId("quick"),
-        title: "",
-        payload: createLocalId("payload"),
-        nextMessageId: null,
-    };
-}
+/* ---------------------------------------------------------
+ * Trigger
+ * --------------------------------------------------------- */
 
 export function getDefaultTrigger(
-    automation?: Automation | null
-): AutomationTriggerType {
-    return (
-        automation?.triggerType ??
+    automation?: {
+        triggerType?: string | null;
+    } | null,
+): "COMMENT_KEYWORD" | "DM" | "STORY_REPLY_KEYWORD" {
+    const triggerType =
+        automation?.triggerType;
+
+    if (
+        triggerType ===
         "COMMENT_KEYWORD"
-    );
+    ) {
+        return "COMMENT_KEYWORD";
+    }
+
+    if (
+        triggerType ===
+        "STORY_REPLY_KEYWORD"
+    ) {
+        return "STORY_REPLY_KEYWORD";
+    }
+
+    return "DM";
 }
 
+/* ---------------------------------------------------------
+ * Message labels
+ * --------------------------------------------------------- */
+
 export function getMessageTypeLabel(
-    messageType: MessageType
+    type: MessageType,
 ) {
-    switch (messageType) {
+    switch (type) {
         case "TEXT":
             return "متن";
 
         case "IMAGE":
-            return "عکس";
+            return "تصویر";
 
         case "VIDEO":
             return "ویدیو";
 
         case "AUDIO":
-            return "ویس";
+            return "صوت";
 
         case "SHOWCASE":
-            return "ویترین";
+            return "Showcase";
 
         case "FORM":
             return "فرم";
@@ -145,171 +176,180 @@ export function getMessageTypeLabel(
     }
 }
 
+/* ---------------------------------------------------------
+ * Message icons
+ * --------------------------------------------------------- */
+
 export function getMessageIcon(
-    messageType: MessageType
+    type: MessageType,
 ) {
-    switch (messageType) {
+    switch (type) {
+        case "TEXT":
+            return "message";
+
         case "IMAGE":
-            return <ImageIcon size={15} />;
+            return "image";
 
         case "VIDEO":
-            return <Video size={15} />;
+            return "video";
 
         case "AUDIO":
-            return <Volume2 size={15} />;
+            return "audio";
 
         case "SHOWCASE":
-            return (
-                <MessageSquareText size={15} />
-            );
+            return "showcase";
 
         case "FORM":
-            return (
-                <MessageSquareText size={15} />
-            );
+            return "form";
 
         default:
-            return (
-                <MessageCircle size={15} />
-            );
+            return "message";
     }
 }
 
+/* ---------------------------------------------------------
+ * Normalize messages returned by API
+ * --------------------------------------------------------- */
+
 export function normalizeMessages(
-    messages: unknown
+    value: unknown,
 ): MessageDraft[] {
-    if (!Array.isArray(messages)) {
+    if (!Array.isArray(value)) {
         return [];
     }
 
-    return messages
-        .map((rawMessage) => {
+    return value
+        .map((raw): MessageDraft | null => {
             if (
-                !rawMessage ||
-                typeof rawMessage !== "object"
+                !raw ||
+                typeof raw !== "object"
             ) {
                 return null;
             }
 
-            const message =
-                rawMessage as Record<
+            const item =
+                raw as Record<
                     string,
                     unknown
                 >;
 
+            const rawType =
+                typeof item.messageType ===
+                    "string"
+                    ? item.messageType
+                    : "TEXT";
+
+            const messageType: MessageType =
+                MESSAGE_TYPES.includes(
+                    rawType as MessageType,
+                )
+                    ? (rawType as MessageType)
+                    : "TEXT";
+
             const rawQuickReplies =
                 Array.isArray(
-                    message.quickReplies
+                    item.quickReplies,
                 )
-                    ? message.quickReplies
+                    ? item.quickReplies
                     : [];
 
             const quickReplies =
                 rawQuickReplies
-                    .map((rawQuickReply) => {
-                        if (
-                            !rawQuickReply ||
-                            typeof rawQuickReply !==
-                            "object"
-                        ) {
-                            return null;
-                        }
+                    .map(
+                        (
+                            rawQuickReply,
+                        ): QuickReplyDraft | null => {
+                            if (
+                                !rawQuickReply ||
+                                typeof rawQuickReply !==
+                                "object"
+                            ) {
+                                return null;
+                            }
 
-                        const quickReply =
-                            rawQuickReply as Record<
-                                string,
-                                unknown
-                            >;
+                            const qr =
+                                rawQuickReply as Record<
+                                    string,
+                                    unknown
+                                >;
 
-                        return {
-                            id:
-                                typeof quickReply.id ===
-                                    "string"
-                                    ? quickReply.id
-                                    : createLocalId(
-                                        "quick"
-                                    ),
+                            return {
+                                id:
+                                    typeof qr.id ===
+                                        "string"
+                                        ? qr.id
+                                        : createLocalId(
+                                            "quick_reply",
+                                        ),
 
-                            title:
-                                typeof quickReply.title ===
-                                    "string"
-                                    ? quickReply.title
-                                    : "",
+                                title:
+                                    typeof qr.title ===
+                                        "string"
+                                        ? qr.title
+                                        : "",
 
-                            payload:
-                                typeof quickReply.payload ===
-                                    "string"
-                                    ? quickReply.payload
-                                    : createLocalId(
-                                        "payload"
-                                    ),
+                                payload:
+                                    typeof qr.payload ===
+                                        "string"
+                                        ? qr.payload
+                                        : createLocalId(
+                                            "payload",
+                                        ),
 
-                            nextMessageId:
-                                typeof quickReply.nextMessageId ===
-                                    "string"
-                                    ? quickReply.nextMessageId
-                                    : null,
-                        };
-                    })
+                                nextMessageId:
+                                    typeof qr.nextMessageId ===
+                                        "string"
+                                        ? qr.nextMessageId
+                                        : null,
+                            };
+                        },
+                    )
                     .filter(
                         (
-                            item
+                            item,
                         ): item is QuickReplyDraft =>
-                            item !== null
+                            item !== null,
                     );
-
-            const rawMessageType =
-                message.messageType;
-
-            const messageType: MessageType =
-                rawMessageType === "IMAGE" ||
-                    rawMessageType === "VIDEO" ||
-                    rawMessageType === "AUDIO" ||
-                    rawMessageType ===
-                    "SHOWCASE" ||
-                    rawMessageType === "FORM"
-                    ? rawMessageType
-                    : "TEXT";
 
             return {
                 id:
-                    typeof message.id ===
+                    typeof item.id ===
                         "string"
-                        ? message.id
+                        ? item.id
                         : createLocalId(
-                            "message"
+                            "message",
                         ),
 
                 messageType,
 
                 text:
-                    typeof message.text ===
+                    typeof item.text ===
                         "string"
-                        ? message.text
+                        ? item.text
                         : "",
 
                 mediaUrl:
-                    typeof message.mediaUrl ===
+                    typeof item.mediaUrl ===
                         "string"
-                        ? message.mediaUrl
+                        ? item.mediaUrl
                         : "",
 
                 mediaId:
-                    typeof message.mediaId ===
+                    typeof item.mediaId ===
                         "string"
-                        ? message.mediaId
+                        ? item.mediaId
                         : "",
 
                 showcaseId:
-                    typeof message.showcaseId ===
+                    typeof item.showcaseId ===
                         "string"
-                        ? message.showcaseId
+                        ? item.showcaseId
                         : "",
 
                 formId:
-                    typeof message.formId ===
+                    typeof item.formId ===
                         "string"
-                        ? message.formId
+                        ? item.formId
                         : "",
 
                 quickReplies,
@@ -317,8 +357,255 @@ export function normalizeMessages(
         })
         .filter(
             (
-                item
+                item,
             ): item is MessageDraft =>
-                item !== null
+                item !== null,
         );
 }
+
+/* ---------------------------------------------------------
+ * Flow validation
+ * --------------------------------------------------------- */
+
+export function validateMessages(
+    messages: MessageDraft[],
+) {
+    if (messages.length === 0) {
+        throw new Error(
+            "حداقل یک پیام اضافه کنید.",
+        );
+    }
+
+    const messageIds =
+        new Set(
+            messages.map(
+                (message) =>
+                    message.id,
+            ),
+        );
+
+    for (
+        let index = 0;
+        index < messages.length;
+        index++
+    ) {
+        const message =
+            messages[index];
+
+        if (!message) {
+            continue;
+        }
+
+        const messageNumber =
+            index + 1;
+
+        switch (
+        message.messageType
+        ) {
+            case "TEXT":
+                if (
+                    !message.text.trim()
+                ) {
+                    throw new Error(
+                        `متن پیام ${messageNumber} را وارد کنید.`,
+                    );
+                }
+                break;
+
+            case "IMAGE":
+            case "VIDEO":
+            case "AUDIO":
+                if (
+                    !message.mediaUrl.trim() &&
+                    !message.mediaId.trim()
+                ) {
+                    throw new Error(
+                        `برای پیام ${messageNumber}، Media URL یا Media ID را وارد کنید.`,
+                    );
+                }
+                break;
+
+            case "SHOWCASE":
+                if (
+                    !message.showcaseId
+                ) {
+                    throw new Error(
+                        `برای پیام ${messageNumber} یک Showcase انتخاب کنید.`,
+                    );
+                }
+                break;
+
+            case "FORM":
+                if (!message.formId) {
+                    throw new Error(
+                        `برای پیام ${messageNumber} یک Form انتخاب کنید.`,
+                    );
+                }
+                break;
+        }
+
+        if (
+            message.quickReplies.length >
+            13
+        ) {
+            throw new Error(
+                `پیام ${messageNumber} نمی‌تواند بیشتر از ۱۳ Quick Reply داشته باشد.`,
+            );
+        }
+
+        for (
+            let qrIndex = 0;
+            qrIndex <
+            message.quickReplies.length;
+            qrIndex++
+        ) {
+            const quickReply =
+                message.quickReplies[
+                qrIndex
+                ];
+
+            if (!quickReply) {
+                continue;
+            }
+
+            if (
+                !quickReply.title.trim()
+            ) {
+                throw new Error(
+                    `عنوان Quick Reply شماره ${qrIndex + 1
+                    } در پیام ${messageNumber} را وارد کنید.`,
+                );
+            }
+
+            if (
+                quickReply.title.trim()
+                    .length > 20
+            ) {
+                throw new Error(
+                    `عنوان Quick Reply شماره ${qrIndex + 1
+                    } در پیام ${messageNumber} نباید بیشتر از ۲۰ کاراکتر باشد.`,
+                );
+            }
+
+            if (
+                !quickReply.nextMessageId
+            ) {
+                throw new Error(
+                    `مقصد Quick Reply شماره ${qrIndex + 1
+                    } در پیام ${messageNumber} را انتخاب کنید.`,
+                );
+            }
+
+            if (
+                !messageIds.has(
+                    quickReply.nextMessageId,
+                )
+            ) {
+                throw new Error(
+                    `مقصد Quick Reply شماره ${qrIndex + 1
+                    } در پیام ${messageNumber} معتبر نیست.`,
+                );
+            }
+
+            if (
+                quickReply.nextMessageId ===
+                message.id
+            ) {
+                throw new Error(
+                    `Quick Reply شماره ${qrIndex + 1
+                    } نمی‌تواند به خودش متصل شود.`,
+                );
+            }
+        }
+    }
+
+    /*
+     * Detect cycles.
+     */
+    const graph =
+        new Map<
+            string,
+            string[]
+        >();
+
+    for (const message of messages) {
+        graph.set(
+            message.id,
+            message.quickReplies
+                .map(
+                    (
+                        quickReply,
+                    ) =>
+                        quickReply.nextMessageId,
+                )
+                .filter(
+                    (
+                        id,
+                    ): id is string =>
+                        Boolean(id),
+                ),
+        );
+    }
+
+    const visiting =
+        new Set<string>();
+
+    const visited =
+        new Set<string>();
+
+    function visit(
+        messageId: string,
+    ): boolean {
+        if (
+            visiting.has(
+                messageId,
+            )
+        ) {
+            return true;
+        }
+
+        if (
+            visited.has(
+                messageId,
+            )
+        ) {
+            return false;
+        }
+
+        visiting.add(messageId);
+
+        for (const nextId of
+            graph.get(
+                messageId,
+            ) ?? []) {
+            if (visit(nextId)) {
+                return true;
+            }
+        }
+
+        visiting.delete(messageId);
+        visited.add(messageId);
+
+        return false;
+    }
+
+    for (const message of messages) {
+        if (visit(message.id)) {
+            throw new Error(
+                "در مسیر Quick Reply یک حلقه ایجاد شده است.",
+            );
+        }
+    }
+
+    return true;
+}
+
+export const MESSAGE_TYPES: MessageType[] =
+    [
+        "TEXT",
+        "IMAGE",
+        "VIDEO",
+        "AUDIO",
+        "SHOWCASE",
+        "FORM",
+    ];
