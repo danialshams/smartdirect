@@ -25,14 +25,15 @@ type InstagramAccount = {
 export type Automation = {
     id: string;
     instagramAccountId: string;
+    mediaId: string | null;
     keyword: string;
     commentReplyText: string | null;
-    replyText: string;
+    replyText: string | null;
+    likeComment: boolean;
     isActive: boolean;
     createdAt: string;
     updatedAt: string;
 };
-
 type AutomationManagerProps = {
     accounts: InstagramAccount[];
 };

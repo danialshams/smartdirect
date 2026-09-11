@@ -1,8 +1,18 @@
-import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
-
+import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+
+export const dynamic = "force-dynamic";
+
+function normalizeKeyword(value: string) {
+  return value
+    .trim()
+    .replace(/[۰-۹]/g, (digit) =>
+      String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)),
+    )
+    .toLowerCase();
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -19,7 +29,9 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const instagramAccountId = searchParams.get("instagramAccountId");
+
+    const instagramAccountId =
+      searchParams.get("instagramAccountId");
 
     if (!instagramAccountId) {
       return NextResponse.json(
@@ -31,46 +43,48 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const account = await prisma.instagramAccount.findFirst({
-      where: {
-        id: instagramAccountId,
-        userId: session.user.id,
-      },
-      select: {
-        id: true,
-      },
-    });
+    const account =
+      await prisma.instagramAccount.findFirst({
+        where: {
+          id: instagramAccountId,
+          userId: session.user.id,
+        },
+      });
 
     if (!account) {
       return NextResponse.json(
         {
           success: false,
-          message: "اکانت اینستاگرام پیدا نشد.",
+          message: "اکانت Instagram متعلق به شما نیست.",
         },
-        { status: 404 },
+        { status: 403 },
       );
     }
 
-    const automations = await prisma.automation.findMany({
-      where: {
-        instagramAccountId: account.id,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    const automations =
+      await prisma.automation.findMany({
+        where: {
+          instagramAccountId,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
 
     return NextResponse.json({
       success: true,
       data: automations,
     });
   } catch (error) {
-    console.error("GET /api/automations error:", error);
+    console.error(
+      "GET /api/automations error:",
+      error,
+    );
 
     return NextResponse.json(
       {
         success: false,
-        message: "دریافت اتوماسیون‌ها با خطا مواجه شد.",
+        message: "خطای داخلی سرور.",
       },
       { status: 500 },
     );
@@ -94,30 +108,35 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     const instagramAccountId =
-      typeof body.instagramAccountId === "string"
-        ? body.instagramAccountId.trim()
-        : "";
+      String(body.instagramAccountId ?? "").trim();
 
-    const keyword =
-      typeof body.keyword === "string"
-        ? body.keyword.trim()
-        : "";
+    const mediaId =
+      body.mediaId
+        ? String(body.mediaId).trim()
+        : null;
+
+    const keyword = normalizeKeyword(
+      String(body.keyword ?? ""),
+    );
 
     const commentReplyText =
-      typeof body.commentReplyText === "string"
-        ? body.commentReplyText.trim()
-        : "";
+      body.commentReplyText
+        ? String(body.commentReplyText).trim()
+        : null;
 
     const replyText =
-      typeof body.replyText === "string"
-        ? body.replyText.trim()
-        : "";
+      body.replyText
+        ? String(body.replyText).trim()
+        : null;
+
+    const likeComment =
+      Boolean(body.likeComment);
 
     if (!instagramAccountId) {
       return NextResponse.json(
         {
           success: false,
-          message: "اکانت اینستاگرام را انتخاب کنید.",
+          message: "اکانت Instagram را انتخاب کنید.",
         },
         { status: 400 },
       );
@@ -127,83 +146,77 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "کلمه یا عبارت فعال‌کننده را وارد کنید.",
+          message: "کلمه کلیدی را وارد کنید.",
         },
         { status: 400 },
       );
     }
 
-    if (!commentReplyText) {
+    if (
+      !commentReplyText &&
+      !replyText &&
+      !likeComment
+    ) {
       return NextResponse.json(
         {
           success: false,
-          message: "متن پاسخ کامنت را وارد کنید.",
+          message: "حداقل یک Action انتخاب کنید.",
         },
         { status: 400 },
       );
     }
 
-    if (!replyText) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "متن دایرکت را وارد کنید.",
+    const account =
+      await prisma.instagramAccount.findFirst({
+        where: {
+          id: instagramAccountId,
+          userId: session.user.id,
         },
-        { status: 400 },
-      );
-    }
-
-    const account = await prisma.instagramAccount.findFirst({
-      where: {
-        id: instagramAccountId,
-        userId: session.user.id,
-      },
-      select: {
-        id: true,
-      },
-    });
+      });
 
     if (!account) {
       return NextResponse.json(
         {
           success: false,
-          message: "اکانت اینستاگرام پیدا نشد.",
+          message: "اکانت Instagram متعلق به شما نیست.",
         },
-        { status: 404 },
+        { status: 403 },
       );
     }
 
-    const existingAutomation = await prisma.automation.findUnique({
-      where: {
-        instagramAccountId_keyword: {
-          instagramAccountId: account.id,
-          keyword,
+    const duplicate =
+      await prisma.automation.findUnique({
+        where: {
+          instagramAccountId_keyword: {
+            instagramAccountId,
+            keyword,
+          },
         },
-      },
-      select: {
-        id: true,
-      },
-    });
+      });
 
-    if (existingAutomation) {
+    if (duplicate) {
       return NextResponse.json(
         {
           success: false,
-          message: "این کلمه قبلاً برای این پیج استفاده شده است.",
+          message:
+            "برای این کلمه کلیدی قبلاً یک Automation ساخته شده است.",
         },
         { status: 409 },
       );
     }
 
-    const automation = await prisma.automation.create({
-      data: {
-        instagramAccountId: account.id,
-        keyword,
-        commentReplyText,
-        replyText,
-        isActive: true,
-      },
-    });
+    const automation =
+      await prisma.automation.create({
+        data: {
+          instagramAccountId,
+          mediaId,
+          keyword,
+          commentReplyText,
+          replyText,
+          likeComment,
+          isActive: true,
+        },
+      });
 
     return NextResponse.json(
       {
@@ -213,12 +226,15 @@ export async function POST(request: NextRequest) {
       { status: 201 },
     );
   } catch (error) {
-    console.error("POST /api/automations error:", error);
+    console.error(
+      "POST /api/automations error:",
+      error,
+    );
 
     return NextResponse.json(
       {
         success: false,
-        message: "ساخت اتوماسیون با خطا مواجه شد.",
+        message: "ساخت Automation ناموفق بود.",
       },
       { status: 500 },
     );

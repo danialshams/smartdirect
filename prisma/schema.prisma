@@ -45,21 +45,21 @@ model Automation {
   instagramAccountId  String
   instagramAccount    InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
 
+  mediaId             String?
   keyword             String
 
-  // متن پاسخ عمومی زیر کامنت
+  likeComment         Boolean          @default(false)
   commentReplyText    String?
+  replyText           String?
 
-  // متن Private Reply داخل دایرکت
-  replyText           String
+  isActive             Boolean         @default(true)
 
-  isActive            Boolean          @default(true)
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
 
-  createdAt           DateTime         @default(now())
-  updatedAt           DateTime         @updatedAt
-  
-@@index([instagramAccountId])
-@@unique([instagramAccountId, keyword])
+  @@index([instagramAccountId])
+  @@index([mediaId])
+  @@unique([instagramAccountId, keyword])
 }
 
 model Comment {

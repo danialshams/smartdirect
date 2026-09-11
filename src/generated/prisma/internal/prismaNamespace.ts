@@ -786,7 +786,9 @@ export type InstagramAccountScalarFieldEnum = (typeof InstagramAccountScalarFiel
 export const AutomationScalarFieldEnum = {
   id: 'id',
   instagramAccountId: 'instagramAccountId',
+  mediaId: 'mediaId',
   keyword: 'keyword',
+  likeComment: 'likeComment',
   commentReplyText: 'commentReplyText',
   replyText: 'replyText',
   isActive: 'isActive',

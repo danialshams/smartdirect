@@ -1,358 +1,510 @@
 "use client";
 
 import {
-    Bot,
-    Check,
-    Loader2,
-    MessageCircle,
-    X,
-} from "lucide-react";
-import { FormEvent, useState } from "react";
-
+    FormEvent,
+    useEffect,
+    useState,
+} from "react";
 import type { Automation } from "./AutomationManager";
-
 type InstagramAccount = {
-  id: string;
-  igUsername: string;
-  igUserId: string;
-  isConnected: boolean;
-  createdAt: Date;
+    id: string;
+    igUsername: string;
 };
 
-type AutomationFormProps = {
-  account: InstagramAccount;
-  automation: Automation | null;
-  onClose: () => void;
-  onCreated: (automation: Automation) => void;
-  onUpdated: (automation: Automation) => void;
+type InstagramMedia = {
+    id: string;
+    caption?: string | null;
+    media_type?: string;
+    media_product_type?: string;
+    media_url?: string | null;
+    thumbnail_url?: string | null;
+    permalink?: string | null;
+    timestamp?: string | null;
+};
+
+type Props = {
+    account: InstagramAccount;
+    automation?: Automation | null;
+    onClose: () => void;
+    onCreated: (automation: Automation) => void;
+    onUpdated: (automation: Automation) => void;
 };
 
 export default function AutomationForm({
-  account,
-  automation,
-  onClose,
-  onCreated,
-  onUpdated,
-}: AutomationFormProps) {
-  const editing = Boolean(automation);
-
-  const [keyword, setKeyword] = useState(
-    automation?.keyword ?? "",
-  );
-
-  const [commentReplyText, setCommentReplyText] =
-    useState(
-      automation?.commentReplyText ?? "",
+    account,
+    automation,
+    onClose,
+    onCreated,
+    onUpdated,
+}: Props) {
+    const [keyword, setKeyword] = useState(
+        automation?.keyword ?? "",
     );
 
-  const [replyText, setReplyText] = useState(
-    automation?.replyText ?? "",
-  );
+    const [mediaId, setMediaId] = useState(
+        automation?.mediaId ?? "",
+    );
 
-  const [isActive, setIsActive] = useState(
-    automation?.isActive ?? true,
-  );
-
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-
-  
-  async function handleSubmit(
-    event: FormEvent<HTMLFormElement>,
-  ) {
-    event.preventDefault();
-
-    setError("");
-
-    if (!keyword.trim()) {
-      setError(
-        "کلمه یا عبارت فعال‌کننده را وارد کنید.",
-      );
-      return;
-    }
-
-    if (!commentReplyText.trim()) {
-      setError("متن پاسخ عمومی را وارد کنید.");
-      return;
-    }
-
-    if (!replyText.trim()) {
-      setError("متن دایرکت را وارد کنید.");
-      return;
-    }
-
-    try {
-      setSaving(true);
-
-      const endpoint = editing
-        ? `/api/automations/${automation?.id}`
-        : "/api/automations";
-
-      const method = editing ? "PATCH" : "POST";
-
-      const body = {
-        ...(editing
-          ? {}
-          : {
-              instagramAccountId: account.id,
-            }),
-        keyword: keyword.trim(),
-        commentReplyText: commentReplyText.trim(),
-        replyText: replyText.trim(),
-        ...(editing
-          ? {
-              isActive,
-            }
-          : {}),
-      };
-
-      const response = await fetch(endpoint, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(
-          result.message ||
-            "ذخیره اتوماسیون ناموفق بود.",
+    const [commentReplyText, setCommentReplyText] =
+        useState(
+            automation?.commentReplyText ?? "",
         );
-      }
 
-      if (editing) {
-        onUpdated(result.data);
-      } else {
-        onCreated(result.data);
-      }
-    } catch (error) {
-      console.error(error);
+    const [replyText, setReplyText] = useState(
+        automation?.replyText ?? "",
+    );
 
-      setError(
-        error instanceof Error
-          ? error.message
-          : "ذخیره اتوماسیون ناموفق بود.",
-      );
-    } finally {
-      setSaving(false);
+    const [likeComment, setLikeComment] =
+        useState(
+            automation?.likeComment ?? false,
+        );
+
+    const [isActive, setIsActive] =
+        useState(
+            automation?.isActive ?? true,
+        );
+
+    const [media, setMedia] = useState<
+        InstagramMedia[]
+    >([]);
+
+    const [loadingMedia, setLoadingMedia] =
+        useState(true);
+
+    const [saving, setSaving] =
+        useState(false);
+
+    const [error, setError] =
+        useState("");
+
+    useEffect(() => {
+        let cancelled = false;
+
+        async function loadMedia() {
+            try {
+                setLoadingMedia(true);
+
+                const response = await fetch(
+                    `/api/instagram/media?instagramAccountId=${encodeURIComponent(
+                        account.id,
+                    )}`,
+                    {
+                        cache: "no-store",
+                    },
+                );
+
+                const result =
+                    await response.json();
+
+                if (!response.ok || !result.success) {
+                    throw new Error(
+                        result.message ||
+                        "دریافت پست‌ها ناموفق بود.",
+                    );
+                }
+
+                if (!cancelled) {
+                    setMedia(result.data ?? []);
+                }
+            } catch (error) {
+                console.error(error);
+
+                if (!cancelled) {
+                    setMedia([]);
+                }
+            } finally {
+                if (!cancelled) {
+                    setLoadingMedia(false);
+                }
+            }
+        }
+
+        loadMedia();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [account.id]);
+
+    async function handleSubmit(
+        event: FormEvent<HTMLFormElement>,
+    ) {
+        event.preventDefault();
+
+        setError("");
+
+        if (!keyword.trim()) {
+            setError(
+                "کلمه کلیدی را وارد کنید.",
+            );
+            return;
+        }
+
+        if (
+            !commentReplyText.trim() &&
+            !replyText.trim() &&
+            !likeComment
+        ) {
+            setError(
+                "حداقل یک Action انتخاب کنید.",
+            );
+            return;
+        }
+
+        try {
+            setSaving(true);
+
+            const isEditing =
+                Boolean(automation?.id);
+
+            const response = await fetch(
+                isEditing
+                    ? `/api/automations/${automation!.id}`
+                    : "/api/automations",
+                {
+                    method: isEditing
+                        ? "PATCH"
+                        : "POST",
+                    headers: {
+                        "Content-Type":
+                            "application/json",
+                    },
+                    body: JSON.stringify({
+                        instagramAccountId:
+                            account.id,
+                        mediaId:
+                            mediaId || null,
+                        keyword,
+                        commentReplyText:
+                            commentReplyText.trim() ||
+                            null,
+                        replyText:
+                            replyText.trim() ||
+                            null,
+                        likeComment,
+                        ...(isEditing
+                            ? {
+                                isActive,
+                            }
+                            : {}),
+                    }),
+                },
+            );
+
+            const result =
+                await response.json();
+
+            if (
+                !response.ok ||
+                !result.success
+            ) {
+                throw new Error(
+                    result.message ||
+                    "ذخیره Automation ناموفق بود.",
+                );
+            }
+
+            if (isEditing) {
+                onUpdated(result.data);
+            } else {
+                onCreated(result.data);
+            }
+        } catch (error) {
+            setError(
+                error instanceof Error
+                    ? error.message
+                    : "خطای ناشناخته رخ داد.",
+            );
+        } finally {
+            setSaving(false);
+        }
     }
-  }
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-end justify-center bg-slate-950/35 p-0 backdrop-blur-[3px] sm:items-center sm:p-6">
-      <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-[28px] bg-white shadow-2xl sm:rounded-[28px]">
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-5 py-5 sm:px-7">
-          <div>
-            <div className="flex items-center gap-2 text-slate-400">
-              <Bot size={17} />
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+            <div className="w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl">
+                <div className="flex items-center justify-between border-b border-gray-100 px-6 py-5">
+                    <div>
+                        <h2 className="text-lg font-semibold text-gray-900">
+                            {automation
+                                ? "ویرایش Automation"
+                                : "ساخت Automation"}
+                        </h2>
 
-              <span className="text-[10px] font-semibold tracking-[0.15em]">
-                AUTOMATION
-              </span>
+                        <p className="mt-1 text-sm text-gray-500">
+                            @{account.igUsername}
+                        </p>
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="text-2xl leading-none text-gray-400 transition hover:text-gray-900"
+                    >
+                        ×
+                    </button>
+                </div>
+
+                <form
+                    onSubmit={handleSubmit}
+                    className="max-h-[80vh] space-y-6 overflow-y-auto p-6"
+                >
+                    <div>
+                        <label className="mb-2 block text-sm font-medium text-gray-800">
+                            پست مورد نظر
+                        </label>
+
+                        {loadingMedia ? (
+                            <div className="rounded-xl border border-gray-200 p-4 text-sm text-gray-500">
+                                در حال دریافت پست‌ها...
+                            </div>
+                        ) : media.length === 0 ? (
+                            <div className="rounded-xl border border-gray-200 p-4 text-sm text-gray-500">
+                                پستی برای این اکانت پیدا نشد.
+                            </div>
+                        ) : (
+                            <div className="grid max-h-80 grid-cols-2 gap-3 overflow-y-auto sm:grid-cols-3">
+                                {media.map((item) => {
+                                    const image =
+                                        item.media_type ===
+                                            "VIDEO" ||
+                                            item.media_product_type ===
+                                            "REELS"
+                                            ? item.thumbnail_url
+                                            : item.media_url;
+
+                                    const selected =
+                                        mediaId === item.id;
+
+                                    return (
+                                        <button
+                                            key={item.id}
+                                            type="button"
+                                            onClick={() =>
+                                                setMediaId(
+                                                    selected
+                                                        ? ""
+                                                        : item.id,
+                                                )
+                                            }
+                                            className={`overflow-hidden rounded-xl border text-right transition ${selected
+                                                    ? "border-gray-900 ring-2 ring-gray-900/10"
+                                                    : "border-gray-200 hover:border-gray-400"
+                                                }`}
+                                        >
+                                            <div className="aspect-square bg-gray-100">
+                                                {image ? (
+                                                    <img
+                                                        src={image}
+                                                        alt={
+                                                            item.caption ||
+                                                            "Instagram post"
+                                                        }
+                                                        className="h-full w-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="flex h-full items-center justify-center text-xs text-gray-400">
+                                                        بدون تصویر
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="p-2">
+                                                <p className="line-clamp-2 text-xs text-gray-600">
+                                                    {item.caption ||
+                                                        "بدون کپشن"}
+                                                </p>
+                                            </div>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+
+                    <div>
+                        <label className="mb-2 block text-sm font-medium text-gray-800">
+                            کلمه یا عبارت Trigger
+                        </label>
+
+                        <input
+                            value={keyword}
+                            onChange={(event) =>
+                                setKeyword(
+                                    event.target.value,
+                                )
+                            }
+                            placeholder="مثلاً 1"
+                            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-gray-900"
+                        />
+
+                        <p className="mt-2 text-xs text-gray-400">
+                            وقتی کاربر این عبارت را در کامنت وارد کند، Automation اجرا می‌شود.
+                        </p>
+                    </div>
+
+                    <div className="border-t border-gray-100 pt-5">
+                        <h3 className="mb-4 text-sm font-semibold text-gray-900">
+                            Actions
+                        </h3>
+
+                        <div className="space-y-4">
+                            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 p-4">
+                                <input
+                                    type="checkbox"
+                                    checked={
+                                        Boolean(
+                                            commentReplyText.trim(),
+                                        )
+                                    }
+                                    onChange={(event) => {
+                                        if (
+                                            event.target.checked
+                                        ) {
+                                            if (
+                                                !commentReplyText
+                                            ) {
+                                                setCommentReplyText(
+                                                    "ممنون از کامنت شما.",
+                                                );
+                                            }
+                                        } else {
+                                            setCommentReplyText(
+                                                "",
+                                            );
+                                        }
+                                    }}
+                                    className="mt-1"
+                                />
+
+                                <div className="flex-1">
+                                    <div className="text-sm font-medium text-gray-900">
+                                        پاسخ عمومی به کامنت
+                                    </div>
+
+                                    <textarea
+                                        value={commentReplyText}
+                                        onChange={(event) =>
+                                            setCommentReplyText(
+                                                event.target.value,
+                                            )
+                                        }
+                                        placeholder="متن پاسخ عمومی..."
+                                        className="mt-3 min-h-24 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-gray-900"
+                                    />
+                                </div>
+                            </label>
+
+                            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 p-4">
+                                <input
+                                    type="checkbox"
+                                    checked={Boolean(replyText)}
+                                    onChange={(event) => {
+                                        if (
+                                            event.target.checked
+                                        ) {
+                                            if (!replyText) {
+                                                setReplyText(
+                                                    "سلام، ممنون از پیام شما.",
+                                                );
+                                            }
+                                        } else {
+                                            setReplyText("");
+                                        }
+                                    }}
+                                    className="mt-1"
+                                />
+
+                                <div className="flex-1">
+                                    <div className="text-sm font-medium text-gray-900">
+                                        ارسال دایرکت
+                                    </div>
+
+                                    <textarea
+                                        value={replyText}
+                                        onChange={(event) =>
+                                            setReplyText(
+                                                event.target.value,
+                                            )
+                                        }
+                                        placeholder="متن دایرکت..."
+                                        className="mt-3 min-h-24 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-gray-900"
+                                    />
+                                </div>
+                            </label>
+
+                            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 p-4">
+                                <input
+                                    type="checkbox"
+                                    checked={likeComment}
+                                    onChange={(event) =>
+                                        setLikeComment(
+                                            event.target.checked,
+                                        )
+                                    }
+                                    className="mt-1"
+                                />
+
+                                <div>
+                                    <div className="text-sm font-medium text-gray-900">
+                                        لایک کردن کامنت
+                                    </div>
+
+                                    <p className="mt-1 text-xs leading-5 text-gray-500">
+                                        این گزینه را فعلاً تا تأیید نهایی Permission و تست API غیرفعال اجرا می‌کنیم.
+                                    </p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    {automation && (
+                        <label className="flex cursor-pointer items-center gap-3 border-t border-gray-100 pt-5">
+                            <input
+                                type="checkbox"
+                                checked={isActive}
+                                onChange={(event) =>
+                                    setIsActive(
+                                        event.target.checked,
+                                    )
+                                }
+                            />
+
+                            <span className="text-sm text-gray-800">
+                                Automation فعال باشد
+                            </span>
+                        </label>
+                    )}
+
+                    {error && (
+                        <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">
+                            {error}
+                        </div>
+                    )}
+
+                    <div className="flex justify-end gap-3 border-t border-gray-100 pt-5">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="rounded-xl border border-gray-200 px-5 py-3 text-sm text-gray-700"
+                        >
+                            انصراف
+                        </button>
+
+                        <button
+                            type="submit"
+                            disabled={saving}
+                            className="rounded-xl bg-gray-900 px-6 py-3 text-sm font-medium text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            {saving
+                                ? "در حال ذخیره..."
+                                : automation
+                                    ? "ذخیره تغییرات"
+                                    : "ساخت Automation"}
+                        </button>
+                    </div>
+                </form>
             </div>
-
-            <h2 className="mt-1 text-lg font-bold text-slate-900">
-              {editing
-                ? "ویرایش اتوماسیون"
-                : "ساخت اتوماسیون جدید"}
-            </h2>
-          </div>
-
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-400 transition hover:bg-slate-50 hover:text-slate-700"
-            aria-label="بستن"
-          >
-            <X size={18} />
-          </button>
         </div>
-
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-6 p-5 sm:p-7"
-        >
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-[10px] font-medium text-slate-400">
-              پیج اینستاگرام
-            </p>
-
-            <p className="mt-1 text-sm font-bold text-slate-800">
-              @{account.igUsername}
-            </p>
-          </div>
-
-          <div>
-            <label
-              htmlFor="automation-keyword"
-              className="mb-2 block text-sm font-semibold text-slate-800"
-            >
-              کلمه فعال‌کننده
-            </label>
-
-            <input
-              id="automation-keyword"
-              value={keyword}
-              onChange={(event) =>
-                setKeyword(event.target.value)
-              }
-              placeholder="مثلاً 1"
-              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-sm text-slate-800 outline-none transition placeholder:text-slate-300 focus:border-slate-500"
-              maxLength={100}
-            />
-
-            <p className="mt-2 text-xs leading-5 text-slate-400">
-              وقتی متن کامنت دقیقاً با این عبارت مطابقت
-              داشته باشد، Automation اجرا می‌شود.
-            </p>
-          </div>
-
-          <div>
-            <label
-              htmlFor="comment-reply"
-              className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-800"
-            >
-              <MessageCircle size={16} />
-              پاسخ عمومی کامنت
-            </label>
-
-            <textarea
-              id="comment-reply"
-              value={commentReplyText}
-              onChange={(event) =>
-                setCommentReplyText(
-                  event.target.value,
-                )
-              }
-              placeholder="مثلاً: دایرکت برات ارسال شد."
-              rows={4}
-              maxLength={1000}
-              className="w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-sm leading-7 text-slate-800 outline-none transition placeholder:text-slate-300 focus:border-slate-500"
-            />
-
-            <div className="mt-2 flex justify-between text-[10px] text-slate-400">
-              <span>
-                این متن زیر کامنت کاربر منتشر می‌شود.
-              </span>
-
-              <span>
-                {commentReplyText.length}/1000
-              </span>
-            </div>
-          </div>
-
-          <div>
-            <label
-              htmlFor="private-reply"
-              className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-800"
-            >
-              <MessageCircle size={16} />
-              متن دایرکت خصوصی
-            </label>
-
-            <textarea
-              id="private-reply"
-              value={replyText}
-              onChange={(event) =>
-                setReplyText(event.target.value)
-              }
-              placeholder="مثلاً: سلام، اطلاعات موردنظر شما در دایرکت ارسال شد."
-              rows={5}
-              maxLength={2000}
-              className="w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-sm leading-7 text-slate-800 outline-none transition placeholder:text-slate-300 focus:border-slate-500"
-            />
-
-            <div className="mt-2 flex justify-between text-[10px] text-slate-400">
-              <span>
-                این پیام به صورت خصوصی برای کاربر ارسال می‌شود.
-              </span>
-
-              <span>
-                {replyText.length}/2000
-              </span>
-            </div>
-          </div>
-
-          {editing && (
-            <button
-              type="button"
-              onClick={() => setIsActive(!isActive)}
-              className="flex w-full items-center justify-between rounded-2xl border border-slate-200 p-4 text-right"
-            >
-              <div>
-                <p className="text-sm font-semibold text-slate-800">
-                  وضعیت اتوماسیون
-                </p>
-
-                <p className="mt-1 text-xs text-slate-400">
-                  در صورت غیرفعال بودن، Trigger اجرا نمی‌شود.
-                </p>
-              </div>
-
-              <span
-                className={[
-                  "relative h-6 w-11 rounded-full transition",
-                  isActive
-                    ? "bg-slate-950"
-                    : "bg-slate-200",
-                ].join(" ")}
-              >
-                <span
-                  className={[
-                    "absolute top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-all",
-                    isActive
-                      ? "right-1"
-                      : "right-6",
-                  ].join(" ")}
-                />
-              </span>
-            </button>
-          )}
-
-          {error && (
-            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs leading-6 text-red-700">
-              {error}
-            </div>
-          )}
-
-          <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={saving}
-              className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-medium text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
-            >
-              انصراف
-            </button>
-
-            <button
-              type="submit"
-              disabled={saving}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {saving ? (
-                <>
-                  <Loader2
-                    size={16}
-                    className="animate-spin"
-                  />
-                  در حال ذخیره
-                </>
-              ) : (
-                <>
-                  <Check size={16} />
-                  {editing
-                    ? "ذخیره تغییرات"
-                    : "ساخت اتوماسیون"}
-                </>
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
+    );
 }

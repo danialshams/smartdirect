@@ -495,12 +495,18 @@ async function processCommentEvent(
     // 13. Send private reply
     // =======================================================
 
-    const privateReplySent = await sendPrivateReply({
-      igUserId: instagramAccount.igUserId,
-      igCommentId,
-      accessToken: instagramAccount.accessToken,
-      replyText: matchedAutomation.replyText,
-    });
+    let privateReplySent = false;
+
+    if (matchedAutomation.replyText && matchedAutomation.replyText.trim()) {
+      privateReplySent = await sendPrivateReply({
+        igUserId: instagramAccount.igUserId,
+        igCommentId,
+        accessToken: instagramAccount.accessToken,
+        replyText: matchedAutomation.replyText,
+      });
+    } else {
+      console.log("No private reply text configured. Skipping private reply.");
+    }
 
     // =======================================================
     // 14. Update database

@@ -1,78 +1,125 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+const INSTAGRAM_API_VERSION = "v26.0";
+
+export async function GET(request: NextRequest) {
   try {
-    const account = await prisma.instagramAccount.findFirst({
-      where: {
-        isConnected: true,
-      },
-      orderBy: {
-        updatedAt: "desc",
-      },
-    });
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "احراز هویت انجام نشده است.",
+        },
+        { status: 401 },
+      );
+    }
+
+    const { searchParams } = new URL(request.url);
+
+    const instagramAccountId =
+      searchParams.get("instagramAccountId");
+
+    if (!instagramAccountId) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "instagramAccountId الزامی است.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const account =
+      await prisma.instagramAccount.findFirst({
+        where: {
+          id: instagramAccountId,
+          userId: session.user.id,
+          isConnected: true,
+        },
+      });
 
     if (!account) {
       return NextResponse.json(
         {
           success: false,
-          error: "No connected Instagram account found",
+          message: "اکانت Instagram پیدا نشد.",
         },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     const url = new URL(
-      `https://graph.instagram.com/v26.0/${account.igUserId}/media`
+      `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${account.igUserId}/media`,
     );
 
     url.searchParams.set(
       "fields",
-      "id,caption,media_type,media_url,permalink,timestamp"
+      [
+        "id",
+        "caption",
+        "media_type",
+        "media_product_type",
+        "media_url",
+        "thumbnail_url",
+        "permalink",
+        "timestamp",
+      ].join(","),
     );
 
-    url.searchParams.set("access_token", account.accessToken);
+    url.searchParams.set("limit", "50");
+    url.searchParams.set(
+      "access_token",
+      account.accessToken,
+    );
 
     const response = await fetch(url.toString(), {
       method: "GET",
       cache: "no-store",
     });
 
-    const data = await response.json();
+    const result = await response.json();
 
-    console.log("========================================");
-    console.log("INSTAGRAM MEDIA TEST");
-    console.log("Account:", account.igUsername);
-    console.log("Instagram ID:", account.igUserId);
-    console.log("Status:", response.status);
-    console.log("Response:", JSON.stringify(data, null, 2));
-    console.log("========================================");
+    if (!response.ok) {
+      console.error(
+        "Instagram media error:",
+        result,
+      );
 
-    return NextResponse.json(
-      {
-        success: response.ok,
-        status: response.status,
-        account: {
-          username: account.igUsername,
-          instagramUserId: account.igUserId,
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            result?.error?.message ||
+            "دریافت پست‌های Instagram ناموفق بود.",
         },
-        data,
-      },
-      {
-        status: response.ok ? 200 : response.status,
-      }
-    );
+        { status: response.status },
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: result.data ?? [],
+      paging: result.paging ?? null,
+    });
   } catch (error) {
-    console.error("Instagram media test error:", error);
+    console.error(
+      "GET /api/instagram/media error:",
+      error,
+    );
 
     return NextResponse.json(
       {
         success: false,
-        error: "Internal server error",
+        message: "خطای داخلی سرور.",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
