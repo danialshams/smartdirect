@@ -137,6 +137,18 @@ export async function executeAutomation(input: ExecuteAutomationInput) {
     }
 
     if (!selectedQuickReply.nextMessageId) {
+      await prisma.conversation.update({
+        where: {
+          id: conversation.id,
+        },
+
+        data: {
+          lastMessageAt: new Date(),
+
+          isActive: true,
+        },
+      });
+
       return {
         success: true,
 
@@ -203,8 +215,9 @@ export async function executeAutomation(input: ExecuteAutomationInput) {
     }));
 
     // =======================================================
-    // 9. Send message through Meta Adapter
+    // 9. Send message through Instagram Adapter
     // =======================================================
+
     const result = await sendAutomationMessage({
       instagramAccountId: instagramAccount.id,
 
@@ -223,6 +236,10 @@ export async function executeAutomation(input: ExecuteAutomationInput) {
 
         mediaId: currentMessage.mediaId,
 
+        showcaseId: currentMessage.showcaseId,
+
+        formId: currentMessage.formId,
+
         quickReplies,
       },
     });
@@ -236,6 +253,8 @@ export async function executeAutomation(input: ExecuteAutomationInput) {
         automationId: automation.id,
 
         messageId: currentMessage.id,
+
+        messageType: currentMessage.messageType,
 
         error: result.error,
       });
@@ -267,7 +286,7 @@ export async function executeAutomation(input: ExecuteAutomationInput) {
 
         messageType: getConversationMessageType(currentMessage.messageType),
 
-        text: currentMessage.text,
+        text: result.conversationText ?? currentMessage.text ?? null,
 
         mediaUrl: currentMessage.mediaUrl,
 
@@ -354,10 +373,6 @@ function getConversationMessageType(
     case "AUDIO":
       return MessageType.AUDIO;
 
-    /*
-     * Showcase و Form هنوز Adapter
-     * مستقل ندارند.
-     */
     case "SHOWCASE":
       return MessageType.TEXT;
 

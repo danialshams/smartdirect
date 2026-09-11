@@ -1,5 +1,7 @@
 import { AutomationMessageType } from "@/generated/prisma/client";
+import { createPublicFormToken } from "@/lib/forms/public-form-token";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
+import { prisma } from "@/lib/prisma";
 
 const INSTAGRAM_API_VERSION = "v26.0";
 
@@ -8,6 +10,10 @@ const MAX_API_RETRIES = 2;
 const MAX_QUICK_REPLIES = 13;
 
 const MAX_QUICK_REPLY_TITLE_LENGTH = 20;
+
+const MAX_SHOWCASE_ITEMS = 10;
+
+const FORM_TOKEN_EXPIRATION = "30d";
 
 type QuickReplyPayload = {
   id: string;
@@ -26,8 +32,6 @@ export type AutomationMessagePayload = {
   /**
    * Instagram Professional Account ID
    * متعلق به SmartDirect.
-   *
-   * این همان InstagramAccount.igUserId است.
    */
   instagramUserId: string;
 
@@ -41,6 +45,10 @@ export type AutomationMessagePayload = {
     mediaUrl: string | null;
 
     mediaId: string | null;
+
+    showcaseId?: string | null;
+
+    formId?: string | null;
 
     quickReplies?: QuickReplyPayload[];
   };
@@ -56,6 +64,16 @@ export type SendAutomationMessageResult = {
   error?: string;
 
   response?: unknown;
+
+  /**
+   * متنی که برای ثبت در ConversationMessage استفاده می‌شود.
+   */
+  conversationText?: string | null;
+
+  /**
+   * URL تولیدشده برای فرم.
+   */
+  formUrl?: string;
 };
 
 type InstagramApiResponse = {
@@ -136,6 +154,57 @@ function getMediaAttachmentType(
   }
 }
 
+function getPublicAppUrl(): string {
+  const configuredUrl =
+    process.env.NEXT_PUBLIC_APP_URL?.trim() || process.env.APP_URL?.trim();
+
+  if (configuredUrl) {
+    return configuredUrl.replace(/\/+$/, "");
+  }
+
+  const vercelProductionUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
+
+  if (vercelProductionUrl) {
+    return `https://${vercelProductionUrl.replace(/^https?:\/\//, "")}`;
+  }
+
+  const vercelUrl = process.env.VERCEL_URL?.trim();
+
+  if (vercelUrl) {
+    return `https://${vercelUrl.replace(/^https?:\/\//, "")}`;
+  }
+
+  throw new Error(
+    "Public application URL is missing. Set NEXT_PUBLIC_APP_URL in production.",
+  );
+}
+
+async function createPublicFormUrl({
+  formId,
+  instagramAccountId,
+  instagramUserId,
+  recipientId,
+}: {
+  formId: string;
+
+  instagramAccountId: string;
+
+  instagramUserId: string;
+
+  recipientId: string;
+}): Promise<string> {
+  const token = await createPublicFormToken({
+    formId,
+    instagramAccountId,
+    instagramUserId,
+    recipientId,
+  });
+
+  const baseUrl = getPublicAppUrl();
+
+  return `${baseUrl}/form/${encodeURIComponent(token)}`;
+}
+
 async function callInstagramMessagesApi({
   instagramUserId,
   accessToken,
@@ -151,7 +220,6 @@ async function callInstagramMessagesApi({
 
   console.log("[Instagram Send API] URL:", url);
 
-  // Access Token را هرگز در log چاپ نمی‌کنیم.
   console.log(
     "[Instagram Send API] Request body:",
     JSON.stringify(body, null, 2),
@@ -238,7 +306,6 @@ async function callInstagramMessagesApi({
         response: responseData,
       });
 
-      // خطاهای 4xx را retry نمی‌کنیم.
       if (response.status >= 400 && response.status < 500) {
         return {
           success: false,
@@ -249,7 +316,6 @@ async function callInstagramMessagesApi({
         };
       }
 
-      // برای خطاهای 5xx یک retry محدود.
       if (attempt < MAX_API_RETRIES) {
         await sleep(attempt * 1000);
 
@@ -290,6 +356,233 @@ async function callInstagramMessagesApi({
   };
 }
 
+async function sendShowcase({
+  instagramAccountId,
+  instagramUserId,
+  recipientId,
+  accessToken,
+  showcaseId,
+}: {
+  instagramAccountId: string;
+
+  instagramUserId: string;
+
+  recipientId: string;
+
+  accessToken: string;
+
+  showcaseId: string;
+}): Promise<SendAutomationMessageResult> {
+  const showcase = await prisma.showcase.findFirst({
+    where: {
+      id: showcaseId,
+
+      instagramAccountId,
+
+      isActive: true,
+    },
+
+    include: {
+      items: {
+        where: {
+          isActive: true,
+        },
+
+        orderBy: {
+          order: "asc",
+        },
+
+        take: MAX_SHOWCASE_ITEMS,
+      },
+    },
+  });
+
+  if (!showcase) {
+    throw new Error("Showcase not found or inactive");
+  }
+
+  if (showcase.items.length === 0) {
+    throw new Error("Showcase has no active items");
+  }
+
+  const elements = showcase.items.map((item) => {
+    const element: Record<string, unknown> = {
+      title: item.title.trim(),
+    };
+
+    if (item.description?.trim()) {
+      element.subtitle = item.description.trim();
+    }
+
+    if (item.imageUrl?.trim()) {
+      element.image_url = item.imageUrl.trim();
+    }
+
+    if (item.linkUrl?.trim()) {
+      element.default_action = {
+        type: "web_url",
+
+        url: item.linkUrl.trim(),
+      };
+
+      element.buttons = [
+        {
+          type: "web_url",
+
+          url: item.linkUrl.trim(),
+
+          title: (item.buttonText?.trim() || "مشاهده").slice(0, 20),
+        },
+      ];
+    }
+
+    return element;
+  });
+
+  const body: Record<string, unknown> = {
+    recipient: {
+      id: recipientId,
+    },
+
+    messaging_type: "RESPONSE",
+
+    message: {
+      attachment: {
+        type: "template",
+
+        payload: {
+          template_type: "generic",
+
+          elements,
+        },
+      },
+    },
+  };
+
+  const result = await callInstagramMessagesApi({
+    instagramUserId,
+
+    accessToken,
+
+    body,
+  });
+
+  if (result.success) {
+    result.conversationText =
+      showcase.description?.trim() || showcase.title.trim();
+  }
+
+  return result;
+}
+
+async function sendForm({
+  instagramAccountId,
+  instagramUserId,
+  recipientId,
+  accessToken,
+  formId,
+}: {
+  instagramAccountId: string;
+
+  instagramUserId: string;
+
+  recipientId: string;
+
+  accessToken: string;
+
+  formId: string;
+}): Promise<SendAutomationMessageResult> {
+  const form = await prisma.form.findFirst({
+    where: {
+      id: formId,
+
+      instagramAccountId,
+
+      isActive: true,
+    },
+
+    include: {
+      fields: {
+        orderBy: {
+          order: "asc",
+        },
+      },
+    },
+  });
+
+  if (!form) {
+    throw new Error("Form not found or inactive");
+  }
+
+  if (form.fields.length === 0) {
+    throw new Error("Form has no fields");
+  }
+
+  const formUrl = await createPublicFormUrl({
+    formId: form.id,
+
+    instagramAccountId,
+
+    instagramUserId,
+
+    recipientId,
+  });
+
+  const element: Record<string, unknown> = {
+    title: form.title.trim(),
+
+    subtitle: (
+      form.description?.trim() || "برای تکمیل فرم روی دکمه زیر بزنید."
+    ).slice(0, 640),
+
+    buttons: [
+      {
+        type: "web_url",
+
+        url: formUrl,
+
+        title: "تکمیل فرم",
+      },
+    ],
+  };
+
+  const body: Record<string, unknown> = {
+    recipient: {
+      id: recipientId,
+    },
+
+    messaging_type: "RESPONSE",
+
+    message: {
+      attachment: {
+        type: "template",
+
+        payload: {
+          template_type: "generic",
+
+          elements: [element],
+        },
+      },
+    },
+  };
+
+  const result = await callInstagramMessagesApi({
+    instagramUserId,
+
+    accessToken,
+
+    body,
+  });
+
+  if (result.success) {
+    result.formUrl = formUrl;
+
+    result.conversationText = form.title.trim();
+  }
+
+  return result;
+}
+
 export async function sendAutomationMessage(
   payload: AutomationMessagePayload,
 ): Promise<SendAutomationMessageResult> {
@@ -303,11 +596,11 @@ export async function sendAutomationMessage(
     throw new Error("Instagram recipient ID is missing");
   }
 
-  const accessToken = await getValidInstagramAccessToken(instagramAccountId);
-
   if (!instagramUserId) {
     throw new Error("Instagram professional account ID is missing");
   }
+
+  const accessToken = await getValidInstagramAccessToken(instagramAccountId);
 
   console.log("[Automation] Sending message:", {
     messageId: message.id,
@@ -350,13 +643,19 @@ export async function sendAutomationMessage(
       message: messageBody,
     };
 
-    return callInstagramMessagesApi({
+    const result = await callInstagramMessagesApi({
       instagramUserId,
 
       accessToken,
 
       body,
     });
+
+    if (result.success) {
+      result.conversationText = message.text.trim();
+    }
+
+    return result;
   }
 
   // =========================================================
@@ -400,13 +699,19 @@ export async function sendAutomationMessage(
       },
     };
 
-    return callInstagramMessagesApi({
+    const result = await callInstagramMessagesApi({
       instagramUserId,
 
       accessToken,
 
       body,
     });
+
+    if (result.success) {
+      result.conversationText = null;
+    }
+
+    return result;
   }
 
   // =========================================================
@@ -414,12 +719,21 @@ export async function sendAutomationMessage(
   // =========================================================
 
   if (message.messageType === "SHOWCASE") {
-    return {
-      success: false,
+    if (!message.showcaseId) {
+      throw new Error("SHOWCASE automation message requires showcaseId");
+    }
 
-      error:
-        "SHOWCASE is not directly supported by the current automation sender.",
-    };
+    return sendShowcase({
+      instagramAccountId,
+
+      instagramUserId,
+
+      recipientId,
+
+      accessToken,
+
+      showcaseId: message.showcaseId,
+    });
   }
 
   // =========================================================
@@ -427,11 +741,21 @@ export async function sendAutomationMessage(
   // =========================================================
 
   if (message.messageType === "FORM") {
-    return {
-      success: false,
+    if (!message.formId) {
+      throw new Error("FORM automation message requires formId");
+    }
 
-      error: "FORM is not directly supported by the current automation sender.",
-    };
+    return sendForm({
+      instagramAccountId,
+
+      instagramUserId,
+
+      recipientId,
+
+      accessToken,
+
+      formId: message.formId,
+    });
   }
 
   return {
