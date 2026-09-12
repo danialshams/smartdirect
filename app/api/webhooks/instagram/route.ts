@@ -46,6 +46,115 @@ function sleep(ms: number): Promise<void> {
 }
 
 // =========================================================
+// Story Reply helpers
+// =========================================================
+
+type StoryReplyData = {
+  isStoryReply: boolean;
+  storyId: string | null;
+  storyUrl: string | null;
+};
+
+function extractStoryReplyData(message: any): StoryReplyData {
+  /**
+   * Meta may provide Story information through the
+   * message attachment / story-related payload.
+   *
+   * We intentionally inspect several possible locations
+   * so that the webhook is resilient to payload variations.
+   */
+
+  const attachments = Array.isArray(message?.attachments)
+    ? message.attachments
+    : [];
+
+  // -------------------------------------------------------
+  // 1. Direct story field
+  // -------------------------------------------------------
+
+  const directStory = message?.story;
+
+  if (directStory) {
+    const storyId =
+      directStory?.id ?? directStory?.media_id ?? directStory?.mediaId ?? null;
+
+    const storyUrl =
+      directStory?.url ?? directStory?.permalink ?? directStory?.link ?? null;
+
+    if (storyId) {
+      return {
+        isStoryReply: true,
+        storyId: String(storyId),
+        storyUrl: storyUrl ? String(storyUrl) : null,
+      };
+    }
+  }
+
+  // -------------------------------------------------------
+  // 2. Attachment story
+  // -------------------------------------------------------
+
+  for (const attachment of attachments) {
+    const attachmentType = String(attachment?.type ?? "").toLowerCase();
+
+    const payload = attachment?.payload ?? {};
+
+    const storyId =
+      payload?.story_id ??
+      payload?.storyId ??
+      payload?.media_id ??
+      payload?.mediaId ??
+      attachment?.story_id ??
+      attachment?.storyId ??
+      null;
+
+    const storyUrl =
+      payload?.url ??
+      payload?.story_url ??
+      payload?.storyUrl ??
+      attachment?.url ??
+      null;
+
+    if (
+      storyId ||
+      attachmentType === "story" ||
+      attachmentType === "ig_story"
+    ) {
+      return {
+        isStoryReply: true,
+        storyId: storyId ? String(storyId) : null,
+        storyUrl: storyUrl ? String(storyUrl) : null,
+      };
+    }
+  }
+
+  // -------------------------------------------------------
+  // 3. Story-related top-level fields
+  // -------------------------------------------------------
+
+  const storyId =
+    message?.story_id ??
+    message?.storyId ??
+    message?.media_id ??
+    message?.mediaId ??
+    null;
+
+  if (storyId) {
+    return {
+      isStoryReply: true,
+      storyId: String(storyId),
+      storyUrl: null,
+    };
+  }
+
+  return {
+    isStoryReply: false,
+    storyId: null,
+    storyUrl: null,
+  };
+}
+
+// =========================================================
 // GET
 // Meta uses this endpoint to verify the webhook.
 // =========================================================
@@ -259,23 +368,13 @@ async function processMessagingEvent(
     console.log("========================================");
 
     const senderId = messagingEvent?.sender?.id;
+
     const recipientId = messagingEvent?.recipient?.id;
 
     const message = messagingEvent?.message;
 
     // =======================================================
-    // ENTRY POINT
-    //
-    // Instagram can send a POSTBACK event without a
-    // message object.
-    //
-    // This is used by:
-    //
-    // 1. Ice Breakers
-    // 2. Persistent Menu
-    //
-    // Therefore postback MUST be handled before the
-    // "message is required" check.
+    // POSTBACK
     // =======================================================
 
     const postbackPayload = messagingEvent?.postback?.payload
@@ -292,8 +391,11 @@ async function processMessagingEvent(
       console.log("========================================");
 
       console.log("Sender ID:", senderId ?? "undefined");
+
       console.log("Recipient ID:", recipientId ?? "undefined");
+
       console.log("Postback title:", postbackTitle ?? "undefined");
+
       console.log("Postback payload:", postbackPayload);
 
       await processInstagramPostback(
@@ -312,9 +414,7 @@ async function processMessagingEvent(
     }
 
     // =======================================================
-    // IMPORTANT:
-    // Ignore read / delivery / reaction events
-    // without a message object.
+    // Ignore non-message events
     // =======================================================
 
     if (!message) {
@@ -342,7 +442,7 @@ async function processMessagingEvent(
     }
 
     // =======================================================
-    // Extract actual message data
+    // Extract message
     // =======================================================
 
     const messageId = message?.mid ? String(message.mid) : null;
@@ -358,6 +458,12 @@ async function processMessagingEvent(
     const attachments = Array.isArray(message?.attachments)
       ? message.attachments
       : [];
+
+    // =======================================================
+    // Detect Story Reply
+    // =======================================================
+
+    const storyReply = extractStoryReplyData(message);
 
     console.log("Instagram account:", instagramAccount.igUsername);
 
@@ -375,8 +481,14 @@ async function processMessagingEvent(
 
     console.log("Is echo:", isEcho);
 
+    console.log("Is Story Reply:", storyReply.isStoryReply);
+
+    console.log("Story ID:", storyReply.storyId);
+
+    console.log("Story URL:", storyReply.storyUrl);
+
     // =======================================================
-    // 1. Ignore outgoing message echo
+    // Ignore outgoing echo
     // =======================================================
 
     if (isEcho) {
@@ -390,7 +502,7 @@ async function processMessagingEvent(
     }
 
     // =======================================================
-    // 2. Incoming message must have sender
+    // Incoming message must have sender
     // =======================================================
 
     if (!senderId) {
@@ -402,12 +514,35 @@ async function processMessagingEvent(
     }
 
     // =======================================================
-    // 3. Log message ID
+    // STORY REPLY
+    //
+    // IMPORTANT:
+    // Story Reply must be handled before normal DM
+    // automation.
     // =======================================================
 
-    if (!messageId) {
-      console.warn("Instagram message does not contain a message ID (mid).");
+    if (storyReply.isStoryReply) {
+      await processInstagramStoryReply(
+        {
+          messagingEvent,
+          message,
+          messageId,
+          senderId: String(senderId),
+          recipientId: recipientId ? String(recipientId) : null,
+          messageText,
+          attachments,
+          storyId: storyReply.storyId,
+          storyUrl: storyReply.storyUrl,
+        },
+        instagramAccount,
+      );
+
+      return;
     }
+
+    // =======================================================
+    // Normal DM continues below
+    // =======================================================
 
     console.log("REAL INCOMING INSTAGRAM MESSAGE");
 
@@ -416,7 +551,7 @@ async function processMessagingEvent(
     console.log("Incoming message:", messageText || "[non-text message]");
 
     // =======================================================
-    // 4. Prevent duplicate message processing
+    // Prevent duplicate message processing
     // =======================================================
 
     if (messageId) {
@@ -438,13 +573,13 @@ async function processMessagingEvent(
     }
 
     // =======================================================
-    // 5. Customer / participant ID
+    // Customer / participant ID
     // =======================================================
 
     const participantId = String(senderId);
 
     // =======================================================
-    // 6. Find or create conversation
+    // Find or create conversation
     // =======================================================
 
     let conversation = await prisma.conversation.findUnique({
@@ -492,7 +627,7 @@ async function processMessagingEvent(
     }
 
     // =======================================================
-    // 7. Find active DM automation
+    // Find active DM automation
     // =======================================================
 
     const automation = await findMatchingAutomation({
@@ -508,7 +643,7 @@ async function processMessagingEvent(
     }
 
     // =======================================================
-    // 8. Resolve Quick Reply
+    // Resolve Quick Reply
     // =======================================================
 
     let selectedQuickReplyId: string | null = null;
@@ -550,7 +685,7 @@ async function processMessagingEvent(
     }
 
     // =======================================================
-    // 9. Determine incoming message type
+    // Determine incoming message type
     // =======================================================
 
     let incomingMessageType:
@@ -564,18 +699,9 @@ async function processMessagingEvent(
 
     let incomingMediaUrl: string | null = null;
 
-    // =======================================================
-    // Quick Reply
-    // =======================================================
-
     if (quickReplyPayload) {
       incomingMessageType = "QUICK_REPLY";
-    }
-
-    // =======================================================
-    // Attachments
-    // =======================================================
-    else if (attachments.length > 0) {
+    } else if (attachments.length > 0) {
       const attachmentType = String(attachments[0]?.type ?? "").toLowerCase();
 
       const attachmentUrl = attachments[0]?.payload?.url ?? null;
@@ -596,7 +722,7 @@ async function processMessagingEvent(
     }
 
     // =======================================================
-    // 10. Save incoming message
+    // Save incoming message
     // =======================================================
 
     const incomingConversationMessage = await prisma.conversationMessage.create(
@@ -631,7 +757,7 @@ async function processMessagingEvent(
     console.log("Incoming message type:", incomingMessageType);
 
     // =======================================================
-    // 11. No DM automation
+    // No DM automation
     // =======================================================
 
     if (!automation) {
@@ -645,16 +771,7 @@ async function processMessagingEvent(
     }
 
     // =======================================================
-    // 12. Execute automation
-    //
-    // Normal message:
-    //
-    //   Starts from automation.messages[0]
-    //
-    // Quick Reply:
-    //
-    //   Starts from QuickReply.nextMessageId
-    //
+    // Execute DM automation
     // =======================================================
 
     console.log("========================================");
@@ -692,6 +809,316 @@ async function processMessagingEvent(
 }
 
 // =========================================================
+// Process Instagram Story Reply
+// =========================================================
+
+async function processInstagramStoryReply(
+  {
+    messagingEvent,
+    message,
+    messageId,
+    senderId,
+    recipientId,
+    messageText,
+    attachments,
+    storyId,
+    storyUrl,
+  }: {
+    messagingEvent: any;
+    message: any;
+    messageId: string | null;
+    senderId: string;
+    recipientId: string | null;
+    messageText: string | null;
+    attachments: any[];
+    storyId: string | null;
+    storyUrl: string | null;
+  },
+  instagramAccount: InstagramAccountData,
+) {
+  try {
+    console.log("========================================");
+    console.log("INSTAGRAM STORY REPLY");
+    console.log("========================================");
+
+    console.log("Instagram account:", instagramAccount.igUsername);
+
+    console.log("Sender ID:", senderId);
+
+    console.log("Recipient ID:", recipientId);
+
+    console.log("Message ID:", messageId);
+
+    console.log("Story ID:", storyId);
+
+    console.log("Story URL:", storyUrl);
+
+    console.log("Story Reply text:", messageText);
+
+    console.log("Attachments:", attachments.length);
+
+    console.log("Raw Story Reply message:", JSON.stringify(message, null, 2));
+
+    console.log(
+      "Raw messaging event:",
+      JSON.stringify(messagingEvent, null, 2),
+    );
+
+    // =======================================================
+    // Validate Story ID
+    // =======================================================
+
+    if (!storyId) {
+      console.warn("Story Reply detected but Story ID was not found.");
+
+      console.warn("The raw Meta payload has been logged above.");
+
+      return;
+    }
+
+    // =======================================================
+    // Validate text
+    // =======================================================
+
+    if (!messageText || !messageText.trim()) {
+      console.log("Story Reply has no text.");
+
+      return;
+    }
+
+    // =======================================================
+    // Normalize keyword
+    // =======================================================
+
+    const normalizedKeyword = normalizeText(messageText);
+
+    console.log("Normalized Story Reply keyword:", normalizedKeyword);
+
+    // =======================================================
+    // Participant
+    // =======================================================
+
+    const participantId = String(senderId);
+
+    // =======================================================
+    // Find / create conversation
+    // =======================================================
+
+    let conversation = await prisma.conversation.findUnique({
+      where: {
+        instagramAccountId_participantId: {
+          instagramAccountId: instagramAccount.id,
+
+          participantId,
+        },
+      },
+    });
+
+    if (!conversation) {
+      conversation = await prisma.conversation.create({
+        data: {
+          userId: instagramAccount.userId,
+
+          instagramAccountId: instagramAccount.id,
+
+          igUserId: participantId,
+
+          participantId,
+
+          isActive: true,
+
+          lastMessageAt: new Date(),
+        },
+      });
+
+      console.log("New conversation created for Story Reply:", conversation.id);
+    } else {
+      conversation = await prisma.conversation.update({
+        where: {
+          id: conversation.id,
+        },
+
+        data: {
+          igUserId: participantId,
+
+          lastMessageAt: new Date(),
+
+          isActive: true,
+        },
+      });
+
+      console.log(
+        "Existing conversation updated for Story Reply:",
+        conversation.id,
+      );
+    }
+
+    // =======================================================
+    // Prevent duplicate webhook event
+    // =======================================================
+
+    if (messageId) {
+      const existingMessage = await prisma.conversationMessage.findUnique({
+        where: {
+          igMessageId: messageId,
+        },
+      });
+
+      if (existingMessage) {
+        console.log("Story Reply already processed:", messageId);
+
+        return;
+      }
+    }
+
+    // =======================================================
+    // Determine incoming message type
+    // =======================================================
+
+    let incomingMessageType: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO" | "STICKER" =
+      "TEXT";
+
+    let incomingMediaUrl: string | null = null;
+
+    if (attachments.length > 0) {
+      const attachmentType = String(attachments[0]?.type ?? "").toLowerCase();
+
+      incomingMediaUrl = attachments[0]?.payload?.url ?? null;
+
+      if (attachmentType === "image") {
+        incomingMessageType = "IMAGE";
+      } else if (attachmentType === "video") {
+        incomingMessageType = "VIDEO";
+      } else if (attachmentType === "audio" || attachmentType === "voice") {
+        incomingMessageType = "AUDIO";
+      } else if (attachmentType === "sticker") {
+        incomingMessageType = "STICKER";
+      }
+    }
+
+    // =======================================================
+    // Save Story Reply as inbound message
+    // =======================================================
+
+    const savedMessage = await prisma.conversationMessage.create({
+      data: {
+        conversationId: conversation.id,
+
+        direction: "INBOUND",
+
+        messageType: incomingMessageType,
+
+        text: messageText,
+
+        mediaUrl: incomingMediaUrl,
+
+        mediaId: storyId,
+
+        igMessageId: messageId,
+
+        quickReplyId: null,
+
+        createdAt: new Date(),
+      },
+    });
+
+    console.log("Story Reply saved:", savedMessage.id);
+
+    // =======================================================
+    // Find STORY_REPLY automation
+    // =======================================================
+
+    console.log("Looking for STORY_REPLY automation...");
+
+    const automation = await findMatchingAutomation({
+      instagramAccountId: instagramAccount.id,
+
+      triggerType: "STORY_REPLY_KEYWORD",
+
+      keyword: normalizedKeyword,
+
+      mediaId: storyId,
+    });
+
+    // =======================================================
+    // No matching automation
+    // =======================================================
+
+    if (!automation) {
+      console.log("No matching STORY_REPLY automation found.");
+
+      console.log({
+        instagramAccountId: instagramAccount.id,
+
+        triggerType: "STORY_REPLY_KEYWORD",
+
+        keyword: normalizedKeyword,
+
+        mediaId: storyId,
+      });
+
+      console.log("========================================");
+
+      return;
+    }
+
+    // =======================================================
+    // Automation matched
+    // =======================================================
+
+    console.log("========================================");
+
+    console.log("STORY REPLY AUTOMATION MATCHED");
+
+    console.log("Automation ID:", automation.id);
+
+    console.log("Trigger type:", automation.triggerType);
+
+    console.log("Keyword:", automation.keyword);
+
+    console.log("Story ID:", storyId);
+
+    console.log("Message count:", automation.messages.length);
+
+    console.log("========================================");
+
+    // =======================================================
+    // No messages
+    // =======================================================
+
+    if (automation.messages.length === 0) {
+      console.log("Story Reply automation has no messages.");
+
+      return;
+    }
+
+    // =======================================================
+    // Execute automation
+    // =======================================================
+
+    const result = await executeAutomation({
+      automationId: automation.id,
+
+      instagramAccountId: instagramAccount.id,
+
+      participantId,
+
+      igUserId: participantId,
+
+      selectedQuickReplyId: null,
+    });
+
+    console.log("Story Reply automation result:", result);
+
+    console.log("========================================");
+  } catch (error) {
+    console.error("Error processing Instagram Story Reply:", error);
+
+    console.log("========================================");
+  }
+}
+
+// =========================================================
 // Process Instagram Ice Breaker / Persistent Menu
 // postback event
 // =========================================================
@@ -711,10 +1138,6 @@ async function processInstagramPostback(
   instagramAccount: InstagramAccountData,
 ) {
   try {
-    // =======================================================
-    // 1. Validate sender
-    // =======================================================
-
     if (!senderId) {
       console.warn("Instagram postback has no sender ID.");
 
@@ -732,15 +1155,18 @@ async function processInstagramPostback(
     });
 
     // =======================================================
-    // 2. Resolve Ice Breaker
+    // Ice Breaker
     // =======================================================
 
     const iceBreaker = await prisma.iceBreaker.findFirst({
       where: {
         instagramAccountId: instagramAccount.id,
+
         payload,
+
         isActive: true,
       },
+
       include: {
         automation: {
           include: {
@@ -748,6 +1174,7 @@ async function processInstagramPostback(
               orderBy: {
                 order: "asc",
               },
+
               include: {
                 quickReplies: {
                   orderBy: {
@@ -763,8 +1190,8 @@ async function processInstagramPostback(
 
     if (iceBreaker) {
       console.log("========================================");
+
       console.log("ICE BREAKER SELECTED");
-      console.log("========================================");
 
       console.log("Ice Breaker ID:", iceBreaker.id);
 
@@ -780,12 +1207,19 @@ async function processInstagramPostback(
 
       await executeEntryPointAutomation({
         automationId: iceBreaker.automationId,
+
         participantId,
+
         igUserId: participantId,
+
         instagramAccount,
+
         source: "ICE_BREAKER",
+
         sourceId: iceBreaker.id,
+
         sourceTitle: iceBreaker.question,
+
         payload,
       });
 
@@ -793,17 +1227,20 @@ async function processInstagramPostback(
     }
 
     // =======================================================
-    // 3. Resolve Persistent Menu
+    // Persistent Menu
     // =======================================================
 
     const persistentMenuItem = await prisma.persistentMenuItem.findFirst({
       where: {
         payload,
+
         persistentMenu: {
           instagramAccountId: instagramAccount.id,
+
           enabled: true,
         },
       },
+
       include: {
         automation: {
           include: {
@@ -811,6 +1248,7 @@ async function processInstagramPostback(
               orderBy: {
                 order: "asc",
               },
+
               include: {
                 quickReplies: {
                   orderBy: {
@@ -821,14 +1259,15 @@ async function processInstagramPostback(
             },
           },
         },
+
         persistentMenu: true,
       },
     });
 
     if (persistentMenuItem) {
       console.log("========================================");
+
       console.log("PERSISTENT MENU ITEM SELECTED");
-      console.log("========================================");
 
       console.log("Persistent Menu Item ID:", persistentMenuItem.id);
 
@@ -849,9 +1288,13 @@ async function processInstagramPostback(
 
         await saveEntryPointInteraction({
           instagramAccount,
+
           participantId,
+
           title: persistentMenuItem.title,
+
           payload,
+
           source: "PERSISTENT_MENU",
         });
 
@@ -860,12 +1303,19 @@ async function processInstagramPostback(
 
       await executeEntryPointAutomation({
         automationId: persistentMenuItem.automationId,
+
         participantId,
+
         igUserId: participantId,
+
         instagramAccount,
+
         source: "PERSISTENT_MENU",
+
         sourceId: persistentMenuItem.id,
+
         sourceTitle: persistentMenuItem.title,
+
         payload,
       });
 
@@ -873,22 +1323,22 @@ async function processInstagramPostback(
     }
 
     // =======================================================
-    // 4. Unknown postback
+    // Unknown postback
     // =======================================================
 
     console.warn("Unknown Instagram postback payload:", payload);
 
     console.log("No Ice Breaker or Persistent Menu item matched.");
 
-    // =======================================================
-    // 5. Still create/update conversation
-    // =======================================================
-
     await saveEntryPointInteraction({
       instagramAccount,
+
       participantId,
+
       title,
+
       payload,
+
       source: "UNKNOWN_POSTBACK",
     });
   } catch (error) {
@@ -921,7 +1371,9 @@ async function executeEntryPointAutomation({
 }) {
   try {
     console.log("========================================");
+
     console.log("EXECUTING ENTRY POINT AUTOMATION");
+
     console.log("========================================");
 
     console.log("Source:", source);
@@ -938,17 +1390,15 @@ async function executeEntryPointAutomation({
 
     console.log("========================================");
 
-    // =======================================================
-    // 1. Make sure automation belongs to this Instagram
-    // account and is active.
-    // =======================================================
-
     const automation = await prisma.automation.findFirst({
       where: {
         id: automationId,
+
         instagramAccountId: instagramAccount.id,
+
         isActive: true,
       },
+
       select: {
         id: true,
       },
@@ -962,58 +1412,58 @@ async function executeEntryPointAutomation({
 
       await saveEntryPointInteraction({
         instagramAccount,
+
         participantId,
+
         title: sourceTitle,
+
         payload,
+
         source,
       });
 
       return;
     }
 
-    // =======================================================
-    // 2. Save / update conversation
-    // =======================================================
-
     const conversation = await getOrCreateConversation({
       instagramAccount,
+
       participantId,
+
       igUserId,
     });
-
-    // =======================================================
-    // 3. Save entry point interaction
-    //
-    // The current schema does not have a dedicated source
-    // column for Ice Breaker / Persistent Menu.
-    //
-    // Therefore we store the interaction as an inbound TEXT
-    // message with the visible title.
-    // =======================================================
 
     await prisma.conversationMessage.create({
       data: {
         conversationId: conversation.id,
+
         direction: "INBOUND",
+
         messageType: "TEXT",
+
         text: sourceTitle || payload,
+
         mediaUrl: null,
+
         mediaId: null,
+
         igMessageId: null,
+
         quickReplyId: null,
+
         createdAt: new Date(),
       },
     });
 
-    // =======================================================
-    // 4. Execute automation
-    // =======================================================
-
     const result = await executeAutomation({
       automationId,
+
       instagramAccountId: instagramAccount.id,
+
       participantId,
+
       igUserId,
+
       selectedQuickReplyId: null,
     });
 
@@ -1048,6 +1498,7 @@ async function getOrCreateConversation({
     where: {
       instagramAccountId_participantId: {
         instagramAccountId: instagramAccount.id,
+
         participantId,
       },
     },
@@ -1057,10 +1508,15 @@ async function getOrCreateConversation({
     conversation = await prisma.conversation.create({
       data: {
         userId: instagramAccount.userId,
+
         instagramAccountId: instagramAccount.id,
+
         igUserId,
+
         participantId,
+
         isActive: true,
+
         lastMessageAt: new Date(),
       },
     });
@@ -1074,9 +1530,12 @@ async function getOrCreateConversation({
       where: {
         id: conversation.id,
       },
+
       data: {
         igUserId,
+
         lastMessageAt: new Date(),
+
         isActive: true,
       },
     });
@@ -1092,7 +1551,6 @@ async function getOrCreateConversation({
 
 // =========================================================
 // Save Ice Breaker / Persistent Menu interaction
-// when there is no automation.
 // =========================================================
 
 async function saveEntryPointInteraction({
@@ -1111,20 +1569,30 @@ async function saveEntryPointInteraction({
   try {
     const conversation = await getOrCreateConversation({
       instagramAccount,
+
       participantId,
+
       igUserId: participantId,
     });
 
     await prisma.conversationMessage.create({
       data: {
         conversationId: conversation.id,
+
         direction: "INBOUND",
+
         messageType: "TEXT",
+
         text: title || payload,
+
         mediaUrl: null,
+
         mediaId: null,
+
         igMessageId: null,
+
         quickReplyId: null,
+
         createdAt: new Date(),
       },
     });
@@ -1155,13 +1623,12 @@ async function processCommentEvent(
       return;
     }
 
-    // =======================================================
-    // 1. Extract comment data
-    // =======================================================
-
     const igCommentId = value.id;
+
     const igMediaId = value.media?.id;
+
     const text = value.text;
+
     const username = value.from?.username;
 
     if (!igCommentId || !igMediaId || !text || !username) {
@@ -1171,6 +1638,7 @@ async function processCommentEvent(
     }
 
     console.log("========================================");
+
     console.log("INSTAGRAM COMMENT");
 
     console.log("commentId:", igCommentId);
@@ -1183,10 +1651,6 @@ async function processCommentEvent(
 
     console.log("========================================");
 
-    // =======================================================
-    // 2. Prevent duplicate comments
-    // =======================================================
-
     const existingComment = await prisma.comment.findUnique({
       where: {
         igCommentId,
@@ -1198,10 +1662,6 @@ async function processCommentEvent(
 
       return;
     }
-
-    // =======================================================
-    // 3. Save comment
-    // =======================================================
 
     const comment = await prisma.comment.create({
       data: {
@@ -1221,15 +1681,9 @@ async function processCommentEvent(
 
     console.log("Instagram comment saved:", comment.id);
 
-    // =======================================================
-    // 4. Find matching COMMENT automation
-    // =======================================================
-
     const normalizedCommentText = normalizeText(text);
 
     console.log("Normalized comment text:", normalizedCommentText);
-
-    console.log("Looking for matching COMMENT automation...");
 
     const matchedAutomation = await findMatchingAutomation({
       instagramAccountId: instagramAccount.id,
@@ -1240,10 +1694,6 @@ async function processCommentEvent(
 
       mediaId: igMediaId,
     });
-
-    // =======================================================
-    // 5. No automation matched
-    // =======================================================
 
     if (!matchedAutomation) {
       console.log(
@@ -1256,11 +1706,8 @@ async function processCommentEvent(
       return;
     }
 
-    // =======================================================
-    // 6. Automation matched
-    // =======================================================
-
     console.log("========================================");
+
     console.log("COMMENT AUTOMATION MATCHED");
 
     console.log("Automation ID:", matchedAutomation.id);
@@ -1279,13 +1726,6 @@ async function processCommentEvent(
 
     console.log("========================================");
 
-    // =======================================================
-    // 7. Get valid Instagram token
-    //
-    // IMPORTANT:
-    // Do NOT use instagramAccount.accessToken directly.
-    // =======================================================
-
     let accessToken: string;
 
     try {
@@ -1295,10 +1735,6 @@ async function processCommentEvent(
 
       return;
     }
-
-    // =======================================================
-    // 8. Public comment reply
-    // =======================================================
 
     let publicCommentReplySent = false;
 
@@ -1318,10 +1754,6 @@ async function processCommentEvent(
         "No public comment reply text configured. Skipping public reply.",
       );
     }
-
-    // =======================================================
-    // 9. Execute automation flow
-    // =======================================================
 
     let automationExecuted = false;
 
@@ -1348,10 +1780,6 @@ async function processCommentEvent(
         console.log("Comment automation engine result:", result);
       }
     }
-
-    // =======================================================
-    // 10. Legacy private reply
-    // =======================================================
 
     let privateReplySent = false;
 
@@ -1381,10 +1809,6 @@ async function processCommentEvent(
       console.log("No legacy private reply configured. Skipping.");
     }
 
-    // =======================================================
-    // 11. Update database
-    // =======================================================
-
     if (privateReplySent || automationExecuted) {
       await prisma.comment.update({
         where: {
@@ -1401,11 +1825,8 @@ async function processCommentEvent(
       console.log("Comment marked as replied.");
     }
 
-    // =======================================================
-    // 12. Final result
-    // =======================================================
-
     console.log("========================================");
+
     console.log("INSTAGRAM AUTOMATION RESULT");
 
     console.log("Public comment reply sent:", publicCommentReplySent);
@@ -1439,6 +1860,7 @@ async function sendPublicCommentReply({
     `${igCommentId}/replies`;
 
   console.log("========================================");
+
   console.log("SENDING PUBLIC INSTAGRAM COMMENT REPLY");
 
   console.log("Instagram comment reply URL:", url);
@@ -1542,6 +1964,7 @@ async function sendPrivateReply({
     `${igUserId}/messages`;
 
   console.log("========================================");
+
   console.log("SENDING INSTAGRAM PRIVATE REPLY");
 
   console.log("Instagram Messages API URL:", url);
