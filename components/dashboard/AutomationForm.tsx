@@ -73,7 +73,9 @@ export default function AutomationForm({
 
     const [triggerType, setTriggerType] =
         useState<AutomationTriggerType>(
-            getDefaultTrigger()
+            () =>
+                automation?.triggerType ??
+                getDefaultTrigger()
         );
 
     const [keyword, setKeyword] = useState(
