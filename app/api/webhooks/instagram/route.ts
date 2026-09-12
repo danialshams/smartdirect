@@ -56,32 +56,11 @@ type StoryReplyData = {
 };
 
 function extractStoryReplyData(message: any): StoryReplyData {
-  /**
-   * IMPORTANT:
-   *
-   * Current Meta Instagram Story Reply payload:
-   *
-   * message.reply_to.story.id
-   * message.reply_to.story.url
-   *
-   * Example:
-   *
-   * "message": {
-   *   "mid": "...",
-   *   "text": "1",
-   *   "reply_to": {
-   *     "story": {
-   *       "url": "...",
-   *       "id": "18119602271476811"
-   *     }
-   *   }
-   * }
-   *
-   * This is the primary structure we must detect.
-   */
-
   // -------------------------------------------------------
   // 1. PRIMARY / CURRENT META STORY REPLY STRUCTURE
+  //
+  // message.reply_to.story.id
+  // message.reply_to.story.url
   // -------------------------------------------------------
 
   const replyToStory = message?.reply_to?.story;
@@ -113,8 +92,6 @@ function extractStoryReplyData(message: any): StoryReplyData {
       };
     }
 
-    // Even if Meta tells us this is a story reply but does
-    // not provide an ID, keep it marked as Story Reply.
     return {
       isStoryReply: true,
       storyId: null,
@@ -580,7 +557,6 @@ async function processMessagingEvent(
     //
     // IMPORTANT:
     // This MUST happen before normal DM automation.
-    // Otherwise Story Reply would be treated as a normal DM.
     // =======================================================
 
     if (storyReply.isStoryReply) {
@@ -654,7 +630,6 @@ async function processMessagingEvent(
       where: {
         instagramAccountId_participantId: {
           instagramAccountId: instagramAccount.id,
-
           participantId,
         },
       },
@@ -664,15 +639,10 @@ async function processMessagingEvent(
       conversation = await prisma.conversation.create({
         data: {
           userId: instagramAccount.userId,
-
           instagramAccountId: instagramAccount.id,
-
           igUserId: participantId,
-
           participantId,
-
           isActive: true,
-
           lastMessageAt: new Date(),
         },
       });
@@ -688,7 +658,6 @@ async function processMessagingEvent(
 
         data: {
           lastMessageAt: new Date(),
-
           isActive: true,
         },
       });
@@ -700,7 +669,6 @@ async function processMessagingEvent(
 
     const automation = await findMatchingAutomation({
       instagramAccountId: instagramAccount.id,
-
       triggerType: "DM",
     });
 
@@ -939,8 +907,6 @@ async function processInstagramStoryReply(
     if (!storyId) {
       console.warn("Story Reply detected but Story ID was not found.");
 
-      console.warn("The raw Meta payload has been logged above.");
-
       return;
     }
 
@@ -994,7 +960,6 @@ async function processInstagramStoryReply(
       where: {
         instagramAccountId_participantId: {
           instagramAccountId: instagramAccount.id,
-
           participantId,
         },
       },
@@ -1100,11 +1065,8 @@ async function processInstagramStoryReply(
 
     console.log({
       instagramAccountId: instagramAccount.id,
-
       triggerType: "STORY_REPLY_KEYWORD",
-
       keyword: normalizedKeyword,
-
       mediaId: storyId,
     });
 
@@ -1127,11 +1089,8 @@ async function processInstagramStoryReply(
 
       console.log({
         instagramAccountId: instagramAccount.id,
-
         triggerType: "STORY_REPLY_KEYWORD",
-
         keyword: normalizedKeyword,
-
         mediaId: storyId,
       });
 
@@ -1156,37 +1115,162 @@ async function processInstagramStoryReply(
 
     console.log("Story ID:", storyId);
 
+    console.log("Direct reply text:", automation.replyText ?? "NONE");
+
     console.log("Message count:", automation.messages.length);
 
     console.log("========================================");
 
     // =======================================================
-    // No messages
+    // Validate automation output
+    //
+    // Allowed:
+    //
+    // 1. Direct reply only
+    // 2. Flow only
+    // 3. Direct reply + Flow
+    // 4. Neither -> nothing to send
     // =======================================================
 
-    if (automation.messages.length === 0) {
-      console.log("Story Reply automation has no messages.");
+    const hasDirectReply = Boolean(
+      automation.replyText && automation.replyText.trim(),
+    );
+
+    const hasFlowMessages = automation.messages.length > 0;
+
+    if (!hasDirectReply && !hasFlowMessages) {
+      console.log(
+        "Story Reply automation has no direct reply or Flow messages.",
+      );
+
+      console.log("Nothing will be sent.");
+
+      console.log("========================================");
 
       return;
     }
 
     // =======================================================
-    // Execute automation
+    // Get valid access token
     // =======================================================
 
-    const result = await executeAutomation({
-      automationId: automation.id,
+    let accessToken: string;
 
-      instagramAccountId: instagramAccount.id,
+    try {
+      accessToken = await getValidInstagramAccessToken(instagramAccount.id);
+    } catch (error) {
+      console.error(
+        "Could not get valid Instagram access token for Story Reply:",
+        error,
+      );
 
-      participantId,
+      return;
+    }
 
-      igUserId: participantId,
+    // =======================================================
+    // 1. DIRECT REPLY
+    //
+    // Story Reply -> normal Instagram Messages API
+    //
+    // IMPORTANT:
+    // This is NOT the same as Comment private reply.
+    // For Story Reply we use:
+    //
+    // recipient.id = sender Instagram-scoped ID
+    // =======================================================
 
-      selectedQuickReplyId: null,
-    });
+    let directReplySent = false;
 
-    console.log("Story Reply automation result:", result);
+    if (hasDirectReply) {
+      console.log("========================================");
+
+      console.log("SENDING STORY REPLY DIRECT MESSAGE");
+
+      console.log("Recipient Instagram-scoped ID:", participantId);
+
+      console.log("Reply text:", automation.replyText);
+
+      directReplySent = await sendStoryReplyMessage({
+        igUserId: instagramAccount.igUserId,
+
+        participantId,
+
+        accessToken,
+
+        replyText: automation.replyText!.trim(),
+      });
+
+      console.log("Story Reply direct message sent:", directReplySent);
+
+      console.log("========================================");
+    } else {
+      console.log("No direct reply text configured.");
+    }
+
+    // =======================================================
+    // 2. FLOW AUTOMATION
+    //
+    // If Flow messages exist, execute them.
+    //
+    // executeAutomation handles:
+    // TEXT
+    // IMAGE
+    // VIDEO
+    // AUDIO
+    // SHOWCASE
+    // FORM
+    // QUICK REPLY
+    // =======================================================
+
+    let automationExecuted = false;
+
+    if (hasFlowMessages) {
+      console.log("========================================");
+
+      console.log("EXECUTING STORY REPLY FLOW AUTOMATION");
+
+      console.log("Automation ID:", automation.id);
+
+      console.log("Message count:", automation.messages.length);
+
+      console.log("Participant ID:", participantId);
+
+      console.log("========================================");
+
+      const result = await executeAutomation({
+        automationId: automation.id,
+
+        instagramAccountId: instagramAccount.id,
+
+        participantId,
+
+        igUserId: participantId,
+
+        selectedQuickReplyId: null,
+      });
+
+      automationExecuted = result.success && result.executed;
+
+      console.log("Story Reply flow execution result:", result);
+    } else {
+      console.log("No Story Reply Flow messages configured.");
+    }
+
+    // =======================================================
+    // Final result
+    // =======================================================
+
+    console.log("========================================");
+
+    console.log("STORY REPLY AUTOMATION RESULT");
+
+    console.log("Direct reply sent:", directReplySent);
+
+    console.log("Flow executed:", automationExecuted);
+
+    console.log("Has direct reply:", hasDirectReply);
+
+    console.log("Flow message count:", automation.messages.length);
 
     console.log("========================================");
   } catch (error) {
@@ -1194,6 +1278,142 @@ async function processInstagramStoryReply(
 
     console.log("========================================");
   }
+}
+
+// =========================================================
+// Send direct message as response to Instagram Story Reply
+// =========================================================
+
+async function sendStoryReplyMessage({
+  igUserId,
+  participantId,
+  accessToken,
+  replyText,
+}: {
+  igUserId: string;
+  participantId: string;
+  accessToken: string;
+  replyText: string;
+}): Promise<boolean> {
+  const url =
+    `https://graph.instagram.com/` +
+    `${INSTAGRAM_API_VERSION}/` +
+    `${igUserId}/messages`;
+
+  const requestBody = {
+    recipient: {
+      id: participantId,
+    },
+
+    message: {
+      text: replyText,
+    },
+  };
+
+  console.log("========================================");
+
+  console.log("SENDING STORY REPLY MESSAGE");
+
+  console.log("Instagram Messages API URL:", url);
+
+  console.log("Story Reply recipient:", participantId);
+
+  console.log(
+    "Story Reply request body:",
+    JSON.stringify(
+      {
+        recipient: {
+          id: participantId,
+        },
+        message: {
+          text: replyText,
+        },
+      },
+      null,
+      2,
+    ),
+  );
+
+  for (let attempt = 1; attempt <= MAX_API_RETRIES; attempt++) {
+    try {
+      console.log(`Story Reply message attempt ${attempt}/${MAX_API_RETRIES}`);
+
+      const response = await fetch(url, {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+
+          Authorization: `Bearer ${accessToken}`,
+
+          Accept: "application/json",
+        },
+
+        body: JSON.stringify(requestBody),
+
+        cache: "no-store",
+      });
+
+      const responseText = await response.text();
+
+      let responseData: unknown;
+
+      try {
+        responseData = responseText ? JSON.parse(responseText) : null;
+      } catch {
+        responseData = responseText;
+      }
+
+      if (response.ok) {
+        console.log("========================================");
+
+        console.log("INSTAGRAM STORY REPLY MESSAGE SENT SUCCESSFULLY");
+
+        console.log("HTTP Status:", response.status);
+
+        console.log("Instagram API response:", responseData);
+
+        console.log("========================================");
+
+        return true;
+      }
+
+      console.error(`Story Reply message attempt ${attempt} failed.`);
+
+      console.error("HTTP Status:", response.status);
+
+      console.error("Instagram API response:", responseData);
+
+      if (attempt < MAX_API_RETRIES) {
+        const delay = attempt * 1000;
+
+        console.log(`Waiting ${delay}ms before Story Reply retry...`);
+
+        await sleep(delay);
+      }
+    } catch (error) {
+      console.error(
+        `Story Reply message request error on attempt ${attempt}:`,
+        error,
+      );
+
+      if (attempt < MAX_API_RETRIES) {
+        const delay = attempt * 1000;
+
+        console.log(`Waiting ${delay}ms before Story Reply retry...`);
+
+        await sleep(delay);
+      }
+    }
+  }
+
+  console.error("========================================");
+
+  console.error("INSTAGRAM STORY REPLY MESSAGE FAILED");
+
+  console.error("========================================");
+
+  return false;
 }
 
 // =========================================================
