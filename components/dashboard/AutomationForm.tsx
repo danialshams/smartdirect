@@ -1246,645 +1246,719 @@ export default function AutomationForm({
         }
 
         try {
-            validateMessages(messages);
-        } catch (error) {
-            setError(
-                error instanceof Error
-                    ? error.message
-                    : "Flow نامعتبر است."
-            );
-            return;
-        }
-
-        try {
-            setSaving(true);
-
-            const url = isEditing
-                ? `/api/automations/${automationId}`
-                : "/api/automations";
-
-            const response =
-                await fetch(url, {
-                    method: isEditing
-                        ? "PATCH"
-                        : "POST",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json",
-                    },
-
-                    credentials:
-                        "include",
-
-                    body: JSON.stringify({
-                        instagramAccountId:
-                            account.id,
-
-                        triggerType,
-
-                        /*
-                         * Comment:
-                         * ID پست/Reel
-                         *
-                         * Story:
-                         * ID Story
-                         *
-                         * DM:
-                         * null
-                         */
-                        mediaId:
-                            mediaId.trim() ||
-                            null,
-
-                        keyword:
-                            keyword.trim() ||
-                            null,
-
-                        commentReplyText:
-                            commentReplyText.trim() ||
-                            null,
-
-                        replyText:
-                            replyText.trim() ||
-                            null,
-
-                        likeComment,
-
-                        sendDm:
-                            Boolean(
-                                replyText.trim() ||
-                                messages.length >
-                                0
-                            ),
-
-                        likeIncomingDm,
-
-                        isActive,
-                    }),
-                });
-
-            const result =
-                await response.json();
-
-            if (
-                !response.ok ||
-                !result.success
-            ) {
-                throw new Error(
-                    result.error ||
-                    result.message ||
-                    "ذخیره Automation ناموفق بود."
-                );
+            if (messages.length > 0) {
+                try {
+                    validateMessages(messages);
+                } catch (error) {
+                    setError(
+                        error instanceof Error
+                            ? error.message
+                            : "Flow نامعتبر است."
+                    );
+                    return;
+                }
             }
 
-            const savedAutomation =
-                result.data as Automation;
+            try {
+                setSaving(true);
 
-            /*
-             * Flow شامل:
-             *
-             * TEXT
-             * IMAGE
-             * VIDEO
-             * AUDIO
-             * SHOWCASE
-             * FORM
-             * Quick Reply
-             *
-             * است و برای Story هم دقیقاً
-             * مانند DM/Comment ذخیره می‌شود.
-             */
-            await syncMessages(
-                savedAutomation.id
-            );
+                const url = isEditing
+                    ? `/api/automations/${automationId}`
+                    : "/api/automations";
 
-            const finalResponse =
-                await fetch(
-                    `/api/automations/${savedAutomation.id}`,
-                    {
-                        cache: "no-store",
+                const response =
+                    await fetch(url, {
+                        method: isEditing
+                            ? "PATCH"
+                            : "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json",
+                        },
+
                         credentials:
                             "include",
-                    }
+
+                        body: JSON.stringify({
+                            instagramAccountId:
+                                account.id,
+
+                            triggerType,
+
+                            /*
+                             * Comment:
+                             * ID پست/Reel
+                             *
+                             * Story:
+                             * ID Story
+                             *
+                             * DM:
+                             * null
+                             */
+                            mediaId:
+                                mediaId.trim() ||
+                                null,
+
+                            keyword:
+                                keyword.trim() ||
+                                null,
+
+                            commentReplyText:
+                                commentReplyText.trim() ||
+                                null,
+
+                            replyText:
+                                replyText.trim() ||
+                                null,
+
+                            likeComment,
+
+                            sendDm:
+                                Boolean(
+                                    replyText.trim() ||
+                                    messages.length >
+                                    0
+                                ),
+
+                            likeIncomingDm,
+
+                            isActive,
+                        }),
+                    });
+
+                const result =
+                    await response.json();
+
+                if (
+                    !response.ok ||
+                    !result.success
+                ) {
+                    throw new Error(
+                        result.error ||
+                        result.message ||
+                        "ذخیره Automation ناموفق بود."
+                    );
+                }
+
+                const savedAutomation =
+                    result.data as Automation;
+
+                /*
+                 * Flow شامل:
+                 *
+                 * TEXT
+                 * IMAGE
+                 * VIDEO
+                 * AUDIO
+                 * SHOWCASE
+                 * FORM
+                 * Quick Reply
+                 *
+                 * است و برای Story هم دقیقاً
+                 * مانند DM/Comment ذخیره می‌شود.
+                 */
+                await syncMessages(
+                    savedAutomation.id
                 );
 
-            const finalResult =
-                await finalResponse.json();
+                const finalResponse =
+                    await fetch(
+                        `/api/automations/${savedAutomation.id}`,
+                        {
+                            cache: "no-store",
+                            credentials:
+                                "include",
+                        }
+                    );
 
-            const finalAutomation =
-                finalResponse.ok &&
-                    finalResult.success
-                    ? (finalResult.data as Automation)
-                    : savedAutomation;
+                const finalResult =
+                    await finalResponse.json();
 
-            if (isEditing) {
-                onUpdated(
-                    finalAutomation
+                const finalAutomation =
+                    finalResponse.ok &&
+                        finalResult.success
+                        ? (finalResult.data as Automation)
+                        : savedAutomation;
+
+                if (isEditing) {
+                    onUpdated(
+                        finalAutomation
+                    );
+                } else {
+                    onCreated(
+                        finalAutomation
+                    );
+                }
+            } catch (error) {
+                console.error(
+                    "save automation error:",
+                    error
                 );
-            } else {
-                onCreated(
-                    finalAutomation
+
+                setError(
+                    error instanceof Error
+                        ? error.message
+                        : "خطای ناشناخته رخ داد."
                 );
+            } finally {
+                setSaving(false);
             }
-        } catch (error) {
-            console.error(
-                "save automation error:",
-                error
-            );
-
-            setError(
-                error instanceof Error
-                    ? error.message
-                    : "خطای ناشناخته رخ داد."
-            );
-        } finally {
-            setSaving(false);
         }
-    }
 
     /* ---------------------------------------------------------------------- */
     /* UI                                                                      */
     /* ---------------------------------------------------------------------- */
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-3 sm:p-4">
-            <div className="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
-                {/* Header */}
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-3 sm:p-4">
+                <div className="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+                    {/* Header */}
 
-                <div className="flex shrink-0 items-center justify-between border-b border-gray-100 px-5 py-4 sm:px-6 sm:py-5">
-                    <div>
-                        <h2 className="text-lg font-semibold text-gray-900">
-                            {isEditing
-                                ? "ویرایش Automation"
-                                : "ساخت Automation"}
-                        </h2>
+                    <div className="flex shrink-0 items-center justify-between border-b border-gray-100 px-5 py-4 sm:px-6 sm:py-5">
+                        <div>
+                            <h2 className="text-lg font-semibold text-gray-900">
+                                {isEditing
+                                    ? "ویرایش Automation"
+                                    : "ساخت Automation"}
+                            </h2>
 
-                        <p className="mt-1 text-sm text-gray-500">
-                            @
-                            {
-                                account.igUsername
+                            <p className="mt-1 text-sm text-gray-500">
+                                @
+                                {
+                                    account.igUsername
+                                }
+                            </p>
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={
+                                onClose
                             }
-                        </p>
+                            disabled={
+                                saving
+                            }
+                            className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-50"
+                            aria-label="بستن"
+                        >
+                            <X size={19} />
+                        </button>
                     </div>
 
-                    <button
-                        type="button"
-                        onClick={
-                            onClose
+                    <form
+                        onSubmit={
+                            handleSubmit
                         }
-                        disabled={
-                            saving
-                        }
-                        className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-50"
-                        aria-label="بستن"
+                        className="min-h-0 space-y-7 overflow-y-auto p-5 sm:p-6"
                     >
-                        <X size={19} />
-                    </button>
-                </div>
+                        {/* Trigger */}
 
-                <form
-                    onSubmit={
-                        handleSubmit
-                    }
-                    className="min-h-0 space-y-7 overflow-y-auto p-5 sm:p-6"
-                >
-                    {/* Trigger */}
+                        <section>
+                            <label className="mb-3 block text-sm font-medium text-gray-800">
+                                نوع Trigger
+                            </label>
 
-                    <section>
-                        <label className="mb-3 block text-sm font-medium text-gray-800">
-                            نوع Trigger
-                        </label>
+                            <div className="grid gap-3 sm:grid-cols-3">
+                                <TriggerOption
+                                    active={
+                                        isComment
+                                    }
+                                    title="کامنت"
+                                    description="وقتی کاربر یک عبارت را کامنت کند"
+                                    onClick={() =>
+                                        handleTriggerChange(
+                                            "COMMENT_KEYWORD"
+                                        )
+                                    }
+                                />
 
-                        <div className="grid gap-3 sm:grid-cols-3">
-                            <TriggerOption
-                                active={
-                                    isComment
-                                }
-                                title="کامنت"
-                                description="وقتی کاربر یک عبارت را کامنت کند"
-                                onClick={() =>
-                                    handleTriggerChange(
-                                        "COMMENT_KEYWORD"
-                                    )
-                                }
-                            />
+                                <TriggerOption
+                                    active={
+                                        isDm
+                                    }
+                                    title="دایرکت"
+                                    description="وقتی کاربر وارد گفتگو شود"
+                                    onClick={() =>
+                                        handleTriggerChange(
+                                            "DM"
+                                        )
+                                    }
+                                />
 
-                            <TriggerOption
-                                active={
-                                    isDm
-                                }
-                                title="دایرکت"
-                                description="وقتی کاربر وارد گفتگو شود"
-                                onClick={() =>
-                                    handleTriggerChange(
-                                        "DM"
-                                    )
-                                }
-                            />
-
-                            <TriggerOption
-                                active={
-                                    isStory
-                                }
-                                title="پاسخ استوری"
-                                description="وقتی کاربر به یک استوری پاسخ دهد"
-                                onClick={() =>
-                                    handleTriggerChange(
-                                        "STORY_REPLY_KEYWORD"
-                                    )
-                                }
-                            />
-                        </div>
-                    </section>
-
-                    {/* ---------------------------------------------------------------- */}
-                    {/* Comment Media                                                     */}
-                    {/* ---------------------------------------------------------------- */}
-
-                    {isComment && (
-                        <section className="space-y-5">
-                            <div>
-                                <label className="mb-2 block text-sm font-medium text-gray-800">
-                                    پست مورد نظر
-                                </label>
-
-                                {loadingMedia ? (
-                                    <div className="flex items-center gap-2 rounded-xl border border-gray-200 p-4 text-sm text-gray-500">
-                                        <Loader2
-                                            size={
-                                                16
-                                            }
-                                            className="animate-spin"
-                                        />
-
-                                        در حال دریافت پست‌ها...
-                                    </div>
-                                ) : media.length ===
-                                    0 ? (
-                                    <div className="rounded-xl border border-gray-200 p-4 text-sm text-gray-500">
-                                        Media ای برای این اکانت پیدا نشد.
-                                    </div>
-                                ) : (
-                                    <div className="grid max-h-72 grid-cols-2 gap-3 overflow-y-auto sm:grid-cols-3 md:grid-cols-4">
-                                        {media.map(
-                                            (
-                                                item
-                                            ) => {
-                                                const image =
-                                                    item.media_type ===
-                                                        "VIDEO" ||
-                                                        item.media_product_type ===
-                                                        "REELS"
-                                                        ? item.thumbnail_url
-                                                        : item.media_url;
-
-                                                const selected =
-                                                    mediaId ===
-                                                    item.id;
-
-                                                return (
-                                                    <button
-                                                        key={
-                                                            item.id
-                                                        }
-                                                        type="button"
-                                                        onClick={() =>
-                                                            setMediaId(
-                                                                selected
-                                                                    ? ""
-                                                                    : item.id
-                                                            )
-                                                        }
-                                                        className={[
-                                                            "overflow-hidden rounded-xl border text-right transition",
-                                                            selected
-                                                                ? "border-gray-900 ring-2 ring-gray-900/10"
-                                                                : "border-gray-200 hover:border-gray-400",
-                                                        ].join(
-                                                            " "
-                                                        )}
-                                                    >
-                                                        <div className="aspect-square bg-gray-100">
-                                                            {image ? (
-                                                                <img
-                                                                    src={
-                                                                        image
-                                                                    }
-                                                                    alt={
-                                                                        item.caption ||
-                                                                        "Instagram media"
-                                                                    }
-                                                                    className="h-full w-full object-cover"
-                                                                />
-                                                            ) : (
-                                                                <div className="flex h-full items-center justify-center text-xs text-gray-400">
-                                                                    بدون تصویر
-                                                                </div>
-                                                            )}
-                                                        </div>
-
-                                                        <div className="p-2">
-                                                            <p className="line-clamp-2 text-xs text-gray-600">
-                                                                {item.caption ||
-                                                                    "بدون کپشن"}
-                                                            </p>
-                                                        </div>
-                                                    </button>
-                                                );
-                                            }
-                                        )}
-                                    </div>
-                                )}
+                                <TriggerOption
+                                    active={
+                                        isStory
+                                    }
+                                    title="پاسخ استوری"
+                                    description="وقتی کاربر به یک استوری پاسخ دهد"
+                                    onClick={() =>
+                                        handleTriggerChange(
+                                            "STORY_REPLY_KEYWORD"
+                                        )
+                                    }
+                                />
                             </div>
-
-                            <KeywordInput
-                                keyword={
-                                    keyword
-                                }
-                                setKeyword={
-                                    setKeyword
-                                }
-                                description="وقتی کاربر این عبارت را در کامنت وارد کند، Automation اجرا می‌شود."
-                            />
                         </section>
-                    )}
 
-                    {/* ---------------------------------------------------------------- */}
-                    {/* Story Selection                                                   */}
-                    {/* ---------------------------------------------------------------- */}
+                        {/* ---------------------------------------------------------------- */}
+                        {/* Comment Media                                                     */}
+                        {/* ---------------------------------------------------------------- */}
 
-                    {isStory && (
-                        <section className="space-y-5">
-                            <div>
-                                <div className="mb-2 flex items-center justify-between gap-3">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-800">
-                                            استوری مورد نظر
-                                        </label>
+                        {isComment && (
+                            <section className="space-y-5">
+                                <div>
+                                    <label className="mb-2 block text-sm font-medium text-gray-800">
+                                        پست مورد نظر
+                                    </label>
 
-                                        <p className="mt-1 text-xs leading-5 text-gray-400">
-                                            استوری‌ای را انتخاب کنید که می‌خواهید پاسخ‌های آن را مدیریت کنید.
-                                        </p>
-                                    </div>
+                                    {loadingMedia ? (
+                                        <div className="flex items-center gap-2 rounded-xl border border-gray-200 p-4 text-sm text-gray-500">
+                                            <Loader2
+                                                size={
+                                                    16
+                                                }
+                                                className="animate-spin"
+                                            />
 
-                                    {stories.length >
-                                        0 && (
-                                            <span className="shrink-0 rounded-full bg-gray-100 px-3 py-1 text-[11px] text-gray-500">
-                                                {
-                                                    stories.length
-                                                }{" "}
-                                                استوری فعال
-                                            </span>
-                                        )}
+                                            در حال دریافت پست‌ها...
+                                        </div>
+                                    ) : media.length ===
+                                        0 ? (
+                                        <div className="rounded-xl border border-gray-200 p-4 text-sm text-gray-500">
+                                            Media ای برای این اکانت پیدا نشد.
+                                        </div>
+                                    ) : (
+                                        <div className="grid max-h-72 grid-cols-2 gap-3 overflow-y-auto sm:grid-cols-3 md:grid-cols-4">
+                                            {media.map(
+                                                (
+                                                    item
+                                                ) => {
+                                                    const image =
+                                                        item.media_type ===
+                                                            "VIDEO" ||
+                                                            item.media_product_type ===
+                                                            "REELS"
+                                                            ? item.thumbnail_url
+                                                            : item.media_url;
+
+                                                    const selected =
+                                                        mediaId ===
+                                                        item.id;
+
+                                                    return (
+                                                        <button
+                                                            key={
+                                                                item.id
+                                                            }
+                                                            type="button"
+                                                            onClick={() =>
+                                                                setMediaId(
+                                                                    selected
+                                                                        ? ""
+                                                                        : item.id
+                                                                )
+                                                            }
+                                                            className={[
+                                                                "overflow-hidden rounded-xl border text-right transition",
+                                                                selected
+                                                                    ? "border-gray-900 ring-2 ring-gray-900/10"
+                                                                    : "border-gray-200 hover:border-gray-400",
+                                                            ].join(
+                                                                " "
+                                                            )}
+                                                        >
+                                                            <div className="aspect-square bg-gray-100">
+                                                                {image ? (
+                                                                    <img
+                                                                        src={
+                                                                            image
+                                                                        }
+                                                                        alt={
+                                                                            item.caption ||
+                                                                            "Instagram media"
+                                                                        }
+                                                                        className="h-full w-full object-cover"
+                                                                    />
+                                                                ) : (
+                                                                    <div className="flex h-full items-center justify-center text-xs text-gray-400">
+                                                                        بدون تصویر
+                                                                    </div>
+                                                                )}
+                                                            </div>
+
+                                                            <div className="p-2">
+                                                                <p className="line-clamp-2 text-xs text-gray-600">
+                                                                    {item.caption ||
+                                                                        "بدون کپشن"}
+                                                                </p>
+                                                            </div>
+                                                        </button>
+                                                    );
+                                                }
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
 
-                                {loadingStories ? (
-                                    <div className="flex items-center gap-2 rounded-xl border border-gray-200 p-5 text-sm text-gray-500">
-                                        <Loader2
-                                            size={
-                                                17
-                                            }
-                                            className="animate-spin"
-                                        />
+                                <KeywordInput
+                                    keyword={
+                                        keyword
+                                    }
+                                    setKeyword={
+                                        setKeyword
+                                    }
+                                    description="وقتی کاربر این عبارت را در کامنت وارد کند، Automation اجرا می‌شود."
+                                />
+                            </section>
+                        )}
 
-                                        در حال دریافت استوری‌های فعال...
+                        {/* ---------------------------------------------------------------- */}
+                        {/* Story Selection                                                   */}
+                        {/* ---------------------------------------------------------------- */}
+
+                        {isStory && (
+                            <section className="space-y-5">
+                                <div>
+                                    <div className="mb-2 flex items-center justify-between gap-3">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-800">
+                                                استوری مورد نظر
+                                            </label>
+
+                                            <p className="mt-1 text-xs leading-5 text-gray-400">
+                                                استوری‌ای را انتخاب کنید که می‌خواهید پاسخ‌های آن را مدیریت کنید.
+                                            </p>
+                                        </div>
+
+                                        {stories.length >
+                                            0 && (
+                                                <span className="shrink-0 rounded-full bg-gray-100 px-3 py-1 text-[11px] text-gray-500">
+                                                    {
+                                                        stories.length
+                                                    }{" "}
+                                                    استوری فعال
+                                                </span>
+                                            )}
                                     </div>
-                                ) : storiesError ? (
-                                    <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-4 text-sm leading-6 text-red-600">
-                                        {storiesError}
-                                    </div>
-                                ) : stories.length ===
-                                    0 ? (
-                                    <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50/60 px-5 py-8 text-center">
-                                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-white text-gray-400 shadow-sm">
-                                            <MessageSquareText
+
+                                    {loadingStories ? (
+                                        <div className="flex items-center gap-2 rounded-xl border border-gray-200 p-5 text-sm text-gray-500">
+                                            <Loader2
                                                 size={
-                                                    21
+                                                    17
                                                 }
+                                                className="animate-spin"
                                             />
+
+                                            در حال دریافت استوری‌های فعال...
                                         </div>
+                                    ) : storiesError ? (
+                                        <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-4 text-sm leading-6 text-red-600">
+                                            {storiesError}
+                                        </div>
+                                    ) : stories.length ===
+                                        0 ? (
+                                        <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50/60 px-5 py-8 text-center">
+                                            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-white text-gray-400 shadow-sm">
+                                                <MessageSquareText
+                                                    size={
+                                                        21
+                                                    }
+                                                />
+                                            </div>
 
-                                        <h4 className="mt-4 text-sm font-semibold text-gray-800">
-                                            استوری فعالی پیدا نشد
-                                        </h4>
+                                            <h4 className="mt-4 text-sm font-semibold text-gray-800">
+                                                استوری فعالی پیدا نشد
+                                            </h4>
 
-                                        <p className="mx-auto mt-2 max-w-md text-xs leading-5 text-gray-400">
-                                            برای ساخت Story Reply ابتدا یک استوری فعال در Instagram داشته باشید.
-                                        </p>
-                                    </div>
-                                ) : (
-                                    <div className="grid max-h-[420px] grid-cols-2 gap-3 overflow-y-auto sm:grid-cols-3 md:grid-cols-4">
-                                        {stories.map(
-                                            (
-                                                story
-                                            ) => {
-                                                const selected =
-                                                    mediaId ===
-                                                    story.id;
+                                            <p className="mx-auto mt-2 max-w-md text-xs leading-5 text-gray-400">
+                                                برای ساخت Story Reply ابتدا یک استوری فعال در Instagram داشته باشید.
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <div className="grid max-h-[420px] grid-cols-2 gap-3 overflow-y-auto sm:grid-cols-3 md:grid-cols-4">
+                                            {stories.map(
+                                                (
+                                                    story
+                                                ) => {
+                                                    const selected =
+                                                        mediaId ===
+                                                        story.id;
 
-                                                const image =
-                                                    story.mediaType ===
-                                                        "VIDEO"
-                                                        ? story.thumbnailUrl ||
-                                                        story.mediaUrl
-                                                        : story.mediaUrl ||
-                                                        story.thumbnailUrl;
+                                                    const image =
+                                                        story.mediaType ===
+                                                            "VIDEO"
+                                                            ? story.thumbnailUrl ||
+                                                            story.mediaUrl
+                                                            : story.mediaUrl ||
+                                                            story.thumbnailUrl;
 
-                                                return (
-                                                    <button
-                                                        key={
-                                                            story.id
-                                                        }
-                                                        type="button"
-                                                        onClick={() =>
-                                                            setMediaId(
+                                                    return (
+                                                        <button
+                                                            key={
+                                                                story.id
+                                                            }
+                                                            type="button"
+                                                            onClick={() =>
+                                                                setMediaId(
+                                                                    selected
+                                                                        ? ""
+                                                                        : story.id
+                                                                )
+                                                            }
+                                                            className={[
+                                                                "group overflow-hidden rounded-xl border bg-white text-right transition",
                                                                 selected
-                                                                    ? ""
-                                                                    : story.id
-                                                            )
-                                                        }
-                                                        className={[
-                                                            "group overflow-hidden rounded-xl border bg-white text-right transition",
-                                                            selected
-                                                                ? "border-gray-900 ring-2 ring-gray-900/10"
-                                                                : "border-gray-200 hover:border-gray-400",
-                                                        ].join(
-                                                            " "
-                                                        )}
-                                                    >
-                                                        <div className="relative aspect-[9/14] overflow-hidden bg-gray-100">
-                                                            {image ? (
-                                                                <img
-                                                                    src={
-                                                                        image
-                                                                    }
-                                                                    alt="Instagram Story"
-                                                                    className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
-                                                                />
-                                                            ) : (
-                                                                <div className="flex h-full items-center justify-center px-3 text-center text-xs text-gray-400">
-                                                                    پیش‌نمایش این استوری در دسترس نیست
-                                                                </div>
+                                                                    ? "border-gray-900 ring-2 ring-gray-900/10"
+                                                                    : "border-gray-200 hover:border-gray-400",
+                                                            ].join(
+                                                                " "
                                                             )}
-
-                                                            {selected && (
-                                                                <div className="absolute inset-x-2 top-2 flex items-center justify-center rounded-lg bg-gray-950/85 px-2 py-2 text-[11px] font-medium text-white">
-                                                                    استوری انتخاب شد
-                                                                </div>
-                                                            )}
-
-                                                            <div className="absolute inset-x-2 bottom-2 rounded-lg bg-black/55 px-2 py-1.5 text-center text-[10px] text-white backdrop-blur-sm">
-                                                                {story.mediaType ===
-                                                                    "VIDEO"
-                                                                    ? "ویدیو"
-                                                                    : "تصویر"}
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="p-2.5">
-                                                            <p className="text-[11px] font-medium text-gray-700">
-                                                                استوری
-                                                            </p>
-
-                                                            <p className="mt-1 truncate text-[10px] text-gray-400">
-                                                                {formatStoryDate(
-                                                                    story.timestamp
+                                                        >
+                                                            <div className="relative aspect-[9/14] overflow-hidden bg-gray-100">
+                                                                {image ? (
+                                                                    <img
+                                                                        src={
+                                                                            image
+                                                                        }
+                                                                        alt="Instagram Story"
+                                                                        className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+                                                                    />
+                                                                ) : (
+                                                                    <div className="flex h-full items-center justify-center px-3 text-center text-xs text-gray-400">
+                                                                        پیش‌نمایش این استوری در دسترس نیست
+                                                                    </div>
                                                                 )}
-                                                            </p>
-                                                        </div>
-                                                    </button>
-                                                );
-                                            }
-                                        )}
-                                    </div>
-                                )}
 
-                                {selectedStory && (
-                                    <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
-                                        <div className="min-w-0">
-                                            <p className="text-xs font-medium text-gray-800">
-                                                استوری انتخاب‌شده
-                                            </p>
+                                                                {selected && (
+                                                                    <div className="absolute inset-x-2 top-2 flex items-center justify-center rounded-lg bg-gray-950/85 px-2 py-2 text-[11px] font-medium text-white">
+                                                                        استوری انتخاب شد
+                                                                    </div>
+                                                                )}
 
-                                            <p className="mt-1 truncate text-[11px] text-gray-400">
-                                                ID:{" "}
-                                                {
-                                                    selectedStory.id
+                                                                <div className="absolute inset-x-2 bottom-2 rounded-lg bg-black/55 px-2 py-1.5 text-center text-[10px] text-white backdrop-blur-sm">
+                                                                    {story.mediaType ===
+                                                                        "VIDEO"
+                                                                        ? "ویدیو"
+                                                                        : "تصویر"}
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="p-2.5">
+                                                                <p className="text-[11px] font-medium text-gray-700">
+                                                                    استوری
+                                                                </p>
+
+                                                                <p className="mt-1 truncate text-[10px] text-gray-400">
+                                                                    {formatStoryDate(
+                                                                        story.timestamp
+                                                                    )}
+                                                                </p>
+                                                            </div>
+                                                        </button>
+                                                    );
                                                 }
-                                            </p>
+                                            )}
                                         </div>
+                                    )}
 
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                setMediaId(
-                                                    ""
-                                                )
-                                            }
-                                            className="shrink-0 text-xs text-gray-500 transition hover:text-gray-900"
-                                        >
-                                            حذف انتخاب
-                                        </button>
-                                    </div>
-                                )}
+                                    {selectedStory && (
+                                        <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+                                            <div className="min-w-0">
+                                                <p className="text-xs font-medium text-gray-800">
+                                                    استوری انتخاب‌شده
+                                                </p>
 
-                                {selectedStoryIsExpired && (
-                                    <div className="mt-3 rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-xs leading-6 text-amber-700">
-                                        استوری‌ای که قبلاً برای این Automation انتخاب شده بود دیگر در لیست Storyهای فعال وجود ندارد. برای ذخیره تغییرات باید یک استوری فعال جدید انتخاب کنید.
-                                    </div>
-                                )}
-                            </div>
+                                                <p className="mt-1 truncate text-[11px] text-gray-400">
+                                                    ID:{" "}
+                                                    {
+                                                        selectedStory.id
+                                                    }
+                                                </p>
+                                            </div>
 
-                            <KeywordInput
-                                keyword={
-                                    keyword
-                                }
-                                setKeyword={
-                                    setKeyword
-                                }
-                                description="وقتی کاربر این عبارت را در پاسخ همین استوری ارسال کند، Automation اجرا می‌شود."
-                            />
-                        </section>
-                    )}
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setMediaId(
+                                                        ""
+                                                    )
+                                                }
+                                                className="shrink-0 text-xs text-gray-500 transition hover:text-gray-900"
+                                            >
+                                                حذف انتخاب
+                                            </button>
+                                        </div>
+                                    )}
 
-                    {/* ---------------------------------------------------------------- */}
-                    {/* Comment Actions                                                   */}
-                    {/* ---------------------------------------------------------------- */}
+                                    {selectedStoryIsExpired && (
+                                        <div className="mt-3 rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-xs leading-6 text-amber-700">
+                                            استوری‌ای که قبلاً برای این Automation انتخاب شده بود دیگر در لیست Storyهای فعال وجود ندارد. برای ذخیره تغییرات باید یک استوری فعال جدید انتخاب کنید.
+                                        </div>
+                                    )}
+                                </div>
 
-                    {isComment && (
-                        <section className="border-t border-gray-100 pt-6">
-                            <h3 className="mb-4 text-sm font-semibold text-gray-900">
-                                Actions کامنت
-                            </h3>
+                                <KeywordInput
+                                    keyword={
+                                        keyword
+                                    }
+                                    setKeyword={
+                                        setKeyword
+                                    }
+                                    description="وقتی کاربر این عبارت را در پاسخ همین استوری ارسال کند، Automation اجرا می‌شود."
+                                />
+                            </section>
+                        )}
 
-                            <div className="space-y-4">
-                                <label className="block rounded-xl border border-gray-200 p-4">
-                                    <div className="flex items-start gap-3">
+                        {/* ---------------------------------------------------------------- */}
+                        {/* Comment Actions                                                   */}
+                        {/* ---------------------------------------------------------------- */}
+
+                        {isComment && (
+                            <section className="border-t border-gray-100 pt-6">
+                                <h3 className="mb-4 text-sm font-semibold text-gray-900">
+                                    Actions کامنت
+                                </h3>
+
+                                <div className="space-y-4">
+                                    <label className="block rounded-xl border border-gray-200 p-4">
+                                        <div className="flex items-start gap-3">
+                                            <input
+                                                type="checkbox"
+                                                checked={Boolean(
+                                                    commentReplyText.trim()
+                                                )}
+                                                onChange={(
+                                                    event
+                                                ) => {
+                                                    if (
+                                                        event
+                                                            .target
+                                                            .checked
+                                                    ) {
+                                                        if (
+                                                            !commentReplyText.trim()
+                                                        ) {
+                                                            setCommentReplyText(
+                                                                "ممنون از کامنت شما."
+                                                            );
+                                                        }
+                                                    } else {
+                                                        setCommentReplyText(
+                                                            ""
+                                                        );
+                                                    }
+                                                }}
+                                                className="mt-1"
+                                            />
+
+                                            <div className="flex-1">
+                                                <div className="text-sm font-medium text-gray-900">
+                                                    پاسخ عمومی به کامنت
+                                                </div>
+
+                                                <textarea
+                                                    value={
+                                                        commentReplyText
+                                                    }
+                                                    onChange={(
+                                                        event
+                                                    ) =>
+                                                        setCommentReplyText(
+                                                            event
+                                                                .target
+                                                                .value
+                                                        )
+                                                    }
+                                                    placeholder="متن پاسخ عمومی..."
+                                                    className="mt-3 min-h-24 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-gray-900"
+                                                />
+                                            </div>
+                                        </div>
+                                    </label>
+
+                                    <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 p-4">
                                         <input
                                             type="checkbox"
-                                            checked={Boolean(
-                                                commentReplyText.trim()
-                                            )}
+                                            checked={
+                                                likeComment
+                                            }
                                             onChange={(
                                                 event
-                                            ) => {
-                                                if (
+                                            ) =>
+                                                setLikeComment(
                                                     event
                                                         .target
                                                         .checked
-                                                ) {
-                                                    if (
-                                                        !commentReplyText.trim()
-                                                    ) {
-                                                        setCommentReplyText(
-                                                            "ممنون از کامنت شما."
-                                                        );
-                                                    }
-                                                } else {
-                                                    setCommentReplyText(
-                                                        ""
-                                                    );
-                                                }
-                                            }}
+                                                )
+                                            }
                                             className="mt-1"
                                         />
 
-                                        <div className="flex-1">
+                                        <div>
                                             <div className="text-sm font-medium text-gray-900">
-                                                پاسخ عمومی به کامنت
+                                                لایک کردن کامنت
                                             </div>
 
-                                            <textarea
-                                                value={
-                                                    commentReplyText
-                                                }
-                                                onChange={(
-                                                    event
-                                                ) =>
-                                                    setCommentReplyText(
-                                                        event
-                                                            .target
-                                                            .value
-                                                    )
-                                                }
-                                                placeholder="متن پاسخ عمومی..."
-                                                className="mt-3 min-h-24 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-gray-900"
-                                            />
+                                            <p className="mt-1 text-xs leading-5 text-gray-500">
+                                                بعد از تأیید Permission و تست API فعال می‌شود.
+                                            </p>
                                         </div>
-                                    </div>
-                                </label>
+                                    </label>
+                                </div>
+                            </section>
+                        )}
 
-                                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 p-4">
+                        {/* ---------------------------------------------------------------- */}
+                        {/* Direct Reply                                                      */}
+                        {/* ---------------------------------------------------------------- */}
+
+                        <section className="border-t border-gray-100 pt-6">
+                            <div className="mb-4">
+                                <h3 className="text-sm font-semibold text-gray-900">
+                                    پاسخ مستقیم
+                                </h3>
+
+                                <p className="mt-1 text-xs leading-5 text-gray-400">
+                                    می‌توانید یک پاسخ متنی ساده قرار دهید. برای پاسخ چندمرحله‌ای یا ترکیبی، از Flow پایین استفاده کنید.
+                                </p>
+                            </div>
+
+                            <textarea
+                                value={
+                                    replyText
+                                }
+                                onChange={(
+                                    event
+                                ) =>
+                                    setReplyText(
+                                        event
+                                            .target
+                                            .value
+                                    )
+                                }
+                                placeholder={
+                                    isStory
+                                        ? "مثلاً سلام، اطلاعات کامل در ادامه برای شما ارسال می‌شود."
+                                        : isDm
+                                            ? "مثلاً سلام، چطور می‌تونم کمکتون کنم؟"
+                                            : "متن دایرکت..."
+                                }
+                                className="min-h-24 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm leading-6 outline-none focus:border-gray-900"
+                            />
+
+                            {isDm && (
+                                <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 p-4">
                                     <input
                                         type="checkbox"
                                         checked={
-                                            likeComment
+                                            likeIncomingDm
                                         }
                                         onChange={(
                                             event
                                         ) =>
-                                            setLikeComment(
+                                            setLikeIncomingDm(
                                                 event
                                                     .target
                                                     .checked
@@ -1895,539 +1969,468 @@ export default function AutomationForm({
 
                                     <div>
                                         <div className="text-sm font-medium text-gray-900">
-                                            لایک کردن کامنت
+                                            لایک کردن پیام ورودی
                                         </div>
 
                                         <p className="mt-1 text-xs leading-5 text-gray-500">
-                                            بعد از تأیید Permission و تست API فعال می‌شود.
+                                            این Action فعلاً فقط ذخیره می‌شود و بعد از تأیید API اجرا خواهد شد.
                                         </p>
                                     </div>
                                 </label>
-                            </div>
+                            )}
                         </section>
-                    )}
 
-                    {/* ---------------------------------------------------------------- */}
-                    {/* Direct Reply                                                      */}
-                    {/* ---------------------------------------------------------------- */}
+                        {/* ---------------------------------------------------------------- */}
+                        {/* Story Response Info                                               */}
+                        {/* ---------------------------------------------------------------- */}
 
-                    <section className="border-t border-gray-100 pt-6">
-                        <div className="mb-4">
-                            <h3 className="text-sm font-semibold text-gray-900">
-                                پاسخ مستقیم
-                            </h3>
-
-                            <p className="mt-1 text-xs leading-5 text-gray-400">
-                                می‌توانید یک پاسخ متنی ساده قرار دهید. برای پاسخ چندمرحله‌ای یا ترکیبی، از Flow پایین استفاده کنید.
-                            </p>
-                        </div>
-
-                        <textarea
-                            value={
-                                replyText
-                            }
-                            onChange={(
-                                event
-                            ) =>
-                                setReplyText(
-                                    event
-                                        .target
-                                        .value
-                                )
-                            }
-                            placeholder={
-                                isStory
-                                    ? "مثلاً سلام، اطلاعات کامل در ادامه برای شما ارسال می‌شود."
-                                    : isDm
-                                        ? "مثلاً سلام، چطور می‌تونم کمکتون کنم؟"
-                                        : "متن دایرکت..."
-                            }
-                            className="min-h-24 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm leading-6 outline-none focus:border-gray-900"
-                        />
-
-                        {isDm && (
-                            <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 p-4">
-                                <input
-                                    type="checkbox"
-                                    checked={
-                                        likeIncomingDm
-                                    }
-                                    onChange={(
-                                        event
-                                    ) =>
-                                        setLikeIncomingDm(
-                                            event
-                                                .target
-                                                .checked
-                                        )
-                                    }
-                                    className="mt-1"
-                                />
-
-                                <div>
-                                    <div className="text-sm font-medium text-gray-900">
-                                        لایک کردن پیام ورودی
+                        {isStory && (
+                            <section className="rounded-2xl border border-gray-200 bg-gray-50/70 p-5">
+                                <div className="flex items-start gap-3">
+                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-gray-700 shadow-sm">
+                                        <MessageSquareText
+                                            size={
+                                                17
+                                            }
+                                        />
                                     </div>
 
-                                    <p className="mt-1 text-xs leading-5 text-gray-500">
-                                        این Action فعلاً فقط ذخیره می‌شود و بعد از تأیید API اجرا خواهد شد.
-                                    </p>
+                                    <div>
+                                        <h3 className="text-sm font-semibold text-gray-900">
+                                            پاسخ به Reply استوری
+                                        </h3>
+
+                                        <p className="mt-1 text-xs leading-6 text-gray-500">
+                                            مثلاً اگر کاربر به این استوری عبارت «1» را Reply کند، پاسخ مستقیم و تمام پیام‌های Flow برای او ارسال می‌شوند.
+                                        </p>
+                                    </div>
                                 </div>
-                            </label>
+                            </section>
                         )}
-                    </section>
 
-                    {/* ---------------------------------------------------------------- */}
-                    {/* Story Response Info                                               */}
-                    {/* ---------------------------------------------------------------- */}
+                        {/* ---------------------------------------------------------------- */}
+                        {/* Flow Builder                                                      */}
+                        {/* ---------------------------------------------------------------- */}
 
-                    {isStory && (
-                        <section className="rounded-2xl border border-gray-200 bg-gray-50/70 p-5">
-                            <div className="flex items-start gap-3">
-                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-gray-700 shadow-sm">
-                                    <MessageSquareText
-                                        size={
-                                            17
-                                        }
-                                    />
-                                </div>
-
+                        <section className="border-t border-gray-100 pt-6">
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                                 <div>
                                     <h3 className="text-sm font-semibold text-gray-900">
-                                        پاسخ به Reply استوری
+                                        Flow پیام‌ها
                                     </h3>
 
-                                    <p className="mt-1 text-xs leading-6 text-gray-500">
-                                        مثلاً اگر کاربر به این استوری عبارت «1» را Reply کند، پاسخ مستقیم و تمام پیام‌های Flow برای او ارسال می‌شوند.
+                                    <p className="mt-1 max-w-2xl text-xs leading-5 text-gray-400">
+                                        پیام‌ها را بسازید و با Quick Reply مشخص کنید هر انتخاب کاربر به کدام پیام منتقل شود.
                                     </p>
+
+                                    {isStory && (
+                                        <p className="mt-2 text-xs font-medium text-gray-500">
+                                            Story Reply نیز می‌تواند از متن، عکس، ویدیو، ویس، ویترین، فرم و ترکیب چند پیام استفاده کند.
+                                        </p>
+                                    )}
                                 </div>
+
+                                <button
+                                    type="button"
+                                    onClick={
+                                        addMessage
+                                    }
+                                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-900 px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-black"
+                                >
+                                    <Plus
+                                        size={
+                                            15
+                                        }
+                                    />
+
+                                    افزودن پیام
+                                </button>
                             </div>
-                        </section>
-                    )}
 
-                    {/* ---------------------------------------------------------------- */}
-                    {/* Flow Builder                                                      */}
-                    {/* ---------------------------------------------------------------- */}
+                            {loadingMessages ? (
+                                <div className="mt-5 flex items-center justify-center rounded-xl border border-gray-200 p-10 text-sm text-gray-500">
+                                    <Loader2
+                                        size={
+                                            18
+                                        }
+                                        className="ml-2 animate-spin"
+                                    />
 
-                    <section className="border-t border-gray-100 pt-6">
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                            <div>
-                                <h3 className="text-sm font-semibold text-gray-900">
-                                    Flow پیام‌ها
-                                </h3>
+                                    در حال دریافت Flow...
+                                </div>
+                            ) : messages.length ===
+                                0 ? (
+                                <div className="mt-5 rounded-2xl border border-dashed border-gray-300 bg-gray-50/60 px-5 py-10 text-center">
+                                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-white text-gray-400 shadow-sm">
+                                        <MessageSquareText
+                                            size={
+                                                21
+                                            }
+                                        />
+                                    </div>
 
-                                <p className="mt-1 max-w-2xl text-xs leading-5 text-gray-400">
-                                    پیام‌ها را بسازید و با Quick Reply مشخص کنید هر انتخاب کاربر به کدام پیام منتقل شود.
-                                </p>
+                                    <h4 className="mt-4 text-sm font-semibold text-gray-800">
+                                        هنوز پیامی به Flow اضافه نشده
+                                    </h4>
 
-                                {isStory && (
-                                    <p className="mt-2 text-xs font-medium text-gray-500">
-                                        Story Reply نیز می‌تواند از متن، عکس، ویدیو، ویس، ویترین، فرم و ترکیب چند پیام استفاده کند.
+                                    <p className="mx-auto mt-2 max-w-md text-xs leading-5 text-gray-400">
+                                        برای پاسخ چندمرحله‌ای، پیام اول را بسازید و سپس پیام‌های بعدی و Quick Replyها را اضافه کنید.
                                     </p>
-                                )}
-                            </div>
 
+                                    <button
+                                        type="button"
+                                        onClick={
+                                            addMessage
+                                        }
+                                        className="mt-5 inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-xs font-semibold text-gray-700 transition hover:border-gray-400"
+                                    >
+                                        <Plus
+                                            size={
+                                                15
+                                            }
+                                        />
+
+                                        ساخت پیام اول
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="mt-5 space-y-4">
+                                    {messages.map(
+                                        (
+                                            message,
+                                            index
+                                        ) => (
+                                            <AutomationFlowMessage
+                                                key={
+                                                    message.id
+                                                }
+                                                message={
+                                                    message
+                                                }
+                                                index={
+                                                    index
+                                                }
+                                                total={
+                                                    messages.length
+                                                }
+                                                messageOptions={
+                                                    messageOptions
+                                                }
+                                                showcases={
+                                                    showcases
+                                                }
+                                                forms={
+                                                    forms
+                                                }
+                                                loadingResources={
+                                                    loadingResources
+                                                }
+                                                onUpdate={(
+                                                    patch
+                                                ) =>
+                                                    updateMessage(
+                                                        message.id,
+                                                        patch
+                                                    )
+                                                }
+                                                onRemove={() =>
+                                                    removeMessage(
+                                                        message.id
+                                                    )
+                                                }
+                                                onMoveUp={() =>
+                                                    moveMessage(
+                                                        message.id,
+                                                        "up"
+                                                    )
+                                                }
+                                                onMoveDown={() =>
+                                                    moveMessage(
+                                                        message.id,
+                                                        "down"
+                                                    )
+                                                }
+                                                onAddQuickReply={() =>
+                                                    addQuickReply(
+                                                        message.id
+                                                    )
+                                                }
+                                                onUpdateQuickReply={(
+                                                    quickReplyId,
+                                                    patch
+                                                ) =>
+                                                    updateQuickReply(
+                                                        message.id,
+                                                        quickReplyId,
+                                                        patch
+                                                    )
+                                                }
+                                                onRemoveQuickReply={(
+                                                    quickReplyId
+                                                ) =>
+                                                    removeQuickReply(
+                                                        message.id,
+                                                        quickReplyId
+                                                    )
+                                                }
+                                            />
+                                        )
+                                    )}
+
+                                    <button
+                                        type="button"
+                                        onClick={
+                                            addMessage
+                                        }
+                                        className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 py-3 text-xs font-medium text-gray-500 transition hover:border-gray-500 hover:text-gray-800"
+                                    >
+                                        <Plus
+                                            size={
+                                                15
+                                            }
+                                        />
+
+                                        افزودن پیام بعدی
+                                    </button>
+                                </div>
+                            )}
+                        </section>
+
+                        {/* Active */}
+
+                        <label className="flex cursor-pointer items-center gap-3 border-t border-gray-100 pt-5">
+                            <input
+                                type="checkbox"
+                                checked={
+                                    isActive
+                                }
+                                onChange={(
+                                    event
+                                ) =>
+                                    setIsActive(
+                                        event
+                                            .target
+                                            .checked
+                                    )
+                                }
+                            />
+
+                            <span className="text-sm text-gray-800">
+                                Automation فعال باشد
+                            </span>
+                        </label>
+
+                        {/* Error */}
+
+                        {error && (
+                            <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm leading-6 text-red-600">
+                                {error}
+                            </div>
+                        )}
+
+                        {/* Footer */}
+
+                        <div className="flex flex-col-reverse gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:justify-end">
                             <button
                                 type="button"
                                 onClick={
-                                    addMessage
+                                    onClose
                                 }
-                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-900 px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-black"
+                                disabled={
+                                    saving
+                                }
+                                className="rounded-xl border border-gray-200 px-5 py-3 text-sm text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
                             >
-                                <Plus
-                                    size={
-                                        15
-                                    }
-                                />
-
-                                افزودن پیام
+                                انصراف
                             </button>
-                        </div>
 
-                        {loadingMessages ? (
-                            <div className="mt-5 flex items-center justify-center rounded-xl border border-gray-200 p-10 text-sm text-gray-500">
-                                <Loader2
-                                    size={
-                                        18
-                                    }
-                                    className="ml-2 animate-spin"
-                                />
-
-                                در حال دریافت Flow...
-                            </div>
-                        ) : messages.length ===
-                            0 ? (
-                            <div className="mt-5 rounded-2xl border border-dashed border-gray-300 bg-gray-50/60 px-5 py-10 text-center">
-                                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-white text-gray-400 shadow-sm">
-                                    <MessageSquareText
+                            <button
+                                type="submit"
+                                disabled={
+                                    saving
+                                }
+                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-900 px-6 py-3 text-sm font-medium text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                {saving && (
+                                    <Loader2
                                         size={
-                                            21
+                                            16
                                         }
+                                        className="animate-spin"
                                     />
-                                </div>
-
-                                <h4 className="mt-4 text-sm font-semibold text-gray-800">
-                                    هنوز پیامی به Flow اضافه نشده
-                                </h4>
-
-                                <p className="mx-auto mt-2 max-w-md text-xs leading-5 text-gray-400">
-                                    برای پاسخ چندمرحله‌ای، پیام اول را بسازید و سپس پیام‌های بعدی و Quick Replyها را اضافه کنید.
-                                </p>
-
-                                <button
-                                    type="button"
-                                    onClick={
-                                        addMessage
-                                    }
-                                    className="mt-5 inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-xs font-semibold text-gray-700 transition hover:border-gray-400"
-                                >
-                                    <Plus
-                                        size={
-                                            15
-                                        }
-                                    />
-
-                                    ساخت پیام اول
-                                </button>
-                            </div>
-                        ) : (
-                            <div className="mt-5 space-y-4">
-                                {messages.map(
-                                    (
-                                        message,
-                                        index
-                                    ) => (
-                                        <AutomationFlowMessage
-                                            key={
-                                                message.id
-                                            }
-                                            message={
-                                                message
-                                            }
-                                            index={
-                                                index
-                                            }
-                                            total={
-                                                messages.length
-                                            }
-                                            messageOptions={
-                                                messageOptions
-                                            }
-                                            showcases={
-                                                showcases
-                                            }
-                                            forms={
-                                                forms
-                                            }
-                                            loadingResources={
-                                                loadingResources
-                                            }
-                                            onUpdate={(
-                                                patch
-                                            ) =>
-                                                updateMessage(
-                                                    message.id,
-                                                    patch
-                                                )
-                                            }
-                                            onRemove={() =>
-                                                removeMessage(
-                                                    message.id
-                                                )
-                                            }
-                                            onMoveUp={() =>
-                                                moveMessage(
-                                                    message.id,
-                                                    "up"
-                                                )
-                                            }
-                                            onMoveDown={() =>
-                                                moveMessage(
-                                                    message.id,
-                                                    "down"
-                                                )
-                                            }
-                                            onAddQuickReply={() =>
-                                                addQuickReply(
-                                                    message.id
-                                                )
-                                            }
-                                            onUpdateQuickReply={(
-                                                quickReplyId,
-                                                patch
-                                            ) =>
-                                                updateQuickReply(
-                                                    message.id,
-                                                    quickReplyId,
-                                                    patch
-                                                )
-                                            }
-                                            onRemoveQuickReply={(
-                                                quickReplyId
-                                            ) =>
-                                                removeQuickReply(
-                                                    message.id,
-                                                    quickReplyId
-                                                )
-                                            }
-                                        />
-                                    )
                                 )}
 
-                                <button
-                                    type="button"
-                                    onClick={
-                                        addMessage
-                                    }
-                                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 py-3 text-xs font-medium text-gray-500 transition hover:border-gray-500 hover:text-gray-800"
-                                >
-                                    <Plus
-                                        size={
-                                            15
-                                        }
-                                    />
-
-                                    افزودن پیام بعدی
-                                </button>
-                            </div>
-                        )}
-                    </section>
-
-                    {/* Active */}
-
-                    <label className="flex cursor-pointer items-center gap-3 border-t border-gray-100 pt-5">
-                        <input
-                            type="checkbox"
-                            checked={
-                                isActive
-                            }
-                            onChange={(
-                                event
-                            ) =>
-                                setIsActive(
-                                    event
-                                        .target
-                                        .checked
-                                )
-                            }
-                        />
-
-                        <span className="text-sm text-gray-800">
-                            Automation فعال باشد
-                        </span>
-                    </label>
-
-                    {/* Error */}
-
-                    {error && (
-                        <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm leading-6 text-red-600">
-                            {error}
+                                {saving
+                                    ? "در حال ذخیره..."
+                                    : isEditing
+                                        ? "ذخیره تغییرات"
+                                        : "ساخت Automation"}
+                            </button>
                         </div>
-                    )}
-
-                    {/* Footer */}
-
-                    <div className="flex flex-col-reverse gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:justify-end">
-                        <button
-                            type="button"
-                            onClick={
-                                onClose
-                            }
-                            disabled={
-                                saving
-                            }
-                            className="rounded-xl border border-gray-200 px-5 py-3 text-sm text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
-                        >
-                            انصراف
-                        </button>
-
-                        <button
-                            type="submit"
-                            disabled={
-                                saving
-                            }
-                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-900 px-6 py-3 text-sm font-medium text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                            {saving && (
-                                <Loader2
-                                    size={
-                                        16
-                                    }
-                                    className="animate-spin"
-                                />
-                            )}
-
-                            {saving
-                                ? "در حال ذخیره..."
-                                : isEditing
-                                    ? "ذخیره تغییرات"
-                                    : "ساخت Automation"}
-                        </button>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
-        </div>
-    );
-}
+        );
+    }
 
-/* -------------------------------------------------------------------------- */
-/* Keyword Input                                                              */
-/* -------------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------------- */
+    /* Keyword Input                                                              */
+    /* -------------------------------------------------------------------------- */
 
-function KeywordInput({
-    keyword,
-    setKeyword,
-    description,
-}: {
-    keyword: string;
-    setKeyword: (
-        value: string
-    ) => void;
-    description: string;
-}) {
-    return (
-        <div>
-            <label className="mb-2 block text-sm font-medium text-gray-800">
-                کلمه یا عبارت Trigger
-            </label>
+    function KeywordInput({
+        keyword,
+        setKeyword,
+        description,
+    }: {
+        keyword: string;
+        setKeyword: (
+            value: string
+        ) => void;
+        description: string;
+    }) {
+        return (
+            <div>
+                <label className="mb-2 block text-sm font-medium text-gray-800">
+                    کلمه یا عبارت Trigger
+                </label>
 
-            <input
-                value={
-                    keyword
-                }
-                onChange={(
-                    event
-                ) =>
-                    setKeyword(
+                <input
+                    value={
+                        keyword
+                    }
+                    onChange={(
                         event
-                            .target
-                            .value
-                    )
-                }
-                placeholder="مثلاً 1"
-                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-gray-900"
-            />
+                    ) =>
+                        setKeyword(
+                            event
+                                .target
+                                .value
+                        )
+                    }
+                    placeholder="مثلاً 1"
+                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-gray-900"
+                />
 
-            <p className="mt-2 text-xs leading-5 text-gray-400">
-                {
-                    description
-                }
-            </p>
-        </div>
-    );
-}
-
-/* -------------------------------------------------------------------------- */
-/* Local Helpers                                                              */
-/* -------------------------------------------------------------------------- */
-
-function getMessageTypeLabelLocal(
-    messageType: MessageType
-) {
-    switch (messageType) {
-        case "TEXT":
-            return "متن";
-
-        case "IMAGE":
-            return "عکس";
-
-        case "VIDEO":
-            return "ویدیو";
-
-        case "AUDIO":
-            return "ویس";
-
-        case "SHOWCASE":
-            return "ویترین";
-
-        case "FORM":
-            return "فرم";
-
-        default:
-            return "پیام";
-    }
-}
-
-function formatStoryDate(
-    timestamp: string | null
-) {
-    if (!timestamp) {
-        return "زمان نامشخص";
-    }
-
-    const date =
-        new Date(timestamp);
-
-    if (
-        Number.isNaN(
-            date.getTime()
-        )
-    ) {
-        return "زمان نامشخص";
-    }
-
-    return new Intl.DateTimeFormat(
-        "fa-IR",
-        {
-            month: "short",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-        }
-    ).format(date);
-}
-
-/* -------------------------------------------------------------------------- */
-/* Trigger Option                                                             */
-/* -------------------------------------------------------------------------- */
-
-function TriggerOption({
-    active,
-    title,
-    description,
-    onClick,
-}: {
-    active: boolean;
-    title: string;
-    description: string;
-    onClick: () => void;
-}) {
-    return (
-        <button
-            type="button"
-            onClick={
-                onClick
-            }
-            className={[
-                "rounded-xl border p-4 text-right transition",
-                active
-                    ? "border-slate-900 bg-slate-950 text-white"
-                    : "border-slate-200 bg-white text-slate-800 hover:border-slate-400",
-            ].join(
-                " "
-            )}
-        >
-            <div className="text-sm font-semibold">
-                {
-                    title
-                }
+                <p className="mt-2 text-xs leading-5 text-gray-400">
+                    {
+                        description
+                    }
+                </p>
             </div>
+        );
+    }
 
-            <div
+    /* -------------------------------------------------------------------------- */
+    /* Local Helpers                                                              */
+    /* -------------------------------------------------------------------------- */
+
+    function getMessageTypeLabelLocal(
+        messageType: MessageType
+    ) {
+        switch (messageType) {
+            case "TEXT":
+                return "متن";
+
+            case "IMAGE":
+                return "عکس";
+
+            case "VIDEO":
+                return "ویدیو";
+
+            case "AUDIO":
+                return "ویس";
+
+            case "SHOWCASE":
+                return "ویترین";
+
+            case "FORM":
+                return "فرم";
+
+            default:
+                return "پیام";
+        }
+    }
+
+    function formatStoryDate(
+        timestamp: string | null
+    ) {
+        if (!timestamp) {
+            return "زمان نامشخص";
+        }
+
+        const date =
+            new Date(timestamp);
+
+        if (
+            Number.isNaN(
+                date.getTime()
+            )
+        ) {
+            return "زمان نامشخص";
+        }
+
+        return new Intl.DateTimeFormat(
+            "fa-IR",
+            {
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+            }
+        ).format(date);
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /* Trigger Option                                                             */
+    /* -------------------------------------------------------------------------- */
+
+    function TriggerOption({
+        active,
+        title,
+        description,
+        onClick,
+    }: {
+        active: boolean;
+        title: string;
+        description: string;
+        onClick: () => void;
+    }) {
+        return (
+            <button
+                type="button"
+                onClick={
+                    onClick
+                }
                 className={[
-                    "mt-1 text-xs leading-5",
+                    "rounded-xl border p-4 text-right transition",
                     active
-                        ? "text-slate-300"
-                        : "text-slate-400",
+                        ? "border-slate-900 bg-slate-950 text-white"
+                        : "border-slate-200 bg-white text-slate-800 hover:border-slate-400",
                 ].join(
                     " "
                 )}
             >
-                {
-                    description
-                }
-            </div>
-        </button>
-    );
-}
+                <div className="text-sm font-semibold">
+                    {
+                        title
+                    }
+                </div>
+
+                <div
+                    className={[
+                        "mt-1 text-xs leading-5",
+                        active
+                            ? "text-slate-300"
+                            : "text-slate-400",
+                    ].join(
+                        " "
+                    )}
+                >
+                    {
+                        description
+                    }
+                </div>
+            </button>
+        );
+    }
 
