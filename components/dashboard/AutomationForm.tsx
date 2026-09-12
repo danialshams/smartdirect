@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { FormEvent } from "react";
@@ -6,7 +7,7 @@ import {
     Loader2,
     MessageSquareText,
     Plus,
-    X
+    X,
 } from "lucide-react";
 
 import {
@@ -49,6 +50,20 @@ type Props = {
 };
 
 /* -------------------------------------------------------------------------- */
+/* Story Type                                                                 */
+/* -------------------------------------------------------------------------- */
+
+type InstagramStory = {
+    id: string;
+    mediaType: string | null;
+    mediaProductType: string | null;
+    mediaUrl: string | null;
+    thumbnailUrl: string | null;
+    permalink: string | null;
+    timestamp: string | null;
+};
+
+/* -------------------------------------------------------------------------- */
 /* Main Component                                                             */
 /* -------------------------------------------------------------------------- */
 
@@ -59,17 +74,15 @@ export default function AutomationForm({
     onCreated,
     onUpdated,
 }: Props) {
-    /*
-     * مهم:
-     * این مقدار را یک بار از prop استخراج می‌کنیم تا
-     * داخل async function دیگر TypeScript احتمال null بودن
-     * automation را مطرح نکند.
-     */
     const automationId =
         automation?.id ?? null;
 
     const isEditing =
         automationId !== null;
+
+    /* ---------------------------------------------------------------------- */
+    /* Trigger / Basic State                                                  */
+    /* ---------------------------------------------------------------------- */
 
     const [triggerType, setTriggerType] =
         useState<AutomationTriggerType>(
@@ -82,6 +95,13 @@ export default function AutomationForm({
         automation?.keyword ?? ""
     );
 
+    /*
+     * برای Comment:
+     * mediaId = ID پست / Reel
+     *
+     * برای Story:
+     * mediaId = ID استوری
+     */
     const [mediaId, setMediaId] = useState(
         automation?.mediaId ?? ""
     );
@@ -93,9 +113,10 @@ export default function AutomationForm({
         automation?.commentReplyText ?? ""
     );
 
-    const [replyText, setReplyText] = useState(
-        automation?.replyText ?? ""
-    );
+    const [replyText, setReplyText] =
+        useState(
+            automation?.replyText ?? ""
+        );
 
     const [likeComment, setLikeComment] =
         useState(
@@ -114,9 +135,30 @@ export default function AutomationForm({
             automation?.isActive ?? true
         );
 
+    /* ---------------------------------------------------------------------- */
+    /* Instagram Media                                                        */
+    /* ---------------------------------------------------------------------- */
+
     const [media, setMedia] = useState<
         InstagramMedia[]
     >([]);
+
+    const [stories, setStories] = useState<
+        InstagramStory[]
+    >([]);
+
+    const [loadingMedia, setLoadingMedia] =
+        useState(false);
+
+    const [loadingStories, setLoadingStories] =
+        useState(false);
+
+    const [storiesError, setStoriesError] =
+        useState("");
+
+    /* ---------------------------------------------------------------------- */
+    /* Resources                                                              */
+    /* ---------------------------------------------------------------------- */
 
     const [showcases, setShowcases] =
         useState<Showcase[]>([]);
@@ -128,19 +170,9 @@ export default function AutomationForm({
     const [messages, setMessages] =
         useState<MessageDraft[]>([]);
 
-    const [loadingMedia, setLoadingMedia] =
-        useState(true);
-
     const [loadingResources, setLoadingResources] =
         useState(false);
 
-    /*
-     * برای جلوگیری از هشدار React:
-     *
-     * Calling setState synchronously within an effect
-     *
-     * مقدار اولیه را از automation مشخص می‌کنیم.
-     */
     const [
         loadingMessages,
         setLoadingMessages,
@@ -154,6 +186,10 @@ export default function AutomationForm({
     const [error, setError] =
         useState("");
 
+    /* ---------------------------------------------------------------------- */
+    /* Trigger Helpers                                                        */
+    /* ---------------------------------------------------------------------- */
+
     const isComment =
         triggerType ===
         "COMMENT_KEYWORD";
@@ -164,6 +200,26 @@ export default function AutomationForm({
     const isStory =
         triggerType ===
         "STORY_REPLY_KEYWORD";
+
+    const selectedStory =
+        useMemo(
+            () =>
+                stories.find(
+                    (story) =>
+                        story.id ===
+                        mediaId
+                ) ?? null,
+            [stories, mediaId]
+        );
+
+    /*
+     * اگر Story قبلی در لیست Storyهای فعلی وجود نداشته باشد،
+     * یعنی احتمالاً Story منقضی شده است.
+     */
+    const selectedStoryIsExpired =
+        isStory &&
+        Boolean(mediaId) &&
+        !selectedStory;
 
     const messageOptions = useMemo(
         () =>
@@ -183,14 +239,27 @@ export default function AutomationForm({
     );
 
     /* ---------------------------------------------------------------------- */
-    /* Load Instagram Media                                                   */
+    /* Load Instagram Posts / Reels                                           */
     /* ---------------------------------------------------------------------- */
 
     useEffect(() => {
+        /*
+         * فقط وقتی Trigger کامنت است Media معمولی را می‌گیریم.
+         *
+         * برای Story از endpoint جداگانه استفاده می‌کنیم.
+         */
+        if (!isComment) {
+            setMedia([]);
+            setLoadingMedia(false);
+            return;
+        }
+
         let cancelled = false;
 
         async function loadMedia() {
             try {
+                setLoadingMedia(true);
+
                 const response =
                     await fetch(
                         `/api/instagram/media?instagramAccountId=${encodeURIComponent(
@@ -242,12 +311,97 @@ export default function AutomationForm({
             }
         }
 
-        loadMedia();
+        void loadMedia();
 
         return () => {
             cancelled = true;
         };
-    }, [account.id]);
+    }, [account.id, isComment]);
+
+    /* ---------------------------------------------------------------------- */
+    /* Load Instagram Stories                                                */
+    /* ---------------------------------------------------------------------- */
+
+    useEffect(() => {
+        /*
+         * فقط وقتی Trigger = Story Reply است Storyها را دریافت می‌کنیم.
+         */
+        if (!isStory) {
+            setStories([]);
+            setLoadingStories(false);
+            setStoriesError("");
+            return;
+        }
+
+        let cancelled = false;
+
+        async function loadStories() {
+            try {
+                setLoadingStories(true);
+                setStoriesError("");
+
+                const response =
+                    await fetch(
+                        `/api/instagram/stories?instagramAccountId=${encodeURIComponent(
+                            account.id
+                        )}`,
+                        {
+                            cache: "no-store",
+                            credentials:
+                                "include",
+                        }
+                    );
+
+                const result =
+                    await response.json();
+
+                if (
+                    !response.ok ||
+                    !result.success
+                ) {
+                    throw new Error(
+                        result.error ||
+                        result.message ||
+                        "دریافت Story ها ناموفق بود."
+                    );
+                }
+
+                if (!cancelled) {
+                    setStories(
+                        Array.isArray(
+                            result.data
+                        )
+                            ? result.data
+                            : []
+                    );
+                }
+            } catch (error) {
+                console.error(
+                    "load instagram stories error:",
+                    error
+                );
+
+                if (!cancelled) {
+                    setStories([]);
+                    setStoriesError(
+                        error instanceof Error
+                            ? error.message
+                            : "دریافت Story ها ناموفق بود."
+                    );
+                }
+            } finally {
+                if (!cancelled) {
+                    setLoadingStories(false);
+                }
+            }
+        }
+
+        void loadStories();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [account.id, isStory]);
 
     /* ---------------------------------------------------------------------- */
     /* Load Showcase + Forms                                                  */
@@ -343,7 +497,7 @@ export default function AutomationForm({
             }
         }
 
-        loadResources();
+        void loadResources();
 
         return () => {
             cancelled = true;
@@ -355,9 +509,6 @@ export default function AutomationForm({
     /* ---------------------------------------------------------------------- */
 
     useEffect(() => {
-        /*
-         * در حالت ساخت Automation چیزی برای Load کردن نداریم.
-         */
         if (!automationId) {
             return;
         }
@@ -427,7 +578,7 @@ export default function AutomationForm({
     }, [automationId]);
 
     /* ---------------------------------------------------------------------- */
-    /* Trigger                                                                */
+    /* Trigger Change                                                         */
     /* ---------------------------------------------------------------------- */
 
     function handleTriggerChange(
@@ -435,7 +586,12 @@ export default function AutomationForm({
     ) {
         setTriggerType(value);
         setError("");
+        setStoriesError("");
 
+        /*
+         * DM:
+         * هیچ Media یا Keyword لازم ندارد.
+         */
         if (value === "DM") {
             setKeyword("");
             setMediaId("");
@@ -443,12 +599,27 @@ export default function AutomationForm({
             setLikeComment(false);
         }
 
+        /*
+         * Comment:
+         * Media معمولی لازم است.
+         */
+        if (value === "COMMENT_KEYWORD") {
+            setMediaId("");
+        }
+
+        /*
+         * Story:
+         * فقط Story ID لازم است.
+         *
+         * متن پاسخ کامنت و لایک کامنت برای Story کاربرد ندارند.
+         */
         if (
             value ===
             "STORY_REPLY_KEYWORD"
         ) {
             setCommentReplyText("");
             setLikeComment(false);
+            setMediaId("");
         }
     }
 
@@ -474,10 +645,6 @@ export default function AutomationForm({
                         messageId
                 );
 
-            /*
-             * اگر مقصد Quick Reply پیام حذف‌شده بوده،
-             * مقصد را null می‌کنیم.
-             */
             return filtered.map(
                 (message) => ({
                     ...message,
@@ -669,11 +836,6 @@ export default function AutomationForm({
     }
 
     /* ---------------------------------------------------------------------- */
-    /* Validate Flow                                                          */
-    /* ---------------------------------------------------------------------- */
-
-
-    /* ---------------------------------------------------------------------- */
     /* Delete Existing Messages                                               */
     /* ---------------------------------------------------------------------- */
 
@@ -776,8 +938,8 @@ export default function AutomationForm({
                     await deleteResponse.json();
             } catch {
                 /*
-                 * بعضی DELETE endpoint ها ممکن است
-                 * body نداشته باشند.
+                 * بعضی DELETE endpoint ها
+                 * ممکن است body نداشته باشند.
                  */
             }
 
@@ -808,29 +970,18 @@ export default function AutomationForm({
     async function syncMessages(
         targetAutomationId: string
     ) {
-        /*
-         * در حالت ویرایش:
-         * ابتدا تمام Message های قبلی حذف می‌شوند.
-         */
         if (isEditing) {
             await deleteExistingMessages(
                 targetAutomationId
             );
         }
 
-        /*
-         * اگر Flow جدید خالی است،
-         * بعد از حذف Flow قبلی کار دیگری نداریم.
-         */
         if (
             messages.length === 0
         ) {
             return;
         }
 
-        /*
-         * local message ID -> server message ID
-         */
         const serverMessageIds =
             new Map<
                 string,
@@ -1027,6 +1178,22 @@ export default function AutomationForm({
             return;
         }
 
+        /*
+         * برای Comment و Story باید یک Media/Story
+         * انتخاب شده باشد.
+         */
+        if (
+            (isComment || isStory) &&
+            !mediaId.trim()
+        ) {
+            setError(
+                isStory
+                    ? "لطفاً یک استوری را انتخاب کنید."
+                    : "لطفاً پست مورد نظر را انتخاب کنید."
+            );
+            return;
+        }
+
         if (
             isComment &&
             !commentReplyText.trim() &&
@@ -1058,6 +1225,22 @@ export default function AutomationForm({
         ) {
             setError(
                 "برای پاسخ استوری حداقل یک پیام یا Flow بسازید."
+            );
+            return;
+        }
+
+        /*
+         * Story قبلی ممکن است دیگر در لیست Storyهای فعال نباشد.
+         *
+         * در این حالت اجازه Save نمی‌دهیم تا Automation
+         * به Story اشتباه متصل نشود.
+         */
+        if (
+            isStory &&
+            selectedStoryIsExpired
+        ) {
+            setError(
+                "استوری انتخاب‌شده دیگر فعال نیست. لطفاً یک استوری جدید انتخاب کنید."
             );
             return;
         }
@@ -1100,6 +1283,16 @@ export default function AutomationForm({
 
                         triggerType,
 
+                        /*
+                         * Comment:
+                         * ID پست/Reel
+                         *
+                         * Story:
+                         * ID Story
+                         *
+                         * DM:
+                         * null
+                         */
                         mediaId:
                             mediaId.trim() ||
                             null,
@@ -1149,16 +1342,23 @@ export default function AutomationForm({
                 result.data as Automation;
 
             /*
-             * Flow را Sync می‌کنیم.
+             * Flow شامل:
+             *
+             * TEXT
+             * IMAGE
+             * VIDEO
+             * AUDIO
+             * SHOWCASE
+             * FORM
+             * Quick Reply
+             *
+             * است و برای Story هم دقیقاً
+             * مانند DM/Comment ذخیره می‌شود.
              */
             await syncMessages(
                 savedAutomation.id
             );
 
-            /*
-             * Automation نهایی را دوباره
-             * از API دریافت می‌کنیم.
-             */
             const finalResponse =
                 await fetch(
                     `/api/automations/${savedAutomation.id}`,
@@ -1230,8 +1430,12 @@ export default function AutomationForm({
 
                     <button
                         type="button"
-                        onClick={onClose}
-                        disabled={saving}
+                        onClick={
+                            onClose
+                        }
+                        disabled={
+                            saving
+                        }
                         className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-50"
                         aria-label="بستن"
                     >
@@ -1284,7 +1488,7 @@ export default function AutomationForm({
                                     isStory
                                 }
                                 title="پاسخ استوری"
-                                description="وقتی کاربر به استوری پاسخ دهد"
+                                description="وقتی کاربر به یک استوری پاسخ دهد"
                                 onClick={() =>
                                     handleTriggerChange(
                                         "STORY_REPLY_KEYWORD"
@@ -1294,143 +1498,319 @@ export default function AutomationForm({
                         </div>
                     </section>
 
-                    {/* Media + Keyword */}
+                    {/* ---------------------------------------------------------------- */}
+                    {/* Comment Media                                                     */}
+                    {/* ---------------------------------------------------------------- */}
 
-                    {(isComment ||
-                        isStory) && (
-                            <section className="space-y-5">
-                                <div>
-                                    <label className="mb-2 block text-sm font-medium text-gray-800">
-                                        {isComment
-                                            ? "پست مورد نظر"
-                                            : "استوری / Media مورد نظر"}
-                                    </label>
+                    {isComment && (
+                        <section className="space-y-5">
+                            <div>
+                                <label className="mb-2 block text-sm font-medium text-gray-800">
+                                    پست مورد نظر
+                                </label>
 
-                                    {loadingMedia ? (
-                                        <div className="flex items-center gap-2 rounded-xl border border-gray-200 p-4 text-sm text-gray-500">
-                                            <Loader2
-                                                size={
-                                                    16
-                                                }
-                                                className="animate-spin"
-                                            />
+                                {loadingMedia ? (
+                                    <div className="flex items-center gap-2 rounded-xl border border-gray-200 p-4 text-sm text-gray-500">
+                                        <Loader2
+                                            size={
+                                                16
+                                            }
+                                            className="animate-spin"
+                                        />
 
-                                            در حال دریافت
-                                            Media ها...
-                                        </div>
-                                    ) : media.length ===
-                                        0 ? (
-                                        <div className="rounded-xl border border-gray-200 p-4 text-sm text-gray-500">
-                                            Media ای برای
-                                            این اکانت پیدا
-                                            نشد.
-                                        </div>
-                                    ) : (
-                                        <div className="grid max-h-72 grid-cols-2 gap-3 overflow-y-auto sm:grid-cols-3 md:grid-cols-4">
-                                            {media.map(
-                                                (
-                                                    item
-                                                ) => {
-                                                    const image =
-                                                        item.media_type ===
-                                                            "VIDEO" ||
-                                                            item.media_product_type ===
-                                                            "REELS"
-                                                            ? item.thumbnail_url
-                                                            : item.media_url;
+                                        در حال دریافت پست‌ها...
+                                    </div>
+                                ) : media.length ===
+                                    0 ? (
+                                    <div className="rounded-xl border border-gray-200 p-4 text-sm text-gray-500">
+                                        Media ای برای این اکانت پیدا نشد.
+                                    </div>
+                                ) : (
+                                    <div className="grid max-h-72 grid-cols-2 gap-3 overflow-y-auto sm:grid-cols-3 md:grid-cols-4">
+                                        {media.map(
+                                            (
+                                                item
+                                            ) => {
+                                                const image =
+                                                    item.media_type ===
+                                                        "VIDEO" ||
+                                                        item.media_product_type ===
+                                                        "REELS"
+                                                        ? item.thumbnail_url
+                                                        : item.media_url;
 
-                                                    const selected =
-                                                        mediaId ===
-                                                        item.id;
+                                                const selected =
+                                                    mediaId ===
+                                                    item.id;
 
-                                                    return (
-                                                        <button
-                                                            key={
-                                                                item.id
-                                                            }
-                                                            type="button"
-                                                            onClick={() =>
-                                                                setMediaId(
-                                                                    selected
-                                                                        ? ""
-                                                                        : item.id
-                                                                )
-                                                            }
-                                                            className={[
-                                                                "overflow-hidden rounded-xl border text-right transition",
+                                                return (
+                                                    <button
+                                                        key={
+                                                            item.id
+                                                        }
+                                                        type="button"
+                                                        onClick={() =>
+                                                            setMediaId(
                                                                 selected
-                                                                    ? "border-gray-900 ring-2 ring-gray-900/10"
-                                                                    : "border-gray-200 hover:border-gray-400",
-                                                            ].join(
-                                                                " "
+                                                                    ? ""
+                                                                    : item.id
+                                                            )
+                                                        }
+                                                        className={[
+                                                            "overflow-hidden rounded-xl border text-right transition",
+                                                            selected
+                                                                ? "border-gray-900 ring-2 ring-gray-900/10"
+                                                                : "border-gray-200 hover:border-gray-400",
+                                                        ].join(
+                                                            " "
+                                                        )}
+                                                    >
+                                                        <div className="aspect-square bg-gray-100">
+                                                            {image ? (
+                                                                <img
+                                                                    src={
+                                                                        image
+                                                                    }
+                                                                    alt={
+                                                                        item.caption ||
+                                                                        "Instagram media"
+                                                                    }
+                                                                    className="h-full w-full object-cover"
+                                                                />
+                                                            ) : (
+                                                                <div className="flex h-full items-center justify-center text-xs text-gray-400">
+                                                                    بدون تصویر
+                                                                </div>
                                                             )}
-                                                        >
-                                                            <div className="aspect-square bg-gray-100">
-                                                                {image ? (
-                                                                    <img
-                                                                        src={
-                                                                            image
-                                                                        }
-                                                                        alt={
-                                                                            item.caption ||
-                                                                            "Instagram media"
-                                                                        }
-                                                                        className="h-full w-full object-cover"
-                                                                    />
-                                                                ) : (
-                                                                    <div className="flex h-full items-center justify-center text-xs text-gray-400">
-                                                                        بدون
-                                                                        تصویر
-                                                                    </div>
-                                                                )}
-                                                            </div>
+                                                        </div>
 
-                                                            <div className="p-2">
-                                                                <p className="line-clamp-2 text-xs text-gray-600">
-                                                                    {item.caption ||
-                                                                        "بدون کپشن"}
-                                                                </p>
-                                                            </div>
-                                                        </button>
-                                                    );
+                                                        <div className="p-2">
+                                                            <p className="line-clamp-2 text-xs text-gray-600">
+                                                                {item.caption ||
+                                                                    "بدون کپشن"}
+                                                            </p>
+                                                        </div>
+                                                    </button>
+                                                );
+                                            }
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
+                            <KeywordInput
+                                keyword={
+                                    keyword
+                                }
+                                setKeyword={
+                                    setKeyword
+                                }
+                                description="وقتی کاربر این عبارت را در کامنت وارد کند، Automation اجرا می‌شود."
+                            />
+                        </section>
+                    )}
+
+                    {/* ---------------------------------------------------------------- */}
+                    {/* Story Selection                                                   */}
+                    {/* ---------------------------------------------------------------- */}
+
+                    {isStory && (
+                        <section className="space-y-5">
+                            <div>
+                                <div className="mb-2 flex items-center justify-between gap-3">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-800">
+                                            استوری مورد نظر
+                                        </label>
+
+                                        <p className="mt-1 text-xs leading-5 text-gray-400">
+                                            استوری‌ای را انتخاب کنید که می‌خواهید پاسخ‌های آن را مدیریت کنید.
+                                        </p>
+                                    </div>
+
+                                    {stories.length >
+                                        0 && (
+                                            <span className="shrink-0 rounded-full bg-gray-100 px-3 py-1 text-[11px] text-gray-500">
+                                                {
+                                                    stories.length
+                                                }{" "}
+                                                استوری فعال
+                                            </span>
+                                        )}
+                                </div>
+
+                                {loadingStories ? (
+                                    <div className="flex items-center gap-2 rounded-xl border border-gray-200 p-5 text-sm text-gray-500">
+                                        <Loader2
+                                            size={
+                                                17
+                                            }
+                                            className="animate-spin"
+                                        />
+
+                                        در حال دریافت استوری‌های فعال...
+                                    </div>
+                                ) : storiesError ? (
+                                    <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-4 text-sm leading-6 text-red-600">
+                                        {storiesError}
+                                    </div>
+                                ) : stories.length ===
+                                    0 ? (
+                                    <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50/60 px-5 py-8 text-center">
+                                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-white text-gray-400 shadow-sm">
+                                            <MessageSquareText
+                                                size={
+                                                    21
                                                 }
-                                            )}
+                                            />
                                         </div>
-                                    )}
-                                </div>
 
-                                <div>
-                                    <label className="mb-2 block text-sm font-medium text-gray-800">
-                                        کلمه یا عبارت Trigger
-                                    </label>
+                                        <h4 className="mt-4 text-sm font-semibold text-gray-800">
+                                            استوری فعالی پیدا نشد
+                                        </h4>
 
-                                    <input
-                                        value={
-                                            keyword
-                                        }
-                                        onChange={(
-                                            event
-                                        ) =>
-                                            setKeyword(
-                                                event
-                                                    .target
-                                                    .value
-                                            )
-                                        }
-                                        placeholder="مثلاً 1"
-                                        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-gray-900"
-                                    />
+                                        <p className="mx-auto mt-2 max-w-md text-xs leading-5 text-gray-400">
+                                            برای ساخت Story Reply ابتدا یک استوری فعال در Instagram داشته باشید.
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="grid max-h-[420px] grid-cols-2 gap-3 overflow-y-auto sm:grid-cols-3 md:grid-cols-4">
+                                        {stories.map(
+                                            (
+                                                story
+                                            ) => {
+                                                const selected =
+                                                    mediaId ===
+                                                    story.id;
 
-                                    <p className="mt-2 text-xs leading-5 text-gray-400">
-                                        {isComment
-                                            ? "وقتی کاربر این عبارت را در کامنت وارد کند، Automation اجرا می‌شود."
-                                            : "وقتی کاربر این عبارت را در پاسخ استوری ارسال کند، Automation اجرا می‌شود."}
-                                    </p>
-                                </div>
-                            </section>
-                        )}
+                                                const image =
+                                                    story.mediaType ===
+                                                        "VIDEO"
+                                                        ? story.thumbnailUrl ||
+                                                        story.mediaUrl
+                                                        : story.mediaUrl ||
+                                                        story.thumbnailUrl;
 
-                    {/* Comment Actions */}
+                                                return (
+                                                    <button
+                                                        key={
+                                                            story.id
+                                                        }
+                                                        type="button"
+                                                        onClick={() =>
+                                                            setMediaId(
+                                                                selected
+                                                                    ? ""
+                                                                    : story.id
+                                                            )
+                                                        }
+                                                        className={[
+                                                            "group overflow-hidden rounded-xl border bg-white text-right transition",
+                                                            selected
+                                                                ? "border-gray-900 ring-2 ring-gray-900/10"
+                                                                : "border-gray-200 hover:border-gray-400",
+                                                        ].join(
+                                                            " "
+                                                        )}
+                                                    >
+                                                        <div className="relative aspect-[9/14] overflow-hidden bg-gray-100">
+                                                            {image ? (
+                                                                <img
+                                                                    src={
+                                                                        image
+                                                                    }
+                                                                    alt="Instagram Story"
+                                                                    className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+                                                                />
+                                                            ) : (
+                                                                <div className="flex h-full items-center justify-center px-3 text-center text-xs text-gray-400">
+                                                                    پیش‌نمایش این استوری در دسترس نیست
+                                                                </div>
+                                                            )}
+
+                                                            {selected && (
+                                                                <div className="absolute inset-x-2 top-2 flex items-center justify-center rounded-lg bg-gray-950/85 px-2 py-2 text-[11px] font-medium text-white">
+                                                                    استوری انتخاب شد
+                                                                </div>
+                                                            )}
+
+                                                            <div className="absolute inset-x-2 bottom-2 rounded-lg bg-black/55 px-2 py-1.5 text-center text-[10px] text-white backdrop-blur-sm">
+                                                                {story.mediaType ===
+                                                                    "VIDEO"
+                                                                    ? "ویدیو"
+                                                                    : "تصویر"}
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="p-2.5">
+                                                            <p className="text-[11px] font-medium text-gray-700">
+                                                                استوری
+                                                            </p>
+
+                                                            <p className="mt-1 truncate text-[10px] text-gray-400">
+                                                                {formatStoryDate(
+                                                                    story.timestamp
+                                                                )}
+                                                            </p>
+                                                        </div>
+                                                    </button>
+                                                );
+                                            }
+                                        )}
+                                    </div>
+                                )}
+
+                                {selectedStory && (
+                                    <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+                                        <div className="min-w-0">
+                                            <p className="text-xs font-medium text-gray-800">
+                                                استوری انتخاب‌شده
+                                            </p>
+
+                                            <p className="mt-1 truncate text-[11px] text-gray-400">
+                                                ID:{" "}
+                                                {
+                                                    selectedStory.id
+                                                }
+                                            </p>
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setMediaId(
+                                                    ""
+                                                )
+                                            }
+                                            className="shrink-0 text-xs text-gray-500 transition hover:text-gray-900"
+                                        >
+                                            حذف انتخاب
+                                        </button>
+                                    </div>
+                                )}
+
+                                {selectedStoryIsExpired && (
+                                    <div className="mt-3 rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-xs leading-6 text-amber-700">
+                                        استوری‌ای که قبلاً برای این Automation انتخاب شده بود دیگر در لیست Storyهای فعال وجود ندارد. برای ذخیره تغییرات باید یک استوری فعال جدید انتخاب کنید.
+                                    </div>
+                                )}
+                            </div>
+
+                            <KeywordInput
+                                keyword={
+                                    keyword
+                                }
+                                setKeyword={
+                                    setKeyword
+                                }
+                                description="وقتی کاربر این عبارت را در پاسخ همین استوری ارسال کند، Automation اجرا می‌شود."
+                            />
+                        </section>
+                    )}
+
+                    {/* ---------------------------------------------------------------- */}
+                    {/* Comment Actions                                                   */}
+                    {/* ---------------------------------------------------------------- */}
 
                     {isComment && (
                         <section className="border-t border-gray-100 pt-6">
@@ -1519,9 +1899,7 @@ export default function AutomationForm({
                                         </div>
 
                                         <p className="mt-1 text-xs leading-5 text-gray-500">
-                                            بعد از تأیید Permission
-                                            و تست API فعال
-                                            می‌شود.
+                                            بعد از تأیید Permission و تست API فعال می‌شود.
                                         </p>
                                     </div>
                                 </label>
@@ -1529,7 +1907,9 @@ export default function AutomationForm({
                         </section>
                     )}
 
-                    {/* Direct Reply */}
+                    {/* ---------------------------------------------------------------- */}
+                    {/* Direct Reply                                                      */}
+                    {/* ---------------------------------------------------------------- */}
 
                     <section className="border-t border-gray-100 pt-6">
                         <div className="mb-4">
@@ -1538,10 +1918,7 @@ export default function AutomationForm({
                             </h3>
 
                             <p className="mt-1 text-xs leading-5 text-gray-400">
-                                برای پاسخ ساده می‌توانید
-                                مستقیماً متن وارد کنید.
-                                برای پاسخ چندمرحله‌ای از
-                                Flow استفاده کنید.
+                                می‌توانید یک پاسخ متنی ساده قرار دهید. برای پاسخ چندمرحله‌ای یا ترکیبی، از Flow پایین استفاده کنید.
                             </p>
                         </div>
 
@@ -1559,9 +1936,11 @@ export default function AutomationForm({
                                 )
                             }
                             placeholder={
-                                isDm
-                                    ? "مثلاً سلام، چطور می‌تونم کمکتون کنم؟"
-                                    : "متن دایرکت..."
+                                isStory
+                                    ? "مثلاً سلام، اطلاعات کامل در ادامه برای شما ارسال می‌شود."
+                                    : isDm
+                                        ? "مثلاً سلام، چطور می‌تونم کمکتون کنم؟"
+                                        : "متن دایرکت..."
                             }
                             className="min-h-24 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm leading-6 outline-none focus:border-gray-900"
                         />
@@ -1591,17 +1970,44 @@ export default function AutomationForm({
                                     </div>
 
                                     <p className="mt-1 text-xs leading-5 text-gray-500">
-                                        این Action فعلاً
-                                        فقط ذخیره می‌شود
-                                        و بعد از تأیید API
-                                        اجرا خواهد شد.
+                                        این Action فعلاً فقط ذخیره می‌شود و بعد از تأیید API اجرا خواهد شد.
                                     </p>
                                 </div>
                             </label>
                         )}
                     </section>
 
-                    {/* Flow Builder */}
+                    {/* ---------------------------------------------------------------- */}
+                    {/* Story Response Info                                               */}
+                    {/* ---------------------------------------------------------------- */}
+
+                    {isStory && (
+                        <section className="rounded-2xl border border-gray-200 bg-gray-50/70 p-5">
+                            <div className="flex items-start gap-3">
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-gray-700 shadow-sm">
+                                    <MessageSquareText
+                                        size={
+                                            17
+                                        }
+                                    />
+                                </div>
+
+                                <div>
+                                    <h3 className="text-sm font-semibold text-gray-900">
+                                        پاسخ به Reply استوری
+                                    </h3>
+
+                                    <p className="mt-1 text-xs leading-6 text-gray-500">
+                                        مثلاً اگر کاربر به این استوری عبارت «1» را Reply کند، پاسخ مستقیم و تمام پیام‌های Flow برای او ارسال می‌شوند.
+                                    </p>
+                                </div>
+                            </div>
+                        </section>
+                    )}
+
+                    {/* ---------------------------------------------------------------- */}
+                    {/* Flow Builder                                                      */}
+                    {/* ---------------------------------------------------------------- */}
 
                     <section className="border-t border-gray-100 pt-6">
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -1611,11 +2017,14 @@ export default function AutomationForm({
                                 </h3>
 
                                 <p className="mt-1 max-w-2xl text-xs leading-5 text-gray-400">
-                                    پیام‌ها را بسازید و با
-                                    Quick Reply مشخص کنید
-                                    هر انتخاب کاربر به کدام
-                                    پیام منتقل شود.
+                                    پیام‌ها را بسازید و با Quick Reply مشخص کنید هر انتخاب کاربر به کدام پیام منتقل شود.
                                 </p>
+
+                                {isStory && (
+                                    <p className="mt-2 text-xs font-medium text-gray-500">
+                                        Story Reply نیز می‌تواند از متن، عکس، ویدیو، ویس، ویترین، فرم و ترکیب چند پیام استفاده کند.
+                                    </p>
+                                )}
                             </div>
 
                             <button
@@ -1662,10 +2071,7 @@ export default function AutomationForm({
                                 </h4>
 
                                 <p className="mx-auto mt-2 max-w-md text-xs leading-5 text-gray-400">
-                                    برای Automation دایرکت،
-                                    پیام اول را بسازید و
-                                    سپس برای آن Quick Reply
-                                    اضافه کنید.
+                                    برای پاسخ چندمرحله‌ای، پیام اول را بسازید و سپس پیام‌های بعدی و Quick Replyها را اضافه کنید.
                                 </p>
 
                                 <button
@@ -1865,7 +2271,54 @@ export default function AutomationForm({
 }
 
 /* -------------------------------------------------------------------------- */
-/* Local helper                                                               */
+/* Keyword Input                                                              */
+/* -------------------------------------------------------------------------- */
+
+function KeywordInput({
+    keyword,
+    setKeyword,
+    description,
+}: {
+    keyword: string;
+    setKeyword: (
+        value: string
+    ) => void;
+    description: string;
+}) {
+    return (
+        <div>
+            <label className="mb-2 block text-sm font-medium text-gray-800">
+                کلمه یا عبارت Trigger
+            </label>
+
+            <input
+                value={
+                    keyword
+                }
+                onChange={(
+                    event
+                ) =>
+                    setKeyword(
+                        event
+                            .target
+                            .value
+                    )
+                }
+                placeholder="مثلاً 1"
+                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-gray-900"
+            />
+
+            <p className="mt-2 text-xs leading-5 text-gray-400">
+                {
+                    description
+                }
+            </p>
+        </div>
+    );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Local Helpers                                                              */
 /* -------------------------------------------------------------------------- */
 
 function getMessageTypeLabelLocal(
@@ -1895,6 +2348,35 @@ function getMessageTypeLabelLocal(
     }
 }
 
+function formatStoryDate(
+    timestamp: string | null
+) {
+    if (!timestamp) {
+        return "زمان نامشخص";
+    }
+
+    const date =
+        new Date(timestamp);
+
+    if (
+        Number.isNaN(
+            date.getTime()
+        )
+    ) {
+        return "زمان نامشخص";
+    }
+
+    return new Intl.DateTimeFormat(
+        "fa-IR",
+        {
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+        }
+    ).format(date);
+}
+
 /* -------------------------------------------------------------------------- */
 /* Trigger Option                                                             */
 /* -------------------------------------------------------------------------- */
@@ -1913,16 +2395,22 @@ function TriggerOption({
     return (
         <button
             type="button"
-            onClick={onClick}
+            onClick={
+                onClick
+            }
             className={[
                 "rounded-xl border p-4 text-right transition",
                 active
                     ? "border-slate-900 bg-slate-950 text-white"
                     : "border-slate-200 bg-white text-slate-800 hover:border-slate-400",
-            ].join(" ")}
+            ].join(
+                " "
+            )}
         >
             <div className="text-sm font-semibold">
-                {title}
+                {
+                    title
+                }
             </div>
 
             <div
@@ -1931,10 +2419,15 @@ function TriggerOption({
                     active
                         ? "text-slate-300"
                         : "text-slate-400",
-                ].join(" ")}
+                ].join(
+                    " "
+                )}
             >
-                {description}
+                {
+                    description
+                }
             </div>
         </button>
     );
 }
+
