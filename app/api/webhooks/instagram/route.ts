@@ -57,19 +57,73 @@ type StoryReplyData = {
 
 function extractStoryReplyData(message: any): StoryReplyData {
   /**
-   * Meta may provide Story information through the
-   * message attachment / story-related payload.
+   * IMPORTANT:
    *
-   * We intentionally inspect several possible locations
-   * so that the webhook is resilient to payload variations.
+   * Current Meta Instagram Story Reply payload:
+   *
+   * message.reply_to.story.id
+   * message.reply_to.story.url
+   *
+   * Example:
+   *
+   * "message": {
+   *   "mid": "...",
+   *   "text": "1",
+   *   "reply_to": {
+   *     "story": {
+   *       "url": "...",
+   *       "id": "18119602271476811"
+   *     }
+   *   }
+   * }
+   *
+   * This is the primary structure we must detect.
    */
 
-  const attachments = Array.isArray(message?.attachments)
-    ? message.attachments
-    : [];
+  // -------------------------------------------------------
+  // 1. PRIMARY / CURRENT META STORY REPLY STRUCTURE
+  // -------------------------------------------------------
+
+  const replyToStory = message?.reply_to?.story;
+
+  if (replyToStory) {
+    const storyId =
+      replyToStory?.id ??
+      replyToStory?.media_id ??
+      replyToStory?.mediaId ??
+      null;
+
+    const storyUrl =
+      replyToStory?.url ??
+      replyToStory?.permalink ??
+      replyToStory?.link ??
+      null;
+
+    console.log("Story Reply detected through message.reply_to.story");
+
+    console.log("Detected Story ID:", storyId ?? "NONE");
+
+    console.log("Detected Story URL:", storyUrl ?? "NONE");
+
+    if (storyId) {
+      return {
+        isStoryReply: true,
+        storyId: String(storyId),
+        storyUrl: storyUrl ? String(storyUrl) : null,
+      };
+    }
+
+    // Even if Meta tells us this is a story reply but does
+    // not provide an ID, keep it marked as Story Reply.
+    return {
+      isStoryReply: true,
+      storyId: null,
+      storyUrl: storyUrl ? String(storyUrl) : null,
+    };
+  }
 
   // -------------------------------------------------------
-  // 1. Direct story field
+  // 2. Direct story field fallback
   // -------------------------------------------------------
 
   const directStory = message?.story;
@@ -91,8 +145,12 @@ function extractStoryReplyData(message: any): StoryReplyData {
   }
 
   // -------------------------------------------------------
-  // 2. Attachment story
+  // 3. Attachment story fallback
   // -------------------------------------------------------
+
+  const attachments = Array.isArray(message?.attachments)
+    ? message.attachments
+    : [];
 
   for (const attachment of attachments) {
     const attachmentType = String(attachment?.type ?? "").toLowerCase();
@@ -129,7 +187,7 @@ function extractStoryReplyData(message: any): StoryReplyData {
   }
 
   // -------------------------------------------------------
-  // 3. Story-related top-level fields
+  // 4. Story-related top-level fields fallback
   // -------------------------------------------------------
 
   const storyId =
@@ -146,6 +204,10 @@ function extractStoryReplyData(message: any): StoryReplyData {
       storyUrl: null,
     };
   }
+
+  // -------------------------------------------------------
+  // 5. Not a Story Reply
+  // -------------------------------------------------------
 
   return {
     isStoryReply: false,
@@ -517,11 +579,15 @@ async function processMessagingEvent(
     // STORY REPLY
     //
     // IMPORTANT:
-    // Story Reply must be handled before normal DM
-    // automation.
+    // This MUST happen before normal DM automation.
+    // Otherwise Story Reply would be treated as a normal DM.
     // =======================================================
 
     if (storyReply.isStoryReply) {
+      console.log("========================================");
+      console.log("STORY REPLY DETECTED - BYPASSING NORMAL DM");
+      console.log("========================================");
+
       await processInstagramStoryReply(
         {
           messagingEvent,
@@ -536,6 +602,8 @@ async function processMessagingEvent(
         },
         instagramAccount,
       );
+
+      console.log("========================================");
 
       return;
     }
@@ -901,6 +969,24 @@ async function processInstagramStoryReply(
     const participantId = String(senderId);
 
     // =======================================================
+    // Prevent duplicate webhook event
+    // =======================================================
+
+    if (messageId) {
+      const existingMessage = await prisma.conversationMessage.findUnique({
+        where: {
+          igMessageId: messageId,
+        },
+      });
+
+      if (existingMessage) {
+        console.log("Story Reply already processed:", messageId);
+
+        return;
+      }
+    }
+
+    // =======================================================
     // Find / create conversation
     // =======================================================
 
@@ -951,24 +1037,6 @@ async function processInstagramStoryReply(
         "Existing conversation updated for Story Reply:",
         conversation.id,
       );
-    }
-
-    // =======================================================
-    // Prevent duplicate webhook event
-    // =======================================================
-
-    if (messageId) {
-      const existingMessage = await prisma.conversationMessage.findUnique({
-        where: {
-          igMessageId: messageId,
-        },
-      });
-
-      if (existingMessage) {
-        console.log("Story Reply already processed:", messageId);
-
-        return;
-      }
     }
 
     // =======================================================
@@ -1029,6 +1097,16 @@ async function processInstagramStoryReply(
     // =======================================================
 
     console.log("Looking for STORY_REPLY automation...");
+
+    console.log({
+      instagramAccountId: instagramAccount.id,
+
+      triggerType: "STORY_REPLY_KEYWORD",
+
+      keyword: normalizedKeyword,
+
+      mediaId: storyId,
+    });
 
     const automation = await findMatchingAutomation({
       instagramAccountId: instagramAccount.id,
