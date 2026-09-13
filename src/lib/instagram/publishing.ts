@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
+import { getStorageProvider } from "@/lib/storage/provider";
 
 const INSTAGRAM_API_VERSION = "v26.0";
 const INSTAGRAM_GRAPH_URL = `https://graph.instagram.com/${INSTAGRAM_API_VERSION}`;
@@ -272,6 +273,33 @@ async function publishContainer(
   return data.id;
 }
 
+async function cleanupPublishedMedia(
+  mediaItems: Array<{ id: string; storageKey: string; deletedAt: Date | null }>,
+) {
+  const storageProvider = getStorageProvider();
+
+  for (const item of mediaItems) {
+    if (item.deletedAt || item.storageKey.startsWith("test:")) {
+      continue;
+    }
+
+    try {
+      await storageProvider.delete(item.storageKey);
+
+      await prisma.instagramPublishMedia.update({
+        where: { id: item.id },
+        data: { deletedAt: new Date() },
+      });
+    } catch (error) {
+      console.error("Failed to delete published Instagram media:", {
+        mediaId: item.id,
+        storageKey: item.storageKey,
+        error,
+      });
+    }
+  }
+}
+
 export async function publishInstagramJob(jobId: string) {
   const job = await prisma.instagramPublishJob.findUnique({
     where: {
@@ -423,6 +451,8 @@ export async function publishInstagramJob(jobId: string) {
         media: true,
       },
     });
+
+    await cleanupPublishedMedia(updatedJob.media);
 
     return updatedJob;
   } catch (error) {
