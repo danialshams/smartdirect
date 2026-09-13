@@ -2,31 +2,107 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { exchangeInstagramToken } from "@/lib/instagram/token-manager";
 
+const INSTAGRAM_API_VERSION = "v26.0";
+const REQUEST_TIMEOUT_MS = 15000;
+const STATE_MAX_AGE_MS = 10 * 60 * 1000;
+
+type InstagramOAuthTokenResponse = {
+  access_token?: string;
+  user_id?: string | number;
+  permissions?: string[];
+
+  error?: string;
+  error_type?: string;
+  error_message?: string;
+};
+
+type InstagramProfileResponse = {
+  id?: string;
+  user_id?: string;
+  username?: string;
+
+  error?: {
+    message?: string;
+    type?: string;
+    code?: number;
+    error_subcode?: number;
+  };
+
+  error_type?: string;
+  error_message?: string;
+};
+
+function getBaseUrl(request: NextRequest): string {
+  return process.env.NEXTAUTH_URL || request.url;
+}
+
+function redirectToDashboard(request: NextRequest, status: string) {
+  return NextResponse.redirect(
+    new URL(
+      `/dashboard?instagram=${encodeURIComponent(status)}`,
+      getBaseUrl(request),
+    ),
+  );
+}
+
+async function fetchWithTimeout(
+  url: string,
+  options?: RequestInit,
+): Promise<Response> {
+  const controller = new AbortController();
+
+  const timeout = setTimeout(() => {
+    controller.abort();
+  }, REQUEST_TIMEOUT_MS);
+
+  try {
+    return await fetch(url, {
+      ...options,
+      signal: controller.signal,
+      cache: "no-store",
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function readJsonResponse<T>(response: Response): Promise<T> {
+  const text = await response.text();
+
+  if (!text) {
+    return {} as T;
+  }
+
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    throw new Error("Instagram returned an invalid JSON response");
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
 
     const code = searchParams.get("code");
     const state = searchParams.get("state");
-    const error = searchParams.get("error");
+
+    const oauthError = searchParams.get("error");
+    const errorReason = searchParams.get("error_reason");
+    const errorDescription = searchParams.get("error_description");
 
     // =========================================================
     // 1. Instagram OAuth Error
     // =========================================================
 
-    if (error) {
-      console.error("Instagram OAuth error:", {
-        error,
-        error_reason: searchParams.get("error_reason"),
-        error_description: searchParams.get("error_description"),
+    if (oauthError) {
+      console.error("[Instagram OAuth] OAuth error:", {
+        error: oauthError,
+        errorReason,
+        errorDescription,
       });
 
-      return NextResponse.redirect(
-        new URL(
-          "/dashboard?instagram=error",
-          process.env.NEXTAUTH_URL || request.url,
-        ),
-      );
+      return redirectToDashboard(request, "error");
     }
 
     // =========================================================
@@ -34,14 +110,9 @@ export async function GET(request: NextRequest) {
     // =========================================================
 
     if (!code) {
-      console.error("Instagram callback: code is missing");
+      console.error("[Instagram OAuth] Authorization code is missing");
 
-      return NextResponse.json(
-        {
-          error: "کد احراز هویت اینستاگرام دریافت نشد",
-        },
-        { status: 400 },
-      );
+      return redirectToDashboard(request, "code_missing");
     }
 
     // =========================================================
@@ -49,14 +120,9 @@ export async function GET(request: NextRequest) {
     // =========================================================
 
     if (!state) {
-      console.error("Instagram callback: state is missing");
+      console.error("[Instagram OAuth] State is missing");
 
-      return NextResponse.json(
-        {
-          error: "State دریافت نشد",
-        },
-        { status: 400 },
-      );
+      return redirectToDashboard(request, "state_missing");
     }
 
     // =========================================================
@@ -69,52 +135,47 @@ export async function GET(request: NextRequest) {
     };
 
     try {
-      stateData = JSON.parse(Buffer.from(state, "base64url").toString("utf-8"));
+      const decodedState = Buffer.from(state, "base64url").toString("utf-8");
+
+      stateData = JSON.parse(decodedState);
     } catch (error) {
-      console.error("Instagram callback: invalid state", error);
+      console.error("[Instagram OAuth] Invalid state:", error);
 
-      return NextResponse.json(
-        {
-          error: "State نامعتبر است",
-        },
-        { status: 400 },
-      );
+      return redirectToDashboard(request, "invalid_state");
     }
 
     // =========================================================
-    // 5. Validate State
+    // 5. Validate State Data
     // =========================================================
 
-    if (!stateData.userId || !stateData.timestamp) {
-      console.error("Instagram callback: invalid state data");
+    if (
+      !stateData ||
+      typeof stateData.userId !== "string" ||
+      !stateData.userId ||
+      typeof stateData.timestamp !== "number" ||
+      !Number.isFinite(stateData.timestamp)
+    ) {
+      console.error("[Instagram OAuth] Invalid state data");
 
-      return NextResponse.json(
-        {
-          error: "اطلاعات State ناقص یا نامعتبر است",
-        },
-        { status: 400 },
-      );
+      return redirectToDashboard(request, "invalid_state");
     }
 
     // =========================================================
-    // 6. State Expiration
+    // 6. Validate State Age
     // =========================================================
 
     const stateAge = Date.now() - stateData.timestamp;
 
-    if (stateAge > 10 * 60 * 1000) {
-      console.error("Instagram callback: state expired");
+    if (stateAge < 0 || stateAge > STATE_MAX_AGE_MS) {
+      console.error("[Instagram OAuth] State expired or invalid:", {
+        stateAge,
+      });
 
-      return NextResponse.json(
-        {
-          error: "درخواست اتصال منقضی شده است. دوباره تلاش کنید.",
-        },
-        { status: 400 },
-      );
+      return redirectToDashboard(request, "state_expired");
     }
 
     // =========================================================
-    // 7. Environment
+    // 7. Environment Variables
     // =========================================================
 
     const clientId = process.env.INSTAGRAM_CLIENT_ID;
@@ -124,59 +185,39 @@ export async function GET(request: NextRequest) {
     const redirectUri = process.env.INSTAGRAM_REDIRECT_URI;
 
     if (!clientId) {
-      console.error("INSTAGRAM_CLIENT_ID is missing");
+      console.error("[Instagram OAuth] INSTAGRAM_CLIENT_ID is missing");
 
-      return NextResponse.json(
-        {
-          error: "INSTAGRAM_CLIENT_ID تنظیم نشده است",
-        },
-        { status: 500 },
-      );
+      return redirectToDashboard(request, "configuration_error");
     }
 
     if (!clientSecret) {
-      console.error("INSTAGRAM_CLIENT_SECRET is missing");
+      console.error("[Instagram OAuth] INSTAGRAM_CLIENT_SECRET is missing");
 
-      return NextResponse.json(
-        {
-          error: "INSTAGRAM_CLIENT_SECRET تنظیم نشده است",
-        },
-        { status: 500 },
-      );
+      return redirectToDashboard(request, "configuration_error");
     }
 
     if (!redirectUri) {
-      console.error("INSTAGRAM_REDIRECT_URI is missing");
+      console.error("[Instagram OAuth] INSTAGRAM_REDIRECT_URI is missing");
 
-      return NextResponse.json(
-        {
-          error: "INSTAGRAM_REDIRECT_URI تنظیم نشده است",
-        },
-        { status: 500 },
-      );
+      return redirectToDashboard(request, "configuration_error");
     }
 
     // =========================================================
     // 8. Exchange Authorization Code
     // =========================================================
 
-    console.log("Instagram OAuth: exchanging authorization code...");
-
-    const tokenController = new AbortController();
-
-    const tokenTimeout = setTimeout(() => {
-      tokenController.abort();
-    }, 15000);
+    console.log("[Instagram OAuth] Exchanging authorization code...");
 
     let tokenResponse: Response;
 
     try {
-      tokenResponse = await fetch(
+      tokenResponse = await fetchWithTimeout(
         "https://api.instagram.com/oauth/access_token",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
+            Accept: "application/json",
           },
           body: new URLSearchParams({
             client_id: clientId,
@@ -184,27 +225,30 @@ export async function GET(request: NextRequest) {
             grant_type: "authorization_code",
             redirect_uri: redirectUri,
             code,
-          }),
-          signal: tokenController.signal,
-          cache: "no-store",
+          }).toString(),
         },
       );
     } catch (error) {
-      console.error("Instagram token exchange FETCH ERROR:", error);
-
-      return NextResponse.redirect(
-        new URL(
-          "/dashboard?instagram=token_fetch_error",
-          process.env.NEXTAUTH_URL || request.url,
-        ),
+      console.error(
+        "[Instagram OAuth] Authorization code exchange request failed:",
+        error,
       );
-    } finally {
-      clearTimeout(tokenTimeout);
+
+      return redirectToDashboard(request, "token_fetch_error");
     }
 
-    const tokenData = await tokenResponse.json();
+    let tokenData: InstagramOAuthTokenResponse;
 
-    console.log("Instagram short-lived token response:", {
+    try {
+      tokenData =
+        await readJsonResponse<InstagramOAuthTokenResponse>(tokenResponse);
+    } catch (error) {
+      console.error("[Instagram OAuth] Token response parsing failed:", error);
+
+      return redirectToDashboard(request, "token_invalid_response");
+    }
+
+    console.log("[Instagram OAuth] Short-lived token response:", {
       success: tokenResponse.ok,
       status: tokenResponse.status,
       user_id: tokenData.user_id,
@@ -219,31 +263,26 @@ export async function GET(request: NextRequest) {
     // =========================================================
 
     if (!tokenResponse.ok || !tokenData.access_token) {
-      console.error("Instagram token exchange failed:", {
+      console.error("[Instagram OAuth] Authorization code exchange failed:", {
         status: tokenResponse.status,
         error: tokenData.error,
         error_type: tokenData.error_type,
         error_message: tokenData.error_message,
       });
 
-      return NextResponse.redirect(
-        new URL(
-          "/dashboard?instagram=token_error",
-          process.env.NEXTAUTH_URL || request.url,
-        ),
-      );
+      return redirectToDashboard(request, "token_error");
     }
 
     const shortLivedToken = String(tokenData.access_token);
 
-    const tokenUserId = String(tokenData.user_id);
+    const tokenUserId = tokenData.user_id ? String(tokenData.user_id) : null;
 
     // =========================================================
-    // 10. Exchange Short-Lived → Long-Lived
+    // 10. Short-Lived -> Long-Lived Token
     // =========================================================
 
     console.log(
-      "Instagram OAuth: exchanging short-lived token for long-lived token...",
+      "[Instagram OAuth] Exchanging short-lived token for long-lived token...",
     );
 
     let longLivedTokenData;
@@ -251,130 +290,103 @@ export async function GET(request: NextRequest) {
     try {
       longLivedTokenData = await exchangeInstagramToken(shortLivedToken);
     } catch (error) {
-      console.error("Instagram long-lived token exchange failed:", error);
-
-      return NextResponse.redirect(
-        new URL(
-          "/dashboard?instagram=long_lived_token_error",
-          process.env.NEXTAUTH_URL || request.url,
-        ),
+      console.error(
+        "[Instagram OAuth] Long-lived token exchange failed:",
+        error,
       );
+
+      return redirectToDashboard(request, "long_lived_token_error");
     }
 
     const accessToken = longLivedTokenData.accessToken;
 
     const tokenExpiresAt = longLivedTokenData.expiresAt;
 
-    console.log("Instagram OAuth: long-lived token ready:", {
+    console.log("[Instagram OAuth] Long-lived token ready:", {
       tokenUserId,
+      expiresIn: longLivedTokenData.expiresIn,
       tokenExpiresAt: tokenExpiresAt.toISOString(),
     });
 
     // =========================================================
-    // 11. Get Instagram Profile
+    // 11. Get Instagram Professional Account
     // =========================================================
 
-    console.log("Instagram OAuth: getting Instagram professional account...");
+    console.log("[Instagram OAuth] Getting Instagram profile...");
 
-    const profileUrl =
-      `https://graph.instagram.com/${"v26.0"}/me` +
-      `?fields=id,user_id,username` +
-      `&access_token=${encodeURIComponent(accessToken)}`;
+    const profileUrl = new URL(
+      `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/me`,
+    );
 
-    const profileController = new AbortController();
+    profileUrl.searchParams.set("fields", "id,user_id,username");
 
-    const profileTimeout = setTimeout(() => {
-      profileController.abort();
-    }, 15000);
+    profileUrl.searchParams.set("access_token", accessToken);
 
     let profileResponse: Response;
 
     try {
-      profileResponse = await fetch(profileUrl, {
+      profileResponse = await fetchWithTimeout(profileUrl.toString(), {
         method: "GET",
-        cache: "no-store",
-        signal: profileController.signal,
+        headers: {
+          Accept: "application/json",
+        },
       });
     } catch (error) {
-      console.error("Instagram profile FETCH ERROR:", error);
+      console.error("[Instagram OAuth] Profile request failed:", error);
 
-      return NextResponse.redirect(
-        new URL(
-          "/dashboard?instagram=profile_fetch_error",
-          process.env.NEXTAUTH_URL || request.url,
-        ),
-      );
-    } finally {
-      clearTimeout(profileTimeout);
+      return redirectToDashboard(request, "profile_fetch_error");
     }
 
-    const profileText = await profileResponse.text();
-
-    console.log("========================================");
-    console.log("INSTAGRAM PROFILE RESPONSE");
-    console.log("status:", profileResponse.status);
-    console.log("ok:", profileResponse.ok);
-    console.log("body:", profileText);
-    console.log("========================================");
-
-    // =========================================================
-    // 12. Parse Profile
-    // =========================================================
-
-    let profileData: {
-      id?: string;
-      user_id?: string;
-      username?: string;
-    };
+    let profileData: InstagramProfileResponse;
 
     try {
-      profileData = JSON.parse(profileText);
-    } catch {
-      console.error("Instagram profile response is not valid JSON");
-
-      return NextResponse.redirect(
-        new URL(
-          "/dashboard?instagram=profile_invalid_json",
-          process.env.NEXTAUTH_URL || request.url,
-        ),
+      profileData =
+        await readJsonResponse<InstagramProfileResponse>(profileResponse);
+    } catch (error) {
+      console.error(
+        "[Instagram OAuth] Profile response parsing failed:",
+        error,
       );
+
+      return redirectToDashboard(request, "profile_invalid_json");
     }
 
+    console.log("[Instagram OAuth] Profile response:", {
+      status: profileResponse.status,
+      ok: profileResponse.ok,
+      id: profileData.id,
+      user_id: profileData.user_id,
+      username: profileData.username,
+      error: profileData.error,
+      error_type: profileData.error_type,
+      error_message: profileData.error_message,
+    });
+
     // =========================================================
-    // 13. Validate Profile
+    // 12. Validate Profile Response
     // =========================================================
 
     if (!profileResponse.ok) {
-      console.error("Instagram profile request failed:", {
+      console.error("[Instagram OAuth] Profile request failed:", {
         status: profileResponse.status,
         data: profileData,
         tokenUserId,
       });
 
-      return NextResponse.redirect(
-        new URL(
-          "/dashboard?instagram=profile_error",
-          process.env.NEXTAUTH_URL || request.url,
-        ),
-      );
+      return redirectToDashboard(request, "profile_error");
     }
 
     if (!profileData.user_id) {
       console.error(
-        "Instagram profile response does not contain user_id:",
+        "[Instagram OAuth] Instagram professional user_id is missing:",
         profileData,
       );
 
-      return NextResponse.redirect(
-        new URL(
-          "/dashboard?instagram=instagram_user_id_missing",
-          process.env.NEXTAUTH_URL || request.url,
-        ),
-      );
+      return redirectToDashboard(request, "instagram_user_id_missing");
     }
 
     // =========================================================
-    // 14. Instagram IDs
+    // 13. Instagram Account Data
     // =========================================================
 
     const instagramUserId = String(profileData.user_id);
@@ -383,26 +395,35 @@ export async function GET(request: NextRequest) {
       ? String(profileData.id)
       : undefined;
 
-    const instagramUsername = profileData.username || "";
+    const instagramUsername = profileData.username?.trim() || "";
 
-    console.log("========================================");
-    console.log("INSTAGRAM OAUTH ID DEBUG");
-    console.log("tokenUserId:", tokenUserId);
-    console.log("appScopedId:", instagramAppScopedId);
-    console.log("professionalUserId:", instagramUserId);
-    console.log("username:", instagramUsername);
-    console.log("tokenExpiresAt:", tokenExpiresAt.toISOString());
-    console.log("========================================");
+    if (!instagramUsername) {
+      console.error(
+        "[Instagram OAuth] Instagram username is missing:",
+        profileData,
+      );
+
+      return redirectToDashboard(request, "instagram_username_missing");
+    }
+
+    console.log("[Instagram OAuth] Account information:", {
+      tokenUserId,
+      appScopedId: instagramAppScopedId,
+      professionalUserId: instagramUserId,
+      username: instagramUsername,
+      tokenExpiresAt: tokenExpiresAt.toISOString(),
+    });
 
     // =========================================================
-    // 15. Find Existing Account
+    // 14. Find Existing Instagram Account
     // =========================================================
 
-    console.log("Instagram OAuth: checking existing account...");
+    console.log("[Instagram OAuth] Checking existing account...");
 
     const existingAccount = await prisma.instagramAccount.findFirst({
       where: {
         userId: stateData.userId,
+
         OR: [
           {
             igUserId: instagramUserId,
@@ -415,15 +436,15 @@ export async function GET(request: NextRequest) {
     });
 
     // =========================================================
-    // 16. Save Instagram Account
+    // 15. Save Instagram Account
     // =========================================================
 
-    console.log("Instagram OAuth: saving account to database...");
+    console.log("[Instagram OAuth] Saving Instagram account...");
 
     let instagramAccount;
 
     if (existingAccount) {
-      console.log("Existing Instagram account found. Updating...");
+      console.log("[Instagram OAuth] Existing account found. Updating...");
 
       instagramAccount = await prisma.instagramAccount.update({
         where: {
@@ -434,17 +455,15 @@ export async function GET(request: NextRequest) {
 
           igUsername: instagramUsername,
 
-          accessToken,
+          accessToken: accessToken,
 
-          tokenExpiresAt,
+          tokenExpiresAt: tokenExpiresAt,
 
           isConnected: true,
         },
       });
     } else {
-      console.log(
-        "No existing Instagram account found. Creating new account...",
-      );
+      console.log("[Instagram OAuth] Creating new Instagram account...");
 
       instagramAccount = await prisma.instagramAccount.create({
         data: {
@@ -454,9 +473,9 @@ export async function GET(request: NextRequest) {
 
           igUsername: instagramUsername,
 
-          accessToken,
+          accessToken: accessToken,
 
-          tokenExpiresAt,
+          tokenExpiresAt: tokenExpiresAt,
 
           isConnected: true,
         },
@@ -464,18 +483,18 @@ export async function GET(request: NextRequest) {
     }
 
     // =========================================================
-    // 17. Final Log
+    // 16. Final Verification
     // =========================================================
 
     console.log("========================================");
 
     console.log("INSTAGRAM CONNECTION COMPLETE");
 
-    console.log("Webhook-compatible Instagram ID:", instagramAccount.igUserId);
+    console.log("Database account ID:", instagramAccount.id);
+
+    console.log("Instagram user ID:", instagramAccount.igUserId);
 
     console.log("Instagram username:", instagramAccount.igUsername);
-
-    console.log("Database account ID:", instagramAccount.id);
 
     console.log(
       "Token expires at:",
@@ -487,23 +506,13 @@ export async function GET(request: NextRequest) {
     console.log("========================================");
 
     // =========================================================
-    // 18. Redirect
+    // 17. Redirect
     // =========================================================
 
-    return NextResponse.redirect(
-      new URL(
-        "/dashboard?instagram=connected",
-        process.env.NEXTAUTH_URL || request.url,
-      ),
-    );
+    return redirectToDashboard(request, "connected");
   } catch (error) {
-    console.error("Instagram callback unexpected error:", error);
+    console.error("[Instagram OAuth] Unexpected callback error:", error);
 
-    return NextResponse.redirect(
-      new URL(
-        "/dashboard?instagram=error",
-        process.env.NEXTAUTH_URL || request.url,
-      ),
-    );
+    return redirectToDashboard(request, "error");
   }
 }

@@ -1,22 +1,28 @@
 import { prisma } from "@/lib/prisma";
 
-const INSTAGRAM_API_VERSION = "v26.0";
-
-// حدود 60 روز
-const DEFAULT_TOKEN_LIFETIME_SECONDS = 60 * 24 * 60 * 60;
-
-// وقتی کمتر از 7 روز مانده، refresh می‌کنیم
 const REFRESH_THRESHOLD_SECONDS = 7 * 24 * 60 * 60;
+const REQUEST_TIMEOUT_MS = 15000;
 
 type InstagramTokenResponse = {
   access_token?: string;
   token_type?: string;
   expires_in?: number;
+
   error?: {
     message?: string;
     type?: string;
     code?: number;
+    error_subcode?: number;
   };
+
+  error_type?: string;
+  error_message?: string;
+};
+
+type InstagramTokenResult = {
+  accessToken: string;
+  expiresAt: Date;
+  expiresIn: number;
 };
 
 function getInstagramAppSecret(): string {
@@ -29,14 +35,97 @@ function getInstagramAppSecret(): string {
   return secret;
 }
 
-/**
- * تبدیل Short-Lived Token به Long-Lived Token
- */
-export async function exchangeInstagramToken(shortLivedToken: string): Promise<{
-  accessToken: string;
-  expiresAt: Date;
-  expiresIn: number;
+function getErrorMessage(data: InstagramTokenResponse): string {
+  return (
+    data.error?.message ||
+    data.error_message ||
+    "Instagram token operation failed"
+  );
+}
+
+function getRemainingSeconds(tokenExpiresAt: Date | null): number | null {
+  if (!tokenExpiresAt) {
+    return null;
+  }
+
+  return Math.floor((tokenExpiresAt.getTime() - Date.now()) / 1000);
+}
+
+function isTokenExpired(tokenExpiresAt: Date | null): boolean {
+  if (!tokenExpiresAt) {
+    return true;
+  }
+
+  return tokenExpiresAt.getTime() <= Date.now();
+}
+
+function shouldRefreshToken(tokenExpiresAt: Date | null): boolean {
+  if (!tokenExpiresAt) {
+    return true;
+  }
+
+  const remainingSeconds = getRemainingSeconds(tokenExpiresAt);
+
+  if (remainingSeconds === null) {
+    return true;
+  }
+
+  return remainingSeconds <= REFRESH_THRESHOLD_SECONDS;
+}
+
+async function fetchInstagram(url: string): Promise<{
+  response: Response;
+  data: InstagramTokenResponse;
 }> {
+  const controller = new AbortController();
+
+  const timeout = setTimeout(() => {
+    controller.abort();
+  }, REQUEST_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      cache: "no-store",
+      signal: controller.signal,
+      headers: {
+        Accept: "application/json",
+      },
+    });
+
+    const text = await response.text();
+
+    let data: InstagramTokenResponse = {};
+
+    try {
+      data = text ? (JSON.parse(text) as InstagramTokenResponse) : {};
+    } catch {
+      data = {
+        error_message: text || "Invalid JSON response",
+      };
+    }
+
+    return {
+      response,
+      data,
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+/**
+ * =========================================================
+ * Short-Lived Token -> Long-Lived Token
+ * =========================================================
+ */
+export async function exchangeInstagramToken(
+  shortLivedToken: string,
+): Promise<InstagramTokenResult> {
+  if (!shortLivedToken) {
+    throw new Error("Instagram short-lived access token is missing");
+  }
+
   const clientSecret = getInstagramAppSecret();
 
   const url = new URL("https://graph.instagram.com/access_token");
@@ -47,29 +136,53 @@ export async function exchangeInstagramToken(shortLivedToken: string): Promise<{
 
   url.searchParams.set("access_token", shortLivedToken);
 
-  const response = await fetch(url.toString(), {
-    method: "GET",
-    cache: "no-store",
-  });
+  console.log(
+    "[Instagram Token] Exchanging short-lived token for long-lived token...",
+  );
 
-  const data = (await response.json()) as InstagramTokenResponse;
+  let response: Response;
+  let data: InstagramTokenResponse;
+
+  try {
+    const result = await fetchInstagram(url.toString());
+
+    response = result.response;
+    data = result.data;
+  } catch (error) {
+    console.error(
+      "[Instagram Token] Long-lived token exchange request failed:",
+      error,
+    );
+
+    throw new Error("Instagram token exchange request failed");
+  }
 
   if (!response.ok || !data.access_token) {
     console.error("[Instagram Token] Long-lived token exchange failed:", {
       status: response.status,
       error: data.error,
+      error_type: data.error_type,
+      error_message: data.error_message,
     });
 
-    throw new Error(
-      data.error?.message ||
-        "تبدیل توکن اینستاگرام به Long-Lived Token ناموفق بود",
-    );
+    throw new Error(getErrorMessage(data));
   }
 
-  const expiresIn =
-    typeof data.expires_in === "number"
-      ? data.expires_in
-      : DEFAULT_TOKEN_LIFETIME_SECONDS;
+  /**
+   * expiration باید از خود Meta دریافت شود.
+   *
+   * هیچ مقدار پیش‌فرضی مثل 60 روز قرار نمی‌دهیم.
+   */
+  if (typeof data.expires_in !== "number" || data.expires_in <= 0) {
+    console.error(
+      "[Instagram Token] Meta did not return a valid expires_in:",
+      data,
+    );
+
+    throw new Error("Instagram did not return a valid token expiration time");
+  }
+
+  const expiresIn = Math.floor(data.expires_in);
 
   const expiresAt = new Date(Date.now() + expiresIn * 1000);
 
@@ -86,10 +199,9 @@ export async function exchangeInstagramToken(shortLivedToken: string): Promise<{
 }
 
 /**
- * Refresh کردن Long-Lived Token
- *
- * Token باید هنوز معتبر باشد و حداقل 24 ساعت از
- * دریافت/refresh قبلی آن گذشته باشد.
+ * =========================================================
+ * Refresh Long-Lived Token
+ * =========================================================
  */
 export async function refreshInstagramToken(
   instagramAccountId: string,
@@ -101,115 +213,13 @@ export async function refreshInstagramToken(
     where: {
       id: instagramAccountId,
     },
-  });
-
-  if (!account) {
-    throw new Error("Instagram account not found");
-  }
-
-  if (!account.accessToken) {
-    throw new Error("Instagram access token is missing");
-  }
-
-  const url = new URL("https://graph.instagram.com/refresh_access_token");
-  
-  url.searchParams.set("grant_type", "ig_refresh_token");
-
-  url.searchParams.set("access_token", account.accessToken);
-
-  const response = await fetch(url.toString(), {
-    method: "GET",
-    cache: "no-store",
-  });
-
-  const data = (await response.json()) as InstagramTokenResponse;
-
-  if (!response.ok || !data.access_token) {
-    console.error("[Instagram Token] Refresh failed:", {
-      instagramAccountId,
-      status: response.status,
-      error: data.error,
-    });
-
-    // اگر Meta توکن را invalid کرده باشد،
-    // اتصال را قطع‌شده علامت می‌زنیم.
-    await prisma.instagramAccount.update({
-      where: {
-        id: instagramAccountId,
-      },
-      data: {
-        isConnected: false,
-      },
-    });
-
-    throw new Error(data.error?.message || "تمدید توکن اینستاگرام ناموفق بود");
-  }
-
-  const expiresIn =
-    typeof data.expires_in === "number"
-      ? data.expires_in
-      : DEFAULT_TOKEN_LIFETIME_SECONDS;
-
-  const expiresAt = new Date(Date.now() + expiresIn * 1000);
-
-  const updatedAccount = await prisma.instagramAccount.update({
-    where: {
-      id: instagramAccountId,
-    },
-    data: {
-      accessToken: data.access_token,
-      tokenExpiresAt: expiresAt,
-      isConnected: true,
-    },
-  });
-
-  console.log("[Instagram Token] Token refreshed successfully:", {
-    instagramAccountId: updatedAccount.id,
-    igUserId: updatedAccount.igUserId,
-    username: updatedAccount.igUsername,
-    expiresAt: expiresAt.toISOString(),
-  });
-
-  return {
-    accessToken: data.access_token,
-    expiresAt,
-  };
-}
-
-/**
- * بررسی اینکه Token نیاز به Refresh دارد یا خیر
- */
-function shouldRefreshToken(tokenExpiresAt: Date | null): boolean {
-  if (!tokenExpiresAt) {
-    return true;
-  }
-
-  const remainingSeconds = (tokenExpiresAt.getTime() - Date.now()) / 1000;
-
-  return remainingSeconds <= REFRESH_THRESHOLD_SECONDS;
-}
-
-/**
- * همیشه از این تابع برای گرفتن Token استفاده کن.
- *
- * اگر Token سالم باشد:
- * همان Token را برمی‌گرداند.
- *
- * اگر کمتر از 7 روز تا انقضا مانده باشد:
- * Token را Refresh می‌کند.
- */
-export async function getValidInstagramAccessToken(
-  instagramAccountId: string,
-): Promise<string> {
-  const account = await prisma.instagramAccount.findUnique({
-    where: {
-      id: instagramAccountId,
-    },
     select: {
       id: true,
       accessToken: true,
       tokenExpiresAt: true,
       isConnected: true,
+      igUserId: true,
+      igUsername: true,
     },
   });
 
@@ -225,13 +235,252 @@ export async function getValidInstagramAccessToken(
     throw new Error("Instagram access token is missing");
   }
 
-  if (!shouldRefreshToken(account.tokenExpiresAt)) {
+  /**
+   * اگر Token هنوز معتبر است و بیشتر از 7 روز
+   * اعتبار دارد، اصلاً Refresh نمی‌کنیم.
+   *
+   * این check باعث می‌شود اگر Cron یا Webhook
+   * اشتباهی این تابع را زود صدا زد، Refresh بی‌دلیل
+   * انجام نشود.
+   */
+  if (
+    account.tokenExpiresAt &&
+    !isTokenExpired(account.tokenExpiresAt) &&
+    !shouldRefreshToken(account.tokenExpiresAt)
+  ) {
+    console.log("[Instagram Token] Token is still healthy. Refresh skipped:", {
+      instagramAccountId,
+      igUserId: account.igUserId,
+      username: account.igUsername,
+      expiresAt: account.tokenExpiresAt.toISOString(),
+      remainingSeconds: getRemainingSeconds(account.tokenExpiresAt),
+    });
+
+    return {
+      accessToken: account.accessToken,
+      expiresAt: account.tokenExpiresAt,
+    };
+  }
+
+  const url = new URL("https://graph.instagram.com/refresh_access_token");
+
+  url.searchParams.set("grant_type", "ig_refresh_token");
+
+  url.searchParams.set("access_token", account.accessToken);
+
+  console.log("[Instagram Token] Refreshing token:", {
+    instagramAccountId,
+    igUserId: account.igUserId,
+    username: account.igUsername,
+    tokenExpiresAt: account.tokenExpiresAt?.toISOString() ?? null,
+    remainingSeconds: getRemainingSeconds(account.tokenExpiresAt),
+  });
+
+  let response: Response;
+  let data: InstagramTokenResponse;
+
+  try {
+    const result = await fetchInstagram(url.toString());
+
+    response = result.response;
+    data = result.data;
+  } catch (error) {
+    console.error("[Instagram Token] Refresh request failed:", {
+      instagramAccountId,
+      error,
+    });
+
+    /**
+     * خطای شبکه یا timeout نباید باعث شود
+     * اکانت disconnected شود.
+     */
+    throw new Error("Instagram token refresh request failed");
+  }
+
+  if (!response.ok || !data.access_token) {
+    const errorCode = data.error?.code;
+    const errorSubcode = data.error?.error_subcode;
+    const errorMessage = getErrorMessage(data);
+
+    console.error("[Instagram Token] Refresh failed:", {
+      instagramAccountId,
+      igUserId: account.igUserId,
+      username: account.igUsername,
+      status: response.status,
+      errorCode,
+      errorSubcode,
+      error: data.error,
+      errorMessage,
+    });
+
+    /**
+     * Error 190 یعنی Token دیگر معتبر نیست.
+     *
+     * در این حالت اتصال را قطع می‌کنیم
+     * تا کاربر دوباره OAuth انجام دهد.
+     */
+    if (errorCode === 190) {
+      await prisma.instagramAccount.update({
+        where: {
+          id: instagramAccountId,
+        },
+        data: {
+          isConnected: false,
+        },
+      });
+
+      throw new Error(
+        "Instagram access token has expired and must be reconnected",
+      );
+    }
+
+    /**
+     * سایر خطاها را موقت در نظر می‌گیریم.
+     *
+     * مثلاً:
+     * - rate limit
+     * - server error
+     * - network issue
+     *
+     * در این شرایط isConnected را تغییر نمی‌دهیم.
+     */
+    throw new Error(errorMessage);
+  }
+
+  /**
+   * Refresh موفق بوده ولی Meta expiration
+   * معتبر برنگردانده است.
+   */
+  if (typeof data.expires_in !== "number" || data.expires_in <= 0) {
+    console.error(
+      "[Instagram Token] Refresh succeeded but expires_in is invalid:",
+      {
+        instagramAccountId,
+        data,
+      },
+    );
+
+    throw new Error(
+      "Instagram refresh response does not contain a valid expires_in",
+    );
+  }
+
+  const expiresIn = Math.floor(data.expires_in);
+
+  const expiresAt = new Date(Date.now() + expiresIn * 1000);
+
+  const updatedAccount = await prisma.instagramAccount.update({
+    where: {
+      id: instagramAccountId,
+    },
+    data: {
+      accessToken: data.access_token,
+      tokenExpiresAt: expiresAt,
+      isConnected: true,
+    },
+    select: {
+      id: true,
+      igUserId: true,
+      igUsername: true,
+      tokenExpiresAt: true,
+    },
+  });
+
+  console.log("[Instagram Token] Token refreshed successfully:", {
+    instagramAccountId: updatedAccount.id,
+    igUserId: updatedAccount.igUserId,
+    username: updatedAccount.igUsername,
+    expiresIn,
+    expiresAt: expiresAt.toISOString(),
+  });
+
+  return {
+    accessToken: data.access_token,
+    expiresAt,
+  };
+}
+
+/**
+ * =========================================================
+ * Get Valid Instagram Access Token
+ * =========================================================
+ */
+export async function getValidInstagramAccessToken(
+  instagramAccountId: string,
+): Promise<string> {
+  const account = await prisma.instagramAccount.findUnique({
+    where: {
+      id: instagramAccountId,
+    },
+    select: {
+      id: true,
+      accessToken: true,
+      tokenExpiresAt: true,
+      isConnected: true,
+      igUserId: true,
+      igUsername: true,
+    },
+  });
+
+  if (!account) {
+    throw new Error("Instagram account not found");
+  }
+
+  if (!account.isConnected) {
+    throw new Error("Instagram account is not connected. Reconnect Instagram.");
+  }
+
+  if (!account.accessToken) {
+    throw new Error("Instagram access token is missing");
+  }
+
+  /**
+   * رکوردهای قدیمی ممکن است tokenExpiresAt نداشته باشند.
+   *
+   * یک بار تلاش می‌کنیم Token را Refresh کنیم.
+   *
+   * اگر Token واقعاً منقضی شده باشد، Meta خطای 190
+   * می‌دهد و refreshInstagramToken اکانت را
+   * disconnected می‌کند.
+   */
+  if (!account.tokenExpiresAt) {
+    console.warn("[Instagram Token] tokenExpiresAt is NULL:", {
+      instagramAccountId,
+      igUserId: account.igUserId,
+      username: account.igUsername,
+    });
+
+    const refreshed = await refreshInstagramToken(instagramAccountId);
+
+    return refreshed.accessToken;
+  }
+
+  const remainingSeconds = getRemainingSeconds(account.tokenExpiresAt);
+
+  /**
+   * بیشتر از 7 روز اعتبار دارد.
+   * نیازی به Refresh نیست.
+   */
+  if (
+    remainingSeconds !== null &&
+    remainingSeconds > REFRESH_THRESHOLD_SECONDS
+  ) {
     return account.accessToken;
   }
 
+  /**
+   * Token به محدوده Refresh رسیده است.
+   */
   console.log("[Instagram Token] Token needs refresh:", {
     instagramAccountId,
-    tokenExpiresAt: account.tokenExpiresAt?.toISOString() ?? null,
+    igUserId: account.igUserId,
+    username: account.igUsername,
+    tokenExpiresAt: account.tokenExpiresAt.toISOString(),
+    remainingSeconds,
+    remainingDays:
+      remainingSeconds !== null
+        ? (remainingSeconds / (24 * 60 * 60)).toFixed(2)
+        : null,
   });
 
   const refreshed = await refreshInstagramToken(instagramAccountId);

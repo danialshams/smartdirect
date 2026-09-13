@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { refreshInstagramToken } from "@/lib/instagram/token-manager";
 
-export async function POST(request: NextRequest) {
+const SEVEN_DAYS_IN_MS = 7 * 24 * 60 * 60 * 1000;
+
+async function handleTokenMaintenance(request: NextRequest) {
   try {
     const cronSecret = process.env.CRON_SECRET;
-
     const authorization = request.headers.get("authorization");
 
     if (!cronSecret || authorization !== `Bearer ${cronSecret}`) {
@@ -18,12 +19,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const threshold = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const threshold = new Date(Date.now() + SEVEN_DAYS_IN_MS);
 
     const accounts = await prisma.instagramAccount.findMany({
       where: {
         isConnected: true,
-
         OR: [
           {
             tokenExpiresAt: null,
@@ -35,7 +35,6 @@ export async function POST(request: NextRequest) {
           },
         ],
       },
-
       select: {
         id: true,
         igUserId: true,
@@ -75,6 +74,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       checked: accounts.length,
+      refreshed: results.filter((item) => item.success).length,
+      failed: results.filter((item) => !item.success).length,
       results,
     });
   } catch (error) {
@@ -88,4 +89,19 @@ export async function POST(request: NextRequest) {
       { status: 500 },
     );
   }
+}
+
+/**
+ * Vercel Cron uses GET.
+ */
+export async function GET(request: NextRequest) {
+  return handleTokenMaintenance(request);
+}
+
+/**
+ * POST is also supported so the same endpoint
+ * can be called from another server/cron system later.
+ */
+export async function POST(request: NextRequest) {
+  return handleTokenMaintenance(request);
 }
