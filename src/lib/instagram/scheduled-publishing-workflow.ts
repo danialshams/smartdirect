@@ -3,8 +3,6 @@ import { sleep } from "workflow";
 import { prisma } from "@/lib/prisma";
 import { publishInstagramJob } from "@/lib/instagram/publishing";
 
-const MAX_ATTEMPTS = 2;
-
 async function publishScheduledJobStep(jobId: string) {
   "use step";
 
@@ -48,7 +46,8 @@ async function publishScheduledJobStep(jobId: string) {
     return {
       ok: false,
       skipped: false,
-      message: error instanceof Error ? error.message : "Instagram publishing failed.",
+      message:
+        error instanceof Error ? error.message : "Instagram publishing failed.",
     };
   }
 }
@@ -65,21 +64,5 @@ export async function scheduleInstagramPublish(
     await sleep(target);
   }
 
-  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
-    const result = await publishScheduledJobStep(jobId);
-
-    if (result.ok || result.skipped) {
-      return result;
-    }
-
-    if (attempt < MAX_ATTEMPTS - 1) {
-      await sleep("10s");
-    }
-  }
-
-  return {
-    ok: false,
-    skipped: false,
-    message: "انتشار زمان‌بندی‌شده پس از تلاش مجدد ناموفق بود.",
-  };
+  return publishScheduledJobStep(jobId);
 }
