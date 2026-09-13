@@ -2093,11 +2093,49 @@ async function processCommentEvent(
 
     console.log("Private reply text:", matchedAutomation.replyText);
 
+    console.log("Message count:", matchedAutomation.messages.length);
+
+    console.log("Like Comment:", matchedAutomation.likeComment);
+
     console.log("Instagram Comment ID:", igCommentId);
 
     console.log("Username:", username);
 
     console.log("========================================");
+
+    // =======================================================
+    // Validate Comment automation output
+    // =======================================================
+
+    const hasPublicCommentReply = Boolean(
+      matchedAutomation.commentReplyText &&
+      matchedAutomation.commentReplyText.trim(),
+    );
+
+    const hasPrivateReply = Boolean(
+      matchedAutomation.replyText && matchedAutomation.replyText.trim(),
+    );
+
+    const hasFlowMessages = matchedAutomation.messages.length > 0;
+
+    const hasLikeComment = matchedAutomation.likeComment === true;
+
+    if (
+      !hasPublicCommentReply &&
+      !hasPrivateReply &&
+      !hasFlowMessages &&
+      !hasLikeComment
+    ) {
+      console.log(
+        "Comment automation has no public reply, private reply, flow, or like action.",
+      );
+
+      console.log("Nothing will be executed.");
+
+      console.log("========================================");
+
+      return;
+    }
 
     let accessToken: string;
 
@@ -2111,26 +2149,22 @@ async function processCommentEvent(
 
     let publicCommentReplySent = false;
 
-    if (
-      matchedAutomation.commentReplyText &&
-      matchedAutomation.commentReplyText.trim()
-    ) {
+    if (hasPublicCommentReply) {
       publicCommentReplySent = await sendPublicCommentReply({
         igCommentId,
 
         accessToken,
 
-        replyText: matchedAutomation.commentReplyText,
+        replyText: matchedAutomation.commentReplyText!.trim(),
       });
     } else {
       console.log(
         "No public comment reply text configured. Skipping public reply.",
       );
     }
-
     let automationExecuted = false;
 
-    if (matchedAutomation.messages.length > 0) {
+    if (hasFlowMessages) {
       const commenterIgUserId = value.from?.id;
 
       if (!commenterIgUserId) {
@@ -2138,6 +2172,18 @@ async function processCommentEvent(
           "Comment does not contain commenter Instagram-scoped ID. Flow cannot execute.",
         );
       } else {
+        console.log("========================================");
+
+        console.log("EXECUTING COMMENT FLOW AUTOMATION");
+
+        console.log("Automation ID:", matchedAutomation.id);
+
+        console.log("Commenter Instagram-scoped ID:", commenterIgUserId);
+
+        console.log("Message count:", matchedAutomation.messages.length);
+
+        console.log("========================================");
+
         const result = await executeAutomation({
           automationId: matchedAutomation.id,
 
@@ -2146,21 +2192,21 @@ async function processCommentEvent(
           participantId: String(commenterIgUserId),
 
           igUserId: String(commenterIgUserId),
+
+          selectedQuickReplyId: null,
         });
 
         automationExecuted = result.success && result.executed;
 
         console.log("Comment automation engine result:", result);
       }
+    } else {
+      console.log("No Comment Flow messages configured.");
     }
 
     let privateReplySent = false;
 
-    if (
-      matchedAutomation.messages.length === 0 &&
-      matchedAutomation.replyText &&
-      matchedAutomation.replyText.trim()
-    ) {
+    if (!hasFlowMessages && hasPrivateReply) {
       const commenterIgUserId = value.from?.id;
 
       if (!commenterIgUserId) {
@@ -2175,14 +2221,17 @@ async function processCommentEvent(
 
           accessToken,
 
-          replyText: matchedAutomation.replyText,
+          replyText: matchedAutomation.replyText!.trim(),
         });
       }
-    } else if (matchedAutomation.messages.length === 0) {
-      console.log("No legacy private reply configured. Skipping.");
+    } else if (!hasFlowMessages) {
+      console.log("No private reply configured. Skipping.");
+    } else {
+      console.log(
+        "Flow messages exist. Direct private reply is skipped because Flow handles the response.",
+      );
     }
-
-    if (privateReplySent || automationExecuted) {
+    if (publicCommentReplySent || privateReplySent || automationExecuted) {
       await prisma.comment.update({
         where: {
           id: comment.id,
@@ -2191,7 +2240,10 @@ async function processCommentEvent(
         data: {
           replied: true,
 
-          replyText: matchedAutomation.replyText ?? null,
+          replyText:
+            matchedAutomation.commentReplyText ??
+            matchedAutomation.replyText ??
+            null,
         },
       });
 
@@ -2200,13 +2252,15 @@ async function processCommentEvent(
 
     console.log("========================================");
 
-    console.log("INSTAGRAM AUTOMATION RESULT");
+    console.log("INSTAGRAM COMMENT AUTOMATION RESULT");
 
     console.log("Public comment reply sent:", publicCommentReplySent);
 
     console.log("Automation engine executed:", automationExecuted);
 
-    console.log("Legacy private reply sent:", privateReplySent);
+    console.log("Private reply sent:", privateReplySent);
+
+    console.log("Like comment enabled:", hasLikeComment);
 
     console.log("========================================");
   } catch (error) {
