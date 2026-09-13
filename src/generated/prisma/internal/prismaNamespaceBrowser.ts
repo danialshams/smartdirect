@@ -68,7 +68,9 @@ export const ModelName = {
   Form: 'Form',
   FormField: 'FormField',
   FormSubmission: 'FormSubmission',
-  PendingFollowGate: 'PendingFollowGate'
+  PendingFollowGate: 'PendingFollowGate',
+  InstagramPublishJob: 'InstagramPublishJob',
+  InstagramPublishMedia: 'InstagramPublishMedia'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -360,6 +362,46 @@ export const PendingFollowGateScalarFieldEnum = {
 } as const
 
 export type PendingFollowGateScalarFieldEnum = (typeof PendingFollowGateScalarFieldEnum)[keyof typeof PendingFollowGateScalarFieldEnum]
+
+
+export const InstagramPublishJobScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  instagramAccountId: 'instagramAccountId',
+  type: 'type',
+  status: 'status',
+  caption: 'caption',
+  scheduledAt: 'scheduledAt',
+  publishedAt: 'publishedAt',
+  instagramContainerId: 'instagramContainerId',
+  instagramMediaId: 'instagramMediaId',
+  errorMessage: 'errorMessage',
+  idempotencyKey: 'idempotencyKey',
+  retryCount: 'retryCount',
+  lastAttemptAt: 'lastAttemptAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type InstagramPublishJobScalarFieldEnum = (typeof InstagramPublishJobScalarFieldEnum)[keyof typeof InstagramPublishJobScalarFieldEnum]
+
+
+export const InstagramPublishMediaScalarFieldEnum = {
+  id: 'id',
+  publishJobId: 'publishJobId',
+  type: 'type',
+  storageKey: 'storageKey',
+  publicUrl: 'publicUrl',
+  fileName: 'fileName',
+  mimeType: 'mimeType',
+  fileSize: 'fileSize',
+  sortOrder: 'sortOrder',
+  deletedAt: 'deletedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type InstagramPublishMediaScalarFieldEnum = (typeof InstagramPublishMediaScalarFieldEnum)[keyof typeof InstagramPublishMediaScalarFieldEnum]
 
 
 export const SortOrder = {

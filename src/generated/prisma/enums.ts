@@ -80,3 +80,34 @@ export const Role = {
 } as const
 
 export type Role = (typeof Role)[keyof typeof Role]
+
+
+export const InstagramPublishType = {
+  POST: 'POST',
+  CAROUSEL: 'CAROUSEL',
+  REEL: 'REEL'
+} as const
+
+export type InstagramPublishType = (typeof InstagramPublishType)[keyof typeof InstagramPublishType]
+
+
+export const InstagramPublishStatus = {
+  DRAFT: 'DRAFT',
+  UPLOADING: 'UPLOADING',
+  SCHEDULED: 'SCHEDULED',
+  PROCESSING: 'PROCESSING',
+  PUBLISHING: 'PUBLISHING',
+  PUBLISHED: 'PUBLISHED',
+  FAILED: 'FAILED',
+  CANCELLED: 'CANCELLED'
+} as const
+
+export type InstagramPublishStatus = (typeof InstagramPublishStatus)[keyof typeof InstagramPublishStatus]
+
+
+export const InstagramMediaType = {
+  IMAGE: 'IMAGE',
+  VIDEO: 'VIDEO'
+} as const
+
+export type InstagramMediaType = (typeof InstagramMediaType)[keyof typeof InstagramMediaType]

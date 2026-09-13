@@ -450,6 +450,57 @@ export type EnumFollowGateStatusWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedEnumFollowGateStatusFilter<$PrismaModel>
 }
 
+export type EnumInstagramPublishTypeFilter<$PrismaModel = never> = {
+  equals?: $Enums.InstagramPublishType | Prisma.EnumInstagramPublishTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.InstagramPublishType[] | Prisma.ListEnumInstagramPublishTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.InstagramPublishType[] | Prisma.ListEnumInstagramPublishTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumInstagramPublishTypeFilter<$PrismaModel> | $Enums.InstagramPublishType
+}
+
+export type EnumInstagramPublishStatusFilter<$PrismaModel = never> = {
+  equals?: $Enums.InstagramPublishStatus | Prisma.EnumInstagramPublishStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.InstagramPublishStatus[] | Prisma.ListEnumInstagramPublishStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.InstagramPublishStatus[] | Prisma.ListEnumInstagramPublishStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumInstagramPublishStatusFilter<$PrismaModel> | $Enums.InstagramPublishStatus
+}
+
+export type EnumInstagramPublishTypeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.InstagramPublishType | Prisma.EnumInstagramPublishTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.InstagramPublishType[] | Prisma.ListEnumInstagramPublishTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.InstagramPublishType[] | Prisma.ListEnumInstagramPublishTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumInstagramPublishTypeWithAggregatesFilter<$PrismaModel> | $Enums.InstagramPublishType
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumInstagramPublishTypeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumInstagramPublishTypeFilter<$PrismaModel>
+}
+
+export type EnumInstagramPublishStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.InstagramPublishStatus | Prisma.EnumInstagramPublishStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.InstagramPublishStatus[] | Prisma.ListEnumInstagramPublishStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.InstagramPublishStatus[] | Prisma.ListEnumInstagramPublishStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumInstagramPublishStatusWithAggregatesFilter<$PrismaModel> | $Enums.InstagramPublishStatus
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumInstagramPublishStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumInstagramPublishStatusFilter<$PrismaModel>
+}
+
+export type EnumInstagramMediaTypeFilter<$PrismaModel = never> = {
+  equals?: $Enums.InstagramMediaType | Prisma.EnumInstagramMediaTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.InstagramMediaType[] | Prisma.ListEnumInstagramMediaTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.InstagramMediaType[] | Prisma.ListEnumInstagramMediaTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumInstagramMediaTypeFilter<$PrismaModel> | $Enums.InstagramMediaType
+}
+
+export type EnumInstagramMediaTypeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.InstagramMediaType | Prisma.EnumInstagramMediaTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.InstagramMediaType[] | Prisma.ListEnumInstagramMediaTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.InstagramMediaType[] | Prisma.ListEnumInstagramMediaTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumInstagramMediaTypeWithAggregatesFilter<$PrismaModel> | $Enums.InstagramMediaType
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumInstagramMediaTypeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumInstagramMediaTypeFilter<$PrismaModel>
+}
+
 export type NestedStringFilter<$PrismaModel = never> = {
   equals?: string | Prisma.StringFieldRefInput<$PrismaModel>
   in?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>
@@ -843,6 +894,57 @@ export type NestedEnumFollowGateStatusWithAggregatesFilter<$PrismaModel = never>
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumFollowGateStatusFilter<$PrismaModel>
   _max?: Prisma.NestedEnumFollowGateStatusFilter<$PrismaModel>
+}
+
+export type NestedEnumInstagramPublishTypeFilter<$PrismaModel = never> = {
+  equals?: $Enums.InstagramPublishType | Prisma.EnumInstagramPublishTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.InstagramPublishType[] | Prisma.ListEnumInstagramPublishTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.InstagramPublishType[] | Prisma.ListEnumInstagramPublishTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumInstagramPublishTypeFilter<$PrismaModel> | $Enums.InstagramPublishType
+}
+
+export type NestedEnumInstagramPublishStatusFilter<$PrismaModel = never> = {
+  equals?: $Enums.InstagramPublishStatus | Prisma.EnumInstagramPublishStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.InstagramPublishStatus[] | Prisma.ListEnumInstagramPublishStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.InstagramPublishStatus[] | Prisma.ListEnumInstagramPublishStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumInstagramPublishStatusFilter<$PrismaModel> | $Enums.InstagramPublishStatus
+}
+
+export type NestedEnumInstagramPublishTypeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.InstagramPublishType | Prisma.EnumInstagramPublishTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.InstagramPublishType[] | Prisma.ListEnumInstagramPublishTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.InstagramPublishType[] | Prisma.ListEnumInstagramPublishTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumInstagramPublishTypeWithAggregatesFilter<$PrismaModel> | $Enums.InstagramPublishType
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumInstagramPublishTypeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumInstagramPublishTypeFilter<$PrismaModel>
+}
+
+export type NestedEnumInstagramPublishStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.InstagramPublishStatus | Prisma.EnumInstagramPublishStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.InstagramPublishStatus[] | Prisma.ListEnumInstagramPublishStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.InstagramPublishStatus[] | Prisma.ListEnumInstagramPublishStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumInstagramPublishStatusWithAggregatesFilter<$PrismaModel> | $Enums.InstagramPublishStatus
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumInstagramPublishStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumInstagramPublishStatusFilter<$PrismaModel>
+}
+
+export type NestedEnumInstagramMediaTypeFilter<$PrismaModel = never> = {
+  equals?: $Enums.InstagramMediaType | Prisma.EnumInstagramMediaTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.InstagramMediaType[] | Prisma.ListEnumInstagramMediaTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.InstagramMediaType[] | Prisma.ListEnumInstagramMediaTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumInstagramMediaTypeFilter<$PrismaModel> | $Enums.InstagramMediaType
+}
+
+export type NestedEnumInstagramMediaTypeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.InstagramMediaType | Prisma.EnumInstagramMediaTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.InstagramMediaType[] | Prisma.ListEnumInstagramMediaTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.InstagramMediaType[] | Prisma.ListEnumInstagramMediaTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumInstagramMediaTypeWithAggregatesFilter<$PrismaModel> | $Enums.InstagramMediaType
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumInstagramMediaTypeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumInstagramMediaTypeFilter<$PrismaModel>
 }
 
 

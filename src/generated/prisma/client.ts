@@ -131,3 +131,13 @@ export type FormSubmission = Prisma.FormSubmissionModel
  * 
  */
 export type PendingFollowGate = Prisma.PendingFollowGateModel
+/**
+ * Model InstagramPublishJob
+ * 
+ */
+export type InstagramPublishJob = Prisma.InstagramPublishJobModel
+/**
+ * Model InstagramPublishMedia
+ * 
+ */
+export type InstagramPublishMedia = Prisma.InstagramPublishMediaModel

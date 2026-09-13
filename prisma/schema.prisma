@@ -18,7 +18,7 @@ model User {
 
   instagramAccounts    InstagramAccount[]
   comments             Comment[]
-  conversations       Conversation[]
+  conversations        Conversation[]
   showcases            Showcase[]
   forms                Form[]
   instagramPublishJobs InstagramPublishJob[]
@@ -44,10 +44,10 @@ model InstagramAccount {
   showcases          Showcase[]
   forms              Form[]
   pendingFollowGates PendingFollowGate[]
-  iceBreakers         IceBreaker[]
-  persistentMenu      PersistentMenu?
-  insightSnapshots    InstagramInsightSnapshot[]
-  publishJobs         InstagramPublishJob[]
+  iceBreakers        IceBreaker[]
+  persistentMenu     PersistentMenu?
+  insightSnapshots   InstagramInsightSnapshot[]
+  publishJobs        InstagramPublishJob[]
 
   @@unique([userId, igUserId])
   @@index([userId])
@@ -102,8 +102,8 @@ model Automation {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  messages          AutomationMessage[]
-  pendingFollowGates PendingFollowGate[]
+  messages            AutomationMessage[]
+  pendingFollowGates  PendingFollowGate[]
   iceBreakers         IceBreaker[]
   persistentMenuItems PersistentMenuItem[]
 
@@ -128,7 +128,7 @@ model AutomationMessage {
   showcase   Showcase? @relation(fields: [showcaseId], references: [id], onDelete: SetNull)
 
   formId String?
-  form   Form? @relation(fields: [formId], references: [id], onDelete: SetNull)
+  form   Form?   @relation(fields: [formId], references: [id], onDelete: SetNull)
 
   order Int
 
@@ -196,7 +196,7 @@ model PersistentMenu {
   instagramAccountId String           @unique
   instagramAccount   InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
 
-  enabled Boolean @default(true)
+  enabled Boolean              @default(true)
   items   PersistentMenuItem[]
 
   createdAt DateTime @default(now())
@@ -360,9 +360,9 @@ model Form {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  fields       FormField[]
-  submissions  FormSubmission[]
-  messages     AutomationMessage[]
+  fields      FormField[]
+  submissions FormSubmission[]
+  messages    AutomationMessage[]
 
   @@index([userId])
   @@index([instagramAccountId])
@@ -381,7 +381,7 @@ model FormField {
   required    Boolean @default(false)
   placeholder String?
   options     Json?
-  order       Int @default(0)
+  order       Int     @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -396,9 +396,9 @@ model FormSubmission {
   formId String
   form   Form   @relation(fields: [formId], references: [id], onDelete: Cascade)
 
-  igUserId  String?
-  username  String?
-  answers   Json
+  igUserId String?
+  username String?
+  answers  Json
 
   createdAt DateTime @default(now())
 
@@ -417,7 +417,7 @@ model PendingFollowGate {
 
   participantId String
   status        FollowGateStatus @default(PENDING)
-  attempts      Int @default(0)
+  attempts      Int              @default(0)
   expiresAt     DateTime
 
   createdAt DateTime @default(now())
@@ -432,7 +432,7 @@ model InstagramPublishJob {
   id String @id @default(cuid())
 
   userId String
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   instagramAccountId String
   instagramAccount   InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
@@ -452,7 +452,7 @@ model InstagramPublishJob {
 
   idempotencyKey String? @unique
 
-  retryCount    Int @default(0)
+  retryCount    Int       @default(0)
   lastAttemptAt DateTime?
 
   createdAt DateTime @default(now())
@@ -483,7 +483,7 @@ model InstagramPublishMedia {
   mimeType String?
   fileSize Int?
 
-  sortOrder Int @default(0)
+  sortOrder Int       @default(0)
   deletedAt DateTime?
 
   createdAt DateTime @default(now())

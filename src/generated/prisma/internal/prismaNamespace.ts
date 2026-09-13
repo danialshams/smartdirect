@@ -414,7 +414,9 @@ export const ModelName = {
   Form: 'Form',
   FormField: 'FormField',
   FormSubmission: 'FormSubmission',
-  PendingFollowGate: 'PendingFollowGate'
+  PendingFollowGate: 'PendingFollowGate',
+  InstagramPublishJob: 'InstagramPublishJob',
+  InstagramPublishMedia: 'InstagramPublishMedia'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -430,7 +432,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "instagramAccount" | "instagramInsightSnapshot" | "automation" | "automationMessage" | "quickReply" | "iceBreaker" | "persistentMenu" | "persistentMenuItem" | "conversation" | "conversationMessage" | "comment" | "showcase" | "showcaseItem" | "form" | "formField" | "formSubmission" | "pendingFollowGate"
+    modelProps: "user" | "instagramAccount" | "instagramInsightSnapshot" | "automation" | "automationMessage" | "quickReply" | "iceBreaker" | "persistentMenu" | "persistentMenuItem" | "conversation" | "conversationMessage" | "comment" | "showcase" | "showcaseItem" | "form" | "formField" | "formSubmission" | "pendingFollowGate" | "instagramPublishJob" | "instagramPublishMedia"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1766,6 +1768,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    InstagramPublishJob: {
+      payload: Prisma.$InstagramPublishJobPayload<ExtArgs>
+      fields: Prisma.InstagramPublishJobFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.InstagramPublishJobFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstagramPublishJobPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.InstagramPublishJobFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstagramPublishJobPayload>
+        }
+        findFirst: {
+          args: Prisma.InstagramPublishJobFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstagramPublishJobPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.InstagramPublishJobFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstagramPublishJobPayload>
+        }
+        findMany: {
+          args: Prisma.InstagramPublishJobFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstagramPublishJobPayload>[]
+        }
+        create: {
+          args: Prisma.InstagramPublishJobCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstagramPublishJobPayload>
+        }
+        createMany: {
+          args: Prisma.InstagramPublishJobCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.InstagramPublishJobCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstagramPublishJobPayload>[]
+        }
+        delete: {
+          args: Prisma.InstagramPublishJobDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstagramPublishJobPayload>
+        }
+        update: {
+          args: Prisma.InstagramPublishJobUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstagramPublishJobPayload>
+        }
+        deleteMany: {
+          args: Prisma.InstagramPublishJobDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.InstagramPublishJobUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.InstagramPublishJobUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstagramPublishJobPayload>[]
+        }
+        upsert: {
+          args: Prisma.InstagramPublishJobUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstagramPublishJobPayload>
+        }
+        aggregate: {
+          args: Prisma.InstagramPublishJobAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateInstagramPublishJob>
+        }
+        groupBy: {
+          args: Prisma.InstagramPublishJobGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.InstagramPublishJobGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.InstagramPublishJobCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.InstagramPublishJobCountAggregateOutputType> | number
+        }
+      }
+    }
+    InstagramPublishMedia: {
+      payload: Prisma.$InstagramPublishMediaPayload<ExtArgs>
+      fields: Prisma.InstagramPublishMediaFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.InstagramPublishMediaFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstagramPublishMediaPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.InstagramPublishMediaFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstagramPublishMediaPayload>
+        }
+        findFirst: {
+          args: Prisma.InstagramPublishMediaFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstagramPublishMediaPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.InstagramPublishMediaFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstagramPublishMediaPayload>
+        }
+        findMany: {
+          args: Prisma.InstagramPublishMediaFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstagramPublishMediaPayload>[]
+        }
+        create: {
+          args: Prisma.InstagramPublishMediaCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstagramPublishMediaPayload>
+        }
+        createMany: {
+          args: Prisma.InstagramPublishMediaCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.InstagramPublishMediaCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstagramPublishMediaPayload>[]
+        }
+        delete: {
+          args: Prisma.InstagramPublishMediaDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstagramPublishMediaPayload>
+        }
+        update: {
+          args: Prisma.InstagramPublishMediaUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstagramPublishMediaPayload>
+        }
+        deleteMany: {
+          args: Prisma.InstagramPublishMediaDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.InstagramPublishMediaUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.InstagramPublishMediaUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstagramPublishMediaPayload>[]
+        }
+        upsert: {
+          args: Prisma.InstagramPublishMediaUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstagramPublishMediaPayload>
+        }
+        aggregate: {
+          args: Prisma.InstagramPublishMediaAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateInstagramPublishMedia>
+        }
+        groupBy: {
+          args: Prisma.InstagramPublishMediaGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.InstagramPublishMediaGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.InstagramPublishMediaCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.InstagramPublishMediaCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -2080,6 +2230,46 @@ export const PendingFollowGateScalarFieldEnum = {
 export type PendingFollowGateScalarFieldEnum = (typeof PendingFollowGateScalarFieldEnum)[keyof typeof PendingFollowGateScalarFieldEnum]
 
 
+export const InstagramPublishJobScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  instagramAccountId: 'instagramAccountId',
+  type: 'type',
+  status: 'status',
+  caption: 'caption',
+  scheduledAt: 'scheduledAt',
+  publishedAt: 'publishedAt',
+  instagramContainerId: 'instagramContainerId',
+  instagramMediaId: 'instagramMediaId',
+  errorMessage: 'errorMessage',
+  idempotencyKey: 'idempotencyKey',
+  retryCount: 'retryCount',
+  lastAttemptAt: 'lastAttemptAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type InstagramPublishJobScalarFieldEnum = (typeof InstagramPublishJobScalarFieldEnum)[keyof typeof InstagramPublishJobScalarFieldEnum]
+
+
+export const InstagramPublishMediaScalarFieldEnum = {
+  id: 'id',
+  publishJobId: 'publishJobId',
+  type: 'type',
+  storageKey: 'storageKey',
+  publicUrl: 'publicUrl',
+  fileName: 'fileName',
+  mimeType: 'mimeType',
+  fileSize: 'fileSize',
+  sortOrder: 'sortOrder',
+  deletedAt: 'deletedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type InstagramPublishMediaScalarFieldEnum = (typeof InstagramPublishMediaScalarFieldEnum)[keyof typeof InstagramPublishMediaScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -2310,6 +2500,48 @@ export type ListEnumFollowGateStatusFieldRefInput<$PrismaModel> = FieldRefInputT
 
 
 /**
+ * Reference to a field of type 'InstagramPublishType'
+ */
+export type EnumInstagramPublishTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'InstagramPublishType'>
+    
+
+
+/**
+ * Reference to a field of type 'InstagramPublishType[]'
+ */
+export type ListEnumInstagramPublishTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'InstagramPublishType[]'>
+    
+
+
+/**
+ * Reference to a field of type 'InstagramPublishStatus'
+ */
+export type EnumInstagramPublishStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'InstagramPublishStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'InstagramPublishStatus[]'
+ */
+export type ListEnumInstagramPublishStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'InstagramPublishStatus[]'>
+    
+
+
+/**
+ * Reference to a field of type 'InstagramMediaType'
+ */
+export type EnumInstagramMediaTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'InstagramMediaType'>
+    
+
+
+/**
+ * Reference to a field of type 'InstagramMediaType[]'
+ */
+export type ListEnumInstagramMediaTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'InstagramMediaType[]'>
+    
+
+
+/**
  * Reference to a field of type 'Float'
  */
 export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
@@ -2491,6 +2723,8 @@ export type GlobalOmitConfig = {
   formField?: Prisma.FormFieldOmit
   formSubmission?: Prisma.FormSubmissionOmit
   pendingFollowGate?: Prisma.PendingFollowGateOmit
+  instagramPublishJob?: Prisma.InstagramPublishJobOmit
+  instagramPublishMedia?: Prisma.InstagramPublishMediaOmit
 }
 
 /* Types for Logging */
