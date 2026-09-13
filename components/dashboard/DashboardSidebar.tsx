@@ -11,6 +11,7 @@ import {
     X,
     CreditCard,
     Menu,
+    Send,
 } from "lucide-react";
 
 import SignOutButton from "../../components/auth/SignOutButton";
@@ -23,6 +24,7 @@ type DashboardSidebarProps = {
 const menuItems = [
     { title: "داشبورد", href: "/dashboard", icon: BarChart3 },
     { title: "تحلیل پیج", href: "/dashboard#insights", icon: BarChart3 },
+    { title: "انتشار محتوا", href: "/dashboard/publishing", icon: Send },
     { title: "اتوماسیون‌ها", href: "/dashboard#automations", icon: Bot },
     { title: "Ice Breaker", href: "/dashboard#ice-breakers", icon: MessageCircle },
     { title: "منوی ثابت", href: "/dashboard#persistent-menu", icon: Menu },
@@ -74,7 +76,12 @@ export default function DashboardSidebar({ open, onClose }: DashboardSidebarProp
                         <nav className="space-y-1">
                             {menuItems.map((item) => {
                                 const Icon = item.icon;
-                                const isActive = item.href === "/dashboard" && pathname === "/dashboard";
+                                const isActive =
+                                    item.href === "/dashboard"
+                                        ? pathname === "/dashboard"
+                                        : item.href === "/dashboard/publishing"
+                                            ? pathname.startsWith("/dashboard/publishing")
+                                            : false;
 
                                 return (
                                     <Link
