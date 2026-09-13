@@ -94,6 +94,8 @@ export async function findMatchingAutomation(input: FindAutomationInput) {
         keyword: automation.keyword,
         mediaId: automation.mediaId,
         isActive: automation.isActive,
+        likeIncomingDm: automation.likeIncomingDm,
+        likeStoryReply: automation.likeStoryReply,
       });
     });
   }

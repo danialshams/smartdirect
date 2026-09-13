@@ -124,6 +124,7 @@ export const AutomationScalarFieldEnum = {
   sendDm: 'sendDm',
   likeIncomingDm: 'likeIncomingDm',
   replyText: 'replyText',
+  likeStoryReply: 'likeStoryReply',
   isActive: 'isActive',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

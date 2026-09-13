@@ -201,6 +201,7 @@ export async function POST(request: NextRequest) {
       commentReplyText,
       sendDm = false,
       likeIncomingDm = false,
+      likeStoryReply = false,
       replyText,
       isActive = true,
     } = body;
@@ -318,6 +319,11 @@ export async function POST(request: NextRequest) {
         sendDm: Boolean(sendDm),
 
         likeIncomingDm: triggerType === "DM" ? Boolean(likeIncomingDm) : false,
+
+        likeStoryReply:
+          triggerType === "STORY_REPLY_KEYWORD"
+            ? Boolean(likeStoryReply)
+            : false,
 
         replyText:
           typeof replyText === "string" && replyText.trim()

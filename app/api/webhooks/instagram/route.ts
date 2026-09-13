@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { executeAutomation } from "@/lib/automation/execute-automation";
 import { findMatchingAutomation } from "@/lib/automation/find-matching-automation";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
+import { reactToInstagramMessage } from "@/lib/instagram/react-to-message";
 
 export const dynamic = "force-dynamic";
 
@@ -807,6 +808,43 @@ async function processMessagingEvent(
     }
 
     // =======================================================
+    // Optional DM reaction
+    //
+    // Only react when the user enabled:
+    // likeIncomingDm = true
+    // =======================================================
+
+    if (automation.likeIncomingDm && messageId) {
+      console.log("========================================");
+      console.log("DM REACTION ENABLED");
+      console.log("========================================");
+
+      console.log("Reacting to incoming DM:", {
+        messageId,
+        recipientId: participantId,
+        reaction: "love",
+      });
+
+      const reactionResult = await reactToInstagramMessage({
+        instagramAccountId: instagramAccount.id,
+        recipientId: participantId,
+        messageId,
+        reaction: "love",
+      });
+
+      console.log("DM reaction result:", reactionResult);
+
+      console.log("========================================");
+    } else {
+      console.log(
+        "DM reaction skipped:",
+        !automation.likeIncomingDm
+          ? "likeIncomingDm is disabled"
+          : "messageId is missing",
+      );
+    }
+
+    // =======================================================
     // Execute DM automation
     // =======================================================
 
@@ -1119,7 +1157,46 @@ async function processInstagramStoryReply(
 
     console.log("Message count:", automation.messages.length);
 
+    console.log("Like Story Reply:", automation.likeStoryReply);
+
     console.log("========================================");
+
+    // =======================================================
+    // Optional Story Reply reaction
+    //
+    // Only react when:
+    // likeStoryReply = true
+    // =======================================================
+
+    if (automation.likeStoryReply && messageId) {
+      console.log("========================================");
+      console.log("STORY REPLY REACTION ENABLED");
+      console.log("========================================");
+
+      console.log("Reacting to Story Reply:", {
+        messageId,
+        recipientId: participantId,
+        reaction: "love",
+      });
+
+      const reactionResult = await reactToInstagramMessage({
+        instagramAccountId: instagramAccount.id,
+        recipientId: participantId,
+        messageId,
+        reaction: "love",
+      });
+
+      console.log("Story Reply reaction result:", reactionResult);
+
+      console.log("========================================");
+    } else {
+      console.log(
+        "Story Reply reaction skipped:",
+        !automation.likeStoryReply
+          ? "likeStoryReply is disabled"
+          : "messageId is missing",
+      );
+    }
 
     // =======================================================
     // Validate automation output
@@ -1138,10 +1215,8 @@ async function processInstagramStoryReply(
 
     const hasFlowMessages = automation.messages.length > 0;
 
-    if (!hasDirectReply && !hasFlowMessages) {
-      console.log(
-        "Story Reply automation has no direct reply or Flow messages.",
-      );
+    if (!hasDirectReply && !hasFlowMessages && !automation.likeStoryReply) {
+      console.log("Story Reply automation has no reply, flow, or reaction.");
 
       console.log("Nothing will be sent.");
 

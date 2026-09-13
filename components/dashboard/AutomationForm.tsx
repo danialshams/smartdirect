@@ -130,6 +130,13 @@ export default function AutomationForm({
         automation?.likeIncomingDm ?? false
     );
 
+    const [
+        likeStoryReply,
+        setLikeStoryReply,
+    ] = useState(
+        automation?.likeStoryReply ?? false
+    );
+
     const [isActive, setIsActive] =
         useState(
             automation?.isActive ?? true
@@ -597,6 +604,7 @@ export default function AutomationForm({
             setMediaId("");
             setCommentReplyText("");
             setLikeComment(false);
+            setLikeStoryReply(false);
         }
 
         /*
@@ -605,6 +613,8 @@ export default function AutomationForm({
          */
         if (value === "COMMENT_KEYWORD") {
             setMediaId("");
+            setLikeIncomingDm(false);
+            setLikeStoryReply(false);
         }
 
         /*
@@ -619,6 +629,7 @@ export default function AutomationForm({
         ) {
             setCommentReplyText("");
             setLikeComment(false);
+            setLikeIncomingDm(false);
             setMediaId("");
         }
     }
@@ -1322,6 +1333,8 @@ export default function AutomationForm({
 
                         likeIncomingDm,
 
+                        likeStoryReply,
+
                         isActive,
                     }),
                 });
@@ -1972,7 +1985,38 @@ export default function AutomationForm({
                                     </div>
 
                                     <p className="mt-1 text-xs leading-5 text-gray-500">
-                                        این Action فعلاً فقط ذخیره می‌شود و بعد از تأیید API اجرا خواهد شد.
+                                        بعد از دریافت پیام کاربر، پیام ورودی با Reaction انتخاب‌شده لایک می‌شود.
+                                    </p>
+                                </div>
+                            </label>
+                        )}
+
+                        {isStory && (
+                            <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 p-4">
+                                <input
+                                    type="checkbox"
+                                    checked={
+                                        likeStoryReply
+                                    }
+                                    onChange={(
+                                        event
+                                    ) =>
+                                        setLikeStoryReply(
+                                            event
+                                                .target
+                                                .checked
+                                        )
+                                    }
+                                    className="mt-1"
+                                />
+
+                                <div>
+                                    <div className="text-sm font-medium text-gray-900">
+                                        لایک کردن پاسخ استوری
+                                    </div>
+
+                                    <p className="mt-1 text-xs leading-5 text-gray-500">
+                                        بعد از دریافت Reply استوری، پیام کاربر با Reaction انتخاب‌شده لایک می‌شود.
                                     </p>
                                 </div>
                             </label>

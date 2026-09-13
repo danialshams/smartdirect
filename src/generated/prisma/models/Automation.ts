@@ -35,6 +35,7 @@ export type AutomationMinAggregateOutputType = {
   sendDm: boolean | null
   likeIncomingDm: boolean | null
   replyText: string | null
+  likeStoryReply: boolean | null
   isActive: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -51,6 +52,7 @@ export type AutomationMaxAggregateOutputType = {
   sendDm: boolean | null
   likeIncomingDm: boolean | null
   replyText: string | null
+  likeStoryReply: boolean | null
   isActive: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -67,6 +69,7 @@ export type AutomationCountAggregateOutputType = {
   sendDm: number
   likeIncomingDm: number
   replyText: number
+  likeStoryReply: number
   isActive: number
   createdAt: number
   updatedAt: number
@@ -85,6 +88,7 @@ export type AutomationMinAggregateInputType = {
   sendDm?: true
   likeIncomingDm?: true
   replyText?: true
+  likeStoryReply?: true
   isActive?: true
   createdAt?: true
   updatedAt?: true
@@ -101,6 +105,7 @@ export type AutomationMaxAggregateInputType = {
   sendDm?: true
   likeIncomingDm?: true
   replyText?: true
+  likeStoryReply?: true
   isActive?: true
   createdAt?: true
   updatedAt?: true
@@ -117,6 +122,7 @@ export type AutomationCountAggregateInputType = {
   sendDm?: true
   likeIncomingDm?: true
   replyText?: true
+  likeStoryReply?: true
   isActive?: true
   createdAt?: true
   updatedAt?: true
@@ -206,6 +212,7 @@ export type AutomationGroupByOutputType = {
   sendDm: boolean
   likeIncomingDm: boolean
   replyText: string | null
+  likeStoryReply: boolean
   isActive: boolean
   createdAt: Date
   updatedAt: Date
@@ -243,6 +250,7 @@ export type AutomationWhereInput = {
   sendDm?: Prisma.BoolFilter<"Automation"> | boolean
   likeIncomingDm?: Prisma.BoolFilter<"Automation"> | boolean
   replyText?: Prisma.StringNullableFilter<"Automation"> | string | null
+  likeStoryReply?: Prisma.BoolFilter<"Automation"> | boolean
   isActive?: Prisma.BoolFilter<"Automation"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Automation"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Automation"> | Date | string
@@ -263,6 +271,7 @@ export type AutomationOrderByWithRelationInput = {
   sendDm?: Prisma.SortOrder
   likeIncomingDm?: Prisma.SortOrder
   replyText?: Prisma.SortOrderInput | Prisma.SortOrder
+  likeStoryReply?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -286,6 +295,7 @@ export type AutomationWhereUniqueInput = Prisma.AtLeast<{
   sendDm?: Prisma.BoolFilter<"Automation"> | boolean
   likeIncomingDm?: Prisma.BoolFilter<"Automation"> | boolean
   replyText?: Prisma.StringNullableFilter<"Automation"> | string | null
+  likeStoryReply?: Prisma.BoolFilter<"Automation"> | boolean
   isActive?: Prisma.BoolFilter<"Automation"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Automation"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Automation"> | Date | string
@@ -306,6 +316,7 @@ export type AutomationOrderByWithAggregationInput = {
   sendDm?: Prisma.SortOrder
   likeIncomingDm?: Prisma.SortOrder
   replyText?: Prisma.SortOrderInput | Prisma.SortOrder
+  likeStoryReply?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -328,6 +339,7 @@ export type AutomationScalarWhereWithAggregatesInput = {
   sendDm?: Prisma.BoolWithAggregatesFilter<"Automation"> | boolean
   likeIncomingDm?: Prisma.BoolWithAggregatesFilter<"Automation"> | boolean
   replyText?: Prisma.StringNullableWithAggregatesFilter<"Automation"> | string | null
+  likeStoryReply?: Prisma.BoolWithAggregatesFilter<"Automation"> | boolean
   isActive?: Prisma.BoolWithAggregatesFilter<"Automation"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Automation"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Automation"> | Date | string
@@ -343,6 +355,7 @@ export type AutomationCreateInput = {
   sendDm?: boolean
   likeIncomingDm?: boolean
   replyText?: string | null
+  likeStoryReply?: boolean
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -363,6 +376,7 @@ export type AutomationUncheckedCreateInput = {
   sendDm?: boolean
   likeIncomingDm?: boolean
   replyText?: string | null
+  likeStoryReply?: boolean
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -381,6 +395,7 @@ export type AutomationUpdateInput = {
   sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   replyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeStoryReply?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -401,6 +416,7 @@ export type AutomationUncheckedUpdateInput = {
   sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   replyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeStoryReply?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -420,6 +436,7 @@ export type AutomationCreateManyInput = {
   sendDm?: boolean
   likeIncomingDm?: boolean
   replyText?: string | null
+  likeStoryReply?: boolean
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -435,6 +452,7 @@ export type AutomationUpdateManyMutationInput = {
   sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   replyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeStoryReply?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -451,6 +469,7 @@ export type AutomationUncheckedUpdateManyInput = {
   sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   replyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeStoryReply?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -477,6 +496,7 @@ export type AutomationCountOrderByAggregateInput = {
   sendDm?: Prisma.SortOrder
   likeIncomingDm?: Prisma.SortOrder
   replyText?: Prisma.SortOrder
+  likeStoryReply?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -493,6 +513,7 @@ export type AutomationMaxOrderByAggregateInput = {
   sendDm?: Prisma.SortOrder
   likeIncomingDm?: Prisma.SortOrder
   replyText?: Prisma.SortOrder
+  likeStoryReply?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -509,6 +530,7 @@ export type AutomationMinOrderByAggregateInput = {
   sendDm?: Prisma.SortOrder
   likeIncomingDm?: Prisma.SortOrder
   replyText?: Prisma.SortOrder
+  likeStoryReply?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -628,6 +650,7 @@ export type AutomationCreateWithoutInstagramAccountInput = {
   sendDm?: boolean
   likeIncomingDm?: boolean
   replyText?: string | null
+  likeStoryReply?: boolean
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -646,6 +669,7 @@ export type AutomationUncheckedCreateWithoutInstagramAccountInput = {
   sendDm?: boolean
   likeIncomingDm?: boolean
   replyText?: string | null
+  likeStoryReply?: boolean
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -694,6 +718,7 @@ export type AutomationScalarWhereInput = {
   sendDm?: Prisma.BoolFilter<"Automation"> | boolean
   likeIncomingDm?: Prisma.BoolFilter<"Automation"> | boolean
   replyText?: Prisma.StringNullableFilter<"Automation"> | string | null
+  likeStoryReply?: Prisma.BoolFilter<"Automation"> | boolean
   isActive?: Prisma.BoolFilter<"Automation"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Automation"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Automation"> | Date | string
@@ -709,6 +734,7 @@ export type AutomationCreateWithoutMessagesInput = {
   sendDm?: boolean
   likeIncomingDm?: boolean
   replyText?: string | null
+  likeStoryReply?: boolean
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -728,6 +754,7 @@ export type AutomationUncheckedCreateWithoutMessagesInput = {
   sendDm?: boolean
   likeIncomingDm?: boolean
   replyText?: string | null
+  likeStoryReply?: boolean
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -761,6 +788,7 @@ export type AutomationUpdateWithoutMessagesInput = {
   sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   replyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeStoryReply?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -780,6 +808,7 @@ export type AutomationUncheckedUpdateWithoutMessagesInput = {
   sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   replyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeStoryReply?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -797,6 +826,7 @@ export type AutomationCreateWithoutIceBreakersInput = {
   sendDm?: boolean
   likeIncomingDm?: boolean
   replyText?: string | null
+  likeStoryReply?: boolean
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -816,6 +846,7 @@ export type AutomationUncheckedCreateWithoutIceBreakersInput = {
   sendDm?: boolean
   likeIncomingDm?: boolean
   replyText?: string | null
+  likeStoryReply?: boolean
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -849,6 +880,7 @@ export type AutomationUpdateWithoutIceBreakersInput = {
   sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   replyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeStoryReply?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -868,6 +900,7 @@ export type AutomationUncheckedUpdateWithoutIceBreakersInput = {
   sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   replyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeStoryReply?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -885,6 +918,7 @@ export type AutomationCreateWithoutPersistentMenuItemsInput = {
   sendDm?: boolean
   likeIncomingDm?: boolean
   replyText?: string | null
+  likeStoryReply?: boolean
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -904,6 +938,7 @@ export type AutomationUncheckedCreateWithoutPersistentMenuItemsInput = {
   sendDm?: boolean
   likeIncomingDm?: boolean
   replyText?: string | null
+  likeStoryReply?: boolean
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -937,6 +972,7 @@ export type AutomationUpdateWithoutPersistentMenuItemsInput = {
   sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   replyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeStoryReply?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -956,6 +992,7 @@ export type AutomationUncheckedUpdateWithoutPersistentMenuItemsInput = {
   sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   replyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeStoryReply?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -973,6 +1010,7 @@ export type AutomationCreateManyInstagramAccountInput = {
   sendDm?: boolean
   likeIncomingDm?: boolean
   replyText?: string | null
+  likeStoryReply?: boolean
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -988,6 +1026,7 @@ export type AutomationUpdateWithoutInstagramAccountInput = {
   sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   replyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeStoryReply?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1006,6 +1045,7 @@ export type AutomationUncheckedUpdateWithoutInstagramAccountInput = {
   sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   replyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeStoryReply?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1024,6 +1064,7 @@ export type AutomationUncheckedUpdateManyWithoutInstagramAccountInput = {
   sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   replyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeStoryReply?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1089,6 +1130,7 @@ export type AutomationSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   sendDm?: boolean
   likeIncomingDm?: boolean
   replyText?: boolean
+  likeStoryReply?: boolean
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -1110,6 +1152,7 @@ export type AutomationSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   sendDm?: boolean
   likeIncomingDm?: boolean
   replyText?: boolean
+  likeStoryReply?: boolean
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -1127,6 +1170,7 @@ export type AutomationSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   sendDm?: boolean
   likeIncomingDm?: boolean
   replyText?: boolean
+  likeStoryReply?: boolean
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -1144,12 +1188,13 @@ export type AutomationSelectScalar = {
   sendDm?: boolean
   likeIncomingDm?: boolean
   replyText?: boolean
+  likeStoryReply?: boolean
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type AutomationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "instagramAccountId" | "triggerType" | "keyword" | "mediaId" | "likeComment" | "commentReplyText" | "sendDm" | "likeIncomingDm" | "replyText" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["automation"]>
+export type AutomationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "instagramAccountId" | "triggerType" | "keyword" | "mediaId" | "likeComment" | "commentReplyText" | "sendDm" | "likeIncomingDm" | "replyText" | "likeStoryReply" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["automation"]>
 export type AutomationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
   messages?: boolean | Prisma.Automation$messagesArgs<ExtArgs>
@@ -1183,6 +1228,7 @@ export type $AutomationPayload<ExtArgs extends runtime.Types.Extensions.Internal
     sendDm: boolean
     likeIncomingDm: boolean
     replyText: string | null
+    likeStoryReply: boolean
     isActive: boolean
     createdAt: Date
     updatedAt: Date
@@ -1623,6 +1669,7 @@ export interface AutomationFieldRefs {
   readonly sendDm: Prisma.FieldRef<"Automation", 'Boolean'>
   readonly likeIncomingDm: Prisma.FieldRef<"Automation", 'Boolean'>
   readonly replyText: Prisma.FieldRef<"Automation", 'String'>
+  readonly likeStoryReply: Prisma.FieldRef<"Automation", 'Boolean'>
   readonly isActive: Prisma.FieldRef<"Automation", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"Automation", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Automation", 'DateTime'>

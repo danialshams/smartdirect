@@ -256,6 +256,7 @@ export async function PATCH(
       commentReplyText,
       sendDm,
       likeIncomingDm,
+      likeStoryReply,
       replyText,
       isActive,
     } = body;
@@ -363,6 +364,7 @@ export async function PATCH(
       commentReplyText?: string | null;
       sendDm?: boolean;
       likeIncomingDm?: boolean;
+      likeStoryReply?: boolean;
       replyText?: string | null;
       isActive?: boolean;
     } = {};
@@ -398,6 +400,13 @@ export async function PATCH(
     if (likeIncomingDm !== undefined) {
       updateData.likeIncomingDm =
         nextTriggerType === "DM" ? Boolean(likeIncomingDm) : false;
+    }
+
+    if (likeStoryReply !== undefined) {
+      updateData.likeStoryReply =
+        nextTriggerType === "STORY_REPLY_KEYWORD"
+          ? Boolean(likeStoryReply)
+          : false;
     }
 
     if (replyText !== undefined) {

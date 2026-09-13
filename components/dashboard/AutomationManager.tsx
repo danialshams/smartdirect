@@ -43,6 +43,7 @@ export type Automation = {
     likeComment: boolean;
     sendDm: boolean;
     likeIncomingDm: boolean;
+    likeStoryReply: boolean;
 
     isActive: boolean;
 
