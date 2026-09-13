@@ -59,9 +59,15 @@ export const cloudinaryStorageProvider: StorageProvider = {
     const fileName = input.key.split("/").pop() || "upload";
 
     const formData = new FormData();
+
+    // Node Buffer is a Uint8Array whose ArrayBuffer can be typed as
+    // ArrayBufferLike. Create a standalone ArrayBuffer so BlobPart's
+    // stricter TypeScript definition is satisfied on newer Node typings.
+    const body = Uint8Array.from(input.body).buffer;
+
     formData.append(
       "file",
-      new Blob([input.body], { type: input.contentType }),
+      new Blob([body], { type: input.contentType }),
       fileName,
     );
     formData.append("api_key", apiKey);
