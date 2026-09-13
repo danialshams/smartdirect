@@ -1,5 +1,5 @@
-import InsightsDashboard from "./InsightsDashboard";
+import InstagramInsights from "../../../components/dashboard/InstagramInsights";
 
 export default function InsightsPage() {
-  return <InsightsDashboard />;
+    return <InstagramInsights />;
 }
