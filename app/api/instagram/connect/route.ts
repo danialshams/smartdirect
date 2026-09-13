@@ -49,7 +49,7 @@ export async function GET() {
       response_type: "code",
 
       scope:
-        "instagram_business_basic,instagram_business_manage_comments,instagram_business_manage_messages,instagram_business_manage_insights",
+        "instagram_business_basic,instagram_business_manage_comments,instagram_business_manage_messages,instagram_business_manage_insights,instagram_business_content_publish",
 
       state,
     });
