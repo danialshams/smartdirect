@@ -16,7 +16,6 @@ export async function GET() {
     }
 
     const clientId = process.env.INSTAGRAM_CLIENT_ID;
-
     const redirectUri = process.env.INSTAGRAM_REDIRECT_URI;
 
     if (!clientId) {
@@ -40,20 +39,17 @@ export async function GET() {
     const state = Buffer.from(
       JSON.stringify({
         userId: session.user.id,
-
         timestamp: Date.now(),
       }),
     ).toString("base64url");
 
     const params = new URLSearchParams({
       client_id: clientId,
-
       redirect_uri: redirectUri,
-
       response_type: "code",
 
       scope:
-        "instagram_business_basic,instagram_business_manage_comments,instagram_business_manage_messages",
+        "instagram_business_basic,instagram_business_manage_comments,instagram_business_manage_messages,instagram_business_manage_insights",
 
       state,
     });

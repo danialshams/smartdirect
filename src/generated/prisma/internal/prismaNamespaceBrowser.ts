@@ -53,6 +53,7 @@ export const AnyNull = runtime.AnyNull
 export const ModelName = {
   User: 'User',
   InstagramAccount: 'InstagramAccount',
+  InstagramInsightSnapshot: 'InstagramInsightSnapshot',
   Automation: 'Automation',
   AutomationMessage: 'AutomationMessage',
   QuickReply: 'QuickReply',
@@ -112,6 +113,23 @@ export const InstagramAccountScalarFieldEnum = {
 } as const
 
 export type InstagramAccountScalarFieldEnum = (typeof InstagramAccountScalarFieldEnum)[keyof typeof InstagramAccountScalarFieldEnum]
+
+
+export const InstagramInsightSnapshotScalarFieldEnum = {
+  id: 'id',
+  instagramAccountId: 'instagramAccountId',
+  snapshotDate: 'snapshotDate',
+  reach: 'reach',
+  views: 'views',
+  accountsEngaged: 'accountsEngaged',
+  totalInteractions: 'totalInteractions',
+  profileViews: 'profileViews',
+  followerCount: 'followerCount',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type InstagramInsightSnapshotScalarFieldEnum = (typeof InstagramInsightSnapshotScalarFieldEnum)[keyof typeof InstagramInsightSnapshotScalarFieldEnum]
 
 
 export const AutomationScalarFieldEnum = {

@@ -399,6 +399,7 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 export const ModelName = {
   User: 'User',
   InstagramAccount: 'InstagramAccount',
+  InstagramInsightSnapshot: 'InstagramInsightSnapshot',
   Automation: 'Automation',
   AutomationMessage: 'AutomationMessage',
   QuickReply: 'QuickReply',
@@ -429,7 +430,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "instagramAccount" | "automation" | "automationMessage" | "quickReply" | "iceBreaker" | "persistentMenu" | "persistentMenuItem" | "conversation" | "conversationMessage" | "comment" | "showcase" | "showcaseItem" | "form" | "formField" | "formSubmission" | "pendingFollowGate"
+    modelProps: "user" | "instagramAccount" | "instagramInsightSnapshot" | "automation" | "automationMessage" | "quickReply" | "iceBreaker" | "persistentMenu" | "persistentMenuItem" | "conversation" | "conversationMessage" | "comment" | "showcase" | "showcaseItem" | "form" | "formField" | "formSubmission" | "pendingFollowGate"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -578,6 +579,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.InstagramAccountCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.InstagramAccountCountAggregateOutputType> | number
+        }
+      }
+    }
+    InstagramInsightSnapshot: {
+      payload: Prisma.$InstagramInsightSnapshotPayload<ExtArgs>
+      fields: Prisma.InstagramInsightSnapshotFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.InstagramInsightSnapshotFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstagramInsightSnapshotPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.InstagramInsightSnapshotFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstagramInsightSnapshotPayload>
+        }
+        findFirst: {
+          args: Prisma.InstagramInsightSnapshotFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstagramInsightSnapshotPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.InstagramInsightSnapshotFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstagramInsightSnapshotPayload>
+        }
+        findMany: {
+          args: Prisma.InstagramInsightSnapshotFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstagramInsightSnapshotPayload>[]
+        }
+        create: {
+          args: Prisma.InstagramInsightSnapshotCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstagramInsightSnapshotPayload>
+        }
+        createMany: {
+          args: Prisma.InstagramInsightSnapshotCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.InstagramInsightSnapshotCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstagramInsightSnapshotPayload>[]
+        }
+        delete: {
+          args: Prisma.InstagramInsightSnapshotDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstagramInsightSnapshotPayload>
+        }
+        update: {
+          args: Prisma.InstagramInsightSnapshotUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstagramInsightSnapshotPayload>
+        }
+        deleteMany: {
+          args: Prisma.InstagramInsightSnapshotDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.InstagramInsightSnapshotUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.InstagramInsightSnapshotUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstagramInsightSnapshotPayload>[]
+        }
+        upsert: {
+          args: Prisma.InstagramInsightSnapshotUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InstagramInsightSnapshotPayload>
+        }
+        aggregate: {
+          args: Prisma.InstagramInsightSnapshotAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateInstagramInsightSnapshot>
+        }
+        groupBy: {
+          args: Prisma.InstagramInsightSnapshotGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.InstagramInsightSnapshotGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.InstagramInsightSnapshotCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.InstagramInsightSnapshotCountAggregateOutputType> | number
         }
       }
     }
@@ -1758,6 +1833,23 @@ export const InstagramAccountScalarFieldEnum = {
 export type InstagramAccountScalarFieldEnum = (typeof InstagramAccountScalarFieldEnum)[keyof typeof InstagramAccountScalarFieldEnum]
 
 
+export const InstagramInsightSnapshotScalarFieldEnum = {
+  id: 'id',
+  instagramAccountId: 'instagramAccountId',
+  snapshotDate: 'snapshotDate',
+  reach: 'reach',
+  views: 'views',
+  accountsEngaged: 'accountsEngaged',
+  totalInteractions: 'totalInteractions',
+  profileViews: 'profileViews',
+  followerCount: 'followerCount',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type InstagramInsightSnapshotScalarFieldEnum = (typeof InstagramInsightSnapshotScalarFieldEnum)[keyof typeof InstagramInsightSnapshotScalarFieldEnum]
+
+
 export const AutomationScalarFieldEnum = {
   id: 'id',
   instagramAccountId: 'instagramAccountId',
@@ -2092,6 +2184,20 @@ export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel,
 
 
 /**
+ * Reference to a field of type 'Int'
+ */
+export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
+    
+
+
+/**
+ * Reference to a field of type 'Int[]'
+ */
+export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+    
+
+
+/**
  * Reference to a field of type 'AutomationTriggerType'
  */
 export type EnumAutomationTriggerTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AutomationTriggerType'>
@@ -2116,20 +2222,6 @@ export type EnumAutomationMessageTypeFieldRefInput<$PrismaModel> = FieldRefInput
  * Reference to a field of type 'AutomationMessageType[]'
  */
 export type ListEnumAutomationMessageTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AutomationMessageType[]'>
-    
-
-
-/**
- * Reference to a field of type 'Int'
- */
-export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
-    
-
-
-/**
- * Reference to a field of type 'Int[]'
- */
-export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
     
 
 
@@ -2383,6 +2475,7 @@ export type PrismaClientOptions = PrismaClientOptionsWithAccelerateUrl | PrismaC
 export type GlobalOmitConfig = {
   user?: Prisma.UserOmit
   instagramAccount?: Prisma.InstagramAccountOmit
+  instagramInsightSnapshot?: Prisma.InstagramInsightSnapshotOmit
   automation?: Prisma.AutomationOmit
   automationMessage?: Prisma.AutomationMessageOmit
   quickReply?: Prisma.QuickReplyOmit

@@ -28,6 +28,11 @@ export type User = Prisma.UserModel
  */
 export type InstagramAccount = Prisma.InstagramAccountModel
 /**
+ * Model InstagramInsightSnapshot
+ * 
+ */
+export type InstagramInsightSnapshot = Prisma.InstagramInsightSnapshotModel
+/**
  * Model Automation
  * 
  */

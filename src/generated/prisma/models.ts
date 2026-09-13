@@ -10,6 +10,7 @@
  */
 export type * from './models/User'
 export type * from './models/InstagramAccount'
+export type * from './models/InstagramInsightSnapshot'
 export type * from './models/Automation'
 export type * from './models/AutomationMessage'
 export type * from './models/QuickReply'

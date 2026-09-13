@@ -55,8 +55,82 @@ model InstagramAccount {
   iceBreakers    IceBreaker[]
   persistentMenu PersistentMenu?
 
+  // ====================================================
+  // INSTAGRAM INSIGHTS
+  // ====================================================
+
+  insightSnapshots InstagramInsightSnapshot[]
+
+  // ====================================================
+  // INDEXES
+  // ====================================================
+
   @@unique([userId, igUserId])
   @@index([userId])
+}
+
+// ======================================================
+// INSTAGRAM INSIGHT SNAPSHOT
+// ======================================================
+//
+// Daily historical snapshot of Instagram account insights.
+//
+// SmartDirect stores these values so we can later build:
+// - Analytics dashboard
+// - Historical charts
+// - Growth reports
+// - Engagement reports
+// - Account performance
+//
+// ======================================================
+
+model InstagramInsightSnapshot {
+  id String @id @default(cuid())
+
+  // ====================================================
+  // INSTAGRAM ACCOUNT
+  // ====================================================
+
+  instagramAccountId String
+
+  instagramAccount InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
+
+  // ====================================================
+  // SNAPSHOT DATE
+  // ====================================================
+
+  snapshotDate DateTime
+
+  // ====================================================
+  // ACCOUNT INSIGHTS
+  // ====================================================
+
+  reach             Int?
+  views             Int?
+  accountsEngaged   Int?
+  totalInteractions Int?
+  profileViews      Int?
+
+  // ====================================================
+  // PROFILE
+  // ====================================================
+
+  followerCount Int?
+
+  // ====================================================
+  // TIMESTAMPS
+  // ====================================================
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // ====================================================
+  // INDEXES
+  // ====================================================
+
+  @@unique([instagramAccountId, snapshotDate])
+  @@index([instagramAccountId])
+  @@index([instagramAccountId, snapshotDate])
 }
 
 // ======================================================
