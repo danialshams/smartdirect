@@ -55,14 +55,15 @@ export const cloudinaryStorageProvider: StorageProvider = {
     const apiKey = requiredEnv("CLOUDINARY_API_KEY");
     const timestamp = Math.floor(Date.now() / 1000).toString();
     const folder = "smartdirect";
-
-    const signature = signParams({
-      folder,
-      timestamp,
-    });
+    const signature = signParams({ folder, timestamp });
+    const fileName = input.key.split("/").pop() || "upload";
 
     const formData = new FormData();
-    formData.append("file", new Blob([input.body], { type: input.contentType }), input.key.split("/").pop());
+    formData.append(
+      "file",
+      new Blob([input.body], { type: input.contentType }),
+      fileName,
+    );
     formData.append("api_key", apiKey);
     formData.append("timestamp", timestamp);
     formData.append("folder", folder);
@@ -102,11 +103,7 @@ export const cloudinaryStorageProvider: StorageProvider = {
     const apiKey = requiredEnv("CLOUDINARY_API_KEY");
     const { resourceType, publicId } = parseStorageKey(storageKey);
     const timestamp = Math.floor(Date.now() / 1000).toString();
-
-    const signature = signParams({
-      public_id: publicId,
-      timestamp,
-    });
+    const signature = signParams({ public_id: publicId, timestamp });
 
     const formData = new URLSearchParams({
       public_id: publicId,
@@ -138,7 +135,6 @@ export const cloudinaryStorageProvider: StorageProvider = {
       const apiKey = requiredEnv("CLOUDINARY_API_KEY");
       const timestamp = Math.floor(Date.now() / 1000).toString();
       const signature = signParams({ public_id: publicId, timestamp });
-
       const params = new URLSearchParams({
         public_id: publicId,
         api_key: apiKey,
