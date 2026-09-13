@@ -7,15 +7,37 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 const MAX_DAYS = 365;
+const INSTAGRAM_API_VERSION = "v26.0";
 
 function normalizeDays(value: string | null) {
     const parsed = Number(value || 30);
-
-    if (!Number.isFinite(parsed)) {
-        return 30;
-    }
-
+    if (!Number.isFinite(parsed)) return 30;
     return Math.min(Math.max(Math.floor(parsed), 1), MAX_DAYS);
+}
+
+async function getProfilePicture(accessToken: string) {
+    if (!accessToken) return null;
+
+    try {
+        const url = new URL(`https://graph.instagram.com/${INSTAGRAM_API_VERSION}/me`);
+        url.searchParams.set("fields", "profile_picture_url");
+        url.searchParams.set("access_token", accessToken);
+
+        const response = await fetch(url, {
+            cache: "no-store",
+            signal: AbortSignal.timeout(10000),
+        });
+
+        if (!response.ok) return null;
+
+        const data = (await response.json()) as {
+            profile_picture_url?: string;
+        };
+
+        return data.profile_picture_url || null;
+    } catch {
+        return null;
+    }
 }
 
 export async function GET(request: NextRequest) {
@@ -24,10 +46,7 @@ export async function GET(request: NextRequest) {
 
         if (!session?.user?.id) {
             return NextResponse.json(
-                {
-                    success: false,
-                    error: "ابتدا وارد حساب کاربری شوید.",
-                },
+                { success: false, error: "ابتدا وارد حساب کاربری شوید." },
                 { status: 401 },
             );
         }
@@ -39,25 +58,21 @@ export async function GET(request: NextRequest) {
         const account = await prisma.instagramAccount.findFirst({
             where: {
                 userId: session.user.id,
-                ...(accountId
-                    ? { id: accountId }
-                    : { isConnected: true }),
+                ...(accountId ? { id: accountId } : { isConnected: true }),
             },
             orderBy: accountId ? undefined : { updatedAt: "desc" },
             select: {
                 id: true,
                 igUserId: true,
                 igUsername: true,
+                accessToken: true,
                 isConnected: true,
             },
         });
 
         if (!account) {
             return NextResponse.json(
-                {
-                    success: false,
-                    error: "اکانت Instagram متصل پیدا نشد.",
-                },
+                { success: false, error: "اکانت Instagram متصل پیدا نشد." },
                 { status: 404 },
             );
         }
@@ -114,6 +129,10 @@ export async function GET(request: NextRequest) {
                 ? Number(((totals.totalInteractions / totals.reach) * 100).toFixed(2))
                 : null;
 
+        const profilePictureUrl = account.isConnected
+            ? await getProfilePicture(account.accessToken)
+            : null;
+
         return NextResponse.json({
             success: true,
             account: {
@@ -121,6 +140,7 @@ export async function GET(request: NextRequest) {
                 igUserId: account.igUserId,
                 username: account.igUsername,
                 isConnected: account.isConnected,
+                profilePictureUrl,
             },
             period: {
                 days,
@@ -144,10 +164,7 @@ export async function GET(request: NextRequest) {
         console.error("[Instagram Insight History]", error);
 
         return NextResponse.json(
-            {
-                success: false,
-                error: "خطا در دریافت تاریخچه Instagram Insights.",
-            },
+            { success: false, error: "خطا در دریافت تاریخچه Instagram Insights." },
             { status: 500 },
         );
     }
