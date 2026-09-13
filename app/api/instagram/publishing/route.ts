@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { start } from "workflow/api";
 import { z } from "zod";
 
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { scheduleInstagramPublish } from "@/lib/instagram/scheduled-publishing-workflow";
 
 export const dynamic = "force-dynamic";
 
@@ -255,10 +257,37 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    let workflowRunId: string | null = null;
+
+    if (isScheduled && scheduledAt) {
+      try {
+        const workflowRun = await start(scheduleInstagramPublish, [
+          job.id,
+          scheduledAt.toISOString(),
+        ]);
+        workflowRunId = workflowRun.runId;
+      } catch (error) {
+        await prisma.instagramPublishJob.update({
+          where: { id: job.id },
+          data: {
+            status: "FAILED",
+            errorMessage:
+              error instanceof Error
+                ? `شروع Workflow ناموفق بود: ${error.message}`
+                : "شروع Workflow ناموفق بود.",
+            retryCount: { increment: 1 },
+          },
+        });
+
+        throw error;
+      }
+    }
+
     return NextResponse.json(
       {
         success: true,
         data: job,
+        workflowRunId,
       },
       { status: 201 },
     );
