@@ -19,7 +19,7 @@ export async function GET() {
 
         const accounts = await prisma.instagramAccount.findMany({
             where: { userId: session.user.id },
-            orderBy: { updatedAt: "desc" },
+            orderBy: [{ isConnected: "desc" }, { updatedAt: "desc" }],
             select: {
                 id: true,
                 igUserId: true,
@@ -28,7 +28,15 @@ export async function GET() {
             },
         });
 
-        return NextResponse.json({ success: true, accounts });
+        return NextResponse.json({
+            success: true,
+            accounts: accounts.map((account) => ({
+                id: account.id,
+                igUserId: account.igUserId,
+                username: account.igUsername,
+                isConnected: account.isConnected,
+            })),
+        });
     } catch (error) {
         console.error("[Instagram Accounts]", error);
 
