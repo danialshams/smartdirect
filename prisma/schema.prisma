@@ -7,10 +7,6 @@ datasource db {
   provider = "postgresql"
 }
 
-// ======================================================
-// USER
-// ======================================================
-
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -20,16 +16,13 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  instagramAccounts InstagramAccount[]
-  comments          Comment[]
-  conversations     Conversation[]
-  showcases         Showcase[]
-  forms             Form[]
+  instagramAccounts    InstagramAccount[]
+  comments             Comment[]
+  conversations       Conversation[]
+  showcases            Showcase[]
+  forms                Form[]
+  instagramPublishJobs InstagramPublishJob[]
 }
-
-// ======================================================
-// INSTAGRAM ACCOUNT
-// ======================================================
 
 model InstagramAccount {
   id     String @id @default(cuid())
@@ -51,91 +44,37 @@ model InstagramAccount {
   showcases          Showcase[]
   forms              Form[]
   pendingFollowGates PendingFollowGate[]
-
-  iceBreakers    IceBreaker[]
-  persistentMenu PersistentMenu?
-
-  // ====================================================
-  // INSTAGRAM INSIGHTS
-  // ====================================================
-
-  insightSnapshots InstagramInsightSnapshot[]
-
-  // ====================================================
-  // INDEXES
-  // ====================================================
+  iceBreakers         IceBreaker[]
+  persistentMenu      PersistentMenu?
+  insightSnapshots    InstagramInsightSnapshot[]
+  publishJobs         InstagramPublishJob[]
 
   @@unique([userId, igUserId])
   @@index([userId])
 }
 
-// ======================================================
-// INSTAGRAM INSIGHT SNAPSHOT
-// ======================================================
-//
-// Daily historical snapshot of Instagram account insights.
-//
-// SmartDirect stores these values so we can later build:
-// - Analytics dashboard
-// - Historical charts
-// - Growth reports
-// - Engagement reports
-// - Account performance
-//
-// ======================================================
-
 model InstagramInsightSnapshot {
   id String @id @default(cuid())
 
-  // ====================================================
-  // INSTAGRAM ACCOUNT
-  // ====================================================
-
   instagramAccountId String
-
-  instagramAccount InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
-
-  // ====================================================
-  // SNAPSHOT DATE
-  // ====================================================
+  instagramAccount   InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
 
   snapshotDate DateTime
-
-  // ====================================================
-  // ACCOUNT INSIGHTS
-  // ====================================================
 
   reach             Int?
   views             Int?
   accountsEngaged   Int?
   totalInteractions Int?
   profileViews      Int?
-
-  // ====================================================
-  // PROFILE
-  // ====================================================
-
-  followerCount Int?
-
-  // ====================================================
-  // TIMESTAMPS
-  // ====================================================
+  followerCount     Int?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  // ====================================================
-  // INDEXES
-  // ====================================================
 
   @@unique([instagramAccountId, snapshotDate])
   @@index([instagramAccountId])
   @@index([instagramAccountId, snapshotDate])
 }
-
-// ======================================================
-// AUTOMATION
-// ======================================================
 
 model Automation {
   id String @id @default(cuid())
@@ -143,87 +82,30 @@ model Automation {
   instagramAccountId String
   instagramAccount   InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
 
-  // ====================================================
-  // TRIGGER
-  // ====================================================
-
   triggerType AutomationTriggerType @default(COMMENT_KEYWORD)
-
-  // برای COMMENT_KEYWORD و STORY_REPLY_KEYWORD
-  // مثال:
-  // 1
-  // قیمت
-  // info
-  keyword String?
-
-  // Post ID / Story ID
-  // null = همه Media های مربوط به Trigger
-  mediaId String?
-
-  // ====================================================
-  // COMMENT ACTIONS
-  // ====================================================
+  keyword     String?
+  mediaId     String?
 
   likeComment      Boolean @default(false)
   commentReplyText String?
-
-  // ====================================================
-  // DM ACTIONS
-  // ====================================================
 
   sendDm         Boolean @default(false)
   likeIncomingDm Boolean @default(false)
   replyText      String?
 
-  // ====================================================
-  // STORY REPLY ACTIONS
-  // ====================================================
-
   likeStoryReply Boolean @default(false)
 
-  // ====================================================
-  // FOLLOW GATE
-  // ====================================================
-
-  // اگر true باشد، کاربر قبل از دریافت محتوای نهایی
-  // باید پیج Instagram را Follow کند.
-  //
-  // این قابلیت فعلاً فقط برای COMMENT_KEYWORD استفاده می‌شود.
-  requireFollow Boolean @default(false)
-
-  // متن نمایش داده شده برای درخواست Follow
+  requireFollow  Boolean @default(false)
   followGateText String?
-
-  // ====================================================
-  // STATUS
-  // ====================================================
 
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // ====================================================
-  // FLOW
-  // ====================================================
-
-  messages AutomationMessage[]
-
-  // ====================================================
-  // PENDING FOLLOW GATES
-  // ====================================================
-
+  messages          AutomationMessage[]
   pendingFollowGates PendingFollowGate[]
-
-  // ====================================================
-  // ENTRY POINTS
-  // ====================================================
-
   iceBreakers         IceBreaker[]
   persistentMenuItems PersistentMenuItem[]
-
-  // ====================================================
-  // INDEXES
-  // ====================================================
 
   @@index([instagramAccountId])
   @@index([mediaId])
@@ -231,72 +113,30 @@ model Automation {
   @@index([instagramAccountId, keyword])
 }
 
-// ======================================================
-// AUTOMATION MESSAGE
-// ======================================================
-
 model AutomationMessage {
   id String @id @default(cuid())
 
   automationId String
   automation   Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
 
-  // ====================================================
-  // CONTENT TYPE
-  // ====================================================
-
   messageType AutomationMessageType @default(TEXT)
-
-  // ====================================================
-  // TEXT
-  // ====================================================
-
-  text String?
-
-  // ====================================================
-  // MEDIA
-  // ====================================================
-
-  mediaUrl String?
-  mediaId  String?
-
-  // ====================================================
-  // SHOWCASE
-  // ====================================================
+  text        String?
+  mediaUrl    String?
+  mediaId     String?
 
   showcaseId String?
   showcase   Showcase? @relation(fields: [showcaseId], references: [id], onDelete: SetNull)
 
-  // ====================================================
-  // FORM
-  // ====================================================
-
   formId String?
-  form   Form?   @relation(fields: [formId], references: [id], onDelete: SetNull)
-
-  // ====================================================
-  // FLOW ORDER
-  // ====================================================
+  form   Form? @relation(fields: [formId], references: [id], onDelete: SetNull)
 
   order Int
-
-  // ====================================================
-  // QUICK REPLIES
-  // ====================================================
 
   quickReplies         QuickReply[]
   nextFromQuickReplies QuickReply[] @relation("QuickReplyNextMessage")
 
-  // ====================================================
-  // TIMESTAMPS
-  // ====================================================
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  // ====================================================
-  // INDEXES
-  // ====================================================
 
   @@index([automationId])
   @@index([automationId, order])
@@ -304,118 +144,45 @@ model AutomationMessage {
   @@index([formId])
 }
 
-// ======================================================
-// QUICK REPLY
-// ======================================================
-
 model QuickReply {
   id String @id @default(cuid())
-
-  // ====================================================
-  // SOURCE MESSAGE
-  // ====================================================
 
   automationMessageId String
   automationMessage   AutomationMessage @relation(fields: [automationMessageId], references: [id], onDelete: Cascade)
 
-  // ====================================================
-  // BUTTON
-  // ====================================================
-
-  title   String
-  payload String
-
-  // پاسخ متنی اختیاری قبل از رفتن به Message بعدی
+  title     String
+  payload   String
   replyText String?
-
-  // ====================================================
-  // NEXT MESSAGE
-  // ====================================================
 
   nextMessageId String?
   nextMessage   AutomationMessage? @relation("QuickReplyNextMessage", fields: [nextMessageId], references: [id], onDelete: SetNull)
 
-  // ====================================================
-  // CONVERSATION
-  // ====================================================
-
   conversationMessages ConversationMessage[]
-
-  // ====================================================
-  // TIMESTAMPS
-  // ====================================================
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  // ====================================================
-  // INDEXES
-  // ====================================================
 
   @@index([automationMessageId])
   @@index([nextMessageId])
   @@index([payload])
 }
 
-// ======================================================
-// ICE BREAKER
-// ======================================================
-//
-// گزینه‌هایی که در شروع مکالمه Instagram نمایش داده می‌شوند.
-//
-// مثال:
-//
-// مشاهده محصولات -> Automation A
-// قیمت محصولات   -> Automation B
-// پشتیبانی       -> Automation C
-//
-// payload توسط Instagram به Webhook برمی‌گردد و SmartDirect
-// با استفاده از آن Automation مربوطه را اجرا می‌کند.
-// ======================================================
-
 model IceBreaker {
   id String @id @default(cuid())
-
-  // ====================================================
-  // INSTAGRAM ACCOUNT
-  // ====================================================
 
   instagramAccountId String
   instagramAccount   InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
 
-  // ====================================================
-  // AUTOMATION
-  // ====================================================
-
   automationId String
   automation   Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
 
-  // ====================================================
-  // DISPLAY
-  // ====================================================
-
-  // متنی که مشتری در Instagram می‌بیند
   question String
-
-  // مقدار داخلی که Instagram هنگام انتخاب برمی‌گرداند
-  payload String
-
-  // ترتیب نمایش
-  order Int @default(0)
-
-  // فعال / غیرفعال
+  payload  String
+  order    Int     @default(0)
   isActive Boolean @default(true)
-
-  // ====================================================
-  // TIMESTAMPS
-  // ====================================================
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  // ====================================================
-  // INDEXES
-  // ====================================================
 
   @@unique([instagramAccountId, payload])
   @@index([instagramAccountId])
@@ -423,134 +190,51 @@ model IceBreaker {
   @@index([instagramAccountId, order])
 }
 
-// ======================================================
-// PERSISTENT MENU
-// ======================================================
-//
-// منوی دائمی Instagram DM.
-//
-// هر Instagram Account حداکثر یک Persistent Menu دارد.
-// ======================================================
-
 model PersistentMenu {
   id String @id @default(cuid())
-
-  // ====================================================
-  // INSTAGRAM ACCOUNT
-  // ====================================================
 
   instagramAccountId String           @unique
   instagramAccount   InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
 
-  // ====================================================
-  // STATUS
-  // ====================================================
-
   enabled Boolean @default(true)
-
-  // ====================================================
-  // ITEMS
-  // ====================================================
-
-  items PersistentMenuItem[]
-
-  // ====================================================
-  // TIMESTAMPS
-  // ====================================================
+  items   PersistentMenuItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-// ======================================================
-// PERSISTENT MENU ITEM
-// ======================================================
-//
-// هر گزینه از Persistent Menu.
-//
-// مثال:
-//
-// محصولات  -> Automation A
-// سفارش    -> Automation B
-// پشتیبانی -> Automation C
-// ======================================================
-
 model PersistentMenuItem {
   id String @id @default(cuid())
-
-  // ====================================================
-  // MENU
-  // ====================================================
 
   persistentMenuId String
   persistentMenu   PersistentMenu @relation(fields: [persistentMenuId], references: [id], onDelete: Cascade)
 
-  // ====================================================
-  // DISPLAY
-  // ====================================================
-
   title   String
   payload String
-
-  // ====================================================
-  // AUTOMATION
-  // ====================================================
 
   automationId String?
   automation   Automation? @relation(fields: [automationId], references: [id], onDelete: SetNull)
 
-  // ====================================================
-  // ORDER
-  // ====================================================
-
   order Int @default(0)
-
-  // ====================================================
-  // TIMESTAMPS
-  // ====================================================
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  // ====================================================
-  // INDEXES
-  // ====================================================
 
   @@index([persistentMenuId])
   @@index([automationId])
 }
 
-// ======================================================
-// CONVERSATION
-// ======================================================
-
 model Conversation {
   id String @id @default(cuid())
-
-  // ====================================================
-  // SMARTDIRECT USER
-  // ====================================================
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // ====================================================
-  // INSTAGRAM ACCOUNT
-  // ====================================================
-
   instagramAccountId String
   instagramAccount   InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
 
-  // ====================================================
-  // INSTAGRAM PARTICIPANT
-  // ====================================================
-
   igUserId      String
   participantId String
-
-  // ====================================================
-  // STATUS
-  // ====================================================
 
   isActive      Boolean   @default(true)
   lastMessageAt DateTime?
@@ -558,15 +242,7 @@ model Conversation {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // ====================================================
-  // MESSAGES
-  // ====================================================
-
   messages ConversationMessage[]
-
-  // ====================================================
-  // INDEXES
-  // ====================================================
 
   @@unique([instagramAccountId, participantId])
   @@index([userId])
@@ -574,85 +250,36 @@ model Conversation {
   @@index([instagramAccountId, lastMessageAt])
 }
 
-// ======================================================
-// CONVERSATION MESSAGE
-// ======================================================
-
 model ConversationMessage {
   id String @id @default(cuid())
 
   conversationId String
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
-  // ====================================================
-  // DIRECTION
-  // ====================================================
-
-  direction MessageDirection
-
-  // ====================================================
-  // TYPE
-  // ====================================================
-
+  direction   MessageDirection
   messageType MessageType
 
-  // ====================================================
-  // TEXT
-  // ====================================================
-
   text String?
-
-  // ====================================================
-  // MEDIA
-  // ====================================================
 
   mediaUrl String?
   mediaId  String?
 
-  // ====================================================
-  // INSTAGRAM MESSAGE ID
-  // ====================================================
-
   igMessageId String? @unique
-
-  // ====================================================
-  // QUICK REPLY
-  // ====================================================
 
   quickReplyId String?
   quickReply   QuickReply? @relation(fields: [quickReplyId], references: [id], onDelete: SetNull)
 
-  // ====================================================
-  // TIMESTAMP
-  // ====================================================
-
   createdAt DateTime @default(now())
-
-  // ====================================================
-  // INDEXES
-  // ====================================================
 
   @@index([conversationId, createdAt])
   @@index([quickReplyId])
 }
 
-// ======================================================
-// COMMENT
-// ======================================================
-
 model Comment {
   id String @id @default(cuid())
 
-  // ====================================================
-  // SMARTDIRECT USER
-  // ====================================================
-
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // ====================================================
-  // INSTAGRAM
-  // ====================================================
 
   igMediaId   String
   igCommentId String @unique
@@ -660,75 +287,36 @@ model Comment {
   text     String
   username String
 
-  // ====================================================
-  // RESULT
-  // ====================================================
-
   replied   Boolean @default(false)
   replyText String?
 
   createdAt DateTime @default(now())
 
-  // ====================================================
-  // INDEXES
-  // ====================================================
-
   @@index([userId, igMediaId])
 }
-
-// ======================================================
-// SHOWCASE
-// ======================================================
 
 model Showcase {
   id String @id @default(cuid())
 
-  // ====================================================
-  // OWNER
-  // ====================================================
-
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // ====================================================
-  // INSTAGRAM ACCOUNT
-  // ====================================================
 
   instagramAccountId String
   instagramAccount   InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
 
-  // ====================================================
-  // INFO
-  // ====================================================
-
   title       String
   description String?
-
-  isActive Boolean @default(true)
+  isActive    Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // ====================================================
-  // ITEMS
-  // ====================================================
-
-  items ShowcaseItem[]
-
-  // Automation Messages that use this Showcase
+  items    ShowcaseItem[]
   messages AutomationMessage[]
-
-  // ====================================================
-  // INDEXES
-  // ====================================================
 
   @@index([userId])
   @@index([instagramAccountId])
 }
-
-// ======================================================
-// SHOWCASE ITEM
-// ======================================================
 
 model ShowcaseItem {
   id String @id @default(cuid())
@@ -736,31 +324,15 @@ model ShowcaseItem {
   showcaseId String
   showcase   Showcase @relation(fields: [showcaseId], references: [id], onDelete: Cascade)
 
-  // ====================================================
-  // CONTENT
-  // ====================================================
-
   title       String
   description String?
   imageUrl    String?
 
-  // ====================================================
-  // PRICE
-  // ====================================================
-
   price         Decimal?
   originalPrice Decimal?
 
-  // ====================================================
-  // ACTION
-  // ====================================================
-
   linkUrl    String?
   buttonText String?
-
-  // ====================================================
-  // ORDER / STATUS
-  // ====================================================
 
   order    Int     @default(0)
   isActive Boolean @default(true)
@@ -768,73 +340,33 @@ model ShowcaseItem {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // ====================================================
-  // INDEXES
-  // ====================================================
-
   @@index([showcaseId])
   @@index([showcaseId, order])
 }
 
-// ======================================================
-// FORM
-// ======================================================
-
 model Form {
   id String @id @default(cuid())
-
-  // ====================================================
-  // OWNER
-  // ====================================================
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // ====================================================
-  // INSTAGRAM ACCOUNT
-  // ====================================================
-
   instagramAccountId String
   instagramAccount   InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
 
-  // ====================================================
-  // INFO
-  // ====================================================
-
   title       String
   description String?
-
-  isActive Boolean @default(true)
+  isActive    Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // ====================================================
-  // FIELDS
-  // ====================================================
-
-  fields FormField[]
-
-  // ====================================================
-  // SUBMISSIONS
-  // ====================================================
-
-  submissions FormSubmission[]
-
-  // Automation Messages that use this Form
-  messages AutomationMessage[]
-
-  // ====================================================
-  // INDEXES
-  // ====================================================
+  fields       FormField[]
+  submissions  FormSubmission[]
+  messages     AutomationMessage[]
 
   @@index([userId])
   @@index([instagramAccountId])
 }
-
-// ======================================================
-// FORM FIELD
-// ======================================================
 
 model FormField {
   id String @id @default(cuid())
@@ -842,37 +374,21 @@ model FormField {
   formId String
   form   Form   @relation(fields: [formId], references: [id], onDelete: Cascade)
 
-  // ====================================================
-  // FIELD INFO
-  // ====================================================
-
   label String
   name  String
-
-  type FormFieldType
+  type  FormFieldType
 
   required    Boolean @default(false)
   placeholder String?
-
-  // برای SELECT / RADIO / CHECKBOX
-  options Json?
-
-  order Int @default(0)
+  options     Json?
+  order       Int @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // ====================================================
-  // INDEXES
-  // ====================================================
-
   @@index([formId])
   @@index([formId, order])
 }
-
-// ======================================================
-// FORM SUBMISSION
-// ======================================================
 
 model FormSubmission {
   id String @id @default(cuid())
@@ -880,97 +396,102 @@ model FormSubmission {
   formId String
   form   Form   @relation(fields: [formId], references: [id], onDelete: Cascade)
 
-  // ====================================================
-  // INSTAGRAM CUSTOMER
-  // ====================================================
-
-  igUserId String?
-  username String?
-
-  // ====================================================
-  // ANSWERS
-  // ====================================================
-
-  answers Json
+  igUserId  String?
+  username  String?
+  answers   Json
 
   createdAt DateTime @default(now())
-
-  // ====================================================
-  // INDEXES
-  // ====================================================
 
   @@index([formId])
   @@index([igUserId])
 }
 
-// ======================================================
-// PENDING FOLLOW GATE
-// ======================================================
-//
-// زمانی که کاربر روی یک Comment Keyword اتوماسیون اجرا می‌کند
-// و Automation نیاز به Follow دارد، این رکورد ایجاد می‌شود.
-//
-// وضعیت:
-//
-// PENDING   -> منتظر Follow
-// COMPLETED -> Follow انجام شده و Flow اجرا شده
-// EXPIRED   -> درخواست منقضی شده
-// ======================================================
-
 model PendingFollowGate {
   id String @id @default(cuid())
-
-  // ====================================================
-  // INSTAGRAM ACCOUNT
-  // ====================================================
 
   instagramAccountId String
   instagramAccount   InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
 
-  // ====================================================
-  // AUTOMATION
-  // ====================================================
-
   automationId String
   automation   Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
 
-  // ====================================================
-  // INSTAGRAM CUSTOMER
-  // ====================================================
-
   participantId String
-
-  // ====================================================
-  // STATUS
-  // ====================================================
-
-  status FollowGateStatus @default(PENDING)
-
-  // تعداد دفعاتی که کاربر وضعیت Follow را بررسی کرده
-  attempts Int @default(0)
-
-  // بعد از این زمان درخواست Follow معتبر نیست
-  expiresAt DateTime
-
-  // ====================================================
-  // TIMESTAMPS
-  // ====================================================
+  status        FollowGateStatus @default(PENDING)
+  attempts      Int @default(0)
+  expiresAt     DateTime
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  // ====================================================
-  // INDEXES
-  // ====================================================
 
   @@index([instagramAccountId, participantId, status])
   @@index([automationId])
   @@index([expiresAt])
 }
 
-// ======================================================
-// ENUM: FOLLOW GATE STATUS
-// ======================================================
+model InstagramPublishJob {
+  id String @id @default(cuid())
+
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  instagramAccountId String
+  instagramAccount   InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
+
+  type   InstagramPublishType
+  status InstagramPublishStatus @default(DRAFT)
+
+  caption String?
+
+  scheduledAt DateTime?
+  publishedAt DateTime?
+
+  instagramContainerId String?
+  instagramMediaId     String?
+
+  errorMessage String?
+
+  idempotencyKey String? @unique
+
+  retryCount    Int @default(0)
+  lastAttemptAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  media InstagramPublishMedia[]
+
+  @@index([userId])
+  @@index([instagramAccountId])
+  @@index([status])
+  @@index([scheduledAt])
+  @@index([instagramAccountId, status])
+  @@index([status, scheduledAt])
+}
+
+model InstagramPublishMedia {
+  id String @id @default(cuid())
+
+  publishJobId String
+  publishJob   InstagramPublishJob @relation(fields: [publishJobId], references: [id], onDelete: Cascade)
+
+  type InstagramMediaType
+
+  storageKey String
+  publicUrl  String?
+
+  fileName String?
+  mimeType String?
+  fileSize Int?
+
+  sortOrder Int @default(0)
+  deletedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([publishJobId])
+  @@index([publishJobId, sortOrder])
+}
 
 enum FollowGateStatus {
   PENDING
@@ -978,19 +499,11 @@ enum FollowGateStatus {
   EXPIRED
 }
 
-// ======================================================
-// ENUM: AUTOMATION TRIGGER
-// ======================================================
-
 enum AutomationTriggerType {
   COMMENT_KEYWORD
   DM
   STORY_REPLY_KEYWORD
 }
-
-// ======================================================
-// ENUM: AUTOMATION MESSAGE TYPE
-// ======================================================
 
 enum AutomationMessageType {
   TEXT
@@ -1001,18 +514,10 @@ enum AutomationMessageType {
   FORM
 }
 
-// ======================================================
-// ENUM: CONVERSATION DIRECTION
-// ======================================================
-
 enum MessageDirection {
   INBOUND
   OUTBOUND
 }
-
-// ======================================================
-// ENUM: CONVERSATION MESSAGE TYPE
-// ======================================================
 
 enum MessageType {
   TEXT
@@ -1023,10 +528,6 @@ enum MessageType {
   STICKER
   REACTION
 }
-
-// ======================================================
-// ENUM: FORM FIELD TYPE
-// ======================================================
 
 enum FormFieldType {
   TEXT
@@ -1039,11 +540,29 @@ enum FormFieldType {
   CHECKBOX
 }
 
-// ======================================================
-// ENUM: USER ROLE
-// ======================================================
-
 enum Role {
   USER
   ADMIN
+}
+
+enum InstagramPublishType {
+  POST
+  CAROUSEL
+  REEL
+}
+
+enum InstagramPublishStatus {
+  DRAFT
+  UPLOADING
+  SCHEDULED
+  PROCESSING
+  PUBLISHING
+  PUBLISHED
+  FAILED
+  CANCELLED
+}
+
+enum InstagramMediaType {
+  IMAGE
+  VIDEO
 }
