@@ -1239,6 +1239,124 @@ async function processInstagramStoryReply(
     }
 
     // =======================================================
+    // FOLLOW GATE
+    //
+    // Story Reply هم مثل Comment باید قبل از ارسال محتوای اصلی
+    // وضعیت Follow کاربر را بررسی کند.
+    // اگر کاربر Follow نکرده باشد، محتوای نهایی ارسال نمی‌شود.
+    // =======================================================
+
+    if (automation.requireFollow) {
+      console.log("========================================");
+      console.log("FOLLOW GATE ENABLED FOR STORY REPLY AUTOMATION");
+      console.log("Automation ID:", automation.id);
+      console.log("Participant ID:", participantId);
+      console.log("========================================");
+
+      const followStatus = await getInstagramUserFollowStatus({
+        instagramUserId: participantId,
+        accessToken,
+      });
+
+      console.log("Story Reply follow status:", followStatus);
+
+      // اگر کاربر از قبل فالو کرده، Gate را رد می‌کنیم و محتوای اصلی
+      // در ادامه همین تابع ارسال خواهد شد.
+      if (followStatus.success && followStatus.isFollowing === true) {
+        console.log("Story Reply user already follows the account.");
+        console.log("Story Reply Follow Gate bypassed.");
+      } else {
+        // در حالت false یا unknown، Fail Closed:
+        // هیچ محتوای اصلی ارسال نمی‌شود.
+        if (!followStatus.success || followStatus.isFollowing === null) {
+          console.warn(
+            "Could not determine Story Reply follow status. Follow Gate remains active.",
+          );
+        } else {
+          console.log(
+            "Story Reply user does NOT follow the account. Final content blocked.",
+          );
+        }
+
+        let pendingGate = await prisma.pendingFollowGate.findFirst({
+          where: {
+            instagramAccountId: instagramAccount.id,
+            automationId: automation.id,
+            participantId,
+            status: "PENDING",
+            expiresAt: {
+              gt: new Date(),
+            },
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+        });
+
+        if (!pendingGate) {
+          pendingGate = await prisma.pendingFollowGate.create({
+            data: {
+              instagramAccountId: instagramAccount.id,
+              automationId: automation.id,
+              participantId,
+              status: "PENDING",
+              attempts: 0,
+              expiresAt: new Date(Date.now() + FOLLOW_GATE_EXPIRATION_MS),
+            },
+          });
+
+          console.log(
+            "New Pending Follow Gate created for Story Reply:",
+            pendingGate.id,
+          );
+        } else {
+          console.log(
+            "Existing Pending Follow Gate reused for Story Reply:",
+            pendingGate.id,
+          );
+        }
+
+        const gateText =
+          automation.followGateText?.trim() ||
+          "برای دریافت این محتوا ابتدا پیج ما را فالو کنید.";
+
+        const gateSent = await sendFollowGateMessage({
+          instagramAccount,
+          participantId,
+          accessToken,
+          pendingGateId: pendingGate.id,
+          followGateText: gateText,
+        });
+
+        if (gateSent) {
+          await prisma.pendingFollowGate.update({
+            where: {
+              id: pendingGate.id,
+            },
+            data: {
+              attempts: {
+                increment: 1,
+              },
+            },
+          });
+        }
+
+        console.log("========================================");
+        console.log("STORY REPLY FOLLOW GATE RESULT");
+        console.log("Gate sent:", gateSent);
+        console.log("Pending Gate ID:", pendingGate.id);
+        console.log("Final content execution: BLOCKED UNTIL FOLLOW");
+        console.log("========================================");
+
+        // بسیار مهم: در حالت عدم Follow یا خطا در بررسی،
+        // از این تابع خارج می‌شویم تا replyText یا Flow ارسال نشود.
+        return;
+      }
+    } else {
+      console.log("Follow Gate disabled for this Story Reply automation.");
+    }
+
+    // =======================================================
     // 1. DIRECT REPLY
     // =======================================================
 
