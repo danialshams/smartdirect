@@ -1,6 +1,7 @@
 import { cloudinaryStorageProvider } from "./cloudinary";
 import { localStorageProvider } from "./local";
 import { testStorageProvider } from "./test";
+import { vercelBlobStorageProvider } from "./vercel-blob";
 
 export function getStorageProvider() {
   const provider = process.env.STORAGE_PROVIDER || "local";
@@ -11,6 +12,9 @@ export function getStorageProvider() {
 
     case "cloudinary":
       return cloudinaryStorageProvider;
+
+    case "vercel-blob":
+      return vercelBlobStorageProvider;
 
     case "test":
       return testStorageProvider;
