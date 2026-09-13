@@ -9,6 +9,15 @@
 * 🟢 You can import this file directly.
 */
 
+export const FollowGateStatus = {
+  PENDING: 'PENDING',
+  COMPLETED: 'COMPLETED',
+  EXPIRED: 'EXPIRED'
+} as const
+
+export type FollowGateStatus = (typeof FollowGateStatus)[keyof typeof FollowGateStatus]
+
+
 export const AutomationTriggerType = {
   COMMENT_KEYWORD: 'COMMENT_KEYWORD',
   DM: 'DM',

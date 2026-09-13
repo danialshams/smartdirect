@@ -121,3 +121,8 @@ export type FormField = Prisma.FormFieldModel
  * 
  */
 export type FormSubmission = Prisma.FormSubmissionModel
+/**
+ * Model PendingFollowGate
+ * 
+ */
+export type PendingFollowGate = Prisma.PendingFollowGateModel

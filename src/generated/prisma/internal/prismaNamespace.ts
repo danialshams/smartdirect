@@ -412,7 +412,8 @@ export const ModelName = {
   ShowcaseItem: 'ShowcaseItem',
   Form: 'Form',
   FormField: 'FormField',
-  FormSubmission: 'FormSubmission'
+  FormSubmission: 'FormSubmission',
+  PendingFollowGate: 'PendingFollowGate'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -428,7 +429,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "instagramAccount" | "automation" | "automationMessage" | "quickReply" | "iceBreaker" | "persistentMenu" | "persistentMenuItem" | "conversation" | "conversationMessage" | "comment" | "showcase" | "showcaseItem" | "form" | "formField" | "formSubmission"
+    modelProps: "user" | "instagramAccount" | "automation" | "automationMessage" | "quickReply" | "iceBreaker" | "persistentMenu" | "persistentMenuItem" | "conversation" | "conversationMessage" | "comment" | "showcase" | "showcaseItem" | "form" | "formField" | "formSubmission" | "pendingFollowGate"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1616,6 +1617,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    PendingFollowGate: {
+      payload: Prisma.$PendingFollowGatePayload<ExtArgs>
+      fields: Prisma.PendingFollowGateFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PendingFollowGateFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PendingFollowGatePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PendingFollowGateFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PendingFollowGatePayload>
+        }
+        findFirst: {
+          args: Prisma.PendingFollowGateFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PendingFollowGatePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PendingFollowGateFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PendingFollowGatePayload>
+        }
+        findMany: {
+          args: Prisma.PendingFollowGateFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PendingFollowGatePayload>[]
+        }
+        create: {
+          args: Prisma.PendingFollowGateCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PendingFollowGatePayload>
+        }
+        createMany: {
+          args: Prisma.PendingFollowGateCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PendingFollowGateCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PendingFollowGatePayload>[]
+        }
+        delete: {
+          args: Prisma.PendingFollowGateDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PendingFollowGatePayload>
+        }
+        update: {
+          args: Prisma.PendingFollowGateUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PendingFollowGatePayload>
+        }
+        deleteMany: {
+          args: Prisma.PendingFollowGateDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PendingFollowGateUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PendingFollowGateUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PendingFollowGatePayload>[]
+        }
+        upsert: {
+          args: Prisma.PendingFollowGateUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PendingFollowGatePayload>
+        }
+        aggregate: {
+          args: Prisma.PendingFollowGateAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePendingFollowGate>
+        }
+        groupBy: {
+          args: Prisma.PendingFollowGateGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PendingFollowGateGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PendingFollowGateCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PendingFollowGateCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1695,6 +1770,8 @@ export const AutomationScalarFieldEnum = {
   likeIncomingDm: 'likeIncomingDm',
   replyText: 'replyText',
   likeStoryReply: 'likeStoryReply',
+  requireFollow: 'requireFollow',
+  followGateText: 'followGateText',
   isActive: 'isActive',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -1894,6 +1971,21 @@ export const FormSubmissionScalarFieldEnum = {
 } as const
 
 export type FormSubmissionScalarFieldEnum = (typeof FormSubmissionScalarFieldEnum)[keyof typeof FormSubmissionScalarFieldEnum]
+
+
+export const PendingFollowGateScalarFieldEnum = {
+  id: 'id',
+  instagramAccountId: 'instagramAccountId',
+  automationId: 'automationId',
+  participantId: 'participantId',
+  status: 'status',
+  attempts: 'attempts',
+  expiresAt: 'expiresAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PendingFollowGateScalarFieldEnum = (typeof PendingFollowGateScalarFieldEnum)[keyof typeof PendingFollowGateScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -2112,6 +2204,20 @@ export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$Prisma
 
 
 /**
+ * Reference to a field of type 'FollowGateStatus'
+ */
+export type EnumFollowGateStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'FollowGateStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'FollowGateStatus[]'
+ */
+export type ListEnumFollowGateStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'FollowGateStatus[]'>
+    
+
+
+/**
  * Reference to a field of type 'Float'
  */
 export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
@@ -2291,6 +2397,7 @@ export type GlobalOmitConfig = {
   form?: Prisma.FormOmit
   formField?: Prisma.FormFieldOmit
   formSubmission?: Prisma.FormSubmissionOmit
+  pendingFollowGate?: Prisma.PendingFollowGateOmit
 }
 
 /* Types for Logging */

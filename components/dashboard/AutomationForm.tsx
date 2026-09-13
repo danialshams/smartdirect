@@ -137,6 +137,21 @@ export default function AutomationForm({
         automation?.likeStoryReply ?? false
     );
 
+    const [
+        requireFollow,
+        setRequireFollow,
+    ] = useState(
+        automation?.requireFollow ?? false
+    );
+
+    const [
+        followGateText,
+        setFollowGateText,
+    ] = useState(
+        automation?.followGateText ??
+        "برای دریافت این محتوا ابتدا پیج ما را فالو کنید."
+    );
+
     const [isActive, setIsActive] =
         useState(
             automation?.isActive ?? true
@@ -605,6 +620,7 @@ export default function AutomationForm({
             setCommentReplyText("");
             setLikeComment(false);
             setLikeStoryReply(false);
+            setRequireFollow(false);
         }
 
         /*
@@ -631,6 +647,7 @@ export default function AutomationForm({
             setLikeComment(false);
             setLikeIncomingDm(false);
             setMediaId("");
+            setRequireFollow(false);
         }
     }
 
@@ -1210,7 +1227,8 @@ export default function AutomationForm({
             !commentReplyText.trim() &&
             !replyText.trim() &&
             !likeComment &&
-            messages.length === 0
+            messages.length === 0 &&
+            !requireFollow
         ) {
             setError(
                 "حداقل یک Action یا Flow برای کامنت انتخاب کنید."
@@ -1257,6 +1275,16 @@ export default function AutomationForm({
         }
 
         try {
+            if (
+                isComment &&
+                requireFollow &&
+                !followGateText.trim()
+            ) {
+                setError(
+                    "متن درخواست فالو را وارد کنید."
+                );
+                return;
+            }
             if (messages.length > 0) {
                 try {
                     validateMessages(messages);
@@ -1334,6 +1362,16 @@ export default function AutomationForm({
                         likeIncomingDm,
 
                         likeStoryReply,
+
+                        requireFollow:
+                            isComment
+                                ? requireFollow
+                                : false,
+
+                        followGateText:
+                            isComment && requireFollow
+                                ? followGateText.trim() || null
+                                : null,
 
                         isActive,
                     }),
@@ -1919,6 +1957,63 @@ export default function AutomationForm({
                                     </div>
                                 </label>
                             </div>
+                        </section>
+                    )}
+
+                    {isComment && (
+                        <section className="border-t border-gray-100 pt-6">
+                            <h3 className="mb-4 text-sm font-semibold text-gray-900">
+                                شرط فالو قبل از ارسال دایرکت
+                            </h3>
+
+                            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 p-4">
+                                <input
+                                    type="checkbox"
+                                    checked={requireFollow}
+                                    onChange={(event) =>
+                                        setRequireFollow(
+                                            event.target.checked
+                                        )
+                                    }
+                                    className="mt-1"
+                                />
+
+                                <div className="flex-1">
+                                    <div className="text-sm font-medium text-gray-900">
+                                        کاربر ابتدا پیج را فالو کند
+                                    </div>
+
+                                    <p className="mt-1 text-xs leading-5 text-gray-500">
+                                        بعد از اینکه کاربر کلمه کلیدی را در کامنت ارسال کرد،
+                                        ابتدا پیام درخواست فالو برای او ارسال می‌شود.
+                                        تا زمانی که فالو بودن کاربر تأیید نشود، محتوای اصلی
+                                        Automation ارسال نمی‌شود.
+                                    </p>
+                                </div>
+                            </label>
+
+                            {requireFollow && (
+                                <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50/70 p-4">
+                                    <label className="mb-2 block text-sm font-medium text-gray-800">
+                                        متن درخواست فالو
+                                    </label>
+
+                                    <textarea
+                                        value={followGateText}
+                                        onChange={(event) =>
+                                            setFollowGateText(
+                                                event.target.value
+                                            )
+                                        }
+                                        placeholder="مثلاً برای دریافت این محتوا ابتدا پیج ما را فالو کنید."
+                                        className="min-h-24 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm leading-6 outline-none transition focus:border-gray-900"
+                                    />
+
+                                    <p className="mt-2 text-xs leading-5 text-gray-400">
+                                        این متن قبل از ارسال Flow اصلی برای کاربر نمایش داده می‌شود.
+                                    </p>
+                                </div>
+                            )}
                         </section>
                     )}
 

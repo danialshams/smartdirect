@@ -11,6 +11,9 @@ export const dynamic = "force-dynamic";
 const INSTAGRAM_API_VERSION = "v26.0";
 const MAX_API_RETRIES = 3;
 
+const FOLLOW_GATE_PAYLOAD_PREFIX = "SMARTDIRECT_FOLLOW_CHECK:";
+const FOLLOW_GATE_EXPIRATION_MS = 24 * 60 * 60 * 1000;
+
 // =========================================================
 // Types
 // =========================================================
@@ -20,6 +23,12 @@ type InstagramAccountData = {
   userId: string;
   igUserId: string;
   igUsername: string;
+};
+
+type InstagramFollowStatus = {
+  success: boolean;
+  isFollowing: boolean | null;
+  error?: string;
 };
 
 // =========================================================
@@ -809,9 +818,6 @@ async function processMessagingEvent(
 
     // =======================================================
     // Optional DM reaction
-    //
-    // Only react when the user enabled:
-    // likeIncomingDm = true
     // =======================================================
 
     if (automation.likeIncomingDm && messageId) {
@@ -1163,9 +1169,6 @@ async function processInstagramStoryReply(
 
     // =======================================================
     // Optional Story Reply reaction
-    //
-    // Only react when:
-    // likeStoryReply = true
     // =======================================================
 
     if (automation.likeStoryReply && messageId) {
@@ -1200,13 +1203,6 @@ async function processInstagramStoryReply(
 
     // =======================================================
     // Validate automation output
-    //
-    // Allowed:
-    //
-    // 1. Direct reply only
-    // 2. Flow only
-    // 3. Direct reply + Flow
-    // 4. Neither -> nothing to send
     // =======================================================
 
     const hasDirectReply = Boolean(
@@ -1244,14 +1240,6 @@ async function processInstagramStoryReply(
 
     // =======================================================
     // 1. DIRECT REPLY
-    //
-    // Story Reply -> normal Instagram Messages API
-    //
-    // IMPORTANT:
-    // This is NOT the same as Comment private reply.
-    // For Story Reply we use:
-    //
-    // recipient.id = sender Instagram-scoped ID
     // =======================================================
 
     let directReplySent = false;
@@ -1284,17 +1272,6 @@ async function processInstagramStoryReply(
 
     // =======================================================
     // 2. FLOW AUTOMATION
-    //
-    // If Flow messages exist, execute them.
-    //
-    // executeAutomation handles:
-    // TEXT
-    // IMAGE
-    // VIDEO
-    // AUDIO
-    // SHOWCASE
-    // FORM
-    // QUICK REPLY
     // =======================================================
 
     let automationExecuted = false;
@@ -1492,6 +1469,735 @@ async function sendStoryReplyMessage({
 }
 
 // =========================================================
+// Instagram Follow Gate
+// =========================================================
+
+async function getInstagramUserFollowStatus({
+  instagramUserId,
+  accessToken,
+}: {
+  instagramUserId: string;
+  accessToken: string;
+}): Promise<InstagramFollowStatus> {
+  const url =
+    `https://graph.instagram.com/` +
+    `${INSTAGRAM_API_VERSION}/` +
+    `${instagramUserId}` +
+    `?fields=is_user_follow_business`;
+
+  console.log("========================================");
+  console.log("CHECKING INSTAGRAM FOLLOW STATUS");
+  console.log("========================================");
+
+  console.log("Instagram User ID:", instagramUserId);
+
+  console.log("Follow status URL:", url);
+
+  for (let attempt = 1; attempt <= MAX_API_RETRIES; attempt++) {
+    try {
+      console.log(`Follow status attempt ${attempt}/${MAX_API_RETRIES}`);
+
+      const response = await fetch(url, {
+        method: "GET",
+
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+
+          Accept: "application/json",
+        },
+
+        cache: "no-store",
+      });
+
+      const responseText = await response.text();
+
+      let responseData: any;
+
+      try {
+        responseData = responseText ? JSON.parse(responseText) : null;
+      } catch {
+        responseData = responseText;
+      }
+
+      if (response.ok) {
+        const rawValue = responseData?.is_user_follow_business;
+
+        const isFollowing =
+          rawValue === true ? true : rawValue === false ? false : null;
+
+        console.log("Instagram follow status response:", responseData);
+
+        console.log("Parsed follow status:", isFollowing);
+
+        console.log("========================================");
+
+        return {
+          success: true,
+          isFollowing,
+        };
+      }
+
+      console.error(`Follow status attempt ${attempt} failed.`);
+
+      console.error("HTTP Status:", response.status);
+
+      console.error("Instagram API response:", responseData);
+
+      if (attempt < MAX_API_RETRIES) {
+        const delay = attempt * 1000;
+
+        await sleep(delay);
+      }
+    } catch (error) {
+      console.error(
+        `Follow status request error on attempt ${attempt}:`,
+        error,
+      );
+
+      if (attempt < MAX_API_RETRIES) {
+        const delay = attempt * 1000;
+
+        await sleep(delay);
+      }
+    }
+  }
+
+  console.error("Could not determine Instagram follow status.");
+
+  console.log("========================================");
+
+  return {
+    success: false,
+    isFollowing: null,
+    error: "FOLLOW_STATUS_CHECK_FAILED",
+  };
+}
+
+// =========================================================
+// Send Follow Gate message
+// =========================================================
+
+async function sendFollowGateMessage({
+  instagramAccount,
+  participantId,
+  accessToken,
+  pendingGateId,
+  followGateText,
+}: {
+  instagramAccount: InstagramAccountData;
+  participantId: string;
+  accessToken: string;
+  pendingGateId: string;
+  followGateText: string;
+}): Promise<boolean> {
+  const url =
+    `https://graph.instagram.com/` +
+    `${INSTAGRAM_API_VERSION}/` +
+    `${instagramAccount.igUserId}/messages`;
+
+  const instagramProfileUrl = `https://www.instagram.com/${encodeURIComponent(
+    instagramAccount.igUsername,
+  )}/`;
+
+  const postbackPayload = `${FOLLOW_GATE_PAYLOAD_PREFIX}${pendingGateId}`;
+
+  const requestBody = {
+    recipient: {
+      id: participantId,
+    },
+
+    message: {
+      attachment: {
+        type: "template",
+
+        payload: {
+          template_type: "button",
+
+          text: followGateText,
+
+          buttons: [
+            {
+              type: "web_url",
+
+              url: instagramProfileUrl,
+
+              title: "فالو کردن",
+            },
+
+            {
+              type: "postback",
+
+              title: "بررسی فالو",
+
+              payload: postbackPayload,
+            },
+          ],
+        },
+      },
+    },
+  };
+
+  console.log("========================================");
+
+  console.log("SENDING FOLLOW GATE MESSAGE");
+
+  console.log("Recipient:", participantId);
+
+  console.log("Instagram profile URL:", instagramProfileUrl);
+
+  console.log("Pending Follow Gate ID:", pendingGateId);
+
+  console.log(
+    "Follow Gate request body:",
+    JSON.stringify(requestBody, null, 2),
+  );
+
+  console.log("========================================");
+
+  for (let attempt = 1; attempt <= MAX_API_RETRIES; attempt++) {
+    try {
+      console.log(`Follow Gate message attempt ${attempt}/${MAX_API_RETRIES}`);
+
+      const response = await fetch(url, {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+
+          Authorization: `Bearer ${accessToken}`,
+
+          Accept: "application/json",
+        },
+
+        body: JSON.stringify(requestBody),
+
+        cache: "no-store",
+      });
+
+      const responseText = await response.text();
+
+      let responseData: unknown;
+
+      try {
+        responseData = responseText ? JSON.parse(responseText) : null;
+      } catch {
+        responseData = responseText;
+      }
+
+      if (response.ok) {
+        console.log("========================================");
+
+        console.log("FOLLOW GATE MESSAGE SENT SUCCESSFULLY");
+
+        console.log("HTTP Status:", response.status);
+
+        console.log("Instagram API response:", responseData);
+
+        console.log("========================================");
+
+        return true;
+      }
+
+      console.error(`Follow Gate message attempt ${attempt} failed.`);
+
+      console.error("HTTP Status:", response.status);
+
+      console.error("Instagram API response:", responseData);
+
+      if (attempt < MAX_API_RETRIES) {
+        const delay = attempt * 1000;
+
+        console.log(`Waiting ${delay}ms before Follow Gate retry...`);
+
+        await sleep(delay);
+      }
+    } catch (error) {
+      console.error(
+        `Follow Gate message request error on attempt ${attempt}:`,
+        error,
+      );
+
+      if (attempt < MAX_API_RETRIES) {
+        const delay = attempt * 1000;
+
+        await sleep(delay);
+      }
+    }
+  }
+
+  console.error("========================================");
+
+  console.error("FOLLOW GATE MESSAGE FAILED");
+
+  console.error("========================================");
+
+  return false;
+}
+
+// =========================================================
+// Send normal Instagram DM
+// =========================================================
+
+async function sendDirectInstagramMessage({
+  igUserId,
+  participantId,
+  accessToken,
+  text,
+}: {
+  igUserId: string;
+  participantId: string;
+  accessToken: string;
+  text: string;
+}): Promise<boolean> {
+  const url =
+    `https://graph.instagram.com/` +
+    `${INSTAGRAM_API_VERSION}/` +
+    `${igUserId}/messages`;
+
+  const requestBody = {
+    recipient: {
+      id: participantId,
+    },
+
+    message: {
+      text,
+    },
+  };
+
+  console.log("========================================");
+
+  console.log("SENDING DIRECT INSTAGRAM MESSAGE");
+
+  console.log("Recipient:", participantId);
+
+  console.log("========================================");
+
+  for (let attempt = 1; attempt <= MAX_API_RETRIES; attempt++) {
+    try {
+      console.log(
+        `Direct Instagram message attempt ${attempt}/${MAX_API_RETRIES}`,
+      );
+
+      const response = await fetch(url, {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+
+          Authorization: `Bearer ${accessToken}`,
+
+          Accept: "application/json",
+        },
+
+        body: JSON.stringify(requestBody),
+
+        cache: "no-store",
+      });
+
+      const responseText = await response.text();
+
+      let responseData: unknown;
+
+      try {
+        responseData = responseText ? JSON.parse(responseText) : null;
+      } catch {
+        responseData = responseText;
+      }
+
+      if (response.ok) {
+        console.log("DIRECT INSTAGRAM MESSAGE SENT SUCCESSFULLY");
+
+        console.log("Instagram API response:", responseData);
+
+        console.log("========================================");
+
+        return true;
+      }
+
+      console.error(`Direct Instagram message attempt ${attempt} failed.`);
+
+      console.error("HTTP Status:", response.status);
+
+      console.error("Instagram API response:", responseData);
+
+      if (attempt < MAX_API_RETRIES) {
+        const delay = attempt * 1000;
+
+        await sleep(delay);
+      }
+    } catch (error) {
+      console.error(
+        `Direct Instagram message request error on attempt ${attempt}:`,
+        error,
+      );
+
+      if (attempt < MAX_API_RETRIES) {
+        const delay = attempt * 1000;
+
+        await sleep(delay);
+      }
+    }
+  }
+
+  console.error("DIRECT INSTAGRAM MESSAGE FAILED");
+
+  console.log("========================================");
+
+  return false;
+}
+
+// =========================================================
+// Process Follow Gate postback
+// =========================================================
+
+async function processFollowGatePostback({
+  senderId,
+  payload,
+  instagramAccount,
+}: {
+  senderId: string;
+  payload: string;
+  instagramAccount: InstagramAccountData;
+}): Promise<boolean> {
+  try {
+    if (!payload.startsWith(FOLLOW_GATE_PAYLOAD_PREFIX)) {
+      return false;
+    }
+
+    const pendingGateId = payload.slice(FOLLOW_GATE_PAYLOAD_PREFIX.length);
+
+    if (!pendingGateId) {
+      console.warn("Follow Gate postback does not contain gate ID.");
+
+      return true;
+    }
+
+    const participantId = String(senderId);
+
+    console.log("========================================");
+
+    console.log("FOLLOW GATE CHECK REQUESTED");
+
+    console.log("Pending Gate ID:", pendingGateId);
+
+    console.log("Participant ID:", participantId);
+
+    console.log("Instagram Account ID:", instagramAccount.id);
+
+    console.log("========================================");
+
+    const pendingGate = await prisma.pendingFollowGate.findFirst({
+      where: {
+        id: pendingGateId,
+
+        instagramAccountId: instagramAccount.id,
+
+        participantId,
+
+        status: "PENDING",
+      },
+
+      include: {
+        automation: {
+          include: {
+            messages: {
+              orderBy: {
+                order: "asc",
+              },
+
+              include: {
+                quickReplies: {
+                  orderBy: {
+                    createdAt: "asc",
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!pendingGate) {
+      console.warn(
+        "Pending Follow Gate not found or no longer pending:",
+        pendingGateId,
+      );
+
+      await sendDirectInstagramMessage({
+        igUserId: instagramAccount.igUserId,
+
+        participantId,
+
+        accessToken: await getValidInstagramAccessToken(instagramAccount.id),
+
+        text:
+          "این درخواست فالو منقضی شده یا دیگر فعال نیست. " +
+          "لطفاً دوباره از طریق کامنت درخواست را ارسال کنید.",
+      });
+
+      return true;
+    }
+
+    if (pendingGate.expiresAt.getTime() <= Date.now()) {
+      await prisma.pendingFollowGate.update({
+        where: {
+          id: pendingGate.id,
+        },
+
+        data: {
+          status: "EXPIRED",
+        },
+      });
+
+      console.log("Follow Gate expired:", pendingGate.id);
+
+      const accessToken = await getValidInstagramAccessToken(
+        instagramAccount.id,
+      );
+
+      await sendDirectInstagramMessage({
+        igUserId: instagramAccount.igUserId,
+
+        participantId,
+
+        accessToken,
+
+        text:
+          "مهلت این درخواست تمام شده است. " +
+          "لطفاً دوباره روی پست کامنت بگذارید تا درخواست جدید ایجاد شود.",
+      });
+
+      return true;
+    }
+
+    if (!pendingGate.automation.isActive) {
+      console.warn(
+        "Follow Gate automation is no longer active:",
+        pendingGate.automationId,
+      );
+
+      return true;
+    }
+
+    let accessToken: string;
+
+    try {
+      accessToken = await getValidInstagramAccessToken(instagramAccount.id);
+    } catch (error) {
+      console.error("Could not get valid access token for Follow Gate:", error);
+
+      return true;
+    }
+
+    // =======================================================
+    // Check actual Instagram follow status
+    // =======================================================
+
+    const followStatus = await getInstagramUserFollowStatus({
+      instagramUserId: participantId,
+
+      accessToken,
+    });
+
+    // =======================================================
+    // API could not determine status
+    // =======================================================
+
+    if (!followStatus.success || followStatus.isFollowing === null) {
+      await prisma.pendingFollowGate.update({
+        where: {
+          id: pendingGate.id,
+        },
+
+        data: {
+          attempts: {
+            increment: 1,
+          },
+        },
+      });
+
+      await sendDirectInstagramMessage({
+        igUserId: instagramAccount.igUserId,
+
+        participantId,
+
+        accessToken,
+
+        text:
+          "در حال حاضر امکان بررسی وضعیت فالو وجود ندارد. " +
+          "لطفاً چند لحظه بعد دوباره «بررسی فالو» را بزنید.",
+      });
+
+      return true;
+    }
+
+    // =======================================================
+    // User has NOT followed
+    // =======================================================
+
+    if (!followStatus.isFollowing) {
+      console.log("User is NOT following the Instagram account.");
+
+      const updatedGate = await prisma.pendingFollowGate.update({
+        where: {
+          id: pendingGate.id,
+        },
+
+        data: {
+          attempts: {
+            increment: 1,
+          },
+        },
+      });
+
+      const gateText =
+        pendingGate.automation.followGateText?.trim() ||
+        "برای دریافت این محتوا ابتدا پیج ما را فالو کنید.";
+
+      await sendFollowGateMessage({
+        instagramAccount,
+
+        participantId,
+
+        accessToken,
+
+        pendingGateId: updatedGate.id,
+
+        followGateText: gateText,
+      });
+
+      return true;
+    }
+
+    // =======================================================
+    // User HAS followed
+    // =======================================================
+
+    console.log("========================================");
+
+    console.log("USER FOLLOW VERIFIED");
+
+    console.log("Pending Gate ID:", pendingGate.id);
+
+    console.log("Automation ID:", pendingGate.automationId);
+
+    console.log("Participant ID:", participantId);
+
+    console.log("========================================");
+
+    await prisma.pendingFollowGate.update({
+      where: {
+        id: pendingGate.id,
+      },
+
+      data: {
+        status: "COMPLETED",
+
+        attempts: {
+          increment: 1,
+        },
+      },
+    });
+
+    const automation = pendingGate.automation;
+
+    const hasDirectReply = Boolean(
+      automation.replyText && automation.replyText.trim(),
+    );
+
+    const hasFlowMessages = automation.messages.length > 0;
+
+    let directReplySent = false;
+
+    // =======================================================
+    // Final direct reply
+    // =======================================================
+
+    if (hasDirectReply && !hasFlowMessages) {
+      directReplySent = await sendDirectInstagramMessage({
+        igUserId: instagramAccount.igUserId,
+
+        participantId,
+
+        accessToken,
+
+        text: automation.replyText!.trim(),
+      });
+
+      console.log("Final direct reply sent:", directReplySent);
+    }
+
+    // =======================================================
+    // Final automation flow
+    // =======================================================
+
+    let automationExecuted = false;
+
+    if (hasFlowMessages) {
+      console.log("========================================");
+
+      console.log("EXECUTING FOLLOW-GATED AUTOMATION");
+
+      console.log("Automation ID:", automation.id);
+
+      console.log("Message count:", automation.messages.length);
+
+      console.log("Participant ID:", participantId);
+
+      console.log("========================================");
+
+      const result = await executeAutomation({
+        automationId: automation.id,
+
+        instagramAccountId: instagramAccount.id,
+
+        participantId,
+
+        igUserId: participantId,
+
+        selectedQuickReplyId: null,
+      });
+
+      automationExecuted = result.success && result.executed;
+
+      console.log("Follow-gated automation result:", result);
+    }
+
+    // =======================================================
+    // Direct reply + flow
+    //
+    // Existing architecture normally lets Flow handle the
+    // response when messages exist, so do not duplicate it.
+    // =======================================================
+
+    if (hasDirectReply && hasFlowMessages) {
+      console.log("Automation has both direct reply and Flow messages.");
+
+      console.log(
+        "Following existing behavior: Flow handles the final response.",
+      );
+    }
+
+    console.log("========================================");
+
+    console.log("FOLLOW GATE COMPLETED");
+
+    console.log("Direct reply sent:", directReplySent);
+
+    console.log("Flow executed:", automationExecuted);
+
+    console.log("========================================");
+
+    return true;
+  } catch (error) {
+    console.error("Error processing Follow Gate postback:", error);
+
+    return true;
+  }
+}
+
+// =========================================================
 // Process Instagram Ice Breaker / Persistent Menu
 // postback event
 // =========================================================
@@ -1526,6 +2232,26 @@ async function processInstagramPostback(
       recipientId,
       instagramAccountId: instagramAccount.id,
     });
+
+    // =======================================================
+    // Follow Gate
+    //
+    // Must be checked BEFORE Ice Breaker / Persistent Menu
+    // so the reserved Follow Gate payload is not treated as
+    // an unknown menu payload.
+    // =======================================================
+
+    if (payload.startsWith(FOLLOW_GATE_PAYLOAD_PREFIX)) {
+      await processFollowGatePostback({
+        senderId: participantId,
+
+        payload,
+
+        instagramAccount,
+      });
+
+      return;
+    }
 
     // =======================================================
     // Ice Breaker
@@ -2004,6 +2730,8 @@ async function processCommentEvent(
 
     const username = value.from?.username;
 
+    const commenterIgUserId = value.from?.id ? String(value.from.id) : null;
+
     if (!igCommentId || !igMediaId || !text || !username) {
       console.warn("Incomplete Instagram comment payload:", value);
 
@@ -2019,6 +2747,8 @@ async function processCommentEvent(
     console.log("mediaId:", igMediaId);
 
     console.log("username:", username);
+
+    console.log("commenterIgUserId:", commenterIgUserId);
 
     console.log("text:", text);
 
@@ -2097,9 +2827,18 @@ async function processCommentEvent(
 
     console.log("Like Comment:", matchedAutomation.likeComment);
 
+    console.log("Require Follow:", matchedAutomation.requireFollow);
+
+    console.log(
+      "Follow Gate Text:",
+      matchedAutomation.followGateText ?? "DEFAULT",
+    );
+
     console.log("Instagram Comment ID:", igCommentId);
 
     console.log("Username:", username);
+
+    console.log("Commenter Instagram-scoped ID:", commenterIgUserId);
 
     console.log("========================================");
 
@@ -2120,6 +2859,8 @@ async function processCommentEvent(
 
     const hasLikeComment = matchedAutomation.likeComment === true;
 
+    const requiresFollow = matchedAutomation.requireFollow === true;
+
     if (
       !hasPublicCommentReply &&
       !hasPrivateReply &&
@@ -2137,6 +2878,10 @@ async function processCommentEvent(
       return;
     }
 
+    // =======================================================
+    // Get valid access token
+    // =======================================================
+
     let accessToken: string;
 
     try {
@@ -2146,6 +2891,12 @@ async function processCommentEvent(
 
       return;
     }
+
+    // =======================================================
+    // Public comment reply
+    //
+    // This is intentionally sent BEFORE Follow Gate.
+    // =======================================================
 
     let publicCommentReplySent = false;
 
@@ -2162,6 +2913,256 @@ async function processCommentEvent(
         "No public comment reply text configured. Skipping public reply.",
       );
     }
+
+    // =======================================================
+    // FOLLOW GATE
+    // =======================================================
+
+    if (requiresFollow) {
+      console.log("========================================");
+
+      console.log("FOLLOW GATE ENABLED FOR COMMENT AUTOMATION");
+
+      console.log("Automation ID:", matchedAutomation.id);
+
+      console.log("Commenter ID:", commenterIgUserId ?? "MISSING");
+
+      console.log("========================================");
+
+      if (!commenterIgUserId) {
+        console.error(
+          "Follow Gate requires commenter Instagram-scoped ID, but it is missing.",
+        );
+
+        return;
+      }
+
+      // =====================================================
+      // Check whether user already follows the account
+      //
+      // If true -> execute final content immediately.
+      // If false/unknown -> create pending gate and send gate.
+      // =====================================================
+
+      const followStatus = await getInstagramUserFollowStatus({
+        instagramUserId: commenterIgUserId,
+
+        accessToken,
+      });
+
+      // =====================================================
+      // Already following
+      // =====================================================
+
+      if (followStatus.success && followStatus.isFollowing === true) {
+        console.log("Commenter already follows the account.");
+
+        console.log("Follow Gate will be bypassed.");
+
+        let automationExecuted = false;
+
+        let privateReplySent = false;
+
+        if (hasFlowMessages) {
+          console.log("========================================");
+
+          console.log("EXECUTING COMMENT FLOW - USER ALREADY FOLLOWS");
+
+          console.log("Automation ID:", matchedAutomation.id);
+
+          console.log("Commenter Instagram-scoped ID:", commenterIgUserId);
+
+          console.log("Message count:", matchedAutomation.messages.length);
+
+          console.log("========================================");
+
+          const result = await executeAutomation({
+            automationId: matchedAutomation.id,
+
+            instagramAccountId: instagramAccount.id,
+
+            participantId: commenterIgUserId,
+
+            igUserId: commenterIgUserId,
+
+            selectedQuickReplyId: null,
+          });
+
+          automationExecuted = result.success && result.executed;
+
+          console.log("Comment automation engine result:", result);
+        } else if (hasPrivateReply) {
+          privateReplySent = await sendPrivateReply({
+            igUserId: instagramAccount.igUserId,
+
+            igCommentId,
+
+            accessToken,
+
+            replyText: matchedAutomation.replyText!.trim(),
+          });
+        }
+
+        if (publicCommentReplySent || privateReplySent || automationExecuted) {
+          await prisma.comment.update({
+            where: {
+              id: comment.id,
+            },
+
+            data: {
+              replied: true,
+
+              replyText:
+                matchedAutomation.commentReplyText ??
+                matchedAutomation.replyText ??
+                null,
+            },
+          });
+        }
+
+        console.log("========================================");
+
+        console.log("COMMENT AUTOMATION RESULT - ALREADY FOLLOWING");
+
+        console.log("Public comment reply sent:", publicCommentReplySent);
+
+        console.log("Automation engine executed:", automationExecuted);
+
+        console.log("Private reply sent:", privateReplySent);
+
+        console.log("========================================");
+
+        return;
+      }
+
+      // =====================================================
+      // Follow status unknown / API failure
+      //
+      // Fail closed: do not release final content.
+      // =====================================================
+
+      if (!followStatus.success || followStatus.isFollowing === null) {
+        console.warn(
+          "Could not determine current follow status. Follow Gate remains active.",
+        );
+      }
+
+      // =====================================================
+      // Find existing pending gate
+      //
+      // This prevents creating a new gate every time the same
+      // user comments repeatedly while the old gate is active.
+      // =====================================================
+
+      let pendingGate = await prisma.pendingFollowGate.findFirst({
+        where: {
+          instagramAccountId: instagramAccount.id,
+
+          automationId: matchedAutomation.id,
+
+          participantId: commenterIgUserId,
+
+          status: "PENDING",
+
+          expiresAt: {
+            gt: new Date(),
+          },
+        },
+
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+
+      if (!pendingGate) {
+        pendingGate = await prisma.pendingFollowGate.create({
+          data: {
+            instagramAccountId: instagramAccount.id,
+
+            automationId: matchedAutomation.id,
+
+            participantId: commenterIgUserId,
+
+            status: "PENDING",
+
+            attempts: 0,
+
+            expiresAt: new Date(Date.now() + FOLLOW_GATE_EXPIRATION_MS),
+          },
+        });
+
+        console.log("New Pending Follow Gate created:", pendingGate.id);
+      } else {
+        console.log("Existing Pending Follow Gate reused:", pendingGate.id);
+      }
+
+      const gateText =
+        matchedAutomation.followGateText?.trim() ||
+        "برای دریافت این محتوا ابتدا پیج ما را فالو کنید.";
+
+      const gateSent = await sendFollowGateMessage({
+        instagramAccount,
+
+        participantId: commenterIgUserId,
+
+        accessToken,
+
+        pendingGateId: pendingGate.id,
+
+        followGateText: gateText,
+      });
+
+      if (gateSent) {
+        await prisma.pendingFollowGate.update({
+          where: {
+            id: pendingGate.id,
+          },
+
+          data: {
+            attempts: {
+              increment: 1,
+            },
+          },
+        });
+      }
+
+      console.log("========================================");
+
+      console.log("FOLLOW GATE RESULT");
+
+      console.log("Gate sent:", gateSent);
+
+      console.log("Pending Gate ID:", pendingGate.id);
+
+      console.log("Final content execution: BLOCKED UNTIL FOLLOW");
+
+      console.log("========================================");
+
+      // =====================================================
+      // VERY IMPORTANT:
+      //
+      // Do NOT execute:
+      //
+      // executeAutomation()
+      //
+      // and do NOT send:
+      //
+      // replyText
+      //
+      // here.
+      //
+      // They are released only after the follow check succeeds.
+      // =====================================================
+
+      return;
+    }
+
+    // =======================================================
+    // Normal Comment Automation
+    //
+    // This section runs only when Follow Gate is disabled.
+    // =======================================================
+
     let automationExecuted = false;
 
     if (hasFlowMessages) {
@@ -2231,6 +3232,7 @@ async function processCommentEvent(
         "Flow messages exist. Direct private reply is skipped because Flow handles the response.",
       );
     }
+
     if (publicCommentReplySent || privateReplySent || automationExecuted) {
       await prisma.comment.update({
         where: {

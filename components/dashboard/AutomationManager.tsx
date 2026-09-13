@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -44,6 +45,18 @@ export type Automation = {
     sendDm: boolean;
     likeIncomingDm: boolean;
     likeStoryReply: boolean;
+
+    /*
+     * Follow Gate
+     *
+     * فقط برای COMMENT_KEYWORD کاربرد دارد.
+     *
+     * اگر true باشد، قبل از ارسال Flow اصلی
+     * باید فالو بودن کاربر توسط Instagram API
+     * تأیید شود.
+     */
+    requireFollow: boolean;
+    followGateText: string | null;
 
     isActive: boolean;
 
@@ -629,6 +642,14 @@ function AutomationCard({
                                     ? "فعال"
                                     : "غیرفعال"}
                             </span>
+
+                            {automation.triggerType ===
+                                "COMMENT_KEYWORD" &&
+                                automation.requireFollow && (
+                                    <span className="rounded-full bg-slate-100 px-2 py-1 text-[9px] font-semibold text-slate-600">
+                                        شرط فالو فعال
+                                    </span>
+                                )}
                         </div>
 
                         <p className="mt-1 text-xs text-slate-400">
@@ -759,3 +780,4 @@ function AutomationCard({
         </div>
     );
 }
+

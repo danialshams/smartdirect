@@ -258,6 +258,11 @@ export async function PATCH(
       likeIncomingDm,
       likeStoryReply,
       replyText,
+
+      // Follow Gate
+      requireFollow,
+      followGateText,
+
       isActive,
     } = body;
 
@@ -356,6 +361,41 @@ export async function PATCH(
       );
     }
 
+    /**
+     * Follow Gate فقط برای COMMENT_KEYWORD قابل استفاده است.
+     */
+    const isCommentTrigger = nextTriggerType === "COMMENT_KEYWORD";
+
+    let nextRequireFollow: boolean;
+
+    if (!isCommentTrigger) {
+      nextRequireFollow = false;
+    } else if (requireFollow !== undefined) {
+      nextRequireFollow = Boolean(requireFollow);
+    } else {
+      nextRequireFollow = existingAutomation.requireFollow;
+    }
+
+    let nextFollowGateText: string | null;
+
+    if (!isCommentTrigger || !nextRequireFollow) {
+      nextFollowGateText = null;
+    } else if (followGateText !== undefined) {
+      nextFollowGateText = normalizeOptionalString(followGateText);
+    } else {
+      nextFollowGateText = existingAutomation.followGateText;
+    }
+
+    if (isCommentTrigger && nextRequireFollow && !nextFollowGateText) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "وقتی Follow Gate فعال است، متن درخواست فالو الزامی است",
+        },
+        { status: 400 },
+      );
+    }
+
     const updateData: {
       triggerType?: TriggerType;
       keyword?: string | null;
@@ -366,6 +406,8 @@ export async function PATCH(
       likeIncomingDm?: boolean;
       likeStoryReply?: boolean;
       replyText?: string | null;
+      requireFollow?: boolean;
+      followGateText?: string | null;
       isActive?: boolean;
     } = {};
 
@@ -412,6 +454,15 @@ export async function PATCH(
     if (replyText !== undefined) {
       updateData.replyText = normalizeOptionalString(replyText);
     }
+
+    /**
+     * همیشه Follow Gate را بر اساس Trigger نهایی تنظیم می‌کنیم.
+     *
+     * اگر Trigger از COMMENT_KEYWORD به DM یا STORY تغییر کند،
+     * Follow Gate به صورت خودکار خاموش و متن آن null می‌شود.
+     */
+    updateData.requireFollow = nextRequireFollow;
+    updateData.followGateText = nextFollowGateText;
 
     if (isActive !== undefined) {
       updateData.isActive = Boolean(isActive);

@@ -66,7 +66,8 @@ export const ModelName = {
   ShowcaseItem: 'ShowcaseItem',
   Form: 'Form',
   FormField: 'FormField',
-  FormSubmission: 'FormSubmission'
+  FormSubmission: 'FormSubmission',
+  PendingFollowGate: 'PendingFollowGate'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -125,6 +126,8 @@ export const AutomationScalarFieldEnum = {
   likeIncomingDm: 'likeIncomingDm',
   replyText: 'replyText',
   likeStoryReply: 'likeStoryReply',
+  requireFollow: 'requireFollow',
+  followGateText: 'followGateText',
   isActive: 'isActive',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -324,6 +327,21 @@ export const FormSubmissionScalarFieldEnum = {
 } as const
 
 export type FormSubmissionScalarFieldEnum = (typeof FormSubmissionScalarFieldEnum)[keyof typeof FormSubmissionScalarFieldEnum]
+
+
+export const PendingFollowGateScalarFieldEnum = {
+  id: 'id',
+  instagramAccountId: 'instagramAccountId',
+  automationId: 'automationId',
+  participantId: 'participantId',
+  status: 'status',
+  attempts: 'attempts',
+  expiresAt: 'expiresAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PendingFollowGateScalarFieldEnum = (typeof PendingFollowGateScalarFieldEnum)[keyof typeof PendingFollowGateScalarFieldEnum]
 
 
 export const SortOrder = {

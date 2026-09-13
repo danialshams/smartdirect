@@ -203,6 +203,11 @@ export async function POST(request: NextRequest) {
       likeIncomingDm = false,
       likeStoryReply = false,
       replyText,
+
+      // Follow Gate
+      requireFollow = false,
+      followGateText,
+
       isActive = true,
     } = body;
 
@@ -276,6 +281,28 @@ export async function POST(request: NextRequest) {
     const normalizedMediaId =
       typeof mediaId === "string" && mediaId.trim() ? mediaId.trim() : null;
 
+    /**
+     * Follow Gate فقط برای COMMENT_KEYWORD معتبر است.
+     */
+    const normalizedRequireFollow =
+      triggerType === "COMMENT_KEYWORD" ? Boolean(requireFollow) : false;
+
+    let normalizedFollowGateText: string | null = null;
+
+    if (triggerType === "COMMENT_KEYWORD" && normalizedRequireFollow) {
+      if (typeof followGateText !== "string" || !followGateText.trim()) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "وقتی Follow Gate فعال است، متن درخواست فالو الزامی است",
+          },
+          { status: 400 },
+        );
+      }
+
+      normalizedFollowGateText = followGateText.trim();
+    }
+
     const duplicate = await prisma.automation.findFirst({
       where: {
         instagramAccountId,
@@ -329,6 +356,11 @@ export async function POST(request: NextRequest) {
           typeof replyText === "string" && replyText.trim()
             ? replyText.trim()
             : null,
+
+        // Follow Gate
+        requireFollow: normalizedRequireFollow,
+
+        followGateText: normalizedFollowGateText,
 
         isActive: Boolean(isActive),
       },

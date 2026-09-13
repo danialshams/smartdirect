@@ -46,14 +46,11 @@ model InstagramAccount {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  automations   Automation[]
-  conversations Conversation[]
-  showcases     Showcase[]
-  forms         Form[]
-
-  // ====================================================
-  // INSTAGRAM MESSENGER PROFILE
-  // ====================================================
+  automations        Automation[]
+  conversations      Conversation[]
+  showcases          Showcase[]
+  forms              Form[]
+  pendingFollowGates PendingFollowGate[]
 
   iceBreakers    IceBreaker[]
   persistentMenu PersistentMenu?
@@ -111,6 +108,19 @@ model Automation {
   likeStoryReply Boolean @default(false)
 
   // ====================================================
+  // FOLLOW GATE
+  // ====================================================
+
+  // اگر true باشد، کاربر قبل از دریافت محتوای نهایی
+  // باید پیج Instagram را Follow کند.
+  //
+  // این قابلیت فعلاً فقط برای COMMENT_KEYWORD استفاده می‌شود.
+  requireFollow Boolean @default(false)
+
+  // متن نمایش داده شده برای درخواست Follow
+  followGateText String?
+
+  // ====================================================
   // STATUS
   // ====================================================
 
@@ -125,11 +135,21 @@ model Automation {
   messages AutomationMessage[]
 
   // ====================================================
-  // INSTAGRAM ENTRY POINTS
+  // PENDING FOLLOW GATES
+  // ====================================================
+
+  pendingFollowGates PendingFollowGate[]
+
+  // ====================================================
+  // ENTRY POINTS
   // ====================================================
 
   iceBreakers         IceBreaker[]
   persistentMenuItems PersistentMenuItem[]
+
+  // ====================================================
+  // INDEXES
+  // ====================================================
 
   @@index([instagramAccountId])
   @@index([mediaId])
@@ -193,8 +213,16 @@ model AutomationMessage {
   quickReplies         QuickReply[]
   nextFromQuickReplies QuickReply[] @relation("QuickReplyNextMessage")
 
+  // ====================================================
+  // TIMESTAMPS
+  // ====================================================
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // ====================================================
+  // INDEXES
+  // ====================================================
 
   @@index([automationId])
   @@index([automationId, order])
@@ -239,8 +267,16 @@ model QuickReply {
 
   conversationMessages ConversationMessage[]
 
+  // ====================================================
+  // TIMESTAMPS
+  // ====================================================
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // ====================================================
+  // INDEXES
+  // ====================================================
 
   @@index([automationMessageId])
   @@index([nextMessageId])
@@ -454,6 +490,10 @@ model Conversation {
 
   messages ConversationMessage[]
 
+  // ====================================================
+  // INDEXES
+  // ====================================================
+
   @@unique([instagramAccountId, participantId])
   @@index([userId])
   @@index([instagramAccountId])
@@ -508,7 +548,15 @@ model ConversationMessage {
   quickReplyId String?
   quickReply   QuickReply? @relation(fields: [quickReplyId], references: [id], onDelete: SetNull)
 
+  // ====================================================
+  // TIMESTAMP
+  // ====================================================
+
   createdAt DateTime @default(now())
+
+  // ====================================================
+  // INDEXES
+  // ====================================================
 
   @@index([conversationId, createdAt])
   @@index([quickReplyId])
@@ -546,6 +594,10 @@ model Comment {
   replyText String?
 
   createdAt DateTime @default(now())
+
+  // ====================================================
+  // INDEXES
+  // ====================================================
 
   @@index([userId, igMediaId])
 }
@@ -592,6 +644,10 @@ model Showcase {
   // Automation Messages that use this Showcase
   messages AutomationMessage[]
 
+  // ====================================================
+  // INDEXES
+  // ====================================================
+
   @@index([userId])
   @@index([instagramAccountId])
 }
@@ -637,6 +693,10 @@ model ShowcaseItem {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // ====================================================
+  // INDEXES
+  // ====================================================
 
   @@index([showcaseId])
   @@index([showcaseId, order])
@@ -690,6 +750,10 @@ model Form {
   // Automation Messages that use this Form
   messages AutomationMessage[]
 
+  // ====================================================
+  // INDEXES
+  // ====================================================
+
   @@index([userId])
   @@index([instagramAccountId])
 }
@@ -724,6 +788,10 @@ model FormField {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // ====================================================
+  // INDEXES
+  // ====================================================
+
   @@index([formId])
   @@index([formId, order])
 }
@@ -753,8 +821,87 @@ model FormSubmission {
 
   createdAt DateTime @default(now())
 
+  // ====================================================
+  // INDEXES
+  // ====================================================
+
   @@index([formId])
   @@index([igUserId])
+}
+
+// ======================================================
+// PENDING FOLLOW GATE
+// ======================================================
+//
+// زمانی که کاربر روی یک Comment Keyword اتوماسیون اجرا می‌کند
+// و Automation نیاز به Follow دارد، این رکورد ایجاد می‌شود.
+//
+// وضعیت:
+//
+// PENDING   -> منتظر Follow
+// COMPLETED -> Follow انجام شده و Flow اجرا شده
+// EXPIRED   -> درخواست منقضی شده
+// ======================================================
+
+model PendingFollowGate {
+  id String @id @default(cuid())
+
+  // ====================================================
+  // INSTAGRAM ACCOUNT
+  // ====================================================
+
+  instagramAccountId String
+  instagramAccount   InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
+
+  // ====================================================
+  // AUTOMATION
+  // ====================================================
+
+  automationId String
+  automation   Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
+
+  // ====================================================
+  // INSTAGRAM CUSTOMER
+  // ====================================================
+
+  participantId String
+
+  // ====================================================
+  // STATUS
+  // ====================================================
+
+  status FollowGateStatus @default(PENDING)
+
+  // تعداد دفعاتی که کاربر وضعیت Follow را بررسی کرده
+  attempts Int @default(0)
+
+  // بعد از این زمان درخواست Follow معتبر نیست
+  expiresAt DateTime
+
+  // ====================================================
+  // TIMESTAMPS
+  // ====================================================
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // ====================================================
+  // INDEXES
+  // ====================================================
+
+  @@index([instagramAccountId, participantId, status])
+  @@index([automationId])
+  @@index([expiresAt])
+}
+
+// ======================================================
+// ENUM: FOLLOW GATE STATUS
+// ======================================================
+
+enum FollowGateStatus {
+  PENDING
+  COMPLETED
+  EXPIRED
 }
 
 // ======================================================
