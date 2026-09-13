@@ -282,14 +282,21 @@ export async function POST(request: NextRequest) {
       typeof mediaId === "string" && mediaId.trim() ? mediaId.trim() : null;
 
     /**
-     * Follow Gate فقط برای COMMENT_KEYWORD معتبر است.
+     * Follow Gate برای COMMENT_KEYWORD و STORY_REPLY_KEYWORD معتبر است.
+     *
+     * برای DM نباید Follow Gate فعال شود.
      */
-    const normalizedRequireFollow =
-      triggerType === "COMMENT_KEYWORD" ? Boolean(requireFollow) : false;
+    const supportsFollowGate =
+      triggerType === "COMMENT_KEYWORD" ||
+      triggerType === "STORY_REPLY_KEYWORD";
+
+    const normalizedRequireFollow = supportsFollowGate
+      ? Boolean(requireFollow)
+      : false;
 
     let normalizedFollowGateText: string | null = null;
 
-    if (triggerType === "COMMENT_KEYWORD" && normalizedRequireFollow) {
+    if (supportsFollowGate && normalizedRequireFollow) {
       if (typeof followGateText !== "string" || !followGateText.trim()) {
         return NextResponse.json(
           {

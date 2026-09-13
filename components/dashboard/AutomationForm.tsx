@@ -647,7 +647,6 @@ export default function AutomationForm({
             setLikeComment(false);
             setLikeIncomingDm(false);
             setMediaId("");
-            setRequireFollow(false);
         }
     }
 
@@ -1276,7 +1275,7 @@ export default function AutomationForm({
 
         try {
             if (
-                isComment &&
+                (isComment || isStory) &&
                 requireFollow &&
                 !followGateText.trim()
             ) {
@@ -1364,12 +1363,12 @@ export default function AutomationForm({
                         likeStoryReply,
 
                         requireFollow:
-                            isComment
+                            isComment || isStory
                                 ? requireFollow
                                 : false,
 
                         followGateText:
-                            isComment && requireFollow
+                            (isComment || isStory) && requireFollow
                                 ? followGateText.trim() || null
                                 : null,
 
@@ -1960,10 +1959,10 @@ export default function AutomationForm({
                         </section>
                     )}
 
-                    {isComment && (
+                    {(isComment || isStory) && (
                         <section className="border-t border-gray-100 pt-6">
                             <h3 className="mb-4 text-sm font-semibold text-gray-900">
-                                شرط فالو قبل از ارسال دایرکت
+                                شرط فالو قبل از ارسال محتوا
                             </h3>
 
                             <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 p-4">
@@ -1984,10 +1983,9 @@ export default function AutomationForm({
                                     </div>
 
                                     <p className="mt-1 text-xs leading-5 text-gray-500">
-                                        بعد از اینکه کاربر کلمه کلیدی را در کامنت ارسال کرد،
-                                        ابتدا پیام درخواست فالو برای او ارسال می‌شود.
-                                        تا زمانی که فالو بودن کاربر تأیید نشود، محتوای اصلی
-                                        Automation ارسال نمی‌شود.
+                                        {isStory
+                                            ? "بعد از اینکه کاربر به استوری پاسخ داد، ابتدا پیام درخواست فالو برای او ارسال می‌شود. تا زمانی که فالو بودن کاربر تأیید نشود، محتوای اصلی Automation ارسال نمی‌شود."
+                                            : "بعد از اینکه کاربر کلمه کلیدی را در کامنت ارسال کرد، ابتدا پیام درخواست فالو برای او ارسال می‌شود. تا زمانی که فالو بودن کاربر تأیید نشود، محتوای اصلی Automation ارسال نمی‌شود."}
                                     </p>
                                 </div>
                             </label>

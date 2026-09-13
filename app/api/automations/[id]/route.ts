@@ -362,13 +362,15 @@ export async function PATCH(
     }
 
     /**
-     * Follow Gate فقط برای COMMENT_KEYWORD قابل استفاده است.
+     * Follow Gate برای COMMENT_KEYWORD و STORY_REPLY_KEYWORD قابل استفاده است.
      */
-    const isCommentTrigger = nextTriggerType === "COMMENT_KEYWORD";
+    const supportsFollowGate =
+      nextTriggerType === "COMMENT_KEYWORD" ||
+      nextTriggerType === "STORY_REPLY_KEYWORD";
 
     let nextRequireFollow: boolean;
 
-    if (!isCommentTrigger) {
+    if (!supportsFollowGate) {
       nextRequireFollow = false;
     } else if (requireFollow !== undefined) {
       nextRequireFollow = Boolean(requireFollow);
@@ -378,7 +380,7 @@ export async function PATCH(
 
     let nextFollowGateText: string | null;
 
-    if (!isCommentTrigger || !nextRequireFollow) {
+    if (!supportsFollowGate || !nextRequireFollow) {
       nextFollowGateText = null;
     } else if (followGateText !== undefined) {
       nextFollowGateText = normalizeOptionalString(followGateText);
@@ -386,7 +388,7 @@ export async function PATCH(
       nextFollowGateText = existingAutomation.followGateText;
     }
 
-    if (isCommentTrigger && nextRequireFollow && !nextFollowGateText) {
+    if (supportsFollowGate && nextRequireFollow && !nextFollowGateText) {
       return NextResponse.json(
         {
           success: false,
@@ -458,7 +460,7 @@ export async function PATCH(
     /**
      * همیشه Follow Gate را بر اساس Trigger نهایی تنظیم می‌کنیم.
      *
-     * اگر Trigger از COMMENT_KEYWORD به DM یا STORY تغییر کند،
+     * اگر Trigger از Comment/Story به DM تغییر کند،
      * Follow Gate به صورت خودکار خاموش و متن آن null می‌شود.
      */
     updateData.requireFollow = nextRequireFollow;
