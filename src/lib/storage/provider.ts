@@ -1,3 +1,4 @@
+import { cloudinaryStorageProvider } from "./cloudinary";
 import { localStorageProvider } from "./local";
 
 export function getStorageProvider() {
@@ -6,6 +7,9 @@ export function getStorageProvider() {
   switch (provider) {
     case "local":
       return localStorageProvider;
+
+    case "cloudinary":
+      return cloudinaryStorageProvider;
 
     default:
       throw new Error(`Storage provider "${provider}" پشتیبانی نمی‌شود.`);
