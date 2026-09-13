@@ -10,7 +10,7 @@
     },
     {
       "path": "/api/cron/instagram-publishing",
-      "schedule": "*/5 * * * *"
+      "schedule": "0 4 * * *"
     }
   ]
 }
