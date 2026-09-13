@@ -15,6 +15,7 @@ import AutomationManager from "./AutomationManager";
 import IceBreakerManager from "./IceBreakerManager";
 import InstagramInsights from "./InstagramInsights";
 import PersistentMenuManager from "./PersistentMenuManager";
+import InstagramContentAnalytics from "./InstagramContentAnalytics";
 
 type InstagramAccount = {
     id: string;
@@ -98,7 +99,7 @@ export default function DashboardOverview({
             </section>
 
             <InstagramInsights />
-
+            <InstagramContentAnalytics />
             <section id="instagram" className="scroll-mt-24">
                 <div className="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
                     <div>
