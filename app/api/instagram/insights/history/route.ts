@@ -6,6 +6,18 @@ import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
+const MAX_DAYS = 365;
+
+function normalizeDays(value: string | null) {
+  const parsed = Number(value || 30);
+
+  if (!Number.isFinite(parsed)) {
+    return 30;
+  }
+
+  return Math.min(Math.max(Math.floor(parsed), 1), MAX_DAYS);
+}
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -13,9 +25,12 @@ export async function GET(request: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json(
         {
-          error: "ابتدا وارد حساب کاربری شوید",
+          success: false,
+          error: "ابتدا وارد حساب کاربری شوید.",
         },
-        { status: 401 },
+        {
+          status: 401,
+        },
       );
     }
 
@@ -23,27 +38,40 @@ export async function GET(request: NextRequest) {
 
     const accountId = searchParams.get("accountId");
 
-    const days = Math.min(Number(searchParams.get("days") || 30), 365);
+    const days = normalizeDays(searchParams.get("days"));
 
     const account = await prisma.instagramAccount.findFirst({
       where: {
         id: accountId || undefined,
         userId: session.user.id,
       },
+
+      select: {
+        id: true,
+        igUserId: true,
+        igUsername: true,
+      },
     });
 
     if (!account) {
       return NextResponse.json(
         {
-          error: "اکانت اینستاگرام پیدا نشد",
+          success: false,
+          error: "اکانت Instagram پیدا نشد.",
         },
-        { status: 404 },
+        {
+          status: 404,
+        },
       );
     }
 
-    const from = new Date();
+    const now = new Date();
 
-    from.setDate(from.getDate() - days);
+    const from = new Date(now);
+
+    from.setUTCDate(from.getUTCDate() - (days - 1));
+
+    from.setUTCHours(0, 0, 0, 0);
 
     const snapshots = await prisma.instagramInsightSnapshot.findMany({
       where: {
@@ -57,13 +85,86 @@ export async function GET(request: NextRequest) {
       orderBy: {
         snapshotDate: "asc",
       },
+
+      select: {
+        id: true,
+        snapshotDate: true,
+        reach: true,
+        views: true,
+        accountsEngaged: true,
+        totalInteractions: true,
+        profileViews: true,
+        followerCount: true,
+      },
     });
 
+    const totals = snapshots.reduce(
+      (result, snapshot) => {
+        result.reach += snapshot.reach ?? 0;
+
+        result.views += snapshot.views ?? 0;
+
+        result.accountsEngaged += snapshot.accountsEngaged ?? 0;
+
+        result.totalInteractions += snapshot.totalInteractions ?? 0;
+
+        result.profileViews += snapshot.profileViews ?? 0;
+
+        return result;
+      },
+      {
+        reach: 0,
+        views: 0,
+        accountsEngaged: 0,
+        totalInteractions: 0,
+        profileViews: 0,
+      },
+    );
+
+    const latestSnapshot = snapshots[snapshots.length - 1] ?? null;
+
+    const firstSnapshot = snapshots[0] ?? null;
+
+    const followerCount = latestSnapshot?.followerCount ?? 0;
+
+    const firstFollowerCount = firstSnapshot?.followerCount ?? 0;
+
+    const followerGrowth = followerCount - firstFollowerCount;
+
+    const engagementRate =
+      totals.reach > 0
+        ? Number(((totals.totalInteractions / totals.reach) * 100).toFixed(2))
+        : null;
+
     return NextResponse.json({
+      success: true,
+
       account: {
         id: account.id,
+        igUserId: account.igUserId,
         username: account.igUsername,
       },
+
+      period: {
+        days,
+        from,
+        to: now,
+      },
+
+      summary: {
+        reach: totals.reach,
+        views: totals.views,
+        accountsEngaged: totals.accountsEngaged,
+        totalInteractions: totals.totalInteractions,
+        profileViews: totals.profileViews,
+
+        followerCount,
+        followerGrowth,
+
+        engagementRate,
+      },
+
+      latest: latestSnapshot,
 
       snapshots,
     });
@@ -72,9 +173,12 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(
       {
-        error: "خطا در دریافت تاریخچه Insights",
+        success: false,
+        error: "خطا در دریافت تاریخچه Instagram Insights.",
       },
-      { status: 500 },
+      {
+        status: 500,
+      },
     );
   }
 }
