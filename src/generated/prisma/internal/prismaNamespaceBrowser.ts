@@ -369,6 +369,7 @@ export const InstagramPublishJobScalarFieldEnum = {
   type: 'type',
   status: 'status',
   caption: 'caption',
+  userTags: 'userTags',
   scheduledAt: 'scheduledAt',
   publishedAt: 'publishedAt',
   instagramContainerId: 'instagramContainerId',
