@@ -11,6 +11,14 @@ export const dynamic = "force-dynamic";
 const INSTAGRAM_API_VERSION = "v26.0";
 const GRAPH_BASE = `https://graph.instagram.com/${INSTAGRAM_API_VERSION}`;
 
+type HandoffState = {
+  conversationId: string;
+  active: boolean;
+  assignedToUserId: string | null;
+  handedOffAt: Date;
+  handedBackAt: Date | null;
+};
+
 function jsonError(message: string, status = 400) {
   return NextResponse.json({ success: false, error: message }, { status });
 }
@@ -29,6 +37,26 @@ function proxyConversationMedia<T extends {
       mediaUrl: proxyInstagramMediaUrl(message.mediaUrl),
     })),
   };
+}
+
+async function getHandoffState(conversationId: string) {
+  const rows = await prisma.$queryRaw<HandoffState[]>`
+    SELECT "conversationId", "active", "assignedToUserId", "handedOffAt", "handedBackAt"
+    FROM "ConversationHandoff"
+    WHERE "conversationId" = ${conversationId}
+    LIMIT 1
+  `;
+  return rows[0] ?? null;
+}
+
+async function getHandoffStates(conversationIds: string[]) {
+  if (!conversationIds.length) return new Map<string, HandoffState>();
+  const rows = await prisma.$queryRaw<HandoffState[]>`
+    SELECT "conversationId", "active", "assignedToUserId", "handedOffAt", "handedBackAt"
+    FROM "ConversationHandoff"
+    WHERE "conversationId" IN (${prisma.join(conversationIds)})
+  `;
+  return new Map(rows.map((row) => [row.conversationId, row]));
 }
 
 async function getOwnedAccount(userId: string, accountId?: string | null) {
@@ -209,6 +237,8 @@ export async function GET(request: NextRequest) {
         },
       });
 
+      const handoff = await getHandoffState(conversation.id);
+
       return NextResponse.json({
         success: true,
         account: {
@@ -216,7 +246,11 @@ export async function GET(request: NextRequest) {
           username: account.igUsername,
           igUserId: account.igUserId,
         },
-        conversation: proxyConversationMedia(refreshed || conversation),
+        conversation: {
+          ...proxyConversationMedia(refreshed || conversation),
+          humanMode: handoff?.active ?? false,
+          handoff,
+        },
       });
     }
 
@@ -266,6 +300,7 @@ export async function GET(request: NextRequest) {
     const unreadMap = new Map(
       unread.map((item) => [item.conversationId, item._count._all]),
     );
+    const handoffMap = await getHandoffStates(conversations.map((item) => item.id));
 
     const freshConversations = await prisma.conversation.findMany({
       where: { id: { in: conversations.map((item) => item.id) } },
@@ -298,10 +333,15 @@ export async function GET(request: NextRequest) {
         username: account.igUsername,
         igUserId: account.igUserId,
       },
-      conversations: freshConversations.map((item) => ({
-        ...proxyConversationMedia(item),
-        unreadCount: unreadMap.get(item.id) || 0,
-      })),
+      conversations: freshConversations.map((item) => {
+        const handoff = handoffMap.get(item.id) ?? null;
+        return {
+          ...proxyConversationMedia(item),
+          unreadCount: unreadMap.get(item.id) || 0,
+          humanMode: handoff?.active ?? false,
+          handoff,
+        };
+      }),
     });
   } catch (error) {
     console.error("Instagram inbox GET error:", error);
@@ -416,13 +456,6 @@ export async function POST(request: NextRequest) {
       message_id?: string;
       error?: { message?: string };
     };
-
-    console.log("========================================");
-    console.log("INSTAGRAM SEND RESPONSE");
-    console.log("========================================");
-    console.log("Instagram API response:", JSON.stringify(data, null, 2));
-    console.log("Returned message_id:", data.message_id);
-    console.log("========================================");
 
     if (!response.ok)
       return jsonError(
