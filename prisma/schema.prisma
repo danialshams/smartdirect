@@ -437,7 +437,8 @@ model InstagramPublishJob {
   type   InstagramPublishType
   status InstagramPublishStatus @default(DRAFT)
 
-  caption String?
+  caption  String?
+  userTags Json?
 
   scheduledAt DateTime?
   publishedAt DateTime?
