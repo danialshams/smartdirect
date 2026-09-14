@@ -219,9 +219,7 @@ export const PersistentMenuItemScalarFieldEnum = {
   title: 'title',
   payload: 'payload',
   automationId: 'automationId',
-  order: 'order',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  order: 'order'
 } as const
 
 export type PersistentMenuItemScalarFieldEnum = (typeof PersistentMenuItemScalarFieldEnum)[keyof typeof PersistentMenuItemScalarFieldEnum]

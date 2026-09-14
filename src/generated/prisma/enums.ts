@@ -85,7 +85,8 @@ export type Role = (typeof Role)[keyof typeof Role]
 export const InstagramPublishType = {
   POST: 'POST',
   CAROUSEL: 'CAROUSEL',
-  REEL: 'REEL'
+  REEL: 'REEL',
+  STORY: 'STORY'
 } as const
 
 export type InstagramPublishType = (typeof InstagramPublishType)[keyof typeof InstagramPublishType]

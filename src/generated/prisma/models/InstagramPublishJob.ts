@@ -334,6 +334,7 @@ export type InstagramPublishJobOrderByWithRelationInput = {
 export type InstagramPublishJobWhereUniqueInput = Prisma.AtLeast<{
   id?: string
   idempotencyKey?: string
+  instagramAccountId_scheduledAt?: Prisma.InstagramPublishJobInstagramAccountIdScheduledAtCompoundUniqueInput
   AND?: Prisma.InstagramPublishJobWhereInput | Prisma.InstagramPublishJobWhereInput[]
   OR?: Prisma.InstagramPublishJobWhereInput[]
   NOT?: Prisma.InstagramPublishJobWhereInput | Prisma.InstagramPublishJobWhereInput[]
@@ -354,7 +355,7 @@ export type InstagramPublishJobWhereUniqueInput = Prisma.AtLeast<{
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   instagramAccount?: Prisma.XOR<Prisma.InstagramAccountScalarRelationFilter, Prisma.InstagramAccountWhereInput>
   media?: Prisma.InstagramPublishMediaListRelationFilter
-}, "id" | "idempotencyKey">
+}, "id" | "idempotencyKey" | "instagramAccountId_scheduledAt">
 
 export type InstagramPublishJobOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -545,6 +546,11 @@ export type InstagramPublishJobListRelationFilter = {
 
 export type InstagramPublishJobOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
+}
+
+export type InstagramPublishJobInstagramAccountIdScheduledAtCompoundUniqueInput = {
+  instagramAccountId: string
+  scheduledAt: Date | string
 }
 
 export type InstagramPublishJobCountOrderByAggregateInput = {
