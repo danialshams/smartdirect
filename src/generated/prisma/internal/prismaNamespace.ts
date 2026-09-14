@@ -2097,6 +2097,9 @@ export const ConversationScalarFieldEnum = {
   instagramAccountId: 'instagramAccountId',
   igUserId: 'igUserId',
   participantId: 'participantId',
+  participantUsername: 'participantUsername',
+  participantName: 'participantName',
+  participantProfilePicture: 'participantProfilePicture',
   isActive: 'isActive',
   lastMessageAt: 'lastMessageAt',
   createdAt: 'createdAt',
@@ -2116,6 +2119,8 @@ export const ConversationMessageScalarFieldEnum = {
   mediaId: 'mediaId',
   igMessageId: 'igMessageId',
   quickReplyId: 'quickReplyId',
+  readAt: 'readAt',
+  seenAt: 'seenAt',
   createdAt: 'createdAt'
 } as const
 

@@ -34,6 +34,8 @@ export type ConversationMessageMinAggregateOutputType = {
   mediaId: string | null
   igMessageId: string | null
   quickReplyId: string | null
+  readAt: Date | null
+  seenAt: Date | null
   createdAt: Date | null
 }
 
@@ -47,6 +49,8 @@ export type ConversationMessageMaxAggregateOutputType = {
   mediaId: string | null
   igMessageId: string | null
   quickReplyId: string | null
+  readAt: Date | null
+  seenAt: Date | null
   createdAt: Date | null
 }
 
@@ -60,6 +64,8 @@ export type ConversationMessageCountAggregateOutputType = {
   mediaId: number
   igMessageId: number
   quickReplyId: number
+  readAt: number
+  seenAt: number
   createdAt: number
   _all: number
 }
@@ -75,6 +81,8 @@ export type ConversationMessageMinAggregateInputType = {
   mediaId?: true
   igMessageId?: true
   quickReplyId?: true
+  readAt?: true
+  seenAt?: true
   createdAt?: true
 }
 
@@ -88,6 +96,8 @@ export type ConversationMessageMaxAggregateInputType = {
   mediaId?: true
   igMessageId?: true
   quickReplyId?: true
+  readAt?: true
+  seenAt?: true
   createdAt?: true
 }
 
@@ -101,6 +111,8 @@ export type ConversationMessageCountAggregateInputType = {
   mediaId?: true
   igMessageId?: true
   quickReplyId?: true
+  readAt?: true
+  seenAt?: true
   createdAt?: true
   _all?: true
 }
@@ -187,6 +199,8 @@ export type ConversationMessageGroupByOutputType = {
   mediaId: string | null
   igMessageId: string | null
   quickReplyId: string | null
+  readAt: Date | null
+  seenAt: Date | null
   createdAt: Date
   _count: ConversationMessageCountAggregateOutputType | null
   _min: ConversationMessageMinAggregateOutputType | null
@@ -221,6 +235,8 @@ export type ConversationMessageWhereInput = {
   mediaId?: Prisma.StringNullableFilter<"ConversationMessage"> | string | null
   igMessageId?: Prisma.StringNullableFilter<"ConversationMessage"> | string | null
   quickReplyId?: Prisma.StringNullableFilter<"ConversationMessage"> | string | null
+  readAt?: Prisma.DateTimeNullableFilter<"ConversationMessage"> | Date | string | null
+  seenAt?: Prisma.DateTimeNullableFilter<"ConversationMessage"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"ConversationMessage"> | Date | string
   conversation?: Prisma.XOR<Prisma.ConversationScalarRelationFilter, Prisma.ConversationWhereInput>
   quickReply?: Prisma.XOR<Prisma.QuickReplyNullableScalarRelationFilter, Prisma.QuickReplyWhereInput> | null
@@ -236,6 +252,8 @@ export type ConversationMessageOrderByWithRelationInput = {
   mediaId?: Prisma.SortOrderInput | Prisma.SortOrder
   igMessageId?: Prisma.SortOrderInput | Prisma.SortOrder
   quickReplyId?: Prisma.SortOrderInput | Prisma.SortOrder
+  readAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  seenAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   conversation?: Prisma.ConversationOrderByWithRelationInput
   quickReply?: Prisma.QuickReplyOrderByWithRelationInput
@@ -254,6 +272,8 @@ export type ConversationMessageWhereUniqueInput = Prisma.AtLeast<{
   mediaUrl?: Prisma.StringNullableFilter<"ConversationMessage"> | string | null
   mediaId?: Prisma.StringNullableFilter<"ConversationMessage"> | string | null
   quickReplyId?: Prisma.StringNullableFilter<"ConversationMessage"> | string | null
+  readAt?: Prisma.DateTimeNullableFilter<"ConversationMessage"> | Date | string | null
+  seenAt?: Prisma.DateTimeNullableFilter<"ConversationMessage"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"ConversationMessage"> | Date | string
   conversation?: Prisma.XOR<Prisma.ConversationScalarRelationFilter, Prisma.ConversationWhereInput>
   quickReply?: Prisma.XOR<Prisma.QuickReplyNullableScalarRelationFilter, Prisma.QuickReplyWhereInput> | null
@@ -269,6 +289,8 @@ export type ConversationMessageOrderByWithAggregationInput = {
   mediaId?: Prisma.SortOrderInput | Prisma.SortOrder
   igMessageId?: Prisma.SortOrderInput | Prisma.SortOrder
   quickReplyId?: Prisma.SortOrderInput | Prisma.SortOrder
+  readAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  seenAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.ConversationMessageCountOrderByAggregateInput
   _max?: Prisma.ConversationMessageMaxOrderByAggregateInput
@@ -288,6 +310,8 @@ export type ConversationMessageScalarWhereWithAggregatesInput = {
   mediaId?: Prisma.StringNullableWithAggregatesFilter<"ConversationMessage"> | string | null
   igMessageId?: Prisma.StringNullableWithAggregatesFilter<"ConversationMessage"> | string | null
   quickReplyId?: Prisma.StringNullableWithAggregatesFilter<"ConversationMessage"> | string | null
+  readAt?: Prisma.DateTimeNullableWithAggregatesFilter<"ConversationMessage"> | Date | string | null
+  seenAt?: Prisma.DateTimeNullableWithAggregatesFilter<"ConversationMessage"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"ConversationMessage"> | Date | string
 }
 
@@ -299,6 +323,8 @@ export type ConversationMessageCreateInput = {
   mediaUrl?: string | null
   mediaId?: string | null
   igMessageId?: string | null
+  readAt?: Date | string | null
+  seenAt?: Date | string | null
   createdAt?: Date | string
   conversation: Prisma.ConversationCreateNestedOneWithoutMessagesInput
   quickReply?: Prisma.QuickReplyCreateNestedOneWithoutConversationMessagesInput
@@ -314,6 +340,8 @@ export type ConversationMessageUncheckedCreateInput = {
   mediaId?: string | null
   igMessageId?: string | null
   quickReplyId?: string | null
+  readAt?: Date | string | null
+  seenAt?: Date | string | null
   createdAt?: Date | string
 }
 
@@ -325,6 +353,8 @@ export type ConversationMessageUpdateInput = {
   mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   igMessageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  readAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  seenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   conversation?: Prisma.ConversationUpdateOneRequiredWithoutMessagesNestedInput
   quickReply?: Prisma.QuickReplyUpdateOneWithoutConversationMessagesNestedInput
@@ -340,6 +370,8 @@ export type ConversationMessageUncheckedUpdateInput = {
   mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   igMessageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quickReplyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  readAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  seenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -353,6 +385,8 @@ export type ConversationMessageCreateManyInput = {
   mediaId?: string | null
   igMessageId?: string | null
   quickReplyId?: string | null
+  readAt?: Date | string | null
+  seenAt?: Date | string | null
   createdAt?: Date | string
 }
 
@@ -364,6 +398,8 @@ export type ConversationMessageUpdateManyMutationInput = {
   mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   igMessageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  readAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  seenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -377,6 +413,8 @@ export type ConversationMessageUncheckedUpdateManyInput = {
   mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   igMessageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quickReplyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  readAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  seenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -400,6 +438,8 @@ export type ConversationMessageCountOrderByAggregateInput = {
   mediaId?: Prisma.SortOrder
   igMessageId?: Prisma.SortOrder
   quickReplyId?: Prisma.SortOrder
+  readAt?: Prisma.SortOrder
+  seenAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -413,6 +453,8 @@ export type ConversationMessageMaxOrderByAggregateInput = {
   mediaId?: Prisma.SortOrder
   igMessageId?: Prisma.SortOrder
   quickReplyId?: Prisma.SortOrder
+  readAt?: Prisma.SortOrder
+  seenAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -426,6 +468,8 @@ export type ConversationMessageMinOrderByAggregateInput = {
   mediaId?: Prisma.SortOrder
   igMessageId?: Prisma.SortOrder
   quickReplyId?: Prisma.SortOrder
+  readAt?: Prisma.SortOrder
+  seenAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -529,6 +573,8 @@ export type ConversationMessageCreateWithoutQuickReplyInput = {
   mediaUrl?: string | null
   mediaId?: string | null
   igMessageId?: string | null
+  readAt?: Date | string | null
+  seenAt?: Date | string | null
   createdAt?: Date | string
   conversation: Prisma.ConversationCreateNestedOneWithoutMessagesInput
 }
@@ -542,6 +588,8 @@ export type ConversationMessageUncheckedCreateWithoutQuickReplyInput = {
   mediaUrl?: string | null
   mediaId?: string | null
   igMessageId?: string | null
+  readAt?: Date | string | null
+  seenAt?: Date | string | null
   createdAt?: Date | string
 }
 
@@ -584,6 +632,8 @@ export type ConversationMessageScalarWhereInput = {
   mediaId?: Prisma.StringNullableFilter<"ConversationMessage"> | string | null
   igMessageId?: Prisma.StringNullableFilter<"ConversationMessage"> | string | null
   quickReplyId?: Prisma.StringNullableFilter<"ConversationMessage"> | string | null
+  readAt?: Prisma.DateTimeNullableFilter<"ConversationMessage"> | Date | string | null
+  seenAt?: Prisma.DateTimeNullableFilter<"ConversationMessage"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"ConversationMessage"> | Date | string
 }
 
@@ -595,6 +645,8 @@ export type ConversationMessageCreateWithoutConversationInput = {
   mediaUrl?: string | null
   mediaId?: string | null
   igMessageId?: string | null
+  readAt?: Date | string | null
+  seenAt?: Date | string | null
   createdAt?: Date | string
   quickReply?: Prisma.QuickReplyCreateNestedOneWithoutConversationMessagesInput
 }
@@ -608,6 +660,8 @@ export type ConversationMessageUncheckedCreateWithoutConversationInput = {
   mediaId?: string | null
   igMessageId?: string | null
   quickReplyId?: string | null
+  readAt?: Date | string | null
+  seenAt?: Date | string | null
   createdAt?: Date | string
 }
 
@@ -646,6 +700,8 @@ export type ConversationMessageCreateManyQuickReplyInput = {
   mediaUrl?: string | null
   mediaId?: string | null
   igMessageId?: string | null
+  readAt?: Date | string | null
+  seenAt?: Date | string | null
   createdAt?: Date | string
 }
 
@@ -657,6 +713,8 @@ export type ConversationMessageUpdateWithoutQuickReplyInput = {
   mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   igMessageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  readAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  seenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   conversation?: Prisma.ConversationUpdateOneRequiredWithoutMessagesNestedInput
 }
@@ -670,6 +728,8 @@ export type ConversationMessageUncheckedUpdateWithoutQuickReplyInput = {
   mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   igMessageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  readAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  seenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -682,6 +742,8 @@ export type ConversationMessageUncheckedUpdateManyWithoutQuickReplyInput = {
   mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   igMessageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  readAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  seenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -694,6 +756,8 @@ export type ConversationMessageCreateManyConversationInput = {
   mediaId?: string | null
   igMessageId?: string | null
   quickReplyId?: string | null
+  readAt?: Date | string | null
+  seenAt?: Date | string | null
   createdAt?: Date | string
 }
 
@@ -705,6 +769,8 @@ export type ConversationMessageUpdateWithoutConversationInput = {
   mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   igMessageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  readAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  seenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   quickReply?: Prisma.QuickReplyUpdateOneWithoutConversationMessagesNestedInput
 }
@@ -718,6 +784,8 @@ export type ConversationMessageUncheckedUpdateWithoutConversationInput = {
   mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   igMessageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quickReplyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  readAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  seenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -730,6 +798,8 @@ export type ConversationMessageUncheckedUpdateManyWithoutConversationInput = {
   mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   igMessageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quickReplyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  readAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  seenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -745,6 +815,8 @@ export type ConversationMessageSelect<ExtArgs extends runtime.Types.Extensions.I
   mediaId?: boolean
   igMessageId?: boolean
   quickReplyId?: boolean
+  readAt?: boolean
+  seenAt?: boolean
   createdAt?: boolean
   conversation?: boolean | Prisma.ConversationDefaultArgs<ExtArgs>
   quickReply?: boolean | Prisma.ConversationMessage$quickReplyArgs<ExtArgs>
@@ -760,6 +832,8 @@ export type ConversationMessageSelectCreateManyAndReturn<ExtArgs extends runtime
   mediaId?: boolean
   igMessageId?: boolean
   quickReplyId?: boolean
+  readAt?: boolean
+  seenAt?: boolean
   createdAt?: boolean
   conversation?: boolean | Prisma.ConversationDefaultArgs<ExtArgs>
   quickReply?: boolean | Prisma.ConversationMessage$quickReplyArgs<ExtArgs>
@@ -775,6 +849,8 @@ export type ConversationMessageSelectUpdateManyAndReturn<ExtArgs extends runtime
   mediaId?: boolean
   igMessageId?: boolean
   quickReplyId?: boolean
+  readAt?: boolean
+  seenAt?: boolean
   createdAt?: boolean
   conversation?: boolean | Prisma.ConversationDefaultArgs<ExtArgs>
   quickReply?: boolean | Prisma.ConversationMessage$quickReplyArgs<ExtArgs>
@@ -790,10 +866,12 @@ export type ConversationMessageSelectScalar = {
   mediaId?: boolean
   igMessageId?: boolean
   quickReplyId?: boolean
+  readAt?: boolean
+  seenAt?: boolean
   createdAt?: boolean
 }
 
-export type ConversationMessageOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "conversationId" | "direction" | "messageType" | "text" | "mediaUrl" | "mediaId" | "igMessageId" | "quickReplyId" | "createdAt", ExtArgs["result"]["conversationMessage"]>
+export type ConversationMessageOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "conversationId" | "direction" | "messageType" | "text" | "mediaUrl" | "mediaId" | "igMessageId" | "quickReplyId" | "readAt" | "seenAt" | "createdAt", ExtArgs["result"]["conversationMessage"]>
 export type ConversationMessageInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   conversation?: boolean | Prisma.ConversationDefaultArgs<ExtArgs>
   quickReply?: boolean | Prisma.ConversationMessage$quickReplyArgs<ExtArgs>
@@ -823,6 +901,8 @@ export type $ConversationMessagePayload<ExtArgs extends runtime.Types.Extensions
     mediaId: string | null
     igMessageId: string | null
     quickReplyId: string | null
+    readAt: Date | null
+    seenAt: Date | null
     createdAt: Date
   }, ExtArgs["result"]["conversationMessage"]>
   composites: {}
@@ -1258,6 +1338,8 @@ export interface ConversationMessageFieldRefs {
   readonly mediaId: Prisma.FieldRef<"ConversationMessage", 'String'>
   readonly igMessageId: Prisma.FieldRef<"ConversationMessage", 'String'>
   readonly quickReplyId: Prisma.FieldRef<"ConversationMessage", 'String'>
+  readonly readAt: Prisma.FieldRef<"ConversationMessage", 'DateTime'>
+  readonly seenAt: Prisma.FieldRef<"ConversationMessage", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"ConversationMessage", 'DateTime'>
 }
     
