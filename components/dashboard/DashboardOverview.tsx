@@ -17,6 +17,7 @@ import InstagramInsights from "./InstagramInsights";
 import PersistentMenuManager from "./PersistentMenuManager";
 import InstagramContentAnalytics from "./InstagramContentAnalytics";
 import AdvancedAnalyticsReports from "./AdvancedAnalyticsReports";
+import InstagramProfileDashboard from "./InstagramProfileDashboard";
 
 type InstagramAccount = {
     id: string;
@@ -99,6 +100,7 @@ export default function DashboardOverview({
                 <StatCard title="وضعیت سرویس" value="فعال" description="سیستم آماده دریافت رویداد" icon={Activity} success />
             </section>
 
+            <InstagramProfileDashboard accounts={instagramAccounts} />
             <InstagramInsights />
             <AdvancedAnalyticsReports />
             <InstagramContentAnalytics />
