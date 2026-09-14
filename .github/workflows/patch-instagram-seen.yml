@@ -1,0 +1,60 @@
+name: Patch Instagram Seen Receipt
+
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Patch webhook
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("app/api/webhooks/instagram/route.ts")
+          source = path.read_text(encoding="utf-8")
+
+          event_guard = '''    // =======================================================\n    // Real Instagram read receipt / seen event\n    // =======================================================\n\n    if (messagingEvent?.read) {\n      await processInstagramReadReceipt(messagingEvent, instagramAccount);\n\n      console.log("Instagram read receipt processed.");\n\n      return;\n    }\n\n'''
+
+          marker = '''    // =======================================================\n    // Ignore non-message events\n    // =======================================================\n'''
+
+          if "processInstagramReadReceipt(messagingEvent" not in source:
+              if marker not in source:
+                  raise SystemExit("Could not find non-message event marker")
+              source = source.replace(marker, event_guard + marker, 1)
+
+          helper = '''// =========================================================\n// Process Instagram read / seen receipt\n//\n// Meta's messaging_seen event carries a `read` object. Its `mid`\n// represents the latest message the customer has seen; everything\n// before that message in the same conversation is also considered seen.\n// =========================================================\n\nasync function processInstagramReadReceipt(\n  messagingEvent: any,\n  instagramAccount: InstagramAccountData,\n) {\n  try {\n    const senderId = messagingEvent?.sender?.id;\n    const read = messagingEvent?.read;\n\n    if (!senderId || !read) {\n      console.warn("Instagram read receipt is missing sender/read data.");\n      return;\n    }\n\n    const participantId = String(senderId);\n    const readMid = typeof read.mid === "string" ? read.mid : null;\n\n    const conversation = await prisma.conversation.findUnique({\n      where: {\n        instagramAccountId_participantId: {\n          instagramAccountId: instagramAccount.id,\n          participantId,\n        },\n      },\n      select: { id: true },\n    });\n\n    if (!conversation) {\n      console.log(\n        "Instagram read receipt received for a conversation that is not stored yet:",\n        participantId,\n      );\n      return;\n    }\n\n    let anchorCreatedAt: Date | null = null;\n\n    // Prefer Meta's message id. This avoids mixing Meta's clock with our\n    // database clock and lets us expand the receipt to every older outbound\n    // message in the same conversation.\n    if (readMid) {\n      const anchor = await prisma.conversationMessage.findFirst({\n        where: {\n          conversationId: conversation.id,\n          direction: "OUTBOUND",\n          igMessageId: readMid,\n        },\n        select: { createdAt: true },\n      });\n\n      anchorCreatedAt = anchor?.createdAt ?? null;\n    }\n\n    const seenAt = new Date();\n\n    let updatedCount = 0;\n\n    if (anchorCreatedAt) {\n      const result = await prisma.conversationMessage.updateMany({\n        where: {\n          conversationId: conversation.id,\n          direction: "OUTBOUND",\n          createdAt: { lte: anchorCreatedAt },\n          seenAt: null,\n        },\n        data: { seenAt },\n      });\n\n      updatedCount = result.count;\n    } else if (readMid) {\n      // The read event can race our send persistence, or the message may\n      // have been sent outside SmartDirect. If the anchor is unknown, do not\n      // throw the receipt away. Mark the currently unseen outbound messages\n      // in this conversation as seen.\n      const result = await prisma.conversationMessage.updateMany({\n        where: {\n          conversationId: conversation.id,\n          direction: "OUTBOUND",\n          seenAt: null,\n        },\n        data: { seenAt },\n      });\n\n      updatedCount = result.count;\n    } else {\n      console.warn(\n        "Instagram read receipt has no message mid; no message state was changed.",\n      );\n      return;\n    }\n\n    console.log("========================================");\n    console.log("INSTAGRAM MESSAGE SEEN / READ RECEIPT");\n    console.log("Participant ID:", participantId);\n    console.log("Read message ID:", readMid ?? "NONE");\n    console.log("Conversation ID:", conversation.id);\n    console.log("Outbound messages marked seen:", updatedCount);\n    console.log("========================================");\n  } catch (error) {\n    console.error("Error processing Instagram read receipt:", error);\n  }\n}\n\n'''
+
+          process_marker = '''// =========================================================\n// Process Instagram messaging events\n// =========================================================\n'''
+
+          if "async function processInstagramReadReceipt(" not in source:
+              if process_marker not in source:
+                  raise SystemExit("Could not find messaging function marker")
+              source = source.replace(process_marker, helper + process_marker, 1)
+
+          path.write_text(source, encoding="utf-8")
+          print("Instagram read receipt handler patched.")
+          PY
+
+      - name: Remove temporary patch workflow
+        run: rm -f .github/workflows/patch-instagram-seen.yml
+
+      - name: Commit patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/api/webhooks/instagram/route.ts .github/workflows/patch-instagram-seen.yml
+          git diff --cached --quiet && exit 0
+          git commit -m "feat: persist real Instagram seen receipts"
+          git push origin HEAD:master
