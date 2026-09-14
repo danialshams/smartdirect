@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
+import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 import { proxyInstagramMediaUrl } from "@/lib/instagram/media-proxy";
@@ -23,10 +24,12 @@ function jsonError(message: string, status = 400) {
   return NextResponse.json({ success: false, error: message }, { status });
 }
 
-function proxyConversationMedia<T extends {
-  participantProfilePicture?: string | null;
-  messages?: Array<{ mediaUrl?: string | null }>;
-}>(conversation: T): T {
+function proxyConversationMedia<
+  T extends {
+    participantProfilePicture?: string | null;
+    messages?: Array<{ mediaUrl?: string | null }>;
+  },
+>(conversation: T): T {
   return {
     ...conversation,
     participantProfilePicture: proxyInstagramMediaUrl(
@@ -54,8 +57,7 @@ async function getHandoffStates(conversationIds: string[]) {
   const rows = await prisma.$queryRaw<HandoffState[]>`
     SELECT "conversationId", "active", "assignedToUserId", "handedOffAt", "handedBackAt"
     FROM "ConversationHandoff"
-    WHERE "conversationId" IN (${prisma.join(conversationIds)})
-  `;
+WHERE "conversationId" IN (${Prisma.join(conversationIds)})  `;
   return new Map(rows.map((row) => [row.conversationId, row]));
 }
 
@@ -300,7 +302,9 @@ export async function GET(request: NextRequest) {
     const unreadMap = new Map(
       unread.map((item) => [item.conversationId, item._count._all]),
     );
-    const handoffMap = await getHandoffStates(conversations.map((item) => item.id));
+    const handoffMap = await getHandoffStates(
+      conversations.map((item) => item.id),
+    );
 
     const freshConversations = await prisma.conversation.findMany({
       where: { id: { in: conversations.map((item) => item.id) } },
