@@ -18,7 +18,6 @@ import PersistentMenuManager from "./PersistentMenuManager";
 import InstagramContentAnalytics from "./InstagramContentAnalytics";
 import AdvancedAnalyticsReports from "./AdvancedAnalyticsReports";
 import InstagramProfileDashboard from "./InstagramProfileDashboard";
-import InstagramBusinessDashboard from "./InstagramBusinessDashboard";
 
 type InstagramAccount = {
     id: string;
@@ -102,7 +101,6 @@ export default function DashboardOverview({
             </section>
 
             <InstagramProfileDashboard accounts={instagramAccounts} />
-            <InstagramBusinessDashboard accounts={instagramAccounts} />
             <InstagramInsights />
             <AdvancedAnalyticsReports />
             <InstagramContentAnalytics />
