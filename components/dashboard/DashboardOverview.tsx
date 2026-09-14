@@ -18,6 +18,7 @@ import PersistentMenuManager from "./PersistentMenuManager";
 import InstagramContentAnalytics from "./InstagramContentAnalytics";
 import AdvancedAnalyticsReports from "./AdvancedAnalyticsReports";
 import InstagramProfileDashboard from "./InstagramProfileDashboard";
+import InstagramInbox from "./InstagramInbox";
 
 type InstagramAccount = {
     id: string;
@@ -96,7 +97,7 @@ export default function DashboardOverview({
             <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <StatCard title="پیج‌های متصل" value={connectedAccounts} description="اکانت فعال اینستاگرام" icon={Camera} />
                 <StatCard title="اتوماسیون‌ها" value="—" description="در حال بارگذاری" icon={Bot} />
-                <StatCard title="پیام‌ها" value="—" description="زیرساخت پیام‌رسانی" icon={MessageCircle} />
+                <StatCard title="پیام‌ها" value="—" description="Inbox حرفه‌ای" icon={MessageCircle} />
                 <StatCard title="وضعیت سرویس" value="فعال" description="سیستم آماده دریافت رویداد" icon={Activity} success />
             </section>
 
@@ -137,6 +138,8 @@ export default function DashboardOverview({
                 )}
             </section>
 
+            <InstagramInbox accounts={instagramAccounts} />
+
             <section id="automations" className="scroll-mt-24">
                 <AutomationManager accounts={instagramAccounts} />
             </section>
@@ -147,18 +150,6 @@ export default function DashboardOverview({
 
             <section id="persistent-menu" className="scroll-mt-24">
                 <PersistentMenuManager accounts={instagramAccounts} />
-            </section>
-
-            <section id="messages" className="scroll-mt-24 rounded-[24px] border border-slate-200 bg-white p-6 sm:p-8">
-                <div className="flex items-center gap-4">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
-                        <MessageCircle size={20} />
-                    </div>
-                    <div>
-                        <h2 className="font-bold text-slate-900">پیام‌ها</h2>
-                        <p className="mt-1 text-sm text-slate-400">مدیریت گفتگوها در مرحله بعدی اضافه می‌شود.</p>
-                    </div>
-                </div>
             </section>
 
             <section id="subscription" className="scroll-mt-24 rounded-[24px] border border-slate-200 bg-white p-6 sm:p-8">
