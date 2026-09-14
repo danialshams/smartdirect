@@ -35,6 +35,12 @@ type MediaItem = {
   sortOrder: number;
 };
 
+type UserTag = {
+  username: string;
+  x?: number;
+  y?: number;
+};
+
 function getErrorMessage(
   data: InstagramApiResponse | undefined,
   fallback: string,
@@ -89,12 +95,31 @@ async function instagramRequest<T>(
   }
 }
 
+function normalizeUserTags(value: unknown): UserTag[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .filter((item): item is UserTag => {
+      if (!item || typeof item !== "object") return false;
+      const tag = item as Record<string, unknown>;
+      return typeof tag.username === "string" && tag.username.trim().length > 0;
+    })
+    .map((tag) => ({
+      username: tag.username.replace(/^@/, "").trim(),
+      ...(typeof tag.x === "number" ? { x: tag.x } : {}),
+      ...(typeof tag.y === "number" ? { y: tag.y } : {}),
+    }));
+}
+
 async function createImageContainer(
   igUserId: string,
   accessToken: string,
   media: MediaItem,
   caption?: string | null,
   isCarouselItem = false,
+  userTags: UserTag[] = [],
 ) {
   const body: Record<string, string> = {
     image_url: media.publicUrl,
@@ -107,6 +132,10 @@ async function createImageContainer(
 
   if (isCarouselItem) {
     body.is_carousel_item = "true";
+  }
+
+  if (!isCarouselItem && userTags.length) {
+    body.user_tags = JSON.stringify(userTags);
   }
 
   const { response, data } = await instagramRequest<ContainerResponse>(
@@ -132,6 +161,7 @@ async function createReelContainer(
   accessToken: string,
   media: MediaItem,
   caption?: string | null,
+  userTags: UserTag[] = [],
 ) {
   const body: Record<string, string> = {
     media_type: "REELS",
@@ -141,6 +171,10 @@ async function createReelContainer(
 
   if (caption) {
     body.caption = caption;
+  }
+
+  if (userTags.length) {
+    body.user_tags = JSON.stringify(userTags);
   }
 
   const { response, data } = await instagramRequest<ContainerResponse>(
@@ -379,6 +413,7 @@ export async function publishInstagramJob(jobId: string) {
     };
   });
 
+  const userTags = normalizeUserTags(job.userTags);
   const accessToken = await getValidInstagramAccessToken(
     job.instagramAccountId,
   );
@@ -396,12 +431,6 @@ export async function publishInstagramJob(jobId: string) {
   try {
     let containerId: string;
 
-    /*
-     * STORY
-     * یک Story فقط یک فایل می‌گیرد:
-     * - یک تصویر
-     * - یا یک ویدیو
-     */
     if (job.type === "STORY") {
       if (media.length !== 1) {
         throw new Error("Story باید دقیقاً یک فایل داشته باشد.");
@@ -426,6 +455,8 @@ export async function publishInstagramJob(jobId: string) {
         accessToken,
         media[0],
         job.caption,
+        false,
+        userTags,
       );
     } else if (job.type === "REEL") {
       if (media.length !== 1 || media[0].type !== "VIDEO") {
@@ -437,11 +468,9 @@ export async function publishInstagramJob(jobId: string) {
         accessToken,
         media[0],
         job.caption,
+        userTags,
       );
     } else {
-      /*
-       * CAROUSEL
-       */
       if (media.length < 2 || media.length > 10) {
         throw new Error("Carousel باید بین ۲ تا ۱۰ فایل داشته باشد.");
       }
