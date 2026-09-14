@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
+import { proxyInstagramMediaUrl } from "@/lib/instagram/media-proxy";
 
 export const dynamic = "force-dynamic";
 
@@ -97,9 +98,19 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const data = (result.data ?? []).map((item: Record<string, unknown>) => ({
+      ...item,
+      media_url: proxyInstagramMediaUrl(
+        typeof item.media_url === "string" ? item.media_url : null,
+      ),
+      thumbnail_url: proxyInstagramMediaUrl(
+        typeof item.thumbnail_url === "string" ? item.thumbnail_url : null,
+      ),
+    }));
+
     return NextResponse.json({
       success: true,
-      data: result.data ?? [],
+      data,
       paging: result.paging ?? null,
     });
   } catch (error) {
