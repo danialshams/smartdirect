@@ -406,9 +406,12 @@ export async function POST(request: NextRequest) {
 // =========================================================
 // Process Instagram read / seen receipt
 //
-// Meta's messaging_seen event carries a `read` object. Its `mid`
-// represents the latest message the customer has seen; everything
-// before that message in the same conversation is also considered seen.
+// Meta's `messaging_seen` event can provide either:
+//
+// 1. `read.mid`       -> the latest message the customer has seen
+// 2. `read.watermark` -> timestamp up to which messages were seen
+//
+// We support both forms.
 // =========================================================
 
 async function processInstagramReadReceipt(
@@ -421,11 +424,37 @@ async function processInstagramReadReceipt(
 
     if (!senderId || !read) {
       console.warn("Instagram read receipt is missing sender/read data.");
+
       return;
     }
 
     const participantId = String(senderId);
-    const readMid = typeof read.mid === "string" ? read.mid : null;
+
+    // =======================================================
+    // Read Message ID
+    // =======================================================
+
+    const readMid =
+      typeof read.mid === "string" && read.mid.trim() ? read.mid.trim() : null;
+
+    // =======================================================
+    // Read Watermark
+    //
+    // Meta may send the watermark as either a number or string.
+    // =======================================================
+
+    const watermarkRaw = read.watermark;
+
+    const readWatermark =
+      typeof watermarkRaw === "number"
+        ? watermarkRaw
+        : typeof watermarkRaw === "string" && watermarkRaw.trim()
+          ? Number(watermarkRaw)
+          : null;
+
+    // =======================================================
+    // Find conversation
+    // =======================================================
 
     const conversation = await prisma.conversation.findUnique({
       where: {
@@ -434,7 +463,10 @@ async function processInstagramReadReceipt(
           participantId,
         },
       },
-      select: { id: true },
+
+      select: {
+        id: true,
+      },
     });
 
     if (!conversation) {
@@ -442,71 +474,178 @@ async function processInstagramReadReceipt(
         "Instagram read receipt received for a conversation that is not stored yet:",
         participantId,
       );
+
       return;
     }
 
+    // =======================================================
+    // Prefer message ID when Meta provides one
+    //
+    // This is more precise because it does not depend on clock
+    // synchronization between Meta and our database.
+    // =======================================================
+
     let anchorCreatedAt: Date | null = null;
 
-    // Prefer Meta's message id. This avoids mixing Meta's clock with our
-    // database clock and lets us expand the receipt to every older outbound
-    // message in the same conversation.
     if (readMid) {
       const anchor = await prisma.conversationMessage.findFirst({
         where: {
           conversationId: conversation.id,
+
           direction: "OUTBOUND",
+
           igMessageId: readMid,
         },
-        select: { createdAt: true },
+
+        select: {
+          createdAt: true,
+        },
       });
 
       anchorCreatedAt = anchor?.createdAt ?? null;
     }
 
+    // =======================================================
+    // Mark messages as Seen
+    // =======================================================
+
     const seenAt = new Date();
 
     let updatedCount = 0;
+
+    // =======================================================
+    // CASE 1:
+    // Meta gave us the exact message ID and that message exists
+    // =======================================================
 
     if (anchorCreatedAt) {
       const result = await prisma.conversationMessage.updateMany({
         where: {
           conversationId: conversation.id,
+
           direction: "OUTBOUND",
-          createdAt: { lte: anchorCreatedAt },
+
+          createdAt: {
+            lte: anchorCreatedAt,
+          },
+
           seenAt: null,
         },
-        data: { seenAt },
+
+        data: {
+          seenAt,
+        },
       });
 
       updatedCount = result.count;
-    } else if (readMid) {
-      // The read event can race our send persistence, or the message may
-      // have been sent outside SmartDirect. If the anchor is unknown, do not
-      // throw the receipt away. Mark the currently unseen outbound messages
-      // in this conversation as seen.
+    }
+
+    // =======================================================
+    // CASE 2:
+    // Meta gave us a message ID but the message is not in DB
+    //
+    // This can happen if the webhook arrives before our outbound
+    // message persistence finishes, or if the message was sent
+    // outside SmartDirect.
+    //
+    // Preserve the existing fallback behavior.
+    // =======================================================
+    else if (readMid) {
       const result = await prisma.conversationMessage.updateMany({
         where: {
           conversationId: conversation.id,
+
           direction: "OUTBOUND",
+
           seenAt: null,
         },
-        data: { seenAt },
+
+        data: {
+          seenAt,
+        },
       });
 
       updatedCount = result.count;
-    } else {
+    }
+
+    // =======================================================
+    // CASE 3:
+    // Meta gave us only a watermark
+    //
+    // Watermark is a Unix timestamp in milliseconds.
+    // Every outbound message created before or at that point
+    // is considered Seen.
+    // =======================================================
+    else if (Number.isFinite(readWatermark)) {
+      const watermarkDate = new Date(readWatermark as number);
+
+      if (Number.isNaN(watermarkDate.getTime())) {
+        console.warn(
+          "Instagram read receipt contains an invalid watermark:",
+          readWatermark,
+        );
+
+        return;
+      }
+
+      const result = await prisma.conversationMessage.updateMany({
+        where: {
+          conversationId: conversation.id,
+
+          direction: "OUTBOUND",
+
+          createdAt: {
+            lte: watermarkDate,
+          },
+
+          seenAt: null,
+        },
+
+        data: {
+          seenAt,
+        },
+      });
+
+      updatedCount = result.count;
+    }
+
+    // =======================================================
+    // CASE 4:
+    // Neither message ID nor valid watermark exists
+    // =======================================================
+    else {
       console.warn(
-        "Instagram read receipt has no message mid; no message state was changed.",
+        "Instagram read receipt has neither a usable message ID nor watermark. No message state was changed.",
       );
+
       return;
     }
 
+    // =======================================================
+    // Logging
+    // =======================================================
+
     console.log("========================================");
+
     console.log("INSTAGRAM MESSAGE SEEN / READ RECEIPT");
+
     console.log("Participant ID:", participantId);
+
     console.log("Read message ID:", readMid ?? "NONE");
+
+    console.log("Read watermark:", readWatermark ?? "NONE");
+
+    console.log(
+      "Read watermark date:",
+      Number.isFinite(readWatermark)
+        ? new Date(readWatermark as number).toISOString()
+        : "NONE",
+    );
+
     console.log("Conversation ID:", conversation.id);
+
     console.log("Outbound messages marked seen:", updatedCount);
+
     console.log("========================================");
   } catch (error) {
     console.error("Error processing Instagram read receipt:", error);
