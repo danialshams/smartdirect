@@ -665,6 +665,12 @@ async function processMessagingEvent(
     console.log("INSTAGRAM MESSAGING EVENT");
     console.log("========================================");
 
+    // Full raw payload received from Meta
+    console.log(
+      "RAW INSTAGRAM MESSAGING EVENT:",
+      JSON.stringify(messagingEvent, null, 2),
+    );
+
     const senderId = messagingEvent?.sender?.id;
 
     const recipientId = messagingEvent?.recipient?.id;
