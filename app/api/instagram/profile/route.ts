@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { proxyInstagramMediaUrl } from "@/lib/instagram/media-proxy";
 
 export const dynamic = "force-dynamic";
 
@@ -141,7 +142,9 @@ export async function GET(request: NextRequest) {
                 name: profile.name || null,
                 biography: profile.biography || null,
                 website: profile.website || null,
-                profilePictureUrl: profile.profile_picture_url || null,
+                profilePictureUrl: proxyInstagramMediaUrl(
+                    profile.profile_picture_url,
+                ),
                 followersCount: profile.followers_count ?? null,
                 followsCount: profile.follows_count ?? null,
                 mediaCount: profile.media_count ?? null,
