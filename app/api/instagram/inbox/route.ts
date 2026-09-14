@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
+import { proxyInstagramMediaUrl } from "@/lib/instagram/media-proxy";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +13,22 @@ const GRAPH_BASE = `https://graph.instagram.com/${INSTAGRAM_API_VERSION}`;
 
 function jsonError(message: string, status = 400) {
   return NextResponse.json({ success: false, error: message }, { status });
+}
+
+function proxyConversationMedia<T extends {
+  participantProfilePicture?: string | null;
+  messages?: Array<{ mediaUrl?: string | null }>;
+}>(conversation: T): T {
+  return {
+    ...conversation,
+    participantProfilePicture: proxyInstagramMediaUrl(
+      conversation.participantProfilePicture,
+    ),
+    messages: conversation.messages?.map((message) => ({
+      ...message,
+      mediaUrl: proxyInstagramMediaUrl(message.mediaUrl),
+    })),
+  };
 }
 
 async function getOwnedAccount(userId: string, accountId?: string | null) {
@@ -199,7 +216,7 @@ export async function GET(request: NextRequest) {
           username: account.igUsername,
           igUserId: account.igUserId,
         },
-        conversation: refreshed || conversation,
+        conversation: proxyConversationMedia(refreshed || conversation),
       });
     }
 
@@ -282,7 +299,7 @@ export async function GET(request: NextRequest) {
         igUserId: account.igUserId,
       },
       conversations: freshConversations.map((item) => ({
-        ...item,
+        ...proxyConversationMedia(item),
         unreadCount: unreadMap.get(item.id) || 0,
       })),
     });
@@ -396,16 +413,17 @@ export async function POST(request: NextRequest) {
       cache: "no-store",
     });
     const data = (await response.json().catch(() => ({}))) as {
-  message_id?: string;
-  error?: { message?: string };
-};
+      message_id?: string;
+      error?: { message?: string };
+    };
 
-console.log("========================================");
-console.log("INSTAGRAM SEND RESPONSE");
-console.log("========================================");
-console.log("Instagram API response:", JSON.stringify(data, null, 2));
-console.log("Returned message_id:", data.message_id);
-console.log("========================================");
+    console.log("========================================");
+    console.log("INSTAGRAM SEND RESPONSE");
+    console.log("========================================");
+    console.log("Instagram API response:", JSON.stringify(data, null, 2));
+    console.log("Returned message_id:", data.message_id);
+    console.log("========================================");
+
     if (!response.ok)
       return jsonError(
         data.error?.message || "Instagram پیام را ارسال نکرد.",
@@ -440,7 +458,14 @@ console.log("========================================");
       where: { id: conversation.id },
       data: { lastMessageAt: createdMessage.createdAt },
     });
-    return NextResponse.json({ success: true, message: createdMessage });
+
+    return NextResponse.json({
+      success: true,
+      message: {
+        ...createdMessage,
+        mediaUrl: proxyInstagramMediaUrl(createdMessage.mediaUrl),
+      },
+    });
   } catch (error) {
     console.error("Instagram inbox POST error:", error);
     return jsonError(
