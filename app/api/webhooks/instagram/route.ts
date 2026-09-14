@@ -484,7 +484,42 @@ async function processInstagramReadReceipt(
     // This is more precise because it does not depend on clock
     // synchronization between Meta and our database.
     // =======================================================
+const recentOutboundMessages = await prisma.conversationMessage.findMany({
+  where: {
+    conversationId: conversation.id,
+    direction: "OUTBOUND",
+  },
+  orderBy: {
+    createdAt: "desc",
+  },
+  take: 10,
+  select: {
+    id: true,
+    text: true,
+    igMessageId: true,
+    createdAt: true,
+    seenAt: true,
+  },
+});
 
+console.log("========================================");
+console.log("OUTBOUND MESSAGES BEFORE SEEN MATCH");
+console.log(
+  JSON.stringify(
+    recentOutboundMessages.map((msg) => ({
+      id: msg.id,
+      text: msg.text,
+      igMessageId: msg.igMessageId,
+      createdAt: msg.createdAt,
+      seenAt: msg.seenAt,
+      isReadMidMatch: msg.igMessageId === readMid,
+    })),
+    null,
+    2,
+  ),
+);
+console.log("Meta read.mid:", readMid);
+console.log("========================================");
     let anchorCreatedAt: Date | null = null;
 
     if (readMid) {
