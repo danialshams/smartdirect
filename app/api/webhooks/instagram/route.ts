@@ -404,6 +404,116 @@ export async function POST(request: NextRequest) {
 }
 
 // =========================================================
+// Process Instagram read / seen receipt
+//
+// Meta's messaging_seen event carries a `read` object. Its `mid`
+// represents the latest message the customer has seen; everything
+// before that message in the same conversation is also considered seen.
+// =========================================================
+
+async function processInstagramReadReceipt(
+  messagingEvent: any,
+  instagramAccount: InstagramAccountData,
+) {
+  try {
+    const senderId = messagingEvent?.sender?.id;
+    const read = messagingEvent?.read;
+
+    if (!senderId || !read) {
+      console.warn("Instagram read receipt is missing sender/read data.");
+      return;
+    }
+
+    const participantId = String(senderId);
+    const readMid = typeof read.mid === "string" ? read.mid : null;
+
+    const conversation = await prisma.conversation.findUnique({
+      where: {
+        instagramAccountId_participantId: {
+          instagramAccountId: instagramAccount.id,
+          participantId,
+        },
+      },
+      select: { id: true },
+    });
+
+    if (!conversation) {
+      console.log(
+        "Instagram read receipt received for a conversation that is not stored yet:",
+        participantId,
+      );
+      return;
+    }
+
+    let anchorCreatedAt: Date | null = null;
+
+    // Prefer Meta's message id. This avoids mixing Meta's clock with our
+    // database clock and lets us expand the receipt to every older outbound
+    // message in the same conversation.
+    if (readMid) {
+      const anchor = await prisma.conversationMessage.findFirst({
+        where: {
+          conversationId: conversation.id,
+          direction: "OUTBOUND",
+          igMessageId: readMid,
+        },
+        select: { createdAt: true },
+      });
+
+      anchorCreatedAt = anchor?.createdAt ?? null;
+    }
+
+    const seenAt = new Date();
+
+    let updatedCount = 0;
+
+    if (anchorCreatedAt) {
+      const result = await prisma.conversationMessage.updateMany({
+        where: {
+          conversationId: conversation.id,
+          direction: "OUTBOUND",
+          createdAt: { lte: anchorCreatedAt },
+          seenAt: null,
+        },
+        data: { seenAt },
+      });
+
+      updatedCount = result.count;
+    } else if (readMid) {
+      // The read event can race our send persistence, or the message may
+      // have been sent outside SmartDirect. If the anchor is unknown, do not
+      // throw the receipt away. Mark the currently unseen outbound messages
+      // in this conversation as seen.
+      const result = await prisma.conversationMessage.updateMany({
+        where: {
+          conversationId: conversation.id,
+          direction: "OUTBOUND",
+          seenAt: null,
+        },
+        data: { seenAt },
+      });
+
+      updatedCount = result.count;
+    } else {
+      console.warn(
+        "Instagram read receipt has no message mid; no message state was changed.",
+      );
+      return;
+    }
+
+    console.log("========================================");
+    console.log("INSTAGRAM MESSAGE SEEN / READ RECEIPT");
+    console.log("Participant ID:", participantId);
+    console.log("Read message ID:", readMid ?? "NONE");
+    console.log("Conversation ID:", conversation.id);
+    console.log("Outbound messages marked seen:", updatedCount);
+    console.log("========================================");
+  } catch (error) {
+    console.error("Error processing Instagram read receipt:", error);
+  }
+}
+
+// =========================================================
 // Process Instagram messaging events
 // =========================================================
 
@@ -458,6 +568,18 @@ async function processMessagingEvent(
       );
 
       console.log("========================================");
+
+      return;
+    }
+
+    // =======================================================
+    // Real Instagram read receipt / seen event
+    // =======================================================
+
+    if (messagingEvent?.read) {
+      await processInstagramReadReceipt(messagingEvent, instagramAccount);
+
+      console.log("Instagram read receipt processed.");
 
       return;
     }
