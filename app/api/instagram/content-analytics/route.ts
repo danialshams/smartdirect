@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
+import { proxyInstagramMediaUrl } from "@/lib/instagram/media-proxy";
 
 export const dynamic = "force-dynamic";
 
@@ -258,10 +258,6 @@ export async function GET(request: NextRequest) {
 
     const accessToken = await getValidInstagramAccessToken(account.id);
 
-    // ---------------------------------------------------------
-    // Get media
-    // ---------------------------------------------------------
-
     const mediaUrl = new URL(
       `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${account.igUserId}/media`,
     );
@@ -281,7 +277,6 @@ export async function GET(request: NextRequest) {
     );
 
     mediaUrl.searchParams.set("limit", String(MEDIA_LIMIT));
-
     mediaUrl.searchParams.set("access_token", accessToken);
 
     const { response: mediaResponse, data: mediaResult } = await fetchInstagram<
@@ -305,10 +300,6 @@ export async function GET(request: NextRequest) {
 
     const media = mediaResult.data;
 
-    // ---------------------------------------------------------
-    // Get insights in controlled batches
-    // ---------------------------------------------------------
-
     const content = await processInBatches(media, 5, async (item) => {
       const insights = await getMediaInsights(item, accessToken);
 
@@ -317,8 +308,8 @@ export async function GET(request: NextRequest) {
         type: item.media_type ?? null,
         productType: item.media_product_type ?? null,
         caption: item.caption ?? null,
-        mediaUrl: item.media_url ?? null,
-        thumbnailUrl: item.thumbnail_url ?? null,
+        mediaUrl: proxyInstagramMediaUrl(item.media_url),
+        thumbnailUrl: proxyInstagramMediaUrl(item.thumbnail_url),
         permalink: item.permalink ?? null,
         timestamp: item.timestamp ?? null,
         insights,
@@ -327,7 +318,6 @@ export async function GET(request: NextRequest) {
 
     const sortedContent = [...content].sort((a, b) => {
       const aValue = a.insights.totalInteractions ?? 0;
-
       const bValue = b.insights.totalInteractions ?? 0;
 
       return bValue - aValue;
@@ -375,13 +365,11 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-
       account: {
         id: account.id,
         igUserId: account.igUserId,
         username: account.igUsername,
       },
-
       summary: {
         contentCount: content.length,
         reach: totalReach,
@@ -393,9 +381,7 @@ export async function GET(request: NextRequest) {
         totalInteractions,
         engagementRate,
       },
-
       bestContent: sortedContent.slice(0, 5),
-
       content,
     });
   } catch (error) {
