@@ -299,10 +299,10 @@ model Showcase {
   id String @id @default(cuid())
 
   userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   instagramAccountId String
-  instagramAccount   InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
+  instagramAccount InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
 
   title       String
   description String?
@@ -322,7 +322,7 @@ model ShowcaseItem {
   id String @id @default(cuid())
 
   showcaseId String
-  showcase   Showcase @relation(fields: [showcaseId], references: [id], onDelete: Cascade)
+  showcase Showcase @relation(fields: [showcaseId], references: [id], onDelete: Cascade)
 
   title       String
   description String?
@@ -348,10 +348,10 @@ model Form {
   id String @id @default(cuid())
 
   userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   instagramAccountId String
-  instagramAccount   InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
+  instagramAccount InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
 
   title       String
   description String?
@@ -372,16 +372,16 @@ model FormField {
   id String @id @default(cuid())
 
   formId String
-  form   Form   @relation(fields: [formId], references: [id], onDelete: Cascade)
+  form Form @relation(fields: [formId], references: [id], onDelete: Cascade)
 
   label String
-  name  String
-  type  FormFieldType
+  name String
+  type FormFieldType
 
-  required    Boolean @default(false)
+  required Boolean @default(false)
   placeholder String?
-  options     Json?
-  order       Int     @default(0)
+  options Json?
+  order Int @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -394,11 +394,11 @@ model FormSubmission {
   id String @id @default(cuid())
 
   formId String
-  form   Form   @relation(fields: [formId], references: [id], onDelete: Cascade)
+  form Form @relation(fields: [formId], references: [id], onDelete: Cascade)
 
   igUserId String?
   username String?
-  answers  Json
+  answers Json
 
   createdAt DateTime @default(now())
 
@@ -410,15 +410,15 @@ model PendingFollowGate {
   id String @id @default(cuid())
 
   instagramAccountId String
-  instagramAccount   InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
+  instagramAccount InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
 
   automationId String
-  automation   Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  automation Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
 
   participantId String
-  status        FollowGateStatus @default(PENDING)
-  attempts      Int              @default(0)
-  expiresAt     DateTime
+  status FollowGateStatus @default(PENDING)
+  attempts Int @default(0)
+  expiresAt DateTime
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -432,12 +432,12 @@ model InstagramPublishJob {
   id String @id @default(cuid())
 
   userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   instagramAccountId String
-  instagramAccount   InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
+  instagramAccount InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
 
-  type   InstagramPublishType
+  type InstagramPublishType
   status InstagramPublishStatus @default(DRAFT)
 
   caption String?
@@ -446,13 +446,13 @@ model InstagramPublishJob {
   publishedAt DateTime?
 
   instagramContainerId String?
-  instagramMediaId     String?
+  instagramMediaId String?
 
   errorMessage String?
 
   idempotencyKey String? @unique
 
-  retryCount    Int       @default(0)
+  retryCount Int @default(0)
   lastAttemptAt DateTime?
 
   createdAt DateTime @default(now())
@@ -466,24 +466,25 @@ model InstagramPublishJob {
   @@index([scheduledAt])
   @@index([instagramAccountId, status])
   @@index([status, scheduledAt])
+  @@unique([instagramAccountId, scheduledAt])
 }
 
 model InstagramPublishMedia {
   id String @id @default(cuid())
 
   publishJobId String
-  publishJob   InstagramPublishJob @relation(fields: [publishJobId], references: [id], onDelete: Cascade)
+  publishJob InstagramPublishJob @relation(fields: [publishJobId], references: [id], onDelete: Cascade)
 
   type InstagramMediaType
 
   storageKey String
-  publicUrl  String?
+  publicUrl String?
 
   fileName String?
   mimeType String?
   fileSize Int?
 
-  sortOrder Int       @default(0)
+  sortOrder Int @default(0)
   deletedAt DateTime?
 
   createdAt DateTime @default(now())
@@ -549,6 +550,7 @@ enum InstagramPublishType {
   POST
   CAROUSEL
   REEL
+  STORY
 }
 
 enum InstagramPublishStatus {
