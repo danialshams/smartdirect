@@ -233,6 +233,10 @@ model Conversation {
   igUserId      String
   participantId String
 
+  participantUsername       String?
+  participantName           String?
+  participantProfilePicture String?
+
   isActive      Boolean   @default(true)
   lastMessageAt DateTime?
 
@@ -266,17 +270,20 @@ model ConversationMessage {
   quickReplyId String?
   quickReply   QuickReply? @relation(fields: [quickReplyId], references: [id], onDelete: SetNull)
 
+  readAt DateTime?
+  seenAt DateTime?
+
   createdAt DateTime @default(now())
 
   @@index([conversationId, createdAt])
-  @@index([quickReplyId])
+  @@index([conversationId, readAt])
 }
 
 model Comment {
   id String @id @default(cuid())
 
   userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   igMediaId   String
   igCommentId String @unique
@@ -296,7 +303,7 @@ model Showcase {
   id String @id @default(cuid())
 
   userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   instagramAccountId String
   instagramAccount   InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
@@ -345,14 +352,14 @@ model Form {
   id String @id @default(cuid())
 
   userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   instagramAccountId String
   instagramAccount   InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
 
   title       String
   description String?
-  isActive    Boolean @default(true)
+  isActive    Boolean   @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -429,7 +436,7 @@ model InstagramPublishJob {
   id String @id @default(cuid())
 
   userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   instagramAccountId String
   instagramAccount   InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
@@ -458,9 +465,6 @@ model InstagramPublishJob {
 
   media InstagramPublishMedia[]
 
-  // جلوگیری از ثبت دو انتشار برای یک اکانت
-  // در دقیقاً یک زمان مشخص.
-  // مقدار NULL برای انتشار فوری چندبار قابل استفاده است.
   @@unique([instagramAccountId, scheduledAt])
   @@index([userId])
   @@index([instagramAccountId])
