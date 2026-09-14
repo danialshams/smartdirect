@@ -9,10 +9,22 @@ import { scheduleInstagramPublish } from "@/lib/instagram/scheduled-publishing-w
 
 export const dynamic = "force-dynamic";
 
+const userTagSchema = z.object({
+  username: z
+    .string()
+    .trim()
+    .min(1)
+    .max(30)
+    .regex(/^@?[A-Za-z0-9._]+$/, "نام کاربری Instagram معتبر نیست."),
+  x: z.number().min(0).max(1).optional(),
+  y: z.number().min(0).max(1).optional(),
+});
+
 const createSchema = z.object({
   instagramAccountId: z.string().min(1),
   type: z.enum(["POST", "CAROUSEL", "REEL", "STORY"]),
   caption: z.string().max(2200).optional().nullable(),
+  userTags: z.array(userTagSchema).max(10).optional().default([]),
   scheduledAt: z.string().datetime().optional().nullable(),
   idempotencyKey: z.string().max(200).optional().nullable(),
   media: z.array(z.object({
@@ -65,6 +77,24 @@ export async function POST(request: NextRequest) {
     if (!parsed.success) return NextResponse.json({ success: false, message: "اطلاعات ارسال‌شده معتبر نیست.", errors: parsed.error.flatten() }, { status: 400 });
 
     const data = parsed.data;
+    const normalizedUserTags = data.userTags.map((tag) => ({
+      username: tag.username.replace(/^@/, ""),
+      ...(tag.x !== undefined ? { x: tag.x } : {}),
+      ...(tag.y !== undefined ? { y: tag.y } : {}),
+    }));
+
+    if (normalizedUserTags.length && data.type === "STORY") {
+      return NextResponse.json({ success: false, message: "Tag کردن با این روش برای Story فعال نیست." }, { status: 400 });
+    }
+
+    if (normalizedUserTags.length && data.type === "CAROUSEL") {
+      return NextResponse.json({ success: false, message: "Tag کردن در Carousel فعلاً در پنل انتشار فعال نیست." }, { status: 400 });
+    }
+
+    if (data.type === "POST" && normalizedUserTags.some((tag) => tag.x === undefined || tag.y === undefined)) {
+      return NextResponse.json({ success: false, message: "برای Tag در پست، موقعیت X و Y هر تگ الزامی است." }, { status: 400 });
+    }
+
     const account = await prisma.instagramAccount.findFirst({
       where: { id: data.instagramAccountId, userId: session.user.id, isConnected: true },
     });
@@ -129,6 +159,7 @@ export async function POST(request: NextRequest) {
           type: data.type,
           status: isScheduled ? "SCHEDULED" : "DRAFT",
           caption: data.caption ?? null,
+          userTags: normalizedUserTags.length ? normalizedUserTags : null,
           scheduledAt,
           idempotencyKey: data.idempotencyKey ?? null,
           media: {
