@@ -1,0 +1,173 @@
+name: Fix Instagram Seen Watermark
+
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Patch read receipt handler
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path('app/api/webhooks/instagram/route.ts')
+          source = path.read_text(encoding='utf-8')
+
+          start_marker = '// =========================================================\n// Process Instagram read / seen receipt'
+          end_marker = '// =========================================================\n// Process Instagram messaging events'
+
+          start = source.find(start_marker)
+          end = source.find(end_marker, start + len(start_marker))
+
+          if start == -1 or end == -1:
+              raise SystemExit('Could not locate Instagram read receipt handler')
+
+          helper = '''// =========================================================
+// Process Instagram read / seen receipt
+//
+// Instagram read receipts are thread-level. The webhook normally carries
+// a read.watermark timestamp; when a message id is also available we use
+// it as the most precise anchor. Watermark is compared with our message
+// creation timestamp so every outbound message the customer has reached
+// is persisted as seen.
+// =========================================================
+
+async function processInstagramReadReceipt(
+  messagingEvent: any,
+  instagramAccount: InstagramAccountData,
+) {
+  try {
+    const senderId = messagingEvent?.sender?.id;
+    const read = messagingEvent?.read;
+
+    if (!senderId || !read) {
+      console.warn('Instagram read receipt is missing sender/read data.');
+      return;
+    }
+
+    const participantId = String(senderId);
+    const readMid = typeof read.mid === 'string' ? read.mid : null;
+    const rawWatermark = Number(read.watermark);
+    const watermark = Number.isFinite(rawWatermark) && rawWatermark > 0
+      ? rawWatermark
+      : null;
+
+    const conversation = await prisma.conversation.findUnique({
+      where: {
+        instagramAccountId_participantId: {
+          instagramAccountId: instagramAccount.id,
+          participantId,
+        },
+      },
+      select: { id: true },
+    });
+
+    if (!conversation) {
+      console.log(
+        'Instagram read receipt received for a conversation that is not stored yet:',
+        participantId,
+      );
+      return;
+    }
+
+    let updatedCount = 0;
+    const seenAt = new Date();
+
+    // Prefer the message id when Meta provides one.
+    if (readMid) {
+      const anchor = await prisma.conversationMessage.findFirst({
+        where: {
+          conversationId: conversation.id,
+          direction: 'OUTBOUND',
+          igMessageId: readMid,
+        },
+        select: { createdAt: true },
+      });
+
+      if (anchor) {
+        const result = await prisma.conversationMessage.updateMany({
+          where: {
+            conversationId: conversation.id,
+            direction: 'OUTBOUND',
+            createdAt: { lte: anchor.createdAt },
+            seenAt: null,
+          },
+          data: { seenAt },
+        });
+
+        updatedCount = result.count;
+      }
+    }
+
+    // Instagram's current read webhook uses a watermark for thread-level
+    // read state. This is the important fallback/current path.
+    if (updatedCount === 0 && watermark !== null) {
+      const watermarkDate = new Date(watermark);
+
+      const result = await prisma.conversationMessage.updateMany({
+        where: {
+          conversationId: conversation.id,
+          direction: 'OUTBOUND',
+          createdAt: { lte: watermarkDate },
+          seenAt: null,
+        },
+        data: { seenAt },
+      });
+
+      updatedCount = result.count;
+    }
+
+    // If Meta supplied a mid but it is not yet persisted locally (race
+    // condition), do not mark arbitrary messages as seen. Wait for a future
+    // receipt/poll rather than producing a false Seen state.
+    if (updatedCount === 0 && !readMid && watermark === null) {
+      console.warn(
+        'Instagram read receipt has neither mid nor a valid watermark.',
+      );
+    }
+
+    console.log('========================================');
+    console.log('INSTAGRAM MESSAGE SEEN / READ RECEIPT');
+    console.log('Participant ID:', participantId);
+    console.log('Read message ID:', readMid ?? 'NONE');
+    console.log('Read watermark:', watermark ?? 'NONE');
+    console.log('Conversation ID:', conversation.id);
+    console.log('Outbound messages marked seen:', updatedCount);
+    console.log('========================================');
+  } catch (error) {
+    console.error('Error processing Instagram read receipt:', error);
+  }
+}
+
+'''
+
+          source = source[:start] + helper + source[end:]
+          path.write_text(source, encoding='utf-8')
+          print('Instagram seen handler updated to support watermark.')
+          PY
+
+      - name: Remove temporary workflow
+        run: rm -f .github/workflows/fix-instagram-seen.yml
+
+      - name: Commit final webhook
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/api/webhooks/instagram/route.ts .github/workflows/fix-instagram-seen.yml
+          git diff --cached --quiet && exit 0
+          git commit -m 'fix: persist real Instagram seen watermark'
+          git push origin HEAD:master
