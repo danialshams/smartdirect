@@ -10,14 +10,14 @@ import { sendAutomationMessage } from "./send-automation-message";
 
 type ExecuteAutomationInput = {
   automationId: string;
-
   instagramAccountId: string;
-
   participantId: string;
-
   igUserId: string;
-
   selectedQuickReplyId?: string | null;
+};
+
+type HandoffState = {
+  active: boolean;
 };
 
 export async function executeAutomation(input: ExecuteAutomationInput) {
@@ -42,18 +42,14 @@ export async function executeAutomation(input: ExecuteAutomationInput) {
   const automation = await prisma.automation.findFirst({
     where: {
       id: input.automationId,
-
       instagramAccountId: input.instagramAccountId,
-
       isActive: true,
     },
-
     include: {
       messages: {
         orderBy: {
           order: "asc",
         },
-
         include: {
           quickReplies: {
             orderBy: {
@@ -72,9 +68,7 @@ export async function executeAutomation(input: ExecuteAutomationInput) {
   if (automation.messages.length === 0) {
     return {
       success: true,
-
       executed: false,
-
       reason: "NO_MESSAGES",
     };
   }
@@ -87,45 +81,70 @@ export async function executeAutomation(input: ExecuteAutomationInput) {
     where: {
       instagramAccountId_participantId: {
         instagramAccountId: input.instagramAccountId,
-
         participantId: input.participantId,
       },
     },
-
     create: {
       userId: instagramAccount.userId,
-
       instagramAccountId: input.instagramAccountId,
-
       igUserId: input.igUserId,
-
       participantId: input.participantId,
-
       isActive: true,
     },
-
     update: {
       isActive: true,
-
       igUserId: input.igUserId,
     },
   });
 
   // =========================================================
-  // 4. Determine first/current message
+  // 4. Human Agent / Transfer-to-Operator guard
+  //
+  // The handoff state lives in a dedicated table so the existing
+  // Conversation model remains backwards compatible. Every entry
+  // point (DM, comment flow, story flow, ice breaker and menu) uses
+  // this same automation engine, so one guard pauses all flow-based
+  // automation consistently.
+  // =========================================================
+
+  const handoffRows = await prisma.$queryRaw<HandoffState[]>`
+    SELECT "active"
+    FROM "ConversationHandoff"
+    WHERE "conversationId" = ${conversation.id}
+    LIMIT 1
+  `;
+
+  const handoff = handoffRows[0];
+
+  if (handoff?.active) {
+    console.log("[Automation Engine] Human handoff is active; automation paused.", {
+      conversationId: conversation.id,
+      automationId: automation.id,
+      participantId: input.participantId,
+    });
+
+    return {
+      success: true,
+      executed: false,
+      reason: "HUMAN_HANDOFF",
+      conversationId: conversation.id,
+    };
+  }
+
+  // =========================================================
+  // 5. Determine first/current message
   // =========================================================
 
   let currentMessage = automation.messages[0];
 
   // =========================================================
-  // 5. Quick Reply branch
+  // 6. Quick Reply branch
   // =========================================================
 
   if (input.selectedQuickReplyId) {
     const selectedQuickReply = await prisma.quickReply.findFirst({
       where: {
         id: input.selectedQuickReplyId,
-
         automationMessage: {
           automationId: automation.id,
         },
@@ -141,21 +160,16 @@ export async function executeAutomation(input: ExecuteAutomationInput) {
         where: {
           id: conversation.id,
         },
-
         data: {
           lastMessageAt: new Date(),
-
           isActive: true,
         },
       });
 
       return {
         success: true,
-
         executed: false,
-
         reason: "FLOW_FINISHED",
-
         conversationId: conversation.id,
       };
     }
@@ -172,15 +186,14 @@ export async function executeAutomation(input: ExecuteAutomationInput) {
   }
 
   // =========================================================
-  // 6. Prevent circular flow
+  // 7. Prevent circular flow
   // =========================================================
 
   const visitedMessages = new Set<string>();
-
   const executedMessages: string[] = [];
 
   // =========================================================
-  // 7. Execute flow
+  // 8. Execute flow
   // =========================================================
 
   while (currentMessage) {
@@ -192,106 +205,76 @@ export async function executeAutomation(input: ExecuteAutomationInput) {
 
     console.log("[Automation Engine] Executing message:", {
       automationId: automation.id,
-
       messageId: currentMessage.id,
-
       messageType: currentMessage.messageType,
-
       order: currentMessage.order,
-
       quickReplies: currentMessage.quickReplies.length,
     });
 
     // =======================================================
-    // 8. Prepare Quick Replies
+    // 9. Prepare Quick Replies
     // =======================================================
 
     const quickReplies = currentMessage.quickReplies.map((quickReply) => ({
       id: quickReply.id,
-
       title: quickReply.title,
-
       payload: quickReply.payload,
     }));
 
     // =======================================================
-    // 9. Send message through Instagram Adapter
+    // 10. Send message through Instagram Adapter
     // =======================================================
 
     const result = await sendAutomationMessage({
       instagramAccountId: instagramAccount.id,
-
       recipientId: input.participantId,
-
       instagramUserId: instagramAccount.igUserId,
-
       message: {
         id: currentMessage.id,
-
         messageType: currentMessage.messageType,
-
         text: currentMessage.text,
-
         mediaUrl: currentMessage.mediaUrl,
-
         mediaId: currentMessage.mediaId,
-
         showcaseId: currentMessage.showcaseId,
-
         formId: currentMessage.formId,
-
         quickReplies,
       },
     });
 
     // =======================================================
-    // 10. Sending failed
+    // 11. Sending failed
     // =======================================================
 
     if (!result.success) {
       console.error("[Automation Engine] Message sending failed:", {
         automationId: automation.id,
-
         messageId: currentMessage.id,
-
         messageType: currentMessage.messageType,
-
         error: result.error,
       });
 
       return {
         success: false,
-
         executed: false,
-
         reason: "MESSAGE_NOT_SENT",
-
         error: result.error,
-
         conversationId: conversation.id,
-
         messageId: currentMessage.id,
       };
     }
 
     // =======================================================
-    // 11. Save outbound message
+    // 12. Save outbound message
     // =======================================================
 
     await prisma.conversationMessage.create({
       data: {
         conversationId: conversation.id,
-
         direction: MessageDirection.OUTBOUND,
-
         messageType: getConversationMessageType(currentMessage.messageType),
-
         text: result.conversationText ?? currentMessage.text ?? null,
-
         mediaUrl: currentMessage.mediaUrl,
-
         mediaId: currentMessage.mediaId,
-
         igMessageId: result.igMessageId ?? null,
       },
     });
@@ -299,17 +282,16 @@ export async function executeAutomation(input: ExecuteAutomationInput) {
     executedMessages.push(currentMessage.id);
 
     // =======================================================
-    // 12. Quick Reply means wait for user
+    // 13. Quick Reply means wait for user
     // =======================================================
 
     if (currentMessage.quickReplies.length > 0) {
       console.log("[Automation Engine] Waiting for Quick Reply.");
-
       break;
     }
 
     // =======================================================
-    // 13. Find next message
+    // 14. Find next message
     // =======================================================
 
     const currentIndex = automation.messages.findIndex(
@@ -326,28 +308,23 @@ export async function executeAutomation(input: ExecuteAutomationInput) {
   }
 
   // =========================================================
-  // 14. Update conversation
+  // 15. Update conversation
   // =========================================================
 
   await prisma.conversation.update({
     where: {
       id: conversation.id,
     },
-
     data: {
       lastMessageAt: new Date(),
-
       isActive: true,
     },
   });
 
   return {
     success: true,
-
     executed: true,
-
     conversationId: conversation.id,
-
     executedMessages,
   };
 }
@@ -363,22 +340,16 @@ function getConversationMessageType(
   switch (messageType) {
     case "TEXT":
       return MessageType.TEXT;
-
     case "IMAGE":
       return MessageType.IMAGE;
-
     case "VIDEO":
       return MessageType.VIDEO;
-
     case "AUDIO":
       return MessageType.AUDIO;
-
     case "SHOWCASE":
       return MessageType.TEXT;
-
     case "FORM":
       return MessageType.TEXT;
-
     default:
       return MessageType.TEXT;
   }
