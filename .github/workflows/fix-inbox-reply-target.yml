@@ -7,7 +7,6 @@ on:
 
 jobs:
   cleanup:
-    if: ${{ !contains(github.event.head_commit.message, 'remove unsupported inbox reply flow') }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -38,7 +37,6 @@ jobs:
 
           ui = Path('components/dashboard/InstagramInbox.tsx')
           text = ui.read_text(encoding='utf-8')
-
           text = text.replace('Reply, ', '')
           text = re.sub(r'''\n  const \[replyTo, setReplyTo\] = useState<Message \| null>\(null\);''', '', text)
           text = text.replace(' setReplyTo(null);', '')
@@ -59,7 +57,11 @@ jobs:
           PY
 
           git diff --check
-          grep -RniE 'reply_to|replyToMessageId|replyInstagramMessageId|retrying as a normal DM|title="Reply"|Reply size=' app/api/instagram/inbox components/dashboard/InstagramInbox.tsx && exit 1 || true
+
+      - name: Verify cleanup
+        shell: bash
+        run: |
+          ! grep -RniE 'reply_to|replyToMessageId|replyInstagramMessageId|retrying as a normal DM|title="Reply"|Reply size=' app/api/instagram/inbox components/dashboard/InstagramInbox.tsx
 
       - name: Commit cleanup and remove temporary workflow
         shell: bash
