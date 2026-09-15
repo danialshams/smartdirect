@@ -1,0 +1,39 @@
+name: Fix Automation Keyword Regex
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Repair malformed regex
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path("components/dashboard/AutomationForm.tsx")
+          text = path.read_text(encoding="utf-8")
+          malformed = 'keyword.split(/[\n,،;؛]+/)'
+          correct = 'keyword.split(/[\\n,،;؛]+/)'
+          if malformed not in text:
+              raise SystemExit("Malformed regex pattern not found")
+          text = text.replace(malformed, correct)
+          path.write_text(text, encoding="utf-8")
+      - name: Commit and push fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add components/dashboard/AutomationForm.tsx
+          git commit -m "fix: repair automation keyword regex"
+          git push
+      - name: Remove temporary workflow
+        if: success()
+        run: |
+          git rm .github/workflows/fix-automation-regex.yml
+          git commit -m "chore: remove temporary regex fix workflow"
+          git push
