@@ -1,0 +1,55 @@
+name: Repair Inbox UI
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  repair:
+    if: ${{ !contains(github.event.head_commit.message, 'chore: repair inbox ui classes') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Repair malformed Tailwind classes
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path('components/dashboard/InstagramInbox.tsx')
+          text = path.read_text(encoding='utf-8')
+
+          def normalize_classes(value: str) -> str:
+              value = re.sub(r'(?<=\\w)\\s+-\\s+(?=\\w)', '-', value)
+              value = re.sub(r'(?<=:)\\s+(?=[A-Za-z])', '', value)
+              return value
+
+          pattern = re.compile(r'className=("(?:\\\\.|[^"\\\\])*"|\\{`[^`]*`\\})', re.S)
+
+          def replace(match):
+              raw = match.group(1)
+              if raw.startswith('"'):
+                  inner = raw[1:-1]
+                  return 'className="' + normalize_classes(inner) + '"'
+              inner = raw[2:-2]
+              return 'className={`' + normalize_classes(inner) + '`}'
+
+          repaired = pattern.sub(replace, text)
+
+          # Keep the API URLs canonical and whitespace-free.
+          repaired = repaired.replace('/api/instagram/inbox?accountId=${encodeURIComponent(', '/api/instagram/inbox?accountId=${encodeURIComponent(')
+
+          path.write_text(repaired, encoding='utf-8')
+          PY
+
+      - name: Commit repair and remove workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add components/dashboard/InstagramInbox.tsx
+          git rm .github/workflows/fix-inbox-ui.yml
+          git diff --cached --quiet && exit 0 || true
+          git commit -m "chore: repair inbox ui classes"
+          git push
