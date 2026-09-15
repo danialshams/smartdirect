@@ -16,21 +16,25 @@ jobs:
           from pathlib import Path
           p = Path('app/api/instagram/inbox/route.ts')
           s = p.read_text(encoding='utf-8')
-          start = s.index('    /*\n     * The reply wrapper is optional.')
-          end = s.index('    if (!response.ok) {', start)
-          s = s[:start] + s[end:]
-          p.write_text(s, encoding='utf-8')
+          marker = '    /*\n     * The reply wrapper is optional.'
+          if marker in s:
+              start = s.index(marker)
+              end = s.index('    if (!response.ok) {', start)
+              s = s[:start] + s[end:]
+              p.write_text(s, encoding='utf-8')
           PY
       - name: Commit fix
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add app/api/instagram/inbox/route.ts
-          git commit -m "fix: require real instagram inbox replies" || exit 0
-          git push origin master
+          git commit -m "fix: require real instagram inbox replies" || true
+          git push origin master || true
       - name: Remove workflow
         if: always()
         run: |
           git rm -f .github/workflows/fix-inbox-real-reply.yml || true
-          git commit -m "chore: remove temporary reply workflow" || exit 0
+          git commit -m "chore: remove temporary reply workflow" || true
           git push origin master || true
+
+# trigger
