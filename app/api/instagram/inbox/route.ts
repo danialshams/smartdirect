@@ -560,11 +560,6 @@ export async function POST(request: NextRequest) {
       return jsonError("گفتگو پیدا نشد.", 404);
     }
 
-    /*
-     * Reply target must belong to the same conversation.
-     * We deliberately resolve the internal DB id to the real
-     * Instagram message id before talking to Meta.
-     */
     let replyInstagramMessageId: string | null = null;
 
     if (replyToMessageId) {
@@ -637,11 +632,6 @@ export async function POST(request: NextRequest) {
       };
     }
 
-    /*
-     * Important:
-     * reply_to belongs at the same level as `message`,
-     * not inside `message`.
-     */
     if (replyInstagramMessageId) {
       messageBody.reply_to = {
         mid: replyInstagramMessageId,
@@ -682,12 +672,44 @@ export async function POST(request: NextRequest) {
     };
 
     /*
-     * If Meta rejects the reply wrapper, do NOT silently
-     * save a fake successful message.
-     *
-     * We return the actual Meta error so the UI shows
-     * the real reason and the Vercel logs contain it.
+     * The reply wrapper is optional. If Meta rejects reply_to,
+     * retry once as a normal DM so selecting Reply never blocks
+     * the actual message from being delivered.
      */
+    if (!response.ok && replyInstagramMessageId) {
+      console.warn(
+        "Instagram reply send rejected; retrying as a normal DM:",
+        JSON.stringify({
+          status: response.status,
+          replyMessageId: replyInstagramMessageId,
+          response: data,
+        }),
+      );
+
+      const fallbackBody = { ...messageBody };
+      delete fallbackBody.reply_to;
+
+      response = await fetch(`${GRAPH_BASE}/${account.igUserId}/messages`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(fallbackBody),
+        cache: "no-store",
+      });
+
+      data = (await response.json().catch(() => ({}))) as {
+        message_id?: string;
+        error?: {
+          message?: string;
+          type?: string;
+          code?: number;
+          error_subcode?: number;
+        };
+      };
+    }
+
     if (!response.ok) {
       console.error(
         "Instagram send failed:",
