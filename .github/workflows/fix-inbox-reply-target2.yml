@@ -1,0 +1,74 @@
+name: Fix Inbox Reply Target 2
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch reply target validation
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path('app/api/instagram/inbox/route.ts')
+          s = p.read_text(encoding='utf-8')
+          old = '''      if (!replyTarget.igMessageId) {
+        return jsonError(
+          "این پیام شناسه Instagram ندارد و امکان Reply مستقیم به آن وجود ندارد.",
+          400,
+        );
+      }
+
+      replyInstagramMessageId = replyTarget.igMessageId;
+'''
+          new = '''      if (replyTarget.direction !== "INBOUND") {
+        return jsonError(
+          "Reply فقط برای پیام‌های دریافتی مشتری قابل استفاده است.",
+          400,
+        );
+      }
+
+      if (!replyTarget.igMessageId) {
+        return jsonError(
+          "این پیام شناسه Instagram ندارد و امکان Reply مستقیم به آن وجود ندارد.",
+          400,
+        );
+      }
+
+      replyInstagramMessageId = replyTarget.igMessageId;
+'''
+          if old not in s:
+              raise SystemExit('route block not found')
+          p.write_text(s.replace(old, new, 1), encoding='utf-8')
+
+          p = Path('components/dashboard/InstagramInbox.tsx')
+          s = p.read_text(encoding='utf-8')
+          old = '''<button type="button" onClick={() => { if (!message.igMessageId) { setError("این پیام شناسه Instagram ندارد و امکان Reply به آن وجود ندارد."); return; } setReplyTo(message); setError(""); }} className={`absolute -top-2 rounded-full border border-slate-200 bg-white p-1.5 text-slate-500 opacity-0 shadow-sm transition group-hover:opacity-100 ${outbound ? "-left-9" : "-right-9"}`} title="Reply"><Reply size={13} /></button>'''
+          new = '''{!outbound && <button type="button" onClick={() => { if (!message.igMessageId) { setError("این پیام شناسه Instagram ندارد و امکان Reply به آن وجود ندارد."); return; } setReplyTo(message); setError(""); }} className="absolute -top-2 -right-9 rounded-full border border-slate-200 bg-white p-1.5 text-slate-500 opacity-0 shadow-sm transition group-hover:opacity-100" title="Reply"><Reply size={13} /></button>}'''
+          if old not in s:
+              raise SystemExit('ui block not found')
+          s = s.replace(old, new, 1)
+          old = '''<div className="flex items-center gap-2 text-[10px] font-semibold text-slate-500"><Reply size={12} />پاسخ به {replyTo.direction === "OUTBOUND" ? "پیام شما" : displayName(selectedConversation)}</div>'''
+          new = '''<div className="flex items-center gap-2 text-[10px] font-semibold text-slate-500"><Reply size={12} />پاسخ به {displayName(selectedConversation)}</div>'''
+          if old not in s:
+              raise SystemExit('ui header block not found')
+          p.write_text(s.replace(old, new, 1), encoding='utf-8')
+          PY
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/api/instagram/inbox/route.ts components/dashboard/InstagramInbox.tsx
+          git commit -m "fix: validate inbox reply targets" || true
+          git push origin master
+      - name: Remove workflow
+        if: always()
+        run: |
+          git rm -f .github/workflows/fix-inbox-reply-target2.yml .github/workflows/fix-inbox-reply-target.yml .github/inbox-reply-trigger.txt || true
+          git commit -m "chore: remove temporary inbox reply workflows" || true
+          git push origin master || true
