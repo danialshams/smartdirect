@@ -64,7 +64,7 @@ export default function PublishingDashboard() {
       const result = await response.json(); if (!response.ok) throw new Error(result.message || "ساخت Publishing Job ناموفق بود.");
       const job: Job = result.data;
       if (publishNow) { const publishResponse = await fetch(`/api/instagram/publishing/${job.id}/publish`, { method: "POST" }); const publishResult = await publishResponse.json(); if (!publishResponse.ok) throw new Error(publishResult.message || "انتشار ناموفق بود."); }
-      setCaption(""); setUploadedMedia([]); setCommentAutomationId(""); setStoryReplyAutomationId(""); setUploadProgress(0); setScheduledDate(currentJalaliDate()); await loadJobs();
+      setCaption(""); setUploadedMedia([]); setCommentAutomationId(""); setStoryReplyAutomationId(""); setCommentTriggerKeywords(""); setCommentTriggerResponse(""); setStoryReplyTriggerKeywords(""); setStoryReplyTriggerResponse(""); setUploadProgress(0); setScheduledDate(currentJalaliDate()); await loadJobs();
     } catch (e) { setError(e instanceof Error ? e.message : "خطا در Publishing."); } finally { setPublishing(false); }
   }
   async function retryJob(id: string) { try { setError(""); const response = await fetch(`/api/instagram/publishing/${id}/retry`, { method: "POST" }); const result = await response.json(); if (!response.ok) throw new Error(result.message || "Retry ناموفق بود."); await loadJobs(); } catch (e) { setError(e instanceof Error ? e.message : "Retry ناموفق بود."); } }
