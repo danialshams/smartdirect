@@ -1,0 +1,36 @@
+name: Fix Inbox Real Reply
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Remove reply fallback
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('app/api/instagram/inbox/route.ts')
+          s = p.read_text(encoding='utf-8')
+          start = s.index('    /*\n     * The reply wrapper is optional.')
+          end = s.index('    if (!response.ok) {', start)
+          s = s[:start] + s[end:]
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Commit fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/api/instagram/inbox/route.ts
+          git commit -m "fix: require real instagram inbox replies" || exit 0
+          git push origin master
+      - name: Remove workflow
+        if: always()
+        run: |
+          git rm -f .github/workflows/fix-inbox-real-reply.yml || true
+          git commit -m "chore: remove temporary reply workflow" || exit 0
+          git push origin master || true
