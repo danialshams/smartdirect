@@ -20,6 +20,10 @@ const createSchema = z.object({
   idempotencyKey: z.string().max(200).optional().nullable(),
   commentAutomationId: z.string().min(1).optional().nullable(),
   storyReplyAutomationId: z.string().min(1).optional().nullable(),
+  commentTriggerKeywords: z.string().trim().max(1000).optional().nullable(),
+  commentTriggerResponse: z.string().trim().max(2000).optional().nullable(),
+  storyReplyTriggerKeywords: z.string().trim().max(1000).optional().nullable(),
+  storyReplyTriggerResponse: z.string().trim().max(2000).optional().nullable(),
   media: z.array(z.object({ type: z.enum(["IMAGE", "VIDEO"]), storageKey: z.string().min(1), publicUrl: z.string().url().optional().nullable(), fileName: z.string().max(255).optional().nullable(), mimeType: z.string().max(100).optional().nullable(), fileSize: z.number().int().positive().optional().nullable(), sortOrder: z.number().int().min(0) })).min(1).max(10),
 });
 
@@ -70,6 +74,14 @@ export async function POST(request: NextRequest) {
     const parsed = createSchema.safeParse(await request.json());
     if (!parsed.success) return NextResponse.json({ success: false, message: "اطلاعات ارسال‌شده معتبر نیست.", errors: parsed.error.flatten() }, { status: 400 });
     const data = parsed.data;
+    const hasCommentTrigger = Boolean(data.commentTriggerKeywords?.trim() || data.commentTriggerResponse?.trim());
+    const hasStoryTrigger = Boolean(data.storyReplyTriggerKeywords?.trim() || data.storyReplyTriggerResponse?.trim());
+    if (hasCommentTrigger && data.type === "STORY") return NextResponse.json({ success: false, message: "شرط کامنت برای Story قابل استفاده نیست." }, { status: 400 });
+    if (hasStoryTrigger && data.type !== "STORY") return NextResponse.json({ success: false, message: "شرط Reply استوری فقط برای Story قابل استفاده است." }, { status: 400 });
+    if (hasCommentTrigger && (!data.commentTriggerKeywords?.trim() || !data.commentTriggerResponse?.trim())) return NextResponse.json({ success: false, message: "برای شرط کامنت، کلمات کلیدی و پاسخ الزامی است." }, { status: 400 });
+    if (hasStoryTrigger && (!data.storyReplyTriggerKeywords?.trim() || !data.storyReplyTriggerResponse?.trim())) return NextResponse.json({ success: false, message: "برای شرط Reply استوری، کلمات کلیدی و پاسخ الزامی است." }, { status: 400 });
+    if (hasCommentTrigger && data.commentAutomationId) return NextResponse.json({ success: false, message: "همزمان انتخاب Automation کامنت و شرط سفارشی کامنت مجاز نیست." }, { status: 400 });
+    if (hasStoryTrigger && data.storyReplyAutomationId) return NextResponse.json({ success: false, message: "همزمان انتخاب Automation استوری و شرط سفارشی Reply مجاز نیست." }, { status: 400 });
     const normalizedUserTags = data.userTags.map((tag) => ({ username: tag.username.replace(/^@/, ""), ...(tag.x !== undefined ? { x: tag.x } : {}), ...(tag.y !== undefined ? { y: tag.y } : {}) }));
     if (normalizedUserTags.length && data.type === "STORY") return NextResponse.json({ success: false, message: "Tag کردن با این روش برای Story فعال نیست." }, { status: 400 });
     if (normalizedUserTags.length && data.type === "CAROUSEL") return NextResponse.json({ success: false, message: "Tag کردن در Carousel فعلاً در پنل انتشار فعال نیست." }, { status: 400 });
@@ -119,6 +131,10 @@ export async function POST(request: NextRequest) {
           ...(normalizedUserTags.length ? { userTags: normalizedUserTags } : {}),
           commentAutomationId: data.commentAutomationId ?? null,
           storyReplyAutomationId: data.storyReplyAutomationId ?? null,
+          commentTriggerKeywords: data.commentTriggerKeywords?.trim() || null,
+          commentTriggerResponse: data.commentTriggerResponse?.trim() || null,
+          storyReplyTriggerKeywords: data.storyReplyTriggerKeywords?.trim() || null,
+          storyReplyTriggerResponse: data.storyReplyTriggerResponse?.trim() || null,
           scheduledAt,
           idempotencyKey: data.idempotencyKey ?? null,
           media: { create: data.media.map((item) => ({ type: item.type, storageKey: item.storageKey, publicUrl: item.publicUrl ?? null, fileName: item.fileName ?? null, mimeType: item.mimeType ?? null, fileSize: item.fileSize ?? null, sortOrder: item.sortOrder })) },
