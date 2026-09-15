@@ -87,12 +87,62 @@ async function cleanupPublishedMedia(items: Array<{ id: string; storageKey: stri
   }
 }
 
-async function bindConditionalAutomations(job: { commentAutomationId: string | null; storyReplyAutomationId: string | null; instagramAccountId: string; type: string }, instagramMediaId: string) {
+function splitTriggerKeywords(value: string | null) {
+  if (!value) return [];
+  return value.split(/[\n,،;؛]+/).map((item) => item.trim()).filter(Boolean).filter((item, index, list) => list.indexOf(item) === index);
+}
+
+async function createConditionalAutomation(
+  instagramAccountId: string,
+  triggerType: "COMMENT_KEYWORD" | "STORY_REPLY_KEYWORD",
+  keywords: string | null,
+  response: string | null,
+  instagramMediaId: string,
+) {
+  const normalizedKeywords = splitTriggerKeywords(keywords);
+  const normalizedResponse = response?.trim();
+  if (!normalizedKeywords.length || !normalizedResponse) return;
+
+  const keyword = normalizedKeywords.join(",");
+  const existing = await prisma.automation.findFirst({ where: { instagramAccountId, triggerType, keyword, mediaId: instagramMediaId }, select: { id: true } });
+  if (existing) return existing.id;
+
+  const automation = await prisma.automation.create({
+    data: {
+      instagramAccountId,
+      triggerType,
+      keyword,
+      mediaId: instagramMediaId,
+      sendDm: true,
+      replyText: normalizedResponse,
+      isActive: true,
+    },
+    select: { id: true },
+  });
+  return automation.id;
+}
+
+async function bindConditionalAutomations(job: {
+  commentAutomationId: string | null;
+  storyReplyAutomationId: string | null;
+  commentTriggerKeywords: string | null;
+  commentTriggerResponse: string | null;
+  storyReplyTriggerKeywords: string | null;
+  storyReplyTriggerResponse: string | null;
+  instagramAccountId: string;
+  type: string;
+}, instagramMediaId: string) {
   if (job.commentAutomationId && job.type !== "STORY") {
     await prisma.automation.updateMany({ where: { id: job.commentAutomationId, instagramAccountId: job.instagramAccountId, triggerType: "COMMENT_KEYWORD" }, data: { mediaId: instagramMediaId } });
   }
   if (job.storyReplyAutomationId && job.type === "STORY") {
     await prisma.automation.updateMany({ where: { id: job.storyReplyAutomationId, instagramAccountId: job.instagramAccountId, triggerType: "STORY_REPLY_KEYWORD" }, data: { mediaId: instagramMediaId } });
+  }
+  if (!job.commentAutomationId && job.type !== "STORY") {
+    await createConditionalAutomation(job.instagramAccountId, "COMMENT_KEYWORD", job.commentTriggerKeywords, job.commentTriggerResponse, instagramMediaId);
+  }
+  if (!job.storyReplyAutomationId && job.type === "STORY") {
+    await createConditionalAutomation(job.instagramAccountId, "STORY_REPLY_KEYWORD", job.storyReplyTriggerKeywords, job.storyReplyTriggerResponse, instagramMediaId);
   }
 }
 
