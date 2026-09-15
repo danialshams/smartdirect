@@ -2422,8 +2422,7 @@ function KeywordInput({
     setKeyword: (value: string) => void;
     description: string;
 }) {
-    const keywords = keyword.split(/[
-,،;؛]+/).map((item) => item.trim()).filter(Boolean).filter((item, index, list) => list.indexOf(item) === index);
+    const keywords = keyword.split(/[\n,،;؛]+/).map((item) => item.trim()).filter(Boolean).filter((item, index, list) => list.indexOf(item) === index);
     const [draft, setDraft] = useState("");
 
     function addKeyword() {
