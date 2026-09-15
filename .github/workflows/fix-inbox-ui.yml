@@ -6,7 +6,6 @@ on:
 
 jobs:
   repair:
-    if: ${{ github.event.head_commit.message != 'chore: repair inbox ui classes' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -14,6 +13,9 @@ jobs:
       - uses: actions/checkout@v4
       - name: Repair malformed Tailwind classes
         run: |
+          if [ "${{ github.event.head_commit.message }}" = "chore: repair inbox ui classes" ]; then
+            exit 0
+          fi
           python - <<'PY'
           from pathlib import Path
           import re
@@ -31,17 +33,17 @@ jobs:
           def replace(match):
               raw = match.group(1)
               if raw.startswith('"'):
-                  inner = raw[1:-1]
-                  return 'className="' + normalize_classes(inner) + '"'
-              inner = raw[2:-2]
-              return 'className={`' + normalize_classes(inner) + '`}'
+                  return 'className="' + normalize_classes(raw[1:-1]) + '"'
+              return 'className={`' + normalize_classes(raw[2:-2]) + '`}'
 
-          repaired = pattern.sub(replace, text)
-          path.write_text(repaired, encoding='utf-8')
+          path.write_text(pattern.sub(replace, text), encoding='utf-8')
           PY
 
       - name: Commit repair and remove workflow
         run: |
+          if [ "${{ github.event.head_commit.message }}" = "chore: repair inbox ui classes" ]; then
+            exit 0
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add components/dashboard/InstagramInbox.tsx
