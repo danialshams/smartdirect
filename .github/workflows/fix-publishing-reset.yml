@@ -1,0 +1,39 @@
+name: Fix Publishing Reset
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch reset
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('components/dashboard/publishing/PublishingDashboard.tsx')
+          s = p.read_text(encoding='utf-8')
+          old = 'setCaption(""); setUploadedMedia([]); setCommentAutomationId(""); setStoryReplyAutomationId(""); setUploadProgress(0); setScheduledDate(currentJalaliDate()); await loadJobs();'
+          new = 'setCaption(""); setUploadedMedia([]); setCommentAutomationId(""); setStoryReplyAutomationId(""); setCommentTriggerKeywords(""); setCommentTriggerResponse(""); setStoryReplyTriggerKeywords(""); setStoryReplyTriggerResponse(""); setUploadProgress(0); setScheduledDate(currentJalaliDate()); await loadJobs();'
+          if s.count(old) != 1:
+              raise SystemExit(f'expected one reset target, found {s.count(old)}')
+          p.write_text(s.replace(old, new, 1), encoding='utf-8')
+          PY
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add components/dashboard/publishing/PublishingDashboard.tsx
+          git commit -m "fix: reset publishing trigger fields"
+          rm -f .github/workflows/fix-publishing-reset.yml
+          git add .github/workflows/fix-publishing-reset.yml
+          git commit -m "chore: remove temporary reset workflow"
+          git push origin HEAD:master
