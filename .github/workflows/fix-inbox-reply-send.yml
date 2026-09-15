@@ -91,8 +91,7 @@ jobs:
      * reply_to wrapper even though a normal DM is valid.
      * Never block the actual send because of that optional
      * presentation feature: retry the same message once
-     * without reply_to. The UI still clears the Reply state
-     * only after a real Meta message_id is returned.
+     * without reply_to.
      */
     if (!response.ok && replyInstagramMessageId) {
       console.warn(
@@ -170,3 +169,5 @@ jobs:
           git diff --cached --quiet && exit 0
           git commit -m "chore: remove temporary inbox reply workflow"
           git push origin master
+
+# trigger workflow
