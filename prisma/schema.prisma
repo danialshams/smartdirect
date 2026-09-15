@@ -8,69 +8,58 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String
-  password  String
-  role      Role     @default(USER)
+  id String @id @default(cuid())
+  email String @unique
+  name String
+  password String
+  role Role @default(USER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  instagramAccounts    InstagramAccount[]
-  comments             Comment[]
-  conversations        Conversation[]
-  showcases            Showcase[]
-  forms                Form[]
+  instagramAccounts InstagramAccount[]
+  comments Comment[]
+  conversations Conversation[]
+  showcases Showcase[]
+  forms Form[]
   instagramPublishJobs InstagramPublishJob[]
 }
 
 model InstagramAccount {
-  id     String @id @default(cuid())
+  id String @id @default(cuid())
   userId String
-
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  igUserId       String    @unique
-  igUsername     String
-  accessToken    String
+  igUserId String @unique
+  igUsername String
+  accessToken String
   tokenExpiresAt DateTime?
-  isConnected    Boolean   @default(false)
-
+  isConnected Boolean @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  automations        Automation[]
-  conversations      Conversation[]
-  showcases          Showcase[]
-  forms              Form[]
+  automations Automation[]
+  conversations Conversation[]
+  showcases Showcase[]
+  forms Form[]
   pendingFollowGates PendingFollowGate[]
-  iceBreakers        IceBreaker[]
-  persistentMenu     PersistentMenu?
-  insightSnapshots   InstagramInsightSnapshot[]
-  publishJobs        InstagramPublishJob[]
-
+  iceBreakers IceBreaker[]
+  persistentMenu PersistentMenu?
+  insightSnapshots InstagramInsightSnapshot[]
+  publishJobs InstagramPublishJob[]
   @@unique([userId, igUserId])
   @@index([userId])
 }
 
 model InstagramInsightSnapshot {
   id String @id @default(cuid())
-
   instagramAccountId String
-  instagramAccount   InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
-
+  instagramAccount InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
   snapshotDate DateTime
-
-  reach             Int?
-  views             Int?
-  accountsEngaged   Int?
+  reach Int?
+  views Int?
+  accountsEngaged Int?
   totalInteractions Int?
-  profileViews      Int?
-  followerCount     Int?
-
+  profileViews Int?
+  followerCount Int?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   @@unique([instagramAccountId, snapshotDate])
   @@index([instagramAccountId])
   @@index([instagramAccountId, snapshotDate])
@@ -78,35 +67,26 @@ model InstagramInsightSnapshot {
 
 model Automation {
   id String @id @default(cuid())
-
   instagramAccountId String
-  instagramAccount   InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
-
+  instagramAccount InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
   triggerType AutomationTriggerType @default(COMMENT_KEYWORD)
-  keyword     String?
-  mediaId     String?
-
-  likeComment      Boolean @default(false)
+  keyword String?
+  mediaId String?
+  likeComment Boolean @default(false)
   commentReplyText String?
-
-  sendDm         Boolean @default(false)
+  sendDm Boolean @default(false)
   likeIncomingDm Boolean @default(false)
-  replyText      String?
-
+  replyText String?
   likeStoryReply Boolean @default(false)
-
-  requireFollow  Boolean @default(false)
+  requireFollow Boolean @default(false)
   followGateText String?
-
-  isActive  Boolean  @default(true)
+  isActive Boolean @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  messages            AutomationMessage[]
-  pendingFollowGates  PendingFollowGate[]
-  iceBreakers         IceBreaker[]
+  messages AutomationMessage[]
+  pendingFollowGates PendingFollowGate[]
+  iceBreakers IceBreaker[]
   persistentMenuItems PersistentMenuItem[]
-
   @@index([instagramAccountId])
   @@index([mediaId])
   @@index([instagramAccountId, triggerType])
@@ -115,29 +95,21 @@ model Automation {
 
 model AutomationMessage {
   id String @id @default(cuid())
-
   automationId String
-  automation   Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
-
+  automation Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
   messageType AutomationMessageType @default(TEXT)
-  text        String?
-  mediaUrl    String?
-  mediaId     String?
-
+  text String?
+  mediaUrl String?
+  mediaId String?
   showcaseId String?
-  showcase   Showcase? @relation(fields: [showcaseId], references: [id], onDelete: SetNull)
-
+  showcase Showcase? @relation(fields: [showcaseId], references: [id], onDelete: SetNull)
   formId String?
-  form   Form?   @relation(fields: [formId], references: [id], onDelete: SetNull)
-
+  form Form? @relation(fields: [formId], references: [id], onDelete: SetNull)
   order Int
-
-  quickReplies         QuickReply[]
+  quickReplies QuickReply[]
   nextFromQuickReplies QuickReply[] @relation("QuickReplyNextMessage")
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   @@index([automationId])
   @@index([automationId, order])
   @@index([showcaseId])
@@ -146,22 +118,16 @@ model AutomationMessage {
 
 model QuickReply {
   id String @id @default(cuid())
-
   automationMessageId String
-  automationMessage   AutomationMessage @relation(fields: [automationMessageId], references: [id], onDelete: Cascade)
-
-  title     String
-  payload   String
+  automationMessage AutomationMessage @relation(fields: [automationMessageId], references: [id], onDelete: Cascade)
+  title String
+  payload String
   replyText String?
-
   nextMessageId String?
-  nextMessage   AutomationMessage? @relation("QuickReplyNextMessage", fields: [nextMessageId], references: [id], onDelete: SetNull)
-
+  nextMessage AutomationMessage? @relation("QuickReplyNextMessage", fields: [nextMessageId], references: [id], onDelete: SetNull)
   conversationMessages ConversationMessage[]
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   @@index([automationMessageId])
   @@index([nextMessageId])
   @@index([payload])
@@ -169,21 +135,16 @@ model QuickReply {
 
 model IceBreaker {
   id String @id @default(cuid())
-
   instagramAccountId String
-  instagramAccount   InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
-
+  instagramAccount InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
   automationId String
-  automation   Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
-
+  automation Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
   question String
-  payload  String
-  order    Int     @default(0)
+  payload String
+  order Int @default(0)
   isActive Boolean @default(true)
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   @@unique([instagramAccountId, payload])
   @@index([instagramAccountId])
   @@index([automationId])
@@ -192,59 +153,43 @@ model IceBreaker {
 
 model PersistentMenu {
   id String @id @default(cuid())
-
-  instagramAccountId String           @unique
-  instagramAccount   InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
-
-  enabled Boolean              @default(true)
-  items   PersistentMenuItem[]
-
+  instagramAccountId String @unique
+  instagramAccount InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
+  enabled Boolean @default(true)
+  items PersistentMenuItem[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model PersistentMenuItem {
   id String @id @default(cuid())
-
   persistentMenuId String
-  persistentMenu   PersistentMenu @relation(fields: [persistentMenuId], references: [id], onDelete: Cascade)
-
-  title   String
+  persistentMenu PersistentMenu @relation(fields: [persistentMenuId], references: [id], onDelete: Cascade)
+  title String
   payload String
-
   automationId String?
-  automation   Automation? @relation(fields: [automationId], references: [id], onDelete: SetNull)
-
+  automation Automation? @relation(fields: [automationId], references: [id], onDelete: SetNull)
   order Int @default(0)
-
   @@index([persistentMenuId])
   @@index([automationId])
 }
 
 model Conversation {
   id String @id @default(cuid())
-
   userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   instagramAccountId String
-  instagramAccount   InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
-
-  igUserId      String
+  instagramAccount InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
+  igUserId String
   participantId String
-
-  participantUsername       String?
-  participantName           String?
+  participantUsername String?
+  participantName String?
   participantProfilePicture String?
-
-  isActive      Boolean   @default(true)
+  isActive Boolean @default(true)
   lastMessageAt DateTime?
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   messages ConversationMessage[]
-
   @@unique([instagramAccountId, participantId])
   @@index([userId])
   @@index([instagramAccountId])
@@ -253,180 +198,132 @@ model Conversation {
 
 model ConversationMessage {
   id String @id @default(cuid())
-
   conversationId String
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-
-  direction   MessageDirection
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  direction MessageDirection
   messageType MessageType
-
   text String?
-
   mediaUrl String?
-  mediaId  String?
-
+  mediaId String?
   igMessageId String? @unique
-
   quickReplyId String?
-  quickReply   QuickReply? @relation(fields: [quickReplyId], references: [id], onDelete: SetNull)
-
+  quickReply QuickReply? @relation(fields: [quickReplyId], references: [id], onDelete: SetNull)
   readAt DateTime?
   seenAt DateTime?
-
   createdAt DateTime @default(now())
-
   @@index([conversationId, createdAt])
   @@index([conversationId, readAt])
 }
 
 model Comment {
   id String @id @default(cuid())
-
   userId String
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  igMediaId   String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  igMediaId String
   igCommentId String @unique
-
-  text     String
+  text String
   username String
-
-  replied   Boolean @default(false)
+  replied Boolean @default(false)
   replyText String?
-
   createdAt DateTime @default(now())
-
   @@index([userId, igMediaId])
 }
 
 model Showcase {
   id String @id @default(cuid())
-
   userId String
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   instagramAccountId String
-  instagramAccount   InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
-
-  title       String
+  instagramAccount InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
+  title String
   description String?
-  isActive    Boolean @default(true)
-
+  isActive Boolean @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  items    ShowcaseItem[]
+  items ShowcaseItem[]
   messages AutomationMessage[]
-
   @@index([userId])
   @@index([instagramAccountId])
 }
 
 model ShowcaseItem {
   id String @id @default(cuid())
-
   showcaseId String
-  showcase   Showcase @relation(fields: [showcaseId], references: [id], onDelete: Cascade)
-
-  title       String
+  showcase Showcase @relation(fields: [showcaseId], references: [id], onDelete: Cascade)
+  title String
   description String?
-  imageUrl    String?
-
-  price         Decimal?
+  imageUrl String?
+  price Decimal?
   originalPrice Decimal?
-
-  linkUrl    String?
+  linkUrl String?
   buttonText String?
-
-  order    Int     @default(0)
+  order Int @default(0)
   isActive Boolean @default(true)
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   @@index([showcaseId])
   @@index([showcaseId, order])
 }
 
 model Form {
   id String @id @default(cuid())
-
   userId String
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   instagramAccountId String
-  instagramAccount   InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
-
-  title       String
+  instagramAccount InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
+  title String
   description String?
-  isActive    Boolean   @default(true)
-
+  isActive Boolean @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  fields      FormField[]
+  fields FormField[]
   submissions FormSubmission[]
-  messages    AutomationMessage[]
-
+  messages AutomationMessage[]
   @@index([userId])
   @@index([instagramAccountId])
 }
 
 model FormField {
   id String @id @default(cuid())
-
   formId String
-  form   Form   @relation(fields: [formId], references: [id], onDelete: Cascade)
-
+  form Form @relation(fields: [formId], references: [id], onDelete: Cascade)
   label String
-  name  String
-  type  FormFieldType
-
-  required    Boolean @default(false)
+  name String
+  type FormFieldType
+  required Boolean @default(false)
   placeholder String?
-  options     Json?
-  order       Int     @default(0)
-
+  options Json?
+  order Int @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   @@index([formId])
   @@index([formId, order])
 }
 
 model FormSubmission {
   id String @id @default(cuid())
-
   formId String
-  form   Form   @relation(fields: [formId], references: [id], onDelete: Cascade)
-
+  form Form @relation(fields: [formId], references: [id], onDelete: Cascade)
   igUserId String?
   username String?
-  answers  Json
-
+  answers Json
   createdAt DateTime @default(now())
-
   @@index([formId])
   @@index([igUserId])
 }
 
 model PendingFollowGate {
   id String @id @default(cuid())
-
   instagramAccountId String
-  instagramAccount   InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
-
+  instagramAccount InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
   automationId String
-  automation   Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
-
+  automation Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
   participantId String
-  status        FollowGateStatus @default(PENDING)
-  attempts      Int              @default(0)
-  expiresAt     DateTime
-
+  status FollowGateStatus @default(PENDING)
+  attempts Int @default(0)
+  expiresAt DateTime
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   @@index([instagramAccountId, participantId, status])
   @@index([automationId])
   @@index([expiresAt])
@@ -434,37 +331,27 @@ model PendingFollowGate {
 
 model InstagramPublishJob {
   id String @id @default(cuid())
-
   userId String
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   instagramAccountId String
-  instagramAccount   InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
-
-  type   InstagramPublishType
+  instagramAccount InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
+  type InstagramPublishType
   status InstagramPublishStatus @default(DRAFT)
-
-  caption  String?
+  caption String?
   userTags Json?
-
+  commentAutomationId String?
+  storyReplyAutomationId String?
   scheduledAt DateTime?
   publishedAt DateTime?
-
   instagramContainerId String?
-  instagramMediaId     String?
-
+  instagramMediaId String?
   errorMessage String?
-
   idempotencyKey String? @unique
-
-  retryCount    Int       @default(0)
+  retryCount Int @default(0)
   lastAttemptAt DateTime?
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   media InstagramPublishMedia[]
-
   @@unique([instagramAccountId, scheduledAt])
   @@index([userId])
   @@index([instagramAccountId])
@@ -476,100 +363,29 @@ model InstagramPublishJob {
 
 model InstagramPublishMedia {
   id String @id @default(cuid())
-
   publishJobId String
-  publishJob   InstagramPublishJob @relation(fields: [publishJobId], references: [id], onDelete: Cascade)
-
+  publishJob InstagramPublishJob @relation(fields: [publishJobId], references: [id], onDelete: Cascade)
   type InstagramMediaType
-
   storageKey String
-  publicUrl  String?
-
+  publicUrl String?
   fileName String?
   mimeType String?
   fileSize Int?
-
-  sortOrder Int       @default(0)
+  sortOrder Int @default(0)
   deletedAt DateTime?
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   @@index([publishJobId])
   @@index([publishJobId, sortOrder])
 }
 
-enum FollowGateStatus {
-  PENDING
-  COMPLETED
-  EXPIRED
-}
-
-enum AutomationTriggerType {
-  COMMENT_KEYWORD
-  DM
-  STORY_REPLY_KEYWORD
-}
-
-enum AutomationMessageType {
-  TEXT
-  IMAGE
-  VIDEO
-  AUDIO
-  SHOWCASE
-  FORM
-}
-
-enum MessageDirection {
-  INBOUND
-  OUTBOUND
-}
-
-enum MessageType {
-  TEXT
-  QUICK_REPLY
-  IMAGE
-  VIDEO
-  AUDIO
-  STICKER
-  REACTION
-}
-
-enum FormFieldType {
-  TEXT
-  TEXTAREA
-  PHONE
-  EMAIL
-  NUMBER
-  SELECT
-  RADIO
-  CHECKBOX
-}
-
-enum Role {
-  USER
-  ADMIN
-}
-
-enum InstagramPublishType {
-  POST
-  CAROUSEL
-  REEL
-  STORY
-}
-
-enum InstagramPublishStatus {
-  DRAFT
-  UPLOADING
-  SCHEDULED
-  PROCESSING
-  PUBLISHING
-  PUBLISHED
-  FAILED
-  CANCELLED
-}
-
-enum InstagramMediaType {
-  IMAGE
-  VIDEO
-}
+enum FollowGateStatus { PENDING COMPLETED EXPIRED }
+enum AutomationTriggerType { COMMENT_KEYWORD DM STORY_REPLY_KEYWORD }
+enum AutomationMessageType { TEXT IMAGE VIDEO AUDIO SHOWCASE FORM }
+enum MessageDirection { INBOUND OUTBOUND }
+enum MessageType { TEXT QUICK_REPLY IMAGE VIDEO AUDIO STICKER REACTION }
+enum FormFieldType { TEXT TEXTAREA PHONE EMAIL NUMBER SELECT RADIO CHECKBOX }
+enum Role { USER ADMIN }
+enum InstagramPublishType { POST CAROUSEL REEL STORY }
+enum InstagramPublishStatus { DRAFT UPLOADING SCHEDULED PROCESSING PUBLISHING PUBLISHED FAILED CANCELLED }
+enum InstagramMediaType { IMAGE VIDEO }
