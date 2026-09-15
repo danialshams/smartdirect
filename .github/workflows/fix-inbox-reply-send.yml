@@ -1,0 +1,172 @@
+name: Fix Inbox Reply Send
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Patch Instagram inbox reply fallback
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('app/api/instagram/inbox/route.ts')
+          text = path.read_text(encoding='utf-8')
+
+          old = '''    let response = await fetch(`${GRAPH_BASE}/${account.igUserId}/messages`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: requestPayload,
+      cache: "no-store",
+    });
+
+    let data = (await response.json().catch(() => ({}))) as {
+      message_id?: string;
+      error?: {
+        message?: string;
+        type?: string;
+        code?: number;
+        error_subcode?: number;
+      };
+    };
+
+    /*
+     * If Meta rejects the reply wrapper, do NOT silently
+     * save a fake successful message.
+     *
+     * We return the actual Meta error so the UI shows
+     * the real reason and the Vercel logs contain it.
+     */
+    if (!response.ok) {
+      console.error(
+        "Instagram send failed:",
+        JSON.stringify({
+          status: response.status,
+          payload: messageBody,
+          response: data,
+        }),
+      );
+
+      const metaMessage =
+        data.error?.message || "Instagram پیام را ارسال نکرد.";
+
+      return jsonError(
+        metaMessage,
+        response.status >= 400 && response.status < 500 ? response.status : 502,
+      );
+    }
+'''
+
+          new = '''    let response = await fetch(`${GRAPH_BASE}/${account.igUserId}/messages`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: requestPayload,
+      cache: "no-store",
+    });
+
+    let data = (await response.json().catch(() => ({}))) as {
+      message_id?: string;
+      error?: {
+        message?: string;
+        type?: string;
+        code?: number;
+        error_subcode?: number;
+      };
+    };
+
+    /*
+     * Instagram Login / graph.instagram.com can reject the
+     * reply_to wrapper even though a normal DM is valid.
+     * Never block the actual send because of that optional
+     * presentation feature: retry the same message once
+     * without reply_to. The UI still clears the Reply state
+     * only after a real Meta message_id is returned.
+     */
+    if (!response.ok && replyInstagramMessageId) {
+      console.warn(
+        "Instagram reply send rejected; retrying as a normal DM:",
+        JSON.stringify({
+          status: response.status,
+          replyMessageId: replyInstagramMessageId,
+          response: data,
+        }),
+      );
+
+      const fallbackBody = { ...messageBody };
+      delete fallbackBody.reply_to;
+
+      response = await fetch(`${GRAPH_BASE}/${account.igUserId}/messages`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(fallbackBody),
+        cache: "no-store",
+      });
+
+      data = (await response.json().catch(() => ({}))) as {
+        message_id?: string;
+        error?: {
+          message?: string;
+          type?: string;
+          code?: number;
+          error_subcode?: number;
+        };
+      };
+    }
+
+    if (!response.ok) {
+      console.error(
+        "Instagram send failed:",
+        JSON.stringify({
+          status: response.status,
+          payload: replyInstagramMessageId ? { ...messageBody, reply_to: Boolean(messageBody.reply_to) } : messageBody,
+          response: data,
+        }),
+      );
+
+      const metaMessage =
+        data.error?.message || "Instagram پیام را ارسال نکرد.";
+
+      return jsonError(
+        metaMessage,
+        response.status >= 400 && response.status < 500 ? response.status : 502,
+      );
+    }
+'''
+
+          if old not in text:
+              raise SystemExit('Target send block not found; aborting without changes.')
+
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/api/instagram/inbox/route.ts
+          git diff --cached --quiet && exit 0
+          git commit -m "fix: allow inbox reply fallback send"
+          git push origin master
+
+      - name: Remove temporary workflow
+        if: always()
+        run: |
+          git rm -f .github/workflows/fix-inbox-reply-send.yml || true
+          git diff --cached --quiet && exit 0
+          git commit -m "chore: remove temporary inbox reply workflow"
+          git push origin master
