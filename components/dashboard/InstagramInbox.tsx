@@ -228,7 +228,7 @@ export default function InstagramInbox({
                 setLoading(true);
 
                 const response = await fetch(
-                    `/ api / instagram / inbox ? accountId = ${encodeURIComponent(
+                     `/api/instagram/inbox?accountId=${encodeURIComponent(
                         accountId,
                     )
                     }`,
@@ -298,10 +298,10 @@ export default function InstagramInbox({
                 setMessagesLoading(true);
 
                 const response = await fetch(
-                    `/ api / instagram / inbox ? accountId = ${encodeURIComponent(
+                     `/api/instagram/inbox?accountId=${encodeURIComponent(
                         accountId,
                     )
-                    }& conversationId=${encodeURIComponent(
+                    }&conversationId=${encodeURIComponent(
                         selectedId,
                     )
                     }`,
