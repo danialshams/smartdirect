@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -14,183 +13,71 @@ function normalizeKeyword(value: string) {
   return normalizePersianDigits(value).trim().toLowerCase();
 }
 
-const validTriggerTypes = [
-  "COMMENT_KEYWORD",
-  "DM",
-  "STORY_REPLY_KEYWORD",
-] as const;
+function normalizeKeywords(value: unknown): string | null {
+  if (typeof value !== "string") return null;
 
+  const keywords = value
+    .split(/[\n,،;؛]+/)
+    .map(normalizeKeyword)
+    .filter(Boolean)
+    .filter((keyword, index, list) => list.indexOf(keyword) === index);
+
+  return keywords.length ? keywords.join(",") : null;
+}
+
+const validTriggerTypes = ["COMMENT_KEYWORD", "DM", "STORY_REPLY_KEYWORD"] as const;
 type TriggerType = (typeof validTriggerTypes)[number];
 
 function isValidTriggerType(value: unknown): value is TriggerType {
-  return (
-    typeof value === "string" &&
-    validTriggerTypes.includes(value as TriggerType)
-  );
+  return typeof value === "string" && validTriggerTypes.includes(value as TriggerType);
 }
 
-/**
- * GET /api/automations
- *
- * دریافت Automation های یک Instagram Account
- */
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "احراز هویت انجام نشده است",
-        },
-        { status: 401 },
-      );
-    }
+    if (!session?.user?.id) return NextResponse.json({ success: false, error: "احراز هویت انجام نشده است" }, { status: 401 });
 
     const { searchParams } = new URL(request.url);
-
     const instagramAccountId = searchParams.get("instagramAccountId");
-
-    if (!instagramAccountId) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "instagramAccountId الزامی است",
-        },
-        { status: 400 },
-      );
-    }
+    if (!instagramAccountId) return NextResponse.json({ success: false, error: "instagramAccountId الزامی است" }, { status: 400 });
 
     const instagramAccount = await prisma.instagramAccount.findFirst({
-      where: {
-        id: instagramAccountId,
-        userId: session.user.id,
-      },
+      where: { id: instagramAccountId, userId: session.user.id },
     });
-
-    if (!instagramAccount) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "اکانت اینستاگرام پیدا نشد",
-        },
-        { status: 404 },
-      );
-    }
+    if (!instagramAccount) return NextResponse.json({ success: false, error: "اکانت اینستاگرام پیدا نشد" }, { status: 404 });
 
     const automations = await prisma.automation.findMany({
-      where: {
-        instagramAccountId,
-      },
-
+      where: { instagramAccountId },
       include: {
         messages: {
-          orderBy: {
-            order: "asc",
-          },
-
+          orderBy: { order: "asc" },
           include: {
             quickReplies: {
-              orderBy: {
-                createdAt: "asc",
-              },
-
-              include: {
-                nextMessage: {
-                  select: {
-                    id: true,
-                    messageType: true,
-                    text: true,
-                    mediaUrl: true,
-                    mediaId: true,
-                    showcaseId: true,
-                    formId: true,
-                    order: true,
-                  },
-                },
-              },
+              orderBy: { createdAt: "asc" },
+              include: { nextMessage: { select: { id: true, messageType: true, text: true, mediaUrl: true, mediaId: true, showcaseId: true, formId: true, order: true } } },
             },
-
-            showcase: {
-              include: {
-                items: {
-                  where: {
-                    isActive: true,
-                  },
-
-                  orderBy: {
-                    order: "asc",
-                  },
-                },
-              },
-            },
-
-            form: {
-              include: {
-                fields: {
-                  orderBy: {
-                    order: "asc",
-                  },
-                },
-              },
-            },
+            showcase: { include: { items: { where: { isActive: true }, orderBy: { order: "asc" } } } },
+            form: { include: { fields: { orderBy: { order: "asc" } } } },
           },
         },
       },
-
-      orderBy: {
-        createdAt: "desc",
-      },
+      orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json({
-      success: true,
-      data: automations,
-    });
+    return NextResponse.json({ success: true, data: automations });
   } catch (error) {
     console.error("GET /api/automations error:", error);
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: "خطا در دریافت Automation ها",
-      },
-      { status: 500 },
-    );
+    return NextResponse.json({ success: false, error: "خطا در دریافت Automation ها" }, { status: 500 });
   }
 }
 
-/**
- * POST /api/automations
- *
- * ساخت Automation جدید
- */
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "احراز هویت انجام نشده است",
-        },
-        { status: 401 },
-      );
-    }
+    if (!session?.user?.id) return NextResponse.json({ success: false, error: "احراز هویت انجام نشده است" }, { status: 401 });
 
     const body = await request.json();
-
-    if (!body || typeof body !== "object") {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "اطلاعات ارسالی نامعتبر است",
-        },
-        { status: 400 },
-      );
-    }
+    if (!body || typeof body !== "object") return NextResponse.json({ success: false, error: "اطلاعات ارسالی نامعتبر است" }, { status: 400 });
 
     const {
       instagramAccountId,
@@ -203,200 +90,55 @@ export async function POST(request: NextRequest) {
       likeIncomingDm = false,
       likeStoryReply = false,
       replyText,
-
-      // Follow Gate
       requireFollow = false,
       followGateText,
-
       isActive = true,
     } = body;
 
-    if (typeof instagramAccountId !== "string" || !instagramAccountId.trim()) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "instagramAccountId الزامی است",
-        },
-        { status: 400 },
-      );
-    }
+    if (typeof instagramAccountId !== "string" || !instagramAccountId.trim()) return NextResponse.json({ success: false, error: "instagramAccountId الزامی است" }, { status: 400 });
+    if (!isValidTriggerType(triggerType)) return NextResponse.json({ success: false, error: "نوع Trigger نامعتبر است" }, { status: 400 });
 
-    if (!isValidTriggerType(triggerType)) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "نوع Trigger نامعتبر است",
-        },
-        { status: 400 },
-      );
-    }
+    const instagramAccount = await prisma.instagramAccount.findFirst({ where: { id: instagramAccountId, userId: session.user.id } });
+    if (!instagramAccount) return NextResponse.json({ success: false, error: "اکانت Instagram متعلق به این کاربر نیست" }, { status: 403 });
 
-    const instagramAccount = await prisma.instagramAccount.findFirst({
-      where: {
-        id: instagramAccountId,
-        userId: session.user.id,
-      },
-    });
+    const requiresKeyword = triggerType === "COMMENT_KEYWORD" || triggerType === "STORY_REPLY_KEYWORD";
+    const normalizedKeyword = requiresKeyword ? normalizeKeywords(keyword) : null;
+    if (requiresKeyword && !normalizedKeyword) return NextResponse.json({ success: false, error: "حداقل یک Keyword معتبر وارد کنید" }, { status: 400 });
 
-    if (!instagramAccount) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "اکانت اینستاگرام متعلق به این کاربر نیست",
-        },
-        { status: 403 },
-      );
-    }
+    const normalizedMediaId = typeof mediaId === "string" && mediaId.trim() ? mediaId.trim() : null;
+    const supportsFollowGate = triggerType === "COMMENT_KEYWORD" || triggerType === "STORY_REPLY_KEYWORD";
+    const normalizedRequireFollow = supportsFollowGate ? Boolean(requireFollow) : false;
+    const normalizedFollowGateText = supportsFollowGate && normalizedRequireFollow && typeof followGateText === "string" && followGateText.trim() ? followGateText.trim() : null;
 
-    const requiresKeyword =
-      triggerType === "COMMENT_KEYWORD" ||
-      triggerType === "STORY_REPLY_KEYWORD";
-
-    let normalizedKeyword: string | null = null;
-
-    if (requiresKeyword) {
-      if (typeof keyword !== "string" || !keyword.trim()) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: "برای این نوع Trigger وارد کردن Keyword الزامی است",
-          },
-          { status: 400 },
-        );
-      }
-
-      normalizedKeyword = normalizeKeyword(keyword);
-
-      if (!normalizedKeyword) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: "Keyword معتبر نیست",
-          },
-          { status: 400 },
-        );
-      }
-    }
-
-    const normalizedMediaId =
-      typeof mediaId === "string" && mediaId.trim() ? mediaId.trim() : null;
-
-    /**
-     * Follow Gate برای COMMENT_KEYWORD و STORY_REPLY_KEYWORD معتبر است.
-     *
-     * برای DM نباید Follow Gate فعال شود.
-     */
-    const supportsFollowGate =
-      triggerType === "COMMENT_KEYWORD" ||
-      triggerType === "STORY_REPLY_KEYWORD";
-
-    const normalizedRequireFollow = supportsFollowGate
-      ? Boolean(requireFollow)
-      : false;
-
-    let normalizedFollowGateText: string | null = null;
-
-    if (supportsFollowGate && normalizedRequireFollow) {
-      if (typeof followGateText !== "string" || !followGateText.trim()) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: "وقتی Follow Gate فعال است، متن درخواست فالو الزامی است",
-          },
-          { status: 400 },
-        );
-      }
-
-      normalizedFollowGateText = followGateText.trim();
-    }
+    if (supportsFollowGate && normalizedRequireFollow && !normalizedFollowGateText) return NextResponse.json({ success: false, error: "وقتی Follow Gate فعال است، متن درخواست فالو الزامی است" }, { status: 400 });
 
     const duplicate = await prisma.automation.findFirst({
-      where: {
-        instagramAccountId,
-        triggerType,
-        keyword: normalizedKeyword,
-        mediaId: normalizedMediaId,
-      },
+      where: { instagramAccountId, triggerType, keyword: normalizedKeyword, mediaId: normalizedMediaId },
     });
-
-    if (duplicate) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Automation مشابه قبلاً وجود دارد",
-          data: duplicate,
-        },
-        { status: 409 },
-      );
-    }
+    if (duplicate) return NextResponse.json({ success: false, error: "Automation مشابه قبلاً وجود دارد", data: duplicate }, { status: 409 });
 
     const automation = await prisma.automation.create({
       data: {
         instagramAccountId,
-
         triggerType,
-
         keyword: normalizedKeyword,
-
         mediaId: normalizedMediaId,
-
-        likeComment:
-          triggerType === "COMMENT_KEYWORD" ? Boolean(likeComment) : false,
-
-        commentReplyText:
-          triggerType === "COMMENT_KEYWORD" &&
-          typeof commentReplyText === "string" &&
-          commentReplyText.trim()
-            ? commentReplyText.trim()
-            : null,
-
+        likeComment: triggerType === "COMMENT_KEYWORD" ? Boolean(likeComment) : false,
+        commentReplyText: triggerType === "COMMENT_KEYWORD" && typeof commentReplyText === "string" && commentReplyText.trim() ? commentReplyText.trim() : null,
         sendDm: Boolean(sendDm),
-
         likeIncomingDm: triggerType === "DM" ? Boolean(likeIncomingDm) : false,
-
-        likeStoryReply:
-          triggerType === "STORY_REPLY_KEYWORD"
-            ? Boolean(likeStoryReply)
-            : false,
-
-        replyText:
-          typeof replyText === "string" && replyText.trim()
-            ? replyText.trim()
-            : null,
-
-        // Follow Gate
+        likeStoryReply: triggerType === "STORY_REPLY_KEYWORD" ? Boolean(likeStoryReply) : false,
+        replyText: typeof replyText === "string" && replyText.trim() ? replyText.trim() : null,
         requireFollow: normalizedRequireFollow,
-
         followGateText: normalizedFollowGateText,
-
         isActive: Boolean(isActive),
       },
-
-      include: {
-        messages: {
-          orderBy: {
-            order: "asc",
-          },
-        },
-      },
+      include: { messages: { orderBy: { order: "asc" } } },
     });
 
-    return NextResponse.json(
-      {
-        success: true,
-        data: automation,
-      },
-      { status: 201 },
-    );
+    return NextResponse.json({ success: true, data: automation }, { status: 201 });
   } catch (error) {
     console.error("POST /api/automations error:", error);
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: "خطا در ساخت Automation",
-      },
-      { status: 500 },
-    );
+    return NextResponse.json({ success: false, error: "خطا در ساخت Automation" }, { status: 500 });
   }
 }
