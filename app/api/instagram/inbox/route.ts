@@ -504,7 +504,6 @@ export async function POST(request: NextRequest) {
         accountId: form.get("accountId"),
         conversationId: form.get("conversationId"),
         text: form.get("text"),
-        replyToMessageId: form.get("replyToMessageId"),
       };
 
       const candidate = form.get("file");
@@ -520,11 +519,6 @@ export async function POST(request: NextRequest) {
       typeof body.conversationId === "string" ? body.conversationId : "";
 
     const text = typeof body.text === "string" ? body.text.trim() : "";
-
-    const replyToMessageId =
-      typeof body.replyToMessageId === "string"
-        ? body.replyToMessageId.trim()
-        : "";
 
     if (!accountId || !conversationId) {
       return jsonError("accountId و conversationId الزامی هستند.");
@@ -558,35 +552,6 @@ export async function POST(request: NextRequest) {
 
     if (!conversation) {
       return jsonError("گفتگو پیدا نشد.", 404);
-    }
-
-    let replyInstagramMessageId: string | null = null;
-
-    if (replyToMessageId) {
-      const replyTarget = await prisma.conversationMessage.findFirst({
-        where: {
-          id: replyToMessageId,
-          conversationId: conversation.id,
-        },
-        select: {
-          id: true,
-          igMessageId: true,
-          direction: true,
-        },
-      });
-
-      if (!replyTarget) {
-        return jsonError("پیام موردنظر برای Reply در این گفتگو پیدا نشد.", 404);
-      }
-
-      if (!replyTarget.igMessageId) {
-        return jsonError(
-          "این پیام شناسه Instagram ندارد و امکان Reply مستقیم به آن وجود ندارد.",
-          400,
-        );
-      }
-
-      replyInstagramMessageId = replyTarget.igMessageId;
     }
 
     const accessToken = await getValidInstagramAccessToken(account.id);
@@ -632,11 +597,6 @@ export async function POST(request: NextRequest) {
       };
     }
 
-    if (replyInstagramMessageId) {
-      messageBody.reply_to = {
-        mid: replyInstagramMessageId,
-      };
-    }
 
     const requestPayload = JSON.stringify(messageBody);
 
@@ -645,8 +605,6 @@ export async function POST(request: NextRequest) {
       JSON.stringify({
         accountId: account.id,
         conversationId: conversation.id,
-        hasReply: Boolean(replyInstagramMessageId),
-        replyMessageId: replyInstagramMessageId,
         messageType,
       }),
     );
@@ -670,45 +628,6 @@ export async function POST(request: NextRequest) {
         error_subcode?: number;
       };
     };
-
-    /*
-     * The reply wrapper is optional. If Meta rejects reply_to,
-     * retry once as a normal DM so selecting Reply never blocks
-     * the actual message from being delivered.
-     */
-    if (!response.ok && replyInstagramMessageId) {
-      console.warn(
-        "Instagram reply send rejected; retrying as a normal DM:",
-        JSON.stringify({
-          status: response.status,
-          replyMessageId: replyInstagramMessageId,
-          response: data,
-        }),
-      );
-
-      const fallbackBody = { ...messageBody };
-      delete fallbackBody.reply_to;
-
-      response = await fetch(`${GRAPH_BASE}/${account.igUserId}/messages`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(fallbackBody),
-        cache: "no-store",
-      });
-
-      data = (await response.json().catch(() => ({}))) as {
-        message_id?: string;
-        error?: {
-          message?: string;
-          type?: string;
-          code?: number;
-          error_subcode?: number;
-        };
-      };
-    }
 
     if (!response.ok) {
       console.error(
