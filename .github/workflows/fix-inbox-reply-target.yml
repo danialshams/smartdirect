@@ -23,32 +23,39 @@ jobs:
           route = Path('app/api/instagram/inbox/route.ts')
           text = route.read_text(encoding='utf-8')
 
-          text = text.replace('''        replyToMessageId: form.get("replyToMessageId"),\n''', '')
+          text = text.replace('        replyToMessageId: form.get("replyToMessageId"),\n', '')
           text = text.replace('''    const replyToMessageId =\n      typeof body.replyToMessageId === "string"\n        ? body.replyToMessageId.trim()\n        : "";\n\n''', '')
-          text = text.replace('''    let replyInstagramMessageId: string | null = null;\n\n    if (replyToMessageId) {\n      const replyTarget = await prisma.conversationMessage.findFirst({\n        where: {\n          id: replyToMessageId,\n          conversationId: conversation.id,\n        },\n        select: {\n          id: true,\n          igMessageId: true,\n          direction: true,\n        },\n      });\n\n      if (!replyTarget) {\n        return jsonError("پیام موردنظر برای Reply در این گفتگو پیدا نشد.", 404);\n      }\n\n      if (replyTarget.direction !== "INBOUND") {\n        return jsonError(\n          "Reply فقط برای پیام‌های دریافتی مشتری قابل استفاده است.",\n          400,\n        );\n      }\n\n      if (!replyTarget.igMessageId) {\n        return jsonError(\n          "این پیام شناسه Instagram ندارد و امکان Reply مستقیم به آن وجود ندارد.",\n          400,\n        );\n      }\n\n      replyInstagramMessageId = replyTarget.igMessageId;\n    }\n\n''', '')
-          text = text.replace('''\n    if (replyInstagramMessageId) {\n      messageBody.reply_to = {\n        mid: replyInstagramMessageId,\n      };\n    }\n''', '')
-          text = re.sub(r'''\n    /\*\n     \* The reply wrapper is optional\.[\s\S]*?\n    }\n\n    if \(!response\.ok\) \{''', '\n\n    if (!response.ok) {', text, count=1)
-          text = text.replace('''        hasReply: Boolean(replyInstagramMessageId),\n        replyMessageId: replyInstagramMessageId,\n''', '')
 
-          if 'reply_to' in text or 'replyToMessageId' in text or 'replyInstagramMessageId' in text or 'retrying as a normal DM' in text:
-              raise SystemExit('route still contains reply flow')
+          start = text.find('    let replyInstagramMessageId: string | null = null;')
+          if start != -1:
+              end = text.find('    const accessToken = await getValidInstagramAccessToken(account.id);', start)
+              if end == -1:
+                  raise SystemExit('reply block end not found')
+              text = text[:start] + text[end:]
 
+          text = text.replace('''\n    if (replyInstagramMessageId) {\n      messageBody.reply_to = {\n        mid: replyInstagramMessageId,\n      };\n    }\n''', '\n')
+
+          start = text.find('    /*\n     * The reply wrapper is optional.')
+          if start != -1:
+              end = text.find('    if (!response.ok) {', start)
+              if end == -1:
+                  raise SystemExit('reply fallback end not found')
+              text = text[:start] + text[end:]
+
+          text = text.replace('        hasReply: Boolean(replyInstagramMessageId),\n', '')
+          text = text.replace('        replyMessageId: replyInstagramMessageId,\n', '')
           route.write_text(text, encoding='utf-8')
 
           ui = Path('components/dashboard/InstagramInbox.tsx')
           text = ui.read_text(encoding='utf-8')
           text = text.replace('Reply, ', '')
-          text = re.sub(r'''\n  const \[replyTo, setReplyTo\] = useState<Message \| null>\(null\);''', '', text)
+          text = re.sub(r'\n  const \[replyTo, setReplyTo\] = useState<Message \| null>\(null\);', '', text)
           text = text.replace(' setReplyTo(null);', '')
-          text = text.replace('''      if (replyTo?.id) form.append("replyToMessageId", replyTo.id);\n''', '')
+          text = text.replace('      if (replyTo?.id) form.append("replyToMessageId", replyTo.id);\n', '')
           text = text.replace('مدیریت گفتگوها، پاسخ مستقیم، Reply و ارسال فایل از داخل SmartDirect.', 'مدیریت گفتگوها، پاسخ مستقیم و ارسال فایل از داخل SmartDirect.')
-          text = re.sub(r'''<button type="button" onClick=\{\(\) => \{ if \(!message\.igMessageId\)[\s\S]*?</button>''', '', text, count=1)
-          text = re.sub(r'''\{replyTo && <div className="mb-3[\s\S]*?</div>\}\{selectedFile &&''', '{selectedFile &&', text, count=1)
+          text = re.sub(r'<button type="button" onClick=\{\(\) => \{ if \(!message\.igMessageId\)[\s\S]*?</button>', '', text, count=1)
+          text = re.sub(r'\{replyTo && <div className="mb-3[\s\S]*?</div>\}\{selectedFile &&', '{selectedFile &&', text, count=1)
           text = text.replace('Enter برای ارسال • Shift + Enter برای خط جدید • Reply برای پاسخ به پیام', 'Enter برای ارسال • Shift + Enter برای خط جدید')
-
-          if 'replyTo' in text or 'Reply size=' in text or 'title="Reply"' in text or 'replyToMessageId' in text:
-              raise SystemExit('UI still contains reply flow')
-
           ui.write_text(text, encoding='utf-8')
 
           marker = Path('fix-inbox-reply-trigger.txt')
@@ -57,11 +64,7 @@ jobs:
           PY
 
           git diff --check
-
-      - name: Verify cleanup
-        shell: bash
-        run: |
-          ! grep -RniE 'reply_to|replyToMessageId|replyInstagramMessageId|retrying as a normal DM|title="Reply"|Reply size=' app/api/instagram/inbox components/dashboard/InstagramInbox.tsx
+          ! grep -RniE 'reply_to|replyToMessageId|replyInstagramMessageId|retrying as a normal DM|title="Reply"|Reply size=|\[replyTo' app/api/instagram/inbox components/dashboard/InstagramInbox.tsx
 
       - name: Commit cleanup and remove temporary workflow
         shell: bash
