@@ -147,7 +147,7 @@ model IceBreaker {
   question           String
   payload            String
   order              Int              @default(0)
-  isActive           Boolean          @default(true)
+  isActive            Boolean         @default(true)
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
 
@@ -175,7 +175,7 @@ model PersistentMenuItem {
   payload          String
   automationId     String?
   automation       Automation?    @relation(fields: [automationId], references: [id], onDelete: SetNull)
-  order            Int            @default(0)
+  order             Int            @default(0)
 
   @@index([persistentMenuId])
   @@index([automationId])
@@ -247,9 +247,9 @@ model Showcase {
   instagramAccount   InstagramAccount    @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
   title              String
   description        String?
-  isActive           Boolean             @default(true)
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
+  isActive            Boolean             @default(true)
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
   items              ShowcaseItem[]
   messages           AutomationMessage[]
 
@@ -285,12 +285,12 @@ model Form {
   instagramAccount   InstagramAccount    @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
   title              String
   description        String?
-  isActive           Boolean             @default(true)
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
+  isActive            Boolean            @default(true)
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
   fields             FormField[]
   submissions        FormSubmission[]
-  messages           AutomationMessage[]
+  messages            AutomationMessage[]
 
   @@index([userId])
   @@index([instagramAccountId])
@@ -337,7 +337,7 @@ model PendingFollowGate {
   status             FollowGateStatus @default(PENDING)
   attempts           Int              @default(0)
   expiresAt          DateTime
-  createdAt          DateTime         @default(now())
+  createdAt           DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
 
   @@index([instagramAccountId, participantId, status])
@@ -346,28 +346,32 @@ model PendingFollowGate {
 }
 
 model InstagramPublishJob {
-  id                     String                  @id @default(cuid())
-  userId                 String
-  user                   User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  instagramAccountId     String
-  instagramAccount       InstagramAccount        @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
-  type                   InstagramPublishType
-  status                 InstagramPublishStatus  @default(DRAFT)
-  caption                String?
-  userTags               Json?
-  commentAutomationId    String?
-  storyReplyAutomationId String?
-  scheduledAt            DateTime?
-  publishedAt            DateTime?
-  instagramContainerId   String?
-  instagramMediaId       String?
-  errorMessage           String?
-  idempotencyKey         String?                 @unique
-  retryCount             Int                     @default(0)
-  lastAttemptAt          DateTime?
-  createdAt              DateTime                @default(now())
-  updatedAt              DateTime                @updatedAt
-  media                  InstagramPublishMedia[]
+  id                          String                  @id @default(cuid())
+  userId                      String
+  user                        User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  instagramAccountId          String
+  instagramAccount            InstagramAccount        @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
+  type                        InstagramPublishType
+  status                      InstagramPublishStatus  @default(DRAFT)
+  caption                     String?
+  userTags                    Json?
+  commentAutomationId         String?
+  storyReplyAutomationId      String?
+  commentTriggerKeywords      String?
+  commentTriggerResponse      String?
+  storyReplyTriggerKeywords   String?
+  storyReplyTriggerResponse   String?
+  scheduledAt                 DateTime?
+  publishedAt                 DateTime?
+  instagramContainerId        String?
+  instagramMediaId            String?
+  errorMessage                String?
+  idempotencyKey              String?                 @unique
+  retryCount                  Int                     @default(0)
+  lastAttemptAt               DateTime?
+  createdAt                   DateTime                @default(now())
+  updatedAt                   DateTime                @updatedAt
+  media                       InstagramPublishMedia[]
 
   @@unique([instagramAccountId, scheduledAt])
   @@index([userId])
