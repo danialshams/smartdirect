@@ -6,7 +6,7 @@ on:
 
 jobs:
   repair:
-    if: ${{ !contains(github.event.head_commit.message, 'chore: repair inbox ui classes') }}
+    if: ${{ github.event.head_commit.message != 'chore: repair inbox ui classes' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -22,11 +22,11 @@ jobs:
           text = path.read_text(encoding='utf-8')
 
           def normalize_classes(value: str) -> str:
-              value = re.sub(r'(?<=\\w)\\s+-\\s+(?=\\w)', '-', value)
-              value = re.sub(r'(?<=:)\\s+(?=[A-Za-z])', '', value)
+              value = re.sub(r'(?<=\w)\s+-\s+(?=\w)', '-', value)
+              value = re.sub(r'(?<=:)\s+(?=[A-Za-z])', '', value)
               return value
 
-          pattern = re.compile(r'className=("(?:\\\\.|[^"\\\\])*"|\\{`[^`]*`\\})', re.S)
+          pattern = re.compile(r'className=("(?:\\.|[^"\\])*"|\{`[^`]*`\})', re.S)
 
           def replace(match):
               raw = match.group(1)
@@ -37,10 +37,6 @@ jobs:
               return 'className={`' + normalize_classes(inner) + '`}'
 
           repaired = pattern.sub(replace, text)
-
-          # Keep the API URLs canonical and whitespace-free.
-          repaired = repaired.replace('/api/instagram/inbox?accountId=${encodeURIComponent(', '/api/instagram/inbox?accountId=${encodeURIComponent(')
-
           path.write_text(repaired, encoding='utf-8')
           PY
 
@@ -50,6 +46,8 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add components/dashboard/InstagramInbox.tsx
           git rm .github/workflows/fix-inbox-ui.yml
-          git diff --cached --quiet && exit 0 || true
+          if git diff --cached --quiet; then
+            exit 0
+          fi
           git commit -m "chore: repair inbox ui classes"
           git push
