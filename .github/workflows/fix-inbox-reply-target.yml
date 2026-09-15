@@ -1,4 +1,4 @@
-name: Fix Inbox Reply Target
+name: Remove Unsupported Inbox Reply
 
 on:
   push:
@@ -6,74 +6,67 @@ on:
       - master
 
 jobs:
-  fix:
+  cleanup:
+    if: ${{ !contains(github.event.head_commit.message, 'remove unsupported inbox reply flow') }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
-      - name: Patch files
+
+      - name: Remove reply flow
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
+          import re
 
           route = Path('app/api/instagram/inbox/route.ts')
           text = route.read_text(encoding='utf-8')
-          old = '''      if (!replyTarget.igMessageId) {
-        return jsonError(
-          "این پیام شناسه Instagram ندارد و امکان Reply مستقیم به آن وجود ندارد.",
-          400,
-        );
-      }
 
-      replyInstagramMessageId = replyTarget.igMessageId;
-'''
-          new = '''      if (replyTarget.direction !== "INBOUND") {
-        return jsonError(
-          "Reply فقط برای پیام‌های دریافتی مشتری قابل استفاده است.",
-          400,
-        );
-      }
+          text = text.replace('''        replyToMessageId: form.get("replyToMessageId"),\n''', '')
+          text = text.replace('''    const replyToMessageId =\n      typeof body.replyToMessageId === "string"\n        ? body.replyToMessageId.trim()\n        : "";\n\n''', '')
+          text = text.replace('''    let replyInstagramMessageId: string | null = null;\n\n    if (replyToMessageId) {\n      const replyTarget = await prisma.conversationMessage.findFirst({\n        where: {\n          id: replyToMessageId,\n          conversationId: conversation.id,\n        },\n        select: {\n          id: true,\n          igMessageId: true,\n          direction: true,\n        },\n      });\n\n      if (!replyTarget) {\n        return jsonError("پیام موردنظر برای Reply در این گفتگو پیدا نشد.", 404);\n      }\n\n      if (replyTarget.direction !== "INBOUND") {\n        return jsonError(\n          "Reply فقط برای پیام‌های دریافتی مشتری قابل استفاده است.",\n          400,\n        );\n      }\n\n      if (!replyTarget.igMessageId) {\n        return jsonError(\n          "این پیام شناسه Instagram ندارد و امکان Reply مستقیم به آن وجود ندارد.",\n          400,\n        );\n      }\n\n      replyInstagramMessageId = replyTarget.igMessageId;\n    }\n\n''', '')
+          text = text.replace('''\n    if (replyInstagramMessageId) {\n      messageBody.reply_to = {\n        mid: replyInstagramMessageId,\n      };\n    }\n''', '')
+          text = re.sub(r'''\n    /\*\n     \* The reply wrapper is optional\.[\s\S]*?\n    }\n\n    if \(!response\.ok\) \{''', '\n\n    if (!response.ok) {', text, count=1)
+          text = text.replace('''        hasReply: Boolean(replyInstagramMessageId),\n        replyMessageId: replyInstagramMessageId,\n''', '')
 
-      if (!replyTarget.igMessageId) {
-        return jsonError(
-          "این پیام شناسه Instagram ندارد و امکان Reply مستقیم به آن وجود ندارد.",
-          400,
-        );
-      }
+          if 'reply_to' in text or 'replyToMessageId' in text or 'replyInstagramMessageId' in text or 'retrying as a normal DM' in text:
+              raise SystemExit('route still contains reply flow')
 
-      replyInstagramMessageId = replyTarget.igMessageId;
-'''
-          if old not in text:
-              raise SystemExit('route reply target block not found')
-          route.write_text(text.replace(old, new, 1), encoding='utf-8')
+          route.write_text(text, encoding='utf-8')
 
           ui = Path('components/dashboard/InstagramInbox.tsx')
           text = ui.read_text(encoding='utf-8')
-          old = '''<button type="button" onClick={() => { if (!message.igMessageId) { setError("این پیام شناسه Instagram ندارد و امکان Reply به آن وجود ندارد."); return; } setReplyTo(message); setError(""); }} className={`absolute -top-2 rounded-full border border-slate-200 bg-white p-1.5 text-slate-500 opacity-0 shadow-sm transition group-hover:opacity-100 ${outbound ? "-left-9" : "-right-9"}`} title="Reply"><Reply size={13} /></button>'''
-          new = '''{!outbound && <button type="button" onClick={() => { if (!message.igMessageId) { setError("این پیام شناسه Instagram ندارد و امکان Reply به آن وجود ندارد."); return; } setReplyTo(message); setError(""); }} className="absolute -top-2 -right-9 rounded-full border border-slate-200 bg-white p-1.5 text-slate-500 opacity-0 shadow-sm transition group-hover:opacity-100" title="Reply"><Reply size={13} /></button>}'''
-          if old not in text:
-              raise SystemExit('UI reply button block not found')
-          text = text.replace(old, new, 1)
-          old = '''<div className="flex items-center gap-2 text-[10px] font-semibold text-slate-500"><Reply size={12} />پاسخ به {replyTo.direction === "OUTBOUND" ? "پیام شما" : displayName(selectedConversation)}</div>'''
-          new = '''<div className="flex items-center gap-2 text-[10px] font-semibold text-slate-500"><Reply size={12} />پاسخ به {displayName(selectedConversation)}</div>'''
-          if old not in text:
-              raise SystemExit('UI reply header block not found')
-          ui.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          text = text.replace('Reply, ', '')
+          text = re.sub(r'''\n  const \[replyTo, setReplyTo\] = useState<Message \| null>\(null\);''', '', text)
+          text = text.replace(' setReplyTo(null);', '')
+          text = text.replace('''      if (replyTo?.id) form.append("replyToMessageId", replyTo.id);\n''', '')
+          text = text.replace('مدیریت گفتگوها، پاسخ مستقیم، Reply و ارسال فایل از داخل SmartDirect.', 'مدیریت گفتگوها، پاسخ مستقیم و ارسال فایل از داخل SmartDirect.')
+          text = re.sub(r'''<button type="button" onClick=\{\(\) => \{ if \(!message\.igMessageId\)[\s\S]*?</button>''', '', text, count=1)
+          text = re.sub(r'''\{replyTo && <div className="mb-3[\s\S]*?</div>\}\{selectedFile &&''', '{selectedFile &&', text, count=1)
+          text = text.replace('Enter برای ارسال • Shift + Enter برای خط جدید • Reply برای پاسخ به پیام', 'Enter برای ارسال • Shift + Enter برای خط جدید')
+
+          if 'replyTo' in text or 'Reply size=' in text or 'title="Reply"' in text or 'replyToMessageId' in text:
+              raise SystemExit('UI still contains reply flow')
+
+          ui.write_text(text, encoding='utf-8')
+
+          marker = Path('fix-inbox-reply-trigger.txt')
+          if marker.exists():
+              marker.unlink()
           PY
 
-          if grep -q 'retrying as a normal DM' app/api/instagram/inbox/route.ts; then
-            echo 'reply fallback still present'
-            exit 1
-          fi
-          grep -q 'Reply فقط برای پیام‌های دریافتی مشتری' app/api/instagram/inbox/route.ts
-          grep -q '!outbound && <button' components/dashboard/InstagramInbox.tsx
+          git diff --check
+          grep -RniE 'reply_to|replyToMessageId|replyInstagramMessageId|retrying as a normal DM|title="Reply"|Reply size=' app/api/instagram/inbox components/dashboard/InstagramInbox.tsx && exit 1 || true
 
-      - name: Commit
+      - name: Commit cleanup and remove temporary workflow
+        shell: bash
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add app/api/instagram/inbox/route.ts components/dashboard/InstagramInbox.tsx
-          git commit -m 'fix: validate inbox reply targets' || exit 0
+          git rm -f .github/workflows/fix-inbox-reply-target.yml || true
+          git add app/api/instagram/inbox/route.ts components/dashboard/InstagramInbox.tsx fix-inbox-reply-trigger.txt || true
+          git commit -m 'fix: remove unsupported inbox reply flow' || exit 0
           git push origin master
