@@ -2419,39 +2419,38 @@ function KeywordInput({
     description,
 }: {
     keyword: string;
-    setKeyword: (
-        value: string
-    ) => void;
+    setKeyword: (value: string) => void;
     description: string;
 }) {
+    const keywords = keyword.split(/[
+,،;؛]+/).map((item) => item.trim()).filter(Boolean).filter((item, index, list) => list.indexOf(item) === index);
+    const [draft, setDraft] = useState("");
+
+    function addKeyword() {
+        const value = draft.trim();
+        if (!value) return;
+        setKeyword([...keywords, value].filter((item, index, list) => list.indexOf(item) === index).join(","));
+        setDraft("");
+    }
+
+    function removeKeyword(value: string) {
+        setKeyword(keywords.filter((item) => item !== value).join(","));
+    }
+
     return (
         <div>
-            <label className="mb-2 block text-sm font-medium text-gray-800">
-                کلمه یا عبارت Trigger
-            </label>
-
-            <input
-                value={
-                    keyword
-                }
-                onChange={(
-                    event
-                ) =>
-                    setKeyword(
-                        event
-                            .target
-                            .value
-                    )
-                }
-                placeholder="مثلاً 1"
-                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-gray-900"
-            />
-
-            <p className="mt-2 text-xs leading-5 text-gray-400">
-                {
-                    description
-                }
-            </p>
+            <label className="mb-2 block text-sm font-medium text-gray-800">کلمات کلیدی Trigger</label>
+            <div className="flex min-h-[52px] flex-wrap items-center gap-2 rounded-xl border border-gray-200 px-3 py-2 transition focus-within:border-gray-900">
+                {keywords.map((item) => (
+                    <span key={item} className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700">
+                        {item}
+                        <button type="button" onClick={() => removeKeyword(item)} className="text-gray-400 transition hover:text-gray-900" aria-label={`حذف ${item}`}><X size={13} /></button>
+                    </span>
+                ))}
+                <input value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === "," || event.key === "،") { event.preventDefault(); addKeyword(); } }} onBlur={addKeyword} placeholder={keywords.length ? "کلمه بعدی..." : "مثلاً 1 یا یک"} className="min-w-[140px] flex-1 border-0 bg-transparent px-1 py-1 text-sm outline-none" />
+                <button type="button" onClick={addKeyword} className="shrink-0 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 transition hover:bg-gray-50">افزودن کلمه</button>
+            </div>
+            <p className="mt-2 text-xs leading-5 text-gray-400">{description} چند کلمه را با Enter یا «افزودن کلمه» اضافه کنید.</p>
         </div>
     );
 }
