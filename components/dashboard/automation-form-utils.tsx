@@ -175,7 +175,9 @@ export function validateMessages(messages: MessageDraft[]) {
                 if (!message.showcaseId) throw new Error(`برای پیام ${messageNumber} یک ویترین انتخاب کنید.`);
                 break;
             case "FORM":
-                if (!message.formId) throw new Error(`برای پیام ${messageNumber} یک فرم انتخاب کنید.`);
+                if (!message.text.trim()) throw new Error(`سوال فرم پیام ${messageNumber} را وارد کنید.`);
+                if (message.formId && message.formId !== "INLINE_FORM") throw new Error(`فرم پیام ${messageNumber} نامعتبر است.`);
+                if (message.quickReplies.length === 0) throw new Error(`برای سوال فرم پیام ${messageNumber} حداقل یک جواب اضافه کنید.`);
                 break;
         }
         if (message.quickReplies.length > 13) throw new Error(`پیام ${messageNumber} نمی‌تواند بیشتر از ۱۳ Quick Reply داشته باشد.`);
