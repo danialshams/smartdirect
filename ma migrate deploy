@@ -1,0 +1,5 @@
+[33m8daaac4[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m feat: send swipeable showcases and inline branching forms
+[33md1bd50a[m feat: allow inline form question messages
+[33m249f41f[m feat: support inline form questions in automation flows
+[33m85ca11e[m feat: rebuild showcase and form flow editor
+[33m1dc04dc[m fix: create publishing forms and showcases without existing resources

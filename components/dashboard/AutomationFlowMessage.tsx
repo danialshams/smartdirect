@@ -60,6 +60,8 @@ export default function AutomationFlowMessage({
   onAddQuickReply,
   onUpdateQuickReply,
   onRemoveQuickReply,
+  onShowcaseCreated,
+  onFormCreated,
 }: AutomationFlowMessageProps) {
   const [showcaseItems, setShowcaseItems] = useState<ShowcaseItemDraft[]>([newShowcaseItem()]);
   const [showcaseSaving, setShowcaseSaving] = useState(false);
