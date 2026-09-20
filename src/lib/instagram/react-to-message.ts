@@ -43,6 +43,7 @@ export async function reactToInstagramMessage({
       {
         method: "POST",
         accessToken,
+        rateLimit: { instagramAccountId: instagramAccount.id, operation: "MESSAGE_TEXT" },
         body: {
           recipient: { id: recipientId },
           sender_action: "react",
