@@ -10,34 +10,25 @@ const DEFAULT_REDIS_COMMAND_TIMEOUT_MS = 5_000;
 
 function getRedisCommandTimeoutMs() {
   const raw = process.env.REDIS_COMMAND_TIMEOUT_MS?.trim();
-
-  if (!raw) {
-    return DEFAULT_REDIS_COMMAND_TIMEOUT_MS;
-  }
+  if (!raw) return DEFAULT_REDIS_COMMAND_TIMEOUT_MS;
 
   const value = Number(raw);
-
-  if (!Number.isFinite(value) || value <= 0) {
-    return DEFAULT_REDIS_COMMAND_TIMEOUT_MS;
-  }
-
-  return value;
+  return Number.isFinite(value) && value > 0
+    ? value
+    : DEFAULT_REDIS_COMMAND_TIMEOUT_MS;
 }
 
-async function redisFetch(
-  input: RequestInfo | URL,
-  init?: RequestInit,
-) {
-  const timeoutSignal = AbortSignal.timeout(getRedisCommandTimeoutMs());
+function withRedisTimeout<T>(promise: Promise<T>): Promise<T> {
+  const timeoutMs = getRedisCommandTimeoutMs();
 
-  const signal = init?.signal
-    ? AbortSignal.any([init.signal, timeoutSignal])
-    : timeoutSignal;
-
-  return fetch(input, {
-    ...init,
-    signal,
-  });
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => {
+      setTimeout(() => {
+        reject(new Error(`Redis command timed out after ${timeoutMs}ms`));
+      }, timeoutMs);
+    }),
+  ]);
 }
 
 function getRedisConfig() {
@@ -53,17 +44,35 @@ function getRedisConfig() {
   return { url, token };
 }
 
+function createTimedRedisClient(): Redis {
+  const { url, token } = getRedisConfig();
+  const client = new Redis({ url, token });
+
+  return new Proxy(client, {
+    get(target, property, receiver) {
+      const value = Reflect.get(target, property, receiver);
+
+      if (typeof value !== "function") return value;
+
+      return (...args: unknown[]) => {
+        const result = value.apply(target, args);
+
+        if (result && typeof result.then === "function") {
+          return withRedisTimeout(Promise.resolve(result));
+        }
+
+        return result;
+      };
+    },
+  });
+}
+
 export function getRedisClient() {
   if (globalForRedis.smartDirectRedis) {
     return globalForRedis.smartDirectRedis;
   }
 
-  const { url, token } = getRedisConfig();
-  const client = new Redis({
-    url,
-    token,
-    fetch: redisFetch,
-  });
+  const client = createTimedRedisClient();
 
   if (process.env.NODE_ENV !== "production") {
     globalForRedis.smartDirectRedis = client;
