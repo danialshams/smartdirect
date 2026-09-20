@@ -382,13 +382,12 @@ export default function InstagramInsights() {
                         </div>
                     )}
 
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
                         <Kpi title="دسترسی" value={number(summary.reach)} helper={`${range} روز`} icon={Users} />
                         <Kpi title="بازدید" value={number(summary.views)} helper={`${range} روز`} icon={Eye} />
                         <Kpi title="اکانت‌های درگیر" value={number(summary.accountsEngaged)} helper={`${range} روز`} icon={Activity} />
                         <Kpi title="تعاملات" value={number(summary.totalInteractions)} helper={`${range} روز`} icon={Heart} />
                         <Kpi title="بازدید پروفایل" value={number(summary.profileViews)} helper={`${range} روز`} icon={BarChart3} />
-                        <Kpi title="دنبال‌کنندگان" value={number(summary.followerCount)} helper={summary.followerGrowth === 0 ? "بدون تغییر" : `${summary.followerGrowth > 0 ? "+" : ""}${number(summary.followerGrowth)}`} icon={TrendingUp} />
                     </div>
 
                     <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
