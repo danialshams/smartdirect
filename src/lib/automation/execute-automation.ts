@@ -193,6 +193,7 @@ export async function executeAutomation(input: ExecuteAutomationInput) {
   const visitedMessages = new Set<string>();
   const executedMessages: string[] = [];
   let privateReplyCommentId = input.commentId ?? null;
+  const isCommentTriggeredFlow = Boolean(input.commentId);
 
   // =========================================================
   // 8. Execute flow
@@ -284,10 +285,13 @@ export async function executeAutomation(input: ExecuteAutomationInput) {
 
     executedMessages.push(currentMessage.id);
 
-    // A comment-triggered flow can use the comment's private-reply
-    // entry point only for the first outbound message. After that,
-    // normal DM recipient routing is used.
-    privateReplyCommentId = null;
+    // A comment-triggered flow gets exactly one Private Reply.
+    // Never continue automatically with a normal DM: the recipient
+    // must first respond before the 24-hour messaging window opens.
+    if (isCommentTriggeredFlow) {
+      privateReplyCommentId = null;
+      break;
+    }
 
     // =======================================================
     // 13. Quick Reply means wait for user
