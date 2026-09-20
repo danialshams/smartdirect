@@ -143,35 +143,48 @@ async function sendShowcase({ instagramAccountId, instagramUserId, recipientId, 
         }
       : {}),
   }));
-  // Meta's comment private-reply path is a special first-contact message.
-  // Rich generic templates are supported for normal DM sends, but are not
-  // reliably accepted as the first private reply to a comment. When this
-  // message is comment-triggered, send a text-only private reply instead.
+  // A comment private reply is used only to open the conversation.
+  // After that first contact, send the real Showcase as a Generic Template
+  // to the user's DM so the item images/cards are preserved.
   if (commentId) {
-    const lines = showcase.items.map((item, index) => {
-      const description = item.description?.trim();
-      const link = item.linkUrl?.trim();
-      return [
-        `${index + 1}. ${item.title.trim()}`,
-        description ? description.slice(0, 640) : null,
-        link ? `لینک: ${link}` : null,
-      ].filter(Boolean).join("\\n");
-    });
+    const privateReplyText = showcase.title.trim() || "ویترین محصولات";
 
-    const text = [showcase.title.trim(), ...lines]
-      .filter(Boolean)
-      .join("\\n\\n")
-      .slice(0, 1000);
-
-    const result = await sendTextLike({
+    const privateReply = await sendTextLike({
       instagramUserId,
       recipientId,
       commentId,
       accessToken,
-      text,
+      text: privateReplyText,
     });
-    if (result.success) result.conversationText = showcase.title.trim();
-    return result;
+
+    if (!privateReply.success) {
+      return privateReply;
+    }
+
+    // The comment private reply is the first outbound message. The actual
+    // Showcase is then sent to the newly opened DM conversation.
+    const showcaseResult = await callInstagramMessagesApi({
+      instagramUserId,
+      accessToken,
+      body: {
+        recipient: { id: recipientId },
+        message: {
+          attachment: {
+            type: "template",
+            payload: {
+              template_type: "generic",
+              elements,
+            },
+          },
+        },
+      },
+    });
+
+    if (showcaseResult.success) {
+      showcaseResult.conversationText = showcase.title.trim();
+    }
+
+    return showcaseResult;
   }
 
   const result = await callInstagramMessagesApi({
