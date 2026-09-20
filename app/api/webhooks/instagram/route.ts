@@ -5,10 +5,10 @@ import { executeAutomation } from "@/lib/automation/execute-automation";
 import { findMatchingAutomation } from "@/lib/automation/find-matching-automation";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 import { reactToInstagramMessage } from "@/lib/instagram/react-to-message";
+import { InstagramApiError, instagramApiRequest } from "@/lib/instagram/client";
 
 export const dynamic = "force-dynamic";
 
-const INSTAGRAM_API_VERSION = "v26.0";
 const MAX_API_RETRIES = 3;
 
 const FOLLOW_GATE_PAYLOAD_PREFIX = "SMARTDIRECT_FOLLOW_CHECK:";
@@ -1767,126 +1767,22 @@ async function sendStoryReplyMessage({
   accessToken: string;
   replyText: string;
 }): Promise<boolean> {
-  const url =
-    `https://graph.instagram.com/` +
-    `${INSTAGRAM_API_VERSION}/` +
-    `${igUserId}/messages`;
-
-  const requestBody = {
-    recipient: {
-      id: participantId,
-    },
-
-    message: {
-      text: replyText,
-    },
-  };
-
-  console.log("========================================");
-
-  console.log("SENDING STORY REPLY MESSAGE");
-
-  console.log("Instagram Messages API URL:", url);
-
-  console.log("Story Reply recipient:", participantId);
-
-  console.log(
-    "Story Reply request body:",
-    JSON.stringify(
-      {
-        recipient: {
-          id: participantId,
-        },
-        message: {
-          text: replyText,
-        },
+  try {
+    await instagramApiRequest(`/${igUserId}/messages`, {
+      method: "POST",
+      accessToken,
+      body: {
+        recipient: { id: participantId },
+        message: { text: replyText },
       },
-      null,
-      2,
-    ),
-  );
-
-  for (let attempt = 1; attempt <= MAX_API_RETRIES; attempt++) {
-    try {
-      console.log(`Story Reply message attempt ${attempt}/${MAX_API_RETRIES}`);
-
-      const response = await fetch(url, {
-        method: "POST",
-
-        headers: {
-          "Content-Type": "application/json",
-
-          Authorization: `Bearer ${accessToken}`,
-
-          Accept: "application/json",
-        },
-
-        body: JSON.stringify(requestBody),
-
-        cache: "no-store",
-      });
-
-      const responseText = await response.text();
-
-      let responseData: unknown;
-
-      try {
-        responseData = responseText ? JSON.parse(responseText) : null;
-      } catch {
-        responseData = responseText;
-      }
-
-      if (response.ok) {
-        console.log("========================================");
-
-        console.log("INSTAGRAM STORY REPLY MESSAGE SENT SUCCESSFULLY");
-
-        console.log("HTTP Status:", response.status);
-
-        console.log("Instagram API response:", responseData);
-
-        console.log("========================================");
-
-        return true;
-      }
-
-      console.error(`Story Reply message attempt ${attempt} failed.`);
-
-      console.error("HTTP Status:", response.status);
-
-      console.error("Instagram API response:", responseData);
-
-      if (attempt < MAX_API_RETRIES) {
-        const delay = attempt * 1000;
-
-        console.log(`Waiting ${delay}ms before Story Reply retry...`);
-
-        await sleep(delay);
-      }
-    } catch (error) {
-      console.error(
-        `Story Reply message request error on attempt ${attempt}:`,
-        error,
-      );
-
-      if (attempt < MAX_API_RETRIES) {
-        const delay = attempt * 1000;
-
-        console.log(`Waiting ${delay}ms before Story Reply retry...`);
-
-        await sleep(delay);
-      }
-    }
+    });
+    return true;
+  } catch (error) {
+    console.error("Instagram Story Reply message failed:", error);
+    return false;
   }
-
-  console.error("========================================");
-
-  console.error("INSTAGRAM STORY REPLY MESSAGE FAILED");
-
-  console.error("========================================");
-
-  return false;
 }
+
 
 // =========================================================
 // Instagram Follow Gate
@@ -1899,99 +1795,34 @@ async function getInstagramUserFollowStatus({
   instagramUserId: string;
   accessToken: string;
 }): Promise<InstagramFollowStatus> {
-  const url =
-    `https://graph.instagram.com/` +
-    `${INSTAGRAM_API_VERSION}/` +
-    `${instagramUserId}` +
-    `?fields=is_user_follow_business`;
-
-  console.log("========================================");
-  console.log("CHECKING INSTAGRAM FOLLOW STATUS");
-  console.log("========================================");
-
-  console.log("Instagram User ID:", instagramUserId);
-
-  console.log("Follow status URL:", url);
-
-  for (let attempt = 1; attempt <= MAX_API_RETRIES; attempt++) {
-    try {
-      console.log(`Follow status attempt ${attempt}/${MAX_API_RETRIES}`);
-
-      const response = await fetch(url, {
+  try {
+    const data = await instagramApiRequest<{ is_user_follow_business?: boolean }>(
+      `/${instagramUserId}`,
+      {
         method: "GET",
-
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-
-          Accept: "application/json",
-        },
-
-        cache: "no-store",
-      });
-
-      const responseText = await response.text();
-
-      let responseData: any;
-
-      try {
-        responseData = responseText ? JSON.parse(responseText) : null;
-      } catch {
-        responseData = responseText;
-      }
-
-      if (response.ok) {
-        const rawValue = responseData?.is_user_follow_business;
-
-        const isFollowing =
-          rawValue === true ? true : rawValue === false ? false : null;
-
-        console.log("Instagram follow status response:", responseData);
-
-        console.log("Parsed follow status:", isFollowing);
-
-        console.log("========================================");
-
-        return {
-          success: true,
-          isFollowing,
-        };
-      }
-
-      console.error(`Follow status attempt ${attempt} failed.`);
-
-      console.error("HTTP Status:", response.status);
-
-      console.error("Instagram API response:", responseData);
-
-      if (attempt < MAX_API_RETRIES) {
-        const delay = attempt * 1000;
-
-        await sleep(delay);
-      }
-    } catch (error) {
-      console.error(
-        `Follow status request error on attempt ${attempt}:`,
-        error,
-      );
-
-      if (attempt < MAX_API_RETRIES) {
-        const delay = attempt * 1000;
-
-        await sleep(delay);
-      }
-    }
+        accessToken,
+        params: { fields: "is_user_follow_business" },
+      },
+    );
+    const rawValue = data?.is_user_follow_business;
+    return {
+      success: true,
+      isFollowing:
+        rawValue === true ? true : rawValue === false ? false : null,
+    };
+  } catch (error) {
+    console.error("Instagram follow status request failed:", error);
+    return {
+      success: false,
+      isFollowing: null,
+      error:
+        error instanceof InstagramApiError
+          ? error.message
+          : "FOLLOW_STATUS_CHECK_FAILED",
+    };
   }
-
-  console.error("Could not determine Instagram follow status.");
-
-  console.log("========================================");
-
-  return {
-    success: false,
-    isFollowing: null,
-    error: "FOLLOW_STATUS_CHECK_FAILED",
-  };
 }
+
 
 // =========================================================
 // Send Follow Gate message
@@ -2010,149 +1841,39 @@ async function sendFollowGateMessage({
   pendingGateId: string;
   followGateText: string;
 }): Promise<boolean> {
-  const url =
-    `https://graph.instagram.com/` +
-    `${INSTAGRAM_API_VERSION}/` +
-    `${instagramAccount.igUserId}/messages`;
-
   const instagramProfileUrl = `https://www.instagram.com/${encodeURIComponent(
     instagramAccount.igUsername,
   )}/`;
-
   const postbackPayload = `${FOLLOW_GATE_PAYLOAD_PREFIX}${pendingGateId}`;
 
-  const requestBody = {
-    recipient: {
-      id: participantId,
-    },
-
-    message: {
-      attachment: {
-        type: "template",
-
-        payload: {
-          template_type: "button",
-
-          text: followGateText,
-
-          buttons: [
-            {
-              type: "web_url",
-
-              url: instagramProfileUrl,
-
-              title: "فالو کردن",
+  try {
+    await instagramApiRequest(`/${instagramAccount.igUserId}/messages`, {
+      method: "POST",
+      accessToken,
+      body: {
+        recipient: { id: participantId },
+        message: {
+          attachment: {
+            type: "template",
+            payload: {
+              template_type: "button",
+              text: followGateText,
+              buttons: [
+                { type: "web_url", url: instagramProfileUrl, title: "فالو کردن" },
+                { type: "postback", title: "بررسی فالو", payload: postbackPayload },
+              ],
             },
-
-            {
-              type: "postback",
-
-              title: "بررسی فالو",
-
-              payload: postbackPayload,
-            },
-          ],
+          },
         },
       },
-    },
-  };
-
-  console.log("========================================");
-
-  console.log("SENDING FOLLOW GATE MESSAGE");
-
-  console.log("Recipient:", participantId);
-
-  console.log("Instagram profile URL:", instagramProfileUrl);
-
-  console.log("Pending Follow Gate ID:", pendingGateId);
-
-  console.log(
-    "Follow Gate request body:",
-    JSON.stringify(requestBody, null, 2),
-  );
-
-  console.log("========================================");
-
-  for (let attempt = 1; attempt <= MAX_API_RETRIES; attempt++) {
-    try {
-      console.log(`Follow Gate message attempt ${attempt}/${MAX_API_RETRIES}`);
-
-      const response = await fetch(url, {
-        method: "POST",
-
-        headers: {
-          "Content-Type": "application/json",
-
-          Authorization: `Bearer ${accessToken}`,
-
-          Accept: "application/json",
-        },
-
-        body: JSON.stringify(requestBody),
-
-        cache: "no-store",
-      });
-
-      const responseText = await response.text();
-
-      let responseData: unknown;
-
-      try {
-        responseData = responseText ? JSON.parse(responseText) : null;
-      } catch {
-        responseData = responseText;
-      }
-
-      if (response.ok) {
-        console.log("========================================");
-
-        console.log("FOLLOW GATE MESSAGE SENT SUCCESSFULLY");
-
-        console.log("HTTP Status:", response.status);
-
-        console.log("Instagram API response:", responseData);
-
-        console.log("========================================");
-
-        return true;
-      }
-
-      console.error(`Follow Gate message attempt ${attempt} failed.`);
-
-      console.error("HTTP Status:", response.status);
-
-      console.error("Instagram API response:", responseData);
-
-      if (attempt < MAX_API_RETRIES) {
-        const delay = attempt * 1000;
-
-        console.log(`Waiting ${delay}ms before Follow Gate retry...`);
-
-        await sleep(delay);
-      }
-    } catch (error) {
-      console.error(
-        `Follow Gate message request error on attempt ${attempt}:`,
-        error,
-      );
-
-      if (attempt < MAX_API_RETRIES) {
-        const delay = attempt * 1000;
-
-        await sleep(delay);
-      }
-    }
+    });
+    return true;
+  } catch (error) {
+    console.error("Instagram Follow Gate message failed:", error);
+    return false;
   }
-
-  console.error("========================================");
-
-  console.error("FOLLOW GATE MESSAGE FAILED");
-
-  console.error("========================================");
-
-  return false;
 }
+
 
 // =========================================================
 // Send normal Instagram DM
@@ -2169,102 +1890,22 @@ async function sendDirectInstagramMessage({
   accessToken: string;
   text: string;
 }): Promise<boolean> {
-  const url =
-    `https://graph.instagram.com/` +
-    `${INSTAGRAM_API_VERSION}/` +
-    `${igUserId}/messages`;
-
-  const requestBody = {
-    recipient: {
-      id: participantId,
-    },
-
-    message: {
-      text,
-    },
-  };
-
-  console.log("========================================");
-
-  console.log("SENDING DIRECT INSTAGRAM MESSAGE");
-
-  console.log("Recipient:", participantId);
-
-  console.log("========================================");
-
-  for (let attempt = 1; attempt <= MAX_API_RETRIES; attempt++) {
-    try {
-      console.log(
-        `Direct Instagram message attempt ${attempt}/${MAX_API_RETRIES}`,
-      );
-
-      const response = await fetch(url, {
-        method: "POST",
-
-        headers: {
-          "Content-Type": "application/json",
-
-          Authorization: `Bearer ${accessToken}`,
-
-          Accept: "application/json",
-        },
-
-        body: JSON.stringify(requestBody),
-
-        cache: "no-store",
-      });
-
-      const responseText = await response.text();
-
-      let responseData: unknown;
-
-      try {
-        responseData = responseText ? JSON.parse(responseText) : null;
-      } catch {
-        responseData = responseText;
-      }
-
-      if (response.ok) {
-        console.log("DIRECT INSTAGRAM MESSAGE SENT SUCCESSFULLY");
-
-        console.log("Instagram API response:", responseData);
-
-        console.log("========================================");
-
-        return true;
-      }
-
-      console.error(`Direct Instagram message attempt ${attempt} failed.`);
-
-      console.error("HTTP Status:", response.status);
-
-      console.error("Instagram API response:", responseData);
-
-      if (attempt < MAX_API_RETRIES) {
-        const delay = attempt * 1000;
-
-        await sleep(delay);
-      }
-    } catch (error) {
-      console.error(
-        `Direct Instagram message request error on attempt ${attempt}:`,
-        error,
-      );
-
-      if (attempt < MAX_API_RETRIES) {
-        const delay = attempt * 1000;
-
-        await sleep(delay);
-      }
-    }
+  try {
+    await instagramApiRequest(`/${igUserId}/messages`, {
+      method: "POST",
+      accessToken,
+      body: {
+        recipient: { id: participantId },
+        message: { text },
+      },
+    });
+    return true;
+  } catch (error) {
+    console.error("Instagram direct message failed:", error);
+    return false;
   }
-
-  console.error("DIRECT INSTAGRAM MESSAGE FAILED");
-
-  console.log("========================================");
-
-  return false;
 }
+
 
 // =========================================================
 // Process Follow Gate postback
@@ -3703,100 +3344,52 @@ async function sendPublicCommentReply({
   accessToken: string;
   replyText: string;
 }): Promise<boolean> {
-  const url =
-    `https://graph.instagram.com/` +
-    `${INSTAGRAM_API_VERSION}/` +
-    `${igCommentId}/replies`;
-
-  console.log("========================================");
-
-  console.log("SENDING PUBLIC INSTAGRAM COMMENT REPLY");
-
-  console.log("Instagram comment reply URL:", url);
-
-  for (let attempt = 1; attempt <= MAX_API_RETRIES; attempt++) {
-    try {
-      console.log(`Public comment reply attempt ${attempt}/${MAX_API_RETRIES}`);
-
-      const body = new URLSearchParams({
-        message: replyText,
-      });
-
-      const response = await fetch(url, {
-        method: "POST",
-
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-
-          "Content-Type": "application/x-www-form-urlencoded",
-
-          Accept: "application/json",
-        },
-
-        body,
-
-        cache: "no-store",
-      });
-
-      const responseText = await response.text();
-
-      let responseData: unknown;
-
-      try {
-        responseData = responseText ? JSON.parse(responseText) : null;
-      } catch {
-        responseData = responseText;
-      }
-
-      if (response.ok) {
-        console.log("INSTAGRAM PUBLIC COMMENT REPLY SENT SUCCESSFULLY");
-
-        console.log("Instagram API response:", responseData);
-
-        console.log("========================================");
-
-        return true;
-      }
-
-      console.error(`Public comment reply attempt ${attempt} failed.`);
-
-      console.error("HTTP Status:", response.status);
-
-      console.error("Instagram API response:", responseData);
-
-      if (attempt < MAX_API_RETRIES) {
-        const delay = attempt * 1000;
-
-        console.log(`Waiting ${delay}ms before public reply retry...`);
-
-        await sleep(delay);
-      }
-    } catch (error) {
-      console.error(
-        `Public comment reply request error on attempt ${attempt}:`,
-        error,
-      );
-
-      if (attempt < MAX_API_RETRIES) {
-        const delay = attempt * 1000;
-
-        await sleep(delay);
-      }
-    }
+  try {
+    await instagramApiRequest(`/${igCommentId}/replies`, {
+      method: "POST",
+      accessToken,
+      body: new URLSearchParams({ message: replyText }),
+    });
+    return true;
+  } catch (error) {
+    console.error("Instagram public comment reply failed:", error);
+    return false;
   }
-
-  console.error("INSTAGRAM PUBLIC COMMENT REPLY FAILED");
-
-  console.log("========================================");
-
-  return false;
 }
+
 
 // =========================================================
 // Send private reply to Instagram commenter
 // =========================================================
 
 async function sendPrivateReply({
+  igUserId,
+  igCommentId,
+  accessToken,
+  replyText,
+}: {
+  igUserId: string;
+  igCommentId: string;
+  accessToken: string;
+  replyText: string;
+}): Promise<boolean> {
+  try {
+    await instagramApiRequest(`/${igUserId}/messages`, {
+      method: "POST",
+      accessToken,
+      body: {
+        recipient: { comment_id: igCommentId },
+        message: { text: replyText },
+      },
+    });
+    return true;
+  } catch (error) {
+    console.error("Instagram private reply failed:", error);
+    return false;
+  }
+}
+
+
   igUserId,
   igCommentId,
   accessToken,
