@@ -1,9 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
+import { InstagramApiError, instagramApiRequest } from "@/lib/instagram/client";
 import { getStorageProvider } from "@/lib/storage/provider";
 
-const VERSION = "v26.0";
-const GRAPH = `https://graph.instagram.com/${VERSION}`;
 
 type ApiError = { message?: string; type?: string; code?: number; error_subcode?: number; fbtrace_id?: string };
 type ApiResponse<T = Record<string, unknown>> = T & { error?: ApiError };
@@ -13,16 +12,60 @@ type MediaItem = { type: "IMAGE" | "VIDEO"; publicUrl: string; sortOrder: number
 type UserTag = { username: string; x?: number; y?: number };
 
 function errorMessage(data: ApiResponse | undefined, fallback: string) { return data?.error?.message || fallback; }
-async function instagramRequest<T>(path: string, accessToken: string, init?: RequestInit) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 30_000);
+async function instagramRequest<T>(
+  path: string,
+  accessToken: string,
+  init?: RequestInit,
+) {
+  const method = (init?.method ?? "GET") as
+    | "GET"
+    | "POST"
+    | "PUT"
+    | "DELETE"
+    | "PATCH";
+
+  let body: unknown = undefined;
+
+  if (typeof init?.body === "string") {
+    try {
+      body = JSON.parse(init.body);
+    } catch {
+      body = init.body;
+    }
+  } else if (init?.body instanceof URLSearchParams) {
+    body = init.body;
+  }
+
   try {
-    const response = await fetch(`${GRAPH}${path}`, { ...init, cache: "no-store", signal: controller.signal, headers: { Accept: "application/json", "Content-Type": "application/json", ...(init?.headers ?? {}) } });
-    const text = await response.text();
-    let data = {} as ApiResponse<T>;
-    try { data = text ? JSON.parse(text) as ApiResponse<T> : {} as ApiResponse<T>; } catch { throw new Error("Instagram پاسخ JSON معتبر برنگرداند."); }
-    return { response, data };
-  } finally { clearTimeout(timeout); }
+    const data = await instagramApiRequest<T>(path, {
+      method,
+      accessToken,
+      body,
+      timeoutMs: 30_000,
+    });
+
+    return {
+      response: {
+        ok: true,
+        status: 200,
+      } as Response,
+      data: data as ApiResponse<T>,
+    };
+  } catch (error) {
+    if (error instanceof InstagramApiError) {
+      return {
+        response: {
+          ok: false,
+          status: error.status,
+        } as Response,
+        data: (error.response ?? {
+          error: error.details,
+        }) as ApiResponse<T>,
+      };
+    }
+
+    throw error;
+  }
 }
 function normalizeUserTags(value: unknown): UserTag[] {
   if (!Array.isArray(value)) return [];
