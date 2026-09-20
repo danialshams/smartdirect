@@ -3,7 +3,12 @@ import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
 const serverOnlyPath = require.resolve("server-only");
-require.cache[serverOnlyPath]!.exports = {};
+require.cache[serverOnlyPath] = {
+  id: serverOnlyPath,
+  filename: serverOnlyPath,
+  loaded: true,
+  exports: {},
+} as any;
 
 let consumeInstagramRateLimit: typeof import("../src/lib/instagram/rate-limit").consumeInstagramRateLimit;
 
