@@ -48,13 +48,11 @@ export async function runQueueWorker(
   const active = new Set<Promise<void>>();
 
   const runOne = async () => {
-    const job = await claimNextJob();
+    const job = await claimNextJob(workerId);
 
     if (!job) {
       return;
     }
-
-    job.workerId = workerId;
 
     try {
       await handler(job);
