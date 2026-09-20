@@ -261,7 +261,7 @@ export async function refreshInstagramToken(
       instagramAccountId,
       igUserId: account.igUserId,
       username: account.igUsername,
-      status: error instanceof InstagramApiError ? error.status : undefined,
+      status: errorCode,
       errorCode,
       errorSubcode,
       error: data.error,
