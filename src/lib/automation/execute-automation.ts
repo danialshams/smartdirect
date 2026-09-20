@@ -13,6 +13,7 @@ type ExecuteAutomationInput = {
   instagramAccountId: string;
   participantId: string;
   igUserId: string;
+  commentId?: string | null;
   selectedQuickReplyId?: string | null;
 };
 
@@ -191,6 +192,7 @@ export async function executeAutomation(input: ExecuteAutomationInput) {
 
   const visitedMessages = new Set<string>();
   const executedMessages: string[] = [];
+  let privateReplyCommentId = input.commentId ?? null;
 
   // =========================================================
   // 8. Execute flow
@@ -229,6 +231,7 @@ export async function executeAutomation(input: ExecuteAutomationInput) {
       instagramAccountId: instagramAccount.id,
       recipientId: input.participantId,
       instagramUserId: instagramAccount.igUserId,
+      commentId: privateReplyCommentId,
       message: {
         id: currentMessage.id,
         messageType: currentMessage.messageType,
@@ -280,6 +283,11 @@ export async function executeAutomation(input: ExecuteAutomationInput) {
     });
 
     executedMessages.push(currentMessage.id);
+
+    // A comment-triggered flow can use the comment's private-reply
+    // entry point only for the first outbound message. After that,
+    // normal DM recipient routing is used.
+    privateReplyCommentId = null;
 
     // =======================================================
     // 13. Quick Reply means wait for user
