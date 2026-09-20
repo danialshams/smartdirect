@@ -5,7 +5,6 @@ import type {
   QueueJob,
   QueueJobPayload,
   QueueJobPriority,
-  QueueJobStatus,
   QueueJobType,
 } from "./types";
 
@@ -13,6 +12,8 @@ const QUEUE_NAME = "default";
 const JOB_PREFIX = "smartdirect:queue:job:";
 const READY_KEY = "smartdirect:queue:default:ready";
 const DELAYED_KEY = "smartdirect:queue:default:delayed";
+const CLAIM_PREFIX = "smartdirect:queue:claim:";
+const CLAIM_TTL_SECONDS = 30;
 
 const PRIORITY_WEIGHT: Record<QueueJobPriority, number> = {
   critical: 0,
@@ -45,6 +46,10 @@ export function createJobId() {
 
 function jobKey(jobId: string) {
   return `${JOB_PREFIX}${jobId}`;
+}
+
+function claimKey(jobId: string) {
+  return `${CLAIM_PREFIX}${jobId}`;
 }
 
 function readyScore(job: QueueJob) {
@@ -112,6 +117,9 @@ export async function promoteDueJobs(limit = 50) {
     }
 
     if (job.status !== "delayed" || job.scheduledAt > now) {
+      if (job.status !== "delayed") {
+        await redis.zrem(DELAYED_KEY, id);
+      }
       continue;
     }
 
@@ -128,7 +136,9 @@ export async function promoteDueJobs(limit = 50) {
   return promoted;
 }
 
-export async function claimNextJob(): Promise<QueueJob | null> {
+export async function claimNextJob(
+  workerId = "unknown",
+): Promise<QueueJob | null> {
   const redis = createQueueRedis();
   await promoteDueJobs();
 
@@ -139,6 +149,16 @@ export async function claimNextJob(): Promise<QueueJob | null> {
   }
 
   const id = ids[0];
+  const claim = await redis.set(
+    claimKey(id),
+    workerId,
+    { nx: true, ex: CLAIM_TTL_SECONDS },
+  );
+
+  if (claim !== "OK") {
+    return null;
+  }
+
   const job = await redis.get<QueueJob>(jobKey(id));
 
   if (!job) {
@@ -146,12 +166,26 @@ export async function claimNextJob(): Promise<QueueJob | null> {
     return null;
   }
 
+  if (job.status !== "waiting") {
+    await redis.zrem(READY_KEY, id);
+    return null;
+  }
+
   job.status = "active";
   job.attempts += 1;
+  job.workerId = workerId;
+
   await redis.set(jobKey(id), job);
   await redis.zrem(READY_KEY, id);
 
   return job;
+}
+
+async function removeJobFromQueue(redis: Redis, jobId: string) {
+  await Promise.all([
+    redis.zrem(READY_KEY, jobId),
+    redis.zrem(DELAYED_KEY, jobId),
+  ]);
 }
 
 export async function completeJob(jobId: string) {
@@ -162,7 +196,11 @@ export async function completeJob(jobId: string) {
 
   job.status = "completed";
   job.workerId = undefined;
-  await redis.set(jobKey(jobId), job);
+
+  await Promise.all([
+    redis.set(jobKey(jobId), job),
+    removeJobFromQueue(redis, jobId),
+  ]);
 
   return job;
 }
@@ -176,7 +214,11 @@ export async function failJob(jobId: string, error: unknown) {
   job.status = "failed";
   job.lastError = error instanceof Error ? error.message : String(error);
   job.workerId = undefined;
-  await redis.set(jobKey(jobId), job);
+
+  await Promise.all([
+    redis.set(jobKey(jobId), job),
+    removeJobFromQueue(redis, jobId),
+  ]);
 
   return job;
 }
