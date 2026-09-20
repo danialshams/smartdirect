@@ -575,6 +575,7 @@ export async function POST(request: NextRequest) {
         instagramAccountId: account.id,
         tenantId: session.user.id,
         igUserId: account.igUserId,
+        accessToken,
         file,
       });
 
