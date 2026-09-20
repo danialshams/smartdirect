@@ -139,7 +139,12 @@ async function waitReady(
     const status = await containerStatus(id, token);
     const code = String(status.statusCode ?? "").toUpperCase();
 
-    if (code === "FINISHED") return;
+    if (code === "FINISHED") {
+      // Meta can report FINISHED a moment before media_publish becomes ready.
+      // Keep a short stabilization window before the final publish call.
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      return;
+    }
     if (code === "ERROR" || code === "EXPIRED") {
       throw new Error(`Instagram container failed with status: ${code}`);
     }
@@ -155,18 +160,48 @@ async function publishContainer(
   token: string,
   containerId: string,
 ) {
-  const data = await instagramApiRequest<PublishResponse>(
-    `/${igUserId}/media_publish`,
-    {
-      method: "POST",
-      accessToken: token,
-      body: { creation_id: containerId },
-      timeoutMs: 30_000,
-    },
-  );
+  const maxAttempts = 4;
 
-  if (!data.id) throw new Error("انتشار محتوا در Instagram ناموفق بود.");
-  return data.id;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      const data = await instagramApiRequest<PublishResponse>(
+        `/${igUserId}/media_publish`,
+        {
+          method: "POST",
+          accessToken: token,
+          body: { creation_id: containerId },
+          timeoutMs: 30_000,
+        },
+      );
+
+      if (!data.id) throw new Error("انتشار محتوا در Instagram ناموفق بود.");
+      return data.id;
+    } catch (error) {
+      // 9007 / 2207027 means the container is still settling and has not
+      // become publishable yet. Retrying this specific POST is safe because
+      // Meta has explicitly rejected the publish before creating the media.
+      if (
+        !(error instanceof import("@/lib/instagram/client").InstagramApiError) ||
+        error.details?.code !== 9007 ||
+        error.details?.error_subcode !== 2207027 ||
+        attempt >= maxAttempts
+      ) {
+        throw error;
+      }
+
+      const delayMs = [1500, 3000, 5000][attempt - 1] ?? 5000;
+      console.warn("[Instagram API] media_publish not ready; retrying", {
+        containerId,
+        attempt,
+        delayMs,
+        errorCode: error.details?.code,
+        errorSubcode: error.details?.error_subcode,
+      });
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+
+  throw new Error("Instagram media_publish failed after retries.");
 }
 
 async function cleanupPublishedMedia(
