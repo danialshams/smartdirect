@@ -16,7 +16,7 @@ const globalForRedis = globalThis as unknown as {
 };
 
 function createRedisClient() {
-  const url = REDIS_URL!;
+  const url = String(REDIS_URL);
 
   const client = new Redis(url, {
     lazyConnect: true,
