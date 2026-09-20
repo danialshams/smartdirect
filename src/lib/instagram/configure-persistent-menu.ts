@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
+import { instagramApiRequest } from "@/lib/instagram/client";
 
 const INSTAGRAM_API_VERSION = "v26.0";
 
@@ -39,30 +40,12 @@ export async function syncPersistentMenu(instagramAccountId: string) {
         },
       ];
 
-  const response = await fetch(
-    `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/me/messenger_profile`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        persistent_menu: persistentMenu,
-      }),
-      cache: "no-store",
+  return instagramApiRequest("me/messenger_profile", {
+    method: "POST",
+    accessToken,
+    params: { platform: "instagram" },
+    body: {
+      persistent_menu: persistentMenu,
     },
-  );
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    console.error("[Instagram Persistent Menu] Sync failed:", data);
-
-    throw new Error(
-      data?.error?.message || "Instagram Persistent Menu sync failed",
-    );
-  }
-
-  return data;
+  });
 }
