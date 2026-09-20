@@ -121,7 +121,7 @@ export async function exchangeInstagramToken(
 
   if (!data.access_token) {
     console.error("[Instagram Token] Long-lived token exchange failed:", {
-      status: error instanceof InstagramApiError ? error.status : undefined,
+      status: data.error?.code,
       error: data.error,
       error_type: data.error_type,
       error_message: data.error_message,
