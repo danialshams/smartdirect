@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { proxyInstagramMediaUrl } from "@/lib/instagram/media-proxy";
+import { proxyInstagramAccountProfileUrl } from "@/lib/instagram/media-proxy";
 
 export const dynamic = "force-dynamic";
 
@@ -36,7 +36,7 @@ async function getProfilePicture(accessToken: string) {
         if (!response.ok) return null;
 
         const data = (await response.json()) as ProfileResponse;
-        return proxyInstagramMediaUrl(data.profile_picture_url);
+        return data.profile_picture_url || null;
     } catch {
         return null;
     } finally {
