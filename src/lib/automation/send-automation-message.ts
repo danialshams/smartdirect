@@ -121,13 +121,36 @@ async function sendShowcase({ instagramAccountId, instagramUserId, recipientId, 
   if (!showcase.items.length) throw new Error("Showcase has no active items");
   const elements = showcase.items.map((item) => ({
     title: item.title.trim(),
-    ...(item.description?.trim() ? { subtitle: item.description.trim() } : {}),
+    ...(item.description?.trim() ? { subtitle: item.description.trim().slice(0, 640) } : {}),
     ...(item.imageUrl?.trim() ? { image_url: item.imageUrl.trim() } : {}),
+    ...(item.linkUrl?.trim()
+      ? {
+          buttons: [
+            {
+              type: "web_url",
+              url: item.linkUrl.trim(),
+              title: (item.buttonText?.trim() || "مشاهده").slice(0, 20),
+            },
+          ],
+        }
+      : {}),
   }));
   const result = await callInstagramMessagesApi({
     instagramUserId,
     accessToken,
-    body: { recipient: commentId ? { comment_id: commentId } : { id: recipientId }, messaging_type: "RESPONSE", message: { attachment: { type: "template", payload: { template_type: "generic", elements } } } },
+    body: {
+      recipient: commentId ? { comment_id: commentId } : { id: recipientId },
+      messaging_type: "RESPONSE",
+      message: {
+        attachment: {
+          type: "template",
+          payload: {
+            template_type: "generic",
+            elements,
+          },
+        },
+      },
+    },
   });
   if (result.success) result.conversationText = showcase.title.trim();
   return result;
