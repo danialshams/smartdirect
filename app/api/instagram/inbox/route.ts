@@ -6,6 +6,10 @@ import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 import {
+  InstagramApiError,
+  instagramApiRequest,
+} from "@/lib/instagram/client";
+import {
   proxyInstagramMediaUrl,
   proxyInstagramParticipantProfileUrl,
 } from "@/lib/instagram/media-proxy";
@@ -108,27 +112,25 @@ async function enrichParticipantProfile(
   accountId: string,
   participantId: string,
   accessToken: string,
+  tenantId: string,
 ) {
   try {
-    const response = await fetch(
-      `${GRAPH_BASE}/${encodeURIComponent(
-        participantId,
-      )}?fields=name,username,profile_pic`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-        cache: "no-store",
-      },
-    );
-
-    if (!response.ok) return;
-
-    const profile = (await response.json()) as {
+    const profile = await instagramApiRequest<{
       name?: string;
       username?: string;
       profile_pic?: string;
-    };
+    }>("/" + encodeURIComponent(participantId), {
+      accessToken,
+      params: {
+        fields: "name,username,profile_pic",
+      },
+      timeoutMs: 30_000,
+      rateLimit: {
+        instagramAccountId: accountId,
+        tenantId,
+        operation: "CONVERSATION_READ",
+      },
+    });
 
     if (!profile.username && !profile.name && !profile.profile_pic) {
       return;
@@ -153,10 +155,14 @@ async function enrichParticipantProfile(
 }
 
 async function uploadInstagramAttachment({
+  instagramAccountId,
+  tenantId,
   igUserId,
   accessToken,
   file,
 }: {
+  instagramAccountId: string;
+  tenantId: string;
   igUserId: string;
   accessToken: string;
   file: File;
@@ -201,32 +207,22 @@ async function uploadInstagramAttachment({
     file.name || "smartdirect-media",
   );
 
-  const response = await fetch(
-    `${GRAPH_BASE}/${igUserId}/message_attachments`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: uploadBody,
-      cache: "no-store",
-    },
-  );
-
-  const data = (await response.json().catch(() => ({}))) as {
+  const data = await instagramApiRequest<{
     attachment_id?: string;
-    error?: {
-      message?: string;
-      type?: string;
-      code?: number;
-      error_subcode?: number;
-    };
-  };
+  }>("/" + encodeURIComponent(igUserId) + "/message_attachments", {
+    method: "POST",
+    accessToken,
+    body: uploadBody,
+    timeoutMs: 30_000,
+    rateLimit: {
+      instagramAccountId,
+      tenantId,
+      operation: "MESSAGE_MEDIA",
+    },
+  });
 
-  if (!response.ok || !data.attachment_id) {
-    throw new Error(
-      data.error?.message || "آپلود فایل به Instagram ناموفق بود.",
-    );
+  if (!data.attachment_id) {
+    throw new Error("Instagram پاسخ موفق داد اما attachment_id برنگرداند.");
   }
 
   return {
