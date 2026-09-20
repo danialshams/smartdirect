@@ -276,16 +276,20 @@ export async function instagramApiRequest<T = unknown>(
           Accept: "application/json",
           ...(options.body instanceof URLSearchParams
             ? { "Content-Type": "application/x-www-form-urlencoded" }
-            : options.body !== undefined
-              ? { "Content-Type": "application/json" }
-              : {}),
+            : options.body instanceof FormData
+              ? {}
+              : options.body !== undefined
+                ? { "Content-Type": "application/json" }
+                : {}),
         },
         ...(options.body !== undefined
           ? {
               body:
                 options.body instanceof URLSearchParams
                   ? options.body.toString()
-                  : JSON.stringify(options.body),
+                  : options.body instanceof FormData
+                    ? options.body
+                    : JSON.stringify(options.body),
             }
           : {}),
       });
