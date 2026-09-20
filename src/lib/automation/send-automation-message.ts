@@ -135,11 +135,42 @@ async function sendShowcase({ instagramAccountId, instagramUserId, recipientId, 
         }
       : {}),
   }));
+  // Meta's comment private-reply path is a special first-contact message.
+  // Rich generic templates are supported for normal DM sends, but are not
+  // reliably accepted as the first private reply to a comment. When this
+  // message is comment-triggered, send a text-only private reply instead.
+  if (commentId) {
+    const lines = showcase.items.map((item, index) => {
+      const description = item.description?.trim();
+      const link = item.linkUrl?.trim();
+      return [
+        `${index + 1}. ${item.title.trim()}`,
+        description ? description.slice(0, 640) : null,
+        link ? `لینک: ${link}` : null,
+      ].filter(Boolean).join("\\n");
+    });
+
+    const text = [showcase.title.trim(), ...lines]
+      .filter(Boolean)
+      .join("\\n\\n")
+      .slice(0, 1000);
+
+    const result = await sendTextLike({
+      instagramUserId,
+      recipientId,
+      commentId,
+      accessToken,
+      text,
+    });
+    if (result.success) result.conversationText = showcase.title.trim();
+    return result;
+  }
+
   const result = await callInstagramMessagesApi({
     instagramUserId,
     accessToken,
     body: {
-      recipient: commentId ? { comment_id: commentId } : { id: recipientId },
+      recipient: { id: recipientId },
       message: {
         attachment: {
           type: "template",
