@@ -55,10 +55,21 @@ export async function GET(request: NextRequest) {
         signal: controller.signal,
         headers: {
           Accept: "image/avif,image/webp,image/apng,image/svg+xml,image/*,video/*,audio/*,*/*;q=0.8",
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/153.0 Safari/537.36",
+          Referer: "https://www.instagram.com/",
         },
       });
 
       if (!response.ok || !response.body) {
+        const responseBody = await response.text().catch(() => "");
+        console.error("Instagram media proxy upstream failed:", {
+          status: response.status,
+          contentType: response.headers.get("content-type"),
+          body: responseBody.slice(0, 500),
+          host: targetUrl.hostname,
+        });
+
         return new NextResponse("Instagram media could not be loaded", {
           status: response.status || 502,
         });
