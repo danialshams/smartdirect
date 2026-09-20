@@ -67,9 +67,18 @@ function getPublicAppUrl() {
   throw new Error("Public application URL is missing.");
 }
 
-async function callInstagramMessagesApi({ instagramAccountId, tenantId, instagramUserId, accessToken, body, operation }: { instagramAccountId: string; tenantId: string; instagramUserId: string; accessToken: string; body: Record<string, unknown>; operation: InstagramRateLimitOperation }): Promise<SendAutomationMessageResult> {
+async function callInstagramMessagesApi({ instagramAccountId, tenantId, instagramUserId, accessToken, body }: { instagramAccountId: string; tenantId: string; instagramUserId: string; accessToken: string; body: Record<string, unknown> }): Promise<SendAutomationMessageResult> {
   for (let attempt = 1; attempt <= MAX_API_RETRIES; attempt += 1) {
     try {
+      const recipient = body.recipient as Record<string, unknown> | undefined;
+      const message = body.message as Record<string, unknown> | undefined;
+      const attachment = message?.attachment as Record<string, unknown> | undefined;
+      const operation: InstagramRateLimitOperation = recipient?.comment_id
+        ? "COMMENT_PRIVATE_REPLY"
+        : attachment && ["audio", "video"].includes(String(attachment.type))
+          ? "MESSAGE_MEDIA"
+          : "MESSAGE_TEXT";
+
       const data = await instagramApiRequest<InstagramApiResponse>(
         `${instagramUserId}/messages`,
         {
@@ -115,13 +124,13 @@ async function callInstagramMessagesApi({ instagramAccountId, tenantId, instagra
   return { success: false, error: "Instagram API request failed" };
 }
 
-async function sendTextLike({ instagramUserId, recipientId, commentId, accessToken, text, quickReplies }: { instagramUserId: string; recipientId: string; commentId?: string | null; accessToken: string; text: string; quickReplies?: QuickReplyPayload[] }) {
+async function sendTextLike({ instagramAccountId, tenantId, instagramUserId, recipientId, commentId, accessToken, text, quickReplies }: { instagramAccountId: string; tenantId: string; instagramUserId: string; recipientId: string; commentId?: string | null; accessToken: string; text: string; quickReplies?: QuickReplyPayload[] }) {
   if (!text.trim()) throw new Error("متن پیام نمی‌تواند خالی باشد.");
   const message: Record<string, unknown> = { text: text.trim() };
   if (quickReplies?.length) message.quick_replies = formatQuickReplies(quickReplies);
   return callInstagramMessagesApi({
     instagramAccountId,
-    tenantId: "__TENANT__",
+    tenantId,
     instagramUserId,
     accessToken,
     body: {
@@ -132,7 +141,7 @@ async function sendTextLike({ instagramUserId, recipientId, commentId, accessTok
   });
 }
 
-async function sendShowcase({ instagramAccountId, instagramUserId, recipientId, commentId, accessToken, showcaseId, quickReplies }: { instagramAccountId: string; instagramUserId: string; recipientId: string; commentId?: string | null; accessToken: string; showcaseId: string; quickReplies?: QuickReplyPayload[] }) {
+async function sendShowcase({ instagramAccountId, tenantId, instagramUserId, recipientId, commentId, accessToken, showcaseId, quickReplies }: { instagramAccountId: string; tenantId: string; instagramUserId: string; recipientId: string; commentId?: string | null; accessToken: string; showcaseId: string; quickReplies?: QuickReplyPayload[] }) {
   const showcase = await prisma.showcase.findFirst({ where: { id: showcaseId, instagramAccountId, isActive: true }, include: { items: { where: { isActive: true }, orderBy: { order: "asc" }, take: MAX_SHOWCASE_ITEMS } } });
   if (!showcase) throw new Error("Showcase not found or inactive");
   if (!showcase.items.length) throw new Error("Showcase has no active items");
@@ -153,6 +162,8 @@ async function sendShowcase({ instagramAccountId, instagramUserId, recipientId, 
       : {}),
   }));
   const result = await callInstagramMessagesApi({
+    instagramAccountId,
+    tenantId,
     instagramUserId,
     accessToken,
     body: {
@@ -172,12 +183,14 @@ async function sendShowcase({ instagramAccountId, instagramUserId, recipientId, 
   return result;
 }
 
-async function sendLegacyForm({ instagramAccountId, instagramUserId, recipientId, commentId, accessToken, formId }: { instagramAccountId: string; instagramUserId: string; recipientId: string; commentId?: string | null; accessToken: string; formId: string }) {
+async function sendLegacyForm({ instagramAccountId, tenantId, instagramUserId, recipientId, commentId, accessToken, formId }: { instagramAccountId: string; tenantId: string; instagramUserId: string; recipientId: string; commentId?: string | null; accessToken: string; formId: string }) {
   const form = await prisma.form.findFirst({ where: { id: formId, instagramAccountId, isActive: true }, include: { fields: { orderBy: { order: "asc" } } } });
   if (!form || !form.fields.length) throw new Error("Form not found or has no fields");
   const token = await createPublicFormToken({ formId: form.id, instagramAccountId, instagramUserId, recipientId });
   const formUrl = `${getPublicAppUrl()}/form/${encodeURIComponent(token)}`;
   const result = await callInstagramMessagesApi({
+    instagramAccountId,
+    tenantId,
     instagramUserId,
     accessToken,
     body: {
@@ -209,13 +222,13 @@ export async function sendAutomationMessage(payload: AutomationMessagePayload): 
   }
 
   if (message.messageType === "TEXT") {
-    const result = await sendTextLike({ instagramUserId, recipientId, commentId: payload.commentId, accessToken, text: message.text || "", quickReplies: message.quickReplies });
+    const result = await sendTextLike({ instagramAccountId, tenantId, instagramUserId, recipientId, commentId: payload.commentId, accessToken, text: message.text || "", quickReplies: message.quickReplies });
     if (result.success) result.conversationText = message.text?.trim() || null;
     return result;
   }
 
   if (message.messageType === "FORM") {
-    if (message.formId) return sendLegacyForm({ instagramAccountId, instagramUserId, recipientId, commentId: payload.commentId, accessToken, formId: message.formId });
+    if (message.formId) return sendLegacyForm({ instagramAccountId, tenantId, instagramUserId, recipientId, commentId: payload.commentId, accessToken, formId: message.formId });
     const result = await sendTextLike({ instagramUserId, recipientId, commentId: payload.commentId, accessToken, text: message.text || "", quickReplies: message.quickReplies });
     if (result.success) result.conversationText = message.text?.trim() || null;
     return result;
@@ -223,14 +236,14 @@ export async function sendAutomationMessage(payload: AutomationMessagePayload): 
 
   if (message.messageType === "SHOWCASE") {
     if (!message.showcaseId) throw new Error("Showcase ID is missing");
-    return sendShowcase({ instagramAccountId, instagramUserId, recipientId, commentId: payload.commentId, accessToken, showcaseId: message.showcaseId, quickReplies: message.quickReplies });
+    return sendShowcase({ instagramAccountId, tenantId, instagramUserId, recipientId, commentId: payload.commentId, accessToken, showcaseId: message.showcaseId, quickReplies: message.quickReplies });
   }
 
   if (message.messageType === "IMAGE" || message.messageType === "VIDEO" || message.messageType === "AUDIO") {
     if (!message.mediaUrl && !message.mediaId) throw new Error(`${message.messageType} requires mediaUrl or mediaId`);
     const type = message.messageType.toLowerCase();
     const attachmentPayload = message.mediaId ? { attachment_id: message.mediaId } : { url: message.mediaUrl };
-    const result = await callInstagramMessagesApi({ instagramUserId, accessToken, body: {
+    const result = await callInstagramMessagesApi({ instagramAccountId, tenantId, instagramUserId, accessToken, body: {
         recipient: payload.commentId ? { comment_id: payload.commentId } : { id: recipientId },
         ...(payload.commentId ? {} : { messaging_type: "RESPONSE" }),
         message: { attachment: { type, payload: attachmentPayload } },
