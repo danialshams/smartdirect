@@ -123,7 +123,7 @@ async function sendTextLike({ instagramUserId, recipientId, commentId, accessTok
   });
 }
 
-async function sendShowcase({ instagramAccountId, instagramUserId, recipientId, commentId, accessToken, showcaseId }: { instagramAccountId: string; instagramUserId: string; recipientId: string; commentId?: string | null; accessToken: string; showcaseId: string }) {
+async function sendShowcase({ instagramAccountId, instagramUserId, recipientId, commentId, accessToken, showcaseId, quickReplies }: { instagramAccountId: string; instagramUserId: string; recipientId: string; commentId?: string | null; accessToken: string; showcaseId: string; quickReplies?: QuickReplyPayload[] }) {
   const showcase = await prisma.showcase.findFirst({ where: { id: showcaseId, instagramAccountId, isActive: true }, include: { items: { where: { isActive: true }, orderBy: { order: "asc" }, take: MAX_SHOWCASE_ITEMS } } });
   if (!showcase) throw new Error("Showcase not found or inactive");
   if (!showcase.items.length) throw new Error("Showcase has no active items");
@@ -143,48 +143,68 @@ async function sendShowcase({ instagramAccountId, instagramUserId, recipientId, 
         }
       : {}),
   }));
-  // A comment private reply is used only to open the conversation.
-  // After that first contact, send the real Showcase as a Generic Template
-  // to the user's DM so the item images/cards are preserved.
+  // A comment-triggered automation gets exactly one Private Reply.
+  // The Private Reply is the first contact and must use the comment_id
+  // recipient. Do not send a second normal DM here: until the commenter
+  // responds, Instagram does not allow another outbound message.
+  //
+  // Native Generic Template/cards are still supported for normal DMs below.
+  // For the first comment reply we therefore send the complete Showcase
+  // information as one text message, preserving the title, description,
+  // item details, prices and links in the only message Meta allows.
   if (commentId) {
-    const privateReplyText = showcase.title.trim() || "ویترین محصولات";
+    const lines: string[] = [];
+
+    const showcaseTitle = showcase.title.trim();
+    const showcaseDescription = showcase.description?.trim();
+
+    if (showcaseTitle) {
+      lines.push(showcaseTitle);
+    }
+
+    if (showcaseDescription) {
+      lines.push(showcaseDescription);
+    }
+
+    for (const item of showcase.items) {
+      const itemTitle = item.title.trim();
+      const itemDescription = item.description?.trim();
+      const price =
+        item.price != null
+          ? `قیمت: ${String(item.price)}`
+          : item.originalPrice != null
+            ? `قیمت: ${String(item.originalPrice)}`
+            : null;
+      const link = item.linkUrl?.trim();
+
+      const itemLines = [
+        itemTitle,
+        itemDescription,
+        price,
+        link ? `لینک: ${link}` : null,
+      ].filter(Boolean);
+
+      if (itemLines.length) {
+        lines.push(itemLines.join("\n"));
+      }
+    }
+
+    const showcaseText = lines.join("\n\n").trim() || "ویترین محصولات";
 
     const privateReply = await sendTextLike({
       instagramUserId,
       recipientId,
       commentId,
       accessToken,
-      text: privateReplyText,
+      text: showcaseText.slice(0, 1900),
+      quickReplies,
     });
 
-    if (!privateReply.success) {
-      return privateReply;
+    if (privateReply.success) {
+      privateReply.conversationText = showcaseText.slice(0, 1900);
     }
 
-    // The comment private reply is the first outbound message. The actual
-    // Showcase is then sent to the newly opened DM conversation.
-    const showcaseResult = await callInstagramMessagesApi({
-      instagramUserId,
-      accessToken,
-      body: {
-        recipient: { id: recipientId },
-        message: {
-          attachment: {
-            type: "template",
-            payload: {
-              template_type: "generic",
-              elements,
-            },
-          },
-        },
-      },
-    });
-
-    if (showcaseResult.success) {
-      showcaseResult.conversationText = showcase.title.trim();
-    }
-
-    return showcaseResult;
+    return privateReply;
   }
 
   const result = await callInstagramMessagesApi({
@@ -245,7 +265,7 @@ export async function sendAutomationMessage(payload: AutomationMessagePayload): 
 
   if (message.messageType === "SHOWCASE") {
     if (!message.showcaseId) throw new Error("Showcase ID is missing");
-    return sendShowcase({ instagramAccountId, instagramUserId, recipientId, commentId: payload.commentId, accessToken, showcaseId: message.showcaseId });
+    return sendShowcase({ instagramAccountId, instagramUserId, recipientId, commentId: payload.commentId, accessToken, showcaseId: message.showcaseId, quickReplies: message.quickReplies });
   }
 
   if (message.messageType === "IMAGE" || message.messageType === "VIDEO" || message.messageType === "AUDIO") {
