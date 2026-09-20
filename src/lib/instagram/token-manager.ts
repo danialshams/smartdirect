@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { InstagramApiError, instagramApiRequest } from "@/lib/instagram/client";
 
 const REFRESH_THRESHOLD_SECONDS = 7 * 24 * 60 * 60;
 const REQUEST_TIMEOUT_MS = 15000;
@@ -73,45 +74,14 @@ function shouldRefreshToken(tokenExpiresAt: Date | null): boolean {
   return remainingSeconds <= REFRESH_THRESHOLD_SECONDS;
 }
 
-async function fetchInstagram(url: string): Promise<{
-  response: Response;
-  data: InstagramTokenResponse;
-}> {
-  const controller = new AbortController();
-
-  const timeout = setTimeout(() => {
-    controller.abort();
-  }, REQUEST_TIMEOUT_MS);
-
-  try {
-    const response = await fetch(url, {
-      method: "GET",
-      cache: "no-store",
-      signal: controller.signal,
-      headers: {
-        Accept: "application/json",
-      },
-    });
-
-    const text = await response.text();
-
-    let data: InstagramTokenResponse = {};
-
-    try {
-      data = text ? (JSON.parse(text) as InstagramTokenResponse) : {};
-    } catch {
-      data = {
-        error_message: text || "Invalid JSON response",
-      };
-    }
-
-    return {
-      response,
-      data,
-    };
-  } finally {
-    clearTimeout(timeout);
-  }
+async function fetchInstagram<T = InstagramTokenResponse>(
+  params: Record<string, string>,
+): Promise<T> {
+  return instagramApiRequest<T>("", {
+    method: "GET",
+    params,
+    timeoutMs: REQUEST_TIMEOUT_MS,
+  });
 }
 
 /**
@@ -128,26 +98,18 @@ export async function exchangeInstagramToken(
 
   const clientSecret = getInstagramAppSecret();
 
-  const url = new URL("https://graph.instagram.com/access_token");
-
-  url.searchParams.set("grant_type", "ig_exchange_token");
-
-  url.searchParams.set("client_secret", clientSecret);
-
-  url.searchParams.set("access_token", shortLivedToken);
-
   console.log(
     "[Instagram Token] Exchanging short-lived token for long-lived token...",
   );
 
-  let response: Response;
   let data: InstagramTokenResponse;
 
   try {
-    const result = await fetchInstagram(url.toString());
-
-    response = result.response;
-    data = result.data;
+    data = await fetchInstagram<InstagramTokenResponse>({
+      grant_type: "ig_exchange_token",
+      client_secret: clientSecret,
+      access_token: shortLivedToken,
+    });
   } catch (error) {
     console.error(
       "[Instagram Token] Long-lived token exchange request failed:",
@@ -157,9 +119,9 @@ export async function exchangeInstagramToken(
     throw new Error("Instagram token exchange request failed");
   }
 
-  if (!response.ok || !data.access_token) {
+  if (!data.access_token) {
     console.error("[Instagram Token] Long-lived token exchange failed:", {
-      status: response.status,
+      status: error instanceof InstagramApiError ? error.status : undefined,
       error: data.error,
       error_type: data.error_type,
       error_message: data.error_message,
@@ -262,12 +224,6 @@ export async function refreshInstagramToken(
     };
   }
 
-  const url = new URL("https://graph.instagram.com/refresh_access_token");
-
-  url.searchParams.set("grant_type", "ig_refresh_token");
-
-  url.searchParams.set("access_token", account.accessToken);
-
   console.log("[Instagram Token] Refreshing token:", {
     instagramAccountId,
     igUserId: account.igUserId,
@@ -276,14 +232,13 @@ export async function refreshInstagramToken(
     remainingSeconds: getRemainingSeconds(account.tokenExpiresAt),
   });
 
-  let response: Response;
   let data: InstagramTokenResponse;
 
   try {
-    const result = await fetchInstagram(url.toString());
-
-    response = result.response;
-    data = result.data;
+    data = await fetchInstagram<InstagramTokenResponse>({
+      grant_type: "ig_refresh_token",
+      access_token: account.accessToken,
+    });
   } catch (error) {
     console.error("[Instagram Token] Refresh request failed:", {
       instagramAccountId,
@@ -297,7 +252,7 @@ export async function refreshInstagramToken(
     throw new Error("Instagram token refresh request failed");
   }
 
-  if (!response.ok || !data.access_token) {
+  if (!data.access_token) {
     const errorCode = data.error?.code;
     const errorSubcode = data.error?.error_subcode;
     const errorMessage = getErrorMessage(data);
@@ -306,7 +261,7 @@ export async function refreshInstagramToken(
       instagramAccountId,
       igUserId: account.igUserId,
       username: account.igUsername,
-      status: response.status,
+      status: error instanceof InstagramApiError ? error.status : undefined,
       errorCode,
       errorSubcode,
       error: data.error,
