@@ -20,7 +20,7 @@ type MediaType = "IMAGE" | "VIDEO";
 type LocalMedia = { file: File; type: MediaType; previewUrl: string; sortOrder: number };
 type UploadedMedia = { type: MediaType; storageKey: string; publicUrl: string; fileName: string; mimeType: string; fileSize: number; sortOrder: number };
 type Job = { id: string; type: PublishType; status: string; caption: string | null; scheduledAt: string | null; publishedAt: string | null; errorMessage: string | null; media: UploadedMedia[]; instagramAccount?: { igUsername: string | null } };
-type InstagramAccount = { id: string; igUsername: string | null; igUserId: string };
+type InstagramAccount = { id: string; igUsername: string | null; username?: string | null; igUserId: string; isConnected?: boolean };
 type JalaliDate = { year: number; month: number; day: number };
 
 type AutomationDraftConfig = {
@@ -97,10 +97,33 @@ export default function PublishingDashboardV2() {
   const [error, setError] = useState("");
 
   const triggerType = type === "STORY" ? "STORY_REPLY_KEYWORD" : "COMMENT_KEYWORD";
-  const automationAccount: AutomationAccount = { id: selectedAccount, igUsername: accounts.find((account) => account.id === selectedAccount)?.igUsername ?? "" };
+  const selectedInstagramAccount = accounts.find((account) => account.id === selectedAccount);\n  const automationAccount: AutomationAccount = { id: selectedAccount, igUsername: selectedInstagramAccount?.igUsername ?? selectedInstagramAccount?.username ?? "" };
   const messageOptions = useMemo(() => messages.map((message, index) => ({ id: message.id, label: `پیام ${index + 1} — ${getMessageTypeLabel(message.messageType)}` })), [messages]);
 
-  async function loadAccounts() { const response = await fetch("/api/instagram/accounts", { cache: "no-store" }); if (!response.ok) throw new Error("دریافت اکانت‌های Instagram ناموفق بود."); const result = await response.json(); const list = result.data ?? result.accounts ?? []; setAccounts(list); setSelectedAccount((current) => current || list[0]?.id || ""); }
+  async function loadAccounts() {
+    const response = await fetch("/api/instagram/accounts", { cache: "no-store" });
+    if (!response.ok) throw new Error("دریافت اکانت‌های Instagram ناموفق بود.");
+
+    const result = await response.json();
+    const rawList = result.data ?? result.accounts ?? [];
+    const list = Array.isArray(rawList)
+      ? rawList
+          .filter((account) => account?.id)
+          .map((account) => ({
+            id: String(account.id),
+            igUserId: String(account.igUserId ?? ""),
+            igUsername: account.igUsername ?? account.username ?? null,
+            username: account.username ?? account.igUsername ?? null,
+            isConnected: account.isConnected !== false,
+          }))
+      : [];
+
+    setAccounts(list);
+    setSelectedAccount((current) => {
+      if (current && list.some((account) => account.id === current)) return current;
+      return list.find((account) => account.isConnected !== false)?.id ?? list[0]?.id ?? "";
+    });
+  }
   async function loadJobs() { const response = await fetch("/api/instagram/publishing", { cache: "no-store" }); if (!response.ok) throw new Error("دریافت Publishing Jobs ناموفق بود."); const result = await response.json(); setJobs(result.data ?? []); }
   async function loadResources(accountId: string) { if (!accountId) return; setLoadingResources(true); try { const [showcaseResponse, formResponse] = await Promise.all([fetch(`/api/showcases?instagramAccountId=${encodeURIComponent(accountId)}`, { cache: "no-store" }), fetch(`/api/forms?instagramAccountId=${encodeURIComponent(accountId)}`, { cache: "no-store" })]); const showcaseResult = await showcaseResponse.json(); const formResult = await formResponse.json(); setShowcases(Array.isArray(showcaseResult.data) ? showcaseResult.data : []); setForms(Array.isArray(formResult.data) ? formResult.data : []); } finally { setLoadingResources(false); } }
   async function load() { try { setLoading(true); setError(""); await Promise.all([loadAccounts(), loadJobs()]); } catch (e) { setError(e instanceof Error ? e.message : "خطا در دریافت اطلاعات."); } finally { setLoading(false); } }
@@ -206,7 +229,7 @@ export default function PublishingDashboardV2() {
 
   <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]"><section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><h2 className="font-bold text-slate-950">محتوای جدید</h2>
   <div className="my-6 grid grid-cols-2 gap-2 sm:grid-cols-4">{([['POST', 'پست', ImagePlus], ['CAROUSEL', 'Carousel', ImagePlus], ['REEL', 'Reel', Video], ['STORY', 'Story', ImagePlus]] as const).map(([value, label, Icon]) => <button key={value} type="button" onClick={() => handleTypeChange(value)} className={["flex flex-col items-center justify-center gap-2 rounded-xl border px-3 py-4 text-sm transition", type === value ? "border-slate-950 bg-slate-950 text-white" : "border-slate-200 bg-white text-slate-500 hover:bg-slate-50"].join(" ")}><Icon size={20} />{label}</button>)}</div>
-  <label className="mb-5 block"><span className="mb-2 block text-sm font-medium text-slate-700">اکانت Instagram</span><select value={selectedAccount} onChange={(e) => setSelectedAccount(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400"><option value="">انتخاب اکانت</option>{accounts.map((account) => <option key={account.id} value={account.id}>@{account.igUsername}</option>)}</select></label>
+  <label className="mb-5 block"><span className="mb-2 block text-sm font-medium text-slate-700">اکانت Instagram</span><select value={selectedAccount} onChange={(e) => setSelectedAccount(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400"><option value="">انتخاب اکانت</option>{accounts.map((account) => { const username = account.igUsername ?? account.username ?? account.igUserId; return <option key={account.id} value={account.id}>{username ? `@${username}` : "اکانت Instagram"}</option>; })}</select></label>
 
   <div className="mb-5 rounded-2xl border border-slate-200 bg-slate-50 p-4"><div className="mb-4"><span className="block text-sm font-bold text-slate-800">Automation اختصاصی این محتوا</span><span className="mt-1 block text-xs leading-5 text-slate-500">برای همین محتوا یک Automation جدید از صفر ساخته می‌شود. هیچ Automation موجودی انتخاب یا استفاده نمی‌شود.</span></div><div className="space-y-4"><label className="block"><span className="mb-2 block text-xs font-semibold text-slate-600">{type === "STORY" ? "کلمات کلیدی Reply استوری" : "کلمات کلیدی کامنت"}</span><KeywordChipsInput value={keywords} onChange={setKeywords} placeholder={type === "STORY" ? "مثلاً 1، اطلاعات، قیمت" : "مثلاً 1، یک، قیمت"} /></label>{type !== "STORY" && <><label className="flex items-center gap-3 text-sm text-slate-700"><input type="checkbox" checked={likeComment} onChange={(e) => setLikeComment(e.target.checked)} /> لایک خودکار کامنت</label><label className="block"><span className="mb-2 block text-xs font-semibold text-slate-600">پاسخ عمومی کامنت (اختیاری)</span><textarea value={commentReplyText} onChange={(e) => setCommentReplyText(e.target.value)} rows={2} className="w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm outline-none focus:border-slate-400" placeholder="اگر بخواهید خود کامنت هم پاسخ عمومی بگیرد..." /></label></>}{type === "STORY" && <label className="flex items-center gap-3 text-sm text-slate-700"><input type="checkbox" checked={likeStoryReply} onChange={(e) => setLikeStoryReply(e.target.checked)} /> لایک خودکار Reply استوری</label>}<label className="flex items-center gap-3 text-sm text-slate-700"><input type="checkbox" checked={requireFollow} onChange={(e) => setRequireFollow(e.target.checked)} /> قبل از ارسال پاسخ، Follow Gate بررسی شود</label>{requireFollow && <textarea value={followGateText} onChange={(e) => setFollowGateText(e.target.value)} rows={2} className="w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm outline-none focus:border-slate-400" placeholder="متن درخواست Follow..." />}</div></div>
 
