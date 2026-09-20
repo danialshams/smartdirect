@@ -2,18 +2,22 @@ import "server-only";
 
 import Redis from "ioredis";
 
-const REDIS_URL = process.env.REDIS_URL ?? "redis://localhost:6379";
-
-if (!REDIS_URL) {
-  throw new Error("REDIS_URL is not configured");
-}
-
 const connectTimeout = Number(process.env.REDIS_CONNECT_TIMEOUT_MS ?? 5_000);
 const commandTimeout = Number(process.env.REDIS_COMMAND_TIMEOUT_MS ?? 3_000);
 
 const globalForRedis = globalThis as unknown as {
   smartDirectRedis?: Redis;
 };
+
+function getRedisUrl() {
+  const url = process.env.REDIS_URL?.trim();
+
+  if (!url) {
+    throw new Error("REDIS_URL is not configured");
+  }
+
+  return url;
+}
 
 function createRedisClient(url: string) {
   const client = new Redis(url, {
@@ -38,14 +42,23 @@ function createRedisClient(url: string) {
   return client;
 }
 
-export const redis =
-  globalForRedis.smartDirectRedis ?? createRedisClient(REDIS_URL);
+export function getRedisClient() {
+  if (globalForRedis.smartDirectRedis) {
+    return globalForRedis.smartDirectRedis;
+  }
 
-if (process.env.NODE_ENV !== "production") {
-  globalForRedis.smartDirectRedis = redis;
+  const client = createRedisClient(getRedisUrl());
+
+  if (process.env.NODE_ENV !== "production") {
+    globalForRedis.smartDirectRedis = client;
+  }
+
+  return client;
 }
 
 export async function connectRedis() {
+  const redis = getRedisClient();
+
   if (redis.status === "ready") {
     return redis;
   }
@@ -79,6 +92,8 @@ export async function connectRedis() {
 }
 
 export async function disconnectRedis() {
+  const redis = getRedisClient();
+
   if (redis.status === "end") {
     return;
   }
@@ -95,14 +110,16 @@ export async function redisHealthCheck() {
 
     return {
       ok: response === "PONG",
+      configured: true,
       latencyMs: Date.now() - startedAt,
       status: client.status,
     };
   } catch (error) {
     return {
       ok: false,
+      configured: Boolean(process.env.REDIS_URL?.trim()),
       latencyMs: Date.now() - startedAt,
-      status: redis.status,
+      status: "error",
       error: error instanceof Error ? error.message : "Unknown Redis error",
     };
   }
