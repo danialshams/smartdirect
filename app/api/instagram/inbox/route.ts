@@ -293,7 +293,7 @@ export async function GET(request: NextRequest) {
         },
       });
 
-      if (!conversation.participantUsername) {
+      if (!conversation.participantUsername || !conversation.participantProfilePicture) {
         await enrichParticipantProfile(
           account.id,
           conversation.participantId,
@@ -386,7 +386,7 @@ export async function GET(request: NextRequest) {
 
     await Promise.all(
       conversations
-        .filter((item) => !item.participantUsername)
+        .filter((item) => !item.participantUsername || !item.participantProfilePicture)
         .slice(0, 25)
         .map((item) =>
           enrichParticipantProfile(account.id, item.participantId, accessToken),
