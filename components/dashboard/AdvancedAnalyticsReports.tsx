@@ -374,96 +374,58 @@ export default function AdvancedAnalyticsReports() {
 
             {report && !invalidRange && (
                 <>
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                        {METRICS.slice(0, 4).map(({ key, title }) => {
-                            const current = report.currentMetrics[key];
-                            const previous = report.previousMetrics[key];
-                            const change = changePercent(current, previous);
-                            const positive = change == null || change >= 0;
-                            const Icon = positive ? TrendingUp : TrendingDown;
-
-                            return (
-                                <div key={key} className="rounded-[22px] border border-slate-200/80 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.03)]">
-                                    <div className="flex items-center justify-between gap-3">
-                                        <p className="text-sm font-medium text-slate-600">{title}</p>
-                                        <span className={`flex items-center gap-1 text-[11px] font-semibold ${change == null ? "text-slate-400" : positive ? "text-emerald-600" : "text-red-600"}`}>
-                                            {change == null ? "بدون مقایسه" : <><Icon size={13} /> {formatPercent(change)}</>}
-                                        </span>
-                                    </div>
-                                    <p className="mt-4 text-2xl font-bold tracking-tight text-slate-950">{formatNumber(current)}</p>
-                                    <p className="mt-1 text-[11px] text-slate-400">دوره قبل: {formatNumber(previous)}</p>
-                                </div>
-                            );
-                        })}
-                    </div>
-
-                    <div className="grid gap-4 lg:grid-cols-2">
-                        <div className="rounded-[24px] border border-slate-200/80 bg-white p-6 shadow-[0_8px_30px_rgba(15,23,42,0.03)]">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm font-bold text-slate-900">رشد فالوئر</p>
-                                    <p className="mt-1 text-xs text-slate-400">مقایسه رشد در دو بازه هم‌اندازه</p>
-                                </div>
-                                <TrendingUp size={18} className="text-slate-400" />
-                            </div>
-                            <div className="mt-6 grid grid-cols-2 gap-3">
-                                <div className="rounded-2xl bg-slate-50 p-4">
-                                    <p className="text-[10px] text-slate-400">بازه انتخابی</p>
-                                    <p className="mt-2 text-xl font-bold text-slate-900">{formatNumber(report.follower)}</p>
-                                </div>
-                                <div className="rounded-2xl bg-slate-50 p-4">
-                                    <p className="text-[10px] text-slate-400">دوره قبل</p>
-                                    <p className="mt-2 text-xl font-bold text-slate-900">{formatNumber(report.previousFollower)}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="rounded-[24px] border border-slate-200/80 bg-white p-6 shadow-[0_8px_30px_rgba(15,23,42,0.03)]">
-                            <div>
-                                <p className="text-sm font-bold text-slate-900">نرخ تعامل</p>
-                                <p className="mt-1 text-xs text-slate-400">تعاملات تقسیم بر دسترسی</p>
-                            </div>
-                            <div className="mt-6 flex items-end justify-between gap-4">
-                                <div>
-                                    <p className="text-3xl font-bold tracking-tight text-slate-950">{formatPercent(report.currentEngagementRate)}</p>
-                                    <p className="mt-1 text-xs text-slate-400">بازه انتخابی</p>
-                                </div>
-                                <div className="text-left">
-                                    <p className="text-lg font-bold text-slate-700">{formatPercent(report.previousEngagementRate)}</p>
-                                    <p className="mt-1 text-xs text-slate-400">دوره قبل</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                     <div className="overflow-hidden rounded-[24px] border border-slate-200/80 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.03)]">
-                        <div className="flex flex-col gap-2 border-b border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-                            <div>
-                                <p className="text-sm font-bold text-slate-900">جزئیات روزانه گزارش</p>
-                                <p className="mt-1 text-xs text-slate-400">{report.current.length} اسنپ‌شات در بازه انتخابی</p>
-                            </div>
-                            <span className="text-[11px] text-slate-400">{from} تا {to}</span>
+                        <div className="border-b border-slate-100 px-5 py-4 sm:px-6">
+                            <p className="text-sm font-bold text-slate-900">مقایسه با دوره قبل</p>
+                            <p className="mt-1 text-xs text-slate-400">در این بخش فقط تغییرات دوره‌ای نمایش داده می‌شود تا آمار خام عملکرد پیج دوباره تکرار نشود.</p>
                         </div>
                         <div className="overflow-x-auto">
-                            <table className="min-w-[760px] w-full text-right text-xs">
+                            <table className="min-w-[720px] w-full text-right text-xs">
                                 <thead className="bg-slate-50 text-slate-400">
                                     <tr>
-                                        <th className="px-5 py-3 font-medium">تاریخ</th>
-                                        {METRICS.map((metric) => <th key={metric.key} className="px-5 py-3 font-medium">{metric.title}</th>)}
-                                        <th className="px-5 py-3 font-medium">فالوئر</th>
+                                        <th className="px-5 py-3 font-medium">شاخص</th>
+                                        <th className="px-5 py-3 font-medium">بازه انتخابی</th>
+                                        <th className="px-5 py-3 font-medium">دوره قبل</th>
+                                        <th className="px-5 py-3 font-medium">تغییر</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
-                                    {report.current.slice().reverse().map((item) => (
-                                        <tr key={item.id} className="text-slate-700">
-                                            <td className="px-5 py-3 font-medium">{snapshotDate(item.snapshotDate)}</td>
-                                            {METRICS.map((metric) => <td key={metric.key} className="px-5 py-3">{formatNumber(item[metric.key])}</td>)}
-                                            <td className="px-5 py-3">{formatNumber(item.followerCount)}</td>
-                                        </tr>
-                                    ))}
+                                    {METRICS.map(({ key, title }) => {
+                                        const current = report.currentMetrics[key];
+                                        const previous = report.previousMetrics[key];
+                                        const change = changePercent(current, previous);
+                                        const positive = change == null || change >= 0;
+                                        const Icon = positive ? TrendingUp : TrendingDown;
+                                        return (
+                                            <tr key={key} className="text-slate-700">
+                                                <td className="px-5 py-3 font-medium">{title}</td>
+                                                <td className="px-5 py-3">{formatNumber(current)}</td>
+                                                <td className="px-5 py-3">{formatNumber(previous)}</td>
+                                                <td className="px-5 py-3">
+                                                    <span className={change == null ? "text-slate-400" : positive ? "inline-flex items-center gap-1 font-semibold text-emerald-600" : "inline-flex items-center gap-1 font-semibold text-red-600"}>
+                                                        {change == null ? "—" : <><Icon size={13} /> {formatPercent(change)}</>}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                    <tr className="text-slate-700">
+                                        <td className="px-5 py-3 font-medium">رشد فالوئر</td>
+                                        <td className="px-5 py-3">{formatNumber(report.follower)}</td>
+                                        <td className="px-5 py-3">{formatNumber(report.previousFollower)}</td>
+                                        <td className="px-5 py-3">{formatPercent(changePercent(report.follower, report.previousFollower))}</td>
+                                    </tr>
+                                    <tr className="text-slate-700">
+                                        <td className="px-5 py-3 font-medium">نرخ تعامل</td>
+                                        <td className="px-5 py-3">{formatPercent(report.currentEngagementRate)}</td>
+                                        <td className="px-5 py-3">{formatPercent(report.previousEngagementRate)}</td>
+                                        <td className="px-5 py-3">{formatPercent(changePercent(report.currentEngagementRate, report.previousEngagementRate))}</td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
+                    </div>
+
                     </div>
                 </>
             )}
