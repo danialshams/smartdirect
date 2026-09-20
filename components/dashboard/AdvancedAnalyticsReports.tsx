@@ -425,8 +425,6 @@ export default function AdvancedAnalyticsReports() {
                             </table>
                         </div>
                     </div>
-
-                    </div>
                 </>
             )}
         </section>
