@@ -1177,6 +1177,7 @@ export default function EntryPointFlowBuilder({
                                                     </div>
 
                                                     <AutomationFlowMessage
+                                                        triggerType="DM"
                                                         message={
                                                             message
                                                         }
