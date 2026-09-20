@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
+import { instagramApiRequest } from "@/lib/instagram/client";
 
 const INSTAGRAM_API_VERSION = "v26.0";
 
@@ -26,33 +27,15 @@ export async function syncIceBreakers(instagramAccountId: string) {
 
   const accessToken = await getValidInstagramAccessToken(instagramAccountId);
 
-  const response = await fetch(
-    `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/me/messenger_profile`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        ice_breakers: iceBreakers.map((item) => ({
-          question: item.question,
-          payload: item.payload,
-        })),
-      }),
-      cache: "no-store",
+  return instagramApiRequest("me/messenger_profile", {
+    method: "POST",
+    accessToken,
+    params: { platform: "instagram" },
+    body: {
+      ice_breakers: iceBreakers.map((item) => ({
+        question: item.question,
+        payload: item.payload,
+      })),
     },
-  );
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    console.error("[Instagram Ice Breakers] Sync failed:", data);
-
-    throw new Error(
-      data?.error?.message || "Instagram Ice Breakers sync failed",
-    );
-  }
-
-  return data;
+  });
 }
