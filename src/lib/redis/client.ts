@@ -15,14 +15,14 @@ const globalForRedis = globalThis as unknown as {
   smartDirectRedis?: Redis;
 };
 
-function createRedisClient() {
-  const client = new Redis(REDIS_URL, {
+function createRedisClient() {\n  const url = REDIS_URL;
+  const client = new Redis(url, {
     lazyConnect: true,
     connectTimeout,
     commandTimeout,
     maxRetriesPerRequest: null,
     enableOfflineQueue: false,
-    retryStrategy(attempt) {
+    retryStrategy(attempt: number) {
       return Math.min(attempt * 250, 5_000);
     },
   });
@@ -31,7 +31,7 @@ function createRedisClient() {
     console.error("[redis] connection error", error);
   });
 
-  client.on("reconnecting", (delay) => {
+  client.on("reconnecting", (delay: number) => {
     console.warn("[redis] reconnecting", { delay });
   });
 
