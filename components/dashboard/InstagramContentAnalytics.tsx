@@ -884,88 +884,12 @@ export default function InstagramContentAnalytics() {
             {data &&
                 summary && (
                     <>
-                        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-                            <Kpi
-                                title="محتوای بررسی‌شده"
-                                value={number(
-                                    summary.contentCount,
-                                )}
-                                icon={
-                                    BarChart3
-                                }
-                            />
-
-                            <Kpi
-                                title="بازدید"
-                                value={number(
-                                    summary.views,
-                                )}
-                                icon={
-                                    Eye
-                                }
-                            />
-
-                            <Kpi
-                                title="Reach"
-                                value={number(
-                                    summary.reach,
-                                )}
-                                icon={
-                                    TrendingUp
-                                }
-                            />
-
-                            <Kpi
-                                title="تعاملات"
-                                value={number(
-                                    summary.totalInteractions,
-                                )}
-                                icon={
-                                    Heart
-                                }
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-                            <Kpi
-                                title="لایک"
-                                value={number(
-                                    summary.likes,
-                                )}
-                                icon={
-                                    Heart
-                                }
-                            />
-
-                            <Kpi
-                                title="کامنت"
-                                value={number(
-                                    summary.comments,
-                                )}
-                                icon={
-                                    MessageCircle
-                                }
-                            />
-
-                            <Kpi
-                                title="ذخیره"
-                                value={number(
-                                    summary.saved,
-                                )}
-                                icon={
-                                    Bookmark
-                                }
-                            />
-
-                            <Kpi
-                                title="نرخ تعامل"
-                                value={percent(
-                                    summary.engagementRate,
-                                )}
-                                icon={
-                                    TrendingUp
-                                }
-                            />
+                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+                            <Kpi title="محتوای بررسی‌شده" value={number(summary.contentCount)} icon={BarChart3} />
+                            <Kpi title="لایک" value={number(summary.likes)} icon={Heart} />
+                            <Kpi title="کامنت" value={number(summary.comments)} icon={MessageCircle} />
+                            <Kpi title="ذخیره" value={number(summary.saved)} icon={Bookmark} />
+                            <Kpi title="اشتراک" value={number(summary.shares)} icon={Share2} />
                         </div>
 
                         <div className="flex flex-col gap-3 rounded-[24px] border border-slate-200/80 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
