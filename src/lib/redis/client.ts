@@ -1,45 +1,22 @@
 import "server-only";
 
-import Redis from "ioredis";
-
-const connectTimeout = Number(process.env.REDIS_CONNECT_TIMEOUT_MS ?? 5_000);
-const commandTimeout = Number(process.env.REDIS_COMMAND_TIMEOUT_MS ?? 3_000);
+import { Redis } from "@upstash/redis";
 
 const globalForRedis = globalThis as unknown as {
   smartDirectRedis?: Redis;
 };
 
-function getRedisUrl() {
-  const url = process.env.REDIS_URL?.trim();
+function getRedisConfig() {
+  const url = process.env.UPSTASH_REDIS_REST_URL?.trim();
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
 
-  if (!url) {
-    throw new Error("REDIS_URL is not configured");
+  if (!url || !token) {
+    throw new Error(
+      "UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN are not configured",
+    );
   }
 
-  return url;
-}
-
-function createRedisClient(url: string) {
-  const client = new Redis(url, {
-    lazyConnect: true,
-    connectTimeout,
-    commandTimeout,
-    maxRetriesPerRequest: null,
-    enableOfflineQueue: false,
-    retryStrategy(attempt: number) {
-      return Math.min(attempt * 250, 5_000);
-    },
-  });
-
-  client.on("error", (error) => {
-    console.error("[redis] connection error", error);
-  });
-
-  client.on("reconnecting", (delay: number) => {
-    console.warn("[redis] reconnecting", { delay });
-  });
-
-  return client;
+  return { url, token };
 }
 
 export function getRedisClient() {
@@ -47,7 +24,8 @@ export function getRedisClient() {
     return globalForRedis.smartDirectRedis;
   }
 
-  const client = createRedisClient(getRedisUrl());
+  const { url, token } = getRedisConfig();
+  const client = new Redis({ url, token });
 
   if (process.env.NODE_ENV !== "production") {
     globalForRedis.smartDirectRedis = client;
@@ -57,67 +35,33 @@ export function getRedisClient() {
 }
 
 export async function connectRedis() {
-  const redis = getRedisClient();
-
-  if (redis.status === "ready") {
-    return redis;
-  }
-
-  if (redis.status === "connecting" || redis.status === "connect") {
-    await new Promise<void>((resolve, reject) => {
-      const onReady = () => {
-        cleanup();
-        resolve();
-      };
-
-      const onError = (error: Error) => {
-        cleanup();
-        reject(error);
-      };
-
-      const cleanup = () => {
-        redis.off("ready", onReady);
-        redis.off("error", onError);
-      };
-
-      redis.once("ready", onReady);
-      redis.once("error", onError);
-    });
-
-    return redis;
-  }
-
-  await redis.connect();
-  return redis;
+  return getRedisClient();
 }
 
 export async function disconnectRedis() {
-  const redis = getRedisClient();
-
-  if (redis.status === "end") {
-    return;
-  }
-
-  await redis.quit();
+  return;
 }
 
 export async function redisHealthCheck() {
   const startedAt = Date.now();
 
   try {
-    const client = await connectRedis();
+    const client = getRedisClient();
     const response = await client.ping();
 
     return {
       ok: response === "PONG",
       configured: true,
       latencyMs: Date.now() - startedAt,
-      status: client.status,
+      status: "ready",
     };
   } catch (error) {
     return {
       ok: false,
-      configured: Boolean(process.env.REDIS_URL?.trim()),
+      configured: Boolean(
+        process.env.UPSTASH_REDIS_REST_URL?.trim() &&
+          process.env.UPSTASH_REDIS_REST_TOKEN?.trim(),
+      ),
       latencyMs: Date.now() - startedAt,
       status: "error",
       error: error instanceof Error ? error.message : "Unknown Redis error",
