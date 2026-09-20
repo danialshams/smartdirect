@@ -32,6 +32,8 @@ function jsonError(message: string, status = 400) {
 
 function proxyConversationMedia<
   T extends {
+    instagramAccountId: string;
+    participantId: string;
     participantProfilePicture?: string | null;
     messages?: Array<{ mediaUrl?: string | null }>;
   },
