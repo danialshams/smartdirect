@@ -55,13 +55,27 @@ const DEFAULTS: Record<InstagramRateLimitOperation, { limit: number; windowMs: n
   PUBLISH_STORY: { limit: 100, windowMs: 24 * 60 * 60 * 1_000 },
 };
 
-const LUA_INCREMENT = `
-local current = redis.call("INCR", KEYS[1])
-if current == 1 then
-  redis.call("PEXPIRE", KEYS[1], ARGV[1])
+const LUA_CONSUME = `
+for i = 1, #KEYS do
+  local current = tonumber(redis.call("GET", KEYS[i]) or "0")
+  local limit = tonumber(ARGV[(i - 1) * 2 + 1])
+  local ttl = redis.call("PTTL", KEYS[i])
+
+  if current >= limit then
+    return { 0, i, current, ttl }
+  end
 end
-local ttl = redis.call("PTTL", KEYS[1])
-return { current, ttl }
+
+for i = 1, #KEYS do
+  local current = redis.call("INCR", KEYS[i])
+  local window = tonumber(ARGV[(i - 1) * 2 + 2])
+
+  if current == 1 then
+    redis.call("PEXPIRE", KEYS[i], window)
+  end
+end
+
+return { 1, 0, 0, -1 }
 `;
 
 function envNumber(name: string, fallback: number) {
@@ -74,10 +88,7 @@ function getOperationConfig(operation: InstagramRateLimitOperation) {
 
   return {
     limit: Math.floor(
-      envNumber(
-        `INSTAGRAM_RATE_LIMIT_${operation}_LIMIT`,
-        defaults.limit,
-      ),
+      envNumber(`INSTAGRAM_RATE_LIMIT_${operation}_LIMIT`, defaults.limit),
     ),
     windowMs: Math.floor(
       envNumber(
@@ -110,43 +121,32 @@ function windowId(now: number, windowMs: number) {
   return Math.floor(now / windowMs);
 }
 
-async function consumeBucket(
-  bucket: InstagramRateLimitBucket,
-  now = Date.now(),
-): Promise<InstagramRateLimitResult> {
-  const redis = getRedisClient();
-  const id = windowId(now, bucket.windowMs);
-  const redisKey = `${PREFIX}:${bucket.key}:${id}`;
-
-  const result = (await redis.eval(
-    LUA_INCREMENT,
-    [redisKey],
-    [String(bucket.windowMs)],
-  )) as [number, number];
-
-  const current = Number(result[0]);
-  const ttl = Math.max(0, Number(result[1]));
-  const resetAt = now + ttl;
-
-  return {
-    allowed: current <= bucket.limit,
-    limit: bucket.limit,
-    remaining: Math.max(0, bucket.limit - current),
-    retryAfterMs: current <= bucket.limit ? 0 : ttl,
-    resetAt,
-  };
+function bucketKey(bucket: InstagramRateLimitBucket, now: number) {
+  return `${PREFIX}:${bucket.key}:${windowId(now, bucket.windowMs)}`;
 }
 
 export function getInstagramRateLimitBuckets(
   context: InstagramRateLimitContext,
 ): InstagramRateLimitBucket[] {
   const operation = getOperationConfig(context.operation);
+
   const buckets: InstagramRateLimitBucket[] = [
     {
       scope: "GLOBAL",
       key: "global",
       ...getGlobalConfig(),
     },
+  ];
+
+  if (context.tenantId) {
+    buckets.push({
+      scope: "TENANT",
+      key: `tenant:${context.tenantId}`,
+      ...getTenantConfig(),
+    });
+  }
+
+  buckets.push(
     {
       scope: "INSTAGRAM_ACCOUNT",
       key: `account:${context.instagramAccountId}`,
@@ -164,15 +164,7 @@ export function getInstagramRateLimitBuckets(
       key: `account:${context.instagramAccountId}:operation:${context.operation}`,
       ...operation,
     },
-  ];
-
-  if (context.tenantId) {
-    buckets.splice(1, 0, {
-      scope: "TENANT",
-      key: `tenant:${context.tenantId}`,
-      ...getTenantConfig(),
-    });
-  }
+  );
 
   return buckets;
 }
@@ -180,22 +172,78 @@ export function getInstagramRateLimitBuckets(
 export async function consumeInstagramRateLimit(
   context: InstagramRateLimitContext,
 ): Promise<InstagramRateLimitResult> {
-  let last: InstagramRateLimitResult | null = null;
+  const buckets = getInstagramRateLimitBuckets(context);
+  const now = Date.now();
+  const redis = getRedisClient();
 
-  for (const bucket of getInstagramRateLimitBuckets(context)) {
-    const result = await consumeBucket(bucket);
-    last = result;
+  const keys = buckets.map((bucket) => bucketKey(bucket, now));
+  const args = buckets.flatMap((bucket) => [
+    String(bucket.limit),
+    String(bucket.windowMs),
+  ]);
 
-    if (!result.allowed) {
-      return result;
-    }
+  const result = (await redis.eval(
+    LUA_CONSUME,
+    keys,
+    args,
+  )) as [number, number, number, number];
+
+  const allowed = Number(result[0]) === 1;
+
+  if (!allowed) {
+    const deniedIndex = Math.max(
+      0,
+      Math.min(buckets.length - 1, Number(result[1]) - 1),
+    );
+    const bucket = buckets[deniedIndex];
+    const current = Number(result[2]);
+    const retryAfterMs = Math.max(0, Number(result[3]));
+
+    return {
+      allowed: false,
+      limit: bucket.limit,
+      remaining: Math.max(0, bucket.limit - current),
+      retryAfterMs,
+      resetAt: now + retryAfterMs,
+      scope: bucket.scope,
+    };
   }
 
-  return last ?? {
+  return {
     allowed: true,
-    limit: 0,
-    remaining: 0,
+    limit: Math.min(...buckets.map((bucket) => bucket.limit)),
+    remaining: Math.min(...buckets.map((bucket) => Math.max(0, bucket.limit - 1))),
     retryAfterMs: 0,
-    resetAt: Date.now(),
+    resetAt: Math.min(...buckets.map((bucket) => now + bucket.windowMs)),
+    scope: "OPERATION",
   };
+}
+
+export async function waitForInstagramRateLimit(
+  context: InstagramRateLimitContext,
+  options: { maxWaitMs?: number; signal?: AbortSignal } = {},
+) {
+  const maxWaitMs = options.maxWaitMs ?? 0;
+  const result = await consumeInstagramRateLimit(context);
+
+  if (result.allowed || result.retryAfterMs <= 0) {
+    return result;
+  }
+
+  if (maxWaitMs <= 0 || result.retryAfterMs > maxWaitMs) {
+    return result;
+  }
+
+  await new Promise<void>((resolve, reject) => {
+    const timer = setTimeout(resolve, result.retryAfterMs);
+
+    const onAbort = () => {
+      clearTimeout(timer);
+      reject(new Error("Instagram rate-limit wait aborted"));
+    };
+
+    options.signal?.addEventListener("abort", onAbort, { once: true });
+  });
+
+  return consumeInstagramRateLimit(context);
 }
