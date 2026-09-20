@@ -23,6 +23,7 @@ export async function likeInstagramComment({
     await instagramApiRequest(`${encodeURIComponent(commentId)}/likes`, {
       method: "POST",
       accessToken,
+      rateLimit: { instagramAccountId, operation: "COMMENT_REPLY" },
     });
 
     return { success: true, commentId };
