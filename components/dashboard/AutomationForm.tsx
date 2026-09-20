@@ -1286,7 +1286,7 @@ export default function AutomationForm({
             }
             if (messages.length > 0) {
                 try {
-                    validateMessages(messages);
+                    validateMessages(messages, triggerType);
                 } catch (error) {
                     setError(
                         error instanceof Error
