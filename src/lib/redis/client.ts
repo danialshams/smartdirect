@@ -6,6 +6,40 @@ const globalForRedis = globalThis as unknown as {
   smartDirectRedis?: Redis;
 };
 
+const DEFAULT_REDIS_COMMAND_TIMEOUT_MS = 5_000;
+
+function getRedisCommandTimeoutMs() {
+  const raw = process.env.REDIS_COMMAND_TIMEOUT_MS?.trim();
+
+  if (!raw) {
+    return DEFAULT_REDIS_COMMAND_TIMEOUT_MS;
+  }
+
+  const value = Number(raw);
+
+  if (!Number.isFinite(value) || value <= 0) {
+    return DEFAULT_REDIS_COMMAND_TIMEOUT_MS;
+  }
+
+  return value;
+}
+
+async function redisFetch(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+) {
+  const timeoutSignal = AbortSignal.timeout(getRedisCommandTimeoutMs());
+
+  const signal = init?.signal
+    ? AbortSignal.any([init.signal, timeoutSignal])
+    : timeoutSignal;
+
+  return fetch(input, {
+    ...init,
+    signal,
+  });
+}
+
 function getRedisConfig() {
   const url = process.env.UPSTASH_REDIS_REST_URL?.trim();
   const token = process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
@@ -25,7 +59,11 @@ export function getRedisClient() {
   }
 
   const { url, token } = getRedisConfig();
-  const client = new Redis({ url, token });
+  const client = new Redis({
+    url,
+    token,
+    fetch: redisFetch,
+  });
 
   if (process.env.NODE_ENV !== "production") {
     globalForRedis.smartDirectRedis = client;
