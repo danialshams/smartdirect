@@ -112,7 +112,15 @@ async function sendTextLike({ instagramUserId, recipientId, commentId, accessTok
   if (!text.trim()) throw new Error("متن پیام نمی‌تواند خالی باشد.");
   const message: Record<string, unknown> = { text: text.trim() };
   if (quickReplies?.length) message.quick_replies = formatQuickReplies(quickReplies);
-  return callInstagramMessagesApi({ instagramUserId, accessToken, body: { recipient: commentId ? { comment_id: commentId } : { id: recipientId }, messaging_type: "RESPONSE", message } });
+  return callInstagramMessagesApi({
+    instagramUserId,
+    accessToken,
+    body: {
+      recipient: commentId ? { comment_id: commentId } : { id: recipientId },
+      ...(commentId ? {} : { messaging_type: "RESPONSE" }),
+      message,
+    },
+  });
 }
 
 async function sendShowcase({ instagramAccountId, instagramUserId, recipientId, commentId, accessToken, showcaseId }: { instagramAccountId: string; instagramUserId: string; recipientId: string; commentId?: string | null; accessToken: string; showcaseId: string }) {
@@ -194,7 +202,11 @@ async function sendLegacyForm({ instagramAccountId, instagramUserId, recipientId
   const result = await callInstagramMessagesApi({
     instagramUserId,
     accessToken,
-    body: { recipient: commentId ? { comment_id: commentId } : { id: recipientId }, messaging_type: "RESPONSE", message: { attachment: { type: "template", payload: { template_type: "generic", elements: [{ title: form.title.trim(), subtitle: (form.description?.trim() || "برای تکمیل فرم روی دکمه زیر بزنید.").slice(0, 640), buttons: [{ type: "web_url", url: formUrl, title: "تکمیل فرم" }] }] } } } },
+    body: {
+      recipient: commentId ? { comment_id: commentId } : { id: recipientId },
+      ...(commentId ? {} : { messaging_type: "RESPONSE" }),
+      message: { attachment: { type: "template", payload: { template_type: "generic", elements: [{ title: form.title.trim(), subtitle: (form.description?.trim() || "برای تکمیل فرم روی دکمه زیر بزنید.").slice(0, 640), buttons: [{ type: "web_url", url: formUrl, title: "تکمیل فرم" }] }] } } },
+    },
   });
   if (result.success) { result.formUrl = formUrl; result.conversationText = form.title.trim(); }
   return result;
@@ -227,7 +239,11 @@ export async function sendAutomationMessage(payload: AutomationMessagePayload): 
     if (!message.mediaUrl && !message.mediaId) throw new Error(`${message.messageType} requires mediaUrl or mediaId`);
     const type = message.messageType.toLowerCase();
     const attachmentPayload = message.mediaId ? { attachment_id: message.mediaId } : { url: message.mediaUrl };
-    const result = await callInstagramMessagesApi({ instagramUserId, accessToken, body: { recipient: payload.commentId ? { comment_id: payload.commentId } : { id: recipientId }, messaging_type: "RESPONSE", message: { attachment: { type, payload: attachmentPayload } } } });
+    const result = await callInstagramMessagesApi({ instagramUserId, accessToken, body: {
+        recipient: payload.commentId ? { comment_id: payload.commentId } : { id: recipientId },
+        ...(payload.commentId ? {} : { messaging_type: "RESPONSE" }),
+        message: { attachment: { type, payload: attachmentPayload } },
+      } });
     if (result.success) result.conversationText = message.messageType;
     return result;
   }
