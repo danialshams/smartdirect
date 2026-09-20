@@ -2243,6 +2243,9 @@ export default function AutomationForm({
                                             message={
                                                 message
                                             }
+                                            triggerType={
+                                                triggerType
+                                            }
                                             index={
                                                 index
                                             }
