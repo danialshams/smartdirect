@@ -5,7 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
-import { proxyInstagramMediaUrl } from "@/lib/instagram/media-proxy";
+import {\n  proxyInstagramAccountProfileUrl,\n  proxyInstagramMediaUrl,\n  proxyInstagramParticipantProfileUrl,\n} from "@/lib/instagram/media-proxy";
 
 export const dynamic = "force-dynamic";
 
@@ -38,9 +38,12 @@ function proxyConversationMedia<
 >(conversation: T): T {
   return {
     ...conversation,
-    participantProfilePicture: proxyInstagramMediaUrl(
-      conversation.participantProfilePicture,
-    ),
+    participantProfilePicture: conversation.participantId
+      ? proxyInstagramParticipantProfileUrl(
+          conversation.instagramAccountId,
+          conversation.participantId,
+        )
+      : proxyInstagramMediaUrl(conversation.participantProfilePicture),
     messages: conversation.messages?.map((message) => ({
       ...message,
       mediaUrl: proxyInstagramMediaUrl(message.mediaUrl),
