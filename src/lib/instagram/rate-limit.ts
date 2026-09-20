@@ -5,8 +5,10 @@ import { getRedisClient } from "@/lib/redis/client";
 export type InstagramRateLimitOperation =
   | "MESSAGE_TEXT"
   | "MESSAGE_MEDIA"
+  | "MESSAGE_REACTION"
   | "CONVERSATION_READ"
   | "COMMENT_REPLY"
+  | "COMMENT_LIKE"
   | "COMMENT_PRIVATE_REPLY"
   | "PUBLISH_MEDIA"
   | "PUBLISH_REEL"
