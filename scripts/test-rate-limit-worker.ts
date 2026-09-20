@@ -3,12 +3,7 @@ import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
 const serverOnlyPath = require.resolve("server-only");
-require.cache[serverOnlyPath] = {
-  id: serverOnlyPath,
-  filename: serverOnlyPath,
-  loaded: true,
-  exports: {},
-};
+require.cache[serverOnlyPath]!.exports = {};
 
 const { consumeInstagramRateLimit } = await import("../src/lib/instagram/rate-limit");
 const accountId = process.env.RATE_LIMIT_TEST_ACCOUNT ?? "rate-limit-worker";
