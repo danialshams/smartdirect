@@ -209,6 +209,3 @@ export async function instagramApiRequest<T = unknown>(
     timeout.cleanup();
   }
 }
-
-export const INSTAGRAM_API_VERSION = INSTAGRAM_API_VERSION;
-export const INSTAGRAM_GRAPH_URL = INSTAGRAM_GRAPH_URL;
