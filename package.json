@@ -10,7 +10,8 @@
     "redis:test": "tsx scripts/test-redis.ts",
     "queue:test": "tsx scripts/test-queue.ts",
     "queue:worker": "tsx scripts/queue-worker.ts",
-    "queue:test:multi-worker": "tsx scripts/test-multi-worker.ts"
+    "queue:test:multi-worker": "tsx scripts/test-multi-worker.ts",
+    "rate-limit:test": "tsx scripts/test-rate-limit.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",
