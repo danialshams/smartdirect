@@ -6,7 +6,11 @@ const require = createRequire(import.meta.url);
 const serverOnlyPath = require.resolve("server-only");
 require.cache[serverOnlyPath]!.exports = {};
 
-const { consumeInstagramRateLimit } = await import("../src/lib/instagram/rate-limit");
+let consumeInstagramRateLimit: typeof import("../src/lib/instagram/rate-limit").consumeInstagramRateLimit;
+
+async function loadRateLimiter() {
+  ({ consumeInstagramRateLimit } = await import("../src/lib/instagram/rate-limit"));
+}
 const LIMIT = 5;
 const WINDOW = 2000;
 const prefix = "smartdirect-rate-limit-test:" + Date.now();
@@ -38,6 +42,7 @@ async function workers() {
  console.log("50 multi-worker atomicity: OK");
 }
 async function main() {
+ await loadRateLimiter();
  process.env.INSTAGRAM_RATE_LIMIT_COMMENT_REPLY_LIMIT = String(LIMIT);
  process.env.INSTAGRAM_RATE_LIMIT_COMMENT_REPLY_WINDOW_MS = String(WINDOW);
  process.env.INSTAGRAM_RATE_LIMIT_GLOBAL_LIMIT = "10000"; process.env.INSTAGRAM_RATE_LIMIT_GLOBAL_WINDOW_MS = String(WINDOW);
