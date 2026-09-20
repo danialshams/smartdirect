@@ -3046,6 +3046,8 @@ async function processCommentEvent(
 
             igUserId: commenterIgUserId,
 
+            commentId: igCommentId,
+
             selectedQuickReplyId: null,
           });
 
@@ -3254,6 +3256,8 @@ async function processCommentEvent(
           participantId: String(commenterIgUserId),
 
           igUserId: String(commenterIgUserId),
+
+          commentId: igCommentId,
 
           selectedQuickReplyId: null,
         });
