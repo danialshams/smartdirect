@@ -3294,7 +3294,11 @@ async function processCommentEvent(
       );
     }
 
-    if (publicCommentReplySent || privateReplySent || automationExecuted) {
+    const automationCompleted = hasFlowMessages
+      ? automationExecuted
+      : publicCommentReplySent || privateReplySent;
+
+    if (automationCompleted) {
       await prisma.comment.update({
         where: {
           id: comment.id,
