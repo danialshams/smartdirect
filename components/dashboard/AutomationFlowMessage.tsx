@@ -2,11 +2,13 @@
 
 import { ArrowDown, ArrowUp, ChevronDown, ImagePlus, MessageSquare, Plus, Trash2, X } from "lucide-react";
 import { useState } from "react";
+import type { AutomationTriggerType } from "./AutomationManager";
 import type { FormItem, MessageDraft, QuickReplyDraft, Showcase } from "./automation-form-utils";
 import { getMessageTypeLabel } from "./automation-form-utils";
 
 type AutomationFlowMessageProps = {
   message: MessageDraft;
+  triggerType: AutomationTriggerType;
   index: number;
   total: number;
   messageOptions: { id: string; label: string }[];
@@ -48,6 +50,7 @@ async function uploadShowcaseImage(file: File): Promise<{ publicUrl: string }> {
 
 export default function AutomationFlowMessage({
   message,
+  triggerType,
   index,
   total,
   messageOptions,
@@ -146,11 +149,15 @@ export default function AutomationFlowMessage({
         <div className="relative">
           <select value={message.messageType} onChange={(event) => onUpdate({ messageType: event.target.value as MessageDraft["messageType"], text: "", mediaUrl: "", mediaId: "", showcaseId: "", formId: "" })} className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 py-3 pl-10 text-sm outline-none focus:border-slate-400">
             <option value="TEXT">متن</option>
-            <option value="IMAGE">تصویر</option>
-            <option value="VIDEO">ویدیو</option>
-            <option value="AUDIO">صوت</option>
-            <option value="SHOWCASE">ویترین</option>
-            <option value="FORM">فرم / سوال</option>
+            {triggerType !== "COMMENT_KEYWORD" && (
+              <>
+                <option value="IMAGE">تصویر</option>
+                <option value="VIDEO">ویدیو</option>
+                <option value="AUDIO">صوت</option>
+                <option value="SHOWCASE">ویترین</option>
+                <option value="FORM">فرم / سوال</option>
+              </>
+            )}
           </select>
           <ChevronDown size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
         </div>
