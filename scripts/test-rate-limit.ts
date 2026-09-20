@@ -1,6 +1,17 @@
 import "dotenv/config";
 import { spawn } from "node:child_process";
-import { consumeInstagramRateLimit } from "../src/lib/instagram/rate-limit";
+import { createRequire } from "node:module";
+
+const require = createRequire(import.meta.url);
+const serverOnlyPath = require.resolve("server-only");
+require.cache[serverOnlyPath] = {
+  id: serverOnlyPath,
+  filename: serverOnlyPath,
+  loaded: true,
+  exports: {},
+};
+
+const { consumeInstagramRateLimit } = await import("../src/lib/instagram/rate-limit");
 const LIMIT = 5;
 const WINDOW = 2000;
 const prefix = "smartdirect-rate-limit-test:" + Date.now();
