@@ -140,7 +140,6 @@ async function sendShowcase({ instagramAccountId, instagramUserId, recipientId, 
     accessToken,
     body: {
       recipient: commentId ? { comment_id: commentId } : { id: recipientId },
-      messaging_type: "RESPONSE",
       message: {
         attachment: {
           type: "template",
