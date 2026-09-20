@@ -97,7 +97,8 @@ export default function PublishingDashboardV2() {
   const [error, setError] = useState("");
 
   const triggerType = type === "STORY" ? "STORY_REPLY_KEYWORD" : "COMMENT_KEYWORD";
-  const selectedInstagramAccount = accounts.find((account) => account.id === selectedAccount);\n  const automationAccount: AutomationAccount = { id: selectedAccount, igUsername: selectedInstagramAccount?.igUsername ?? selectedInstagramAccount?.username ?? "" };
+  const selectedInstagramAccount = accounts.find((account) => account.id === selectedAccount);
+  const automationAccount: AutomationAccount = { id: selectedAccount, igUsername: selectedInstagramAccount?.igUsername ?? selectedInstagramAccount?.username ?? "" };
   const messageOptions = useMemo(() => messages.map((message, index) => ({ id: message.id, label: `پیام ${index + 1} — ${getMessageTypeLabel(message.messageType)}` })), [messages]);
 
   async function loadAccounts() {
