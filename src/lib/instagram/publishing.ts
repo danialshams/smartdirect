@@ -144,10 +144,10 @@ async function containerStatus(id: string, token: string, instagramAccountId: st
 async function waitReady(
   id: string,
   token: string,
-  maxAttempts = 20,
   instagramAccountId: string,
   tenantId?: string,
   delayMs = 3000,
+  maxAttempts = 20,
   operation: "PUBLISH_MEDIA" | "PUBLISH_REEL" | "PUBLISH_CAROUSEL" | "PUBLISH_STORY" = "PUBLISH_MEDIA",
 ) {
   for (let i = 0; i < maxAttempts; i += 1) {
@@ -462,7 +462,7 @@ export async function publishInstagramJob(jobId: string) {
           "PUBLISH_CAROUSEL",
         );
 
-        await waitReady(childId, token, 20, job.instagramAccount.igUserId, tenantId, 3000, "PUBLISH_CAROUSEL");
+        await waitReady(childId, token, job.instagramAccountId, tenantId, 3000, 20, "PUBLISH_CAROUSEL");
         children.push(childId);
       }
 
@@ -485,7 +485,7 @@ export async function publishInstagramJob(jobId: string) {
     });
 
     const publishOperation = job.type === "REEL" ? "PUBLISH_REEL" : job.type === "CAROUSEL" ? "PUBLISH_CAROUSEL" : job.type === "STORY" ? "PUBLISH_STORY" : "PUBLISH_MEDIA";
-    await waitReady(containerId, token, 20, job.instagramAccount.igUserId, tenantId, 3000, publishOperation);
+    await waitReady(containerId, token, job.instagramAccountId, tenantId, 3000, 20, publishOperation);
 
     const instagramMediaId = await publishContainer(
       job.instagramAccount.igUserId,
