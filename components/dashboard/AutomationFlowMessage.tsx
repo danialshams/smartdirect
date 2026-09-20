@@ -66,6 +66,7 @@ export default function AutomationFlowMessage({
   const [showcaseItems, setShowcaseItems] = useState<ShowcaseItemDraft[]>([newShowcaseItem()]);
   const [showcaseSaving, setShowcaseSaving] = useState(false);
   const [showcaseError, setShowcaseError] = useState("");
+  const [connectedShowcase, setConnectedShowcase] = useState<{ id: string; title: string } | null>(null);
 
   const isForm = message.messageType === "FORM";
   const canAddReply = message.quickReplies.length < 13;
@@ -118,8 +119,8 @@ export default function AutomationFlowMessage({
         });
       }
       onUpdate({ showcaseId: created.id });
+      setConnectedShowcase({ id: created.id, title: created.title?.trim() || "ویترین ساخته‌شده" });
       onShowcaseCreated?.({ ...created, items: showcaseItems });
-      setShowcaseItems([newShowcaseItem()]);
     } catch (error) {
       setShowcaseError(error instanceof Error ? error.message : "ساخت ویترین ناموفق بود.");
     } finally {
@@ -197,7 +198,11 @@ export default function AutomationFlowMessage({
             </div>
           ))}
           {showcaseError && <p className="text-xs text-red-600">{showcaseError}</p>}
-          <button type="button" disabled={showcaseSaving || loadingResources} onClick={() => void createShowcase()} className="w-full rounded-xl bg-slate-950 px-4 py-3 text-xs font-semibold text-white disabled:opacity-50">{showcaseSaving ? "در حال ساخت ویترین..." : "ساخت و اتصال ویترین"}</button>
+          {connectedShowcase && <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-xs leading-6 text-emerald-800">
+            <span className="font-bold">ویترین متصل شد:</span> {connectedShowcase.title}
+            <span className="block text-[10px] text-emerald-700">این ویترین برای همین پیام Automation ثبت شده است.</span>
+          </div>}
+          <button type="button" disabled={showcaseSaving || loadingResources || Boolean(connectedShowcase)} onClick={() => void createShowcase()} className="w-full rounded-xl bg-slate-950 px-4 py-3 text-xs font-semibold text-white disabled:opacity-50">{showcaseSaving ? "در حال ساخت ویترین..." : connectedShowcase ? "ویترین متصل است" : "ساخت و اتصال ویترین"}</button>
         </div>
       )}
 
