@@ -15,7 +15,9 @@ const globalForRedis = globalThis as unknown as {
   smartDirectRedis?: Redis;
 };
 
-function createRedisClient() {\n  const url = REDIS_URL;
+function createRedisClient() {
+  const url: string = REDIS_URL;
+
   const client = new Redis(url, {
     lazyConnect: true,
     connectTimeout,
@@ -38,7 +40,8 @@ function createRedisClient() {\n  const url = REDIS_URL;
   return client;
 }
 
-export const redis = globalForRedis.smartDirectRedis ?? createRedisClient();
+export const redis =
+  globalForRedis.smartDirectRedis ?? createRedisClient();
 
 if (process.env.NODE_ENV !== "production") {
   globalForRedis.smartDirectRedis = redis;
