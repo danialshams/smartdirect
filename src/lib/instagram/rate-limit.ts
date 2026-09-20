@@ -32,6 +32,7 @@ export type InstagramRateLimitResult = {
   remaining: number;
   retryAfterMs: number;
   resetAt: number;
+  scope?: InstagramRateLimitScope;
 };
 
 export type InstagramRateLimitContext = {
