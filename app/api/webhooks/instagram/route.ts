@@ -3363,4 +3363,29 @@ async function sendPublicCommentReply({
 // =========================================================
 
 async function sendPrivateReply({
+  igUserId,
+  igCommentId,
+  accessToken,
+  replyText,
+}: {
+  igUserId: string;
+  igCommentId: string;
+  accessToken: string;
+  replyText: string;
+}): Promise<boolean> {
+  try {
+    await instagramApiRequest(`/${igUserId}/messages`, {
+      method: "POST",
+      accessToken,
+      body: {
+        recipient: { comment_id: igCommentId },
+        message: { text: replyText },
+      },
+    });
 
+    return true;
+  } catch (error) {
+    console.error("Instagram private reply failed:", error);
+    return false;
+  }
+}
