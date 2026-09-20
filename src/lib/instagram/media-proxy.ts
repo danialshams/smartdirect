@@ -9,12 +9,22 @@ export function proxyInstagramMediaUrl(
 ): string | null {
   if (!url) return null;
 
-  // Keep the helper idempotent. Some API routes already persist/return a
-  // SmartDirect proxy URL, and wrapping it again makes the proxy reject its
-  // own URL as an external Instagram host.
   if (isAlreadyProxied(url)) {
     return url;
   }
 
   return `${PROXY_PATH}?url=${encodeURIComponent(url)}`;
+}
+
+export function proxyInstagramParticipantProfileUrl(
+  accountId: string,
+  participantId: string,
+): string {
+  return `${PROXY_PATH}?accountId=${encodeURIComponent(
+    accountId,
+  )}&participantId=${encodeURIComponent(participantId)}`;
+}
+
+export function proxyInstagramAccountProfileUrl(accountId: string): string {
+  return `${PROXY_PATH}?accountId=${encodeURIComponent(accountId)}`;
 }
