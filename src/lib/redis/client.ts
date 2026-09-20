@@ -8,6 +8,9 @@ if (!REDIS_URL) {
   throw new Error("REDIS_URL is not configured");
 }
 
+const connectTimeout = Number(process.env.REDIS_CONNECT_TIMEOUT_MS ?? 5_000);
+const commandTimeout = Number(process.env.REDIS_COMMAND_TIMEOUT_MS ?? 3_000);
+
 const globalForRedis = globalThis as unknown as {
   smartDirectRedis?: Redis;
 };
@@ -15,8 +18,8 @@ const globalForRedis = globalThis as unknown as {
 function createRedisClient() {
   const client = new Redis(REDIS_URL, {
     lazyConnect: true,
-    connectTimeout: 5_000,
-    commandTimeout: 3_000,
+    connectTimeout,
+    commandTimeout,
     maxRetriesPerRequest: null,
     enableOfflineQueue: false,
     retryStrategy(attempt) {
