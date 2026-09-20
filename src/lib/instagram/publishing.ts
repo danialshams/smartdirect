@@ -33,6 +33,7 @@ async function createImageContainer(
   carousel = false,
   tags: UserTag[] = [],
   tenantId?: string,
+  rateLimitAccountId?: string,
   rateLimitOperation: "PUBLISH_MEDIA" | "PUBLISH_REEL" | "PUBLISH_CAROUSEL" | "PUBLISH_STORY" = "PUBLISH_MEDIA",
 ) {
   const body: Record<string, unknown> = { image_url: media.publicUrl };
@@ -45,7 +46,7 @@ async function createImageContainer(
     accessToken: token,
     body,
     timeoutMs: 30_000,
-    rateLimit: { instagramAccountId: igUserId, operation: rateLimitOperation, ...(tenantId ? { tenantId } : {}) },
+    rateLimit: { instagramAccountId: rateLimitAccountId ?? igUserId, operation: rateLimitOperation, ...(tenantId ? { tenantId } : {}) },
   });
 
   if (!data.id) throw new Error("ساخت Instagram image container ناموفق بود.");
@@ -59,6 +60,7 @@ async function createReelContainer(
   caption?: string | null,
   tags: UserTag[] = [],
   tenantId?: string,
+  rateLimitAccountId?: string,
 ) {
   const body: Record<string, unknown> = {
     media_type: "REELS",
@@ -72,14 +74,14 @@ async function createReelContainer(
     accessToken: token,
     body,
     timeoutMs: 30_000,
-    rateLimit: { instagramAccountId: igUserId, operation: "PUBLISH_REEL", ...(tenantId ? { tenantId } : {}) },
+    rateLimit: { instagramAccountId: rateLimitAccountId ?? igUserId, operation: "PUBLISH_REEL", ...(tenantId ? { tenantId } : {}) },
   });
 
   if (!data.id) throw new Error("ساخت Instagram Reel container ناموفق بود.");
   return data.id;
 }
 
-async function createStoryContainer(igUserId: string, token: string, media: MediaItem, tenantId?: string) {
+async function createStoryContainer(igUserId: string, token: string, media: MediaItem, tenantId?: string, rateLimitAccountId?: string) {
   const body: Record<string, unknown> = {
     media_type: "STORIES",
     ...(media.type === "IMAGE"
@@ -92,7 +94,7 @@ async function createStoryContainer(igUserId: string, token: string, media: Medi
     accessToken: token,
     body,
     timeoutMs: 30_000,
-    rateLimit: { instagramAccountId: igUserId, operation: "PUBLISH_STORY", ...(tenantId ? { tenantId } : {}) },
+    rateLimit: { instagramAccountId: rateLimitAccountId ?? igUserId, operation: "PUBLISH_STORY", ...(tenantId ? { tenantId } : {}) },
   });
 
   if (!data.id) throw new Error("ساخت Instagram Story container ناموفق بود.");
@@ -105,6 +107,7 @@ async function createCarouselContainer(
   children: string[],
   caption?: string | null,
   tenantId?: string,
+  rateLimitAccountId?: string,
 ) {
   const body: Record<string, unknown> = {
     media_type: "CAROUSEL",
@@ -117,7 +120,7 @@ async function createCarouselContainer(
     accessToken: token,
     body,
     timeoutMs: 30_000,
-    rateLimit: { instagramAccountId: igUserId, operation: "PUBLISH_CAROUSEL", ...(tenantId ? { tenantId } : {}) },
+    rateLimit: { instagramAccountId: rateLimitAccountId ?? igUserId, operation: "PUBLISH_CAROUSEL", ...(tenantId ? { tenantId } : {}) },
   });
 
   if (!data.id) throw new Error("ساخت Instagram Carousel ناموفق بود.");
@@ -142,9 +145,9 @@ async function waitReady(
   id: string,
   token: string,
   maxAttempts = 20,
-  delayMs = 3000,
   instagramAccountId: string,
   tenantId?: string,
+  delayMs = 3000,
   operation: "PUBLISH_MEDIA" | "PUBLISH_REEL" | "PUBLISH_CAROUSEL" | "PUBLISH_STORY" = "PUBLISH_MEDIA",
 ) {
   for (let i = 0; i < maxAttempts; i += 1) {
@@ -172,6 +175,7 @@ async function publishContainer(
   token: string,
   containerId: string,
   tenantId?: string,
+  rateLimitAccountId?: string,
   operation: "PUBLISH_MEDIA" | "PUBLISH_REEL" | "PUBLISH_CAROUSEL" | "PUBLISH_STORY" = "PUBLISH_MEDIA",
 ) {
   const maxAttempts = 4;
@@ -185,7 +189,7 @@ async function publishContainer(
           accessToken: token,
           body: { creation_id: containerId },
           timeoutMs: 30_000,
-          rateLimit: { instagramAccountId: igUserId, operation, ...(tenantId ? { tenantId } : {}) },
+          rateLimit: { instagramAccountId: rateLimitAccountId ?? igUserId, operation, ...(tenantId ? { tenantId } : {}) },
         },
       );
 
@@ -404,6 +408,7 @@ export async function publishInstagramJob(jobId: string) {
         token,
         media[0],
         tenantId,
+        job.instagramAccountId,
       );
     } else if (job.type === "POST") {
       if (media.length !== 1 || media[0].type !== "IMAGE") {
@@ -431,6 +436,7 @@ export async function publishInstagramJob(jobId: string) {
         job.caption,
         tags,
         tenantId,
+        job.instagramAccountId,
       );
     } else {
       if (
@@ -452,10 +458,11 @@ export async function publishInstagramJob(jobId: string) {
           true,
           undefined,
           tenantId,
+          job.instagramAccountId,
           "PUBLISH_CAROUSEL",
         );
 
-        await waitReady(childId, token, 20, 3000, job.instagramAccount.igUserId, tenantId, "PUBLISH_CAROUSEL");
+        await waitReady(childId, token, 20, job.instagramAccount.igUserId, tenantId, 3000, "PUBLISH_CAROUSEL");
         children.push(childId);
       }
 
@@ -465,6 +472,7 @@ export async function publishInstagramJob(jobId: string) {
         children,
         job.caption,
         tenantId,
+        job.instagramAccountId,
       );
     }
 
@@ -477,13 +485,14 @@ export async function publishInstagramJob(jobId: string) {
     });
 
     const publishOperation = job.type === "REEL" ? "PUBLISH_REEL" : job.type === "CAROUSEL" ? "PUBLISH_CAROUSEL" : job.type === "STORY" ? "PUBLISH_STORY" : "PUBLISH_MEDIA";
-    await waitReady(containerId, token, 20, 3000, job.instagramAccount.igUserId, tenantId, publishOperation);
+    await waitReady(containerId, token, 20, job.instagramAccount.igUserId, tenantId, 3000, publishOperation);
 
     const instagramMediaId = await publishContainer(
       job.instagramAccount.igUserId,
       token,
       containerId,
       tenantId,
+      job.instagramAccountId,
       publishOperation,
     );
 
