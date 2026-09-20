@@ -5,7 +5,10 @@ import { authOptions } from "@/lib/auth";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
-import {\n  proxyInstagramAccountProfileUrl,\n  proxyInstagramMediaUrl,\n  proxyInstagramParticipantProfileUrl,\n} from "@/lib/instagram/media-proxy";
+import {
+  proxyInstagramMediaUrl,
+  proxyInstagramParticipantProfileUrl,
+} from "@/lib/instagram/media-proxy";
 
 export const dynamic = "force-dynamic";
 
