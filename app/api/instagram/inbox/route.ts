@@ -12,8 +12,6 @@ import {
 
 export const dynamic = "force-dynamic";
 
-const INSTAGRAM_API_VERSION = "v26.0";
-const GRAPH_BASE = `https://graph.instagram.com/${INSTAGRAM_API_VERSION}`;
 
 type HandoffState = {
   conversationId: string;
@@ -608,8 +606,6 @@ export async function POST(request: NextRequest) {
     }
 
 
-    const requestPayload = JSON.stringify(messageBody);
-
     console.info(
       "Instagram inbox send:",
       JSON.stringify({
@@ -619,52 +615,33 @@ export async function POST(request: NextRequest) {
       }),
     );
 
-    let response = await fetch(`${GRAPH_BASE}/${account.igUserId}/messages`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: requestPayload,
-      cache: "no-store",
-    });
+    let data: { message_id?: string };
 
-    let data = (await response.json().catch(() => ({}))) as {
-      message_id?: string;
-      error?: {
-        message?: string;
-        type?: string;
-        code?: number;
-        error_subcode?: number;
-      };
-    };
-
-    if (!response.ok) {
-      console.error(
-        "Instagram send failed:",
-        JSON.stringify({
-          status: response.status,
-          payload: messageBody,
-          response: data,
-        }),
+    try {
+      data = await instagramApiRequest<{ message_id?: string }>(
+        `/${encodeURIComponent(account.igUserId)}/messages`,
+        {
+          method: "POST",
+          accessToken,
+          body: messageBody,
+          timeoutMs: 30_000,
+          rateLimit: {
+            instagramAccountId: account.id,
+            tenantId: session.user.id,
+            operation: file ? "MESSAGE_MEDIA" : "MESSAGE_TEXT",
+          },
+        },
       );
-
-      const metaMessage =
-        data.error?.message || "Instagram پیام را ارسال نکرد.";
-
-      return jsonError(
-        metaMessage,
-        response.status >= 400 && response.status < 500 ? response.status : 502,
-      );
+    } catch (error) {
+      console.error("Instagram send failed:", error);
+      const status = error instanceof InstagramApiError ? error.status : 502;
+      const message = error instanceof Error ? error.message : "Instagram پیام را ارسال نکرد.";
+      return jsonError(message, status >= 400 && status < 500 ? status : 502);
     }
 
     if (!data.message_id) {
       console.error("Instagram send returned no message_id:", data);
-
-      return jsonError(
-        "Instagram پاسخ موفق داد اما message_id برنگرداند.",
-        502,
-      );
+      return jsonError("Instagram پاسخ موفق داد اما message_id برنگرداند.", 502);
     }
 
     const createdMessage = await prisma.conversationMessage.create({
