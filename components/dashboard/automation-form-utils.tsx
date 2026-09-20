@@ -155,8 +155,11 @@ export function normalizeMessages(value: unknown): MessageDraft[] {
     }).filter((item): item is MessageDraft => item !== null);
 }
 
-export function validateMessages(messages: MessageDraft[]) {
+export function validateMessages(messages: MessageDraft[], triggerType?: "COMMENT_KEYWORD" | "DM" | "STORY_REPLY_KEYWORD") {
     if (messages.length === 0) throw new Error("حداقل یک پیام اضافه کنید.");
+    if (triggerType === "COMMENT_KEYWORD" && messages.some((message) => message.messageType !== "TEXT")) {
+        throw new Error("در Automation کامنت فقط پیام متنی به‌عنوان Private Reply قابل استفاده است.");
+    }
     const messageIds = new Set(messages.map((message) => message.id));
     for (let index = 0; index < messages.length; index += 1) {
         const message = messages[index];
