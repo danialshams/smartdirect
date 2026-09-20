@@ -1,5 +1,10 @@
 import "server-only";
 
+import {
+  consumeInstagramRateLimit,
+  type InstagramRateLimitContext,
+} from "@/lib/instagram/rate-limit";
+
 const INSTAGRAM_API_VERSION = "v26.0";
 const INSTAGRAM_GRAPH_URL = `https://graph.instagram.com/${INSTAGRAM_API_VERSION}`;
 const DEFAULT_TIMEOUT_MS = 30_000;
@@ -13,6 +18,18 @@ export type InstagramApiErrorDetails = {
   error_subcode?: number;
   fbtrace_id?: string;
 };
+
+export class InstagramRateLimitError extends Error {
+  retryAfterMs: number;
+  scope?: string;
+
+  constructor(retryAfterMs: number, scope?: string) {
+    super(`Instagram rate limit exceeded${scope ? ` (${scope})` : ""}`);
+    this.name = "InstagramRateLimitError";
+    this.retryAfterMs = retryAfterMs;
+    this.scope = scope;
+  }
+}
 
 export class InstagramApiError extends Error {
   status: number;
@@ -44,6 +61,8 @@ export type InstagramApiRequestOptions = {
   signal?: AbortSignal;
   maxRetries?: number;
   retryBaseDelayMs?: number;
+  rateLimit?: InstagramRateLimitContext;
+  rateLimitWaitMs?: number;
 };
 
 function getTimeoutMs(timeoutMs?: number) {
@@ -202,6 +221,32 @@ export async function instagramApiRequest<T = unknown>(
   }
 
   const url = buildUrl(path, params);
+
+  if (options.rateLimit) {
+    const rateLimit = await consumeInstagramRateLimit(options.rateLimit);
+
+    if (!rateLimit.allowed) {
+      if (
+        options.rateLimitWaitMs &&
+        options.rateLimitWaitMs > 0 &&
+        rateLimit.retryAfterMs <= options.rateLimitWaitMs
+      ) {
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(resolve, rateLimit.retryAfterMs);
+          const onAbort = () => {
+            clearTimeout(timer);
+            reject(new Error("Instagram rate-limit wait aborted"));
+          };
+          options.signal?.addEventListener("abort", onAbort, { once: true });
+        });
+      } else {
+        throw new InstagramRateLimitError(
+          rateLimit.retryAfterMs,
+          rateLimit.scope,
+        );
+      }
+    }
+  }
 
   for (let attempt = 1; attempt <= maxRetries + 1; attempt += 1) {
     const timeout = createTimeoutSignal(
