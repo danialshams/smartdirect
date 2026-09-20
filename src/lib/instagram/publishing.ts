@@ -423,6 +423,7 @@ export async function publishInstagramJob(jobId: string) {
         false,
         tags,
         tenantId,
+        job.instagramAccountId,
       );
     } else if (job.type === "REEL") {
       if (media.length !== 1 || media[0].type !== "VIDEO") {
