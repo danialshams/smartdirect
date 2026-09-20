@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
-import { instagramApiRequest } from "@/lib/instagram/client";
+import { InstagramApiError, instagramApiRequest } from "@/lib/instagram/client";
 import { getStorageProvider } from "@/lib/storage/provider";
 
 type ContainerResponse = { id?: string; status_code?: string; status?: string };
@@ -181,7 +181,7 @@ async function publishContainer(
       // become publishable yet. Retrying this specific POST is safe because
       // Meta has explicitly rejected the publish before creating the media.
       if (
-        !(error instanceof import("@/lib/instagram/client").InstagramApiError) ||
+        !(error instanceof InstagramApiError) ||
         error.details?.code !== 9007 ||
         error.details?.error_subcode !== 2207027 ||
         attempt >= maxAttempts
