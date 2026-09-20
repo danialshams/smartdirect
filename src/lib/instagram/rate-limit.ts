@@ -46,8 +46,10 @@ const PREFIX = "smartdirect:rate-limit:v1";
 const DEFAULTS: Record<InstagramRateLimitOperation, { limit: number; windowMs: number }> = {
   MESSAGE_TEXT: { limit: 100, windowMs: 1_000 },
   MESSAGE_MEDIA: { limit: 10, windowMs: 1_000 },
+  MESSAGE_REACTION: { limit: 100, windowMs: 1_000 },
   CONVERSATION_READ: { limit: 2, windowMs: 1_000 },
   COMMENT_REPLY: { limit: 100, windowMs: 1_000 },
+  COMMENT_LIKE: { limit: 100, windowMs: 1_000 },
   COMMENT_PRIVATE_REPLY: { limit: 750, windowMs: 60 * 60 * 1_000 },
   PUBLISH_MEDIA: { limit: 100, windowMs: 24 * 60 * 60 * 1_000 },
   PUBLISH_REEL: { limit: 100, windowMs: 24 * 60 * 60 * 1_000 },
