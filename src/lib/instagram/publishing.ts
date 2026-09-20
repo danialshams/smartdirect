@@ -32,6 +32,8 @@ async function createImageContainer(
   caption?: string | null,
   carousel = false,
   tags: UserTag[] = [],
+  tenantId?: string,
+  rateLimitOperation: "PUBLISH_MEDIA" | "PUBLISH_REEL" | "PUBLISH_CAROUSEL" | "PUBLISH_STORY" = "PUBLISH_MEDIA",
 ) {
   const body: Record<string, unknown> = { image_url: media.publicUrl };
   if (caption && !carousel) body.caption = caption;
@@ -43,6 +45,7 @@ async function createImageContainer(
     accessToken: token,
     body,
     timeoutMs: 30_000,
+    rateLimit: { instagramAccountId: igUserId, operation: rateLimitOperation, ...(tenantId ? { tenantId } : {}) },
   });
 
   if (!data.id) throw new Error("ساخت Instagram image container ناموفق بود.");
@@ -55,6 +58,7 @@ async function createReelContainer(
   media: MediaItem,
   caption?: string | null,
   tags: UserTag[] = [],
+  tenantId?: string,
 ) {
   const body: Record<string, unknown> = {
     media_type: "REELS",
@@ -68,13 +72,14 @@ async function createReelContainer(
     accessToken: token,
     body,
     timeoutMs: 30_000,
+    rateLimit: { instagramAccountId: igUserId, operation: "PUBLISH_REEL", ...(tenantId ? { tenantId } : {}) },
   });
 
   if (!data.id) throw new Error("ساخت Instagram Reel container ناموفق بود.");
   return data.id;
 }
 
-async function createStoryContainer(igUserId: string, token: string, media: MediaItem) {
+async function createStoryContainer(igUserId: string, token: string, media: MediaItem, tenantId?: string) {
   const body: Record<string, unknown> = {
     media_type: "STORIES",
     ...(media.type === "IMAGE"
@@ -87,6 +92,7 @@ async function createStoryContainer(igUserId: string, token: string, media: Medi
     accessToken: token,
     body,
     timeoutMs: 30_000,
+    rateLimit: { instagramAccountId: igUserId, operation: "PUBLISH_STORY", ...(tenantId ? { tenantId } : {}) },
   });
 
   if (!data.id) throw new Error("ساخت Instagram Story container ناموفق بود.");
@@ -98,6 +104,7 @@ async function createCarouselContainer(
   token: string,
   children: string[],
   caption?: string | null,
+  tenantId?: string,
 ) {
   const body: Record<string, unknown> = {
     media_type: "CAROUSEL",
@@ -110,17 +117,19 @@ async function createCarouselContainer(
     accessToken: token,
     body,
     timeoutMs: 30_000,
+    rateLimit: { instagramAccountId: igUserId, operation: "PUBLISH_CAROUSEL", ...(tenantId ? { tenantId } : {}) },
   });
 
   if (!data.id) throw new Error("ساخت Instagram Carousel ناموفق بود.");
   return data.id;
 }
 
-async function containerStatus(id: string, token: string) {
+async function containerStatus(id: string, token: string, instagramAccountId: string, tenantId?: string, operation: "PUBLISH_MEDIA" | "PUBLISH_REEL" | "PUBLISH_CAROUSEL" | "PUBLISH_STORY" = "PUBLISH_MEDIA") {
   const data = await instagramApiRequest<ContainerResponse>(`/${id}`, {
     accessToken: token,
     params: { fields: "status_code,status" },
     timeoutMs: 30_000,
+    rateLimit: { instagramAccountId, operation, ...(tenantId ? { tenantId } : {}) },
   });
 
   return {
@@ -134,9 +143,12 @@ async function waitReady(
   token: string,
   maxAttempts = 20,
   delayMs = 3000,
+  instagramAccountId: string,
+  tenantId?: string,
+  operation: "PUBLISH_MEDIA" | "PUBLISH_REEL" | "PUBLISH_CAROUSEL" | "PUBLISH_STORY" = "PUBLISH_MEDIA",
 ) {
   for (let i = 0; i < maxAttempts; i += 1) {
-    const status = await containerStatus(id, token);
+    const status = await containerStatus(id, token, instagramAccountId, tenantId, operation);
     const code = String(status.statusCode ?? "").toUpperCase();
 
     if (code === "FINISHED") {
@@ -159,6 +171,8 @@ async function publishContainer(
   igUserId: string,
   token: string,
   containerId: string,
+  tenantId?: string,
+  operation: "PUBLISH_MEDIA" | "PUBLISH_REEL" | "PUBLISH_CAROUSEL" | "PUBLISH_STORY" = "PUBLISH_MEDIA",
 ) {
   const maxAttempts = 4;
 
@@ -171,6 +185,7 @@ async function publishContainer(
           accessToken: token,
           body: { creation_id: containerId },
           timeoutMs: 30_000,
+          rateLimit: { instagramAccountId: igUserId, operation, ...(tenantId ? { tenantId } : {}) },
         },
       );
 
@@ -366,6 +381,7 @@ export async function publishInstagramJob(jobId: string) {
 
   const tags = normalizeUserTags(job.userTags);
   const token = await getValidInstagramAccessToken(job.instagramAccountId);
+  const tenantId = job.instagramAccount.userId;
 
   await prisma.instagramPublishJob.update({
     where: { id: job.id },
@@ -387,6 +403,7 @@ export async function publishInstagramJob(jobId: string) {
         job.instagramAccount.igUserId,
         token,
         media[0],
+        tenantId,
       );
     } else if (job.type === "POST") {
       if (media.length !== 1 || media[0].type !== "IMAGE") {
@@ -400,6 +417,7 @@ export async function publishInstagramJob(jobId: string) {
         job.caption,
         false,
         tags,
+        tenantId,
       );
     } else if (job.type === "REEL") {
       if (media.length !== 1 || media[0].type !== "VIDEO") {
@@ -412,6 +430,7 @@ export async function publishInstagramJob(jobId: string) {
         media[0],
         job.caption,
         tags,
+        tenantId,
       );
     } else {
       if (
@@ -431,9 +450,12 @@ export async function publishInstagramJob(jobId: string) {
           item,
           null,
           true,
+          undefined,
+          tenantId,
+          "PUBLISH_CAROUSEL",
         );
 
-        await waitReady(childId, token);
+        await waitReady(childId, token, 20, 3000, job.instagramAccount.igUserId, tenantId, "PUBLISH_CAROUSEL");
         children.push(childId);
       }
 
@@ -442,6 +464,7 @@ export async function publishInstagramJob(jobId: string) {
         token,
         children,
         job.caption,
+        tenantId,
       );
     }
 
@@ -453,12 +476,15 @@ export async function publishInstagramJob(jobId: string) {
       },
     });
 
-    await waitReady(containerId, token);
+    const publishOperation = job.type === "REEL" ? "PUBLISH_REEL" : job.type === "CAROUSEL" ? "PUBLISH_CAROUSEL" : job.type === "STORY" ? "PUBLISH_STORY" : "PUBLISH_MEDIA";
+    await waitReady(containerId, token, 20, 3000, job.instagramAccount.igUserId, tenantId, publishOperation);
 
     const instagramMediaId = await publishContainer(
       job.instagramAccount.igUserId,
       token,
       containerId,
+      tenantId,
+      publishOperation,
     );
 
     await bindConditionalAutomations(job, instagramMediaId);
