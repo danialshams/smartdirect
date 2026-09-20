@@ -2,7 +2,7 @@ import "server-only";
 
 import Redis from "ioredis";
 
-const REDIS_URL = process.env.REDIS_URL ?? "";
+const REDIS_URL = process.env.REDIS_URL;
 
 if (!REDIS_URL) {
   throw new Error("REDIS_URL is not configured");
@@ -16,7 +16,7 @@ const globalForRedis = globalThis as unknown as {
 };
 
 function createRedisClient() {
-  const url = REDIS_URL;
+  const url = REDIS_URL!;
 
   const client = new Redis(url, {
     lazyConnect: true,
