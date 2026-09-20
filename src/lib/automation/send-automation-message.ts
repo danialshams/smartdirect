@@ -1,9 +1,9 @@
 import { AutomationMessageType } from "@/generated/prisma/client";
 import { createPublicFormToken } from "@/lib/forms/public-form-token";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
+import { InstagramApiError, instagramApiRequest } from "@/lib/instagram/client";
 import { prisma } from "@/lib/prisma";
 
-const INSTAGRAM_API_VERSION = "v26.0";
 const MAX_API_RETRIES = 2;
 const MAX_QUICK_REPLIES = 13;
 const MAX_QUICK_REPLY_TITLE_LENGTH = 20;
@@ -66,32 +66,44 @@ function getPublicAppUrl() {
 }
 
 async function callInstagramMessagesApi({ instagramUserId, accessToken, body }: { instagramUserId: string; accessToken: string; body: Record<string, unknown> }): Promise<SendAutomationMessageResult> {
-  const url = `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${instagramUserId}/messages`;
   for (let attempt = 1; attempt <= MAX_API_RETRIES; attempt += 1) {
     try {
-      const response = await fetch(url, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify(body),
-        cache: "no-store",
-      });
-      const responseText = await response.text();
-      let data: InstagramApiResponse | string;
-      try { data = JSON.parse(responseText); } catch { data = responseText; }
-      if (response.ok) {
-        const result = data as InstagramApiResponse;
-        return { success: true, igMessageId: result.message_id, recipientId: result.recipient_id, response: data };
-      }
-      const errorData = data as InstagramApiResponse;
-      const error = errorData?.error?.message || `Instagram API returned HTTP ${response.status}`;
-      if (response.status >= 400 && response.status < 500) return { success: false, error, response: data };
-      if (attempt < MAX_API_RETRIES) { await sleep(attempt * 1000); continue; }
-      return { success: false, error, response: data };
+      const data = await instagramApiRequest<InstagramApiResponse>(
+        `${instagramUserId}/messages`,
+        {
+          method: "POST",
+          accessToken,
+          body,
+        },
+      );
+
+      return {
+        success: true,
+        igMessageId: data.message_id,
+        recipientId: data.recipient_id,
+        response: data,
+      };
     } catch (error) {
-      if (attempt < MAX_API_RETRIES) { await sleep(attempt * 1000); continue; }
-      return { success: false, error: error instanceof Error ? error.message : "Instagram API request failed" };
+      const message =
+        error instanceof Error ? error.message : "Instagram API request failed";
+
+      if (error instanceof InstagramApiError && error.status >= 400 && error.status < 500) {
+        return { success: false, error: message, response: error.response };
+      }
+
+      if (attempt < MAX_API_RETRIES) {
+        await sleep(attempt * 1000);
+        continue;
+      }
+
+      return {
+        success: false,
+        error: message,
+        response: error instanceof InstagramApiError ? error.response : undefined,
+      };
     }
   }
+
   return { success: false, error: "Instagram API request failed" };
 }
 
