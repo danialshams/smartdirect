@@ -98,7 +98,11 @@ export default function PublishingDashboardV2() {
 
   const triggerType = type === "STORY" ? "STORY_REPLY_KEYWORD" : "COMMENT_KEYWORD";
   const selectedInstagramAccount = accounts.find((account) => account.id === selectedAccount);
-  const automationAccount: AutomationAccount = { id: selectedAccount, igUsername: selectedInstagramAccount?.igUsername ?? selectedInstagramAccount?.username ?? "" };
+  const selectedAccountId = selectedInstagramAccount?.id ?? "";
+  const automationAccount: AutomationAccount = {
+    id: selectedAccountId,
+    igUsername: selectedInstagramAccount?.igUsername ?? selectedInstagramAccount?.username ?? "",
+  };
   const messageOptions = useMemo(() => messages.map((message, index) => ({ id: message.id, label: `پیام ${index + 1} — ${getMessageTypeLabel(message.messageType)}` })), [messages]);
 
   async function loadAccounts() {
@@ -202,7 +206,8 @@ export default function PublishingDashboardV2() {
   }
 
   async function createJob(publishNow: boolean) {
-    if (!selectedAccount) { setError("ابتدا یک اکانت Instagram انتخاب کنید."); return; }
+    const accountId = selectedInstagramAccount?.id ?? "";
+    if (!accountId) { setError("اکانت Instagram انتخاب نشده است."); return; }
     if (!uploadedMedia.length) { setError("ابتدا فایل را آپلود کنید."); return; }
     if (type === "CAROUSEL" && uploadedMedia.length < 2) { setError("Carousel باید حداقل دو تصویر داشته باشد."); return; }
     if (type !== "CAROUSEL" && uploadedMedia.length !== 1) { setError(`${typeLabels[type]} باید دقیقاً یک فایل داشته باشد.`); return; }
@@ -211,7 +216,7 @@ export default function PublishingDashboardV2() {
     try {
       setPublishing(true); setError("");
       const automationId = await createAutomation();
-      const response = await fetch("/api/instagram/publishing", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ instagramAccountId: selectedAccount, type, caption: type === "STORY" ? null : caption.trim() || null, scheduledAt: publishNow ? null : scheduled.toISOString(), idempotencyKey: crypto.randomUUID(), commentAutomationId: type === "STORY" ? null : automationId, storyReplyAutomationId: type === "STORY" ? automationId : null, media: uploadedMedia }) });
+      const response = await fetch("/api/instagram/publishing", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ instagramAccountId: accountId, type, caption: type === "STORY" ? null : caption.trim() || null, scheduledAt: publishNow ? null : scheduled.toISOString(), idempotencyKey: crypto.randomUUID(), commentAutomationId: type === "STORY" ? null : automationId, storyReplyAutomationId: type === "STORY" ? automationId : null, media: uploadedMedia }) });
       const result = await response.json();
       if (!response.ok) { await fetch(`/api/automations/${automationId}`, { method: "DELETE" }).catch(() => undefined); throw new Error(result.message || "ساخت Publishing Job ناموفق بود."); }
       const job = result.data as Job;
