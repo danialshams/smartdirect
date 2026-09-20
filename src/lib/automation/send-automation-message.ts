@@ -2,6 +2,7 @@ import { AutomationMessageType } from "@/generated/prisma/client";
 import { createPublicFormToken } from "@/lib/forms/public-form-token";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 import { InstagramApiError, instagramApiRequest } from "@/lib/instagram/client";
+import type { InstagramRateLimitOperation } from "@/lib/instagram/rate-limit";
 import { prisma } from "@/lib/prisma";
 
 const MAX_API_RETRIES = 2;
@@ -66,7 +67,7 @@ function getPublicAppUrl() {
   throw new Error("Public application URL is missing.");
 }
 
-async function callInstagramMessagesApi({ instagramUserId, accessToken, body }: { instagramUserId: string; accessToken: string; body: Record<string, unknown> }): Promise<SendAutomationMessageResult> {
+async function callInstagramMessagesApi({ instagramAccountId, tenantId, instagramUserId, accessToken, body, operation }: { instagramAccountId: string; tenantId: string; instagramUserId: string; accessToken: string; body: Record<string, unknown>; operation: InstagramRateLimitOperation }): Promise<SendAutomationMessageResult> {
   for (let attempt = 1; attempt <= MAX_API_RETRIES; attempt += 1) {
     try {
       const data = await instagramApiRequest<InstagramApiResponse>(
@@ -75,6 +76,12 @@ async function callInstagramMessagesApi({ instagramUserId, accessToken, body }: 
           method: "POST",
           accessToken,
           body,
+          rateLimit: {
+            tenantId,
+            instagramAccountId,
+            operation,
+          },
+          rateLimitWaitMs: 0,
         },
       );
 
@@ -113,6 +120,8 @@ async function sendTextLike({ instagramUserId, recipientId, commentId, accessTok
   const message: Record<string, unknown> = { text: text.trim() };
   if (quickReplies?.length) message.quick_replies = formatQuickReplies(quickReplies);
   return callInstagramMessagesApi({
+    instagramAccountId,
+    tenantId: "__TENANT__",
     instagramUserId,
     accessToken,
     body: {
@@ -185,6 +194,12 @@ export async function sendAutomationMessage(payload: AutomationMessagePayload): 
   const { instagramAccountId, recipientId, instagramUserId, message } = payload;
   if (!instagramAccountId || !recipientId || !instagramUserId) throw new Error("Instagram message identifiers are missing");
   const accessToken = await getValidInstagramAccessToken(instagramAccountId);
+  const instagramAccount = await prisma.instagramAccount.findUnique({
+    where: { id: instagramAccountId },
+    select: { userId: true },
+  });
+  if (!instagramAccount) throw new Error("Instagram account not found");
+  const tenantId = instagramAccount.userId;
 
   // Instagram Comment Private Reply supports one text reply. Rich message
   // types below are available for normal DM / Story Reply flows, not a
