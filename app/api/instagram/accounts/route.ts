@@ -71,6 +71,7 @@ export async function GET() {
             accounts.map(async (account) => ({
                 id: account.id,
                 igUserId: account.igUserId,
+                igUsername: account.igUsername,
                 username: account.igUsername,
                 isConnected: account.isConnected,
                 profilePictureUrl: account.isConnected
