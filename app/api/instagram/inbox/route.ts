@@ -306,6 +306,7 @@ export async function GET(request: NextRequest) {
           account.id,
           conversation.participantId,
           accessToken,
+          session.user.id,
         );
       }
 
@@ -397,7 +398,7 @@ export async function GET(request: NextRequest) {
         .filter((item) => !item.participantUsername || !item.participantProfilePicture)
         .slice(0, 25)
         .map((item) =>
-          enrichParticipantProfile(account.id, item.participantId, accessToken),
+          enrichParticipantProfile(account.id, item.participantId, accessToken, session.user.id),
         ),
     );
 
@@ -577,8 +578,9 @@ export async function POST(request: NextRequest) {
 
     if (file) {
       const uploaded = await uploadInstagramAttachment({
+        instagramAccountId: account.id,
+        tenantId: session.user.id,
         igUserId: account.igUserId,
-        accessToken,
         file,
       });
 
