@@ -239,6 +239,17 @@ export async function instagramApiRequest<T = unknown>(
           };
           options.signal?.addEventListener("abort", onAbort, { once: true });
         });
+
+        const retriedRateLimit = await consumeInstagramRateLimit(
+          options.rateLimit,
+        );
+
+        if (!retriedRateLimit.allowed) {
+          throw new InstagramRateLimitError(
+            retriedRateLimit.retryAfterMs,
+            retriedRateLimit.scope,
+          );
+        }
       } else {
         throw new InstagramRateLimitError(
           rateLimit.retryAfterMs,
