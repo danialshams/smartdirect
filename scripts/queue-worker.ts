@@ -1,6 +1,7 @@
 import "dotenv/config";
 
 import { runQueueWorker } from "../src/lib/queue/worker";
+import type { QueueJobPayload } from "../src/lib/queue/types";
 
 const controller = new AbortController();
 
@@ -26,10 +27,12 @@ runQueueWorker(
     );
 
     if (job.type === "TEST") {
+      const payload = job.payload as QueueJobPayload<"TEST">;
+
       console.log(
         JSON.stringify({
           event: "job:test",
-          message: job.payload.message,
+          message: payload.message,
         }),
       );
     }
