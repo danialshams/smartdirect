@@ -30,7 +30,7 @@ type HandoffState = {
   active: boolean;
 };
 
-export async function executeAutomation(input: ExecuteAutomationInput) {
+async function executeAutomationInternal(input: ExecuteAutomationInput) {
   let idempotencyKey: string | null = null;
 
   try {
@@ -403,6 +403,26 @@ export async function executeAutomation(input: ExecuteAutomationInput) {
     if (idempotencyKey) {
       await failAutomationExecution(idempotencyKey, error);
     }
+    throw error;
+  }
+}
+
+
+export async function executeAutomation(input: ExecuteAutomationInput) {
+  const startedAt = Date.now();
+
+  try {
+    const result = await executeAutomationInternal(input);
+    const { recordLatency } = await import("@/lib/observability/metrics");
+    void recordLatency("automation", Date.now() - startedAt);
+    return result;
+  } catch (error) {
+    const { recordLatency, recordFailure } = await import("@/lib/observability/metrics");
+    void recordLatency("automation", Date.now() - startedAt);
+    void recordFailure(
+      "automation",
+      error instanceof Error ? error.constructor.name : "unknown",
+    );
     throw error;
   }
 }
