@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 import { proxyInstagramMediaUrl } from "@/lib/instagram/media-proxy";
+import { getCachedInstagramMedia } from "@/lib/cache/instagram";
 
 export const dynamic = "force-dynamic";
 
@@ -55,48 +56,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const url = new URL(
-      `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${account.igUserId}/media`,
-    );
-
-    url.searchParams.set(
-      "fields",
-      [
-        "id",
-        "caption",
-        "media_type",
-        "media_product_type",
-        "media_url",
-        "thumbnail_url",
-        "permalink",
-        "timestamp",
-      ].join(","),
-    );
-
-    url.searchParams.set("limit", "50");
-    const accessToken = await getValidInstagramAccessToken(account.id);
-
-    url.searchParams.set("access_token", accessToken);
-
-    const response = await fetch(url.toString(), {
-      method: "GET",
-      cache: "no-store",
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      console.error("Instagram media error:", result);
-
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            result?.error?.message || "دریافت پست‌های Instagram ناموفق بود.",
-        },
-        { status: response.status },
-      );
-    }
+    const result = await getCachedInstagramMedia(account.id, 50);\n\n    if (!result) {\n      return NextResponse.json({ success: false, message: "دریافت Media اینستاگرام ناموفق بود." }, { status: 502 });\n    }
 
     const data = (result.data ?? []).map((item: Record<string, unknown>) => ({
       ...item,
