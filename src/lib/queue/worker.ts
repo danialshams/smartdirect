@@ -21,6 +21,7 @@ export interface QueueWorkerOptions {
   concurrency?: number;
   pollIntervalMs?: number;
   workerId?: string;
+  queueNamespace?: string;
   signal?: AbortSignal;
 }
 
@@ -86,7 +87,7 @@ export async function runQueueWorker(
     let job: QueueJob | null = null;
 
     try {
-      job = await claimNextJob(workerId);
+      job = await claimNextJob(workerId, options.queueNamespace);
     } catch (error) {
       observabilityLogger.error("queue_claim_failed", {
         workerId,
@@ -170,7 +171,7 @@ export async function runQueueWorker(
     if (Date.now() - lastRecoveryAt >= recoveryIntervalMs) {
       lastRecoveryAt = Date.now();
       try {
-        await recoverStalledJobs();
+        await recoverStalledJobs(50, options.queueNamespace);
       } catch (error) {
         observabilityLogger.error("queue_recovery_error", {
           error: error instanceof Error ? error.message : String(error),
