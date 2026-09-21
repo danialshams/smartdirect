@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { proxyInstagramMediaUrl } from "@/lib/instagram/media-proxy";
+import { getCachedInstagramProfile } from "@/lib/cache/instagram";
 
 export const dynamic = "force-dynamic";
 
@@ -131,7 +132,7 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        const profile = await fetchProfile(account.accessToken);
+        const profile = await getCachedInstagramProfile(account.id);\n\n        if (!profile) {\n            return NextResponse.json(\n                { success: false, error: "اطلاعات پروفایل Instagram در دسترس نیست." },\n                { status: 502 },\n            );\n        }
 
         return NextResponse.json({
             success: true,
