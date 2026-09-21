@@ -25,7 +25,8 @@
     "idempotency:concurrent-duplicate:test": "tsx scripts/test-idempotency-concurrent-duplicate.ts",
     "lock:redis:test": "tsx scripts/test-redis-distributed-lock.ts",
     "lock:acquisition:test": "tsx scripts/test-lock-acquisition.ts",
-    "lock:release:test": "tsx scripts/test-lock-release.ts"
+    "lock:release:test": "tsx scripts/test-lock-release.ts",
+    "lock:double-worker:test": "tsx scripts/test-double-worker.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",
