@@ -361,7 +361,7 @@ async function bindConditionalAutomations(
   }
 }
 
-export async function publishInstagramJob(jobId: string) {
+async function publishInstagramJobInternal(jobId: string) {
   const job = await prisma.instagramPublishJob.findUnique({
     where: { id: jobId },
     include: {
@@ -555,6 +555,25 @@ export async function publishInstagramJob(jobId: string) {
       console.error("Failed to mark publishing idempotency as FAILED:", idempotencyError);
     }
 
+    throw error;
+  }
+}
+
+export async function publishInstagramJob(jobId: string) {
+  const startedAt = Date.now();
+
+  try {
+    const result = await publishInstagramJobInternal(jobId);
+    const { recordLatency } = await import("@/lib/observability/metrics");
+    void recordLatency("publishing", Date.now() - startedAt);
+    return result;
+  } catch (error) {
+    const { recordLatency, recordFailure } = await import("@/lib/observability/metrics");
+    void recordLatency("publishing", Date.now() - startedAt);
+    void recordFailure(
+      "publishing",
+      error instanceof Error ? error.constructor.name : "unknown",
+    );
     throw error;
   }
 }
