@@ -106,7 +106,8 @@ async function main() {
           throw new Error(`Unexpected job type: ${job.type}`);
         }
 
-        const eventId = job.payload.eventId;
+        const webhookJob = job as import("../src/lib/queue/types").QueueJob<"INSTAGRAM_WEBHOOK">;
+        const eventId = webhookJob.payload.eventId;
 
         if (processedIds.has(eventId)) {
           throw new Error(`Duplicate processing detected: ${eventId}`);
