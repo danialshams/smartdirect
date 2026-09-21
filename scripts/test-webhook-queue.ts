@@ -28,8 +28,8 @@ async function main() {
   if (
     !stored ||
     stored.type !== "INSTAGRAM_WEBHOOK" ||
-    stored.payload.eventId !== eventId ||
-    stored.payload.instagramAccountId !== "instagram-account-test"
+    (stored as import("../src/lib/queue/types").QueueJob<"INSTAGRAM_WEBHOOK">).payload.eventId !== eventId ||
+    (stored as import("../src/lib/queue/types").QueueJob<"INSTAGRAM_WEBHOOK">).payload.instagramAccountId !== "instagram-account-test"
   ) {
     throw new Error("Queued webhook payload could not be read back.");
   }
