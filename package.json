@@ -13,7 +13,8 @@
     "queue:test:multi-worker": "tsx scripts/test-multi-worker.ts",
     "rate-limit:test": "tsx scripts/test-rate-limit.ts",
     "instagram:retry:test": "tsx scripts/test-instagram-retry.ts",
-    "idempotency:key:test": "tsx scripts/test-idempotency-key.ts"
+    "idempotency:key:test": "tsx scripts/test-idempotency-key.ts",
+    "idempotency:store:test": "tsx scripts/test-idempotency-store.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",
