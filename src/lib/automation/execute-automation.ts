@@ -30,29 +30,6 @@ type HandoffState = {
 export async function executeAutomation(input: ExecuteAutomationInput) {
   let idempotencyKey: string | null = null;
 
-  if (input.executionId?.trim()) {
-    const claim = await claimAutomationExecution({
-      instagramAccountId: input.instagramAccountId,
-      automationId: input.automationId,
-      executionId: input.executionId.trim(),
-    });
-
-    if (!claim.claimed) {
-      console.log("[Automation Engine] Duplicate execution skipped.", {
-        automationId: input.automationId,
-        executionId: input.executionId,
-      });
-
-      return {
-        success: true,
-        executed: false,
-        reason: "IDEMPOTENT_DUPLICATE",
-      };
-    }
-
-    idempotencyKey = claim.key;
-  }
-
   try {
   // =========================================================
   // 1. Find Instagram account
@@ -164,6 +141,29 @@ export async function executeAutomation(input: ExecuteAutomationInput) {
     };
   }
 
+  if (input.executionId?.trim()) {
+    const claim = await claimAutomationExecution({
+      instagramAccountId: input.instagramAccountId,
+      automationId: input.automationId,
+      executionId: input.executionId.trim(),
+    });
+
+    if (!claim.claimed) {
+      console.log("[Automation Engine] Duplicate execution skipped.", {
+        automationId: input.automationId,
+        executionId: input.executionId,
+      });
+
+      return {
+        success: true,
+        executed: false,
+        reason: "IDEMPOTENT_DUPLICATE",
+      };
+    }
+
+    idempotencyKey = claim.key;
+  }
+
   // =========================================================
   // 5. Determine first/current message
   // =========================================================
@@ -199,12 +199,18 @@ export async function executeAutomation(input: ExecuteAutomationInput) {
         },
       });
 
-      return {
+      const result = {
         success: true,
         executed: false,
         reason: "FLOW_FINISHED",
         conversationId: conversation.id,
       };
+
+      if (idempotencyKey) {
+        await completeAutomationExecution(idempotencyKey, result);
+      }
+
+      return result;
     }
 
     const nextMessage = automation.messages.find(
@@ -289,7 +295,7 @@ export async function executeAutomation(input: ExecuteAutomationInput) {
         error: result.error,
       });
 
-      return {
+      const failure = {
         success: false,
         executed: false,
         reason: "MESSAGE_NOT_SENT",
@@ -297,6 +303,15 @@ export async function executeAutomation(input: ExecuteAutomationInput) {
         conversationId: conversation.id,
         messageId: currentMessage.id,
       };
+
+      if (idempotencyKey) {
+        await failAutomationExecution(
+          idempotencyKey,
+          result.error ?? "Automation message could not be sent.",
+        );
+      }
+
+      return failure;
     }
 
     // =======================================================
