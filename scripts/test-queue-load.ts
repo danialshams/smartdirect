@@ -7,7 +7,7 @@ import {
   getQueueDepth,
 } from "../src/lib/queue/core";
 import { getLoadTestConfig } from "./load-test/config";
-import { reportLoadTest } from "./load-test/report";
+import { printLoadTestReport } from "./load-test/report";
 import { runLoadTest } from "./load-test/runner";
 
 async function main() {
@@ -47,7 +47,7 @@ async function main() {
       }
     });
 
-    reportLoadTest(result);
+    printLoadTestReport(result);
 
     if (result.failed > 0) {
       throw new Error(
