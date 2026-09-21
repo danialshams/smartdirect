@@ -7,6 +7,9 @@ import {
 } from "@/generated/prisma/client";
 
 import { sendAutomationMessage } from "./send-automation-message";
+import { evaluateAutomationConditions } from "./conditions";
+import { resolveAutomationAction } from "./action";
+import { resolveNextSequentialMessage, resolveQuickReplyDestination } from "./quick-reply-flow";
 import {
   claimAutomationExecution,
   completeAutomationExecution,
@@ -126,8 +129,14 @@ export async function executeAutomation(input: ExecuteAutomationInput) {
 
   const handoff = handoffRows[0];
 
-  if (handoff?.active) {
-    console.log("[Automation Engine] Human handoff is active; automation paused.", {
+  const conditions = evaluateAutomationConditions({
+    automationIsActive: automation.isActive,
+    humanHandoffActive: Boolean(handoff?.active),
+  });
+
+  if (!conditions.allowed) {
+    console.log("[Automation Engine] Automation condition blocked execution.", {
+      reason: conditions.reason,
       conversationId: conversation.id,
       automationId: automation.id,
       participantId: input.participantId,
@@ -184,11 +193,12 @@ export async function executeAutomation(input: ExecuteAutomationInput) {
       },
     });
 
-    if (!selectedQuickReply) {
-      throw new Error("Quick reply not found");
-    }
+    const nextMessageId = resolveQuickReplyDestination(
+      automation.messages,
+      input.selectedQuickReplyId,
+    );
 
-    if (!selectedQuickReply.nextMessageId) {
+    if (!nextMessageId) {
       await prisma.conversation.update({
         where: {
           id: conversation.id,
@@ -214,7 +224,7 @@ export async function executeAutomation(input: ExecuteAutomationInput) {
     }
 
     const nextMessage = automation.messages.find(
-      (message) => message.id === selectedQuickReply.nextMessageId,
+      (message) => message.id === nextMessageId,
     );
 
     if (!nextMessage) {
@@ -265,6 +275,15 @@ export async function executeAutomation(input: ExecuteAutomationInput) {
     // =======================================================
     // 10. Send message through Instagram Adapter
     // =======================================================
+
+    const action = resolveAutomationAction({
+      messageType: currentMessage.messageType,
+      text: currentMessage.text,
+      mediaUrl: currentMessage.mediaUrl,
+      mediaId: currentMessage.mediaId,
+      formId: currentMessage.formId,
+      showcaseId: currentMessage.showcaseId,
+    });
 
     const result = await sendAutomationMessage({
       instagramAccountId: instagramAccount.id,
@@ -358,7 +377,7 @@ export async function executeAutomation(input: ExecuteAutomationInput) {
       (message) => message.id === currentMessage.id,
     );
 
-    const nextMessage = automation.messages[currentIndex + 1];
+    const nextMessage = resolveNextSequentialMessage(automation.messages, currentMessage.id);
 
     if (!nextMessage) {
       break;
