@@ -138,6 +138,7 @@ export async function GET(
     }
 
     await invalidateAutomationCache(automation.instagramAccountId);
+
     return NextResponse.json({
       success: true,
       data: message,
@@ -514,7 +515,7 @@ export async function DELETE(
       },
     });
 
-    await invalidateAutomationCache(message.automationId);
+    await invalidateAutomationCache(automation.instagramAccountId);
     return NextResponse.json({
       success: true,
       message: "پیام با موفقیت حذف شد",
