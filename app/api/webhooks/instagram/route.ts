@@ -21,6 +21,7 @@ import {
   getRequestObservabilityContext,
 } from "@/lib/observability/context";
 import { observabilityLogger } from "@/lib/observability/logger";
+import { recordFailure, recordLatency } from "@/lib/observability/metrics";
 
 export const dynamic = "force-dynamic";
 
@@ -413,9 +414,12 @@ export async function POST(request: NextRequest) {
     // 7. Processing complete
     // =======================================================
 
+    const latencyMs = Date.now() - startedAt;
+
     observabilityLogger.info("webhook_request_completed", {
-      latencyMs: Date.now() - startedAt,
+      latencyMs,
     });
+    void recordLatency("webhook", latencyMs);
 
     return NextResponse.json(
       { success: true },
@@ -428,10 +432,17 @@ export async function POST(request: NextRequest) {
       },
     );
   } catch (error) {
+    const latencyMs = Date.now() - startedAt;
+
     observabilityLogger.error("webhook_request_failed", {
-      latencyMs: Date.now() - startedAt,
+      latencyMs,
       error: error instanceof Error ? error.message : String(error),
     });
+    void recordLatency("webhook", latencyMs);
+    void recordFailure(
+      "webhook",
+      error instanceof Error ? error.constructor.name : "unknown",
+    );
 
     return NextResponse.json(
       {
