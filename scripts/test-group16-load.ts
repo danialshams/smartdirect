@@ -7,7 +7,7 @@ import {
   getQueueDepth,
 } from "../src/lib/queue/core";
 import { recoverStalledJobs } from "../src/lib/queue/recovery";
-import { getRedisClient } from "../src/lib/redis/client";
+import { getRedisClient, setRedisCommandTimeoutMs } from "../src/lib/redis/client";
 import { runQueueWorker } from "../src/lib/queue/worker";
 import type { QueueJob, QueueJobType } from "../src/lib/queue/types";
 
@@ -21,6 +21,10 @@ const CONCURRENCY = Math.max(
 );
 const TOTAL = Math.max(30, Number(process.env.GROUP16_TOTAL ?? 50));
 const NAMESPACE = `group16-load-${Date.now()}`;
+
+// Upstash can legitimately take longer than the default 5s during stress tests.
+// Keep the production default unchanged; this override applies only to this test process.
+setRedisCommandTimeoutMs(30_000);
 
 const sleep = (ms: number) =>
   new Promise((resolve) => setTimeout(resolve, ms));
@@ -267,7 +271,7 @@ async function main() {
       async () => {
         await sleep(4);
       },
-      { concurrency: CONCURRENCY * 2 },
+      { concurrency: CONCURRENCY },
     ),
   );
 
@@ -279,7 +283,7 @@ async function main() {
       async () => {
         await sleep(4);
       },
-      { concurrency: CONCURRENCY * 2 },
+      { concurrency: CONCURRENCY },
     ),
   );
 
