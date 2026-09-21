@@ -1,5 +1,3 @@
-import "server-only";
-
 import { getRedisClient } from "@/lib/redis/client";
 import {
   type AcquireLockResult,
