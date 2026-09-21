@@ -21,6 +21,9 @@ export interface QueueJobPayloadMap {
   };
   INSTAGRAM_WEBHOOK: {
     event: unknown;
+    eventId: string;
+    instagramAccountId: string;
+    eventType: "MESSAGING" | "COMMENT";
   };
   AUTOMATION: {
     automationId: string;
