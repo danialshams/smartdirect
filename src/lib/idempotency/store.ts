@@ -119,6 +119,50 @@ export async function claimIdempotency(
       throw error;
     }
 
+    const now = new Date();
+
+    if (
+      existing.status === "IN_PROGRESS" &&
+      existing.expiresAt.getTime() <= now.getTime()
+    ) {
+      const reclaimed = await prisma.idempotencyRecord.updateMany({
+        where: {
+          key: input.key,
+          status: "IN_PROGRESS",
+          expiresAt: { lte: now },
+        },
+        data: {
+          status: "IN_PROGRESS",
+          expiresAt,
+          response: null,
+          errorMessage: null,
+          completedAt: null,
+        },
+      });
+
+      if (reclaimed.count === 1) {
+        const record = await getIdempotencyRecord(input.key);
+        if (!record) {
+          throw new Error("Idempotency record disappeared after reclaim.");
+        }
+
+        return {
+          claimed: true,
+          record,
+        };
+      }
+
+      const latest = await getIdempotencyRecord(input.key);
+      if (!latest) {
+        throw error;
+      }
+
+      return {
+        claimed: false,
+        record: latest,
+      };
+    }
+
     return {
       claimed: false,
       record: toRecord(existing),
@@ -207,4 +251,11 @@ export async function failIdempotency(
   }
 
   return record;
+}
+
+
+export function getIdempotencyExecutionState(
+  record: Pick<IdempotencyRecord, "status">,
+): IdempotencyExecutionState {
+  return record.status;
 }
