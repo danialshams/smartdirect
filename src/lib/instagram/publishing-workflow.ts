@@ -1,4 +1,3 @@
-import { prisma } from "@/lib/prisma";
 import { getJob, completeJob, failJob } from "@/lib/queue/core";
 import { claimIdempotency, completeIdempotency, failIdempotency } from "@/lib/idempotency/store";
 import { acquireLock, releaseLock } from "@/lib/lock/redis-lock";
@@ -8,7 +7,7 @@ import type { QueueJob } from "@/lib/queue/types";
 import { enterObservabilityContext } from "@/lib/observability/context";
 import { observabilityLogger } from "@/lib/observability/logger";
 
-async function processPublishingQueueJobStep(jobId: string) {
+export async function processPublishingQueueJobStep(jobId: string) {
   "use step";
 
   const job = await getJob(jobId);
