@@ -5,6 +5,7 @@ import { z } from "zod";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { scheduleInstagramPublish } from "@/lib/instagram/scheduled-publishing-workflow";
+import { enqueueInstagramPublishing } from "@/lib/instagram/publishing-queue";
 import { proxyInstagramMediaUrl } from "@/lib/instagram/media-proxy";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 
@@ -147,6 +148,7 @@ export async function POST(request: NextRequest) {
     }
 
     let workflowRunId: string | null = null;
+    let queueJobId: string | null = null;
     if (isScheduled && scheduledAt) {
       try {
         const workflowRun = await start(scheduleInstagramPublish, [job.id, scheduledAt.toISOString()]);
@@ -155,8 +157,26 @@ export async function POST(request: NextRequest) {
         await prisma.instagramPublishJob.update({ where: { id: job.id }, data: { status: "FAILED", errorMessage: error instanceof Error ? `شروع Workflow ناموفق بود: ${error.message}` : "شروع Workflow ناموفق بود.", retryCount: { increment: 1 } } });
         throw error;
       }
+    } else {
+      try {
+        const queued = await enqueueInstagramPublishing(job.id, { maxAttempts: 4 });
+        queueJobId = queued.job.id;
+      } catch (error) {
+        await prisma.instagramPublishJob.update({
+          where: { id: job.id },
+          data: {
+            status: "FAILED",
+            errorMessage:
+              error instanceof Error
+                ? `Queue شدن Publishing ناموفق بود: ${error.message}`
+                : "Queue شدن Publishing ناموفق بود.",
+            retryCount: { increment: 1 },
+          },
+        });
+        throw error;
+      }
     }
-    return NextResponse.json({ success: true, data: job, workflowRunId }, { status: 201 });
+    return NextResponse.json({ success: true, data: job, workflowRunId, queueJobId }, { status: 201 });
   } catch (error) {
     console.error("POST /api/instagram/publishing error:", error);
     return NextResponse.json({ success: false, message: error instanceof Error ? error.message : "ساخت Publishing Job ناموفق بود." }, { status: 500 });
