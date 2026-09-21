@@ -17,7 +17,6 @@ import { reactToInstagramMessage } from "@/lib/instagram/react-to-message";
 import { InstagramApiError, instagramApiRequest } from "@/lib/instagram/client";
 import { withConversationLock } from "@/lib/conversation/conversation-lock";
 import {
-  createRequestId,
   enterObservabilityContext,
   getRequestObservabilityContext,
 } from "@/lib/observability/context";
@@ -354,7 +353,15 @@ export async function POST(request: NextRequest) {
 
       console.log("Instagram account found:", instagramAccount.igUsername);
 
-      console.log("Database Instagram Account ID:", instagramAccount.id);
+      enterObservabilityContext({
+        tenantId: instagramAccount.userId,
+        instagramAccountId: instagramAccount.id,
+      });
+
+      observabilityLogger.info("webhook_account_resolved", {
+        igUserId: instagramAccount.igUserId,
+        instagramUsername: instagramAccount.igUsername,
+      });
 
       const accountData: InstagramAccountData = {
         id: instagramAccount.id,
@@ -406,20 +413,25 @@ export async function POST(request: NextRequest) {
     // 7. Processing complete
     // =======================================================
 
-    console.log("========================================");
-    console.log("INSTAGRAM WEBHOOK PROCESSING COMPLETE");
-    console.log("========================================");
+    observabilityLogger.info("webhook_request_completed", {
+      latencyMs: Date.now() - startedAt,
+    });
 
     return NextResponse.json(
-      {
-        success: true,
-      },
+      { success: true },
       {
         status: 200,
+        headers: {
+          "x-request-id": requestContext.requestId,
+          "x-correlation-id": requestContext.correlationId,
+        },
       },
     );
   } catch (error) {
-    console.error("Instagram webhook POST error:", error);
+    observabilityLogger.error("webhook_request_failed", {
+      latencyMs: Date.now() - startedAt,
+      error: error instanceof Error ? error.message : String(error),
+    });
 
     return NextResponse.json(
       {
@@ -428,6 +440,10 @@ export async function POST(request: NextRequest) {
       },
       {
         status: 500,
+        headers: {
+          "x-request-id": requestContext.requestId,
+          "x-correlation-id": requestContext.correlationId,
+        },
       },
     );
   }
