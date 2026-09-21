@@ -26,7 +26,8 @@
     "lock:redis:test": "tsx scripts/test-redis-distributed-lock.ts",
     "lock:acquisition:test": "tsx scripts/test-lock-acquisition.ts",
     "lock:release:test": "tsx scripts/test-lock-release.ts",
-    "lock:double-worker:test": "tsx scripts/test-double-worker.ts"
+    "lock:double-worker:test": "tsx scripts/test-double-worker.ts",
+    "lock:failure:test": "tsx scripts/test-lock-failure-handling.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",
