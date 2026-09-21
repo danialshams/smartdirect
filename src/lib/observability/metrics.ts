@@ -151,14 +151,16 @@ export async function getLatencyPercentiles(operation: string) {
       backend: "redis" as const,
     };
   } catch (error) {
+    const values = memoryState.latencies.get(operation) ?? [];
+
     return {
       operation,
-      sampleCount: 0,
-      p50: null,
-      p95: null,
-      p99: null,
+      sampleCount: values.length,
+      p50: percentile(values, 50),
+      p95: percentile(values, 95),
+      p99: percentile(values, 99),
       error: error instanceof Error ? error.message : String(error),
-      backend: "redis" as const,
+      backend: "memory" as const,
     };
   }
 }
@@ -176,6 +178,6 @@ export async function getFailureCount(operation: string, errorType = "unknown") 
 
     return Number(value ?? 0);
   } catch {
-    return 0;
+    return memoryState.failures.get(`${operation}:${errorType}`) ?? 0;
   }
 }
