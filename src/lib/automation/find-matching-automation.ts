@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+import { cacheKey, getOrSetCachedJson } from "@/lib/cache/redis-cache";
+import { CACHE_TTL } from "@/lib/cache/instagram";
 import { AutomationTriggerType } from "@/generated/prisma/client";
 import {
   matchesAutomationTrigger,
