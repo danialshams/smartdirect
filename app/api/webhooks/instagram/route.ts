@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { claimInstagramWebhookEvent, completeInstagramWebhookEvent, failInstagramWebhookEvent } from "@/lib/idempotency/webhook";
+import { normalizeInstagramWebhookEvent } from "@/lib/webhook/normalize";
 
 import { executeAutomation } from "@/lib/automation/execute-automation";
 import { findMatchingAutomation } from "@/lib/automation/find-matching-automation";
@@ -412,10 +413,17 @@ async function processMessagingEventWithIdempotency(
   messagingEvent: any,
   instagramAccount: InstagramAccountData,
 ) {
+  const normalizedEvent = normalizeInstagramWebhookEvent({
+    type: "MESSAGING",
+    event: messagingEvent,
+    accountId: instagramAccount.id,
+  });
+
   const claim = await claimInstagramWebhookEvent({
     instagramAccountId: instagramAccount.id,
-    event: messagingEvent,
-    eventType: "MESSAGING",
+    event: normalizedEvent.rawEvent,
+    eventType: normalizedEvent.type,
+    eventId: normalizedEvent.eventId,
   });
 
   if (!claim.claimed) {
@@ -436,10 +444,17 @@ async function processCommentEventWithIdempotency(
   value: any,
   instagramAccount: InstagramAccountData,
 ) {
+  const normalizedEvent = normalizeInstagramWebhookEvent({
+    type: "COMMENT",
+    event: value,
+    accountId: instagramAccount.id,
+  });
+
   const claim = await claimInstagramWebhookEvent({
     instagramAccountId: instagramAccount.id,
-    event: value,
-    eventType: "COMMENT",
+    event: normalizedEvent.rawEvent,
+    eventType: normalizedEvent.type,
+    eventId: normalizedEvent.eventId,
   });
 
   if (!claim.claimed) {
