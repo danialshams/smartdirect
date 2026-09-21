@@ -28,7 +28,8 @@
     "lock:release:test": "tsx scripts/test-lock-release.ts",
     "lock:double-worker:test": "tsx scripts/test-double-worker.ts",
     "lock:failure:test": "tsx scripts/test-lock-failure-handling.ts",
-    "lock:concurrent-workers:test": "tsx scripts/test-concurrent-workers.ts"
+    "lock:concurrent-workers:test": "tsx scripts/test-concurrent-workers.ts",
+    "webhook:foundation:test": "tsx scripts/test-webhook-foundation.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",
