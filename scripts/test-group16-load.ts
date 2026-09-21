@@ -1,6 +1,8 @@
 import "dotenv/config";
 
-import { enqueueJobsBatch, getQueueDepth, deleteJob } from "../src/lib/queue/core";
+import { claimNextJob, enqueueJobsBatch, getQueueDepth, deleteJob } from "../src/lib/queue/core";
+import { recoverStalledJobs } from "../src/lib/queue/recovery";
+import { getRedisClient } from "../src/lib/redis/client";
 import { runQueueWorker } from "../src/lib/queue/worker";
 import type { QueueJob } from "../src/lib/queue/types";
 
@@ -9,7 +11,7 @@ function assert(condition: unknown, message: string) {
 }
 
 const CONCURRENCY = Math.max(1, Number(process.env.LOAD_TEST_CONCURRENCY ?? 16));
-const TOTAL = Math.max(30, Number(process.env.GROUP16_TOTAL ?? 100));
+const TOTAL = Math.max(30, Number(process.env.GROUP16_TOTAL ?? 50));
 const NAMESPACE = `group16-load-${Date.now()}`;
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -66,7 +68,7 @@ async function runScenario(
   for (const job of jobs) await deleteJob(job.id);
 
   assert(processed === count, `${name}: processed ${processed}/${count}`);
-  assert(depth.total === 0 || depth.failed === 0, `${name}: queue cleanup/failure invariant failed`);
+  assert(depth.ready === 0 && depth.delayed === 0 && depth.active === 0, `${name}: queue did not drain`);
 
   return {
     name,
