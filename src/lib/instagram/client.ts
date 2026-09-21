@@ -2,6 +2,8 @@ import {
   consumeInstagramRateLimit,
   type InstagramRateLimitContext,
 } from "@/lib/instagram/rate-limit";
+import { observabilityLogger } from "@/lib/observability/logger";
+import { recordFailure, recordLatency } from "@/lib/observability/metrics";
 
 const INSTAGRAM_API_VERSION = "v26.0";
 const INSTAGRAM_GRAPH_URL = `https://graph.instagram.com/${INSTAGRAM_API_VERSION}`;
@@ -119,6 +121,13 @@ function createTimeoutSignal(timeoutMs: number, signal?: AbortSignal) {
       signal?.removeEventListener("abort", abortFromCaller);
     },
   };
+}
+
+function getObservabilityOperation(method: string, path: string) {
+  const normalizedPath = path
+    .replace(/\\b[a-fA-F0-9]{16,}\\b/g, ":id")
+    .replace(/\\b[0-9]+\\b/g, ":id");
+  return `instagram_api:${method}:${normalizedPath}`;
 }
 
 function buildUrl(
@@ -247,6 +256,15 @@ export async function instagramApiRequest<T = unknown>(
   }
 
   const url = buildUrl(path, params);
+  const operation = getObservabilityOperation(method, path);
+
+  observabilityLogger.info("instagram_api_request_started", {
+    method,
+    path,
+    operation,
+    hasAccessToken: Boolean(options.accessToken),
+    hasRateLimit: Boolean(options.rateLimit),
+  });
 
   if (options.rateLimit) {
     const rateLimit = await consumeInstagramRateLimit(options.rateLimit);
@@ -337,17 +355,25 @@ export async function instagramApiRequest<T = unknown>(
           isRetryableMethod(method) &&
           isRetryableStatus(response.status);
 
-        console.error("[Instagram API]", {
+        const latencyMs = Date.now() - startedAt;
+
+        observabilityLogger.warn("instagram_api_response", {
           method,
           path,
+          operation,
           status: response.status,
-          latencyMs: Date.now() - startedAt,
+          latencyMs,
           attempt,
           maxRetries: maxRetries + 1,
           retrying: canRetry,
           errorCode: details?.code,
           errorSubcode: details?.error_subcode,
         });
+        void recordLatency(operation, latencyMs);
+        void recordFailure(
+          operation,
+          `http_${response.status}${details?.code ? `_code_${details.code}` : ""}`,
+        );
 
         if (canRetry) {
           const exponentialDelay =
@@ -369,13 +395,17 @@ export async function instagramApiRequest<T = unknown>(
         });
       }
 
-      console.log("[Instagram API]", {
+      const latencyMs = Date.now() - startedAt;
+
+      observabilityLogger.info("instagram_api_response", {
         method,
         path,
+        operation,
         status: response.status,
-        latencyMs: Date.now() - startedAt,
+        latencyMs,
         attempt,
       });
+      void recordLatency(operation, latencyMs);
 
       return data as T;
     } catch (error) {
@@ -391,16 +421,22 @@ export async function instagramApiRequest<T = unknown>(
         !callerAborted &&
         (timedOut || isNetworkError(error));
 
-      console.error("[Instagram API]", {
+      const latencyMs = Date.now() - startedAt;
+      const errorType = timedOut ? "timeout" : "network_error";
+
+      observabilityLogger.error("instagram_api_error", {
         method,
         path,
+        operation,
         status: timedOut ? "timeout" : "network-error",
-        latencyMs: Date.now() - startedAt,
+        latencyMs,
         attempt,
         maxRetries: maxRetries + 1,
         retrying: canRetry,
         error: error instanceof Error ? error.message : "Unknown error",
       });
+      void recordLatency(operation, latencyMs);
+      void recordFailure(operation, errorType);
 
       if (canRetry) {
         const exponentialDelay =
