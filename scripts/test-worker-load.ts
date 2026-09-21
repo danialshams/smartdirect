@@ -271,7 +271,7 @@ async function main() {
       } else {
         failed++;
         errors.push(
-          \`Job \${id} ended with status \${job?.status ?? "missing"}.\`,
+          `Job ${id} ended with status ${job?.status ?? "missing"}.`,
         );
       }
     }
@@ -337,7 +337,7 @@ async function main() {
   } catch (error) {
     cleanupFailures = config.total;
     errors.push(
-      \`Worker load-test cleanup failed: \${error instanceof Error ? error.message : String(error)}\`,
+      `Worker load-test cleanup failed: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
 
