@@ -38,6 +38,8 @@ async function main() {
   });
 
   const originalFetch = globalThis.fetch;
+  const originalRedisUrl = process.env.UPSTASH_REDIS_REST_URL;
+  const originalRedisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
   const samples: Array<{
     index: number;
     startedAt: number;
@@ -53,7 +55,20 @@ async function main() {
   const errors: string[] = [];
   let nextIndex = 0;
 
+  // Gateway load tests must not count or depend on Redis/observability HTTP calls.
+  // The gateway's fetch is mocked only for the Instagram Graph API; everything else
+  // is left untouched. Redis-backed observability is disabled so it cannot become the
+  // bottleneck or failure source for this gateway-only test.
+  delete process.env.UPSTASH_REDIS_REST_URL;
+  delete process.env.UPSTASH_REDIS_REST_TOKEN;
+
   globalThis.fetch = async (input, init) => {
+    const url = String(input);
+
+    if (!url.includes("graph.instagram.com/v26.0/")) {
+      return originalFetch(input, init);
+    }
+
     fetchCalls += 1;
     active += 1;
     maxActive = Math.max(maxActive, active);
@@ -63,11 +78,8 @@ async function main() {
         throw new Error(`Unexpected gateway load-test method: ${init.method}`);
       }
 
-      const url = String(input);
-
-      if (!url.includes("/v26.0/")) {
-        throw new Error(`Unexpected Instagram API URL: ${url}`);
-      }
+      // Keep the mock asynchronous so configured concurrency is actually exercised.
+      await new Promise((resolve) => setTimeout(resolve, 2));
 
       return jsonResponse({
         id: "load-test",
@@ -131,6 +143,18 @@ async function main() {
     );
   } finally {
     globalThis.fetch = originalFetch;
+
+    if (originalRedisUrl === undefined) {
+      delete process.env.UPSTASH_REDIS_REST_URL;
+    } else {
+      process.env.UPSTASH_REDIS_REST_URL = originalRedisUrl;
+    }
+
+    if (originalRedisToken === undefined) {
+      delete process.env.UPSTASH_REDIS_REST_TOKEN;
+    } else {
+      process.env.UPSTASH_REDIS_REST_TOKEN = originalRedisToken;
+    }
   }
 
   const durationMs = Date.now() - startedAt;
