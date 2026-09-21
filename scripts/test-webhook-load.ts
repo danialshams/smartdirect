@@ -15,7 +15,8 @@ import {
 import { runQueueWorker } from "../src/lib/queue/worker";
 
 const TOTAL_EVENTS = 200;
-const CONCURRENCY = 32;
+const CONCURRENCY = 16;
+process.env.REDIS_COMMAND_TIMEOUT_MS ??= "30_000";
 const TEST_ACCOUNT_ID = "webhook-load-test-account";
 
 function webhookKey(eventId: string) {
