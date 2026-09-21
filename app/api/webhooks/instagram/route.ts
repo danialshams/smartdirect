@@ -3108,7 +3108,8 @@ async function processCommentEvent(
             commentId: igCommentId,
 
             selectedQuickReplyId: null,
-          executionId: executionId,
+            executionId,
+
           });
 
           automationExecuted = result.success && result.executed;
@@ -3320,6 +3321,7 @@ async function processCommentEvent(
           commentId: igCommentId,
 
           selectedQuickReplyId: null,
+        executionId,
         });
 
         automationExecuted = result.success && result.executed;
