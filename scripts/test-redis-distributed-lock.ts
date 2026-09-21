@@ -13,8 +13,43 @@ require.cache[serverOnlyPath] = {
 } as any;
 
 async function main() {
-  const { acquireLock, releaseLock, isLockOwned, createLockKey } = await import("../src/lib/lock/redis-lock");
+  const { acquireLock, releaseLock, isLockOwned, createLockKey, getLockTtlSeconds, DISTRIBUTED_LOCK_TTL_DEFAULT_SECONDS, DISTRIBUTED_LOCK_TTL_MIN_SECONDS, DISTRIBUTED_LOCK_TTL_MAX_SECONDS } = await import("../src/lib/lock/redis-lock");
 
+  const originalTtl = process.env.DISTRIBUTED_LOCK_TTL_SECONDS;
+  const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+  const restoreTtl = () => {
+    if (originalTtl === undefined) delete process.env.DISTRIBUTED_LOCK_TTL_SECONDS;
+    else process.env.DISTRIBUTED_LOCK_TTL_SECONDS = originalTtl;
+  };
+
+  delete process.env.DISTRIBUTED_LOCK_TTL_SECONDS;
+  if (getLockTtlSeconds() !== DISTRIBUTED_LOCK_TTL_DEFAULT_SECONDS) {
+    throw new Error("Default lock TTL validation failed.");
+  }
+
+  process.env.DISTRIBUTED_LOCK_TTL_SECONDS = "7";
+  if (getLockTtlSeconds() !== 7) {
+    throw new Error("Configured lock TTL validation failed.");
+  }
+
+  for (const invalid of ["0", "-1", "301", "1.5", "abc"]) {
+    process.env.DISTRIBUTED_LOCK_TTL_SECONDS = invalid;
+    if (getLockTtlSeconds() !== DISTRIBUTED_LOCK_TTL_DEFAULT_SECONDS) {
+      throw new Error(`Invalid lock TTL was accepted: ${invalid}`);
+    }
+  }
+
+  process.env.DISTRIBUTED_LOCK_TTL_SECONDS = String(DISTRIBUTED_LOCK_TTL_MIN_SECONDS);
+  if (getLockTtlSeconds() !== DISTRIBUTED_LOCK_TTL_MIN_SECONDS) {
+    throw new Error("Minimum lock TTL was rejected.");
+  }
+
+  process.env.DISTRIBUTED_LOCK_TTL_SECONDS = String(DISTRIBUTED_LOCK_TTL_MAX_SECONDS);
+  if (getLockTtlSeconds() !== DISTRIBUTED_LOCK_TTL_MAX_SECONDS) {
+    throw new Error("Maximum lock TTL was rejected.");
+  }
+
+  process.env.DISTRIBUTED_LOCK_TTL_SECONDS = "1";
   const resourceId = `lock-test-${Date.now()}-${Math.random()}`;
   const input = {
     scope: "job" as const,
@@ -54,6 +89,19 @@ async function main() {
       throw error;
     }
   }
+
+  const ttlInput = { scope: "job" as const, resourceId: `ttl-test-${Date.now()}-${Math.random()}` };
+  const ttlOwner = await acquireLock(ttlInput);
+  if (!ttlOwner.acquired) throw new Error("TTL test lock could not be acquired.");
+  const ttlRemaining = ttlOwner.handle.expiresAt - Date.now();
+  if (ttlRemaining < 800 || ttlRemaining > 1500) throw new Error(`Unexpected 1-second lock expiry window: ${ttlRemaining}ms`);
+  await sleep(1200);
+  if (await isLockOwned(ttlOwner.handle)) throw new Error("Lock did not expire after its TTL.");
+  const afterExpiry = await acquireLock(ttlInput);
+  if (!afterExpiry.acquired) throw new Error("Lock could not be reacquired after TTL expiration.");
+  await releaseLock(afterExpiry.handle);
+
+  process.env.DISTRIBUTED_LOCK_TTL_SECONDS = "30";
 
   const [first, second] = await Promise.all([
     acquireLock(input),
@@ -106,7 +154,9 @@ async function main() {
 
   await releaseLock(reacquired.handle);
 
-  console.log("76 Redis lock key strategy: OK");
+  restoreTtl();
+
+  console.log("77 Redis lock TTL: OK");
   console.log(
     JSON.stringify(
       {
@@ -124,6 +174,13 @@ async function main() {
           "scope-isolation",
           "resource-isolation",
           "empty-resource-rejection",
+          "default-ttl",
+          "configured-ttl",
+          "invalid-ttl-fallback",
+          "minimum-ttl",
+          "maximum-ttl",
+          "ttl-expiration",
+          "reacquisition-after-ttl",
         ],
       },
       null,
@@ -134,7 +191,7 @@ async function main() {
 
 main()
   .catch((error) => {
-    console.error("76 Redis lock key strategy: FAILED");
+    console.error("77 Redis lock TTL: FAILED");
     console.error(error);
     process.exitCode = 1;
   });
