@@ -184,15 +184,6 @@ export async function executeAutomation(input: ExecuteAutomationInput) {
   // =========================================================
 
   if (input.selectedQuickReplyId) {
-    const selectedQuickReply = await prisma.quickReply.findFirst({
-      where: {
-        id: input.selectedQuickReplyId,
-        automationMessage: {
-          automationId: automation.id,
-        },
-      },
-    });
-
     const nextMessageId = resolveQuickReplyDestination(
       automation.messages,
       input.selectedQuickReplyId,
@@ -372,10 +363,6 @@ export async function executeAutomation(input: ExecuteAutomationInput) {
     // =======================================================
     // 14. Find next message
     // =======================================================
-
-    const currentIndex = automation.messages.findIndex(
-      (message) => message.id === currentMessage.id,
-    );
 
     const nextMessage = resolveNextSequentialMessage(automation.messages, currentMessage.id);
 
