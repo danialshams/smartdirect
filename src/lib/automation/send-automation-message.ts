@@ -234,6 +234,23 @@ export async function sendAutomationMessage(payload: AutomationMessagePayload): 
     idempotencyKey = claim.key;
   }
 
+  const finalizeResult = async (
+    result: SendAutomationMessageResult,
+  ): Promise<SendAutomationMessageResult> => {
+    if (idempotencyKey) {
+      if (result.success) {
+        await completeSendMessage(idempotencyKey, {
+          messageId: message.id,
+          igMessageId: result.igMessageId ?? null,
+        });
+      } else {
+        await failSendMessage(idempotencyKey, result.error ?? "Instagram message sending failed.");
+      }
+    }
+
+    return result;
+  };
+
   const accessToken = await getValidInstagramAccessToken(instagramAccountId);
   const instagramAccount = await prisma.instagramAccount.findUnique({
     where: { id: instagramAccountId },
@@ -252,19 +269,19 @@ export async function sendAutomationMessage(payload: AutomationMessagePayload): 
   if (message.messageType === "TEXT") {
     const result = await sendTextLike({ instagramAccountId, tenantId, instagramUserId, recipientId, commentId: payload.commentId, accessToken, text: message.text || "", quickReplies: message.quickReplies });
     if (result.success) result.conversationText = message.text?.trim() || null;
-    return return result;
+    return await finalizeResult(result);
   }
 
   if (message.messageType === "FORM") {
     if (message.formId) return sendLegacyForm({ instagramAccountId, tenantId, instagramUserId, recipientId, commentId: payload.commentId, accessToken, formId: message.formId });
     const result = await sendTextLike({ instagramAccountId, tenantId, instagramUserId, recipientId, commentId: payload.commentId, accessToken, text: message.text || "", quickReplies: message.quickReplies });
     if (result.success) result.conversationText = message.text?.trim() || null;
-    return return result;
+    return await finalizeResult(result);
   }
 
   if (message.messageType === "SHOWCASE") {
     if (!message.showcaseId) throw new Error("Showcase ID is missing");
-    return sendShowcase({ instagramAccountId, tenantId, instagramUserId, recipientId, commentId: payload.commentId, accessToken, showcaseId: message.showcaseId, quickReplies: message.quickReplies });
+    return await finalizeResult(await sendShowcase({ instagramAccountId, tenantId, instagramUserId, recipientId, commentId: payload.commentId, accessToken, showcaseId: message.showcaseId, quickReplies: message.quickReplies }));
   }
 
   if (message.messageType === "IMAGE" || message.messageType === "VIDEO" || message.messageType === "AUDIO") {
@@ -277,7 +294,7 @@ export async function sendAutomationMessage(payload: AutomationMessagePayload): 
         message: { attachment: { type, payload: attachmentPayload } },
       } });
     if (result.success) result.conversationText = message.messageType;
-    return return result;
+    return await finalizeResult(result);
   }
 
   throw new Error(`Unsupported automation message type: ${message.messageType}`);
