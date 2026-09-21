@@ -382,6 +382,25 @@ model InstagramPublishJob {
   @@index([status, scheduledAt])
 }
 
+model IdempotencyRecord {
+  id            String            @id @default(cuid())
+  key           String            @unique
+  tenantId      String
+  operation     String
+  resourceId    String?
+  status        IdempotencyStatus @default(IN_PROGRESS)
+  response      Json?
+  errorMessage  String?
+  expiresAt     DateTime
+  completedAt   DateTime?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@index([tenantId, operation])
+  @@index([tenantId, operation, status])
+  @@index([expiresAt])
+}
+
 model InstagramPublishMedia {
   id           String              @id @default(cuid())
   publishJobId String
@@ -399,6 +418,12 @@ model InstagramPublishMedia {
 
   @@index([publishJobId])
   @@index([publishJobId, sortOrder])
+}
+
+enum IdempotencyStatus {
+  IN_PROGRESS
+  COMPLETED
+  FAILED
 }
 
 enum FollowGateStatus {
