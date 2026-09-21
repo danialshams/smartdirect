@@ -166,7 +166,8 @@ async function main() {
     console.log(`Worker load-test prepared ${jobIds.length} isolated ready jobs in namespace ${LOAD_TEST_QUEUE_NAMESPACE}.`);
 
     workerStartedAt = Date.now();
-    const deadlineAt = workerStartedAt + config.durationMs;
+    const durationLimitMs = config.durationMs ?? 30_000;
+    const deadlineAt = workerStartedAt + durationLimitMs;
 
     watchdog = (async () => {
       while (!watchdogStopped && !controller.signal.aborted) {
@@ -174,7 +175,7 @@ async function main() {
 
         if (remainingMs <= 0) {
           errors.push(
-            `Worker load test exceeded the ${config.durationMs}ms execution deadline.`,
+            `Worker load test exceeded the ${durationLimitMs}ms execution deadline.`,
           );
           controller.abort();
           return;
