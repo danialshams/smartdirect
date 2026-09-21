@@ -2,9 +2,7 @@ import "dotenv/config";
 
 import {
   createQueueRedis,
-  deleteJob,
   enqueueJobsBatch,
-  getJob,
   getQueueDepth,
 } from "../src/lib/queue/core";
 import { runQueueWorker } from "../src/lib/queue/worker";
@@ -17,6 +15,55 @@ const JOB_PREFIX = "smartdirect:queue:job:";
 const READY_KEY = "smartdirect:queue:default:ready";
 const ENQUEUE_BATCH_SIZE = 25;
 const READY_SCORE_BATCH_SIZE = 25;
+const VERIFY_BATCH_SIZE = 100;
+
+async function getJobsBatch(jobIds: string[]) {
+  const redis = createQueueRedis();
+  const results: Array<{ id: string; job: { status?: string } | null }> = [];
+
+  for (let start = 0; start < jobIds.length; start += VERIFY_BATCH_SIZE) {
+    const batch = jobIds.slice(start, start + VERIFY_BATCH_SIZE);
+    const pipeline = redis.pipeline();
+
+    for (const jobId of batch) {
+      pipeline.get<{ status?: string }>(JOB_PREFIX + jobId);
+    }
+
+    const values = await pipeline.exec<Array<{ status?: string } | null>>();
+
+    batch.forEach((id, index) => {
+      results.push({ id, job: values[index] ?? null });
+    });
+  }
+
+  return results;
+}
+
+async function deleteJobsBatch(jobIds: string[]) {
+  if (!jobIds.length) return 0;
+
+  const redis = createQueueRedis();
+  let deleted = 0;
+
+  for (let start = 0; start < jobIds.length; start += VERIFY_BATCH_SIZE) {
+    const batch = jobIds.slice(start, start + VERIFY_BATCH_SIZE);
+    const pipeline = redis.pipeline();
+
+    for (const jobId of batch) {
+      pipeline.del(JOB_PREFIX + jobId);
+      pipeline.del("smartdirect:queue:claim:" + jobId);
+      pipeline.zrem("smartdirect:queue:default:active", jobId);
+      pipeline.zrem("smartdirect:queue:default:failed", jobId);
+      pipeline.zrem(READY_KEY, jobId);
+      pipeline.zrem("smartdirect:queue:default:delayed", jobId);
+    }
+
+    await pipeline.exec();
+    deleted += batch.length;
+  }
+
+  return deleted;
+}
 
 async function cleanupPreviousWorkerLoadJobs() {
   const redis = createQueueRedis();
@@ -182,6 +229,10 @@ async function main() {
           ok: true,
         });
 
+        if (samples.length > 0 && samples.length % 10 === 0) {
+          console.log(`Worker load-test progress: ${samples.length}/${config.total}`);
+        }
+
         if (samples.length >= config.total) {
           controller.abort();
         }
@@ -211,25 +262,36 @@ async function main() {
   let successful = 0;
   let failed = 0;
 
-  for (const jobId of jobIds) {
-    try {
-      const job = await getJob(jobId);
+  try {
+    const verifiedJobs = await getJobsBatch(jobIds);
 
+    for (const { id, job } of verifiedJobs) {
       if (job?.status === "completed") {
         successful++;
       } else {
         failed++;
         errors.push(
-          `Job ${jobId} ended with status ${job?.status ?? "missing"}.`,
+          \`Job \${id} ended with status \${job?.status ?? "missing"}.\`,
         );
       }
-    } catch (error) {
-      failed++;
-      errors.push(
-        error instanceof Error ? error.message : String(error),
-      );
     }
+  } catch (error) {
+    failed = config.total;
+    errors.push(error instanceof Error ? error.message : String(error));
   }
+
+  console.log(
+    JSON.stringify(
+      {
+        event: "worker-load:verification",
+        total: config.total,
+        successful,
+        failed,
+      },
+      null,
+      2,
+    ),
+  );
 
   const result = {
     name: config.name,
@@ -268,16 +330,15 @@ async function main() {
     ),
   );
 
-  const cleanupResults = await Promise.allSettled(
-    jobIds.map((jobId) => deleteJob(jobId)),
-  );
+  let cleanupFailures = 0;
 
-  const cleanupFailures = cleanupResults.filter(
-    (result) => result.status === "rejected",
-  ).length;
-
-  if (cleanupFailures > 0) {
-    errors.push(`Worker load-test cleanup failed for ${cleanupFailures} jobs.`);
+  try {
+    await deleteJobsBatch(jobIds);
+  } catch (error) {
+    cleanupFailures = config.total;
+    errors.push(
+      \`Worker load-test cleanup failed: \${error instanceof Error ? error.message : String(error)}\`,
+    );
   }
 
   printLoadTestReport(result);
