@@ -1,7 +1,7 @@
 import { sleep } from "workflow";
 
 import { prisma } from "@/lib/prisma";
-import { publishInstagramJob } from "@/lib/instagram/publishing";
+import { enqueueInstagramPublishing } from "@/lib/instagram/publishing-queue";
 
 async function publishScheduledJobStep(jobId: string) {
   "use step";
@@ -35,12 +35,13 @@ async function publishScheduledJobStep(jobId: string) {
   }
 
   try {
-    const published = await publishInstagramJob(jobId);
+    const queued = await enqueueInstagramPublishing(jobId, { maxAttempts: 4 });
 
     return {
       ok: true,
       skipped: false,
-      mediaId: published.instagramMediaId,
+      queued: true,
+      queueJobId: queued.job.id,
     };
   } catch (error) {
     return {
