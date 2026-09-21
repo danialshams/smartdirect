@@ -7,6 +7,7 @@ import { claimIdempotency } from "../idempotency/store";
 import { acquireLock, releaseLock } from "../lock/redis-lock";
 import type { DistributedLockHandle } from "../lock/types";
 import type { QueueJob } from "./types";
+import { recoverStalledJobs } from "./recovery";
 
 export interface QueueWorkerOptions {
   concurrency?: number;
@@ -36,6 +37,8 @@ export async function runQueueWorker(
     options.workerId ?? `worker_${process.pid}_${Date.now()}`;
 
   let stopped = false;
+  let lastRecoveryAt = 0;
+  const recoveryIntervalMs = Math.max(5_000, Number(process.env.QUEUE_RECOVERY_INTERVAL_MS ?? 10_000));
 
   const stop = () => {
     stopped = true;
@@ -97,6 +100,15 @@ export async function runQueueWorker(
   };
 
   while (!stopped) {
+    if (Date.now() - lastRecoveryAt >= recoveryIntervalMs) {
+      lastRecoveryAt = Date.now();
+      try {
+        await recoverStalledJobs();
+      } catch (error) {
+        console.error(JSON.stringify({ event: "queue:recovery:error", error: error instanceof Error ? error.message : String(error) }));
+      }
+    }
+
     while (!stopped && active.size < concurrency) {
       const task = runOne().finally(() => active.delete(task));
       active.add(task);
