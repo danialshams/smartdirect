@@ -273,7 +273,7 @@ export async function sendAutomationMessage(payload: AutomationMessagePayload): 
   }
 
   if (message.messageType === "FORM") {
-    if (message.formId) return sendLegacyForm({ instagramAccountId, tenantId, instagramUserId, recipientId, commentId: payload.commentId, accessToken, formId: message.formId });
+    if (message.formId) return await finalizeResult(await sendLegacyForm({ instagramAccountId, tenantId, instagramUserId, recipientId, commentId: payload.commentId, accessToken, formId: message.formId }));
     const result = await sendTextLike({ instagramAccountId, tenantId, instagramUserId, recipientId, commentId: payload.commentId, accessToken, text: message.text || "", quickReplies: message.quickReplies });
     if (result.success) result.conversationText = message.text?.trim() || null;
     return await finalizeResult(result);
