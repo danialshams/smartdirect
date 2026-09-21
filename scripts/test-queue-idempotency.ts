@@ -5,6 +5,7 @@ import { randomUUID } from "node:crypto";
 
 const require = createRequire(import.meta.url);
 const serverOnlyPath = require.resolve("server-only");
+
 require.cache[serverOnlyPath] = {
   id: serverOnlyPath,
   filename: serverOnlyPath,
@@ -12,18 +13,12 @@ require.cache[serverOnlyPath] = {
   exports: {},
 } as any;
 
-import { createIdempotencyKey } from "../src/lib/idempotency/key";
-import { prisma } from "../src/lib/prisma";
-import {
-  deleteJob,
-  enqueueJob,
-  getJob,
-} from "../src/lib/queue/core";
-import { runQueueWorker } from "../src/lib/queue/worker";
-
 const TIMEOUT_MS = 15_000;
 
-async function waitForCompletion(jobIds: string[]) {
+async function waitForCompletion(
+  getJob: (id: string) => Promise<any>,
+  jobIds: string[],
+) {
   const startedAt = Date.now();
 
   while (Date.now() - startedAt < TIMEOUT_MS) {
@@ -44,6 +39,15 @@ async function waitForCompletion(jobIds: string[]) {
 }
 
 async function main() {
+  const { createIdempotencyKey } = await import(
+    "../src/lib/idempotency/key"
+  );
+  const { prisma } = await import("../src/lib/prisma");
+  const { deleteJob, enqueueJob, getJob } = await import(
+    "../src/lib/queue/core"
+  );
+  const { runQueueWorker } = await import("../src/lib/queue/worker");
+
   const testId = randomUUID();
   const tenantId = `queue-idempotency-test:${testId}`;
   const clientKey = `duplicate-job:${testId}`;
@@ -110,7 +114,7 @@ async function main() {
       signal: controller.signal,
     });
 
-    const completed = await waitForCompletion(jobs);
+    const completed = await waitForCompletion(getJob, jobs);
 
     if (completed.some((job) => job?.status !== "completed")) {
       throw new Error("Duplicate queue jobs did not both complete.");
@@ -146,7 +150,7 @@ async function main() {
       signal: thirdController.signal,
     });
 
-    const thirdResultPromise = waitForCompletion([third.id]);
+    const thirdResultPromise = waitForCompletion(getJob, [third.id]);
     const thirdResult = await thirdResultPromise;
 
     thirdController.abort();
@@ -183,9 +187,7 @@ async function main() {
   } finally {
     controller.abort();
 
-    await Promise.all(
-      jobs.map((jobId) => deleteJob(jobId)),
-    );
+    await Promise.all(jobs.map((jobId) => deleteJob(jobId)));
 
     await prisma.idempotencyRecord.deleteMany({
       where: {
