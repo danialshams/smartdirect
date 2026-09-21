@@ -1,6 +1,6 @@
-import {
-  getInstagramWebhookEventId,
-} from "@/lib/webhook/normalize";
+import { createHash } from "node:crypto";
+
+import { getInstagramWebhookEventId } from "@/lib/webhook/normalize";
 
 import {
   claimIdempotency,
@@ -33,7 +33,7 @@ export async function claimInstagramWebhookEvent(
       ? input.eventId.trim()
       : getInstagramWebhookEventId(input.event);
 
-  const key = `smartdirect:idempotency:v1:webhook:${input.instagramAccountId}:${input.eventType}:${Buffer.from(eventId).toString("base64url")}`;
+  const key = `smartdirect:idempotency:v1:webhook:${input.instagramAccountId}:${input.eventType}:${createHash("sha256").update(eventId).digest("hex")}`;
 
   const result = await claimIdempotency({
     key,
