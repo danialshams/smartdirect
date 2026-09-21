@@ -28,6 +28,46 @@ async function main() {
   const controller = new AbortController();
 
   let workerError: unknown;
+  const workerStartedAt = Date.now();
+  const deadlineAt = workerStartedAt + config.durationMs;
+  let watchdogStopped = false;
+
+  const watchdog = (async () => {
+    while (!watchdogStopped && !controller.signal.aborted) {
+      const remainingMs = deadlineAt - Date.now();
+
+      if (remainingMs <= 0) {
+        errors.push(
+          `Worker load test exceeded the ${config.durationMs}ms execution deadline.`,
+        );
+        controller.abort();
+        return;
+      }
+
+      try {
+        const depth = await getQueueDepth();
+
+        if (
+          depth.ready === 0 &&
+          depth.delayed === 0 &&
+          depth.active === 0
+        ) {
+          controller.abort();
+          return;
+        }
+      } catch (error) {
+        errors.push(
+          error instanceof Error
+            ? `Worker load watchdog error: ${error.message}`
+            : `Worker load watchdog error: ${String(error)}`,
+        );
+      }
+
+      await new Promise((resolve) =>
+        setTimeout(resolve, Math.min(250, remainingMs)),
+      );
+    }
+  })();
 
   try {
     for (let index = 0; index < config.total; index++) {
@@ -81,12 +121,12 @@ async function main() {
     workerError = error;
     errors.push(error instanceof Error ? error.message : String(error));
     controller.abort();
+  } finally {
+    watchdogStopped = true;
+    await watchdog;
   }
 
-  const durationMs = samples.length > 0
-    ? Math.max(...samples.map((sample) => sample.completedAt)) -
-      Math.min(...samples.map((sample) => sample.startedAt))
-    : 0;
+  const durationMs = Date.now() - workerStartedAt;
 
   let successful = 0;
   let failed = 0;
@@ -129,15 +169,18 @@ async function main() {
   printLoadTestReport(result);
 
   const after = await getQueueDepth();
+  const integrity =
+    successful === config.total &&
+    failed === 0 &&
+    after.ready === before.ready &&
+    after.delayed === before.delayed &&
+    after.active === before.active &&
+    after.failed === before.failed;
+
   console.log(
     JSON.stringify(
       {
-        integrity:
-          successful === config.total &&
-          after.ready === before.ready &&
-          after.delayed === before.delayed &&
-          after.active === before.active &&
-          after.failed === before.failed,
+        integrity,
         before,
         after,
         processed: successful,
@@ -153,6 +196,7 @@ async function main() {
 
   if (
     result.status !== "completed" ||
+    !integrity ||
     successful !== config.total ||
     failed !== 0
   ) {
