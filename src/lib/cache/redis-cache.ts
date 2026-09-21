@@ -1,5 +1,3 @@
-import "server-only";
-
 import { createQueueRedis } from "@/lib/queue/core";
 
 const DEFAULT_TTL_SECONDS = 300;
