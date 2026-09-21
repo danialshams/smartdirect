@@ -61,6 +61,7 @@ export interface QueueJob<T extends QueueJobType = QueueJobType> {
   lastError?: string;
   workerId?: string;
   idempotency?: QueueJobIdempotency;
+  recoveryId?: string;
 }
 
 export interface EnqueueJobOptions {
@@ -68,4 +69,5 @@ export interface EnqueueJobOptions {
   delayMs?: number;
   maxAttempts?: number;
   idempotency?: QueueJobIdempotency;
+  recoveryId?: string;
 }
