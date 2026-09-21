@@ -4,6 +4,11 @@ import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 import { InstagramApiError, instagramApiRequest } from "@/lib/instagram/client";
 import type { InstagramRateLimitOperation } from "@/lib/instagram/rate-limit";
 import { prisma } from "@/lib/prisma";
+import {
+  claimSendMessage,
+  completeSendMessage,
+  failSendMessage,
+} from "@/lib/idempotency/send-message";
 
 const MAX_API_RETRIES = 2;
 const MAX_QUICK_REPLIES = 13;
@@ -17,6 +22,7 @@ export type AutomationMessagePayload = {
   recipientId: string;
   instagramUserId: string;
   commentId?: string | null;
+  executionId?: string | null;
   message: {
     id: string;
     messageType: AutomationMessageType;
@@ -204,8 +210,30 @@ async function sendLegacyForm({ instagramAccountId, tenantId, instagramUserId, r
 }
 
 export async function sendAutomationMessage(payload: AutomationMessagePayload): Promise<SendAutomationMessageResult> {
+  try {
+
   const { instagramAccountId, recipientId, instagramUserId, message } = payload;
   if (!instagramAccountId || !recipientId || !instagramUserId) throw new Error("Instagram message identifiers are missing");
+  let idempotencyKey: string | null = null;
+
+  if (payload.executionId?.trim()) {
+    const claim = await claimSendMessage({
+      instagramAccountId,
+      messageId: message.id,
+      executionId: payload.executionId.trim(),
+    });
+
+    if (!claim.claimed) {
+      return {
+        success: true,
+        recipientId,
+        conversationText: null,
+      };
+    }
+
+    idempotencyKey = claim.key;
+  }
+
   const accessToken = await getValidInstagramAccessToken(instagramAccountId);
   const instagramAccount = await prisma.instagramAccount.findUnique({
     where: { id: instagramAccountId },
@@ -224,14 +252,14 @@ export async function sendAutomationMessage(payload: AutomationMessagePayload): 
   if (message.messageType === "TEXT") {
     const result = await sendTextLike({ instagramAccountId, tenantId, instagramUserId, recipientId, commentId: payload.commentId, accessToken, text: message.text || "", quickReplies: message.quickReplies });
     if (result.success) result.conversationText = message.text?.trim() || null;
-    return result;
+    return return result;
   }
 
   if (message.messageType === "FORM") {
     if (message.formId) return sendLegacyForm({ instagramAccountId, tenantId, instagramUserId, recipientId, commentId: payload.commentId, accessToken, formId: message.formId });
     const result = await sendTextLike({ instagramAccountId, tenantId, instagramUserId, recipientId, commentId: payload.commentId, accessToken, text: message.text || "", quickReplies: message.quickReplies });
     if (result.success) result.conversationText = message.text?.trim() || null;
-    return result;
+    return return result;
   }
 
   if (message.messageType === "SHOWCASE") {
@@ -249,8 +277,15 @@ export async function sendAutomationMessage(payload: AutomationMessagePayload): 
         message: { attachment: { type, payload: attachmentPayload } },
       } });
     if (result.success) result.conversationText = message.messageType;
-    return result;
+    return return result;
   }
 
   throw new Error(`Unsupported automation message type: ${message.messageType}`);
+  } catch (error) {
+    if (idempotencyKey) {
+      await failSendMessage(idempotencyKey, error);
+    }
+    throw error;
+  }
+
 }
