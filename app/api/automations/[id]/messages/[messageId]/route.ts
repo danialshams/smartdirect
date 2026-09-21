@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { invalidateAutomationCache } from "@/lib/cache/instagram";
 
 export const dynamic = "force-dynamic";
 
@@ -136,6 +137,7 @@ export async function GET(
       );
     }
 
+    await invalidateAutomationCache(automation.instagramAccountId);
     return NextResponse.json({
       success: true,
       data: message,
@@ -512,6 +514,7 @@ export async function DELETE(
       },
     });
 
+    await invalidateAutomationCache(message.automationId);
     return NextResponse.json({
       success: true,
       message: "پیام با موفقیت حذف شد",
