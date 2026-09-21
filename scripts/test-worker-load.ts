@@ -3,7 +3,7 @@ import "dotenv/config";
 import {
   createQueueRedis,
   deleteJob,
-  enqueueJob,
+  enqueueJobsBatch,
   getJob,
   getQueueDepth,
 } from "../src/lib/queue/core";
@@ -88,31 +88,30 @@ async function main() {
         batchStart + ENQUEUE_BATCH_SIZE,
       );
 
-      const jobs = await Promise.all(
+      const jobs = await enqueueJobsBatch(
         Array.from({ length: batchEnd - batchStart }, (_, offset) => {
           const index = batchStart + offset;
-          const jobStartedAt = Date.now();
 
-          return enqueueJob(
-            "TEST",
-            { message: `worker-load-${runId}-${index}` },
-            {
+          return {
+            type: "TEST" as const,
+            payload: { message: `worker-load-${runId}-${index}` },
+            options: {
               priority: index % 4 === 0
-                ? "critical"
+                ? "critical" as const
                 : index % 4 === 1
-                  ? "high"
+                  ? "high" as const
                   : index % 4 === 2
-                    ? "normal"
-                    : "low",
+                    ? "normal" as const
+                    : "low" as const,
               maxAttempts: 1,
             },
-          ).then((job) => ({ job, jobStartedAt }));
+          };
         }),
       );
 
-      for (const { job, jobStartedAt } of jobs) {
+      for (const job of jobs) {
         jobIds.push(job.id);
-        startedAtByJobId.set(job.id, jobStartedAt);
+        startedAtByJobId.set(job.id, job.createdAt);
       }
     }
 
