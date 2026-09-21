@@ -254,7 +254,7 @@ export async function claimNextJob(
   const redis = createQueueRedis();
   const keys = getQueueKeys(queueNamespace);
 
-  const result = await redis.eval<string | null>(
+  const result = await redis.eval(
     CLAIM_NEXT_JOB_SCRIPT,
     [keys.ready, keys.active],
     [
