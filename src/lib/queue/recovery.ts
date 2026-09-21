@@ -39,7 +39,7 @@ export async function recoverStalledJobs(limit = 50, queueNamespace = "default")
   const redis = createQueueRedis();
   const keys = getQueueKeys(queueNamespace);
   const cutoff = Date.now() - STALLED_TTL_SECONDS * 1000;
-  const ids = await redis.zrange<string[]>(ACTIVE_KEY, 0, cutoff, {
+  const ids = await redis.zrange<string[]>(keys.active, 0, cutoff, {
     byScore: true,
     offset: 0,
     count: limit,
@@ -64,7 +64,7 @@ export async function recoverStalledJobs(limit = 50, queueNamespace = "default")
     }
 
     if (job.status !== "active") {
-      await redis.zrem(ACTIVE_KEY, id);
+      await redis.zrem(keys.active, id);
       continue;
     }
 
