@@ -16,14 +16,11 @@ async function main() {
 
   try {
     result = await runLoadTest(
-      {
-        ...loadTestConfigFromEnv({
-          name: "redis-load",
-          total: 1000,
-          concurrency: 16,
-          durationMs: 30_000,
-        }),
-      },
+      getLoadTestConfig("redis-load", {
+        total: 1000,
+        concurrency: 16,
+        durationMs: 30_000,
+      }),
       async (index) => {
         const key = `smartdirect:load-test:redis:${runId}:${index}`;
         const value = `value-${index}`;
