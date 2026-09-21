@@ -158,6 +158,7 @@ async function main() {
   }
 
   const durationMs = Date.now() - startedAt;
+  const durationLimitMs = config.durationMs ?? 120_000;
   const successful = samples.length;
   const latency = calculateLatency(
     samples.map((sample) => ({
@@ -175,7 +176,7 @@ async function main() {
     fetchCalls === config.total &&
     active === 0 &&
     errors.length === 0 &&
-    durationMs <= config.durationMs;
+    durationMs <= durationLimitMs;
 
   const result = {
     success,
