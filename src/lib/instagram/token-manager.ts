@@ -345,11 +345,11 @@ export async function refreshInstagramToken(
   });
 
   await setCachedJson(
-    instagramTokenCacheKey(instagramAccountId),
+    cacheKey("instagram-token", instagramAccountId),
     { accessToken: data.access_token, expiresAt: expiresAt.toISOString() },
     Math.min(300, Math.max(1, expiresIn)),
   );
-  await deleteCachedJson(instagramAccountCacheKey(instagramAccountId));
+  await deleteCachedJson(cacheKey("instagram-account", instagramAccountId));
 
   console.log("[Instagram Token] Token refreshed successfully:", {
     instagramAccountId: updatedAccount.id,
@@ -373,7 +373,7 @@ export async function refreshInstagramToken(
 export async function getValidInstagramAccessToken(
   instagramAccountId: string,
 ): Promise<string> {
-  const cachedToken = await getCachedJson<{ accessToken: string; expiresAt: string }>(instagramTokenCacheKey(instagramAccountId));
+  const cachedToken = await getCachedJson<{ accessToken: string; expiresAt: string }>(cacheKey("instagram-token", instagramAccountId));
   if (
     cachedToken &&
     new Date(cachedToken.expiresAt).getTime() - Date.now() > REFRESH_THRESHOLD_SECONDS * 1000
