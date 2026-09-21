@@ -56,8 +56,8 @@ async function main() {
   const previousUrl = process.env.UPSTASH_REDIS_REST_URL;
   const previousToken = process.env.UPSTASH_REDIS_REST_TOKEN;
 
-  process.env.UPSTASH_REDIS_REST_URL = "https://invalid-cache-host.invalid";
-  process.env.UPSTASH_REDIS_REST_TOKEN = "invalid-token";
+  delete process.env.UPSTASH_REDIS_REST_URL;
+  delete process.env.UPSTASH_REDIS_REST_TOKEN;
 
   const fallbackValue = await getCachedJson("smartdirect:cache:fallback-test");
   assert(fallbackValue === null, "Redis failure fallback GET should return null");
