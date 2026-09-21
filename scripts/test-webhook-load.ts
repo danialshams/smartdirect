@@ -15,7 +15,7 @@ import {
 import { runQueueWorker } from "../src/lib/queue/worker";
 
 const TOTAL_EVENTS = 200;
-const CONCURRENCY = 8;
+const CONCURRENCY = 32;
 const TEST_ACCOUNT_ID = "webhook-load-test-account";
 
 function webhookKey(eventId: string) {
@@ -24,7 +24,7 @@ function webhookKey(eventId: string) {
 
 async function waitFor(
   predicate: () => Promise<boolean>,
-  timeoutMs = 120_000,
+  timeoutMs = 180_000,
 ) {
   const started = Date.now();
 
