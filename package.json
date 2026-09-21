@@ -38,7 +38,8 @@
     "automation:flow:test": "tsx scripts/test-automation-flow.ts",
     "automation:messages:test": "tsx scripts/test-automation-messages.ts",
     "automation:engine:test": "tsx scripts/test-automation-engine.ts",
-    "publishing:queue:test": "tsx scripts/test-publishing-queue.ts"
+    "publishing:queue:test": "tsx scripts/test-publishing-queue.ts",
+    "conversation:concurrency:test": "tsx scripts/test-conversation-concurrency.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",
