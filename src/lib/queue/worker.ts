@@ -3,6 +3,7 @@ import {
   completeJob,
   failJob,
 } from "./core";
+import { claimIdempotency } from "../idempotency/store";
 import type { QueueJob } from "./types";
 
 export interface QueueWorkerOptions {
@@ -55,6 +56,20 @@ export async function runQueueWorker(
     }
 
     try {
+      if (job.idempotency) {
+        const claim = await claimIdempotency({
+          key: job.idempotency.key,
+          tenantId: job.idempotency.tenantId,
+          operation: job.idempotency.operation,
+          resourceId: job.idempotency.resourceId,
+        });
+
+        if (!claim.claimed) {
+          await completeJob(job.id);
+          return;
+        }
+      }
+
       await handler(job);
       await completeJob(job.id);
     } catch (error) {
