@@ -21,7 +21,7 @@ type FindAutomationInput =
     };
 
 export async function findMatchingAutomation(input: FindAutomationInput) {
-  const automations = await prisma.automation.findMany({
+  const cacheKeyValue = cacheKey("automation", input.instagramAccountId, input.triggerType);\n\n  const automations = await getOrSetCachedJson(cacheKeyValue, () => prisma.automation.findMany({
     where: {
       instagramAccountId: input.instagramAccountId,
       triggerType: input.triggerType as AutomationTriggerType,
@@ -49,7 +49,7 @@ export async function findMatchingAutomation(input: FindAutomationInput) {
       },
     },
     orderBy: { createdAt: "asc" },
-  });
+  ), CACHE_TTL.AUTOMATION);
 
   if (input.triggerType === "DM") {
     return automations[0] ?? null;
