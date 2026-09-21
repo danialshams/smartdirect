@@ -1978,6 +1978,7 @@ async function processFollowGatePostback({
   senderId: string;
   payload: string;
   instagramAccount: InstagramAccountData;
+  executionId: string;
 }): Promise<boolean> {
   try {
     if (!payload.startsWith(FOLLOW_GATE_PAYLOAD_PREFIX)) {
@@ -2277,7 +2278,7 @@ async function processFollowGatePostback({
         igUserId: participantId,
 
         selectedQuickReplyId: null,
-      executionId: executionId,
+        executionId,
       });
 
       automationExecuted = result.success && result.executed;
@@ -2336,6 +2337,7 @@ async function processInstagramPostback(
     title: string | null;
   },
   instagramAccount: InstagramAccountData,
+  executionId: string,
 ) {
   try {
     if (!senderId) {
@@ -2369,6 +2371,7 @@ async function processInstagramPostback(
         payload,
 
         instagramAccount,
+        executionId,
       });
 
       return;
