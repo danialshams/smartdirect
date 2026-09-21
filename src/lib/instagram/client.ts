@@ -31,6 +31,16 @@ export class InstagramRateLimitError extends Error {
   }
 }
 
+export class InstagramApiTimeoutError extends Error {
+  timeoutMs: number;
+
+  constructor(timeoutMs: number) {
+    super(`Instagram API request timed out after ${timeoutMs}ms`);
+    this.name = "InstagramApiTimeoutError";
+    this.timeoutMs = timeoutMs;
+  }
+}
+
 export class InstagramApiError extends Error {
   status: number;
   details?: InstagramApiErrorDetails;
@@ -82,8 +92,6 @@ function getTimeoutMs(timeoutMs?: number) {
 function createTimeoutSignal(timeoutMs: number, signal?: AbortSignal) {
   const controller = new AbortController();
 
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-
   const abortFromCaller = () => controller.abort();
 
   if (signal) {
@@ -94,10 +102,23 @@ function createTimeoutSignal(timeoutMs: number, signal?: AbortSignal) {
     }
   }
 
+  let timedOut = false;
+
+  const timeoutHandler = () => {
+    timedOut = true;
+    controller.abort();
+  };
+
+  clearTimeout(timeout);
+  const timeoutId = setTimeout(timeoutHandler, timeoutMs);
+
   return {
     signal: controller.signal,
+    didTimeout() {
+      return timedOut;
+    },
     cleanup() {
-      clearTimeout(timeout);
+      clearTimeout(timeoutId);
       signal?.removeEventListener("abort", abortFromCaller);
     },
   };
@@ -165,6 +186,14 @@ function isRetryableStatus(status: number) {
 
 function isRetryableMethod(method: string) {
   return method === "GET";
+}
+
+function isCallerAbort(signal?: AbortSignal) {
+  return Boolean(signal?.aborted);
+}
+
+function isNetworkError(error: unknown) {
+  return error instanceof TypeError || error instanceof Error;
 }
 
 function getRetryAfterMs(response: Response) {
@@ -353,18 +382,22 @@ export async function instagramApiRequest<T = unknown>(
 
       return data as T;
     } catch (error) {
-      if (error instanceof InstagramApiError) {
+      if (error instanceof InstagramApiError || error instanceof InstagramApiTimeoutError) {
         throw error;
       }
 
+      const timedOut = timeout.didTimeout();
+      const callerAborted = isCallerAbort(options.signal);
       const canRetry =
         attempt <= maxRetries &&
-        isRetryableMethod(method);
+        isRetryableMethod(method) &&
+        !callerAborted &&
+        (timedOut || isNetworkError(error));
 
       console.error("[Instagram API]", {
         method,
         path,
-        status: "network-error",
+        status: timedOut ? "timeout" : "network-error",
         latencyMs: Date.now() - startedAt,
         attempt,
         maxRetries: maxRetries + 1,
@@ -382,6 +415,10 @@ export async function instagramApiRequest<T = unknown>(
         );
 
         continue;
+      }
+
+      if (timedOut) {
+        throw new InstagramApiTimeoutError(getTimeoutMs(options.timeoutMs));
       }
 
       throw error instanceof Error ? error : new Error("Instagram API request failed");
