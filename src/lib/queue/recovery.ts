@@ -137,7 +137,7 @@ export async function retryFailedJob(failureId: string) {
 
   const job = await enqueueJob(
     failure.type,
-    failure.payload as QueueJobPayload<typeof failure.type>,
+    failure.payload as QueueJobPayload<QueueJobType>,
     {
       priority: failure.priority as "low" | "normal" | "high" | "critical",
       maxAttempts: failure.maxAttempts,
