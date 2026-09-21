@@ -29,11 +29,15 @@ export async function getInstagramProfile(accessToken: string) {
     followers_count?: number;
     follows_count?: number;
     media_count?: number;
+    biography?: string;
+    website?: string;
+    profile_picture_url?: string;
+    account_type?: string;
   }>("me", {
     accessToken,
     params: {
       fields:
-        "id,user_id,username,name,followers_count,follows_count,media_count",
+        "id,user_id,username,name,biography,website,profile_picture_url,followers_count,follows_count,media_count,account_type",
     },
   });
 }
