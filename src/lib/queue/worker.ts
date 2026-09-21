@@ -12,6 +12,9 @@ import { acquireLock, releaseLock } from "../lock/redis-lock";
 import type { DistributedLockHandle } from "../lock/types";
 import type { QueueJob } from "./types";
 import { recoverStalledJobs } from "./recovery";
+import { enterObservabilityContext } from "@/lib/observability/context";
+import { observabilityLogger } from "@/lib/observability/logger";
+import { recordFailure } from "@/lib/observability/metrics";
 
 export interface QueueWorkerOptions {
   concurrency?: number;
@@ -64,6 +67,8 @@ export async function runQueueWorker(
       return;
     }
 
+    enterObservabilityContext({ jobId: job.id });
+
     let lockHandle: DistributedLockHandle | undefined;
 
     try {
@@ -100,6 +105,13 @@ export async function runQueueWorker(
 
       await completeJob(job.id);
     } catch (error) {
+      observabilityLogger.error("queue_job_failed", {
+        type: job.type,
+        attempt: job.attempts,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      void recordFailure("queue_job", job.type);
+
       if (job.idempotency) {
         try {
           await failIdempotency(
@@ -107,11 +119,9 @@ export async function runQueueWorker(
             error instanceof Error ? error.message : String(error),
           );
         } catch (idempotencyError) {
-          console.error(JSON.stringify({
-            event: "queue:idempotency:failure-marking-error",
-            jobId: job.id,
-            error: idempotencyError instanceof Error ? idempotencyError.message : String(idempotencyError),
-          }));
+          observabilityLogger.error("queue_idempotency_failure_marking_error", {
+          error: idempotencyError instanceof Error ? idempotencyError.message : String(idempotencyError),
+        });
         }
       }
 
@@ -129,7 +139,9 @@ export async function runQueueWorker(
       try {
         await recoverStalledJobs();
       } catch (error) {
-        console.error(JSON.stringify({ event: "queue:recovery:error", error: error instanceof Error ? error.message : String(error) }));
+        observabilityLogger.error("queue_recovery_error", {
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
     }
 
