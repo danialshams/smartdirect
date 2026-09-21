@@ -16,12 +16,13 @@ import {
 } from "../src/lib/queue/core";
 import { runQueueWorker } from "../src/lib/queue/worker";
 import { prisma } from "../src/lib/prisma";
+import { setRedisCommandTimeoutMs } from "../src/lib/redis/client";
 
 const TOTAL_EVENTS = Math.max(1, Number(process.env.WEBHOOK_LOAD_TOTAL ?? 1000));
 const CONCURRENCY = Math.max(1, Number(process.env.WEBHOOK_LOAD_CONCURRENCY ?? 16));
 const DUPLICATE_REQUESTS = Math.max(2, Number(process.env.WEBHOOK_LOAD_DUPLICATES ?? 50));
 const QUEUE_NAMESPACE = "webhook-load-test";
-process.env.REDIS_COMMAND_TIMEOUT_MS = "30_000";
+setRedisCommandTimeoutMs(30_000);
 const TEST_ACCOUNT_ID = `webhook-load-test-account:${randomUUID()}`;
 
 function webhookKey(eventId: string) {
