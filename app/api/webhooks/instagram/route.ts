@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { claimInstagramWebhookEvent, completeInstagramWebhookEvent, failInstagramWebhookEvent } from "@/lib/idempotency/webhook";
 
 import { executeAutomation } from "@/lib/automation/execute-automation";
 import { findMatchingAutomation } from "@/lib/automation/find-matching-automation";
@@ -341,7 +342,7 @@ export async function POST(request: NextRequest) {
         console.log("Messaging events received:", entry.messaging.length);
 
         for (const messagingEvent of entry.messaging) {
-          await processMessagingEvent(messagingEvent, accountData);
+          await processMessagingEventWithIdempotency(messagingEvent, accountData);
         }
       }
 
@@ -359,7 +360,7 @@ export async function POST(request: NextRequest) {
             continue;
           }
 
-          await processCommentEvent(change.value, accountData);
+          await processCommentEventWithIdempotency(change.value, accountData);
         }
       }
 
@@ -400,6 +401,58 @@ export async function POST(request: NextRequest) {
         status: 500,
       },
     );
+  }
+}
+
+// =========================================================
+// Webhook Idempotency wrappers
+// =========================================================
+
+async function processMessagingEventWithIdempotency(
+  messagingEvent: any,
+  instagramAccount: InstagramAccountData,
+) {
+  const claim = await claimInstagramWebhookEvent({
+    instagramAccountId: instagramAccount.id,
+    event: messagingEvent,
+    eventType: "MESSAGING",
+  });
+
+  if (!claim.claimed) {
+    console.log("Duplicate Instagram messaging webhook skipped:", claim.eventId);
+    return;
+  }
+
+  try {
+    await processMessagingEvent(messagingEvent, instagramAccount);
+    await completeInstagramWebhookEvent(claim.key);
+  } catch (error) {
+    await failInstagramWebhookEvent(claim.key, error);
+    throw error;
+  }
+}
+
+async function processCommentEventWithIdempotency(
+  value: any,
+  instagramAccount: InstagramAccountData,
+) {
+  const claim = await claimInstagramWebhookEvent({
+    instagramAccountId: instagramAccount.id,
+    event: value,
+    eventType: "COMMENT",
+  });
+
+  if (!claim.claimed) {
+    console.log("Duplicate Instagram comment webhook skipped:", claim.eventId);
+    return;
+  }
+
+  try {
+    await processCommentEvent(value, instagramAccount);
+    await completeInstagramWebhookEvent(claim.key);
+  } catch (error) {
+    await failInstagramWebhookEvent(claim.key, error);
+    throw error;
   }
 }
 
