@@ -12,47 +12,48 @@ async function main() {
   const redis = getRedisClient();
   const runId = randomUUID();
   const keys: string[] = [];
-
-  const result = await runLoadTest(
-    {
-      ...loadTestConfigFromEnv({
-        name: "redis-load",
-        total: 1000,
-        concurrency: 16,
-        durationMs: 30_000,
-      }),
-    },
-    async (index) => {
-      const key = `smartdirect:load-test:redis:${runId}:${index}`;
-      const value = `value-${index}`;
-
-      keys.push(key);
-
-      await redis.set(key, value, { ex: 60 });
-
-      const stored = await redis.get<string>(key);
-
-      if (stored !== value) {
-        throw new Error(
-          `Redis value mismatch for index ${index}: expected ${value}, received ${String(stored)}`,
-        );
-      }
-    },
-  );
+  let result: Awaited<ReturnType<typeof runLoadTest>> | undefined;
 
   try {
+    result = await runLoadTest(
+      {
+        ...loadTestConfigFromEnv({
+          name: "redis-load",
+          total: 1000,
+          concurrency: 16,
+          durationMs: 30_000,
+        }),
+      },
+      async (index) => {
+        const key = `smartdirect:load-test:redis:${runId}:${index}`;
+        const value = `value-${index}`;
+
+        keys.push(key);
+
+        await redis.set(key, value, { ex: 60 });
+
+        const stored = await redis.get<string>(key);
+
+        if (stored !== value) {
+          throw new Error(
+            `Redis value mismatch for index ${index}: expected ${value}, received ${String(stored)}`,
+          );
+        }
+      },
+    );
+
+    printLoadTestReport(result);
+
+    if (result.status !== "completed" || result.successful !== result.total) {
+      throw new Error("176 Redis Load Test: FAILED");
+    }
+
+    console.log("176 Redis Load Test: OK");
+  } finally {
     if (keys.length > 0) {
       await Promise.all(keys.map((key) => redis.del(key)));
     }
-  } finally {
-    printLoadTestReport(result);
   }
-
-  if (result.status !== "completed" || result.successful !== result.total) {
-    throw new Error("176 Redis Load Test: FAILED");
-  }
-
-  console.log("176 Redis Load Test: OK");
 }
 
 main().catch((error) => {
