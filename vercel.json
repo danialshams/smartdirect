@@ -7,10 +7,6 @@
     {
       "path": "/api/cron/instagram-insights",
       "schedule": "30 3 * * *"
-    },
-    {
-      "path": "/api/cron/process-queue",
-      "schedule": "* * * * *"
     }
   ]
 }
