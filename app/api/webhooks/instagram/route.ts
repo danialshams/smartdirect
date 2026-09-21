@@ -15,6 +15,7 @@ import { findMatchingAutomation } from "@/lib/automation/find-matching-automatio
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 import { reactToInstagramMessage } from "@/lib/instagram/react-to-message";
 import { InstagramApiError, instagramApiRequest } from "@/lib/instagram/client";
+import { withConversationLock } from "@/lib/conversation/conversation-lock";
 
 export const dynamic = "force-dynamic";
 
@@ -849,21 +850,43 @@ async function processMessagingEvent(
   instagramAccount: InstagramAccountData,
   executionId: string,
 ) {
-  try {
-    console.log("========================================");
-    console.log("INSTAGRAM MESSAGING EVENT");
-    console.log("========================================");
+  const senderId = messagingEvent?.sender?.id;
 
-    // Full raw payload received from Meta
-    console.log(
-      "RAW INSTAGRAM MESSAGING EVENT:",
-      JSON.stringify(messagingEvent, null, 2),
+  if (!senderId) {
+    return processMessagingEventLocked(
+      messagingEvent,
+      instagramAccount,
+      executionId,
     );
+  }
+
+  return withConversationLock(
+    {
+      instagramAccountId: instagramAccount.id,
+      participantId: String(senderId),
+    },
+    async () =>
+      processMessagingEventLocked(
+        messagingEvent,
+        instagramAccount,
+        executionId,
+      ),
+  );
+}
+
+async function processMessagingEventLocked(
+  messagingEvent: any,
+  instagramAccount: InstagramAccountData,
+  executionId: string,
+) {
+  try {
+    console.log("[Conversation Concurrency] Per-user conversation lock acquired.");
 
     const senderId = messagingEvent?.sender?.id;
 
     const recipientId = messagingEvent?.recipient?.id;
 
+    const message = messagingEvent?.message;
     const message = messagingEvent?.message;
 
     // =======================================================
