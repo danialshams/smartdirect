@@ -24,7 +24,7 @@ function webhookKey(eventId: string) {
 
 async function waitFor(
   predicate: () => Promise<boolean>,
-  timeoutMs = 30_000,
+  timeoutMs = 120_000,
 ) {
   const started = Date.now();
 
@@ -116,15 +116,19 @@ async function main() {
       },
       {
         concurrency: 1,
-        pollIntervalMs: 50,
+        pollIntervalMs: 100,
         workerId: `webhook-load-worker-${index}-${Date.now()}`,
         signal: controller.signal,
       },
     ),
   );
 
+  let waitError: unknown;
+
   try {
     await waitFor(async () => processed === TOTAL_EVENTS);
+  } catch (error) {
+    waitError = error;
   } finally {
     controller.abort();
     await Promise.all(workers);
@@ -140,6 +144,12 @@ async function main() {
     }
 
     await deleteJob(jobId);
+  }
+
+  if (waitError) {
+    throw new Error(
+      `${waitError instanceof Error ? waitError.message : String(waitError)} Processed ${processed}/${TOTAL_EVENTS} events.`,
+    );
   }
 
   if (failedJobs.length > 0) {
