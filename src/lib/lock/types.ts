@@ -1,5 +1,3 @@
-import "server-only";
-
 export const DISTRIBUTED_LOCK_KEY_PREFIX = "smartdirect:lock:";
 
 export type DistributedLockScope =
