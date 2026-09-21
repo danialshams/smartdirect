@@ -3,7 +3,11 @@ import {
   completeJob,
   failJob,
 } from "./core";
-import { claimIdempotency } from "../idempotency/store";
+import {
+  claimIdempotency,
+  completeIdempotency,
+  failIdempotency,
+} from "../idempotency/store";
 import { acquireLock, releaseLock } from "../lock/redis-lock";
 import type { DistributedLockHandle } from "../lock/types";
 import type { QueueJob } from "./types";
@@ -89,8 +93,28 @@ export async function runQueueWorker(
       }
 
       await handler(job);
+
+      if (job.idempotency) {
+        await completeIdempotency(job.idempotency.key, { jobId: job.id });
+      }
+
       await completeJob(job.id);
     } catch (error) {
+      if (job.idempotency) {
+        try {
+          await failIdempotency(
+            job.idempotency.key,
+            error instanceof Error ? error.message : String(error),
+          );
+        } catch (idempotencyError) {
+          console.error(JSON.stringify({
+            event: "queue:idempotency:failure-marking-error",
+            jobId: job.id,
+            error: idempotencyError instanceof Error ? idempotencyError.message : String(idempotencyError),
+          }));
+        }
+      }
+
       await failJob(job.id, error);
     } finally {
       if (lockHandle) {
