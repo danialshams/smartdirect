@@ -9,6 +9,7 @@
     "lint": "eslint",
     "redis:test": "tsx scripts/test-redis.ts",
     "redis:load:test": "tsx scripts/test-redis-load.ts",
+    "queue:load:test": "tsx scripts/test-queue-load.ts",
     "queue:test": "tsx scripts/test-queue.ts",
     "queue:worker": "tsx scripts/queue-worker.ts",
     "queue:test:multi-worker": "tsx scripts/test-multi-worker.ts",
