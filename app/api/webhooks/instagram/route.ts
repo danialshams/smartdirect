@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { claimInstagramWebhookEvent, completeInstagramWebhookEvent, failInstagramWebhookEvent } from "@/lib/idempotency/webhook";
 import { normalizeInstagramWebhookEvent } from "@/lib/webhook/normalize";
+import { enqueueInstagramWebhookEvent } from "@/lib/webhook/queue";
 
 import { executeAutomation } from "@/lib/automation/execute-automation";
 import { findMatchingAutomation } from "@/lib/automation/find-matching-automation";
@@ -432,8 +433,13 @@ async function processMessagingEventWithIdempotency(
   }
 
   try {
-    await processMessagingEvent(messagingEvent, instagramAccount, claim.eventId);
-    await completeInstagramWebhookEvent(claim.key);
+    await enqueueInstagramWebhookEvent({
+      instagramAccountId: instagramAccount.id,
+      eventId: claim.eventId,
+      eventType: "MESSAGING",
+      event: messagingEvent,
+      idempotencyKey: claim.key,
+    });
   } catch (error) {
     await failInstagramWebhookEvent(claim.key, error);
     throw error;
@@ -463,10 +469,70 @@ async function processCommentEventWithIdempotency(
   }
 
   try {
-    await processCommentEvent(value, instagramAccount, claim.eventId);
-    await completeInstagramWebhookEvent(claim.key);
+    await enqueueInstagramWebhookEvent({
+      instagramAccountId: instagramAccount.id,
+      eventId: claim.eventId,
+      eventType: "COMMENT",
+      event: value,
+      idempotencyKey: claim.key,
+    });
   } catch (error) {
     await failInstagramWebhookEvent(claim.key, error);
+    throw error;
+  }
+}
+
+// =========================================================
+// Queued Instagram webhook processor
+// =========================================================
+
+export async function processQueuedInstagramWebhookEvent(
+  payload: {
+    instagramAccountId: string;
+    eventId: string;
+    eventType: "MESSAGING" | "COMMENT";
+    event: unknown;
+  },
+) {
+  const instagramAccount = await prisma.instagramAccount.findUnique({
+    where: {
+      id: payload.instagramAccountId,
+    },
+  });
+
+  if (!instagramAccount) {
+    throw new Error(
+      `Instagram account not found for queued webhook: ${payload.instagramAccountId}`,
+    );
+  }
+
+  const accountData: InstagramAccountData = {
+    id: instagramAccount.id,
+    userId: instagramAccount.userId,
+    igUserId: instagramAccount.igUserId,
+    igUsername: instagramAccount.igUsername,
+  };
+
+  const webhookEventKey = `smartdirect:idempotency:v1:webhook:${accountData.id}:${payload.eventType}:${require("node:crypto").createHash("sha256").update(payload.eventId).digest("hex")}`;
+
+  try {
+    if (payload.eventType === "MESSAGING") {
+      await processMessagingEvent(
+        payload.event,
+        accountData,
+        payload.eventId,
+      );
+    } else {
+      await processCommentEvent(
+        payload.event,
+        accountData,
+        payload.eventId,
+      );
+    }
+
+    await completeInstagramWebhookEvent(webhookEventKey);
+  } catch (error) {
+    await failInstagramWebhookEvent(webhookEventKey, error);
     throw error;
   }
 }
