@@ -5,6 +5,7 @@ import { getStorageProvider } from "@/lib/storage/provider";
 import {
   claimPublishingExecution,
   completePublishingExecution,
+  failPublishingExecution,
 } from "@/lib/idempotency/publishing";
 
 type ContainerResponse = { id?: string; status_code?: string; status?: string };
@@ -545,6 +546,12 @@ export async function publishInstagramJob(jobId: string) {
         retryCount: { increment: 1 },
       },
     });
+
+    try {
+      await failPublishingExecution(idempotencyKey, error);
+    } catch (idempotencyError) {
+      console.error("Failed to mark publishing idempotency as FAILED:", idempotencyError);
+    }
 
     throw error;
   }
