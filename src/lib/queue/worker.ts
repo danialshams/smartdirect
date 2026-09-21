@@ -174,9 +174,10 @@ export async function runQueueWorker(
     while (!stopped && active.size < concurrency) {
       const task = runOne();
       active.add(task);
-      void task.finally(() => {
-        active.delete(task);
-      });
+      void task.then(
+        () => active.delete(task),
+        () => active.delete(task),
+      );
       await Promise.resolve();
     }
 
