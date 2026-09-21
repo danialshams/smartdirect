@@ -12,9 +12,8 @@ import { printLoadTestReport } from "./load-test/report";
 import type { LoadTestSample } from "./load-test/types";
 
 const JOB_PREFIX = "smartdirect:queue:job:";
-const READY_KEY = "smartdirect:queue:default:ready";
+const LOAD_TEST_QUEUE_NAMESPACE = "load-test-worker";
 const ENQUEUE_BATCH_SIZE = 25;
-const READY_SCORE_BATCH_SIZE = 25;
 const VERIFY_BATCH_SIZE = 100;
 
 async function getJobsBatch(jobIds: string[]) {
@@ -39,7 +38,7 @@ async function getJobsBatch(jobIds: string[]) {
   return results;
 }
 
-async function deleteJobsBatch(jobIds: string[]) {
+async function deleteJobsBatch(jobIds: string[], queueNamespace = LOAD_TEST_QUEUE_NAMESPACE) {
   if (!jobIds.length) return 0;
 
   const redis = createQueueRedis();
@@ -52,10 +51,10 @@ async function deleteJobsBatch(jobIds: string[]) {
     for (const jobId of batch) {
       pipeline.del(JOB_PREFIX + jobId);
       pipeline.del("smartdirect:queue:claim:" + jobId);
-      pipeline.zrem("smartdirect:queue:default:active", jobId);
-      pipeline.zrem("smartdirect:queue:default:failed", jobId);
-      pipeline.zrem(READY_KEY, jobId);
-      pipeline.zrem("smartdirect:queue:default:delayed", jobId);
+      pipeline.zrem(`smartdirect:queue:${queueNamespace}:active`, jobId);
+      pipeline.zrem(`smartdirect:queue:${queueNamespace}:failed`, jobId);
+      pipeline.zrem(`smartdirect:queue:${queueNamespace}:ready`, jobId);
+      pipeline.zrem(`smartdirect:queue:${queueNamespace}:delayed`, jobId);
     }
 
     await pipeline.exec();
@@ -119,7 +118,8 @@ async function main() {
     console.log(`Cleaned up ${cleanedPreviousJobs} stale worker-load jobs before the test.`);
   }
 
-  const before = await getQueueDepth();
+  const before = await getQueueDepth(LOAD_TEST_QUEUE_NAMESPACE);
+  const productionBefore = await getQueueDepth("default");
   console.log(`Worker load-test run ${runId} created ${config.total} isolated jobs.`);
   const controller = new AbortController();
 
@@ -151,6 +151,7 @@ async function main() {
                     ? "normal" as const
                     : "low" as const,
               maxAttempts: 1,
+              queueNamespace: LOAD_TEST_QUEUE_NAMESPACE,
             },
           };
         }),
@@ -162,34 +163,7 @@ async function main() {
       }
     }
 
-    // Force the isolated test jobs ahead of the pre-existing queue backlog.
-    // Do this in small batches; sending 1,000 concurrent REST commands to
-    // Upstash can itself become the bottleneck and would invalidate the test.
-    const redis = createQueueRedis();
-
-    for (
-      let batchStart = 0;
-      batchStart < jobIds.length;
-      batchStart += READY_SCORE_BATCH_SIZE
-    ) {
-      const batchEnd = Math.min(
-        jobIds.length,
-        batchStart + READY_SCORE_BATCH_SIZE,
-      );
-
-      await Promise.all(
-        jobIds.slice(batchStart, batchEnd).map((jobId, offset) =>
-          redis.zadd(READY_KEY, {
-            score: batchStart + offset - config.total,
-            member: jobId,
-          }),
-        ),
-      );
-    }
-
-    console.log(
-      `Worker load-test prepared ${jobIds.length} isolated ready jobs.`,
-    );
+    console.log(`Worker load-test prepared ${jobIds.length} isolated ready jobs in namespace ${LOAD_TEST_QUEUE_NAMESPACE}.`);
 
     workerStartedAt = Date.now();
     const deadlineAt = workerStartedAt + config.durationMs;
@@ -241,6 +215,7 @@ async function main() {
         concurrency: config.concurrency,
         pollIntervalMs: 100,
         workerId: `load-test-${process.pid}-${Date.now()}`,
+        queueNamespace: LOAD_TEST_QUEUE_NAMESPACE,
         signal: controller.signal,
       },
     );
@@ -308,14 +283,19 @@ async function main() {
     errors,
   } as const;
 
-  const after = await getQueueDepth();
+  const after = await getQueueDepth(LOAD_TEST_QUEUE_NAMESPACE);
+  const productionAfter = await getQueueDepth("default");
   const integrity =
     successful === config.total &&
     failed === 0 &&
     after.ready === before.ready &&
     after.delayed === before.delayed &&
     after.active === before.active &&
-    after.failed === before.failed;
+    after.failed === before.failed &&
+    productionAfter.ready === productionBefore.ready &&
+    productionAfter.delayed === productionBefore.delayed &&
+    productionAfter.active === productionBefore.active &&
+    productionAfter.failed === productionBefore.failed;
 
   console.log(
     JSON.stringify(
@@ -333,7 +313,7 @@ async function main() {
   let cleanupFailures = 0;
 
   try {
-    await deleteJobsBatch(jobIds);
+    await deleteJobsBatch(jobIds, LOAD_TEST_QUEUE_NAMESPACE);
   } catch (error) {
     cleanupFailures = config.total;
     errors.push(
