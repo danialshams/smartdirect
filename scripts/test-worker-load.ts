@@ -1,6 +1,7 @@
 import "dotenv/config";
 
 import {
+  createQueueRedis,
   deleteJob,
   enqueueJob,
   getJob,
@@ -11,6 +12,42 @@ import { getLoadTestConfig } from "./load-test/config";
 import { calculateLatency } from "./load-test/metrics";
 import { printLoadTestReport } from "./load-test/report";
 import type { LoadTestSample } from "./load-test/types";
+
+const JOB_PREFIX = "smartdirect:queue:job:";
+
+async function cleanupPreviousWorkerLoadJobs() {
+  const redis = createQueueRedis();
+  const jobIds: string[] = [];
+  let cursor = 0;
+
+  do {
+    const result = await redis.scan(cursor, {
+      match: `${JOB_PREFIX}job_*`,
+      count: 100,
+    });
+
+    cursor = Number(result[0]);
+
+    for (const key of result[1]) {
+      const job = await redis.get<{ type?: string; payload?: { message?: string } }>(key);
+
+      if (
+        job?.type === "TEST" &&
+        typeof job.payload?.message === "string" &&
+        job.payload.message.startsWith("worker-load-")
+      ) {
+        jobIds.push(key.slice(JOB_PREFIX.length));
+      }
+    }
+  } while (cursor !== 0);
+
+  if (!jobIds.length) {
+    return 0;
+  }
+
+  await Promise.all(jobIds.map((jobId) => deleteJob(jobId)));
+  return jobIds.length;
+}
 
 async function main() {
   const config = getLoadTestConfig("worker-load", {
@@ -23,6 +60,11 @@ async function main() {
   const startedAtByJobId = new Map<string, number>();
   const samples: LoadTestSample[] = [];
   const errors: string[] = [];
+
+  const cleanedPreviousJobs = await cleanupPreviousWorkerLoadJobs();
+  if (cleanedPreviousJobs > 0) {
+    console.log(`Cleaned up ${cleanedPreviousJobs} stale worker-load jobs before the test.`);
+  }
 
   const before = await getQueueDepth();
   const controller = new AbortController();
