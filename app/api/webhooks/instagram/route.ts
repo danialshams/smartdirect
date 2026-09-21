@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { claimInstagramWebhookEvent, completeInstagramWebhookEvent, failInstagramWebhookEvent } from "@/lib/idempotency/webhook";
@@ -513,7 +514,7 @@ export async function processQueuedInstagramWebhookEvent(
     igUsername: instagramAccount.igUsername,
   };
 
-  const webhookEventKey = `smartdirect:idempotency:v1:webhook:${accountData.id}:${payload.eventType}:${require("node:crypto").createHash("sha256").update(payload.eventId).digest("hex")}`;
+  const webhookEventKey = `smartdirect:idempotency:v1:webhook:${accountData.id}:${payload.eventType}:${createHash("sha256").update(payload.eventId).digest("hex")}`;
 
   try {
     if (payload.eventType === "MESSAGING") {
