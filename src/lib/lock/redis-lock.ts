@@ -5,9 +5,9 @@ import {
   type AcquireLockResult,
   type DistributedLockHandle,
   type DistributedLockKeyInput,
+  DISTRIBUTED_LOCK_KEY_PREFIX,
 } from "./types";
 
-const LOCK_PREFIX = "smartdirect:lock:";
 const DEFAULT_LOCK_TTL_SECONDS = 30;
 const MIN_LOCK_TTL_SECONDS = 1;
 const MAX_LOCK_TTL_SECONDS = 300;
@@ -29,14 +29,47 @@ function getLockTtlSeconds() {
   return value;
 }
 
-export function createLockKey(input: DistributedLockKeyInput) {
-  const resourceId = input.resourceId.trim();
+const LOCK_KEY_VERSION = "v1";
 
-  if (!resourceId) {
+const VALID_LOCK_SCOPES = new Set<DistributedLockKeyInput["scope"]>([
+  "job",
+  "instagram-account",
+  "conversation",
+  "publishing-job",
+]);
+
+function normalizeResourceId(resourceId: string) {
+  const normalized = resourceId.trim();
+
+  if (!normalized) {
     throw new Error("Distributed lock resourceId cannot be empty.");
   }
 
-  return `${LOCK_PREFIX}${input.scope}:${resourceId}`;
+  return normalized;
+}
+
+function encodeResourceId(resourceId: string) {
+  return encodeURIComponent(resourceId);
+}
+
+/**
+ * Builds the canonical, versioned Redis lock key.
+ *
+ * Format:
+ *   smartdirect:lock:v1:<scope>:<encoded-resource-id>
+ *
+ * Resource IDs are URI-encoded so separators inside an ID cannot alter the
+ * key structure. The version segment lets the key format evolve without
+ * silently colliding with older formats.
+ */
+export function createLockKey(input: DistributedLockKeyInput) {
+  if (!VALID_LOCK_SCOPES.has(input.scope)) {
+    throw new Error(`Unsupported distributed lock scope: ${String(input.scope)}`);
+  }
+
+  const resourceId = normalizeResourceId(input.resourceId);
+
+  return `${DISTRIBUTED_LOCK_KEY_PREFIX}${LOCK_KEY_VERSION}:${input.scope}:${encodeResourceId(resourceId)}`;
 }
 
 function createLockToken() {
