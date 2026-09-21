@@ -28,46 +28,6 @@ async function main() {
   const controller = new AbortController();
 
   let workerError: unknown;
-  const workerStartedAt = Date.now();
-  const deadlineAt = workerStartedAt + config.durationMs;
-  let watchdogStopped = false;
-
-  const watchdog = (async () => {
-    while (!watchdogStopped && !controller.signal.aborted) {
-      const remainingMs = deadlineAt - Date.now();
-
-      if (remainingMs <= 0) {
-        errors.push(
-          `Worker load test exceeded the ${config.durationMs}ms execution deadline.`,
-        );
-        controller.abort();
-        return;
-      }
-
-      try {
-        const depth = await getQueueDepth();
-
-        if (
-          depth.ready === 0 &&
-          depth.delayed === 0 &&
-          depth.active === 0
-        ) {
-          controller.abort();
-          return;
-        }
-      } catch (error) {
-        errors.push(
-          error instanceof Error
-            ? `Worker load watchdog error: ${error.message}`
-            : `Worker load watchdog error: ${String(error)}`,
-        );
-      }
-
-      await new Promise((resolve) =>
-        setTimeout(resolve, Math.min(250, remainingMs)),
-      );
-    }
-  })();
 
   try {
     for (let index = 0; index < config.total; index++) {
@@ -90,6 +50,47 @@ async function main() {
       jobIds.push(job.id);
       startedAtByJobId.set(job.id, jobStartedAt);
     }
+
+    const workerStartedAt = Date.now();
+    const deadlineAt = workerStartedAt + config.durationMs;
+    let watchdogStopped = false;
+
+    const watchdog = (async () => {
+      while (!watchdogStopped && !controller.signal.aborted) {
+        const remainingMs = deadlineAt - Date.now();
+
+        if (remainingMs <= 0) {
+          errors.push(
+            `Worker load test exceeded the ${config.durationMs}ms execution deadline.`,
+          );
+          controller.abort();
+          return;
+        }
+
+        try {
+          const depth = await getQueueDepth();
+
+          if (
+            depth.ready === 0 &&
+            depth.delayed === 0 &&
+            depth.active === 0
+          ) {
+            controller.abort();
+            return;
+          }
+        } catch (error) {
+          errors.push(
+            error instanceof Error
+              ? `Worker load watchdog error: ${error.message}`
+              : `Worker load watchdog error: ${String(error)}`,
+          );
+        }
+
+        await new Promise((resolve) =>
+          setTimeout(resolve, Math.min(250, remainingMs)),
+        );
+      }
+    })();
 
     const workerPromise = runQueueWorker(
       async (job) => {
