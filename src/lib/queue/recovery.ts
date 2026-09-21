@@ -4,11 +4,10 @@ import {
   createQueueRedis,
   enqueueJob,
   failJob,
+  getQueueKeys,
 } from "./core";
 import type { QueueJobPayload, QueueJobType } from "./types";
 
-const ACTIVE_KEY = "smartdirect:queue:default:active";
-const FAILED_KEY = "smartdirect:queue:default:failed";
 const CLAIM_PREFIX = "smartdirect:queue:claim:";
 const JOB_PREFIX = "smartdirect:queue:job:";
 const STALLED_TTL_SECONDS = Math.max(
@@ -36,8 +35,9 @@ function jobKey(jobId: string) {
   return `${JOB_PREFIX}${jobId}`;
 }
 
-export async function recoverStalledJobs(limit = 50) {
+export async function recoverStalledJobs(limit = 50, queueNamespace = "default") {
   const redis = createQueueRedis();
+  const keys = getQueueKeys(queueNamespace);
   const cutoff = Date.now() - STALLED_TTL_SECONDS * 1000;
   const ids = await redis.zrange<string[]>(ACTIVE_KEY, 0, cutoff, {
     byScore: true,
@@ -55,7 +55,7 @@ export async function recoverStalledJobs(limit = 50) {
     ]);
 
     if (!job) {
-      await redis.zrem(ACTIVE_KEY, id);
+      await redis.zrem(keys.active, id);
       continue;
     }
 
@@ -84,8 +84,8 @@ export async function recoverStalledJobs(limit = 50) {
     job.workerId = undefined;
 
     await redis.set(jobKey(id), job);
-    await redis.zrem(ACTIVE_KEY, id);
-    await redis.zadd("smartdirect:queue:default:ready", {
+    await redis.zrem(keys.active, id);
+    await redis.zadd(keys.ready, {
       score: job.scheduledAt * 10,
       member: id,
     });
@@ -156,7 +156,8 @@ export async function retryFailedJob(failureId: string) {
   });
 
   const redis = createQueueRedis();
-  await redis.zrem(FAILED_KEY, failure.jobId);
+  const failureKeys = getQueueKeys("default");
+  await redis.zrem(failureKeys.failed, failure.jobId);
 
   console.log(JSON.stringify({
     event: "queue:manual-retry",
@@ -182,12 +183,13 @@ export async function getFailedJob(failureId: string) {
   });
 }
 
-export async function getRecoveryHealth() {
+export async function getRecoveryHealth(queueNamespace = "default") {
   const redis = createQueueRedis();
+  const keys = getQueueKeys(queueNamespace);
   const [failed, active, ready] = await Promise.all([
-    redis.zcard(FAILED_KEY),
-    redis.zcard(ACTIVE_KEY),
-    redis.zcard("smartdirect:queue:default:ready"),
+    redis.zcard(keys.failed),
+    redis.zcard(keys.active),
+    redis.zcard(keys.ready),
   ]);
 
   return {
