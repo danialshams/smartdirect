@@ -12,7 +12,11 @@ const DEFAULT_LOCK_TTL_SECONDS = 30;
 const MIN_LOCK_TTL_SECONDS = 1;
 const MAX_LOCK_TTL_SECONDS = 300;
 
-function getLockTtlSeconds() {
+export const DISTRIBUTED_LOCK_TTL_DEFAULT_SECONDS = DEFAULT_LOCK_TTL_SECONDS;
+export const DISTRIBUTED_LOCK_TTL_MIN_SECONDS = MIN_LOCK_TTL_SECONDS;
+export const DISTRIBUTED_LOCK_TTL_MAX_SECONDS = MAX_LOCK_TTL_SECONDS;
+
+export function getLockTtlSeconds() {
   const raw = process.env.DISTRIBUTED_LOCK_TTL_SECONDS?.trim();
   if (!raw) return DEFAULT_LOCK_TTL_SECONDS;
 
