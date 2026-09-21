@@ -43,7 +43,8 @@
     "queue:recovery:test": "tsx scripts/test-failed-jobs-recovery.ts",
     "cache:redis:test": "tsx scripts/test-redis-cache.ts",
     "observability:test": "tsx scripts/test-observability.ts",
-    "monitoring:test": "tsx scripts/test-monitoring.ts"
+    "monitoring:test": "tsx scripts/test-monitoring.ts",
+    "load:architecture:test": "tsx scripts/test-load-architecture.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",
