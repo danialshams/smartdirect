@@ -49,24 +49,27 @@ async function main() {
       throw new Error("Messaging event ID resolver did not prefer message.mid.");
     }
 
-    const first = await claimInstagramWebhookEvent({
-      instagramAccountId: accountA,
-      event: messageEvent,
-      eventType: "MESSAGING",
-    });
+    const [first, duplicateInProgress] = await Promise.all([
+      claimInstagramWebhookEvent({
+        instagramAccountId: accountA,
+        event: messageEvent,
+        eventType: "MESSAGING",
+      }),
+      claimInstagramWebhookEvent({
+        instagramAccountId: accountA,
+        event: messageEvent,
+        eventType: "MESSAGING",
+      }),
+    ]);
 
-    if (!first.claimed) {
-      throw new Error("First messaging webhook event was not claimed.");
-    }
+    const concurrentClaims = [first.claimed, duplicateInProgress.claimed].filter(
+      Boolean,
+    ).length;
 
-    const duplicateInProgress = await claimInstagramWebhookEvent({
-      instagramAccountId: accountA,
-      event: messageEvent,
-      eventType: "MESSAGING",
-    });
-
-    if (duplicateInProgress.claimed) {
-      throw new Error("Duplicate messaging event was claimed while in progress.");
+    if (concurrentClaims !== 1) {
+      throw new Error(
+        `Expected exactly one concurrent webhook claim, got ${concurrentClaims}.`,
+      );
     }
 
     await completeInstagramWebhookEvent(first.key);
