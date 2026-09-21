@@ -99,7 +99,7 @@ async function main() {
     jobs.push(job.id);
   }
 
-  const workers = Array.from({ length: CONCURRENCY }, (_, index) =>
+  const workers = [
     runQueueWorker(
       async (job) => {
         if (job.type !== "INSTAGRAM_WEBHOOK") {
@@ -116,13 +116,13 @@ async function main() {
         processed += 1;
       },
       {
-        concurrency: 1,
+        concurrency: CONCURRENCY,
         pollIntervalMs: 100,
-        workerId: `webhook-load-worker-${index}-${Date.now()}`,
+        workerId: `webhook-load-worker-${Date.now()}`,
         signal: controller.signal,
       },
     ),
-  );
+  ];
 
   let waitError: unknown;
 
