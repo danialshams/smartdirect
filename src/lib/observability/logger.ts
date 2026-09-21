@@ -54,7 +54,7 @@ function emit(level: LogLevel, event: string, fields: LogFields = {}) {
     service: "smartdirect",
     event,
     ...context,
-    ...redact(fields),
+    ...redact(fields ?? {}),
   };
 
   const line = JSON.stringify(payload);
@@ -93,7 +93,7 @@ export function logWithContext(
 ) {
   const merged = {
     ...context,
-    ...redact(fields),
+    ...redact(fields ?? {}),
   };
 
   const payload = {
