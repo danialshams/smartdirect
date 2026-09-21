@@ -76,6 +76,7 @@ export async function enqueueJob<T extends QueueJobType>(
     scheduledAt: now + delayMs,
     attempts: 0,
     maxAttempts: Math.max(1, options.maxAttempts ?? 3),
+    idempotency: options.idempotency,
   };
 
   await redis.set(jobKey(job.id), job);
