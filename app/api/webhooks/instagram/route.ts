@@ -1,7 +1,12 @@
 import { createHash } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { claimInstagramWebhookEvent, completeInstagramWebhookEvent, failInstagramWebhookEvent } from "@/lib/idempotency/webhook";
+import {
+  claimInstagramWebhookEvent,
+  completeInstagramWebhookEvent,
+  failInstagramWebhookEvent,
+  retryInstagramWebhookEvent,
+} from "@/lib/idempotency/webhook";
 import { normalizeInstagramWebhookEvent } from "@/lib/webhook/normalize";
 import { enqueueInstagramWebhookEvent } from "@/lib/webhook/queue";
 
@@ -494,6 +499,7 @@ export async function processQueuedInstagramWebhookEvent(
     eventType: "MESSAGING" | "COMMENT";
     event: unknown;
   },
+  attempt = 1,
 ) {
   const instagramAccount = await prisma.instagramAccount.findUnique({
     where: {
@@ -515,6 +521,18 @@ export async function processQueuedInstagramWebhookEvent(
   };
 
   const webhookEventKey = `smartdirect:idempotency:v1:webhook:${accountData.id}:${payload.eventType}:${createHash("sha256").update(payload.eventId).digest("hex")}`;
+
+  if (attempt > 1) {
+    const reclaimed = await retryInstagramWebhookEvent(webhookEventKey);
+
+    if (!reclaimed) {
+      console.log(
+        "Queued Instagram webhook retry skipped because the event is not in FAILED state:",
+        payload.eventId,
+      );
+      return;
+    }
+  }
 
   try {
     if (payload.eventType === "MESSAGING") {
