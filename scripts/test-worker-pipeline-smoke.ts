@@ -8,6 +8,7 @@ import {
   getJob,
 } from "../src/lib/queue/core";
 import { acquireLock, releaseLock } from "../src/lib/lock/redis-lock";
+import type { DistributedLockHandle } from "../src/lib/lock/types";
 import { createQueueRedis } from "../src/lib/queue/core";
 
 const STEP_TIMEOUT_MS = 10_000;
@@ -26,9 +27,7 @@ async function withTimeout<T>(name: string, promise: Promise<T>) {
 async function main() {
   const message = `worker-pipeline-smoke-${Date.now()}-${crypto.randomUUID()}`;
   let jobId: string | undefined;
-  let lockHandle:
-    | Awaited<ReturnType<typeof acquireLock>>["handle"]
-    | undefined;
+  let lockHandle: DistributedLockHandle | undefined;
 
   const step = async <T>(name: string, fn: () => Promise<T>) => {
     const startedAt = Date.now();
@@ -80,7 +79,7 @@ async function main() {
       }),
     );
 
-    if (!lock.acquired || !lock.handle) {
+    if (!lock.acquired) {
       throw new Error("PIPELINE_SMOKE_LOCK_FAILED");
     }
 
