@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
+import { start } from "workflow/api";
 import { prisma } from "@/lib/prisma";
 import {
   claimInstagramWebhookEvent,
@@ -9,6 +10,7 @@ import {
 } from "@/lib/idempotency/webhook";
 import { normalizeInstagramWebhookEvent } from "@/lib/webhook/normalize";
 import { enqueueInstagramWebhookEvent } from "@/lib/webhook/queue";
+import { processInstagramWebhookQueueJob } from "@/lib/webhook/workflow";
 
 import { executeAutomation } from "@/lib/automation/execute-automation";
 import { findMatchingAutomation } from "@/lib/automation/find-matching-automation";
@@ -487,13 +489,14 @@ async function processMessagingEventWithIdempotency(
   }
 
   try {
-    await enqueueInstagramWebhookEvent({
+    const queued = await enqueueInstagramWebhookEvent({
       instagramAccountId: instagramAccount.id,
       eventId: claim.eventId,
       eventType: "MESSAGING",
       event: messagingEvent,
       idempotencyKey: claim.key,
     });
+    await start(processInstagramWebhookQueueJob, [queued.id]);
   } catch (error) {
     await failInstagramWebhookEvent(claim.key, error);
     throw error;
@@ -523,13 +526,14 @@ async function processCommentEventWithIdempotency(
   }
 
   try {
-    await enqueueInstagramWebhookEvent({
+    const queued = await enqueueInstagramWebhookEvent({
       instagramAccountId: instagramAccount.id,
       eventId: claim.eventId,
       eventType: "COMMENT",
       event: value,
       idempotencyKey: claim.key,
     });
+    await start(processInstagramWebhookQueueJob, [queued.id]);
   } catch (error) {
     await failInstagramWebhookEvent(claim.key, error);
     throw error;
