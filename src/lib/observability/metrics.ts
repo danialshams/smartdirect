@@ -56,6 +56,15 @@ export async function recordLatency(operation: string, latencyMs: number) {
 
   addMemoryLatency(operation, latencyMs);
 
+  const aggregateOperation =
+    operation.startsWith("instagram_api:") && operation !== "instagram_api:all"
+      ? "instagram_api:all"
+      : null;
+
+  if (aggregateOperation) {
+    addMemoryLatency(aggregateOperation, latencyMs);
+  }
+
   if (!isRedisConfigured()) {
     return;
   }
@@ -71,6 +80,13 @@ export async function recordLatency(operation: string, latencyMs: number) {
     await redis.lpush(key, sample);
     await redis.ltrim(key, 0, LATENCY_SAMPLE_LIMIT - 1);
     await redis.expire(key, LATENCY_TTL_SECONDS);
+
+    if (aggregateOperation) {
+      const aggregateKey = latencyKey(aggregateOperation);
+      await redis.lpush(aggregateKey, sample);
+      await redis.ltrim(aggregateKey, 0, LATENCY_SAMPLE_LIMIT - 1);
+      await redis.expire(aggregateKey, LATENCY_TTL_SECONDS);
+    }
   } catch (error) {
     addMemoryLatency(operation, latencyMs);
     console.error(
@@ -86,6 +102,15 @@ export async function recordLatency(operation: string, latencyMs: number) {
 export async function recordFailure(operation: string, errorType = "unknown") {
   addMemoryFailure(operation, errorType);
 
+  const aggregateOperation =
+    operation.startsWith("instagram_api:") && operation !== "instagram_api:all"
+      ? "instagram_api:all"
+      : null;
+
+  if (aggregateOperation) {
+    addMemoryFailure(aggregateOperation, errorType);
+  }
+
   if (!isRedisConfigured()) {
     return;
   }
@@ -96,6 +121,12 @@ export async function recordFailure(operation: string, errorType = "unknown") {
 
     await redis.incr(key);
     await redis.expire(key, FAILURE_TTL_SECONDS);
+
+    if (aggregateOperation) {
+      const aggregateKey = failureKey(`${aggregateOperation}:${errorType}`);
+      await redis.incr(aggregateKey);
+      await redis.expire(aggregateKey, FAILURE_TTL_SECONDS);
+    }
   } catch (error) {
     addMemoryFailure(operation, errorType);
     console.error(
