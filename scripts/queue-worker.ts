@@ -38,9 +38,11 @@ runQueueWorker(
         }),
       );
     } else if (job.type === "INSTAGRAM_WEBHOOK") {
-      await handleInstagramWebhookJob(job);
+      const webhookJob = job as import("../src/lib/queue/types").QueueJob<"INSTAGRAM_WEBHOOK">;
+      await handleInstagramWebhookJob(webhookJob);
     } else if (job.type === "PUBLISH") {
-      await publishInstagramJob(job.payload.publishingJobId);
+      const publishJob = job as import("../src/lib/queue/types").QueueJob<"PUBLISH">;
+      await publishInstagramJob(publishJob.payload.publishingJobId);
     }
 
     console.log(
