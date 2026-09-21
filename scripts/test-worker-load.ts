@@ -1,0 +1,170 @@
+import "dotenv/config";
+
+import {
+  deleteJob,
+  enqueueJob,
+  getJob,
+  getQueueDepth,
+} from "../src/lib/queue/core";
+import { runQueueWorker } from "../src/lib/queue/worker";
+import { getLoadTestConfig } from "./load-test/config";
+import { calculateLatency } from "./load-test/metrics";
+import { printLoadTestReport } from "./load-test/report";
+import type { LoadTestSample } from "./load-test/types";
+
+async function main() {
+  const config = getLoadTestConfig("worker-load", {
+    total: 1_000,
+    concurrency: 16,
+    durationMs: 30_000,
+  });
+
+  const jobIds: string[] = [];
+  const startedAtByJobId = new Map<string, number>();
+  const samples: LoadTestSample[] = [];
+  const errors: string[] = [];
+
+  const before = await getQueueDepth();
+  const controller = new AbortController();
+
+  let workerError: unknown;
+
+  try {
+    for (let index = 0; index < config.total; index++) {
+      const jobStartedAt = Date.now();
+      const job = await enqueueJob(
+        "TEST",
+        { message: `worker-load-${index}` },
+        {
+          priority: index % 4 === 0
+            ? "critical"
+            : index % 4 === 1
+              ? "high"
+              : index % 4 === 2
+                ? "normal"
+                : "low",
+          maxAttempts: 1,
+        },
+      );
+
+      jobIds.push(job.id);
+      startedAtByJobId.set(job.id, jobStartedAt);
+    }
+
+    const workerPromise = runQueueWorker(
+      async (job) => {
+        const completedAt = Date.now();
+        const jobStartedAt = startedAtByJobId.get(job.id) ?? completedAt;
+
+        samples.push({
+          index: samples.length,
+          startedAt: jobStartedAt,
+          completedAt,
+          durationMs: completedAt - jobStartedAt,
+          ok: true,
+        });
+
+        if (samples.length >= config.total) {
+          controller.abort();
+        }
+      },
+      {
+        concurrency: config.concurrency,
+        pollIntervalMs: 100,
+        workerId: `load-test-${process.pid}-${Date.now()}`,
+        signal: controller.signal,
+      },
+    );
+
+    await workerPromise;
+  } catch (error) {
+    workerError = error;
+    errors.push(error instanceof Error ? error.message : String(error));
+    controller.abort();
+  }
+
+  const durationMs = samples.length > 0
+    ? Math.max(...samples.map((sample) => sample.completedAt)) -
+      Math.min(...samples.map((sample) => sample.startedAt))
+    : 0;
+
+  let successful = 0;
+  let failed = 0;
+
+  for (const jobId of jobIds) {
+    try {
+      const job = await getJob(jobId);
+
+      if (job?.status === "completed") {
+        successful++;
+      } else {
+        failed++;
+        errors.push(
+          `Job ${jobId} ended with status ${job?.status ?? "missing"}.`,
+        );
+      }
+    } catch (error) {
+      failed++;
+      errors.push(
+        error instanceof Error ? error.message : String(error),
+      );
+    }
+  }
+
+  const result = {
+    name: config.name,
+    status:
+      !workerError && successful === config.total && failed === 0
+        ? "completed"
+        : "failed",
+    durationMs,
+    total: config.total,
+    successful,
+    failed,
+    throughput: durationMs > 0 ? Number((successful / (durationMs / 1000)).toFixed(2)) : 0,
+    latency: calculateLatency(samples),
+    errors,
+  } as const;
+
+  printLoadTestReport(result);
+
+  const after = await getQueueDepth();
+  console.log(
+    JSON.stringify(
+      {
+        integrity:
+          successful === config.total &&
+          after.ready === before.ready &&
+          after.delayed === before.delayed &&
+          after.active === before.active &&
+          after.failed === before.failed,
+        before,
+        after,
+        processed: successful,
+      },
+      null,
+      2,
+    ),
+  );
+
+  for (const jobId of jobIds) {
+    await deleteJob(jobId);
+  }
+
+  if (
+    result.status !== "completed" ||
+    successful !== config.total ||
+    failed !== 0
+  ) {
+    throw new Error(
+      `178 Worker Load Test failed: ${successful} of ${config.total} jobs completed.`,
+    );
+  }
+
+  console.log("178 Worker Load Test: OK");
+}
+
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});
