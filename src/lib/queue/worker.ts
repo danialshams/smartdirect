@@ -50,6 +50,10 @@ export async function runQueueWorker(
   let heartbeatStopped = false;
   let lastRecoveryAt = 0;
   let lastPromotionAt = 0;
+  let promotionInFlight = false;
+  let recoveryInFlight = false;
+  let promotionPromise: Promise<void> | null = null;
+  let recoveryPromise: Promise<void> | null = null;
   const recoveryIntervalMs = Math.max(5_000, Number(process.env.QUEUE_RECOVERY_INTERVAL_MS ?? 10_000));
   const promotionIntervalMs = Math.max(250, Number(process.env.QUEUE_PROMOTION_INTERVAL_MS ?? 1_000));
 
@@ -190,27 +194,47 @@ export async function runQueueWorker(
     }
   };
 
+  const runPromotion = async () => {
+    if (promotionInFlight) return;
+
+    promotionInFlight = true;
+
+    try {
+      await promoteDueJobs(50, options.queueNamespace);
+    } catch (error) {
+      observabilityLogger.error("queue_promotion_error", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    } finally {
+      promotionInFlight = false;
+    }
+  };
+
+  const runRecovery = async () => {
+    if (recoveryInFlight) return;
+
+    recoveryInFlight = true;
+
+    try {
+      await recoverStalledJobs(50, options.queueNamespace);
+    } catch (error) {
+      observabilityLogger.error("queue_recovery_error", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    } finally {
+      recoveryInFlight = false;
+    }
+  };
+
   while (!stopped) {
     if (Date.now() - lastPromotionAt >= promotionIntervalMs) {
       lastPromotionAt = Date.now();
-      try {
-        await promoteDueJobs(50, options.queueNamespace);
-      } catch (error) {
-        observabilityLogger.error("queue_promotion_error", {
-          error: error instanceof Error ? error.message : String(error),
-        });
-      }
+      promotionPromise = runPromotion();
     }
 
     if (Date.now() - lastRecoveryAt >= recoveryIntervalMs) {
       lastRecoveryAt = Date.now();
-      try {
-        await recoverStalledJobs(50, options.queueNamespace);
-      } catch (error) {
-        observabilityLogger.error("queue_recovery_error", {
-          error: error instanceof Error ? error.message : String(error),
-        });
-      }
+      recoveryPromise = runRecovery();
     }
 
     while (!stopped && active.size < concurrency) {
@@ -238,5 +262,10 @@ export async function runQueueWorker(
   // Shutdown is cooperative: no new jobs are claimed after stop is requested,
   // but already-running jobs are drained before the worker resolves.
   await Promise.all(active);
+  await Promise.all(
+    [promotionPromise, recoveryPromise].filter(
+      (promise): promise is Promise<void> => promise !== null,
+    ),
+  );
   await stopHeartbeatOnce();
 }
