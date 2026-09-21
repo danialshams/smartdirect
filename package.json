@@ -36,7 +36,8 @@
     "automation:foundation:test": "tsx scripts/test-automation-foundation.ts",
     "automation:entrypoints:test": "tsx scripts/test-automation-entrypoints.ts",
     "automation:flow:test": "tsx scripts/test-automation-flow.ts",
-    "automation:messages:test": "tsx scripts/test-automation-messages.ts"
+    "automation:messages:test": "tsx scripts/test-automation-messages.ts",
+    "automation:engine:test": "tsx scripts/test-automation-engine.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",
