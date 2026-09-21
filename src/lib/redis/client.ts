@@ -5,8 +5,11 @@ const globalForRedis = globalThis as unknown as {
 };
 
 const DEFAULT_REDIS_COMMAND_TIMEOUT_MS = 5_000;
+let redisCommandTimeoutOverrideMs: number | undefined;
 
 function getRedisCommandTimeoutMs() {
+  if (redisCommandTimeoutOverrideMs) return redisCommandTimeoutOverrideMs;
+
   const raw = process.env.REDIS_COMMAND_TIMEOUT_MS?.trim();
   if (!raw) return DEFAULT_REDIS_COMMAND_TIMEOUT_MS;
 
@@ -63,6 +66,14 @@ function createTimedRedisClient(): Redis {
       };
     },
   });
+}
+
+export function setRedisCommandTimeoutMs(timeoutMs: number) {
+  if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
+    throw new Error("INVALID_REDIS_COMMAND_TIMEOUT_MS");
+  }
+
+  redisCommandTimeoutOverrideMs = timeoutMs;
 }
 
 export function getRedisClient() {
