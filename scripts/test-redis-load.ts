@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 
 import { getRedisClient } from "@/lib/redis/client";
 
-import { loadTestConfigFromEnv } from "./load-test/config";
+import { getLoadTestConfig } from "./load-test/config";
 import { printLoadTestReport } from "./load-test/report";
 import { runLoadTest } from "./load-test/runner";
 
