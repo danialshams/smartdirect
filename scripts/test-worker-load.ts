@@ -28,6 +28,9 @@ async function main() {
   const controller = new AbortController();
 
   let workerError: unknown;
+  let workerStartedAt = 0;
+  let watchdogStopped = false;
+  let watchdog: Promise<void> | undefined;
 
   try {
     for (let index = 0; index < config.total; index++) {
@@ -51,11 +54,10 @@ async function main() {
       startedAtByJobId.set(job.id, jobStartedAt);
     }
 
-    const workerStartedAt = Date.now();
+    workerStartedAt = Date.now();
     const deadlineAt = workerStartedAt + config.durationMs;
-    let watchdogStopped = false;
 
-    const watchdog = (async () => {
+    watchdog = (async () => {
       while (!watchdogStopped && !controller.signal.aborted) {
         const remainingMs = deadlineAt - Date.now();
 
@@ -124,7 +126,9 @@ async function main() {
     controller.abort();
   } finally {
     watchdogStopped = true;
-    await watchdog;
+    if (watchdog) {
+      await watchdog;
+    }
   }
 
   const durationMs = Date.now() - workerStartedAt;
