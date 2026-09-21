@@ -1,5 +1,3 @@
-import "server-only";
-
 import { enqueueJob } from "@/lib/queue/core";
 import type { QueueJob } from "@/lib/queue/types";
 
