@@ -22,6 +22,13 @@ export function getObservabilityContext(): ObservabilityContext {
   return storage.getStore() ?? {};
 }
 
+export function enterObservabilityContext(context: ObservabilityContext) {
+  storage.enterWith({
+    ...getObservabilityContext(),
+    ...context,
+  });
+}
+
 export function runWithObservabilityContext<T>(
   context: ObservabilityContext,
   work: () => Promise<T>,
