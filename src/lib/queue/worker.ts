@@ -5,6 +5,7 @@ import {
 } from "./core";
 import { claimIdempotency } from "../idempotency/store";
 import { acquireLock, releaseLock } from "../lock/redis-lock";
+import type { DistributedLockHandle } from "../lock/types";
 import type { QueueJob } from "./types";
 
 export interface QueueWorkerOptions {
@@ -56,11 +57,7 @@ export async function runQueueWorker(
       return;
     }
 
-    let lockHandle: Awaited<ReturnType<typeof acquireLock>> extends infer T
-      ? T extends { acquired: true }
-        ? T["handle"]
-        : never
-      : never;
+    let lockHandle: DistributedLockHandle | undefined;
 
     try {
       const lock = await acquireLock({
