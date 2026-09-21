@@ -1,6 +1,7 @@
 import {
   claimNextJob,
   completeJob,
+  promoteDueJobs,
   failJob,
 } from "./core";
 import {
@@ -48,7 +49,9 @@ export async function runQueueWorker(
   let stopped = false;
   let heartbeatStopped = false;
   let lastRecoveryAt = 0;
+  let lastPromotionAt = 0;
   const recoveryIntervalMs = Math.max(5_000, Number(process.env.QUEUE_RECOVERY_INTERVAL_MS ?? 10_000));
+  const promotionIntervalMs = Math.max(250, Number(process.env.QUEUE_PROMOTION_INTERVAL_MS ?? 1_000));
 
   const stop = () => {
     stopped = true;
@@ -188,6 +191,17 @@ export async function runQueueWorker(
   };
 
   while (!stopped) {
+    if (Date.now() - lastPromotionAt >= promotionIntervalMs) {
+      lastPromotionAt = Date.now();
+      try {
+        await promoteDueJobs(50, options.queueNamespace);
+      } catch (error) {
+        observabilityLogger.error("queue_promotion_error", {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
     if (Date.now() - lastRecoveryAt >= recoveryIntervalMs) {
       lastRecoveryAt = Date.now();
       try {
