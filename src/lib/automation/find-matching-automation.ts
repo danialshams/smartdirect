@@ -53,7 +53,9 @@ export async function findMatchingAutomation(input: FindAutomationInput) {
       },
     },
     orderBy: { createdAt: "asc" },
-  ), CACHE_TTL.AUTOMATION);
+  }),
+  CACHE_TTL.AUTOMATION,
+);
 
   if (input.triggerType === "DM") {
     return automations[0] ?? null;
