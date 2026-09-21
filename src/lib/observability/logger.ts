@@ -23,7 +23,7 @@ const SENSITIVE_KEYS = new Set([
   "app_secret",
 ]);
 
-function redact(value: unknown, depth = 0): unknown {
+function redact(value: unknown, depth = 0): Record<string, unknown> | unknown[] | unknown {
   if (depth > 4) return "[REDACTED_DEPTH]";
 
   if (Array.isArray(value)) {
@@ -54,7 +54,7 @@ function emit(level: LogLevel, event: string, fields: LogFields = {}) {
     service: "smartdirect",
     event,
     ...context,
-    ...redact(fields ?? {}),
+    ...(redact(fields ?? {}) as Record<string, unknown>),
   };
 
   const line = JSON.stringify(payload);
