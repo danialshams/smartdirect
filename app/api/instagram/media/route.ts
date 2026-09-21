@@ -56,7 +56,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const result = await getCachedInstagramMedia(account.id, 50);\n\n    if (!result) {\n      return NextResponse.json({ success: false, message: "دریافت Media اینستاگرام ناموفق بود." }, { status: 502 });\n    }
+    const result = await getCachedInstagramMedia(account.id, 50);
+
+    if (!result) {
+      return NextResponse.json({ success: false, message: "دریافت Media اینستاگرام ناموفق بود." }, { status: 502 });
+    }
 
     const data = (result.data ?? []).map((item: Record<string, unknown>) => ({
       ...item,
