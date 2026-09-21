@@ -109,6 +109,7 @@ export async function recordFailure(operation: string, errorType = "unknown") {
 
   if (aggregateOperation) {
     addMemoryFailure(aggregateOperation, errorType);
+    addMemoryFailure(aggregateOperation, "all");
   }
 
   if (!isRedisConfigured()) {
@@ -124,8 +125,11 @@ export async function recordFailure(operation: string, errorType = "unknown") {
 
     if (aggregateOperation) {
       const aggregateKey = failureKey(`${aggregateOperation}:${errorType}`);
+      const aggregateAllKey = failureKey(`${aggregateOperation}:all`);
       await redis.incr(aggregateKey);
       await redis.expire(aggregateKey, FAILURE_TTL_SECONDS);
+      await redis.incr(aggregateAllKey);
+      await redis.expire(aggregateAllKey, FAILURE_TTL_SECONDS);
     }
   } catch (error) {
     addMemoryFailure(operation, errorType);
