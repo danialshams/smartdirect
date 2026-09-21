@@ -134,7 +134,7 @@ async function main() {
 
 main()
   .catch((error) => {
-    console.error("75 Redis distributed lock: FAILED");
+    console.error("76 Redis lock key strategy: FAILED");
     console.error(error);
     process.exitCode = 1;
   });
