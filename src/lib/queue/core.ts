@@ -264,7 +264,7 @@ export async function failJob(jobId: string, error: unknown) {
     create: {
       jobId,
       type: job.type,
-      payload: job.payload as never,
+      payload: JSON.parse(JSON.stringify(job.payload)),
       priority: job.priority,
       attempts: job.attempts,
       maxAttempts: job.maxAttempts,
@@ -277,7 +277,7 @@ export async function failJob(jobId: string, error: unknown) {
     },
     update: {
       type: job.type,
-      payload: job.payload,
+      payload: JSON.parse(JSON.stringify(job.payload)),
       priority: job.priority,
       attempts: job.attempts,
       maxAttempts: job.maxAttempts,
