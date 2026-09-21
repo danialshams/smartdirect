@@ -7,10 +7,12 @@ import {
   claimInstagramWebhookEvent,
 } from "../src/lib/idempotency/webhook";
 import {
+  createQueueRedis,
   deleteJob,
   enqueueJob,
   getJob,
   getQueueDepth,
+  getQueueKeys,
 } from "../src/lib/queue/core";
 import { runQueueWorker } from "../src/lib/queue/worker";
 import { prisma } from "../src/lib/prisma";
@@ -40,12 +42,39 @@ async function waitFor(
   throw new Error("Timed out waiting for webhook load test completion.");
 }
 
+async function clearTestQueueNamespace() {
+  const redis = createQueueRedis();
+  const keys = getQueueKeys(QUEUE_NAMESPACE);
+
+  const ids = new Set<string>();
+
+  for (const key of [keys.ready, keys.delayed, keys.active, keys.failed]) {
+    const members = await redis.zrange<string[]>(key, 0, -1);
+    for (const id of members) {
+      ids.add(id);
+    }
+  }
+
+  if (ids.size === 0) return 0;
+
+  await Promise.all(Array.from(ids, (jobId) => deleteJob(jobId)));
+  return ids.size;
+}
+
 async function main() {
   const startedAt = Date.now();
   const controller = new AbortController();
   let processed = 0;
   const processedIds = new Set<string>();
   const jobs: string[] = [];
+
+  const clearedJobs = await clearTestQueueNamespace();
+
+  if (clearedJobs > 0) {
+    console.log(
+      `[180] preflight: cleared ${clearedJobs} stale jobs from ${QUEUE_NAMESPACE}.`,
+    );
+  }
 
   // 1. Verify concurrent webhook idempotency: duplicate claims must produce exactly one owner.
   console.log(`[180] phase 1/5: starting ${DUPLICATE_REQUESTS} concurrent idempotency claims...`);
@@ -158,7 +187,7 @@ async function main() {
   let waitError: unknown;
 
   try {
-    await waitFor(async () => processed === TOTAL_EVENTS);
+    await waitFor(async () => processed >= TOTAL_EVENTS);
   } catch (error) {
     waitError = error;
   } finally {
