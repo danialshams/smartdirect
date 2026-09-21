@@ -15,6 +15,7 @@ import { recoverStalledJobs } from "./recovery";
 import { enterObservabilityContext } from "@/lib/observability/context";
 import { observabilityLogger } from "@/lib/observability/logger";
 import { recordFailure } from "@/lib/observability/metrics";
+import { startWorkerHeartbeat } from "@/lib/monitoring/worker";
 
 export interface QueueWorkerOptions {
   concurrency?: number;
@@ -59,6 +60,20 @@ export async function runQueueWorker(
   }
 
   const active = new Set<Promise<void>>();
+  const stopHeartbeat = startWorkerHeartbeat(workerId, {
+    pid: process.pid,
+    hostname: process.env.HOSTNAME,
+  });
+
+  if (options.signal) {
+    options.signal.addEventListener(
+      "abort",
+      () => {
+        void stopHeartbeat();
+      },
+      { once: true },
+    );
+  }
 
   const runOne = async () => {
     const job = await claimNextJob(workerId);
@@ -159,4 +174,5 @@ export async function runQueueWorker(
   }
 
   await Promise.all(active);
+  await stopHeartbeat();
 }
