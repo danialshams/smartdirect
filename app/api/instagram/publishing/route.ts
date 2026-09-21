@@ -6,6 +6,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { scheduleInstagramPublish } from "@/lib/instagram/scheduled-publishing-workflow";
 import { enqueueInstagramPublishing } from "@/lib/instagram/publishing-queue";
+import { processPublishingQueueJob } from "@/lib/instagram/publishing-workflow";
 import { proxyInstagramMediaUrl } from "@/lib/instagram/media-proxy";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 
@@ -161,6 +162,8 @@ export async function POST(request: NextRequest) {
       try {
         const queued = await enqueueInstagramPublishing(job.id, { maxAttempts: 4 });
         queueJobId = queued.job.id;
+        const workflowRun = await start(processPublishingQueueJob, [queued.job.id]);
+        workflowRunId = workflowRun.runId;
       } catch (error) {
         await prisma.instagramPublishJob.update({
           where: { id: job.id },
