@@ -1,5 +1,7 @@
 import "dotenv/config";
 
+process.env.NODE_ENV = "production";
+
 import { validateServerEnvironment } from "../src/lib/config/env";
 
 try {
