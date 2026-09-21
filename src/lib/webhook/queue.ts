@@ -23,12 +23,6 @@ export async function enqueueInstagramWebhookEvent(
     {
       priority: "high",
       maxAttempts: 3,
-      idempotency: {
-        key: input.idempotencyKey,
-        tenantId: input.instagramAccountId,
-        operation: "WEBHOOK_INSTAGRAM_EVENT",
-        resourceId: input.eventId,
-      },
     },
   );
 }
