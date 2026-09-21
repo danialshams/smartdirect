@@ -21,9 +21,38 @@ async function main() {
     resourceId,
   };
 
-  const expectedKey = `smartdirect:lock:job:${resourceId}`;
+  const expectedKey = `smartdirect:lock:v1:job:${encodeURIComponent(resourceId)}`;
   if (createLockKey(input) !== expectedKey) {
     throw new Error("Lock key strategy failed.");
+  }
+
+  if (createLockKey({ scope: "job", resourceId: "  same-resource  " }) !==
+      "smartdirect:lock:v1:job:same-resource") {
+    throw new Error("Lock key normalization failed.");
+  }
+
+  if (createLockKey({ scope: "job", resourceId: "a:b/c?d" }) !==
+      "smartdirect:lock:v1:job:a%3Ab%2Fc%3Fd") {
+    throw new Error("Lock key encoding failed.");
+  }
+
+  if (createLockKey({ scope: "job", resourceId }) ===
+      createLockKey({ scope: "conversation", resourceId })) {
+    throw new Error("Lock scope isolation failed.");
+  }
+
+  if (createLockKey({ scope: "job", resourceId: "resource-a" }) ===
+      createLockKey({ scope: "job", resourceId: "resource-b" })) {
+    throw new Error("Lock resource isolation failed.");
+  }
+
+  try {
+    createLockKey({ scope: "job", resourceId: "   " });
+    throw new Error("Empty resource ID was accepted.");
+  } catch (error) {
+    if (!(error instanceof Error) || !error.message.includes("resourceId cannot be empty")) {
+      throw error;
+    }
   }
 
   const [first, second] = await Promise.all([
@@ -77,7 +106,7 @@ async function main() {
 
   await releaseLock(reacquired.handle);
 
-  console.log("75 Redis distributed lock: OK");
+  console.log("76 Redis lock key strategy: OK");
   console.log(
     JSON.stringify(
       {
@@ -89,6 +118,12 @@ async function main() {
           "non-owner-release-block",
           "owner-release",
           "reacquisition-after-release",
+          "canonical-key-format",
+          "resource-normalization",
+          "resource-encoding",
+          "scope-isolation",
+          "resource-isolation",
+          "empty-resource-rejection",
         ],
       },
       null,
