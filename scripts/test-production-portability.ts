@@ -1,5 +1,7 @@
 import "dotenv/config";
 
+process.env.NODE_ENV = "production";
+
 import { validateServerEnvironment } from "../src/lib/config/env";
 import { prisma } from "../src/lib/prisma";
 import { getRedisClient, redisHealthCheck } from "../src/lib/redis/client";
