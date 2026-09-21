@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { invalidateAutomationCache } from "@/lib/cache/instagram";
 
 function normalizePersianDigits(value: string) {
   return value.replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit))).replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)));
@@ -95,6 +96,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     };
 
     const automation = await prisma.automation.update({ where: { id }, data: updateData, include: automationInclude });
+    await invalidateAutomationCache(existingAutomation.instagramAccountId);
     return NextResponse.json({ success: true, data: automation });
   } catch (error) {
     console.error("PATCH /api/automations/[id] error:", error);
@@ -111,6 +113,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     const automation = await prisma.automation.findFirst({ where: { id, instagramAccount: { userId: session.user.id } } });
     if (!automation) return NextResponse.json({ success: false, error: "Automation پیدا نشد" }, { status: 404 });
     await prisma.automation.delete({ where: { id } });
+    await invalidateAutomationCache(automation.instagramAccountId);
     return NextResponse.json({ success: true, message: "Automation با موفقیت حذف شد" });
   } catch (error) {
     console.error("DELETE /api/automations/[id] error:", error);
