@@ -17,7 +17,7 @@ function resolveKey(key: string) {
 
   const fullPath = path.resolve(basePath, normalized);
 
-  const root = path.resolve(basePath);
+  const root = path.resolve(/*turbopackIgnore: true*/ basePath);
 
   if (fullPath !== root && !fullPath.startsWith(`${root}${path.sep}`)) {
     throw new Error("Invalid storage key.");
