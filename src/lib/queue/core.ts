@@ -14,6 +14,8 @@ const READY_KEY = "smartdirect:queue:default:ready";
 const DELAYED_KEY = "smartdirect:queue:default:delayed";
 const CLAIM_PREFIX = "smartdirect:queue:claim:";
 const CLAIM_TTL_SECONDS = 30;
+const DEFAULT_RETRY_DELAY_MS = 1_000;
+const MAX_RETRY_DELAY_MS = 60_000;
 
 const PRIORITY_WEIGHT: Record<QueueJobPriority, number> = {
   critical: 0,
@@ -212,9 +214,30 @@ export async function failJob(jobId: string, error: unknown) {
 
   if (!job) return null;
 
-  job.status = "failed";
   job.lastError = error instanceof Error ? error.message : String(error);
   job.workerId = undefined;
+
+  await redis.del(claimKey(jobId));
+
+  if (job.attempts < job.maxAttempts) {
+    const retryDelayMs = Math.min(
+      MAX_RETRY_DELAY_MS,
+      DEFAULT_RETRY_DELAY_MS * 2 ** Math.max(0, job.attempts - 1),
+    );
+
+    job.status = "delayed";
+    job.scheduledAt = Date.now() + retryDelayMs;
+
+    await redis.set(jobKey(jobId), job);
+    await redis.zadd(DELAYED_KEY, {
+      score: job.scheduledAt,
+      member: job.id,
+    });
+
+    return job;
+  }
+
+  job.status = "failed";
 
   await Promise.all([
     redis.set(jobKey(jobId), job),
