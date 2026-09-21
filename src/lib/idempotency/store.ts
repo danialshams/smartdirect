@@ -259,6 +259,42 @@ export async function failIdempotency(
 }
 
 
+export async function retryFailedIdempotency(
+  key: string,
+  ttlSeconds: number = getIdempotencyTtlSeconds(),
+): Promise<ClaimIdempotencyResult> {
+  if (!Number.isInteger(ttlSeconds) || ttlSeconds <= 0) {
+    throw new Error("Idempotency TTL must be a positive integer.");
+  }
+
+  const expiresAt = new Date(Date.now() + ttlSeconds * 1000);
+
+  const updated = await prisma.idempotencyRecord.updateMany({
+    where: {
+      key,
+      status: "FAILED",
+    },
+    data: {
+      status: "IN_PROGRESS",
+      expiresAt,
+      response: { set: null },
+      errorMessage: null,
+      completedAt: null,
+    },
+  });
+
+  const record = await getIdempotencyRecord(key);
+
+  if (!record) {
+    throw new Error("Idempotency record not found.");
+  }
+
+  return {
+    claimed: updated.count === 1,
+    record,
+  };
+}
+
 export function getIdempotencyExecutionState(
   record: Pick<IdempotencyRecord, "status">,
 ): IdempotencyExecutionState {
