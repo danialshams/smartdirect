@@ -6,6 +6,7 @@ import {
   claimIdempotency,
   completeIdempotency,
   failIdempotency,
+  retryFailedIdempotency,
 } from "./store";
 
 const WEBHOOK_OPERATION = "WEBHOOK_INSTAGRAM_EVENT";
@@ -47,6 +48,13 @@ export async function claimInstagramWebhookEvent(
     eventId,
     key,
   };
+}
+
+export async function retryInstagramWebhookEvent(
+  key: string,
+): Promise<boolean> {
+  const result = await retryFailedIdempotency(key);
+  return result.claimed;
 }
 
 export async function completeInstagramWebhookEvent(
