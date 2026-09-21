@@ -276,7 +276,7 @@ export async function executeAutomation(input: ExecuteAutomationInput) {
     // 10. Send message through Instagram Adapter
     // =======================================================
 
-    const action = resolveAutomationAction({
+    resolveAutomationAction({
       messageType: currentMessage.messageType,
       text: currentMessage.text,
       mediaUrl: currentMessage.mediaUrl,
