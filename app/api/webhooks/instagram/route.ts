@@ -887,7 +887,6 @@ async function processMessagingEventLocked(
     const recipientId = messagingEvent?.recipient?.id;
 
     const message = messagingEvent?.message;
-    const message = messagingEvent?.message;
 
     // =======================================================
     // POSTBACK
