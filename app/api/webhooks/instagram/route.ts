@@ -747,6 +747,7 @@ console.log("========================================");
 async function processMessagingEvent(
   messagingEvent: any,
   instagramAccount: InstagramAccountData,
+  executionId: string,
 ) {
   try {
     console.log("========================================");
@@ -1231,6 +1232,7 @@ async function processMessagingEvent(
       igUserId: participantId,
 
       selectedQuickReplyId,
+      executionId: executionId,
     });
 
     console.log("DM automation execution result:", result);
@@ -1772,6 +1774,7 @@ async function processInstagramStoryReply(
         igUserId: participantId,
 
         selectedQuickReplyId: null,
+      executionId: executionId,
       });
 
       automationExecuted = result.success && result.executed;
@@ -2271,6 +2274,7 @@ async function processFollowGatePostback({
         igUserId: participantId,
 
         selectedQuickReplyId: null,
+      executionId: executionId,
       });
 
       automationExecuted = result.success && result.executed;
@@ -2678,6 +2682,7 @@ async function executeEntryPointAutomation({
       igUserId,
 
       selectedQuickReplyId: null,
+      executionId: sourceId,
     });
 
     console.log("Entry point automation result:", {
@@ -2828,6 +2833,7 @@ async function saveEntryPointInteraction({
 async function processCommentEvent(
   value: any,
   instagramAccount: InstagramAccountData,
+  executionId: string,
 ) {
   try {
     if (!value) {
@@ -3102,6 +3108,7 @@ async function processCommentEvent(
             commentId: igCommentId,
 
             selectedQuickReplyId: null,
+          executionId: executionId,
           });
 
           automationExecuted = result.success && result.executed;
@@ -3369,6 +3376,7 @@ async function processCommentEvent(
             matchedAutomation.replyText ??
             null,
         },
+          executionId: executionId,
       });
 
       console.log("Comment marked as replied.");
