@@ -132,7 +132,14 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        const profile = await getCachedInstagramProfile(account.id);\n\n        if (!profile) {\n            return NextResponse.json(\n                { success: false, error: "اطلاعات پروفایل Instagram در دسترس نیست." },\n                { status: 502 },\n            );\n        }
+        const profile = await getCachedInstagramProfile(account.id);
+
+        if (!profile) {
+            return NextResponse.json(
+                { success: false, error: "اطلاعات پروفایل Instagram در دسترس نیست." },
+                { status: 502 },
+            );
+        }
 
         return NextResponse.json({
             success: true,
