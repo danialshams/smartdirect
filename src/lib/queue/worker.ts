@@ -85,16 +85,36 @@ export async function runQueueWorker(
 
   const runOne = async () => {
     let job: QueueJob | null = null;
+    let claimError: unknown;
 
-    try {
-      job = await claimNextJob(workerId, options.queueNamespace);
-    } catch (error) {
-      observabilityLogger.error("queue_claim_failed", {
-        workerId,
-        error: error instanceof Error ? error.message : String(error),
-      });
-      void recordFailure("queue_claim", "claim_next_job");
-      throw error;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        job = await claimNextJob(workerId, options.queueNamespace);
+        claimError = undefined;
+        break;
+      } catch (error) {
+        claimError = error;
+
+        observabilityLogger.error("queue_claim_failed", {
+          workerId,
+          attempt,
+          maxAttempts: 3,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        void recordFailure("queue_claim", "claim_next_job");
+
+        if (attempt < 3) {
+          await new Promise((resolve) =>
+            setTimeout(resolve, 250 * 2 ** (attempt - 1)),
+          );
+        }
+      }
+    }
+
+    if (claimError) {
+      // A transient Redis/queue claim failure must not terminate the whole
+      // worker. The next polling cycle will retry the claim.
+      return;
     }
 
     if (!job) {
