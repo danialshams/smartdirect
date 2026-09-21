@@ -152,8 +152,6 @@ async function main() {
     errors,
   } as const;
 
-  printLoadTestReport(result);
-
   const after = await getQueueDepth();
   const integrity =
     successful === config.total &&
@@ -176,15 +174,26 @@ async function main() {
     ),
   );
 
-  for (const jobId of jobIds) {
-    await deleteJob(jobId);
+  const cleanupResults = await Promise.allSettled(
+    jobIds.map((jobId) => deleteJob(jobId)),
+  );
+
+  const cleanupFailures = cleanupResults.filter(
+    (result) => result.status === "rejected",
+  ).length;
+
+  if (cleanupFailures > 0) {
+    errors.push(`Worker load-test cleanup failed for ${cleanupFailures} jobs.`);
   }
+
+  printLoadTestReport(result);
 
   if (
     result.status !== "completed" ||
     !integrity ||
     successful !== config.total ||
-    failed !== 0
+    failed !== 0 ||
+    cleanupFailures > 0
   ) {
     throw new Error(
       `178 Worker Load Test failed: ${successful} of ${config.total} jobs completed.`,
