@@ -1,5 +1,3 @@
-import "server-only";
-
 import { prisma } from "@/lib/prisma";
 import type { IdempotencyStatus } from "@/generated/prisma/client";
 import { getIdempotencyTtlSeconds } from "./key";
