@@ -16,6 +16,12 @@ import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 import { reactToInstagramMessage } from "@/lib/instagram/react-to-message";
 import { InstagramApiError, instagramApiRequest } from "@/lib/instagram/client";
 import { withConversationLock } from "@/lib/conversation/conversation-lock";
+import {
+  createRequestId,
+  enterObservabilityContext,
+  getRequestObservabilityContext,
+} from "@/lib/observability/context";
+import { observabilityLogger } from "@/lib/observability/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -274,6 +280,17 @@ export async function GET(request: NextRequest) {
 // =========================================================
 
 export async function POST(request: NextRequest) {
+  const requestContext = getRequestObservabilityContext(request);
+  enterObservabilityContext(requestContext);
+  const startedAt = Date.now();
+
+  observabilityLogger.info("webhook_request_started", {
+    requestId: requestContext.requestId,
+    correlationId: requestContext.correlationId,
+    method: request.method,
+    path: new URL(request.url).pathname,
+  });
+
   try {
     const body = await request.json();
 
@@ -281,7 +298,10 @@ export async function POST(request: NextRequest) {
     console.log("INSTAGRAM WEBHOOK EVENT");
     console.log("========================================");
 
-    console.log("Webhook body:", JSON.stringify(body, null, 2));
+    observabilityLogger.info("webhook_payload_received", {
+      entryCount: Array.isArray(body?.entry) ? body.entry.length : 0,
+      object: body?.object ?? null,
+    });
 
     // =======================================================
     // 1. Validate webhook structure
