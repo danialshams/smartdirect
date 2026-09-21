@@ -52,20 +52,26 @@ async function main() {
   const duplicateEventId = `load-duplicate-${Date.now()}`;
   const duplicateResults = await Promise.race([
     Promise.all(
-    Array.from({ length: DUPLICATE_REQUESTS }, () =>
-      claimInstagramWebhookEvent({
-        instagramAccountId: TEST_ACCOUNT_ID,
-        eventType: "MESSAGING",
-        eventId: duplicateEventId,
-        event: {
-          sender: { id: "load-test-user" },
-          message: { mid: duplicateEventId, text: "load-test" },
-        },
-      }),
+      Array.from({ length: DUPLICATE_REQUESTS }, () =>
+        claimInstagramWebhookEvent({
+          instagramAccountId: TEST_ACCOUNT_ID,
+          eventType: "MESSAGING",
+          eventId: duplicateEventId,
+          event: {
+            sender: { id: "load-test-user" },
+            message: { mid: duplicateEventId, text: "load-test" },
+          },
+        }),
+      ),
     ),
     new Promise<never>((_, reject) =>
       setTimeout(
-        () => reject(new Error(`Timed out during phase 1: concurrent idempotency claims did not finish within 60s.`)),
+        () =>
+          reject(
+            new Error(
+              "Timed out during phase 1: concurrent idempotency claims did not finish within 60s.",
+            ),
+          ),
         60_000,
       ),
     ),
