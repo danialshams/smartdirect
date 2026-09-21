@@ -49,7 +49,8 @@
     "monitoring:test": "tsx scripts/test-monitoring.ts",
     "load:architecture:test": "tsx scripts/test-load-architecture.ts",
     "worker:smoke:test": "tsx scripts/test-worker-smoke.ts",
-    "worker:recovery:smoke:test": "tsx scripts/test-worker-recovery-smoke.ts"
+    "worker:recovery:smoke:test": "tsx scripts/test-worker-recovery-smoke.ts",
+    "worker:pipeline:smoke:test": "tsx scripts/test-worker-pipeline-smoke.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",
