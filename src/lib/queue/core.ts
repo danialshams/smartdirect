@@ -229,6 +229,16 @@ export async function getJob(jobId: string) {
   return redis.get<QueueJob>(jobKey(jobId));
 }
 
+export async function deleteJob(jobId: string) {
+  const redis = createQueueRedis();
+  await Promise.all([
+    redis.del(jobKey(jobId)),
+    redis.del(claimKey(jobId)),
+    redis.zrem(READY_KEY, jobId),
+    redis.zrem(DELAYED_KEY, jobId),
+  ]);
+}
+
 export async function getQueueDepth() {
   const redis = createQueueRedis();
   const [ready, delayed] = await Promise.all([
