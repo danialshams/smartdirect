@@ -2,6 +2,8 @@ import { createHash } from "node:crypto";
 
 import { getInstagramWebhookEventId } from "@/lib/webhook/normalize";
 
+export { getInstagramWebhookEventId } from "@/lib/webhook/normalize";
+
 import {
   claimIdempotency,
   completeIdempotency,
