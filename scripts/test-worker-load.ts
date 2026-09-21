@@ -34,7 +34,9 @@ async function cleanupPreviousWorkerLoadJobs() {
       if (
         job?.type === "TEST" &&
         typeof job.payload?.message === "string" &&
-        job.payload.message.startsWith("worker-load-")
+        (job.payload.message.startsWith("worker-load-") ||
+          job.payload.message.startsWith("queue-load-") ||
+          job.payload.message.startsWith("worker-smoke-"))
       ) {
         jobIds.push(key.slice(JOB_PREFIX.length));
       }
@@ -56,6 +58,7 @@ async function main() {
     durationMs: 30_000,
   });
 
+  const runId = `${Date.now()}-${crypto.randomUUID()}`;
   const jobIds: string[] = [];
   const startedAtByJobId = new Map<string, number>();
   const samples: LoadTestSample[] = [];
@@ -67,6 +70,7 @@ async function main() {
   }
 
   const before = await getQueueDepth();
+  console.log(`Worker load-test run ${runId} created ${config.total} isolated jobs.`);
   const controller = new AbortController();
 
   let workerError: unknown;
@@ -79,7 +83,7 @@ async function main() {
       const jobStartedAt = Date.now();
       const job = await enqueueJob(
         "TEST",
-        { message: `worker-load-${index}` },
+        { message: `worker-load-${runId}-${index}` },
         {
           priority: index % 4 === 0
             ? "critical"
@@ -120,7 +124,11 @@ async function main() {
     const workerPromise = runQueueWorker(
       async (job) => {
         const completedAt = Date.now();
-        const jobStartedAt = startedAtByJobId.get(job.id) ?? completedAt;
+        const jobStartedAt = startedAtByJobId.get(job.id);
+
+        if (jobStartedAt === undefined) {
+          return;
+        }
 
         samples.push({
           index: samples.length,
