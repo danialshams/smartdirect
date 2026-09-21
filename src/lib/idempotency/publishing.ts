@@ -1,6 +1,9 @@
 import {
   claimIdempotency,
   completeIdempotency,
+  failIdempotency,
+  getIdempotencyRecord,
+  retryFailedIdempotency,
 } from "./store";
 import { createIdempotencyKey } from "./key";
 
@@ -28,6 +31,16 @@ export async function claimPublishingExecution(
     input.publishingJobId,
   );
 
+  const existing = await getIdempotencyRecord(key);
+
+  if (existing?.status === "FAILED") {
+    const retried = await retryFailedIdempotency(key);
+    return {
+      claimed: retried.claimed,
+      key,
+    };
+  }
+
   const result = await claimIdempotency({
     key,
     tenantId: input.instagramAccountId,
@@ -46,4 +59,12 @@ export async function completePublishingExecution(
   response?: unknown,
 ): Promise<void> {
   await completeIdempotency(key, response);
+}
+
+export async function failPublishingExecution(
+  key: string,
+  error: unknown,
+): Promise<void> {
+  const message = error instanceof Error ? error.message : "Instagram publishing failed.";
+  await failIdempotency(key, message);
 }
