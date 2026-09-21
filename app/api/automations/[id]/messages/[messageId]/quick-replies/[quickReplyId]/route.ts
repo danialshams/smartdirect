@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { invalidateAutomationCache } from "@/lib/cache/instagram";
 
 export const dynamic = "force-dynamic";
 
@@ -267,6 +268,7 @@ export async function PATCH(
       },
     });
 
+    await invalidateAutomationCache(id);
     return NextResponse.json({
       success: true,
       message: "Quick Reply با موفقیت ویرایش شد",
@@ -338,6 +340,7 @@ export async function DELETE(
       },
     });
 
+    await invalidateAutomationCache(id);
     return NextResponse.json({
       success: true,
       message: "Quick Reply با موفقیت حذف شد",
