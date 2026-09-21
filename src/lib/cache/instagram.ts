@@ -1,5 +1,3 @@
-import "server-only";
-
 import { prisma } from "@/lib/prisma";
 import { getInstagramProfile, getInstagramMedia } from "@/lib/instagram/api";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
