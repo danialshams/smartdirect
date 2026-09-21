@@ -76,7 +76,18 @@ export async function runQueueWorker(
   }
 
   const runOne = async () => {
-    const job = await claimNextJob(workerId);
+    let job: QueueJob | null = null;
+
+    try {
+      job = await claimNextJob(workerId);
+    } catch (error) {
+      observabilityLogger.error("queue_claim_failed", {
+        workerId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      void recordFailure("queue_claim", "claim_next_job");
+      throw error;
+    }
 
     if (!job) {
       return;
