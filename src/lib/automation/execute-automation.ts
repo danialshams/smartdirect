@@ -270,6 +270,7 @@ export async function executeAutomation(input: ExecuteAutomationInput) {
       instagramAccountId: instagramAccount.id,
       recipientId: input.participantId,
       instagramUserId: instagramAccount.igUserId,
+      executionId: input.executionId,
       commentId: privateReplyCommentId,
       message: {
         id: currentMessage.id,
