@@ -255,7 +255,11 @@ export async function claimNextJob(
     return null;
   }
 
-  return JSON.parse(result) as QueueJob;
+  if (typeof result === "string") {
+    return JSON.parse(result) as QueueJob;
+  }
+
+  return result as QueueJob;
 }
 
 async function removeJobFromQueue(redis: Redis, jobId: string) {
