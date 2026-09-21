@@ -40,7 +40,8 @@
     "automation:engine:test": "tsx scripts/test-automation-engine.ts",
     "publishing:queue:test": "tsx scripts/test-publishing-queue.ts",
     "conversation:concurrency:test": "tsx scripts/test-conversation-concurrency.ts",
-    "queue:recovery:test": "tsx scripts/test-failed-jobs-recovery.ts"
+    "queue:recovery:test": "tsx scripts/test-failed-jobs-recovery.ts",
+    "cache:redis:test": "tsx scripts/test-redis-cache.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",
