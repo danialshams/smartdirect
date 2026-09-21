@@ -2,6 +2,7 @@ import { sleep } from "workflow";
 
 import { prisma } from "@/lib/prisma";
 import { enqueueInstagramPublishing } from "@/lib/instagram/publishing-queue";
+import { processPublishingQueueJobStep } from "@/lib/instagram/publishing-workflow";
 
 async function publishScheduledJobStep(jobId: string) {
   "use step";
@@ -42,6 +43,7 @@ async function publishScheduledJobStep(jobId: string) {
       skipped: false,
       queued: true,
       queueJobId: queued.job.id,
+      processed: await processPublishingQueueJobStep(queued.job.id),
     };
   } catch (error) {
     return {
