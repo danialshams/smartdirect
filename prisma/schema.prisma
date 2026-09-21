@@ -382,6 +382,33 @@ model InstagramPublishJob {
   @@index([status, scheduledAt])
 }
 
+model QueueFailure {
+  id                String              @id @default(cuid())
+  jobId             String              @unique
+  requeuedJobId     String?             @unique
+  type              String
+  payload           Json
+  priority          String
+  attempts          Int
+  maxAttempts       Int
+  lastError         String
+  tenantId          String?
+  idempotencyKey    String?
+  idempotencyTenantId String?
+  idempotencyOperation String?
+  idempotencyResourceId String?
+  status            QueueFailureStatus   @default(FAILED)
+  failedAt          DateTime            @default(now())
+  requeuedAt        DateTime?
+  resolvedAt        DateTime?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([status, failedAt])
+  @@index([tenantId, status])
+  @@index([type, status])
+}
+
 model IdempotencyRecord {
   id            String            @id @default(cuid())
   key           String            @unique
@@ -418,6 +445,12 @@ model InstagramPublishMedia {
 
   @@index([publishJobId])
   @@index([publishJobId, sortOrder])
+}
+
+enum QueueFailureStatus {
+  FAILED
+  REQUEUED
+  RESOLVED
 }
 
 enum IdempotencyStatus {
