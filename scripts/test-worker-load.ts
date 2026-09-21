@@ -69,25 +69,6 @@ async function main() {
           return;
         }
 
-        try {
-          const depth = await getQueueDepth();
-
-          if (
-            depth.ready === 0 &&
-            depth.delayed === 0 &&
-            depth.active === 0
-          ) {
-            controller.abort();
-            return;
-          }
-        } catch (error) {
-          errors.push(
-            error instanceof Error
-              ? `Worker load watchdog error: ${error.message}`
-              : `Worker load watchdog error: ${String(error)}`,
-          );
-        }
-
         await new Promise((resolve) =>
           setTimeout(resolve, Math.min(250, remainingMs)),
         );
