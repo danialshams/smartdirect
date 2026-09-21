@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { invalidateAutomationCache } from "@/lib/cache/instagram";
 
 export const dynamic = "force-dynamic";
 
@@ -80,6 +81,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       },
       include: await getMessageInclude(),
     });
+    await invalidateAutomationCache(automation.instagramAccountId);
     return NextResponse.json({ success: true, data: message }, { status: 201 });
   } catch (error) {
     console.error("POST /api/automations/[id]/messages error:", error);
