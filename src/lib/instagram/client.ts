@@ -109,7 +109,6 @@ function createTimeoutSignal(timeoutMs: number, signal?: AbortSignal) {
     controller.abort();
   };
 
-  clearTimeout(timeout);
   const timeoutId = setTimeout(timeoutHandler, timeoutMs);
 
   return {
