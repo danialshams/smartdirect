@@ -141,7 +141,9 @@ async function runRecoveryScenario() {
     NAMESPACE,
   );
 
-  assert(crashed, "recovery test could not claim a simulated crashed job");
+  if (!crashed) {
+    throw new Error("recovery test could not claim a simulated crashed job");
+  }
 
   const redis = getRedisClient();
   const claimKey = `smartdirect:queue:claim:${crashed.id}`;
