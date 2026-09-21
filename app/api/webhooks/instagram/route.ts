@@ -424,7 +424,7 @@ async function processMessagingEventWithIdempotency(
   }
 
   try {
-    await processMessagingEvent(messagingEvent, instagramAccount);
+    await processMessagingEvent(messagingEvent, instagramAccount, claim.eventId);
     await completeInstagramWebhookEvent(claim.key);
   } catch (error) {
     await failInstagramWebhookEvent(claim.key, error);
@@ -448,7 +448,7 @@ async function processCommentEventWithIdempotency(
   }
 
   try {
-    await processCommentEvent(value, instagramAccount);
+    await processCommentEvent(value, instagramAccount, claim.eventId);
     await completeInstagramWebhookEvent(claim.key);
   } catch (error) {
     await failInstagramWebhookEvent(claim.key, error);
@@ -799,6 +799,7 @@ async function processMessagingEvent(
           title: postbackTitle,
         },
         instagramAccount,
+        executionId,
       );
 
       console.log("========================================");
@@ -1272,6 +1273,7 @@ async function processInstagramStoryReply(
     storyUrl: string | null;
   },
   instagramAccount: InstagramAccountData,
+  executionId: string,
 ) {
   try {
     console.log("========================================");
@@ -1774,7 +1776,8 @@ async function processInstagramStoryReply(
         igUserId: participantId,
 
         selectedQuickReplyId: null,
-      executionId: executionId,
+        executionId,
+
       });
 
       automationExecuted = result.success && result.executed;
@@ -3378,7 +3381,6 @@ async function processCommentEvent(
             matchedAutomation.replyText ??
             null,
         },
-          executionId: executionId,
       });
 
       console.log("Comment marked as replied.");
