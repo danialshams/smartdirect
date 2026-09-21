@@ -197,50 +197,65 @@ export async function promoteDueJobs(limit = 50) {
   return promoted;
 }
 
+const CLAIM_NEXT_JOB_SCRIPT = `
+local ids = redis.call("ZRANGE", KEYS[1], 0, 49)
+
+for _, id in ipairs(ids) do
+  local claimKey = ARGV[1] .. id
+  local existingClaim = redis.call("GET", claimKey)
+
+  if not existingClaim then
+    local rawJob = redis.call("GET", ARGV[2] .. id)
+
+    if not rawJob then
+      redis.call("ZREM", KEYS[1], id)
+    else
+      local job = cjson.decode(rawJob)
+
+      if job.status ~= "waiting" then
+        redis.call("ZREM", KEYS[1], id)
+      else
+        job.status = "active"
+        job.attempts = (job.attempts or 0) + 1
+        job.workerId = ARGV[3]
+
+        redis.call("SET", claimKey, ARGV[3], "EX", ARGV[4])
+        redis.call("SET", ARGV[2] .. id, cjson.encode(job))
+        redis.call("ZADD", KEYS[2], ARGV[5], id)
+        redis.call("ZREM", KEYS[1], id)
+
+        return cjson.encode(job)
+      end
+    end
+  end
+end
+
+return nil
+`;
+
 export async function claimNextJob(
   workerId = "unknown",
 ): Promise<QueueJob | null> {
   const redis = createQueueRedis();
   await promoteDueJobs();
 
-  const ids = await redis.zrange<string[]>(READY_KEY, 0, 0);
-
-  if (!ids.length) {
-    return null;
-  }
-
-  const id = ids[0];
-  const claim = await redis.set(
-    claimKey(id),
-    workerId,
-    { nx: true, ex: CLAIM_TTL_SECONDS },
+  const result = await redis.eval<string | null>(
+    CLAIM_NEXT_JOB_SCRIPT,
+    [READY_KEY, ACTIVE_KEY],
+    [
+      CLAIM_PREFIX,
+      JOB_PREFIX,
+      workerId,
+      String(CLAIM_TTL_SECONDS),
+      String(Date.now()),
+    ],
   );
 
-  if (claim !== "OK") {
+  if (!result) {
     return null;
   }
 
-  const job = await redis.get<QueueJob>(jobKey(id));
-
-  if (!job) {
-    await redis.zrem(READY_KEY, id);
-    return null;
-  }
-
-  if (job.status !== "waiting") {
-    await redis.zrem(READY_KEY, id);
-    return null;
-  }
-
-  job.status = "active";
-  job.attempts += 1;
-  job.workerId = workerId;
-
-  await redis.set(jobKey(id), job);
-  await redis.zadd(ACTIVE_KEY, { score: Date.now(), member: id });
-  await redis.zrem(READY_KEY, id);
-
-  return job;
+  return JSON.parse(result) as QueueJob;
 }
 
 async function removeJobFromQueue(redis: Redis, jobId: string) {
