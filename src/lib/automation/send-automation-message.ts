@@ -210,12 +210,12 @@ async function sendLegacyForm({ instagramAccountId, tenantId, instagramUserId, r
 }
 
 export async function sendAutomationMessage(payload: AutomationMessagePayload): Promise<SendAutomationMessageResult> {
+  let idempotencyKey: string | null = null;
+
   try {
 
   const { instagramAccountId, recipientId, instagramUserId, message } = payload;
   if (!instagramAccountId || !recipientId || !instagramUserId) throw new Error("Instagram message identifiers are missing");
-  let idempotencyKey: string | null = null;
-
   if (payload.executionId?.trim()) {
     const claim = await claimSendMessage({
       instagramAccountId,
