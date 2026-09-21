@@ -4,6 +4,7 @@ import {
   failJob,
 } from "./core";
 import { claimIdempotency } from "../idempotency/store";
+import { acquireLock, releaseLock } from "../lock/redis-lock";
 import type { QueueJob } from "./types";
 
 export interface QueueWorkerOptions {
@@ -55,7 +56,24 @@ export async function runQueueWorker(
       return;
     }
 
+    let lockHandle: Awaited<ReturnType<typeof acquireLock>> extends infer T
+      ? T extends { acquired: true }
+        ? T["handle"]
+        : never
+      : never;
+
     try {
+      const lock = await acquireLock({
+        scope: "job",
+        resourceId: job.id,
+      });
+
+      if (!lock.acquired) {
+        throw new Error(`Distributed lock is already held for job ${job.id}.`);
+      }
+
+      lockHandle = lock.handle;
+
       if (job.idempotency) {
         const claim = await claimIdempotency({
           key: job.idempotency.key,
@@ -74,6 +92,10 @@ export async function runQueueWorker(
       await completeJob(job.id);
     } catch (error) {
       await failJob(job.id, error);
+    } finally {
+      if (lockHandle) {
+        await releaseLock(lockHandle);
+      }
     }
   };
 
