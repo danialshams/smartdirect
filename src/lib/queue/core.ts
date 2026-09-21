@@ -9,13 +9,30 @@ import type {
   QueueJobType,
 } from "./types";
 
-const QUEUE_NAME = "default";
+const DEFAULT_QUEUE_NAMESPACE = "default";
 const JOB_PREFIX = "smartdirect:queue:job:";
-const READY_KEY = "smartdirect:queue:default:ready";
-const DELAYED_KEY = "smartdirect:queue:default:delayed";
 const CLAIM_PREFIX = "smartdirect:queue:claim:";
-const ACTIVE_KEY = "smartdirect:queue:default:active";
-const FAILED_KEY = "smartdirect:queue:default:failed";
+
+function normalizeQueueNamespace(queueNamespace = DEFAULT_QUEUE_NAMESPACE) {
+  const value = queueNamespace.trim();
+  if (!/^[a-zA-Z0-9_-]+$/.test(value)) {
+    throw new Error("INVALID_QUEUE_NAMESPACE");
+  }
+  return value;
+}
+
+export function getQueueKeys(queueNamespace = DEFAULT_QUEUE_NAMESPACE) {
+  const namespace = normalizeQueueNamespace(queueNamespace);
+  const prefix = `smartdirect:queue:${namespace}`;
+
+  return {
+    queue: namespace,
+    ready: `${prefix}:ready`,
+    delayed: `${prefix}:delayed`,
+    active: `${prefix}:active`,
+    failed: `${prefix}:failed`,
+  };
+}
 const CLAIM_TTL_SECONDS = 30;
 const DEFAULT_RETRY_DELAY_MS = 1_000;
 const MAX_RETRY_DELAY_MS = 60_000;
@@ -71,6 +88,8 @@ export async function enqueueJob<T extends QueueJobType>(
   const delayMs = Math.max(0, options.delayMs ?? 0);
   const priority = options.priority ?? "normal";
 
+  const queueNamespace = normalizeQueueNamespace(options.queueNamespace);
+
   const job: QueueJob<T> = {
     id: createJobId(),
     type,
@@ -83,17 +102,20 @@ export async function enqueueJob<T extends QueueJobType>(
     maxAttempts: Math.max(1, options.maxAttempts ?? 3),
     idempotency: options.idempotency,
     recoveryId: options.recoveryId,
+    queueNamespace,
   };
 
   await redis.set(jobKey(job.id), job);
 
+  const keys = getQueueKeys(queueNamespace);
+
   if (delayMs > 0) {
-    await redis.zadd(DELAYED_KEY, {
+    await redis.zadd(keys.delayed, {
       score: job.scheduledAt,
       member: job.id,
     });
   } else {
-    await redis.zadd(READY_KEY, {
+    await redis.zadd(keys.ready, {
       score: readyScore(job),
       member: job.id,
     });
@@ -115,6 +137,7 @@ export async function enqueueJobsBatch<T extends QueueJobType>(
   const now = Date.now();
 
   const jobs = jobsInput.map(({ type, payload, options = {} }) => {
+    const queueNamespace = normalizeQueueNamespace(options.queueNamespace);
     const delayMs = Math.max(0, options.delayMs ?? 0);
     const priority = options.priority ?? "normal";
 
@@ -130,6 +153,7 @@ export async function enqueueJobsBatch<T extends QueueJobType>(
       maxAttempts: Math.max(1, options.maxAttempts ?? 3),
       idempotency: options.idempotency,
       recoveryId: options.recoveryId,
+      queueNamespace,
     } as QueueJob<T>;
   });
 
@@ -138,13 +162,15 @@ export async function enqueueJobsBatch<T extends QueueJobType>(
   for (const job of jobs) {
     pipeline.set(jobKey(job.id), job);
 
+    const keys = getQueueKeys(job.queueNamespace);
+
     if (job.status === "delayed") {
-      pipeline.zadd(DELAYED_KEY, {
+      pipeline.zadd(keys.delayed, {
         score: job.scheduledAt,
         member: job.id,
       });
     } else {
-      pipeline.zadd(READY_KEY, {
+      pipeline.zadd(keys.ready, {
         score: readyScore(job),
         member: job.id,
       });
@@ -156,12 +182,13 @@ export async function enqueueJobsBatch<T extends QueueJobType>(
   return jobs;
 }
 
-export async function promoteDueJobs(limit = 50) {
+export async function promoteDueJobs(limit = 50, queueNamespace = DEFAULT_QUEUE_NAMESPACE) {
   const redis = createQueueRedis();
   const now = Date.now();
+  const keys = getQueueKeys(queueNamespace);
 
   const ids = await redis.zrange<string[]>(
-    DELAYED_KEY,
+    keys.delayed,
     0,
     now,
     { byScore: true, offset: 0, count: limit },
@@ -173,21 +200,21 @@ export async function promoteDueJobs(limit = 50) {
     const job = await redis.get<QueueJob>(jobKey(id));
 
     if (!job) {
-      await redis.zrem(DELAYED_KEY, id);
+      await redis.zrem(keys.delayed, id);
       continue;
     }
 
     if (job.status !== "delayed" || job.scheduledAt > now) {
       if (job.status !== "delayed") {
-        await redis.zrem(DELAYED_KEY, id);
+        await redis.zrem(keys.delayed, id);
       }
       continue;
     }
 
     job.status = "waiting";
     await redis.set(jobKey(id), job);
-    await redis.zrem(DELAYED_KEY, id);
-    await redis.zadd(READY_KEY, {
+    await redis.zrem(keys.delayed, id);
+    await redis.zadd(keys.ready, {
       score: readyScore(job),
       member: id,
     });
@@ -235,13 +262,15 @@ return nil
 
 export async function claimNextJob(
   workerId = "unknown",
+  queueNamespace = DEFAULT_QUEUE_NAMESPACE,
 ): Promise<QueueJob | null> {
   const redis = createQueueRedis();
-  await promoteDueJobs();
+  const keys = getQueueKeys(queueNamespace);
+  await promoteDueJobs(50, queueNamespace);
 
   const result = await redis.eval<string | null>(
     CLAIM_NEXT_JOB_SCRIPT,
-    [READY_KEY, ACTIVE_KEY],
+    [keys.ready, keys.active],
     [
       CLAIM_PREFIX,
       JOB_PREFIX,
@@ -256,16 +285,30 @@ export async function claimNextJob(
   }
 
   if (typeof result === "string") {
-    return JSON.parse(result) as QueueJob;
+    try {
+      return JSON.parse(result) as QueueJob;
+    } catch {
+      throw new Error(`QUEUE_CLAIM_INVALID_RESULT:${result}`);
+    }
   }
 
-  return result as QueueJob;
+  if (result && typeof result === "object") {
+    return result as QueueJob;
+  }
+
+  throw new Error("QUEUE_CLAIM_INVALID_RESULT");
 }
 
-async function removeJobFromQueue(redis: Redis, jobId: string) {
+async function removeJobFromQueue(
+  redis: Redis,
+  jobId: string,
+  queueNamespace = DEFAULT_QUEUE_NAMESPACE,
+) {
+  const keys = getQueueKeys(queueNamespace);
+
   await Promise.all([
-    redis.zrem(READY_KEY, jobId),
-    redis.zrem(DELAYED_KEY, jobId),
+    redis.zrem(keys.ready, jobId),
+    redis.zrem(keys.delayed, jobId),
   ]);
 }
 
@@ -285,10 +328,12 @@ export async function completeJob(jobId: string) {
     });
   }
 
+  const keys = getQueueKeys(job.queueNamespace);
+
   await Promise.all([
-    redis.zrem(ACTIVE_KEY, jobId),
+    redis.zrem(keys.active, jobId),
     redis.set(jobKey(jobId), job),
-    removeJobFromQueue(redis, jobId),
+    removeJobFromQueue(redis, jobId, job.queueNamespace),
   ]);
 
   return job;
@@ -304,7 +349,9 @@ export async function failJob(jobId: string, error: unknown) {
   job.workerId = undefined;
 
   await redis.del(claimKey(jobId));
-  await redis.zrem(ACTIVE_KEY, jobId);
+  const keys = getQueueKeys(job.queueNamespace);
+
+  await redis.zrem(keys.active, jobId);
 
   if (job.attempts < job.maxAttempts) {
     const retryDelayMs = Math.min(
@@ -316,7 +363,7 @@ export async function failJob(jobId: string, error: unknown) {
     job.scheduledAt = Date.now() + retryDelayMs;
 
     await redis.set(jobKey(jobId), job);
-    await redis.zadd(DELAYED_KEY, {
+    await redis.zadd(keys.delayed, {
       score: job.scheduledAt,
       member: job.id,
     });
@@ -328,8 +375,8 @@ export async function failJob(jobId: string, error: unknown) {
 
   await Promise.all([
     redis.set(jobKey(jobId), job),
-    removeJobFromQueue(redis, jobId),
-    redis.zadd(FAILED_KEY, { score: Date.now(), member: jobId }),
+    removeJobFromQueue(redis, jobId, job.queueNamespace),
+    redis.zadd(keys.failed, { score: Date.now(), member: jobId }),
   ]);
 
   await prisma.queueFailure.upsert({
@@ -371,27 +418,30 @@ export async function getJob(jobId: string) {
 
 export async function deleteJob(jobId: string) {
   const redis = createQueueRedis();
+  const job = await redis.get<QueueJob>(jobKey(jobId));
+  const keys = getQueueKeys(job?.queueNamespace);
   await Promise.all([
     redis.del(jobKey(jobId)),
     redis.del(claimKey(jobId)),
-    redis.zrem(ACTIVE_KEY, jobId),
-    redis.zrem(FAILED_KEY, jobId),
-    redis.zrem(READY_KEY, jobId),
-    redis.zrem(DELAYED_KEY, jobId),
+    redis.zrem(keys.active, jobId),
+    redis.zrem(keys.failed, jobId),
+    redis.zrem(keys.ready, jobId),
+    redis.zrem(keys.delayed, jobId),
   ]);
 }
 
-export async function getQueueDepth() {
+export async function getQueueDepth(queueNamespace = DEFAULT_QUEUE_NAMESPACE) {
   const redis = createQueueRedis();
+  const keys = getQueueKeys(queueNamespace);
   const [ready, delayed, failed, active] = await Promise.all([
-    redis.zcard(READY_KEY),
-    redis.zcard(DELAYED_KEY),
-    redis.zcard(FAILED_KEY),
-    redis.zcard(ACTIVE_KEY),
+    redis.zcard(keys.ready),
+    redis.zcard(keys.delayed),
+    redis.zcard(keys.failed),
+    redis.zcard(keys.active),
   ]);
 
   return {
-    queue: QUEUE_NAME,
+    queue: keys.queue,
     ready,
     delayed,
     active,
