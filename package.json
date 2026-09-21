@@ -33,7 +33,8 @@
     "webhook:queue:test": "tsx scripts/test-webhook-queue.ts",
     "webhook:processing:test": "tsx scripts/test-webhook-processing.ts",
     "webhook:load:test": "tsx scripts/test-webhook-load.ts",
-    "automation:foundation:test": "tsx scripts/test-automation-foundation.ts"
+    "automation:foundation:test": "tsx scripts/test-automation-foundation.ts",
+    "automation:entrypoints:test": "tsx scripts/test-automation-entrypoints.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",
