@@ -9,6 +9,24 @@
 * 🟢 You can import this file directly.
 */
 
+export const QueueFailureStatus = {
+  FAILED: 'FAILED',
+  REQUEUED: 'REQUEUED',
+  RESOLVED: 'RESOLVED'
+} as const
+
+export type QueueFailureStatus = (typeof QueueFailureStatus)[keyof typeof QueueFailureStatus]
+
+
+export const IdempotencyStatus = {
+  IN_PROGRESS: 'IN_PROGRESS',
+  COMPLETED: 'COMPLETED',
+  FAILED: 'FAILED'
+} as const
+
+export type IdempotencyStatus = (typeof IdempotencyStatus)[keyof typeof IdempotencyStatus]
+
+
 export const FollowGateStatus = {
   PENDING: 'PENDING',
   COMPLETED: 'COMPLETED',

@@ -484,6 +484,40 @@ export type EnumInstagramPublishStatusWithAggregatesFilter<$PrismaModel = never>
   _max?: Prisma.NestedEnumInstagramPublishStatusFilter<$PrismaModel>
 }
 
+export type EnumQueueFailureStatusFilter<$PrismaModel = never> = {
+  equals?: $Enums.QueueFailureStatus | Prisma.EnumQueueFailureStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.QueueFailureStatus[] | Prisma.ListEnumQueueFailureStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.QueueFailureStatus[] | Prisma.ListEnumQueueFailureStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumQueueFailureStatusFilter<$PrismaModel> | $Enums.QueueFailureStatus
+}
+
+export type EnumQueueFailureStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.QueueFailureStatus | Prisma.EnumQueueFailureStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.QueueFailureStatus[] | Prisma.ListEnumQueueFailureStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.QueueFailureStatus[] | Prisma.ListEnumQueueFailureStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumQueueFailureStatusWithAggregatesFilter<$PrismaModel> | $Enums.QueueFailureStatus
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumQueueFailureStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumQueueFailureStatusFilter<$PrismaModel>
+}
+
+export type EnumIdempotencyStatusFilter<$PrismaModel = never> = {
+  equals?: $Enums.IdempotencyStatus | Prisma.EnumIdempotencyStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.IdempotencyStatus[] | Prisma.ListEnumIdempotencyStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.IdempotencyStatus[] | Prisma.ListEnumIdempotencyStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumIdempotencyStatusFilter<$PrismaModel> | $Enums.IdempotencyStatus
+}
+
+export type EnumIdempotencyStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.IdempotencyStatus | Prisma.EnumIdempotencyStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.IdempotencyStatus[] | Prisma.ListEnumIdempotencyStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.IdempotencyStatus[] | Prisma.ListEnumIdempotencyStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumIdempotencyStatusWithAggregatesFilter<$PrismaModel> | $Enums.IdempotencyStatus
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumIdempotencyStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumIdempotencyStatusFilter<$PrismaModel>
+}
+
 export type EnumInstagramMediaTypeFilter<$PrismaModel = never> = {
   equals?: $Enums.InstagramMediaType | Prisma.EnumInstagramMediaTypeFieldRefInput<$PrismaModel>
   in?: $Enums.InstagramMediaType[] | Prisma.ListEnumInstagramMediaTypeFieldRefInput<$PrismaModel>
@@ -928,6 +962,40 @@ export type NestedEnumInstagramPublishStatusWithAggregatesFilter<$PrismaModel = 
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumInstagramPublishStatusFilter<$PrismaModel>
   _max?: Prisma.NestedEnumInstagramPublishStatusFilter<$PrismaModel>
+}
+
+export type NestedEnumQueueFailureStatusFilter<$PrismaModel = never> = {
+  equals?: $Enums.QueueFailureStatus | Prisma.EnumQueueFailureStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.QueueFailureStatus[] | Prisma.ListEnumQueueFailureStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.QueueFailureStatus[] | Prisma.ListEnumQueueFailureStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumQueueFailureStatusFilter<$PrismaModel> | $Enums.QueueFailureStatus
+}
+
+export type NestedEnumQueueFailureStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.QueueFailureStatus | Prisma.EnumQueueFailureStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.QueueFailureStatus[] | Prisma.ListEnumQueueFailureStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.QueueFailureStatus[] | Prisma.ListEnumQueueFailureStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumQueueFailureStatusWithAggregatesFilter<$PrismaModel> | $Enums.QueueFailureStatus
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumQueueFailureStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumQueueFailureStatusFilter<$PrismaModel>
+}
+
+export type NestedEnumIdempotencyStatusFilter<$PrismaModel = never> = {
+  equals?: $Enums.IdempotencyStatus | Prisma.EnumIdempotencyStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.IdempotencyStatus[] | Prisma.ListEnumIdempotencyStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.IdempotencyStatus[] | Prisma.ListEnumIdempotencyStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumIdempotencyStatusFilter<$PrismaModel> | $Enums.IdempotencyStatus
+}
+
+export type NestedEnumIdempotencyStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.IdempotencyStatus | Prisma.EnumIdempotencyStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.IdempotencyStatus[] | Prisma.ListEnumIdempotencyStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.IdempotencyStatus[] | Prisma.ListEnumIdempotencyStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumIdempotencyStatusWithAggregatesFilter<$PrismaModel> | $Enums.IdempotencyStatus
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumIdempotencyStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumIdempotencyStatusFilter<$PrismaModel>
 }
 
 export type NestedEnumInstagramMediaTypeFilter<$PrismaModel = never> = {

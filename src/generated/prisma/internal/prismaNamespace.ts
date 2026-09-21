@@ -416,6 +416,8 @@ export const ModelName = {
   FormSubmission: 'FormSubmission',
   PendingFollowGate: 'PendingFollowGate',
   InstagramPublishJob: 'InstagramPublishJob',
+  QueueFailure: 'QueueFailure',
+  IdempotencyRecord: 'IdempotencyRecord',
   InstagramPublishMedia: 'InstagramPublishMedia'
 } as const
 
@@ -432,7 +434,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "instagramAccount" | "instagramInsightSnapshot" | "automation" | "automationMessage" | "quickReply" | "iceBreaker" | "persistentMenu" | "persistentMenuItem" | "conversation" | "conversationMessage" | "comment" | "showcase" | "showcaseItem" | "form" | "formField" | "formSubmission" | "pendingFollowGate" | "instagramPublishJob" | "instagramPublishMedia"
+    modelProps: "user" | "instagramAccount" | "instagramInsightSnapshot" | "automation" | "automationMessage" | "quickReply" | "iceBreaker" | "persistentMenu" | "persistentMenuItem" | "conversation" | "conversationMessage" | "comment" | "showcase" | "showcaseItem" | "form" | "formField" | "formSubmission" | "pendingFollowGate" | "instagramPublishJob" | "queueFailure" | "idempotencyRecord" | "instagramPublishMedia"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1842,6 +1844,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    QueueFailure: {
+      payload: Prisma.$QueueFailurePayload<ExtArgs>
+      fields: Prisma.QueueFailureFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.QueueFailureFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QueueFailurePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.QueueFailureFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QueueFailurePayload>
+        }
+        findFirst: {
+          args: Prisma.QueueFailureFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QueueFailurePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.QueueFailureFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QueueFailurePayload>
+        }
+        findMany: {
+          args: Prisma.QueueFailureFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QueueFailurePayload>[]
+        }
+        create: {
+          args: Prisma.QueueFailureCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QueueFailurePayload>
+        }
+        createMany: {
+          args: Prisma.QueueFailureCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.QueueFailureCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QueueFailurePayload>[]
+        }
+        delete: {
+          args: Prisma.QueueFailureDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QueueFailurePayload>
+        }
+        update: {
+          args: Prisma.QueueFailureUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QueueFailurePayload>
+        }
+        deleteMany: {
+          args: Prisma.QueueFailureDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.QueueFailureUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.QueueFailureUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QueueFailurePayload>[]
+        }
+        upsert: {
+          args: Prisma.QueueFailureUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QueueFailurePayload>
+        }
+        aggregate: {
+          args: Prisma.QueueFailureAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateQueueFailure>
+        }
+        groupBy: {
+          args: Prisma.QueueFailureGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.QueueFailureGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.QueueFailureCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.QueueFailureCountAggregateOutputType> | number
+        }
+      }
+    }
+    IdempotencyRecord: {
+      payload: Prisma.$IdempotencyRecordPayload<ExtArgs>
+      fields: Prisma.IdempotencyRecordFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.IdempotencyRecordFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdempotencyRecordPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.IdempotencyRecordFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdempotencyRecordPayload>
+        }
+        findFirst: {
+          args: Prisma.IdempotencyRecordFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdempotencyRecordPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.IdempotencyRecordFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdempotencyRecordPayload>
+        }
+        findMany: {
+          args: Prisma.IdempotencyRecordFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdempotencyRecordPayload>[]
+        }
+        create: {
+          args: Prisma.IdempotencyRecordCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdempotencyRecordPayload>
+        }
+        createMany: {
+          args: Prisma.IdempotencyRecordCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.IdempotencyRecordCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdempotencyRecordPayload>[]
+        }
+        delete: {
+          args: Prisma.IdempotencyRecordDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdempotencyRecordPayload>
+        }
+        update: {
+          args: Prisma.IdempotencyRecordUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdempotencyRecordPayload>
+        }
+        deleteMany: {
+          args: Prisma.IdempotencyRecordDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.IdempotencyRecordUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.IdempotencyRecordUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdempotencyRecordPayload>[]
+        }
+        upsert: {
+          args: Prisma.IdempotencyRecordUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdempotencyRecordPayload>
+        }
+        aggregate: {
+          args: Prisma.IdempotencyRecordAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateIdempotencyRecord>
+        }
+        groupBy: {
+          args: Prisma.IdempotencyRecordGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.IdempotencyRecordGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.IdempotencyRecordCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.IdempotencyRecordCountAggregateOutputType> | number
+        }
+      }
+    }
     InstagramPublishMedia: {
       payload: Prisma.$InstagramPublishMediaPayload<ExtArgs>
       fields: Prisma.InstagramPublishMediaFieldRefs
@@ -2262,6 +2412,50 @@ export const InstagramPublishJobScalarFieldEnum = {
 export type InstagramPublishJobScalarFieldEnum = (typeof InstagramPublishJobScalarFieldEnum)[keyof typeof InstagramPublishJobScalarFieldEnum]
 
 
+export const QueueFailureScalarFieldEnum = {
+  id: 'id',
+  jobId: 'jobId',
+  requeuedJobId: 'requeuedJobId',
+  type: 'type',
+  payload: 'payload',
+  priority: 'priority',
+  attempts: 'attempts',
+  maxAttempts: 'maxAttempts',
+  lastError: 'lastError',
+  tenantId: 'tenantId',
+  idempotencyKey: 'idempotencyKey',
+  idempotencyTenantId: 'idempotencyTenantId',
+  idempotencyOperation: 'idempotencyOperation',
+  idempotencyResourceId: 'idempotencyResourceId',
+  status: 'status',
+  failedAt: 'failedAt',
+  requeuedAt: 'requeuedAt',
+  resolvedAt: 'resolvedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type QueueFailureScalarFieldEnum = (typeof QueueFailureScalarFieldEnum)[keyof typeof QueueFailureScalarFieldEnum]
+
+
+export const IdempotencyRecordScalarFieldEnum = {
+  id: 'id',
+  key: 'key',
+  tenantId: 'tenantId',
+  operation: 'operation',
+  resourceId: 'resourceId',
+  status: 'status',
+  response: 'response',
+  errorMessage: 'errorMessage',
+  expiresAt: 'expiresAt',
+  completedAt: 'completedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type IdempotencyRecordScalarFieldEnum = (typeof IdempotencyRecordScalarFieldEnum)[keyof typeof IdempotencyRecordScalarFieldEnum]
+
+
 export const InstagramPublishMediaScalarFieldEnum = {
   id: 'id',
   publishJobId: 'publishJobId',
@@ -2538,6 +2732,34 @@ export type ListEnumInstagramPublishStatusFieldRefInput<$PrismaModel> = FieldRef
 
 
 /**
+ * Reference to a field of type 'QueueFailureStatus'
+ */
+export type EnumQueueFailureStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueueFailureStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'QueueFailureStatus[]'
+ */
+export type ListEnumQueueFailureStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueueFailureStatus[]'>
+    
+
+
+/**
+ * Reference to a field of type 'IdempotencyStatus'
+ */
+export type EnumIdempotencyStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'IdempotencyStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'IdempotencyStatus[]'
+ */
+export type ListEnumIdempotencyStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'IdempotencyStatus[]'>
+    
+
+
+/**
  * Reference to a field of type 'InstagramMediaType'
  */
 export type EnumInstagramMediaTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'InstagramMediaType'>
@@ -2734,6 +2956,8 @@ export type GlobalOmitConfig = {
   formSubmission?: Prisma.FormSubmissionOmit
   pendingFollowGate?: Prisma.PendingFollowGateOmit
   instagramPublishJob?: Prisma.InstagramPublishJobOmit
+  queueFailure?: Prisma.QueueFailureOmit
+  idempotencyRecord?: Prisma.IdempotencyRecordOmit
   instagramPublishMedia?: Prisma.InstagramPublishMediaOmit
 }
 

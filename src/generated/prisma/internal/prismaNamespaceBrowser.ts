@@ -70,6 +70,8 @@ export const ModelName = {
   FormSubmission: 'FormSubmission',
   PendingFollowGate: 'PendingFollowGate',
   InstagramPublishJob: 'InstagramPublishJob',
+  QueueFailure: 'QueueFailure',
+  IdempotencyRecord: 'IdempotencyRecord',
   InstagramPublishMedia: 'InstagramPublishMedia'
 } as const
 
@@ -394,6 +396,50 @@ export const InstagramPublishJobScalarFieldEnum = {
 } as const
 
 export type InstagramPublishJobScalarFieldEnum = (typeof InstagramPublishJobScalarFieldEnum)[keyof typeof InstagramPublishJobScalarFieldEnum]
+
+
+export const QueueFailureScalarFieldEnum = {
+  id: 'id',
+  jobId: 'jobId',
+  requeuedJobId: 'requeuedJobId',
+  type: 'type',
+  payload: 'payload',
+  priority: 'priority',
+  attempts: 'attempts',
+  maxAttempts: 'maxAttempts',
+  lastError: 'lastError',
+  tenantId: 'tenantId',
+  idempotencyKey: 'idempotencyKey',
+  idempotencyTenantId: 'idempotencyTenantId',
+  idempotencyOperation: 'idempotencyOperation',
+  idempotencyResourceId: 'idempotencyResourceId',
+  status: 'status',
+  failedAt: 'failedAt',
+  requeuedAt: 'requeuedAt',
+  resolvedAt: 'resolvedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type QueueFailureScalarFieldEnum = (typeof QueueFailureScalarFieldEnum)[keyof typeof QueueFailureScalarFieldEnum]
+
+
+export const IdempotencyRecordScalarFieldEnum = {
+  id: 'id',
+  key: 'key',
+  tenantId: 'tenantId',
+  operation: 'operation',
+  resourceId: 'resourceId',
+  status: 'status',
+  response: 'response',
+  errorMessage: 'errorMessage',
+  expiresAt: 'expiresAt',
+  completedAt: 'completedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type IdempotencyRecordScalarFieldEnum = (typeof IdempotencyRecordScalarFieldEnum)[keyof typeof IdempotencyRecordScalarFieldEnum]
 
 
 export const InstagramPublishMediaScalarFieldEnum = {

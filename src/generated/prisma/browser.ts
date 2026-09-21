@@ -113,6 +113,16 @@ export type PendingFollowGate = Prisma.PendingFollowGateModel
  */
 export type InstagramPublishJob = Prisma.InstagramPublishJobModel
 /**
+ * Model QueueFailure
+ * 
+ */
+export type QueueFailure = Prisma.QueueFailureModel
+/**
+ * Model IdempotencyRecord
+ * 
+ */
+export type IdempotencyRecord = Prisma.IdempotencyRecordModel
+/**
  * Model InstagramPublishMedia
  * 
  */
