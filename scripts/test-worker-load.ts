@@ -14,6 +14,8 @@ import { printLoadTestReport } from "./load-test/report";
 import type { LoadTestSample } from "./load-test/types";
 
 const JOB_PREFIX = "smartdirect:queue:job:";
+const READY_KEY = "smartdirect:queue:default:ready";
+const ENQUEUE_BATCH_SIZE = 50;
 
 async function cleanupPreviousWorkerLoadJobs() {
   const redis = createQueueRedis();
@@ -79,26 +81,50 @@ async function main() {
   let watchdog: Promise<void> | undefined;
 
   try {
-    for (let index = 0; index < config.total; index++) {
-      const jobStartedAt = Date.now();
-      const job = await enqueueJob(
-        "TEST",
-        { message: `worker-load-${runId}-${index}` },
-        {
-          priority: index % 4 === 0
-            ? "critical"
-            : index % 4 === 1
-              ? "high"
-              : index % 4 === 2
-                ? "normal"
-                : "low",
-          maxAttempts: 1,
-        },
+    for (let batchStart = 0; batchStart < config.total; batchStart += ENQUEUE_BATCH_SIZE) {
+      const batchEnd = Math.min(
+        config.total,
+        batchStart + ENQUEUE_BATCH_SIZE,
       );
 
-      jobIds.push(job.id);
-      startedAtByJobId.set(job.id, jobStartedAt);
+      const jobs = await Promise.all(
+        Array.from({ length: batchEnd - batchStart }, (_, offset) => {
+          const index = batchStart + offset;
+          const jobStartedAt = Date.now();
+
+          return enqueueJob(
+            "TEST",
+            { message: `worker-load-${runId}-${index}` },
+            {
+              priority: index % 4 === 0
+                ? "critical"
+                : index % 4 === 1
+                  ? "high"
+                  : index % 4 === 2
+                    ? "normal"
+                    : "low",
+              maxAttempts: 1,
+            },
+          ).then((job) => ({ job, jobStartedAt }));
+        }),
+      );
+
+      for (const { job, jobStartedAt } of jobs) {
+        jobIds.push(job.id);
+        startedAtByJobId.set(job.id, jobStartedAt);
+      }
     }
+
+    // Force the isolated test jobs ahead of the pre-existing queue backlog.
+    const redis = createQueueRedis();
+    await Promise.all(
+      jobIds.map((jobId, index) =>
+        redis.zadd(READY_KEY, {
+          score: index - config.total,
+          member: jobId,
+        }),
+      ),
+    );
 
     workerStartedAt = Date.now();
     const deadlineAt = workerStartedAt + config.durationMs;
@@ -162,7 +188,7 @@ async function main() {
     }
   }
 
-  const durationMs = Date.now() - workerStartedAt;
+  const durationMs = workerStartedAt > 0 ? Date.now() - workerStartedAt : 0;
 
   let successful = 0;
   let failed = 0;
