@@ -93,7 +93,7 @@ export function logWithContext(
 ) {
   const merged = {
     ...context,
-    ...redact(fields ?? {}),
+    ...(redact(fields ?? {}) as Record<string, unknown>),
   };
 
   const payload = {
