@@ -97,7 +97,7 @@ async function cleanupPreviousWorkerLoadJobs() {
     return 0;
   }
 
-  await Promise.all(jobIds.map((jobId) => deleteJob(jobId)));
+  await deleteJobsBatch(jobIds);
   return jobIds.length;
 }
 
