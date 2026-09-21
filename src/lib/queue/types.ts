@@ -38,6 +38,13 @@ export interface QueueJobPayloadMap {
 
 export type QueueJobPayload<T extends QueueJobType> = QueueJobPayloadMap[T];
 
+export interface QueueJobIdempotency {
+  key: string;
+  tenantId: string;
+  operation: string;
+  resourceId?: string | null;
+}
+
 export interface QueueJob<T extends QueueJobType = QueueJobType> {
   id: string;
   type: T;
@@ -50,10 +57,12 @@ export interface QueueJob<T extends QueueJobType = QueueJobType> {
   maxAttempts: number;
   lastError?: string;
   workerId?: string;
+  idempotency?: QueueJobIdempotency;
 }
 
 export interface EnqueueJobOptions {
   priority?: QueueJobPriority;
   delayMs?: number;
   maxAttempts?: number;
+  idempotency?: QueueJobIdempotency;
 }
