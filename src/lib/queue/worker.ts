@@ -178,7 +178,12 @@ export async function runQueueWorker(
     }
 
     if (active.size > 0) {
-      await Promise.race(active);
+      try {
+        await Promise.race(active);
+      } catch (error) {
+        stopped = true;
+        throw error;
+      }
     } else {
       await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
     }
