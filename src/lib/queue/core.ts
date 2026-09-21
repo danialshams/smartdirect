@@ -102,6 +102,60 @@ export async function enqueueJob<T extends QueueJobType>(
   return job;
 }
 
+export async function enqueueJobsBatch<T extends QueueJobType>(
+  jobsInput: Array<{
+    type: T;
+    payload: QueueJobPayload<T>;
+    options?: EnqueueJobOptions;
+  }>,
+): Promise<QueueJob<T>[]> {
+  if (!jobsInput.length) return [];
+
+  const redis = createQueueRedis();
+  const now = Date.now();
+
+  const jobs = jobsInput.map(({ type, payload, options = {} }) => {
+    const delayMs = Math.max(0, options.delayMs ?? 0);
+    const priority = options.priority ?? "normal";
+
+    return {
+      id: createJobId(),
+      type,
+      payload,
+      status: delayMs > 0 ? "delayed" : "waiting",
+      priority,
+      createdAt: now,
+      scheduledAt: now + delayMs,
+      attempts: 0,
+      maxAttempts: Math.max(1, options.maxAttempts ?? 3),
+      idempotency: options.idempotency,
+      recoveryId: options.recoveryId,
+    } as QueueJob<T>;
+  });
+
+  const pipeline = redis.pipeline();
+
+  for (const job of jobs) {
+    pipeline.set(jobKey(job.id), job);
+
+    if (job.status === "delayed") {
+      pipeline.zadd(DELAYED_KEY, {
+        score: job.scheduledAt,
+        member: job.id,
+      });
+    } else {
+      pipeline.zadd(READY_KEY, {
+        score: readyScore(job),
+        member: job.id,
+      });
+    }
+  }
+
+  await pipeline.exec();
+
+  return jobs;
+}
+
 export async function promoteDueJobs(limit = 50) {
   const redis = createQueueRedis();
   const now = Date.now();
