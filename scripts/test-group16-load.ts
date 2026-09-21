@@ -20,7 +20,7 @@ async function runScenario(
   name: string,
   total: number,
   handler: (job: QueueJob) => Promise<void>,
-  options: { concurrency?: number; delayMs?: number } = {},
+  options: { concurrency?: number; delayMs?: number; type?: "TEST" | "AUTOMATION" | "SEND_MESSAGE" | "PUBLISH"; payloadFactory?: (index: number) => any } = {},
 ) {
   const count = Math.max(1, total);
   const concurrency = options.concurrency ?? CONCURRENCY;
