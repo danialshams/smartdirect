@@ -8,6 +8,7 @@ import {
   getJob,
 } from "../src/lib/queue/core";
 import { acquireLock, releaseLock } from "../src/lib/lock/redis-lock";
+import { createQueueRedis } from "../src/lib/queue/core";
 
 const STEP_TIMEOUT_MS = 10_000;
 
@@ -55,6 +56,14 @@ async function main() {
     );
 
     jobId = job.id;
+
+    // The queue may contain old test jobs. Move only this smoke-test job to the
+    // front so claimNextJob() is guaranteed to exercise this exact job.
+    const redis = createQueueRedis();
+    await redis.zadd("smartdirect:queue:default:ready", {
+      score: 0,
+      member: job.id,
+    });
 
     const claimed = await step("claim", () => claimNextJob("worker-pipeline-smoke"));
 
