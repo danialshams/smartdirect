@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { InstagramApiError, instagramApiRequest } from "@/lib/instagram/client";
-import { deleteCachedJson, getCachedJson, setCachedJson } from "@/lib/cache/redis-cache";
-import { instagramAccountCacheKey, instagramTokenCacheKey, CACHE_TTL } from "@/lib/cache/instagram";
+import { deleteCachedJson, getCachedJson, setCachedJson, cacheKey } from "@/lib/cache/redis-cache";
 
 const REFRESH_THRESHOLD_SECONDS = 7 * 24 * 60 * 60;
 const REQUEST_TIMEOUT_MS = 15000;
@@ -286,8 +285,8 @@ export async function refreshInstagramToken(
         },
       });
 
-      await deleteCachedJson(instagramTokenCacheKey(instagramAccountId));
-      await deleteCachedJson(instagramAccountCacheKey(instagramAccountId));
+      await deleteCachedJson(cacheKey("instagram-token", instagramAccountId));
+      await deleteCachedJson(cacheKey("instagram-account", instagramAccountId));
       throw new Error(
         "Instagram access token has expired and must be reconnected",
       );
@@ -348,7 +347,7 @@ export async function refreshInstagramToken(
   await setCachedJson(
     instagramTokenCacheKey(instagramAccountId),
     { accessToken: data.access_token, expiresAt: expiresAt.toISOString() },
-    Math.min(CACHE_TTL.TOKEN, Math.max(1, expiresIn)),
+    Math.min(300, Math.max(1, expiresIn)),
   );
   await deleteCachedJson(instagramAccountCacheKey(instagramAccountId));
 
