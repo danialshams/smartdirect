@@ -2,6 +2,10 @@ import { prisma } from "@/lib/prisma";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 import { InstagramApiError, instagramApiRequest } from "@/lib/instagram/client";
 import { getStorageProvider } from "@/lib/storage/provider";
+import {
+  claimPublishingExecution,
+  completePublishingExecution,
+} from "@/lib/idempotency/publishing";
 
 type ContainerResponse = { id?: string; status_code?: string; status?: string };
 type PublishResponse = { id?: string };
@@ -383,6 +387,17 @@ export async function publishInstagramJob(jobId: string) {
     };
   });
 
+  const idempotency = await claimPublishingExecution({
+    instagramAccountId: job.instagramAccountId,
+    publishingJobId: job.id,
+  });
+
+  if (!idempotency.claimed) {
+    return job;
+  }
+
+  const idempotencyKey = idempotency.key;
+
   const tags = normalizeUserTags(job.userTags);
   const token = await getValidInstagramAccessToken(job.instagramAccountId);
   const tenantId = job.instagramAccount.userId;
@@ -511,6 +526,11 @@ export async function publishInstagramJob(jobId: string) {
     });
 
     await cleanupPublishedMedia(updatedJob.media);
+
+    await completePublishingExecution(idempotencyKey, {
+      publishingJobId: job.id,
+      instagramMediaId,
+    });
 
     return updatedJob;
   } catch (error) {
