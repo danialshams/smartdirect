@@ -3,6 +3,7 @@ import "dotenv/config";
 import { runQueueWorker } from "../src/lib/queue/worker";
 import type { QueueJobPayload } from "../src/lib/queue/types";
 import { handleInstagramWebhookJob } from "../src/lib/webhook/worker-handler";
+import { publishInstagramJob } from "../src/lib/instagram/publishing";
 
 const controller = new AbortController();
 
@@ -38,6 +39,8 @@ runQueueWorker(
       );
     } else if (job.type === "INSTAGRAM_WEBHOOK") {
       await handleInstagramWebhookJob(job);
+    } else if (job.type === "PUBLISH") {
+      await publishInstagramJob(job.payload.publishingJobId);
     }
 
     console.log(
