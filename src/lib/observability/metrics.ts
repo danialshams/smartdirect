@@ -54,8 +54,9 @@ function failureKey(operation: string) {
 export async function recordLatency(operation: string, latencyMs: number) {
   if (!Number.isFinite(latencyMs) || latencyMs < 0) return;
 
+  addMemoryLatency(operation, latencyMs);
+
   if (!isRedisConfigured()) {
-    addMemoryLatency(operation, latencyMs);
     return;
   }
 
@@ -83,8 +84,9 @@ export async function recordLatency(operation: string, latencyMs: number) {
 }
 
 export async function recordFailure(operation: string, errorType = "unknown") {
+  addMemoryFailure(operation, errorType);
+
   if (!isRedisConfigured()) {
-    addMemoryFailure(operation, errorType);
     return;
   }
 
@@ -131,7 +133,7 @@ export async function getLatencyPercentiles(operation: string) {
   try {
     const redis = createQueueRedis();
     const rows = await redis.lrange<string[]>(latencyKey(operation), 0, LATENCY_SAMPLE_LIMIT - 1);
-    const values = rows
+    const redisValues = rows
       .map((row) => {
         try {
           const parsed = JSON.parse(row) as { latencyMs?: number };
@@ -142,13 +144,18 @@ export async function getLatencyPercentiles(operation: string) {
       })
       .filter((value): value is number => value !== null);
 
+    const values =
+      redisValues.length > 0
+        ? redisValues
+        : memoryState.latencies.get(operation) ?? [];
+
     return {
       operation,
       sampleCount: values.length,
       p50: percentile(values, 50),
       p95: percentile(values, 95),
       p99: percentile(values, 99),
-      backend: "redis" as const,
+      backend: redisValues.length > 0 ? ("redis" as const) : ("memory" as const),
     };
   } catch (error) {
     const values = memoryState.latencies.get(operation) ?? [];
