@@ -132,7 +132,7 @@ export async function getLatencyPercentiles(operation: string) {
 
   try {
     const redis = createQueueRedis();
-    const rows = await redis.lrange<string[]>(latencyKey(operation), 0, LATENCY_SAMPLE_LIMIT - 1);
+    const rows = await redis.lrange(latencyKey(operation), 0, LATENCY_SAMPLE_LIMIT - 1);
     const redisValues = rows
       .map((row) => {
         try {
