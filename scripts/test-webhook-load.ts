@@ -47,10 +47,11 @@ async function main() {
   const processedIds = new Set<string>();
   const jobs: string[] = [];
 
-  // 1. Verify concurrent webhook idempotency: 50 claims for the same event
-  // must produce exactly one owner.
+  // 1. Verify concurrent webhook idempotency: duplicate claims must produce exactly one owner.
+  console.log(`[180] phase 1/5: starting ${DUPLICATE_REQUESTS} concurrent idempotency claims...`);
   const duplicateEventId = `load-duplicate-${Date.now()}`;
-  const duplicateResults = await Promise.all(
+  const duplicateResults = await Promise.race([
+    Promise.all(
     Array.from({ length: DUPLICATE_REQUESTS }, () =>
       claimInstagramWebhookEvent({
         instagramAccountId: TEST_ACCOUNT_ID,
@@ -62,7 +63,15 @@ async function main() {
         },
       }),
     ),
-  );
+    new Promise<never>((_, reject) =>
+      setTimeout(
+        () => reject(new Error(`Timed out during phase 1: concurrent idempotency claims did not finish within 60s.`)),
+        60_000,
+      ),
+    ),
+  ]);
+
+  console.log(`[180] phase 1/5: idempotency claims completed.`);
 
   const claimedCount = duplicateResults.filter((result) => result.claimed).length;
 
@@ -76,7 +85,7 @@ async function main() {
     webhookKey(duplicateEventId),
   );
 
-  // 2. Queue a realistic burst of normalized webhook jobs.
+  console.log(`[180] phase 2/5: enqueueing ${TOTAL_EVENTS} webhook jobs...`);
   for (let index = 0; index < TOTAL_EVENTS; index++) {
     const eventId = `load-event-${Date.now()}-${index}`;
 
@@ -102,8 +111,13 @@ async function main() {
     );
 
     jobs.push(job.id);
+
+    if ((index + 1) % 100 === 0 || index + 1 === TOTAL_EVENTS) {
+      console.log(`[180] phase 2/5: enqueued ${index + 1}/${TOTAL_EVENTS}`);
+    }
   }
 
+  console.log(`[180] phase 3/5: starting worker (concurrency=${CONCURRENCY})...`);
   const workers = [
     runQueueWorker(
       async (job) => {
@@ -120,6 +134,10 @@ async function main() {
 
         processedIds.add(eventId);
         processed += 1;
+
+        if (processed % 100 === 0 || processed === TOTAL_EVENTS) {
+          console.log(`[180] phase 4/5: processed ${processed}/${TOTAL_EVENTS}`);
+        }
       },
       {
         concurrency: CONCURRENCY,
@@ -142,6 +160,7 @@ async function main() {
     await Promise.all(workers);
   }
 
+  console.log(`[180] phase 4/5: all webhook jobs processed; validating job states...`);
   const failedJobs: string[] = [];
 
   for (const jobId of jobs) {
@@ -166,6 +185,7 @@ async function main() {
     );
   }
 
+  console.log(`[180] phase 5/5: cleanup and final metrics...`);
   const depth = await getQueueDepth(QUEUE_NAMESPACE);
   const durationMs = Date.now() - startedAt;
   const throughput = durationMs > 0 ? Number(((TOTAL_EVENTS / durationMs) * 1000).toFixed(2)) : TOTAL_EVENTS;
