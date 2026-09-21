@@ -264,7 +264,7 @@ export async function failJob(jobId: string, error: unknown) {
     create: {
       jobId,
       type: job.type,
-      payload: job.payload,
+      payload: job.payload as never,
       priority: job.priority,
       attempts: job.attempts,
       maxAttempts: job.maxAttempts,
