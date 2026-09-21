@@ -62,6 +62,7 @@ export interface QueueJob<T extends QueueJobType = QueueJobType> {
   workerId?: string;
   idempotency?: QueueJobIdempotency;
   recoveryId?: string;
+  queueNamespace?: string;
 }
 
 export interface EnqueueJobOptions {
@@ -70,4 +71,5 @@ export interface EnqueueJobOptions {
   maxAttempts?: number;
   idempotency?: QueueJobIdempotency;
   recoveryId?: string;
+  queueNamespace?: string;
 }
