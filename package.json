@@ -16,7 +16,8 @@
     "idempotency:key:test": "tsx scripts/test-idempotency-key.ts",
     "idempotency:store:test": "tsx scripts/test-idempotency-store.ts",
     "queue:idempotency:test": "tsx scripts/test-queue-idempotency.ts",
-    "webhook:idempotency:test": "tsx scripts/test-webhook-idempotency.ts"
+    "webhook:idempotency:test": "tsx scripts/test-webhook-idempotency.ts",
+    "automation:idempotency:test": "tsx scripts/test-automation-idempotency.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",
