@@ -2,6 +2,7 @@ import "dotenv/config";
 
 import { runQueueWorker } from "../src/lib/queue/worker";
 import type { QueueJobPayload } from "../src/lib/queue/types";
+import { handleInstagramWebhookJob } from "../src/lib/webhook/worker-handler";
 
 const controller = new AbortController();
 
@@ -35,6 +36,8 @@ runQueueWorker(
           message: payload.message,
         }),
       );
+    } else if (job.type === "INSTAGRAM_WEBHOOK") {
+      await handleInstagramWebhookJob(job);
     }
 
     console.log(
