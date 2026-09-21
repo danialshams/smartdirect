@@ -168,15 +168,33 @@ async function main() {
 
   console.log(`[180] phase 4/5: all webhook jobs processed; validating job states...`);
   const failedJobs: string[] = [];
+  const VALIDATION_BATCH_SIZE = 50;
 
-  for (const jobId of jobs) {
-    const job = await getJob(jobId);
+  for (let index = 0; index < jobs.length; index += VALIDATION_BATCH_SIZE) {
+    const batch = jobs.slice(index, index + VALIDATION_BATCH_SIZE);
 
-    if (!job || job.status !== "completed") {
-      failedJobs.push(jobId);
-    }
+    const results = await Promise.all(
+      batch.map(async (jobId) => {
+        const job = await getJob(jobId);
 
-    await deleteJob(jobId);
+        if (!job || job.status !== "completed") {
+          return jobId;
+        }
+
+        return null;
+      }),
+    );
+
+    failedJobs.push(
+      ...results.filter((jobId): jobId is string => jobId !== null),
+    );
+
+    await Promise.all(batch.map((jobId) => deleteJob(jobId)));
+
+    const validated = Math.min(index + batch.length, jobs.length);
+    console.log(
+      `[180] phase 4/5: validated ${validated}/${jobs.length} jobs`,
+    );
   }
 
   if (waitError) {
