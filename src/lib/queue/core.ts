@@ -1,4 +1,5 @@
-import { Redis } from "@upstash/redis";
+import type { Redis } from "@upstash/redis";
+import { getRedisClient } from "@/lib/redis/client";
 import { prisma } from "@/lib/prisma";
 
 import type {
@@ -44,22 +45,8 @@ const PRIORITY_WEIGHT: Record<QueueJobPriority, number> = {
   low: 3,
 };
 
-function getRedisConfig() {
-  const url = process.env.UPSTASH_REDIS_REST_URL?.trim();
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
-
-  if (!url || !token) {
-    throw new Error(
-      "UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN are not configured",
-    );
-  }
-
-  return { url, token };
-}
-
 export function createQueueRedis() {
-  const { url, token } = getRedisConfig();
-  return new Redis({ url, token });
+  return getRedisClient();
 }
 
 export function createJobId() {
@@ -266,7 +253,6 @@ export async function claimNextJob(
 ): Promise<QueueJob | null> {
   const redis = createQueueRedis();
   const keys = getQueueKeys(queueNamespace);
-  await promoteDueJobs(50, queueNamespace);
 
   const result = await redis.eval<string | null>(
     CLAIM_NEXT_JOB_SCRIPT,
