@@ -7,6 +7,11 @@ import {
 } from "@/generated/prisma/client";
 
 import { sendAutomationMessage } from "./send-automation-message";
+import {
+  claimAutomationExecution,
+  completeAutomationExecution,
+  failAutomationExecution,
+} from "@/lib/idempotency/automation";
 
 type ExecuteAutomationInput = {
   automationId: string;
@@ -15,6 +20,7 @@ type ExecuteAutomationInput = {
   igUserId: string;
   commentId?: string | null;
   selectedQuickReplyId?: string | null;
+  executionId?: string | null;
 };
 
 type HandoffState = {
@@ -22,6 +28,32 @@ type HandoffState = {
 };
 
 export async function executeAutomation(input: ExecuteAutomationInput) {
+  let idempotencyKey: string | null = null;
+
+  if (input.executionId?.trim()) {
+    const claim = await claimAutomationExecution({
+      instagramAccountId: input.instagramAccountId,
+      automationId: input.automationId,
+      executionId: input.executionId.trim(),
+    });
+
+    if (!claim.claimed) {
+      console.log("[Automation Engine] Duplicate execution skipped.", {
+        automationId: input.automationId,
+        executionId: input.executionId,
+      });
+
+      return {
+        success: true,
+        executed: false,
+        reason: "IDEMPOTENT_DUPLICATE",
+      };
+    }
+
+    idempotencyKey = claim.key;
+  }
+
+  try {
   // =========================================================
   // 1. Find Instagram account
   // =========================================================
@@ -333,12 +365,24 @@ export async function executeAutomation(input: ExecuteAutomationInput) {
     },
   });
 
-  return {
+  const result = {
     success: true,
     executed: true,
     conversationId: conversation.id,
     executedMessages,
   };
+
+  if (idempotencyKey) {
+    await completeAutomationExecution(idempotencyKey, result);
+  }
+
+  return result;
+  } catch (error) {
+    if (idempotencyKey) {
+      await failAutomationExecution(idempotencyKey, error);
+    }
+    throw error;
+  }
 }
 
 // =========================================================
