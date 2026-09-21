@@ -312,16 +312,21 @@ async function main() {
   );
 
   console.log("[16] 188 Failure Under Load...");
-  let attempts = 0;
+  const failureAttempts = new Map<string, number>();
   results.push(
     await runScenario(
       "failure",
       TOTAL,
-      async () => {
-        attempts += 1;
-        if (attempts % 3 === 1) {
+      async (job) => {
+        const attempt = (failureAttempts.get(job.id) ?? 0) + 1;
+        failureAttempts.set(job.id, attempt);
+
+        // Inject exactly one transient failure per job so the scenario validates
+        // retry/recovery behavior without allowing one job's failure to affect another.
+        if (attempt === 1) {
           throw new Error("LOAD_INJECTED_FAILURE");
         }
+
         await sleep(4);
       },
     ),
