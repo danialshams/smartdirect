@@ -1,4 +1,5 @@
 import { Redis } from "@upstash/redis";
+import { prisma } from "@/lib/prisma";
 
 import type {
   EnqueueJobOptions,
@@ -13,6 +14,8 @@ const JOB_PREFIX = "smartdirect:queue:job:";
 const READY_KEY = "smartdirect:queue:default:ready";
 const DELAYED_KEY = "smartdirect:queue:default:delayed";
 const CLAIM_PREFIX = "smartdirect:queue:claim:";
+const ACTIVE_KEY = "smartdirect:queue:default:active";
+const FAILED_KEY = "smartdirect:queue:default:failed";
 const CLAIM_TTL_SECONDS = 30;
 const DEFAULT_RETRY_DELAY_MS = 1_000;
 const MAX_RETRY_DELAY_MS = 60_000;
@@ -79,6 +82,7 @@ export async function enqueueJob<T extends QueueJobType>(
     attempts: 0,
     maxAttempts: Math.max(1, options.maxAttempts ?? 3),
     idempotency: options.idempotency,
+    recoveryId: options.recoveryId,
   };
 
   await redis.set(jobKey(job.id), job);
@@ -179,6 +183,7 @@ export async function claimNextJob(
   job.workerId = workerId;
 
   await redis.set(jobKey(id), job);
+  await redis.zadd(ACTIVE_KEY, { score: Date.now(), member: id });
   await redis.zrem(READY_KEY, id);
 
   return job;
@@ -200,7 +205,15 @@ export async function completeJob(jobId: string) {
   job.status = "completed";
   job.workerId = undefined;
 
+  if (job.recoveryId) {
+    await prisma.queueFailure.updateMany({
+      where: { id: job.recoveryId, status: "REQUEUED" },
+      data: { status: "RESOLVED", resolvedAt: new Date() },
+    });
+  }
+
   await Promise.all([
+    redis.zrem(ACTIVE_KEY, jobId),
     redis.set(jobKey(jobId), job),
     removeJobFromQueue(redis, jobId),
   ]);
@@ -218,6 +231,7 @@ export async function failJob(jobId: string, error: unknown) {
   job.workerId = undefined;
 
   await redis.del(claimKey(jobId));
+  await redis.zrem(ACTIVE_KEY, jobId);
 
   if (job.attempts < job.maxAttempts) {
     const retryDelayMs = Math.min(
@@ -242,7 +256,37 @@ export async function failJob(jobId: string, error: unknown) {
   await Promise.all([
     redis.set(jobKey(jobId), job),
     removeJobFromQueue(redis, jobId),
+    redis.zadd(FAILED_KEY, { score: Date.now(), member: jobId }),
   ]);
+
+  await prisma.queueFailure.upsert({
+    where: { jobId },
+    create: {
+      jobId,
+      type: job.type,
+      payload: job.payload,
+      priority: job.priority,
+      attempts: job.attempts,
+      maxAttempts: job.maxAttempts,
+      lastError: job.lastError ?? "Unknown queue failure",
+      tenantId: job.idempotency?.tenantId ?? null,
+      idempotencyKey: job.idempotency?.key ?? null,
+      idempotencyTenantId: job.idempotency?.tenantId ?? null,
+      idempotencyOperation: job.idempotency?.operation ?? null,
+      idempotencyResourceId: job.idempotency?.resourceId ?? null,
+    },
+    update: {
+      type: job.type,
+      payload: job.payload,
+      priority: job.priority,
+      attempts: job.attempts,
+      maxAttempts: job.maxAttempts,
+      lastError: job.lastError ?? "Unknown queue failure",
+      status: "FAILED",
+      failedAt: new Date(),
+      resolvedAt: null,
+    },
+  });
 
   return job;
 }
@@ -257,6 +301,8 @@ export async function deleteJob(jobId: string) {
   await Promise.all([
     redis.del(jobKey(jobId)),
     redis.del(claimKey(jobId)),
+    redis.zrem(ACTIVE_KEY, jobId),
+    redis.zrem(FAILED_KEY, jobId),
     redis.zrem(READY_KEY, jobId),
     redis.zrem(DELAYED_KEY, jobId),
   ]);
@@ -264,15 +310,19 @@ export async function deleteJob(jobId: string) {
 
 export async function getQueueDepth() {
   const redis = createQueueRedis();
-  const [ready, delayed] = await Promise.all([
+  const [ready, delayed, failed, active] = await Promise.all([
     redis.zcard(READY_KEY),
     redis.zcard(DELAYED_KEY),
+    redis.zcard(FAILED_KEY),
+    redis.zcard(ACTIVE_KEY),
   ]);
 
   return {
     queue: QUEUE_NAME,
     ready,
     delayed,
+    active,
+    failed,
     total: ready + delayed,
   };
 }
