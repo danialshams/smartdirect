@@ -1,5 +1,4 @@
-import { getJob, completeJob, failJob } from "@/lib/queue/core";
-import { claimIdempotency, completeIdempotency, failIdempotency } from "@/lib/idempotency/store";
+import { getJob, completeJob } from "@/lib/queue/core";
 import { acquireLock, releaseLock } from "@/lib/lock/redis-lock";
 import type { DistributedLockHandle } from "@/lib/lock/types";
 import { publishInstagramJob } from "@/lib/instagram/publishing";
@@ -52,27 +51,9 @@ export async function processPublishingQueueJobStep(jobId: string) {
 
     lockHandle = lock.handle;
 
-    if (job.idempotency) {
-      const claim = await claimIdempotency({
-        key: job.idempotency.key,
-        tenantId: job.idempotency.tenantId,
-        operation: job.idempotency.operation,
-        resourceId: job.idempotency.resourceId,
-      });
-
-      if (!claim.claimed) {
-        await completeJob(job.id);
-        return { ok: true, skipped: true, message: "Idempotency duplicate skipped." };
-      }
-    }
-
     await publishInstagramJob(
       (job as QueueJob<"PUBLISH">).payload.publishingJobId,
     );
-
-    if (job.idempotency) {
-      await completeIdempotency(job.idempotency.key, { jobId: job.id });
-    }
 
     await completeJob(job.id);
 
@@ -84,20 +65,6 @@ export async function processPublishingQueueJobStep(jobId: string) {
       error: message,
     });
 
-    if (job.idempotency) {
-      try {
-        await failIdempotency(job.idempotency.key, message);
-      } catch (idempotencyError) {
-        observabilityLogger.error("workflow_publishing_idempotency_failure_marking_error", {
-          error:
-            idempotencyError instanceof Error
-              ? idempotencyError.message
-              : String(idempotencyError),
-        });
-      }
-    }
-
-    await failJob(job.id, error);
     throw error;
   } finally {
     if (lockHandle) {
