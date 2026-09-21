@@ -19,7 +19,8 @@
     "webhook:idempotency:test": "tsx scripts/test-webhook-idempotency.ts",
     "automation:idempotency:test": "tsx scripts/test-automation-idempotency.ts",
     "send-message:idempotency:test": "tsx scripts/test-send-message-idempotency.ts",
-    "publishing:idempotency:test": "tsx scripts/test-publishing-idempotency.ts"
+    "publishing:idempotency:test": "tsx scripts/test-publishing-idempotency.ts",
+    "idempotency:semantics:test": "tsx scripts/test-idempotency-semantics.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",
