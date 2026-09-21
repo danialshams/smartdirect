@@ -173,11 +173,6 @@ export async function refreshInstagramToken(
   accessToken: string;
   expiresAt: Date;
 }> {
-  const cachedToken = await getCachedJson<{ accessToken: string; expiresAt: string }>(instagramTokenCacheKey(instagramAccountId));
-  if (cachedToken && new Date(cachedToken.expiresAt).getTime() > Date.now()) {
-    return cachedToken.accessToken;
-  }
-
   const account = await prisma.instagramAccount.findUnique({
     where: {
       id: instagramAccountId,
@@ -379,6 +374,14 @@ export async function refreshInstagramToken(
 export async function getValidInstagramAccessToken(
   instagramAccountId: string,
 ): Promise<string> {
+  const cachedToken = await getCachedJson<{ accessToken: string; expiresAt: string }>(instagramTokenCacheKey(instagramAccountId));
+  if (
+    cachedToken &&
+    new Date(cachedToken.expiresAt).getTime() - Date.now() > REFRESH_THRESHOLD_SECONDS * 1000
+  ) {
+    return cachedToken.accessToken;
+  }
+
   const account = await prisma.instagramAccount.findUnique({
     where: {
       id: instagramAccountId,
