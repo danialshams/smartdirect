@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { invalidateAutomationCache } from "@/lib/cache/instagram";
 
 function normalizePersianDigits(value: string) {
   return value
@@ -136,6 +137,7 @@ export async function POST(request: NextRequest) {
       include: { messages: { orderBy: { order: "asc" } } },
     });
 
+    await invalidateAutomationCache(instagramAccountId);
     return NextResponse.json({ success: true, data: automation }, { status: 201 });
   } catch (error) {
     console.error("POST /api/automations error:", error);
