@@ -15,7 +15,8 @@ import type { LoadTestSample } from "./load-test/types";
 
 const JOB_PREFIX = "smartdirect:queue:job:";
 const READY_KEY = "smartdirect:queue:default:ready";
-const ENQUEUE_BATCH_SIZE = 50;
+const ENQUEUE_BATCH_SIZE = 25;
+const READY_SCORE_BATCH_SIZE = 25;
 
 async function cleanupPreviousWorkerLoadJobs() {
   const redis = createQueueRedis();
@@ -116,14 +117,32 @@ async function main() {
     }
 
     // Force the isolated test jobs ahead of the pre-existing queue backlog.
+    // Do this in small batches; sending 1,000 concurrent REST commands to
+    // Upstash can itself become the bottleneck and would invalidate the test.
     const redis = createQueueRedis();
-    await Promise.all(
-      jobIds.map((jobId, index) =>
-        redis.zadd(READY_KEY, {
-          score: index - config.total,
-          member: jobId,
-        }),
-      ),
+
+    for (
+      let batchStart = 0;
+      batchStart < jobIds.length;
+      batchStart += READY_SCORE_BATCH_SIZE
+    ) {
+      const batchEnd = Math.min(
+        jobIds.length,
+        batchStart + READY_SCORE_BATCH_SIZE,
+      );
+
+      await Promise.all(
+        jobIds.slice(batchStart, batchEnd).map((jobId, offset) =>
+          redis.zadd(READY_KEY, {
+            score: batchStart + offset - config.total,
+            member: jobId,
+          }),
+        ),
+      );
+    }
+
+    console.log(
+      `Worker load-test prepared ${jobIds.length} isolated ready jobs.`,
     );
 
     workerStartedAt = Date.now();
