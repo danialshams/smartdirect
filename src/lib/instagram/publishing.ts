@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 import { InstagramApiError, instagramApiRequest } from "@/lib/instagram/client";
 import { getStorageProvider } from "@/lib/storage/provider";
+import { invalidateAutomationCache } from "@/lib/cache/instagram";
 import {
   claimPublishingExecution,
   completePublishingExecution,
@@ -300,6 +301,7 @@ async function createConditionalAutomation(
     select: { id: true },
   });
 
+  await invalidateAutomationCache(instagramAccountId);
   return automation.id;
 }
 
