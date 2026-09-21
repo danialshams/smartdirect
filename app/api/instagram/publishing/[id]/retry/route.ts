@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { publishInstagramJob } from "@/lib/instagram/publishing";
+import { enqueueInstagramPublishing } from "@/lib/instagram/publishing-queue";
 
 export const dynamic = "force-dynamic";
 
@@ -57,24 +57,32 @@ export async function POST(_request: NextRequest, context: Context) {
     }
 
     await prisma.instagramPublishJob.update({
-      where: {
-        id,
-      },
-      data: {
-        status: "UPLOADING",
-        errorMessage: null,
-        lastAttemptAt: new Date(),
-      },
+      where: { id },
+      data: { status: "PROCESSING", errorMessage: null, lastAttemptAt: new Date() },
     });
 
     try {
-      const published = await publishInstagramJob(id);
-
+      const queued = await enqueueInstagramPublishing(id, { maxAttempts: 4 });
       return NextResponse.json({
         success: true,
-        data: published,
-      });
+        queued: true,
+        queueJobId: queued.job.id,
+      }, { status: 202 });
     } catch (error) {
+      await prisma.instagramPublishJob.update({
+        where: { id },
+        data: {
+          status: "FAILED",
+          errorMessage: error instanceof Error ? error.message : "قرار دادن Retry در صف ناموفق بود.",
+          retryCount: { increment: 1 },
+        },
+      });
+      return NextResponse.json({
+        success: false,
+        message: error instanceof Error ? error.message : "قرار دادن Retry در صف ناموفق بود.",
+      }, { status: 502 });
+    }
+  } catch (error) {
       return NextResponse.json(
         {
           success: false,
