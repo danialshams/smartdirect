@@ -45,7 +45,8 @@ async function main() {
 
   const stored = await getJob(queueJob.id);
   assert(stored?.type === "PUBLISH", "PUBLISH queue job was not stored");
-  assert(stored?.payload.publishingJobId === queueJob.payload.publishingJobId, "PUBLISH payload mismatch");
+  const storedPublishJob = stored as import("../src/lib/queue/types").QueueJob<"PUBLISH">;
+  assert(storedPublishJob.payload.publishingJobId === queueJob.payload.publishingJobId, "PUBLISH payload mismatch");
   assert(stored?.maxAttempts === 4, "Publishing queue retry count mismatch");
 
   await deleteJob(queueJob.id);
