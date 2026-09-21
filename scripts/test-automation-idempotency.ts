@@ -1,10 +1,24 @@
-import { prisma } from "@/lib/prisma";
-import {
-  claimAutomationExecution,
-  completeAutomationExecution,
-} from "@/lib/idempotency/automation";
+import "dotenv/config";
+
+import { createRequire } from "node:module";
+
+const require = createRequire(import.meta.url);
+const serverOnlyPath = require.resolve("server-only");
+
+require.cache[serverOnlyPath] = {
+  id: serverOnlyPath,
+  filename: serverOnlyPath,
+  loaded: true,
+  exports: {},
+} as any;
 
 async function main() {
+  const { prisma } = await import("../src/lib/prisma");
+  const {
+    claimAutomationExecution,
+    completeAutomationExecution,
+  } = await import("../src/lib/idempotency/automation");
+
   const tenantId = `automation-test-tenant-${Date.now()}-${Math.random()}`;
   const automationId = "automation-test";
   const executionId = `execution-${Date.now()}-${Math.random()}`;
@@ -65,30 +79,35 @@ async function main() {
     throw new Error("Different execution ID was incorrectly deduplicated");
   }
 
-  await Promise.all([
-    prisma.idempotencyRecord.deleteMany({
-      where: { tenantId },
-    }),
-  ]);
+  await prisma.idempotencyRecord.deleteMany({
+    where: { tenantId },
+  });
 
   console.log("68 automation idempotency: OK");
-  console.log(JSON.stringify({
-    success: true,
-    tests: [
-      "concurrent-duplicate-claim",
-      "in-progress-duplicate-skip",
-      "completed-duplicate-skip",
-      "different-execution-isolation",
-    ],
-  }, null, 2));
+  console.log(
+    JSON.stringify(
+      {
+        success: true,
+        tests: [
+          "concurrent-duplicate-claim",
+          "in-progress-duplicate-skip",
+          "completed-duplicate-skip",
+          "different-execution-isolation",
+        ],
+      },
+      null,
+      2,
+    ),
+  );
 }
 
 main()
-  .catch(async (error) => {
+  .catch((error) => {
     console.error("68 automation idempotency: FAILED");
     console.error(error);
     process.exitCode = 1;
   })
   .finally(async () => {
+    const { prisma } = await import("../src/lib/prisma");
     await prisma.$disconnect();
   });
