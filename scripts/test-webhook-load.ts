@@ -1,6 +1,6 @@
 import "dotenv/config";
 
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 
 import {
   completeInstagramWebhookEvent,
@@ -13,11 +13,14 @@ import {
   getQueueDepth,
 } from "../src/lib/queue/core";
 import { runQueueWorker } from "../src/lib/queue/worker";
+import { prisma } from "../src/lib/prisma";
 
-const TOTAL_EVENTS = 200;
-const CONCURRENCY = 16;
+const TOTAL_EVENTS = Math.max(1, Number(process.env.WEBHOOK_LOAD_TOTAL ?? 1000));
+const CONCURRENCY = Math.max(1, Number(process.env.WEBHOOK_LOAD_CONCURRENCY ?? 16));
+const DUPLICATE_REQUESTS = Math.max(2, Number(process.env.WEBHOOK_LOAD_DUPLICATES ?? 50));
+const QUEUE_NAMESPACE = "webhook-load-test";
 process.env.REDIS_COMMAND_TIMEOUT_MS ??= "30_000";
-const TEST_ACCOUNT_ID = "webhook-load-test-account";
+const TEST_ACCOUNT_ID = `webhook-load-test-account:${randomUUID()}`;
 
 function webhookKey(eventId: string) {
   return `smartdirect:idempotency:v1:webhook:${TEST_ACCOUNT_ID}:MESSAGING:${createHash("sha256").update(eventId).digest("hex")}`;
@@ -38,6 +41,7 @@ async function waitFor(
 }
 
 async function main() {
+  const startedAt = Date.now();
   const controller = new AbortController();
   let processed = 0;
   const processedIds = new Set<string>();
@@ -47,7 +51,7 @@ async function main() {
   // must produce exactly one owner.
   const duplicateEventId = `load-duplicate-${Date.now()}`;
   const duplicateResults = await Promise.all(
-    Array.from({ length: 50 }, () =>
+    Array.from({ length: DUPLICATE_REQUESTS }, () =>
       claimInstagramWebhookEvent({
         instagramAccountId: TEST_ACCOUNT_ID,
         eventType: "MESSAGING",
@@ -93,6 +97,7 @@ async function main() {
       {
         priority: "high",
         maxAttempts: 3,
+        queueNamespace: QUEUE_NAMESPACE,
       },
     );
 
@@ -119,7 +124,8 @@ async function main() {
       {
         concurrency: CONCURRENCY,
         pollIntervalMs: 100,
-        workerId: `webhook-load-worker-${Date.now()}`,
+        workerId: `webhook-load-worker-${Date.now()}-${randomUUID()}`,
+        queueNamespace: QUEUE_NAMESPACE,
         signal: controller.signal,
       },
     ),
@@ -160,20 +166,28 @@ async function main() {
     );
   }
 
-  const depth = await getQueueDepth();
+  const depth = await getQueueDepth(QUEUE_NAMESPACE);
+  const durationMs = Date.now() - startedAt;
+  const throughput = durationMs > 0 ? Number(((TOTAL_EVENTS / durationMs) * 1000).toFixed(2)) : TOTAL_EVENTS;
 
-  console.log("94 Webhook load test: OK");
+  console.log("180 Webhook load test: OK");
+  await prisma.idempotencyRecord.deleteMany({ where: { tenantId: TEST_ACCOUNT_ID } });
+
   console.log(
     JSON.stringify(
       {
         success: true,
         totalEvents: TOTAL_EVENTS,
         workers: CONCURRENCY,
+        duplicateRequests: DUPLICATE_REQUESTS,
         processed,
         duplicateClaims: claimedCount,
         duplicateExecutions: 0,
         failedJobs: failedJobs.length,
         queueDepthAfterCleanup: depth,
+        durationMs,
+        throughput,
+        queueNamespace: QUEUE_NAMESPACE,
       },
       null,
       2,
@@ -181,8 +195,13 @@ async function main() {
   );
 }
 
-main().catch((error) => {
-  console.error("94 Webhook load test: FAILED");
-  console.error(error);
-  process.exitCode = 1;
-});
+main()
+  .catch((error) => {
+    console.error("180 Webhook load test: FAILED");
+    console.error(error);
+    process.exitCode = 1;
+  })
+  .finally(async () => {
+    await prisma.idempotencyRecord.deleteMany({ where: { tenantId: TEST_ACCOUNT_ID } });
+    await prisma.$disconnect();
+  });
