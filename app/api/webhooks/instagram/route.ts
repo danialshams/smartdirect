@@ -944,6 +944,7 @@ async function processMessagingEvent(
           storyUrl: storyReply.storyUrl,
         },
         instagramAccount,
+        executionId,
       );
 
       console.log("========================================");
@@ -1974,6 +1975,7 @@ async function processFollowGatePostback({
   senderId,
   payload,
   instagramAccount,
+  executionId,
 }: {
   senderId: string;
   payload: string;
