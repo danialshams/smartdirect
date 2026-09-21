@@ -32,6 +32,11 @@ export type ClaimIdempotencyResult = {
   record: IdempotencyRecord;
 };
 
+export type IdempotencyExecutionState =
+  | "IN_PROGRESS"
+  | "COMPLETED"
+  | "FAILED";
+
 function toRecord(value: {
   id: string;
   key: string;
@@ -134,7 +139,7 @@ export async function claimIdempotency(
         data: {
           status: "IN_PROGRESS",
           expiresAt,
-          response: null,
+          response: { set: null },
           errorMessage: null,
           completedAt: null,
         },
