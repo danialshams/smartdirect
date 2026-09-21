@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { invalidateAutomationCache } from "@/lib/cache/instagram";
 
 export const dynamic = "force-dynamic";
 
@@ -347,6 +348,7 @@ export async function POST(
       },
     });
 
+    await invalidateAutomationCache(id);
     return NextResponse.json(
       {
         success: true,
