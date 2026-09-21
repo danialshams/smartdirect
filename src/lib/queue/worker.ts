@@ -45,6 +45,7 @@ export async function runQueueWorker(
     options.workerId ?? `worker_${process.pid}_${Date.now()}`;
 
   let stopped = false;
+  let heartbeatStopped = false;
   let lastRecoveryAt = 0;
   const recoveryIntervalMs = Math.max(5_000, Number(process.env.QUEUE_RECOVERY_INTERVAL_MS ?? 10_000));
 
@@ -65,11 +66,17 @@ export async function runQueueWorker(
     hostname: process.env.HOSTNAME,
   });
 
+  const stopHeartbeatOnce = async () => {
+    if (heartbeatStopped) return;
+    heartbeatStopped = true;
+    await stopHeartbeat();
+  };
+
   if (options.signal) {
     options.signal.addEventListener(
       "abort",
       () => {
-        void stopHeartbeat();
+        void stopHeartbeatOnce();
       },
       { once: true },
     );
@@ -193,6 +200,8 @@ export async function runQueueWorker(
     }
   }
 
+  // Shutdown is cooperative: no new jobs are claimed after stop is requested,
+  // but already-running jobs are drained before the worker resolves.
   await Promise.all(active);
-  await stopHeartbeat();
+  await stopHeartbeatOnce();
 }
