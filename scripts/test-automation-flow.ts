@@ -16,8 +16,10 @@ async function main() {
 
   const active = evaluateAutomationConditions({ automationIsActive: true, humanHandoffActive: false });
   assert(active.allowed, "Active automation should be allowed");
-  assert(evaluateAutomationConditions({ automationIsActive: false, humanHandoffActive: false }).reason === "INACTIVE", "Inactive condition failed");
-  assert(evaluateAutomationConditions({ automationIsActive: true, humanHandoffActive: true }).reason === "HUMAN_HANDOFF", "Handoff condition failed");
+  const inactive = evaluateAutomationConditions({ automationIsActive: false, humanHandoffActive: false });
+  assert(!inactive.allowed && inactive.reason === "INACTIVE", "Inactive condition failed");
+  const handoff = evaluateAutomationConditions({ automationIsActive: true, humanHandoffActive: true });
+  assert(!handoff.allowed && handoff.reason === "HUMAN_HANDOFF", "Handoff condition failed");
 
   assert(resolveAutomationAction({ messageType: AutomationMessageType.TEXT, text: " hello ", mediaUrl: null, mediaId: null, formId: null, showcaseId: null }).type === "TEXT", "Text action resolution failed");
   assert(resolveAutomationAction({ messageType: AutomationMessageType.IMAGE, text: null, mediaUrl: "https://example.com/a.jpg", mediaId: null, formId: null, showcaseId: null }).type === "IMAGE", "Media action resolution failed");
