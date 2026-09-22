@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getInstagramProfile } from "@/lib/instagram/api";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
+import { proxyInstagramAccountProfileUrl } from "@/lib/instagram/media-proxy";
 import UnansweredComments from "../../../components/dashboard/comments/UnansweredComments";
 
 export const dynamic = "force-dynamic";
@@ -38,7 +39,7 @@ export default async function UnansweredCommentsPage() {
 
         return {
           ...account,
-          profilePictureUrl: profile.profile_picture_url ?? null,
+          profilePictureUrl: proxyInstagramAccountProfileUrl(account.id),
           igUsername: profile.username ?? account.igUsername,
         };
       } catch {
