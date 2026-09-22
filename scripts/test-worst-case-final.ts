@@ -112,7 +112,7 @@ async function main() {
     async (job) => {
       workerStarted += 1;
 
-      const payload = job.payload as unknown as TestPayload;
+      const payload = JSON.parse((job.payload as { message?: string }).message ?? "{}") as TestPayload;
       const start = Date.now();
       const simulatedWorkMs = Math.min(12, Math.max(2, Math.ceil(payload.actions.length / 2)));
       await sleep(simulatedWorkMs);
