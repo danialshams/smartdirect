@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { exchangeInstagramToken } from "@/lib/instagram/token-manager";
+import { verifyInstagramOAuthState } from "@/lib/instagram/oauth-state";
 
 const INSTAGRAM_API_VERSION = "v26.0";
 const REQUEST_TIMEOUT_MS = 15000;
@@ -515,4 +516,25 @@ export async function GET(request: NextRequest) {
 
     return redirectToDashboard(request, "error");
   }
-}
+}    // =========================================================
+    // 4-6. Verify signed state
+    // =========================================================
+
+    let stateData: {
+      userId: string;
+      timestamp: number;
+      nonce: string;
+    };
+
+    try {
+      stateData = verifyInstagramOAuthState(state);
+    } catch (error) {
+      console.error("[Instagram OAuth] State verification failed:", error);
+      const message = error instanceof Error ? error.message : "Invalid state";
+      return redirectToDashboard(
+        request,
+        message.includes("expired") ? "state_expired" : "invalid_state",
+      );
+    }
+
+
