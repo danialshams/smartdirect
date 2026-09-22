@@ -11,7 +11,10 @@ import {
   getInstagramUserProfile,
   type InstagramMediaComment,
 } from "@/lib/instagram/api";
-import { proxyInstagramMediaUrl } from "@/lib/instagram/media-proxy";
+import {
+  proxyInstagramMediaUrl,
+  proxyInstagramParticipantProfileUrl,
+} from "@/lib/instagram/media-proxy";
 
 export const dynamic = "force-dynamic";
 
@@ -193,7 +196,10 @@ export async function GET(request: NextRequest) {
           );
 
           if (profile.profile_pic) {
-            commentProfilePictures.set(comment.id, profile.profile_pic);
+            commentProfilePictures.set(
+              comment.id,
+              proxyInstagramParticipantProfileUrl(account.id, scopedUserId),
+            );
           }
         } catch {
           // A commenter profile picture is optional in Meta's API.
