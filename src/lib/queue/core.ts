@@ -34,7 +34,13 @@ export function getQueueKeys(queueNamespace = DEFAULT_QUEUE_NAMESPACE) {
     failed: `${prefix}:failed`,
   };
 }
-const CLAIM_TTL_SECONDS = 30;
+const DEFAULT_CLAIM_TTL_SECONDS = 30;
+const MIN_CLAIM_TTL_SECONDS = 10;
+
+export function getQueueClaimTtlSeconds() {
+  const value = Number(process.env.QUEUE_CLAIM_TTL_SECONDS ?? DEFAULT_CLAIM_TTL_SECONDS);
+  return Number.isFinite(value) && value >= MIN_CLAIM_TTL_SECONDS ? Math.floor(value) : DEFAULT_CLAIM_TTL_SECONDS;
+}
 const DEFAULT_RETRY_DELAY_MS = 1_000;
 const MAX_RETRY_DELAY_MS = 60_000;
 
@@ -261,7 +267,7 @@ export async function claimNextJob(
       CLAIM_PREFIX,
       JOB_PREFIX,
       workerId,
-      String(CLAIM_TTL_SECONDS),
+      String(getQueueClaimTtlSeconds()),
       String(Date.now()),
     ],
   );
@@ -435,3 +441,99 @@ export async function getQueueDepth(queueNamespace = DEFAULT_QUEUE_NAMESPACE) {
     total: ready + delayed,
   };
 }
+
+const CLAIM_JOB_BY_ID_SCRIPT = `
+local jobKey = ARGV[1] .. ARGV[2]
+local claimKey = ARGV[3] .. ARGV[2]
+local rawJob = redis.call("GET", jobKey)
+
+if not rawJob then
+  return nil
+end
+
+local job = cjson.decode(rawJob)
+if job.status ~= "waiting" then
+  return nil
+end
+
+if redis.call("GET", claimKey) then
+  return nil
+end
+
+job.status = "active"
+job.attempts = (job.attempts or 0) + 1
+job.workerId = ARGV[4]
+
+redis.call("SET", claimKey, ARGV[4], "EX", ARGV[5])
+redis.call("SET", jobKey, cjson.encode(job))
+redis.call("ZADD", KEYS[1], ARGV[6], ARGV[2])
+redis.call("ZREM", KEYS[2], ARGV[2])
+redis.call("ZREM", KEYS[3], ARGV[2])
+
+return cjson.encode(job)
+`
+
+export async function claimJobById(
+  jobId: string,
+  workerId: string,
+  queueNamespace = DEFAULT_QUEUE_NAMESPACE,
+): Promise<QueueJob | null> {
+  const redis = createQueueRedis();
+  const keys = getQueueKeys(queueNamespace);
+
+  const result = await redis.eval(
+    CLAIM_JOB_BY_ID_SCRIPT,
+    [keys.active, keys.ready, keys.delayed],
+    [
+      JOB_PREFIX,
+      jobId,
+      CLAIM_PREFIX,
+      workerId,
+      String(getQueueClaimTtlSeconds()),
+      String(Date.now()),
+    ],
+  );
+
+  if (!result) return null;
+  if (typeof result === "string") return JSON.parse(result) as QueueJob;
+  if (result && typeof result === "object") return result as QueueJob;
+  throw new Error("QUEUE_CLAIM_BY_ID_INVALID_RESULT");
+}
+
+const REFRESH_CLAIM_SCRIPT = `
+if redis.call("GET", KEYS[1]) == ARGV[1] then
+  redis.call("EXPIRE", KEYS[1], ARGV[2])
+  return 1
+end
+return 0
+`
+
+export async function refreshJobClaim(jobId: string, workerId: string) {
+  const redis = createQueueRedis();
+  const result = await redis.eval(
+    REFRESH_CLAIM_SCRIPT,
+    [claimKey(jobId)],
+    [workerId, String(getQueueClaimTtlSeconds())],
+  );
+  return Number(result) === 1;
+}
+
+export function startJobClaimHeartbeat(jobId: string, workerId: string) {
+  const intervalMs = Math.max(1_000, Math.floor((getQueueClaimTtlSeconds() * 1000) / 3));
+  let stopped = false;
+  let inFlight = false;
+
+  const timer = setInterval(() => {
+    if (stopped || inFlight) return;
+    inFlight = true;
+    void refreshJobClaim(jobId, workerId).catch(() => undefined).finally(() => {
+      inFlight = false;
+    });
+  }, intervalMs);
+
+  return () => {
+    stopped = true;
+    clearInterval(timer);
+  };
+}
+
