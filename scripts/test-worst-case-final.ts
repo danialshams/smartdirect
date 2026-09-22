@@ -33,6 +33,9 @@ const ACCOUNTS_PER_TENANT = Math.max(
 );
 const ACCOUNTS_PER_JOB = Math.max(1, Number(process.env.WORST_CASE_ACCOUNTS_PER_JOB ?? 1));
 const EVENTS_PER_ACCOUNT = Math.max(20, Number(process.env.WORST_CASE_EVENTS_PER_ACCOUNT ?? 200));
+const COMMENTS_PER_COMMENT_EVENT = Math.max(10, Number(process.env.WORST_CASE_COMMENTS_PER_COMMENT_EVENT ?? 100));
+const DMS_PER_DM_EVENT = Math.max(1, Number(process.env.WORST_CASE_DMS_PER_DM_EVENT ?? 20));
+const STORY_REPLIES_PER_STORY_EVENT = Math.max(1, Number(process.env.WORST_CASE_STORY_REPLIES_PER_STORY_EVENT ?? 20));
 const BATCH_SIZE = Math.max(50, Number(process.env.WORST_CASE_BATCH_SIZE ?? 100));
 const WORKER_CONCURRENCY = Math.max(
   8,
@@ -51,6 +54,7 @@ const namespace = `worst-case-${Date.now()}-${randomUUID().slice(0, 8)}`;
 const ACTIONS = [
   "COMMENT_REPLY_TEXT",
   "COMMENT_REPLY_MEDIA",
+  "COMMENT_AUTO_LIKE",
   "DM_TEXT",
   "DM_IMAGE",
   "DM_VIDEO",
@@ -119,6 +123,10 @@ async function main() {
   let storyEvents = 0;
   let publishingEvents = 0;
   let scheduledPublishingEvents = 0;
+  let commentInteractions = 0;
+  let dmInteractions = 0;
+  let storyReplyInteractions = 0;
+  let publishOperations = 0;
 
   const controller = new AbortController();
 
@@ -141,12 +149,16 @@ async function main() {
 
           if (logicalEventIndex % 7 === 0) {
             commentEvents += 1;
+            commentInteractions += COMMENTS_PER_COMMENT_EVENT;
           } else if (logicalEventIndex % 7 === 1) {
             dmEvents += 1;
+            dmInteractions += DMS_PER_DM_EVENT;
           } else if (logicalEventIndex % 7 === 2) {
             storyEvents += 1;
+            storyReplyInteractions += STORY_REPLIES_PER_STORY_EVENT;
           } else {
             publishingEvents += 1;
+            publishOperations += 1;
             if (logicalEventIndex % 2 === 0) {
               scheduledPublishingEvents += 1;
             }
@@ -288,6 +300,10 @@ async function main() {
         storyReplies: storyEvents,
         publishing: publishingEvents,
         scheduledPublishing: scheduledPublishingEvents,
+        commentInteractions,
+        dmInteractions,
+        storyReplyInteractions,
+        publishOperations,
       },
       workerConcurrency: WORKER_CONCURRENCY,
       producerBackpressureHits,
@@ -296,7 +312,7 @@ async function main() {
       latencyMs: { p50, p95, p99, max },
       queueFinalDepth: finalDepth,
       actionCoverage: ACTIONS.map((action) => ({ action, executions: actionCounts.get(action) ?? 0 })),
-      note: "Synthetic final stress test. It does not call Meta and does not prove Meta API quotas. Each queue job models a worst-case account workload containing comment reply, DM media/form/showcase, story reply, and immediate/scheduled post/reel/carousel/story actions.",
+      note: "Synthetic final stress test. It does not call Meta and does not prove Meta API quotas. Each queue job models hundreds of logical interaction units per account; comment units expand to 100 comments, DM units to 20 DMs, and story units to 20 story replies, while every unit exercises the full automation/publishing action matrix.",
     }, null, 2));
   } finally {
     controller.abort();
