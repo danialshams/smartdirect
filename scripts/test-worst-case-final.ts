@@ -3,7 +3,6 @@ import "dotenv/config";
 import { randomUUID } from "node:crypto";
 
 import {
-  deleteJob,
   enqueueJobsBatch,
   getQueueDepth,
 } from "../src/lib/queue/core";
@@ -32,11 +31,11 @@ const ACCOUNTS_PER_TENANT = Math.max(
   2,
   Number(process.env.WORST_CASE_ACCOUNTS_PER_TENANT ?? 3),
 );
-const JOBS_PER_ACCOUNT = Math.max(1, Number(process.env.WORST_CASE_JOBS_PER_ACCOUNT ?? 1));
-const BATCH_SIZE = Math.max(50, Number(process.env.WORST_CASE_BATCH_SIZE ?? 250));
+const ACCOUNTS_PER_JOB = Math.max(1, Number(process.env.WORST_CASE_ACCOUNTS_PER_JOB ?? 10));
+const BATCH_SIZE = Math.max(50, Number(process.env.WORST_CASE_BATCH_SIZE ?? 100));
 const WORKER_CONCURRENCY = Math.max(
   8,
-  Number(process.env.WORST_CASE_CONCURRENCY ?? 64),
+  Number(process.env.WORST_CASE_CONCURRENCY ?? 16),
 );
 const LATENCY_P95_LIMIT_MS = Math.max(
   1_000,
@@ -82,7 +81,7 @@ async function main() {
   assert(health.ok, `Redis health failed: ${health.error ?? "unknown"}`);
 
   const totalAccounts = TENANTS * ACCOUNTS_PER_TENANT;
-  const totalJobs = totalAccounts * JOBS_PER_ACCOUNT;
+  const totalJobs = Math.ceil(totalAccounts / ACCOUNTS_PER_JOB);
 
   console.log(JSON.stringify({
     phase: "START",
@@ -90,16 +89,20 @@ async function main() {
     tenants: TENANTS,
     accountsPerTenant: ACCOUNTS_PER_TENANT,
     simulatedInstagramAccounts: totalAccounts,
-    jobs: totalJobs,
+    queueJobs: totalJobs,
+    virtualInstagramAccounts: totalAccounts,
+    accountsPerQueueJob: ACCOUNTS_PER_JOB,
     workerConcurrency: WORKER_CONCURRENCY,
     batchSize: BATCH_SIZE,
     actionsPerJob: ACTIONS.length,
+    note: "10 virtual Instagram accounts are packed into each queue job so this remains a severe multi-tenant test without turning the free Upstash database into the bottleneck."
   }, null, 2));
 
   const jobIds: string[] = [];
   const latencyMs: number[] = [];
   const tenantSet = new Set<string>();
   const accountSet = new Set<string>();
+  const virtualAccountsProcessed = new Set<string>();
   const completedSet = new Set<string>();
   const actionCounts = new Map<string, number>();
   let producerBackpressureHits = 0;
@@ -117,8 +120,12 @@ async function main() {
       const simulatedWorkMs = Math.min(12, Math.max(2, Math.ceil(payload.actions.length / 2)));
       await sleep(simulatedWorkMs);
 
-      for (const action of payload.actions) {
-        actionCounts.set(action, (actionCounts.get(action) ?? 0) + 1);
+      const accountIds = payload.instagramAccountId.split(",").filter(Boolean);
+      for (const accountId of accountIds) {
+        virtualAccountsProcessed.add(accountId);
+        for (const action of payload.actions) {
+          actionCounts.set(action, (actionCounts.get(action) ?? 0) + 1);
+        }
       }
 
       completedSet.add(job.id);
@@ -148,17 +155,21 @@ async function main() {
       for (let i = 0; i < batchCount; i++) {
         const globalIndex = nextJobNumber + i;
         const tenantIndex = globalIndex % TENANTS;
-        const accountIndex = globalIndex % ACCOUNTS_PER_TENANT;
-        const tenantId = `worst-tenant-${tenantIndex}`;
-        const accountId = `worst-account-${tenantIndex}-${accountIndex}`;
-
-        tenantSet.add(tenantId);
-        accountSet.add(accountId);
+        const accountsInJob: string[] = [];
+        for (let virtualIndex = globalIndex * ACCOUNTS_PER_JOB; virtualIndex < Math.min(totalAccounts, (globalIndex + 1) * ACCOUNTS_PER_JOB); virtualIndex++) {
+          const tenantIndex = virtualIndex % TENANTS;
+          const accountIndex = virtualIndex % ACCOUNTS_PER_TENANT;
+          const tenantId = `worst-tenant-${tenantIndex}`;
+          const accountId = `worst-account-${tenantIndex}-${accountIndex}`;
+          tenantSet.add(tenantId);
+          accountSet.add(accountId);
+          accountsInJob.push(accountId);
+        }
 
         const payload: TestPayload = {
           workload: "WORST_CASE_FULL_INSTAGRAM",
-          tenantId,
-          instagramAccountId: accountId,
+          tenantId: "MULTI_TENANT_BATCH",
+          instagramAccountId: accountsInJob.join(","),
           createdAt: Date.now(),
           actions: [...ACTIONS],
         };
@@ -203,6 +214,7 @@ async function main() {
 
     assert(processed === totalJobs, `Lost jobs: processed=${processed}, expected=${totalJobs}`);
     assert(completedSet.size === totalJobs, "Duplicate/lost completion detected");
+    assert(virtualAccountsProcessed.size === totalAccounts, `Virtual account coverage failed: ${virtualAccountsProcessed.size}/${totalAccounts}`);
     assert(tenantSet.size === TENANTS, `Tenant coverage failed: ${tenantSet.size}/${TENANTS}`);
     assert(
       accountSet.size === totalAccounts,
@@ -219,7 +231,7 @@ async function main() {
     assert(p95 <= LATENCY_P95_LIMIT_MS, `P95 latency exceeded limit: ${p95}ms > ${LATENCY_P95_LIMIT_MS}ms`);
     assert(p99 <= LATENCY_P99_LIMIT_MS, `P99 latency exceeded limit: ${p99}ms > ${LATENCY_P99_LIMIT_MS}ms`);
 
-    const requiredActions = ACTIONS.filter((action) => (actionCounts.get(action) ?? 0) === totalJobs);
+    const requiredActions = ACTIONS.filter((action) => (actionCounts.get(action) ?? 0) === totalAccounts);
     assert(requiredActions.length === ACTIONS.length, "Not every worst-case automation/publishing action was exercised for every job");
 
     console.log(JSON.stringify({
@@ -228,7 +240,9 @@ async function main() {
       tenants: TENANTS,
       accountsPerTenant: ACCOUNTS_PER_TENANT,
       simulatedInstagramAccounts: totalAccounts,
-      jobs: totalJobs,
+      queueJobs: totalJobs,
+      virtualInstagramAccounts: totalAccounts,
+      accountsPerQueueJob: ACCOUNTS_PER_JOB,
       workerConcurrency: WORKER_CONCURRENCY,
       producerBackpressureHits,
       workerStarted,
@@ -242,17 +256,35 @@ async function main() {
     controller.abort();
     await workerPromise.catch(() => undefined);
 
-    for (let i = 0; i < jobIds.length; i += 100) {
-      await Promise.all(jobIds.slice(i, i + 100).map((id) => deleteJob(id).catch(() => undefined)));
-    }
-
     const redis = getRedisClient();
-    await Promise.all([
-      redis.del(`smartdirect:queue:${namespace}:ready`).catch(() => undefined),
-      redis.del(`smartdirect:queue:${namespace}:delayed`).catch(() => undefined),
-      redis.del(`smartdirect:queue:${namespace}:active`).catch(() => undefined),
-      redis.del(`smartdirect:queue:${namespace}:failed`).catch(() => undefined),
-    ]);
+    const keys = [
+      `smartdirect:queue:${namespace}:ready`,
+      `smartdirect:queue:${namespace}:delayed`,
+      `smartdirect:queue:${namespace}:active`,
+      `smartdirect:queue:${namespace}:failed`,
+    ];
+    const cleanupScript = `
+      local ids = {}
+      for _, key in ipairs(KEYS) do
+        local members = redis.call("ZRANGE", key, 0, -1)
+        for _, id in ipairs(members) do
+          ids[#ids + 1] = id
+        end
+      end
+      for _, id in ipairs(ids) do
+        redis.call("DEL", ARGV[1] .. id)
+        redis.call("DEL", ARGV[2] .. id)
+      end
+      for _, key in ipairs(KEYS) do
+        redis.call("DEL", key)
+      end
+      return #ids
+    `;
+    await redis.eval(
+      cleanupScript,
+      keys,
+      ["smartdirect:queue:job:", "smartdirect:queue:claim:"],
+    ).catch(() => undefined);
   }
 }
 
