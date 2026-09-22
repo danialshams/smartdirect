@@ -201,7 +201,7 @@ async function main() {
         const tenantIndex = globalIndex % TENANTS;
         const accountsInJob: string[] = [];
         for (let virtualIndex = globalIndex * ACCOUNTS_PER_JOB; virtualIndex < Math.min(totalAccounts, (globalIndex + 1) * ACCOUNTS_PER_JOB); virtualIndex++) {
-          const tenantIndex = virtualIndex % TENANTS;
+          const tenantIndex = Math.floor(virtualIndex / ACCOUNTS_PER_TENANT);
           const accountIndex = virtualIndex % ACCOUNTS_PER_TENANT;
           const tenantId = `worst-tenant-${tenantIndex}`;
           const accountId = `worst-account-${tenantIndex}-${accountIndex}`;
