@@ -66,7 +66,7 @@ async function main() {
   const duplicateError = await prisma.instagramAccount.create({
     data: {
       userId: users[1].id,
-      igUserId: account.id,
+      igUserId: "db-test-ig-" + suffix,
       igUsername: "db_duplicate_" + suffix.slice(-10),
       accessToken: "test-only",
     },
