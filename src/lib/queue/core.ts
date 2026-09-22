@@ -567,12 +567,18 @@ export async function refreshJobClaim(jobId: string, workerId: string) {
   return Number(result) === 1;
 }
 
-export function startJobClaimHeartbeat(jobId: string, workerId: string) {
+export function startJobClaimHeartbeat(jobId: string, workerId: string, maxDurationMs?: number) {
   const intervalMs = Math.max(1_000, Math.floor((getQueueClaimTtlSeconds() * 1000) / 3));
   let stopped = false;
   let inFlight = false;
 
+  const startedAt = Date.now();
   const timer = setInterval(() => {
+    if (maxDurationMs && Date.now() - startedAt >= maxDurationMs) {
+      stopped = true;
+      clearInterval(timer);
+      return;
+    }
     if (stopped || inFlight) return;
     inFlight = true;
     void refreshJobClaim(jobId, workerId).catch(() => undefined).finally(() => {
