@@ -85,15 +85,16 @@ async function main() {
     assert(fulfilled.length <= 2 && rejected.length >= 1, "Atomic backpressure admission failed");
     results.backpressure = true;
     process.env.QUEUE_MAX_DEPTH = oldMax;
+    for (const item of fulfilled) {
+      await deleteJob((item as PromiseFulfilledResult<any>).value.id);
+    }
 
     const low = await enqueueJob("TEST", { message: "old-low" }, {
       queueNamespace: ns,
       priority: "low",
-      delayMs: 1,
     });
     jobs.push(low.id);
     await new Promise((resolve) => setTimeout(resolve, 20));
-    await promoteDueJobs(50, ns);
     const high = await enqueueJob("TEST", { message: "new-high" }, {
       queueNamespace: ns,
       priority: "high",
