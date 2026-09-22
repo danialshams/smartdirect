@@ -1,12 +1,13 @@
 import { randomUUID } from "node:crypto";
 import "dotenv/config";
 
+import { prisma } from "../src/lib/prisma";
+
 async function main() {
   if (typeof process.env.DATABASE_URL !== "string" || !process.env.DATABASE_URL.trim()) {
     throw new Error("DATABASE_URL is not loaded for meta lifecycle test");
   }
 
-  const { prisma } = await import("../src/lib/prisma");
   const { createInstagramOAuthState, verifyInstagramOAuthState } = await import("../src/lib/instagram/oauth-state");
 
   process.env.NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET || "group20-test-secret";
