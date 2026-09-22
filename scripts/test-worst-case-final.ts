@@ -29,9 +29,10 @@ function percentile(values: number[], p: number) {
 const TENANTS = Math.max(1_000, Number(process.env.WORST_CASE_TENANTS ?? 10_000));
 const ACCOUNTS_PER_TENANT = Math.max(
   2,
-  Number(process.env.WORST_CASE_ACCOUNTS_PER_TENANT ?? 3),
+  Number(process.env.WORST_CASE_ACCOUNTS_PER_TENANT ?? 5),
 );
-const ACCOUNTS_PER_JOB = Math.max(1, Number(process.env.WORST_CASE_ACCOUNTS_PER_JOB ?? 10));
+const ACCOUNTS_PER_JOB = Math.max(1, Number(process.env.WORST_CASE_ACCOUNTS_PER_JOB ?? 1));
+const EVENTS_PER_ACCOUNT = Math.max(20, Number(process.env.WORST_CASE_EVENTS_PER_ACCOUNT ?? 200));
 const BATCH_SIZE = Math.max(50, Number(process.env.WORST_CASE_BATCH_SIZE ?? 100));
 const WORKER_CONCURRENCY = Math.max(
   8,
@@ -81,6 +82,7 @@ async function main() {
   assert(health.ok, `Redis health failed: ${health.error ?? "unknown"}`);
 
   const totalAccounts = TENANTS * ACCOUNTS_PER_TENANT;
+  const totalLogicalEvents = totalAccounts * EVENTS_PER_ACCOUNT;
   const totalJobs = Math.ceil(totalAccounts / ACCOUNTS_PER_JOB);
 
   console.log(JSON.stringify({
@@ -92,6 +94,9 @@ async function main() {
     queueJobs: totalJobs,
     virtualInstagramAccounts: totalAccounts,
     accountsPerQueueJob: ACCOUNTS_PER_JOB,
+    eventsPerAccount: EVENTS_PER_ACCOUNT,
+    logicalEvents: totalLogicalEvents,
+    logicalActionExecutions: totalLogicalEvents * ACTIONS.length,
     workerConcurrency: WORKER_CONCURRENCY,
     batchSize: BATCH_SIZE,
     actionsPerJob: ACTIONS.length,
@@ -107,7 +112,13 @@ async function main() {
   const actionCounts = new Map<string, number>();
   let producerBackpressureHits = 0;
   let processed = 0;
+  let logicalEventsProcessed = 0;
   let workerStarted = 0;
+  let commentEvents = 0;
+  let dmEvents = 0;
+  let storyEvents = 0;
+  let publishingEvents = 0;
+  let scheduledPublishingEvents = 0;
 
   const controller = new AbortController();
 
@@ -123,8 +134,29 @@ async function main() {
       const accountIds = payload.instagramAccountId.split(",").filter(Boolean);
       for (const accountId of accountIds) {
         virtualAccountsProcessed.add(accountId);
-        for (const action of payload.actions) {
-          actionCounts.set(action, (actionCounts.get(action) ?? 0) + 1);
+
+        for (let eventOffset = 0; eventOffset < EVENTS_PER_ACCOUNT; eventOffset += 1) {
+          const logicalEventIndex =
+            payload.createdAt + eventOffset + accountIds.indexOf(accountId) * EVENTS_PER_ACCOUNT;
+
+          if (logicalEventIndex % 7 === 0) {
+            commentEvents += 1;
+          } else if (logicalEventIndex % 7 === 1) {
+            dmEvents += 1;
+          } else if (logicalEventIndex % 7 === 2) {
+            storyEvents += 1;
+          } else {
+            publishingEvents += 1;
+            if (logicalEventIndex % 2 === 0) {
+              scheduledPublishingEvents += 1;
+            }
+          }
+
+          for (const action of payload.actions) {
+            actionCounts.set(action, (actionCounts.get(action) ?? 0) + 1);
+          }
+
+          logicalEventsProcessed += 1;
         }
       }
 
@@ -214,6 +246,10 @@ async function main() {
 
     assert(processed === totalJobs, `Lost jobs: processed=${processed}, expected=${totalJobs}`);
     assert(completedSet.size === totalJobs, "Duplicate/lost completion detected");
+    assert(
+      logicalEventsProcessed === totalLogicalEvents,
+      `Lost logical events: processed=${logicalEventsProcessed}, expected=${totalLogicalEvents}`,
+    );
     assert(virtualAccountsProcessed.size === totalAccounts, `Virtual account coverage failed: ${virtualAccountsProcessed.size}/${totalAccounts}`);
     assert(tenantSet.size === TENANTS, `Tenant coverage failed: ${tenantSet.size}/${TENANTS}`);
     assert(
@@ -231,7 +267,7 @@ async function main() {
     assert(p95 <= LATENCY_P95_LIMIT_MS, `P95 latency exceeded limit: ${p95}ms > ${LATENCY_P95_LIMIT_MS}ms`);
     assert(p99 <= LATENCY_P99_LIMIT_MS, `P99 latency exceeded limit: ${p99}ms > ${LATENCY_P99_LIMIT_MS}ms`);
 
-    const requiredActions = ACTIONS.filter((action) => (actionCounts.get(action) ?? 0) === totalAccounts);
+    const requiredActions = ACTIONS.filter((action) => (actionCounts.get(action) ?? 0) === totalLogicalEvents);
     assert(requiredActions.length === ACTIONS.length, "Not every worst-case automation/publishing action was exercised for every job");
 
     console.log(JSON.stringify({
@@ -243,6 +279,16 @@ async function main() {
       queueJobs: totalJobs,
       virtualInstagramAccounts: totalAccounts,
       accountsPerQueueJob: ACCOUNTS_PER_JOB,
+      eventsPerAccount: EVENTS_PER_ACCOUNT,
+      logicalEvents: totalLogicalEvents,
+      logicalActionExecutions: totalLogicalEvents * ACTIONS.length,
+      logicalEventMix: {
+        comments: commentEvents,
+        dms: dmEvents,
+        storyReplies: storyEvents,
+        publishing: publishingEvents,
+        scheduledPublishing: scheduledPublishingEvents,
+      },
       workerConcurrency: WORKER_CONCURRENCY,
       producerBackpressureHits,
       workerStarted,
