@@ -25,6 +25,34 @@ async function syncMediaComments(
   for (const comment of comments) {
     if (!comment.id || !comment.text) continue;
 
+    let username = comment.username;
+
+    // With Instagram Login, the comments edge can omit the username.
+    // Fetch the individual comment as a fallback so the UI does not
+    // display the generic "instagram-user" label when Meta provides
+    // the commenter identity on the comment object.
+    if (!username) {
+      try {
+        const commentDetails = await getInstagramComment(
+          comment.id,
+          accessToken,
+        );
+
+        username =
+          commentDetails.username ??
+          commentDetails.from?.username ??
+          undefined;
+      } catch (error) {
+        console.warn(
+          "[Unanswered Comments] Comment username lookup failed:",
+          {
+            commentId: comment.id,
+            error,
+          },
+        );
+      }
+    }
+
     await prisma.comment.upsert({
       where: {
         igCommentId: comment.id,
@@ -34,14 +62,14 @@ async function syncMediaComments(
         igMediaId: mediaId,
         igCommentId: comment.id,
         text: comment.text,
-        username: comment.username ?? "instagram-user",
+        username: username ?? "instagram-user",
         createdAt: comment.timestamp
           ? new Date(comment.timestamp)
           : undefined,
       },
       update: {
         text: comment.text,
-        username: comment.username ?? "instagram-user",
+        ...(username ? { username } : {}),
       },
     });
   }
