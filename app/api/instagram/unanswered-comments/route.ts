@@ -8,6 +8,7 @@ import {
   getInstagramMedia,
   getInstagramMediaComments,
   getInstagramComment,
+  getInstagramUserProfile,
   type InstagramMediaComment,
 } from "@/lib/instagram/api";
 import { proxyInstagramMediaUrl } from "@/lib/instagram/media-proxy";
@@ -173,6 +174,33 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    const commentProfilePictures = new Map<string, string>();
+
+    await Promise.all(
+      storedComments.map(async (comment) => {
+        try {
+          const metaComment = await getInstagramComment(
+            comment.igCommentId,
+            accessToken,
+          );
+          const scopedUserId = metaComment.from?.id;
+
+          if (!scopedUserId) return;
+
+          const profile = await getInstagramUserProfile(
+            scopedUserId,
+            accessToken,
+          );
+
+          if (profile.profile_pic) {
+            commentProfilePictures.set(comment.id, profile.profile_pic);
+          }
+        } catch {
+          // A commenter profile picture is optional in Meta's API.
+        }
+      }),
+    );
+
     const mediaById = new Map(
       media.map((item) => [
         item.id,
@@ -219,7 +247,14 @@ export async function GET(request: NextRequest) {
         id: account.id,
         username: account.igUsername,
       },
-      posts: Array.from(grouped.values()),
+      posts: Array.from(grouped.values()).map((group) => ({
+        ...group,
+        comments: group.comments.map((comment) => ({
+          ...comment,
+          profilePictureUrl:
+            commentProfilePictures.get(comment.id) ?? null,
+        })),
+      })),
       meta: {
         syncedMediaCount: syncedMediaIds.length,
         scannedMediaCount: media.length,
