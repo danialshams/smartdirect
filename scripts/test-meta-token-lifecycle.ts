@@ -19,6 +19,7 @@ async function main() {
     oauthStateSignature: false,
     oauthStateTamperProtection: false,
     oauthStateExpiryValidation: false,
+    oauthStateReplayProtection: false,
     accountTokenIsolation: false,
     connectedStateIsolation: false,
     cleanup: false,
@@ -58,7 +59,7 @@ async function main() {
       await verifyInstagramOAuthState(replayState);
     } catch (error) {
       if (error instanceof Error && error.message.includes("already used")) {
-        results.oauthStateExpiryValidation = true;
+        results.oauthStateReplayProtection = true;
       }
     }
 
