@@ -56,7 +56,8 @@
     "group16:load:test": "tsx scripts/test-group16-load.ts",
     "portability:test": "tsx scripts/test-production-portability.ts",
     "database:reliability:test": "tsx scripts/test-database-reliability.ts",
-    "meta:lifecycle:test": "tsx scripts/test-meta-token-lifecycle.ts"
+    "meta:lifecycle:test": "tsx scripts/test-meta-token-lifecycle.ts",
+    "meta:token:validation:test": "tsx scripts/test-meta-token-validation.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",
