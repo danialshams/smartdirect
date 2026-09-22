@@ -2,6 +2,7 @@ import {
   claimNextJob,
   startJobClaimHeartbeat,
   completeJob,
+  getJob,
   promoteDueJobs,
   failJob,
 } from "./core";
@@ -162,6 +163,11 @@ export async function runQueueWorker(
       }
 
       await handler(job);
+
+      const latestJob = await getJob(job.id);
+      if (latestJob?.status === "cancelled") {
+        return;
+      }
 
       if (job.idempotency) {
         await completeIdempotency(job.idempotency.key, { jobId: job.id });
