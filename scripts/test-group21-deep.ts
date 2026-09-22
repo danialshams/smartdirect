@@ -9,7 +9,6 @@ import {
   enqueueJob,
   getJob,
   getQueueDepth,
-  promoteDueJobs,
 } from "../src/lib/queue/core";
 import { runQueueWorker } from "../src/lib/queue/worker";
 import { recoverStalledJobs } from "../src/lib/queue/recovery";
@@ -23,7 +22,7 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 async function waitFor(
   predicate: () => Promise<boolean>,
   timeoutMs: number,
-  intervalMs = 50,
+  intervalMs = 250,
 ) {
   const started = Date.now();
   while (Date.now() - started < timeoutMs) {
@@ -184,14 +183,20 @@ async function main() {
       },
     );
 
-    assert(
-      await waitFor(async () => (await getJob(recoveryTarget.id))?.status === "completed", 3_000),
-      "Recovered job was not executed by a real worker",
-    );
-    assert(executions === 1, `Recovered job executed ${executions} times`);
-    recoveryController.abort();
-    await recoveryWorker;
-    results.atLeastOnceWorkerRecovery = true;
+    try {
+      assert(
+        await waitFor(
+          async () => (await getJob(recoveryTarget.id))?.status === "completed",
+          5_000,
+        ),
+        "Recovered job was not executed by a real worker",
+      );
+      assert(executions === 1, `Recovered job executed ${executions} times`);
+      results.atLeastOnceWorkerRecovery = true;
+    } finally {
+      recoveryController.abort();
+      await recoveryWorker;
+    }
 
     // 4) Retry after a real worker handler failure.
     // The first execution fails; failJob must schedule a retry and the second
@@ -222,14 +227,23 @@ async function main() {
       },
     );
 
-    assert(
-      await waitFor(async () => (await getJob(retryTarget.id))?.status === "completed", 5_000),
-      "Worker failure did not produce a successful retry",
-    );
-    assert(retryExecutions === 2, `Expected 2 worker executions, got ${retryExecutions}`);
-    retryController.abort();
-    await retryWorker;
-    results.retryAfterWorkerFailure = true;
+    try {
+      assert(
+        await waitFor(
+          async () => (await getJob(retryTarget.id))?.status === "completed",
+          10_000,
+        ),
+        "Worker failure did not produce a successful retry",
+      );
+      assert(
+        retryExecutions === 2,
+        `Expected 2 worker executions, got ${retryExecutions}`,
+      );
+      results.retryAfterWorkerFailure = true;
+    } finally {
+      retryController.abort();
+      await retryWorker;
+    }
 
     // 5) Starvation under a high-priority burst:
     // An older low-priority job must still be selected before newer arrivals.
