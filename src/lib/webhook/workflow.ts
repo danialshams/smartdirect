@@ -1,4 +1,4 @@
-import { getJob, completeJob } from "@/lib/queue/core";
+import { claimJobById, completeJob, startJobClaimHeartbeat } from "@/lib/queue/core";
 import { acquireLock, releaseLock } from "@/lib/lock/redis-lock";
 import type { DistributedLockHandle } from "@/lib/lock/types";
 import { handleInstagramWebhookJob } from "@/lib/webhook/worker-handler";
@@ -9,7 +9,8 @@ import { observabilityLogger } from "@/lib/observability/logger";
 export async function processInstagramWebhookQueueJobStep(jobId: string) {
   "use step";
 
-  const job = await getJob(jobId);
+  const workflowWorkerId = `workflow_${jobId}`;
+  const job = await claimJobById(jobId, workflowWorkerId);
 
   if (!job) {
     return { ok: false, skipped: true, message: "Webhook queue job پیدا نشد." };
@@ -19,15 +20,8 @@ export async function processInstagramWebhookQueueJobStep(jobId: string) {
     return { ok: false, skipped: true, message: "Queue job از نوع webhook نیست." };
   }
 
-  if (job.status !== "waiting" && job.status !== "active") {
-    return {
-      ok: false,
-      skipped: true,
-      message: `Queue job در وضعیت ${job.status} است.`,
-    };
-  }
-
   enterObservabilityContext({ jobId: job.id });
+  const stopClaimHeartbeat = startJobClaimHeartbeat(job.id, workflowWorkerId);
 
   let lockHandle: DistributedLockHandle | undefined;
 
@@ -65,6 +59,7 @@ export async function processInstagramWebhookQueueJobStep(jobId: string) {
 
     throw error;
   } finally {
+    stopClaimHeartbeat();
     if (lockHandle) {
       await releaseLock(lockHandle);
     }
