@@ -109,6 +109,7 @@ async function main() {
     await deleteJob(high.id);
     jobs.splice(jobs.indexOf(high.id), 1);
 
+    process.env.QUEUE_CLAIM_TTL_SECONDS = "10";
     const timeoutTarget = await enqueueJob("TEST", { message: "timeout-watchdog" }, {
       queueNamespace: ns,
       maxAttempts: 2,
@@ -116,7 +117,6 @@ async function main() {
     jobs.push(timeoutTarget.id);
     const timeoutClaim = await claimNextJob("group21-timeout", ns);
     assert(timeoutClaim?.id === timeoutTarget.id, "Timeout target claim failed");
-    process.env.QUEUE_CLAIM_TTL_SECONDS = "10";
     const stopHeartbeat = startJobClaimHeartbeat(timeoutTarget.id, "group21-timeout", 1_100);
     await new Promise((resolve) => setTimeout(resolve, 1_600));
     stopHeartbeat();
