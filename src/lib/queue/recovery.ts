@@ -5,6 +5,7 @@ import {
   enqueueJob,
   failJob,
   getQueueKeys,
+  getJob,
 } from "./core";
 import type { QueueJobPayload, QueueJobType } from "./types";
 
@@ -135,6 +136,9 @@ export async function retryFailedJob(failureId: string) {
         }
       : undefined;
 
+  const originalJob = await getJob(failure.jobId);
+  const queueNamespace = originalJob?.queueNamespace ?? "default";
+
   const job = await enqueueJob(
     failure.type,
     failure.payload as QueueJobPayload<QueueJobType>,
@@ -143,6 +147,7 @@ export async function retryFailedJob(failureId: string) {
       maxAttempts: failure.maxAttempts,
       idempotency,
       recoveryId: failure.id,
+      queueNamespace,
     },
   );
 
@@ -156,7 +161,7 @@ export async function retryFailedJob(failureId: string) {
   });
 
   const redis = createQueueRedis();
-  const failureKeys = getQueueKeys("default");
+  const failureKeys = getQueueKeys(queueNamespace);
   await redis.zrem(failureKeys.failed, failure.jobId);
 
   console.log(JSON.stringify({
