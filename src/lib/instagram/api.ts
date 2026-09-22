@@ -100,10 +100,6 @@ export type InstagramMediaComment = {
   text?: string;
   username?: string;
   timestamp?: string;
-  from?: {
-    id?: string;
-    username?: string;
-  };
 };
 
 export async function getInstagramMediaComments(
@@ -119,7 +115,7 @@ export async function getInstagramMediaComments(
   }>(`${mediaId}/comments`, {
     accessToken,
     params: {
-      fields: "id,text,username,timestamp,from",
+      fields: "id,text,username,timestamp",
       limit,
     },
   });
@@ -135,9 +131,9 @@ export async function replyToInstagramComment(
   }>(`${commentId}/replies`, {
     method: "POST",
     accessToken,
-    body: {
+    body: new URLSearchParams({
       message,
-    },
+    }),
     maxRetries: 0,
   });
 }
