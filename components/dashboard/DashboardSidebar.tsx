@@ -83,7 +83,9 @@ export default function DashboardSidebar({ open, onClose }: DashboardSidebarProp
                                         ? pathname === "/dashboard"
                                         : item.href === "/dashboard/publishing"
                                             ? pathname.startsWith("/dashboard/publishing")
-                                            : false;
+                                            : item.href === "/dashboard/comments"
+                                                ? pathname.startsWith("/dashboard/comments")
+                                                : false;
 
                                 return (
                                     <Link
