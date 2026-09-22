@@ -134,7 +134,8 @@ export async function runQueueWorker(
 
     let lockHandle: DistributedLockHandle | undefined;
     let stopClaimHeartbeat: (() => void) | undefined;
-    stopClaimHeartbeat = startJobClaimHeartbeat(job.id, workerId);
+    const jobTimeoutMs = Math.max(0, Number(process.env.QUEUE_JOB_TIMEOUT_MS ?? 0));
+    stopClaimHeartbeat = startJobClaimHeartbeat(job.id, workerId, jobTimeoutMs || undefined);
 
     try {
       const lock = await acquireLock({
