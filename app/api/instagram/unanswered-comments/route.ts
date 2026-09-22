@@ -7,6 +7,7 @@ import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 import {
   getInstagramMedia,
   getInstagramMediaComments,
+  getInstagramComment,
   type InstagramMediaComment,
 } from "@/lib/instagram/api";
 import { proxyInstagramMediaUrl } from "@/lib/instagram/media-proxy";
@@ -21,6 +22,7 @@ async function syncMediaComments(
   userId: string,
   mediaId: string,
   comments: InstagramMediaComment[],
+  accessToken: string,
 ) {
   for (const comment of comments) {
     if (!comment.id || !comment.text) continue;
@@ -142,6 +144,7 @@ export async function GET(request: NextRequest) {
               session.user.id,
               item.id,
               commentsResult.data ?? [],
+              accessToken,
             );
 
             syncedMediaIds.push(item.id);
