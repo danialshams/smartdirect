@@ -54,7 +54,8 @@
     "worker:lifecycle:smoke:test": "tsx scripts/test-worker-lifecycle-smoke.ts",
     "instagram:gateway:load:test": "tsx scripts/test-instagram-gateway-load.ts",
     "group16:load:test": "tsx scripts/test-group16-load.ts",
-    "portability:test": "tsx scripts/test-production-portability.ts"
+    "portability:test": "tsx scripts/test-production-portability.ts",
+    "database:reliability:test": "tsx scripts/test-database-reliability.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",
