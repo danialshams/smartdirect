@@ -38,8 +38,8 @@ async function main() {
       select: { id: true },
     });
 
-    const state = createInstagramOAuthState(userA.id);
-    const verified = verifyInstagramOAuthState(state);
+    const state = await createInstagramOAuthState(userA.id);
+    const verified = await verifyInstagramOAuthState(state);
 
     if (verified.userId !== userA.id) throw new Error("OAuth state user binding failed");
     results.oauthStateSignature = true;
@@ -48,22 +48,31 @@ async function main() {
     const tampered = `${encoded}x.${signature}`;
 
     try {
-      verifyInstagramOAuthState(tampered);
+      await verifyInstagramOAuthState(tampered);
     } catch {
       results.oauthStateTamperProtection = true;
     }
 
-    const expiredState = `${encoded}.${signature}`;
-    if (expiredState) {
-      const originalNow = Date.now;
-      Date.now = () => originalNow() + 11 * 60 * 1000;
-      try {
-        verifyInstagramOAuthState(state);
-      } catch {
+    const replayState = state;
+    try {
+      await verifyInstagramOAuthState(replayState);
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("already used")) {
         results.oauthStateExpiryValidation = true;
-      } finally {
-        Date.now = originalNow;
       }
+    }
+
+    const expiryState = await createInstagramOAuthState(userA.id);
+    const originalNow = Date.now;
+    Date.now = () => originalNow() + 11 * 60 * 1000;
+    try {
+      await verifyInstagramOAuthState(expiryState);
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("expired")) {
+        results.oauthStateExpiryValidation = true;
+      }
+    } finally {
+      Date.now = originalNow;
     }
 
     const tokenA = `token-a-${randomUUID()}`;
