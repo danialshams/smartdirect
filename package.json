@@ -59,7 +59,8 @@
     "meta:lifecycle:test": "tsx scripts/test-meta-token-lifecycle.ts",
     "meta:token:validation:test": "tsx scripts/test-meta-token-validation.ts",
     "queue:reliability:test": "tsx scripts/test-queue-reliability.ts",
-    "queue:reliability:deep:test": "tsx scripts/test-group21-deep.ts"
+    "queue:reliability:deep:test": "tsx scripts/test-group21-deep.ts",
+    "production:final:test": "tsx scripts/test-production-final.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",
