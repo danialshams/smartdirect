@@ -130,10 +130,10 @@ export async function runQueueWorker(
     }
 
     enterObservabilityContext({ jobId: job.id });
-    stopClaimHeartbeat = startJobClaimHeartbeat(job.id, workerId);
 
     let lockHandle: DistributedLockHandle | undefined;
     let stopClaimHeartbeat: (() => void) | undefined;
+    stopClaimHeartbeat = startJobClaimHeartbeat(job.id, workerId);
 
     try {
       const lock = await acquireLock({
