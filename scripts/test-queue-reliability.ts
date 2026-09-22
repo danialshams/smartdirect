@@ -106,6 +106,8 @@ async function main() {
     assert(firstPriorityClaim?.id === low.id, "Older low-priority job starved behind newer high-priority job");
     results.starvationPrevention = true;
     await completeJob(low.id);
+    await deleteJob(high.id);
+    jobs.splice(jobs.indexOf(high.id), 1);
 
     const timeoutTarget = await enqueueJob("TEST", { message: "timeout-watchdog" }, {
       queueNamespace: ns,
