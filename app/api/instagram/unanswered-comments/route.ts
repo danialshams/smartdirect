@@ -14,6 +14,7 @@ import {
 import {
   proxyInstagramMediaUrl,
   proxyInstagramParticipantProfileUrl,
+  proxyInstagramAccountProfileUrl,
 } from "@/lib/instagram/media-proxy";
 
 export const dynamic = "force-dynamic";
@@ -189,6 +190,14 @@ export async function GET(request: NextRequest) {
           const scopedUserId = metaComment.from?.id;
 
           if (!scopedUserId) return;
+
+          if (scopedUserId === account.igUserId) {
+            commentProfilePictures.set(
+              comment.id,
+              proxyInstagramAccountProfileUrl(account.id),
+            );
+            return;
+          }
 
           const profile = await getInstagramUserProfile(
             scopedUserId,
