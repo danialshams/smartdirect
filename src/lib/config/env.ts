@@ -6,6 +6,9 @@ export type ServerEnvironment = {
   redisDriver: RedisDriver;
   redisRestUrl: string;
   redisRestToken: string;
+  databasePoolMax: number;
+  databaseConnectionTimeoutMs: number;
+  databaseIdleTimeoutMs: number;
   nextAuthSecret?: string;
   nextAuthUrl?: string;
 };
@@ -17,6 +20,16 @@ function required(name: string) {
     throw new Error(`MISSING_ENV:${name}`);
   }
 
+  return value;
+}
+
+function parseBoundedNumber(name: string, fallback: number, min: number, max: number) {
+  const raw = process.env[name]?.trim();
+  if (!raw) return fallback;
+  const value = Number(raw);
+  if (!Number.isInteger(value) || value < min || value > max) {
+    throw new Error(`INVALID_ENV:${name}`);
+  }
   return value;
 }
 
@@ -39,6 +52,9 @@ export function validateServerEnvironment(): ServerEnvironment {
   }
 
   const databaseUrl = required("DATABASE_URL");
+  const databasePoolMax = parseBoundedNumber("DB_POOL_MAX", 5, 1, 50);
+  const databaseConnectionTimeoutMs = parseBoundedNumber("DB_CONNECTION_TIMEOUT_MS", 5000, 1000, 60000);
+  const databaseIdleTimeoutMs = parseBoundedNumber("DB_IDLE_TIMEOUT_MS", 10000, 1000, 300000);
   const redisRestUrl = required("UPSTASH_REDIS_REST_URL");
   const redisRestToken = required("UPSTASH_REDIS_REST_TOKEN");
 
@@ -86,6 +102,9 @@ export function validateServerEnvironment(): ServerEnvironment {
     redisDriver,
     redisRestUrl,
     redisRestToken,
+    databasePoolMax,
+    databaseConnectionTimeoutMs,
+    databaseIdleTimeoutMs,
     nextAuthSecret,
     nextAuthUrl,
   };
