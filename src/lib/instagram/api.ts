@@ -121,6 +121,27 @@ export async function getInstagramMediaComments(
   });
 }
 
+export async function getInstagramComment(
+  commentId: string,
+  accessToken: string,
+) {
+  return instagramApiRequest<{
+    id?: string;
+    text?: string;
+    username?: string;
+    timestamp?: string;
+    from?: {
+      id?: string;
+      username?: string;
+    };
+  }>(commentId, {
+    accessToken,
+    params: {
+      fields: "id,text,username,timestamp,from",
+    },
+  });
+}
+
 export async function replyToInstagramComment(
   commentId: string,
   accessToken: string,
