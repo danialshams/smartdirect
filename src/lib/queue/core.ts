@@ -205,9 +205,10 @@ export async function enqueueJobsBatch<T extends QueueJobType>(
   const groups = new Map<string, QueueJob<T>[]>();
 
   for (const job of jobs) {
-    const group = groups.get(job.queueNamespace) ?? [];
+    const queueNamespace = job.queueNamespace ?? DEFAULT_QUEUE_NAMESPACE;
+    const group = groups.get(queueNamespace) ?? [];
     group.push(job);
-    groups.set(job.queueNamespace, group);
+    groups.set(queueNamespace, group);
   }
 
   for (const [queueNamespace, group] of groups) {
