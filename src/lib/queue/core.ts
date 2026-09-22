@@ -35,7 +35,13 @@ export function getQueueKeys(queueNamespace = DEFAULT_QUEUE_NAMESPACE) {
   };
 }
 const DEFAULT_CLAIM_TTL_SECONDS = 30;
+const DEFAULT_QUEUE_MAX_DEPTH = 10_000;
 const MIN_CLAIM_TTL_SECONDS = 10;
+
+export function getQueueMaxDepth() {
+  const value = Number(process.env.QUEUE_MAX_DEPTH ?? DEFAULT_QUEUE_MAX_DEPTH);
+  return Number.isFinite(value) && value > 0 ? Math.floor(value) : DEFAULT_QUEUE_MAX_DEPTH;
+}
 
 export function getQueueClaimTtlSeconds() {
   const value = Number(process.env.QUEUE_CLAIM_TTL_SECONDS ?? DEFAULT_CLAIM_TTL_SECONDS);
@@ -71,6 +77,19 @@ function readyScore(job: QueueJob) {
   return job.scheduledAt * 10 + PRIORITY_WEIGHT[job.priority];
 }
 
+const ENQUEUE_JOB_SCRIPT = \`
+local pending = redis.call("ZCARD", KEYS[1]) + redis.call("ZCARD", KEYS[2]) + redis.call("ZCARD", KEYS[3])
+local maxDepth = tonumber(ARGV[1])
+if pending >= maxDepth then return "BACKPRESSURE" end
+redis.call("SET", KEYS[4], ARGV[2])
+if ARGV[3] == "1" then
+  redis.call("ZADD", KEYS[2], ARGV[5], ARGV[6])
+else
+  redis.call("ZADD", KEYS[1], ARGV[5], ARGV[6])
+end
+return "OK"
+\`;
+
 export async function enqueueJob<T extends QueueJobType>(
   type: T,
   payload: QueueJobPayload<T>,
@@ -98,21 +117,22 @@ export async function enqueueJob<T extends QueueJobType>(
     queueNamespace,
   };
 
-  await redis.set(jobKey(job.id), job);
-
   const keys = getQueueKeys(queueNamespace);
+  const enqueueResult = await redis.eval(
+    ENQUEUE_JOB_SCRIPT,
+    [keys.ready, keys.delayed, keys.active, jobKey(job.id)],
+    [
+      String(getQueueMaxDepth()),
+      JSON.stringify(job),
+      String(delayMs > 0 ? 1 : 0),
+      String(job.scheduledAt),
+      String(delayMs > 0 ? job.scheduledAt : readyScore(job)),
+      job.id,
+    ],
+  );
 
-  if (delayMs > 0) {
-    await redis.zadd(keys.delayed, {
-      score: job.scheduledAt,
-      member: job.id,
-    });
-  } else {
-    await redis.zadd(keys.ready, {
-      score: readyScore(job),
-      member: job.id,
-    });
-  }
+  if (enqueueResult === "BACKPRESSURE") throw new Error("QUEUE_BACKPRESSURE");
+  if (enqueueResult !== "OK") throw new Error("QUEUE_ENQUEUE_FAILED");
 
   return job;
 }
@@ -302,6 +322,35 @@ async function removeJobFromQueue(
     redis.zrem(keys.ready, jobId),
     redis.zrem(keys.delayed, jobId),
   ]);
+}
+
+const CANCEL_JOB_SCRIPT = \`
+local rawJob = redis.call("GET", KEYS[1])
+if not rawJob then return "NOT_FOUND" end
+local job = cjson.decode(rawJob)
+if job.status == "completed" or job.status == "failed" or job.status == "cancelled" then return job.status end
+job.status = "cancelled"
+job.workerId = nil
+redis.call("SET", KEYS[1], cjson.encode(job))
+redis.call("ZREM", KEYS[2], ARGV[1])
+redis.call("ZREM", KEYS[3], ARGV[1])
+redis.call("ZREM", KEYS[4], ARGV[1])
+redis.call("DEL", KEYS[5])
+return "CANCELLED"
+\`;
+
+export async function cancelJob(jobId: string) {
+  const redis = createQueueRedis();
+  const job = await redis.get<QueueJob>(jobKey(jobId));
+  if (!job) return null;
+  const keys = getQueueKeys(job.queueNamespace);
+  const result = await redis.eval(
+    CANCEL_JOB_SCRIPT,
+    [jobKey(jobId), keys.ready, keys.delayed, keys.active, claimKey(jobId)],
+    [jobId],
+  );
+  if (result === "CANCELLED") return await redis.get<QueueJob>(jobKey(jobId));
+  return await redis.get<QueueJob>(jobKey(jobId));
 }
 
 export async function completeJob(jobId: string) {
