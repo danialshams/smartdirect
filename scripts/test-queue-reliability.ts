@@ -9,10 +9,9 @@ import {
   enqueueJob,
   getJob,
   getQueueDepth,
-  recoverStalledJobs,
-  refreshJobClaim,
   startJobClaimHeartbeat,
 } from "../src/lib/queue/core";
+import { recoverStalledJobs } from "../src/lib/queue/recovery";
 import { setRedisCommandTimeoutMs } from "../src/lib/redis/client";
 
 function assert(condition: unknown, message: string) {
@@ -115,8 +114,14 @@ async function main() {
     await new Promise((resolve) => setTimeout(resolve, 1_600));
     stopHeartbeat();
     await new Promise((resolve) => setTimeout(resolve, 9_500));
+    const claimAfterTimeout = await redis.get(`smartdirect:queue:claim:${timeoutTarget.id}`);
+    assert(claimAfterTimeout === null, "Job timeout watchdog did not allow the claim to expire");
+    await redis.zadd(`smartdirect:queue:${ns}:active`, {
+      score: Date.now() - 60_000,
+      member: timeoutTarget.id,
+    });
     const timeoutRecovery = await recoverStalledJobs(10, ns);
-    assert(timeoutRecovery.recovered === 1 || (await getJob(timeoutTarget.id))?.status === "waiting", "Job timeout watchdog did not release the claim for recovery");
+    assert(timeoutRecovery.recovered === 1, "Job timeout watchdog did not make the job recoverable");
     results.jobTimeoutWatchdog = true;
 
     setRedisCommandTimeoutMs(1);
