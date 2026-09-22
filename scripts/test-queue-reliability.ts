@@ -9,6 +9,7 @@ import {
   enqueueJob,
   getJob,
   getQueueDepth,
+  promoteDueJobs,
   startJobClaimHeartbeat,
 } from "../src/lib/queue/core";
 import { recoverStalledJobs } from "../src/lib/queue/recovery";
@@ -92,6 +93,7 @@ async function main() {
     });
     jobs.push(low.id);
     await new Promise((resolve) => setTimeout(resolve, 20));
+    await promoteDueJobs(50, ns);
     const high = await enqueueJob("TEST", { message: "new-high" }, {
       queueNamespace: ns,
       priority: "high",
