@@ -58,6 +58,8 @@ async function main() {
     assert(recovered.recovered === 1, "Stalled job was not recovered");
     const recoveredJob = await getJob(first.id);
     assert(recoveredJob?.status === "waiting", "Recovered job is not waiting");
+    await deleteJob(first.id);
+    jobs.splice(jobs.indexOf(first.id), 1);
     results.stalledDetection = true;
     results.workerCrashRecovery = true;
     results.jobRecovery = true;
