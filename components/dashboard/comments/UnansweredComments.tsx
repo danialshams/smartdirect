@@ -22,6 +22,7 @@ type Comment = {
   igCommentId: string;
   text: string;
   username: string;
+  profilePictureUrl: string | null;
   createdAt: string;
 };
 
@@ -379,9 +380,17 @@ function PostCard({
         {post.comments.map((comment) => (
           <div key={comment.id} className="p-5">
             <div className="flex items-start gap-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-950 text-[10px] font-bold text-white">
-                IG
-              </div>
+              {comment.profilePictureUrl ? (
+                <img
+                  src={comment.profilePictureUrl}
+                  alt={comment.username}
+                  className="h-9 w-9 shrink-0 rounded-full object-cover"
+                />
+              ) : (
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-950 text-[10px] font-bold text-white">
+                  IG
+                </div>
+              )}
 
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-3">
