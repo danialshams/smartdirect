@@ -60,7 +60,8 @@
     "meta:token:validation:test": "tsx scripts/test-meta-token-validation.ts",
     "queue:reliability:test": "tsx scripts/test-queue-reliability.ts",
     "queue:reliability:deep:test": "tsx scripts/test-group21-deep.ts",
-    "production:final:test": "tsx scripts/test-production-final.ts"
+    "production:final:test": "tsx scripts/test-production-final.ts",
+    "worst-case:final:test": "tsx scripts/test-worst-case-final.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",
@@ -72,7 +73,7 @@
     "@vercel/blob": "^2.8.0",
     "axios": "^1.20.0",
     "bcryptjs": "^3.0.0",
-    "clsx": "^2.1.1",
+    "clsx": "^2.1.0",
     "date-fns": "^4.4.0",
     "ioredis": "^6.0.0",
     "jose": "^6.2.12",
