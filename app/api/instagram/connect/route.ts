@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { createInstagramOAuthState } from "@/lib/instagram/oauth-state";
 
 export async function GET() {
   try {
@@ -36,12 +37,7 @@ export async function GET() {
       );
     }
 
-    const state = Buffer.from(
-      JSON.stringify({
-        userId: session.user.id,
-        timestamp: Date.now(),
-      }),
-    ).toString("base64url");
+    const state = createInstagramOAuthState(session.user.id);
 
     const params = new URLSearchParams({
       client_id: clientId,
