@@ -115,6 +115,60 @@ function createLocalRedisClient(): RedisLikeClient {
     await connectPromise;
   }
 
+  function createPipeline() {
+    const commands: Array<{
+      type: "get" | "del" | "zrem";
+      args: string[];
+    }> = [];
+
+    const pipeline = {
+      get<T = unknown>(key: string) {
+        commands.push({ type: "get", args: [key] });
+        return pipeline;
+      },
+
+      del(key: string) {
+        commands.push({ type: "del", args: [key] });
+        return pipeline;
+      },
+
+      zrem(key: string, member: string) {
+        commands.push({ type: "zrem", args: [key, member] });
+        return pipeline;
+      },
+
+      async exec<T = unknown[]>() {
+        await ensureConnected();
+
+        const multi = client.multi();
+
+        for (const command of commands) {
+          if (command.type === "get") {
+            multi.get(command.args[0]);
+          } else if (command.type === "del") {
+            multi.del(command.args[0]);
+          } else {
+            multi.zRem(command.args[0], command.args[1]);
+          }
+        }
+
+        const results = await multi.exec();
+
+        return results.map((result, index) => {
+          const command = commands[index];
+
+          if (command?.type === "get") {
+            return parseRedisValue(result as string | null);
+          }
+
+          return result;
+        }) as T;
+      },
+    };
+
+    return pipeline;
+  }
+
   return new Proxy(client, {
     get(target, property, receiver) {
       if (property === "eval") {
@@ -125,19 +179,17 @@ function createLocalRedisClient(): RedisLikeClient {
         ) => {
           await ensureConnected();
 
-          return withRedisTimeout(
-            target.eval(script, {
-              keys,
-              arguments: args,
-            }),
-          );
+          return target.eval(script, {
+            keys,
+            arguments: args,
+          });
         };
       }
 
       if (property === "get") {
         return async <T = unknown>(key: string) => {
           await ensureConnected();
-          const result = await withRedisTimeout(target.get(key));
+          const result = await target.get(key);
           return parseRedisValue<T>(result);
         };
       }
@@ -155,9 +207,7 @@ function createLocalRedisClient(): RedisLikeClient {
           if (options?.nx) redisOptions.NX = true;
           if (options?.ex !== undefined) redisOptions.EX = options.ex;
 
-          return withRedisTimeout(
-            target.set(key, serializeRedisValue(value), redisOptions),
-          );
+          return target.set(key, serializeRedisValue(value), redisOptions);
         };
       }
 
@@ -175,17 +225,15 @@ function createLocalRedisClient(): RedisLikeClient {
           await ensureConnected();
 
           if (options?.byScore) {
-            return withRedisTimeout(
-              target.zRangeByScore(key, start, end, {
-                LIMIT: {
-                  offset: options.offset ?? 0,
-                  count: options.count ?? -1,
-                },
-              }),
-            );
+            return target.zRangeByScore(key, start, end, {
+              LIMIT: {
+                offset: options.offset ?? 0,
+                count: options.count ?? -1,
+              },
+            });
           }
 
-          return withRedisTimeout(target.zRange(key, start, end));
+          return target.zRange(key, start, end);
         };
       }
 
@@ -196,21 +244,42 @@ function createLocalRedisClient(): RedisLikeClient {
         ) => {
           await ensureConnected();
 
-          return withRedisTimeout(
-            target.zAdd(key, [
-              {
-                score: value.score,
-                value: value.member,
-              },
-            ]),
-          );
+          return target.zAdd(key, [
+            {
+              score: value.score,
+              value: value.member,
+            },
+          ]);
         };
+      }
+
+      if (property === "scan") {
+        return async (
+          cursor: number | string,
+          options?: {
+            match?: string;
+            count?: number;
+          },
+        ) => {
+          await ensureConnected();
+
+          const result = await target.scan(cursor, {
+            MATCH: options?.match,
+            COUNT: options?.count,
+          });
+
+          return [Number(result.cursor), result.keys] as [number, string[]];
+        };
+      }
+
+      if (property === "pipeline") {
+        return () => createPipeline();
       }
 
       if (property === "ping") {
         return async () => {
           await ensureConnected();
-          return withRedisTimeout(target.ping());
+          return target.ping();
         };
       }
 
@@ -219,12 +288,10 @@ function createLocalRedisClient(): RedisLikeClient {
       if (typeof value !== "function") return value;
 
       return (...args: unknown[]) => {
-        return withRedisTimeout(
-          (async () => {
-            await ensureConnected();
-            return value.apply(target, args);
-          })(),
-        );
+        return (async () => {
+          await ensureConnected();
+          return value.apply(target, args);
+        })();
       };
     },
   });
