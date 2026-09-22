@@ -148,9 +148,7 @@ export async function GET(request: NextRequest) {
       where: {
         userId: session.user.id,
         replied: false,
-        ...(syncedMediaIds.length > 0
-          ? { igMediaId: { in: syncedMediaIds } }
-          : {}),
+        igMediaId: { in: media.map((item) => item.id) },
       },
       orderBy: {
         createdAt: "desc",
@@ -176,7 +174,7 @@ export async function GET(request: NextRequest) {
     const grouped = new Map<
       string,
       {
-        media: (typeof mediaById extends Map<string, infer V> ? V : never);
+        media: NonNullable<ReturnType<typeof mediaById.get>>;
         comments: typeof storedComments;
       }
     >();
