@@ -1,4 +1,5 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+import { getRedisClient } from "@/lib/redis/client";
 
 const STATE_MAX_AGE_MS = 10 * 60 * 1000;
 
@@ -22,23 +23,27 @@ function sign(payload: string): string {
   return createHmac("sha256", getStateSecret()).update(payload).digest("base64url");
 }
 
-export function createInstagramOAuthState(userId: string): string {
+export async function createInstagramOAuthState(userId: string): Promise<string> {
   if (!userId) throw new Error("Instagram OAuth state userId is required");
 
   const payload: InstagramOAuthState = {
     userId,
     timestamp: Date.now(),
-    nonce: createHmac("sha256", `${getStateSecret()}:${Date.now()}:${Math.random()}`)
-      .update(userId)
-      .digest("hex")
-      .slice(0, 32),
+    nonce: randomBytes(16).toString("hex"),
   };
 
   const encoded = Buffer.from(JSON.stringify(payload)).toString("base64url");
-  return `${encoded}.${sign(encoded)}`;
+  const state = `${encoded}.${sign(encoded)}`;
+
+  await getRedisClient().set(`smartdirect:oauth-state:${payload.nonce}`, "1", {
+    ex: Math.ceil(STATE_MAX_AGE_MS / 1000),
+    nx: true,
+  });
+
+  return state;
 }
 
-export function verifyInstagramOAuthState(state: string): InstagramOAuthState {
+export async function verifyInstagramOAuthState(state: string): Promise<InstagramOAuthState> {
   if (!state || !state.includes(".")) {
     throw new Error("Invalid Instagram OAuth state");
   }
@@ -85,6 +90,16 @@ export function verifyInstagramOAuthState(state: string): InstagramOAuthState {
   if (age < 0 || age > STATE_MAX_AGE_MS) {
     throw new Error("Instagram OAuth state expired");
   }
+
+  const redisKey = `smartdirect:oauth-state:${payload.nonce}`;
+  const redis = getRedisClient();
+  const exists = await redis.get<string>(redisKey);
+
+  if (!exists) {
+    throw new Error("Instagram OAuth state already used or not found");
+  }
+
+  await redis.del(redisKey);
 
   return payload;
 }
