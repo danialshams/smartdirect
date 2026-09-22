@@ -14,6 +14,7 @@ import { useEffect, useMemo, useState } from "react";
 type Account = {
   id: string;
   igUsername: string;
+  profilePictureUrl: string | null;
 };
 
 type Comment = {
@@ -211,17 +212,20 @@ export default function UnansweredComments({
             <span className="shrink-0 text-sm font-medium text-slate-600">
               اکانت
             </span>
-            <select
-              value={selectedAccountId}
-              onChange={(event) => setSelectedAccountId(event.target.value)}
-              className="h-10 min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 outline-none focus:border-slate-400 sm:w-72 sm:flex-none"
-            >
-              {accounts.map((account) => (
-                <option key={account.id} value={account.id}>
-                  @{account.igUsername}
-                </option>
-              ))}
-            </select>
+            <div className="flex min-w-0 flex-1 items-center gap-2 sm:w-72 sm:flex-none">
+              <AccountAvatar account={accounts.find((account) => account.id === selectedAccountId) ?? accounts[0]} />
+              <select
+                value={selectedAccountId}
+                onChange={(event) => setSelectedAccountId(event.target.value)}
+                className="h-10 min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 outline-none focus:border-slate-400"
+              >
+                {accounts.map((account) => (
+                  <option key={account.id} value={account.id}>
+                    @{account.igUsername}
+                  </option>
+                ))}
+              </select>
+            </div>
           </label>
 
           <div className="text-sm text-slate-500">
@@ -269,6 +273,20 @@ export default function UnansweredComments({
         )}
       </div>
     </main>
+  );
+}
+
+function AccountAvatar({ account }: { account: Account }) {
+  return account.profilePictureUrl ? (
+    <img
+      src={account.profilePictureUrl}
+      alt={account.igUsername}
+      className="h-9 w-9 shrink-0 rounded-full object-cover"
+    />
+  ) : (
+    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-950 text-[10px] font-bold text-white">
+      IG
+    </div>
   );
 }
 
