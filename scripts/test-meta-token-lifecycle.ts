@@ -1,10 +1,11 @@
 import { randomUUID } from "node:crypto";
-import dotenv from "dotenv";
-
-dotenv.config({ path: ".env.local" });
-dotenv.config({ path: ".env" });
+import "dotenv/config";
 
 async function main() {
+  if (typeof process.env.DATABASE_URL !== "string" || !process.env.DATABASE_URL.trim()) {
+    throw new Error("DATABASE_URL is not loaded for meta lifecycle test");
+  }
+
   const { prisma } = await import("../src/lib/prisma");
   const { createInstagramOAuthState, verifyInstagramOAuthState } = await import("../src/lib/instagram/oauth-state");
 
