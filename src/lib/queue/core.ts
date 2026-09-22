@@ -324,7 +324,7 @@ async function removeJobFromQueue(
   ]);
 }
 
-const CANCEL_JOB_SCRIPT = \`
+const CANCEL_JOB_SCRIPT = `
 local rawJob = redis.call("GET", KEYS[1])
 if not rawJob then return "NOT_FOUND" end
 local job = cjson.decode(rawJob)
@@ -337,7 +337,7 @@ redis.call("ZREM", KEYS[3], ARGV[1])
 redis.call("ZREM", KEYS[4], ARGV[1])
 redis.call("DEL", KEYS[5])
 return "CANCELLED"
-\`;
+`;
 
 export async function cancelJob(jobId: string) {
   const redis = createQueueRedis();
