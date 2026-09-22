@@ -2,6 +2,8 @@ import "dotenv/config";
 
 import { randomUUID } from "node:crypto";
 
+import type { QueueJobPayload } from "../src/lib/queue/types";
+
 import { prisma } from "../src/lib/prisma";
 import {
   claimNextJob,
@@ -212,15 +214,43 @@ async function main() {
           const tenantIndex = index % tenantCount;
           const accountIndex = index % accountsPerTenant;
 
+          const instagramAccountId =
+            accounts[tenantIndex * accountsPerTenant + accountIndex].id;
+          const eventId = `prod-final-${scenario.name}-${index}-${suffix}`;
+
+          let payload: QueueJobPayload<typeof scenario.type>;
+
+          switch (scenario.type) {
+            case "INSTAGRAM_WEBHOOK":
+              payload = {
+                event: { scenario: scenario.name, tenantId: users[tenantIndex].id },
+                eventId,
+                instagramAccountId,
+                eventType: "COMMENT",
+              };
+              break;
+            case "AUTOMATION":
+              payload = {
+                automationId: `prod-final-automation-${scenario.name}-${index}-${suffix}`,
+              };
+              break;
+            case "SEND_MESSAGE":
+              payload = {
+                instagramAccountId,
+                recipientId: `prod-final-recipient-${index}-${suffix}`,
+                message: { scenario: scenario.name },
+              };
+              break;
+            case "PUBLISH":
+              payload = {
+                publishingJobId: `prod-final-publishing-${index}-${suffix}`,
+              };
+              break;
+          }
+
           return {
             type: scenario.type,
-            payload: {
-              scenario: scenario.name,
-              tenantId: users[tenantIndex].id,
-              instagramAccountId:
-                accounts[tenantIndex * accountsPerTenant + accountIndex].id,
-              eventId: `prod-final-${scenario.name}-${index}-${suffix}`,
-            },
+            payload,
             options: {
               queueNamespace: namespace,
               maxAttempts: 4,
@@ -325,7 +355,7 @@ async function main() {
         const saturated = await enqueueJobsBatch(
           Array.from({ length: 60 }, (_, index) => ({
             type: "TEST" as const,
-            payload: { saturation: true, index },
+            payload: { message: `saturation-${index}` },
             options: { queueNamespace: namespace, maxAttempts: 1 },
           })),
         );
@@ -404,7 +434,7 @@ async function main() {
     // ------------------------------------------------------------
     const crashJob = await enqueueJob(
       "TEST",
-      { crashRecovery: true },
+      { message: "crash-recovery" },
       {
         queueNamespace: namespace,
         maxAttempts: 3,
