@@ -18,10 +18,7 @@ type InstagramComment = {
   text?: string;
   username?: string;
   timestamp?: string;
-  from?: {
-    id?: string;
-    username?: string;
-  };
+
 };
 
 async function syncMediaComments(
@@ -41,10 +38,7 @@ async function syncMediaComments(
         igMediaId: mediaId,
         igCommentId: comment.id,
         text: comment.text,
-        username:
-          comment.username ??
-          comment.from?.username ??
-          "instagram-user",
+        username: comment.username ?? "instagram-user",
         createdAt: comment.timestamp
           ? new Date(comment.timestamp)
           : undefined,
