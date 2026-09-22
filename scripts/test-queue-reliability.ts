@@ -120,7 +120,9 @@ async function main() {
     const stopHeartbeat = startJobClaimHeartbeat(timeoutTarget.id, "group21-timeout", 1_100);
     await new Promise((resolve) => setTimeout(resolve, 1_600));
     stopHeartbeat();
-    await new Promise((resolve) => setTimeout(resolve, 9_500));
+    const claimBeforeWait = await redis.ttl(`smartdirect:queue:claim:${timeoutTarget.id}`);
+    assert(claimBeforeWait >= 1 && claimBeforeWait <= 10, `Unexpected claim TTL after watchdog stop: ${claimBeforeWait}`);
+    await new Promise((resolve) => setTimeout(resolve, 10_500));
     const claimAfterTimeout = await redis.get(`smartdirect:queue:claim:${timeoutTarget.id}`);
     assert(claimAfterTimeout === null, "Job timeout watchdog did not allow the claim to expire");
     await redis.zadd(`smartdirect:queue:${ns}:active`, {
