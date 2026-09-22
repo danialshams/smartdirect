@@ -95,6 +95,53 @@ export async function getInstagramMedia(
   });
 }
 
+export type InstagramMediaComment = {
+  id: string;
+  text?: string;
+  username?: string;
+  timestamp?: string;
+  from?: {
+    id?: string;
+    username?: string;
+  };
+};
+
+export async function getInstagramMediaComments(
+  mediaId: string,
+  accessToken: string,
+  limit = 50,
+) {
+  return instagramApiRequest<{
+    data: InstagramMediaComment[];
+    paging?: {
+      next?: string;
+    };
+  }>(`${mediaId}/comments`, {
+    accessToken,
+    params: {
+      fields: "id,text,username,timestamp,from",
+      limit,
+    },
+  });
+}
+
+export async function replyToInstagramComment(
+  commentId: string,
+  accessToken: string,
+  message: string,
+) {
+  return instagramApiRequest<{
+    id?: string;
+  }>(`${commentId}/replies`, {
+    method: "POST",
+    accessToken,
+    body: {
+      message,
+    },
+    maxRetries: 0,
+  });
+}
+
 export async function getInstagramMediaInsights(
   mediaId: string,
   accessToken: string,
