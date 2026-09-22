@@ -10,12 +10,14 @@ import {
 } from "../src/lib/queue/core";
 
 async function main() {
+  const queueNamespace = `group18-smoke-${Date.now()}`;
   const job = await enqueueJob(
     "TEST",
     { message: `worker-smoke-${Date.now()}` },
     {
       priority: "normal",
       maxAttempts: 1,
+      queueNamespace,
     },
   );
 
@@ -39,14 +41,14 @@ async function main() {
           step: "before-claim",
           jobId: job.id,
           status: queued?.status ?? "missing",
-          queue: await getQueueDepth(),
+          queue: await getQueueDepth(queueNamespace),
         },
         null,
         2,
       ),
     );
 
-    const claimed = await claimNextJob("worker-smoke");
+    const claimed = await claimNextJob("worker-smoke", queueNamespace);
 
     if (!claimed) {
       throw new Error("SMOKE_CLAIM_FAILED: claimNextJob returned null.");
@@ -66,6 +68,10 @@ async function main() {
         2,
       ),
     );
+
+    if (claimed.id !== job.id) {
+      throw new Error(`SMOKE_CLAIM_FAILED: expected ${job.id}, got ${claimed.id}.`);
+    }
 
     const completed = await completeJob(claimed.id);
 
