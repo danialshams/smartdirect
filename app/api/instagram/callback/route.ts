@@ -127,52 +127,24 @@ export async function GET(request: NextRequest) {
     }
 
     // =========================================================
-    // 4. Decode State
+    // 4-6. Verify signed one-time State
     // =========================================================
 
     let stateData: {
       userId: string;
       timestamp: number;
+      nonce: string;
     };
 
     try {
-      const decodedState = Buffer.from(state, "base64url").toString("utf-8");
-
-      stateData = JSON.parse(decodedState);
+      stateData = await verifyInstagramOAuthState(state);
     } catch (error) {
-      console.error("[Instagram OAuth] Invalid state:", error);
-
-      return redirectToDashboard(request, "invalid_state");
-    }
-
-    // =========================================================
-    // 5. Validate State Data
-    // =========================================================
-
-    if (
-      !stateData ||
-      typeof stateData.userId !== "string" ||
-      !stateData.userId ||
-      typeof stateData.timestamp !== "number" ||
-      !Number.isFinite(stateData.timestamp)
-    ) {
-      console.error("[Instagram OAuth] Invalid state data");
-
-      return redirectToDashboard(request, "invalid_state");
-    }
-
-    // =========================================================
-    // 6. Validate State Age
-    // =========================================================
-
-    const stateAge = Date.now() - stateData.timestamp;
-
-    if (stateAge < 0 || stateAge > STATE_MAX_AGE_MS) {
-      console.error("[Instagram OAuth] State expired or invalid:", {
-        stateAge,
-      });
-
-      return redirectToDashboard(request, "state_expired");
+      console.error("[Instagram OAuth] State verification failed:", error);
+      const message = error instanceof Error ? error.message : "Invalid state";
+      return redirectToDashboard(
+        request,
+        message.includes("expired") ? "state_expired" : "invalid_state",
+      );
     }
 
     // =========================================================
@@ -516,25 +488,4 @@ export async function GET(request: NextRequest) {
 
     return redirectToDashboard(request, "error");
   }
-}    // =========================================================
-    // 4-6. Verify signed state
-    // =========================================================
-
-    let stateData: {
-      userId: string;
-      timestamp: number;
-      nonce: string;
-    };
-
-    try {
-      stateData = verifyInstagramOAuthState(state);
-    } catch (error) {
-      console.error("[Instagram OAuth] State verification failed:", error);
-      const message = error instanceof Error ? error.message : "Invalid state";
-      return redirectToDashboard(
-        request,
-        message.includes("expired") ? "state_expired" : "invalid_state",
-      );
-    }
-
-
+}
