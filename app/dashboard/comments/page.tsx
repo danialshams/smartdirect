@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getInstagramProfile } from "@/lib/instagram/api";
+import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 import UnansweredComments from "../../../components/dashboard/comments/UnansweredComments";
 
 export const dynamic = "force-dynamic";
@@ -28,5 +30,25 @@ export default async function UnansweredCommentsPage() {
     },
   });
 
-  return <UnansweredComments accounts={accounts} />;
+  const accountsWithProfiles = await Promise.all(
+    accounts.map(async (account) => {
+      try {
+        const accessToken = await getValidInstagramAccessToken(account.id);
+        const profile = await getInstagramProfile(accessToken);
+
+        return {
+          ...account,
+          profilePictureUrl: profile.profile_picture_url ?? null,
+          igUsername: profile.username ?? account.igUsername,
+        };
+      } catch {
+        return {
+          ...account,
+          profilePictureUrl: null,
+        };
+      }
+    }),
+  );
+
+  return <UnansweredComments accounts={accountsWithProfiles} />;
 }
