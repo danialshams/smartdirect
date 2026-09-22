@@ -1,7 +1,7 @@
 import { getJob, completeJob } from "@/lib/queue/core";
 import { acquireLock, releaseLock } from "@/lib/lock/redis-lock";
 import type { DistributedLockHandle } from "@/lib/lock/types";
-import { processQueuedInstagramWebhookEvent } from "@/lib/webhook/worker-handler";
+import { handleInstagramWebhookJob } from "@/lib/webhook/worker-handler";
 import type { QueueJob } from "@/lib/queue/types";
 import { enterObservabilityContext } from "@/lib/observability/context";
 import { observabilityLogger } from "@/lib/observability/logger";
@@ -49,10 +49,7 @@ export async function processInstagramWebhookQueueJobStep(jobId: string) {
 
     const webhookJob = job as QueueJob<"INSTAGRAM_WEBHOOK">;
 
-    await processQueuedInstagramWebhookEvent(
-      webhookJob.payload,
-      webhookJob.attempts,
-    );
+    await handleInstagramWebhookJob(webhookJob);
 
     await completeJob(job.id);
 
