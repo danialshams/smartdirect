@@ -90,6 +90,38 @@ end
 return "OK"
 `;
 
+const ENQUEUE_JOBS_BATCH_SCRIPT = `
+local pending = redis.call("ZCARD", KEYS[1]) + redis.call("ZCARD", KEYS[2]) + redis.call("ZCARD", KEYS[3])
+local maxDepth = tonumber(ARGV[1])
+local count = tonumber(ARGV[2])
+
+if pending + count > maxDepth then
+  return "BACKPRESSURE"
+end
+
+local jobPrefix = ARGV[3]
+local argIndex = 4
+
+for _ = 1, count do
+  local rawJob = ARGV[argIndex]
+  local jobId = ARGV[argIndex + 1]
+  local delayed = ARGV[argIndex + 2]
+  local score = ARGV[argIndex + 3]
+
+  redis.call("SET", jobPrefix .. jobId, rawJob)
+
+  if delayed == "1" then
+    redis.call("ZADD", KEYS[2], score, jobId)
+  else
+    redis.call("ZADD", KEYS[1], score, jobId)
+  end
+
+  argIndex = argIndex + 4
+end
+
+return "OK"
+`;
+
 export async function enqueueJob<T extends QueueJobType>(
   type: T,
   payload: QueueJobPayload<T>,
@@ -170,27 +202,45 @@ export async function enqueueJobsBatch<T extends QueueJobType>(
     } as QueueJob<T>;
   });
 
-  const pipeline = redis.pipeline();
+  const groups = new Map<string, QueueJob<T>[]>();
 
   for (const job of jobs) {
-    pipeline.set(jobKey(job.id), job);
-
-    const keys = getQueueKeys(job.queueNamespace);
-
-    if (job.status === "delayed") {
-      pipeline.zadd(keys.delayed, {
-        score: job.scheduledAt,
-        member: job.id,
-      });
-    } else {
-      pipeline.zadd(keys.ready, {
-        score: readyScore(job),
-        member: job.id,
-      });
-    }
+    const group = groups.get(job.queueNamespace) ?? [];
+    group.push(job);
+    groups.set(job.queueNamespace, group);
   }
 
-  await pipeline.exec();
+  for (const [queueNamespace, group] of groups) {
+    const keys = getQueueKeys(queueNamespace);
+    const args = [
+      String(getQueueMaxDepth()),
+      String(group.length),
+      JOB_PREFIX,
+    ];
+
+    for (const job of group) {
+      args.push(
+        JSON.stringify(job),
+        job.id,
+        String(job.status === "delayed" ? 1 : 0),
+        String(job.status === "delayed" ? job.scheduledAt : readyScore(job)),
+      );
+    }
+
+    const result = await redis.eval(
+      ENQUEUE_JOBS_BATCH_SCRIPT,
+      [keys.ready, keys.delayed, keys.active],
+      args,
+    );
+
+    if (result === "BACKPRESSURE") {
+      throw new Error("QUEUE_BACKPRESSURE");
+    }
+
+    if (result !== "OK") {
+      throw new Error("QUEUE_BATCH_ENQUEUE_FAILED");
+    }
+  }
 
   return jobs;
 }
