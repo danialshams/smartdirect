@@ -179,14 +179,15 @@ function createLocalRedisClient(): RedisLikeClient {
         ) => {
           await ensureConnected();
 
-          return target.eval(script, {
-            keys,
-            arguments: args.map((arg) =>
-              typeof arg === "string" || Buffer.isBuffer(arg)
-                ? arg
-                : String(arg),
-            ),
-          });
+          const command = [
+            "EVAL",
+            script,
+            String(keys.length),
+            ...keys.map(String),
+            ...args.map((arg) => String(arg)),
+          ];
+
+          return target.sendCommand(command);
         };
       }
 
