@@ -1,11 +1,13 @@
 import { randomUUID } from "node:crypto";
-import { prisma } from "@/lib/prisma";
-import {
-  createInstagramOAuthState,
-  verifyInstagramOAuthState,
-} from "@/lib/instagram/oauth-state";
+import dotenv from "dotenv";
+
+dotenv.config({ path: ".env.local" });
+dotenv.config({ path: ".env" });
 
 async function main() {
+  const { prisma } = await import("../src/lib/prisma");
+  const { createInstagramOAuthState, verifyInstagramOAuthState } = await import("../src/lib/instagram/oauth-state");
+
   process.env.NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET || "group20-test-secret";
 
   const suffix = `meta-lifecycle-${Date.now()}-${Math.random().toString(36).slice(2)}`;
