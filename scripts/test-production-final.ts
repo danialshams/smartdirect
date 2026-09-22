@@ -34,10 +34,10 @@ const accountsPerTenant = Math.max(
   2,
   Number(process.env.PRODUCTION_FINAL_ACCOUNTS_PER_TENANT ?? 3),
 );
-const baseJobs = Math.max(120, Number(process.env.PRODUCTION_FINAL_JOBS ?? 360));
+const baseJobs = Math.max(120, Number(process.env.PRODUCTION_FINAL_JOBS ?? 240));
 const concurrency = Math.max(
   4,
-  Number(process.env.PRODUCTION_FINAL_CONCURRENCY ?? 16),
+  Number(process.env.PRODUCTION_FINAL_CONCURRENCY ?? 8),
 );
 
 setRedisCommandTimeoutMs(30_000);
