@@ -77,7 +77,7 @@ function readyScore(job: QueueJob) {
   return job.scheduledAt * 10 + PRIORITY_WEIGHT[job.priority];
 }
 
-const ENQUEUE_JOB_SCRIPT = \`
+const ENQUEUE_JOB_SCRIPT = `
 local pending = redis.call("ZCARD", KEYS[1]) + redis.call("ZCARD", KEYS[2]) + redis.call("ZCARD", KEYS[3])
 local maxDepth = tonumber(ARGV[1])
 if pending >= maxDepth then return "BACKPRESSURE" end
@@ -88,7 +88,7 @@ else
   redis.call("ZADD", KEYS[1], ARGV[5], ARGV[6])
 end
 return "OK"
-\`;
+`;
 
 export async function enqueueJob<T extends QueueJobType>(
   type: T,
