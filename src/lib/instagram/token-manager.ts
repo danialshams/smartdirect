@@ -365,6 +365,100 @@ export async function refreshInstagramToken(
   };
 }
 
+export type InstagramTokenValidationResult = {
+  valid: boolean;
+  disconnected: boolean;
+  igUserId?: string;
+  username?: string;
+};
+
+/**
+ * Validate the currently stored token against Meta without refreshing it.
+ *
+ * Invalid/revoked tokens (Meta error 190) disconnect only this account.
+ * Network, timeout, rate-limit, and server errors are propagated and do not
+ * change the account connection state.
+ */
+export async function validateInstagramAccessToken(
+  instagramAccountId: string,
+): Promise<InstagramTokenValidationResult> {
+  const account = await prisma.instagramAccount.findUnique({
+    where: { id: instagramAccountId },
+    select: {
+      id: true,
+      accessToken: true,
+      isConnected: true,
+      igUserId: true,
+      igUsername: true,
+    },
+  });
+
+  if (!account) {
+    throw new Error("Instagram account not found");
+  }
+
+  if (!account.isConnected) {
+    throw new Error("Instagram account is not connected. Reconnect Instagram.");
+  }
+
+  if (!account.accessToken) {
+    throw new Error("Instagram access token is missing");
+  }
+
+  try {
+    const profile = await instagramApiRequest<{
+      id?: string;
+      user_id?: string;
+      username?: string;
+      error?: {
+        message?: string;
+        type?: string;
+        code?: number;
+        error_subcode?: number;
+      };
+    }>("/me", {
+      method: "GET",
+      accessToken: account.accessToken,
+      params: {
+        fields: "id,user_id,username",
+      },
+      timeoutMs: REQUEST_TIMEOUT_MS,
+      maxRetries: 0,
+    });
+
+    if (!profile?.user_id && !profile?.id) {
+      throw new Error("Instagram token validation returned an invalid profile");
+    }
+
+    return {
+      valid: true,
+      disconnected: false,
+      igUserId: profile.user_id ?? profile.id,
+      username: profile.username,
+    };
+  } catch (error) {
+    if (error instanceof InstagramApiError && error.details?.code === 190) {
+      await prisma.instagramAccount.update({
+        where: { id: instagramAccountId },
+        data: { isConnected: false },
+      });
+
+      await Promise.all([
+        deleteCachedJson(cacheKey("instagram-token", instagramAccountId)),
+        deleteCachedJson(cacheKey("instagram-account", instagramAccountId)),
+      ]);
+
+      return {
+        valid: false,
+        disconnected: true,
+      };
+    }
+
+    throw error;
+  }
+}
+
+
 /**
  * =========================================================
  * Get Valid Instagram Access Token
