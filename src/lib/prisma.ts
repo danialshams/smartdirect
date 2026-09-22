@@ -5,12 +5,13 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
+const databaseUrl = process.env.DATABASE_URL;
 const databasePoolMax = Number(process.env.DB_POOL_MAX ?? 5);
 const databaseConnectionTimeoutMs = Number(process.env.DB_CONNECTION_TIMEOUT_MS ?? 5000);
 const databaseIdleTimeoutMs = Number(process.env.DB_IDLE_TIMEOUT_MS ?? 10000);
 
 const adapter = new PrismaPg({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: databaseUrl?.replace(/([?&]sslmode=)(require|prefer|verify-ca)(?=(&|$))/i, "$1verify-full"),
   max: Number.isFinite(databasePoolMax) && databasePoolMax > 0 ? Math.floor(databasePoolMax) : 5,
   connectionTimeoutMillis:
     Number.isFinite(databaseConnectionTimeoutMs) && databaseConnectionTimeoutMs > 0
