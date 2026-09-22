@@ -1,4 +1,8 @@
-import "dotenv/config";
+import { config as loadEnv } from "dotenv";
+
+// Load local test overrides first (e.g. REDIS_DRIVER=local), then fill missing values from .env.
+loadEnv({ path: ".env.local" });
+loadEnv({ path: ".env" });
 
 import {
   createQueueRedis,
