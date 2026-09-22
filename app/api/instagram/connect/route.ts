@@ -37,7 +37,7 @@ export async function GET() {
       );
     }
 
-    const state = createInstagramOAuthState(session.user.id);
+    const state = await createInstagramOAuthState(session.user.id);
 
     const params = new URLSearchParams({
       client_id: clientId,
