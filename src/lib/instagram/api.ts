@@ -37,7 +37,7 @@ export async function getInstagramProfile(accessToken: string) {
     accessToken,
     params: {
       fields:
-        "id,user_id,username,name,biography,website,profile_picture_url,followers_count,follows_count,media_count,account_type",
+        "id,username,name,biography,website,profile_picture_url,followers_count,follows_count,media_count,account_type",
     },
   });
 }
@@ -100,7 +100,34 @@ export type InstagramMediaComment = {
   text?: string;
   username?: string;
   timestamp?: string;
+  from?: {
+    id?: string;
+    username?: string;
+  };
 };
+
+export type InstagramUserProfile = {
+  id?: string;
+  name?: string;
+  username?: string;
+  profile_pic?: string;
+  follower_count?: number;
+  is_user_follow_business?: boolean;
+  is_business_follow_user?: boolean;
+};
+
+export async function getInstagramUserProfile(
+  instagramScopedUserId: string,
+  accessToken: string,
+) {
+  return instagramApiRequest<InstagramUserProfile>(instagramScopedUserId, {
+    accessToken,
+    params: {
+      fields:
+        "id,name,username,profile_pic,follower_count,is_user_follow_business,is_business_follow_user",
+    },
+  });
+}
 
 export async function getInstagramMediaComments(
   mediaId: string,
@@ -115,7 +142,7 @@ export async function getInstagramMediaComments(
   }>(`${mediaId}/comments`, {
     accessToken,
     params: {
-      fields: "id,text,username,timestamp",
+      fields: "id,text,username,timestamp,from",
       limit,
     },
   });
