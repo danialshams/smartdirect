@@ -181,7 +181,11 @@ function createLocalRedisClient(): RedisLikeClient {
 
           return target.eval(script, {
             keys,
-            arguments: args,
+            arguments: args.map((arg) =>
+              typeof arg === "string" || Buffer.isBuffer(arg)
+                ? arg
+                : String(arg),
+            ),
           });
         };
       }
