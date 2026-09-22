@@ -4,7 +4,11 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
-import { getInstagramMedia, getInstagramMediaComments } from "@/lib/instagram/api";
+import {
+  getInstagramMedia,
+  getInstagramMediaComments,
+  type InstagramMediaComment,
+} from "@/lib/instagram/api";
 import { proxyInstagramMediaUrl } from "@/lib/instagram/media-proxy";
 
 export const dynamic = "force-dynamic";
@@ -13,18 +17,10 @@ const MEDIA_LIMIT = 20;
 const COMMENTS_LIMIT = 50;
 const COMMENT_BATCH_SIZE = 4;
 
-type InstagramComment = {
-  id: string;
-  text?: string;
-  username?: string;
-  timestamp?: string;
-
-};
-
 async function syncMediaComments(
   userId: string,
   mediaId: string,
-  comments: InstagramComment[],
+  comments: InstagramMediaComment[],
 ) {
   for (const comment of comments) {
     if (!comment.id || !comment.text) continue;
@@ -45,10 +41,7 @@ async function syncMediaComments(
       },
       update: {
         text: comment.text,
-        username:
-          comment.username ??
-          comment.from?.username ??
-          "instagram-user",
+        username: comment.username ?? "instagram-user",
       },
     });
   }
