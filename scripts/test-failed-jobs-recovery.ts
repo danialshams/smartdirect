@@ -11,15 +11,16 @@ import {
 import { recoverStalledJobs, retryFailedJob } from "../src/lib/queue/recovery";
 
 async function main() {
+  const queueNamespace = `group18-recovery-${Date.now()}`;
   const redis = createQueueRedis();
 
   const failureJob = await enqueueJob(
     "TEST",
     { message: "failure-injection" },
-    { maxAttempts: 1 },
+    { maxAttempts: 1, queueNamespace },
   );
 
-  const claimed = await (await import("../src/lib/queue/core")).claimNextJob("failure-test-worker");
+  const claimed = await (await import("../src/lib/queue/core")).claimNextJob("failure-test-worker", queueNamespace);
 
   if (!claimed || claimed.id !== failureJob.id) {
     throw new Error("Failed job test could not claim the injected job.");
@@ -60,22 +61,22 @@ async function main() {
   const stalledJob = await enqueueJob(
     "TEST",
     { message: "stalled-injection" },
-    { maxAttempts: 2 },
+    { maxAttempts: 2, queueNamespace },
   );
 
-  const stalledClaim = await (await import("../src/lib/queue/core")).claimNextJob("stalled-test-worker");
+  const stalledClaim = await (await import("../src/lib/queue/core")).claimNextJob("stalled-test-worker", queueNamespace);
 
   if (!stalledClaim || stalledClaim.id !== stalledJob.id) {
     throw new Error("Stalled job could not be claimed.");
   }
 
-  await redis.zadd("smartdirect:queue:default:active", {
+  await redis.zadd(`smartdirect:queue:${queueNamespace}:active`, {
     score: Date.now() - 120_000,
     member: stalledJob.id,
   });
   await redis.del(`smartdirect:queue:claim:${stalledJob.id}`);
 
-  const recovery = await recoverStalledJobs();
+  const recovery = await recoverStalledJobs(50, queueNamespace);
 
   if (recovery.recovered < 1) {
     throw new Error("Automatic stalled job recovery did not recover the job.");
@@ -101,8 +102,8 @@ async function main() {
   await redis.del(`smartdirect:queue:job:${failureJob.id}`);
   await redis.del(`smartdirect:queue:job:${retried.id}`);
   await redis.del(`smartdirect:queue:job:${stalledJob.id}`);
-  await redis.zrem("smartdirect:queue:default:failed", failureJob.id);
-  await redis.zrem("smartdirect:queue:default:active", stalledJob.id);
+  await redis.zrem(`smartdirect:queue:${queueNamespace}:failed`, failureJob.id);
+  await redis.zrem(`smartdirect:queue:${queueNamespace}:active`, stalledJob.id);
 
   console.log(JSON.stringify({
     success: true,
