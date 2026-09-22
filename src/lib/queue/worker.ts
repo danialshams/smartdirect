@@ -1,5 +1,6 @@
 import {
   claimNextJob,
+  startJobClaimHeartbeat,
   completeJob,
   promoteDueJobs,
   failJob,
@@ -129,8 +130,10 @@ export async function runQueueWorker(
     }
 
     enterObservabilityContext({ jobId: job.id });
+    stopClaimHeartbeat = startJobClaimHeartbeat(job.id, workerId);
 
     let lockHandle: DistributedLockHandle | undefined;
+    let stopClaimHeartbeat: (() => void) | undefined;
 
     try {
       const lock = await acquireLock({
@@ -188,6 +191,7 @@ export async function runQueueWorker(
 
       await failJob(job.id, error);
     } finally {
+      stopClaimHeartbeat?.();
       if (lockHandle) {
         await releaseLock(lockHandle);
       }
