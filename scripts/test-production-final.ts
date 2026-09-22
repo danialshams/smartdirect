@@ -294,7 +294,7 @@ async function main() {
         attemptsByJob.set(job.id, attempts);
 
         // Controlled transient failure injection for a retry storm.
-        if (scenario === "webhook" && attempts === 1 && Number(job.id.slice(-2), 36) % 7 === 0) {
+        if (scenario === "webhook" && attempts === 1 && Number.parseInt(job.id.slice(-2), 36) % 7 === 0) {
           totalFailuresInjected += 1;
           throw new Error("PRODUCTION_FINAL_RETRY_INJECTION");
         }
