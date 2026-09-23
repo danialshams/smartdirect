@@ -15,8 +15,6 @@ const INSIGHT_METRICS = [
   "views",
   "accounts_engaged",
   "total_interactions",
-  "follows_and_unfollows",
-  "profile_links_taps",
 ] as const;
 
 type InsightMetricName = (typeof INSIGHT_METRICS)[number];
@@ -103,20 +101,6 @@ function getMetricValue(
   const metric = metrics.find((item) => item.name === name);
   const value = metric?.values?.[metric.values.length - 1]?.value;
   return typeof value === "number" && Number.isFinite(value) ? value : null;
-}
-
-function getFollowMetrics(metrics: InstagramInsightMetric[]) {
-  const metric = metrics.find((item) => item.name === "follows_and_unfollows");
-  const value = metric?.values?.[metric.values.length - 1]?.value;
-
-  if (typeof value === "object" && value) {
-    return {
-      follows: typeof value.follows === "number" ? value.follows : null,
-      unfollows: typeof value.unfollows === "number" ? value.unfollows : null,
-    };
-  }
-
-  return { follows: null, unfollows: null };
 }
 
 function getSnapshotDate(): Date {
