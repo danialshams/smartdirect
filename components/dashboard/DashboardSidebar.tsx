@@ -7,7 +7,6 @@ import {
   Bot,
   CreditCard,
   FileBarChart,
-  FileText,
   ImagePlus,
   Inbox,
   LayoutDashboard,
