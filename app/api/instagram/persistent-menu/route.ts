@@ -311,6 +311,7 @@ export async function POST(request: NextRequest) {
             payload: item.payload,
             automationId: item.automationId,
             order: item.order,
+            updatedAt: new Date(),
           })),
         },
       },
