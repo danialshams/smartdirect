@@ -306,9 +306,7 @@ export async function GET(request: NextRequest) {
         followerCount,
       },
       update: {
-        reach: values.reach,
         views: values.views,
-        accountsEngaged: values.accountsEngaged,
         totalInteractions: values.totalInteractions,
         follows: values.follows,
         unfollows: values.unfollows,
