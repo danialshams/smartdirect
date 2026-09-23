@@ -271,6 +271,20 @@ export default function InstagramInsights({
     };
   }, [range]);
 
+  const syncInsights = useCallback(async () => {
+    if (!accountId) return;
+
+    const response = await fetch(
+      "/api/instagram/insights?accountId=" + encodeURIComponent(accountId),
+      { cache: "no-store" },
+    );
+
+    if (!response.ok) {
+      const result = await response.json().catch(() => null);
+      throw new Error(result?.error || "خطا در بروزرسانی Instagram Insights");
+    }
+  }, [accountId]);
+
   const load = useCallback(async () => {
     if (!accountId || !effectiveRange) {
       setData(null);
@@ -316,11 +330,39 @@ export default function InstagramInsights({
   }, [externalAccountId]);
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    if (!accountId) return;
+
+    void (async () => {
+      try {
+        await syncInsights();
+      } catch (requestError) {
+        setError(
+          requestError instanceof Error
+            ? requestError.message
+            : "خطا در بروزرسانی Instagram Insights",
+        );
+      } finally {
+        await load();
+      }
+    })();
+  }, [accountId, syncInsights, load]);
 
   useEffect(() => {
-    const handler = () => void load();
+    const handler = () => {
+      void (async () => {
+        try {
+          await syncInsights();
+        } catch (requestError) {
+          setError(
+            requestError instanceof Error
+              ? requestError.message
+              : "خطا در بروزرسانی Instagram Insights",
+          );
+        } finally {
+          await load();
+        }
+      })();
+    };
     window.addEventListener("smartdirect:refresh", handler);
     return () => window.removeEventListener("smartdirect:refresh", handler);
   }, [load]);
@@ -474,7 +516,21 @@ export default function InstagramInsights({
             </div>
             <button
               type="button"
-              onClick={() => void load()}
+              onClick={() =>
+                void (async () => {
+                  try {
+                    await syncInsights();
+                  } catch (requestError) {
+                    setError(
+                      requestError instanceof Error
+                        ? requestError.message
+                        : "خطا در بروزرسانی Instagram Insights",
+                    );
+                  } finally {
+                    await load();
+                  }
+                })()
+              }
               className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 px-3 text-[10px] font-semibold text-slate-600 transition hover:bg-slate-50"
             >
               <RefreshCw size={13} />
