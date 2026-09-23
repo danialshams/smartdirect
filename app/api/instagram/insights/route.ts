@@ -26,8 +26,6 @@ type InsightMetricName =
   | (typeof CORE_INSIGHT_METRICS)[number]
   | (typeof ADVANCED_INSIGHT_METRICS)[number];
 
-type InsightMetricName = (typeof INSIGHT_METRICS)[number];
-
 type InstagramInsightMetric = {
   name?: string;
   period?: string;
