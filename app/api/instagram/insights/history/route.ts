@@ -169,14 +169,28 @@ export async function GET(request: NextRequest) {
             },
         );
 
+        const averageDailyReach =
+            snapshots.length > 0
+                ? Math.round(totals.reach / snapshots.length)
+                : 0;
+        const averageDailyAccountsEngaged =
+            snapshots.length > 0
+                ? Math.round(totals.accountsEngaged / snapshots.length)
+                : 0;
+
         const latestSnapshot = snapshots[snapshots.length - 1] ?? null;
         const firstSnapshot = snapshots[0] ?? null;
         const followerCount = latestSnapshot?.followerCount ?? 0;
         const firstFollowerCount = firstSnapshot?.followerCount ?? 0;
         const followerGrowth = followerCount - firstFollowerCount;
         const engagementRate =
-            totals.reach > 0
-                ? Number(((totals.accountsEngaged / totals.reach) * 100).toFixed(2))
+            averageDailyReach > 0
+                ? Number(
+                      (
+                          (averageDailyAccountsEngaged / averageDailyReach) *
+                          100
+                      ).toFixed(2),
+                  )
                 : null;
 
         return NextResponse.json({
@@ -198,7 +212,7 @@ export async function GET(request: NextRequest) {
                 to,
             },
             summary: {
-                reach: totals.reach,
+                reach: averageDailyReach,
                 views: totals.views,
                 accountsEngaged: totals.accountsEngaged,
                 totalInteractions: totals.totalInteractions,
