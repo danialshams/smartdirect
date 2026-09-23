@@ -169,6 +169,7 @@ function RangeCalendar({
         onSelect={onChange}
         defaultMonth={range.from}
         disabled={{ after: new Date() }}
+        max={365}
         dir="rtl"
         className="mx-auto"
         showOutsideDays
