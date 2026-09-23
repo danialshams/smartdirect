@@ -1,432 +1,445 @@
 "use client";
 
 import {
-    BarChart3,
-    Download,
-    RefreshCw,
-    TrendingDown,
-    TrendingUp,
+  ArrowDown,
+  ArrowUp,
+  Download,
+  FileBarChart,
+  RefreshCw,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 type Snapshot = {
-    id: string;
-    snapshotDate: string;
-    reach: number | null;
-    views: number | null;
-    accountsEngaged: number | null;
-    totalInteractions: number | null;
-    profileViews: number | null;
-    followerCount: number | null;
+  id: string;
+  snapshotDate: string;
+  reach: number | null;
+  views: number | null;
+  accountsEngaged: number | null;
+  totalInteractions: number | null;
+  profileViews: number | null;
+  followerCount: number | null;
 };
 
 type Account = {
-    id: string;
-    igUserId: string;
-    username: string;
-    isConnected: boolean;
+  id: string;
+  igUserId: string;
+  username: string;
+  isConnected: boolean;
 };
 
-type AnalyticsResponse = {
-    success: boolean;
-    account: Account;
-    snapshots: Snapshot[];
-    error?: string;
+type Data = {
+  success: boolean;
+  account: Account;
+  snapshots: Snapshot[];
 };
 
 type MetricKey =
-    | "reach"
-    | "views"
-    | "accountsEngaged"
-    | "totalInteractions"
-    | "profileViews";
+  | "reach"
+  | "views"
+  | "accountsEngaged"
+  | "totalInteractions"
+  | "profileViews";
 
-type Metric = {
-    key: MetricKey;
-    title: string;
-};
-
-const METRICS: Metric[] = [
-    { key: "reach", title: "دسترسی" },
-    { key: "views", title: "بازدید" },
-    { key: "accountsEngaged", title: "اکانت‌های درگیر" },
-    { key: "totalInteractions", title: "تعاملات" },
-    { key: "profileViews", title: "بازدید پروفایل" },
+const metrics: Array<{ key: MetricKey; label: string }> = [
+  { key: "reach", label: "دسترسی" },
+  { key: "views", label: "بازدید" },
+  { key: "accountsEngaged", label: "اکانت‌های درگیر" },
+  { key: "totalInteractions", label: "تعاملات" },
+  { key: "profileViews", label: "بازدید پروفایل" },
 ];
 
 const nf = new Intl.NumberFormat("fa-IR");
 const pf = new Intl.NumberFormat("fa-IR", { maximumFractionDigits: 1 });
 
-function formatNumber(value: number | null | undefined) {
-    return value == null ? "—" : nf.format(Math.round(value));
+function number(value: number | null | undefined) {
+  return value == null ? "—" : nf.format(Math.round(value));
 }
 
-function formatPercent(value: number | null | undefined) {
-    if (value == null || !Number.isFinite(value)) return "—";
-    return `${pf.format(value)}٪`;
+function date(value: string) {
+  return new Intl.DateTimeFormat("fa-IR", {
+    dateStyle: "medium",
+  }).format(new Date(value));
 }
 
-function toInputDate(date: Date) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
+function sum(items: Snapshot[], key: MetricKey) {
+  return items.reduce((total, item) => total + (item[key] ?? 0), 0);
 }
 
-function parseInputDate(value: string) {
-    const [year, month, day] = value.split("-").map(Number);
-    return new Date(year, month - 1, day);
+function change(current: number, previous: number) {
+  if (previous === 0) return null;
+  return ((current - previous) / Math.abs(previous)) * 100;
 }
 
-function startOfDay(value: string) {
-    const date = parseInputDate(value);
-    date.setHours(0, 0, 0, 0);
-    return date;
+function inputDate(dateValue: Date) {
+  const year = dateValue.getFullYear();
+  const month = String(dateValue.getMonth() + 1).padStart(2, "0");
+  const day = String(dateValue.getDate()).padStart(2, "0");
+  return year + "-" + month + "-" + day;
 }
 
-function endOfDay(value: string) {
-    const date = parseInputDate(value);
-    date.setHours(23, 59, 59, 999);
-    return date;
+function dayStart(value: string) {
+  const dateValue = new Date(value + "T00:00:00");
+  return dateValue.getTime();
 }
 
-function snapshotDate(value: string) {
-    return new Date(value).toLocaleDateString("fa-IR");
+function dayEnd(value: string) {
+  const dateValue = new Date(value + "T23:59:59.999");
+  return dateValue.getTime();
 }
 
-function sum(snapshots: Snapshot[], key: MetricKey) {
-    return snapshots.reduce((total, item) => total + (item[key] ?? 0), 0);
-}
+function ChangeBadge({ value }: { value: number | null }) {
+  if (value == null || !Number.isFinite(value)) {
+    return <span className="text-slate-400">—</span>;
+  }
 
-function followerGrowth(snapshots: Snapshot[]) {
-    if (!snapshots.length) return null;
-    const first = snapshots[0]?.followerCount;
-    const last = snapshots[snapshots.length - 1]?.followerCount;
-    if (typeof first !== "number" || typeof last !== "number") return null;
-    return last - first;
-}
+  const positive = value >= 0;
 
-function changePercent(current: number | null, previous: number | null) {
-    if (current == null || previous == null || previous === 0) return null;
-    return Number((((current - previous) / Math.abs(previous)) * 100).toFixed(1));
-}
-
-function csvCell(value: string | number | null) {
-    const text = value == null ? "" : String(value);
-    return `"${text.replaceAll('"', '""')}"`;
+  return (
+    <span
+      className={
+        positive
+          ? "inline-flex items-center gap-1 text-xs font-semibold text-emerald-600"
+          : "inline-flex items-center gap-1 text-xs font-semibold text-red-600"
+      }
+    >
+      {positive ? <ArrowUp size={13} /> : <ArrowDown size={13} />}
+      {pf.format(Math.abs(value))}٪
+    </span>
+  );
 }
 
 export default function AdvancedAnalyticsReports() {
-    const today = useMemo(() => new Date(), []);
-    const defaultFrom = useMemo(() => {
-        const date = new Date(today);
-        date.setDate(date.getDate() - 29);
-        return toInputDate(date);
-    }, [today]);
+  const today = useMemo(() => new Date(), []);
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [accountId, setAccountId] = useState("");
+  const [from, setFrom] = useState(
+    inputDate(new Date(today.getTime() - 29 * 86400000)),
+  );
+  const [to, setTo] = useState(inputDate(today));
+  const [data, setData] = useState<Data | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-    const [accounts, setAccounts] = useState<Account[]>([]);
-    const [accountId, setAccountId] = useState("");
-    const [from, setFrom] = useState(defaultFrom);
-    const [to, setTo] = useState(toInputDate(today));
-    const [data, setData] = useState<AnalyticsResponse | null>(null);
-    const [loading, setLoading] = useState(false);
-    const [loadingAccounts, setLoadingAccounts] = useState(true);
-    const [error, setError] = useState("");
+  const loadAccounts = useCallback(async () => {
+    const response = await fetch("/api/instagram/accounts", {
+      cache: "no-store",
+    });
+    const result = await response.json();
 
-    const loadAccounts = useCallback(async () => {
-        try {
-            setLoadingAccounts(true);
-            const response = await fetch("/api/instagram/accounts", { cache: "no-store" });
-            const result = await response.json();
-            if (!response.ok || !result.success) {
-                throw new Error(result.error || "خطا در دریافت اکانت‌ها");
-            }
-            const list = Array.isArray(result.accounts) ? (result.accounts as Account[]) : [];
-            setAccounts(list);
-            setAccountId((current) =>
-                list.some((item) => item.id === current)
-                    ? current
-                    : list.find((item) => item.isConnected)?.id || list[0]?.id || "",
-            );
-        } catch (err) {
-            setError(err instanceof Error ? err.message : "خطا در دریافت اکانت‌ها");
-        } finally {
-            setLoadingAccounts(false);
-        }
-    }, []);
+    if (!response.ok || !result.success) {
+      throw new Error(result.error || "خطا در دریافت اکانت‌ها");
+    }
 
-    const load = useCallback(async (selectedAccountId: string) => {
-        if (!selectedAccountId) return;
+    const list = Array.isArray(result.accounts)
+      ? (result.accounts as Account[])
+      : [];
 
-        try {
-            setLoading(true);
-            setError("");
-            const response = await fetch(
-                `/api/instagram/insights/history?days=365&accountId=${encodeURIComponent(selectedAccountId)}`,
-                { cache: "no-store" },
-            );
-            const result = (await response.json()) as AnalyticsResponse;
-            if (!response.ok || !result.success) {
-                throw new Error(result.error || "خطا در دریافت گزارش تحلیلی");
-            }
-            setData(result);
-        } catch (err) {
-            setData(null);
-            setError(err instanceof Error ? err.message : "خطا در دریافت گزارش تحلیلی");
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+    setAccounts(list);
 
-    useEffect(() => {
-        void loadAccounts();
-    }, [loadAccounts]);
+    if (!accountId) {
+      setAccountId(list.find((item) => item.isConnected)?.id || "");
+    }
+  }, [accountId]);
 
-    useEffect(() => {
-        if (accountId) void load(accountId);
-    }, [accountId, load]);
+  const load = useCallback(async () => {
+    if (!accountId) {
+      setLoading(false);
+      return;
+    }
 
-    const report = useMemo(() => {
-        if (!data || !from || !to || startOfDay(from) > endOfDay(to)) return null;
+    try {
+      setLoading(true);
+      setError("");
 
-        const currentStart = startOfDay(from).getTime();
-        const currentEnd = endOfDay(to).getTime();
-        const duration = currentEnd - currentStart + 1;
-        const previousStart = currentStart - duration;
-        const previousEnd = currentStart - 1;
+      const response = await fetch(
+        "/api/instagram/insights/history?days=90&accountId=" +
+          encodeURIComponent(accountId),
+        { cache: "no-store" },
+      );
 
-        const current = data.snapshots.filter((item) => {
-            const time = new Date(item.snapshotDate).getTime();
-            return time >= currentStart && time <= currentEnd;
-        });
+      const result = await response.json();
 
-        const previous = data.snapshots.filter((item) => {
-            const time = new Date(item.snapshotDate).getTime();
-            return time >= previousStart && time <= previousEnd;
-        });
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "خطا در دریافت داده‌های گزارش");
+      }
 
-        const currentMetrics = Object.fromEntries(
-            METRICS.map(({ key }) => [key, sum(current, key)]),
-        ) as Record<MetricKey, number>;
+      setData(result as Data);
+    } catch (requestError) {
+      setData(null);
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "خطا در دریافت داده‌های گزارش",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [accountId]);
 
-        const previousMetrics = Object.fromEntries(
-            METRICS.map(({ key }) => [key, sum(previous, key)]),
-        ) as Record<MetricKey, number>;
+  useEffect(() => {
+    void loadAccounts().catch((requestError) => {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "خطا در دریافت اکانت‌ها",
+      );
+      setLoading(false);
+    });
+  }, [loadAccounts]);
 
-        const follower = followerGrowth(current);
-        const previousFollower = followerGrowth(previous);
+  useEffect(() => {
+    void load();
+  }, [load]);
 
-        return {
-            current,
-            previous,
-            currentMetrics,
-            previousMetrics,
-            follower,
-            previousFollower,
-            currentEngagementRate:
-                currentMetrics.reach > 0
-                    ? Number(((currentMetrics.totalInteractions / currentMetrics.reach) * 100).toFixed(2))
-                    : null,
-            previousEngagementRate:
-                previousMetrics.reach > 0
-                    ? Number(((previousMetrics.totalInteractions / previousMetrics.reach) * 100).toFixed(2))
-                    : null,
-        };
-    }, [data, from, to]);
+  const report = useMemo(() => {
+    if (!data || !from || !to || dayStart(from) > dayEnd(to)) {
+      return null;
+    }
 
-    const exportCsv = useCallback(() => {
-        if (!report || !data) return;
+    const currentStart = dayStart(from);
+    const currentEnd = dayEnd(to);
+    const duration = currentEnd - currentStart + 1;
 
-        const rows = [
-            ["Instagram Advanced Analytics"],
-            ["Account", `@${data.account.username}`],
-            ["Current period", `${from} → ${to}`],
-            ["Previous period", "Same duration immediately before current period"],
-            [],
-            ["Metric", "Current", "Previous", "Change %"],
-            ...METRICS.map(({ key, title }) => [
-                title,
-                report.currentMetrics[key],
-                report.previousMetrics[key],
-                changePercent(report.currentMetrics[key], report.previousMetrics[key]),
-            ]),
-            ["رشد فالوئر", report.follower, report.previousFollower, changePercent(report.follower, report.previousFollower)],
-            ["نرخ تعامل", report.currentEngagementRate, report.previousEngagementRate, changePercent(report.currentEngagementRate, report.previousEngagementRate)],
-            [],
-            ["Snapshot date", ...METRICS.map((metric) => metric.title), "Follower Count"],
-            ...report.current.map((item) => [
-                snapshotDate(item.snapshotDate),
-                ...METRICS.map(({ key }) => item[key]),
-                item.followerCount,
-            ]),
-        ];
+    const current = data.snapshots.filter((item) => {
+      const timestamp = new Date(item.snapshotDate).getTime();
+      return timestamp >= currentStart && timestamp <= currentEnd;
+    });
 
-        const csv = rows
-            .map((row) => row.map((cell) => csvCell(cell as string | number | null)).join(","))
-            .join("\n");
+    const previousStart = currentStart - duration;
+    const previousEnd = currentStart - 1;
 
-        const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-        const url = URL.createObjectURL(blob);
-        const anchor = document.createElement("a");
-        anchor.href = url;
-        anchor.download = `smartdirect-instagram-report-${from}-${to}.csv`;
-        document.body.appendChild(anchor);
-        anchor.click();
-        anchor.remove();
-        URL.revokeObjectURL(url);
-    }, [data, from, report, to]);
+    const previous = data.snapshots.filter((item) => {
+      const timestamp = new Date(item.snapshotDate).getTime();
+      return timestamp >= previousStart && timestamp <= previousEnd;
+    });
 
-    const invalidRange = !from || !to || startOfDay(from) > endOfDay(to);
+    const currentMetrics = Object.fromEntries(
+      metrics.map(({ key }) => [key, sum(current, key)]),
+    ) as Record<MetricKey, number>;
 
-    return (
-        <section id="advanced-analytics" dir="rtl" className="scroll-mt-24 space-y-5">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                <div>
-                    <div className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.18em] text-slate-400">
-                        <BarChart3 size={14} />
-                        ADVANCED REPORTS
-                    </div>
-                    <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
-                        گزارش پیشرفته عملکرد
-                    </h2>
-                    <p className="mt-1.5 text-sm leading-6 text-slate-500">
-                        بازه دلخواه را انتخاب کنید، با دوره قبل مقایسه کنید و گزارش CSV بگیرید.
-                    </p>
+    const previousMetrics = Object.fromEntries(
+      metrics.map(({ key }) => [key, sum(previous, key)]),
+    ) as Record<MetricKey, number>;
+
+    return {
+      current,
+      previous,
+      currentMetrics,
+      previousMetrics,
+    };
+  }, [data, from, to]);
+
+  function exportCsv() {
+    if (!report || !data) return;
+
+    const rows = [
+      ["SmartDirect Instagram Report"],
+      ["Account", "@" + data.account.username],
+      ["From", from],
+      ["To", to],
+      [],
+      ["Metric", "Current", "Previous", "Change"],
+      ...metrics.map(({ key, label }) => [
+        label,
+        report.currentMetrics[key],
+        report.previousMetrics[key],
+        change(report.currentMetrics[key], report.previousMetrics[key]) ?? "",
+      ]),
+    ];
+
+    const csv = rows
+      .map((row) =>
+        row
+          .map((cell) => '"' + String(cell).replace(/"/g, '""') + '"')
+          .join(","),
+      )
+      .join("\n");
+
+    const blob = new Blob(["\uFEFF" + csv], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+
+    anchor.href = url;
+    anchor.download = "smartdirect-report-" + from + "-" + to + ".csv";
+    anchor.click();
+
+    URL.revokeObjectURL(url);
+  }
+
+  return (
+    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+      <div className="border-b border-slate-100 px-5 py-5 sm:px-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-xs font-medium text-slate-400">گزارش‌ها</p>
+            <h2 className="mt-1 text-lg font-bold tracking-tight text-slate-950">
+              گزارش عملکرد پیج
+            </h2>
+            <p className="mt-1 text-xs leading-6 text-slate-500">
+              بازه موردنظر را انتخاب کنید و نتیجه را با دوره قبل مقایسه کنید.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 sm:flex">
+            {accounts.length > 1 && (
+              <select
+                value={accountId}
+                onChange={(event) => setAccountId(event.target.value)}
+                className="h-10 col-span-2 rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 outline-none sm:col-span-1 sm:min-w-[150px]"
+              >
+                {accounts.map((account) => (
+                  <option key={account.id} value={account.id}>
+                    @{account.username}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            <label className="rounded-lg border border-slate-200 bg-white px-3 py-1.5">
+              <span className="block text-[9px] text-slate-400">از</span>
+              <input
+                type="date"
+                value={from}
+                max={to}
+                onChange={(event) => setFrom(event.target.value)}
+                className="mt-0.5 w-full bg-transparent text-[11px] font-medium text-slate-700 outline-none"
+              />
+            </label>
+
+            <label className="rounded-lg border border-slate-200 bg-white px-3 py-1.5">
+              <span className="block text-[9px] text-slate-400">تا</span>
+              <input
+                type="date"
+                value={to}
+                min={from}
+                onChange={(event) => setTo(event.target.value)}
+                className="mt-0.5 w-full bg-transparent text-[11px] font-medium text-slate-700 outline-none"
+              />
+            </label>
+
+            <button
+              type="button"
+              onClick={() => void load()}
+              disabled={loading || !accountId}
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+            >
+              <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+              بروزرسانی
+            </button>
+
+            <button
+              type="button"
+              onClick={exportCsv}
+              disabled={!report}
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-slate-950 px-3 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:opacity-40"
+            >
+              <Download size={14} />
+              CSV
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {error && (
+        <div className="mx-5 mt-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700 sm:mx-6">
+          {error}
+        </div>
+      )}
+
+      {loading && !data ? (
+        <div className="p-5 sm:p-6">
+          <div className="h-10 w-56 animate-pulse rounded-lg bg-slate-100" />
+          <div className="mt-4 h-64 animate-pulse rounded-xl bg-slate-100" />
+        </div>
+      ) : report ? (
+        <div className="p-4 sm:p-5 lg:p-6">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            {metrics.map(({ key, label }) => {
+              const current = report.currentMetrics[key];
+              const previous = report.previousMetrics[key];
+
+              return (
+                <div
+                  key={key}
+                  className="rounded-xl border border-slate-200 p-4"
+                >
+                  <p className="text-xs text-slate-400">{label}</p>
+                  <p className="mt-2 text-xl font-bold tracking-tight text-slate-950">
+                    {number(current)}
+                  </p>
+                  <div className="mt-2 flex items-center justify-between gap-2">
+                    <span className="text-[10px] text-slate-400">
+                      دوره قبل: {number(previous)}
+                    </span>
+                    <ChangeBadge value={change(current, previous)} />
+                  </div>
                 </div>
+              );
+            })}
+          </div>
 
-                <div className="flex flex-wrap items-end gap-2">
-                    <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2">
-                        <label className="block text-[10px] text-slate-400">از تاریخ</label>
-                        <input
-                            type="date"
-                            value={from}
-                            max={to || undefined}
-                            onChange={(event) => setFrom(event.target.value)}
-                            className="mt-1 bg-transparent text-xs font-medium text-slate-800 outline-none"
-                        />
-                    </div>
-                    <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2">
-                        <label className="block text-[10px] text-slate-400">تا تاریخ</label>
-                        <input
-                            type="date"
-                            value={to}
-                            min={from || undefined}
-                            max={toInputDate(today)}
-                            onChange={(event) => setTo(event.target.value)}
-                            className="mt-1 bg-transparent text-xs font-medium text-slate-800 outline-none"
-                        />
-                    </div>
-                    <select
-                        value={accountId}
-                        onChange={(event) => setAccountId(event.target.value)}
-                        disabled={loadingAccounts || !accounts.length}
-                        className="h-[58px] min-w-[150px] rounded-2xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-800 outline-none"
-                        aria-label="انتخاب پیج برای گزارش"
-                    >
-                        {accounts.map((account) => (
-                            <option key={account.id} value={account.id}>
-                                @{account.username}
-                            </option>
-                        ))}
-                    </select>
-                    <button
-                        type="button"
-                        onClick={() => accountId && load(accountId)}
-                        disabled={loading || !accountId}
-                        className="inline-flex h-[58px] items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                        <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
-                        بروزرسانی
-                    </button>
-                    <button
-                        type="button"
-                        onClick={exportCsv}
-                        disabled={!report || invalidRange}
-                        className="inline-flex h-[58px] items-center gap-2 rounded-2xl bg-slate-950 px-4 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
-                    >
-                        <Download size={15} />
-                        خروجی CSV
-                    </button>
-                </div>
+          <div className="mt-4 overflow-hidden rounded-xl border border-slate-200">
+            <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-4">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-50 text-slate-500">
+                <FileBarChart size={17} />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-950">
+                  جزئیات بازه
+                </h3>
+                <p className="mt-0.5 text-[10px] text-slate-400">
+                  {report.current.length} روز داده در بازه انتخابی
+                </p>
+              </div>
             </div>
 
-            {error && (
-                <div className="flex items-center justify-between gap-4 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
-                    <span>{error}</span>
-                    <button type="button" onClick={() => accountId && load(accountId)} className="inline-flex items-center gap-1.5 font-medium hover:underline">
-                        <RefreshCw size={14} />
-                        تلاش مجدد
-                    </button>
-                </div>
+            {report.current.length === 0 ? (
+              <div className="px-5 py-12 text-center text-sm text-slate-400">
+                برای این بازه داده‌ای ثبت نشده است.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[700px] text-right text-xs">
+                  <thead className="bg-slate-50 text-slate-400">
+                    <tr>
+                      <th className="px-4 py-3 font-medium">تاریخ</th>
+                      {metrics.slice(0, 4).map((metric) => (
+                        <th key={metric.key} className="px-4 py-3 font-medium">
+                          {metric.label}
+                        </th>
+                      ))}
+                      <th className="px-4 py-3 font-medium">فالوور</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {[...report.current].reverse().map((snapshot) => (
+                      <tr key={snapshot.id} className="text-slate-700">
+                        <td className="px-4 py-3 font-medium text-slate-800">
+                          {date(snapshot.snapshotDate)}
+                        </td>
+                        {metrics.slice(0, 4).map((metric) => (
+                          <td key={metric.key} className="px-4 py-3">
+                            {number(snapshot[metric.key])}
+                          </td>
+                        ))}
+                        <td className="px-4 py-3">
+                          {number(snapshot.followerCount)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
-
-            {invalidRange && (
-                <div className="rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                    بازه انتخاب‌شده معتبر نیست. تاریخ شروع باید قبل از تاریخ پایان باشد.
-                </div>
-            )}
-
-            {loading && !data && (
-                <div className="rounded-[26px] border border-slate-200 bg-white px-6 py-16 text-center text-sm text-slate-400">
-                    در حال آماده‌سازی گزارش...
-                </div>
-            )}
-
-            {report && !invalidRange && (
-                <>
-                    <div className="overflow-hidden rounded-[24px] border border-slate-200/80 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.03)]">
-                        <div className="border-b border-slate-100 px-5 py-4 sm:px-6">
-                            <p className="text-sm font-bold text-slate-900">مقایسه با دوره قبل</p>
-                            <p className="mt-1 text-xs text-slate-400">در این بخش فقط تغییرات دوره‌ای نمایش داده می‌شود تا آمار خام عملکرد پیج دوباره تکرار نشود.</p>
-                        </div>
-                        <div className="overflow-x-auto">
-                            <table className="min-w-[720px] w-full text-right text-xs">
-                                <thead className="bg-slate-50 text-slate-400">
-                                    <tr>
-                                        <th className="px-5 py-3 font-medium">شاخص</th>
-                                        <th className="px-5 py-3 font-medium">بازه انتخابی</th>
-                                        <th className="px-5 py-3 font-medium">دوره قبل</th>
-                                        <th className="px-5 py-3 font-medium">تغییر</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100">
-                                    {METRICS.map(({ key, title }) => {
-                                        const current = report.currentMetrics[key];
-                                        const previous = report.previousMetrics[key];
-                                        const change = changePercent(current, previous);
-                                        const positive = change == null || change >= 0;
-                                        const Icon = positive ? TrendingUp : TrendingDown;
-                                        return (
-                                            <tr key={key} className="text-slate-700">
-                                                <td className="px-5 py-3 font-medium">{title}</td>
-                                                <td className="px-5 py-3">{formatNumber(current)}</td>
-                                                <td className="px-5 py-3">{formatNumber(previous)}</td>
-                                                <td className="px-5 py-3">
-                                                    <span className={change == null ? "text-slate-400" : positive ? "inline-flex items-center gap-1 font-semibold text-emerald-600" : "inline-flex items-center gap-1 font-semibold text-red-600"}>
-                                                        {change == null ? "—" : <><Icon size={13} /> {formatPercent(change)}</>}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                    <tr className="text-slate-700">
-                                        <td className="px-5 py-3 font-medium">رشد فالوئر</td>
-                                        <td className="px-5 py-3">{formatNumber(report.follower)}</td>
-                                        <td className="px-5 py-3">{formatNumber(report.previousFollower)}</td>
-                                        <td className="px-5 py-3">{formatPercent(changePercent(report.follower, report.previousFollower))}</td>
-                                    </tr>
-                                    <tr className="text-slate-700">
-                                        <td className="px-5 py-3 font-medium">نرخ تعامل</td>
-                                        <td className="px-5 py-3">{formatPercent(report.currentEngagementRate)}</td>
-                                        <td className="px-5 py-3">{formatPercent(report.previousEngagementRate)}</td>
-                                        <td className="px-5 py-3">{formatPercent(changePercent(report.currentEngagementRate, report.previousEngagementRate))}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </>
-            )}
-        </section>
-    );
+          </div>
+        </div>
+      ) : (
+        <div className="px-5 py-16 text-center text-sm text-slate-400">
+          برای ساخت گزارش، یک پیج و بازه زمانی انتخاب کنید.
+        </div>
+      )}
+    </section>
+  );
 }
