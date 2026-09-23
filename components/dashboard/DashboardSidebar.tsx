@@ -34,6 +34,7 @@ const menuGroups = [
       { title: "پروفایل پیج", href: "/dashboard/profile", icon: UserRound },
       { title: "تحلیل پیج", href: "/dashboard/insights", icon: BarChart3 },
       { title: "گزارش‌ها", href: "/dashboard/reports", icon: FileBarChart },
+      { title: "تحلیل محتوا", href: "/dashboard/content-analytics", icon: BarChart3 },
       { title: "اکانت‌های متصل", href: "/dashboard/accounts", icon: UsersRound },
     ],
   },
