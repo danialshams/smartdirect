@@ -46,11 +46,9 @@ export default function DashboardAccountsClient({
         }
 
         const list = Array.isArray(result.accounts)
-          ? result.accounts.map((account: Account & { createdAt?: string }) => ({
+          ? result.accounts.map((account: Omit<Account, "createdAt"> & { createdAt?: string }) => ({
               ...account,
-              createdAt: account.createdAt
-                ? new Date(account.createdAt)
-                : new Date(),
+              createdAt: account.createdAt ? new Date(account.createdAt) : new Date(),
             }))
           : [];
 
