@@ -150,10 +150,14 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const { searchParams } = new URL(request.url);
+    const requestedAccountId = searchParams.get("accountId");
+
     const instagramAccount = await prisma.instagramAccount.findFirst({
       where: {
         userId: session.user.id,
         isConnected: true,
+        ...(requestedAccountId ? { id: requestedAccountId } : {}),
       },
       orderBy: {
         updatedAt: "desc",
@@ -247,9 +251,7 @@ export async function GET(request: NextRequest) {
     }
 
     const values = {
-      reach: getMetricValue(metrics, "reach"),
       views: getMetricValue(metrics, "views"),
-      accountsEngaged: getMetricValue(metrics, "accounts_engaged"),
       totalInteractions: getMetricValue(metrics, "total_interactions"),
       follows: followValues.follows,
       unfollows: followValues.unfollows,
@@ -297,9 +299,7 @@ export async function GET(request: NextRequest) {
       create: {
         instagramAccountId: instagramAccount.id,
         snapshotDate,
-        reach: values.reach,
         views: values.views,
-        accountsEngaged: values.accountsEngaged,
         totalInteractions: values.totalInteractions,
         follows: values.follows,
         unfollows: values.unfollows,
