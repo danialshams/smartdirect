@@ -10,8 +10,10 @@ import {
   UserPlus,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { DayPicker } from "react-day-picker/persian";
-import type { DateRange } from "react-day-picker";
+import { Calendar } from "react-multi-date-picker";
+import DateObject from "react-date-object";
+import persian from "react-date-object/calendars/persian";
+import persian_fa from "react-date-object/locales/persian_fa";
 import {
   CartesianGrid,
   Line,
@@ -23,12 +25,7 @@ import {
 } from "recharts";
 
 type RangePreset = 7 | 30 | 90 | "custom";
-type Metric =
-  | "views"
-  | "totalInteractions"
-  | "follows"
-  | "unfollows"
-  | "followerCount";
+type Metric = "views" | "totalInteractions" | "follows" | "unfollows";
 
 type Account = {
   id: string;
@@ -44,7 +41,7 @@ type Snapshot = {
   totalInteractions: number | null;
   follows: number | null;
   unfollows: number | null;
-  followerCount: number | null;
+  followerCount?: number | null;
 };
 
 type Data = {
@@ -60,8 +57,8 @@ type Data = {
     totalInteractions: number;
     follows: number | null;
     unfollows: number | null;
-    followerCount: number;
-    followerGrowth: number;
+    followerCount?: number;
+    followerGrowth?: number;
   };
   latest: Snapshot | null;
   snapshots: Snapshot[];
@@ -77,15 +74,13 @@ const metricLabels: Record<Metric, string> = {
   totalInteractions: "تعاملات",
   follows: "فالو",
   unfollows: "آنفالو",
-  followerCount: "تعداد فالوورها",
 };
 
 const metricDescriptions: Record<Metric, string> = {
-  views: "تعداد دفعات مشاهده محتوا که Meta در Insights ثبت کرده است",
+  views: "تعداد دفعات مشاهده ثبت‌شده توسط Meta",
   totalInteractions: "مجموع تعاملات ثبت‌شده توسط Meta",
   follows: "فالوهای ثبت‌شده در بازه",
   unfollows: "آنفالوهای ثبت‌شده در بازه",
-  followerCount: "تعداد فالوور در زمان ثبت Snapshot",
 };
 
 function formatNumber(value: number | null | undefined) {
@@ -135,52 +130,49 @@ function RangeCalendar({
   onChange,
   onClose,
 }: {
-  range: DateRange;
-  onChange: (range: DateRange | undefined) => void;
+  range: { from?: Date; to?: Date };
+  onChange: (range: { from: Date; to: Date } | undefined) => void;
   onClose: () => void;
 }) {
+  const initialValue = [
+    range.from ? new DateObject(range.from).convert(persian) : null,
+    range.to ? new DateObject(range.to).convert(persian) : null,
+  ].filter((value): value is DateObject => Boolean(value));
+
+  const today = new DateObject({ calendar: persian });
+  const minDate = new DateObject({ calendar: persian }).subtract(365, "days");
+
   return (
-    <div className="absolute left-0 top-[calc(100%+10px)] z-40 w-[min(92vw,360px)] rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_24px_70px_rgba(15,23,42,0.14)]">
-      <DayPicker
-        mode="range"
-        selected={range}
-        onSelect={onChange}
-        defaultMonth={range.from}
-        disabled={{ after: new Date() }}
-        max={365}
-        captionLayout="dropdown"
-        fromYear={new Date().getFullYear() - 1}
-        toYear={new Date().getFullYear()}
-        dir="rtl"
-        className="mx-auto"
-        showOutsideDays
+    <div className="absolute left-0 top-[calc(100%+10px)] z-40 w-[min(94vw,390px)] rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_24px_70px_rgba(15,23,42,0.14)]">
+      <Calendar
+        range
+        rangeHover
+        value={initialValue}
+        calendar={persian}
+        locale={persian_fa}
+        minDate={minDate}
+        maxDate={today}
+        showOtherDays
+        onChange={(selected) => {
+          if (!selected || selected.length < 2) return;
+
+          const from = selected[0].toDate();
+          const to = selected[1].toDate();
+          const start = from <= to ? from : to;
+          const end = from <= to ? to : from;
+
+          onChange({ from: start, to: end });
+          onClose();
+        }}
       />
       <div className="mt-2 border-t border-slate-100 pt-3">
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-[10px] text-slate-400">بازه انتخاب‌شده</p>
-            <p className="mt-1 truncate text-xs font-semibold text-slate-800">
-              {range.from && range.to
-                ? formatDate(range.from.toISOString()) +
-                  " تا " +
-                  formatDate(range.to.toISOString())
-                : "تاریخ پایان را انتخاب کنید"}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={!range.from || !range.to}
-            className="shrink-0 rounded-lg bg-slate-950 px-3 py-2 text-[11px] font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            اعمال
-          </button>
-        </div>
+        <p className="text-[10px] text-slate-400">
+          ابتدا روز شروع و سپس روز پایان را انتخاب کنید.
+        </p>
       </div>
     </div>
   );
 }
-
 function MetricCard({
   label,
   value,
@@ -234,7 +226,7 @@ export default function InstagramInsights({
   const today = useMemo(() => new Date(), []);
   const [accountId, setAccountId] = useState(externalAccountId || "");
   const [preset, setPreset] = useState<RangePreset>(30);
-  const [range, setRange] = useState<DateRange>({
+  const [range, setRange] = useState<{ from?: Date; to?: Date }>({
     from: addDays(today, -29),
     to: today,
   });
@@ -359,20 +351,20 @@ export default function InstagramInsights({
     setCalendarOpen(false);
   }
 
-  function selectCustomRange(next: DateRange | undefined) {
-    if (next) setRange(next);
+  function selectCustomRange(next: { from: Date; to: Date } | undefined) {
+    if (!next?.from || !next.to) return;
+
+    const days =
+      Math.floor(
+        (new Date(toIsoDate(next.to)).getTime() -
+          new Date(toIsoDate(next.from)).getTime()) /
+          86400000,
+      ) + 1;
+
+    if (days > 365) return;
+
+    setRange(next);
     setPreset("custom");
-
-    if (next?.from && next.to) {
-      const days =
-        Math.floor(
-          (new Date(toIsoDate(next.to)).getTime() -
-            new Date(toIsoDate(next.from)).getTime()) /
-            86400000,
-        ) + 1;
-
-      if (days > 365) return;
-    }
   }
 
   const chartData = useMemo(
