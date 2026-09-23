@@ -6,6 +6,7 @@ import {
   FileBarChart,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import PersianDateSelect from "./PersianDateSelect";
 
 type Snapshot = {
   id: string;
@@ -287,27 +288,8 @@ export default function AdvancedAnalyticsReports({ accountId: externalAccountId 
 
           <div className="grid grid-cols-2 gap-2 sm:flex">
 
-            <label className="rounded-lg border border-slate-200 bg-white px-3 py-1.5">
-              <span className="block text-[9px] text-slate-400">از</span>
-              <input
-                type="date"
-                value={from}
-                max={to}
-                onChange={(event) => setFrom(event.target.value)}
-                className="mt-0.5 w-full bg-transparent text-[11px] font-medium text-slate-700 outline-none"
-              />
-            </label>
-
-            <label className="rounded-lg border border-slate-200 bg-white px-3 py-1.5">
-              <span className="block text-[9px] text-slate-400">تا</span>
-              <input
-                type="date"
-                value={to}
-                min={from}
-                onChange={(event) => setTo(event.target.value)}
-                className="mt-0.5 w-full bg-transparent text-[11px] font-medium text-slate-700 outline-none"
-              />
-            </label>
+            <PersianDateSelect value={from} onChange={setFrom} label="از" />
+            <PersianDateSelect value={to} onChange={setTo} label="تا" />
 
 
           </div>
