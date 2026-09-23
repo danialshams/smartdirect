@@ -10,12 +10,21 @@ export const dynamic = "force-dynamic";
 const INSTAGRAM_API_VERSION = "v26.0";
 const REQUEST_TIMEOUT_MS = 15000;
 
-const INSIGHT_METRICS = [
+const CORE_INSIGHT_METRICS = [
   "reach",
   "views",
   "accounts_engaged",
   "total_interactions",
 ] as const;
+
+const ADVANCED_INSIGHT_METRICS = [
+  "follows_and_unfollows",
+  "profile_links_taps",
+] as const;
+
+type InsightMetricName =
+  | (typeof CORE_INSIGHT_METRICS)[number]
+  | (typeof ADVANCED_INSIGHT_METRICS)[number];
 
 type InsightMetricName = (typeof INSIGHT_METRICS)[number];
 
@@ -103,6 +112,26 @@ function getMetricValue(
   return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
+function getFollowValues(metrics: InstagramInsightMetric[]) {
+  const metric = metrics.find((item) => item.name === "follows_and_unfollows");
+  const value = metric?.values?.[metric.values.length - 1]?.value;
+
+  if (!value || typeof value !== "object") {
+    return { follows: null, unfollows: null };
+  }
+
+  return {
+    follows:
+      typeof value.follows === "number" && Number.isFinite(value.follows)
+        ? value.follows
+        : null,
+    unfollows:
+      typeof value.unfollows === "number" && Number.isFinite(value.unfollows)
+        ? value.unfollows
+        : null,
+  };
+}
+
 function getSnapshotDate(): Date {
   const now = new Date();
 
@@ -159,7 +188,7 @@ export async function GET() {
       `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${instagramAccount.igUserId}/insights`,
     );
 
-    insightsUrl.searchParams.set("metric", INSIGHT_METRICS.join(","));
+    insightsUrl.searchParams.set("metric", CORE_INSIGHT_METRICS.join(","));
 
     insightsUrl.searchParams.set("period", "day");
     insightsUrl.searchParams.set("metric_type", "total_value");
@@ -190,11 +219,51 @@ export async function GET() {
 
     const metrics = insightsData.data;
 
+    const followValues = { follows: null as number | null, unfollows: null as number | null };
+    let profileLinksTaps: number | null = null;
+
+    try {
+      const advancedUrl = new URL(insightsUrl.toString());
+      advancedUrl.searchParams.set(
+        "metric",
+        ADVANCED_INSIGHT_METRICS.join(","),
+      );
+
+      const {
+        response: advancedResponse,
+        data: advancedData,
+      } = await fetchInstagram<InstagramInsightsResponse>(advancedUrl.toString());
+
+      if (advancedResponse.ok && advancedData.data) {
+        const parsedFollows = getFollowValues(advancedData.data);
+        followValues.follows = parsedFollows.follows;
+        followValues.unfollows = parsedFollows.unfollows;
+        profileLinksTaps = getMetricValue(
+          advancedData.data,
+          "profile_links_taps",
+        );
+      } else {
+        console.warn("[Instagram Insights] Advanced metrics unavailable:", {
+          status: advancedResponse.status,
+          accountId: instagramAccount.id,
+          error: advancedData.error,
+        });
+      }
+    } catch (error) {
+      console.warn("[Instagram Insights] Advanced metrics request failed:", {
+        accountId: instagramAccount.id,
+        error,
+      });
+    }
+
     const values = {
       reach: getMetricValue(metrics, "reach"),
       views: getMetricValue(metrics, "views"),
       accountsEngaged: getMetricValue(metrics, "accounts_engaged"),
       totalInteractions: getMetricValue(metrics, "total_interactions"),
+      follows: followValues.follows,
+      unfollows: followValues.unfollows,
+      profileLinksTaps,
     };
 
     let followerCount: number | null = null;
@@ -243,6 +312,9 @@ export async function GET() {
         views: values.views,
         accountsEngaged: values.accountsEngaged,
         totalInteractions: values.totalInteractions,
+        follows: values.follows,
+        unfollows: values.unfollows,
+        profileLinksTaps: values.profileLinksTaps,
         followerCount,
       },
       update: {
@@ -250,6 +322,9 @@ export async function GET() {
         views: values.views,
         accountsEngaged: values.accountsEngaged,
         totalInteractions: values.totalInteractions,
+        follows: values.follows,
+        unfollows: values.unfollows,
+        profileLinksTaps: values.profileLinksTaps,
         followerCount,
       },
     });
