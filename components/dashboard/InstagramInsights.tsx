@@ -1,10 +1,39 @@
 "use client";
 
-import { BarChart3, Eye, Users } from "lucide-react";
+import {
+  BarChart3,
+  CalendarDays,
+  ChevronDown,
+  Eye,
+  Link2,
+  RefreshCw,
+  UserMinus,
+  UserPlus,
+  Users,
+} from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { DayPicker } from "react-day-picker/persian";
+import type { DateRange } from "react-day-picker";
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
-type Range = 7 | 30 | 90;
-type Metric = "reach" | "accountsEngaged";
+type RangePreset = 7 | 30 | 90 | "custom";
+type Metric =
+  | "reach"
+  | "views"
+  | "accountsEngaged"
+  | "totalInteractions"
+  | "follows"
+  | "unfollows"
+  | "profileLinksTaps"
+  | "followerCount";
 
 type Account = {
   id: string;
@@ -29,14 +58,19 @@ type Snapshot = {
 type Data = {
   success: boolean;
   account: Account;
+  period: {
+    days: number;
+    from: string;
+    to: string;
+  };
   summary: {
     reach: number;
     views: number;
     accountsEngaged: number;
     totalInteractions: number;
-    follows: number;
-    unfollows: number;
-    profileLinksTaps: number;
+    follows: number | null;
+    unfollows: number | null;
+    profileLinksTaps: number | null;
     followerCount: number;
     followerGrowth: number;
     engagementRate: number | null;
@@ -45,127 +79,122 @@ type Data = {
   snapshots: Snapshot[];
 };
 
-const nf = new Intl.NumberFormat("fa-IR");
-const pf = new Intl.NumberFormat("fa-IR", { maximumFractionDigits: 2 });
+const numberFormatter = new Intl.NumberFormat("fa-IR");
+const percentFormatter = new Intl.NumberFormat("fa-IR", {
+  maximumFractionDigits: 2,
+});
 
-function number(value: number | null | undefined) {
-  return value == null ? "—" : nf.format(Math.round(value));
+const metricLabels: Record<Metric, string> = {
+  reach: "دسترسی",
+  views: "بازدید",
+  accountsEngaged: "اکانت‌های درگیر",
+  totalInteractions: "تعاملات",
+  follows: "فالو",
+  unfollows: "آنفالو",
+  profileLinksTaps: "کلیک‌های پروفایل",
+  followerCount: "تعداد فالوورها",
+};
+
+const metricDescriptions: Record<Metric, string> = {
+  reach: "تعداد اکانت‌های رسیده در هر روز",
+  views: "تعداد بازدیدهای ثبت‌شده در هر روز",
+  accountsEngaged: "اکانت‌هایی که با محتوا تعامل داشته‌اند",
+  totalInteractions: "مجموع تعاملات ثبت‌شده",
+  follows: "فالوهای ثبت‌شده در روز",
+  unfollows: "آنفالوهای ثبت‌شده در روز",
+  profileLinksTaps: "تپ روی آدرس، تماس، ایمیل یا پیام پروفایل",
+  followerCount: "تعداد فالوور در زمان ثبت Snapshot",
+};
+
+function formatNumber(value: number | null | undefined) {
+  return value == null ? "—" : numberFormatter.format(Math.round(value));
 }
 
-function percent(value: number | null | undefined) {
-  return value == null || !Number.isFinite(value) ? "—" : pf.format(value) + "٪";
+function formatPercent(value: number | null | undefined) {
+  return value == null || !Number.isFinite(value)
+    ? "—"
+    : percentFormatter.format(value) + "٪";
 }
 
-function date(value: string) {
+function formatDate(value: string) {
+  return new Intl.DateTimeFormat("fa-IR", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  }).format(new Date(value));
+}
+
+function formatShortDate(value: string) {
   return new Intl.DateTimeFormat("fa-IR", {
     month: "short",
     day: "numeric",
   }).format(new Date(value));
 }
 
-function metricValue(snapshot: Snapshot, metric: Metric) {
-  return metric === "reach" ? snapshot.reach ?? 0 : snapshot.accountsEngaged ?? 0;
+function toIsoDate(value: Date) {
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, "0");
+  const day = String(value.getDate()).padStart(2, "0");
+  return year + "-" + month + "-" + day;
 }
 
-function LineChart({ snapshots, metric }: { snapshots: Snapshot[]; metric: Metric }) {
-  const width = 900;
-  const height = 260;
-  const paddingX = 20;
-  const paddingY = 24;
+function fromIsoDate(value: string) {
+  return new Date(value + "T12:00:00");
+}
 
-  const points = useMemo(() => {
-    if (!snapshots.length) return [];
-    const values = snapshots.map((item) => metricValue(item, metric));
-    const max = Math.max(...values, 1);
-    const min = Math.min(...values, 0);
-    const range = Math.max(max - min, 1);
+function addDays(value: Date, days: number) {
+  const next = new Date(value);
+  next.setDate(next.getDate() + days);
+  return next;
+}
 
-    return snapshots.map((item, index) => ({
-      x:
-        snapshots.length === 1
-          ? width / 2
-          : paddingX + (index / (snapshots.length - 1)) * (width - paddingX * 2),
-      y:
-        height -
-        paddingY -
-        ((metricValue(item, metric) - min) / range) * (height - paddingY * 2),
-      date: item.snapshotDate,
-    }));
-  }, [metric, snapshots]);
+function metricValue(snapshot: Snapshot, metric: Metric) {
+  return snapshot[metric];
+}
 
-  if (!points.length) {
-    return (
-      <div className="flex h-[260px] items-center justify-center rounded-xl border border-dashed border-slate-200 text-sm text-slate-400">
-        هنوز داده تاریخی برای این بازه ثبت نشده است.
-      </div>
-    );
-  }
-
-  const line = points
-    .map((point, index) => (index ? "L " : "M ") + point.x.toFixed(2) + " " + point.y.toFixed(2))
-    .join(" ");
-
-  const area =
-    line +
-    " L " +
-    points.at(-1)!.x.toFixed(2) +
-    " " +
-    (height - paddingY) +
-    " L " +
-    points[0].x.toFixed(2) +
-    " " +
-    (height - paddingY) +
-    " Z";
-
-  const labels = Array.from(
-    new Set([0, Math.floor((points.length - 1) / 2), points.length - 1]),
-  );
-
+function RangeCalendar({
+  range,
+  onChange,
+  onClose,
+}: {
+  range: DateRange;
+  onChange: (range: DateRange | undefined) => void;
+  onClose: () => void;
+}) {
   return (
-    <div className="overflow-x-auto">
-      <svg viewBox={"0 0 " + width + " " + height} className="h-[260px] min-w-[620px] w-full" role="img">
-        {[0.25, 0.5, 0.75].map((ratio) => (
-          <line
-            key={ratio}
-            x1={paddingX}
-            x2={width - paddingX}
-            y1={height * ratio}
-            y2={height * ratio}
-            stroke="currentColor"
-            className="text-slate-100"
-          />
-        ))}
-        <path d={area} fill="currentColor" className="text-blue-50" />
-        <path
-          d={line}
-          fill="none"
-          stroke="currentColor"
-          className="text-[#2563eb]"
-          strokeWidth="2.5"
-          vectorEffect="non-scaling-stroke"
-        />
-        {points.map((point) => (
-          <circle
-            key={point.date}
-            cx={point.x}
-            cy={point.y}
-            r="3.5"
-            fill="currentColor"
-            className="text-[#2563eb]"
-          />
-        ))}
-        {labels.map((index) => (
-          <text
-            key={points[index].date}
-            x={points[index].x}
-            y={height - 4}
-            textAnchor={index === 0 ? "start" : index === points.length - 1 ? "end" : "middle"}
-            className="fill-slate-400 text-[11px]"
+    <div className="absolute left-0 top-[calc(100%+10px)] z-40 w-[min(92vw,360px)] rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_24px_70px_rgba(15,23,42,0.14)]">
+      <DayPicker
+        mode="range"
+        selected={range}
+        onSelect={onChange}
+        defaultMonth={range.from}
+        disabled={{ after: new Date() }}
+        dir="rtl"
+        className="mx-auto"
+        showOutsideDays
+      />
+      <div className="mt-2 border-t border-slate-100 pt-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[10px] text-slate-400">بازه انتخاب‌شده</p>
+            <p className="mt-1 truncate text-xs font-semibold text-slate-800">
+              {range.from && range.to
+                ? formatDate(range.from.toISOString()) +
+                  " تا " +
+                  formatDate(range.to.toISOString())
+                : "تاریخ پایان را انتخاب کنید"}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={!range.from || !range.to}
+            className="shrink-0 rounded-lg bg-slate-950 px-3 py-2 text-[11px] font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {date(points[index].date)}
-          </text>
-        ))}
-      </svg>
+            اعمال
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -182,49 +211,68 @@ function MetricCard({
   icon: typeof BarChart3;
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
-      <div className="flex items-center justify-between gap-3">
-        <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-50 text-slate-500">
-          <Icon size={17} strokeWidth={1.8} />
+    <div className="min-w-0 rounded-xl border border-slate-200 bg-white p-3.5 sm:p-4">
+      <div className="flex items-start justify-between gap-2">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-50 text-slate-500">
+          <Icon size={16} strokeWidth={1.8} />
         </span>
-        <span className="text-[10px] text-slate-400">{helper}</span>
+        <span className="text-right text-[9px] leading-4 text-slate-400">{helper}</span>
       </div>
-      <p className="mt-4 text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">{value}</p>
-      <p className="mt-1 text-xs text-slate-500">{label}</p>
+      <p className="mt-3 truncate text-lg font-bold tracking-tight text-slate-950 sm:text-xl">
+        {value}
+      </p>
+      <p className="mt-1 truncate text-[11px] text-slate-500">{label}</p>
     </div>
   );
 }
 
-function MiniStat({ label, value }: { label: string; value: string }) {
+function RateCard({
+  label,
+  value,
+  helper,
+}: {
+  label: string;
+  value: string;
+  helper: string;
+}) {
   return (
-    <div className="rounded-xl bg-slate-50 px-4 py-3">
+    <div className="min-w-0 rounded-xl bg-slate-50 px-3.5 py-3">
       <p className="text-[10px] text-slate-400">{label}</p>
-      <p className="mt-1 text-sm font-bold text-slate-800">{value}</p>
+      <p className="mt-1 text-base font-bold text-slate-900">{value}</p>
+      <p className="mt-0.5 truncate text-[9px] text-slate-400">{helper}</p>
     </div>
   );
 }
 
-export default function InstagramInsights({ accountId: externalAccountId }: { accountId?: string }) {
-  const [accounts, setAccounts] = useState<Account[]>([]);
+export default function InstagramInsights({
+  accountId: externalAccountId,
+}: {
+  accountId?: string;
+}) {
+  const today = useMemo(() => new Date(), []);
   const [accountId, setAccountId] = useState(externalAccountId || "");
-  const [range, setRange] = useState<Range>(7);
+  const [preset, setPreset] = useState<RangePreset>(30);
+  const [range, setRange] = useState<DateRange>({
+    from: addDays(today, -29),
+    to: today,
+  });
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const [metric, setMetric] = useState<Metric>("reach");
   const [data, setData] = useState<Data | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const loadAccounts = useCallback(async () => {
-    const response = await fetch("/api/instagram/accounts", { cache: "no-store" });
-    const result = await response.json();
-    if (!response.ok || !result.success) throw new Error(result.error || "خطا در دریافت اکانت‌ها");
+  const effectiveRange = useMemo(() => {
+    if (!range.from || !range.to) return null;
 
-    const list = Array.isArray(result.accounts) ? (result.accounts as Account[]) : [];
-    setAccounts(list);
-    if (!accountId) setAccountId(list.find((item) => item.isConnected)?.id || "");
-  }, [accountId]);
+    return {
+      from: toIsoDate(range.from),
+      to: toIsoDate(range.to),
+    };
+  }, [range]);
 
   const load = useCallback(async () => {
-    if (!accountId) {
+    if (!accountId || !effectiveRange) {
       setData(null);
       setLoading(false);
       return;
@@ -233,31 +281,39 @@ export default function InstagramInsights({ accountId: externalAccountId }: { ac
     try {
       setLoading(true);
       setError("");
+
       const response = await fetch(
-        "/api/instagram/insights/history?days=" + range + "&accountId=" + encodeURIComponent(accountId),
+        "/api/instagram/insights/history?from=" +
+          encodeURIComponent(effectiveRange.from) +
+          "&to=" +
+          encodeURIComponent(effectiveRange.to) +
+          "&accountId=" +
+          encodeURIComponent(accountId),
         { cache: "no-store" },
       );
+
       const result = await response.json();
-      if (!response.ok || !result.success) throw new Error(result.error || "خطا در دریافت آمار پیج");
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "خطا در دریافت آمار پیج");
+      }
+
       setData(result as Data);
     } catch (requestError) {
       setData(null);
-      setError(requestError instanceof Error ? requestError.message : "خطا در دریافت آمار پیج");
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "خطا در دریافت آمار پیج",
+      );
     } finally {
       setLoading(false);
     }
-  }, [accountId, range]);
+  }, [accountId, effectiveRange]);
 
   useEffect(() => {
-    if (externalAccountId) {
-      setAccountId(externalAccountId);
-      return;
-    }
-    void loadAccounts().catch((requestError) => {
-      setError(requestError instanceof Error ? requestError.message : "خطا در دریافت اکانت‌ها");
-      setLoading(false);
-    });
-  }, [loadAccounts, externalAccountId]);
+    if (externalAccountId) setAccountId(externalAccountId);
+  }, [externalAccountId]);
 
   useEffect(() => {
     void load();
@@ -269,93 +325,383 @@ export default function InstagramInsights({ accountId: externalAccountId }: { ac
     return () => window.removeEventListener("smartdirect:refresh", handler);
   }, [load]);
 
-  const summary = data?.summary;
+  function selectPreset(value: Exclude<RangePreset, "custom">) {
+    setPreset(value);
+    const end = new Date();
+    setRange({
+      from: addDays(end, -(value - 1)),
+      to: end,
+    });
+    setCalendarOpen(false);
+  }
+
+  function selectCustomRange(next: DateRange | undefined) {
+    setRange(next || {});
+    setPreset("custom");
+
+    if (next?.from && next.to) {
+      const days =
+        Math.floor(
+          (new Date(toIsoDate(next.to)).getTime() -
+            new Date(toIsoDate(next.from)).getTime()) /
+            86400000,
+        ) + 1;
+
+      if (days > 365) return;
+    }
+  }
+
+  const chartData = useMemo(
+    () =>
+      (data?.snapshots ?? []).map((snapshot) => ({
+        date: snapshot.snapshotDate,
+        label: formatShortDate(snapshot.snapshotDate),
+        value: metricValue(snapshot, metric),
+      })),
+    [data?.snapshots, metric],
+  );
+
+  const rates = useMemo(() => {
+    if (!data) return null;
+
+    const reach = data.summary.reach;
+    const interactions = data.summary.totalInteractions;
+    const engaged = data.summary.accountsEngaged;
+
+    return {
+      engagementRate:
+        reach > 0 ? (engaged / reach) * 100 : data.summary.engagementRate,
+      interactionRate: reach > 0 ? (interactions / reach) * 100 : null,
+      netFollowerGrowth:
+        data.summary.follows != null && data.summary.unfollows != null
+          ? data.summary.follows - data.summary.unfollows
+          : data.summary.followerGrowth,
+    };
+  }, [data]);
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-      <div className="flex flex-col gap-4 border-b border-slate-100 px-5 py-5 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <p className="text-xs font-medium text-slate-400">تحلیل پیج</p>
-          <h2 className="mt-1 text-lg font-bold tracking-tight text-slate-950">عملکرد Instagram</h2>
-          <p className="mt-1 text-xs leading-6 text-slate-500">
-            دسترسی، اکانت‌های درگیر، رشد فالوورها و عملکرد لینک پروفایل.
-          </p>
-        </div>
-        <div className="flex h-10 rounded-lg border border-slate-200 bg-white p-1">
-          {[7, 30, 90].map((days) => (
-            <button
-              key={days}
-              type="button"
-              onClick={() => setRange(days as Range)}
-              className={[
-                "min-w-12 rounded-md px-2 text-[11px] font-semibold transition",
-                range === days ? "bg-slate-950 text-white" : "text-slate-500 hover:bg-slate-50",
-              ].join(" ")}
-            >
-              {days} روز
-            </button>
-          ))}
+    <section className="min-w-0 overflow-visible rounded-2xl border border-slate-200 bg-white">
+      <div className="border-b border-slate-100 px-4 py-5 sm:px-6">
+        <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="min-w-0">
+            <p className="text-xs font-medium text-slate-400">تحلیل پیج</p>
+            <h2 className="mt-1 text-lg font-bold tracking-tight text-slate-950">
+              روند عملکرد Instagram
+            </h2>
+            <p className="mt-1 max-w-2xl text-xs leading-6 text-slate-500">
+              شاخص‌های عملکرد اکانت فعال را در یک بازه مشخص بررسی کنید.
+            </p>
+          </div>
+
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <div className="flex max-w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-1">
+              {[7, 30, 90].map((days) => (
+                <button
+                  key={days}
+                  type="button"
+                  onClick={() => selectPreset(days as 7 | 30 | 90)}
+                  className={[
+                    "shrink-0 rounded-lg px-3 py-2 text-[10px] font-semibold transition sm:px-3.5",
+                    preset === days
+                      ? "bg-slate-950 text-white shadow-sm"
+                      : "text-slate-500 hover:bg-white hover:text-slate-800",
+                  ].join(" ")}
+                >
+                  {days} روز
+                </button>
+              ))}
+            </div>
+
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setCalendarOpen((open) => !open)}
+                className="inline-flex h-10 max-w-full items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-semibold text-slate-700 transition hover:border-slate-300"
+                aria-expanded={calendarOpen}
+              >
+                <CalendarDays size={15} className="shrink-0 text-slate-400" />
+                <span className="max-w-[150px] truncate">
+                  {range.from && range.to
+                    ? formatDate(range.from.toISOString()) +
+                      " — " +
+                      formatDate(range.to.toISOString())
+                    : "انتخاب بازه"}
+                </span>
+                <ChevronDown
+                  size={14}
+                  className={calendarOpen ? "rotate-180 transition" : "transition"}
+                />
+              </button>
+
+              {calendarOpen && (
+                <RangeCalendar
+                  range={range}
+                  onChange={selectCustomRange}
+                  onClose={() => setCalendarOpen(false)}
+                />
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
       {error && (
-        <div className="mx-5 mt-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700 sm:mx-6">
+        <div className="mx-4 mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700 sm:mx-6">
           {error}
         </div>
       )}
 
       {loading && !data ? (
-        <div className="p-5 sm:p-6">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="p-4 sm:p-6">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             {Array.from({ length: 5 }).map((_, index) => (
-              <div key={index} className="h-24 animate-pulse rounded-xl bg-slate-100" />
+              <div
+                key={index}
+                className="h-24 animate-pulse rounded-xl bg-slate-100"
+              />
             ))}
           </div>
-          <div className="mt-3 h-[260px] animate-pulse rounded-xl bg-slate-100" />
+          <div className="mt-4 h-[280px] animate-pulse rounded-xl bg-slate-100" />
         </div>
-      ) : summary ? (
-        <div className="p-4 sm:p-5 lg:p-6">
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-            <MetricCard label="دسترسی" value={number(summary.reach)} helper={"در " + range + " روز"} icon={Eye} />
-            <MetricCard label="اکانت‌های درگیر" value={number(summary.accountsEngaged)} helper={percent(summary.engagementRate) + " از دسترسی"} icon={Users} />
-            <MetricCard label="فالو جدید" value={number(summary.follows)} helper={"در " + range + " روز"} icon={Users} />
-            <MetricCard label="آنفالو" value={number(summary.unfollows)} helper={"در " + range + " روز"} icon={Users} />
-            <MetricCard label="کلیک لینک پروفایل" value={number(summary.profileLinksTaps)} helper={"در " + range + " روز"} icon={BarChart3} />
-          </div>
-
-          <div className="mt-4 rounded-xl border border-slate-200 p-4 sm:p-5">
-            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h3 className="text-sm font-bold text-slate-950">روند عملکرد</h3>
-                <p className="mt-1 text-xs text-slate-400">داده‌های ثبت‌شده در SmartDirect</p>
-              </div>
-              <div className="flex rounded-lg border border-slate-200 p-1">
-                {[["reach", "دسترسی"], ["accountsEngaged", "اکانت‌های درگیر"]].map(([value, label]) => (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => setMetric(value as Metric)}
-                    className={[
-                      "rounded-md px-3 py-1.5 text-[11px] font-medium",
-                      metric === value ? "bg-slate-950 text-white" : "text-slate-500 hover:bg-slate-50",
-                    ].join(" ")}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
+      ) : data ? (
+        <div className="min-w-0 p-4 sm:p-5 lg:p-6">
+          <div className="mb-4 flex min-w-0 flex-wrap items-center justify-between gap-2">
+            <div>
+              <p className="text-[10px] text-slate-400">اکانت فعال</p>
+              <p className="mt-1 text-sm font-bold text-slate-900">
+                @{data.account.username}
+              </p>
             </div>
-            <LineChart snapshots={data.snapshots} metric={metric} />
+            <button
+              type="button"
+              onClick={() => void load()}
+              className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 px-3 text-[10px] font-semibold text-slate-600 transition hover:bg-slate-50"
+            >
+              <RefreshCw size={13} />
+              بروزرسانی
+            </button>
           </div>
 
-          <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <MiniStat label="نرخ اکانت‌های درگیر" value={percent(summary.engagementRate)} />
-            <MiniStat label="رشد خالص فالوور" value={number(summary.followerGrowth)} />
-            <MiniStat label="فالوور فعلی" value={number(summary.followerCount)} />
+          <div className="grid min-w-0 grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
+            <MetricCard
+              label="دسترسی"
+              value={formatNumber(data.summary.reach)}
+              helper="مجموع داده‌های روزانه"
+              icon={Eye}
+            />
+            <MetricCard
+              label="بازدید"
+              value={formatNumber(data.summary.views)}
+              helper="در بازه انتخابی"
+              icon={BarChart3}
+            />
+            <MetricCard
+              label="اکانت‌های درگیر"
+              value={formatNumber(data.summary.accountsEngaged)}
+              helper="در بازه انتخابی"
+              icon={Users}
+            />
+            <MetricCard
+              label="تعاملات"
+              value={formatNumber(data.summary.totalInteractions)}
+              helper="در بازه انتخابی"
+              icon={BarChart3}
+            />
+            <MetricCard
+              label="فالو / آنفالو"
+              value={
+                data.summary.follows == null || data.summary.unfollows == null
+                  ? "—"
+                  : formatNumber(
+                      data.summary.follows - data.summary.unfollows,
+                    )
+              }
+              helper={
+                data.summary.follows == null || data.summary.unfollows == null
+                  ? "داده از Meta در دسترس نیست"
+                  : formatNumber(data.summary.follows) +
+                    " فالو / " +
+                    formatNumber(data.summary.unfollows) +
+                    " آنفالو"
+              }
+              icon={UserPlus}
+            />
+          </div>
+
+          <div className="mt-3 grid min-w-0 grid-cols-2 gap-3 md:grid-cols-3">
+            <MetricCard
+              label="کلیک‌های پروفایل"
+              value={formatNumber(data.summary.profileLinksTaps)}
+              helper="آدرس، تماس، ایمیل یا پیام"
+              icon={Link2}
+            />
+            <MetricCard
+              label="فالوور فعلی"
+              value={formatNumber(data.summary.followerCount)}
+              helper="آخرین Snapshot"
+              icon={Users}
+            />
+            <MetricCard
+              label="رشد فالوور"
+              value={formatNumber(data.summary.followerGrowth)}
+              helper="تغییر بین ابتدا و انتهای بازه"
+              icon={UserMinus}
+            />
+          </div>
+
+          <div className="mt-5 min-w-0 rounded-xl border border-slate-200 p-3.5 sm:p-5">
+            <div className="flex min-w-0 flex-col gap-3">
+              <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                <div className="min-w-0">
+                  <h3 className="text-sm font-bold text-slate-950">
+                    روند روزانه
+                  </h3>
+                  <p className="mt-1 text-[10px] leading-5 text-slate-400">
+                    محور افقی تاریخ روزهای بازه است؛ با انتخاب شاخص، روند همان
+                    شاخص نمایش داده می‌شود.
+                  </p>
+                </div>
+                <div className="w-full overflow-x-auto sm:w-auto sm:max-w-full">
+                  <div className="flex min-w-max rounded-lg border border-slate-200 bg-slate-50 p-1">
+                    {(
+                      [
+                        "reach",
+                        "views",
+                        "accountsEngaged",
+                        "totalInteractions",
+                        "follows",
+                        "unfollows",
+                        "profileLinksTaps",
+                        "followerCount",
+                      ] as Metric[]
+                    ).map((value) => (
+                      <button
+                        key={value}
+                        type="button"
+                        title={metricDescriptions[value]}
+                        onClick={() => setMetric(value)}
+                        className={[
+                          "rounded-md px-2.5 py-1.5 text-[10px] font-medium transition",
+                          metric === value
+                            ? "bg-slate-950 text-white"
+                            : "text-slate-500 hover:bg-white hover:text-slate-800",
+                        ].join(" ")}
+                      >
+                        {metricLabels[value]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {chartData.length ? (
+                <div className="h-[250px] w-full min-w-0 sm:h-[290px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={chartData}
+                      margin={{ top: 12, right: 4, left: 0, bottom: 4 }}
+                    >
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        vertical={false}
+                        stroke="#eef2f7"
+                      />
+                      <XAxis
+                        dataKey="date"
+                        tickFormatter={formatShortDate}
+                        tick={{ fontSize: 10, fill: "#94a3b8" }}
+                        tickLine={false}
+                        axisLine={false}
+                        minTickGap={28}
+                      />
+                      <YAxis
+                        tickFormatter={(value) => numberFormatter.format(value)}
+                        tick={{ fontSize: 10, fill: "#94a3b8" }}
+                        tickLine={false}
+                        axisLine={false}
+                        width={48}
+                        allowDecimals={false}
+                      />
+                      <Tooltip
+                        labelFormatter={(value) => formatDate(String(value))}
+                        formatter={(value) => [
+                          formatNumber(
+                            typeof value === "number" ? value : null,
+                          ),
+                          metricLabels[metric],
+                        ]}
+                        contentStyle={{
+                          borderRadius: 12,
+                          border: "1px solid #e2e8f0",
+                          boxShadow: "0 12px 30px rgba(15,23,42,0.08)",
+                          fontFamily: "Vazirmatn, Arial, sans-serif",
+                          fontSize: 11,
+                        }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="value"
+                        stroke="#0f172a"
+                        strokeWidth={2.5}
+                        dot={{ r: 2.5, strokeWidth: 1 }}
+                        activeDot={{ r: 5 }}
+                        connectNulls={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="flex h-[250px] items-center justify-center rounded-xl border border-dashed border-slate-200 text-xs text-slate-400">
+                  برای این بازه داده تاریخی ثبت نشده است.
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-3 min-w-0 rounded-xl border border-slate-200 p-3.5 sm:p-4">
+            <div className="mb-3">
+              <h3 className="text-sm font-bold text-slate-950">
+                نرخ‌های عملکرد
+              </h3>
+              <p className="mt-1 text-[10px] text-slate-400">
+                همه نرخ‌ها فقط در این بخش محاسبه می‌شوند و با تغییر بازه به‌روزرسانی می‌شوند.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-2.5 md:grid-cols-4">
+              <RateCard
+                label="نرخ اکانت‌های درگیر"
+                value={formatPercent(rates?.engagementRate)}
+                helper="اکانت‌های درگیر نسبت به دسترسی"
+              />
+              <RateCard
+                label="نرخ تعامل"
+                value={formatPercent(rates?.interactionRate)}
+                helper="تعاملات نسبت به دسترسی"
+              />
+              <RateCard
+                label="رشد خالص فالوور"
+                value={formatNumber(rates?.netFollowerGrowth)}
+                helper="فالو منهای آنفالو"
+              />
+              <RateCard
+                label="کلیک پروفایل نسبت به دسترسی"
+                value={
+                  data.summary.profileLinksTaps != null && data.summary.reach > 0
+                    ? formatPercent(
+                        (data.summary.profileLinksTaps / data.summary.reach) *
+                          100,
+                      )
+                    : "—"
+                }
+                helper="بر اساس داده‌های موجود Meta"
+              />
+            </div>
           </div>
         </div>
       ) : (
-        <div className="px-5 py-16 text-center text-sm text-slate-400">داده‌ای برای نمایش وجود ندارد.</div>
+        <div className="px-5 py-16 text-center text-sm text-slate-400">
+          داده‌ای برای نمایش وجود ندارد.
+        </div>
       )}
     </section>
   );
