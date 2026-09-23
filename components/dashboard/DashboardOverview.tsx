@@ -3,7 +3,6 @@
 import { ChevronDown, Plus, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import AdvancedAnalyticsReports from "./AdvancedAnalyticsReports";
 import InstagramInsights from "./InstagramInsights";
 import InstagramProfileDashboard from "./InstagramProfileDashboard";
 
@@ -83,7 +82,6 @@ export default function DashboardOverview({ user, instagramAccounts, instagramSt
 
       <InstagramProfileDashboard accountId={accountId} />
       <InstagramInsights accountId={accountId} />
-      <AdvancedAnalyticsReports accountId={accountId} />
     </div>
   );
 }
