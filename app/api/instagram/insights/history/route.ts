@@ -15,6 +15,12 @@ function normalizeDays(value: string | null) {
     return Math.min(Math.max(Math.floor(parsed), 1), MAX_DAYS);
 }
 
+function normalizeDate(value: string | null) {
+    if (!value || !/^\\d{4}-\\d{2}-\\d{2}$/.test(value)) return null;
+    const date = new Date(value + "T00:00:00.000Z");
+    return Number.isNaN(date.getTime()) ? null : date;
+}
+
 async function getProfilePicture(accessToken: string) {
     if (!accessToken) return null;
 
@@ -53,6 +59,8 @@ export async function GET(request: NextRequest) {
 
         const { searchParams } = new URL(request.url);
         const accountId = searchParams.get("accountId");
+        const requestedFrom = normalizeDate(searchParams.get("from"));
+        const requestedTo = normalizeDate(searchParams.get("to"));
         const days = normalizeDays(searchParams.get("days"));
 
         const account = await prisma.instagramAccount.findFirst({
@@ -78,9 +86,35 @@ export async function GET(request: NextRequest) {
         }
 
         const now = new Date();
-        const from = new Date(now);
-        from.setUTCDate(from.getUTCDate() - (days - 1));
-        from.setUTCHours(0, 0, 0, 0);
+        const today = new Date(now);
+        today.setUTCHours(0, 0, 0, 0);
+
+        let from = new Date(today);
+        let to = now;
+
+        if (requestedFrom && requestedTo && requestedFrom <= requestedTo) {
+            const requestedDays =
+                Math.floor(
+                    (requestedTo.getTime() - requestedFrom.getTime()) /
+                        86400000,
+                ) + 1;
+
+            if (requestedDays > MAX_DAYS) {
+                return NextResponse.json(
+                    {
+                        success: false,
+                        error: "بازه انتخابی حداکثر می‌تواند ۳۶۵ روز باشد.",
+                    },
+                    { status: 400 },
+                );
+            }
+
+            from = requestedFrom;
+            to = new Date(requestedTo);
+            to.setUTCHours(23, 59, 59, 999);
+        } else {
+            from.setUTCDate(from.getUTCDate() - (days - 1));
+        }
 
         const snapshots = await prisma.instagramInsightSnapshot.findMany({
             where: {
@@ -95,6 +129,9 @@ export async function GET(request: NextRequest) {
                 views: true,
                 accountsEngaged: true,
                 totalInteractions: true,
+                follows: true,
+                unfollows: true,
+                profileLinksTaps: true,
                 followerCount: true,
             },
         });
@@ -105,6 +142,9 @@ export async function GET(request: NextRequest) {
                 result.views += snapshot.views ?? 0;
                 result.accountsEngaged += snapshot.accountsEngaged ?? 0;
                 result.totalInteractions += snapshot.totalInteractions ?? 0;
+                result.follows += snapshot.follows ?? 0;
+                result.unfollows += snapshot.unfollows ?? 0;
+                result.profileLinksTaps += snapshot.profileLinksTaps ?? 0;
                 return result;
             },
             {
@@ -112,6 +152,9 @@ export async function GET(request: NextRequest) {
                 views: 0,
                 accountsEngaged: 0,
                 totalInteractions: 0,
+                follows: 0,
+                unfollows: 0,
+                profileLinksTaps: 0,
             },
         );
 
@@ -134,15 +177,23 @@ export async function GET(request: NextRequest) {
                 isConnected: account.isConnected,
             },
             period: {
-                days,
+                days:
+                    requestedFrom && requestedTo
+                        ? Math.floor(
+                              (to.getTime() - from.getTime()) / 86400000,
+                          ) + 1
+                        : days,
                 from,
-                to: now,
+                to,
             },
             summary: {
                 reach: totals.reach,
                 views: totals.views,
                 accountsEngaged: totals.accountsEngaged,
                 totalInteractions: totals.totalInteractions,
+                follows: totals.follows,
+                unfollows: totals.unfollows,
+                profileLinksTaps: totals.profileLinksTaps,
                 followerCount,
                 followerGrowth,
                 engagementRate,
