@@ -10,21 +10,21 @@ export default function DashboardMobileHeader({
   onOpen,
 }: DashboardMobileHeaderProps) {
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-slate-200/80 bg-white/90 px-4 backdrop-blur lg:hidden">
+    <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-slate-200 bg-white/95 px-3 backdrop-blur sm:h-16 sm:px-5 lg:hidden">
       <button
         type="button"
         onClick={onOpen}
-        className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-700"
+        className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-700 transition hover:bg-slate-50"
         aria-label="باز کردن منو"
       >
-        <Menu size={20} strokeWidth={1.8} />
+        <Menu size={18} strokeWidth={1.8} />
       </button>
 
-      <div className="text-sm font-bold">
+      <div className="text-sm font-bold tracking-tight text-slate-950">
         SmartDirect
       </div>
 
-      <div className="h-10 w-10" />
+      <div className="h-9 w-9" />
     </header>
   );
 }
