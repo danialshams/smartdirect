@@ -4,7 +4,6 @@ import {
   ExternalLink,
   Globe2,
   Image as ImageIcon,
-  RefreshCw,
   UserRound,
   Users,
 } from "lucide-react";
@@ -38,202 +37,72 @@ function formatNumber(value: number | null) {
   return value == null ? "—" : numberFormatter.format(value);
 }
 
-export default function InstagramProfileDashboard({
-  accounts,
-}: {
-  accounts: InstagramAccount[];
-}) {
-  const connectedAccounts = useMemo(
-    () => accounts.filter((account) => account.isConnected),
-    [accounts],
-  );
-
-  const [accountId, setAccountId] = useState(
-    connectedAccounts[0]?.id || "",
-  );
+export default function InstagramProfileDashboard({ accountId }: { accountId: string }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (!connectedAccounts.length) {
-      setAccountId("");
-      return;
-    }
-
-    if (!connectedAccounts.some((account) => account.id === accountId)) {
-      setAccountId(connectedAccounts[0].id);
-    }
-  }, [accountId, connectedAccounts]);
-
   const loadProfile = useCallback(async () => {
     if (!accountId) return;
-
     try {
       setLoading(true);
       setError("");
-
-      const response = await fetch(
-        "/api/instagram/profile?accountId=" + encodeURIComponent(accountId),
-        { cache: "no-store" },
-      );
-
+      const response = await fetch("/api/instagram/profile?accountId=" + encodeURIComponent(accountId), { cache: "no-store" });
       const result = await response.json();
-
-      if (!response.ok || !result.success || !result.profile) {
-        throw new Error(result.error || "اطلاعات پروفایل دریافت نشد.");
-      }
-
+      if (!response.ok || !result.success || !result.profile) throw new Error(result.error || "اطلاعات پروفایل دریافت نشد.");
       setProfile(result.profile);
     } catch (requestError) {
       setProfile(null);
-      setError(
-        requestError instanceof Error
-          ? requestError.message
-          : "خطا در دریافت اطلاعات پروفایل.",
-      );
+      setError(requestError instanceof Error ? requestError.message : "خطا در دریافت اطلاعات پروفایل.");
     } finally {
       setLoading(false);
     }
   }, [accountId]);
 
+  useEffect(() => { void loadProfile(); }, [loadProfile]);
   useEffect(() => {
-    void loadProfile();
+    const handler = () => void loadProfile();
+    window.addEventListener("smartdirect:refresh", handler);
+    return () => window.removeEventListener("smartdirect:refresh", handler);
   }, [loadProfile]);
 
-  if (!connectedAccounts.length) {
-    return null;
-  }
+  if (!accountId) return null;
 
   return (
     <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-      <div className="flex flex-col gap-4 border-b border-slate-100 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-        <div>
-          <p className="text-xs font-medium text-slate-400">پروفایل Instagram</p>
-          <h2 className="mt-1 text-lg font-bold tracking-tight text-slate-950">
-            اطلاعات پیج
-          </h2>
-        </div>
-
-        <div className="flex w-full gap-2 sm:w-auto">
-          {connectedAccounts.length > 1 && (
-            <select
-              value={accountId}
-              onChange={(event) => setAccountId(event.target.value)}
-              className="h-10 min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 outline-none focus:border-slate-400 sm:min-w-[180px]"
-            >
-              {connectedAccounts.map((account) => (
-                <option key={account.id} value={account.id}>
-                  @{account.igUsername}
-                </option>
-              ))}
-            </select>
-          )}
-
-          <button
-            type="button"
-            onClick={() => void loadProfile()}
-            disabled={loading}
-            className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
-          >
-            <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-            بروزرسانی
-          </button>
-        </div>
+      <div className="border-b border-slate-100 px-5 py-5 sm:px-6">
+        <p className="text-xs font-medium text-slate-400">پروفایل Instagram</p>
+        <h2 className="mt-1 text-lg font-bold tracking-tight text-slate-950">اطلاعات پیج فعال</h2>
       </div>
-
-      {error && (
-        <div className="mx-5 mt-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs leading-6 text-red-700 sm:mx-6">
-          {error}
-        </div>
-      )}
-
+      {error && <div className="mx-5 mt-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs leading-6 text-red-700 sm:mx-6">{error}</div>}
       {loading && !profile ? (
         <div className="grid gap-3 p-5 sm:grid-cols-[auto_1fr] sm:p-6">
           <div className="mx-auto h-24 w-24 animate-pulse rounded-full bg-slate-100 sm:mx-0" />
-          <div className="space-y-3">
-            <div className="h-5 w-40 animate-pulse rounded bg-slate-100" />
-            <div className="h-4 w-28 animate-pulse rounded bg-slate-100" />
-            <div className="h-16 w-full animate-pulse rounded bg-slate-100" />
-          </div>
+          <div className="space-y-3"><div className="h-5 w-40 animate-pulse rounded bg-slate-100" /><div className="h-4 w-28 animate-pulse rounded bg-slate-100" /><div className="h-16 w-full animate-pulse rounded bg-slate-100" /></div>
         </div>
       ) : profile ? (
         <>
           <div className="px-5 py-6 sm:px-6">
             <div className="flex flex-col items-center text-center sm:flex-row sm:items-center sm:text-right">
               <div className="h-24 w-24 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-slate-50 sm:h-28 sm:w-28">
-                {profile.profilePictureUrl ? (
-                  <img
-                    src={profile.profilePictureUrl}
-                    alt={profile.username}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-slate-300">
-                    <UserRound size={34} strokeWidth={1.5} />
-                  </div>
-                )}
+                {profile.profilePictureUrl ? <img src={profile.profilePictureUrl} alt={profile.username} className="h-full w-full object-cover" /> : <div className="flex h-full w-full items-center justify-center text-slate-300"><UserRound size={34} strokeWidth={1.5} /></div>}
               </div>
-
               <div className="mt-5 min-w-0 sm:mr-6 sm:mt-0">
-                <h3 className="text-xl font-bold tracking-tight text-slate-950">
-                  {profile.name || "بدون نام"}
-                </h3>
-                <p className="mt-1 text-sm text-slate-500">
-                  @{profile.username}
-                </p>
-
-                {profile.biography && (
-                  <p className="mx-auto mt-3 max-w-2xl whitespace-pre-wrap text-sm leading-7 text-slate-600 sm:mx-0">
-                    {profile.biography}
-                  </p>
-                )}
-
-                {profile.website && (
-                  <a
-                    href={profile.website}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-3 inline-flex max-w-full items-center gap-1.5 text-xs font-medium text-[#2563eb] hover:underline"
-                  >
-                    <Globe2 size={14} />
-                    <span className="max-w-[260px] truncate">{profile.website}</span>
-                    <ExternalLink size={12} />
-                  </a>
-                )}
+                <h3 className="text-xl font-bold tracking-tight text-slate-950">{profile.name || "بدون نام"}</h3>
+                <p className="mt-1 text-sm text-slate-500">@{profile.username}</p>
+                {profile.biography && <p className="mx-auto mt-3 max-w-2xl whitespace-pre-wrap text-sm leading-7 text-slate-600 sm:mx-0">{profile.biography}</p>}
+                {profile.website && <a href={profile.website} target="_blank" rel="noreferrer" className="mt-3 inline-flex max-w-full items-center gap-1.5 text-xs font-medium text-[#2563eb] hover:underline"><Globe2 size={14} /><span className="max-w-[260px] truncate">{profile.website}</span><ExternalLink size={12} /></a>}
               </div>
             </div>
           </div>
-
           <div className="grid grid-cols-3 border-t border-slate-100 sm:grid-cols-4">
-            <ProfileStat
-              icon={<Users size={17} />}
-              label="فالوور"
-              value={formatNumber(profile.followersCount)}
-            />
-            <ProfileStat
-              icon={<UserRound size={17} />}
-              label="فالووینگ"
-              value={formatNumber(profile.followsCount)}
-            />
-            <ProfileStat
-              icon={<ImageIcon size={17} />}
-              label="پست"
-              value={formatNumber(profile.mediaCount)}
-            />
-            <div className="hidden sm:flex">
-              <ProfileStat
-                label="نوع حساب"
-                value={profile.accountType || "Professional"}
-              />
-            </div>
+            <ProfileStat icon={<Users size={17} />} label="فالوور" value={formatNumber(profile.followersCount)} />
+            <ProfileStat icon={<UserRound size={17} />} label="فالووینگ" value={formatNumber(profile.followsCount)} />
+            <ProfileStat icon={<ImageIcon size={17} />} label="پست" value={formatNumber(profile.mediaCount)} />
+            <div className="hidden sm:flex"><ProfileStat label="نوع حساب" value={profile.accountType || "Professional"} /></div>
           </div>
         </>
-      ) : (
-        <div className="px-5 py-12 text-center text-sm text-slate-400">
-          اطلاعات پروفایل در دسترس نیست.
-        </div>
-      )}
+      ) : <div className="px-5 py-12 text-center text-sm text-slate-400">اطلاعات پروفایل در دسترس نیست.</div>}
     </section>
   );
 }
