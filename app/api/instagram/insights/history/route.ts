@@ -125,73 +125,42 @@ export async function GET(request: NextRequest) {
             select: {
                 id: true,
                 snapshotDate: true,
-                reach: true,
                 views: true,
-                accountsEngaged: true,
                 totalInteractions: true,
                 follows: true,
                 unfollows: true,
-                profileLinksTaps: true,
                 followerCount: true,
             },
         });
 
         const totals = snapshots.reduce(
             (result, snapshot) => {
-                result.reach += snapshot.reach ?? 0;
                 result.views += snapshot.views ?? 0;
-                result.accountsEngaged += snapshot.accountsEngaged ?? 0;
                 result.totalInteractions += snapshot.totalInteractions ?? 0;
 
                 if (snapshot.follows != null) result.follows += snapshot.follows;
                 if (snapshot.unfollows != null) result.unfollows += snapshot.unfollows;
-                if (snapshot.profileLinksTaps != null) {
-                    result.profileLinksTaps += snapshot.profileLinksTaps;
-                }
 
                 result.followsAvailable ||= snapshot.follows != null;
                 result.unfollowsAvailable ||= snapshot.unfollows != null;
-                result.profileLinksTapsAvailable ||= snapshot.profileLinksTaps != null;
 
                 return result;
             },
             {
-                reach: 0,
                 views: 0,
-                accountsEngaged: 0,
                 totalInteractions: 0,
                 follows: 0,
                 unfollows: 0,
-                profileLinksTaps: 0,
                 followsAvailable: false,
                 unfollowsAvailable: false,
-                profileLinksTapsAvailable: false,
             },
         );
-
-        const averageDailyReach =
-            snapshots.length > 0
-                ? Math.round(totals.reach / snapshots.length)
-                : 0;
-        const averageDailyAccountsEngaged =
-            snapshots.length > 0
-                ? Math.round(totals.accountsEngaged / snapshots.length)
-                : 0;
 
         const latestSnapshot = snapshots[snapshots.length - 1] ?? null;
         const firstSnapshot = snapshots[0] ?? null;
         const followerCount = latestSnapshot?.followerCount ?? 0;
         const firstFollowerCount = firstSnapshot?.followerCount ?? 0;
         const followerGrowth = followerCount - firstFollowerCount;
-        const engagementRate =
-            averageDailyReach > 0
-                ? Number(
-                      (
-                          (averageDailyAccountsEngaged / averageDailyReach) *
-                          100
-                      ).toFixed(2),
-                  )
-                : null;
 
         return NextResponse.json({
             success: true,
@@ -212,18 +181,12 @@ export async function GET(request: NextRequest) {
                 to,
             },
             summary: {
-                reach: averageDailyReach,
                 views: totals.views,
-                accountsEngaged: totals.accountsEngaged,
                 totalInteractions: totals.totalInteractions,
                 follows: totals.followsAvailable ? totals.follows : null,
                 unfollows: totals.unfollowsAvailable ? totals.unfollows : null,
-                profileLinksTaps: totals.profileLinksTapsAvailable
-                    ? totals.profileLinksTaps
-                    : null,
                 followerCount,
                 followerGrowth,
-                engagementRate,
             },
             latest: latestSnapshot,
             snapshots,
