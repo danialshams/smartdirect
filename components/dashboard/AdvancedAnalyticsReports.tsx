@@ -3,9 +3,7 @@
 import {
   ArrowDown,
   ArrowUp,
-  Download,
   FileBarChart,
-  RefreshCw,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -108,10 +106,10 @@ function ChangeBadge({ value }: { value: number | null }) {
   );
 }
 
-export default function AdvancedAnalyticsReports() {
+export default function AdvancedAnalyticsReports({ accountId: externalAccountId }: { accountId?: string }) {
   const today = useMemo(() => new Date(), []);
   const [accounts, setAccounts] = useState<Account[]>([]);
-  const [accountId, setAccountId] = useState("");
+  const [accountId, setAccountId] = useState(externalAccountId || "");
   const [from, setFrom] = useState(
     inputDate(new Date(today.getTime() - 29 * 86400000)),
   );
@@ -177,6 +175,7 @@ export default function AdvancedAnalyticsReports() {
   }, [accountId]);
 
   useEffect(() => {
+    if (externalAccountId) { setAccountId(externalAccountId); return; }
     void loadAccounts().catch((requestError) => {
       setError(
         requestError instanceof Error
@@ -185,10 +184,14 @@ export default function AdvancedAnalyticsReports() {
       );
       setLoading(false);
     });
-  }, [loadAccounts]);
+  }, [loadAccounts, externalAccountId]);
+
+  useEffect(() => { void load(); }, [load]);
 
   useEffect(() => {
-    void load();
+    const handler = () => void load();
+    window.addEventListener("smartdirect:refresh", handler);
+    return () => window.removeEventListener("smartdirect:refresh", handler);
   }, [load]);
 
   const report = useMemo(() => {
@@ -283,19 +286,6 @@ export default function AdvancedAnalyticsReports() {
           </div>
 
           <div className="grid grid-cols-2 gap-2 sm:flex">
-            {accounts.length > 1 && (
-              <select
-                value={accountId}
-                onChange={(event) => setAccountId(event.target.value)}
-                className="h-10 col-span-2 rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 outline-none sm:col-span-1 sm:min-w-[150px]"
-              >
-                {accounts.map((account) => (
-                  <option key={account.id} value={account.id}>
-                    @{account.username}
-                  </option>
-                ))}
-              </select>
-            )}
 
             <label className="rounded-lg border border-slate-200 bg-white px-3 py-1.5">
               <span className="block text-[9px] text-slate-400">از</span>
@@ -319,25 +309,7 @@ export default function AdvancedAnalyticsReports() {
               />
             </label>
 
-            <button
-              type="button"
-              onClick={() => void load()}
-              disabled={loading || !accountId}
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
-            >
-              <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-              بروزرسانی
-            </button>
 
-            <button
-              type="button"
-              onClick={exportCsv}
-              disabled={!report}
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-slate-950 px-3 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:opacity-40"
-            >
-              <Download size={14} />
-              CSV
-            </button>
           </div>
         </div>
       </div>
