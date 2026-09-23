@@ -379,7 +379,7 @@ export default function InstagramInsights({
   }
 
   function selectCustomRange(next: DateRange | undefined) {
-    setRange(next || {});
+    if (next) setRange(next);
     setPreset("custom");
 
     if (next?.from && next.to) {
