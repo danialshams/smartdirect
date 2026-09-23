@@ -57,6 +57,9 @@ model InstagramInsightSnapshot {
   views              Int?
   accountsEngaged    Int?
   totalInteractions  Int?
+  follows            Int?
+  unfollows          Int?
+  profileLinksTaps   Int?
   profileViews       Int?
   followerCount      Int?
   createdAt          DateTime         @default(now())
