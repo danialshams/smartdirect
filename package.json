@@ -97,7 +97,8 @@
     "workflow": "^4.8.8",
     "zod": "^4.5.4",
     "recharts": "^3.10.1",
-    "react-day-picker": "^9.14.0"
+    "react-day-picker": "^9.14.0",
+    "react-is": "^19.2.8"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
