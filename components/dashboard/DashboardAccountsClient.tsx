@@ -82,7 +82,13 @@ export default function DashboardAccountsClient({
   }
 
   if (mode === "profile") {
-    return <InstagramProfileDashboard accounts={accounts} />;
+    const activeAccount = accounts.find((account) => account.isConnected);
+
+    if (!activeAccount) {
+      return null;
+    }
+
+    return <InstagramProfileDashboard accountId={activeAccount.id} />;
   }
 
   if (mode === "inbox") {
