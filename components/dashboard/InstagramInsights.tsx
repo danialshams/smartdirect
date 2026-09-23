@@ -406,14 +406,28 @@ export default function InstagramInsights({
   const rates = useMemo(() => {
     if (!data) return null;
 
-    const reach = data.summary.reach;
-    const interactions = data.summary.totalInteractions;
-    const engaged = data.summary.accountsEngaged;
+    const average = (key: "reach" | "accountsEngaged" | "totalInteractions" | "profileLinksTaps") => {
+      const values = data.snapshots
+        .map((snapshot) => snapshot[key])
+        .filter((value): value is number => value != null);
+
+      return values.length
+        ? values.reduce((total, value) => total + value, 0) / values.length
+        : null;
+    };
+
+    const reach = average("reach");
+    const engaged = average("accountsEngaged");
+    const interactions = average("totalInteractions");
+    const profileLinks = average("profileLinksTaps");
 
     return {
       engagementRate:
-        reach > 0 ? (engaged / reach) * 100 : data.summary.engagementRate,
-      interactionRate: reach > 0 ? (interactions / reach) * 100 : null,
+        reach && engaged != null ? (engaged / reach) * 100 : data.summary.engagementRate,
+      interactionRate:
+        reach && interactions != null ? (interactions / reach) * 100 : null,
+      profileLinkRate:
+        reach && profileLinks != null ? (profileLinks / reach) * 100 : null,
       netFollowerGrowth:
         data.summary.follows != null && data.summary.unfollows != null
           ? data.summary.follows - data.summary.unfollows
@@ -542,7 +556,7 @@ export default function InstagramInsights({
             <MetricCard
               label="دسترسی"
               value={formatNumber(data.summary.reach)}
-              helper="مجموع داده‌های روزانه"
+              helper="میانگین روزانه"
               icon={Eye}
             />
             <MetricCard
@@ -742,11 +756,8 @@ export default function InstagramInsights({
               <RateCard
                 label="کلیک پروفایل نسبت به دسترسی"
                 value={
-                  data.summary.profileLinksTaps != null && data.summary.reach > 0
-                    ? formatPercent(
-                        (data.summary.profileLinksTaps / data.summary.reach) *
-                          100,
-                      )
+                  rates?.profileLinkRate != null
+                    ? formatPercent(rates.profileLinkRate)
                     : "—"
                 }
                 helper="بر اساس داده‌های موجود Meta"
