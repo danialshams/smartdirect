@@ -5,11 +5,9 @@ import {
   CalendarDays,
   ChevronDown,
   Eye,
-  Link2,
   RefreshCw,
   UserMinus,
   UserPlus,
-  Users,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DayPicker } from "react-day-picker/persian";
@@ -26,13 +24,10 @@ import {
 
 type RangePreset = 7 | 30 | 90 | "custom";
 type Metric =
-  | "reach"
   | "views"
-  | "accountsEngaged"
   | "totalInteractions"
   | "follows"
   | "unfollows"
-  | "profileLinksTaps"
   | "followerCount";
 
 type Account = {
@@ -45,13 +40,10 @@ type Account = {
 type Snapshot = {
   id: string;
   snapshotDate: string;
-  reach: number | null;
   views: number | null;
-  accountsEngaged: number | null;
   totalInteractions: number | null;
   follows: number | null;
   unfollows: number | null;
-  profileLinksTaps: number | null;
   followerCount: number | null;
 };
 
@@ -64,16 +56,12 @@ type Data = {
     to: string;
   };
   summary: {
-    reach: number;
     views: number;
-    accountsEngaged: number;
     totalInteractions: number;
     follows: number | null;
     unfollows: number | null;
-    profileLinksTaps: number | null;
     followerCount: number;
     followerGrowth: number;
-    engagementRate: number | null;
   };
   latest: Snapshot | null;
   snapshots: Snapshot[];
@@ -85,24 +73,18 @@ const percentFormatter = new Intl.NumberFormat("fa-IR", {
 });
 
 const metricLabels: Record<Metric, string> = {
-  reach: "دسترسی",
   views: "بازدید",
-  accountsEngaged: "اکانت‌های درگیر",
   totalInteractions: "تعاملات",
   follows: "فالو",
   unfollows: "آنفالو",
-  profileLinksTaps: "کلیک‌های پروفایل",
   followerCount: "تعداد فالوورها",
 };
 
 const metricDescriptions: Record<Metric, string> = {
-  reach: "تعداد اکانت‌های رسیده در هر روز",
-  views: "تعداد بازدیدهای ثبت‌شده در هر روز",
-  accountsEngaged: "اکانت‌هایی که با محتوا تعامل داشته‌اند",
-  totalInteractions: "مجموع تعاملات ثبت‌شده",
-  follows: "فالوهای ثبت‌شده در روز",
-  unfollows: "آنفالوهای ثبت‌شده در روز",
-  profileLinksTaps: "تپ روی آدرس، تماس، ایمیل یا پیام پروفایل",
+  views: "تعداد دفعات مشاهده محتوا که Meta در Insights ثبت کرده است",
+  totalInteractions: "مجموع تعاملات ثبت‌شده توسط Meta",
+  follows: "فالوهای ثبت‌شده در بازه",
+  unfollows: "آنفالوهای ثبت‌شده در بازه",
   followerCount: "تعداد فالوور در زمان ثبت Snapshot",
 };
 
@@ -170,6 +152,9 @@ function RangeCalendar({
         defaultMonth={range.from}
         disabled={{ after: new Date() }}
         max={365}
+        captionLayout="dropdown"
+        fromYear={2024}
+        toYear={new Date().getFullYear()}
         dir="rtl"
         className="mx-auto"
         showOutsideDays
@@ -407,32 +392,22 @@ export default function InstagramInsights({
   const rates = useMemo(() => {
     if (!data) return null;
 
-    const average = (key: "reach" | "accountsEngaged" | "totalInteractions" | "profileLinksTaps") => {
-      const values = data.snapshots
-        .map((snapshot) => snapshot[key])
-        .filter((value): value is number => value != null);
-
-      return values.length
-        ? values.reduce((total, value) => total + value, 0) / values.length
-        : null;
-    };
-
-    const reach = average("reach");
-    const engaged = average("accountsEngaged");
-    const interactions = average("totalInteractions");
-    const profileLinks = average("profileLinksTaps");
+    const totalViews = data.summary.views;
+    const totalInteractions = data.summary.totalInteractions;
+    const follows = data.summary.follows;
+    const unfollows = data.summary.unfollows;
 
     return {
-      engagementRate:
-        reach && engaged != null ? (engaged / reach) * 100 : data.summary.engagementRate,
       interactionRate:
-        reach && interactions != null ? (interactions / reach) * 100 : null,
-      profileLinkRate:
-        reach && profileLinks != null ? (profileLinks / reach) * 100 : null,
-      netFollowerGrowth:
-        data.summary.follows != null && data.summary.unfollows != null
-          ? data.summary.follows - data.summary.unfollows
-          : data.summary.followerGrowth,
+        totalViews > 0 ? (totalInteractions / totalViews) * 100 : null,
+      followRate:
+        totalViews > 0 && follows != null ? (follows / totalViews) * 100 : null,
+      unfollowRate:
+        totalViews > 0 && unfollows != null ? (unfollows / totalViews) * 100 : null,
+      netFollowerRate:
+        totalViews > 0 && follows != null && unfollows != null
+          ? ((follows - unfollows) / totalViews) * 100
+          : null,
     };
   }, [data]);
 
@@ -523,12 +498,7 @@ export default function InstagramInsights({
       ) : data ? (
         <div className="min-w-0 p-4 sm:p-5 lg:p-6">
           <div className="mb-4 flex min-w-0 flex-wrap items-center justify-between gap-2">
-            <div>
-              <p className="text-[10px] text-slate-400">اکانت فعال</p>
-              <p className="mt-1 text-sm font-bold text-slate-900">
-                @{data.account.username}
-              </p>
-            </div>
+
             <button
               type="button"
               onClick={() =>
@@ -553,69 +523,29 @@ export default function InstagramInsights({
             </button>
           </div>
 
-          <div className="grid min-w-0 grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
-            <MetricCard
-              label="دسترسی"
-              value={formatNumber(data.summary.reach)}
-              helper="میانگین روزانه"
-              icon={Eye}
-            />
+          <div className="grid min-w-0 grid-cols-2 gap-3 md:grid-cols-4">
             <MetricCard
               label="بازدید"
               value={formatNumber(data.summary.views)}
-              helper="در بازه انتخابی"
-              icon={BarChart3}
-            />
-            <MetricCard
-              label="اکانت‌های درگیر"
-              value={formatNumber(data.summary.accountsEngaged)}
-              helper="در بازه انتخابی"
-              icon={Users}
+              helper="مجموع بازه انتخابی"
+              icon={Eye}
             />
             <MetricCard
               label="تعاملات"
               value={formatNumber(data.summary.totalInteractions)}
-              helper="در بازه انتخابی"
+              helper="مجموع بازه انتخابی"
               icon={BarChart3}
             />
             <MetricCard
-              label="فالو / آنفالو"
-              value={
-                data.summary.follows == null || data.summary.unfollows == null
-                  ? "—"
-                  : formatNumber(
-                      data.summary.follows - data.summary.unfollows,
-                    )
-              }
-              helper={
-                data.summary.follows == null || data.summary.unfollows == null
-                  ? "داده از Meta در دسترس نیست"
-                  : formatNumber(data.summary.follows) +
-                    " فالو / " +
-                    formatNumber(data.summary.unfollows) +
-                    " آنفالو"
-              }
+              label="فالو"
+              value={formatNumber(data.summary.follows)}
+              helper={data.summary.follows == null ? "داده از Meta در دسترس نیست" : "در بازه انتخابی"}
               icon={UserPlus}
             />
-          </div>
-
-          <div className="mt-3 grid min-w-0 grid-cols-2 gap-3 md:grid-cols-3">
             <MetricCard
-              label="کلیک‌های پروفایل"
-              value={formatNumber(data.summary.profileLinksTaps)}
-              helper="آدرس، تماس، ایمیل یا پیام"
-              icon={Link2}
-            />
-            <MetricCard
-              label="فالوور فعلی"
-              value={formatNumber(data.summary.followerCount)}
-              helper="آخرین Snapshot"
-              icon={Users}
-            />
-            <MetricCard
-              label="رشد فالوور"
-              value={formatNumber(data.summary.followerGrowth)}
-              helper="تغییر بین ابتدا و انتهای بازه"
+              label="آنفالو"
+              value={formatNumber(data.summary.unfollows)}
+              helper={data.summary.unfollows == null ? "داده از Meta در دسترس نیست" : "در بازه انتخابی"}
               icon={UserMinus}
             />
           </div>
@@ -636,14 +566,10 @@ export default function InstagramInsights({
                   <div className="flex min-w-max rounded-lg border border-slate-200 bg-slate-50 p-1">
                     {(
                       [
-                        "reach",
                         "views",
-                        "accountsEngaged",
                         "totalInteractions",
                         "follows",
                         "unfollows",
-                        "profileLinksTaps",
-                        "followerCount",
                       ] as Metric[]
                     ).map((value) => (
                       <button
@@ -740,28 +666,24 @@ export default function InstagramInsights({
             </div>
             <div className="grid grid-cols-2 gap-2.5 md:grid-cols-4">
               <RateCard
-                label="نرخ اکانت‌های درگیر"
-                value={formatPercent(rates?.engagementRate)}
-                helper="اکانت‌های درگیر نسبت به دسترسی"
-              />
-              <RateCard
                 label="نرخ تعامل"
                 value={formatPercent(rates?.interactionRate)}
-                helper="تعاملات نسبت به دسترسی"
+                helper="تعاملات نسبت به بازدید"
               />
               <RateCard
-                label="رشد خالص فالوور"
-                value={formatNumber(rates?.netFollowerGrowth)}
-                helper="فالو منهای آنفالو"
+                label="نرخ فالو"
+                value={formatPercent(rates?.followRate)}
+                helper="فالو نسبت به بازدید"
               />
               <RateCard
-                label="کلیک پروفایل نسبت به دسترسی"
-                value={
-                  rates?.profileLinkRate != null
-                    ? formatPercent(rates.profileLinkRate)
-                    : "—"
-                }
-                helper="بر اساس داده‌های موجود Meta"
+                label="نرخ آنفالو"
+                value={formatPercent(rates?.unfollowRate)}
+                helper="آنفالو نسبت به بازدید"
+              />
+              <RateCard
+                label="نرخ رشد خالص"
+                value={formatPercent(rates?.netFollowerRate)}
+                helper="فالو منهای آنفالو، نسبت به بازدید"
               />
             </div>
           </div>
