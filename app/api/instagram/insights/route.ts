@@ -211,9 +211,6 @@ export async function GET() {
       views: getMetricValue(metrics, "views"),
       accountsEngaged: getMetricValue(metrics, "accounts_engaged"),
       totalInteractions: getMetricValue(metrics, "total_interactions"),
-      follows: getFollowMetrics(metrics).follows,
-      unfollows: getFollowMetrics(metrics).unfollows,
-      profileLinksTaps: getMetricValue(metrics, "profile_links_taps"),
     };
 
     let followerCount: number | null = null;
@@ -262,9 +259,6 @@ export async function GET() {
         views: values.views,
         accountsEngaged: values.accountsEngaged,
         totalInteractions: values.totalInteractions,
-        follows: values.follows,
-        unfollows: values.unfollows,
-        profileLinksTaps: values.profileLinksTaps,
         followerCount,
       },
       update: {
@@ -272,9 +266,6 @@ export async function GET() {
         views: values.views,
         accountsEngaged: values.accountsEngaged,
         totalInteractions: values.totalInteractions,
-        follows: values.follows,
-        unfollows: values.unfollows,
-        profileLinksTaps: values.profileLinksTaps,
         followerCount,
       },
     });
