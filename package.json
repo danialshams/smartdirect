@@ -95,7 +95,9 @@
     "sonner": "^2.0.8",
     "tailwind-merge": "^3.6.0",
     "workflow": "^4.8.8",
-    "zod": "^4.5.4"
+    "zod": "^4.5.4",
+    "recharts": "^3.2.1",
+    "react-day-picker": "^9.14.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
