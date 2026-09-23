@@ -95,7 +95,9 @@ export async function GET(request: NextRequest) {
                 views: true,
                 accountsEngaged: true,
                 totalInteractions: true,
-                profileViews: true,
+                follows: true,
+                unfollows: true,
+                profileLinksTaps: true,
                 followerCount: true,
             },
         });
@@ -106,7 +108,9 @@ export async function GET(request: NextRequest) {
                 result.views += snapshot.views ?? 0;
                 result.accountsEngaged += snapshot.accountsEngaged ?? 0;
                 result.totalInteractions += snapshot.totalInteractions ?? 0;
-                result.profileViews += snapshot.profileViews ?? 0;
+                result.follows += snapshot.follows ?? 0;
+                result.unfollows += snapshot.unfollows ?? 0;
+                result.profileLinksTaps += snapshot.profileLinksTaps ?? 0;
                 return result;
             },
             {
@@ -114,7 +118,9 @@ export async function GET(request: NextRequest) {
                 views: 0,
                 accountsEngaged: 0,
                 totalInteractions: 0,
-                profileViews: 0,
+                follows: 0,
+                unfollows: 0,
+                profileLinksTaps: 0,
             },
         );
 
@@ -124,9 +130,9 @@ export async function GET(request: NextRequest) {
         const firstFollowerCount = firstSnapshot?.followerCount ?? 0;
         const followerGrowth = followerCount - firstFollowerCount;
 
-        const engagementRate =
+            const engagementRate =
             totals.reach > 0
-                ? Number(((totals.totalInteractions / totals.reach) * 100).toFixed(2))
+                ? Number(((totals.accountsEngaged / totals.reach) * 100).toFixed(2))
                 : null;
 
         const profilePictureUrl = account.isConnected
@@ -152,7 +158,10 @@ export async function GET(request: NextRequest) {
                 views: totals.views,
                 accountsEngaged: totals.accountsEngaged,
                 totalInteractions: totals.totalInteractions,
-                profileViews: totals.profileViews,
+                accountsEngaged: totals.accountsEngaged,
+                follows: totals.follows,
+                unfollows: totals.unfollows,
+                profileLinksTaps: totals.profileLinksTaps,
                 followerCount,
                 followerGrowth,
                 engagementRate,
