@@ -3,10 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  BarChart3,
   Bot,
   CreditCard,
-  FileBarChart,
   ImagePlus,
   Inbox,
   LayoutDashboard,
@@ -16,7 +14,6 @@ import {
   Settings,
   UsersRound,
   X,
-  UserRound,
 } from "lucide-react";
 
 import SignOutButton from "../../components/auth/SignOutButton";
@@ -31,9 +28,6 @@ const menuGroups = [
     label: "نمای کلی",
     items: [
       { title: "داشبورد", href: "/dashboard", icon: LayoutDashboard },
-      { title: "پروفایل پیج", href: "/dashboard/profile", icon: UserRound },
-      { title: "تحلیل پیج", href: "/dashboard/insights", icon: BarChart3 },
-      { title: "گزارش‌ها", href: "/dashboard/reports", icon: FileBarChart },
       { title: "تحلیل محتوا", href: "/dashboard/content-analytics", icon: BarChart3 },
       { title: "اکانت‌های متصل", href: "/dashboard/accounts", icon: UsersRound },
     ],
