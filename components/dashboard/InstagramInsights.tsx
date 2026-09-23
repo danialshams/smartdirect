@@ -5,7 +5,6 @@ import {
   Eye,
   Heart,
   MessageCircle,
-  RefreshCw,
   Users,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -233,9 +232,9 @@ function MetricCard({
   );
 }
 
-export default function InstagramInsights() {
+export default function InstagramInsights({ accountId: externalAccountId }: { accountId?: string }) {
   const [accounts, setAccounts] = useState<Account[]>([]);
-  const [accountId, setAccountId] = useState("");
+  const [accountId, setAccountId] = useState(externalAccountId || "");
   const [range, setRange] = useState<Range>(7);
   const [metric, setMetric] = useState<Metric>("reach");
   const [data, setData] = useState<Data | null>(null);
@@ -302,6 +301,7 @@ export default function InstagramInsights() {
   }, [accountId, range]);
 
   useEffect(() => {
+    if (externalAccountId) { setAccountId(externalAccountId); return; }
     void loadAccounts().catch((requestError) => {
       setError(
         requestError instanceof Error
@@ -310,10 +310,14 @@ export default function InstagramInsights() {
       );
       setLoading(false);
     });
-  }, [loadAccounts]);
+  }, [loadAccounts, externalAccountId]);
+
+  useEffect(() => { void load(); }, [load]);
 
   useEffect(() => {
-    void load();
+    const handler = () => void load();
+    window.addEventListener("smartdirect:refresh", handler);
+    return () => window.removeEventListener("smartdirect:refresh", handler);
   }, [load]);
 
   const summary = data?.summary;
@@ -332,19 +336,6 @@ export default function InstagramInsights() {
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row">
-          {accounts.length > 1 && (
-            <select
-              value={accountId}
-              onChange={(event) => setAccountId(event.target.value)}
-              className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 outline-none"
-            >
-              {accounts.map((account) => (
-                <option key={account.id} value={account.id}>
-                  @{account.username}
-                </option>
-              ))}
-            </select>
-          )}
 
           <div className="flex h-10 rounded-lg border border-slate-200 bg-white p-1">
             {[7, 30, 90].map((days) => (
@@ -364,15 +355,6 @@ export default function InstagramInsights() {
             ))}
           </div>
 
-          <button
-            type="button"
-            onClick={() => void load()}
-            disabled={loading || !accountId}
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
-          >
-            <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-            بروزرسانی
-          </button>
         </div>
       </div>
 
