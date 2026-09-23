@@ -178,6 +178,7 @@ export async function GET() {
     insightsUrl.searchParams.set("metric", INSIGHT_METRICS.join(","));
 
     insightsUrl.searchParams.set("period", "day");
+    insightsUrl.searchParams.set("metric_type", "total_value");
 
     insightsUrl.searchParams.set("access_token", accessToken);
 
