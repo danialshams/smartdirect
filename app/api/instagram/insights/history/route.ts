@@ -142,9 +142,17 @@ export async function GET(request: NextRequest) {
                 result.views += snapshot.views ?? 0;
                 result.accountsEngaged += snapshot.accountsEngaged ?? 0;
                 result.totalInteractions += snapshot.totalInteractions ?? 0;
-                result.follows += snapshot.follows ?? 0;
-                result.unfollows += snapshot.unfollows ?? 0;
-                result.profileLinksTaps += snapshot.profileLinksTaps ?? 0;
+
+                if (snapshot.follows != null) result.follows += snapshot.follows;
+                if (snapshot.unfollows != null) result.unfollows += snapshot.unfollows;
+                if (snapshot.profileLinksTaps != null) {
+                    result.profileLinksTaps += snapshot.profileLinksTaps;
+                }
+
+                result.followsAvailable ||= snapshot.follows != null;
+                result.unfollowsAvailable ||= snapshot.unfollows != null;
+                result.profileLinksTapsAvailable ||= snapshot.profileLinksTaps != null;
+
                 return result;
             },
             {
@@ -155,6 +163,9 @@ export async function GET(request: NextRequest) {
                 follows: 0,
                 unfollows: 0,
                 profileLinksTaps: 0,
+                followsAvailable: false,
+                unfollowsAvailable: false,
+                profileLinksTapsAvailable: false,
             },
         );
 
@@ -191,9 +202,11 @@ export async function GET(request: NextRequest) {
                 views: totals.views,
                 accountsEngaged: totals.accountsEngaged,
                 totalInteractions: totals.totalInteractions,
-                follows: totals.follows,
-                unfollows: totals.unfollows,
-                profileLinksTaps: totals.profileLinksTaps,
+                follows: totals.followsAvailable ? totals.follows : null,
+                unfollows: totals.unfollowsAvailable ? totals.unfollows : null,
+                profileLinksTaps: totals.profileLinksTapsAvailable
+                    ? totals.profileLinksTaps
+                    : null,
                 followerCount,
                 followerGrowth,
                 engagementRate,
