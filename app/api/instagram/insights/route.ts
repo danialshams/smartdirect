@@ -15,7 +15,8 @@ const INSIGHT_METRICS = [
   "views",
   "accounts_engaged",
   "total_interactions",
-  "profile_views",
+  "follows_and_unfollows",
+  "profile_links_taps",
 ] as const;
 
 type InsightMetricName = (typeof INSIGHT_METRICS)[number];
@@ -24,7 +25,7 @@ type InstagramInsightMetric = {
   name?: string;
   period?: string;
   values?: Array<{
-    value?: number;
+    value?: number | { follows?: number; unfollows?: number };
     end_time?: string;
   }>;
 };
@@ -100,10 +101,22 @@ function getMetricValue(
   name: InsightMetricName,
 ): number | null {
   const metric = metrics.find((item) => item.name === name);
+  const value = metric?.values?.[metric.values.length - 1]?.value;
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
 
+function getFollowMetrics(metrics: InstagramInsightMetric[]) {
+  const metric = metrics.find((item) => item.name === "follows_and_unfollows");
   const value = metric?.values?.[metric.values.length - 1]?.value;
 
-  return typeof value === "number" && Number.isFinite(value) ? value : null;
+  if (typeof value === "object" && value) {
+    return {
+      follows: typeof value.follows === "number" ? value.follows : null,
+      unfollows: typeof value.unfollows === "number" ? value.unfollows : null,
+    };
+  }
+
+  return { follows: null, unfollows: null };
 }
 
 function getSnapshotDate(): Date {
@@ -197,7 +210,9 @@ export async function GET() {
       views: getMetricValue(metrics, "views"),
       accountsEngaged: getMetricValue(metrics, "accounts_engaged"),
       totalInteractions: getMetricValue(metrics, "total_interactions"),
-      profileViews: getMetricValue(metrics, "profile_views"),
+      follows: getFollowMetrics(metrics).follows,
+      unfollows: getFollowMetrics(metrics).unfollows,
+      profileLinksTaps: getMetricValue(metrics, "profile_links_taps"),
     };
 
     let followerCount: number | null = null;
@@ -246,7 +261,9 @@ export async function GET() {
         views: values.views,
         accountsEngaged: values.accountsEngaged,
         totalInteractions: values.totalInteractions,
-        profileViews: values.profileViews,
+        follows: values.follows,
+        unfollows: values.unfollows,
+        profileLinksTaps: values.profileLinksTaps,
         followerCount,
       },
       update: {
@@ -254,7 +271,9 @@ export async function GET() {
         views: values.views,
         accountsEngaged: values.accountsEngaged,
         totalInteractions: values.totalInteractions,
-        profileViews: values.profileViews,
+        follows: values.follows,
+        unfollows: values.unfollows,
+        profileLinksTaps: values.profileLinksTaps,
         followerCount,
       },
     });
