@@ -120,10 +120,6 @@ function toIsoDate(value: Date) {
   return year + "-" + month + "-" + day;
 }
 
-function fromIsoDate(value: string) {
-  return new Date(value + "T12:00:00");
-}
-
 function addDays(value: Date, days: number) {
   const next = new Date(value);
   next.setDate(next.getDate() + days);
@@ -153,7 +149,7 @@ function RangeCalendar({
         disabled={{ after: new Date() }}
         max={365}
         captionLayout="dropdown"
-        fromYear={2024}
+        fromYear={new Date().getFullYear() - 1}
         toYear={new Date().getFullYear()}
         dir="rtl"
         className="mx-auto"
@@ -243,7 +239,7 @@ export default function InstagramInsights({
     to: today,
   });
   const [calendarOpen, setCalendarOpen] = useState(false);
-  const [metric, setMetric] = useState<Metric>("reach");
+  const [metric, setMetric] = useState<Metric>("views");
   const [data, setData] = useState<Data | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
