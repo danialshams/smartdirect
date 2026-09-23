@@ -11,15 +11,12 @@ const INSTAGRAM_API_VERSION = "v26.0";
 const REQUEST_TIMEOUT_MS = 15000;
 
 const CORE_INSIGHT_METRICS = [
-  "reach",
   "views",
-  "accounts_engaged",
   "total_interactions",
 ] as const;
 
 const ADVANCED_INSIGHT_METRICS = [
   "follows_and_unfollows",
-  "profile_links_taps",
 ] as const;
 
 type InsightMetricName =
@@ -218,8 +215,6 @@ export async function GET(request: NextRequest) {
     const metrics = insightsData.data;
 
     const followValues = { follows: null as number | null, unfollows: null as number | null };
-    let profileLinksTaps: number | null = null;
-
     try {
       const advancedUrl = new URL(insightsUrl.toString());
       advancedUrl.searchParams.set(
@@ -236,10 +231,7 @@ export async function GET(request: NextRequest) {
         const parsedFollows = getFollowValues(advancedData.data);
         followValues.follows = parsedFollows.follows;
         followValues.unfollows = parsedFollows.unfollows;
-        profileLinksTaps = getMetricValue(
-          advancedData.data,
-          "profile_links_taps",
-        );
+
       } else {
         console.warn("[Instagram Insights] Advanced metrics unavailable:", {
           status: advancedResponse.status,
@@ -261,7 +253,6 @@ export async function GET(request: NextRequest) {
       totalInteractions: getMetricValue(metrics, "total_interactions"),
       follows: followValues.follows,
       unfollows: followValues.unfollows,
-      profileLinksTaps,
     };
 
     let followerCount: number | null = null;
@@ -312,7 +303,6 @@ export async function GET(request: NextRequest) {
         totalInteractions: values.totalInteractions,
         follows: values.follows,
         unfollows: values.unfollows,
-        profileLinksTaps: values.profileLinksTaps,
         followerCount,
       },
       update: {
@@ -322,7 +312,6 @@ export async function GET(request: NextRequest) {
         totalInteractions: values.totalInteractions,
         follows: values.follows,
         unfollows: values.unfollows,
-        profileLinksTaps: values.profileLinksTaps,
         followerCount,
       },
     });
