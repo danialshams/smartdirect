@@ -30,6 +30,9 @@ type InstagramInsightMetric = {
     value?: number | { follows?: number; unfollows?: number };
     end_time?: string;
   }>;
+  total_value?: {
+    value?: number | { follows?: number; unfollows?: number };
+  };
 };
 
 type InstagramInsightsResponse = {
@@ -103,13 +106,18 @@ function getMetricValue(
   name: InsightMetricName,
 ): number | null {
   const metric = metrics.find((item) => item.name === name);
-  const value = metric?.values?.[metric.values.length - 1]?.value;
+  const timeSeriesValue = metric?.values?.[metric.values.length - 1]?.value;
+  const totalValue = metric?.total_value?.value;
+  const value = totalValue ?? timeSeriesValue;
+
   return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
 function getFollowValues(metrics: InstagramInsightMetric[]) {
   const metric = metrics.find((item) => item.name === "follows_and_unfollows");
-  const value = metric?.values?.[metric.values.length - 1]?.value;
+  const value =
+    metric?.total_value?.value ??
+    metric?.values?.[metric.values.length - 1]?.value;
 
   if (!value || typeof value !== "object") {
     return { follows: null, unfollows: null };
@@ -306,11 +314,13 @@ export async function GET(request: NextRequest) {
         followerCount,
       },
       update: {
-        views: values.views,
-        totalInteractions: values.totalInteractions,
-        follows: values.follows,
-        unfollows: values.unfollows,
-        followerCount,
+        ...(values.views !== null ? { views: values.views } : {}),
+        ...(values.totalInteractions !== null
+          ? { totalInteractions: values.totalInteractions }
+          : {}),
+        ...(values.follows !== null ? { follows: values.follows } : {}),
+        ...(values.unfollows !== null ? { unfollows: values.unfollows } : {}),
+        ...(followerCount !== null ? { followerCount } : {}),
       },
     });
 
