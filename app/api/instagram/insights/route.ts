@@ -82,20 +82,20 @@ async function fetchAllInstagramInsightPages(url: string) {
   let pageCount = 0;
 
   while (nextUrl && pageCount < 20) {
-    const { response, data } =
+    const pageResult: { response: Response; data: InstagramInsightsResponse } =
       await fetchInstagram<InstagramInsightsResponse>(nextUrl);
 
-    if (!response.ok || !data.data) {
+    if (!pageResult.response.ok || !pageResult.data.data) {
       return {
-        response,
-        data,
+        response: pageResult.response,
+        data: pageResult.data,
         metrics: allMetrics,
         pageCount,
       };
     }
 
-    allMetrics.push(...data.data);
-    nextUrl = data.paging?.next ?? null;
+    allMetrics.push(...pageResult.data.data);
+    nextUrl = pageResult.data.paging?.next ?? null;
     pageCount += 1;
   }
 
