@@ -200,6 +200,13 @@ export async function GET(request: NextRequest) {
 
     const accessToken = await getValidInstagramAccessToken(instagramAccount.id);
 
+    if (!accessToken) {
+      return NextResponse.json(
+        { error: "توکن معتبر Instagram برای این حساب پیدا نشد" },
+        { status: 401 },
+      );
+    }
+
     const now = new Date();
     const today = getSnapshotDate(now);
 
