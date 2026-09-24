@@ -207,6 +207,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const validAccessToken: string = accessToken;
+    const igUserId: string = instagramAccount.igUserId;
+
     const now = new Date();
     const today = getSnapshotDate(now);
 
@@ -297,8 +300,8 @@ export async function GET(request: NextRequest) {
             return {
               day,
               result: await fetchDailyInsight(
-                instagramAccount.igUserId,
-                accessToken,
+                igUserId,
+                validAccessToken,
                 day,
               ),
             };
