@@ -9,7 +9,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { Calendar } from "@/components/ui/calendar";
+import { Calendar } from "../ui/calendar";
 import {
   CartesianGrid,
   Line,
