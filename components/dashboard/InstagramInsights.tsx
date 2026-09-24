@@ -249,7 +249,12 @@ export default function InstagramInsights({
     if (!accountId) return;
 
     const response = await fetch(
-      "/api/instagram/insights?accountId=" + encodeURIComponent(accountId),
+      "/api/instagram/insights?accountId=" +
+        encodeURIComponent(accountId) +
+        "&from=" +
+        encodeURIComponent(effectiveRange?.from ?? "") +
+        "&to=" +
+        encodeURIComponent(effectiveRange?.to ?? ""),
       { cache: "no-store" },
     );
 
@@ -257,7 +262,7 @@ export default function InstagramInsights({
       const result = await response.json().catch(() => null);
       throw new Error(result?.error || "خطا در بروزرسانی Instagram Insights");
     }
-  }, [accountId]);
+  }, [accountId, effectiveRange]);
 
   const load = useCallback(async () => {
     if (!accountId || !effectiveRange) {
