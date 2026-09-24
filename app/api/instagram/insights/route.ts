@@ -28,6 +28,9 @@ type InstagramInsightMetric = {
 
 type InstagramInsightsResponse = {
   data?: InstagramInsightMetric[];
+  paging?: {
+    next?: string;
+  };
   error?: {
     message?: string;
     type?: string;
@@ -69,6 +72,37 @@ async function fetchInstagram<T>(url: string) {
   } finally {
     clearTimeout(timeout);
   }
+}
+
+async function fetchAllInstagramInsightPages(url: string) {
+  const allMetrics: InstagramInsightMetric[] = [];
+  let nextUrl: string | null = url;
+  let pageCount = 0;
+
+  while (nextUrl && pageCount < 20) {
+    const { response, data } =
+      await fetchInstagram<InstagramInsightsResponse>(nextUrl);
+
+    if (!response.ok || !data.data) {
+      return {
+        response,
+        data,
+        metrics: allMetrics,
+        pageCount,
+      };
+    }
+
+    allMetrics.push(...data.data);
+    nextUrl = data.paging?.next ?? null;
+    pageCount += 1;
+  }
+
+  return {
+    response: { ok: true, status: 200 } as Response,
+    data: { data: allMetrics } as InstagramInsightsResponse,
+    metrics: allMetrics,
+    pageCount,
+  };
 }
 
 function parseDate(value: string | null | undefined) {
@@ -214,8 +248,24 @@ export async function GET(request: NextRequest) {
 
     insightsUrl.searchParams.set("access_token", accessToken);
 
-    const { response: insightsResponse, data: insightsData } =
-      await fetchInstagram<InstagramInsightsResponse>(insightsUrl.toString());
+    const insightsResult = await fetchAllInstagramInsightPages(
+      insightsUrl.toString(),
+    );
+    const insightsResponse = insightsResult.response;
+    const insightsData = insightsResult.data;
+    const insightsMetrics = insightsResult.metrics;
+
+    console.info("[Instagram Insights] Core time-series sync:", {
+      accountId: instagramAccount.id,
+      requestedFrom,
+      requestedTo,
+      pages: insightsResult.pageCount,
+      metrics: insightsMetrics.map((metric) => ({
+        name: metric.name,
+        period: metric.period,
+        values: metric.values?.length ?? 0,
+      })),
+    });
 
     if (!insightsResponse.ok || !insightsData.data) {
       console.error("[Instagram Insights] Meta request failed:", {
@@ -242,13 +292,12 @@ export async function GET(request: NextRequest) {
         ADVANCED_INSIGHT_METRICS.join(","),
       );
 
-      const { response, data } =
-        await fetchInstagram<InstagramInsightsResponse>(
-          advancedUrl.toString(),
-        );
+      const advancedResult = await fetchAllInstagramInsightPages(
+        advancedUrl.toString(),
+      );
 
-      if (response.ok && data.data) {
-        followMetrics = data.data;
+      if (advancedResult.response.ok && advancedResult.data.data) {
+        followMetrics = advancedResult.metrics;
       } else {
         console.warn("[Instagram Insights] Advanced metrics unavailable:", {
           status: response.status,
@@ -263,9 +312,9 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const viewSeries = getMetricSeries(insightsData.data, "views");
+    const viewSeries = getMetricSeries(insightsMetrics, "views");
     const interactionSeries = getMetricSeries(
-      insightsData.data,
+      insightsMetrics,
       "total_interactions",
     );
     const followSeries = getFollowSeries(followMetrics);
