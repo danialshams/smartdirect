@@ -186,7 +186,7 @@ export default function InsightsDashboard() {
                 <header className="flex flex-col gap-5 border-b border-zinc-200 pb-6 lg:flex-row lg:items-end lg:justify-between">
                     <div>
                         <div className="text-xs font-medium uppercase tracking-[0.18em] text-zinc-400">Instagram Insights</div>
-                        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950 sm:text-3xl">تحلیل عملکرد پیج</h1>
+                        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950 sm:text-3xl">تحلیل پیج</h1>
                     </div>
 
                     <div className="flex w-full flex-col gap-3 sm:flex-row lg:w-auto">
@@ -223,28 +223,34 @@ export default function InsightsDashboard() {
                             <Stat label="دنبال‌کنندگان" value={number(summary.followerCount)} helper={summary.followerGrowth === 0 ? "بدون تغییر در بازه" : `${summary.followerGrowth > 0 ? "+" : ""}${number(summary.followerGrowth)} در بازه`} />
                         </section>
 
-                        <section className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
-                            <div className="border border-zinc-200 bg-white p-5 sm:p-6">
-                                <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                                    <div><h2 className="text-lg font-semibold text-zinc-950">روند عملکرد</h2><p className="mt-1 text-sm text-zinc-500">داده‌های روزانه ذخیره‌شده در SmartDirect</p></div>
-                                    <div className="flex w-full gap-1 border border-zinc-200 p-1 sm:w-auto">
+                        <section className="border border-zinc-200 bg-white p-5 sm:p-6">
+                            <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                                <div className="max-w-2xl">
+                                    <h2 className="text-xl font-semibold text-zinc-950">روند عملکرد Instagram</h2>
+                                    <p className="mt-2 text-sm leading-6 text-zinc-500">شاخص‌های عملکرد اکانت فعال را در یک بازه مشخص بررسی کنید.</p>
+                                    <div className="mt-5 flex w-full gap-1 border border-zinc-200 p-1 sm:w-fit">
                                         {([["reach", "دسترسی"], ["views", "بازدید"], ["interactions", "تعاملات"]] as const).map(([value, label]) => <button key={value} type="button" onClick={() => setMetric(value)} className={`px-3 py-2 text-xs sm:text-sm ${metric === value ? "bg-zinc-950 text-white" : "text-zinc-500 hover:bg-zinc-50"}`}>{label}</button>)}
                                     </div>
                                 </div>
-                                <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-start">
-                                    <Chart snapshots={chartSnapshots} metric={metric} />
+                                <div className="shrink-0">
                                     <Calendar mode="range" selected={dateRange} onSelect={setDateRange} className="rounded-lg border" />
                                 </div>
                             </div>
 
+                            <div className="mt-8 border-t border-zinc-100 pt-6">
+                                <Chart snapshots={chartSnapshots} metric={metric} />
+                            </div>
+                        </section>
+
+                        <section className="grid grid-cols-1 gap-6 lg:grid-cols-1">
                             <aside className="border border-zinc-200 bg-white p-5 sm:p-6">
                                 <div className="text-xs uppercase tracking-[0.16em] text-zinc-400">وضعیت فعلی</div>
                                 <h2 className="mt-2 text-lg font-semibold text-zinc-950">خلاصه عملکرد</h2>
-                                <div className="mt-6 space-y-5">
+                                <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
                                     <div><div className="text-sm text-zinc-500">نرخ تعامل</div><div className="mt-1 text-2xl font-semibold text-zinc-950">{percent(summary.engagementRate)}</div></div>
-                                    <div className="border-t border-zinc-100 pt-5"><div className="text-sm text-zinc-500">آخرین دسترسی</div><div className="mt-1 text-xl font-semibold text-zinc-950">{number(latest?.reach)}</div></div>
-                                    <div className="border-t border-zinc-100 pt-5"><div className="text-sm text-zinc-500">آخرین تعاملات</div><div className="mt-1 text-xl font-semibold text-zinc-950">{number(latest?.totalInteractions)}</div></div>
-                                    <div className="border-t border-zinc-100 pt-5"><div className="text-sm text-zinc-500">آخرین Snapshot</div><div className="mt-1 text-sm font-medium text-zinc-900">{latest ? date(latest.snapshotDate) : "—"}</div></div>
+                                    <div className="border-t border-zinc-100 pt-5 sm:border-t-0 sm:border-r sm:pt-0 sm:pr-5"><div className="text-sm text-zinc-500">آخرین دسترسی</div><div className="mt-1 text-xl font-semibold text-zinc-950">{number(latest?.reach)}</div></div>
+                                    <div className="border-t border-zinc-100 pt-5 sm:border-t-0 sm:border-r sm:pt-0 sm:pr-5"><div className="text-sm text-zinc-500">آخرین تعاملات</div><div className="mt-1 text-xl font-semibold text-zinc-950">{number(latest?.totalInteractions)}</div></div>
+                                    <div className="border-t border-zinc-100 pt-5 sm:border-t-0 sm:border-r sm:pt-0 sm:pr-5"><div className="text-sm text-zinc-500">آخرین Snapshot</div><div className="mt-1 text-sm font-medium text-zinc-900">{latest ? date(latest.snapshotDate) : "—"}</div></div>
                                 </div>
                             </aside>
                         </section>
