@@ -169,12 +169,18 @@ function RangeCalendar({
   const today = useMemo(() => normalizeDateOnly(new Date()), []);
   const minimum = useMemo(() => normalizeDateOnly(minDate), [minDate]);
 
-  const [from, setFrom] = useState<Date>(
-    normalizeDateOnly(range.from ?? minimum),
-  );
-  const [to, setTo] = useState<Date>(
-    normalizeDateOnly(range.to ?? today),
-  );
+  const initialFrom = useMemo(() => {
+    const requested = normalizeDateOnly(range.from ?? minimum);
+    return requested < minimum ? minimum : requested;
+  }, [range.from, minimum]);
+
+  const initialTo = useMemo(() => {
+    const requested = normalizeDateOnly(range.to ?? today);
+    return requested < initialFrom ? initialFrom : requested;
+  }, [range.to, today, initialFrom]);
+
+  const [from, setFrom] = useState<Date>(initialFrom);
+  const [to, setTo] = useState<Date>(initialTo);
 
   function handleFromChange(value: string) {
     const next = parseDateInputValue(value);
