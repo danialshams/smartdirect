@@ -319,7 +319,8 @@ export default function InstagramInsights({
   const [metric, setMetric] = useState<Metric>("views");
   const [data, setData] = useState<Data | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");\n  const [calendarMounted, setCalendarMounted] = useState(false);
+  const [error, setError] = useState("");
+  const [calendarMounted, setCalendarMounted] = useState(false);
 
   const effectiveRange = useMemo(() => {
     if (!range.from || !range.to) return null;
