@@ -101,7 +101,7 @@
     "react-is": "^19.2.8",
     "react-multi-date-picker": "^4.5.2",
     "react-date-object": "^2.1.9",
-    "cn": "^0.0.1"
+    "class-variance-authority": "^0.7.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
