@@ -319,7 +319,10 @@ export async function GET(request: NextRequest) {
 
       for (const item of results) {
         if ("error" in item) {
-          syncErrors.push({ day: item.day, error: item.error });
+          syncErrors.push({
+            day: item.day,
+            error: item.error ?? "خطای نامشخص در دریافت داده Meta",
+          });
         } else {
           synced.push(item.result);
         }
