@@ -10,27 +10,23 @@ export const dynamic = "force-dynamic";
 const INSTAGRAM_API_VERSION = "v26.0";
 const REQUEST_TIMEOUT_MS = 15000;
 
-const CORE_INSIGHT_METRICS = ["views", "total_interactions"] as const;
-const ADVANCED_INSIGHT_METRICS = ["follows_and_unfollows"] as const;
+const INSIGHT_METRICS = [
+  "views",
+  "total_interactions",
+  "follows_and_unfollows",
+] as const;
 
-type InsightMetricName =
-  | (typeof CORE_INSIGHT_METRICS)[number]
-  | (typeof ADVANCED_INSIGHT_METRICS)[number];
+type InstagramInsightMetricName = (typeof INSIGHT_METRICS)[number];
 
 type InstagramInsightMetric = {
   name?: string;
-  period?: string;
-  values?: Array<{
+  total_value?: {
     value?: number | { follows?: number; unfollows?: number };
-    end_time?: string;
-  }>;
+  };
 };
 
 type InstagramInsightsResponse = {
   data?: InstagramInsightMetric[];
-  paging?: {
-    next?: string;
-  };
   error?: {
     message?: string;
     type?: string;
@@ -76,108 +72,93 @@ async function fetchInstagram<T>(
   }
 }
 
-async function fetchAllInstagramInsightPages(url: string) {
-  const allMetrics: InstagramInsightMetric[] = [];
-  let nextUrl: string | null = url;
-  let pageCount = 0;
-
-  while (nextUrl && pageCount < 20) {
-    const pageResult: { response: Response; data: InstagramInsightsResponse } =
-      await fetchInstagram<InstagramInsightsResponse>(nextUrl);
-
-    if (!pageResult.response.ok || !pageResult.data.data) {
-      return {
-        response: pageResult.response,
-        data: pageResult.data,
-        metrics: allMetrics,
-        pageCount,
-      };
-    }
-
-    allMetrics.push(...pageResult.data.data);
-    nextUrl = pageResult.data.paging?.next ?? null;
-    pageCount += 1;
-  }
-
-  return {
-    response: { ok: true, status: 200 } as Response,
-    data: { data: allMetrics } as InstagramInsightsResponse,
-    metrics: allMetrics,
-    pageCount,
-  };
-}
-
-function parseDate(value: string | null | undefined) {
-  if (!value) return null;
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? null : date;
-}
-
 function getSnapshotDate(value: Date) {
   return new Date(
     Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate()),
   );
 }
 
-function getMetricSeries(
-  metrics: InstagramInsightMetric[],
-  name: InsightMetricName,
+function getMetricNumber(
+  data: InstagramInsightsResponse,
+  name: InstagramInsightMetricName,
 ) {
-  const metric = metrics.find((item) => item.name === name);
+  const metric = data.data?.find((item) => item.name === name);
+  const value = metric?.total_value?.value;
 
-  return (metric?.values ?? [])
-    .map((item) => {
-      const value = item.value;
-      const endTime = parseDate(item.end_time);
-
-      if (
-        typeof value !== "number" ||
-        !Number.isFinite(value) ||
-        !endTime
-      ) {
-        return null;
-      }
-
-      return { value, endTime };
-    })
-    .filter(
-      (item): item is { value: number; endTime: Date } => item !== null,
-    );
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
-function getFollowSeries(metrics: InstagramInsightMetric[]) {
-  const metric = metrics.find((item) => item.name === "follows_and_unfollows");
+function getFollowValues(data: InstagramInsightsResponse) {
+  const metric = data.data?.find(
+    (item) => item.name === "follows_and_unfollows",
+  );
+  const value = metric?.total_value?.value;
 
-  return (metric?.values ?? [])
-    .map((item) => {
-      if (!item.value || typeof item.value !== "object") return null;
+  if (!value || typeof value !== "object") {
+    return { follows: null, unfollows: null };
+  }
 
-      const endTime = parseDate(item.end_time);
-      if (!endTime) return null;
+  return {
+    follows:
+      typeof value.follows === "number" && Number.isFinite(value.follows)
+        ? value.follows
+        : null,
+    unfollows:
+      typeof value.unfollows === "number" && Number.isFinite(value.unfollows)
+        ? value.unfollows
+        : null,
+  };
+}
 
-      return {
-        follows:
-          typeof item.value.follows === "number" &&
-          Number.isFinite(item.value.follows)
-            ? item.value.follows
-            : null,
-        unfollows:
-          typeof item.value.unfollows === "number" &&
-          Number.isFinite(item.value.unfollows)
-            ? item.value.unfollows
-            : null,
-        endTime,
-      };
-    })
-    .filter(
-      (
-        item,
-      ): item is {
-        follows: number | null;
-        unfollows: number | null;
-        endTime: Date;
-      } => item !== null,
+function getDayKeys(from: Date, to: Date) {
+  const days: string[] = [];
+  const cursor = new Date(from);
+
+  while (cursor <= to) {
+    days.push(cursor.toISOString().slice(0, 10));
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+
+  return days;
+}
+
+async function fetchDailyInsight(
+  igUserId: string,
+  accessToken: string,
+  dayKey: string,
+) {
+  const start = new Date(dayKey + "T00:00:00.000Z");
+  const end = new Date(dayKey + "T23:59:59.999Z");
+
+  const url = new URL(
+    `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${igUserId}/insights`,
+  );
+
+  url.searchParams.set("metric", INSIGHT_METRICS.join(","));
+  url.searchParams.set("period", "day");
+  url.searchParams.set("metric_type", "total_value");
+  url.searchParams.set("since", String(Math.floor(start.getTime() / 1000)));
+  url.searchParams.set("until", String(Math.floor(end.getTime() / 1000)));
+  url.searchParams.set("access_token", accessToken);
+
+  const { response, data } =
+    await fetchInstagram<InstagramInsightsResponse>(url.toString());
+
+  if (!response.ok || !data.data) {
+    throw new Error(
+      `Meta daily insights failed for ${dayKey}: ${getErrorMessage(data)}`,
     );
+  }
+
+  const followValues = getFollowValues(data);
+
+  return {
+    snapshotDate: start,
+    views: getMetricNumber(data, "views"),
+    totalInteractions: getMetricNumber(data, "total_interactions"),
+    follows: followValues.follows,
+    unfollows: followValues.unfollows,
+  };
 }
 
 export async function GET(request: NextRequest) {
