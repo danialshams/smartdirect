@@ -9,9 +9,7 @@ import {
   UserMinus,
   UserPlus,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import DateObject from "react-date-object";
-import persian from "react-date-object/calendars/persian";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   CartesianGrid,
   Line,
@@ -155,19 +153,19 @@ function normalizeDateOnly(value: Date) {
   return new Date(value.getFullYear(), value.getMonth(), value.getDate());
 }
 
-function RangeCalendar({
+function NativeDateRangePicker({
   range,
   minDate,
   onChange,
-  onClose,
 }: {
   range: { from?: Date; to?: Date };
   minDate: Date;
   onChange: (range: { from: Date; to: Date } | undefined) => void;
-  onClose: () => void;
 }) {
   const today = useMemo(() => normalizeDateOnly(new Date()), []);
   const minimum = useMemo(() => normalizeDateOnly(minDate), [minDate]);
+  const fromInputRef = useRef<HTMLInputElement>(null);
+  const toInputRef = useRef<HTMLInputElement>(null);
 
   const initialFrom = useMemo(() => {
     const requested = normalizeDateOnly(range.from ?? minimum);
@@ -182,6 +180,30 @@ function RangeCalendar({
   const [from, setFrom] = useState<Date>(initialFrom);
   const [to, setTo] = useState<Date>(initialTo);
 
+  useEffect(() => {
+    setFrom(initialFrom);
+    setTo(initialTo);
+  }, [initialFrom, initialTo]);
+
+  function openNativePicker(input: HTMLInputElement | null) {
+    if (!input) return;
+
+    const picker = input as HTMLInputElement & {
+      showPicker?: () => void;
+    };
+
+    try {
+      if (typeof picker.showPicker === "function") {
+        picker.showPicker();
+        return;
+      }
+    } catch {
+      // Safari versions without showPicker fall back to a normal input click.
+    }
+
+    input.click();
+  }
+
   function handleFromChange(value: string) {
     const next = parseDateInputValue(value);
     if (!next) return;
@@ -189,9 +211,12 @@ function RangeCalendar({
     const safeNext = next < minimum ? minimum : next > today ? today : next;
     setFrom(safeNext);
 
-    if (safeNext > to) {
-      setTo(safeNext);
-    }
+    const nextTo = safeNext > to ? safeNext : to;
+    setTo(nextTo);
+
+    window.setTimeout(() => {
+      openNativePicker(toInputRef.current);
+    }, 0);
   }
 
   function handleToChange(value: string) {
@@ -200,113 +225,52 @@ function RangeCalendar({
 
     const safeNext = next < from ? from : next > today ? today : next;
     setTo(safeNext);
-  }
-
-  function applyRange() {
-    const start = from <= to ? from : to;
-    const end = from <= to ? to : from;
-
-    const days =
-      Math.floor(
-        (normalizeDateOnly(end).getTime() -
-          normalizeDateOnly(start).getTime()) /
-          86400000,
-      ) + 1;
-
-    if (days > 730) {
-      const correctedStart = addDays(end, -729);
-      onChange({ from: correctedStart, to: end });
-    } else {
-      onChange({ from: start, to: end });
-    }
-
-    onClose();
+    onChange({ from, to: safeNext });
   }
 
   return (
-    <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/5 p-3 backdrop-blur-[1px]"
-      role="presentation"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
-      onTouchStart={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
-    >
-      <div
-        className="w-full max-w-[680px] rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_24px_80px_rgba(15,23,42,0.18)] sm:p-5"
-        role="dialog"
-        aria-modal="true"
+    <div className="relative inline-flex h-10 max-w-full">
+      <button
+        type="button"
+        onClick={() => openNativePicker(fromInputRef.current)}
+        className="inline-flex h-10 max-w-full items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-semibold text-slate-700 transition hover:border-slate-300"
         aria-label="انتخاب بازه زمانی"
-        onMouseDown={(event) => event.stopPropagation()}
-        onTouchStart={(event) => event.stopPropagation()}
       >
-        <div className="mb-4 border-b border-slate-100 pb-4">
-          <p className="text-xs font-bold text-slate-950">انتخاب بازه زمانی</p>
-          <p className="mt-1 text-[10px] leading-5 text-slate-400">
-            تاریخ مبدا و مقصد را با انتخابگر تاریخ دستگاه انتخاب کنید.
-          </p>
-        </div>
+        <CalendarDays size={15} className="shrink-0 text-slate-400" />
+        <span className="max-w-[150px] truncate">
+          {from && to
+            ? formatDate(from) + " — " + formatDate(to)
+            : "انتخاب بازه"}
+        </span>
+      </button>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <label className="min-w-0 rounded-xl border border-slate-100 p-3">
-            <span className="mb-2 block text-xs font-bold text-slate-900">
-              تاریخ مبدا
-            </span>
-            <input
-              type="date"
-              value={formatDateInputValue(from)}
-              min={formatDateInputValue(minimum)}
-              max={formatDateInputValue(today)}
-              onChange={(event) => handleFromChange(event.target.value)}
-              className="h-11 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100"
-            />
-            <span className="mt-2 block text-[10px] text-slate-400">
-              {formatDate(from)}
-            </span>
-          </label>
+      <input
+        ref={fromInputRef}
+        type="date"
+        lang="fa-IR"
+        dir="rtl"
+        value={formatDateInputValue(from)}
+        min={formatDateInputValue(minimum)}
+        max={formatDateInputValue(today)}
+        onChange={(event) => handleFromChange(event.target.value)}
+        aria-label="تاریخ مبدا"
+        className="pointer-events-none absolute h-px w-px opacity-0"
+        tabIndex={-1}
+      />
 
-          <label className="min-w-0 rounded-xl border border-slate-100 p-3">
-            <span className="mb-2 block text-xs font-bold text-slate-900">
-              تاریخ مقصد
-            </span>
-            <input
-              type="date"
-              value={formatDateInputValue(to)}
-              min={formatDateInputValue(from)}
-              max={formatDateInputValue(today)}
-              onChange={(event) => handleToChange(event.target.value)}
-              className="h-11 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100"
-            />
-            <span className="mt-2 block text-[10px] text-slate-400">
-              {formatDate(to)}
-            </span>
-          </label>
-        </div>
-
-        <div className="mt-4 flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-[10px] text-slate-400">
-            از {formatDate(minimum)} تا امروز — حداکثر ۲ سال
-          </p>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="h-10 rounded-xl px-4 text-xs font-semibold text-slate-500 transition hover:bg-slate-50 hover:text-slate-800"
-            >
-              انصراف
-            </button>
-            <button
-              type="button"
-              onClick={applyRange}
-              className="h-10 rounded-xl bg-slate-950 px-5 text-xs font-semibold text-white transition hover:bg-slate-800"
-            >
-              اعمال بازه
-            </button>
-          </div>
-        </div>
-      </div>
+      <input
+        ref={toInputRef}
+        type="date"
+        lang="fa-IR"
+        dir="rtl"
+        value={formatDateInputValue(to)}
+        min={formatDateInputValue(from)}
+        max={formatDateInputValue(today)}
+        onChange={(event) => handleToChange(event.target.value)}
+        aria-label="تاریخ مقصد"
+        className="pointer-events-none absolute h-px w-px opacity-0"
+        tabIndex={-1}
+      />
     </div>
   );
 }
@@ -368,7 +332,6 @@ export default function InstagramInsights({
     from: addDays(today, -29),
     to: today,
   });
-  const [calendarOpen, setCalendarOpen] = useState(false);
   const [metric, setMetric] = useState<Metric>("views");
   const [data, setData] = useState<Data | null>(null);
   const [loading, setLoading] = useState(true);
@@ -483,15 +446,6 @@ export default function InstagramInsights({
     window.addEventListener("smartdirect:refresh", handler);
     return () => window.removeEventListener("smartdirect:refresh", handler);
   }, [load]);
-
-  function openCalendar() {
-    setCalendarOpen(true);
-  }
-
-  function closeCalendar() {
-    setCalendarOpen(false);
-  }
-
   function selectPreset(value: Exclude<RangePreset, "custom">) {
     setPreset(value);
     const end = new Date();
@@ -499,7 +453,6 @@ export default function InstagramInsights({
       from: addDays(end, -(value - 1)),
       to: end,
     });
-    setCalendarOpen(false);
   }
 
   function selectCustomRange(next: { from: Date; to: Date } | undefined) {
@@ -591,40 +544,15 @@ export default function InstagramInsights({
               ))}
             </div>
 
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => (calendarOpen ? closeCalendar() : openCalendar())}
-                className="inline-flex h-10 max-w-full items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-semibold text-slate-700 transition hover:border-slate-300"
-                aria-expanded={calendarOpen}
-              >
-                <CalendarDays size={15} className="shrink-0 text-slate-400" />
-                <span className="max-w-[150px] truncate">
-                  {range.from && range.to
-                    ? formatDate(range.from.toISOString()) +
-                      " — " +
-                      formatDate(range.to.toISOString())
-                    : "انتخاب بازه"}
-                </span>
-                <ChevronDown
-                  size={14}
-                  className={calendarOpen ? "rotate-180 transition" : "transition"}
-                />
-              </button>
-
-              {calendarOpen && (
-                <RangeCalendar
-                  range={range}
-                  minDate={
-                    data?.account.analyticsStartDate
-                      ? new Date(data.account.analyticsStartDate)
-                      : addDays(new Date(), -730)
-                  }
-                  onChange={selectCustomRange}
-                  onClose={closeCalendar}
-                />
-              )}
-            </div>
+            <NativeDateRangePicker
+              range={range}
+              minDate={
+                data?.account.analyticsStartDate
+                  ? new Date(data.account.analyticsStartDate)
+                  : addDays(new Date(), -730)
+              }
+              onChange={selectCustomRange}
+            />
           </div>
         </div>
       </div>
