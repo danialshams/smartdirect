@@ -47,7 +47,9 @@ function getErrorMessage(data: InstagramInsightsResponse) {
   return data.error?.message || "Instagram Insights request failed";
 }
 
-async function fetchInstagram<T>(url: string) {
+async function fetchInstagram<T>(
+  url: string,
+): Promise<{ response: Response; data: T }> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
@@ -300,9 +302,9 @@ export async function GET(request: NextRequest) {
         followMetrics = advancedResult.metrics;
       } else {
         console.warn("[Instagram Insights] Advanced metrics unavailable:", {
-          status: response.status,
+          status: advancedResult.response.status,
           accountId: instagramAccount.id,
-          error: data.error,
+          error: advancedResult.data.error,
         });
       }
     } catch (error) {
