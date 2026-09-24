@@ -311,20 +311,49 @@ function WheelColumn({
   formatValue: (value: number) => string;
   onSelect: (value: number) => void;
 }) {
-  const selectedIndex = Math.max(0, values.indexOf(selected));
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const container = ref.current;
     if (!container) return;
 
-    const target = container.children[selectedIndex + 1] as HTMLElement | undefined;
+    const index = values.indexOf(selected);
+    if (index < 0) return;
+
+    const target = container.children[index + 1] as HTMLElement | undefined;
     target?.scrollIntoView({ block: "center", behavior: "auto" });
-  }, [selectedIndex]);
+  }, [values, selected]);
+
+  function handleScroll() {
+    const container = ref.current;
+    if (!container || values.length === 0) return;
+
+    const center = container.scrollTop + container.clientHeight / 2;
+    let closestIndex = 0;
+    let closestDistance = Number.POSITIVE_INFINITY;
+
+    values.forEach((value, index) => {
+      const item = container.children[index + 1] as HTMLElement | undefined;
+      if (!item) return;
+
+      const itemCenter = item.offsetTop + item.offsetHeight / 2;
+      const distance = Math.abs(itemCenter - center);
+
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestIndex = index;
+      }
+    });
+
+    if (values[closestIndex] !== selected) {
+      onSelect(values[closestIndex]);
+    }
+  }
 
   return (
     <div
       ref={ref}
+      onScroll={handleScroll}
       className="h-[174px] snap-y snap-mandatory overflow-y-auto overscroll-contain px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
       <div className="h-[66px]" aria-hidden="true" />
@@ -344,6 +373,84 @@ function WheelColumn({
         </button>
       ))}
       <div className="h-[66px]" aria-hidden="true" />
+    </div>
+  );
+}
+
+function NativeMobileDateRangePicker({
+  range,
+  minDate,
+  onChange,
+}: {
+  range: { from?: Date; to?: Date };
+  minDate: Date;
+  onChange: (range: { from: Date; to: Date }) => void;
+}) {
+  const today = normalizeDateOnly(new Date());
+  const minimum = normalizeDateOnly(minDate);
+  const from = range.from
+    ? clampDate(normalizeDateOnly(range.from), minimum, today)
+    : minimum;
+  const to = range.to
+    ? clampDate(normalizeDateOnly(range.to), from, today)
+    : today;
+
+  function applyFrom(value: string) {
+    const next = parseDateInputValue(value);
+    if (!next) return;
+
+    const safeFrom = clampDate(next, minimum, today);
+    const safeTo = to < safeFrom ? safeFrom : to;
+    onChange({ from: safeFrom, to: safeTo });
+  }
+
+  function applyTo(value: string) {
+    const next = parseDateInputValue(value);
+    if (!next) return;
+
+    const safeTo = clampDate(next, from, today);
+    onChange({ from, to: safeTo });
+  }
+
+  return (
+    <div className="flex max-w-full items-center gap-1 sm:hidden">
+      <label className="relative flex h-10 min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-white px-3">
+        <CalendarDays size={15} className="shrink-0 text-slate-400" />
+        <span className="min-w-0 truncate text-[10px] font-semibold text-slate-700">
+          {formatDate(from)}
+        </span>
+        <input
+          type="date"
+          lang="fa-IR"
+          dir="rtl"
+          value={formatDateInputValue(from)}
+          min={formatDateInputValue(minimum)}
+          max={formatDateInputValue(today)}
+          onChange={(event) => applyFrom(event.target.value)}
+          aria-label="تاریخ شروع"
+          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+        />
+      </label>
+
+      <span className="shrink-0 text-[10px] text-slate-300">تا</span>
+
+      <label className="relative flex h-10 min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-white px-3">
+        <CalendarDays size={15} className="shrink-0 text-slate-400" />
+        <span className="min-w-0 truncate text-[10px] font-semibold text-slate-700">
+          {formatDate(to)}
+        </span>
+        <input
+          type="date"
+          lang="fa-IR"
+          dir="rtl"
+          value={formatDateInputValue(to)}
+          min={formatDateInputValue(from)}
+          max={formatDateInputValue(today)}
+          onChange={(event) => applyTo(event.target.value)}
+          aria-label="تاریخ پایان"
+          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+        />
+      </label>
     </div>
   );
 }
@@ -473,7 +580,7 @@ function JalaliDatePickerSheet({
 
   return (
     <div
-      className="fixed inset-0 z-[120] flex items-end justify-center bg-slate-950/20 backdrop-blur-[2px] sm:items-center sm:p-4"
+      className="fixed inset-0 z-[120] hidden items-end justify-center bg-slate-950/20 backdrop-blur-[2px] sm:flex sm:items-center sm:p-4"
       role="presentation"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
@@ -566,7 +673,7 @@ function JalaliDateRangePicker({
 }: {
   range: { from?: Date; to?: Date };
   minDate: Date;
-  onChange: (range: { from: Date; to: Date } | undefined) => void;
+  onChange: (range: { from: Date; to: Date }) => void;
 }) {
   const today = useMemo(() => normalizeDateOnly(new Date()), []);
   const minimum = useMemo(() => normalizeDateOnly(minDate), [minDate]);
@@ -584,6 +691,7 @@ function JalaliDateRangePicker({
   function confirmFrom(date: Date) {
     const safeFrom = clampDate(date, minimum, today);
     const safeTo = to < safeFrom ? safeFrom : to;
+
     onChange({ from: safeFrom, to: safeTo });
     setPickerTarget("to");
   }
@@ -596,17 +704,25 @@ function JalaliDateRangePicker({
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setPickerTarget("from")}
-        className="inline-flex h-10 max-w-full items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-semibold text-slate-700 transition hover:border-slate-300"
-        aria-label="انتخاب بازه زمانی"
-      >
-        <CalendarDays size={15} className="shrink-0 text-slate-400" />
-        <span className="max-w-[170px] truncate">
-          {formatDate(from)} — {formatDate(to)}
-        </span>
-      </button>
+      <NativeMobileDateRangePicker
+        range={range}
+        minDate={minimum}
+        onChange={onChange}
+      />
+
+      <div className="hidden sm:inline-flex">
+        <button
+          type="button"
+          onClick={() => setPickerTarget("from")}
+          className="inline-flex h-10 max-w-full items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-semibold text-slate-700 transition hover:border-slate-300"
+          aria-label="انتخاب بازه زمانی"
+        >
+          <CalendarDays size={15} className="shrink-0 text-slate-400" />
+          <span className="max-w-[170px] truncate">
+            {formatDate(from)} — {formatDate(to)}
+          </span>
+        </button>
+      </div>
 
       {pickerTarget === "from" && (
         <JalaliDatePickerSheet
