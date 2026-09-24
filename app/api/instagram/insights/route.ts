@@ -245,6 +245,7 @@ export async function GET(request: NextRequest) {
         id: true,
         igUserId: true,
         igUsername: true,
+        createdAt: true,
       },
     });
 
@@ -270,6 +271,12 @@ export async function GET(request: NextRequest) {
     const now = new Date();
     const today = getSnapshotDate(now);
 
+    const accountCreatedDate = getSnapshotDate(instagramAccount.createdAt);
+    const twoYearsAgo = new Date(today);
+    twoYearsAgo.setUTCDate(twoYearsAgo.getUTCDate() - 729);
+    const analyticsStartDate =
+      accountCreatedDate > twoYearsAgo ? accountCreatedDate : twoYearsAgo;
+
     let from = new Date(today);
     let to = new Date(today);
 
@@ -294,6 +301,34 @@ export async function GET(request: NextRequest) {
       from.setUTCDate(from.getUTCDate() - 29);
     }
 
+    if (from < analyticsStartDate) {
+      from = new Date(analyticsStartDate);
+    }
+
+    if (to < from) {
+      return NextResponse.json({
+        success: true,
+        account: {
+          id: instagramAccount.id,
+          igUserId: instagramAccount.igUserId,
+          username: instagramAccount.igUsername,
+          analyticsStartDate,
+        },
+        metrics: {
+          views: null,
+          totalInteractions: null,
+          follows: null,
+          unfollows: null,
+        },
+        snapshots: [],
+        sync: {
+          requestedDays: 0,
+          syncedDays: 0,
+          errors: [],
+        },
+      });
+    }
+
     const dayKeys = getDayKeys(from, to);
     const MAX_SYNC_DAYS = 730;
 
@@ -301,7 +336,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         {
           error:
-            "Meta برای تاریخچه Insights حداکثر ۹۰ روز اخیر را در این مسیر قابل دریافت می‌کند.",
+            "بازه Insights حداکثر می‌تواند ۲ سال باشد.",
         },
         { status: 400 },
       );
@@ -481,6 +516,7 @@ export async function GET(request: NextRequest) {
         id: instagramAccount.id,
         igUserId: instagramAccount.igUserId,
         username: instagramAccount.igUsername,
+        analyticsStartDate,
       },
       metrics: {
         views: latest?.views ?? null,
