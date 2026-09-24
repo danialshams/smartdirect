@@ -134,45 +134,130 @@ function RangeCalendar({
   onChange: (range: { from: Date; to: Date } | undefined) => void;
   onClose: () => void;
 }) {
-  const initialValue = [
-    range.from ? new DateObject(range.from).convert(persian) : null,
-    range.to ? new DateObject(range.to).convert(persian) : null,
-  ].filter((value): value is DateObject => Boolean(value));
+  const [from, setFrom] = useState<Date | undefined>(range.from);
+  const [to, setTo] = useState<Date | undefined>(range.to);
 
-  const today = new DateObject({ calendar: persian });
-  const minDate = new DateObject({ calendar: persian }).subtract(365, "days");
+  const today = useMemo(() => new DateObject({ calendar: persian }), []);
+  const minDate = useMemo(
+    () => new DateObject({ calendar: persian }).subtract(730, "days"),
+    [],
+  );
+
+  const fromValue = from
+    ? new DateObject(from).convert(persian)
+    : undefined;
+  const toValue = to ? new DateObject(to).convert(persian) : undefined;
+
+  function handleFromChange(selected: DateObject | DateObject[] | null) {
+    const value = Array.isArray(selected) ? selected[0] : selected;
+    if (!value) return;
+
+    const nextFrom = value.toDate();
+    setFrom(nextFrom);
+
+    if (to && nextFrom > to) {
+      setTo(undefined);
+    }
+  }
+
+  function handleToChange(selected: DateObject | DateObject[] | null) {
+    const value = Array.isArray(selected) ? selected[0] : selected;
+    if (!value) return;
+
+    const nextTo = value.toDate();
+
+    if (!from) {
+      setFrom(nextTo);
+      return;
+    }
+
+    const start = from <= nextTo ? from : nextTo;
+    const end = from <= nextTo ? nextTo : from;
+
+    setFrom(start);
+    setTo(end);
+    onChange({ from: start, to: end });
+    onClose();
+  }
 
   return (
-    <div className="absolute left-0 top-[calc(100%+10px)] z-40 w-[min(94vw,390px)] rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_24px_70px_rgba(15,23,42,0.14)]">
-      <Calendar
-        range
-        rangeHover
-        value={initialValue}
-        calendar={persian}
-        locale={persian_fa}
-        minDate={minDate}
-        maxDate={today}
-        showOtherDays
-        onChange={(selected) => {
-          if (!selected || selected.length < 2) return;
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/5 p-3 backdrop-blur-[1px]"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+      onTouchStart={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <div
+        className="max-h-[calc(100dvh-24px)] w-full max-w-[820px] overflow-auto rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_24px_80px_rgba(15,23,42,0.18)] transition duration-200 sm:p-4"
+        role="dialog"
+        aria-modal="true"
+        aria-label="انتخاب بازه زمانی"
+        onMouseDown={(event) => event.stopPropagation()}
+        onTouchStart={(event) => event.stopPropagation()}
+      >
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <div className="min-w-0 rounded-xl border border-slate-100 p-1.5">
+            <div className="px-2 pb-2 pt-1 text-right">
+              <p className="text-xs font-bold text-slate-900">تاریخ مبدا</p>
+              <p className="mt-0.5 text-[10px] text-slate-400">
+                روز شروع بازه را انتخاب کنید
+              </p>
+            </div>
+            <div className="flex justify-center overflow-hidden">
+              <Calendar
+                value={fromValue}
+                calendar={persian}
+                locale={persian_fa}
+                minDate={minDate}
+                maxDate={today}
+                showOtherDays
+                onChange={handleFromChange}
+              />
+            </div>
+          </div>
 
-          const from = selected[0].toDate();
-          const to = selected[1].toDate();
-          const start = from <= to ? from : to;
-          const end = from <= to ? to : from;
+          <div className="min-w-0 rounded-xl border border-slate-100 p-1.5">
+            <div className="px-2 pb-2 pt-1 text-right">
+              <p className="text-xs font-bold text-slate-900">تاریخ مقصد</p>
+              <p className="mt-0.5 text-[10px] text-slate-400">
+                روز پایان بازه را انتخاب کنید
+              </p>
+            </div>
+            <div className="flex justify-center overflow-hidden">
+              <Calendar
+                value={toValue}
+                calendar={persian}
+                locale={persian_fa}
+                minDate={from ? new DateObject(from).convert(persian) : minDate}
+                maxDate={today}
+                showOtherDays
+                onChange={handleToChange}
+              />
+            </div>
+          </div>
+        </div>
 
-          onChange({ from: start, to: end });
-          onClose();
-        }}
-      />
-      <div className="mt-2 border-t border-slate-100 pt-3">
-        <p className="text-[10px] text-slate-400">
-          ابتدا روز شروع و سپس روز پایان را انتخاب کنید.
-        </p>
+        <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
+          <p className="text-[10px] text-slate-400">
+            حداکثر بازه قابل انتخاب: ۲ سال اخیر
+          </p>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg px-3 py-1.5 text-[10px] font-semibold text-slate-500 transition hover:bg-slate-50 hover:text-slate-800"
+          >
+            بستن
+          </button>
+        </div>
       </div>
     </div>
   );
 }
+
 function MetricCard({
   label,
   value,
@@ -234,7 +319,7 @@ export default function InstagramInsights({
   const [metric, setMetric] = useState<Metric>("views");
   const [data, setData] = useState<Data | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [error, setError] = useState("");\n  const [calendarMounted, setCalendarMounted] = useState(false);
 
   const effectiveRange = useMemo(() => {
     if (!range.from || !range.to) return null;
@@ -346,6 +431,16 @@ export default function InstagramInsights({
     return () => window.removeEventListener("smartdirect:refresh", handler);
   }, [load]);
 
+  function openCalendar() {
+    setCalendarMounted(true);
+    requestAnimationFrame(() => setCalendarOpen(true));
+  }
+
+  function closeCalendar() {
+    setCalendarOpen(false);
+    window.setTimeout(() => setCalendarMounted(false), 180);
+  }
+
   function selectPreset(value: Exclude<RangePreset, "custom">) {
     setPreset(value);
     const end = new Date();
@@ -440,7 +535,7 @@ export default function InstagramInsights({
             <div className="relative">
               <button
                 type="button"
-                onClick={() => setCalendarOpen((open) => !open)}
+                onClick={() => (calendarOpen ? closeCalendar() : openCalendar())}
                 className="inline-flex h-10 max-w-full items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-semibold text-slate-700 transition hover:border-slate-300"
                 aria-expanded={calendarOpen}
               >
