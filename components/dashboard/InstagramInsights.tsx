@@ -8,8 +8,6 @@ import {
   UserPlus,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Button } from "../ui/button";
-import { Calendar } from "../ui/calendar";
 import {
   CartesianGrid,
   Line,
@@ -20,7 +18,7 @@ import {
   YAxis,
 } from "recharts";
 
-type RangePreset = 7 | 30 | 90 | "custom";
+type RangePreset = 7 | 30 | 90;
 type Metric = "views" | "totalInteractions" | "follows" | "unfollows";
 
 type Account = {
@@ -125,199 +123,6 @@ function metricValue(snapshot: Snapshot, metric: Metric) {
   return snapshot[metric];
 }
 
-function normalizeDateOnly(value: Date) {
-  return new Date(value.getFullYear(), value.getMonth(), value.getDate());
-}
-
-function clampDate(value: Date, min: Date, max: Date) {
-  if (value < min) return min;
-  if (value > max) return max;
-  return value;
-}
-
-function JalaliDatePickerSheet({
-  range,
-  minDate,
-  maxDate,
-  onConfirm,
-  onClose,
-}: {
-  range: { from?: Date; to?: Date };
-  minDate: Date;
-  maxDate: Date;
-  onConfirm: (range: { from: Date; to: Date }) => void;
-  onClose: () => void;
-}) {
-  const minimum = normalizeDateOnly(minDate);
-  const maximum = normalizeDateOnly(maxDate);
-  const safeFrom = clampDate(normalizeDateOnly(range.from ?? minimum), minimum, maximum);
-  const safeTo = clampDate(normalizeDateOnly(range.to ?? safeFrom), safeFrom, maximum);
-  const [startDate, setStartDate] = useState<Date>(safeFrom);
-  const [endDate, setEndDate] = useState<Date>(safeTo);
-  const [activeField, setActiveField] = useState<"from" | "to">("from");
-  const [month, setMonth] = useState<Date>(safeFrom);
-
-  useEffect(() => {
-    const previousBodyOverflow = document.body.style.overflow;
-    const previousHtmlOverflow = document.documentElement.style.overflow;
-    document.body.style.overflow = "hidden";
-    document.documentElement.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previousBodyOverflow;
-      document.documentElement.style.overflow = previousHtmlOverflow;
-    };
-  }, []);
-
-  const selectedDate = activeField === "from" ? startDate : endDate;
-
-  return (
-    <div
-      className="fixed inset-0 z-[120] flex items-center justify-center overflow-auto bg-black/50 p-4"
-      role="presentation"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
-    >
-      <div
-        dir="rtl"
-        role="dialog"
-        aria-modal="true"
-        aria-label="انتخاب بازه زمانی"
-        onMouseDown={(event) => event.stopPropagation()}
-        className="dark w-fit max-w-full overflow-auto rounded-lg border bg-background text-foreground shadow-lg"
-      >
-        <div className="flex items-center justify-between gap-3 border-b p-4">
-          <Button
-            type="button"
-            variant={activeField === "from" ? "default" : "outline"}
-            onClick={() => {
-              setActiveField("from");
-              setMonth(startDate);
-            }}
-          >
-            {formatDate(startDate)}
-          </Button>
-          <span className="text-sm text-muted-foreground">تا</span>
-          <Button
-            type="button"
-            variant={activeField === "to" ? "default" : "outline"}
-            onClick={() => {
-              setActiveField("to");
-              setMonth(endDate);
-            }}
-          >
-            {formatDate(endDate)}
-          </Button>
-          <Button type="button" variant="ghost" onClick={onClose}>
-            لغو
-          </Button>
-        </div>
-
-        <div className="p-4">
-          <Calendar
-            mode="single"
-            selected={selectedDate}
-            onSelect={(date) => {
-              if (!date) return;
-              const normalized = normalizeDateOnly(date);
-
-              if (activeField === "from") {
-                const nextStart = clampDate(normalized, minimum, maximum);
-                const nextEnd = nextStart > endDate ? nextStart : endDate;
-                setStartDate(nextStart);
-                setEndDate(nextEnd);
-                setMonth(nextStart);
-                setActiveField("to");
-                return;
-              }
-
-              const nextEnd = clampDate(normalized, startDate, maximum);
-              setEndDate(nextEnd);
-              setMonth(nextEnd);
-            }}
-            month={month}
-            onMonthChange={setMonth}
-            startMonth={activeField === "from" ? minimum : startDate}
-            endMonth={maximum}
-            disabled={
-              activeField === "from"
-                ? { before: minimum, after: maximum }
-                : { before: startDate, after: maximum }
-            }
-            captionLayout="dropdown"
-            dir="rtl"
-          />
-        </div>
-
-        <div className="flex justify-end border-t p-4">
-          <Button
-            type="button"
-            onClick={() => onConfirm({ from: startDate, to: endDate })}
-          >
-            انجام شد
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function JalaliDateRangePicker({
-  range,
-  minDate,
-  onChange,
-}: {
-  range: { from?: Date; to?: Date };
-  minDate: Date;
-  onChange: (range: { from?: Date; to?: Date }) => void;
-}) {
-  const today = useMemo(() => normalizeDateOnly(new Date()), []);
-  const minimum = useMemo(() => normalizeDateOnly(minDate), [minDate]);
-  const [pickerOpen, setPickerOpen] = useState(false);
-
-  const from = range.from
-    ? clampDate(normalizeDateOnly(range.from), minimum, today)
-    : minimum;
-  const to = range.to
-    ? clampDate(normalizeDateOnly(range.to), from, today)
-    : today;
-
-  return (
-    <>
-      <div className="flex min-w-0 items-center gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => setPickerOpen(true)}
-          aria-label="انتخاب تاریخ شروع"
-        >
-          شروع: {formatDate(from)}
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => setPickerOpen(true)}
-          aria-label="انتخاب تاریخ پایان"
-        >
-          پایان: {formatDate(to)}
-        </Button>
-      </div>
-
-      {pickerOpen && (
-        <JalaliDatePickerSheet
-          range={{ from, to }}
-          minDate={minimum}
-          maxDate={today}
-          onConfirm={(next) => {
-            onChange(next);
-            setPickerOpen(false);
-          }}
-          onClose={() => setPickerOpen(false)}
-        />
-      )}
-    </>
-  );
-}
 function MetricCard({
   label,
   value,
@@ -563,19 +368,7 @@ export default function InstagramInsights({
               ))}
             </div>
 
-            <JalaliDateRangePicker
-              range={range}
-              minDate={
-                data?.account.analyticsStartDate
-                  ? new Date(data.account.analyticsStartDate)
-                  : addDays(new Date(), -729)
-              }
-              onChange={(next) => {
-                if (!next?.from || !next.to) return;
-                setRange(next);
-                setPreset("custom");
-              }}
-            />
+
           </div>
         </div>
       </div>
