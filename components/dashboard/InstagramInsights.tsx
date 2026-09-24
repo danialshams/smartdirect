@@ -161,11 +161,10 @@ function JalaliDatePickerSheet({
     maximum,
   );
 
-  const [selected, setSelected] = useState<{ from: Date; to?: Date }>({
-    from: safeFrom,
-    to: safeTo,
-  });
-  const [visibleMonth, setVisibleMonth] = useState<Date>(safeFrom);
+  const [startDate, setStartDate] = useState<Date>(safeFrom);
+  const [endDate, setEndDate] = useState<Date>(safeTo);
+  const [startMonth, setStartMonth] = useState<Date>(safeFrom);
+  const [endMonth, setEndMonth] = useState<Date>(safeTo);
 
   useEffect(() => {
     const body = document.body;
@@ -188,46 +187,17 @@ function JalaliDatePickerSheet({
     };
   }, []);
 
-  function handleSelect(next: { from?: Date; to?: Date } | undefined) {
-    if (!next?.from) return;
-
-    const from = clampDate(normalizeDateOnly(next.from), minimum, maximum);
-    const to = next.to
-      ? clampDate(normalizeDateOnly(next.to), from, maximum)
-      : undefined;
-
-    setSelected({ from, to });
-    if (to) setVisibleMonth(to);
-  }
-
-  function confirm() {
-    if (!selected.from) return;
-
-    const from = clampDate(
-      normalizeDateOnly(selected.from),
-      minimum,
-      maximum,
-    );
-    const to = clampDate(
-      normalizeDateOnly(selected.to ?? selected.from),
-      from,
-      maximum,
-    );
-
-    onConfirm({ from, to });
-  }
-
   const fromLabel = new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
     year: "numeric",
     month: "long",
     day: "numeric",
-  }).format(selected.from);
+  }).format(startDate);
 
   const toLabel = new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
     year: "numeric",
     month: "long",
     day: "numeric",
-  }).format(selected.to ?? selected.from);
+  }).format(endDate);
 
   return (
     <div
@@ -243,55 +213,95 @@ function JalaliDatePickerSheet({
         aria-modal="true"
         aria-label="انتخاب بازه زمانی"
         onMouseDown={(event) => event.stopPropagation()}
-        className="relative w-full max-w-[430px] overflow-hidden rounded-t-[28px] border border-slate-200 bg-white text-slate-950 shadow-[0_-20px_60px_rgba(15,23,42,0.12)] sm:rounded-[28px] sm:shadow-[0_24px_60px_rgba(15,23,42,0.12)]"
+        className="dark relative w-full max-w-[900px] overflow-hidden rounded-t-[28px] border bg-background text-foreground shadow-[0_-20px_60px_rgba(0,0,0,0.35)] sm:rounded-[28px] sm:shadow-[0_24px_60px_rgba(0,0,0,0.35)]"
       >
-        <div className="relative flex h-[58px] items-center border-b border-slate-200 px-5">
+        <div className="relative flex h-[58px] items-center border-b px-5">
           <button
             type="button"
             onClick={onClose}
-            className="absolute left-5 top-1/2 -translate-y-1/2 text-[15px] font-medium text-slate-600 active:opacity-50"
+            className="absolute left-5 top-1/2 -translate-y-1/2 text-[15px] font-medium text-muted-foreground active:opacity-50"
           >
             لغو
           </button>
 
           <div className="mx-auto text-center">
-            <p className="text-[13px] font-semibold text-slate-950">انتخاب بازه زمانی</p>
-            <p className="mt-0.5 text-[10px] text-slate-400">
+            <p className="text-[13px] font-semibold">انتخاب بازه زمانی</p>
+            <p className="mt-0.5 text-[10px] text-muted-foreground">
               {fromLabel} تا {toLabel}
             </p>
           </div>
 
           <button
             type="button"
-            onClick={confirm}
-            className="absolute right-5 top-1/2 -translate-y-1/2 text-[15px] font-semibold text-slate-950 active:opacity-50"
+            onClick={onClose}
+            className="absolute right-5 top-1/2 -translate-y-1/2 text-[15px] font-semibold active:opacity-50"
           >
             انجام شد
           </button>
         </div>
 
-        <div className="relative max-h-[calc(100dvh-58px)] overflow-y-auto overscroll-contain bg-white px-3 pb-5 pt-4 sm:px-5">
-          <Calendar
-            mode="range"
-            selected={selected}
-            onSelect={handleSelect}
-            month={visibleMonth}
-            onMonthChange={setVisibleMonth}
-            startMonth={minimum}
-            endMonth={maximum}
-            disabled={{ before: minimum, after: maximum }}
-            captionLayout="dropdown"
-            dir="rtl"
-          />
-
-          <div className="mt-4 grid grid-cols-2 gap-2 border-t border-slate-200 pt-3">
-            <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-center">
-              <p className="text-[9px] text-slate-400">شروع</p>
-              <p className="mt-1 text-[11px] font-semibold text-slate-700">{fromLabel}</p>
+        <div className="relative max-h-[calc(100dvh-58px)] overflow-y-auto overscroll-contain px-3 pb-5 pt-4 sm:px-5">
+          <div className="grid gap-6 lg:grid-cols-2">
+            <div>
+              <p className="mb-2 text-center text-xs font-medium text-muted-foreground">تاریخ شروع</p>
+              <Calendar
+                mode="single"
+                selected={startDate}
+                onSelect={(date) => {
+                  if (!date) return;
+                  const nextStart = clampDate(
+                    normalizeDateOnly(date),
+                    minimum,
+                    endDate,
+                  );
+                  setStartDate(nextStart);
+                  if (nextStart > endDate) setEndDate(nextStart);
+                  setStartMonth(nextStart);
+                }}
+                month={startMonth}
+                onMonthChange={setStartMonth}
+                startMonth={minimum}
+                endMonth={endDate}
+                disabled={{ before: minimum, after: endDate }}
+                captionLayout="dropdown"
+                dir="rtl"
+              />
             </div>
-            <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-center">
-              <p className="text-[9px] text-slate-400">پایان</p>
-              <p className="mt-1 text-[11px] font-semibold text-slate-700">{toLabel}</p>
+
+            <div>
+              <p className="mb-2 text-center text-xs font-medium text-muted-foreground">تاریخ پایان</p>
+              <Calendar
+                mode="single"
+                selected={endDate}
+                onSelect={(date) => {
+                  if (!date) return;
+                  const nextEnd = clampDate(
+                    normalizeDateOnly(date),
+                    startDate,
+                    maximum,
+                  );
+                  setEndDate(nextEnd);
+                  setEndMonth(nextEnd);
+                }}
+                month={endMonth}
+                onMonthChange={setEndMonth}
+                startMonth={startDate}
+                endMonth={maximum}
+                disabled={{ before: startDate, after: maximum }}
+                captionLayout="dropdown"
+                dir="rtl"
+              />
+            </div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-2 gap-2 border-t pt-3">
+            <div className="rounded-md border bg-card px-3 py-2 text-center">
+              <p className="text-[9px] text-muted-foreground">شروع</p>
+              <p className="mt-1 text-[11px] font-semibold">{fromLabel}</p>
+            </div>
+            <div className="rounded-md border bg-card px-3 py-2 text-center">
+              <p className="text-[9px] text-muted-foreground">پایان</p>
+              <p className="mt-1 text-[11px] font-semibold">{toLabel}</p>
             </div>
           </div>
         </div>
