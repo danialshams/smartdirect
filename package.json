@@ -99,8 +99,6 @@
     "recharts": "^3.10.1",
     "react-day-picker": "^9.14.0",
     "react-is": "^19.2.8",
-    "react-multi-date-picker": "^4.5.2",
-    "react-date-object": "^2.1.9",
     "class-variance-authority": "^0.7.1"
   },
   "devDependencies": {
