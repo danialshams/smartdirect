@@ -10,10 +10,8 @@ import {
   UserPlus,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Calendar } from "react-multi-date-picker";
 import DateObject from "react-date-object";
 import persian from "react-date-object/calendars/persian";
-import persian_fa from "react-date-object/locales/persian_fa";
 import {
   CartesianGrid,
   Line,
@@ -125,6 +123,153 @@ function metricValue(snapshot: Snapshot, metric: Metric) {
   return snapshot[metric];
 }
 
+const persianMonths = [
+  "فروردین",
+  "اردیبهشت",
+  "خرداد",
+  "تیر",
+  "مرداد",
+  "شهریور",
+  "مهر",
+  "آبان",
+  "آذر",
+  "دی",
+  "بهمن",
+  "اسفند",
+];
+
+type PersianDateParts = {
+  year: number;
+  month: number;
+  day: number;
+};
+
+function getPersianParts(value?: Date): PersianDateParts | null {
+  if (!value) return null;
+
+  const date = new DateObject(value).convert(persian);
+
+  return {
+    year: Number(date.year),
+    month: Number(date.month.number),
+    day: Number(date.day),
+  };
+}
+
+function getPersianDate(parts: PersianDateParts) {
+  return new DateObject({
+    calendar: persian,
+    year: parts.year,
+    month: parts.month,
+    day: parts.day,
+  }).toDate();
+}
+
+function getPersianMonthDays(year: number, month: number) {
+  const lastDay = new DateObject({
+    calendar: persian,
+    year,
+    month,
+    day: 1,
+  }).month.length;
+
+  return Array.from({ length: lastDay }, (_, index) => index + 1);
+}
+
+function DateDropdown({
+  label,
+  value,
+  years,
+  minDate,
+  maxDate,
+  onChange,
+}: {
+  label: string;
+  value?: Date;
+  years: number[];
+  minDate: Date;
+  maxDate: Date;
+  onChange: (value: Date) => void;
+}) {
+  const parts = getPersianParts(value);
+  const fallbackParts = getPersianParts(maxDate) as PersianDateParts;
+  const selected = parts ?? fallbackParts;
+
+  const monthDays = getPersianMonthDays(selected.year, selected.month);
+
+  const setParts = (next: Partial<PersianDateParts>) => {
+    let year = next.year ?? selected.year;
+    let month = next.month ?? selected.month;
+    let day = next.day ?? selected.day;
+
+    const maxDay = getPersianMonthDays(year, month).length;
+    day = Math.min(day, maxDay);
+
+    const nextDate = getPersianDate({ year, month, day });
+
+    if (nextDate < minDate) {
+      onChange(minDate);
+      return;
+    }
+
+    if (nextDate > maxDate) {
+      onChange(maxDate);
+      return;
+    }
+
+    onChange(nextDate);
+  };
+
+  const selectClass =
+    "h-10 min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-2 text-right text-xs font-medium text-slate-700 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100";
+
+  return (
+    <div className="min-w-0">
+      <p className="mb-2 text-[10px] font-semibold text-slate-500">{label}</p>
+      <div className="flex min-w-0 gap-2" dir="rtl">
+        <select
+          aria-label={label + " سال"}
+          value={selected.year}
+          onChange={(event) => setParts({ year: Number(event.target.value) })}
+          className={selectClass}
+        >
+          {years.map((year) => (
+            <option key={year} value={year}>
+              {numberFormatter.format(year)}
+            </option>
+          ))}
+        </select>
+
+        <select
+          aria-label={label + " ماه"}
+          value={selected.month}
+          onChange={(event) => setParts({ month: Number(event.target.value) })}
+          className={selectClass}
+        >
+          {persianMonths.map((month, index) => (
+            <option key={month} value={index + 1}>
+              {month}
+            </option>
+          ))}
+        </select>
+
+        <select
+          aria-label={label + " روز"}
+          value={selected.day}
+          onChange={(event) => setParts({ day: Number(event.target.value) })}
+          className={selectClass}
+        >
+          {monthDays.map((day) => (
+            <option key={day} value={day}>
+              {numberFormatter.format(day)}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
+  );
+}
+
 function RangeCalendar({
   range,
   onChange,
@@ -134,48 +279,30 @@ function RangeCalendar({
   onChange: (range: { from: Date; to: Date } | undefined) => void;
   onClose: () => void;
 }) {
-  const [from, setFrom] = useState<Date | undefined>(range.from);
-  const [to, setTo] = useState<Date | undefined>(range.to);
+  const today = useMemo(() => new Date(), []);
+  const minDate = useMemo(() => addDays(today, -730), [today]);
+  const years = useMemo(() => {
+    const currentYear = getPersianParts(today)?.year ?? 1405;
+    return [currentYear, currentYear - 1, currentYear - 2];
+  }, [today]);
 
-  const today = useMemo(() => new DateObject({ calendar: persian }), []);
-  const minDate = useMemo(
-    () => new DateObject({ calendar: persian }).subtract(730, "days"),
-    [],
-  );
+  const [from, setFrom] = useState<Date>(range.from ?? minDate);
+  const [to, setTo] = useState<Date>(range.to ?? today);
 
-  const fromValue = from
-    ? new DateObject(from).convert(persian)
-    : undefined;
-  const toValue = to ? new DateObject(to).convert(persian) : undefined;
-
-  function handleFromChange(selected: DateObject | DateObject[] | null) {
-    const value = Array.isArray(selected) ? selected[0] : selected;
-    if (!value) return;
-
-    const nextFrom = value.toDate();
-    setFrom(nextFrom);
-
-    if (to && nextFrom > to) {
-      setTo(undefined);
+  function handleFromChange(value: Date) {
+    setFrom(value);
+    if (value > to) {
+      setTo(value);
     }
   }
 
-  function handleToChange(selected: DateObject | DateObject[] | null) {
-    const value = Array.isArray(selected) ? selected[0] : selected;
-    if (!value) return;
+  function handleToChange(value: Date) {
+    setTo(value < from ? from : value);
+  }
 
-    const nextTo = value.toDate();
-
-    if (!from) {
-      setFrom(nextTo);
-      return;
-    }
-
-    const start = from <= nextTo ? from : nextTo;
-    const end = from <= nextTo ? nextTo : from;
-
-    setFrom(start);
-    setTo(end);
+  function applyRange() {
+    const start = from <= to ? from : to;
+    const end = from <= to ? to : from;
     onChange({ from: start, to: end });
     onClose();
   }
@@ -192,65 +319,65 @@ function RangeCalendar({
       }}
     >
       <div
-        className="max-h-[calc(100dvh-24px)] w-full max-w-[820px] overflow-auto rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_24px_80px_rgba(15,23,42,0.18)] transition duration-200 sm:p-4"
+        className="w-full max-w-[760px] rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_24px_80px_rgba(15,23,42,0.18)] sm:p-5"
         role="dialog"
         aria-modal="true"
         aria-label="انتخاب بازه زمانی"
         onMouseDown={(event) => event.stopPropagation()}
         onTouchStart={(event) => event.stopPropagation()}
       >
+        <div className="mb-4 flex items-start justify-between gap-3 border-b border-slate-100 pb-4">
+          <div>
+            <p className="text-xs font-bold text-slate-950">انتخاب بازه زمانی</p>
+            <p className="mt-1 text-[10px] leading-5 text-slate-400">
+              سال، ماه و روز مبدا و مقصد را جداگانه انتخاب کنید.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="shrink-0 rounded-lg px-2.5 py-1.5 text-[10px] font-semibold text-slate-500 transition hover:bg-slate-50 hover:text-slate-800"
+          >
+            بستن
+          </button>
+        </div>
+
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          <div className="min-w-0 rounded-xl border border-slate-100 p-1.5">
-            <div className="px-2 pb-2 pt-1 text-right">
-              <p className="text-xs font-bold text-slate-900">تاریخ مبدا</p>
-              <p className="mt-0.5 text-[10px] text-slate-400">
-                روز شروع بازه را انتخاب کنید
-              </p>
-            </div>
-            <div className="flex justify-center overflow-hidden">
-              <Calendar
-                value={fromValue}
-                calendar={persian}
-                locale={persian_fa}
-                minDate={minDate}
-                maxDate={today}
-                showOtherDays
-                onChange={handleFromChange}
-              />
-            </div>
+          <div className="min-w-0 rounded-xl border border-slate-100 p-3">
+            <p className="mb-3 text-xs font-bold text-slate-900">تاریخ مبدا</p>
+            <DateDropdown
+              label="سال / ماه / روز شروع"
+              value={from}
+              years={years}
+              minDate={minDate}
+              maxDate={today}
+              onChange={handleFromChange}
+            />
           </div>
 
-          <div className="min-w-0 rounded-xl border border-slate-100 p-1.5">
-            <div className="px-2 pb-2 pt-1 text-right">
-              <p className="text-xs font-bold text-slate-900">تاریخ مقصد</p>
-              <p className="mt-0.5 text-[10px] text-slate-400">
-                روز پایان بازه را انتخاب کنید
-              </p>
-            </div>
-            <div className="flex justify-center overflow-hidden">
-              <Calendar
-                value={toValue}
-                calendar={persian}
-                locale={persian_fa}
-                minDate={from ? new DateObject(from).convert(persian) : minDate}
-                maxDate={today}
-                showOtherDays
-                onChange={handleToChange}
-              />
-            </div>
+          <div className="min-w-0 rounded-xl border border-slate-100 p-3">
+            <p className="mb-3 text-xs font-bold text-slate-900">تاریخ مقصد</p>
+            <DateDropdown
+              label="سال / ماه / روز پایان"
+              value={to}
+              years={years}
+              minDate={from}
+              maxDate={today}
+              onChange={handleToChange}
+            />
           </div>
         </div>
 
-        <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
+        <div className="mt-4 flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-[10px] text-slate-400">
             حداکثر بازه قابل انتخاب: ۲ سال اخیر
           </p>
           <button
             type="button"
-            onClick={onClose}
-            className="rounded-lg px-3 py-1.5 text-[10px] font-semibold text-slate-500 transition hover:bg-slate-50 hover:text-slate-800"
+            onClick={applyRange}
+            className="h-10 rounded-xl bg-slate-950 px-5 text-xs font-semibold text-white transition hover:bg-slate-800"
           >
-            بستن
+            اعمال بازه
           </button>
         </div>
       </div>
@@ -320,7 +447,6 @@ export default function InstagramInsights({
   const [data, setData] = useState<Data | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [calendarMounted, setCalendarMounted] = useState(false);
 
   const effectiveRange = useMemo(() => {
     if (!range.from || !range.to) return null;
@@ -433,13 +559,11 @@ export default function InstagramInsights({
   }, [load]);
 
   function openCalendar() {
-    setCalendarMounted(true);
-    requestAnimationFrame(() => setCalendarOpen(true));
+    setCalendarOpen(true);
   }
 
   function closeCalendar() {
     setCalendarOpen(false);
-    window.setTimeout(() => setCalendarMounted(false), 180);
   }
 
   function selectPreset(value: Exclude<RangePreset, "custom">) {
@@ -462,7 +586,7 @@ export default function InstagramInsights({
           86400000,
       ) + 1;
 
-    if (days > 365) return;
+    if (days > 730) return;
 
     setRange(next);
     setPreset("custom");
@@ -558,7 +682,7 @@ export default function InstagramInsights({
                 <RangeCalendar
                   range={range}
                   onChange={selectCustomRange}
-                  onClose={() => setCalendarOpen(false)}
+                  onClose={closeCalendar}
                 />
               )}
             </div>
