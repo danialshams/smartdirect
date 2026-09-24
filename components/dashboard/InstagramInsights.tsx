@@ -375,18 +375,22 @@ function JalaliDatePickerSheet({
   const [selected, setSelected] = useState<JalaliDate>(initialJalali);
   useEffect(() => {
     const body = document.body;
-    const previousOverflow = body.style.overflow;
-    const previousTouchAction = body.style.touchAction;
-    const previousOverscrollBehavior = body.style.overscrollBehavior;
+    const html = document.documentElement;
+    const previousBodyOverflow = body.style.overflow;
+    const previousHtmlOverflow = html.style.overflow;
+    const previousBodyOverscrollBehavior = body.style.overscrollBehavior;
+    const previousHtmlOverscrollBehavior = html.style.overscrollBehavior;
 
     body.style.overflow = "hidden";
-    body.style.touchAction = "none";
+    html.style.overflow = "hidden";
     body.style.overscrollBehavior = "none";
+    html.style.overscrollBehavior = "none";
 
     return () => {
-      body.style.overflow = previousOverflow;
-      body.style.touchAction = previousTouchAction;
-      body.style.overscrollBehavior = previousOverscrollBehavior;
+      body.style.overflow = previousBodyOverflow;
+      html.style.overflow = previousHtmlOverflow;
+      body.style.overscrollBehavior = previousBodyOverscrollBehavior;
+      html.style.overscrollBehavior = previousHtmlOverscrollBehavior;
     };
   }, []);
 
