@@ -150,35 +150,25 @@ function JalaliDatePickerSheet({
 }) {
   const minimum = normalizeDateOnly(minDate);
   const maximum = normalizeDateOnly(maxDate);
-
-  const safeFrom = clampDate(
-    normalizeDateOnly(range.from ?? minimum),
-    minimum,
-    maximum,
-  );
-  const safeTo = clampDate(
-    normalizeDateOnly(range.to ?? safeFrom),
-    safeFrom,
-    maximum,
-  );
-
+  const safeFrom = clampDate(normalizeDateOnly(range.from ?? minimum), minimum, maximum);
+  const safeTo = clampDate(normalizeDateOnly(range.to ?? safeFrom), safeFrom, maximum);
   const [startDate, setStartDate] = useState<Date>(safeFrom);
   const [endDate, setEndDate] = useState<Date>(safeTo);
-  const [startMonth, setStartMonth] = useState<Date>(safeFrom);
-  const [endMonth, setEndMonth] = useState<Date>(safeTo);
+  const [activeField, setActiveField] = useState<"from" | "to">("from");
+  const [month, setMonth] = useState<Date>(safeFrom);
 
   useEffect(() => {
     const previousBodyOverflow = document.body.style.overflow;
     const previousHtmlOverflow = document.documentElement.style.overflow;
-
     document.body.style.overflow = "hidden";
     document.documentElement.style.overflow = "hidden";
-
     return () => {
       document.body.style.overflow = previousBodyOverflow;
       document.documentElement.style.overflow = previousHtmlOverflow;
     };
   }, []);
+
+  const selectedDate = activeField === "from" ? startDate : endDate;
 
   return (
     <div
@@ -196,75 +186,76 @@ function JalaliDatePickerSheet({
         onMouseDown={(event) => event.stopPropagation()}
         className="dark w-fit max-w-full overflow-auto rounded-lg border bg-background text-foreground shadow-lg"
       >
-        <div className="flex items-center justify-between border-b px-4 py-3">
-          <button
+        <div className="flex items-center justify-between gap-3 border-b p-4">
+          <Button
             type="button"
-            onClick={onClose}
-            className="text-sm text-muted-foreground"
+            variant={activeField === "from" ? "default" : "outline"}
+            onClick={() => {
+              setActiveField("from");
+              setMonth(startDate);
+            }}
           >
+            {formatDate(startDate)}
+          </Button>
+          <span className="text-sm text-muted-foreground">تا</span>
+          <Button
+            type="button"
+            variant={activeField === "to" ? "default" : "outline"}
+            onClick={() => {
+              setActiveField("to");
+              setMonth(endDate);
+            }}
+          >
+            {formatDate(endDate)}
+          </Button>
+          <Button type="button" variant="ghost" onClick={onClose}>
             لغو
-          </button>
-          <span className="text-sm font-medium">انتخاب بازه زمانی</span>
-          <button
-            type="button"
-            onClick={() => onConfirm({ from: startDate, to: endDate })}
-            className="text-sm font-medium"
-          >
-            انجام شد
-          </button>
+          </Button>
         </div>
 
-        <div className="flex flex-col gap-4 p-4 md:flex-row">
+        <div className="p-4">
           <Calendar
             mode="single"
-            selected={startDate}
+            selected={selectedDate}
             onSelect={(date) => {
               if (!date) return;
+              const normalized = normalizeDateOnly(date);
 
-              const nextStart = clampDate(
-                normalizeDateOnly(date),
-                minimum,
-                endDate,
-              );
-
-              setStartDate(nextStart);
-              if (nextStart > endDate) {
-                setEndDate(nextStart);
+              if (activeField === "from") {
+                const nextStart = clampDate(normalized, minimum, maximum);
+                const nextEnd = nextStart > endDate ? nextStart : endDate;
+                setStartDate(nextStart);
+                setEndDate(nextEnd);
+                setMonth(nextStart);
+                setActiveField("to");
+                return;
               }
-              setStartMonth(nextStart);
-            }}
-            month={startMonth}
-            onMonthChange={setStartMonth}
-            startMonth={minimum}
-            endMonth={endDate}
-            disabled={{ before: minimum, after: endDate }}
-            captionLayout="dropdown"
-            dir="rtl"
-          />
 
-          <Calendar
-            mode="single"
-            selected={endDate}
-            onSelect={(date) => {
-              if (!date) return;
-
-              const nextEnd = clampDate(
-                normalizeDateOnly(date),
-                startDate,
-                maximum,
-              );
-
+              const nextEnd = clampDate(normalized, startDate, maximum);
               setEndDate(nextEnd);
-              setEndMonth(nextEnd);
+              setMonth(nextEnd);
             }}
-            month={endMonth}
-            onMonthChange={setEndMonth}
-            startMonth={startDate}
+            month={month}
+            onMonthChange={setMonth}
+            startMonth={activeField === "from" ? minimum : startDate}
             endMonth={maximum}
-            disabled={{ before: startDate, after: maximum }}
+            disabled={
+              activeField === "from"
+                ? { before: minimum, after: maximum }
+                : { before: startDate, after: maximum }
+            }
             captionLayout="dropdown"
             dir="rtl"
           />
+        </div>
+
+        <div className="flex justify-end border-t p-4">
+          <Button
+            type="button"
+            onClick={() => onConfirm({ from: startDate, to: endDate })}
+          >
+            انجام شد
+          </Button>
         </div>
       </div>
     </div>
@@ -278,7 +269,7 @@ function JalaliDateRangePicker({
 }: {
   range: { from?: Date; to?: Date };
   minDate: Date;
-  onChange: (range: { from: Date; to: Date }) => void;
+  onChange: (range: { from?: Date; to?: Date }) => void;
 }) {
   const today = useMemo(() => normalizeDateOnly(new Date()), []);
   const minimum = useMemo(() => normalizeDateOnly(minDate), [minDate]);
@@ -293,17 +284,24 @@ function JalaliDateRangePicker({
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setPickerOpen(true)}
-        className="inline-flex h-10 max-w-full min-w-0 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-semibold text-slate-700 transition hover:border-slate-300"
-        aria-label="انتخاب بازه زمانی"
-      >
-        <CalendarDays size={15} className="shrink-0 text-slate-400" />
-        <span className="max-w-[210px] truncate">
-          {formatDate(from)} — {formatDate(to)}
-        </span>
-      </button>
+      <div className="flex min-w-0 items-center gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setPickerOpen(true)}
+          aria-label="انتخاب تاریخ شروع"
+        >
+          شروع: {formatDate(from)}
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setPickerOpen(true)}
+          aria-label="انتخاب تاریخ پایان"
+        >
+          پایان: {formatDate(to)}
+        </Button>
+      </div>
 
       {pickerOpen && (
         <JalaliDatePickerSheet
