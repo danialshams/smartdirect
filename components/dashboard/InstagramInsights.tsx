@@ -41,7 +41,6 @@ type Snapshot = {
 type Data = {
   success: boolean;
   account: Account & {
-    analyticsStartDate?: string;
   };
   period: {
     days: number;
@@ -294,7 +293,7 @@ export default function InstagramInsights({
     window.addEventListener("smartdirect:refresh", handler);
     return () => window.removeEventListener("smartdirect:refresh", handler);
   }, [load]);
-  function selectPreset(value: Exclude<RangePreset, "custom">) {
+  function selectPreset(value: RangePreset) {
     setPreset(value);
     const end = new Date();
     setRange({
