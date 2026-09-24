@@ -8,7 +8,13 @@ import {
   UserMinus,
   UserPlus,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import "@ncdai/react-wheel-picker/style.css";
+import {
+  WheelPicker,
+  WheelPickerWrapper,
+  type WheelPickerOption,
+} from "@ncdai/react-wheel-picker";
 import {
   CartesianGrid,
   Line,
@@ -276,7 +282,7 @@ function clampDate(value: Date, min: Date, max: Date) {
   return value;
 }
 
-function WheelColumn({
+function JalaliWheelColumn({
   values,
   selected,
   formatValue,
@@ -287,101 +293,34 @@ function WheelColumn({
   formatValue: (value: number) => string;
   onSelect: (value: number) => void;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const scrollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const ROW_HEIGHT = 44;
-  const VIEWPORT_HEIGHT = 244;
-  const EDGE_PADDING = (VIEWPORT_HEIGHT - ROW_HEIGHT) / 2;
-
-  useEffect(() => {
-    const container = ref.current;
-    if (!container) return;
-
-    const index = values.indexOf(selected);
-    if (index < 0) return;
-
-    container.scrollTop = index * ROW_HEIGHT;
-  }, [values, selected]);
-
-  useEffect(() => {
-    return () => {
-      if (scrollTimer.current) clearTimeout(scrollTimer.current);
-    };
-  }, []);
-
-  function commitNearestValue() {
-    const container = ref.current;
-    if (!container || values.length === 0) return;
-
-    const rawIndex = container.scrollTop / ROW_HEIGHT;
-    const index = Math.min(
-      values.length - 1,
-      Math.max(0, Math.round(rawIndex)),
-    );
-    const nextValue = values[index];
-
-    container.scrollTo({
-      top: index * ROW_HEIGHT,
-      behavior: "smooth",
-    });
-
-    if (nextValue !== selected) {
-      onSelect(nextValue);
-    }
-  }
-
-  function handleScroll() {
-    if (scrollTimer.current) clearTimeout(scrollTimer.current);
-    scrollTimer.current = setTimeout(commitNearestValue, 90);
-  }
+  const options = useMemo<WheelPickerOption<number>[]>(
+    () =>
+      values.map((value) => ({
+        value,
+        label: formatValue(value),
+        textValue: formatValue(value),
+      })),
+    [values, formatValue],
+  );
 
   return (
-    <div
-      ref={ref}
-      onScroll={handleScroll}
-      className="h-[244px] min-w-0 snap-y snap-mandatory overflow-y-auto overscroll-y-contain touch-pan-y select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-      style={{ WebkitOverflowScrolling: "touch" }}
-    >
-      <div
-        className="shrink-0"
-        style={{ height: EDGE_PADDING }}
-        aria-hidden="true"
-      />
-
-      {values.map((value) => (
-        <button
-          key={value}
-          type="button"
-          onClick={() => {
-            const index = values.indexOf(value);
-            const container = ref.current;
-            if (index >= 0 && container) {
-              container.scrollTo({
-                top: index * ROW_HEIGHT,
-                behavior: "smooth",
-              });
-            }
-            onSelect(value);
-          }}
-          className={[
-            "flex h-[44px] w-full shrink-0 snap-center items-center justify-center overflow-hidden rounded-none px-1 text-center text-[19px] font-normal leading-none tracking-[-0.02em] whitespace-nowrap transition-opacity",
-            value === selected
-              ? "text-white opacity-100"
-              : "text-white/45 opacity-100",
-          ].join(" ")}
-        >
-          <span className="block max-w-full truncate">
-            {formatValue(value)}
-          </span>
-        </button>
-      ))}
-
-      <div
-        className="shrink-0"
-        style={{ height: EDGE_PADDING }}
-        aria-hidden="true"
-      />
-    </div>
+    <WheelPicker<number>
+      options={options}
+      value={selected}
+      onValueChange={onSelect}
+      visibleCount={16}
+      optionItemHeight={48}
+      dragSensitivity={3}
+      scrollSensitivity={5}
+      classNames={{
+        optionItem:
+          "flex items-center justify-center px-1 text-[18px] font-normal leading-none tracking-[-0.02em] whitespace-nowrap text-white/35",
+        highlightWrapper:
+          "pointer-events-none rounded-[12px] border border-white/[0.11] bg-white/[0.075] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_1px_5px_rgba(0,0,0,0.08)]",
+        highlightItem:
+          "flex items-center justify-center px-1 text-[18px] font-normal leading-none tracking-[-0.02em] whitespace-nowrap text-white",
+      }}
+    />
   );
 }
 
@@ -581,31 +520,31 @@ function JalaliDatePickerSheet({
         </div>
 
         <div className="relative h-[244px] overflow-hidden px-0">
-          <div className="pointer-events-none absolute left-1/2 top-[100px] z-10 h-[44px] w-[calc(100%-16px)] -translate-x-1/2 rounded-[12px] border border-white/[0.11] bg-white/[0.075] shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_1px_5px_rgba(0,0,0,0.08)]" />
-
-          <div className="relative z-0 grid h-full min-w-0 grid-cols-3 gap-0">
-            <WheelColumn
+          <WheelPickerWrapper
+            className="grid h-[244px] min-w-0 grid-cols-3 items-center gap-0 overflow-hidden bg-transparent"
+          >
+            <JalaliWheelColumn
               values={days}
               selected={selected.day}
               formatValue={(day) => numberFormatter.format(day)}
-              onSelect={(day) => setSelected({ ...selected, day })}
+              onSelect={(day) => setSelected((current) => ({ ...current, day }))}
             />
-            <WheelColumn
+            <JalaliWheelColumn
               values={months}
               selected={selected.month}
               formatValue={(month) => jalaliMonthNames[month - 1]}
               onSelect={updateMonth}
             />
-            <WheelColumn
+            <JalaliWheelColumn
               values={years}
               selected={selected.year}
               formatValue={(year) => numberFormatter.format(year)}
               onSelect={updateYear}
             />
-          </div>
+          </WheelPickerWrapper>
 
-          <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-[100px] bg-gradient-to-b from-slate-950/92 via-slate-950/50 to-transparent" />
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-[100px] bg-gradient-to-t from-slate-950/92 via-slate-950/50 to-transparent" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-[98px] bg-gradient-to-b from-slate-950/92 via-slate-950/50 to-transparent" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-[98px] bg-gradient-to-t from-slate-950/92 via-slate-950/50 to-transparent" />
         </div>
 
         <div className="relative px-5 pb-[max(16px,env(safe-area-inset-bottom))] pt-2">
