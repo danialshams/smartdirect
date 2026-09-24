@@ -295,7 +295,7 @@ export async function GET(request: NextRequest) {
     }
 
     const dayKeys = getDayKeys(from, to);
-    const MAX_SYNC_DAYS = 90;
+    const MAX_SYNC_DAYS = 730;
 
     if (dayKeys.length > MAX_SYNC_DAYS) {
       return NextResponse.json(
