@@ -8,6 +8,9 @@ import {
   UserPlus,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import type { DateRange } from "react-day-picker";
+
+import { Calendar } from "@/components/ui/calendar";
 import {
   CartesianGrid,
   Line,
@@ -179,6 +182,7 @@ export default function InstagramInsights({
     from: addDays(today, -29),
     to: today,
   });
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const [metric, setMetric] = useState<Metric>("views");
   const [data, setData] = useState<Data | null>(null);
   const [loading, setLoading] = useState(true);
@@ -302,6 +306,18 @@ export default function InstagramInsights({
     });
   }
 
+  function selectCalendarRange(value: DateRange | undefined) {
+    if (!value?.from) {
+      setRange({});
+      return;
+    }
+
+    setPreset(30);
+    setRange({ from: value.from, to: value.to ?? value.from });
+
+    if (value.to) setCalendarOpen(false);
+  }
+
   const chartData = useMemo(
     () =>
       (data?.snapshots ?? []).map((snapshot) => ({
@@ -367,7 +383,38 @@ export default function InstagramInsights({
               ))}
             </div>
 
+            <div className="relative shrink-0">
+              <button
+                type="button"
+                onClick={() => setCalendarOpen((open) => !open)}
+                className="inline-flex h-10 min-w-[150px] items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-semibold text-slate-700 transition hover:bg-slate-50"
+                aria-expanded={calendarOpen}
+                aria-haspopup="dialog"
+              >
+                <span className="truncate">
+                  {range.from
+                    ? range.to
+                      ? `${formatDate(range.from)} تا ${formatDate(range.to)}`
+                      : formatDate(range.from)
+                    : "انتخاب بازه زمانی"}
+                </span>
+                <span className="text-slate-400">⌄</span>
+              </button>
 
+              {calendarOpen && (
+                <div className="absolute right-0 top-12 z-50 rounded-xl border border-slate-200 bg-white p-2 shadow-[0_18px_50px_rgba(15,23,42,0.12)]">
+                  <Calendar
+                    mode="range"
+                    selected={
+                      range.from
+                        ? ({ from: range.from, to: range.to } satisfies DateRange)
+                        : undefined
+                    }
+                    onSelect={selectCalendarRange}
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
