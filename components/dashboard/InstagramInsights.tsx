@@ -95,12 +95,12 @@ function formatPercent(value: number | null | undefined) {
     : percentFormatter.format(value) + "٪";
 }
 
-function formatDate(value: string) {
+function formatDate(value: string | Date) {
   return new Intl.DateTimeFormat("fa-IR", {
     year: "numeric",
     month: "short",
     day: "numeric",
-  }).format(new Date(value));
+  }).format(typeof value === "string" ? new Date(value) : value);
 }
 
 function formatShortDate(value: string) {
