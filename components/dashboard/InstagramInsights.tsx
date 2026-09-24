@@ -243,20 +243,20 @@ function JalaliDatePickerSheet({
         aria-modal="true"
         aria-label="انتخاب بازه زمانی"
         onMouseDown={(event) => event.stopPropagation()}
-        className="relative w-full max-w-[430px] overflow-hidden rounded-t-[28px] border border-white/[0.14] bg-slate-950/92 text-white shadow-[0_-20px_80px_rgba(0,0,0,0.48)] backdrop-blur-[30px] sm:rounded-[28px] sm:shadow-[0_24px_80px_rgba(0,0,0,0.48)]"
+        className="relative w-full max-w-[430px] overflow-hidden rounded-t-[28px] border border-slate-200 bg-white text-slate-950 shadow-[0_-20px_60px_rgba(15,23,42,0.12)] sm:rounded-[28px] sm:shadow-[0_24px_60px_rgba(15,23,42,0.12)]"
       >
-        <div className="relative flex h-[58px] items-center border-b border-white/[0.08] px-5">
+        <div className="relative flex h-[58px] items-center border-b border-slate-200 px-5">
           <button
             type="button"
             onClick={onClose}
-            className="absolute left-5 top-1/2 -translate-y-1/2 text-[15px] font-medium text-blue-400 active:opacity-50"
+            className="absolute left-5 top-1/2 -translate-y-1/2 text-[15px] font-medium text-slate-600 active:opacity-50"
           >
             لغو
           </button>
 
           <div className="mx-auto text-center">
-            <p className="text-[13px] font-semibold text-white/90">انتخاب بازه زمانی</p>
-            <p className="mt-0.5 text-[10px] text-white/45">
+            <p className="text-[13px] font-semibold text-slate-950">انتخاب بازه زمانی</p>
+            <p className="mt-0.5 text-[10px] text-slate-400">
               {fromLabel} تا {toLabel}
             </p>
           </div>
@@ -264,13 +264,13 @@ function JalaliDatePickerSheet({
           <button
             type="button"
             onClick={confirm}
-            className="absolute right-5 top-1/2 -translate-y-1/2 text-[15px] font-semibold text-blue-400 active:opacity-50"
+            className="absolute right-5 top-1/2 -translate-y-1/2 text-[15px] font-semibold text-slate-950 active:opacity-50"
           >
             انجام شد
           </button>
         </div>
 
-        <div className="relative max-h-[calc(100dvh-58px)] overflow-y-auto overscroll-contain px-3 pb-5 pt-4 sm:px-5">
+        <div className="relative max-h-[calc(100dvh-58px)] overflow-y-auto overscroll-contain bg-white px-3 pb-5 pt-4 sm:px-5">
           <Calendar
             mode="range"
             selected={selected}
@@ -281,40 +281,18 @@ function JalaliDatePickerSheet({
             endMonth={maximum}
             disabled={{ before: minimum, after: maximum }}
             captionLayout="dropdown"
-            className="w-full text-white [--cell-size:2.55rem] sm:[--cell-size:3rem]"
-            classNames={{
-              month_caption: "mb-3 h-10",
-              caption_label: "text-sm font-semibold text-white",
-              dropdown_root:
-                "rounded-md border border-white/10 bg-white/[0.06] text-white",
-              dropdown:
-                "absolute inset-0 cursor-pointer opacity-0",
-              weekday:
-                "h-8 text-center text-[11px] font-medium text-white/40",
-              day: "p-0",
-              day_button:
-                "flex aspect-square w-full items-center justify-center rounded-md text-sm font-normal text-white/80 transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30",
-              range_start:
-                "rounded-s-md rounded-e-none bg-white text-slate-950",
-              range_end:
-                "rounded-e-md rounded-s-none bg-white text-slate-950",
-              range_middle:
-                "rounded-none bg-white/[0.14] text-white",
-              today: "font-semibold text-blue-300",
-              outside: "text-white/20",
-              disabled: "cursor-not-allowed text-white/20 opacity-30",
-              hidden: "invisible",
-            }}
+            dir="rtl"
+            className="w-full rounded-lg border border-slate-200 bg-white [--cell-size:2.75rem] sm:[--cell-size:3rem]"
           />
 
-          <div className="mt-4 grid grid-cols-2 gap-2 border-t border-white/[0.08] pt-3">
-            <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-center">
-              <p className="text-[9px] text-white/35">شروع</p>
-              <p className="mt-1 text-[11px] font-semibold text-white/85">{fromLabel}</p>
+          <div className="mt-4 grid grid-cols-2 gap-2 border-t border-slate-200 pt-3">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-center">
+              <p className="text-[9px] text-slate-400">شروع</p>
+              <p className="mt-1 text-[11px] font-semibold text-slate-700">{fromLabel}</p>
             </div>
-            <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-center">
-              <p className="text-[9px] text-white/35">پایان</p>
-              <p className="mt-1 text-[11px] font-semibold text-white/85">{toLabel}</p>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-center">
+              <p className="text-[9px] text-slate-400">پایان</p>
+              <p className="mt-1 text-[11px] font-semibold text-slate-700">{toLabel}</p>
             </div>
           </div>
         </div>
