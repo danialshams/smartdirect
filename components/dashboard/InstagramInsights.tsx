@@ -136,27 +136,36 @@ function clampDate(value: Date, min: Date, max: Date) {
 }
 
 function JalaliDatePickerSheet({
-  value,
+  range,
   minDate,
   maxDate,
-  title,
   onConfirm,
   onClose,
 }: {
-  value: Date;
+  range: { from?: Date; to?: Date };
   minDate: Date;
   maxDate: Date;
-  title: string;
-  onConfirm: (date: Date) => void;
+  onConfirm: (range: { from: Date; to: Date }) => void;
   onClose: () => void;
 }) {
-  const safeValue = clampDate(
-    normalizeDateOnly(value),
-    normalizeDateOnly(minDate),
-    normalizeDateOnly(maxDate),
+  const minimum = normalizeDateOnly(minDate);
+  const maximum = normalizeDateOnly(maxDate);
+  const safeFrom = clampDate(
+    normalizeDateOnly(range.from ?? minimum),
+    minimum,
+    maximum,
   );
-  const [selected, setSelected] = useState<Date>(safeValue);
-  const [visibleMonth, setVisibleMonth] = useState<Date>(safeValue);
+  const safeTo = clampDate(
+    normalizeDateOnly(range.to ?? safeFrom),
+    safeFrom,
+    maximum,
+  );
+
+  const [selected, setSelected] = useState<{ from: Date; to?: Date }>({
+    from: safeFrom,
+    to: safeTo,
+  });
+  const [visibleMonth, setVisibleMonth] = useState<Date>(safeFrom);
 
   useEffect(() => {
     const body = document.body;
@@ -179,32 +188,46 @@ function JalaliDatePickerSheet({
     };
   }, []);
 
-  function handleSelect(next: Date | undefined) {
-    if (!next) return;
-    setSelected(
-      clampDate(
-        normalizeDateOnly(next),
-        normalizeDateOnly(minDate),
-        normalizeDateOnly(maxDate),
-      ),
-    );
+  function handleSelect(next: { from?: Date; to?: Date } | undefined) {
+    if (!next?.from) return;
+
+    const from = clampDate(normalizeDateOnly(next.from), minimum, maximum);
+    const to = next.to
+      ? clampDate(normalizeDateOnly(next.to), from, maximum)
+      : undefined;
+
+    setSelected({ from, to });
+    if (to) setVisibleMonth(to);
   }
 
   function confirm() {
-    onConfirm(
-      clampDate(
-        normalizeDateOnly(selected),
-        normalizeDateOnly(minDate),
-        normalizeDateOnly(maxDate),
-      ),
+    if (!selected.from) return;
+
+    const from = clampDate(
+      normalizeDateOnly(selected.from),
+      minimum,
+      maximum,
     );
+    const to = clampDate(
+      normalizeDateOnly(selected.to ?? selected.from),
+      from,
+      maximum,
+    );
+
+    onConfirm({ from, to });
   }
 
-  const selectedLabel = new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
+  const fromLabel = new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
     year: "numeric",
     month: "long",
     day: "numeric",
-  }).format(selected);
+  }).format(selected.from);
+
+  const toLabel = new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  }).format(selected.to ?? selected.from);
 
   return (
     <div
@@ -218,13 +241,11 @@ function JalaliDatePickerSheet({
         dir="rtl"
         role="dialog"
         aria-modal="true"
-        aria-label={title}
+        aria-label="انتخاب بازه زمانی"
         onMouseDown={(event) => event.stopPropagation()}
         className="relative w-full max-w-[430px] overflow-hidden rounded-t-[28px] border border-white/[0.14] bg-slate-950/92 text-white shadow-[0_-20px_80px_rgba(0,0,0,0.48)] backdrop-blur-[30px] sm:rounded-[28px] sm:shadow-[0_24px_80px_rgba(0,0,0,0.48)]"
       >
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/[0.07] via-transparent to-black/[0.12]" />
-
-        <div className="relative flex h-[58px] items-center px-5">
+        <div className="relative flex h-[58px] items-center border-b border-white/[0.08] px-5">
           <button
             type="button"
             onClick={onClose}
@@ -234,8 +255,10 @@ function JalaliDatePickerSheet({
           </button>
 
           <div className="mx-auto text-center">
-            <p className="text-[13px] font-semibold text-white/90">{title}</p>
-            <p className="mt-0.5 text-[10px] text-white/45">{selectedLabel}</p>
+            <p className="text-[13px] font-semibold text-white/90">انتخاب بازه زمانی</p>
+            <p className="mt-0.5 text-[10px] text-white/45">
+              {fromLabel} تا {toLabel}
+            </p>
           </div>
 
           <button
@@ -247,47 +270,53 @@ function JalaliDatePickerSheet({
           </button>
         </div>
 
-        <div className="relative px-4 pb-5 pt-3 sm:px-5">
-          <div className="rounded-2xl border border-white/[0.09] bg-white/[0.025] p-2">
-            <Calendar
-              mode="single"
-              selected={selected}
-              onSelect={handleSelect}
-              month={visibleMonth}
-              onMonthChange={setVisibleMonth}
-              startMonth={normalizeDateOnly(minDate)}
-              endMonth={normalizeDateOnly(maxDate)}
-              disabled={{
-                before: normalizeDateOnly(minDate),
-                after: normalizeDateOnly(maxDate),
-              }}
-              captionLayout="dropdown"
-              className="w-full text-white"
-              classNames={{
-                month_caption: "mb-3 flex h-10 items-center justify-center",
-                dropdowns: "flex items-center justify-center gap-2",
-                dropdown_root:
-                  "relative overflow-hidden rounded-lg border border-white/10 bg-white/[0.06]",
-                caption_label:
-                  "flex h-9 items-center rounded-lg px-3 text-sm font-semibold text-white",
-                weekdays: "mb-1 grid grid-cols-7",
-                weekday:
-                  "flex h-8 items-center justify-center text-[11px] font-medium text-white/35",
-                week: "mt-1 grid grid-cols-7",
-                day: "relative flex aspect-square items-center justify-center p-0",
-                day_button:
-                  "flex aspect-square size-full min-w-9 items-center justify-center rounded-md text-sm font-normal text-white/75 transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 aria-selected:bg-white aria-selected:text-slate-950",
-                today: "font-bold text-blue-300",
-                outside: "text-white/15",
-                disabled: "cursor-not-allowed text-white/20 opacity-30",
-                hidden: "invisible",
-              }}
-            />
-          </div>
+        <div className="relative max-h-[calc(100dvh-58px)] overflow-y-auto overscroll-contain px-3 pb-5 pt-4 sm:px-5">
+          <Calendar
+            mode="range"
+            selected={selected}
+            onSelect={handleSelect}
+            month={visibleMonth}
+            onMonthChange={setVisibleMonth}
+            startMonth={minimum}
+            endMonth={maximum}
+            disabled={{ before: minimum, after: maximum }}
+            captionLayout="dropdown"
+            className="w-full text-white [--cell-size:2.55rem] sm:[--cell-size:3rem]"
+            classNames={{
+              month_caption: "mb-3 h-10",
+              caption_label: "text-sm font-semibold text-white",
+              dropdown_root:
+                "rounded-md border border-white/10 bg-white/[0.06] text-white",
+              dropdown:
+                "absolute inset-0 cursor-pointer opacity-0",
+              weekday:
+                "h-8 text-center text-[11px] font-medium text-white/40",
+              day: "p-0",
+              day_button:
+                "flex aspect-square w-full items-center justify-center rounded-md text-sm font-normal text-white/80 transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30",
+              range_start:
+                "rounded-s-md rounded-e-none bg-white text-slate-950",
+              range_end:
+                "rounded-e-md rounded-s-none bg-white text-slate-950",
+              range_middle:
+                "rounded-none bg-white/[0.14] text-white",
+              today: "font-semibold text-blue-300",
+              outside: "text-white/20",
+              disabled: "cursor-not-allowed text-white/20 opacity-30",
+              hidden: "invisible",
+            }}
+          />
 
-          <p className="pt-3 text-center text-[10px] font-medium text-white/35">
-            تاریخ انتخاب‌شده: {selectedLabel}
-          </p>
+          <div className="mt-4 grid grid-cols-2 gap-2 border-t border-white/[0.08] pt-3">
+            <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-center">
+              <p className="text-[9px] text-white/35">شروع</p>
+              <p className="mt-1 text-[11px] font-semibold text-white/85">{fromLabel}</p>
+            </div>
+            <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-center">
+              <p className="text-[9px] text-white/35">پایان</p>
+              <p className="mt-1 text-[11px] font-semibold text-white/85">{toLabel}</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -305,7 +334,7 @@ function JalaliDateRangePicker({
 }) {
   const today = useMemo(() => normalizeDateOnly(new Date()), []);
   const minimum = useMemo(() => normalizeDateOnly(minDate), [minDate]);
-  const [pickerTarget, setPickerTarget] = useState<"from" | "to" | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const from = range.from
     ? clampDate(normalizeDateOnly(range.from), minimum, today)
@@ -314,84 +343,35 @@ function JalaliDateRangePicker({
     ? clampDate(normalizeDateOnly(range.to), from, today)
     : today;
 
-  function confirmFrom(date: Date) {
-    const safeFrom = clampDate(date, minimum, today);
-    const safeTo = to < safeFrom ? safeFrom : to;
-    onChange({ from: safeFrom, to: safeTo });
-    setPickerTarget("to");
-  }
-
-  function confirmTo(date: Date) {
-    const safeTo = clampDate(date, from, today);
-    onChange({ from, to: safeTo });
-    setPickerTarget(null);
-  }
-
   return (
     <>
-      <div className="flex max-w-full items-center gap-1.5 sm:hidden">
-        <button
-          type="button"
-          onClick={() => setPickerTarget("from")}
-          className="flex h-10 min-w-0 flex-1 items-center justify-center gap-2 rounded-[14px] border border-white/[0.12] bg-slate-950/65 px-3 text-[10px] font-semibold text-white/85 shadow-[0_6px_22px_rgba(0,0,0,0.16)] backdrop-blur-xl transition active:scale-[0.98]"
-          aria-label="انتخاب تاریخ شروع"
-        >
-          <CalendarDays size={15} className="shrink-0 text-white/45" />
-          <span className="min-w-0 truncate">{formatDate(from)}</span>
-        </button>
+      <button
+        type="button"
+        onClick={() => setPickerOpen(true)}
+        className="inline-flex h-10 max-w-full min-w-0 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-semibold text-slate-700 transition hover:border-slate-300"
+        aria-label="انتخاب بازه زمانی"
+      >
+        <CalendarDays size={15} className="shrink-0 text-slate-400" />
+        <span className="max-w-[210px] truncate">
+          {formatDate(from)} — {formatDate(to)}
+        </span>
+      </button>
 
-        <span className="shrink-0 text-[10px] font-medium text-slate-500">تا</span>
-
-        <button
-          type="button"
-          onClick={() => setPickerTarget("to")}
-          className="flex h-10 min-w-0 flex-1 items-center justify-center gap-2 rounded-[14px] border border-white/[0.12] bg-slate-950/65 px-3 text-[10px] font-semibold text-white/85 shadow-[0_6px_22px_rgba(0,0,0,0.16)] backdrop-blur-xl transition active:scale-[0.98]"
-          aria-label="انتخاب تاریخ پایان"
-        >
-          <CalendarDays size={15} className="shrink-0 text-white/45" />
-          <span className="min-w-0 truncate">{formatDate(to)}</span>
-        </button>
-      </div>
-
-      <div className="hidden sm:inline-flex">
-        <button
-          type="button"
-          onClick={() => setPickerTarget("from")}
-          className="inline-flex h-10 max-w-full items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-semibold text-slate-700 transition hover:border-slate-300"
-          aria-label="انتخاب بازه زمانی"
-        >
-          <CalendarDays size={15} className="shrink-0 text-slate-400" />
-          <span className="max-w-[170px] truncate">
-            {formatDate(from)} — {formatDate(to)}
-          </span>
-        </button>
-      </div>
-
-      {pickerTarget === "from" && (
+      {pickerOpen && (
         <JalaliDatePickerSheet
-          value={from}
+          range={{ from, to }}
           minDate={minimum}
           maxDate={today}
-          title="انتخاب تاریخ شروع"
-          onConfirm={confirmFrom}
-          onClose={() => setPickerTarget(null)}
-        />
-      )}
-
-      {pickerTarget === "to" && (
-        <JalaliDatePickerSheet
-          value={to}
-          minDate={from}
-          maxDate={today}
-          title="انتخاب تاریخ پایان"
-          onConfirm={confirmTo}
-          onClose={() => setPickerTarget(null)}
+          onConfirm={(next) => {
+            onChange(next);
+            setPickerOpen(false);
+          }}
+          onClose={() => setPickerOpen(false)}
         />
       )}
     </>
   );
 }
-
 function MetricCard({
   label,
   value,
