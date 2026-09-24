@@ -282,7 +282,6 @@ function JalaliDatePickerSheet({
             disabled={{ before: minimum, after: maximum }}
             captionLayout="dropdown"
             dir="rtl"
-            className="w-full rounded-lg border border-slate-200 bg-white [--cell-size:2.75rem] sm:[--cell-size:3rem]"
           />
 
           <div className="mt-4 grid grid-cols-2 gap-2 border-t border-slate-200 pt-3">
