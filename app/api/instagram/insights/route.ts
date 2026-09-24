@@ -101,38 +101,72 @@ async function fetchInstagram<T>(url: string): Promise<{
   }
 }
 
-function getMetricValue(
+function getMetricSeries(
   metrics: InstagramInsightMetric[],
   name: InsightMetricName,
-): number | null {
+) {
   const metric = metrics.find((item) => item.name === name);
-  const timeSeriesValue = metric?.values?.[metric.values.length - 1]?.value;
-  const totalValue = metric?.total_value?.value;
-  const value = totalValue ?? timeSeriesValue;
+  return (metric?.values ?? [])
+    .map((item) => {
+      const value = item.value;
+      if (
+        typeof value !== "number" ||
+        !Number.isFinite(value) ||
+        !item.end_time
+      ) {
+        return null;
+      }
 
-  return typeof value === "number" && Number.isFinite(value) ? value : null;
+      const endTime = new Date(item.end_time);
+      if (Number.isNaN(endTime.getTime())) return null;
+
+      return { value, endTime };
+    })
+    .filter(
+      (item): item is { value: number; endTime: Date } => item !== null,
+    );
 }
 
-function getFollowValues(metrics: InstagramInsightMetric[]) {
+function getFollowSeries(metrics: InstagramInsightMetric[]) {
   const metric = metrics.find((item) => item.name === "follows_and_unfollows");
-  const value =
-    metric?.total_value?.value ??
-    metric?.values?.[metric.values.length - 1]?.value;
+  return (metric?.values ?? [])
+    .map((item) => {
+      if (!item.end_time || !item.value || typeof item.value !== "object") {
+        return null;
+      }
 
-  if (!value || typeof value !== "object") {
-    return { follows: null, unfollows: null };
-  }
+      const endTime = new Date(item.end_time);
+      if (Number.isNaN(endTime.getTime())) return null;
 
-  return {
-    follows:
-      typeof value.follows === "number" && Number.isFinite(value.follows)
-        ? value.follows
-        : null,
-    unfollows:
-      typeof value.unfollows === "number" && Number.isFinite(value.unfollows)
-        ? value.unfollows
-        : null,
-  };
+      return {
+        follows:
+          typeof item.value.follows === "number" &&
+          Number.isFinite(item.value.follows)
+            ? item.value.follows
+            : null,
+        unfollows:
+          typeof item.value.unfollows === "number" &&
+          Number.isFinite(item.value.unfollows)
+            ? item.value.unfollows
+            : null,
+        endTime,
+      };
+    })
+    .filter(
+      (
+        item,
+      ): item is {
+        follows: number | null;
+        unfollows: number | null;
+        endTime: Date;
+      } => item !== null,
+    );
+}
+
+function getSnapshotDate(value: Date): Date {
+  return new Date(
+    Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate()),
+  );
 }
 
 function getSnapshotDate(): Date {
@@ -160,6 +194,8 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const requestedAccountId = searchParams.get("accountId");
+    const requestedFrom = searchParams.get("from");
+    const requestedTo = searchParams.get("to");
 
     const instagramAccount = await prisma.instagramAccount.findFirst({
       where: {
@@ -198,7 +234,22 @@ export async function GET(request: NextRequest) {
     insightsUrl.searchParams.set("metric", CORE_INSIGHT_METRICS.join(","));
 
     insightsUrl.searchParams.set("period", "day");
-    insightsUrl.searchParams.set("metric_type", "total_value");
+    insightsUrl.searchParams.set("metric_type", "time_series");
+
+    if (requestedFrom && /^\d{4}-\d{2}-\d{2}$/.test(requestedFrom)) {
+      insightsUrl.searchParams.set(
+        "since",
+        String(Math.floor(new Date(requestedFrom + "T00:00:00.000Z").getTime() / 1000)),
+      );
+    }
+
+    if (requestedTo && /^\d{4}-\d{2}-\d{2}$/.test(requestedTo)) {
+      const until = new Date(requestedTo + "T23:59:59.999Z");
+      insightsUrl.searchParams.set(
+        "until",
+        String(Math.floor(until.getTime() / 1000)),
+      );
+    }
 
     insightsUrl.searchParams.set("access_token", accessToken);
 
@@ -258,24 +309,163 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const values = {
-      views: getMetricValue(metrics, "views"),
-      totalInteractions: getMetricValue(metrics, "total_interactions"),
-      follows: followValues.follows,
-      unfollows: followValues.unfollows,
-    };
+    const viewSeries = getMetricSeries(metrics, "views");
+    const interactionSeries = getMetricSeries(metrics, "total_interactions");
+
+    const followSeries = getFollowSeries(
+      (await (async () => {
+        const advancedUrl = new URL(insightsUrl.toString());
+        advancedUrl.searchParams.set(
+          "metric",
+          ADVANCED_INSIGHT_METRICS.join(","),
+        );
+
+        const {
+          response: advancedResponse,
+          data: advancedData,
+        } = await fetchInstagram<InstagramInsightsResponse>(
+          advancedUrl.toString(),
+        );
+
+        return advancedResponse.ok && advancedData.data
+          ? advancedData.data
+          : [];
+      })()),
+    );
+
+    const seriesByDate = new Map<
+      string,
+      {
+        snapshotDate: Date;
+        views: number | null;
+        totalInteractions: number | null;
+        follows: number | null;
+        unfollows: number | null;
+      }
+    >();
+
+    for (const item of viewSeries) {
+      const date = getSnapshotDate(item.endTime);
+      seriesByDate.set(date.toISOString(), {
+        snapshotDate: date,
+        views: item.value,
+        totalInteractions: null,
+        follows: null,
+        unfollows: null,
+      });
+    }
+
+    for (const item of interactionSeries) {
+      const date = getSnapshotDate(item.endTime);
+      const key = date.toISOString();
+      const existing = seriesByDate.get(key) ?? {
+        snapshotDate: date,
+        views: null,
+        totalInteractions: null,
+        follows: null,
+        unfollows: null,
+      };
+      existing.totalInteractions = item.value;
+      seriesByDate.set(key, existing);
+    }
+
+    for (const item of followSeries) {
+      const date = getSnapshotDate(item.endTime);
+      const key = date.toISOString();
+      const existing = seriesByDate.get(key) ?? {
+        snapshotDate: date,
+        views: null,
+        totalInteractions: null,
+        follows: null,
+        unfollows: null,
+      };
+      existing.follows = item.follows;
+      existing.unfo    const viewSeries = getMetricSeries(metrics, "views");
+    const interactionSeries = getMetricSeries(metrics, "total_interactions");
+
+    const followSeries = getFollowSeries(
+      (await (async () => {
+        const advancedUrl = new URL(insightsUrl.toString());
+        advancedUrl.searchParams.set(
+          "metric",
+          ADVANCED_INSIGHT_METRICS.join(","),
+        );
+
+        const {
+          response: advancedResponse,
+          data: advancedData,
+        } = await fetchInstagram<InstagramInsightsResponse>(
+          advancedUrl.toString(),
+        );
+
+        return advancedResponse.ok && advancedData.data
+          ? advancedData.data
+          : [];
+      })()),
+    );
+
+    const seriesByDate = new Map<
+      string,
+      {
+        snapshotDate: Date;
+        views: number | null;
+        totalInteractions: number | null;
+        follows: number | null;
+        unfollows: number | null;
+      }
+    >();
+
+    for (const item of viewSeries) {
+      const date = getSnapshotDate(item.endTime);
+      seriesByDate.set(date.toISOString(), {
+        snapshotDate: date,
+        views: item.value,
+        totalInteractions: null,
+        follows: null,
+        unfollows: null,
+      });
+    }
+
+    for (const item of interactionSeries) {
+      const date = getSnapshotDate(item.endTime);
+      const key = date.toISOString();
+      const existing = seriesByDate.get(key) ?? {
+        snapshotDate: date,
+        views: null,
+        totalInteractions: null,
+        follows: null,
+        unfollows: null,
+      };
+      existing.totalInteractions = item.value;
+      seriesByDate.set(key, existing);
+    }
+
+    for (const item of followSeries) {
+      const date = getSnapshotDate(item.endTime);
+      const key = date.toISOString();
+      const existing = seriesByDate.get(key) ?? {
+        snapshotDate: date,
+        views: null,
+        totalInteractions: null,
+        follows: null,
+        unfollows: null,
+      };
+      existing.follows = item.follows;
+      existing.unfollows = item.unfollows;
+      seriesByDate.set(key, existing);
+    }
+
+    const todayKey = getSnapshotDate(new Date()).toISOString();
+    const todaySnapshot = seriesByDate.get(todayKey);
 
     let followerCount: number | null = null;
-
     const profileUrl = new URL(
       `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/me`,
     );
-
     profileUrl.searchParams.set(
       "fields",
       "id,user_id,username,followers_count",
     );
-
     profileUrl.searchParams.set("access_token", accessToken);
 
     try {
@@ -295,36 +485,134 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const snapshotDate = getSnapshotDate();
+    const snapshots = [];
 
-    const snapshot = await prisma.instagramInsightSnapshot.upsert({
-      where: {
-        instagramAccountId_snapshotDate: {
-          instagramAccountId: instagramAccount.id,
-          snapshotDate,
+    for (const item of Array.from(seriesByDate.values()).sort(
+      (a, b) => a.snapshotDate.getTime() - b.snapshotDate.getTime(),
+    )) {
+      const snapshot = await prisma.instagramInsightSnapshot.upsert({
+        where: {
+          instagramAccountId_snapshotDate: {
+            instagramAccountId: instagramAccount.id,
+            snapshotDate: item.snapshotDate,
+          },
         },
-      },
-      create: {
-        instagramAccountId: instagramAccount.id,
-        snapshotDate,
-        views: values.views,
-        totalInteractions: values.totalInteractions,
-        follows: values.follows,
-        unfollows: values.unfollows,
-        followerCount,
-      },
-      update: {
-        ...(values.views !== null ? { views: values.views } : {}),
-        ...(values.totalInteractions !== null
-          ? { totalInteractions: values.totalInteractions }
-          : {}),
-        ...(values.follows !== null ? { follows: values.follows } : {}),
-        ...(values.unfollows !== null ? { unfollows: values.unfollows } : {}),
-        ...(followerCount !== null ? { followerCount } : {}),
-      },
-    });
+        create: {
+          instagramAccountId: instagramAccount.id,
+          snapshotDate: item.snapshotDate,
+          views: item.views,
+          totalInteractions: item.totalInteractions,
+          follows: item.follows,
+          unfollows: item.unfollows,
+          followerCount:
+            item.snapshotDate.getTime() === new Date(todayKey).getTime()
+              ? followerCount
+              : null,
+        },
+        update: {
+          ...(item.views !== null ? { views: item.views } : {}),
+          ...(item.totalInteractions !== null
+            ? { totalInteractions: item.totalInteractions }
+            : {}),
+          ...(item.follows !== null ? { follows: item.follows } : {}),
+          ...(item.unfollows !== null ? { unfollows: item.unfollows } : {}),
+          ...(item.snapshotDate.getTime() === new Date(todayKey).getTime() &&
+          followerCount !== null
+            ? { followerCount }
+            : {}),
+        },
+      });
+
+      snapshots.push(snapshot);
+    }
 
     return NextResponse.json({
+      success: true,
+      account: {
+        id: instagramAccount.id,
+        igUserId: instagramAccount.igUserId,
+        username: instagramAccount.igUsername,
+      },
+      metrics: {
+        views: todaySnapshot?.views ?? null,
+        totalInteractions: todaySnapshot?.totalInteractions ?? null,
+        follows: todaySnapshot?.follows ?? null,
+        unfollows: todaySnapshot?.unfollows ?? null,
+      },
+      snapshots: snapshots.map((snapshot) => ({
+        id: snapshot.id,
+        snapshotDate: snapshot.snapshotDate,
+      })),
+    });
+  }
+  } catch (error) {
+      console.warn("[Instagram Insights] Profile followers request failed:", {
+        accountId: instagramAccount.id,
+        error,
+      });
+    }
+
+    const snapshots = [];
+
+    for (const item of Array.from(seriesByDate.values()).sort(
+      (a, b) => a.snapshotDate.getTime() - b.snapshotDate.getTime(),
+    )) {
+      const snapshot = await prisma.instagramInsightSnapshot.upsert({
+        where: {
+          instagramAccountId_snapshotDate: {
+            instagramAccountId: instagramAccount.id,
+            snapshotDate: item.snapshotDate,
+          },
+        },
+        create: {
+          instagramAccountId: instagramAccount.id,
+          snapshotDate: item.snapshotDate,
+          views: item.views,
+          totalInteractions: item.totalInteractions,
+          follows: item.follows,
+          unfollows: item.unfollows,
+          followerCount:
+            item.snapshotDate.getTime() === new Date(todayKey).getTime()
+              ? followerCount
+              : null,
+        },
+        update: {
+          ...(item.views !== null ? { views: item.views } : {}),
+          ...(item.totalInteractions !== null
+            ? { totalInteractions: item.totalInteractions }
+            : {}),
+          ...(item.follows !== null ? { follows: item.follows } : {}),
+          ...(item.unfollows !== null ? { unfollows: item.unfollows } : {}),
+          ...(item.snapshotDate.getTime() === new Date(todayKey).getTime() &&
+          followerCount !== null
+            ? { followerCount }
+            : {}),
+        },
+      });
+
+      snapshots.push(snapshot);
+    }
+
+    return NextResponse.json({
+      success: true,
+      account: {
+        id: instagramAccount.id,
+        igUserId: instagramAccount.igUserId,
+        username: instagramAccount.igUsername,
+      },
+      metrics: {
+        views: todaySnapshot?.views ?? null,
+        totalInteractions: todaySnapshot?.totalInteractions ?? null,
+        follows: todaySnapshot?.follows ?? null,
+        unfollows: todaySnapshot?.unfollows ?? null,
+      },
+      snapshots: snapshots.map((snapshot) => ({
+        id: snapshot.id,
+        snapshotDate: snapshot.snapshotDate,
+      })),
+    });
+  }
+
       success: true,
 
       account: {
