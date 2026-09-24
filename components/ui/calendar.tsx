@@ -2,7 +2,8 @@
 
 import * as React from "react"
 import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
-import { DayPicker, getDefaultClassNames, type DayButton } from "react-day-picker/persian"
+import { getDefaultClassNames, type DayButton } from "react-day-picker"
+import { DayPicker } from "react-day-picker/persian"
 
 function CalendarDayButton({
   className,
