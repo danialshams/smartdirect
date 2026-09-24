@@ -188,7 +188,6 @@ export async function GET(request: NextRequest) {
         id: true,
         igUserId: true,
         igUsername: true,
-        tokenExpiresAt: true,
       },
     });
 
@@ -201,147 +200,120 @@ export async function GET(request: NextRequest) {
 
     const accessToken = await getValidInstagramAccessToken(instagramAccount.id);
 
-    const insightsUrl = new URL(
-      `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${instagramAccount.igUserId}/insights`,
-    );
+    const now = new Date();
+    const today = getSnapshotDate(now);
 
-    insightsUrl.searchParams.set("metric", CORE_INSIGHT_METRICS.join(","));
-    insightsUrl.searchParams.set("period", "day");
-    insightsUrl.searchParams.set("metric_type", "time_series");
+    let from = new Date(today);
+    let to = new Date(today);
 
-    if (requestedFrom && /^\d{4}-\d{2}-\d{2}$/.test(requestedFrom)) {
-      const since = new Date(`${requestedFrom}T00:00:00.000Z`);
-      if (!Number.isNaN(since.getTime())) {
-        insightsUrl.searchParams.set(
-          "since",
-          String(Math.floor(since.getTime() / 1000)),
-        );
+    if (
+      requestedFrom &&
+      requestedTo &&
+      /^\d{4}-\d{2}-\d{2}$/.test(requestedFrom) &&
+      /^\d{4}-\d{2}-\d{2}$/.test(requestedTo)
+    ) {
+      const requestedStart = new Date(requestedFrom + "T00:00:00.000Z");
+      const requestedEnd = new Date(requestedTo + "T00:00:00.000Z");
+
+      if (
+        !Number.isNaN(requestedStart.getTime()) &&
+        !Number.isNaN(requestedEnd.getTime()) &&
+        requestedStart <= requestedEnd
+      ) {
+        from = requestedStart;
+        to = requestedEnd;
       }
+    } else {
+      from.setUTCDate(from.getUTCDate() - 29);
     }
 
-    if (requestedTo && /^\d{4}-\d{2}-\d{2}$/.test(requestedTo)) {
-      const until = new Date(`${requestedTo}T23:59:59.999Z`);
-      if (!Number.isNaN(until.getTime())) {
-        insightsUrl.searchParams.set(
-          "until",
-          String(Math.floor(until.getTime() / 1000)),
-        );
-      }
-    }
+    const dayKeys = getDayKeys(from, to);
+    const MAX_SYNC_DAYS = 90;
 
-    insightsUrl.searchParams.set("access_token", accessToken);
-
-    const insightsResult = await fetchAllInstagramInsightPages(
-      insightsUrl.toString(),
-    );
-    const insightsResponse = insightsResult.response;
-    const insightsData = insightsResult.data;
-    const insightsMetrics = insightsResult.metrics;
-
-    console.info("[Instagram Insights] Core time-series sync:", {
-      accountId: instagramAccount.id,
-      requestedFrom,
-      requestedTo,
-      pages: insightsResult.pageCount,
-      metrics: insightsMetrics.map((metric) => ({
-        name: metric.name,
-        period: metric.period,
-        values: metric.values?.length ?? 0,
-      })),
-    });
-
-    if (!insightsResponse.ok || !insightsData.data) {
-      console.error("[Instagram Insights] Meta request failed:", {
-        status: insightsResponse.status,
-        accountId: instagramAccount.id,
-        error: insightsData.error,
-      });
-
+    if (dayKeys.length > MAX_SYNC_DAYS) {
       return NextResponse.json(
         {
-          error: getErrorMessage(insightsData),
-          meta: insightsData.error ?? null,
+          error:
+            "Meta برای تاریخچه Insights حداکثر ۹۰ روز اخیر را در این مسیر قابل دریافت می‌کند.",
         },
-        { status: insightsResponse.status || 502 },
+        { status: 400 },
       );
     }
 
-    let followMetrics: InstagramInsightMetric[] = [];
+    const existingSnapshots = await prisma.instagramInsightSnapshot.findMany({
+      where: {
+        instagramAccountId: instagramAccount.id,
+        snapshotDate: {
+          gte: from,
+          lte: new Date(to.getTime() + 86400000 - 1),
+        },
+      },
+      select: {
+        snapshotDate: true,
+        views: true,
+        totalInteractions: true,
+        follows: true,
+        unfollows: true,
+      },
+    });
 
-    try {
-      const advancedUrl = new URL(insightsUrl.toString());
-      advancedUrl.searchParams.set(
-        "metric",
-        ADVANCED_INSIGHT_METRICS.join(","),
-      );
-
-      const advancedResult = await fetchAllInstagramInsightPages(
-        advancedUrl.toString(),
-      );
-
-      if (advancedResult.response.ok && advancedResult.data.data) {
-        followMetrics = advancedResult.metrics;
-      } else {
-        console.warn("[Instagram Insights] Advanced metrics unavailable:", {
-          status: advancedResult.response.status,
-          accountId: instagramAccount.id,
-          error: advancedResult.data.error,
-        });
-      }
-    } catch (error) {
-      console.warn("[Instagram Insights] Advanced metrics request failed:", {
-        accountId: instagramAccount.id,
-        error,
-      });
-    }
-
-    const viewSeries = getMetricSeries(insightsMetrics, "views");
-    const interactionSeries = getMetricSeries(
-      insightsMetrics,
-      "total_interactions",
+    const existingByDay = new Map(
+      existingSnapshots.map((snapshot) => [
+        snapshot.snapshotDate.toISOString().slice(0, 10),
+        snapshot,
+      ]),
     );
-    const followSeries = getFollowSeries(followMetrics);
 
-    const seriesByDate = new Map<
-      string,
-      {
-        snapshotDate: Date;
-        views: number | null;
-        totalInteractions: number | null;
-        follows: number | null;
-        unfollows: number | null;
+    const daysToSync = dayKeys.filter((day) => {
+      const existing = existingByDay.get(day);
+      return (
+        !existing ||
+        existing.views == null ||
+        existing.totalInteractions == null ||
+        existing.follows == null ||
+        existing.unfollows == null
+      );
+    });
+
+    const synced = [];
+    const syncErrors: Array<{ day: string; error: string }> = [];
+
+    // Meta does not reliably expose daily values for all four requested
+    // dashboard metrics through time_series. We therefore request each
+    // selected day as total_value and persist the result as a daily snapshot.
+    for (let index = 0; index < daysToSync.length; index += 3) {
+      const batch = daysToSync.slice(index, index + 3);
+
+      const results = await Promise.all(
+        batch.map(async (day) => {
+          try {
+            return {
+              day,
+              result: await fetchDailyInsight(
+                instagramAccount.igUserId,
+                accessToken,
+                day,
+              ),
+            };
+          } catch (error) {
+            return {
+              day,
+              error:
+                error instanceof Error
+                  ? error.message
+                  : "خطای نامشخص در دریافت داده Meta",
+            };
+          }
+        }),
+      );
+
+      for (const item of results) {
+        if ("error" in item) {
+          syncErrors.push({ day: item.day, error: item.error });
+        } else {
+          synced.push(item.result);
+        }
       }
-    >();
-
-    const ensureSeriesDay = (date: Date) => {
-      const snapshotDate = getSnapshotDate(date);
-      const key = snapshotDate.toISOString();
-
-      if (!seriesByDate.has(key)) {
-        seriesByDate.set(key, {
-          snapshotDate,
-          views: null,
-          totalInteractions: null,
-          follows: null,
-          unfollows: null,
-        });
-      }
-
-      return seriesByDate.get(key)!;
-    };
-
-    for (const item of viewSeries) {
-      ensureSeriesDay(item.endTime).views = item.value;
-    }
-
-    for (const item of interactionSeries) {
-      ensureSeriesDay(item.endTime).totalInteractions = item.value;
-    }
-
-    for (const item of followSeries) {
-      const day = ensureSeriesDay(item.endTime);
-      day.follows = item.follows;
-      day.unfollows = item.unfollows;
     }
 
     let followerCount: number | null = null;
@@ -368,15 +340,10 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const snapshots = [];
+    for (const item of synced) {
+      const isToday = item.snapshotDate.getTime() === today.getTime();
 
-    for (const item of Array.from(seriesByDate.values()).sort(
-      (a, b) => a.snapshotDate.getTime() - b.snapshotDate.getTime(),
-    )) {
-      const isToday =
-        item.snapshotDate.getTime() === getSnapshotDate(new Date()).getTime();
-
-      const snapshot = await prisma.instagramInsightSnapshot.upsert({
+      await prisma.instagramInsightSnapshot.upsert({
         where: {
           instagramAccountId_snapshotDate: {
             instagramAccountId: instagramAccount.id,
@@ -402,9 +369,38 @@ export async function GET(request: NextRequest) {
           ...(isToday && followerCount !== null ? { followerCount } : {}),
         },
       });
-
-      snapshots.push(snapshot);
     }
+
+    const snapshots = await prisma.instagramInsightSnapshot.findMany({
+      where: {
+        instagramAccountId: instagramAccount.id,
+        snapshotDate: {
+          gte: from,
+          lte: new Date(to.getTime() + 86400000 - 1),
+        },
+      },
+      orderBy: { snapshotDate: "asc" },
+      select: {
+        id: true,
+        snapshotDate: true,
+        views: true,
+        totalInteractions: true,
+        follows: true,
+        unfollows: true,
+        followerCount: true,
+      },
+    });
+
+    console.info("[Instagram Insights] Daily snapshot sync:", {
+      accountId: instagramAccount.id,
+      requestedFrom: from.toISOString().slice(0, 10),
+      requestedTo: to.toISOString().slice(0, 10),
+      requestedDays: dayKeys.length,
+      existingDays: existingSnapshots.length,
+      syncedDays: synced.length,
+      errors: syncErrors,
+      snapshotsReturned: snapshots.length,
+    });
 
     const latest = snapshots[snapshots.length - 1] ?? null;
 
@@ -425,6 +421,11 @@ export async function GET(request: NextRequest) {
         id: snapshot.id,
         snapshotDate: snapshot.snapshotDate,
       })),
+      sync: {
+        requestedDays: dayKeys.length,
+        syncedDays: synced.length,
+        errors: syncErrors,
+      },
     });
   } catch (error) {
     console.error("[Instagram Insights] Unexpected error:", error);
