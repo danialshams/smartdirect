@@ -1,6 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import type { DateRange } from "react-day-picker";
+
+import { Calendar } from "@/components/ui/calendar";
 
 type Range = 7 | 30 | 90;
 type Metric = "reach" | "views" | "interactions";
@@ -117,6 +120,7 @@ export default function InsightsDashboard() {
     const [accountId, setAccountId] = useState("");
     const [range, setRange] = useState<Range>(7);
     const [metric, setMetric] = useState<Metric>("reach");
+    const [dateRange, setDateRange] = useState<DateRange | undefined>();
     const [loadingAccounts, setLoadingAccounts] = useState(true);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -163,6 +167,18 @@ export default function InsightsDashboard() {
 
     const summary = data?.summary;
     const latest = data?.latest;
+
+    const chartSnapshots = useMemo(() => {
+        if (!data?.snapshots.length || !dateRange?.from) return data?.snapshots ?? [];
+        const from = new Date(dateRange.from);
+        from.setHours(0, 0, 0, 0);
+        const to = new Date(dateRange.to ?? dateRange.from);
+        to.setHours(23, 59, 59, 999);
+        return data.snapshots.filter((snapshot) => {
+            const snapshotDate = new Date(snapshot.snapshotDate);
+            return snapshotDate >= from && snapshotDate <= to;
+        });
+    }, [data?.snapshots, dateRange]);
 
     return (
         <main dir="rtl" className="min-h-screen bg-zinc-50/40 px-4 py-5 sm:px-6 sm:py-8">
@@ -215,7 +231,10 @@ export default function InsightsDashboard() {
                                         {([["reach", "دسترسی"], ["views", "بازدید"], ["interactions", "تعاملات"]] as const).map(([value, label]) => <button key={value} type="button" onClick={() => setMetric(value)} className={`px-3 py-2 text-xs sm:text-sm ${metric === value ? "bg-zinc-950 text-white" : "text-zinc-500 hover:bg-zinc-50"}`}>{label}</button>)}
                                     </div>
                                 </div>
-                                <Chart snapshots={data.snapshots} metric={metric} />
+                                <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-start">
+                                    <Chart snapshots={chartSnapshots} metric={metric} />
+                                    <Calendar mode="range" selected={dateRange} onSelect={setDateRange} className="rounded-lg border" />
+                                </div>
                             </div>
 
                             <aside className="border border-zinc-200 bg-white p-5 sm:p-6">
