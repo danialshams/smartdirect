@@ -75,6 +75,7 @@ export async function GET(request: NextRequest) {
                 igUsername: true,
                 accessToken: true,
                 isConnected: true,
+                createdAt: true,
             },
         });
 
@@ -88,6 +89,13 @@ export async function GET(request: NextRequest) {
         const now = new Date();
         const today = new Date(now);
         today.setUTCHours(0, 0, 0, 0);
+
+        const accountCreatedDate = new Date(account.createdAt);
+        accountCreatedDate.setUTCHours(0, 0, 0, 0);
+        const twoYearsAgo = new Date(today);
+        twoYearsAgo.setUTCDate(twoYearsAgo.getUTCDate() - (MAX_DAYS - 1));
+        const analyticsStartDate =
+            accountCreatedDate > twoYearsAgo ? accountCreatedDate : twoYearsAgo;
 
         let from = new Date(today);
         let to = now;
@@ -114,6 +122,38 @@ export async function GET(request: NextRequest) {
             to.setUTCHours(23, 59, 59, 999);
         } else {
             from.setUTCDate(from.getUTCDate() - (days - 1));
+        }
+
+        if (from < analyticsStartDate) {
+            from = new Date(analyticsStartDate);
+        }
+
+        if (to < from) {
+            return NextResponse.json({
+                success: true,
+                account: {
+                    id: account.id,
+                    igUserId: account.igUserId,
+                    username: account.igUsername,
+                    isConnected: account.isConnected,
+                    analyticsStartDate,
+                },
+                period: {
+                    days: 0,
+                    from: analyticsStartDate,
+                    to: analyticsStartDate,
+                },
+                summary: {
+                    views: 0,
+                    totalInteractions: 0,
+                    follows: null,
+                    unfollows: null,
+                    followerCount: 0,
+                    followerGrowth: 0,
+                },
+                latest: null,
+                snapshots: [],
+            });
         }
 
         const snapshots = await prisma.instagramInsightSnapshot.findMany({
@@ -169,6 +209,7 @@ export async function GET(request: NextRequest) {
                 igUserId: account.igUserId,
                 username: account.igUsername,
                 isConnected: account.isConnected,
+                analyticsStartDate,
             },
             period: {
                 days:
