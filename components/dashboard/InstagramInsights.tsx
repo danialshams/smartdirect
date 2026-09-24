@@ -150,6 +150,7 @@ function JalaliDatePickerSheet({
 }) {
   const minimum = normalizeDateOnly(minDate);
   const maximum = normalizeDateOnly(maxDate);
+
   const safeFrom = clampDate(
     normalizeDateOnly(range.from ?? minimum),
     minimum,
@@ -167,41 +168,21 @@ function JalaliDatePickerSheet({
   const [endMonth, setEndMonth] = useState<Date>(safeTo);
 
   useEffect(() => {
-    const body = document.body;
-    const html = document.documentElement;
-    const previousBodyOverflow = body.style.overflow;
-    const previousHtmlOverflow = html.style.overflow;
-    const previousBodyOverscrollBehavior = body.style.overscrollBehavior;
-    const previousHtmlOverscrollBehavior = html.style.overscrollBehavior;
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
 
-    body.style.overflow = "hidden";
-    html.style.overflow = "hidden";
-    body.style.overscrollBehavior = "none";
-    html.style.overscrollBehavior = "none";
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
 
     return () => {
-      body.style.overflow = previousBodyOverflow;
-      html.style.overflow = previousHtmlOverflow;
-      body.style.overscrollBehavior = previousBodyOverscrollBehavior;
-      html.style.overscrollBehavior = previousHtmlOverscrollBehavior;
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
     };
   }, []);
 
-  const fromLabel = new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  }).format(startDate);
-
-  const toLabel = new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  }).format(endDate);
-
   return (
     <div
-      className="fixed inset-0 z-[120] flex h-[100dvh] w-full items-end justify-center overflow-hidden overscroll-none bg-black/40 px-0 pb-0 backdrop-blur-[8px] sm:items-center sm:px-4 sm:pb-4"
+      className="fixed inset-0 z-[120] flex items-center justify-center overflow-auto bg-black/50 p-4"
       role="presentation"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
@@ -213,97 +194,77 @@ function JalaliDatePickerSheet({
         aria-modal="true"
         aria-label="انتخاب بازه زمانی"
         onMouseDown={(event) => event.stopPropagation()}
-        className="dark relative w-full max-w-[900px] overflow-hidden rounded-t-[28px] border bg-background text-foreground shadow-[0_-20px_60px_rgba(0,0,0,0.35)] sm:rounded-[28px] sm:shadow-[0_24px_60px_rgba(0,0,0,0.35)]"
+        className="dark w-fit max-w-full overflow-auto rounded-lg border bg-background text-foreground shadow-lg"
       >
-        <div className="relative flex h-[58px] items-center border-b px-5">
+        <div className="flex items-center justify-between border-b px-4 py-3">
           <button
             type="button"
             onClick={onClose}
-            className="absolute left-5 top-1/2 -translate-y-1/2 text-[15px] font-medium text-muted-foreground active:opacity-50"
+            className="text-sm text-muted-foreground"
           >
             لغو
           </button>
-
-          <div className="mx-auto text-center">
-            <p className="text-[13px] font-semibold">انتخاب بازه زمانی</p>
-            <p className="mt-0.5 text-[10px] text-muted-foreground">
-              {fromLabel} تا {toLabel}
-            </p>
-          </div>
-
+          <span className="text-sm font-medium">انتخاب بازه زمانی</span>
           <button
             type="button"
-            onClick={onClose}
-            className="absolute right-5 top-1/2 -translate-y-1/2 text-[15px] font-semibold active:opacity-50"
+            onClick={() => onConfirm({ from: startDate, to: endDate })}
+            className="text-sm font-medium"
           >
             انجام شد
           </button>
         </div>
 
-        <div className="relative max-h-[calc(100dvh-58px)] overflow-y-auto overscroll-contain px-3 pb-5 pt-4 sm:px-5">
-          <div className="grid gap-6 lg:grid-cols-2">
-            <div>
-              <p className="mb-2 text-center text-xs font-medium text-muted-foreground">تاریخ شروع</p>
-              <Calendar
-                mode="single"
-                selected={startDate}
-                onSelect={(date) => {
-                  if (!date) return;
-                  const nextStart = clampDate(
-                    normalizeDateOnly(date),
-                    minimum,
-                    endDate,
-                  );
-                  setStartDate(nextStart);
-                  if (nextStart > endDate) setEndDate(nextStart);
-                  setStartMonth(nextStart);
-                }}
-                month={startMonth}
-                onMonthChange={setStartMonth}
-                startMonth={minimum}
-                endMonth={endDate}
-                disabled={{ before: minimum, after: endDate }}
-                captionLayout="dropdown"
-                dir="rtl"
-              />
-            </div>
+        <div className="flex flex-col gap-4 p-4 md:flex-row">
+          <Calendar
+            mode="single"
+            selected={startDate}
+            onSelect={(date) => {
+              if (!date) return;
 
-            <div>
-              <p className="mb-2 text-center text-xs font-medium text-muted-foreground">تاریخ پایان</p>
-              <Calendar
-                mode="single"
-                selected={endDate}
-                onSelect={(date) => {
-                  if (!date) return;
-                  const nextEnd = clampDate(
-                    normalizeDateOnly(date),
-                    startDate,
-                    maximum,
-                  );
-                  setEndDate(nextEnd);
-                  setEndMonth(nextEnd);
-                }}
-                month={endMonth}
-                onMonthChange={setEndMonth}
-                startMonth={startDate}
-                endMonth={maximum}
-                disabled={{ before: startDate, after: maximum }}
-                captionLayout="dropdown"
-                dir="rtl"
-              />
-            </div>
-          </div>
+              const nextStart = clampDate(
+                normalizeDateOnly(date),
+                minimum,
+                endDate,
+              );
 
-          <div className="mt-4 grid grid-cols-2 gap-2 border-t pt-3">
-            <div className="rounded-md border bg-card px-3 py-2 text-center">
-              <p className="text-[9px] text-muted-foreground">شروع</p>
-              <p className="mt-1 text-[11px] font-semibold">{fromLabel}</p>
-            </div>
-            <div className="rounded-md border bg-card px-3 py-2 text-center">
-              <p className="text-[9px] text-muted-foreground">پایان</p>
-              <p className="mt-1 text-[11px] font-semibold">{toLabel}</p>
-            </div>
-          </div>
+              setStartDate(nextStart);
+              if (nextStart > endDate) {
+                setEndDate(nextStart);
+              }
+              setStartMonth(nextStart);
+            }}
+            month={startMonth}
+            onMonthChange={setStartMonth}
+            startMonth={minimum}
+            endMonth={endDate}
+            disabled={{ before: minimum, after: endDate }}
+            captionLayout="dropdown"
+            dir="rtl"
+          />
+
+          <Calendar
+            mode="single"
+            selected={endDate}
+            onSelect={(date) => {
+              if (!date) return;
+
+              const nextEnd = clampDate(
+                normalizeDateOnly(date),
+                startDate,
+                maximum,
+              );
+
+              setEndDate(nextEnd);
+              setEndMonth(nextEnd);
+            }}
+            month={endMonth}
+            onMonthChange={setEndMonth}
+            startMonth={startDate}
+            endMonth={maximum}
+            disabled={{ before: startDate, after: maximum }}
+            captionLayout="dropdown"
+            dir="rtl"
+          />
         </div>
       </div>
     </div>
