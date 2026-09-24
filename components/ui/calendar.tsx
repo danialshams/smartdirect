@@ -79,7 +79,6 @@ function Calendar({
             : "rounded-md pl-2 pr-1 flex items-center gap-1 text-sm h-8",
           defaultClassNames.caption_label
         ),
-        table: cn("w-full border-collapse", defaultClassNames.table),
         weekdays: cn("flex", defaultClassNames.weekdays),
         weekday: cn(
           "flex-1 select-none rounded-md text-[0.8rem] font-normal text-slate-500",
