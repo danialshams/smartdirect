@@ -402,17 +402,38 @@ export default function InstagramInsights({
               </button>
 
               {calendarOpen && (
-                <div className="absolute right-0 top-12 z-50 rounded-xl border border-slate-200 bg-white p-2 shadow-[0_18px_50px_rgba(15,23,42,0.12)]">
-                  <Calendar
-                    mode="range"
-                    selected={
-                      range.from
-                        ? ({ from: range.from, to: range.to } satisfies DateRange)
-                        : undefined
-                    }
-                    onSelect={selectCalendarRange}
-                  />
-                </div>
+                <>
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/10 p-4 md:hidden">
+                    <div
+                      role="dialog"
+                      aria-modal="true"
+                      className="rounded-xl border border-slate-200 bg-white p-2 shadow-[0_18px_50px_rgba(15,23,42,0.18)]"
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      <Calendar
+                        mode="range"
+                        selected={
+                          range.from
+                            ? ({ from: range.from, to: range.to } satisfies DateRange)
+                            : undefined
+                        }
+                        onSelect={selectCalendarRange}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="absolute right-0 top-12 z-50 hidden rounded-xl border border-slate-200 bg-white p-2 shadow-[0_18px_50px_rgba(15,23,42,0.12)] md:block">
+                    <Calendar
+                      mode="range"
+                      selected={
+                        range.from
+                          ? ({ from: range.from, to: range.to } satisfies DateRange)
+                          : undefined
+                      }
+                      onSelect={selectCalendarRange}
+                    />
+                  </div>
+                </>
               )}
             </div>
           </div>
