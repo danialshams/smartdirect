@@ -353,38 +353,6 @@ function WheelColumn({
   );
 }
 
-function NativeMobileDateRangePicker({
-  range,
-  minDate,
-  onChange,
-}: {
-  range: { from?: Date; to?: Date };
-  minDate: Date;
-  onChange: (range: { from: Date; to: Date }) => void;
-}) {
-  const today = normalizeDateOnly(new Date());
-  const minimum = normalizeDateOnly(minDate);
-  const from = range.from
-    ? clampDate(normalizeDateOnly(range.from), minimum, today)
-    : minimum;
-  const to = range.to
-    ? clampDate(normalizeDateOnly(range.to), from, today)
-    : today;
-
-  function applyFrom(value: Date) {
-    const safeFrom = clampDate(value, minimum, today);
-    const safeTo = to < safeFrom ? safeFrom : to;
-    onChange({ from: safeFrom, to: safeTo });
-  }
-
-  function applyTo(value: Date) {
-    const safeTo = clampDate(value, from, today);
-    onChange({ from, to: safeTo });
-  }
-
-  return null;
-}
-
 function JalaliDatePickerSheet({
   value,
   minDate,
@@ -530,11 +498,20 @@ function JalaliDatePickerSheet({
       >
         <div className="mx-auto mt-3 h-1.5 w-11 rounded-full bg-slate-400/45 sm:hidden" />
 
-        <div className="border-b border-white/45 px-5 pb-4 pt-4 text-center sm:pt-5">
-          <p className="text-xs font-bold text-slate-950">{title}</p>
-          <p className="mt-1 text-[10px] text-slate-400">
-            روز، ماه و سال را با کشیدن بالا یا پایین انتخاب کنید.
-          </p>
+        <div className="relative border-b border-white/45 px-5 pb-4 pt-4 sm:pt-5">
+          <button
+            type="button"
+            onClick={confirm}
+            className="absolute right-5 top-4 text-[13px] font-semibold text-blue-500 transition active:opacity-60"
+          >
+            تأیید
+          </button>
+          <div className="px-14 text-center">
+            <p className="text-[15px] font-semibold text-slate-950">{title}</p>
+            <p className="mt-1 text-[10px] text-slate-400">
+              روز، ماه و سال را با کشیدن بالا یا پایین انتخاب کنید.
+            </p>
+          </div>
         </div>
 
         <div className="relative px-4 py-3 sm:px-5">
@@ -571,25 +548,16 @@ function JalaliDatePickerSheet({
         </div>
 
         <div className="border-t border-white/45 px-4 pb-[max(18px,env(safe-area-inset-bottom))] pt-3 sm:pb-4">
-          <div className="mb-3 text-center text-[11px] text-slate-400">
+          <div className="mb-1 text-center text-[11px] font-medium text-slate-500">
             {formatDate(jalaliToGregorian(selected))}
           </div>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="h-11 flex-1 rounded-[15px] border border-white/70 bg-white/35 text-xs font-semibold text-slate-600 backdrop-blur-xl transition hover:bg-white/55"
-            >
-              انصراف
-            </button>
-            <button
-              type="button"
-              onClick={confirm}
-              className="h-11 flex-[1.5] rounded-[15px] bg-blue-500/90 text-xs font-semibold text-white shadow-[0_8px_24px_rgba(59,130,246,0.22)] backdrop-blur-xl transition hover:bg-blue-500"
-            >
-              تأیید تاریخ
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="mx-auto block text-[11px] font-medium text-slate-400 transition active:opacity-60"
+          >
+            انصراف
+          </button>
         </div>
       </div>
     </div>
@@ -944,7 +912,7 @@ export default function InstagramInsights({
               minDate={
                 data?.account.analyticsStartDate
                   ? new Date(data.account.analyticsStartDate)
-                  : addDays(new Date(), -730)
+                  : addDays(new Date(), -729)
               }
               onChange={(next) => {
                 if (!next?.from || !next.to) return;
