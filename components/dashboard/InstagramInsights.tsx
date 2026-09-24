@@ -288,6 +288,8 @@ function WheelColumn({
   onSelect: (value: number) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const ROW_HEIGHT = 44;
+  const TOP_PADDING = 88;
 
   useEffect(() => {
     const container = ref.current;
@@ -296,33 +298,27 @@ function WheelColumn({
     const index = values.indexOf(selected);
     if (index < 0) return;
 
-    const target = container.children[index + 1] as HTMLElement | undefined;
-    target?.scrollIntoView({ block: "center", behavior: "auto" });
+    const targetScrollTop = index * ROW_HEIGHT;
+    if (Math.abs(container.scrollTop - targetScrollTop) > 1) {
+      container.scrollTo({
+        top: targetScrollTop,
+        behavior: "auto",
+      });
+    }
   }, [values, selected]);
 
   function handleScroll() {
     const container = ref.current;
     if (!container || values.length === 0) return;
 
-    const center = container.scrollTop + container.clientHeight / 2;
-    let closestIndex = 0;
-    let closestDistance = Number.POSITIVE_INFINITY;
+    const index = Math.min(
+      values.length - 1,
+      Math.max(0, Math.round(container.scrollTop / ROW_HEIGHT)),
+    );
+    const nextValue = values[index];
 
-    values.forEach((value, index) => {
-      const item = container.children[index + 1] as HTMLElement | undefined;
-      if (!item) return;
-
-      const itemCenter = item.offsetTop + item.offsetHeight / 2;
-      const distance = Math.abs(itemCenter - center);
-
-      if (distance < closestDistance) {
-        closestDistance = distance;
-        closestIndex = index;
-      }
-    });
-
-    if (values[closestIndex] !== selected) {
-      onSelect(values[closestIndex]);
+    if (nextValue !== selected) {
+      onSelect(nextValue);
     }
   }
 
@@ -330,25 +326,27 @@ function WheelColumn({
     <div
       ref={ref}
       onScroll={handleScroll}
-      className="h-[212px] snap-y snap-mandatory overflow-y-auto overscroll-contain px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      onClick={(event) => event.stopPropagation()}
+      className="h-[220px] snap-y snap-mandatory overflow-y-auto overscroll-y-contain touch-pan-y px-0 select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      style={{ scrollPaddingBlock: TOP_PADDING }}
     >
-      <div className="h-[85px]" aria-hidden="true" />
+      <div className="h-[88px]" aria-hidden="true" />
       {values.map((value) => (
         <button
           key={value}
           type="button"
           onClick={() => onSelect(value)}
           className={[
-            "flex h-[38px] w-full snap-center items-center justify-center rounded-[10px] text-[20px] font-normal tracking-[-0.02em] transition-[color,opacity,transform]",
+            "flex h-[44px] w-full snap-center items-center justify-center rounded-none text-[19px] font-normal leading-none tracking-[-0.02em] transition-[color,opacity,transform]",
             value === selected
-              ? "text-slate-900 opacity-100"
-              : "text-slate-500/70 opacity-80",
+              ? "text-white opacity-100"
+              : "text-white/45 opacity-100",
           ].join(" ")}
         >
           {formatValue(value)}
         </button>
       ))}
-      <div className="h-[66px]" aria-hidden="true" />
+      <div className="h-[88px]" aria-hidden="true" />
     </div>
   );
 }
@@ -375,6 +373,23 @@ function JalaliDatePickerSheet({
   );
   const initialJalali = gregorianToJalali(safeValue);
   const [selected, setSelected] = useState<JalaliDate>(initialJalali);
+  useEffect(() => {
+    const body = document.body;
+    const previousOverflow = body.style.overflow;
+    const previousTouchAction = body.style.touchAction;
+    const previousOverscrollBehavior = body.style.overscrollBehavior;
+
+    body.style.overflow = "hidden";
+    body.style.touchAction = "none";
+    body.style.overscrollBehavior = "none";
+
+    return () => {
+      body.style.overflow = previousOverflow;
+      body.style.touchAction = previousTouchAction;
+      body.style.overscrollBehavior = previousOverscrollBehavior;
+    };
+  }, []);
+
 
   const minJalali = gregorianToJalali(normalizeDateOnly(minDate));
   const maxJalali = gregorianToJalali(normalizeDateOnly(maxDate));
@@ -477,7 +492,7 @@ function JalaliDatePickerSheet({
 
   return (
     <div
-      className="fixed inset-0 z-[120] flex items-end justify-center bg-slate-950/12 backdrop-blur-[3px] sm:items-center sm:p-4"
+      className="fixed inset-0 z-[120] flex h-[100dvh] w-full items-end justify-center overflow-hidden overscroll-none bg-black/35 backdrop-blur-[7px] sm:items-center sm:p-4"
       role="presentation"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
@@ -493,24 +508,24 @@ function JalaliDatePickerSheet({
         aria-label={title}
         onMouseDown={(event) => event.stopPropagation()}
         onTouchStart={(event) => event.stopPropagation()}
-        className="relative w-full overflow-hidden rounded-t-[28px] border border-white/75 bg-white/48 shadow-[0_-18px_70px_rgba(15,23,42,0.16)] backdrop-blur-[34px] supports-[backdrop-filter]:bg-white/38 sm:max-w-[430px] sm:rounded-[28px] sm:shadow-[0_22px_70px_rgba(15,23,42,0.18)]"
+        className="relative w-full max-h-[min(520px,calc(100dvh-16px))] overflow-hidden rounded-t-[30px] border border-white/[0.14] bg-slate-950/70 text-white shadow-[0_-20px_80px_rgba(0,0,0,0.42)] backdrop-blur-[36px] supports-[backdrop-filter]:bg-slate-950/58 sm:max-w-[430px] sm:rounded-[30px] sm:shadow-[0_24px_80px_rgba(0,0,0,0.45)]"
       >
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/32 via-white/10 to-white/24" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/[0.10] via-transparent to-black/[0.16]" />
 
-        <div className="relative flex h-[54px] items-center border-b border-black/[0.06] px-5">
+        <div className="relative flex h-[56px] items-center px-5">
           <button
             type="button"
             onClick={onClose}
-            className="absolute left-5 top-1/2 -translate-y-1/2 text-[15px] font-medium text-blue-500 active:opacity-50"
+            className="absolute left-5 top-1/2 -translate-y-1/2 text-[15px] font-medium text-blue-400 active:opacity-50"
           >
             لغو
           </button>
 
           <div className="mx-auto text-center">
-            <p className="text-[13px] font-medium text-slate-900/90">
+            <p className="text-[13px] font-medium text-white/90">
               {title}
             </p>
-            <p className="mt-0.5 text-[10px] text-slate-500/80">
+            <p className="mt-0.5 text-[10px] text-white/45">
               {numberFormatter.format(selected.year)}/{numberFormatter.format(selected.month)}/{numberFormatter.format(selected.day)}
             </p>
           </div>
@@ -518,16 +533,16 @@ function JalaliDatePickerSheet({
           <button
             type="button"
             onClick={confirm}
-            className="absolute right-5 top-1/2 -translate-y-1/2 text-[15px] font-semibold text-blue-500 active:opacity-50"
+            className="absolute right-5 top-1/2 -translate-y-1/2 text-[15px] font-semibold text-blue-400 active:opacity-50"
           >
             انجام شد
           </button>
         </div>
 
-        <div className="relative h-[238px] overflow-hidden px-3 pt-3">
-          <div className="pointer-events-none absolute inset-x-3 top-[101px] z-10 h-[38px] rounded-[11px] border border-black/[0.035] bg-black/[0.045] shadow-[inset_0_1px_0_rgba(255,255,255,0.55),0_1px_3px_rgba(15,23,42,0.025)]" />
+        <div className="relative h-[244px] overflow-hidden px-2">
+          <div className="pointer-events-none absolute inset-x-2 top-[100px] z-10 h-[44px] rounded-[12px] border border-white/[0.11] bg-white/[0.075] shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_1px_5px_rgba(0,0,0,0.08)]" />
 
-          <div className="relative z-0 grid h-full grid-cols-[1fr_1.35fr_0.85fr] gap-0">
+          <div className="relative z-0 grid h-full grid-cols-3 gap-0">
             <WheelColumn
               values={days}
               selected={selected.day}
@@ -548,12 +563,12 @@ function JalaliDatePickerSheet({
             />
           </div>
 
-          <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-[82px] bg-gradient-to-b from-white/82 via-white/35 to-transparent" />
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-[82px] bg-gradient-to-t from-white/82 via-white/35 to-transparent" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-[88px] bg-gradient-to-b from-slate-950/90 via-slate-950/48 to-transparent" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-[88px] bg-gradient-to-t from-slate-950/90 via-slate-950/48 to-transparent" />
         </div>
 
-        <div className="relative border-t border-black/[0.05] px-5 pb-[max(14px,env(safe-area-inset-bottom))] pt-3">
-          <p className="text-center text-[11px] font-medium text-slate-500/80">
+        <div className="relative px-5 pb-[max(16px,env(safe-area-inset-bottom))] pt-2">
+          <p className="text-center text-[11px] font-medium text-white/40">
             تاریخ انتخاب‌شده: {formatDate(jalaliToGregorian(selected))}
           </p>
         </div>
@@ -601,14 +616,14 @@ function JalaliDateRangePicker({
         <button
           type="button"
           onClick={() => setPickerTarget("from")}
-          className="flex h-10 min-w-0 flex-1 items-center justify-center gap-2 rounded-[14px] border border-white/70 bg-white/70 px-3 text-[10px] font-semibold text-slate-700 shadow-[0_4px_18px_rgba(15,23,42,0.06)] backdrop-blur-xl transition active:scale-[0.98]"
+          className="flex h-10 min-w-0 flex-1 items-center justify-center gap-2 rounded-[14px] border border-white/[0.12] bg-slate-950/65 px-3 text-[10px] font-semibold text-white/85 shadow-[0_6px_22px_rgba(0,0,0,0.16)] backdrop-blur-xl transition active:scale-[0.98]"
           aria-label="انتخاب تاریخ شروع"
         >
-          <CalendarDays size={15} className="shrink-0 text-slate-400" />
+          <CalendarDays size={15} className="shrink-0 text-white/45" />
           <span className="min-w-0 truncate">{formatDate(from)}</span>
         </button>
 
-        <span className="shrink-0 text-[10px] font-medium text-slate-400">تا</span>
+        <span className="shrink-0 text-[10px] font-medium text-slate-500">تا</span>
 
         <button
           type="button"
