@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-const MAX_DAYS = 365;
+const MAX_DAYS = 730;
 const INSTAGRAM_API_VERSION = "v26.0";
 
 function normalizeDays(value: string | null) {
@@ -103,7 +103,7 @@ export async function GET(request: NextRequest) {
                 return NextResponse.json(
                     {
                         success: false,
-                        error: "بازه انتخابی حداکثر می‌تواند ۳۶۵ روز باشد.",
+                        error: "بازه انتخابی حداکثر می‌تواند ۲ سال باشد.",
                     },
                     { status: 400 },
                 );
