@@ -330,19 +330,19 @@ function WheelColumn({
     <div
       ref={ref}
       onScroll={handleScroll}
-      className="h-[174px] snap-y snap-mandatory overflow-y-auto overscroll-contain px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="h-[212px] snap-y snap-mandatory overflow-y-auto overscroll-contain px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
-      <div className="h-[66px]" aria-hidden="true" />
+      <div className="h-[85px]" aria-hidden="true" />
       {values.map((value) => (
         <button
           key={value}
           type="button"
           onClick={() => onSelect(value)}
           className={[
-            "flex h-[42px] w-full snap-center items-center justify-center rounded-lg text-[15px] font-medium transition",
+            "flex h-[38px] w-full snap-center items-center justify-center rounded-[10px] text-[20px] font-normal tracking-[-0.02em] transition-[color,opacity,transform]",
             value === selected
-              ? "bg-slate-50 text-slate-950"
-              : "text-slate-300",
+              ? "text-slate-900 opacity-100"
+              : "text-slate-500/70 opacity-80",
           ].join(" ")}
         >
           {formatValue(value)}
@@ -374,7 +374,6 @@ function JalaliDatePickerSheet({
     normalizeDateOnly(maxDate),
   );
   const initialJalali = gregorianToJalali(safeValue);
-
   const [selected, setSelected] = useState<JalaliDate>(initialJalali);
 
   const minJalali = gregorianToJalali(normalizeDateOnly(minDate));
@@ -447,12 +446,12 @@ function JalaliDatePickerSheet({
       Math.max(selected.month, year === minJalali.year ? minJalali.month : 1),
       year === maxJalali.year ? maxJalali.month : 12,
     );
-    const day = Math.min(
-      selected.day,
-      jalaliDaysInMonth(year, month),
-    );
 
-    setSelected({ year, month, day });
+    setSelected({
+      year,
+      month,
+      day: Math.min(selected.day, jalaliDaysInMonth(year, month)),
+    });
   }
 
   function updateMonth(month: number) {
@@ -478,7 +477,7 @@ function JalaliDatePickerSheet({
 
   return (
     <div
-      className="fixed inset-0 z-[120] flex items-end justify-center bg-slate-950/25 px-0 pb-0 backdrop-blur-xl sm:items-center sm:p-4"
+      className="fixed inset-0 z-[120] flex items-end justify-center bg-slate-950/12 backdrop-blur-[3px] sm:items-center sm:p-4"
       role="presentation"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
@@ -494,35 +493,46 @@ function JalaliDatePickerSheet({
         aria-label={title}
         onMouseDown={(event) => event.stopPropagation()}
         onTouchStart={(event) => event.stopPropagation()}
-        className="w-full max-w-[440px] overflow-hidden rounded-t-[32px] border border-white/70 bg-white/65 shadow-[0_-24px_80px_rgba(15,23,42,0.24)] backdrop-blur-3xl supports-[backdrop-filter]:bg-white/55 sm:rounded-[30px] sm:shadow-[0_24px_90px_rgba(15,23,42,0.22)]"
+        className="relative w-full overflow-hidden rounded-t-[28px] border border-white/75 bg-white/48 shadow-[0_-18px_70px_rgba(15,23,42,0.16)] backdrop-blur-[34px] supports-[backdrop-filter]:bg-white/38 sm:max-w-[430px] sm:rounded-[28px] sm:shadow-[0_22px_70px_rgba(15,23,42,0.18)]"
       >
-        <div className="mx-auto mt-3 h-1.5 w-11 rounded-full bg-slate-400/45 sm:hidden" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/32 via-white/10 to-white/24" />
 
-        <div className="relative border-b border-white/45 px-5 pb-4 pt-4 sm:pt-5">
+        <div className="relative flex h-[54px] items-center border-b border-black/[0.06] px-5">
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute left-5 top-1/2 -translate-y-1/2 text-[15px] font-medium text-blue-500 active:opacity-50"
+          >
+            لغو
+          </button>
+
+          <div className="mx-auto text-center">
+            <p className="text-[13px] font-medium text-slate-900/90">
+              {title}
+            </p>
+            <p className="mt-0.5 text-[10px] text-slate-500/80">
+              {numberFormatter.format(selected.year)}/{numberFormatter.format(selected.month)}/{numberFormatter.format(selected.day)}
+            </p>
+          </div>
+
           <button
             type="button"
             onClick={confirm}
-            className="absolute right-5 top-4 text-[13px] font-semibold text-blue-500 transition active:opacity-60"
+            className="absolute right-5 top-1/2 -translate-y-1/2 text-[15px] font-semibold text-blue-500 active:opacity-50"
           >
-            تأیید
+            انجام شد
           </button>
-          <div className="px-14 text-center">
-            <p className="text-[15px] font-semibold text-slate-950">{title}</p>
-            <p className="mt-1 text-[10px] text-slate-400">
-              روز، ماه و سال را با کشیدن بالا یا پایین انتخاب کنید.
-            </p>
-          </div>
         </div>
 
-        <div className="relative px-4 py-3 sm:px-5">
-          <div className="pointer-events-none absolute inset-x-4 top-[79px] h-[42px] rounded-[14px] border-y border-white/50 bg-white/28 shadow-[inset_0_1px_0_rgba(255,255,255,0.55),inset_0_-1px_0_rgba(15,23,42,0.04)] sm:inset-x-5" />
+        <div className="relative h-[238px] overflow-hidden px-3 pt-3">
+          <div className="pointer-events-none absolute inset-x-3 top-[101px] z-10 h-[38px] rounded-[11px] border border-black/[0.035] bg-black/[0.045] shadow-[inset_0_1px_0_rgba(255,255,255,0.55),0_1px_3px_rgba(15,23,42,0.025)]" />
 
-          <div className="relative grid grid-cols-3 gap-1">
+          <div className="relative z-0 grid h-full grid-cols-[1fr_1.35fr_0.85fr] gap-0">
             <WheelColumn
-              values={years}
-              selected={selected.year}
-              formatValue={(year) => numberFormatter.format(year)}
-              onSelect={updateYear}
+              values={days}
+              selected={selected.day}
+              formatValue={(day) => numberFormatter.format(day)}
+              onSelect={(day) => setSelected({ ...selected, day })}
             />
             <WheelColumn
               values={months}
@@ -531,33 +541,21 @@ function JalaliDatePickerSheet({
               onSelect={updateMonth}
             />
             <WheelColumn
-              values={days}
-              selected={selected.day}
-              formatValue={(day) => numberFormatter.format(day)}
-              onSelect={(day) =>
-                setSelected({
-                  ...selected,
-                  day,
-                })
-              }
+              values={years}
+              selected={selected.year}
+              formatValue={(year) => numberFormatter.format(year)}
+              onSelect={updateYear}
             />
           </div>
 
-          <div className="pointer-events-none absolute inset-x-4 top-3 h-14 bg-gradient-to-b from-white/80 via-white/35 to-transparent sm:inset-x-5" />
-          <div className="pointer-events-none absolute inset-x-4 bottom-3 h-14 bg-gradient-to-t from-white/80 via-white/35 to-transparent sm:inset-x-5" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-[82px] bg-gradient-to-b from-white/82 via-white/35 to-transparent" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-[82px] bg-gradient-to-t from-white/82 via-white/35 to-transparent" />
         </div>
 
-        <div className="border-t border-white/45 px-4 pb-[max(18px,env(safe-area-inset-bottom))] pt-3 sm:pb-4">
-          <div className="mb-1 text-center text-[11px] font-medium text-slate-500">
-            {formatDate(jalaliToGregorian(selected))}
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="mx-auto block text-[11px] font-medium text-slate-400 transition active:opacity-60"
-          >
-            انصراف
-          </button>
+        <div className="relative border-t border-black/[0.05] px-5 pb-[max(14px,env(safe-area-inset-bottom))] pt-3">
+          <p className="text-center text-[11px] font-medium text-slate-500/80">
+            تاریخ انتخاب‌شده: {formatDate(jalaliToGregorian(selected))}
+          </p>
         </div>
       </div>
     </div>
