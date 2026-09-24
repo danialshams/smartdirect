@@ -289,7 +289,7 @@ function WheelColumn({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const ROW_HEIGHT = 44;
-  const TOP_PADDING = 88;
+  const TOP_PADDING = 100;
 
   useEffect(() => {
     const container = ref.current;
@@ -299,12 +299,7 @@ function WheelColumn({
     if (index < 0) return;
 
     const targetScrollTop = index * ROW_HEIGHT;
-    if (Math.abs(container.scrollTop - targetScrollTop) > 1) {
-      container.scrollTo({
-        top: targetScrollTop,
-        behavior: "auto",
-      });
-    }
+    container.scrollTop = targetScrollTop;
   }, [values, selected]);
 
   function handleScroll() {
@@ -326,27 +321,25 @@ function WheelColumn({
     <div
       ref={ref}
       onScroll={handleScroll}
-      onClick={(event) => event.stopPropagation()}
-      className="h-[220px] snap-y snap-mandatory overflow-y-auto overscroll-y-contain touch-pan-y px-0 select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-      style={{ scrollPaddingBlock: TOP_PADDING }}
+      className="h-[244px] min-w-0 snap-y snap-mandatory overflow-y-auto overscroll-y-contain touch-pan-y select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
-      <div className="h-[88px]" aria-hidden="true" />
+      <div className="h-[100px] shrink-0" aria-hidden="true" />
       {values.map((value) => (
         <button
           key={value}
           type="button"
           onClick={() => onSelect(value)}
           className={[
-            "flex h-[44px] w-full snap-center items-center justify-center rounded-none text-[19px] font-normal leading-none tracking-[-0.02em] transition-[color,opacity,transform]",
-            value === selected
-              ? "text-white opacity-100"
-              : "text-white/45 opacity-100",
+            "flex h-[44px] w-full shrink-0 snap-center items-center justify-center overflow-hidden rounded-none px-1 text-center text-[19px] font-normal leading-none tracking-[-0.02em] whitespace-nowrap transition-opacity",
+            value === selected ? "text-white opacity-100" : "text-white/45 opacity-100",
           ].join(" ")}
         >
-          {formatValue(value)}
+          <span className="block max-w-full truncate">
+            {formatValue(value)}
+          </span>
         </button>
       ))}
-      <div className="h-[88px]" aria-hidden="true" />
+      <div className="h-[100px] shrink-0" aria-hidden="true" />
     </div>
   );
 }
@@ -516,7 +509,7 @@ function JalaliDatePickerSheet({
       >
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/[0.10] via-transparent to-black/[0.16]" />
 
-        <div className="relative flex h-[56px] items-center px-5">
+        <div className="relative flex h-[56px] items-center bg-white/[0.025] px-5">
           <button
             type="button"
             onClick={onClose}
@@ -543,10 +536,10 @@ function JalaliDatePickerSheet({
           </button>
         </div>
 
-        <div className="relative h-[244px] overflow-hidden px-2">
-          <div className="pointer-events-none absolute inset-x-2 top-[100px] z-10 h-[44px] rounded-[12px] border border-white/[0.11] bg-white/[0.075] shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_1px_5px_rgba(0,0,0,0.08)]" />
+        <div className="relative h-[244px] overflow-hidden px-0">
+          <div className="pointer-events-none absolute left-1/2 top-[100px] z-10 h-[44px] w-[calc(100%-16px)] -translate-x-1/2 rounded-[12px] border border-white/[0.11] bg-white/[0.075] shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_1px_5px_rgba(0,0,0,0.08)]" />
 
-          <div className="relative z-0 grid h-full grid-cols-3 gap-0">
+          <div className="relative z-0 grid h-full min-w-0 grid-cols-3 gap-0">
             <WheelColumn
               values={days}
               selected={selected.day}
@@ -567,11 +560,11 @@ function JalaliDatePickerSheet({
             />
           </div>
 
-          <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-[88px] bg-gradient-to-b from-slate-950/90 via-slate-950/48 to-transparent" />
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-[88px] bg-gradient-to-t from-slate-950/90 via-slate-950/48 to-transparent" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-[100px] bg-gradient-to-b from-slate-950/92 via-slate-950/50 to-transparent" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-[100px] bg-gradient-to-t from-slate-950/92 via-slate-950/50 to-transparent" />
         </div>
 
-        <div className="relative px-5 pb-[max(16px,env(safe-area-inset-bottom))] pt-2">
+        <div className="relative bg-white/[0.025] px-5 pb-[max(16px,env(safe-area-inset-bottom))] pt-2">
           <p className="text-center text-[11px] font-medium text-white/40">
             تاریخ انتخاب‌شده: {formatDate(jalaliToGregorian(selected))}
           </p>
@@ -632,10 +625,10 @@ function JalaliDateRangePicker({
         <button
           type="button"
           onClick={() => setPickerTarget("to")}
-          className="flex h-10 min-w-0 flex-1 items-center justify-center gap-2 rounded-[14px] border border-white/70 bg-white/70 px-3 text-[10px] font-semibold text-slate-700 shadow-[0_4px_18px_rgba(15,23,42,0.06)] backdrop-blur-xl transition active:scale-[0.98]"
+          className="flex h-10 min-w-0 flex-1 items-center justify-center gap-2 rounded-[14px] border border-white/[0.12] bg-slate-950/65 px-3 text-[10px] font-semibold text-white/85 shadow-[0_6px_22px_rgba(0,0,0,0.16)] backdrop-blur-xl transition active:scale-[0.98]"
           aria-label="انتخاب تاریخ پایان"
         >
-          <CalendarDays size={15} className="shrink-0 text-slate-400" />
+          <CalendarDays size={15} className="shrink-0 text-white/45" />
           <span className="min-w-0 truncate">{formatDate(to)}</span>
         </button>
       </div>
