@@ -124,30 +124,6 @@ function metricValue(snapshot: Snapshot, metric: Metric) {
   return snapshot[metric];
 }
 
-function formatDateInputValue(value: Date) {
-  const year = value.getFullYear();
-  const month = String(value.getMonth() + 1).padStart(2, "0");
-  const day = String(value.getDate()).padStart(2, "0");
-  return year + "-" + month + "-" + day;
-}
-
-function parseDateInputValue(value: string) {
-  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(value)) return null;
-
-  const [year, month, day] = value.split("-").map(Number);
-  const date = new Date(year, month - 1, day);
-
-  if (
-    date.getFullYear() !== year ||
-    date.getMonth() !== month - 1 ||
-    date.getDate() !== day
-  ) {
-    return null;
-  }
-
-  return date;
-}
-
 function normalizeDateOnly(value: Date) {
   return new Date(value.getFullYear(), value.getMonth(), value.getDate());
 }
@@ -395,64 +371,18 @@ function NativeMobileDateRangePicker({
     ? clampDate(normalizeDateOnly(range.to), from, today)
     : today;
 
-  function applyFrom(value: string) {
-    const next = parseDateInputValue(value);
-    if (!next) return;
-
-    const safeFrom = clampDate(next, minimum, today);
+  function applyFrom(value: Date) {
+    const safeFrom = clampDate(value, minimum, today);
     const safeTo = to < safeFrom ? safeFrom : to;
     onChange({ from: safeFrom, to: safeTo });
   }
 
-  function applyTo(value: string) {
-    const next = parseDateInputValue(value);
-    if (!next) return;
-
-    const safeTo = clampDate(next, from, today);
+  function applyTo(value: Date) {
+    const safeTo = clampDate(value, from, today);
     onChange({ from, to: safeTo });
   }
 
-  return (
-    <div className="flex max-w-full items-center gap-1 sm:hidden">
-      <label className="relative flex h-10 min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-white px-3">
-        <CalendarDays size={15} className="shrink-0 text-slate-400" />
-        <span className="min-w-0 truncate text-[10px] font-semibold text-slate-700">
-          {formatDate(from)}
-        </span>
-        <input
-          type="date"
-          lang="fa-IR"
-          dir="rtl"
-          value={formatDateInputValue(from)}
-          min={formatDateInputValue(minimum)}
-          max={formatDateInputValue(today)}
-          onChange={(event) => applyFrom(event.target.value)}
-          aria-label="تاریخ شروع"
-          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-        />
-      </label>
-
-      <span className="shrink-0 text-[10px] text-slate-300">تا</span>
-
-      <label className="relative flex h-10 min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-white px-3">
-        <CalendarDays size={15} className="shrink-0 text-slate-400" />
-        <span className="min-w-0 truncate text-[10px] font-semibold text-slate-700">
-          {formatDate(to)}
-        </span>
-        <input
-          type="date"
-          lang="fa-IR"
-          dir="rtl"
-          value={formatDateInputValue(to)}
-          min={formatDateInputValue(from)}
-          max={formatDateInputValue(today)}
-          onChange={(event) => applyTo(event.target.value)}
-          aria-label="تاریخ پایان"
-          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-        />
-      </label>
-    </div>
-  );
+  return null;
 }
 
 function JalaliDatePickerSheet({
@@ -580,7 +510,7 @@ function JalaliDatePickerSheet({
 
   return (
     <div
-      className="fixed inset-0 z-[120] hidden items-end justify-center bg-slate-950/20 backdrop-blur-[2px] sm:flex sm:items-center sm:p-4"
+      className="fixed inset-0 z-[120] flex items-end justify-center bg-slate-950/25 px-0 pb-0 backdrop-blur-xl sm:items-center sm:p-4"
       role="presentation"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
@@ -596,19 +526,19 @@ function JalaliDatePickerSheet({
         aria-label={title}
         onMouseDown={(event) => event.stopPropagation()}
         onTouchStart={(event) => event.stopPropagation()}
-        className="w-full max-w-[440px] overflow-hidden rounded-t-[28px] border border-slate-200 bg-white shadow-[0_-18px_60px_rgba(15,23,42,0.16)] sm:rounded-[26px] sm:shadow-[0_24px_80px_rgba(15,23,42,0.18)]"
+        className="w-full max-w-[440px] overflow-hidden rounded-t-[32px] border border-white/70 bg-white/65 shadow-[0_-24px_80px_rgba(15,23,42,0.24)] backdrop-blur-3xl supports-[backdrop-filter]:bg-white/55 sm:rounded-[30px] sm:shadow-[0_24px_90px_rgba(15,23,42,0.22)]"
       >
-        <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-slate-200 sm:hidden" />
+        <div className="mx-auto mt-3 h-1.5 w-11 rounded-full bg-slate-400/45 sm:hidden" />
 
-        <div className="border-b border-slate-100 px-5 pb-4 pt-4 text-center sm:pt-5">
+        <div className="border-b border-white/45 px-5 pb-4 pt-4 text-center sm:pt-5">
           <p className="text-xs font-bold text-slate-950">{title}</p>
           <p className="mt-1 text-[10px] text-slate-400">
             روز، ماه و سال را با کشیدن بالا یا پایین انتخاب کنید.
           </p>
         </div>
 
-        <div className="relative px-4 py-3">
-          <div className="pointer-events-none absolute inset-x-4 top-[79px] h-[42px] rounded-xl border-y border-slate-200 bg-slate-50/80" />
+        <div className="relative px-4 py-3 sm:px-5">
+          <div className="pointer-events-none absolute inset-x-4 top-[79px] h-[42px] rounded-[14px] border-y border-white/50 bg-white/28 shadow-[inset_0_1px_0_rgba(255,255,255,0.55),inset_0_-1px_0_rgba(15,23,42,0.04)] sm:inset-x-5" />
 
           <div className="relative grid grid-cols-3 gap-1">
             <WheelColumn
@@ -636,11 +566,11 @@ function JalaliDatePickerSheet({
             />
           </div>
 
-          <div className="pointer-events-none absolute inset-x-4 top-3 h-14 bg-gradient-to-b from-white via-white/70 to-transparent" />
-          <div className="pointer-events-none absolute inset-x-4 bottom-3 h-14 bg-gradient-to-t from-white via-white/70 to-transparent" />
+          <div className="pointer-events-none absolute inset-x-4 top-3 h-14 bg-gradient-to-b from-white/80 via-white/35 to-transparent sm:inset-x-5" />
+          <div className="pointer-events-none absolute inset-x-4 bottom-3 h-14 bg-gradient-to-t from-white/80 via-white/35 to-transparent sm:inset-x-5" />
         </div>
 
-        <div className="border-t border-slate-100 px-4 pb-[max(16px,env(safe-area-inset-bottom))] pt-3 sm:pb-4">
+        <div className="border-t border-white/45 px-4 pb-[max(18px,env(safe-area-inset-bottom))] pt-3 sm:pb-4">
           <div className="mb-3 text-center text-[11px] text-slate-400">
             {formatDate(jalaliToGregorian(selected))}
           </div>
@@ -648,14 +578,14 @@ function JalaliDatePickerSheet({
             <button
               type="button"
               onClick={onClose}
-              className="h-11 flex-1 rounded-xl border border-slate-200 text-xs font-semibold text-slate-500 transition hover:bg-slate-50"
+              className="h-11 flex-1 rounded-[15px] border border-white/70 bg-white/35 text-xs font-semibold text-slate-600 backdrop-blur-xl transition hover:bg-white/55"
             >
               انصراف
             </button>
             <button
               type="button"
               onClick={confirm}
-              className="h-11 flex-[1.5] rounded-xl bg-slate-950 text-xs font-semibold text-white transition hover:bg-slate-800"
+              className="h-11 flex-[1.5] rounded-[15px] bg-blue-500/90 text-xs font-semibold text-white shadow-[0_8px_24px_rgba(59,130,246,0.22)] backdrop-blur-xl transition hover:bg-blue-500"
             >
               تأیید تاریخ
             </button>
@@ -677,9 +607,7 @@ function JalaliDateRangePicker({
 }) {
   const today = useMemo(() => normalizeDateOnly(new Date()), []);
   const minimum = useMemo(() => normalizeDateOnly(minDate), [minDate]);
-  const [pickerTarget, setPickerTarget] = useState<"from" | "to" | null>(
-    null,
-  );
+  const [pickerTarget, setPickerTarget] = useState<"from" | "to" | null>(null);
 
   const from = range.from
     ? clampDate(normalizeDateOnly(range.from), minimum, today)
@@ -691,7 +619,6 @@ function JalaliDateRangePicker({
   function confirmFrom(date: Date) {
     const safeFrom = clampDate(date, minimum, today);
     const safeTo = to < safeFrom ? safeFrom : to;
-
     onChange({ from: safeFrom, to: safeTo });
     setPickerTarget("to");
   }
@@ -704,11 +631,29 @@ function JalaliDateRangePicker({
 
   return (
     <>
-      <NativeMobileDateRangePicker
-        range={range}
-        minDate={minimum}
-        onChange={onChange}
-      />
+      <div className="flex max-w-full items-center gap-1.5 sm:hidden">
+        <button
+          type="button"
+          onClick={() => setPickerTarget("from")}
+          className="flex h-10 min-w-0 flex-1 items-center justify-center gap-2 rounded-[14px] border border-white/70 bg-white/70 px-3 text-[10px] font-semibold text-slate-700 shadow-[0_4px_18px_rgba(15,23,42,0.06)] backdrop-blur-xl transition active:scale-[0.98]"
+          aria-label="انتخاب تاریخ شروع"
+        >
+          <CalendarDays size={15} className="shrink-0 text-slate-400" />
+          <span className="min-w-0 truncate">{formatDate(from)}</span>
+        </button>
+
+        <span className="shrink-0 text-[10px] font-medium text-slate-400">تا</span>
+
+        <button
+          type="button"
+          onClick={() => setPickerTarget("to")}
+          className="flex h-10 min-w-0 flex-1 items-center justify-center gap-2 rounded-[14px] border border-white/70 bg-white/70 px-3 text-[10px] font-semibold text-slate-700 shadow-[0_4px_18px_rgba(15,23,42,0.06)] backdrop-blur-xl transition active:scale-[0.98]"
+          aria-label="انتخاب تاریخ پایان"
+        >
+          <CalendarDays size={15} className="shrink-0 text-slate-400" />
+          <span className="min-w-0 truncate">{formatDate(to)}</span>
+        </button>
+      </div>
 
       <div className="hidden sm:inline-flex">
         <button
