@@ -286,11 +286,13 @@ function JalaliWheelColumn({
   values,
   selected,
   formatValue,
+  disabled,
   onSelect,
 }: {
   values: number[];
   selected: number;
   formatValue: (value: number) => string;
+  disabled?: (value: number) => boolean;
   onSelect: (value: number) => void;
 }) {
   const options = useMemo<WheelPickerOption<number>[]>(
@@ -299,8 +301,9 @@ function JalaliWheelColumn({
         value,
         label: formatValue(value),
         textValue: formatValue(value),
+        disabled: disabled?.(value) ?? false,
       })),
-    [values, formatValue],
+    [values, formatValue, disabled],
   );
 
   return (
@@ -309,16 +312,16 @@ function JalaliWheelColumn({
       value={selected}
       onValueChange={onSelect}
       visibleCount={16}
-      optionItemHeight={48}
+      optionItemHeight={44}
       dragSensitivity={3}
       scrollSensitivity={5}
       classNames={{
         optionItem:
-          "flex items-center justify-center px-1 text-[18px] font-normal leading-none tracking-[-0.02em] whitespace-nowrap text-white/35",
+          "flex items-center justify-center px-1 text-[18px] font-normal leading-none tracking-[-0.025em] whitespace-nowrap text-white/35 data-disabled:pointer-events-none data-disabled:opacity-20",
         highlightWrapper:
-          "pointer-events-none rounded-[12px] border border-white/[0.11] bg-white/[0.075] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_1px_5px_rgba(0,0,0,0.08)]",
+          "pointer-events-none rounded-[11px] border border-white/[0.13] bg-white/[0.08] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.10),0_1px_5px_rgba(0,0,0,0.10)]",
         highlightItem:
-          "flex items-center justify-center px-1 text-[18px] font-normal leading-none tracking-[-0.02em] whitespace-nowrap text-white",
+          "flex items-center justify-center px-1 text-[18px] font-normal leading-none tracking-[-0.025em] whitespace-nowrap text-white",
       }}
     />
   );
@@ -380,84 +383,119 @@ function JalaliDatePickerSheet({
     [minJalali.year, maxJalali.year],
   );
 
-  const months = useMemo(
-    () =>
-      Array.from({ length: 12 }, (_, index) => index + 1).filter((month) => {
-        const first = jalaliToGregorian({
-          year: selected.year,
-          month,
-          day: 1,
-        });
-        const last = jalaliToGregorian({
-          year: selected.year,
-          month,
-          day: jalaliDaysInMonth(selected.year, month),
-        });
+  const allMonths = useMemo(
+    () => Array.from({ length: 12 }, (_, index) => index + 1),
+    [],
+  );
 
-        return last >= minDate && first <= maxDate;
-      }),
+  const allDays = useMemo(
+    () => Array.from({ length: 31 }, (_, index) => index + 1),
+    [],
+  );
+
+  const isMonthAllowed = useCallback(
+    (month: number) => {
+      const first = jalaliToGregorian({
+        year: selected.year,
+        month,
+        day: 1,
+      });
+      const last = jalaliToGregorian({
+        year: selected.year,
+        month,
+        day: jalaliDaysInMonth(selected.year, month),
+      });
+
+      return last >= minDate && first <= maxDate;
+    },
     [selected.year, minDate, maxDate],
   );
 
-  const days = useMemo(
-    () =>
-      Array.from(
-        { length: jalaliDaysInMonth(selected.year, selected.month) },
-        (_, index) => index + 1,
-      ).filter((day) => {
-        const date = jalaliToGregorian({
-          year: selected.year,
-          month: selected.month,
-          day,
-        });
+  const isDayAllowed = useCallback(
+    (day: number) => {
+      if (day > jalaliDaysInMonth(selected.year, selected.month)) {
+        return false;
+      }
 
-        return date >= minDate && date <= maxDate;
-      }),
+      const date = jalaliToGregorian({
+        year: selected.year,
+        month: selected.month,
+        day,
+      });
+
+      return date >= minDate && date <= maxDate;
+    },
     [selected.year, selected.month, minDate, maxDate],
   );
 
-  useEffect(() => {
-    if (months.length === 0 || days.length === 0) return;
-
-    const nextMonth = months.includes(selected.month)
-      ? selected.month
-      : months[0];
-
-    const nextDay = days.includes(selected.day)
-      ? selected.day
-      : days[days.length - 1];
-
-    if (nextMonth !== selected.month || nextDay !== selected.day) {
-      setSelected((current) => ({
-        ...current,
-        month: nextMonth,
-        day: nextDay,
-      }));
-    }
-  }, [months, days, selected.month, selected.day]);
-
   function updateYear(year: number) {
-    const month = Math.min(
-      Math.max(selected.month, year === minJalali.year ? minJalali.month : 1),
-      year === maxJalali.year ? maxJalali.month : 12,
-    );
-
-    setSelected({
-      year,
-      month,
-      day: Math.min(selected.day, jalaliDaysInMonth(year, month)),
+    const allowedMonths = allMonths.filter((month) => {
+      const first = jalaliToGregorian({ year, month, day: 1 });
+      const last = jalaliToGregorian({
+        year,
+        month,
+        day: jalaliDaysInMonth(year, month),
+      });
+      return last >= minDate && first <= maxDate;
     });
+
+    if (!allowedMonths.length) return;
+
+    const month = allowedMonths.includes(selected.month)
+      ? selected.month
+      : allowedMonths.reduce(
+          (closest, candidate) =>
+            Math.abs(candidate - selected.month) <
+            Math.abs(closest - selected.month)
+              ? candidate
+              : closest,
+          allowedMonths[0],
+        );
+
+    const allowedDays = allDays.filter((day) => {
+      if (day > jalaliDaysInMonth(year, month)) return false;
+      const date = jalaliToGregorian({ year, month, day });
+      return date >= minDate && date <= maxDate;
+    });
+
+    if (!allowedDays.length) return;
+
+    const day = allowedDays.includes(selected.day)
+      ? selected.day
+      : allowedDays[allowedDays.length - 1];
+
+    setSelected({ year, month, day });
   }
 
   function updateMonth(month: number) {
-    setSelected({
-      ...selected,
+    if (!isMonthAllowed(month)) return;
+
+    const maxDay = jalaliDaysInMonth(selected.year, month);
+    const candidateDay = Math.min(selected.day, maxDay);
+    const candidateDate = jalaliToGregorian({
+      year: selected.year,
       month,
-      day: Math.min(
-        selected.day,
-        jalaliDaysInMonth(selected.year, month),
-      ),
+      day: candidateDay,
     });
+
+    let day = candidateDay;
+
+    if (candidateDate < minDate || candidateDate > maxDate) {
+      const validDays = allDays.filter((value) => {
+        if (value > maxDay) return false;
+        const date = jalaliToGregorian({
+          year: selected.year,
+          month,
+          day: value,
+        });
+        return date >= minDate && date <= maxDate;
+      });
+
+      if (!validDays.length) return;
+      day = validDays[validDays.length - 1];
+    }
+
+    setSelected((current) => ({ ...current, month, day }));
   }
 
   function confirm() {
@@ -524,15 +562,19 @@ function JalaliDatePickerSheet({
             className="grid h-[244px] min-w-0 grid-cols-3 items-center gap-0 overflow-hidden bg-transparent"
           >
             <JalaliWheelColumn
-              values={days}
+              values={allDays}
               selected={selected.day}
               formatValue={(day) => numberFormatter.format(day)}
-              onSelect={(day) => setSelected((current) => ({ ...current, day }))}
+              disabled={(day) => !isDayAllowed(day)}
+              onSelect={(day) =>
+                setSelected((current) => ({ ...current, day }))
+              }
             />
             <JalaliWheelColumn
-              values={months}
+              values={allMonths}
               selected={selected.month}
               formatValue={(month) => jalaliMonthNames[month - 1]}
+              disabled={(month) => !isMonthAllowed(month)}
               onSelect={updateMonth}
             />
             <JalaliWheelColumn
