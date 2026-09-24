@@ -151,7 +151,7 @@ function CalendarDayButton({
   return (
     <Button
       ref={ref}
-      variant={buttonVariants({ variant: "ghost" })}
+      variant="ghost"
       data-day={day.date.toLocaleDateString("fa-IR-u-ca-persian")}
       data-selected-single={
         modifiers.selected &&
