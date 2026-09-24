@@ -418,7 +418,8 @@ export const ModelName = {
   InstagramPublishJob: 'InstagramPublishJob',
   QueueFailure: 'QueueFailure',
   IdempotencyRecord: 'IdempotencyRecord',
-  InstagramPublishMedia: 'InstagramPublishMedia'
+  InstagramPublishMedia: 'InstagramPublishMedia',
+  ConversationHandoff: 'ConversationHandoff'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -434,7 +435,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "instagramAccount" | "instagramInsightSnapshot" | "automation" | "automationMessage" | "quickReply" | "iceBreaker" | "persistentMenu" | "persistentMenuItem" | "conversation" | "conversationMessage" | "comment" | "showcase" | "showcaseItem" | "form" | "formField" | "formSubmission" | "pendingFollowGate" | "instagramPublishJob" | "queueFailure" | "idempotencyRecord" | "instagramPublishMedia"
+    modelProps: "user" | "instagramAccount" | "instagramInsightSnapshot" | "automation" | "automationMessage" | "quickReply" | "iceBreaker" | "persistentMenu" | "persistentMenuItem" | "conversation" | "conversationMessage" | "comment" | "showcase" | "showcaseItem" | "form" | "formField" | "formSubmission" | "pendingFollowGate" | "instagramPublishJob" | "queueFailure" | "idempotencyRecord" | "instagramPublishMedia" | "conversationHandoff"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -2066,6 +2067,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    ConversationHandoff: {
+      payload: Prisma.$ConversationHandoffPayload<ExtArgs>
+      fields: Prisma.ConversationHandoffFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ConversationHandoffFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConversationHandoffPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ConversationHandoffFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConversationHandoffPayload>
+        }
+        findFirst: {
+          args: Prisma.ConversationHandoffFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConversationHandoffPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ConversationHandoffFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConversationHandoffPayload>
+        }
+        findMany: {
+          args: Prisma.ConversationHandoffFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConversationHandoffPayload>[]
+        }
+        create: {
+          args: Prisma.ConversationHandoffCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConversationHandoffPayload>
+        }
+        createMany: {
+          args: Prisma.ConversationHandoffCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ConversationHandoffCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConversationHandoffPayload>[]
+        }
+        delete: {
+          args: Prisma.ConversationHandoffDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConversationHandoffPayload>
+        }
+        update: {
+          args: Prisma.ConversationHandoffUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConversationHandoffPayload>
+        }
+        deleteMany: {
+          args: Prisma.ConversationHandoffDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ConversationHandoffUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ConversationHandoffUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConversationHandoffPayload>[]
+        }
+        upsert: {
+          args: Prisma.ConversationHandoffUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConversationHandoffPayload>
+        }
+        aggregate: {
+          args: Prisma.ConversationHandoffAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateConversationHandoff>
+        }
+        groupBy: {
+          args: Prisma.ConversationHandoffGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ConversationHandoffGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ConversationHandoffCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ConversationHandoffCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -2144,7 +2219,10 @@ export const InstagramInsightSnapshotScalarFieldEnum = {
   profileViews: 'profileViews',
   followerCount: 'followerCount',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  follows: 'follows',
+  unfollows: 'unfollows',
+  profileLinksTaps: 'profileLinksTaps'
 } as const
 
 export type InstagramInsightSnapshotScalarFieldEnum = (typeof InstagramInsightSnapshotScalarFieldEnum)[keyof typeof InstagramInsightSnapshotScalarFieldEnum]
@@ -2153,20 +2231,20 @@ export type InstagramInsightSnapshotScalarFieldEnum = (typeof InstagramInsightSn
 export const AutomationScalarFieldEnum = {
   id: 'id',
   instagramAccountId: 'instagramAccountId',
-  triggerType: 'triggerType',
   keyword: 'keyword',
-  mediaId: 'mediaId',
-  likeComment: 'likeComment',
-  commentReplyText: 'commentReplyText',
-  sendDm: 'sendDm',
-  likeIncomingDm: 'likeIncomingDm',
   replyText: 'replyText',
-  likeStoryReply: 'likeStoryReply',
-  requireFollow: 'requireFollow',
-  followGateText: 'followGateText',
   isActive: 'isActive',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  commentReplyText: 'commentReplyText',
+  likeComment: 'likeComment',
+  mediaId: 'mediaId',
+  likeIncomingDm: 'likeIncomingDm',
+  sendDm: 'sendDm',
+  triggerType: 'triggerType',
+  likeStoryReply: 'likeStoryReply',
+  followGateText: 'followGateText',
+  requireFollow: 'requireFollow'
 } as const
 
 export type AutomationScalarFieldEnum = (typeof AutomationScalarFieldEnum)[keyof typeof AutomationScalarFieldEnum]
@@ -2175,15 +2253,15 @@ export type AutomationScalarFieldEnum = (typeof AutomationScalarFieldEnum)[keyof
 export const AutomationMessageScalarFieldEnum = {
   id: 'id',
   automationId: 'automationId',
-  messageType: 'messageType',
   text: 'text',
-  mediaUrl: 'mediaUrl',
-  mediaId: 'mediaId',
-  showcaseId: 'showcaseId',
-  formId: 'formId',
   order: 'order',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  formId: 'formId',
+  mediaId: 'mediaId',
+  mediaUrl: 'mediaUrl',
+  messageType: 'messageType',
+  showcaseId: 'showcaseId'
 } as const
 
 export type AutomationMessageScalarFieldEnum = (typeof AutomationMessageScalarFieldEnum)[keyof typeof AutomationMessageScalarFieldEnum]
@@ -2235,7 +2313,9 @@ export const PersistentMenuItemScalarFieldEnum = {
   title: 'title',
   payload: 'payload',
   automationId: 'automationId',
-  order: 'order'
+  order: 'order',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 } as const
 
 export type PersistentMenuItemScalarFieldEnum = (typeof PersistentMenuItemScalarFieldEnum)[keyof typeof PersistentMenuItemScalarFieldEnum]
@@ -2247,13 +2327,13 @@ export const ConversationScalarFieldEnum = {
   instagramAccountId: 'instagramAccountId',
   igUserId: 'igUserId',
   participantId: 'participantId',
-  participantUsername: 'participantUsername',
-  participantName: 'participantName',
-  participantProfilePicture: 'participantProfilePicture',
   isActive: 'isActive',
   lastMessageAt: 'lastMessageAt',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  participantUsername: 'participantUsername',
+  participantName: 'participantName',
+  participantProfilePicture: 'participantProfilePicture'
 } as const
 
 export type ConversationScalarFieldEnum = (typeof ConversationScalarFieldEnum)[keyof typeof ConversationScalarFieldEnum]
@@ -2265,13 +2345,13 @@ export const ConversationMessageScalarFieldEnum = {
   direction: 'direction',
   messageType: 'messageType',
   text: 'text',
-  mediaUrl: 'mediaUrl',
-  mediaId: 'mediaId',
   igMessageId: 'igMessageId',
   quickReplyId: 'quickReplyId',
+  createdAt: 'createdAt',
+  mediaId: 'mediaId',
+  mediaUrl: 'mediaUrl',
   readAt: 'readAt',
-  seenAt: 'seenAt',
-  createdAt: 'createdAt'
+  seenAt: 'seenAt'
 } as const
 
 export type ConversationMessageScalarFieldEnum = (typeof ConversationMessageScalarFieldEnum)[keyof typeof ConversationMessageScalarFieldEnum]
@@ -2390,13 +2470,6 @@ export const InstagramPublishJobScalarFieldEnum = {
   type: 'type',
   status: 'status',
   caption: 'caption',
-  userTags: 'userTags',
-  commentAutomationId: 'commentAutomationId',
-  storyReplyAutomationId: 'storyReplyAutomationId',
-  commentTriggerKeywords: 'commentTriggerKeywords',
-  commentTriggerResponse: 'commentTriggerResponse',
-  storyReplyTriggerKeywords: 'storyReplyTriggerKeywords',
-  storyReplyTriggerResponse: 'storyReplyTriggerResponse',
   scheduledAt: 'scheduledAt',
   publishedAt: 'publishedAt',
   instagramContainerId: 'instagramContainerId',
@@ -2406,7 +2479,14 @@ export const InstagramPublishJobScalarFieldEnum = {
   retryCount: 'retryCount',
   lastAttemptAt: 'lastAttemptAt',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  userTags: 'userTags',
+  commentAutomationId: 'commentAutomationId',
+  storyReplyAutomationId: 'storyReplyAutomationId',
+  commentTriggerKeywords: 'commentTriggerKeywords',
+  commentTriggerResponse: 'commentTriggerResponse',
+  storyReplyTriggerKeywords: 'storyReplyTriggerKeywords',
+  storyReplyTriggerResponse: 'storyReplyTriggerResponse'
 } as const
 
 export type InstagramPublishJobScalarFieldEnum = (typeof InstagramPublishJobScalarFieldEnum)[keyof typeof InstagramPublishJobScalarFieldEnum]
@@ -2472,6 +2552,18 @@ export const InstagramPublishMediaScalarFieldEnum = {
 } as const
 
 export type InstagramPublishMediaScalarFieldEnum = (typeof InstagramPublishMediaScalarFieldEnum)[keyof typeof InstagramPublishMediaScalarFieldEnum]
+
+
+export const ConversationHandoffScalarFieldEnum = {
+  conversationId: 'conversationId',
+  userId: 'userId',
+  active: 'active',
+  assignedToUserId: 'assignedToUserId',
+  handedOffAt: 'handedOffAt',
+  handedBackAt: 'handedBackAt'
+} as const
+
+export type ConversationHandoffScalarFieldEnum = (typeof ConversationHandoffScalarFieldEnum)[keyof typeof ConversationHandoffScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -2959,6 +3051,7 @@ export type GlobalOmitConfig = {
   queueFailure?: Prisma.QueueFailureOmit
   idempotencyRecord?: Prisma.IdempotencyRecordOmit
   instagramPublishMedia?: Prisma.InstagramPublishMediaOmit
+  conversationHandoff?: Prisma.ConversationHandoffOmit
 }
 
 /* Types for Logging */

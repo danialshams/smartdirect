@@ -151,3 +151,8 @@ export type IdempotencyRecord = Prisma.IdempotencyRecordModel
  * 
  */
 export type InstagramPublishMedia = Prisma.InstagramPublishMediaModel
+/**
+ * Model ConversationHandoff
+ * 
+ */
+export type ConversationHandoff = Prisma.ConversationHandoffModel

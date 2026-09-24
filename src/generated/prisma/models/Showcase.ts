@@ -206,10 +206,10 @@ export type ShowcaseWhereInput = {
   isActive?: Prisma.BoolFilter<"Showcase"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Showcase"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Showcase"> | Date | string
-  user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
-  instagramAccount?: Prisma.XOR<Prisma.InstagramAccountScalarRelationFilter, Prisma.InstagramAccountWhereInput>
-  items?: Prisma.ShowcaseItemListRelationFilter
   messages?: Prisma.AutomationMessageListRelationFilter
+  instagramAccount?: Prisma.XOR<Prisma.InstagramAccountScalarRelationFilter, Prisma.InstagramAccountWhereInput>
+  user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  items?: Prisma.ShowcaseItemListRelationFilter
 }
 
 export type ShowcaseOrderByWithRelationInput = {
@@ -221,10 +221,10 @@ export type ShowcaseOrderByWithRelationInput = {
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  user?: Prisma.UserOrderByWithRelationInput
-  instagramAccount?: Prisma.InstagramAccountOrderByWithRelationInput
-  items?: Prisma.ShowcaseItemOrderByRelationAggregateInput
   messages?: Prisma.AutomationMessageOrderByRelationAggregateInput
+  instagramAccount?: Prisma.InstagramAccountOrderByWithRelationInput
+  user?: Prisma.UserOrderByWithRelationInput
+  items?: Prisma.ShowcaseItemOrderByRelationAggregateInput
 }
 
 export type ShowcaseWhereUniqueInput = Prisma.AtLeast<{
@@ -239,10 +239,10 @@ export type ShowcaseWhereUniqueInput = Prisma.AtLeast<{
   isActive?: Prisma.BoolFilter<"Showcase"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Showcase"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Showcase"> | Date | string
-  user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
-  instagramAccount?: Prisma.XOR<Prisma.InstagramAccountScalarRelationFilter, Prisma.InstagramAccountWhereInput>
-  items?: Prisma.ShowcaseItemListRelationFilter
   messages?: Prisma.AutomationMessageListRelationFilter
+  instagramAccount?: Prisma.XOR<Prisma.InstagramAccountScalarRelationFilter, Prisma.InstagramAccountWhereInput>
+  user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  items?: Prisma.ShowcaseItemListRelationFilter
 }, "id">
 
 export type ShowcaseOrderByWithAggregationInput = {
@@ -280,10 +280,10 @@ export type ShowcaseCreateInput = {
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
-  user: Prisma.UserCreateNestedOneWithoutShowcasesInput
-  instagramAccount: Prisma.InstagramAccountCreateNestedOneWithoutShowcasesInput
-  items?: Prisma.ShowcaseItemCreateNestedManyWithoutShowcaseInput
   messages?: Prisma.AutomationMessageCreateNestedManyWithoutShowcaseInput
+  instagramAccount: Prisma.InstagramAccountCreateNestedOneWithoutShowcasesInput
+  user: Prisma.UserCreateNestedOneWithoutShowcasesInput
+  items?: Prisma.ShowcaseItemCreateNestedManyWithoutShowcaseInput
 }
 
 export type ShowcaseUncheckedCreateInput = {
@@ -295,8 +295,8 @@ export type ShowcaseUncheckedCreateInput = {
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
-  items?: Prisma.ShowcaseItemUncheckedCreateNestedManyWithoutShowcaseInput
   messages?: Prisma.AutomationMessageUncheckedCreateNestedManyWithoutShowcaseInput
+  items?: Prisma.ShowcaseItemUncheckedCreateNestedManyWithoutShowcaseInput
 }
 
 export type ShowcaseUpdateInput = {
@@ -306,10 +306,10 @@ export type ShowcaseUpdateInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  user?: Prisma.UserUpdateOneRequiredWithoutShowcasesNestedInput
-  instagramAccount?: Prisma.InstagramAccountUpdateOneRequiredWithoutShowcasesNestedInput
-  items?: Prisma.ShowcaseItemUpdateManyWithoutShowcaseNestedInput
   messages?: Prisma.AutomationMessageUpdateManyWithoutShowcaseNestedInput
+  instagramAccount?: Prisma.InstagramAccountUpdateOneRequiredWithoutShowcasesNestedInput
+  user?: Prisma.UserUpdateOneRequiredWithoutShowcasesNestedInput
+  items?: Prisma.ShowcaseItemUpdateManyWithoutShowcaseNestedInput
 }
 
 export type ShowcaseUncheckedUpdateInput = {
@@ -321,8 +321,8 @@ export type ShowcaseUncheckedUpdateInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  items?: Prisma.ShowcaseItemUncheckedUpdateManyWithoutShowcaseNestedInput
   messages?: Prisma.AutomationMessageUncheckedUpdateManyWithoutShowcaseNestedInput
+  items?: Prisma.ShowcaseItemUncheckedUpdateManyWithoutShowcaseNestedInput
 }
 
 export type ShowcaseCreateManyInput = {
@@ -530,9 +530,9 @@ export type ShowcaseCreateWithoutUserInput = {
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  messages?: Prisma.AutomationMessageCreateNestedManyWithoutShowcaseInput
   instagramAccount: Prisma.InstagramAccountCreateNestedOneWithoutShowcasesInput
   items?: Prisma.ShowcaseItemCreateNestedManyWithoutShowcaseInput
-  messages?: Prisma.AutomationMessageCreateNestedManyWithoutShowcaseInput
 }
 
 export type ShowcaseUncheckedCreateWithoutUserInput = {
@@ -543,8 +543,8 @@ export type ShowcaseUncheckedCreateWithoutUserInput = {
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
-  items?: Prisma.ShowcaseItemUncheckedCreateNestedManyWithoutShowcaseInput
   messages?: Prisma.AutomationMessageUncheckedCreateNestedManyWithoutShowcaseInput
+  items?: Prisma.ShowcaseItemUncheckedCreateNestedManyWithoutShowcaseInput
 }
 
 export type ShowcaseCreateOrConnectWithoutUserInput = {
@@ -594,9 +594,9 @@ export type ShowcaseCreateWithoutInstagramAccountInput = {
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  messages?: Prisma.AutomationMessageCreateNestedManyWithoutShowcaseInput
   user: Prisma.UserCreateNestedOneWithoutShowcasesInput
   items?: Prisma.ShowcaseItemCreateNestedManyWithoutShowcaseInput
-  messages?: Prisma.AutomationMessageCreateNestedManyWithoutShowcaseInput
 }
 
 export type ShowcaseUncheckedCreateWithoutInstagramAccountInput = {
@@ -607,8 +607,8 @@ export type ShowcaseUncheckedCreateWithoutInstagramAccountInput = {
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
-  items?: Prisma.ShowcaseItemUncheckedCreateNestedManyWithoutShowcaseInput
   messages?: Prisma.AutomationMessageUncheckedCreateNestedManyWithoutShowcaseInput
+  items?: Prisma.ShowcaseItemUncheckedCreateNestedManyWithoutShowcaseInput
 }
 
 export type ShowcaseCreateOrConnectWithoutInstagramAccountInput = {
@@ -644,8 +644,8 @@ export type ShowcaseCreateWithoutMessagesInput = {
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
-  user: Prisma.UserCreateNestedOneWithoutShowcasesInput
   instagramAccount: Prisma.InstagramAccountCreateNestedOneWithoutShowcasesInput
+  user: Prisma.UserCreateNestedOneWithoutShowcasesInput
   items?: Prisma.ShowcaseItemCreateNestedManyWithoutShowcaseInput
 }
 
@@ -684,8 +684,8 @@ export type ShowcaseUpdateWithoutMessagesInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  user?: Prisma.UserUpdateOneRequiredWithoutShowcasesNestedInput
   instagramAccount?: Prisma.InstagramAccountUpdateOneRequiredWithoutShowcasesNestedInput
+  user?: Prisma.UserUpdateOneRequiredWithoutShowcasesNestedInput
   items?: Prisma.ShowcaseItemUpdateManyWithoutShowcaseNestedInput
 }
 
@@ -708,9 +708,9 @@ export type ShowcaseCreateWithoutItemsInput = {
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
-  user: Prisma.UserCreateNestedOneWithoutShowcasesInput
-  instagramAccount: Prisma.InstagramAccountCreateNestedOneWithoutShowcasesInput
   messages?: Prisma.AutomationMessageCreateNestedManyWithoutShowcaseInput
+  instagramAccount: Prisma.InstagramAccountCreateNestedOneWithoutShowcasesInput
+  user: Prisma.UserCreateNestedOneWithoutShowcasesInput
 }
 
 export type ShowcaseUncheckedCreateWithoutItemsInput = {
@@ -748,9 +748,9 @@ export type ShowcaseUpdateWithoutItemsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  user?: Prisma.UserUpdateOneRequiredWithoutShowcasesNestedInput
-  instagramAccount?: Prisma.InstagramAccountUpdateOneRequiredWithoutShowcasesNestedInput
   messages?: Prisma.AutomationMessageUpdateManyWithoutShowcaseNestedInput
+  instagramAccount?: Prisma.InstagramAccountUpdateOneRequiredWithoutShowcasesNestedInput
+  user?: Prisma.UserUpdateOneRequiredWithoutShowcasesNestedInput
 }
 
 export type ShowcaseUncheckedUpdateWithoutItemsInput = {
@@ -782,9 +782,9 @@ export type ShowcaseUpdateWithoutUserInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  messages?: Prisma.AutomationMessageUpdateManyWithoutShowcaseNestedInput
   instagramAccount?: Prisma.InstagramAccountUpdateOneRequiredWithoutShowcasesNestedInput
   items?: Prisma.ShowcaseItemUpdateManyWithoutShowcaseNestedInput
-  messages?: Prisma.AutomationMessageUpdateManyWithoutShowcaseNestedInput
 }
 
 export type ShowcaseUncheckedUpdateWithoutUserInput = {
@@ -795,8 +795,8 @@ export type ShowcaseUncheckedUpdateWithoutUserInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  items?: Prisma.ShowcaseItemUncheckedUpdateManyWithoutShowcaseNestedInput
   messages?: Prisma.AutomationMessageUncheckedUpdateManyWithoutShowcaseNestedInput
+  items?: Prisma.ShowcaseItemUncheckedUpdateManyWithoutShowcaseNestedInput
 }
 
 export type ShowcaseUncheckedUpdateManyWithoutUserInput = {
@@ -826,9 +826,9 @@ export type ShowcaseUpdateWithoutInstagramAccountInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  messages?: Prisma.AutomationMessageUpdateManyWithoutShowcaseNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutShowcasesNestedInput
   items?: Prisma.ShowcaseItemUpdateManyWithoutShowcaseNestedInput
-  messages?: Prisma.AutomationMessageUpdateManyWithoutShowcaseNestedInput
 }
 
 export type ShowcaseUncheckedUpdateWithoutInstagramAccountInput = {
@@ -839,8 +839,8 @@ export type ShowcaseUncheckedUpdateWithoutInstagramAccountInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  items?: Prisma.ShowcaseItemUncheckedUpdateManyWithoutShowcaseNestedInput
   messages?: Prisma.AutomationMessageUncheckedUpdateManyWithoutShowcaseNestedInput
+  items?: Prisma.ShowcaseItemUncheckedUpdateManyWithoutShowcaseNestedInput
 }
 
 export type ShowcaseUncheckedUpdateManyWithoutInstagramAccountInput = {
@@ -859,13 +859,13 @@ export type ShowcaseUncheckedUpdateManyWithoutInstagramAccountInput = {
  */
 
 export type ShowcaseCountOutputType = {
-  items: number
   messages: number
+  items: number
 }
 
 export type ShowcaseCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  items?: boolean | ShowcaseCountOutputTypeCountItemsArgs
   messages?: boolean | ShowcaseCountOutputTypeCountMessagesArgs
+  items?: boolean | ShowcaseCountOutputTypeCountItemsArgs
 }
 
 /**
@@ -881,15 +881,15 @@ export type ShowcaseCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Ext
 /**
  * ShowcaseCountOutputType without action
  */
-export type ShowcaseCountOutputTypeCountItemsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.ShowcaseItemWhereInput
+export type ShowcaseCountOutputTypeCountMessagesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.AutomationMessageWhereInput
 }
 
 /**
  * ShowcaseCountOutputType without action
  */
-export type ShowcaseCountOutputTypeCountMessagesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.AutomationMessageWhereInput
+export type ShowcaseCountOutputTypeCountItemsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ShowcaseItemWhereInput
 }
 
 
@@ -902,10 +902,10 @@ export type ShowcaseSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
-  instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
-  items?: boolean | Prisma.Showcase$itemsArgs<ExtArgs>
   messages?: boolean | Prisma.Showcase$messagesArgs<ExtArgs>
+  instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  items?: boolean | Prisma.Showcase$itemsArgs<ExtArgs>
   _count?: boolean | Prisma.ShowcaseCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["showcase"]>
 
@@ -918,8 +918,8 @@ export type ShowcaseSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["showcase"]>
 
 export type ShowcaseSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -931,8 +931,8 @@ export type ShowcaseSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["showcase"]>
 
 export type ShowcaseSelectScalar = {
@@ -948,28 +948,28 @@ export type ShowcaseSelectScalar = {
 
 export type ShowcaseOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "instagramAccountId" | "title" | "description" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["showcase"]>
 export type ShowcaseInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
-  instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
-  items?: boolean | Prisma.Showcase$itemsArgs<ExtArgs>
   messages?: boolean | Prisma.Showcase$messagesArgs<ExtArgs>
+  instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  items?: boolean | Prisma.Showcase$itemsArgs<ExtArgs>
   _count?: boolean | Prisma.ShowcaseCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type ShowcaseIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 export type ShowcaseIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 
 export type $ShowcasePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Showcase"
   objects: {
-    user: Prisma.$UserPayload<ExtArgs>
-    instagramAccount: Prisma.$InstagramAccountPayload<ExtArgs>
-    items: Prisma.$ShowcaseItemPayload<ExtArgs>[]
     messages: Prisma.$AutomationMessagePayload<ExtArgs>[]
+    instagramAccount: Prisma.$InstagramAccountPayload<ExtArgs>
+    user: Prisma.$UserPayload<ExtArgs>
+    items: Prisma.$ShowcaseItemPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1374,10 +1374,10 @@ readonly fields: ShowcaseFieldRefs;
  */
 export interface Prisma__ShowcaseClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-  instagramAccount<T extends Prisma.InstagramAccountDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.InstagramAccountDefaultArgs<ExtArgs>>): Prisma.Prisma__InstagramAccountClient<runtime.Types.Result.GetResult<Prisma.$InstagramAccountPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-  items<T extends Prisma.Showcase$itemsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Showcase$itemsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShowcaseItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   messages<T extends Prisma.Showcase$messagesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Showcase$messagesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AutomationMessagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  instagramAccount<T extends Prisma.InstagramAccountDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.InstagramAccountDefaultArgs<ExtArgs>>): Prisma.Prisma__InstagramAccountClient<runtime.Types.Result.GetResult<Prisma.$InstagramAccountPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  items<T extends Prisma.Showcase$itemsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Showcase$itemsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShowcaseItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1816,30 +1816,6 @@ export type ShowcaseDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Inte
 }
 
 /**
- * Showcase.items
- */
-export type Showcase$itemsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the ShowcaseItem
-   */
-  select?: Prisma.ShowcaseItemSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the ShowcaseItem
-   */
-  omit?: Prisma.ShowcaseItemOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ShowcaseItemInclude<ExtArgs> | null
-  where?: Prisma.ShowcaseItemWhereInput
-  orderBy?: Prisma.ShowcaseItemOrderByWithRelationInput | Prisma.ShowcaseItemOrderByWithRelationInput[]
-  cursor?: Prisma.ShowcaseItemWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.ShowcaseItemScalarFieldEnum | Prisma.ShowcaseItemScalarFieldEnum[]
-}
-
-/**
  * Showcase.messages
  */
 export type Showcase$messagesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1861,6 +1837,30 @@ export type Showcase$messagesArgs<ExtArgs extends runtime.Types.Extensions.Inter
   take?: number
   skip?: number
   distinct?: Prisma.AutomationMessageScalarFieldEnum | Prisma.AutomationMessageScalarFieldEnum[]
+}
+
+/**
+ * Showcase.items
+ */
+export type Showcase$itemsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ShowcaseItem
+   */
+  select?: Prisma.ShowcaseItemSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ShowcaseItem
+   */
+  omit?: Prisma.ShowcaseItemOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ShowcaseItemInclude<ExtArgs> | null
+  where?: Prisma.ShowcaseItemWhereInput
+  orderBy?: Prisma.ShowcaseItemOrderByWithRelationInput | Prisma.ShowcaseItemOrderByWithRelationInput[]
+  cursor?: Prisma.ShowcaseItemWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ShowcaseItemScalarFieldEnum | Prisma.ShowcaseItemScalarFieldEnum[]
 }
 
 /**

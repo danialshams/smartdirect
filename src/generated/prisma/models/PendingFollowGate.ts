@@ -248,8 +248,8 @@ export type PendingFollowGateWhereInput = {
   expiresAt?: Prisma.DateTimeFilter<"PendingFollowGate"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"PendingFollowGate"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"PendingFollowGate"> | Date | string
-  instagramAccount?: Prisma.XOR<Prisma.InstagramAccountScalarRelationFilter, Prisma.InstagramAccountWhereInput>
   automation?: Prisma.XOR<Prisma.AutomationScalarRelationFilter, Prisma.AutomationWhereInput>
+  instagramAccount?: Prisma.XOR<Prisma.InstagramAccountScalarRelationFilter, Prisma.InstagramAccountWhereInput>
 }
 
 export type PendingFollowGateOrderByWithRelationInput = {
@@ -262,8 +262,8 @@ export type PendingFollowGateOrderByWithRelationInput = {
   expiresAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  instagramAccount?: Prisma.InstagramAccountOrderByWithRelationInput
   automation?: Prisma.AutomationOrderByWithRelationInput
+  instagramAccount?: Prisma.InstagramAccountOrderByWithRelationInput
 }
 
 export type PendingFollowGateWhereUniqueInput = Prisma.AtLeast<{
@@ -279,8 +279,8 @@ export type PendingFollowGateWhereUniqueInput = Prisma.AtLeast<{
   expiresAt?: Prisma.DateTimeFilter<"PendingFollowGate"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"PendingFollowGate"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"PendingFollowGate"> | Date | string
-  instagramAccount?: Prisma.XOR<Prisma.InstagramAccountScalarRelationFilter, Prisma.InstagramAccountWhereInput>
   automation?: Prisma.XOR<Prisma.AutomationScalarRelationFilter, Prisma.AutomationWhereInput>
+  instagramAccount?: Prisma.XOR<Prisma.InstagramAccountScalarRelationFilter, Prisma.InstagramAccountWhereInput>
 }, "id">
 
 export type PendingFollowGateOrderByWithAggregationInput = {
@@ -323,8 +323,8 @@ export type PendingFollowGateCreateInput = {
   expiresAt: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
-  instagramAccount: Prisma.InstagramAccountCreateNestedOneWithoutPendingFollowGatesInput
   automation: Prisma.AutomationCreateNestedOneWithoutPendingFollowGatesInput
+  instagramAccount: Prisma.InstagramAccountCreateNestedOneWithoutPendingFollowGatesInput
 }
 
 export type PendingFollowGateUncheckedCreateInput = {
@@ -347,8 +347,8 @@ export type PendingFollowGateUpdateInput = {
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  instagramAccount?: Prisma.InstagramAccountUpdateOneRequiredWithoutPendingFollowGatesNestedInput
   automation?: Prisma.AutomationUpdateOneRequiredWithoutPendingFollowGatesNestedInput
+  instagramAccount?: Prisma.InstagramAccountUpdateOneRequiredWithoutPendingFollowGatesNestedInput
 }
 
 export type PendingFollowGateUncheckedUpdateInput = {
@@ -750,8 +750,8 @@ export type PendingFollowGateSelect<ExtArgs extends runtime.Types.Extensions.Int
   expiresAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
   automation?: boolean | Prisma.AutomationDefaultArgs<ExtArgs>
+  instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["pendingFollowGate"]>
 
 export type PendingFollowGateSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -764,8 +764,8 @@ export type PendingFollowGateSelectCreateManyAndReturn<ExtArgs extends runtime.T
   expiresAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
   automation?: boolean | Prisma.AutomationDefaultArgs<ExtArgs>
+  instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["pendingFollowGate"]>
 
 export type PendingFollowGateSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -778,8 +778,8 @@ export type PendingFollowGateSelectUpdateManyAndReturn<ExtArgs extends runtime.T
   expiresAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
   automation?: boolean | Prisma.AutomationDefaultArgs<ExtArgs>
+  instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["pendingFollowGate"]>
 
 export type PendingFollowGateSelectScalar = {
@@ -796,23 +796,23 @@ export type PendingFollowGateSelectScalar = {
 
 export type PendingFollowGateOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "instagramAccountId" | "automationId" | "participantId" | "status" | "attempts" | "expiresAt" | "createdAt" | "updatedAt", ExtArgs["result"]["pendingFollowGate"]>
 export type PendingFollowGateInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
   automation?: boolean | Prisma.AutomationDefaultArgs<ExtArgs>
+  instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
 }
 export type PendingFollowGateIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
   automation?: boolean | Prisma.AutomationDefaultArgs<ExtArgs>
+  instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
 }
 export type PendingFollowGateIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
   automation?: boolean | Prisma.AutomationDefaultArgs<ExtArgs>
+  instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
 }
 
 export type $PendingFollowGatePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "PendingFollowGate"
   objects: {
-    instagramAccount: Prisma.$InstagramAccountPayload<ExtArgs>
     automation: Prisma.$AutomationPayload<ExtArgs>
+    instagramAccount: Prisma.$InstagramAccountPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1218,8 +1218,8 @@ readonly fields: PendingFollowGateFieldRefs;
  */
 export interface Prisma__PendingFollowGateClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  instagramAccount<T extends Prisma.InstagramAccountDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.InstagramAccountDefaultArgs<ExtArgs>>): Prisma.Prisma__InstagramAccountClient<runtime.Types.Result.GetResult<Prisma.$InstagramAccountPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   automation<T extends Prisma.AutomationDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AutomationDefaultArgs<ExtArgs>>): Prisma.Prisma__AutomationClient<runtime.Types.Result.GetResult<Prisma.$AutomationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  instagramAccount<T extends Prisma.InstagramAccountDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.InstagramAccountDefaultArgs<ExtArgs>>): Prisma.Prisma__InstagramAccountClient<runtime.Types.Result.GetResult<Prisma.$InstagramAccountPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.

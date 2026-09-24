@@ -33,6 +33,9 @@ export type InstagramInsightSnapshotAvgAggregateOutputType = {
   totalInteractions: number | null
   profileViews: number | null
   followerCount: number | null
+  follows: number | null
+  unfollows: number | null
+  profileLinksTaps: number | null
 }
 
 export type InstagramInsightSnapshotSumAggregateOutputType = {
@@ -42,6 +45,9 @@ export type InstagramInsightSnapshotSumAggregateOutputType = {
   totalInteractions: number | null
   profileViews: number | null
   followerCount: number | null
+  follows: number | null
+  unfollows: number | null
+  profileLinksTaps: number | null
 }
 
 export type InstagramInsightSnapshotMinAggregateOutputType = {
@@ -56,6 +62,9 @@ export type InstagramInsightSnapshotMinAggregateOutputType = {
   followerCount: number | null
   createdAt: Date | null
   updatedAt: Date | null
+  follows: number | null
+  unfollows: number | null
+  profileLinksTaps: number | null
 }
 
 export type InstagramInsightSnapshotMaxAggregateOutputType = {
@@ -70,6 +79,9 @@ export type InstagramInsightSnapshotMaxAggregateOutputType = {
   followerCount: number | null
   createdAt: Date | null
   updatedAt: Date | null
+  follows: number | null
+  unfollows: number | null
+  profileLinksTaps: number | null
 }
 
 export type InstagramInsightSnapshotCountAggregateOutputType = {
@@ -84,6 +96,9 @@ export type InstagramInsightSnapshotCountAggregateOutputType = {
   followerCount: number
   createdAt: number
   updatedAt: number
+  follows: number
+  unfollows: number
+  profileLinksTaps: number
   _all: number
 }
 
@@ -95,6 +110,9 @@ export type InstagramInsightSnapshotAvgAggregateInputType = {
   totalInteractions?: true
   profileViews?: true
   followerCount?: true
+  follows?: true
+  unfollows?: true
+  profileLinksTaps?: true
 }
 
 export type InstagramInsightSnapshotSumAggregateInputType = {
@@ -104,6 +122,9 @@ export type InstagramInsightSnapshotSumAggregateInputType = {
   totalInteractions?: true
   profileViews?: true
   followerCount?: true
+  follows?: true
+  unfollows?: true
+  profileLinksTaps?: true
 }
 
 export type InstagramInsightSnapshotMinAggregateInputType = {
@@ -118,6 +139,9 @@ export type InstagramInsightSnapshotMinAggregateInputType = {
   followerCount?: true
   createdAt?: true
   updatedAt?: true
+  follows?: true
+  unfollows?: true
+  profileLinksTaps?: true
 }
 
 export type InstagramInsightSnapshotMaxAggregateInputType = {
@@ -132,6 +156,9 @@ export type InstagramInsightSnapshotMaxAggregateInputType = {
   followerCount?: true
   createdAt?: true
   updatedAt?: true
+  follows?: true
+  unfollows?: true
+  profileLinksTaps?: true
 }
 
 export type InstagramInsightSnapshotCountAggregateInputType = {
@@ -146,6 +173,9 @@ export type InstagramInsightSnapshotCountAggregateInputType = {
   followerCount?: true
   createdAt?: true
   updatedAt?: true
+  follows?: true
+  unfollows?: true
+  profileLinksTaps?: true
   _all?: true
 }
 
@@ -247,6 +277,9 @@ export type InstagramInsightSnapshotGroupByOutputType = {
   followerCount: number | null
   createdAt: Date
   updatedAt: Date
+  follows: number | null
+  unfollows: number | null
+  profileLinksTaps: number | null
   _count: InstagramInsightSnapshotCountAggregateOutputType | null
   _avg: InstagramInsightSnapshotAvgAggregateOutputType | null
   _sum: InstagramInsightSnapshotSumAggregateOutputType | null
@@ -284,6 +317,9 @@ export type InstagramInsightSnapshotWhereInput = {
   followerCount?: Prisma.IntNullableFilter<"InstagramInsightSnapshot"> | number | null
   createdAt?: Prisma.DateTimeFilter<"InstagramInsightSnapshot"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"InstagramInsightSnapshot"> | Date | string
+  follows?: Prisma.IntNullableFilter<"InstagramInsightSnapshot"> | number | null
+  unfollows?: Prisma.IntNullableFilter<"InstagramInsightSnapshot"> | number | null
+  profileLinksTaps?: Prisma.IntNullableFilter<"InstagramInsightSnapshot"> | number | null
   instagramAccount?: Prisma.XOR<Prisma.InstagramAccountScalarRelationFilter, Prisma.InstagramAccountWhereInput>
 }
 
@@ -299,6 +335,9 @@ export type InstagramInsightSnapshotOrderByWithRelationInput = {
   followerCount?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  follows?: Prisma.SortOrderInput | Prisma.SortOrder
+  unfollows?: Prisma.SortOrderInput | Prisma.SortOrder
+  profileLinksTaps?: Prisma.SortOrderInput | Prisma.SortOrder
   instagramAccount?: Prisma.InstagramAccountOrderByWithRelationInput
 }
 
@@ -318,6 +357,9 @@ export type InstagramInsightSnapshotWhereUniqueInput = Prisma.AtLeast<{
   followerCount?: Prisma.IntNullableFilter<"InstagramInsightSnapshot"> | number | null
   createdAt?: Prisma.DateTimeFilter<"InstagramInsightSnapshot"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"InstagramInsightSnapshot"> | Date | string
+  follows?: Prisma.IntNullableFilter<"InstagramInsightSnapshot"> | number | null
+  unfollows?: Prisma.IntNullableFilter<"InstagramInsightSnapshot"> | number | null
+  profileLinksTaps?: Prisma.IntNullableFilter<"InstagramInsightSnapshot"> | number | null
   instagramAccount?: Prisma.XOR<Prisma.InstagramAccountScalarRelationFilter, Prisma.InstagramAccountWhereInput>
 }, "id" | "instagramAccountId_snapshotDate">
 
@@ -333,6 +375,9 @@ export type InstagramInsightSnapshotOrderByWithAggregationInput = {
   followerCount?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  follows?: Prisma.SortOrderInput | Prisma.SortOrder
+  unfollows?: Prisma.SortOrderInput | Prisma.SortOrder
+  profileLinksTaps?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.InstagramInsightSnapshotCountOrderByAggregateInput
   _avg?: Prisma.InstagramInsightSnapshotAvgOrderByAggregateInput
   _max?: Prisma.InstagramInsightSnapshotMaxOrderByAggregateInput
@@ -355,6 +400,9 @@ export type InstagramInsightSnapshotScalarWhereWithAggregatesInput = {
   followerCount?: Prisma.IntNullableWithAggregatesFilter<"InstagramInsightSnapshot"> | number | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"InstagramInsightSnapshot"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"InstagramInsightSnapshot"> | Date | string
+  follows?: Prisma.IntNullableWithAggregatesFilter<"InstagramInsightSnapshot"> | number | null
+  unfollows?: Prisma.IntNullableWithAggregatesFilter<"InstagramInsightSnapshot"> | number | null
+  profileLinksTaps?: Prisma.IntNullableWithAggregatesFilter<"InstagramInsightSnapshot"> | number | null
 }
 
 export type InstagramInsightSnapshotCreateInput = {
@@ -368,6 +416,9 @@ export type InstagramInsightSnapshotCreateInput = {
   followerCount?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  follows?: number | null
+  unfollows?: number | null
+  profileLinksTaps?: number | null
   instagramAccount: Prisma.InstagramAccountCreateNestedOneWithoutInsightSnapshotsInput
 }
 
@@ -383,6 +434,9 @@ export type InstagramInsightSnapshotUncheckedCreateInput = {
   followerCount?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  follows?: number | null
+  unfollows?: number | null
+  profileLinksTaps?: number | null
 }
 
 export type InstagramInsightSnapshotUpdateInput = {
@@ -396,6 +450,9 @@ export type InstagramInsightSnapshotUpdateInput = {
   followerCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  follows?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  unfollows?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  profileLinksTaps?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   instagramAccount?: Prisma.InstagramAccountUpdateOneRequiredWithoutInsightSnapshotsNestedInput
 }
 
@@ -411,6 +468,9 @@ export type InstagramInsightSnapshotUncheckedUpdateInput = {
   followerCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  follows?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  unfollows?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  profileLinksTaps?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
 }
 
 export type InstagramInsightSnapshotCreateManyInput = {
@@ -425,6 +485,9 @@ export type InstagramInsightSnapshotCreateManyInput = {
   followerCount?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  follows?: number | null
+  unfollows?: number | null
+  profileLinksTaps?: number | null
 }
 
 export type InstagramInsightSnapshotUpdateManyMutationInput = {
@@ -438,6 +501,9 @@ export type InstagramInsightSnapshotUpdateManyMutationInput = {
   followerCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  follows?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  unfollows?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  profileLinksTaps?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
 }
 
 export type InstagramInsightSnapshotUncheckedUpdateManyInput = {
@@ -452,6 +518,9 @@ export type InstagramInsightSnapshotUncheckedUpdateManyInput = {
   followerCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  follows?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  unfollows?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  profileLinksTaps?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
 }
 
 export type InstagramInsightSnapshotListRelationFilter = {
@@ -481,6 +550,9 @@ export type InstagramInsightSnapshotCountOrderByAggregateInput = {
   followerCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  follows?: Prisma.SortOrder
+  unfollows?: Prisma.SortOrder
+  profileLinksTaps?: Prisma.SortOrder
 }
 
 export type InstagramInsightSnapshotAvgOrderByAggregateInput = {
@@ -490,6 +562,9 @@ export type InstagramInsightSnapshotAvgOrderByAggregateInput = {
   totalInteractions?: Prisma.SortOrder
   profileViews?: Prisma.SortOrder
   followerCount?: Prisma.SortOrder
+  follows?: Prisma.SortOrder
+  unfollows?: Prisma.SortOrder
+  profileLinksTaps?: Prisma.SortOrder
 }
 
 export type InstagramInsightSnapshotMaxOrderByAggregateInput = {
@@ -504,6 +579,9 @@ export type InstagramInsightSnapshotMaxOrderByAggregateInput = {
   followerCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  follows?: Prisma.SortOrder
+  unfollows?: Prisma.SortOrder
+  profileLinksTaps?: Prisma.SortOrder
 }
 
 export type InstagramInsightSnapshotMinOrderByAggregateInput = {
@@ -518,6 +596,9 @@ export type InstagramInsightSnapshotMinOrderByAggregateInput = {
   followerCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  follows?: Prisma.SortOrder
+  unfollows?: Prisma.SortOrder
+  profileLinksTaps?: Prisma.SortOrder
 }
 
 export type InstagramInsightSnapshotSumOrderByAggregateInput = {
@@ -527,6 +608,9 @@ export type InstagramInsightSnapshotSumOrderByAggregateInput = {
   totalInteractions?: Prisma.SortOrder
   profileViews?: Prisma.SortOrder
   followerCount?: Prisma.SortOrder
+  follows?: Prisma.SortOrder
+  unfollows?: Prisma.SortOrder
+  profileLinksTaps?: Prisma.SortOrder
 }
 
 export type InstagramInsightSnapshotCreateNestedManyWithoutInstagramAccountInput = {
@@ -590,6 +674,9 @@ export type InstagramInsightSnapshotCreateWithoutInstagramAccountInput = {
   followerCount?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  follows?: number | null
+  unfollows?: number | null
+  profileLinksTaps?: number | null
 }
 
 export type InstagramInsightSnapshotUncheckedCreateWithoutInstagramAccountInput = {
@@ -603,6 +690,9 @@ export type InstagramInsightSnapshotUncheckedCreateWithoutInstagramAccountInput 
   followerCount?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  follows?: number | null
+  unfollows?: number | null
+  profileLinksTaps?: number | null
 }
 
 export type InstagramInsightSnapshotCreateOrConnectWithoutInstagramAccountInput = {
@@ -646,6 +736,9 @@ export type InstagramInsightSnapshotScalarWhereInput = {
   followerCount?: Prisma.IntNullableFilter<"InstagramInsightSnapshot"> | number | null
   createdAt?: Prisma.DateTimeFilter<"InstagramInsightSnapshot"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"InstagramInsightSnapshot"> | Date | string
+  follows?: Prisma.IntNullableFilter<"InstagramInsightSnapshot"> | number | null
+  unfollows?: Prisma.IntNullableFilter<"InstagramInsightSnapshot"> | number | null
+  profileLinksTaps?: Prisma.IntNullableFilter<"InstagramInsightSnapshot"> | number | null
 }
 
 export type InstagramInsightSnapshotCreateManyInstagramAccountInput = {
@@ -659,6 +752,9 @@ export type InstagramInsightSnapshotCreateManyInstagramAccountInput = {
   followerCount?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  follows?: number | null
+  unfollows?: number | null
+  profileLinksTaps?: number | null
 }
 
 export type InstagramInsightSnapshotUpdateWithoutInstagramAccountInput = {
@@ -672,6 +768,9 @@ export type InstagramInsightSnapshotUpdateWithoutInstagramAccountInput = {
   followerCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  follows?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  unfollows?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  profileLinksTaps?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
 }
 
 export type InstagramInsightSnapshotUncheckedUpdateWithoutInstagramAccountInput = {
@@ -685,6 +784,9 @@ export type InstagramInsightSnapshotUncheckedUpdateWithoutInstagramAccountInput 
   followerCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  follows?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  unfollows?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  profileLinksTaps?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
 }
 
 export type InstagramInsightSnapshotUncheckedUpdateManyWithoutInstagramAccountInput = {
@@ -698,6 +800,9 @@ export type InstagramInsightSnapshotUncheckedUpdateManyWithoutInstagramAccountIn
   followerCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  follows?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  unfollows?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  profileLinksTaps?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
 }
 
 
@@ -714,6 +819,9 @@ export type InstagramInsightSnapshotSelect<ExtArgs extends runtime.Types.Extensi
   followerCount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  follows?: boolean
+  unfollows?: boolean
+  profileLinksTaps?: boolean
   instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["instagramInsightSnapshot"]>
 
@@ -729,6 +837,9 @@ export type InstagramInsightSnapshotSelectCreateManyAndReturn<ExtArgs extends ru
   followerCount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  follows?: boolean
+  unfollows?: boolean
+  profileLinksTaps?: boolean
   instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["instagramInsightSnapshot"]>
 
@@ -744,6 +855,9 @@ export type InstagramInsightSnapshotSelectUpdateManyAndReturn<ExtArgs extends ru
   followerCount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  follows?: boolean
+  unfollows?: boolean
+  profileLinksTaps?: boolean
   instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["instagramInsightSnapshot"]>
 
@@ -759,9 +873,12 @@ export type InstagramInsightSnapshotSelectScalar = {
   followerCount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  follows?: boolean
+  unfollows?: boolean
+  profileLinksTaps?: boolean
 }
 
-export type InstagramInsightSnapshotOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "instagramAccountId" | "snapshotDate" | "reach" | "views" | "accountsEngaged" | "totalInteractions" | "profileViews" | "followerCount" | "createdAt" | "updatedAt", ExtArgs["result"]["instagramInsightSnapshot"]>
+export type InstagramInsightSnapshotOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "instagramAccountId" | "snapshotDate" | "reach" | "views" | "accountsEngaged" | "totalInteractions" | "profileViews" | "followerCount" | "createdAt" | "updatedAt" | "follows" | "unfollows" | "profileLinksTaps", ExtArgs["result"]["instagramInsightSnapshot"]>
 export type InstagramInsightSnapshotInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
 }
@@ -789,6 +906,9 @@ export type $InstagramInsightSnapshotPayload<ExtArgs extends runtime.Types.Exten
     followerCount: number | null
     createdAt: Date
     updatedAt: Date
+    follows: number | null
+    unfollows: number | null
+    profileLinksTaps: number | null
   }, ExtArgs["result"]["instagramInsightSnapshot"]>
   composites: {}
 }
@@ -1224,6 +1344,9 @@ export interface InstagramInsightSnapshotFieldRefs {
   readonly followerCount: Prisma.FieldRef<"InstagramInsightSnapshot", 'Int'>
   readonly createdAt: Prisma.FieldRef<"InstagramInsightSnapshot", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"InstagramInsightSnapshot", 'DateTime'>
+  readonly follows: Prisma.FieldRef<"InstagramInsightSnapshot", 'Int'>
+  readonly unfollows: Prisma.FieldRef<"InstagramInsightSnapshot", 'Int'>
+  readonly profileLinksTaps: Prisma.FieldRef<"InstagramInsightSnapshot", 'Int'>
 }
     
 

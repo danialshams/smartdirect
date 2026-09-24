@@ -159,13 +159,6 @@ export type IntNullableWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedIntNullableFilter<$PrismaModel>
 }
 
-export type EnumAutomationTriggerTypeFilter<$PrismaModel = never> = {
-  equals?: $Enums.AutomationTriggerType | Prisma.EnumAutomationTriggerTypeFieldRefInput<$PrismaModel>
-  in?: $Enums.AutomationTriggerType[] | Prisma.ListEnumAutomationTriggerTypeFieldRefInput<$PrismaModel>
-  notIn?: $Enums.AutomationTriggerType[] | Prisma.ListEnumAutomationTriggerTypeFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumAutomationTriggerTypeFilter<$PrismaModel> | $Enums.AutomationTriggerType
-}
-
 export type StringNullableFilter<$PrismaModel = never> = {
   equals?: string | Prisma.StringFieldRefInput<$PrismaModel> | null
   in?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel> | null
@@ -181,14 +174,11 @@ export type StringNullableFilter<$PrismaModel = never> = {
   not?: Prisma.NestedStringNullableFilter<$PrismaModel> | string | null
 }
 
-export type EnumAutomationTriggerTypeWithAggregatesFilter<$PrismaModel = never> = {
+export type EnumAutomationTriggerTypeFilter<$PrismaModel = never> = {
   equals?: $Enums.AutomationTriggerType | Prisma.EnumAutomationTriggerTypeFieldRefInput<$PrismaModel>
   in?: $Enums.AutomationTriggerType[] | Prisma.ListEnumAutomationTriggerTypeFieldRefInput<$PrismaModel>
   notIn?: $Enums.AutomationTriggerType[] | Prisma.ListEnumAutomationTriggerTypeFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumAutomationTriggerTypeWithAggregatesFilter<$PrismaModel> | $Enums.AutomationTriggerType
-  _count?: Prisma.NestedIntFilter<$PrismaModel>
-  _min?: Prisma.NestedEnumAutomationTriggerTypeFilter<$PrismaModel>
-  _max?: Prisma.NestedEnumAutomationTriggerTypeFilter<$PrismaModel>
+  not?: Prisma.NestedEnumAutomationTriggerTypeFilter<$PrismaModel> | $Enums.AutomationTriggerType
 }
 
 export type StringNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -209,11 +199,14 @@ export type StringNullableWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedStringNullableFilter<$PrismaModel>
 }
 
-export type EnumAutomationMessageTypeFilter<$PrismaModel = never> = {
-  equals?: $Enums.AutomationMessageType | Prisma.EnumAutomationMessageTypeFieldRefInput<$PrismaModel>
-  in?: $Enums.AutomationMessageType[] | Prisma.ListEnumAutomationMessageTypeFieldRefInput<$PrismaModel>
-  notIn?: $Enums.AutomationMessageType[] | Prisma.ListEnumAutomationMessageTypeFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumAutomationMessageTypeFilter<$PrismaModel> | $Enums.AutomationMessageType
+export type EnumAutomationTriggerTypeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.AutomationTriggerType | Prisma.EnumAutomationTriggerTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.AutomationTriggerType[] | Prisma.ListEnumAutomationTriggerTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.AutomationTriggerType[] | Prisma.ListEnumAutomationTriggerTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumAutomationTriggerTypeWithAggregatesFilter<$PrismaModel> | $Enums.AutomationTriggerType
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumAutomationTriggerTypeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumAutomationTriggerTypeFilter<$PrismaModel>
 }
 
 export type IntFilter<$PrismaModel = never> = {
@@ -227,14 +220,11 @@ export type IntFilter<$PrismaModel = never> = {
   not?: Prisma.NestedIntFilter<$PrismaModel> | number
 }
 
-export type EnumAutomationMessageTypeWithAggregatesFilter<$PrismaModel = never> = {
+export type EnumAutomationMessageTypeFilter<$PrismaModel = never> = {
   equals?: $Enums.AutomationMessageType | Prisma.EnumAutomationMessageTypeFieldRefInput<$PrismaModel>
   in?: $Enums.AutomationMessageType[] | Prisma.ListEnumAutomationMessageTypeFieldRefInput<$PrismaModel>
   notIn?: $Enums.AutomationMessageType[] | Prisma.ListEnumAutomationMessageTypeFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumAutomationMessageTypeWithAggregatesFilter<$PrismaModel> | $Enums.AutomationMessageType
-  _count?: Prisma.NestedIntFilter<$PrismaModel>
-  _min?: Prisma.NestedEnumAutomationMessageTypeFilter<$PrismaModel>
-  _max?: Prisma.NestedEnumAutomationMessageTypeFilter<$PrismaModel>
+  not?: Prisma.NestedEnumAutomationMessageTypeFilter<$PrismaModel> | $Enums.AutomationMessageType
 }
 
 export type IntWithAggregatesFilter<$PrismaModel = never> = {
@@ -251,6 +241,16 @@ export type IntWithAggregatesFilter<$PrismaModel = never> = {
   _sum?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedIntFilter<$PrismaModel>
   _max?: Prisma.NestedIntFilter<$PrismaModel>
+}
+
+export type EnumAutomationMessageTypeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.AutomationMessageType | Prisma.EnumAutomationMessageTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.AutomationMessageType[] | Prisma.ListEnumAutomationMessageTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.AutomationMessageType[] | Prisma.ListEnumAutomationMessageTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumAutomationMessageTypeWithAggregatesFilter<$PrismaModel> | $Enums.AutomationMessageType
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumAutomationMessageTypeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumAutomationMessageTypeFilter<$PrismaModel>
 }
 
 export type EnumMessageDirectionFilter<$PrismaModel = never> = {
@@ -695,13 +695,6 @@ export type NestedFloatNullableFilter<$PrismaModel = never> = {
   not?: Prisma.NestedFloatNullableFilter<$PrismaModel> | number | null
 }
 
-export type NestedEnumAutomationTriggerTypeFilter<$PrismaModel = never> = {
-  equals?: $Enums.AutomationTriggerType | Prisma.EnumAutomationTriggerTypeFieldRefInput<$PrismaModel>
-  in?: $Enums.AutomationTriggerType[] | Prisma.ListEnumAutomationTriggerTypeFieldRefInput<$PrismaModel>
-  notIn?: $Enums.AutomationTriggerType[] | Prisma.ListEnumAutomationTriggerTypeFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumAutomationTriggerTypeFilter<$PrismaModel> | $Enums.AutomationTriggerType
-}
-
 export type NestedStringNullableFilter<$PrismaModel = never> = {
   equals?: string | Prisma.StringFieldRefInput<$PrismaModel> | null
   in?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel> | null
@@ -716,14 +709,11 @@ export type NestedStringNullableFilter<$PrismaModel = never> = {
   not?: Prisma.NestedStringNullableFilter<$PrismaModel> | string | null
 }
 
-export type NestedEnumAutomationTriggerTypeWithAggregatesFilter<$PrismaModel = never> = {
+export type NestedEnumAutomationTriggerTypeFilter<$PrismaModel = never> = {
   equals?: $Enums.AutomationTriggerType | Prisma.EnumAutomationTriggerTypeFieldRefInput<$PrismaModel>
   in?: $Enums.AutomationTriggerType[] | Prisma.ListEnumAutomationTriggerTypeFieldRefInput<$PrismaModel>
   notIn?: $Enums.AutomationTriggerType[] | Prisma.ListEnumAutomationTriggerTypeFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumAutomationTriggerTypeWithAggregatesFilter<$PrismaModel> | $Enums.AutomationTriggerType
-  _count?: Prisma.NestedIntFilter<$PrismaModel>
-  _min?: Prisma.NestedEnumAutomationTriggerTypeFilter<$PrismaModel>
-  _max?: Prisma.NestedEnumAutomationTriggerTypeFilter<$PrismaModel>
+  not?: Prisma.NestedEnumAutomationTriggerTypeFilter<$PrismaModel> | $Enums.AutomationTriggerType
 }
 
 export type NestedStringNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -743,21 +733,21 @@ export type NestedStringNullableWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedStringNullableFilter<$PrismaModel>
 }
 
+export type NestedEnumAutomationTriggerTypeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.AutomationTriggerType | Prisma.EnumAutomationTriggerTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.AutomationTriggerType[] | Prisma.ListEnumAutomationTriggerTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.AutomationTriggerType[] | Prisma.ListEnumAutomationTriggerTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumAutomationTriggerTypeWithAggregatesFilter<$PrismaModel> | $Enums.AutomationTriggerType
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumAutomationTriggerTypeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumAutomationTriggerTypeFilter<$PrismaModel>
+}
+
 export type NestedEnumAutomationMessageTypeFilter<$PrismaModel = never> = {
   equals?: $Enums.AutomationMessageType | Prisma.EnumAutomationMessageTypeFieldRefInput<$PrismaModel>
   in?: $Enums.AutomationMessageType[] | Prisma.ListEnumAutomationMessageTypeFieldRefInput<$PrismaModel>
   notIn?: $Enums.AutomationMessageType[] | Prisma.ListEnumAutomationMessageTypeFieldRefInput<$PrismaModel>
   not?: Prisma.NestedEnumAutomationMessageTypeFilter<$PrismaModel> | $Enums.AutomationMessageType
-}
-
-export type NestedEnumAutomationMessageTypeWithAggregatesFilter<$PrismaModel = never> = {
-  equals?: $Enums.AutomationMessageType | Prisma.EnumAutomationMessageTypeFieldRefInput<$PrismaModel>
-  in?: $Enums.AutomationMessageType[] | Prisma.ListEnumAutomationMessageTypeFieldRefInput<$PrismaModel>
-  notIn?: $Enums.AutomationMessageType[] | Prisma.ListEnumAutomationMessageTypeFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumAutomationMessageTypeWithAggregatesFilter<$PrismaModel> | $Enums.AutomationMessageType
-  _count?: Prisma.NestedIntFilter<$PrismaModel>
-  _min?: Prisma.NestedEnumAutomationMessageTypeFilter<$PrismaModel>
-  _max?: Prisma.NestedEnumAutomationMessageTypeFilter<$PrismaModel>
 }
 
 export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
@@ -785,6 +775,16 @@ export type NestedFloatFilter<$PrismaModel = never> = {
   gt?: number | Prisma.FloatFieldRefInput<$PrismaModel>
   gte?: number | Prisma.FloatFieldRefInput<$PrismaModel>
   not?: Prisma.NestedFloatFilter<$PrismaModel> | number
+}
+
+export type NestedEnumAutomationMessageTypeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.AutomationMessageType | Prisma.EnumAutomationMessageTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.AutomationMessageType[] | Prisma.ListEnumAutomationMessageTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.AutomationMessageType[] | Prisma.ListEnumAutomationMessageTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumAutomationMessageTypeWithAggregatesFilter<$PrismaModel> | $Enums.AutomationMessageType
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumAutomationMessageTypeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumAutomationMessageTypeFilter<$PrismaModel>
 }
 
 export type NestedEnumMessageDirectionFilter<$PrismaModel = never> = {

@@ -198,12 +198,14 @@ export type UserWhereInput = {
   role?: Prisma.EnumRoleFilter<"User"> | $Enums.Role
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
-  instagramAccounts?: Prisma.InstagramAccountListRelationFilter
   comments?: Prisma.CommentListRelationFilter
   conversations?: Prisma.ConversationListRelationFilter
-  showcases?: Prisma.ShowcaseListRelationFilter
+  ConversationHandoff_ConversationHandoff_assignedToUserIdToUser?: Prisma.ConversationHandoffListRelationFilter
+  ConversationHandoff_ConversationHandoff_userIdToUser?: Prisma.ConversationHandoffListRelationFilter
   forms?: Prisma.FormListRelationFilter
+  instagramAccounts?: Prisma.InstagramAccountListRelationFilter
   instagramPublishJobs?: Prisma.InstagramPublishJobListRelationFilter
+  showcases?: Prisma.ShowcaseListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -214,12 +216,14 @@ export type UserOrderByWithRelationInput = {
   role?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  instagramAccounts?: Prisma.InstagramAccountOrderByRelationAggregateInput
   comments?: Prisma.CommentOrderByRelationAggregateInput
   conversations?: Prisma.ConversationOrderByRelationAggregateInput
-  showcases?: Prisma.ShowcaseOrderByRelationAggregateInput
+  ConversationHandoff_ConversationHandoff_assignedToUserIdToUser?: Prisma.ConversationHandoffOrderByRelationAggregateInput
+  ConversationHandoff_ConversationHandoff_userIdToUser?: Prisma.ConversationHandoffOrderByRelationAggregateInput
   forms?: Prisma.FormOrderByRelationAggregateInput
+  instagramAccounts?: Prisma.InstagramAccountOrderByRelationAggregateInput
   instagramPublishJobs?: Prisma.InstagramPublishJobOrderByRelationAggregateInput
+  showcases?: Prisma.ShowcaseOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -233,12 +237,14 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   role?: Prisma.EnumRoleFilter<"User"> | $Enums.Role
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
-  instagramAccounts?: Prisma.InstagramAccountListRelationFilter
   comments?: Prisma.CommentListRelationFilter
   conversations?: Prisma.ConversationListRelationFilter
-  showcases?: Prisma.ShowcaseListRelationFilter
+  ConversationHandoff_ConversationHandoff_assignedToUserIdToUser?: Prisma.ConversationHandoffListRelationFilter
+  ConversationHandoff_ConversationHandoff_userIdToUser?: Prisma.ConversationHandoffListRelationFilter
   forms?: Prisma.FormListRelationFilter
+  instagramAccounts?: Prisma.InstagramAccountListRelationFilter
   instagramPublishJobs?: Prisma.InstagramPublishJobListRelationFilter
+  showcases?: Prisma.ShowcaseListRelationFilter
 }, "id" | "email">
 
 export type UserOrderByWithAggregationInput = {
@@ -275,12 +281,14 @@ export type UserCreateInput = {
   role?: $Enums.Role
   createdAt?: Date | string
   updatedAt?: Date | string
-  instagramAccounts?: Prisma.InstagramAccountCreateNestedManyWithoutUserInput
   comments?: Prisma.CommentCreateNestedManyWithoutUserInput
   conversations?: Prisma.ConversationCreateNestedManyWithoutUserInput
-  showcases?: Prisma.ShowcaseCreateNestedManyWithoutUserInput
+  ConversationHandoff_ConversationHandoff_assignedToUserIdToUser?: Prisma.ConversationHandoffCreateNestedManyWithoutUser_ConversationHandoff_assignedToUserIdToUserInput
+  ConversationHandoff_ConversationHandoff_userIdToUser?: Prisma.ConversationHandoffCreateNestedManyWithoutUser_ConversationHandoff_userIdToUserInput
   forms?: Prisma.FormCreateNestedManyWithoutUserInput
+  instagramAccounts?: Prisma.InstagramAccountCreateNestedManyWithoutUserInput
   instagramPublishJobs?: Prisma.InstagramPublishJobCreateNestedManyWithoutUserInput
+  showcases?: Prisma.ShowcaseCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -291,12 +299,14 @@ export type UserUncheckedCreateInput = {
   role?: $Enums.Role
   createdAt?: Date | string
   updatedAt?: Date | string
-  instagramAccounts?: Prisma.InstagramAccountUncheckedCreateNestedManyWithoutUserInput
   comments?: Prisma.CommentUncheckedCreateNestedManyWithoutUserInput
   conversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutUserInput
-  showcases?: Prisma.ShowcaseUncheckedCreateNestedManyWithoutUserInput
+  ConversationHandoff_ConversationHandoff_assignedToUserIdToUser?: Prisma.ConversationHandoffUncheckedCreateNestedManyWithoutUser_ConversationHandoff_assignedToUserIdToUserInput
+  ConversationHandoff_ConversationHandoff_userIdToUser?: Prisma.ConversationHandoffUncheckedCreateNestedManyWithoutUser_ConversationHandoff_userIdToUserInput
   forms?: Prisma.FormUncheckedCreateNestedManyWithoutUserInput
+  instagramAccounts?: Prisma.InstagramAccountUncheckedCreateNestedManyWithoutUserInput
   instagramPublishJobs?: Prisma.InstagramPublishJobUncheckedCreateNestedManyWithoutUserInput
+  showcases?: Prisma.ShowcaseUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserUpdateInput = {
@@ -307,12 +317,14 @@ export type UserUpdateInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  instagramAccounts?: Prisma.InstagramAccountUpdateManyWithoutUserNestedInput
   comments?: Prisma.CommentUpdateManyWithoutUserNestedInput
   conversations?: Prisma.ConversationUpdateManyWithoutUserNestedInput
-  showcases?: Prisma.ShowcaseUpdateManyWithoutUserNestedInput
+  ConversationHandoff_ConversationHandoff_assignedToUserIdToUser?: Prisma.ConversationHandoffUpdateManyWithoutUser_ConversationHandoff_assignedToUserIdToUserNestedInput
+  ConversationHandoff_ConversationHandoff_userIdToUser?: Prisma.ConversationHandoffUpdateManyWithoutUser_ConversationHandoff_userIdToUserNestedInput
   forms?: Prisma.FormUpdateManyWithoutUserNestedInput
+  instagramAccounts?: Prisma.InstagramAccountUpdateManyWithoutUserNestedInput
   instagramPublishJobs?: Prisma.InstagramPublishJobUpdateManyWithoutUserNestedInput
+  showcases?: Prisma.ShowcaseUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -323,12 +335,14 @@ export type UserUncheckedUpdateInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  instagramAccounts?: Prisma.InstagramAccountUncheckedUpdateManyWithoutUserNestedInput
   comments?: Prisma.CommentUncheckedUpdateManyWithoutUserNestedInput
   conversations?: Prisma.ConversationUncheckedUpdateManyWithoutUserNestedInput
-  showcases?: Prisma.ShowcaseUncheckedUpdateManyWithoutUserNestedInput
+  ConversationHandoff_ConversationHandoff_assignedToUserIdToUser?: Prisma.ConversationHandoffUncheckedUpdateManyWithoutUser_ConversationHandoff_assignedToUserIdToUserNestedInput
+  ConversationHandoff_ConversationHandoff_userIdToUser?: Prisma.ConversationHandoffUncheckedUpdateManyWithoutUser_ConversationHandoff_userIdToUserNestedInput
   forms?: Prisma.FormUncheckedUpdateManyWithoutUserNestedInput
+  instagramAccounts?: Prisma.InstagramAccountUncheckedUpdateManyWithoutUserNestedInput
   instagramPublishJobs?: Prisma.InstagramPublishJobUncheckedUpdateManyWithoutUserNestedInput
+  showcases?: Prisma.ShowcaseUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -394,6 +408,11 @@ export type UserMinOrderByAggregateInput = {
 export type UserScalarRelationFilter = {
   is?: Prisma.UserWhereInput
   isNot?: Prisma.UserWhereInput
+}
+
+export type UserNullableScalarRelationFilter = {
+  is?: Prisma.UserWhereInput | null
+  isNot?: Prisma.UserWhereInput | null
 }
 
 export type StringFieldUpdateOperationsInput = {
@@ -492,6 +511,36 @@ export type UserUpdateOneRequiredWithoutInstagramPublishJobsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutInstagramPublishJobsInput, Prisma.UserUpdateWithoutInstagramPublishJobsInput>, Prisma.UserUncheckedUpdateWithoutInstagramPublishJobsInput>
 }
 
+export type UserCreateNestedOneWithoutConversationHandoff_ConversationHandoff_assignedToUserIdToUserInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutConversationHandoff_ConversationHandoff_assignedToUserIdToUserInput, Prisma.UserUncheckedCreateWithoutConversationHandoff_ConversationHandoff_assignedToUserIdToUserInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutConversationHandoff_ConversationHandoff_assignedToUserIdToUserInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserCreateNestedOneWithoutConversationHandoff_ConversationHandoff_userIdToUserInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutConversationHandoff_ConversationHandoff_userIdToUserInput, Prisma.UserUncheckedCreateWithoutConversationHandoff_ConversationHandoff_userIdToUserInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutConversationHandoff_ConversationHandoff_userIdToUserInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneWithoutConversationHandoff_ConversationHandoff_assignedToUserIdToUserNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutConversationHandoff_ConversationHandoff_assignedToUserIdToUserInput, Prisma.UserUncheckedCreateWithoutConversationHandoff_ConversationHandoff_assignedToUserIdToUserInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutConversationHandoff_ConversationHandoff_assignedToUserIdToUserInput
+  upsert?: Prisma.UserUpsertWithoutConversationHandoff_ConversationHandoff_assignedToUserIdToUserInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutConversationHandoff_ConversationHandoff_assignedToUserIdToUserInput, Prisma.UserUpdateWithoutConversationHandoff_ConversationHandoff_assignedToUserIdToUserInput>, Prisma.UserUncheckedUpdateWithoutConversationHandoff_ConversationHandoff_assignedToUserIdToUserInput>
+}
+
+export type UserUpdateOneRequiredWithoutConversationHandoff_ConversationHandoff_userIdToUserNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutConversationHandoff_ConversationHandoff_userIdToUserInput, Prisma.UserUncheckedCreateWithoutConversationHandoff_ConversationHandoff_userIdToUserInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutConversationHandoff_ConversationHandoff_userIdToUserInput
+  upsert?: Prisma.UserUpsertWithoutConversationHandoff_ConversationHandoff_userIdToUserInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutConversationHandoff_ConversationHandoff_userIdToUserInput, Prisma.UserUpdateWithoutConversationHandoff_ConversationHandoff_userIdToUserInput>, Prisma.UserUncheckedUpdateWithoutConversationHandoff_ConversationHandoff_userIdToUserInput>
+}
+
 export type UserCreateWithoutInstagramAccountsInput = {
   id?: string
   email: string
@@ -502,9 +551,11 @@ export type UserCreateWithoutInstagramAccountsInput = {
   updatedAt?: Date | string
   comments?: Prisma.CommentCreateNestedManyWithoutUserInput
   conversations?: Prisma.ConversationCreateNestedManyWithoutUserInput
-  showcases?: Prisma.ShowcaseCreateNestedManyWithoutUserInput
+  ConversationHandoff_ConversationHandoff_assignedToUserIdToUser?: Prisma.ConversationHandoffCreateNestedManyWithoutUser_ConversationHandoff_assignedToUserIdToUserInput
+  ConversationHandoff_ConversationHandoff_userIdToUser?: Prisma.ConversationHandoffCreateNestedManyWithoutUser_ConversationHandoff_userIdToUserInput
   forms?: Prisma.FormCreateNestedManyWithoutUserInput
   instagramPublishJobs?: Prisma.InstagramPublishJobCreateNestedManyWithoutUserInput
+  showcases?: Prisma.ShowcaseCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutInstagramAccountsInput = {
@@ -517,9 +568,11 @@ export type UserUncheckedCreateWithoutInstagramAccountsInput = {
   updatedAt?: Date | string
   comments?: Prisma.CommentUncheckedCreateNestedManyWithoutUserInput
   conversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutUserInput
-  showcases?: Prisma.ShowcaseUncheckedCreateNestedManyWithoutUserInput
+  ConversationHandoff_ConversationHandoff_assignedToUserIdToUser?: Prisma.ConversationHandoffUncheckedCreateNestedManyWithoutUser_ConversationHandoff_assignedToUserIdToUserInput
+  ConversationHandoff_ConversationHandoff_userIdToUser?: Prisma.ConversationHandoffUncheckedCreateNestedManyWithoutUser_ConversationHandoff_userIdToUserInput
   forms?: Prisma.FormUncheckedCreateNestedManyWithoutUserInput
   instagramPublishJobs?: Prisma.InstagramPublishJobUncheckedCreateNestedManyWithoutUserInput
+  showcases?: Prisma.ShowcaseUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutInstagramAccountsInput = {
@@ -548,9 +601,11 @@ export type UserUpdateWithoutInstagramAccountsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   comments?: Prisma.CommentUpdateManyWithoutUserNestedInput
   conversations?: Prisma.ConversationUpdateManyWithoutUserNestedInput
-  showcases?: Prisma.ShowcaseUpdateManyWithoutUserNestedInput
+  ConversationHandoff_ConversationHandoff_assignedToUserIdToUser?: Prisma.ConversationHandoffUpdateManyWithoutUser_ConversationHandoff_assignedToUserIdToUserNestedInput
+  ConversationHandoff_ConversationHandoff_userIdToUser?: Prisma.ConversationHandoffUpdateManyWithoutUser_ConversationHandoff_userIdToUserNestedInput
   forms?: Prisma.FormUpdateManyWithoutUserNestedInput
   instagramPublishJobs?: Prisma.InstagramPublishJobUpdateManyWithoutUserNestedInput
+  showcases?: Prisma.ShowcaseUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutInstagramAccountsInput = {
@@ -563,9 +618,11 @@ export type UserUncheckedUpdateWithoutInstagramAccountsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   comments?: Prisma.CommentUncheckedUpdateManyWithoutUserNestedInput
   conversations?: Prisma.ConversationUncheckedUpdateManyWithoutUserNestedInput
-  showcases?: Prisma.ShowcaseUncheckedUpdateManyWithoutUserNestedInput
+  ConversationHandoff_ConversationHandoff_assignedToUserIdToUser?: Prisma.ConversationHandoffUncheckedUpdateManyWithoutUser_ConversationHandoff_assignedToUserIdToUserNestedInput
+  ConversationHandoff_ConversationHandoff_userIdToUser?: Prisma.ConversationHandoffUncheckedUpdateManyWithoutUser_ConversationHandoff_userIdToUserNestedInput
   forms?: Prisma.FormUncheckedUpdateManyWithoutUserNestedInput
   instagramPublishJobs?: Prisma.InstagramPublishJobUncheckedUpdateManyWithoutUserNestedInput
+  showcases?: Prisma.ShowcaseUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutConversationsInput = {
@@ -576,11 +633,13 @@ export type UserCreateWithoutConversationsInput = {
   role?: $Enums.Role
   createdAt?: Date | string
   updatedAt?: Date | string
-  instagramAccounts?: Prisma.InstagramAccountCreateNestedManyWithoutUserInput
   comments?: Prisma.CommentCreateNestedManyWithoutUserInput
-  showcases?: Prisma.ShowcaseCreateNestedManyWithoutUserInput
+  ConversationHandoff_ConversationHandoff_assignedToUserIdToUser?: Prisma.ConversationHandoffCreateNestedManyWithoutUser_ConversationHandoff_assignedToUserIdToUserInput
+  ConversationHandoff_ConversationHandoff_userIdToUser?: Prisma.ConversationHandoffCreateNestedManyWithoutUser_ConversationHandoff_userIdToUserInput
   forms?: Prisma.FormCreateNestedManyWithoutUserInput
+  instagramAccounts?: Prisma.InstagramAccountCreateNestedManyWithoutUserInput
   instagramPublishJobs?: Prisma.InstagramPublishJobCreateNestedManyWithoutUserInput
+  showcases?: Prisma.ShowcaseCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutConversationsInput = {
@@ -591,11 +650,13 @@ export type UserUncheckedCreateWithoutConversationsInput = {
   role?: $Enums.Role
   createdAt?: Date | string
   updatedAt?: Date | string
-  instagramAccounts?: Prisma.InstagramAccountUncheckedCreateNestedManyWithoutUserInput
   comments?: Prisma.CommentUncheckedCreateNestedManyWithoutUserInput
-  showcases?: Prisma.ShowcaseUncheckedCreateNestedManyWithoutUserInput
+  ConversationHandoff_ConversationHandoff_assignedToUserIdToUser?: Prisma.ConversationHandoffUncheckedCreateNestedManyWithoutUser_ConversationHandoff_assignedToUserIdToUserInput
+  ConversationHandoff_ConversationHandoff_userIdToUser?: Prisma.ConversationHandoffUncheckedCreateNestedManyWithoutUser_ConversationHandoff_userIdToUserInput
   forms?: Prisma.FormUncheckedCreateNestedManyWithoutUserInput
+  instagramAccounts?: Prisma.InstagramAccountUncheckedCreateNestedManyWithoutUserInput
   instagramPublishJobs?: Prisma.InstagramPublishJobUncheckedCreateNestedManyWithoutUserInput
+  showcases?: Prisma.ShowcaseUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutConversationsInput = {
@@ -622,11 +683,13 @@ export type UserUpdateWithoutConversationsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  instagramAccounts?: Prisma.InstagramAccountUpdateManyWithoutUserNestedInput
   comments?: Prisma.CommentUpdateManyWithoutUserNestedInput
-  showcases?: Prisma.ShowcaseUpdateManyWithoutUserNestedInput
+  ConversationHandoff_ConversationHandoff_assignedToUserIdToUser?: Prisma.ConversationHandoffUpdateManyWithoutUser_ConversationHandoff_assignedToUserIdToUserNestedInput
+  ConversationHandoff_ConversationHandoff_userIdToUser?: Prisma.ConversationHandoffUpdateManyWithoutUser_ConversationHandoff_userIdToUserNestedInput
   forms?: Prisma.FormUpdateManyWithoutUserNestedInput
+  instagramAccounts?: Prisma.InstagramAccountUpdateManyWithoutUserNestedInput
   instagramPublishJobs?: Prisma.InstagramPublishJobUpdateManyWithoutUserNestedInput
+  showcases?: Prisma.ShowcaseUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutConversationsInput = {
@@ -637,11 +700,13 @@ export type UserUncheckedUpdateWithoutConversationsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  instagramAccounts?: Prisma.InstagramAccountUncheckedUpdateManyWithoutUserNestedInput
   comments?: Prisma.CommentUncheckedUpdateManyWithoutUserNestedInput
-  showcases?: Prisma.ShowcaseUncheckedUpdateManyWithoutUserNestedInput
+  ConversationHandoff_ConversationHandoff_assignedToUserIdToUser?: Prisma.ConversationHandoffUncheckedUpdateManyWithoutUser_ConversationHandoff_assignedToUserIdToUserNestedInput
+  ConversationHandoff_ConversationHandoff_userIdToUser?: Prisma.ConversationHandoffUncheckedUpdateManyWithoutUser_ConversationHandoff_userIdToUserNestedInput
   forms?: Prisma.FormUncheckedUpdateManyWithoutUserNestedInput
+  instagramAccounts?: Prisma.InstagramAccountUncheckedUpdateManyWithoutUserNestedInput
   instagramPublishJobs?: Prisma.InstagramPublishJobUncheckedUpdateManyWithoutUserNestedInput
+  showcases?: Prisma.ShowcaseUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutCommentsInput = {
@@ -652,11 +717,13 @@ export type UserCreateWithoutCommentsInput = {
   role?: $Enums.Role
   createdAt?: Date | string
   updatedAt?: Date | string
-  instagramAccounts?: Prisma.InstagramAccountCreateNestedManyWithoutUserInput
   conversations?: Prisma.ConversationCreateNestedManyWithoutUserInput
-  showcases?: Prisma.ShowcaseCreateNestedManyWithoutUserInput
+  ConversationHandoff_ConversationHandoff_assignedToUserIdToUser?: Prisma.ConversationHandoffCreateNestedManyWithoutUser_ConversationHandoff_assignedToUserIdToUserInput
+  ConversationHandoff_ConversationHandoff_userIdToUser?: Prisma.ConversationHandoffCreateNestedManyWithoutUser_ConversationHandoff_userIdToUserInput
   forms?: Prisma.FormCreateNestedManyWithoutUserInput
+  instagramAccounts?: Prisma.InstagramAccountCreateNestedManyWithoutUserInput
   instagramPublishJobs?: Prisma.InstagramPublishJobCreateNestedManyWithoutUserInput
+  showcases?: Prisma.ShowcaseCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutCommentsInput = {
@@ -667,11 +734,13 @@ export type UserUncheckedCreateWithoutCommentsInput = {
   role?: $Enums.Role
   createdAt?: Date | string
   updatedAt?: Date | string
-  instagramAccounts?: Prisma.InstagramAccountUncheckedCreateNestedManyWithoutUserInput
   conversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutUserInput
-  showcases?: Prisma.ShowcaseUncheckedCreateNestedManyWithoutUserInput
+  ConversationHandoff_ConversationHandoff_assignedToUserIdToUser?: Prisma.ConversationHandoffUncheckedCreateNestedManyWithoutUser_ConversationHandoff_assignedToUserIdToUserInput
+  ConversationHandoff_ConversationHandoff_userIdToUser?: Prisma.ConversationHandoffUncheckedCreateNestedManyWithoutUser_ConversationHandoff_userIdToUserInput
   forms?: Prisma.FormUncheckedCreateNestedManyWithoutUserInput
+  instagramAccounts?: Prisma.InstagramAccountUncheckedCreateNestedManyWithoutUserInput
   instagramPublishJobs?: Prisma.InstagramPublishJobUncheckedCreateNestedManyWithoutUserInput
+  showcases?: Prisma.ShowcaseUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutCommentsInput = {
@@ -698,11 +767,13 @@ export type UserUpdateWithoutCommentsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  instagramAccounts?: Prisma.InstagramAccountUpdateManyWithoutUserNestedInput
   conversations?: Prisma.ConversationUpdateManyWithoutUserNestedInput
-  showcases?: Prisma.ShowcaseUpdateManyWithoutUserNestedInput
+  ConversationHandoff_ConversationHandoff_assignedToUserIdToUser?: Prisma.ConversationHandoffUpdateManyWithoutUser_ConversationHandoff_assignedToUserIdToUserNestedInput
+  ConversationHandoff_ConversationHandoff_userIdToUser?: Prisma.ConversationHandoffUpdateManyWithoutUser_ConversationHandoff_userIdToUserNestedInput
   forms?: Prisma.FormUpdateManyWithoutUserNestedInput
+  instagramAccounts?: Prisma.InstagramAccountUpdateManyWithoutUserNestedInput
   instagramPublishJobs?: Prisma.InstagramPublishJobUpdateManyWithoutUserNestedInput
+  showcases?: Prisma.ShowcaseUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCommentsInput = {
@@ -713,11 +784,13 @@ export type UserUncheckedUpdateWithoutCommentsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  instagramAccounts?: Prisma.InstagramAccountUncheckedUpdateManyWithoutUserNestedInput
   conversations?: Prisma.ConversationUncheckedUpdateManyWithoutUserNestedInput
-  showcases?: Prisma.ShowcaseUncheckedUpdateManyWithoutUserNestedInput
+  ConversationHandoff_ConversationHandoff_assignedToUserIdToUser?: Prisma.ConversationHandoffUncheckedUpdateManyWithoutUser_ConversationHandoff_assignedToUserIdToUserNestedInput
+  ConversationHandoff_ConversationHandoff_userIdToUser?: Prisma.ConversationHandoffUncheckedUpdateManyWithoutUser_ConversationHandoff_userIdToUserNestedInput
   forms?: Prisma.FormUncheckedUpdateManyWithoutUserNestedInput
+  instagramAccounts?: Prisma.InstagramAccountUncheckedUpdateManyWithoutUserNestedInput
   instagramPublishJobs?: Prisma.InstagramPublishJobUncheckedUpdateManyWithoutUserNestedInput
+  showcases?: Prisma.ShowcaseUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutShowcasesInput = {
@@ -728,10 +801,12 @@ export type UserCreateWithoutShowcasesInput = {
   role?: $Enums.Role
   createdAt?: Date | string
   updatedAt?: Date | string
-  instagramAccounts?: Prisma.InstagramAccountCreateNestedManyWithoutUserInput
   comments?: Prisma.CommentCreateNestedManyWithoutUserInput
   conversations?: Prisma.ConversationCreateNestedManyWithoutUserInput
+  ConversationHandoff_ConversationHandoff_assignedToUserIdToUser?: Prisma.ConversationHandoffCreateNestedManyWithoutUser_ConversationHandoff_assignedToUserIdToUserInput
+  ConversationHandoff_ConversationHandoff_userIdToUser?: Prisma.ConversationHandoffCreateNestedManyWithoutUser_ConversationHandoff_userIdToUserInput
   forms?: Prisma.FormCreateNestedManyWithoutUserInput
+  instagramAccounts?: Prisma.InstagramAccountCreateNestedManyWithoutUserInput
   instagramPublishJobs?: Prisma.InstagramPublishJobCreateNestedManyWithoutUserInput
 }
 
@@ -743,10 +818,12 @@ export type UserUncheckedCreateWithoutShowcasesInput = {
   role?: $Enums.Role
   createdAt?: Date | string
   updatedAt?: Date | string
-  instagramAccounts?: Prisma.InstagramAccountUncheckedCreateNestedManyWithoutUserInput
   comments?: Prisma.CommentUncheckedCreateNestedManyWithoutUserInput
   conversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutUserInput
+  ConversationHandoff_ConversationHandoff_assignedToUserIdToUser?: Prisma.ConversationHandoffUncheckedCreateNestedManyWithoutUser_ConversationHandoff_assignedToUserIdToUserInput
+  ConversationHandoff_ConversationHandoff_userIdToUser?: Prisma.ConversationHandoffUncheckedCreateNestedManyWithoutUser_ConversationHandoff_userIdToUserInput
   forms?: Prisma.FormUncheckedCreateNestedManyWithoutUserInput
+  instagramAccounts?: Prisma.InstagramAccountUncheckedCreateNestedManyWithoutUserInput
   instagramPublishJobs?: Prisma.InstagramPublishJobUncheckedCreateNestedManyWithoutUserInput
 }
 
@@ -774,10 +851,12 @@ export type UserUpdateWithoutShowcasesInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  instagramAccounts?: Prisma.InstagramAccountUpdateManyWithoutUserNestedInput
   comments?: Prisma.CommentUpdateManyWithoutUserNestedInput
   conversations?: Prisma.ConversationUpdateManyWithoutUserNestedInput
+  ConversationHandoff_ConversationHandoff_assignedToUserIdToUser?: Prisma.ConversationHandoffUpdateManyWithoutUser_ConversationHandoff_assignedToUserIdToUserNestedInput
+  ConversationHandoff_ConversationHandoff_userIdToUser?: Prisma.ConversationHandoffUpdateManyWithoutUser_ConversationHandoff_userIdToUserNestedInput
   forms?: Prisma.FormUpdateManyWithoutUserNestedInput
+  instagramAccounts?: Prisma.InstagramAccountUpdateManyWithoutUserNestedInput
   instagramPublishJobs?: Prisma.InstagramPublishJobUpdateManyWithoutUserNestedInput
 }
 
@@ -789,10 +868,12 @@ export type UserUncheckedUpdateWithoutShowcasesInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  instagramAccounts?: Prisma.InstagramAccountUncheckedUpdateManyWithoutUserNestedInput
   comments?: Prisma.CommentUncheckedUpdateManyWithoutUserNestedInput
   conversations?: Prisma.ConversationUncheckedUpdateManyWithoutUserNestedInput
+  ConversationHandoff_ConversationHandoff_assignedToUserIdToUser?: Prisma.ConversationHandoffUncheckedUpdateManyWithoutUser_ConversationHandoff_assignedToUserIdToUserNestedInput
+  ConversationHandoff_ConversationHandoff_userIdToUser?: Prisma.ConversationHandoffUncheckedUpdateManyWithoutUser_ConversationHandoff_userIdToUserNestedInput
   forms?: Prisma.FormUncheckedUpdateManyWithoutUserNestedInput
+  instagramAccounts?: Prisma.InstagramAccountUncheckedUpdateManyWithoutUserNestedInput
   instagramPublishJobs?: Prisma.InstagramPublishJobUncheckedUpdateManyWithoutUserNestedInput
 }
 
@@ -804,11 +885,13 @@ export type UserCreateWithoutFormsInput = {
   role?: $Enums.Role
   createdAt?: Date | string
   updatedAt?: Date | string
-  instagramAccounts?: Prisma.InstagramAccountCreateNestedManyWithoutUserInput
   comments?: Prisma.CommentCreateNestedManyWithoutUserInput
   conversations?: Prisma.ConversationCreateNestedManyWithoutUserInput
-  showcases?: Prisma.ShowcaseCreateNestedManyWithoutUserInput
+  ConversationHandoff_ConversationHandoff_assignedToUserIdToUser?: Prisma.ConversationHandoffCreateNestedManyWithoutUser_ConversationHandoff_assignedToUserIdToUserInput
+  ConversationHandoff_ConversationHandoff_userIdToUser?: Prisma.ConversationHandoffCreateNestedManyWithoutUser_ConversationHandoff_userIdToUserInput
+  instagramAccounts?: Prisma.InstagramAccountCreateNestedManyWithoutUserInput
   instagramPublishJobs?: Prisma.InstagramPublishJobCreateNestedManyWithoutUserInput
+  showcases?: Prisma.ShowcaseCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutFormsInput = {
@@ -819,11 +902,13 @@ export type UserUncheckedCreateWithoutFormsInput = {
   role?: $Enums.Role
   createdAt?: Date | string
   updatedAt?: Date | string
-  instagramAccounts?: Prisma.InstagramAccountUncheckedCreateNestedManyWithoutUserInput
   comments?: Prisma.CommentUncheckedCreateNestedManyWithoutUserInput
   conversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutUserInput
-  showcases?: Prisma.ShowcaseUncheckedCreateNestedManyWithoutUserInput
+  ConversationHandoff_ConversationHandoff_assignedToUserIdToUser?: Prisma.ConversationHandoffUncheckedCreateNestedManyWithoutUser_ConversationHandoff_assignedToUserIdToUserInput
+  ConversationHandoff_ConversationHandoff_userIdToUser?: Prisma.ConversationHandoffUncheckedCreateNestedManyWithoutUser_ConversationHandoff_userIdToUserInput
+  instagramAccounts?: Prisma.InstagramAccountUncheckedCreateNestedManyWithoutUserInput
   instagramPublishJobs?: Prisma.InstagramPublishJobUncheckedCreateNestedManyWithoutUserInput
+  showcases?: Prisma.ShowcaseUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutFormsInput = {
@@ -850,11 +935,13 @@ export type UserUpdateWithoutFormsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  instagramAccounts?: Prisma.InstagramAccountUpdateManyWithoutUserNestedInput
   comments?: Prisma.CommentUpdateManyWithoutUserNestedInput
   conversations?: Prisma.ConversationUpdateManyWithoutUserNestedInput
-  showcases?: Prisma.ShowcaseUpdateManyWithoutUserNestedInput
+  ConversationHandoff_ConversationHandoff_assignedToUserIdToUser?: Prisma.ConversationHandoffUpdateManyWithoutUser_ConversationHandoff_assignedToUserIdToUserNestedInput
+  ConversationHandoff_ConversationHandoff_userIdToUser?: Prisma.ConversationHandoffUpdateManyWithoutUser_ConversationHandoff_userIdToUserNestedInput
+  instagramAccounts?: Prisma.InstagramAccountUpdateManyWithoutUserNestedInput
   instagramPublishJobs?: Prisma.InstagramPublishJobUpdateManyWithoutUserNestedInput
+  showcases?: Prisma.ShowcaseUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutFormsInput = {
@@ -865,11 +952,13 @@ export type UserUncheckedUpdateWithoutFormsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  instagramAccounts?: Prisma.InstagramAccountUncheckedUpdateManyWithoutUserNestedInput
   comments?: Prisma.CommentUncheckedUpdateManyWithoutUserNestedInput
   conversations?: Prisma.ConversationUncheckedUpdateManyWithoutUserNestedInput
-  showcases?: Prisma.ShowcaseUncheckedUpdateManyWithoutUserNestedInput
+  ConversationHandoff_ConversationHandoff_assignedToUserIdToUser?: Prisma.ConversationHandoffUncheckedUpdateManyWithoutUser_ConversationHandoff_assignedToUserIdToUserNestedInput
+  ConversationHandoff_ConversationHandoff_userIdToUser?: Prisma.ConversationHandoffUncheckedUpdateManyWithoutUser_ConversationHandoff_userIdToUserNestedInput
+  instagramAccounts?: Prisma.InstagramAccountUncheckedUpdateManyWithoutUserNestedInput
   instagramPublishJobs?: Prisma.InstagramPublishJobUncheckedUpdateManyWithoutUserNestedInput
+  showcases?: Prisma.ShowcaseUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutInstagramPublishJobsInput = {
@@ -880,11 +969,13 @@ export type UserCreateWithoutInstagramPublishJobsInput = {
   role?: $Enums.Role
   createdAt?: Date | string
   updatedAt?: Date | string
-  instagramAccounts?: Prisma.InstagramAccountCreateNestedManyWithoutUserInput
   comments?: Prisma.CommentCreateNestedManyWithoutUserInput
   conversations?: Prisma.ConversationCreateNestedManyWithoutUserInput
-  showcases?: Prisma.ShowcaseCreateNestedManyWithoutUserInput
+  ConversationHandoff_ConversationHandoff_assignedToUserIdToUser?: Prisma.ConversationHandoffCreateNestedManyWithoutUser_ConversationHandoff_assignedToUserIdToUserInput
+  ConversationHandoff_ConversationHandoff_userIdToUser?: Prisma.ConversationHandoffCreateNestedManyWithoutUser_ConversationHandoff_userIdToUserInput
   forms?: Prisma.FormCreateNestedManyWithoutUserInput
+  instagramAccounts?: Prisma.InstagramAccountCreateNestedManyWithoutUserInput
+  showcases?: Prisma.ShowcaseCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutInstagramPublishJobsInput = {
@@ -895,11 +986,13 @@ export type UserUncheckedCreateWithoutInstagramPublishJobsInput = {
   role?: $Enums.Role
   createdAt?: Date | string
   updatedAt?: Date | string
-  instagramAccounts?: Prisma.InstagramAccountUncheckedCreateNestedManyWithoutUserInput
   comments?: Prisma.CommentUncheckedCreateNestedManyWithoutUserInput
   conversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutUserInput
-  showcases?: Prisma.ShowcaseUncheckedCreateNestedManyWithoutUserInput
+  ConversationHandoff_ConversationHandoff_assignedToUserIdToUser?: Prisma.ConversationHandoffUncheckedCreateNestedManyWithoutUser_ConversationHandoff_assignedToUserIdToUserInput
+  ConversationHandoff_ConversationHandoff_userIdToUser?: Prisma.ConversationHandoffUncheckedCreateNestedManyWithoutUser_ConversationHandoff_userIdToUserInput
   forms?: Prisma.FormUncheckedCreateNestedManyWithoutUserInput
+  instagramAccounts?: Prisma.InstagramAccountUncheckedCreateNestedManyWithoutUserInput
+  showcases?: Prisma.ShowcaseUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutInstagramPublishJobsInput = {
@@ -926,11 +1019,13 @@ export type UserUpdateWithoutInstagramPublishJobsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  instagramAccounts?: Prisma.InstagramAccountUpdateManyWithoutUserNestedInput
   comments?: Prisma.CommentUpdateManyWithoutUserNestedInput
   conversations?: Prisma.ConversationUpdateManyWithoutUserNestedInput
-  showcases?: Prisma.ShowcaseUpdateManyWithoutUserNestedInput
+  ConversationHandoff_ConversationHandoff_assignedToUserIdToUser?: Prisma.ConversationHandoffUpdateManyWithoutUser_ConversationHandoff_assignedToUserIdToUserNestedInput
+  ConversationHandoff_ConversationHandoff_userIdToUser?: Prisma.ConversationHandoffUpdateManyWithoutUser_ConversationHandoff_userIdToUserNestedInput
   forms?: Prisma.FormUpdateManyWithoutUserNestedInput
+  instagramAccounts?: Prisma.InstagramAccountUpdateManyWithoutUserNestedInput
+  showcases?: Prisma.ShowcaseUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutInstagramPublishJobsInput = {
@@ -941,11 +1036,181 @@ export type UserUncheckedUpdateWithoutInstagramPublishJobsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  instagramAccounts?: Prisma.InstagramAccountUncheckedUpdateManyWithoutUserNestedInput
   comments?: Prisma.CommentUncheckedUpdateManyWithoutUserNestedInput
   conversations?: Prisma.ConversationUncheckedUpdateManyWithoutUserNestedInput
-  showcases?: Prisma.ShowcaseUncheckedUpdateManyWithoutUserNestedInput
+  ConversationHandoff_ConversationHandoff_assignedToUserIdToUser?: Prisma.ConversationHandoffUncheckedUpdateManyWithoutUser_ConversationHandoff_assignedToUserIdToUserNestedInput
+  ConversationHandoff_ConversationHandoff_userIdToUser?: Prisma.ConversationHandoffUncheckedUpdateManyWithoutUser_ConversationHandoff_userIdToUserNestedInput
   forms?: Prisma.FormUncheckedUpdateManyWithoutUserNestedInput
+  instagramAccounts?: Prisma.InstagramAccountUncheckedUpdateManyWithoutUserNestedInput
+  showcases?: Prisma.ShowcaseUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutConversationHandoff_ConversationHandoff_assignedToUserIdToUserInput = {
+  id?: string
+  email: string
+  name: string
+  password: string
+  role?: $Enums.Role
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  comments?: Prisma.CommentCreateNestedManyWithoutUserInput
+  conversations?: Prisma.ConversationCreateNestedManyWithoutUserInput
+  ConversationHandoff_ConversationHandoff_userIdToUser?: Prisma.ConversationHandoffCreateNestedManyWithoutUser_ConversationHandoff_userIdToUserInput
+  forms?: Prisma.FormCreateNestedManyWithoutUserInput
+  instagramAccounts?: Prisma.InstagramAccountCreateNestedManyWithoutUserInput
+  instagramPublishJobs?: Prisma.InstagramPublishJobCreateNestedManyWithoutUserInput
+  showcases?: Prisma.ShowcaseCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutConversationHandoff_ConversationHandoff_assignedToUserIdToUserInput = {
+  id?: string
+  email: string
+  name: string
+  password: string
+  role?: $Enums.Role
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  comments?: Prisma.CommentUncheckedCreateNestedManyWithoutUserInput
+  conversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutUserInput
+  ConversationHandoff_ConversationHandoff_userIdToUser?: Prisma.ConversationHandoffUncheckedCreateNestedManyWithoutUser_ConversationHandoff_userIdToUserInput
+  forms?: Prisma.FormUncheckedCreateNestedManyWithoutUserInput
+  instagramAccounts?: Prisma.InstagramAccountUncheckedCreateNestedManyWithoutUserInput
+  instagramPublishJobs?: Prisma.InstagramPublishJobUncheckedCreateNestedManyWithoutUserInput
+  showcases?: Prisma.ShowcaseUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutConversationHandoff_ConversationHandoff_assignedToUserIdToUserInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutConversationHandoff_ConversationHandoff_assignedToUserIdToUserInput, Prisma.UserUncheckedCreateWithoutConversationHandoff_ConversationHandoff_assignedToUserIdToUserInput>
+}
+
+export type UserCreateWithoutConversationHandoff_ConversationHandoff_userIdToUserInput = {
+  id?: string
+  email: string
+  name: string
+  password: string
+  role?: $Enums.Role
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  comments?: Prisma.CommentCreateNestedManyWithoutUserInput
+  conversations?: Prisma.ConversationCreateNestedManyWithoutUserInput
+  ConversationHandoff_ConversationHandoff_assignedToUserIdToUser?: Prisma.ConversationHandoffCreateNestedManyWithoutUser_ConversationHandoff_assignedToUserIdToUserInput
+  forms?: Prisma.FormCreateNestedManyWithoutUserInput
+  instagramAccounts?: Prisma.InstagramAccountCreateNestedManyWithoutUserInput
+  instagramPublishJobs?: Prisma.InstagramPublishJobCreateNestedManyWithoutUserInput
+  showcases?: Prisma.ShowcaseCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutConversationHandoff_ConversationHandoff_userIdToUserInput = {
+  id?: string
+  email: string
+  name: string
+  password: string
+  role?: $Enums.Role
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  comments?: Prisma.CommentUncheckedCreateNestedManyWithoutUserInput
+  conversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutUserInput
+  ConversationHandoff_ConversationHandoff_assignedToUserIdToUser?: Prisma.ConversationHandoffUncheckedCreateNestedManyWithoutUser_ConversationHandoff_assignedToUserIdToUserInput
+  forms?: Prisma.FormUncheckedCreateNestedManyWithoutUserInput
+  instagramAccounts?: Prisma.InstagramAccountUncheckedCreateNestedManyWithoutUserInput
+  instagramPublishJobs?: Prisma.InstagramPublishJobUncheckedCreateNestedManyWithoutUserInput
+  showcases?: Prisma.ShowcaseUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutConversationHandoff_ConversationHandoff_userIdToUserInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutConversationHandoff_ConversationHandoff_userIdToUserInput, Prisma.UserUncheckedCreateWithoutConversationHandoff_ConversationHandoff_userIdToUserInput>
+}
+
+export type UserUpsertWithoutConversationHandoff_ConversationHandoff_assignedToUserIdToUserInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutConversationHandoff_ConversationHandoff_assignedToUserIdToUserInput, Prisma.UserUncheckedUpdateWithoutConversationHandoff_ConversationHandoff_assignedToUserIdToUserInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutConversationHandoff_ConversationHandoff_assignedToUserIdToUserInput, Prisma.UserUncheckedCreateWithoutConversationHandoff_ConversationHandoff_assignedToUserIdToUserInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutConversationHandoff_ConversationHandoff_assignedToUserIdToUserInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutConversationHandoff_ConversationHandoff_assignedToUserIdToUserInput, Prisma.UserUncheckedUpdateWithoutConversationHandoff_ConversationHandoff_assignedToUserIdToUserInput>
+}
+
+export type UserUpdateWithoutConversationHandoff_ConversationHandoff_assignedToUserIdToUserInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  comments?: Prisma.CommentUpdateManyWithoutUserNestedInput
+  conversations?: Prisma.ConversationUpdateManyWithoutUserNestedInput
+  ConversationHandoff_ConversationHandoff_userIdToUser?: Prisma.ConversationHandoffUpdateManyWithoutUser_ConversationHandoff_userIdToUserNestedInput
+  forms?: Prisma.FormUpdateManyWithoutUserNestedInput
+  instagramAccounts?: Prisma.InstagramAccountUpdateManyWithoutUserNestedInput
+  instagramPublishJobs?: Prisma.InstagramPublishJobUpdateManyWithoutUserNestedInput
+  showcases?: Prisma.ShowcaseUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutConversationHandoff_ConversationHandoff_assignedToUserIdToUserInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  comments?: Prisma.CommentUncheckedUpdateManyWithoutUserNestedInput
+  conversations?: Prisma.ConversationUncheckedUpdateManyWithoutUserNestedInput
+  ConversationHandoff_ConversationHandoff_userIdToUser?: Prisma.ConversationHandoffUncheckedUpdateManyWithoutUser_ConversationHandoff_userIdToUserNestedInput
+  forms?: Prisma.FormUncheckedUpdateManyWithoutUserNestedInput
+  instagramAccounts?: Prisma.InstagramAccountUncheckedUpdateManyWithoutUserNestedInput
+  instagramPublishJobs?: Prisma.InstagramPublishJobUncheckedUpdateManyWithoutUserNestedInput
+  showcases?: Prisma.ShowcaseUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserUpsertWithoutConversationHandoff_ConversationHandoff_userIdToUserInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutConversationHandoff_ConversationHandoff_userIdToUserInput, Prisma.UserUncheckedUpdateWithoutConversationHandoff_ConversationHandoff_userIdToUserInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutConversationHandoff_ConversationHandoff_userIdToUserInput, Prisma.UserUncheckedCreateWithoutConversationHandoff_ConversationHandoff_userIdToUserInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutConversationHandoff_ConversationHandoff_userIdToUserInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutConversationHandoff_ConversationHandoff_userIdToUserInput, Prisma.UserUncheckedUpdateWithoutConversationHandoff_ConversationHandoff_userIdToUserInput>
+}
+
+export type UserUpdateWithoutConversationHandoff_ConversationHandoff_userIdToUserInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  comments?: Prisma.CommentUpdateManyWithoutUserNestedInput
+  conversations?: Prisma.ConversationUpdateManyWithoutUserNestedInput
+  ConversationHandoff_ConversationHandoff_assignedToUserIdToUser?: Prisma.ConversationHandoffUpdateManyWithoutUser_ConversationHandoff_assignedToUserIdToUserNestedInput
+  forms?: Prisma.FormUpdateManyWithoutUserNestedInput
+  instagramAccounts?: Prisma.InstagramAccountUpdateManyWithoutUserNestedInput
+  instagramPublishJobs?: Prisma.InstagramPublishJobUpdateManyWithoutUserNestedInput
+  showcases?: Prisma.ShowcaseUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutConversationHandoff_ConversationHandoff_userIdToUserInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  comments?: Prisma.CommentUncheckedUpdateManyWithoutUserNestedInput
+  conversations?: Prisma.ConversationUncheckedUpdateManyWithoutUserNestedInput
+  ConversationHandoff_ConversationHandoff_assignedToUserIdToUser?: Prisma.ConversationHandoffUncheckedUpdateManyWithoutUser_ConversationHandoff_assignedToUserIdToUserNestedInput
+  forms?: Prisma.FormUncheckedUpdateManyWithoutUserNestedInput
+  instagramAccounts?: Prisma.InstagramAccountUncheckedUpdateManyWithoutUserNestedInput
+  instagramPublishJobs?: Prisma.InstagramPublishJobUncheckedUpdateManyWithoutUserNestedInput
+  showcases?: Prisma.ShowcaseUncheckedUpdateManyWithoutUserNestedInput
 }
 
 
@@ -954,21 +1219,25 @@ export type UserUncheckedUpdateWithoutInstagramPublishJobsInput = {
  */
 
 export type UserCountOutputType = {
-  instagramAccounts: number
   comments: number
   conversations: number
-  showcases: number
+  ConversationHandoff_ConversationHandoff_assignedToUserIdToUser: number
+  ConversationHandoff_ConversationHandoff_userIdToUser: number
   forms: number
+  instagramAccounts: number
   instagramPublishJobs: number
+  showcases: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  instagramAccounts?: boolean | UserCountOutputTypeCountInstagramAccountsArgs
   comments?: boolean | UserCountOutputTypeCountCommentsArgs
   conversations?: boolean | UserCountOutputTypeCountConversationsArgs
-  showcases?: boolean | UserCountOutputTypeCountShowcasesArgs
+  ConversationHandoff_ConversationHandoff_assignedToUserIdToUser?: boolean | UserCountOutputTypeCountConversationHandoff_ConversationHandoff_assignedToUserIdToUserArgs
+  ConversationHandoff_ConversationHandoff_userIdToUser?: boolean | UserCountOutputTypeCountConversationHandoff_ConversationHandoff_userIdToUserArgs
   forms?: boolean | UserCountOutputTypeCountFormsArgs
+  instagramAccounts?: boolean | UserCountOutputTypeCountInstagramAccountsArgs
   instagramPublishJobs?: boolean | UserCountOutputTypeCountInstagramPublishJobsArgs
+  showcases?: boolean | UserCountOutputTypeCountShowcasesArgs
 }
 
 /**
@@ -979,13 +1248,6 @@ export type UserCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensi
    * Select specific fields to fetch from the UserCountOutputType
    */
   select?: Prisma.UserCountOutputTypeSelect<ExtArgs> | null
-}
-
-/**
- * UserCountOutputType without action
- */
-export type UserCountOutputTypeCountInstagramAccountsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.InstagramAccountWhereInput
 }
 
 /**
@@ -1005,8 +1267,15 @@ export type UserCountOutputTypeCountConversationsArgs<ExtArgs extends runtime.Ty
 /**
  * UserCountOutputType without action
  */
-export type UserCountOutputTypeCountShowcasesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.ShowcaseWhereInput
+export type UserCountOutputTypeCountConversationHandoff_ConversationHandoff_assignedToUserIdToUserArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ConversationHandoffWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountConversationHandoff_ConversationHandoff_userIdToUserArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ConversationHandoffWhereInput
 }
 
 /**
@@ -1019,8 +1288,22 @@ export type UserCountOutputTypeCountFormsArgs<ExtArgs extends runtime.Types.Exte
 /**
  * UserCountOutputType without action
  */
+export type UserCountOutputTypeCountInstagramAccountsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.InstagramAccountWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
 export type UserCountOutputTypeCountInstagramPublishJobsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.InstagramPublishJobWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountShowcasesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ShowcaseWhereInput
 }
 
 
@@ -1032,12 +1315,14 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   role?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  instagramAccounts?: boolean | Prisma.User$instagramAccountsArgs<ExtArgs>
   comments?: boolean | Prisma.User$commentsArgs<ExtArgs>
   conversations?: boolean | Prisma.User$conversationsArgs<ExtArgs>
-  showcases?: boolean | Prisma.User$showcasesArgs<ExtArgs>
+  ConversationHandoff_ConversationHandoff_assignedToUserIdToUser?: boolean | Prisma.User$ConversationHandoff_ConversationHandoff_assignedToUserIdToUserArgs<ExtArgs>
+  ConversationHandoff_ConversationHandoff_userIdToUser?: boolean | Prisma.User$ConversationHandoff_ConversationHandoff_userIdToUserArgs<ExtArgs>
   forms?: boolean | Prisma.User$formsArgs<ExtArgs>
+  instagramAccounts?: boolean | Prisma.User$instagramAccountsArgs<ExtArgs>
   instagramPublishJobs?: boolean | Prisma.User$instagramPublishJobsArgs<ExtArgs>
+  showcases?: boolean | Prisma.User$showcasesArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -1073,12 +1358,14 @@ export type UserSelectScalar = {
 
 export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "name" | "password" | "role" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  instagramAccounts?: boolean | Prisma.User$instagramAccountsArgs<ExtArgs>
   comments?: boolean | Prisma.User$commentsArgs<ExtArgs>
   conversations?: boolean | Prisma.User$conversationsArgs<ExtArgs>
-  showcases?: boolean | Prisma.User$showcasesArgs<ExtArgs>
+  ConversationHandoff_ConversationHandoff_assignedToUserIdToUser?: boolean | Prisma.User$ConversationHandoff_ConversationHandoff_assignedToUserIdToUserArgs<ExtArgs>
+  ConversationHandoff_ConversationHandoff_userIdToUser?: boolean | Prisma.User$ConversationHandoff_ConversationHandoff_userIdToUserArgs<ExtArgs>
   forms?: boolean | Prisma.User$formsArgs<ExtArgs>
+  instagramAccounts?: boolean | Prisma.User$instagramAccountsArgs<ExtArgs>
   instagramPublishJobs?: boolean | Prisma.User$instagramPublishJobsArgs<ExtArgs>
+  showcases?: boolean | Prisma.User$showcasesArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -1087,12 +1374,14 @@ export type UserIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
 export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "User"
   objects: {
-    instagramAccounts: Prisma.$InstagramAccountPayload<ExtArgs>[]
     comments: Prisma.$CommentPayload<ExtArgs>[]
     conversations: Prisma.$ConversationPayload<ExtArgs>[]
-    showcases: Prisma.$ShowcasePayload<ExtArgs>[]
+    ConversationHandoff_ConversationHandoff_assignedToUserIdToUser: Prisma.$ConversationHandoffPayload<ExtArgs>[]
+    ConversationHandoff_ConversationHandoff_userIdToUser: Prisma.$ConversationHandoffPayload<ExtArgs>[]
     forms: Prisma.$FormPayload<ExtArgs>[]
+    instagramAccounts: Prisma.$InstagramAccountPayload<ExtArgs>[]
     instagramPublishJobs: Prisma.$InstagramPublishJobPayload<ExtArgs>[]
+    showcases: Prisma.$ShowcasePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1496,12 +1785,14 @@ readonly fields: UserFieldRefs;
  */
 export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  instagramAccounts<T extends Prisma.User$instagramAccountsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$instagramAccountsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InstagramAccountPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   comments<T extends Prisma.User$commentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$commentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CommentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   conversations<T extends Prisma.User$conversationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$conversationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ConversationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  showcases<T extends Prisma.User$showcasesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$showcasesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShowcasePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  ConversationHandoff_ConversationHandoff_assignedToUserIdToUser<T extends Prisma.User$ConversationHandoff_ConversationHandoff_assignedToUserIdToUserArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$ConversationHandoff_ConversationHandoff_assignedToUserIdToUserArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ConversationHandoffPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  ConversationHandoff_ConversationHandoff_userIdToUser<T extends Prisma.User$ConversationHandoff_ConversationHandoff_userIdToUserArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$ConversationHandoff_ConversationHandoff_userIdToUserArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ConversationHandoffPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   forms<T extends Prisma.User$formsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$formsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FormPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  instagramAccounts<T extends Prisma.User$instagramAccountsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$instagramAccountsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InstagramAccountPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   instagramPublishJobs<T extends Prisma.User$instagramPublishJobsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$instagramPublishJobsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InstagramPublishJobPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  showcases<T extends Prisma.User$showcasesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$showcasesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShowcasePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1931,30 +2222,6 @@ export type UserDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Internal
 }
 
 /**
- * User.instagramAccounts
- */
-export type User$instagramAccountsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the InstagramAccount
-   */
-  select?: Prisma.InstagramAccountSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the InstagramAccount
-   */
-  omit?: Prisma.InstagramAccountOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.InstagramAccountInclude<ExtArgs> | null
-  where?: Prisma.InstagramAccountWhereInput
-  orderBy?: Prisma.InstagramAccountOrderByWithRelationInput | Prisma.InstagramAccountOrderByWithRelationInput[]
-  cursor?: Prisma.InstagramAccountWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.InstagramAccountScalarFieldEnum | Prisma.InstagramAccountScalarFieldEnum[]
-}
-
-/**
  * User.comments
  */
 export type User$commentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2003,27 +2270,51 @@ export type User$conversationsArgs<ExtArgs extends runtime.Types.Extensions.Inte
 }
 
 /**
- * User.showcases
+ * User.ConversationHandoff_ConversationHandoff_assignedToUserIdToUser
  */
-export type User$showcasesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type User$ConversationHandoff_ConversationHandoff_assignedToUserIdToUserArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   /**
-   * Select specific fields to fetch from the Showcase
+   * Select specific fields to fetch from the ConversationHandoff
    */
-  select?: Prisma.ShowcaseSelect<ExtArgs> | null
+  select?: Prisma.ConversationHandoffSelect<ExtArgs> | null
   /**
-   * Omit specific fields from the Showcase
+   * Omit specific fields from the ConversationHandoff
    */
-  omit?: Prisma.ShowcaseOmit<ExtArgs> | null
+  omit?: Prisma.ConversationHandoffOmit<ExtArgs> | null
   /**
    * Choose, which related nodes to fetch as well
    */
-  include?: Prisma.ShowcaseInclude<ExtArgs> | null
-  where?: Prisma.ShowcaseWhereInput
-  orderBy?: Prisma.ShowcaseOrderByWithRelationInput | Prisma.ShowcaseOrderByWithRelationInput[]
-  cursor?: Prisma.ShowcaseWhereUniqueInput
+  include?: Prisma.ConversationHandoffInclude<ExtArgs> | null
+  where?: Prisma.ConversationHandoffWhereInput
+  orderBy?: Prisma.ConversationHandoffOrderByWithRelationInput | Prisma.ConversationHandoffOrderByWithRelationInput[]
+  cursor?: Prisma.ConversationHandoffWhereUniqueInput
   take?: number
   skip?: number
-  distinct?: Prisma.ShowcaseScalarFieldEnum | Prisma.ShowcaseScalarFieldEnum[]
+  distinct?: Prisma.ConversationHandoffScalarFieldEnum | Prisma.ConversationHandoffScalarFieldEnum[]
+}
+
+/**
+ * User.ConversationHandoff_ConversationHandoff_userIdToUser
+ */
+export type User$ConversationHandoff_ConversationHandoff_userIdToUserArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ConversationHandoff
+   */
+  select?: Prisma.ConversationHandoffSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ConversationHandoff
+   */
+  omit?: Prisma.ConversationHandoffOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ConversationHandoffInclude<ExtArgs> | null
+  where?: Prisma.ConversationHandoffWhereInput
+  orderBy?: Prisma.ConversationHandoffOrderByWithRelationInput | Prisma.ConversationHandoffOrderByWithRelationInput[]
+  cursor?: Prisma.ConversationHandoffWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ConversationHandoffScalarFieldEnum | Prisma.ConversationHandoffScalarFieldEnum[]
 }
 
 /**
@@ -2051,6 +2342,30 @@ export type User$formsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs
 }
 
 /**
+ * User.instagramAccounts
+ */
+export type User$instagramAccountsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the InstagramAccount
+   */
+  select?: Prisma.InstagramAccountSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the InstagramAccount
+   */
+  omit?: Prisma.InstagramAccountOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.InstagramAccountInclude<ExtArgs> | null
+  where?: Prisma.InstagramAccountWhereInput
+  orderBy?: Prisma.InstagramAccountOrderByWithRelationInput | Prisma.InstagramAccountOrderByWithRelationInput[]
+  cursor?: Prisma.InstagramAccountWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.InstagramAccountScalarFieldEnum | Prisma.InstagramAccountScalarFieldEnum[]
+}
+
+/**
  * User.instagramPublishJobs
  */
 export type User$instagramPublishJobsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2072,6 +2387,30 @@ export type User$instagramPublishJobsArgs<ExtArgs extends runtime.Types.Extensio
   take?: number
   skip?: number
   distinct?: Prisma.InstagramPublishJobScalarFieldEnum | Prisma.InstagramPublishJobScalarFieldEnum[]
+}
+
+/**
+ * User.showcases
+ */
+export type User$showcasesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Showcase
+   */
+  select?: Prisma.ShowcaseSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Showcase
+   */
+  omit?: Prisma.ShowcaseOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ShowcaseInclude<ExtArgs> | null
+  where?: Prisma.ShowcaseWhereInput
+  orderBy?: Prisma.ShowcaseOrderByWithRelationInput | Prisma.ShowcaseOrderByWithRelationInput[]
+  cursor?: Prisma.ShowcaseWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ShowcaseScalarFieldEnum | Prisma.ShowcaseScalarFieldEnum[]
 }
 
 /**

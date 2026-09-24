@@ -30,13 +30,13 @@ export type ConversationMessageMinAggregateOutputType = {
   direction: $Enums.MessageDirection | null
   messageType: $Enums.MessageType | null
   text: string | null
-  mediaUrl: string | null
-  mediaId: string | null
   igMessageId: string | null
   quickReplyId: string | null
+  createdAt: Date | null
+  mediaId: string | null
+  mediaUrl: string | null
   readAt: Date | null
   seenAt: Date | null
-  createdAt: Date | null
 }
 
 export type ConversationMessageMaxAggregateOutputType = {
@@ -45,13 +45,13 @@ export type ConversationMessageMaxAggregateOutputType = {
   direction: $Enums.MessageDirection | null
   messageType: $Enums.MessageType | null
   text: string | null
-  mediaUrl: string | null
-  mediaId: string | null
   igMessageId: string | null
   quickReplyId: string | null
+  createdAt: Date | null
+  mediaId: string | null
+  mediaUrl: string | null
   readAt: Date | null
   seenAt: Date | null
-  createdAt: Date | null
 }
 
 export type ConversationMessageCountAggregateOutputType = {
@@ -60,13 +60,13 @@ export type ConversationMessageCountAggregateOutputType = {
   direction: number
   messageType: number
   text: number
-  mediaUrl: number
-  mediaId: number
   igMessageId: number
   quickReplyId: number
+  createdAt: number
+  mediaId: number
+  mediaUrl: number
   readAt: number
   seenAt: number
-  createdAt: number
   _all: number
 }
 
@@ -77,13 +77,13 @@ export type ConversationMessageMinAggregateInputType = {
   direction?: true
   messageType?: true
   text?: true
-  mediaUrl?: true
-  mediaId?: true
   igMessageId?: true
   quickReplyId?: true
+  createdAt?: true
+  mediaId?: true
+  mediaUrl?: true
   readAt?: true
   seenAt?: true
-  createdAt?: true
 }
 
 export type ConversationMessageMaxAggregateInputType = {
@@ -92,13 +92,13 @@ export type ConversationMessageMaxAggregateInputType = {
   direction?: true
   messageType?: true
   text?: true
-  mediaUrl?: true
-  mediaId?: true
   igMessageId?: true
   quickReplyId?: true
+  createdAt?: true
+  mediaId?: true
+  mediaUrl?: true
   readAt?: true
   seenAt?: true
-  createdAt?: true
 }
 
 export type ConversationMessageCountAggregateInputType = {
@@ -107,13 +107,13 @@ export type ConversationMessageCountAggregateInputType = {
   direction?: true
   messageType?: true
   text?: true
-  mediaUrl?: true
-  mediaId?: true
   igMessageId?: true
   quickReplyId?: true
+  createdAt?: true
+  mediaId?: true
+  mediaUrl?: true
   readAt?: true
   seenAt?: true
-  createdAt?: true
   _all?: true
 }
 
@@ -195,13 +195,13 @@ export type ConversationMessageGroupByOutputType = {
   direction: $Enums.MessageDirection
   messageType: $Enums.MessageType
   text: string | null
-  mediaUrl: string | null
-  mediaId: string | null
   igMessageId: string | null
   quickReplyId: string | null
+  createdAt: Date
+  mediaId: string | null
+  mediaUrl: string | null
   readAt: Date | null
   seenAt: Date | null
-  createdAt: Date
   _count: ConversationMessageCountAggregateOutputType | null
   _min: ConversationMessageMinAggregateOutputType | null
   _max: ConversationMessageMaxAggregateOutputType | null
@@ -231,13 +231,13 @@ export type ConversationMessageWhereInput = {
   direction?: Prisma.EnumMessageDirectionFilter<"ConversationMessage"> | $Enums.MessageDirection
   messageType?: Prisma.EnumMessageTypeFilter<"ConversationMessage"> | $Enums.MessageType
   text?: Prisma.StringNullableFilter<"ConversationMessage"> | string | null
-  mediaUrl?: Prisma.StringNullableFilter<"ConversationMessage"> | string | null
-  mediaId?: Prisma.StringNullableFilter<"ConversationMessage"> | string | null
   igMessageId?: Prisma.StringNullableFilter<"ConversationMessage"> | string | null
   quickReplyId?: Prisma.StringNullableFilter<"ConversationMessage"> | string | null
+  createdAt?: Prisma.DateTimeFilter<"ConversationMessage"> | Date | string
+  mediaId?: Prisma.StringNullableFilter<"ConversationMessage"> | string | null
+  mediaUrl?: Prisma.StringNullableFilter<"ConversationMessage"> | string | null
   readAt?: Prisma.DateTimeNullableFilter<"ConversationMessage"> | Date | string | null
   seenAt?: Prisma.DateTimeNullableFilter<"ConversationMessage"> | Date | string | null
-  createdAt?: Prisma.DateTimeFilter<"ConversationMessage"> | Date | string
   conversation?: Prisma.XOR<Prisma.ConversationScalarRelationFilter, Prisma.ConversationWhereInput>
   quickReply?: Prisma.XOR<Prisma.QuickReplyNullableScalarRelationFilter, Prisma.QuickReplyWhereInput> | null
 }
@@ -248,13 +248,13 @@ export type ConversationMessageOrderByWithRelationInput = {
   direction?: Prisma.SortOrder
   messageType?: Prisma.SortOrder
   text?: Prisma.SortOrderInput | Prisma.SortOrder
-  mediaUrl?: Prisma.SortOrderInput | Prisma.SortOrder
-  mediaId?: Prisma.SortOrderInput | Prisma.SortOrder
   igMessageId?: Prisma.SortOrderInput | Prisma.SortOrder
   quickReplyId?: Prisma.SortOrderInput | Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  mediaId?: Prisma.SortOrderInput | Prisma.SortOrder
+  mediaUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   readAt?: Prisma.SortOrderInput | Prisma.SortOrder
   seenAt?: Prisma.SortOrderInput | Prisma.SortOrder
-  createdAt?: Prisma.SortOrder
   conversation?: Prisma.ConversationOrderByWithRelationInput
   quickReply?: Prisma.QuickReplyOrderByWithRelationInput
 }
@@ -269,12 +269,12 @@ export type ConversationMessageWhereUniqueInput = Prisma.AtLeast<{
   direction?: Prisma.EnumMessageDirectionFilter<"ConversationMessage"> | $Enums.MessageDirection
   messageType?: Prisma.EnumMessageTypeFilter<"ConversationMessage"> | $Enums.MessageType
   text?: Prisma.StringNullableFilter<"ConversationMessage"> | string | null
-  mediaUrl?: Prisma.StringNullableFilter<"ConversationMessage"> | string | null
-  mediaId?: Prisma.StringNullableFilter<"ConversationMessage"> | string | null
   quickReplyId?: Prisma.StringNullableFilter<"ConversationMessage"> | string | null
+  createdAt?: Prisma.DateTimeFilter<"ConversationMessage"> | Date | string
+  mediaId?: Prisma.StringNullableFilter<"ConversationMessage"> | string | null
+  mediaUrl?: Prisma.StringNullableFilter<"ConversationMessage"> | string | null
   readAt?: Prisma.DateTimeNullableFilter<"ConversationMessage"> | Date | string | null
   seenAt?: Prisma.DateTimeNullableFilter<"ConversationMessage"> | Date | string | null
-  createdAt?: Prisma.DateTimeFilter<"ConversationMessage"> | Date | string
   conversation?: Prisma.XOR<Prisma.ConversationScalarRelationFilter, Prisma.ConversationWhereInput>
   quickReply?: Prisma.XOR<Prisma.QuickReplyNullableScalarRelationFilter, Prisma.QuickReplyWhereInput> | null
 }, "id" | "igMessageId">
@@ -285,13 +285,13 @@ export type ConversationMessageOrderByWithAggregationInput = {
   direction?: Prisma.SortOrder
   messageType?: Prisma.SortOrder
   text?: Prisma.SortOrderInput | Prisma.SortOrder
-  mediaUrl?: Prisma.SortOrderInput | Prisma.SortOrder
-  mediaId?: Prisma.SortOrderInput | Prisma.SortOrder
   igMessageId?: Prisma.SortOrderInput | Prisma.SortOrder
   quickReplyId?: Prisma.SortOrderInput | Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  mediaId?: Prisma.SortOrderInput | Prisma.SortOrder
+  mediaUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   readAt?: Prisma.SortOrderInput | Prisma.SortOrder
   seenAt?: Prisma.SortOrderInput | Prisma.SortOrder
-  createdAt?: Prisma.SortOrder
   _count?: Prisma.ConversationMessageCountOrderByAggregateInput
   _max?: Prisma.ConversationMessageMaxOrderByAggregateInput
   _min?: Prisma.ConversationMessageMinOrderByAggregateInput
@@ -306,13 +306,13 @@ export type ConversationMessageScalarWhereWithAggregatesInput = {
   direction?: Prisma.EnumMessageDirectionWithAggregatesFilter<"ConversationMessage"> | $Enums.MessageDirection
   messageType?: Prisma.EnumMessageTypeWithAggregatesFilter<"ConversationMessage"> | $Enums.MessageType
   text?: Prisma.StringNullableWithAggregatesFilter<"ConversationMessage"> | string | null
-  mediaUrl?: Prisma.StringNullableWithAggregatesFilter<"ConversationMessage"> | string | null
-  mediaId?: Prisma.StringNullableWithAggregatesFilter<"ConversationMessage"> | string | null
   igMessageId?: Prisma.StringNullableWithAggregatesFilter<"ConversationMessage"> | string | null
   quickReplyId?: Prisma.StringNullableWithAggregatesFilter<"ConversationMessage"> | string | null
+  createdAt?: Prisma.DateTimeWithAggregatesFilter<"ConversationMessage"> | Date | string
+  mediaId?: Prisma.StringNullableWithAggregatesFilter<"ConversationMessage"> | string | null
+  mediaUrl?: Prisma.StringNullableWithAggregatesFilter<"ConversationMessage"> | string | null
   readAt?: Prisma.DateTimeNullableWithAggregatesFilter<"ConversationMessage"> | Date | string | null
   seenAt?: Prisma.DateTimeNullableWithAggregatesFilter<"ConversationMessage"> | Date | string | null
-  createdAt?: Prisma.DateTimeWithAggregatesFilter<"ConversationMessage"> | Date | string
 }
 
 export type ConversationMessageCreateInput = {
@@ -320,12 +320,12 @@ export type ConversationMessageCreateInput = {
   direction: $Enums.MessageDirection
   messageType: $Enums.MessageType
   text?: string | null
-  mediaUrl?: string | null
-  mediaId?: string | null
   igMessageId?: string | null
+  createdAt?: Date | string
+  mediaId?: string | null
+  mediaUrl?: string | null
   readAt?: Date | string | null
   seenAt?: Date | string | null
-  createdAt?: Date | string
   conversation: Prisma.ConversationCreateNestedOneWithoutMessagesInput
   quickReply?: Prisma.QuickReplyCreateNestedOneWithoutConversationMessagesInput
 }
@@ -336,13 +336,13 @@ export type ConversationMessageUncheckedCreateInput = {
   direction: $Enums.MessageDirection
   messageType: $Enums.MessageType
   text?: string | null
-  mediaUrl?: string | null
-  mediaId?: string | null
   igMessageId?: string | null
   quickReplyId?: string | null
+  createdAt?: Date | string
+  mediaId?: string | null
+  mediaUrl?: string | null
   readAt?: Date | string | null
   seenAt?: Date | string | null
-  createdAt?: Date | string
 }
 
 export type ConversationMessageUpdateInput = {
@@ -350,12 +350,12 @@ export type ConversationMessageUpdateInput = {
   direction?: Prisma.EnumMessageDirectionFieldUpdateOperationsInput | $Enums.MessageDirection
   messageType?: Prisma.EnumMessageTypeFieldUpdateOperationsInput | $Enums.MessageType
   text?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   igMessageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   readAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   seenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   conversation?: Prisma.ConversationUpdateOneRequiredWithoutMessagesNestedInput
   quickReply?: Prisma.QuickReplyUpdateOneWithoutConversationMessagesNestedInput
 }
@@ -366,13 +366,13 @@ export type ConversationMessageUncheckedUpdateInput = {
   direction?: Prisma.EnumMessageDirectionFieldUpdateOperationsInput | $Enums.MessageDirection
   messageType?: Prisma.EnumMessageTypeFieldUpdateOperationsInput | $Enums.MessageType
   text?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   igMessageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quickReplyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   readAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   seenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ConversationMessageCreateManyInput = {
@@ -381,13 +381,13 @@ export type ConversationMessageCreateManyInput = {
   direction: $Enums.MessageDirection
   messageType: $Enums.MessageType
   text?: string | null
-  mediaUrl?: string | null
-  mediaId?: string | null
   igMessageId?: string | null
   quickReplyId?: string | null
+  createdAt?: Date | string
+  mediaId?: string | null
+  mediaUrl?: string | null
   readAt?: Date | string | null
   seenAt?: Date | string | null
-  createdAt?: Date | string
 }
 
 export type ConversationMessageUpdateManyMutationInput = {
@@ -395,12 +395,12 @@ export type ConversationMessageUpdateManyMutationInput = {
   direction?: Prisma.EnumMessageDirectionFieldUpdateOperationsInput | $Enums.MessageDirection
   messageType?: Prisma.EnumMessageTypeFieldUpdateOperationsInput | $Enums.MessageType
   text?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   igMessageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   readAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   seenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ConversationMessageUncheckedUpdateManyInput = {
@@ -409,13 +409,13 @@ export type ConversationMessageUncheckedUpdateManyInput = {
   direction?: Prisma.EnumMessageDirectionFieldUpdateOperationsInput | $Enums.MessageDirection
   messageType?: Prisma.EnumMessageTypeFieldUpdateOperationsInput | $Enums.MessageType
   text?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   igMessageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quickReplyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   readAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   seenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ConversationMessageListRelationFilter = {
@@ -434,13 +434,13 @@ export type ConversationMessageCountOrderByAggregateInput = {
   direction?: Prisma.SortOrder
   messageType?: Prisma.SortOrder
   text?: Prisma.SortOrder
-  mediaUrl?: Prisma.SortOrder
-  mediaId?: Prisma.SortOrder
   igMessageId?: Prisma.SortOrder
   quickReplyId?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  mediaId?: Prisma.SortOrder
+  mediaUrl?: Prisma.SortOrder
   readAt?: Prisma.SortOrder
   seenAt?: Prisma.SortOrder
-  createdAt?: Prisma.SortOrder
 }
 
 export type ConversationMessageMaxOrderByAggregateInput = {
@@ -449,13 +449,13 @@ export type ConversationMessageMaxOrderByAggregateInput = {
   direction?: Prisma.SortOrder
   messageType?: Prisma.SortOrder
   text?: Prisma.SortOrder
-  mediaUrl?: Prisma.SortOrder
-  mediaId?: Prisma.SortOrder
   igMessageId?: Prisma.SortOrder
   quickReplyId?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  mediaId?: Prisma.SortOrder
+  mediaUrl?: Prisma.SortOrder
   readAt?: Prisma.SortOrder
   seenAt?: Prisma.SortOrder
-  createdAt?: Prisma.SortOrder
 }
 
 export type ConversationMessageMinOrderByAggregateInput = {
@@ -464,13 +464,13 @@ export type ConversationMessageMinOrderByAggregateInput = {
   direction?: Prisma.SortOrder
   messageType?: Prisma.SortOrder
   text?: Prisma.SortOrder
-  mediaUrl?: Prisma.SortOrder
-  mediaId?: Prisma.SortOrder
   igMessageId?: Prisma.SortOrder
   quickReplyId?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  mediaId?: Prisma.SortOrder
+  mediaUrl?: Prisma.SortOrder
   readAt?: Prisma.SortOrder
   seenAt?: Prisma.SortOrder
-  createdAt?: Prisma.SortOrder
 }
 
 export type ConversationMessageCreateNestedManyWithoutQuickReplyInput = {
@@ -570,12 +570,12 @@ export type ConversationMessageCreateWithoutQuickReplyInput = {
   direction: $Enums.MessageDirection
   messageType: $Enums.MessageType
   text?: string | null
-  mediaUrl?: string | null
-  mediaId?: string | null
   igMessageId?: string | null
+  createdAt?: Date | string
+  mediaId?: string | null
+  mediaUrl?: string | null
   readAt?: Date | string | null
   seenAt?: Date | string | null
-  createdAt?: Date | string
   conversation: Prisma.ConversationCreateNestedOneWithoutMessagesInput
 }
 
@@ -585,12 +585,12 @@ export type ConversationMessageUncheckedCreateWithoutQuickReplyInput = {
   direction: $Enums.MessageDirection
   messageType: $Enums.MessageType
   text?: string | null
-  mediaUrl?: string | null
-  mediaId?: string | null
   igMessageId?: string | null
+  createdAt?: Date | string
+  mediaId?: string | null
+  mediaUrl?: string | null
   readAt?: Date | string | null
   seenAt?: Date | string | null
-  createdAt?: Date | string
 }
 
 export type ConversationMessageCreateOrConnectWithoutQuickReplyInput = {
@@ -628,13 +628,13 @@ export type ConversationMessageScalarWhereInput = {
   direction?: Prisma.EnumMessageDirectionFilter<"ConversationMessage"> | $Enums.MessageDirection
   messageType?: Prisma.EnumMessageTypeFilter<"ConversationMessage"> | $Enums.MessageType
   text?: Prisma.StringNullableFilter<"ConversationMessage"> | string | null
-  mediaUrl?: Prisma.StringNullableFilter<"ConversationMessage"> | string | null
-  mediaId?: Prisma.StringNullableFilter<"ConversationMessage"> | string | null
   igMessageId?: Prisma.StringNullableFilter<"ConversationMessage"> | string | null
   quickReplyId?: Prisma.StringNullableFilter<"ConversationMessage"> | string | null
+  createdAt?: Prisma.DateTimeFilter<"ConversationMessage"> | Date | string
+  mediaId?: Prisma.StringNullableFilter<"ConversationMessage"> | string | null
+  mediaUrl?: Prisma.StringNullableFilter<"ConversationMessage"> | string | null
   readAt?: Prisma.DateTimeNullableFilter<"ConversationMessage"> | Date | string | null
   seenAt?: Prisma.DateTimeNullableFilter<"ConversationMessage"> | Date | string | null
-  createdAt?: Prisma.DateTimeFilter<"ConversationMessage"> | Date | string
 }
 
 export type ConversationMessageCreateWithoutConversationInput = {
@@ -642,12 +642,12 @@ export type ConversationMessageCreateWithoutConversationInput = {
   direction: $Enums.MessageDirection
   messageType: $Enums.MessageType
   text?: string | null
-  mediaUrl?: string | null
-  mediaId?: string | null
   igMessageId?: string | null
+  createdAt?: Date | string
+  mediaId?: string | null
+  mediaUrl?: string | null
   readAt?: Date | string | null
   seenAt?: Date | string | null
-  createdAt?: Date | string
   quickReply?: Prisma.QuickReplyCreateNestedOneWithoutConversationMessagesInput
 }
 
@@ -656,13 +656,13 @@ export type ConversationMessageUncheckedCreateWithoutConversationInput = {
   direction: $Enums.MessageDirection
   messageType: $Enums.MessageType
   text?: string | null
-  mediaUrl?: string | null
-  mediaId?: string | null
   igMessageId?: string | null
   quickReplyId?: string | null
+  createdAt?: Date | string
+  mediaId?: string | null
+  mediaUrl?: string | null
   readAt?: Date | string | null
   seenAt?: Date | string | null
-  createdAt?: Date | string
 }
 
 export type ConversationMessageCreateOrConnectWithoutConversationInput = {
@@ -697,12 +697,12 @@ export type ConversationMessageCreateManyQuickReplyInput = {
   direction: $Enums.MessageDirection
   messageType: $Enums.MessageType
   text?: string | null
-  mediaUrl?: string | null
-  mediaId?: string | null
   igMessageId?: string | null
+  createdAt?: Date | string
+  mediaId?: string | null
+  mediaUrl?: string | null
   readAt?: Date | string | null
   seenAt?: Date | string | null
-  createdAt?: Date | string
 }
 
 export type ConversationMessageUpdateWithoutQuickReplyInput = {
@@ -710,12 +710,12 @@ export type ConversationMessageUpdateWithoutQuickReplyInput = {
   direction?: Prisma.EnumMessageDirectionFieldUpdateOperationsInput | $Enums.MessageDirection
   messageType?: Prisma.EnumMessageTypeFieldUpdateOperationsInput | $Enums.MessageType
   text?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   igMessageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   readAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   seenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   conversation?: Prisma.ConversationUpdateOneRequiredWithoutMessagesNestedInput
 }
 
@@ -725,12 +725,12 @@ export type ConversationMessageUncheckedUpdateWithoutQuickReplyInput = {
   direction?: Prisma.EnumMessageDirectionFieldUpdateOperationsInput | $Enums.MessageDirection
   messageType?: Prisma.EnumMessageTypeFieldUpdateOperationsInput | $Enums.MessageType
   text?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   igMessageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   readAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   seenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ConversationMessageUncheckedUpdateManyWithoutQuickReplyInput = {
@@ -739,12 +739,12 @@ export type ConversationMessageUncheckedUpdateManyWithoutQuickReplyInput = {
   direction?: Prisma.EnumMessageDirectionFieldUpdateOperationsInput | $Enums.MessageDirection
   messageType?: Prisma.EnumMessageTypeFieldUpdateOperationsInput | $Enums.MessageType
   text?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   igMessageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   readAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   seenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ConversationMessageCreateManyConversationInput = {
@@ -752,13 +752,13 @@ export type ConversationMessageCreateManyConversationInput = {
   direction: $Enums.MessageDirection
   messageType: $Enums.MessageType
   text?: string | null
-  mediaUrl?: string | null
-  mediaId?: string | null
   igMessageId?: string | null
   quickReplyId?: string | null
+  createdAt?: Date | string
+  mediaId?: string | null
+  mediaUrl?: string | null
   readAt?: Date | string | null
   seenAt?: Date | string | null
-  createdAt?: Date | string
 }
 
 export type ConversationMessageUpdateWithoutConversationInput = {
@@ -766,12 +766,12 @@ export type ConversationMessageUpdateWithoutConversationInput = {
   direction?: Prisma.EnumMessageDirectionFieldUpdateOperationsInput | $Enums.MessageDirection
   messageType?: Prisma.EnumMessageTypeFieldUpdateOperationsInput | $Enums.MessageType
   text?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   igMessageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   readAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   seenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   quickReply?: Prisma.QuickReplyUpdateOneWithoutConversationMessagesNestedInput
 }
 
@@ -780,13 +780,13 @@ export type ConversationMessageUncheckedUpdateWithoutConversationInput = {
   direction?: Prisma.EnumMessageDirectionFieldUpdateOperationsInput | $Enums.MessageDirection
   messageType?: Prisma.EnumMessageTypeFieldUpdateOperationsInput | $Enums.MessageType
   text?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   igMessageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quickReplyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   readAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   seenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ConversationMessageUncheckedUpdateManyWithoutConversationInput = {
@@ -794,13 +794,13 @@ export type ConversationMessageUncheckedUpdateManyWithoutConversationInput = {
   direction?: Prisma.EnumMessageDirectionFieldUpdateOperationsInput | $Enums.MessageDirection
   messageType?: Prisma.EnumMessageTypeFieldUpdateOperationsInput | $Enums.MessageType
   text?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   igMessageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quickReplyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   readAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   seenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 
@@ -811,13 +811,13 @@ export type ConversationMessageSelect<ExtArgs extends runtime.Types.Extensions.I
   direction?: boolean
   messageType?: boolean
   text?: boolean
-  mediaUrl?: boolean
-  mediaId?: boolean
   igMessageId?: boolean
   quickReplyId?: boolean
+  createdAt?: boolean
+  mediaId?: boolean
+  mediaUrl?: boolean
   readAt?: boolean
   seenAt?: boolean
-  createdAt?: boolean
   conversation?: boolean | Prisma.ConversationDefaultArgs<ExtArgs>
   quickReply?: boolean | Prisma.ConversationMessage$quickReplyArgs<ExtArgs>
 }, ExtArgs["result"]["conversationMessage"]>
@@ -828,13 +828,13 @@ export type ConversationMessageSelectCreateManyAndReturn<ExtArgs extends runtime
   direction?: boolean
   messageType?: boolean
   text?: boolean
-  mediaUrl?: boolean
-  mediaId?: boolean
   igMessageId?: boolean
   quickReplyId?: boolean
+  createdAt?: boolean
+  mediaId?: boolean
+  mediaUrl?: boolean
   readAt?: boolean
   seenAt?: boolean
-  createdAt?: boolean
   conversation?: boolean | Prisma.ConversationDefaultArgs<ExtArgs>
   quickReply?: boolean | Prisma.ConversationMessage$quickReplyArgs<ExtArgs>
 }, ExtArgs["result"]["conversationMessage"]>
@@ -845,13 +845,13 @@ export type ConversationMessageSelectUpdateManyAndReturn<ExtArgs extends runtime
   direction?: boolean
   messageType?: boolean
   text?: boolean
-  mediaUrl?: boolean
-  mediaId?: boolean
   igMessageId?: boolean
   quickReplyId?: boolean
+  createdAt?: boolean
+  mediaId?: boolean
+  mediaUrl?: boolean
   readAt?: boolean
   seenAt?: boolean
-  createdAt?: boolean
   conversation?: boolean | Prisma.ConversationDefaultArgs<ExtArgs>
   quickReply?: boolean | Prisma.ConversationMessage$quickReplyArgs<ExtArgs>
 }, ExtArgs["result"]["conversationMessage"]>
@@ -862,16 +862,16 @@ export type ConversationMessageSelectScalar = {
   direction?: boolean
   messageType?: boolean
   text?: boolean
-  mediaUrl?: boolean
-  mediaId?: boolean
   igMessageId?: boolean
   quickReplyId?: boolean
+  createdAt?: boolean
+  mediaId?: boolean
+  mediaUrl?: boolean
   readAt?: boolean
   seenAt?: boolean
-  createdAt?: boolean
 }
 
-export type ConversationMessageOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "conversationId" | "direction" | "messageType" | "text" | "mediaUrl" | "mediaId" | "igMessageId" | "quickReplyId" | "readAt" | "seenAt" | "createdAt", ExtArgs["result"]["conversationMessage"]>
+export type ConversationMessageOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "conversationId" | "direction" | "messageType" | "text" | "igMessageId" | "quickReplyId" | "createdAt" | "mediaId" | "mediaUrl" | "readAt" | "seenAt", ExtArgs["result"]["conversationMessage"]>
 export type ConversationMessageInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   conversation?: boolean | Prisma.ConversationDefaultArgs<ExtArgs>
   quickReply?: boolean | Prisma.ConversationMessage$quickReplyArgs<ExtArgs>
@@ -897,13 +897,13 @@ export type $ConversationMessagePayload<ExtArgs extends runtime.Types.Extensions
     direction: $Enums.MessageDirection
     messageType: $Enums.MessageType
     text: string | null
-    mediaUrl: string | null
-    mediaId: string | null
     igMessageId: string | null
     quickReplyId: string | null
+    createdAt: Date
+    mediaId: string | null
+    mediaUrl: string | null
     readAt: Date | null
     seenAt: Date | null
-    createdAt: Date
   }, ExtArgs["result"]["conversationMessage"]>
   composites: {}
 }
@@ -1334,13 +1334,13 @@ export interface ConversationMessageFieldRefs {
   readonly direction: Prisma.FieldRef<"ConversationMessage", 'MessageDirection'>
   readonly messageType: Prisma.FieldRef<"ConversationMessage", 'MessageType'>
   readonly text: Prisma.FieldRef<"ConversationMessage", 'String'>
-  readonly mediaUrl: Prisma.FieldRef<"ConversationMessage", 'String'>
-  readonly mediaId: Prisma.FieldRef<"ConversationMessage", 'String'>
   readonly igMessageId: Prisma.FieldRef<"ConversationMessage", 'String'>
   readonly quickReplyId: Prisma.FieldRef<"ConversationMessage", 'String'>
+  readonly createdAt: Prisma.FieldRef<"ConversationMessage", 'DateTime'>
+  readonly mediaId: Prisma.FieldRef<"ConversationMessage", 'String'>
+  readonly mediaUrl: Prisma.FieldRef<"ConversationMessage", 'String'>
   readonly readAt: Prisma.FieldRef<"ConversationMessage", 'DateTime'>
   readonly seenAt: Prisma.FieldRef<"ConversationMessage", 'DateTime'>
-  readonly createdAt: Prisma.FieldRef<"ConversationMessage", 'DateTime'>
 }
     
 

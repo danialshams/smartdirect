@@ -41,6 +41,8 @@ export type PersistentMenuItemMinAggregateOutputType = {
   payload: string | null
   automationId: string | null
   order: number | null
+  createdAt: Date | null
+  updatedAt: Date | null
 }
 
 export type PersistentMenuItemMaxAggregateOutputType = {
@@ -50,6 +52,8 @@ export type PersistentMenuItemMaxAggregateOutputType = {
   payload: string | null
   automationId: string | null
   order: number | null
+  createdAt: Date | null
+  updatedAt: Date | null
 }
 
 export type PersistentMenuItemCountAggregateOutputType = {
@@ -59,6 +63,8 @@ export type PersistentMenuItemCountAggregateOutputType = {
   payload: number
   automationId: number
   order: number
+  createdAt: number
+  updatedAt: number
   _all: number
 }
 
@@ -78,6 +84,8 @@ export type PersistentMenuItemMinAggregateInputType = {
   payload?: true
   automationId?: true
   order?: true
+  createdAt?: true
+  updatedAt?: true
 }
 
 export type PersistentMenuItemMaxAggregateInputType = {
@@ -87,6 +95,8 @@ export type PersistentMenuItemMaxAggregateInputType = {
   payload?: true
   automationId?: true
   order?: true
+  createdAt?: true
+  updatedAt?: true
 }
 
 export type PersistentMenuItemCountAggregateInputType = {
@@ -96,6 +106,8 @@ export type PersistentMenuItemCountAggregateInputType = {
   payload?: true
   automationId?: true
   order?: true
+  createdAt?: true
+  updatedAt?: true
   _all?: true
 }
 
@@ -192,6 +204,8 @@ export type PersistentMenuItemGroupByOutputType = {
   payload: string
   automationId: string | null
   order: number
+  createdAt: Date
+  updatedAt: Date
   _count: PersistentMenuItemCountAggregateOutputType | null
   _avg: PersistentMenuItemAvgAggregateOutputType | null
   _sum: PersistentMenuItemSumAggregateOutputType | null
@@ -224,8 +238,10 @@ export type PersistentMenuItemWhereInput = {
   payload?: Prisma.StringFilter<"PersistentMenuItem"> | string
   automationId?: Prisma.StringNullableFilter<"PersistentMenuItem"> | string | null
   order?: Prisma.IntFilter<"PersistentMenuItem"> | number
-  persistentMenu?: Prisma.XOR<Prisma.PersistentMenuScalarRelationFilter, Prisma.PersistentMenuWhereInput>
+  createdAt?: Prisma.DateTimeFilter<"PersistentMenuItem"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"PersistentMenuItem"> | Date | string
   automation?: Prisma.XOR<Prisma.AutomationNullableScalarRelationFilter, Prisma.AutomationWhereInput> | null
+  persistentMenu?: Prisma.XOR<Prisma.PersistentMenuScalarRelationFilter, Prisma.PersistentMenuWhereInput>
 }
 
 export type PersistentMenuItemOrderByWithRelationInput = {
@@ -235,8 +251,10 @@ export type PersistentMenuItemOrderByWithRelationInput = {
   payload?: Prisma.SortOrder
   automationId?: Prisma.SortOrderInput | Prisma.SortOrder
   order?: Prisma.SortOrder
-  persistentMenu?: Prisma.PersistentMenuOrderByWithRelationInput
+  createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
   automation?: Prisma.AutomationOrderByWithRelationInput
+  persistentMenu?: Prisma.PersistentMenuOrderByWithRelationInput
 }
 
 export type PersistentMenuItemWhereUniqueInput = Prisma.AtLeast<{
@@ -249,8 +267,10 @@ export type PersistentMenuItemWhereUniqueInput = Prisma.AtLeast<{
   payload?: Prisma.StringFilter<"PersistentMenuItem"> | string
   automationId?: Prisma.StringNullableFilter<"PersistentMenuItem"> | string | null
   order?: Prisma.IntFilter<"PersistentMenuItem"> | number
-  persistentMenu?: Prisma.XOR<Prisma.PersistentMenuScalarRelationFilter, Prisma.PersistentMenuWhereInput>
+  createdAt?: Prisma.DateTimeFilter<"PersistentMenuItem"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"PersistentMenuItem"> | Date | string
   automation?: Prisma.XOR<Prisma.AutomationNullableScalarRelationFilter, Prisma.AutomationWhereInput> | null
+  persistentMenu?: Prisma.XOR<Prisma.PersistentMenuScalarRelationFilter, Prisma.PersistentMenuWhereInput>
 }, "id">
 
 export type PersistentMenuItemOrderByWithAggregationInput = {
@@ -260,6 +280,8 @@ export type PersistentMenuItemOrderByWithAggregationInput = {
   payload?: Prisma.SortOrder
   automationId?: Prisma.SortOrderInput | Prisma.SortOrder
   order?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
   _count?: Prisma.PersistentMenuItemCountOrderByAggregateInput
   _avg?: Prisma.PersistentMenuItemAvgOrderByAggregateInput
   _max?: Prisma.PersistentMenuItemMaxOrderByAggregateInput
@@ -277,6 +299,8 @@ export type PersistentMenuItemScalarWhereWithAggregatesInput = {
   payload?: Prisma.StringWithAggregatesFilter<"PersistentMenuItem"> | string
   automationId?: Prisma.StringNullableWithAggregatesFilter<"PersistentMenuItem"> | string | null
   order?: Prisma.IntWithAggregatesFilter<"PersistentMenuItem"> | number
+  createdAt?: Prisma.DateTimeWithAggregatesFilter<"PersistentMenuItem"> | Date | string
+  updatedAt?: Prisma.DateTimeWithAggregatesFilter<"PersistentMenuItem"> | Date | string
 }
 
 export type PersistentMenuItemCreateInput = {
@@ -284,8 +308,10 @@ export type PersistentMenuItemCreateInput = {
   title: string
   payload: string
   order?: number
-  persistentMenu: Prisma.PersistentMenuCreateNestedOneWithoutItemsInput
+  createdAt?: Date | string
+  updatedAt: Date | string
   automation?: Prisma.AutomationCreateNestedOneWithoutPersistentMenuItemsInput
+  persistentMenu: Prisma.PersistentMenuCreateNestedOneWithoutItemsInput
 }
 
 export type PersistentMenuItemUncheckedCreateInput = {
@@ -295,6 +321,8 @@ export type PersistentMenuItemUncheckedCreateInput = {
   payload: string
   automationId?: string | null
   order?: number
+  createdAt?: Date | string
+  updatedAt: Date | string
 }
 
 export type PersistentMenuItemUpdateInput = {
@@ -302,8 +330,10 @@ export type PersistentMenuItemUpdateInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   payload?: Prisma.StringFieldUpdateOperationsInput | string
   order?: Prisma.IntFieldUpdateOperationsInput | number
-  persistentMenu?: Prisma.PersistentMenuUpdateOneRequiredWithoutItemsNestedInput
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   automation?: Prisma.AutomationUpdateOneWithoutPersistentMenuItemsNestedInput
+  persistentMenu?: Prisma.PersistentMenuUpdateOneRequiredWithoutItemsNestedInput
 }
 
 export type PersistentMenuItemUncheckedUpdateInput = {
@@ -313,6 +343,8 @@ export type PersistentMenuItemUncheckedUpdateInput = {
   payload?: Prisma.StringFieldUpdateOperationsInput | string
   automationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   order?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type PersistentMenuItemCreateManyInput = {
@@ -322,6 +354,8 @@ export type PersistentMenuItemCreateManyInput = {
   payload: string
   automationId?: string | null
   order?: number
+  createdAt?: Date | string
+  updatedAt: Date | string
 }
 
 export type PersistentMenuItemUpdateManyMutationInput = {
@@ -329,6 +363,8 @@ export type PersistentMenuItemUpdateManyMutationInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   payload?: Prisma.StringFieldUpdateOperationsInput | string
   order?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type PersistentMenuItemUncheckedUpdateManyInput = {
@@ -338,6 +374,8 @@ export type PersistentMenuItemUncheckedUpdateManyInput = {
   payload?: Prisma.StringFieldUpdateOperationsInput | string
   automationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   order?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type PersistentMenuItemListRelationFilter = {
@@ -357,6 +395,8 @@ export type PersistentMenuItemCountOrderByAggregateInput = {
   payload?: Prisma.SortOrder
   automationId?: Prisma.SortOrder
   order?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
 }
 
 export type PersistentMenuItemAvgOrderByAggregateInput = {
@@ -370,6 +410,8 @@ export type PersistentMenuItemMaxOrderByAggregateInput = {
   payload?: Prisma.SortOrder
   automationId?: Prisma.SortOrder
   order?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
 }
 
 export type PersistentMenuItemMinOrderByAggregateInput = {
@@ -379,6 +421,8 @@ export type PersistentMenuItemMinOrderByAggregateInput = {
   payload?: Prisma.SortOrder
   automationId?: Prisma.SortOrder
   order?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
 }
 
 export type PersistentMenuItemSumOrderByAggregateInput = {
@@ -474,6 +518,8 @@ export type PersistentMenuItemCreateWithoutAutomationInput = {
   title: string
   payload: string
   order?: number
+  createdAt?: Date | string
+  updatedAt: Date | string
   persistentMenu: Prisma.PersistentMenuCreateNestedOneWithoutItemsInput
 }
 
@@ -483,6 +529,8 @@ export type PersistentMenuItemUncheckedCreateWithoutAutomationInput = {
   title: string
   payload: string
   order?: number
+  createdAt?: Date | string
+  updatedAt: Date | string
 }
 
 export type PersistentMenuItemCreateOrConnectWithoutAutomationInput = {
@@ -521,6 +569,8 @@ export type PersistentMenuItemScalarWhereInput = {
   payload?: Prisma.StringFilter<"PersistentMenuItem"> | string
   automationId?: Prisma.StringNullableFilter<"PersistentMenuItem"> | string | null
   order?: Prisma.IntFilter<"PersistentMenuItem"> | number
+  createdAt?: Prisma.DateTimeFilter<"PersistentMenuItem"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"PersistentMenuItem"> | Date | string
 }
 
 export type PersistentMenuItemCreateWithoutPersistentMenuInput = {
@@ -528,6 +578,8 @@ export type PersistentMenuItemCreateWithoutPersistentMenuInput = {
   title: string
   payload: string
   order?: number
+  createdAt?: Date | string
+  updatedAt: Date | string
   automation?: Prisma.AutomationCreateNestedOneWithoutPersistentMenuItemsInput
 }
 
@@ -537,6 +589,8 @@ export type PersistentMenuItemUncheckedCreateWithoutPersistentMenuInput = {
   payload: string
   automationId?: string | null
   order?: number
+  createdAt?: Date | string
+  updatedAt: Date | string
 }
 
 export type PersistentMenuItemCreateOrConnectWithoutPersistentMenuInput = {
@@ -571,6 +625,8 @@ export type PersistentMenuItemCreateManyAutomationInput = {
   title: string
   payload: string
   order?: number
+  createdAt?: Date | string
+  updatedAt: Date | string
 }
 
 export type PersistentMenuItemUpdateWithoutAutomationInput = {
@@ -578,6 +634,8 @@ export type PersistentMenuItemUpdateWithoutAutomationInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   payload?: Prisma.StringFieldUpdateOperationsInput | string
   order?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   persistentMenu?: Prisma.PersistentMenuUpdateOneRequiredWithoutItemsNestedInput
 }
 
@@ -587,6 +645,8 @@ export type PersistentMenuItemUncheckedUpdateWithoutAutomationInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   payload?: Prisma.StringFieldUpdateOperationsInput | string
   order?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type PersistentMenuItemUncheckedUpdateManyWithoutAutomationInput = {
@@ -595,6 +655,8 @@ export type PersistentMenuItemUncheckedUpdateManyWithoutAutomationInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   payload?: Prisma.StringFieldUpdateOperationsInput | string
   order?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type PersistentMenuItemCreateManyPersistentMenuInput = {
@@ -603,6 +665,8 @@ export type PersistentMenuItemCreateManyPersistentMenuInput = {
   payload: string
   automationId?: string | null
   order?: number
+  createdAt?: Date | string
+  updatedAt: Date | string
 }
 
 export type PersistentMenuItemUpdateWithoutPersistentMenuInput = {
@@ -610,6 +674,8 @@ export type PersistentMenuItemUpdateWithoutPersistentMenuInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   payload?: Prisma.StringFieldUpdateOperationsInput | string
   order?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   automation?: Prisma.AutomationUpdateOneWithoutPersistentMenuItemsNestedInput
 }
 
@@ -619,6 +685,8 @@ export type PersistentMenuItemUncheckedUpdateWithoutPersistentMenuInput = {
   payload?: Prisma.StringFieldUpdateOperationsInput | string
   automationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   order?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type PersistentMenuItemUncheckedUpdateManyWithoutPersistentMenuInput = {
@@ -627,6 +695,8 @@ export type PersistentMenuItemUncheckedUpdateManyWithoutPersistentMenuInput = {
   payload?: Prisma.StringFieldUpdateOperationsInput | string
   automationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   order?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 
@@ -638,8 +708,10 @@ export type PersistentMenuItemSelect<ExtArgs extends runtime.Types.Extensions.In
   payload?: boolean
   automationId?: boolean
   order?: boolean
-  persistentMenu?: boolean | Prisma.PersistentMenuDefaultArgs<ExtArgs>
+  createdAt?: boolean
+  updatedAt?: boolean
   automation?: boolean | Prisma.PersistentMenuItem$automationArgs<ExtArgs>
+  persistentMenu?: boolean | Prisma.PersistentMenuDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["persistentMenuItem"]>
 
 export type PersistentMenuItemSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -649,8 +721,10 @@ export type PersistentMenuItemSelectCreateManyAndReturn<ExtArgs extends runtime.
   payload?: boolean
   automationId?: boolean
   order?: boolean
-  persistentMenu?: boolean | Prisma.PersistentMenuDefaultArgs<ExtArgs>
+  createdAt?: boolean
+  updatedAt?: boolean
   automation?: boolean | Prisma.PersistentMenuItem$automationArgs<ExtArgs>
+  persistentMenu?: boolean | Prisma.PersistentMenuDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["persistentMenuItem"]>
 
 export type PersistentMenuItemSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -660,8 +734,10 @@ export type PersistentMenuItemSelectUpdateManyAndReturn<ExtArgs extends runtime.
   payload?: boolean
   automationId?: boolean
   order?: boolean
-  persistentMenu?: boolean | Prisma.PersistentMenuDefaultArgs<ExtArgs>
+  createdAt?: boolean
+  updatedAt?: boolean
   automation?: boolean | Prisma.PersistentMenuItem$automationArgs<ExtArgs>
+  persistentMenu?: boolean | Prisma.PersistentMenuDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["persistentMenuItem"]>
 
 export type PersistentMenuItemSelectScalar = {
@@ -671,27 +747,29 @@ export type PersistentMenuItemSelectScalar = {
   payload?: boolean
   automationId?: boolean
   order?: boolean
+  createdAt?: boolean
+  updatedAt?: boolean
 }
 
-export type PersistentMenuItemOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "persistentMenuId" | "title" | "payload" | "automationId" | "order", ExtArgs["result"]["persistentMenuItem"]>
+export type PersistentMenuItemOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "persistentMenuId" | "title" | "payload" | "automationId" | "order" | "createdAt" | "updatedAt", ExtArgs["result"]["persistentMenuItem"]>
 export type PersistentMenuItemInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  persistentMenu?: boolean | Prisma.PersistentMenuDefaultArgs<ExtArgs>
   automation?: boolean | Prisma.PersistentMenuItem$automationArgs<ExtArgs>
+  persistentMenu?: boolean | Prisma.PersistentMenuDefaultArgs<ExtArgs>
 }
 export type PersistentMenuItemIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  persistentMenu?: boolean | Prisma.PersistentMenuDefaultArgs<ExtArgs>
   automation?: boolean | Prisma.PersistentMenuItem$automationArgs<ExtArgs>
+  persistentMenu?: boolean | Prisma.PersistentMenuDefaultArgs<ExtArgs>
 }
 export type PersistentMenuItemIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  persistentMenu?: boolean | Prisma.PersistentMenuDefaultArgs<ExtArgs>
   automation?: boolean | Prisma.PersistentMenuItem$automationArgs<ExtArgs>
+  persistentMenu?: boolean | Prisma.PersistentMenuDefaultArgs<ExtArgs>
 }
 
 export type $PersistentMenuItemPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "PersistentMenuItem"
   objects: {
-    persistentMenu: Prisma.$PersistentMenuPayload<ExtArgs>
     automation: Prisma.$AutomationPayload<ExtArgs> | null
+    persistentMenu: Prisma.$PersistentMenuPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -700,6 +778,8 @@ export type $PersistentMenuItemPayload<ExtArgs extends runtime.Types.Extensions.
     payload: string
     automationId: string | null
     order: number
+    createdAt: Date
+    updatedAt: Date
   }, ExtArgs["result"]["persistentMenuItem"]>
   composites: {}
 }
@@ -1094,8 +1174,8 @@ readonly fields: PersistentMenuItemFieldRefs;
  */
 export interface Prisma__PersistentMenuItemClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  persistentMenu<T extends Prisma.PersistentMenuDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.PersistentMenuDefaultArgs<ExtArgs>>): Prisma.Prisma__PersistentMenuClient<runtime.Types.Result.GetResult<Prisma.$PersistentMenuPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   automation<T extends Prisma.PersistentMenuItem$automationArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.PersistentMenuItem$automationArgs<ExtArgs>>): Prisma.Prisma__AutomationClient<runtime.Types.Result.GetResult<Prisma.$AutomationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  persistentMenu<T extends Prisma.PersistentMenuDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.PersistentMenuDefaultArgs<ExtArgs>>): Prisma.Prisma__PersistentMenuClient<runtime.Types.Result.GetResult<Prisma.$PersistentMenuPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1131,6 +1211,8 @@ export interface PersistentMenuItemFieldRefs {
   readonly payload: Prisma.FieldRef<"PersistentMenuItem", 'String'>
   readonly automationId: Prisma.FieldRef<"PersistentMenuItem", 'String'>
   readonly order: Prisma.FieldRef<"PersistentMenuItem", 'Int'>
+  readonly createdAt: Prisma.FieldRef<"PersistentMenuItem", 'DateTime'>
+  readonly updatedAt: Prisma.FieldRef<"PersistentMenuItem", 'DateTime'>
 }
     
 

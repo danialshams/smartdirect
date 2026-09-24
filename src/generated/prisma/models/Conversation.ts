@@ -30,13 +30,13 @@ export type ConversationMinAggregateOutputType = {
   instagramAccountId: string | null
   igUserId: string | null
   participantId: string | null
-  participantUsername: string | null
-  participantName: string | null
-  participantProfilePicture: string | null
   isActive: boolean | null
   lastMessageAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
+  participantUsername: string | null
+  participantName: string | null
+  participantProfilePicture: string | null
 }
 
 export type ConversationMaxAggregateOutputType = {
@@ -45,13 +45,13 @@ export type ConversationMaxAggregateOutputType = {
   instagramAccountId: string | null
   igUserId: string | null
   participantId: string | null
-  participantUsername: string | null
-  participantName: string | null
-  participantProfilePicture: string | null
   isActive: boolean | null
   lastMessageAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
+  participantUsername: string | null
+  participantName: string | null
+  participantProfilePicture: string | null
 }
 
 export type ConversationCountAggregateOutputType = {
@@ -60,13 +60,13 @@ export type ConversationCountAggregateOutputType = {
   instagramAccountId: number
   igUserId: number
   participantId: number
-  participantUsername: number
-  participantName: number
-  participantProfilePicture: number
   isActive: number
   lastMessageAt: number
   createdAt: number
   updatedAt: number
+  participantUsername: number
+  participantName: number
+  participantProfilePicture: number
   _all: number
 }
 
@@ -77,13 +77,13 @@ export type ConversationMinAggregateInputType = {
   instagramAccountId?: true
   igUserId?: true
   participantId?: true
-  participantUsername?: true
-  participantName?: true
-  participantProfilePicture?: true
   isActive?: true
   lastMessageAt?: true
   createdAt?: true
   updatedAt?: true
+  participantUsername?: true
+  participantName?: true
+  participantProfilePicture?: true
 }
 
 export type ConversationMaxAggregateInputType = {
@@ -92,13 +92,13 @@ export type ConversationMaxAggregateInputType = {
   instagramAccountId?: true
   igUserId?: true
   participantId?: true
-  participantUsername?: true
-  participantName?: true
-  participantProfilePicture?: true
   isActive?: true
   lastMessageAt?: true
   createdAt?: true
   updatedAt?: true
+  participantUsername?: true
+  participantName?: true
+  participantProfilePicture?: true
 }
 
 export type ConversationCountAggregateInputType = {
@@ -107,13 +107,13 @@ export type ConversationCountAggregateInputType = {
   instagramAccountId?: true
   igUserId?: true
   participantId?: true
-  participantUsername?: true
-  participantName?: true
-  participantProfilePicture?: true
   isActive?: true
   lastMessageAt?: true
   createdAt?: true
   updatedAt?: true
+  participantUsername?: true
+  participantName?: true
+  participantProfilePicture?: true
   _all?: true
 }
 
@@ -195,13 +195,13 @@ export type ConversationGroupByOutputType = {
   instagramAccountId: string
   igUserId: string
   participantId: string
-  participantUsername: string | null
-  participantName: string | null
-  participantProfilePicture: string | null
   isActive: boolean
   lastMessageAt: Date | null
   createdAt: Date
   updatedAt: Date
+  participantUsername: string | null
+  participantName: string | null
+  participantProfilePicture: string | null
   _count: ConversationCountAggregateOutputType | null
   _min: ConversationMinAggregateOutputType | null
   _max: ConversationMaxAggregateOutputType | null
@@ -231,15 +231,16 @@ export type ConversationWhereInput = {
   instagramAccountId?: Prisma.StringFilter<"Conversation"> | string
   igUserId?: Prisma.StringFilter<"Conversation"> | string
   participantId?: Prisma.StringFilter<"Conversation"> | string
-  participantUsername?: Prisma.StringNullableFilter<"Conversation"> | string | null
-  participantName?: Prisma.StringNullableFilter<"Conversation"> | string | null
-  participantProfilePicture?: Prisma.StringNullableFilter<"Conversation"> | string | null
   isActive?: Prisma.BoolFilter<"Conversation"> | boolean
   lastMessageAt?: Prisma.DateTimeNullableFilter<"Conversation"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Conversation"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Conversation"> | Date | string
-  user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  participantUsername?: Prisma.StringNullableFilter<"Conversation"> | string | null
+  participantName?: Prisma.StringNullableFilter<"Conversation"> | string | null
+  participantProfilePicture?: Prisma.StringNullableFilter<"Conversation"> | string | null
   instagramAccount?: Prisma.XOR<Prisma.InstagramAccountScalarRelationFilter, Prisma.InstagramAccountWhereInput>
+  user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  ConversationHandoff?: Prisma.XOR<Prisma.ConversationHandoffNullableScalarRelationFilter, Prisma.ConversationHandoffWhereInput> | null
   messages?: Prisma.ConversationMessageListRelationFilter
 }
 
@@ -249,15 +250,16 @@ export type ConversationOrderByWithRelationInput = {
   instagramAccountId?: Prisma.SortOrder
   igUserId?: Prisma.SortOrder
   participantId?: Prisma.SortOrder
-  participantUsername?: Prisma.SortOrderInput | Prisma.SortOrder
-  participantName?: Prisma.SortOrderInput | Prisma.SortOrder
-  participantProfilePicture?: Prisma.SortOrderInput | Prisma.SortOrder
   isActive?: Prisma.SortOrder
   lastMessageAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  user?: Prisma.UserOrderByWithRelationInput
+  participantUsername?: Prisma.SortOrderInput | Prisma.SortOrder
+  participantName?: Prisma.SortOrderInput | Prisma.SortOrder
+  participantProfilePicture?: Prisma.SortOrderInput | Prisma.SortOrder
   instagramAccount?: Prisma.InstagramAccountOrderByWithRelationInput
+  user?: Prisma.UserOrderByWithRelationInput
+  ConversationHandoff?: Prisma.ConversationHandoffOrderByWithRelationInput
   messages?: Prisma.ConversationMessageOrderByRelationAggregateInput
 }
 
@@ -271,15 +273,16 @@ export type ConversationWhereUniqueInput = Prisma.AtLeast<{
   instagramAccountId?: Prisma.StringFilter<"Conversation"> | string
   igUserId?: Prisma.StringFilter<"Conversation"> | string
   participantId?: Prisma.StringFilter<"Conversation"> | string
-  participantUsername?: Prisma.StringNullableFilter<"Conversation"> | string | null
-  participantName?: Prisma.StringNullableFilter<"Conversation"> | string | null
-  participantProfilePicture?: Prisma.StringNullableFilter<"Conversation"> | string | null
   isActive?: Prisma.BoolFilter<"Conversation"> | boolean
   lastMessageAt?: Prisma.DateTimeNullableFilter<"Conversation"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Conversation"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Conversation"> | Date | string
-  user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  participantUsername?: Prisma.StringNullableFilter<"Conversation"> | string | null
+  participantName?: Prisma.StringNullableFilter<"Conversation"> | string | null
+  participantProfilePicture?: Prisma.StringNullableFilter<"Conversation"> | string | null
   instagramAccount?: Prisma.XOR<Prisma.InstagramAccountScalarRelationFilter, Prisma.InstagramAccountWhereInput>
+  user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  ConversationHandoff?: Prisma.XOR<Prisma.ConversationHandoffNullableScalarRelationFilter, Prisma.ConversationHandoffWhereInput> | null
   messages?: Prisma.ConversationMessageListRelationFilter
 }, "id" | "instagramAccountId_participantId">
 
@@ -289,13 +292,13 @@ export type ConversationOrderByWithAggregationInput = {
   instagramAccountId?: Prisma.SortOrder
   igUserId?: Prisma.SortOrder
   participantId?: Prisma.SortOrder
-  participantUsername?: Prisma.SortOrderInput | Prisma.SortOrder
-  participantName?: Prisma.SortOrderInput | Prisma.SortOrder
-  participantProfilePicture?: Prisma.SortOrderInput | Prisma.SortOrder
   isActive?: Prisma.SortOrder
   lastMessageAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  participantUsername?: Prisma.SortOrderInput | Prisma.SortOrder
+  participantName?: Prisma.SortOrderInput | Prisma.SortOrder
+  participantProfilePicture?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.ConversationCountOrderByAggregateInput
   _max?: Prisma.ConversationMaxOrderByAggregateInput
   _min?: Prisma.ConversationMinOrderByAggregateInput
@@ -310,28 +313,29 @@ export type ConversationScalarWhereWithAggregatesInput = {
   instagramAccountId?: Prisma.StringWithAggregatesFilter<"Conversation"> | string
   igUserId?: Prisma.StringWithAggregatesFilter<"Conversation"> | string
   participantId?: Prisma.StringWithAggregatesFilter<"Conversation"> | string
-  participantUsername?: Prisma.StringNullableWithAggregatesFilter<"Conversation"> | string | null
-  participantName?: Prisma.StringNullableWithAggregatesFilter<"Conversation"> | string | null
-  participantProfilePicture?: Prisma.StringNullableWithAggregatesFilter<"Conversation"> | string | null
   isActive?: Prisma.BoolWithAggregatesFilter<"Conversation"> | boolean
   lastMessageAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Conversation"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Conversation"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Conversation"> | Date | string
+  participantUsername?: Prisma.StringNullableWithAggregatesFilter<"Conversation"> | string | null
+  participantName?: Prisma.StringNullableWithAggregatesFilter<"Conversation"> | string | null
+  participantProfilePicture?: Prisma.StringNullableWithAggregatesFilter<"Conversation"> | string | null
 }
 
 export type ConversationCreateInput = {
   id?: string
   igUserId: string
   participantId: string
-  participantUsername?: string | null
-  participantName?: string | null
-  participantProfilePicture?: string | null
   isActive?: boolean
   lastMessageAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  user: Prisma.UserCreateNestedOneWithoutConversationsInput
+  participantUsername?: string | null
+  participantName?: string | null
+  participantProfilePicture?: string | null
   instagramAccount: Prisma.InstagramAccountCreateNestedOneWithoutConversationsInput
+  user: Prisma.UserCreateNestedOneWithoutConversationsInput
+  ConversationHandoff?: Prisma.ConversationHandoffCreateNestedOneWithoutConversationInput
   messages?: Prisma.ConversationMessageCreateNestedManyWithoutConversationInput
 }
 
@@ -341,13 +345,14 @@ export type ConversationUncheckedCreateInput = {
   instagramAccountId: string
   igUserId: string
   participantId: string
-  participantUsername?: string | null
-  participantName?: string | null
-  participantProfilePicture?: string | null
   isActive?: boolean
   lastMessageAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  participantUsername?: string | null
+  participantName?: string | null
+  participantProfilePicture?: string | null
+  ConversationHandoff?: Prisma.ConversationHandoffUncheckedCreateNestedOneWithoutConversationInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutConversationInput
 }
 
@@ -355,15 +360,16 @@ export type ConversationUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   igUserId?: Prisma.StringFieldUpdateOperationsInput | string
   participantId?: Prisma.StringFieldUpdateOperationsInput | string
-  participantUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  participantName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  participantProfilePicture?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastMessageAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  user?: Prisma.UserUpdateOneRequiredWithoutConversationsNestedInput
+  participantUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  participantName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  participantProfilePicture?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   instagramAccount?: Prisma.InstagramAccountUpdateOneRequiredWithoutConversationsNestedInput
+  user?: Prisma.UserUpdateOneRequiredWithoutConversationsNestedInput
+  ConversationHandoff?: Prisma.ConversationHandoffUpdateOneWithoutConversationNestedInput
   messages?: Prisma.ConversationMessageUpdateManyWithoutConversationNestedInput
 }
 
@@ -373,13 +379,14 @@ export type ConversationUncheckedUpdateInput = {
   instagramAccountId?: Prisma.StringFieldUpdateOperationsInput | string
   igUserId?: Prisma.StringFieldUpdateOperationsInput | string
   participantId?: Prisma.StringFieldUpdateOperationsInput | string
-  participantUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  participantName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  participantProfilePicture?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastMessageAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  participantUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  participantName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  participantProfilePicture?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ConversationHandoff?: Prisma.ConversationHandoffUncheckedUpdateOneWithoutConversationNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutConversationNestedInput
 }
 
@@ -389,26 +396,26 @@ export type ConversationCreateManyInput = {
   instagramAccountId: string
   igUserId: string
   participantId: string
-  participantUsername?: string | null
-  participantName?: string | null
-  participantProfilePicture?: string | null
   isActive?: boolean
   lastMessageAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  participantUsername?: string | null
+  participantName?: string | null
+  participantProfilePicture?: string | null
 }
 
 export type ConversationUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   igUserId?: Prisma.StringFieldUpdateOperationsInput | string
   participantId?: Prisma.StringFieldUpdateOperationsInput | string
-  participantUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  participantName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  participantProfilePicture?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastMessageAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  participantUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  participantName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  participantProfilePicture?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type ConversationUncheckedUpdateManyInput = {
@@ -417,13 +424,13 @@ export type ConversationUncheckedUpdateManyInput = {
   instagramAccountId?: Prisma.StringFieldUpdateOperationsInput | string
   igUserId?: Prisma.StringFieldUpdateOperationsInput | string
   participantId?: Prisma.StringFieldUpdateOperationsInput | string
-  participantUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  participantName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  participantProfilePicture?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastMessageAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  participantUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  participantName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  participantProfilePicture?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type ConversationListRelationFilter = {
@@ -447,13 +454,13 @@ export type ConversationCountOrderByAggregateInput = {
   instagramAccountId?: Prisma.SortOrder
   igUserId?: Prisma.SortOrder
   participantId?: Prisma.SortOrder
-  participantUsername?: Prisma.SortOrder
-  participantName?: Prisma.SortOrder
-  participantProfilePicture?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   lastMessageAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  participantUsername?: Prisma.SortOrder
+  participantName?: Prisma.SortOrder
+  participantProfilePicture?: Prisma.SortOrder
 }
 
 export type ConversationMaxOrderByAggregateInput = {
@@ -462,13 +469,13 @@ export type ConversationMaxOrderByAggregateInput = {
   instagramAccountId?: Prisma.SortOrder
   igUserId?: Prisma.SortOrder
   participantId?: Prisma.SortOrder
-  participantUsername?: Prisma.SortOrder
-  participantName?: Prisma.SortOrder
-  participantProfilePicture?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   lastMessageAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  participantUsername?: Prisma.SortOrder
+  participantName?: Prisma.SortOrder
+  participantProfilePicture?: Prisma.SortOrder
 }
 
 export type ConversationMinOrderByAggregateInput = {
@@ -477,13 +484,13 @@ export type ConversationMinOrderByAggregateInput = {
   instagramAccountId?: Prisma.SortOrder
   igUserId?: Prisma.SortOrder
   participantId?: Prisma.SortOrder
-  participantUsername?: Prisma.SortOrder
-  participantName?: Prisma.SortOrder
-  participantProfilePicture?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   lastMessageAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  participantUsername?: Prisma.SortOrder
+  participantName?: Prisma.SortOrder
+  participantProfilePicture?: Prisma.SortOrder
 }
 
 export type ConversationScalarRelationFilter = {
@@ -589,18 +596,33 @@ export type ConversationUpdateOneRequiredWithoutMessagesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.ConversationUpdateToOneWithWhereWithoutMessagesInput, Prisma.ConversationUpdateWithoutMessagesInput>, Prisma.ConversationUncheckedUpdateWithoutMessagesInput>
 }
 
+export type ConversationCreateNestedOneWithoutConversationHandoffInput = {
+  create?: Prisma.XOR<Prisma.ConversationCreateWithoutConversationHandoffInput, Prisma.ConversationUncheckedCreateWithoutConversationHandoffInput>
+  connectOrCreate?: Prisma.ConversationCreateOrConnectWithoutConversationHandoffInput
+  connect?: Prisma.ConversationWhereUniqueInput
+}
+
+export type ConversationUpdateOneRequiredWithoutConversationHandoffNestedInput = {
+  create?: Prisma.XOR<Prisma.ConversationCreateWithoutConversationHandoffInput, Prisma.ConversationUncheckedCreateWithoutConversationHandoffInput>
+  connectOrCreate?: Prisma.ConversationCreateOrConnectWithoutConversationHandoffInput
+  upsert?: Prisma.ConversationUpsertWithoutConversationHandoffInput
+  connect?: Prisma.ConversationWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ConversationUpdateToOneWithWhereWithoutConversationHandoffInput, Prisma.ConversationUpdateWithoutConversationHandoffInput>, Prisma.ConversationUncheckedUpdateWithoutConversationHandoffInput>
+}
+
 export type ConversationCreateWithoutUserInput = {
   id?: string
   igUserId: string
   participantId: string
-  participantUsername?: string | null
-  participantName?: string | null
-  participantProfilePicture?: string | null
   isActive?: boolean
   lastMessageAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  participantUsername?: string | null
+  participantName?: string | null
+  participantProfilePicture?: string | null
   instagramAccount: Prisma.InstagramAccountCreateNestedOneWithoutConversationsInput
+  ConversationHandoff?: Prisma.ConversationHandoffCreateNestedOneWithoutConversationInput
   messages?: Prisma.ConversationMessageCreateNestedManyWithoutConversationInput
 }
 
@@ -609,13 +631,14 @@ export type ConversationUncheckedCreateWithoutUserInput = {
   instagramAccountId: string
   igUserId: string
   participantId: string
-  participantUsername?: string | null
-  participantName?: string | null
-  participantProfilePicture?: string | null
   isActive?: boolean
   lastMessageAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  participantUsername?: string | null
+  participantName?: string | null
+  participantProfilePicture?: string | null
+  ConversationHandoff?: Prisma.ConversationHandoffUncheckedCreateNestedOneWithoutConversationInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutConversationInput
 }
 
@@ -654,27 +677,28 @@ export type ConversationScalarWhereInput = {
   instagramAccountId?: Prisma.StringFilter<"Conversation"> | string
   igUserId?: Prisma.StringFilter<"Conversation"> | string
   participantId?: Prisma.StringFilter<"Conversation"> | string
-  participantUsername?: Prisma.StringNullableFilter<"Conversation"> | string | null
-  participantName?: Prisma.StringNullableFilter<"Conversation"> | string | null
-  participantProfilePicture?: Prisma.StringNullableFilter<"Conversation"> | string | null
   isActive?: Prisma.BoolFilter<"Conversation"> | boolean
   lastMessageAt?: Prisma.DateTimeNullableFilter<"Conversation"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Conversation"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Conversation"> | Date | string
+  participantUsername?: Prisma.StringNullableFilter<"Conversation"> | string | null
+  participantName?: Prisma.StringNullableFilter<"Conversation"> | string | null
+  participantProfilePicture?: Prisma.StringNullableFilter<"Conversation"> | string | null
 }
 
 export type ConversationCreateWithoutInstagramAccountInput = {
   id?: string
   igUserId: string
   participantId: string
-  participantUsername?: string | null
-  participantName?: string | null
-  participantProfilePicture?: string | null
   isActive?: boolean
   lastMessageAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  participantUsername?: string | null
+  participantName?: string | null
+  participantProfilePicture?: string | null
   user: Prisma.UserCreateNestedOneWithoutConversationsInput
+  ConversationHandoff?: Prisma.ConversationHandoffCreateNestedOneWithoutConversationInput
   messages?: Prisma.ConversationMessageCreateNestedManyWithoutConversationInput
 }
 
@@ -683,13 +707,14 @@ export type ConversationUncheckedCreateWithoutInstagramAccountInput = {
   userId: string
   igUserId: string
   participantId: string
-  participantUsername?: string | null
-  participantName?: string | null
-  participantProfilePicture?: string | null
   isActive?: boolean
   lastMessageAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  participantUsername?: string | null
+  participantName?: string | null
+  participantProfilePicture?: string | null
+  ConversationHandoff?: Prisma.ConversationHandoffUncheckedCreateNestedOneWithoutConversationInput
   messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutConversationInput
 }
 
@@ -723,15 +748,16 @@ export type ConversationCreateWithoutMessagesInput = {
   id?: string
   igUserId: string
   participantId: string
-  participantUsername?: string | null
-  participantName?: string | null
-  participantProfilePicture?: string | null
   isActive?: boolean
   lastMessageAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  user: Prisma.UserCreateNestedOneWithoutConversationsInput
+  participantUsername?: string | null
+  participantName?: string | null
+  participantProfilePicture?: string | null
   instagramAccount: Prisma.InstagramAccountCreateNestedOneWithoutConversationsInput
+  user: Prisma.UserCreateNestedOneWithoutConversationsInput
+  ConversationHandoff?: Prisma.ConversationHandoffCreateNestedOneWithoutConversationInput
 }
 
 export type ConversationUncheckedCreateWithoutMessagesInput = {
@@ -740,13 +766,14 @@ export type ConversationUncheckedCreateWithoutMessagesInput = {
   instagramAccountId: string
   igUserId: string
   participantId: string
-  participantUsername?: string | null
-  participantName?: string | null
-  participantProfilePicture?: string | null
   isActive?: boolean
   lastMessageAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  participantUsername?: string | null
+  participantName?: string | null
+  participantProfilePicture?: string | null
+  ConversationHandoff?: Prisma.ConversationHandoffUncheckedCreateNestedOneWithoutConversationInput
 }
 
 export type ConversationCreateOrConnectWithoutMessagesInput = {
@@ -769,15 +796,16 @@ export type ConversationUpdateWithoutMessagesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   igUserId?: Prisma.StringFieldUpdateOperationsInput | string
   participantId?: Prisma.StringFieldUpdateOperationsInput | string
-  participantUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  participantName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  participantProfilePicture?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastMessageAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  user?: Prisma.UserUpdateOneRequiredWithoutConversationsNestedInput
+  participantUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  participantName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  participantProfilePicture?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   instagramAccount?: Prisma.InstagramAccountUpdateOneRequiredWithoutConversationsNestedInput
+  user?: Prisma.UserUpdateOneRequiredWithoutConversationsNestedInput
+  ConversationHandoff?: Prisma.ConversationHandoffUpdateOneWithoutConversationNestedInput
 }
 
 export type ConversationUncheckedUpdateWithoutMessagesInput = {
@@ -786,13 +814,94 @@ export type ConversationUncheckedUpdateWithoutMessagesInput = {
   instagramAccountId?: Prisma.StringFieldUpdateOperationsInput | string
   igUserId?: Prisma.StringFieldUpdateOperationsInput | string
   participantId?: Prisma.StringFieldUpdateOperationsInput | string
-  participantUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  participantName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  participantProfilePicture?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastMessageAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  participantUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  participantName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  participantProfilePicture?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ConversationHandoff?: Prisma.ConversationHandoffUncheckedUpdateOneWithoutConversationNestedInput
+}
+
+export type ConversationCreateWithoutConversationHandoffInput = {
+  id?: string
+  igUserId: string
+  participantId: string
+  isActive?: boolean
+  lastMessageAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  participantUsername?: string | null
+  participantName?: string | null
+  participantProfilePicture?: string | null
+  instagramAccount: Prisma.InstagramAccountCreateNestedOneWithoutConversationsInput
+  user: Prisma.UserCreateNestedOneWithoutConversationsInput
+  messages?: Prisma.ConversationMessageCreateNestedManyWithoutConversationInput
+}
+
+export type ConversationUncheckedCreateWithoutConversationHandoffInput = {
+  id?: string
+  userId: string
+  instagramAccountId: string
+  igUserId: string
+  participantId: string
+  isActive?: boolean
+  lastMessageAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  participantUsername?: string | null
+  participantName?: string | null
+  participantProfilePicture?: string | null
+  messages?: Prisma.ConversationMessageUncheckedCreateNestedManyWithoutConversationInput
+}
+
+export type ConversationCreateOrConnectWithoutConversationHandoffInput = {
+  where: Prisma.ConversationWhereUniqueInput
+  create: Prisma.XOR<Prisma.ConversationCreateWithoutConversationHandoffInput, Prisma.ConversationUncheckedCreateWithoutConversationHandoffInput>
+}
+
+export type ConversationUpsertWithoutConversationHandoffInput = {
+  update: Prisma.XOR<Prisma.ConversationUpdateWithoutConversationHandoffInput, Prisma.ConversationUncheckedUpdateWithoutConversationHandoffInput>
+  create: Prisma.XOR<Prisma.ConversationCreateWithoutConversationHandoffInput, Prisma.ConversationUncheckedCreateWithoutConversationHandoffInput>
+  where?: Prisma.ConversationWhereInput
+}
+
+export type ConversationUpdateToOneWithWhereWithoutConversationHandoffInput = {
+  where?: Prisma.ConversationWhereInput
+  data: Prisma.XOR<Prisma.ConversationUpdateWithoutConversationHandoffInput, Prisma.ConversationUncheckedUpdateWithoutConversationHandoffInput>
+}
+
+export type ConversationUpdateWithoutConversationHandoffInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  igUserId?: Prisma.StringFieldUpdateOperationsInput | string
+  participantId?: Prisma.StringFieldUpdateOperationsInput | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastMessageAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  participantUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  participantName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  participantProfilePicture?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  instagramAccount?: Prisma.InstagramAccountUpdateOneRequiredWithoutConversationsNestedInput
+  user?: Prisma.UserUpdateOneRequiredWithoutConversationsNestedInput
+  messages?: Prisma.ConversationMessageUpdateManyWithoutConversationNestedInput
+}
+
+export type ConversationUncheckedUpdateWithoutConversationHandoffInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  instagramAccountId?: Prisma.StringFieldUpdateOperationsInput | string
+  igUserId?: Prisma.StringFieldUpdateOperationsInput | string
+  participantId?: Prisma.StringFieldUpdateOperationsInput | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastMessageAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  participantUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  participantName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  participantProfilePicture?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutConversationNestedInput
 }
 
 export type ConversationCreateManyUserInput = {
@@ -800,27 +909,28 @@ export type ConversationCreateManyUserInput = {
   instagramAccountId: string
   igUserId: string
   participantId: string
-  participantUsername?: string | null
-  participantName?: string | null
-  participantProfilePicture?: string | null
   isActive?: boolean
   lastMessageAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  participantUsername?: string | null
+  participantName?: string | null
+  participantProfilePicture?: string | null
 }
 
 export type ConversationUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   igUserId?: Prisma.StringFieldUpdateOperationsInput | string
   participantId?: Prisma.StringFieldUpdateOperationsInput | string
-  participantUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  participantName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  participantProfilePicture?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastMessageAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  participantUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  participantName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  participantProfilePicture?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   instagramAccount?: Prisma.InstagramAccountUpdateOneRequiredWithoutConversationsNestedInput
+  ConversationHandoff?: Prisma.ConversationHandoffUpdateOneWithoutConversationNestedInput
   messages?: Prisma.ConversationMessageUpdateManyWithoutConversationNestedInput
 }
 
@@ -829,13 +939,14 @@ export type ConversationUncheckedUpdateWithoutUserInput = {
   instagramAccountId?: Prisma.StringFieldUpdateOperationsInput | string
   igUserId?: Prisma.StringFieldUpdateOperationsInput | string
   participantId?: Prisma.StringFieldUpdateOperationsInput | string
-  participantUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  participantName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  participantProfilePicture?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastMessageAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  participantUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  participantName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  participantProfilePicture?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ConversationHandoff?: Prisma.ConversationHandoffUncheckedUpdateOneWithoutConversationNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutConversationNestedInput
 }
 
@@ -844,13 +955,13 @@ export type ConversationUncheckedUpdateManyWithoutUserInput = {
   instagramAccountId?: Prisma.StringFieldUpdateOperationsInput | string
   igUserId?: Prisma.StringFieldUpdateOperationsInput | string
   participantId?: Prisma.StringFieldUpdateOperationsInput | string
-  participantUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  participantName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  participantProfilePicture?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastMessageAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  participantUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  participantName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  participantProfilePicture?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type ConversationCreateManyInstagramAccountInput = {
@@ -858,27 +969,28 @@ export type ConversationCreateManyInstagramAccountInput = {
   userId: string
   igUserId: string
   participantId: string
-  participantUsername?: string | null
-  participantName?: string | null
-  participantProfilePicture?: string | null
   isActive?: boolean
   lastMessageAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  participantUsername?: string | null
+  participantName?: string | null
+  participantProfilePicture?: string | null
 }
 
 export type ConversationUpdateWithoutInstagramAccountInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   igUserId?: Prisma.StringFieldUpdateOperationsInput | string
   participantId?: Prisma.StringFieldUpdateOperationsInput | string
-  participantUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  participantName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  participantProfilePicture?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastMessageAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  participantUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  participantName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  participantProfilePicture?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   user?: Prisma.UserUpdateOneRequiredWithoutConversationsNestedInput
+  ConversationHandoff?: Prisma.ConversationHandoffUpdateOneWithoutConversationNestedInput
   messages?: Prisma.ConversationMessageUpdateManyWithoutConversationNestedInput
 }
 
@@ -887,13 +999,14 @@ export type ConversationUncheckedUpdateWithoutInstagramAccountInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   igUserId?: Prisma.StringFieldUpdateOperationsInput | string
   participantId?: Prisma.StringFieldUpdateOperationsInput | string
-  participantUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  participantName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  participantProfilePicture?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastMessageAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  participantUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  participantName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  participantProfilePicture?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ConversationHandoff?: Prisma.ConversationHandoffUncheckedUpdateOneWithoutConversationNestedInput
   messages?: Prisma.ConversationMessageUncheckedUpdateManyWithoutConversationNestedInput
 }
 
@@ -902,13 +1015,13 @@ export type ConversationUncheckedUpdateManyWithoutInstagramAccountInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   igUserId?: Prisma.StringFieldUpdateOperationsInput | string
   participantId?: Prisma.StringFieldUpdateOperationsInput | string
-  participantUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  participantName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  participantProfilePicture?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastMessageAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  participantUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  participantName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  participantProfilePicture?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 
@@ -948,15 +1061,16 @@ export type ConversationSelect<ExtArgs extends runtime.Types.Extensions.Internal
   instagramAccountId?: boolean
   igUserId?: boolean
   participantId?: boolean
-  participantUsername?: boolean
-  participantName?: boolean
-  participantProfilePicture?: boolean
   isActive?: boolean
   lastMessageAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  participantUsername?: boolean
+  participantName?: boolean
+  participantProfilePicture?: boolean
   instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  ConversationHandoff?: boolean | Prisma.Conversation$ConversationHandoffArgs<ExtArgs>
   messages?: boolean | Prisma.Conversation$messagesArgs<ExtArgs>
   _count?: boolean | Prisma.ConversationCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["conversation"]>
@@ -967,15 +1081,15 @@ export type ConversationSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   instagramAccountId?: boolean
   igUserId?: boolean
   participantId?: boolean
-  participantUsername?: boolean
-  participantName?: boolean
-  participantProfilePicture?: boolean
   isActive?: boolean
   lastMessageAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  participantUsername?: boolean
+  participantName?: boolean
+  participantProfilePicture?: boolean
   instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["conversation"]>
 
 export type ConversationSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -984,15 +1098,15 @@ export type ConversationSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   instagramAccountId?: boolean
   igUserId?: boolean
   participantId?: boolean
-  participantUsername?: boolean
-  participantName?: boolean
-  participantProfilePicture?: boolean
   isActive?: boolean
   lastMessageAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  participantUsername?: boolean
+  participantName?: boolean
+  participantProfilePicture?: boolean
   instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["conversation"]>
 
 export type ConversationSelectScalar = {
@@ -1001,36 +1115,38 @@ export type ConversationSelectScalar = {
   instagramAccountId?: boolean
   igUserId?: boolean
   participantId?: boolean
-  participantUsername?: boolean
-  participantName?: boolean
-  participantProfilePicture?: boolean
   isActive?: boolean
   lastMessageAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  participantUsername?: boolean
+  participantName?: boolean
+  participantProfilePicture?: boolean
 }
 
-export type ConversationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "instagramAccountId" | "igUserId" | "participantId" | "participantUsername" | "participantName" | "participantProfilePicture" | "isActive" | "lastMessageAt" | "createdAt" | "updatedAt", ExtArgs["result"]["conversation"]>
+export type ConversationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "instagramAccountId" | "igUserId" | "participantId" | "isActive" | "lastMessageAt" | "createdAt" | "updatedAt" | "participantUsername" | "participantName" | "participantProfilePicture", ExtArgs["result"]["conversation"]>
 export type ConversationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  ConversationHandoff?: boolean | Prisma.Conversation$ConversationHandoffArgs<ExtArgs>
   messages?: boolean | Prisma.Conversation$messagesArgs<ExtArgs>
   _count?: boolean | Prisma.ConversationCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type ConversationIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 export type ConversationIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 
 export type $ConversationPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Conversation"
   objects: {
-    user: Prisma.$UserPayload<ExtArgs>
     instagramAccount: Prisma.$InstagramAccountPayload<ExtArgs>
+    user: Prisma.$UserPayload<ExtArgs>
+    ConversationHandoff: Prisma.$ConversationHandoffPayload<ExtArgs> | null
     messages: Prisma.$ConversationMessagePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -1039,13 +1155,13 @@ export type $ConversationPayload<ExtArgs extends runtime.Types.Extensions.Intern
     instagramAccountId: string
     igUserId: string
     participantId: string
-    participantUsername: string | null
-    participantName: string | null
-    participantProfilePicture: string | null
     isActive: boolean
     lastMessageAt: Date | null
     createdAt: Date
     updatedAt: Date
+    participantUsername: string | null
+    participantName: string | null
+    participantProfilePicture: string | null
   }, ExtArgs["result"]["conversation"]>
   composites: {}
 }
@@ -1440,8 +1556,9 @@ readonly fields: ConversationFieldRefs;
  */
 export interface Prisma__ConversationClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   instagramAccount<T extends Prisma.InstagramAccountDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.InstagramAccountDefaultArgs<ExtArgs>>): Prisma.Prisma__InstagramAccountClient<runtime.Types.Result.GetResult<Prisma.$InstagramAccountPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  ConversationHandoff<T extends Prisma.Conversation$ConversationHandoffArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Conversation$ConversationHandoffArgs<ExtArgs>>): Prisma.Prisma__ConversationHandoffClient<runtime.Types.Result.GetResult<Prisma.$ConversationHandoffPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   messages<T extends Prisma.Conversation$messagesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Conversation$messagesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ConversationMessagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -1477,13 +1594,13 @@ export interface ConversationFieldRefs {
   readonly instagramAccountId: Prisma.FieldRef<"Conversation", 'String'>
   readonly igUserId: Prisma.FieldRef<"Conversation", 'String'>
   readonly participantId: Prisma.FieldRef<"Conversation", 'String'>
-  readonly participantUsername: Prisma.FieldRef<"Conversation", 'String'>
-  readonly participantName: Prisma.FieldRef<"Conversation", 'String'>
-  readonly participantProfilePicture: Prisma.FieldRef<"Conversation", 'String'>
   readonly isActive: Prisma.FieldRef<"Conversation", 'Boolean'>
   readonly lastMessageAt: Prisma.FieldRef<"Conversation", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"Conversation", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Conversation", 'DateTime'>
+  readonly participantUsername: Prisma.FieldRef<"Conversation", 'String'>
+  readonly participantName: Prisma.FieldRef<"Conversation", 'String'>
+  readonly participantProfilePicture: Prisma.FieldRef<"Conversation", 'String'>
 }
     
 
@@ -1882,6 +1999,25 @@ export type ConversationDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.
    * Limit how many Conversations to delete.
    */
   limit?: number
+}
+
+/**
+ * Conversation.ConversationHandoff
+ */
+export type Conversation$ConversationHandoffArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ConversationHandoff
+   */
+  select?: Prisma.ConversationHandoffSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ConversationHandoff
+   */
+  omit?: Prisma.ConversationHandoffOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ConversationHandoffInclude<ExtArgs> | null
+  where?: Prisma.ConversationHandoffWhereInput
 }
 
 /**

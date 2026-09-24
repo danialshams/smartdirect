@@ -206,11 +206,11 @@ export type FormWhereInput = {
   isActive?: Prisma.BoolFilter<"Form"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Form"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Form"> | Date | string
-  user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  messages?: Prisma.AutomationMessageListRelationFilter
   instagramAccount?: Prisma.XOR<Prisma.InstagramAccountScalarRelationFilter, Prisma.InstagramAccountWhereInput>
+  user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   fields?: Prisma.FormFieldListRelationFilter
   submissions?: Prisma.FormSubmissionListRelationFilter
-  messages?: Prisma.AutomationMessageListRelationFilter
 }
 
 export type FormOrderByWithRelationInput = {
@@ -222,11 +222,11 @@ export type FormOrderByWithRelationInput = {
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  user?: Prisma.UserOrderByWithRelationInput
+  messages?: Prisma.AutomationMessageOrderByRelationAggregateInput
   instagramAccount?: Prisma.InstagramAccountOrderByWithRelationInput
+  user?: Prisma.UserOrderByWithRelationInput
   fields?: Prisma.FormFieldOrderByRelationAggregateInput
   submissions?: Prisma.FormSubmissionOrderByRelationAggregateInput
-  messages?: Prisma.AutomationMessageOrderByRelationAggregateInput
 }
 
 export type FormWhereUniqueInput = Prisma.AtLeast<{
@@ -241,11 +241,11 @@ export type FormWhereUniqueInput = Prisma.AtLeast<{
   isActive?: Prisma.BoolFilter<"Form"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Form"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Form"> | Date | string
-  user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  messages?: Prisma.AutomationMessageListRelationFilter
   instagramAccount?: Prisma.XOR<Prisma.InstagramAccountScalarRelationFilter, Prisma.InstagramAccountWhereInput>
+  user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   fields?: Prisma.FormFieldListRelationFilter
   submissions?: Prisma.FormSubmissionListRelationFilter
-  messages?: Prisma.AutomationMessageListRelationFilter
 }, "id">
 
 export type FormOrderByWithAggregationInput = {
@@ -283,11 +283,11 @@ export type FormCreateInput = {
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
-  user: Prisma.UserCreateNestedOneWithoutFormsInput
+  messages?: Prisma.AutomationMessageCreateNestedManyWithoutFormInput
   instagramAccount: Prisma.InstagramAccountCreateNestedOneWithoutFormsInput
+  user: Prisma.UserCreateNestedOneWithoutFormsInput
   fields?: Prisma.FormFieldCreateNestedManyWithoutFormInput
   submissions?: Prisma.FormSubmissionCreateNestedManyWithoutFormInput
-  messages?: Prisma.AutomationMessageCreateNestedManyWithoutFormInput
 }
 
 export type FormUncheckedCreateInput = {
@@ -299,9 +299,9 @@ export type FormUncheckedCreateInput = {
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  messages?: Prisma.AutomationMessageUncheckedCreateNestedManyWithoutFormInput
   fields?: Prisma.FormFieldUncheckedCreateNestedManyWithoutFormInput
   submissions?: Prisma.FormSubmissionUncheckedCreateNestedManyWithoutFormInput
-  messages?: Prisma.AutomationMessageUncheckedCreateNestedManyWithoutFormInput
 }
 
 export type FormUpdateInput = {
@@ -311,11 +311,11 @@ export type FormUpdateInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  user?: Prisma.UserUpdateOneRequiredWithoutFormsNestedInput
+  messages?: Prisma.AutomationMessageUpdateManyWithoutFormNestedInput
   instagramAccount?: Prisma.InstagramAccountUpdateOneRequiredWithoutFormsNestedInput
+  user?: Prisma.UserUpdateOneRequiredWithoutFormsNestedInput
   fields?: Prisma.FormFieldUpdateManyWithoutFormNestedInput
   submissions?: Prisma.FormSubmissionUpdateManyWithoutFormNestedInput
-  messages?: Prisma.AutomationMessageUpdateManyWithoutFormNestedInput
 }
 
 export type FormUncheckedUpdateInput = {
@@ -327,9 +327,9 @@ export type FormUncheckedUpdateInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  messages?: Prisma.AutomationMessageUncheckedUpdateManyWithoutFormNestedInput
   fields?: Prisma.FormFieldUncheckedUpdateManyWithoutFormNestedInput
   submissions?: Prisma.FormSubmissionUncheckedUpdateManyWithoutFormNestedInput
-  messages?: Prisma.AutomationMessageUncheckedUpdateManyWithoutFormNestedInput
 }
 
 export type FormCreateManyInput = {
@@ -551,10 +551,10 @@ export type FormCreateWithoutUserInput = {
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  messages?: Prisma.AutomationMessageCreateNestedManyWithoutFormInput
   instagramAccount: Prisma.InstagramAccountCreateNestedOneWithoutFormsInput
   fields?: Prisma.FormFieldCreateNestedManyWithoutFormInput
   submissions?: Prisma.FormSubmissionCreateNestedManyWithoutFormInput
-  messages?: Prisma.AutomationMessageCreateNestedManyWithoutFormInput
 }
 
 export type FormUncheckedCreateWithoutUserInput = {
@@ -565,9 +565,9 @@ export type FormUncheckedCreateWithoutUserInput = {
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  messages?: Prisma.AutomationMessageUncheckedCreateNestedManyWithoutFormInput
   fields?: Prisma.FormFieldUncheckedCreateNestedManyWithoutFormInput
   submissions?: Prisma.FormSubmissionUncheckedCreateNestedManyWithoutFormInput
-  messages?: Prisma.AutomationMessageUncheckedCreateNestedManyWithoutFormInput
 }
 
 export type FormCreateOrConnectWithoutUserInput = {
@@ -617,10 +617,10 @@ export type FormCreateWithoutInstagramAccountInput = {
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  messages?: Prisma.AutomationMessageCreateNestedManyWithoutFormInput
   user: Prisma.UserCreateNestedOneWithoutFormsInput
   fields?: Prisma.FormFieldCreateNestedManyWithoutFormInput
   submissions?: Prisma.FormSubmissionCreateNestedManyWithoutFormInput
-  messages?: Prisma.AutomationMessageCreateNestedManyWithoutFormInput
 }
 
 export type FormUncheckedCreateWithoutInstagramAccountInput = {
@@ -631,9 +631,9 @@ export type FormUncheckedCreateWithoutInstagramAccountInput = {
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  messages?: Prisma.AutomationMessageUncheckedCreateNestedManyWithoutFormInput
   fields?: Prisma.FormFieldUncheckedCreateNestedManyWithoutFormInput
   submissions?: Prisma.FormSubmissionUncheckedCreateNestedManyWithoutFormInput
-  messages?: Prisma.AutomationMessageUncheckedCreateNestedManyWithoutFormInput
 }
 
 export type FormCreateOrConnectWithoutInstagramAccountInput = {
@@ -669,8 +669,8 @@ export type FormCreateWithoutMessagesInput = {
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
-  user: Prisma.UserCreateNestedOneWithoutFormsInput
   instagramAccount: Prisma.InstagramAccountCreateNestedOneWithoutFormsInput
+  user: Prisma.UserCreateNestedOneWithoutFormsInput
   fields?: Prisma.FormFieldCreateNestedManyWithoutFormInput
   submissions?: Prisma.FormSubmissionCreateNestedManyWithoutFormInput
 }
@@ -711,8 +711,8 @@ export type FormUpdateWithoutMessagesInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  user?: Prisma.UserUpdateOneRequiredWithoutFormsNestedInput
   instagramAccount?: Prisma.InstagramAccountUpdateOneRequiredWithoutFormsNestedInput
+  user?: Prisma.UserUpdateOneRequiredWithoutFormsNestedInput
   fields?: Prisma.FormFieldUpdateManyWithoutFormNestedInput
   submissions?: Prisma.FormSubmissionUpdateManyWithoutFormNestedInput
 }
@@ -737,10 +737,10 @@ export type FormCreateWithoutFieldsInput = {
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
-  user: Prisma.UserCreateNestedOneWithoutFormsInput
-  instagramAccount: Prisma.InstagramAccountCreateNestedOneWithoutFormsInput
-  submissions?: Prisma.FormSubmissionCreateNestedManyWithoutFormInput
   messages?: Prisma.AutomationMessageCreateNestedManyWithoutFormInput
+  instagramAccount: Prisma.InstagramAccountCreateNestedOneWithoutFormsInput
+  user: Prisma.UserCreateNestedOneWithoutFormsInput
+  submissions?: Prisma.FormSubmissionCreateNestedManyWithoutFormInput
 }
 
 export type FormUncheckedCreateWithoutFieldsInput = {
@@ -752,8 +752,8 @@ export type FormUncheckedCreateWithoutFieldsInput = {
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
-  submissions?: Prisma.FormSubmissionUncheckedCreateNestedManyWithoutFormInput
   messages?: Prisma.AutomationMessageUncheckedCreateNestedManyWithoutFormInput
+  submissions?: Prisma.FormSubmissionUncheckedCreateNestedManyWithoutFormInput
 }
 
 export type FormCreateOrConnectWithoutFieldsInput = {
@@ -779,10 +779,10 @@ export type FormUpdateWithoutFieldsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  user?: Prisma.UserUpdateOneRequiredWithoutFormsNestedInput
-  instagramAccount?: Prisma.InstagramAccountUpdateOneRequiredWithoutFormsNestedInput
-  submissions?: Prisma.FormSubmissionUpdateManyWithoutFormNestedInput
   messages?: Prisma.AutomationMessageUpdateManyWithoutFormNestedInput
+  instagramAccount?: Prisma.InstagramAccountUpdateOneRequiredWithoutFormsNestedInput
+  user?: Prisma.UserUpdateOneRequiredWithoutFormsNestedInput
+  submissions?: Prisma.FormSubmissionUpdateManyWithoutFormNestedInput
 }
 
 export type FormUncheckedUpdateWithoutFieldsInput = {
@@ -794,8 +794,8 @@ export type FormUncheckedUpdateWithoutFieldsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  submissions?: Prisma.FormSubmissionUncheckedUpdateManyWithoutFormNestedInput
   messages?: Prisma.AutomationMessageUncheckedUpdateManyWithoutFormNestedInput
+  submissions?: Prisma.FormSubmissionUncheckedUpdateManyWithoutFormNestedInput
 }
 
 export type FormCreateWithoutSubmissionsInput = {
@@ -805,10 +805,10 @@ export type FormCreateWithoutSubmissionsInput = {
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
-  user: Prisma.UserCreateNestedOneWithoutFormsInput
-  instagramAccount: Prisma.InstagramAccountCreateNestedOneWithoutFormsInput
-  fields?: Prisma.FormFieldCreateNestedManyWithoutFormInput
   messages?: Prisma.AutomationMessageCreateNestedManyWithoutFormInput
+  instagramAccount: Prisma.InstagramAccountCreateNestedOneWithoutFormsInput
+  user: Prisma.UserCreateNestedOneWithoutFormsInput
+  fields?: Prisma.FormFieldCreateNestedManyWithoutFormInput
 }
 
 export type FormUncheckedCreateWithoutSubmissionsInput = {
@@ -820,8 +820,8 @@ export type FormUncheckedCreateWithoutSubmissionsInput = {
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
-  fields?: Prisma.FormFieldUncheckedCreateNestedManyWithoutFormInput
   messages?: Prisma.AutomationMessageUncheckedCreateNestedManyWithoutFormInput
+  fields?: Prisma.FormFieldUncheckedCreateNestedManyWithoutFormInput
 }
 
 export type FormCreateOrConnectWithoutSubmissionsInput = {
@@ -847,10 +847,10 @@ export type FormUpdateWithoutSubmissionsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  user?: Prisma.UserUpdateOneRequiredWithoutFormsNestedInput
-  instagramAccount?: Prisma.InstagramAccountUpdateOneRequiredWithoutFormsNestedInput
-  fields?: Prisma.FormFieldUpdateManyWithoutFormNestedInput
   messages?: Prisma.AutomationMessageUpdateManyWithoutFormNestedInput
+  instagramAccount?: Prisma.InstagramAccountUpdateOneRequiredWithoutFormsNestedInput
+  user?: Prisma.UserUpdateOneRequiredWithoutFormsNestedInput
+  fields?: Prisma.FormFieldUpdateManyWithoutFormNestedInput
 }
 
 export type FormUncheckedUpdateWithoutSubmissionsInput = {
@@ -862,8 +862,8 @@ export type FormUncheckedUpdateWithoutSubmissionsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  fields?: Prisma.FormFieldUncheckedUpdateManyWithoutFormNestedInput
   messages?: Prisma.AutomationMessageUncheckedUpdateManyWithoutFormNestedInput
+  fields?: Prisma.FormFieldUncheckedUpdateManyWithoutFormNestedInput
 }
 
 export type FormCreateManyUserInput = {
@@ -883,10 +883,10 @@ export type FormUpdateWithoutUserInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  messages?: Prisma.AutomationMessageUpdateManyWithoutFormNestedInput
   instagramAccount?: Prisma.InstagramAccountUpdateOneRequiredWithoutFormsNestedInput
   fields?: Prisma.FormFieldUpdateManyWithoutFormNestedInput
   submissions?: Prisma.FormSubmissionUpdateManyWithoutFormNestedInput
-  messages?: Prisma.AutomationMessageUpdateManyWithoutFormNestedInput
 }
 
 export type FormUncheckedUpdateWithoutUserInput = {
@@ -897,9 +897,9 @@ export type FormUncheckedUpdateWithoutUserInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  messages?: Prisma.AutomationMessageUncheckedUpdateManyWithoutFormNestedInput
   fields?: Prisma.FormFieldUncheckedUpdateManyWithoutFormNestedInput
   submissions?: Prisma.FormSubmissionUncheckedUpdateManyWithoutFormNestedInput
-  messages?: Prisma.AutomationMessageUncheckedUpdateManyWithoutFormNestedInput
 }
 
 export type FormUncheckedUpdateManyWithoutUserInput = {
@@ -929,10 +929,10 @@ export type FormUpdateWithoutInstagramAccountInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  messages?: Prisma.AutomationMessageUpdateManyWithoutFormNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutFormsNestedInput
   fields?: Prisma.FormFieldUpdateManyWithoutFormNestedInput
   submissions?: Prisma.FormSubmissionUpdateManyWithoutFormNestedInput
-  messages?: Prisma.AutomationMessageUpdateManyWithoutFormNestedInput
 }
 
 export type FormUncheckedUpdateWithoutInstagramAccountInput = {
@@ -943,9 +943,9 @@ export type FormUncheckedUpdateWithoutInstagramAccountInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  messages?: Prisma.AutomationMessageUncheckedUpdateManyWithoutFormNestedInput
   fields?: Prisma.FormFieldUncheckedUpdateManyWithoutFormNestedInput
   submissions?: Prisma.FormSubmissionUncheckedUpdateManyWithoutFormNestedInput
-  messages?: Prisma.AutomationMessageUncheckedUpdateManyWithoutFormNestedInput
 }
 
 export type FormUncheckedUpdateManyWithoutInstagramAccountInput = {
@@ -964,15 +964,15 @@ export type FormUncheckedUpdateManyWithoutInstagramAccountInput = {
  */
 
 export type FormCountOutputType = {
+  messages: number
   fields: number
   submissions: number
-  messages: number
 }
 
 export type FormCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  messages?: boolean | FormCountOutputTypeCountMessagesArgs
   fields?: boolean | FormCountOutputTypeCountFieldsArgs
   submissions?: boolean | FormCountOutputTypeCountSubmissionsArgs
-  messages?: boolean | FormCountOutputTypeCountMessagesArgs
 }
 
 /**
@@ -983,6 +983,13 @@ export type FormCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensi
    * Select specific fields to fetch from the FormCountOutputType
    */
   select?: Prisma.FormCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * FormCountOutputType without action
+ */
+export type FormCountOutputTypeCountMessagesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.AutomationMessageWhereInput
 }
 
 /**
@@ -999,13 +1006,6 @@ export type FormCountOutputTypeCountSubmissionsArgs<ExtArgs extends runtime.Type
   where?: Prisma.FormSubmissionWhereInput
 }
 
-/**
- * FormCountOutputType without action
- */
-export type FormCountOutputTypeCountMessagesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.AutomationMessageWhereInput
-}
-
 
 export type FormSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1016,11 +1016,11 @@ export type FormSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  messages?: boolean | Prisma.Form$messagesArgs<ExtArgs>
   instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   fields?: boolean | Prisma.Form$fieldsArgs<ExtArgs>
   submissions?: boolean | Prisma.Form$submissionsArgs<ExtArgs>
-  messages?: boolean | Prisma.Form$messagesArgs<ExtArgs>
   _count?: boolean | Prisma.FormCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["form"]>
 
@@ -1033,8 +1033,8 @@ export type FormSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["form"]>
 
 export type FormSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1046,8 +1046,8 @@ export type FormSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["form"]>
 
 export type FormSelectScalar = {
@@ -1063,30 +1063,30 @@ export type FormSelectScalar = {
 
 export type FormOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "instagramAccountId" | "title" | "description" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["form"]>
 export type FormInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  messages?: boolean | Prisma.Form$messagesArgs<ExtArgs>
   instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   fields?: boolean | Prisma.Form$fieldsArgs<ExtArgs>
   submissions?: boolean | Prisma.Form$submissionsArgs<ExtArgs>
-  messages?: boolean | Prisma.Form$messagesArgs<ExtArgs>
   _count?: boolean | Prisma.FormCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type FormIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 export type FormIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 
 export type $FormPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Form"
   objects: {
-    user: Prisma.$UserPayload<ExtArgs>
+    messages: Prisma.$AutomationMessagePayload<ExtArgs>[]
     instagramAccount: Prisma.$InstagramAccountPayload<ExtArgs>
+    user: Prisma.$UserPayload<ExtArgs>
     fields: Prisma.$FormFieldPayload<ExtArgs>[]
     submissions: Prisma.$FormSubmissionPayload<ExtArgs>[]
-    messages: Prisma.$AutomationMessagePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1491,11 +1491,11 @@ readonly fields: FormFieldRefs;
  */
 export interface Prisma__FormClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  messages<T extends Prisma.Form$messagesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Form$messagesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AutomationMessagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   instagramAccount<T extends Prisma.InstagramAccountDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.InstagramAccountDefaultArgs<ExtArgs>>): Prisma.Prisma__InstagramAccountClient<runtime.Types.Result.GetResult<Prisma.$InstagramAccountPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   fields<T extends Prisma.Form$fieldsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Form$fieldsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FormFieldPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   submissions<T extends Prisma.Form$submissionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Form$submissionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FormSubmissionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  messages<T extends Prisma.Form$messagesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Form$messagesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AutomationMessagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1934,6 +1934,30 @@ export type FormDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Internal
 }
 
 /**
+ * Form.messages
+ */
+export type Form$messagesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the AutomationMessage
+   */
+  select?: Prisma.AutomationMessageSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the AutomationMessage
+   */
+  omit?: Prisma.AutomationMessageOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AutomationMessageInclude<ExtArgs> | null
+  where?: Prisma.AutomationMessageWhereInput
+  orderBy?: Prisma.AutomationMessageOrderByWithRelationInput | Prisma.AutomationMessageOrderByWithRelationInput[]
+  cursor?: Prisma.AutomationMessageWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.AutomationMessageScalarFieldEnum | Prisma.AutomationMessageScalarFieldEnum[]
+}
+
+/**
  * Form.fields
  */
 export type Form$fieldsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1979,30 +2003,6 @@ export type Form$submissionsArgs<ExtArgs extends runtime.Types.Extensions.Intern
   take?: number
   skip?: number
   distinct?: Prisma.FormSubmissionScalarFieldEnum | Prisma.FormSubmissionScalarFieldEnum[]
-}
-
-/**
- * Form.messages
- */
-export type Form$messagesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the AutomationMessage
-   */
-  select?: Prisma.AutomationMessageSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the AutomationMessage
-   */
-  omit?: Prisma.AutomationMessageOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.AutomationMessageInclude<ExtArgs> | null
-  where?: Prisma.AutomationMessageWhereInput
-  orderBy?: Prisma.AutomationMessageOrderByWithRelationInput | Prisma.AutomationMessageOrderByWithRelationInput[]
-  cursor?: Prisma.AutomationMessageWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.AutomationMessageScalarFieldEnum | Prisma.AutomationMessageScalarFieldEnum[]
 }
 
 /**

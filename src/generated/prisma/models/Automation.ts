@@ -27,58 +27,58 @@ export type AggregateAutomation = {
 export type AutomationMinAggregateOutputType = {
   id: string | null
   instagramAccountId: string | null
-  triggerType: $Enums.AutomationTriggerType | null
   keyword: string | null
-  mediaId: string | null
-  likeComment: boolean | null
-  commentReplyText: string | null
-  sendDm: boolean | null
-  likeIncomingDm: boolean | null
   replyText: string | null
-  likeStoryReply: boolean | null
-  requireFollow: boolean | null
-  followGateText: string | null
   isActive: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
+  commentReplyText: string | null
+  likeComment: boolean | null
+  mediaId: string | null
+  likeIncomingDm: boolean | null
+  sendDm: boolean | null
+  triggerType: $Enums.AutomationTriggerType | null
+  likeStoryReply: boolean | null
+  followGateText: string | null
+  requireFollow: boolean | null
 }
 
 export type AutomationMaxAggregateOutputType = {
   id: string | null
   instagramAccountId: string | null
-  triggerType: $Enums.AutomationTriggerType | null
   keyword: string | null
-  mediaId: string | null
-  likeComment: boolean | null
-  commentReplyText: string | null
-  sendDm: boolean | null
-  likeIncomingDm: boolean | null
   replyText: string | null
-  likeStoryReply: boolean | null
-  requireFollow: boolean | null
-  followGateText: string | null
   isActive: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
+  commentReplyText: string | null
+  likeComment: boolean | null
+  mediaId: string | null
+  likeIncomingDm: boolean | null
+  sendDm: boolean | null
+  triggerType: $Enums.AutomationTriggerType | null
+  likeStoryReply: boolean | null
+  followGateText: string | null
+  requireFollow: boolean | null
 }
 
 export type AutomationCountAggregateOutputType = {
   id: number
   instagramAccountId: number
-  triggerType: number
   keyword: number
-  mediaId: number
-  likeComment: number
-  commentReplyText: number
-  sendDm: number
-  likeIncomingDm: number
   replyText: number
-  likeStoryReply: number
-  requireFollow: number
-  followGateText: number
   isActive: number
   createdAt: number
   updatedAt: number
+  commentReplyText: number
+  likeComment: number
+  mediaId: number
+  likeIncomingDm: number
+  sendDm: number
+  triggerType: number
+  likeStoryReply: number
+  followGateText: number
+  requireFollow: number
   _all: number
 }
 
@@ -86,58 +86,58 @@ export type AutomationCountAggregateOutputType = {
 export type AutomationMinAggregateInputType = {
   id?: true
   instagramAccountId?: true
-  triggerType?: true
   keyword?: true
-  mediaId?: true
-  likeComment?: true
-  commentReplyText?: true
-  sendDm?: true
-  likeIncomingDm?: true
   replyText?: true
-  likeStoryReply?: true
-  requireFollow?: true
-  followGateText?: true
   isActive?: true
   createdAt?: true
   updatedAt?: true
+  commentReplyText?: true
+  likeComment?: true
+  mediaId?: true
+  likeIncomingDm?: true
+  sendDm?: true
+  triggerType?: true
+  likeStoryReply?: true
+  followGateText?: true
+  requireFollow?: true
 }
 
 export type AutomationMaxAggregateInputType = {
   id?: true
   instagramAccountId?: true
-  triggerType?: true
   keyword?: true
-  mediaId?: true
-  likeComment?: true
-  commentReplyText?: true
-  sendDm?: true
-  likeIncomingDm?: true
   replyText?: true
-  likeStoryReply?: true
-  requireFollow?: true
-  followGateText?: true
   isActive?: true
   createdAt?: true
   updatedAt?: true
+  commentReplyText?: true
+  likeComment?: true
+  mediaId?: true
+  likeIncomingDm?: true
+  sendDm?: true
+  triggerType?: true
+  likeStoryReply?: true
+  followGateText?: true
+  requireFollow?: true
 }
 
 export type AutomationCountAggregateInputType = {
   id?: true
   instagramAccountId?: true
-  triggerType?: true
   keyword?: true
-  mediaId?: true
-  likeComment?: true
-  commentReplyText?: true
-  sendDm?: true
-  likeIncomingDm?: true
   replyText?: true
-  likeStoryReply?: true
-  requireFollow?: true
-  followGateText?: true
   isActive?: true
   createdAt?: true
   updatedAt?: true
+  commentReplyText?: true
+  likeComment?: true
+  mediaId?: true
+  likeIncomingDm?: true
+  sendDm?: true
+  triggerType?: true
+  likeStoryReply?: true
+  followGateText?: true
+  requireFollow?: true
   _all?: true
 }
 
@@ -216,20 +216,20 @@ export type AutomationGroupByArgs<ExtArgs extends runtime.Types.Extensions.Inter
 export type AutomationGroupByOutputType = {
   id: string
   instagramAccountId: string
-  triggerType: $Enums.AutomationTriggerType
   keyword: string | null
-  mediaId: string | null
-  likeComment: boolean
-  commentReplyText: string | null
-  sendDm: boolean
-  likeIncomingDm: boolean
   replyText: string | null
-  likeStoryReply: boolean
-  requireFollow: boolean
-  followGateText: string | null
   isActive: boolean
   createdAt: Date
   updatedAt: Date
+  commentReplyText: string | null
+  likeComment: boolean
+  mediaId: string | null
+  likeIncomingDm: boolean
+  sendDm: boolean
+  triggerType: $Enums.AutomationTriggerType
+  likeStoryReply: boolean
+  followGateText: string | null
+  requireFollow: boolean
   _count: AutomationCountAggregateOutputType | null
   _min: AutomationMinAggregateOutputType | null
   _max: AutomationMaxAggregateOutputType | null
@@ -256,95 +256,96 @@ export type AutomationWhereInput = {
   NOT?: Prisma.AutomationWhereInput | Prisma.AutomationWhereInput[]
   id?: Prisma.StringFilter<"Automation"> | string
   instagramAccountId?: Prisma.StringFilter<"Automation"> | string
-  triggerType?: Prisma.EnumAutomationTriggerTypeFilter<"Automation"> | $Enums.AutomationTriggerType
   keyword?: Prisma.StringNullableFilter<"Automation"> | string | null
-  mediaId?: Prisma.StringNullableFilter<"Automation"> | string | null
-  likeComment?: Prisma.BoolFilter<"Automation"> | boolean
-  commentReplyText?: Prisma.StringNullableFilter<"Automation"> | string | null
-  sendDm?: Prisma.BoolFilter<"Automation"> | boolean
-  likeIncomingDm?: Prisma.BoolFilter<"Automation"> | boolean
   replyText?: Prisma.StringNullableFilter<"Automation"> | string | null
-  likeStoryReply?: Prisma.BoolFilter<"Automation"> | boolean
-  requireFollow?: Prisma.BoolFilter<"Automation"> | boolean
-  followGateText?: Prisma.StringNullableFilter<"Automation"> | string | null
   isActive?: Prisma.BoolFilter<"Automation"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Automation"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Automation"> | Date | string
+  commentReplyText?: Prisma.StringNullableFilter<"Automation"> | string | null
+  likeComment?: Prisma.BoolFilter<"Automation"> | boolean
+  mediaId?: Prisma.StringNullableFilter<"Automation"> | string | null
+  likeIncomingDm?: Prisma.BoolFilter<"Automation"> | boolean
+  sendDm?: Prisma.BoolFilter<"Automation"> | boolean
+  triggerType?: Prisma.EnumAutomationTriggerTypeFilter<"Automation"> | $Enums.AutomationTriggerType
+  likeStoryReply?: Prisma.BoolFilter<"Automation"> | boolean
+  followGateText?: Prisma.StringNullableFilter<"Automation"> | string | null
+  requireFollow?: Prisma.BoolFilter<"Automation"> | boolean
   instagramAccount?: Prisma.XOR<Prisma.InstagramAccountScalarRelationFilter, Prisma.InstagramAccountWhereInput>
   messages?: Prisma.AutomationMessageListRelationFilter
-  pendingFollowGates?: Prisma.PendingFollowGateListRelationFilter
   iceBreakers?: Prisma.IceBreakerListRelationFilter
+  pendingFollowGates?: Prisma.PendingFollowGateListRelationFilter
   persistentMenuItems?: Prisma.PersistentMenuItemListRelationFilter
 }
 
 export type AutomationOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   instagramAccountId?: Prisma.SortOrder
-  triggerType?: Prisma.SortOrder
   keyword?: Prisma.SortOrderInput | Prisma.SortOrder
-  mediaId?: Prisma.SortOrderInput | Prisma.SortOrder
-  likeComment?: Prisma.SortOrder
-  commentReplyText?: Prisma.SortOrderInput | Prisma.SortOrder
-  sendDm?: Prisma.SortOrder
-  likeIncomingDm?: Prisma.SortOrder
   replyText?: Prisma.SortOrderInput | Prisma.SortOrder
-  likeStoryReply?: Prisma.SortOrder
-  requireFollow?: Prisma.SortOrder
-  followGateText?: Prisma.SortOrderInput | Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  commentReplyText?: Prisma.SortOrderInput | Prisma.SortOrder
+  likeComment?: Prisma.SortOrder
+  mediaId?: Prisma.SortOrderInput | Prisma.SortOrder
+  likeIncomingDm?: Prisma.SortOrder
+  sendDm?: Prisma.SortOrder
+  triggerType?: Prisma.SortOrder
+  likeStoryReply?: Prisma.SortOrder
+  followGateText?: Prisma.SortOrderInput | Prisma.SortOrder
+  requireFollow?: Prisma.SortOrder
   instagramAccount?: Prisma.InstagramAccountOrderByWithRelationInput
   messages?: Prisma.AutomationMessageOrderByRelationAggregateInput
-  pendingFollowGates?: Prisma.PendingFollowGateOrderByRelationAggregateInput
   iceBreakers?: Prisma.IceBreakerOrderByRelationAggregateInput
+  pendingFollowGates?: Prisma.PendingFollowGateOrderByRelationAggregateInput
   persistentMenuItems?: Prisma.PersistentMenuItemOrderByRelationAggregateInput
 }
 
 export type AutomationWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  instagramAccountId_keyword_mediaId?: Prisma.AutomationInstagramAccountIdKeywordMediaIdCompoundUniqueInput
   AND?: Prisma.AutomationWhereInput | Prisma.AutomationWhereInput[]
   OR?: Prisma.AutomationWhereInput[]
   NOT?: Prisma.AutomationWhereInput | Prisma.AutomationWhereInput[]
   instagramAccountId?: Prisma.StringFilter<"Automation"> | string
-  triggerType?: Prisma.EnumAutomationTriggerTypeFilter<"Automation"> | $Enums.AutomationTriggerType
   keyword?: Prisma.StringNullableFilter<"Automation"> | string | null
-  mediaId?: Prisma.StringNullableFilter<"Automation"> | string | null
-  likeComment?: Prisma.BoolFilter<"Automation"> | boolean
-  commentReplyText?: Prisma.StringNullableFilter<"Automation"> | string | null
-  sendDm?: Prisma.BoolFilter<"Automation"> | boolean
-  likeIncomingDm?: Prisma.BoolFilter<"Automation"> | boolean
   replyText?: Prisma.StringNullableFilter<"Automation"> | string | null
-  likeStoryReply?: Prisma.BoolFilter<"Automation"> | boolean
-  requireFollow?: Prisma.BoolFilter<"Automation"> | boolean
-  followGateText?: Prisma.StringNullableFilter<"Automation"> | string | null
   isActive?: Prisma.BoolFilter<"Automation"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Automation"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Automation"> | Date | string
+  commentReplyText?: Prisma.StringNullableFilter<"Automation"> | string | null
+  likeComment?: Prisma.BoolFilter<"Automation"> | boolean
+  mediaId?: Prisma.StringNullableFilter<"Automation"> | string | null
+  likeIncomingDm?: Prisma.BoolFilter<"Automation"> | boolean
+  sendDm?: Prisma.BoolFilter<"Automation"> | boolean
+  triggerType?: Prisma.EnumAutomationTriggerTypeFilter<"Automation"> | $Enums.AutomationTriggerType
+  likeStoryReply?: Prisma.BoolFilter<"Automation"> | boolean
+  followGateText?: Prisma.StringNullableFilter<"Automation"> | string | null
+  requireFollow?: Prisma.BoolFilter<"Automation"> | boolean
   instagramAccount?: Prisma.XOR<Prisma.InstagramAccountScalarRelationFilter, Prisma.InstagramAccountWhereInput>
   messages?: Prisma.AutomationMessageListRelationFilter
-  pendingFollowGates?: Prisma.PendingFollowGateListRelationFilter
   iceBreakers?: Prisma.IceBreakerListRelationFilter
+  pendingFollowGates?: Prisma.PendingFollowGateListRelationFilter
   persistentMenuItems?: Prisma.PersistentMenuItemListRelationFilter
-}, "id">
+}, "id" | "instagramAccountId_keyword_mediaId">
 
 export type AutomationOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   instagramAccountId?: Prisma.SortOrder
-  triggerType?: Prisma.SortOrder
   keyword?: Prisma.SortOrderInput | Prisma.SortOrder
-  mediaId?: Prisma.SortOrderInput | Prisma.SortOrder
-  likeComment?: Prisma.SortOrder
-  commentReplyText?: Prisma.SortOrderInput | Prisma.SortOrder
-  sendDm?: Prisma.SortOrder
-  likeIncomingDm?: Prisma.SortOrder
   replyText?: Prisma.SortOrderInput | Prisma.SortOrder
-  likeStoryReply?: Prisma.SortOrder
-  requireFollow?: Prisma.SortOrder
-  followGateText?: Prisma.SortOrderInput | Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  commentReplyText?: Prisma.SortOrderInput | Prisma.SortOrder
+  likeComment?: Prisma.SortOrder
+  mediaId?: Prisma.SortOrderInput | Prisma.SortOrder
+  likeIncomingDm?: Prisma.SortOrder
+  sendDm?: Prisma.SortOrder
+  triggerType?: Prisma.SortOrder
+  likeStoryReply?: Prisma.SortOrder
+  followGateText?: Prisma.SortOrderInput | Prisma.SortOrder
+  requireFollow?: Prisma.SortOrder
   _count?: Prisma.AutomationCountOrderByAggregateInput
   _max?: Prisma.AutomationMaxOrderByAggregateInput
   _min?: Prisma.AutomationMinOrderByAggregateInput
@@ -356,168 +357,168 @@ export type AutomationScalarWhereWithAggregatesInput = {
   NOT?: Prisma.AutomationScalarWhereWithAggregatesInput | Prisma.AutomationScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"Automation"> | string
   instagramAccountId?: Prisma.StringWithAggregatesFilter<"Automation"> | string
-  triggerType?: Prisma.EnumAutomationTriggerTypeWithAggregatesFilter<"Automation"> | $Enums.AutomationTriggerType
   keyword?: Prisma.StringNullableWithAggregatesFilter<"Automation"> | string | null
-  mediaId?: Prisma.StringNullableWithAggregatesFilter<"Automation"> | string | null
-  likeComment?: Prisma.BoolWithAggregatesFilter<"Automation"> | boolean
-  commentReplyText?: Prisma.StringNullableWithAggregatesFilter<"Automation"> | string | null
-  sendDm?: Prisma.BoolWithAggregatesFilter<"Automation"> | boolean
-  likeIncomingDm?: Prisma.BoolWithAggregatesFilter<"Automation"> | boolean
   replyText?: Prisma.StringNullableWithAggregatesFilter<"Automation"> | string | null
-  likeStoryReply?: Prisma.BoolWithAggregatesFilter<"Automation"> | boolean
-  requireFollow?: Prisma.BoolWithAggregatesFilter<"Automation"> | boolean
-  followGateText?: Prisma.StringNullableWithAggregatesFilter<"Automation"> | string | null
   isActive?: Prisma.BoolWithAggregatesFilter<"Automation"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Automation"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Automation"> | Date | string
+  commentReplyText?: Prisma.StringNullableWithAggregatesFilter<"Automation"> | string | null
+  likeComment?: Prisma.BoolWithAggregatesFilter<"Automation"> | boolean
+  mediaId?: Prisma.StringNullableWithAggregatesFilter<"Automation"> | string | null
+  likeIncomingDm?: Prisma.BoolWithAggregatesFilter<"Automation"> | boolean
+  sendDm?: Prisma.BoolWithAggregatesFilter<"Automation"> | boolean
+  triggerType?: Prisma.EnumAutomationTriggerTypeWithAggregatesFilter<"Automation"> | $Enums.AutomationTriggerType
+  likeStoryReply?: Prisma.BoolWithAggregatesFilter<"Automation"> | boolean
+  followGateText?: Prisma.StringNullableWithAggregatesFilter<"Automation"> | string | null
+  requireFollow?: Prisma.BoolWithAggregatesFilter<"Automation"> | boolean
 }
 
 export type AutomationCreateInput = {
   id?: string
-  triggerType?: $Enums.AutomationTriggerType
   keyword?: string | null
-  mediaId?: string | null
-  likeComment?: boolean
-  commentReplyText?: string | null
-  sendDm?: boolean
-  likeIncomingDm?: boolean
   replyText?: string | null
-  likeStoryReply?: boolean
-  requireFollow?: boolean
-  followGateText?: string | null
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  commentReplyText?: string | null
+  likeComment?: boolean
+  mediaId?: string | null
+  likeIncomingDm?: boolean
+  sendDm?: boolean
+  triggerType?: $Enums.AutomationTriggerType
+  likeStoryReply?: boolean
+  followGateText?: string | null
+  requireFollow?: boolean
   instagramAccount: Prisma.InstagramAccountCreateNestedOneWithoutAutomationsInput
   messages?: Prisma.AutomationMessageCreateNestedManyWithoutAutomationInput
-  pendingFollowGates?: Prisma.PendingFollowGateCreateNestedManyWithoutAutomationInput
   iceBreakers?: Prisma.IceBreakerCreateNestedManyWithoutAutomationInput
+  pendingFollowGates?: Prisma.PendingFollowGateCreateNestedManyWithoutAutomationInput
   persistentMenuItems?: Prisma.PersistentMenuItemCreateNestedManyWithoutAutomationInput
 }
 
 export type AutomationUncheckedCreateInput = {
   id?: string
   instagramAccountId: string
-  triggerType?: $Enums.AutomationTriggerType
   keyword?: string | null
-  mediaId?: string | null
-  likeComment?: boolean
-  commentReplyText?: string | null
-  sendDm?: boolean
-  likeIncomingDm?: boolean
   replyText?: string | null
-  likeStoryReply?: boolean
-  requireFollow?: boolean
-  followGateText?: string | null
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  commentReplyText?: string | null
+  likeComment?: boolean
+  mediaId?: string | null
+  likeIncomingDm?: boolean
+  sendDm?: boolean
+  triggerType?: $Enums.AutomationTriggerType
+  likeStoryReply?: boolean
+  followGateText?: string | null
+  requireFollow?: boolean
   messages?: Prisma.AutomationMessageUncheckedCreateNestedManyWithoutAutomationInput
-  pendingFollowGates?: Prisma.PendingFollowGateUncheckedCreateNestedManyWithoutAutomationInput
   iceBreakers?: Prisma.IceBreakerUncheckedCreateNestedManyWithoutAutomationInput
+  pendingFollowGates?: Prisma.PendingFollowGateUncheckedCreateNestedManyWithoutAutomationInput
   persistentMenuItems?: Prisma.PersistentMenuItemUncheckedCreateNestedManyWithoutAutomationInput
 }
 
 export type AutomationUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  triggerType?: Prisma.EnumAutomationTriggerTypeFieldUpdateOperationsInput | $Enums.AutomationTriggerType
   keyword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  likeComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  commentReplyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   replyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  likeStoryReply?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  requireFollow?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  followGateText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  commentReplyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  triggerType?: Prisma.EnumAutomationTriggerTypeFieldUpdateOperationsInput | $Enums.AutomationTriggerType
+  likeStoryReply?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  followGateText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requireFollow?: Prisma.BoolFieldUpdateOperationsInput | boolean
   instagramAccount?: Prisma.InstagramAccountUpdateOneRequiredWithoutAutomationsNestedInput
   messages?: Prisma.AutomationMessageUpdateManyWithoutAutomationNestedInput
-  pendingFollowGates?: Prisma.PendingFollowGateUpdateManyWithoutAutomationNestedInput
   iceBreakers?: Prisma.IceBreakerUpdateManyWithoutAutomationNestedInput
+  pendingFollowGates?: Prisma.PendingFollowGateUpdateManyWithoutAutomationNestedInput
   persistentMenuItems?: Prisma.PersistentMenuItemUpdateManyWithoutAutomationNestedInput
 }
 
 export type AutomationUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   instagramAccountId?: Prisma.StringFieldUpdateOperationsInput | string
-  triggerType?: Prisma.EnumAutomationTriggerTypeFieldUpdateOperationsInput | $Enums.AutomationTriggerType
   keyword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  likeComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  commentReplyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   replyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  likeStoryReply?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  requireFollow?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  followGateText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  commentReplyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  triggerType?: Prisma.EnumAutomationTriggerTypeFieldUpdateOperationsInput | $Enums.AutomationTriggerType
+  likeStoryReply?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  followGateText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requireFollow?: Prisma.BoolFieldUpdateOperationsInput | boolean
   messages?: Prisma.AutomationMessageUncheckedUpdateManyWithoutAutomationNestedInput
-  pendingFollowGates?: Prisma.PendingFollowGateUncheckedUpdateManyWithoutAutomationNestedInput
   iceBreakers?: Prisma.IceBreakerUncheckedUpdateManyWithoutAutomationNestedInput
+  pendingFollowGates?: Prisma.PendingFollowGateUncheckedUpdateManyWithoutAutomationNestedInput
   persistentMenuItems?: Prisma.PersistentMenuItemUncheckedUpdateManyWithoutAutomationNestedInput
 }
 
 export type AutomationCreateManyInput = {
   id?: string
   instagramAccountId: string
-  triggerType?: $Enums.AutomationTriggerType
   keyword?: string | null
-  mediaId?: string | null
-  likeComment?: boolean
-  commentReplyText?: string | null
-  sendDm?: boolean
-  likeIncomingDm?: boolean
   replyText?: string | null
-  likeStoryReply?: boolean
-  requireFollow?: boolean
-  followGateText?: string | null
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  commentReplyText?: string | null
+  likeComment?: boolean
+  mediaId?: string | null
+  likeIncomingDm?: boolean
+  sendDm?: boolean
+  triggerType?: $Enums.AutomationTriggerType
+  likeStoryReply?: boolean
+  followGateText?: string | null
+  requireFollow?: boolean
 }
 
 export type AutomationUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  triggerType?: Prisma.EnumAutomationTriggerTypeFieldUpdateOperationsInput | $Enums.AutomationTriggerType
   keyword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  likeComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  commentReplyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   replyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  likeStoryReply?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  requireFollow?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  followGateText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  commentReplyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  triggerType?: Prisma.EnumAutomationTriggerTypeFieldUpdateOperationsInput | $Enums.AutomationTriggerType
+  likeStoryReply?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  followGateText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requireFollow?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 export type AutomationUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   instagramAccountId?: Prisma.StringFieldUpdateOperationsInput | string
-  triggerType?: Prisma.EnumAutomationTriggerTypeFieldUpdateOperationsInput | $Enums.AutomationTriggerType
   keyword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  likeComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  commentReplyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   replyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  likeStoryReply?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  requireFollow?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  followGateText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  commentReplyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  triggerType?: Prisma.EnumAutomationTriggerTypeFieldUpdateOperationsInput | $Enums.AutomationTriggerType
+  likeStoryReply?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  followGateText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requireFollow?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 export type AutomationListRelationFilter = {
@@ -530,61 +531,67 @@ export type AutomationOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
+export type AutomationInstagramAccountIdKeywordMediaIdCompoundUniqueInput = {
+  instagramAccountId: string
+  keyword: string
+  mediaId: string
+}
+
 export type AutomationCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   instagramAccountId?: Prisma.SortOrder
-  triggerType?: Prisma.SortOrder
   keyword?: Prisma.SortOrder
-  mediaId?: Prisma.SortOrder
-  likeComment?: Prisma.SortOrder
-  commentReplyText?: Prisma.SortOrder
-  sendDm?: Prisma.SortOrder
-  likeIncomingDm?: Prisma.SortOrder
   replyText?: Prisma.SortOrder
-  likeStoryReply?: Prisma.SortOrder
-  requireFollow?: Prisma.SortOrder
-  followGateText?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  commentReplyText?: Prisma.SortOrder
+  likeComment?: Prisma.SortOrder
+  mediaId?: Prisma.SortOrder
+  likeIncomingDm?: Prisma.SortOrder
+  sendDm?: Prisma.SortOrder
+  triggerType?: Prisma.SortOrder
+  likeStoryReply?: Prisma.SortOrder
+  followGateText?: Prisma.SortOrder
+  requireFollow?: Prisma.SortOrder
 }
 
 export type AutomationMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   instagramAccountId?: Prisma.SortOrder
-  triggerType?: Prisma.SortOrder
   keyword?: Prisma.SortOrder
-  mediaId?: Prisma.SortOrder
-  likeComment?: Prisma.SortOrder
-  commentReplyText?: Prisma.SortOrder
-  sendDm?: Prisma.SortOrder
-  likeIncomingDm?: Prisma.SortOrder
   replyText?: Prisma.SortOrder
-  likeStoryReply?: Prisma.SortOrder
-  requireFollow?: Prisma.SortOrder
-  followGateText?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  commentReplyText?: Prisma.SortOrder
+  likeComment?: Prisma.SortOrder
+  mediaId?: Prisma.SortOrder
+  likeIncomingDm?: Prisma.SortOrder
+  sendDm?: Prisma.SortOrder
+  triggerType?: Prisma.SortOrder
+  likeStoryReply?: Prisma.SortOrder
+  followGateText?: Prisma.SortOrder
+  requireFollow?: Prisma.SortOrder
 }
 
 export type AutomationMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   instagramAccountId?: Prisma.SortOrder
-  triggerType?: Prisma.SortOrder
   keyword?: Prisma.SortOrder
-  mediaId?: Prisma.SortOrder
-  likeComment?: Prisma.SortOrder
-  commentReplyText?: Prisma.SortOrder
-  sendDm?: Prisma.SortOrder
-  likeIncomingDm?: Prisma.SortOrder
   replyText?: Prisma.SortOrder
-  likeStoryReply?: Prisma.SortOrder
-  requireFollow?: Prisma.SortOrder
-  followGateText?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  commentReplyText?: Prisma.SortOrder
+  likeComment?: Prisma.SortOrder
+  mediaId?: Prisma.SortOrder
+  likeIncomingDm?: Prisma.SortOrder
+  sendDm?: Prisma.SortOrder
+  triggerType?: Prisma.SortOrder
+  likeStoryReply?: Prisma.SortOrder
+  followGateText?: Prisma.SortOrder
+  requireFollow?: Prisma.SortOrder
 }
 
 export type AutomationScalarRelationFilter = {
@@ -639,12 +646,12 @@ export type AutomationUncheckedUpdateManyWithoutInstagramAccountNestedInput = {
   deleteMany?: Prisma.AutomationScalarWhereInput | Prisma.AutomationScalarWhereInput[]
 }
 
-export type EnumAutomationTriggerTypeFieldUpdateOperationsInput = {
-  set?: $Enums.AutomationTriggerType
-}
-
 export type NullableStringFieldUpdateOperationsInput = {
   set?: string | null
+}
+
+export type EnumAutomationTriggerTypeFieldUpdateOperationsInput = {
+  set?: $Enums.AutomationTriggerType
 }
 
 export type AutomationCreateNestedOneWithoutMessagesInput = {
@@ -707,45 +714,45 @@ export type AutomationUpdateOneRequiredWithoutPendingFollowGatesNestedInput = {
 
 export type AutomationCreateWithoutInstagramAccountInput = {
   id?: string
-  triggerType?: $Enums.AutomationTriggerType
   keyword?: string | null
-  mediaId?: string | null
-  likeComment?: boolean
-  commentReplyText?: string | null
-  sendDm?: boolean
-  likeIncomingDm?: boolean
   replyText?: string | null
-  likeStoryReply?: boolean
-  requireFollow?: boolean
-  followGateText?: string | null
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  commentReplyText?: string | null
+  likeComment?: boolean
+  mediaId?: string | null
+  likeIncomingDm?: boolean
+  sendDm?: boolean
+  triggerType?: $Enums.AutomationTriggerType
+  likeStoryReply?: boolean
+  followGateText?: string | null
+  requireFollow?: boolean
   messages?: Prisma.AutomationMessageCreateNestedManyWithoutAutomationInput
-  pendingFollowGates?: Prisma.PendingFollowGateCreateNestedManyWithoutAutomationInput
   iceBreakers?: Prisma.IceBreakerCreateNestedManyWithoutAutomationInput
+  pendingFollowGates?: Prisma.PendingFollowGateCreateNestedManyWithoutAutomationInput
   persistentMenuItems?: Prisma.PersistentMenuItemCreateNestedManyWithoutAutomationInput
 }
 
 export type AutomationUncheckedCreateWithoutInstagramAccountInput = {
   id?: string
-  triggerType?: $Enums.AutomationTriggerType
   keyword?: string | null
-  mediaId?: string | null
-  likeComment?: boolean
-  commentReplyText?: string | null
-  sendDm?: boolean
-  likeIncomingDm?: boolean
   replyText?: string | null
-  likeStoryReply?: boolean
-  requireFollow?: boolean
-  followGateText?: string | null
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  commentReplyText?: string | null
+  likeComment?: boolean
+  mediaId?: string | null
+  likeIncomingDm?: boolean
+  sendDm?: boolean
+  triggerType?: $Enums.AutomationTriggerType
+  likeStoryReply?: boolean
+  followGateText?: string | null
+  requireFollow?: boolean
   messages?: Prisma.AutomationMessageUncheckedCreateNestedManyWithoutAutomationInput
-  pendingFollowGates?: Prisma.PendingFollowGateUncheckedCreateNestedManyWithoutAutomationInput
   iceBreakers?: Prisma.IceBreakerUncheckedCreateNestedManyWithoutAutomationInput
+  pendingFollowGates?: Prisma.PendingFollowGateUncheckedCreateNestedManyWithoutAutomationInput
   persistentMenuItems?: Prisma.PersistentMenuItemUncheckedCreateNestedManyWithoutAutomationInput
 }
 
@@ -781,63 +788,63 @@ export type AutomationScalarWhereInput = {
   NOT?: Prisma.AutomationScalarWhereInput | Prisma.AutomationScalarWhereInput[]
   id?: Prisma.StringFilter<"Automation"> | string
   instagramAccountId?: Prisma.StringFilter<"Automation"> | string
-  triggerType?: Prisma.EnumAutomationTriggerTypeFilter<"Automation"> | $Enums.AutomationTriggerType
   keyword?: Prisma.StringNullableFilter<"Automation"> | string | null
-  mediaId?: Prisma.StringNullableFilter<"Automation"> | string | null
-  likeComment?: Prisma.BoolFilter<"Automation"> | boolean
-  commentReplyText?: Prisma.StringNullableFilter<"Automation"> | string | null
-  sendDm?: Prisma.BoolFilter<"Automation"> | boolean
-  likeIncomingDm?: Prisma.BoolFilter<"Automation"> | boolean
   replyText?: Prisma.StringNullableFilter<"Automation"> | string | null
-  likeStoryReply?: Prisma.BoolFilter<"Automation"> | boolean
-  requireFollow?: Prisma.BoolFilter<"Automation"> | boolean
-  followGateText?: Prisma.StringNullableFilter<"Automation"> | string | null
   isActive?: Prisma.BoolFilter<"Automation"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Automation"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Automation"> | Date | string
+  commentReplyText?: Prisma.StringNullableFilter<"Automation"> | string | null
+  likeComment?: Prisma.BoolFilter<"Automation"> | boolean
+  mediaId?: Prisma.StringNullableFilter<"Automation"> | string | null
+  likeIncomingDm?: Prisma.BoolFilter<"Automation"> | boolean
+  sendDm?: Prisma.BoolFilter<"Automation"> | boolean
+  triggerType?: Prisma.EnumAutomationTriggerTypeFilter<"Automation"> | $Enums.AutomationTriggerType
+  likeStoryReply?: Prisma.BoolFilter<"Automation"> | boolean
+  followGateText?: Prisma.StringNullableFilter<"Automation"> | string | null
+  requireFollow?: Prisma.BoolFilter<"Automation"> | boolean
 }
 
 export type AutomationCreateWithoutMessagesInput = {
   id?: string
-  triggerType?: $Enums.AutomationTriggerType
   keyword?: string | null
-  mediaId?: string | null
-  likeComment?: boolean
-  commentReplyText?: string | null
-  sendDm?: boolean
-  likeIncomingDm?: boolean
   replyText?: string | null
-  likeStoryReply?: boolean
-  requireFollow?: boolean
-  followGateText?: string | null
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  commentReplyText?: string | null
+  likeComment?: boolean
+  mediaId?: string | null
+  likeIncomingDm?: boolean
+  sendDm?: boolean
+  triggerType?: $Enums.AutomationTriggerType
+  likeStoryReply?: boolean
+  followGateText?: string | null
+  requireFollow?: boolean
   instagramAccount: Prisma.InstagramAccountCreateNestedOneWithoutAutomationsInput
-  pendingFollowGates?: Prisma.PendingFollowGateCreateNestedManyWithoutAutomationInput
   iceBreakers?: Prisma.IceBreakerCreateNestedManyWithoutAutomationInput
+  pendingFollowGates?: Prisma.PendingFollowGateCreateNestedManyWithoutAutomationInput
   persistentMenuItems?: Prisma.PersistentMenuItemCreateNestedManyWithoutAutomationInput
 }
 
 export type AutomationUncheckedCreateWithoutMessagesInput = {
   id?: string
   instagramAccountId: string
-  triggerType?: $Enums.AutomationTriggerType
   keyword?: string | null
-  mediaId?: string | null
-  likeComment?: boolean
-  commentReplyText?: string | null
-  sendDm?: boolean
-  likeIncomingDm?: boolean
   replyText?: string | null
-  likeStoryReply?: boolean
-  requireFollow?: boolean
-  followGateText?: string | null
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
-  pendingFollowGates?: Prisma.PendingFollowGateUncheckedCreateNestedManyWithoutAutomationInput
+  commentReplyText?: string | null
+  likeComment?: boolean
+  mediaId?: string | null
+  likeIncomingDm?: boolean
+  sendDm?: boolean
+  triggerType?: $Enums.AutomationTriggerType
+  likeStoryReply?: boolean
+  followGateText?: string | null
+  requireFollow?: boolean
   iceBreakers?: Prisma.IceBreakerUncheckedCreateNestedManyWithoutAutomationInput
+  pendingFollowGates?: Prisma.PendingFollowGateUncheckedCreateNestedManyWithoutAutomationInput
   persistentMenuItems?: Prisma.PersistentMenuItemUncheckedCreateNestedManyWithoutAutomationInput
 }
 
@@ -859,64 +866,64 @@ export type AutomationUpdateToOneWithWhereWithoutMessagesInput = {
 
 export type AutomationUpdateWithoutMessagesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  triggerType?: Prisma.EnumAutomationTriggerTypeFieldUpdateOperationsInput | $Enums.AutomationTriggerType
   keyword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  likeComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  commentReplyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   replyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  likeStoryReply?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  requireFollow?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  followGateText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  commentReplyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  triggerType?: Prisma.EnumAutomationTriggerTypeFieldUpdateOperationsInput | $Enums.AutomationTriggerType
+  likeStoryReply?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  followGateText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requireFollow?: Prisma.BoolFieldUpdateOperationsInput | boolean
   instagramAccount?: Prisma.InstagramAccountUpdateOneRequiredWithoutAutomationsNestedInput
-  pendingFollowGates?: Prisma.PendingFollowGateUpdateManyWithoutAutomationNestedInput
   iceBreakers?: Prisma.IceBreakerUpdateManyWithoutAutomationNestedInput
+  pendingFollowGates?: Prisma.PendingFollowGateUpdateManyWithoutAutomationNestedInput
   persistentMenuItems?: Prisma.PersistentMenuItemUpdateManyWithoutAutomationNestedInput
 }
 
 export type AutomationUncheckedUpdateWithoutMessagesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   instagramAccountId?: Prisma.StringFieldUpdateOperationsInput | string
-  triggerType?: Prisma.EnumAutomationTriggerTypeFieldUpdateOperationsInput | $Enums.AutomationTriggerType
   keyword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  likeComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  commentReplyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   replyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  likeStoryReply?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  requireFollow?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  followGateText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  pendingFollowGates?: Prisma.PendingFollowGateUncheckedUpdateManyWithoutAutomationNestedInput
+  commentReplyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  triggerType?: Prisma.EnumAutomationTriggerTypeFieldUpdateOperationsInput | $Enums.AutomationTriggerType
+  likeStoryReply?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  followGateText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requireFollow?: Prisma.BoolFieldUpdateOperationsInput | boolean
   iceBreakers?: Prisma.IceBreakerUncheckedUpdateManyWithoutAutomationNestedInput
+  pendingFollowGates?: Prisma.PendingFollowGateUncheckedUpdateManyWithoutAutomationNestedInput
   persistentMenuItems?: Prisma.PersistentMenuItemUncheckedUpdateManyWithoutAutomationNestedInput
 }
 
 export type AutomationCreateWithoutIceBreakersInput = {
   id?: string
-  triggerType?: $Enums.AutomationTriggerType
   keyword?: string | null
-  mediaId?: string | null
-  likeComment?: boolean
-  commentReplyText?: string | null
-  sendDm?: boolean
-  likeIncomingDm?: boolean
   replyText?: string | null
-  likeStoryReply?: boolean
-  requireFollow?: boolean
-  followGateText?: string | null
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  commentReplyText?: string | null
+  likeComment?: boolean
+  mediaId?: string | null
+  likeIncomingDm?: boolean
+  sendDm?: boolean
+  triggerType?: $Enums.AutomationTriggerType
+  likeStoryReply?: boolean
+  followGateText?: string | null
+  requireFollow?: boolean
   instagramAccount: Prisma.InstagramAccountCreateNestedOneWithoutAutomationsInput
   messages?: Prisma.AutomationMessageCreateNestedManyWithoutAutomationInput
   pendingFollowGates?: Prisma.PendingFollowGateCreateNestedManyWithoutAutomationInput
@@ -926,20 +933,20 @@ export type AutomationCreateWithoutIceBreakersInput = {
 export type AutomationUncheckedCreateWithoutIceBreakersInput = {
   id?: string
   instagramAccountId: string
-  triggerType?: $Enums.AutomationTriggerType
   keyword?: string | null
-  mediaId?: string | null
-  likeComment?: boolean
-  commentReplyText?: string | null
-  sendDm?: boolean
-  likeIncomingDm?: boolean
   replyText?: string | null
-  likeStoryReply?: boolean
-  requireFollow?: boolean
-  followGateText?: string | null
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  commentReplyText?: string | null
+  likeComment?: boolean
+  mediaId?: string | null
+  likeIncomingDm?: boolean
+  sendDm?: boolean
+  triggerType?: $Enums.AutomationTriggerType
+  likeStoryReply?: boolean
+  followGateText?: string | null
+  requireFollow?: boolean
   messages?: Prisma.AutomationMessageUncheckedCreateNestedManyWithoutAutomationInput
   pendingFollowGates?: Prisma.PendingFollowGateUncheckedCreateNestedManyWithoutAutomationInput
   persistentMenuItems?: Prisma.PersistentMenuItemUncheckedCreateNestedManyWithoutAutomationInput
@@ -963,20 +970,20 @@ export type AutomationUpdateToOneWithWhereWithoutIceBreakersInput = {
 
 export type AutomationUpdateWithoutIceBreakersInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  triggerType?: Prisma.EnumAutomationTriggerTypeFieldUpdateOperationsInput | $Enums.AutomationTriggerType
   keyword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  likeComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  commentReplyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   replyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  likeStoryReply?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  requireFollow?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  followGateText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  commentReplyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  triggerType?: Prisma.EnumAutomationTriggerTypeFieldUpdateOperationsInput | $Enums.AutomationTriggerType
+  likeStoryReply?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  followGateText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requireFollow?: Prisma.BoolFieldUpdateOperationsInput | boolean
   instagramAccount?: Prisma.InstagramAccountUpdateOneRequiredWithoutAutomationsNestedInput
   messages?: Prisma.AutomationMessageUpdateManyWithoutAutomationNestedInput
   pendingFollowGates?: Prisma.PendingFollowGateUpdateManyWithoutAutomationNestedInput
@@ -986,20 +993,20 @@ export type AutomationUpdateWithoutIceBreakersInput = {
 export type AutomationUncheckedUpdateWithoutIceBreakersInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   instagramAccountId?: Prisma.StringFieldUpdateOperationsInput | string
-  triggerType?: Prisma.EnumAutomationTriggerTypeFieldUpdateOperationsInput | $Enums.AutomationTriggerType
   keyword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  likeComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  commentReplyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   replyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  likeStoryReply?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  requireFollow?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  followGateText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  commentReplyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  triggerType?: Prisma.EnumAutomationTriggerTypeFieldUpdateOperationsInput | $Enums.AutomationTriggerType
+  likeStoryReply?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  followGateText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requireFollow?: Prisma.BoolFieldUpdateOperationsInput | boolean
   messages?: Prisma.AutomationMessageUncheckedUpdateManyWithoutAutomationNestedInput
   pendingFollowGates?: Prisma.PendingFollowGateUncheckedUpdateManyWithoutAutomationNestedInput
   persistentMenuItems?: Prisma.PersistentMenuItemUncheckedUpdateManyWithoutAutomationNestedInput
@@ -1007,46 +1014,46 @@ export type AutomationUncheckedUpdateWithoutIceBreakersInput = {
 
 export type AutomationCreateWithoutPersistentMenuItemsInput = {
   id?: string
-  triggerType?: $Enums.AutomationTriggerType
   keyword?: string | null
-  mediaId?: string | null
-  likeComment?: boolean
-  commentReplyText?: string | null
-  sendDm?: boolean
-  likeIncomingDm?: boolean
   replyText?: string | null
-  likeStoryReply?: boolean
-  requireFollow?: boolean
-  followGateText?: string | null
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  commentReplyText?: string | null
+  likeComment?: boolean
+  mediaId?: string | null
+  likeIncomingDm?: boolean
+  sendDm?: boolean
+  triggerType?: $Enums.AutomationTriggerType
+  likeStoryReply?: boolean
+  followGateText?: string | null
+  requireFollow?: boolean
   instagramAccount: Prisma.InstagramAccountCreateNestedOneWithoutAutomationsInput
   messages?: Prisma.AutomationMessageCreateNestedManyWithoutAutomationInput
-  pendingFollowGates?: Prisma.PendingFollowGateCreateNestedManyWithoutAutomationInput
   iceBreakers?: Prisma.IceBreakerCreateNestedManyWithoutAutomationInput
+  pendingFollowGates?: Prisma.PendingFollowGateCreateNestedManyWithoutAutomationInput
 }
 
 export type AutomationUncheckedCreateWithoutPersistentMenuItemsInput = {
   id?: string
   instagramAccountId: string
-  triggerType?: $Enums.AutomationTriggerType
   keyword?: string | null
-  mediaId?: string | null
-  likeComment?: boolean
-  commentReplyText?: string | null
-  sendDm?: boolean
-  likeIncomingDm?: boolean
   replyText?: string | null
-  likeStoryReply?: boolean
-  requireFollow?: boolean
-  followGateText?: string | null
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  commentReplyText?: string | null
+  likeComment?: boolean
+  mediaId?: string | null
+  likeIncomingDm?: boolean
+  sendDm?: boolean
+  triggerType?: $Enums.AutomationTriggerType
+  likeStoryReply?: boolean
+  followGateText?: string | null
+  requireFollow?: boolean
   messages?: Prisma.AutomationMessageUncheckedCreateNestedManyWithoutAutomationInput
-  pendingFollowGates?: Prisma.PendingFollowGateUncheckedCreateNestedManyWithoutAutomationInput
   iceBreakers?: Prisma.IceBreakerUncheckedCreateNestedManyWithoutAutomationInput
+  pendingFollowGates?: Prisma.PendingFollowGateUncheckedCreateNestedManyWithoutAutomationInput
 }
 
 export type AutomationCreateOrConnectWithoutPersistentMenuItemsInput = {
@@ -1067,64 +1074,64 @@ export type AutomationUpdateToOneWithWhereWithoutPersistentMenuItemsInput = {
 
 export type AutomationUpdateWithoutPersistentMenuItemsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  triggerType?: Prisma.EnumAutomationTriggerTypeFieldUpdateOperationsInput | $Enums.AutomationTriggerType
   keyword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  likeComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  commentReplyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   replyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  likeStoryReply?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  requireFollow?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  followGateText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  commentReplyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  triggerType?: Prisma.EnumAutomationTriggerTypeFieldUpdateOperationsInput | $Enums.AutomationTriggerType
+  likeStoryReply?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  followGateText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requireFollow?: Prisma.BoolFieldUpdateOperationsInput | boolean
   instagramAccount?: Prisma.InstagramAccountUpdateOneRequiredWithoutAutomationsNestedInput
   messages?: Prisma.AutomationMessageUpdateManyWithoutAutomationNestedInput
-  pendingFollowGates?: Prisma.PendingFollowGateUpdateManyWithoutAutomationNestedInput
   iceBreakers?: Prisma.IceBreakerUpdateManyWithoutAutomationNestedInput
+  pendingFollowGates?: Prisma.PendingFollowGateUpdateManyWithoutAutomationNestedInput
 }
 
 export type AutomationUncheckedUpdateWithoutPersistentMenuItemsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   instagramAccountId?: Prisma.StringFieldUpdateOperationsInput | string
-  triggerType?: Prisma.EnumAutomationTriggerTypeFieldUpdateOperationsInput | $Enums.AutomationTriggerType
   keyword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  likeComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  commentReplyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   replyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  likeStoryReply?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  requireFollow?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  followGateText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  commentReplyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  triggerType?: Prisma.EnumAutomationTriggerTypeFieldUpdateOperationsInput | $Enums.AutomationTriggerType
+  likeStoryReply?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  followGateText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requireFollow?: Prisma.BoolFieldUpdateOperationsInput | boolean
   messages?: Prisma.AutomationMessageUncheckedUpdateManyWithoutAutomationNestedInput
-  pendingFollowGates?: Prisma.PendingFollowGateUncheckedUpdateManyWithoutAutomationNestedInput
   iceBreakers?: Prisma.IceBreakerUncheckedUpdateManyWithoutAutomationNestedInput
+  pendingFollowGates?: Prisma.PendingFollowGateUncheckedUpdateManyWithoutAutomationNestedInput
 }
 
 export type AutomationCreateWithoutPendingFollowGatesInput = {
   id?: string
-  triggerType?: $Enums.AutomationTriggerType
   keyword?: string | null
-  mediaId?: string | null
-  likeComment?: boolean
-  commentReplyText?: string | null
-  sendDm?: boolean
-  likeIncomingDm?: boolean
   replyText?: string | null
-  likeStoryReply?: boolean
-  requireFollow?: boolean
-  followGateText?: string | null
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  commentReplyText?: string | null
+  likeComment?: boolean
+  mediaId?: string | null
+  likeIncomingDm?: boolean
+  sendDm?: boolean
+  triggerType?: $Enums.AutomationTriggerType
+  likeStoryReply?: boolean
+  followGateText?: string | null
+  requireFollow?: boolean
   instagramAccount: Prisma.InstagramAccountCreateNestedOneWithoutAutomationsInput
   messages?: Prisma.AutomationMessageCreateNestedManyWithoutAutomationInput
   iceBreakers?: Prisma.IceBreakerCreateNestedManyWithoutAutomationInput
@@ -1134,20 +1141,20 @@ export type AutomationCreateWithoutPendingFollowGatesInput = {
 export type AutomationUncheckedCreateWithoutPendingFollowGatesInput = {
   id?: string
   instagramAccountId: string
-  triggerType?: $Enums.AutomationTriggerType
   keyword?: string | null
-  mediaId?: string | null
-  likeComment?: boolean
-  commentReplyText?: string | null
-  sendDm?: boolean
-  likeIncomingDm?: boolean
   replyText?: string | null
-  likeStoryReply?: boolean
-  requireFollow?: boolean
-  followGateText?: string | null
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  commentReplyText?: string | null
+  likeComment?: boolean
+  mediaId?: string | null
+  likeIncomingDm?: boolean
+  sendDm?: boolean
+  triggerType?: $Enums.AutomationTriggerType
+  likeStoryReply?: boolean
+  followGateText?: string | null
+  requireFollow?: boolean
   messages?: Prisma.AutomationMessageUncheckedCreateNestedManyWithoutAutomationInput
   iceBreakers?: Prisma.IceBreakerUncheckedCreateNestedManyWithoutAutomationInput
   persistentMenuItems?: Prisma.PersistentMenuItemUncheckedCreateNestedManyWithoutAutomationInput
@@ -1171,20 +1178,20 @@ export type AutomationUpdateToOneWithWhereWithoutPendingFollowGatesInput = {
 
 export type AutomationUpdateWithoutPendingFollowGatesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  triggerType?: Prisma.EnumAutomationTriggerTypeFieldUpdateOperationsInput | $Enums.AutomationTriggerType
   keyword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  likeComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  commentReplyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   replyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  likeStoryReply?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  requireFollow?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  followGateText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  commentReplyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  triggerType?: Prisma.EnumAutomationTriggerTypeFieldUpdateOperationsInput | $Enums.AutomationTriggerType
+  likeStoryReply?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  followGateText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requireFollow?: Prisma.BoolFieldUpdateOperationsInput | boolean
   instagramAccount?: Prisma.InstagramAccountUpdateOneRequiredWithoutAutomationsNestedInput
   messages?: Prisma.AutomationMessageUpdateManyWithoutAutomationNestedInput
   iceBreakers?: Prisma.IceBreakerUpdateManyWithoutAutomationNestedInput
@@ -1194,20 +1201,20 @@ export type AutomationUpdateWithoutPendingFollowGatesInput = {
 export type AutomationUncheckedUpdateWithoutPendingFollowGatesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   instagramAccountId?: Prisma.StringFieldUpdateOperationsInput | string
-  triggerType?: Prisma.EnumAutomationTriggerTypeFieldUpdateOperationsInput | $Enums.AutomationTriggerType
   keyword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  likeComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  commentReplyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   replyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  likeStoryReply?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  requireFollow?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  followGateText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  commentReplyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  triggerType?: Prisma.EnumAutomationTriggerTypeFieldUpdateOperationsInput | $Enums.AutomationTriggerType
+  likeStoryReply?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  followGateText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requireFollow?: Prisma.BoolFieldUpdateOperationsInput | boolean
   messages?: Prisma.AutomationMessageUncheckedUpdateManyWithoutAutomationNestedInput
   iceBreakers?: Prisma.IceBreakerUncheckedUpdateManyWithoutAutomationNestedInput
   persistentMenuItems?: Prisma.PersistentMenuItemUncheckedUpdateManyWithoutAutomationNestedInput
@@ -1215,82 +1222,82 @@ export type AutomationUncheckedUpdateWithoutPendingFollowGatesInput = {
 
 export type AutomationCreateManyInstagramAccountInput = {
   id?: string
-  triggerType?: $Enums.AutomationTriggerType
   keyword?: string | null
-  mediaId?: string | null
-  likeComment?: boolean
-  commentReplyText?: string | null
-  sendDm?: boolean
-  likeIncomingDm?: boolean
   replyText?: string | null
-  likeStoryReply?: boolean
-  requireFollow?: boolean
-  followGateText?: string | null
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  commentReplyText?: string | null
+  likeComment?: boolean
+  mediaId?: string | null
+  likeIncomingDm?: boolean
+  sendDm?: boolean
+  triggerType?: $Enums.AutomationTriggerType
+  likeStoryReply?: boolean
+  followGateText?: string | null
+  requireFollow?: boolean
 }
 
 export type AutomationUpdateWithoutInstagramAccountInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  triggerType?: Prisma.EnumAutomationTriggerTypeFieldUpdateOperationsInput | $Enums.AutomationTriggerType
   keyword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  likeComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  commentReplyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   replyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  likeStoryReply?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  requireFollow?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  followGateText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  commentReplyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  triggerType?: Prisma.EnumAutomationTriggerTypeFieldUpdateOperationsInput | $Enums.AutomationTriggerType
+  likeStoryReply?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  followGateText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requireFollow?: Prisma.BoolFieldUpdateOperationsInput | boolean
   messages?: Prisma.AutomationMessageUpdateManyWithoutAutomationNestedInput
-  pendingFollowGates?: Prisma.PendingFollowGateUpdateManyWithoutAutomationNestedInput
   iceBreakers?: Prisma.IceBreakerUpdateManyWithoutAutomationNestedInput
+  pendingFollowGates?: Prisma.PendingFollowGateUpdateManyWithoutAutomationNestedInput
   persistentMenuItems?: Prisma.PersistentMenuItemUpdateManyWithoutAutomationNestedInput
 }
 
 export type AutomationUncheckedUpdateWithoutInstagramAccountInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  triggerType?: Prisma.EnumAutomationTriggerTypeFieldUpdateOperationsInput | $Enums.AutomationTriggerType
   keyword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  likeComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  commentReplyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   replyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  likeStoryReply?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  requireFollow?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  followGateText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  commentReplyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  triggerType?: Prisma.EnumAutomationTriggerTypeFieldUpdateOperationsInput | $Enums.AutomationTriggerType
+  likeStoryReply?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  followGateText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requireFollow?: Prisma.BoolFieldUpdateOperationsInput | boolean
   messages?: Prisma.AutomationMessageUncheckedUpdateManyWithoutAutomationNestedInput
-  pendingFollowGates?: Prisma.PendingFollowGateUncheckedUpdateManyWithoutAutomationNestedInput
   iceBreakers?: Prisma.IceBreakerUncheckedUpdateManyWithoutAutomationNestedInput
+  pendingFollowGates?: Prisma.PendingFollowGateUncheckedUpdateManyWithoutAutomationNestedInput
   persistentMenuItems?: Prisma.PersistentMenuItemUncheckedUpdateManyWithoutAutomationNestedInput
 }
 
 export type AutomationUncheckedUpdateManyWithoutInstagramAccountInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  triggerType?: Prisma.EnumAutomationTriggerTypeFieldUpdateOperationsInput | $Enums.AutomationTriggerType
   keyword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  likeComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  commentReplyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
   replyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  likeStoryReply?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  requireFollow?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  followGateText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  commentReplyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  likeIncomingDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sendDm?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  triggerType?: Prisma.EnumAutomationTriggerTypeFieldUpdateOperationsInput | $Enums.AutomationTriggerType
+  likeStoryReply?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  followGateText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requireFollow?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 
@@ -1300,15 +1307,15 @@ export type AutomationUncheckedUpdateManyWithoutInstagramAccountInput = {
 
 export type AutomationCountOutputType = {
   messages: number
-  pendingFollowGates: number
   iceBreakers: number
+  pendingFollowGates: number
   persistentMenuItems: number
 }
 
 export type AutomationCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   messages?: boolean | AutomationCountOutputTypeCountMessagesArgs
-  pendingFollowGates?: boolean | AutomationCountOutputTypeCountPendingFollowGatesArgs
   iceBreakers?: boolean | AutomationCountOutputTypeCountIceBreakersArgs
+  pendingFollowGates?: boolean | AutomationCountOutputTypeCountPendingFollowGatesArgs
   persistentMenuItems?: boolean | AutomationCountOutputTypeCountPersistentMenuItemsArgs
 }
 
@@ -1332,15 +1339,15 @@ export type AutomationCountOutputTypeCountMessagesArgs<ExtArgs extends runtime.T
 /**
  * AutomationCountOutputType without action
  */
-export type AutomationCountOutputTypeCountPendingFollowGatesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.PendingFollowGateWhereInput
+export type AutomationCountOutputTypeCountIceBreakersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.IceBreakerWhereInput
 }
 
 /**
  * AutomationCountOutputType without action
  */
-export type AutomationCountOutputTypeCountIceBreakersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.IceBreakerWhereInput
+export type AutomationCountOutputTypeCountPendingFollowGatesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.PendingFollowGateWhereInput
 }
 
 /**
@@ -1354,24 +1361,24 @@ export type AutomationCountOutputTypeCountPersistentMenuItemsArgs<ExtArgs extend
 export type AutomationSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   instagramAccountId?: boolean
-  triggerType?: boolean
   keyword?: boolean
-  mediaId?: boolean
-  likeComment?: boolean
-  commentReplyText?: boolean
-  sendDm?: boolean
-  likeIncomingDm?: boolean
   replyText?: boolean
-  likeStoryReply?: boolean
-  requireFollow?: boolean
-  followGateText?: boolean
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  commentReplyText?: boolean
+  likeComment?: boolean
+  mediaId?: boolean
+  likeIncomingDm?: boolean
+  sendDm?: boolean
+  triggerType?: boolean
+  likeStoryReply?: boolean
+  followGateText?: boolean
+  requireFollow?: boolean
   instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
   messages?: boolean | Prisma.Automation$messagesArgs<ExtArgs>
-  pendingFollowGates?: boolean | Prisma.Automation$pendingFollowGatesArgs<ExtArgs>
   iceBreakers?: boolean | Prisma.Automation$iceBreakersArgs<ExtArgs>
+  pendingFollowGates?: boolean | Prisma.Automation$pendingFollowGatesArgs<ExtArgs>
   persistentMenuItems?: boolean | Prisma.Automation$persistentMenuItemsArgs<ExtArgs>
   _count?: boolean | Prisma.AutomationCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["automation"]>
@@ -1379,68 +1386,68 @@ export type AutomationSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
 export type AutomationSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   instagramAccountId?: boolean
-  triggerType?: boolean
   keyword?: boolean
-  mediaId?: boolean
-  likeComment?: boolean
-  commentReplyText?: boolean
-  sendDm?: boolean
-  likeIncomingDm?: boolean
   replyText?: boolean
-  likeStoryReply?: boolean
-  requireFollow?: boolean
-  followGateText?: boolean
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  commentReplyText?: boolean
+  likeComment?: boolean
+  mediaId?: boolean
+  likeIncomingDm?: boolean
+  sendDm?: boolean
+  triggerType?: boolean
+  likeStoryReply?: boolean
+  followGateText?: boolean
+  requireFollow?: boolean
   instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["automation"]>
 
 export type AutomationSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   instagramAccountId?: boolean
-  triggerType?: boolean
   keyword?: boolean
-  mediaId?: boolean
-  likeComment?: boolean
-  commentReplyText?: boolean
-  sendDm?: boolean
-  likeIncomingDm?: boolean
   replyText?: boolean
-  likeStoryReply?: boolean
-  requireFollow?: boolean
-  followGateText?: boolean
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  commentReplyText?: boolean
+  likeComment?: boolean
+  mediaId?: boolean
+  likeIncomingDm?: boolean
+  sendDm?: boolean
+  triggerType?: boolean
+  likeStoryReply?: boolean
+  followGateText?: boolean
+  requireFollow?: boolean
   instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["automation"]>
 
 export type AutomationSelectScalar = {
   id?: boolean
   instagramAccountId?: boolean
-  triggerType?: boolean
   keyword?: boolean
-  mediaId?: boolean
-  likeComment?: boolean
-  commentReplyText?: boolean
-  sendDm?: boolean
-  likeIncomingDm?: boolean
   replyText?: boolean
-  likeStoryReply?: boolean
-  requireFollow?: boolean
-  followGateText?: boolean
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  commentReplyText?: boolean
+  likeComment?: boolean
+  mediaId?: boolean
+  likeIncomingDm?: boolean
+  sendDm?: boolean
+  triggerType?: boolean
+  likeStoryReply?: boolean
+  followGateText?: boolean
+  requireFollow?: boolean
 }
 
-export type AutomationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "instagramAccountId" | "triggerType" | "keyword" | "mediaId" | "likeComment" | "commentReplyText" | "sendDm" | "likeIncomingDm" | "replyText" | "likeStoryReply" | "requireFollow" | "followGateText" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["automation"]>
+export type AutomationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "instagramAccountId" | "keyword" | "replyText" | "isActive" | "createdAt" | "updatedAt" | "commentReplyText" | "likeComment" | "mediaId" | "likeIncomingDm" | "sendDm" | "triggerType" | "likeStoryReply" | "followGateText" | "requireFollow", ExtArgs["result"]["automation"]>
 export type AutomationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
   messages?: boolean | Prisma.Automation$messagesArgs<ExtArgs>
-  pendingFollowGates?: boolean | Prisma.Automation$pendingFollowGatesArgs<ExtArgs>
   iceBreakers?: boolean | Prisma.Automation$iceBreakersArgs<ExtArgs>
+  pendingFollowGates?: boolean | Prisma.Automation$pendingFollowGatesArgs<ExtArgs>
   persistentMenuItems?: boolean | Prisma.Automation$persistentMenuItemsArgs<ExtArgs>
   _count?: boolean | Prisma.AutomationCountOutputTypeDefaultArgs<ExtArgs>
 }
@@ -1456,27 +1463,27 @@ export type $AutomationPayload<ExtArgs extends runtime.Types.Extensions.Internal
   objects: {
     instagramAccount: Prisma.$InstagramAccountPayload<ExtArgs>
     messages: Prisma.$AutomationMessagePayload<ExtArgs>[]
-    pendingFollowGates: Prisma.$PendingFollowGatePayload<ExtArgs>[]
     iceBreakers: Prisma.$IceBreakerPayload<ExtArgs>[]
+    pendingFollowGates: Prisma.$PendingFollowGatePayload<ExtArgs>[]
     persistentMenuItems: Prisma.$PersistentMenuItemPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     instagramAccountId: string
-    triggerType: $Enums.AutomationTriggerType
     keyword: string | null
-    mediaId: string | null
-    likeComment: boolean
-    commentReplyText: string | null
-    sendDm: boolean
-    likeIncomingDm: boolean
     replyText: string | null
-    likeStoryReply: boolean
-    requireFollow: boolean
-    followGateText: string | null
     isActive: boolean
     createdAt: Date
     updatedAt: Date
+    commentReplyText: string | null
+    likeComment: boolean
+    mediaId: string | null
+    likeIncomingDm: boolean
+    sendDm: boolean
+    triggerType: $Enums.AutomationTriggerType
+    likeStoryReply: boolean
+    followGateText: string | null
+    requireFollow: boolean
   }, ExtArgs["result"]["automation"]>
   composites: {}
 }
@@ -1873,8 +1880,8 @@ export interface Prisma__AutomationClient<T, Null = never, ExtArgs extends runti
   readonly [Symbol.toStringTag]: "PrismaPromise"
   instagramAccount<T extends Prisma.InstagramAccountDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.InstagramAccountDefaultArgs<ExtArgs>>): Prisma.Prisma__InstagramAccountClient<runtime.Types.Result.GetResult<Prisma.$InstagramAccountPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   messages<T extends Prisma.Automation$messagesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Automation$messagesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AutomationMessagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  pendingFollowGates<T extends Prisma.Automation$pendingFollowGatesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Automation$pendingFollowGatesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PendingFollowGatePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   iceBreakers<T extends Prisma.Automation$iceBreakersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Automation$iceBreakersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$IceBreakerPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  pendingFollowGates<T extends Prisma.Automation$pendingFollowGatesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Automation$pendingFollowGatesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PendingFollowGatePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   persistentMenuItems<T extends Prisma.Automation$persistentMenuItemsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Automation$persistentMenuItemsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PersistentMenuItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -1907,20 +1914,20 @@ export interface Prisma__AutomationClient<T, Null = never, ExtArgs extends runti
 export interface AutomationFieldRefs {
   readonly id: Prisma.FieldRef<"Automation", 'String'>
   readonly instagramAccountId: Prisma.FieldRef<"Automation", 'String'>
-  readonly triggerType: Prisma.FieldRef<"Automation", 'AutomationTriggerType'>
   readonly keyword: Prisma.FieldRef<"Automation", 'String'>
-  readonly mediaId: Prisma.FieldRef<"Automation", 'String'>
-  readonly likeComment: Prisma.FieldRef<"Automation", 'Boolean'>
-  readonly commentReplyText: Prisma.FieldRef<"Automation", 'String'>
-  readonly sendDm: Prisma.FieldRef<"Automation", 'Boolean'>
-  readonly likeIncomingDm: Prisma.FieldRef<"Automation", 'Boolean'>
   readonly replyText: Prisma.FieldRef<"Automation", 'String'>
-  readonly likeStoryReply: Prisma.FieldRef<"Automation", 'Boolean'>
-  readonly requireFollow: Prisma.FieldRef<"Automation", 'Boolean'>
-  readonly followGateText: Prisma.FieldRef<"Automation", 'String'>
   readonly isActive: Prisma.FieldRef<"Automation", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"Automation", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Automation", 'DateTime'>
+  readonly commentReplyText: Prisma.FieldRef<"Automation", 'String'>
+  readonly likeComment: Prisma.FieldRef<"Automation", 'Boolean'>
+  readonly mediaId: Prisma.FieldRef<"Automation", 'String'>
+  readonly likeIncomingDm: Prisma.FieldRef<"Automation", 'Boolean'>
+  readonly sendDm: Prisma.FieldRef<"Automation", 'Boolean'>
+  readonly triggerType: Prisma.FieldRef<"Automation", 'AutomationTriggerType'>
+  readonly likeStoryReply: Prisma.FieldRef<"Automation", 'Boolean'>
+  readonly followGateText: Prisma.FieldRef<"Automation", 'String'>
+  readonly requireFollow: Prisma.FieldRef<"Automation", 'Boolean'>
 }
     
 
@@ -2346,30 +2353,6 @@ export type Automation$messagesArgs<ExtArgs extends runtime.Types.Extensions.Int
 }
 
 /**
- * Automation.pendingFollowGates
- */
-export type Automation$pendingFollowGatesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the PendingFollowGate
-   */
-  select?: Prisma.PendingFollowGateSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the PendingFollowGate
-   */
-  omit?: Prisma.PendingFollowGateOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.PendingFollowGateInclude<ExtArgs> | null
-  where?: Prisma.PendingFollowGateWhereInput
-  orderBy?: Prisma.PendingFollowGateOrderByWithRelationInput | Prisma.PendingFollowGateOrderByWithRelationInput[]
-  cursor?: Prisma.PendingFollowGateWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.PendingFollowGateScalarFieldEnum | Prisma.PendingFollowGateScalarFieldEnum[]
-}
-
-/**
  * Automation.iceBreakers
  */
 export type Automation$iceBreakersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2391,6 +2374,30 @@ export type Automation$iceBreakersArgs<ExtArgs extends runtime.Types.Extensions.
   take?: number
   skip?: number
   distinct?: Prisma.IceBreakerScalarFieldEnum | Prisma.IceBreakerScalarFieldEnum[]
+}
+
+/**
+ * Automation.pendingFollowGates
+ */
+export type Automation$pendingFollowGatesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PendingFollowGate
+   */
+  select?: Prisma.PendingFollowGateSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the PendingFollowGate
+   */
+  omit?: Prisma.PendingFollowGateOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PendingFollowGateInclude<ExtArgs> | null
+  where?: Prisma.PendingFollowGateWhereInput
+  orderBy?: Prisma.PendingFollowGateOrderByWithRelationInput | Prisma.PendingFollowGateOrderByWithRelationInput[]
+  cursor?: Prisma.PendingFollowGateWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.PendingFollowGateScalarFieldEnum | Prisma.PendingFollowGateScalarFieldEnum[]
 }
 
 /**

@@ -206,9 +206,9 @@ export type QuickReplyWhereInput = {
   nextMessageId?: Prisma.StringNullableFilter<"QuickReply"> | string | null
   createdAt?: Prisma.DateTimeFilter<"QuickReply"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"QuickReply"> | Date | string
+  conversationMessages?: Prisma.ConversationMessageListRelationFilter
   automationMessage?: Prisma.XOR<Prisma.AutomationMessageScalarRelationFilter, Prisma.AutomationMessageWhereInput>
   nextMessage?: Prisma.XOR<Prisma.AutomationMessageNullableScalarRelationFilter, Prisma.AutomationMessageWhereInput> | null
-  conversationMessages?: Prisma.ConversationMessageListRelationFilter
 }
 
 export type QuickReplyOrderByWithRelationInput = {
@@ -220,9 +220,9 @@ export type QuickReplyOrderByWithRelationInput = {
   nextMessageId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  conversationMessages?: Prisma.ConversationMessageOrderByRelationAggregateInput
   automationMessage?: Prisma.AutomationMessageOrderByWithRelationInput
   nextMessage?: Prisma.AutomationMessageOrderByWithRelationInput
-  conversationMessages?: Prisma.ConversationMessageOrderByRelationAggregateInput
 }
 
 export type QuickReplyWhereUniqueInput = Prisma.AtLeast<{
@@ -237,9 +237,9 @@ export type QuickReplyWhereUniqueInput = Prisma.AtLeast<{
   nextMessageId?: Prisma.StringNullableFilter<"QuickReply"> | string | null
   createdAt?: Prisma.DateTimeFilter<"QuickReply"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"QuickReply"> | Date | string
+  conversationMessages?: Prisma.ConversationMessageListRelationFilter
   automationMessage?: Prisma.XOR<Prisma.AutomationMessageScalarRelationFilter, Prisma.AutomationMessageWhereInput>
   nextMessage?: Prisma.XOR<Prisma.AutomationMessageNullableScalarRelationFilter, Prisma.AutomationMessageWhereInput> | null
-  conversationMessages?: Prisma.ConversationMessageListRelationFilter
 }, "id">
 
 export type QuickReplyOrderByWithAggregationInput = {
@@ -277,9 +277,9 @@ export type QuickReplyCreateInput = {
   replyText?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  conversationMessages?: Prisma.ConversationMessageCreateNestedManyWithoutQuickReplyInput
   automationMessage: Prisma.AutomationMessageCreateNestedOneWithoutQuickRepliesInput
   nextMessage?: Prisma.AutomationMessageCreateNestedOneWithoutNextFromQuickRepliesInput
-  conversationMessages?: Prisma.ConversationMessageCreateNestedManyWithoutQuickReplyInput
 }
 
 export type QuickReplyUncheckedCreateInput = {
@@ -301,9 +301,9 @@ export type QuickReplyUpdateInput = {
   replyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  conversationMessages?: Prisma.ConversationMessageUpdateManyWithoutQuickReplyNestedInput
   automationMessage?: Prisma.AutomationMessageUpdateOneRequiredWithoutQuickRepliesNestedInput
   nextMessage?: Prisma.AutomationMessageUpdateOneWithoutNextFromQuickRepliesNestedInput
-  conversationMessages?: Prisma.ConversationMessageUpdateManyWithoutQuickReplyNestedInput
 }
 
 export type QuickReplyUncheckedUpdateInput = {
@@ -504,8 +504,8 @@ export type QuickReplyCreateWithoutAutomationMessageInput = {
   replyText?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  nextMessage?: Prisma.AutomationMessageCreateNestedOneWithoutNextFromQuickRepliesInput
   conversationMessages?: Prisma.ConversationMessageCreateNestedManyWithoutQuickReplyInput
+  nextMessage?: Prisma.AutomationMessageCreateNestedOneWithoutNextFromQuickRepliesInput
 }
 
 export type QuickReplyUncheckedCreateWithoutAutomationMessageInput = {
@@ -536,8 +536,8 @@ export type QuickReplyCreateWithoutNextMessageInput = {
   replyText?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  automationMessage: Prisma.AutomationMessageCreateNestedOneWithoutQuickRepliesInput
   conversationMessages?: Prisma.ConversationMessageCreateNestedManyWithoutQuickReplyInput
+  automationMessage: Prisma.AutomationMessageCreateNestedOneWithoutQuickRepliesInput
 }
 
 export type QuickReplyUncheckedCreateWithoutNextMessageInput = {
@@ -694,8 +694,8 @@ export type QuickReplyUpdateWithoutAutomationMessageInput = {
   replyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  nextMessage?: Prisma.AutomationMessageUpdateOneWithoutNextFromQuickRepliesNestedInput
   conversationMessages?: Prisma.ConversationMessageUpdateManyWithoutQuickReplyNestedInput
+  nextMessage?: Prisma.AutomationMessageUpdateOneWithoutNextFromQuickRepliesNestedInput
 }
 
 export type QuickReplyUncheckedUpdateWithoutAutomationMessageInput = {
@@ -726,8 +726,8 @@ export type QuickReplyUpdateWithoutNextMessageInput = {
   replyText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  automationMessage?: Prisma.AutomationMessageUpdateOneRequiredWithoutQuickRepliesNestedInput
   conversationMessages?: Prisma.ConversationMessageUpdateManyWithoutQuickReplyNestedInput
+  automationMessage?: Prisma.AutomationMessageUpdateOneRequiredWithoutQuickRepliesNestedInput
 }
 
 export type QuickReplyUncheckedUpdateWithoutNextMessageInput = {
@@ -791,9 +791,9 @@ export type QuickReplySelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   nextMessageId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  conversationMessages?: boolean | Prisma.QuickReply$conversationMessagesArgs<ExtArgs>
   automationMessage?: boolean | Prisma.AutomationMessageDefaultArgs<ExtArgs>
   nextMessage?: boolean | Prisma.QuickReply$nextMessageArgs<ExtArgs>
-  conversationMessages?: boolean | Prisma.QuickReply$conversationMessagesArgs<ExtArgs>
   _count?: boolean | Prisma.QuickReplyCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["quickReply"]>
 
@@ -836,9 +836,9 @@ export type QuickReplySelectScalar = {
 
 export type QuickReplyOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "automationMessageId" | "title" | "payload" | "replyText" | "nextMessageId" | "createdAt" | "updatedAt", ExtArgs["result"]["quickReply"]>
 export type QuickReplyInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  conversationMessages?: boolean | Prisma.QuickReply$conversationMessagesArgs<ExtArgs>
   automationMessage?: boolean | Prisma.AutomationMessageDefaultArgs<ExtArgs>
   nextMessage?: boolean | Prisma.QuickReply$nextMessageArgs<ExtArgs>
-  conversationMessages?: boolean | Prisma.QuickReply$conversationMessagesArgs<ExtArgs>
   _count?: boolean | Prisma.QuickReplyCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type QuickReplyIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -853,9 +853,9 @@ export type QuickReplyIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.E
 export type $QuickReplyPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "QuickReply"
   objects: {
+    conversationMessages: Prisma.$ConversationMessagePayload<ExtArgs>[]
     automationMessage: Prisma.$AutomationMessagePayload<ExtArgs>
     nextMessage: Prisma.$AutomationMessagePayload<ExtArgs> | null
-    conversationMessages: Prisma.$ConversationMessagePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1260,9 +1260,9 @@ readonly fields: QuickReplyFieldRefs;
  */
 export interface Prisma__QuickReplyClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  conversationMessages<T extends Prisma.QuickReply$conversationMessagesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.QuickReply$conversationMessagesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ConversationMessagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   automationMessage<T extends Prisma.AutomationMessageDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AutomationMessageDefaultArgs<ExtArgs>>): Prisma.Prisma__AutomationMessageClient<runtime.Types.Result.GetResult<Prisma.$AutomationMessagePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   nextMessage<T extends Prisma.QuickReply$nextMessageArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.QuickReply$nextMessageArgs<ExtArgs>>): Prisma.Prisma__AutomationMessageClient<runtime.Types.Result.GetResult<Prisma.$AutomationMessagePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-  conversationMessages<T extends Prisma.QuickReply$conversationMessagesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.QuickReply$conversationMessagesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ConversationMessagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1701,25 +1701,6 @@ export type QuickReplyDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.In
 }
 
 /**
- * QuickReply.nextMessage
- */
-export type QuickReply$nextMessageArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the AutomationMessage
-   */
-  select?: Prisma.AutomationMessageSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the AutomationMessage
-   */
-  omit?: Prisma.AutomationMessageOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.AutomationMessageInclude<ExtArgs> | null
-  where?: Prisma.AutomationMessageWhereInput
-}
-
-/**
  * QuickReply.conversationMessages
  */
 export type QuickReply$conversationMessagesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1741,6 +1722,25 @@ export type QuickReply$conversationMessagesArgs<ExtArgs extends runtime.Types.Ex
   take?: number
   skip?: number
   distinct?: Prisma.ConversationMessageScalarFieldEnum | Prisma.ConversationMessageScalarFieldEnum[]
+}
+
+/**
+ * QuickReply.nextMessage
+ */
+export type QuickReply$nextMessageArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the AutomationMessage
+   */
+  select?: Prisma.AutomationMessageSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the AutomationMessage
+   */
+  omit?: Prisma.AutomationMessageOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AutomationMessageInclude<ExtArgs> | null
+  where?: Prisma.AutomationMessageWhereInput
 }
 
 /**

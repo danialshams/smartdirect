@@ -37,43 +37,43 @@ export type AutomationMessageSumAggregateOutputType = {
 export type AutomationMessageMinAggregateOutputType = {
   id: string | null
   automationId: string | null
-  messageType: $Enums.AutomationMessageType | null
   text: string | null
-  mediaUrl: string | null
-  mediaId: string | null
-  showcaseId: string | null
-  formId: string | null
   order: number | null
   createdAt: Date | null
   updatedAt: Date | null
+  formId: string | null
+  mediaId: string | null
+  mediaUrl: string | null
+  messageType: $Enums.AutomationMessageType | null
+  showcaseId: string | null
 }
 
 export type AutomationMessageMaxAggregateOutputType = {
   id: string | null
   automationId: string | null
-  messageType: $Enums.AutomationMessageType | null
   text: string | null
-  mediaUrl: string | null
-  mediaId: string | null
-  showcaseId: string | null
-  formId: string | null
   order: number | null
   createdAt: Date | null
   updatedAt: Date | null
+  formId: string | null
+  mediaId: string | null
+  mediaUrl: string | null
+  messageType: $Enums.AutomationMessageType | null
+  showcaseId: string | null
 }
 
 export type AutomationMessageCountAggregateOutputType = {
   id: number
   automationId: number
-  messageType: number
   text: number
-  mediaUrl: number
-  mediaId: number
-  showcaseId: number
-  formId: number
   order: number
   createdAt: number
   updatedAt: number
+  formId: number
+  mediaId: number
+  mediaUrl: number
+  messageType: number
+  showcaseId: number
   _all: number
 }
 
@@ -89,43 +89,43 @@ export type AutomationMessageSumAggregateInputType = {
 export type AutomationMessageMinAggregateInputType = {
   id?: true
   automationId?: true
-  messageType?: true
   text?: true
-  mediaUrl?: true
-  mediaId?: true
-  showcaseId?: true
-  formId?: true
   order?: true
   createdAt?: true
   updatedAt?: true
+  formId?: true
+  mediaId?: true
+  mediaUrl?: true
+  messageType?: true
+  showcaseId?: true
 }
 
 export type AutomationMessageMaxAggregateInputType = {
   id?: true
   automationId?: true
-  messageType?: true
   text?: true
-  mediaUrl?: true
-  mediaId?: true
-  showcaseId?: true
-  formId?: true
   order?: true
   createdAt?: true
   updatedAt?: true
+  formId?: true
+  mediaId?: true
+  mediaUrl?: true
+  messageType?: true
+  showcaseId?: true
 }
 
 export type AutomationMessageCountAggregateInputType = {
   id?: true
   automationId?: true
-  messageType?: true
   text?: true
-  mediaUrl?: true
-  mediaId?: true
-  showcaseId?: true
-  formId?: true
   order?: true
   createdAt?: true
   updatedAt?: true
+  formId?: true
+  mediaId?: true
+  mediaUrl?: true
+  messageType?: true
+  showcaseId?: true
   _all?: true
 }
 
@@ -218,15 +218,15 @@ export type AutomationMessageGroupByArgs<ExtArgs extends runtime.Types.Extension
 export type AutomationMessageGroupByOutputType = {
   id: string
   automationId: string
-  messageType: $Enums.AutomationMessageType
   text: string | null
-  mediaUrl: string | null
-  mediaId: string | null
-  showcaseId: string | null
-  formId: string | null
   order: number
   createdAt: Date
   updatedAt: Date
+  formId: string | null
+  mediaId: string | null
+  mediaUrl: string | null
+  messageType: $Enums.AutomationMessageType
+  showcaseId: string | null
   _count: AutomationMessageCountAggregateOutputType | null
   _avg: AutomationMessageAvgAggregateOutputType | null
   _sum: AutomationMessageSumAggregateOutputType | null
@@ -255,18 +255,18 @@ export type AutomationMessageWhereInput = {
   NOT?: Prisma.AutomationMessageWhereInput | Prisma.AutomationMessageWhereInput[]
   id?: Prisma.StringFilter<"AutomationMessage"> | string
   automationId?: Prisma.StringFilter<"AutomationMessage"> | string
-  messageType?: Prisma.EnumAutomationMessageTypeFilter<"AutomationMessage"> | $Enums.AutomationMessageType
   text?: Prisma.StringNullableFilter<"AutomationMessage"> | string | null
-  mediaUrl?: Prisma.StringNullableFilter<"AutomationMessage"> | string | null
-  mediaId?: Prisma.StringNullableFilter<"AutomationMessage"> | string | null
-  showcaseId?: Prisma.StringNullableFilter<"AutomationMessage"> | string | null
-  formId?: Prisma.StringNullableFilter<"AutomationMessage"> | string | null
   order?: Prisma.IntFilter<"AutomationMessage"> | number
   createdAt?: Prisma.DateTimeFilter<"AutomationMessage"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"AutomationMessage"> | Date | string
+  formId?: Prisma.StringNullableFilter<"AutomationMessage"> | string | null
+  mediaId?: Prisma.StringNullableFilter<"AutomationMessage"> | string | null
+  mediaUrl?: Prisma.StringNullableFilter<"AutomationMessage"> | string | null
+  messageType?: Prisma.EnumAutomationMessageTypeFilter<"AutomationMessage"> | $Enums.AutomationMessageType
+  showcaseId?: Prisma.StringNullableFilter<"AutomationMessage"> | string | null
   automation?: Prisma.XOR<Prisma.AutomationScalarRelationFilter, Prisma.AutomationWhereInput>
-  showcase?: Prisma.XOR<Prisma.ShowcaseNullableScalarRelationFilter, Prisma.ShowcaseWhereInput> | null
   form?: Prisma.XOR<Prisma.FormNullableScalarRelationFilter, Prisma.FormWhereInput> | null
+  showcase?: Prisma.XOR<Prisma.ShowcaseNullableScalarRelationFilter, Prisma.ShowcaseWhereInput> | null
   quickReplies?: Prisma.QuickReplyListRelationFilter
   nextFromQuickReplies?: Prisma.QuickReplyListRelationFilter
 }
@@ -274,18 +274,18 @@ export type AutomationMessageWhereInput = {
 export type AutomationMessageOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   automationId?: Prisma.SortOrder
-  messageType?: Prisma.SortOrder
   text?: Prisma.SortOrderInput | Prisma.SortOrder
-  mediaUrl?: Prisma.SortOrderInput | Prisma.SortOrder
-  mediaId?: Prisma.SortOrderInput | Prisma.SortOrder
-  showcaseId?: Prisma.SortOrderInput | Prisma.SortOrder
-  formId?: Prisma.SortOrderInput | Prisma.SortOrder
   order?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  formId?: Prisma.SortOrderInput | Prisma.SortOrder
+  mediaId?: Prisma.SortOrderInput | Prisma.SortOrder
+  mediaUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  messageType?: Prisma.SortOrder
+  showcaseId?: Prisma.SortOrderInput | Prisma.SortOrder
   automation?: Prisma.AutomationOrderByWithRelationInput
-  showcase?: Prisma.ShowcaseOrderByWithRelationInput
   form?: Prisma.FormOrderByWithRelationInput
+  showcase?: Prisma.ShowcaseOrderByWithRelationInput
   quickReplies?: Prisma.QuickReplyOrderByRelationAggregateInput
   nextFromQuickReplies?: Prisma.QuickReplyOrderByRelationAggregateInput
 }
@@ -296,18 +296,18 @@ export type AutomationMessageWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.AutomationMessageWhereInput[]
   NOT?: Prisma.AutomationMessageWhereInput | Prisma.AutomationMessageWhereInput[]
   automationId?: Prisma.StringFilter<"AutomationMessage"> | string
-  messageType?: Prisma.EnumAutomationMessageTypeFilter<"AutomationMessage"> | $Enums.AutomationMessageType
   text?: Prisma.StringNullableFilter<"AutomationMessage"> | string | null
-  mediaUrl?: Prisma.StringNullableFilter<"AutomationMessage"> | string | null
-  mediaId?: Prisma.StringNullableFilter<"AutomationMessage"> | string | null
-  showcaseId?: Prisma.StringNullableFilter<"AutomationMessage"> | string | null
-  formId?: Prisma.StringNullableFilter<"AutomationMessage"> | string | null
   order?: Prisma.IntFilter<"AutomationMessage"> | number
   createdAt?: Prisma.DateTimeFilter<"AutomationMessage"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"AutomationMessage"> | Date | string
+  formId?: Prisma.StringNullableFilter<"AutomationMessage"> | string | null
+  mediaId?: Prisma.StringNullableFilter<"AutomationMessage"> | string | null
+  mediaUrl?: Prisma.StringNullableFilter<"AutomationMessage"> | string | null
+  messageType?: Prisma.EnumAutomationMessageTypeFilter<"AutomationMessage"> | $Enums.AutomationMessageType
+  showcaseId?: Prisma.StringNullableFilter<"AutomationMessage"> | string | null
   automation?: Prisma.XOR<Prisma.AutomationScalarRelationFilter, Prisma.AutomationWhereInput>
-  showcase?: Prisma.XOR<Prisma.ShowcaseNullableScalarRelationFilter, Prisma.ShowcaseWhereInput> | null
   form?: Prisma.XOR<Prisma.FormNullableScalarRelationFilter, Prisma.FormWhereInput> | null
+  showcase?: Prisma.XOR<Prisma.ShowcaseNullableScalarRelationFilter, Prisma.ShowcaseWhereInput> | null
   quickReplies?: Prisma.QuickReplyListRelationFilter
   nextFromQuickReplies?: Prisma.QuickReplyListRelationFilter
 }, "id">
@@ -315,15 +315,15 @@ export type AutomationMessageWhereUniqueInput = Prisma.AtLeast<{
 export type AutomationMessageOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   automationId?: Prisma.SortOrder
-  messageType?: Prisma.SortOrder
   text?: Prisma.SortOrderInput | Prisma.SortOrder
-  mediaUrl?: Prisma.SortOrderInput | Prisma.SortOrder
-  mediaId?: Prisma.SortOrderInput | Prisma.SortOrder
-  showcaseId?: Prisma.SortOrderInput | Prisma.SortOrder
-  formId?: Prisma.SortOrderInput | Prisma.SortOrder
   order?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  formId?: Prisma.SortOrderInput | Prisma.SortOrder
+  mediaId?: Prisma.SortOrderInput | Prisma.SortOrder
+  mediaUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  messageType?: Prisma.SortOrder
+  showcaseId?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.AutomationMessageCountOrderByAggregateInput
   _avg?: Prisma.AutomationMessageAvgOrderByAggregateInput
   _max?: Prisma.AutomationMessageMaxOrderByAggregateInput
@@ -337,29 +337,29 @@ export type AutomationMessageScalarWhereWithAggregatesInput = {
   NOT?: Prisma.AutomationMessageScalarWhereWithAggregatesInput | Prisma.AutomationMessageScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"AutomationMessage"> | string
   automationId?: Prisma.StringWithAggregatesFilter<"AutomationMessage"> | string
-  messageType?: Prisma.EnumAutomationMessageTypeWithAggregatesFilter<"AutomationMessage"> | $Enums.AutomationMessageType
   text?: Prisma.StringNullableWithAggregatesFilter<"AutomationMessage"> | string | null
-  mediaUrl?: Prisma.StringNullableWithAggregatesFilter<"AutomationMessage"> | string | null
-  mediaId?: Prisma.StringNullableWithAggregatesFilter<"AutomationMessage"> | string | null
-  showcaseId?: Prisma.StringNullableWithAggregatesFilter<"AutomationMessage"> | string | null
-  formId?: Prisma.StringNullableWithAggregatesFilter<"AutomationMessage"> | string | null
   order?: Prisma.IntWithAggregatesFilter<"AutomationMessage"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"AutomationMessage"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"AutomationMessage"> | Date | string
+  formId?: Prisma.StringNullableWithAggregatesFilter<"AutomationMessage"> | string | null
+  mediaId?: Prisma.StringNullableWithAggregatesFilter<"AutomationMessage"> | string | null
+  mediaUrl?: Prisma.StringNullableWithAggregatesFilter<"AutomationMessage"> | string | null
+  messageType?: Prisma.EnumAutomationMessageTypeWithAggregatesFilter<"AutomationMessage"> | $Enums.AutomationMessageType
+  showcaseId?: Prisma.StringNullableWithAggregatesFilter<"AutomationMessage"> | string | null
 }
 
 export type AutomationMessageCreateInput = {
   id?: string
-  messageType?: $Enums.AutomationMessageType
   text?: string | null
-  mediaUrl?: string | null
-  mediaId?: string | null
   order: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  mediaId?: string | null
+  mediaUrl?: string | null
+  messageType?: $Enums.AutomationMessageType
   automation: Prisma.AutomationCreateNestedOneWithoutMessagesInput
-  showcase?: Prisma.ShowcaseCreateNestedOneWithoutMessagesInput
   form?: Prisma.FormCreateNestedOneWithoutMessagesInput
+  showcase?: Prisma.ShowcaseCreateNestedOneWithoutMessagesInput
   quickReplies?: Prisma.QuickReplyCreateNestedManyWithoutAutomationMessageInput
   nextFromQuickReplies?: Prisma.QuickReplyCreateNestedManyWithoutNextMessageInput
 }
@@ -367,31 +367,31 @@ export type AutomationMessageCreateInput = {
 export type AutomationMessageUncheckedCreateInput = {
   id?: string
   automationId: string
-  messageType?: $Enums.AutomationMessageType
   text?: string | null
-  mediaUrl?: string | null
-  mediaId?: string | null
-  showcaseId?: string | null
-  formId?: string | null
   order: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  formId?: string | null
+  mediaId?: string | null
+  mediaUrl?: string | null
+  messageType?: $Enums.AutomationMessageType
+  showcaseId?: string | null
   quickReplies?: Prisma.QuickReplyUncheckedCreateNestedManyWithoutAutomationMessageInput
   nextFromQuickReplies?: Prisma.QuickReplyUncheckedCreateNestedManyWithoutNextMessageInput
 }
 
 export type AutomationMessageUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  messageType?: Prisma.EnumAutomationMessageTypeFieldUpdateOperationsInput | $Enums.AutomationMessageType
   text?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   order?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  messageType?: Prisma.EnumAutomationMessageTypeFieldUpdateOperationsInput | $Enums.AutomationMessageType
   automation?: Prisma.AutomationUpdateOneRequiredWithoutMessagesNestedInput
-  showcase?: Prisma.ShowcaseUpdateOneWithoutMessagesNestedInput
   form?: Prisma.FormUpdateOneWithoutMessagesNestedInput
+  showcase?: Prisma.ShowcaseUpdateOneWithoutMessagesNestedInput
   quickReplies?: Prisma.QuickReplyUpdateManyWithoutAutomationMessageNestedInput
   nextFromQuickReplies?: Prisma.QuickReplyUpdateManyWithoutNextMessageNestedInput
 }
@@ -399,15 +399,15 @@ export type AutomationMessageUpdateInput = {
 export type AutomationMessageUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   automationId?: Prisma.StringFieldUpdateOperationsInput | string
-  messageType?: Prisma.EnumAutomationMessageTypeFieldUpdateOperationsInput | $Enums.AutomationMessageType
   text?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  showcaseId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  formId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   order?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  formId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  messageType?: Prisma.EnumAutomationMessageTypeFieldUpdateOperationsInput | $Enums.AutomationMessageType
+  showcaseId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quickReplies?: Prisma.QuickReplyUncheckedUpdateManyWithoutAutomationMessageNestedInput
   nextFromQuickReplies?: Prisma.QuickReplyUncheckedUpdateManyWithoutNextMessageNestedInput
 }
@@ -415,40 +415,40 @@ export type AutomationMessageUncheckedUpdateInput = {
 export type AutomationMessageCreateManyInput = {
   id?: string
   automationId: string
-  messageType?: $Enums.AutomationMessageType
   text?: string | null
-  mediaUrl?: string | null
-  mediaId?: string | null
-  showcaseId?: string | null
-  formId?: string | null
   order: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  formId?: string | null
+  mediaId?: string | null
+  mediaUrl?: string | null
+  messageType?: $Enums.AutomationMessageType
+  showcaseId?: string | null
 }
 
 export type AutomationMessageUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  messageType?: Prisma.EnumAutomationMessageTypeFieldUpdateOperationsInput | $Enums.AutomationMessageType
   text?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   order?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  messageType?: Prisma.EnumAutomationMessageTypeFieldUpdateOperationsInput | $Enums.AutomationMessageType
 }
 
 export type AutomationMessageUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   automationId?: Prisma.StringFieldUpdateOperationsInput | string
-  messageType?: Prisma.EnumAutomationMessageTypeFieldUpdateOperationsInput | $Enums.AutomationMessageType
   text?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  showcaseId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  formId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   order?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  formId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  messageType?: Prisma.EnumAutomationMessageTypeFieldUpdateOperationsInput | $Enums.AutomationMessageType
+  showcaseId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type AutomationMessageListRelationFilter = {
@@ -464,15 +464,15 @@ export type AutomationMessageOrderByRelationAggregateInput = {
 export type AutomationMessageCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   automationId?: Prisma.SortOrder
-  messageType?: Prisma.SortOrder
   text?: Prisma.SortOrder
-  mediaUrl?: Prisma.SortOrder
-  mediaId?: Prisma.SortOrder
-  showcaseId?: Prisma.SortOrder
-  formId?: Prisma.SortOrder
   order?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  formId?: Prisma.SortOrder
+  mediaId?: Prisma.SortOrder
+  mediaUrl?: Prisma.SortOrder
+  messageType?: Prisma.SortOrder
+  showcaseId?: Prisma.SortOrder
 }
 
 export type AutomationMessageAvgOrderByAggregateInput = {
@@ -482,29 +482,29 @@ export type AutomationMessageAvgOrderByAggregateInput = {
 export type AutomationMessageMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   automationId?: Prisma.SortOrder
-  messageType?: Prisma.SortOrder
   text?: Prisma.SortOrder
-  mediaUrl?: Prisma.SortOrder
-  mediaId?: Prisma.SortOrder
-  showcaseId?: Prisma.SortOrder
-  formId?: Prisma.SortOrder
   order?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  formId?: Prisma.SortOrder
+  mediaId?: Prisma.SortOrder
+  mediaUrl?: Prisma.SortOrder
+  messageType?: Prisma.SortOrder
+  showcaseId?: Prisma.SortOrder
 }
 
 export type AutomationMessageMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   automationId?: Prisma.SortOrder
-  messageType?: Prisma.SortOrder
   text?: Prisma.SortOrder
-  mediaUrl?: Prisma.SortOrder
-  mediaId?: Prisma.SortOrder
-  showcaseId?: Prisma.SortOrder
-  formId?: Prisma.SortOrder
   order?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  formId?: Prisma.SortOrder
+  mediaId?: Prisma.SortOrder
+  mediaUrl?: Prisma.SortOrder
+  messageType?: Prisma.SortOrder
+  showcaseId?: Prisma.SortOrder
 }
 
 export type AutomationMessageSumOrderByAggregateInput = {
@@ -563,16 +563,16 @@ export type AutomationMessageUncheckedUpdateManyWithoutAutomationNestedInput = {
   deleteMany?: Prisma.AutomationMessageScalarWhereInput | Prisma.AutomationMessageScalarWhereInput[]
 }
 
-export type EnumAutomationMessageTypeFieldUpdateOperationsInput = {
-  set?: $Enums.AutomationMessageType
-}
-
 export type IntFieldUpdateOperationsInput = {
   set?: number
   increment?: number
   decrement?: number
   multiply?: number
   divide?: number
+}
+
+export type EnumAutomationMessageTypeFieldUpdateOperationsInput = {
+  set?: $Enums.AutomationMessageType
 }
 
 export type AutomationMessageCreateNestedOneWithoutQuickRepliesInput = {
@@ -691,30 +691,30 @@ export type AutomationMessageUncheckedUpdateManyWithoutFormNestedInput = {
 
 export type AutomationMessageCreateWithoutAutomationInput = {
   id?: string
-  messageType?: $Enums.AutomationMessageType
   text?: string | null
-  mediaUrl?: string | null
-  mediaId?: string | null
   order: number
   createdAt?: Date | string
   updatedAt?: Date | string
-  showcase?: Prisma.ShowcaseCreateNestedOneWithoutMessagesInput
+  mediaId?: string | null
+  mediaUrl?: string | null
+  messageType?: $Enums.AutomationMessageType
   form?: Prisma.FormCreateNestedOneWithoutMessagesInput
+  showcase?: Prisma.ShowcaseCreateNestedOneWithoutMessagesInput
   quickReplies?: Prisma.QuickReplyCreateNestedManyWithoutAutomationMessageInput
   nextFromQuickReplies?: Prisma.QuickReplyCreateNestedManyWithoutNextMessageInput
 }
 
 export type AutomationMessageUncheckedCreateWithoutAutomationInput = {
   id?: string
-  messageType?: $Enums.AutomationMessageType
   text?: string | null
-  mediaUrl?: string | null
-  mediaId?: string | null
-  showcaseId?: string | null
-  formId?: string | null
   order: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  formId?: string | null
+  mediaId?: string | null
+  mediaUrl?: string | null
+  messageType?: $Enums.AutomationMessageType
+  showcaseId?: string | null
   quickReplies?: Prisma.QuickReplyUncheckedCreateNestedManyWithoutAutomationMessageInput
   nextFromQuickReplies?: Prisma.QuickReplyUncheckedCreateNestedManyWithoutNextMessageInput
 }
@@ -751,44 +751,44 @@ export type AutomationMessageScalarWhereInput = {
   NOT?: Prisma.AutomationMessageScalarWhereInput | Prisma.AutomationMessageScalarWhereInput[]
   id?: Prisma.StringFilter<"AutomationMessage"> | string
   automationId?: Prisma.StringFilter<"AutomationMessage"> | string
-  messageType?: Prisma.EnumAutomationMessageTypeFilter<"AutomationMessage"> | $Enums.AutomationMessageType
   text?: Prisma.StringNullableFilter<"AutomationMessage"> | string | null
-  mediaUrl?: Prisma.StringNullableFilter<"AutomationMessage"> | string | null
-  mediaId?: Prisma.StringNullableFilter<"AutomationMessage"> | string | null
-  showcaseId?: Prisma.StringNullableFilter<"AutomationMessage"> | string | null
-  formId?: Prisma.StringNullableFilter<"AutomationMessage"> | string | null
   order?: Prisma.IntFilter<"AutomationMessage"> | number
   createdAt?: Prisma.DateTimeFilter<"AutomationMessage"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"AutomationMessage"> | Date | string
+  formId?: Prisma.StringNullableFilter<"AutomationMessage"> | string | null
+  mediaId?: Prisma.StringNullableFilter<"AutomationMessage"> | string | null
+  mediaUrl?: Prisma.StringNullableFilter<"AutomationMessage"> | string | null
+  messageType?: Prisma.EnumAutomationMessageTypeFilter<"AutomationMessage"> | $Enums.AutomationMessageType
+  showcaseId?: Prisma.StringNullableFilter<"AutomationMessage"> | string | null
 }
 
 export type AutomationMessageCreateWithoutQuickRepliesInput = {
   id?: string
-  messageType?: $Enums.AutomationMessageType
   text?: string | null
-  mediaUrl?: string | null
-  mediaId?: string | null
   order: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  mediaId?: string | null
+  mediaUrl?: string | null
+  messageType?: $Enums.AutomationMessageType
   automation: Prisma.AutomationCreateNestedOneWithoutMessagesInput
-  showcase?: Prisma.ShowcaseCreateNestedOneWithoutMessagesInput
   form?: Prisma.FormCreateNestedOneWithoutMessagesInput
+  showcase?: Prisma.ShowcaseCreateNestedOneWithoutMessagesInput
   nextFromQuickReplies?: Prisma.QuickReplyCreateNestedManyWithoutNextMessageInput
 }
 
 export type AutomationMessageUncheckedCreateWithoutQuickRepliesInput = {
   id?: string
   automationId: string
-  messageType?: $Enums.AutomationMessageType
   text?: string | null
-  mediaUrl?: string | null
-  mediaId?: string | null
-  showcaseId?: string | null
-  formId?: string | null
   order: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  formId?: string | null
+  mediaId?: string | null
+  mediaUrl?: string | null
+  messageType?: $Enums.AutomationMessageType
+  showcaseId?: string | null
   nextFromQuickReplies?: Prisma.QuickReplyUncheckedCreateNestedManyWithoutNextMessageInput
 }
 
@@ -799,31 +799,31 @@ export type AutomationMessageCreateOrConnectWithoutQuickRepliesInput = {
 
 export type AutomationMessageCreateWithoutNextFromQuickRepliesInput = {
   id?: string
-  messageType?: $Enums.AutomationMessageType
   text?: string | null
-  mediaUrl?: string | null
-  mediaId?: string | null
   order: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  mediaId?: string | null
+  mediaUrl?: string | null
+  messageType?: $Enums.AutomationMessageType
   automation: Prisma.AutomationCreateNestedOneWithoutMessagesInput
-  showcase?: Prisma.ShowcaseCreateNestedOneWithoutMessagesInput
   form?: Prisma.FormCreateNestedOneWithoutMessagesInput
+  showcase?: Prisma.ShowcaseCreateNestedOneWithoutMessagesInput
   quickReplies?: Prisma.QuickReplyCreateNestedManyWithoutAutomationMessageInput
 }
 
 export type AutomationMessageUncheckedCreateWithoutNextFromQuickRepliesInput = {
   id?: string
   automationId: string
-  messageType?: $Enums.AutomationMessageType
   text?: string | null
-  mediaUrl?: string | null
-  mediaId?: string | null
-  showcaseId?: string | null
-  formId?: string | null
   order: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  formId?: string | null
+  mediaId?: string | null
+  mediaUrl?: string | null
+  messageType?: $Enums.AutomationMessageType
+  showcaseId?: string | null
   quickReplies?: Prisma.QuickReplyUncheckedCreateNestedManyWithoutAutomationMessageInput
 }
 
@@ -845,31 +845,31 @@ export type AutomationMessageUpdateToOneWithWhereWithoutQuickRepliesInput = {
 
 export type AutomationMessageUpdateWithoutQuickRepliesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  messageType?: Prisma.EnumAutomationMessageTypeFieldUpdateOperationsInput | $Enums.AutomationMessageType
   text?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   order?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  messageType?: Prisma.EnumAutomationMessageTypeFieldUpdateOperationsInput | $Enums.AutomationMessageType
   automation?: Prisma.AutomationUpdateOneRequiredWithoutMessagesNestedInput
-  showcase?: Prisma.ShowcaseUpdateOneWithoutMessagesNestedInput
   form?: Prisma.FormUpdateOneWithoutMessagesNestedInput
+  showcase?: Prisma.ShowcaseUpdateOneWithoutMessagesNestedInput
   nextFromQuickReplies?: Prisma.QuickReplyUpdateManyWithoutNextMessageNestedInput
 }
 
 export type AutomationMessageUncheckedUpdateWithoutQuickRepliesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   automationId?: Prisma.StringFieldUpdateOperationsInput | string
-  messageType?: Prisma.EnumAutomationMessageTypeFieldUpdateOperationsInput | $Enums.AutomationMessageType
   text?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  showcaseId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  formId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   order?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  formId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  messageType?: Prisma.EnumAutomationMessageTypeFieldUpdateOperationsInput | $Enums.AutomationMessageType
+  showcaseId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nextFromQuickReplies?: Prisma.QuickReplyUncheckedUpdateManyWithoutNextMessageNestedInput
 }
 
@@ -886,43 +886,43 @@ export type AutomationMessageUpdateToOneWithWhereWithoutNextFromQuickRepliesInpu
 
 export type AutomationMessageUpdateWithoutNextFromQuickRepliesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  messageType?: Prisma.EnumAutomationMessageTypeFieldUpdateOperationsInput | $Enums.AutomationMessageType
   text?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   order?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  messageType?: Prisma.EnumAutomationMessageTypeFieldUpdateOperationsInput | $Enums.AutomationMessageType
   automation?: Prisma.AutomationUpdateOneRequiredWithoutMessagesNestedInput
-  showcase?: Prisma.ShowcaseUpdateOneWithoutMessagesNestedInput
   form?: Prisma.FormUpdateOneWithoutMessagesNestedInput
+  showcase?: Prisma.ShowcaseUpdateOneWithoutMessagesNestedInput
   quickReplies?: Prisma.QuickReplyUpdateManyWithoutAutomationMessageNestedInput
 }
 
 export type AutomationMessageUncheckedUpdateWithoutNextFromQuickRepliesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   automationId?: Prisma.StringFieldUpdateOperationsInput | string
-  messageType?: Prisma.EnumAutomationMessageTypeFieldUpdateOperationsInput | $Enums.AutomationMessageType
   text?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  showcaseId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  formId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   order?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  formId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  messageType?: Prisma.EnumAutomationMessageTypeFieldUpdateOperationsInput | $Enums.AutomationMessageType
+  showcaseId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quickReplies?: Prisma.QuickReplyUncheckedUpdateManyWithoutAutomationMessageNestedInput
 }
 
 export type AutomationMessageCreateWithoutShowcaseInput = {
   id?: string
-  messageType?: $Enums.AutomationMessageType
   text?: string | null
-  mediaUrl?: string | null
-  mediaId?: string | null
   order: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  mediaId?: string | null
+  mediaUrl?: string | null
+  messageType?: $Enums.AutomationMessageType
   automation: Prisma.AutomationCreateNestedOneWithoutMessagesInput
   form?: Prisma.FormCreateNestedOneWithoutMessagesInput
   quickReplies?: Prisma.QuickReplyCreateNestedManyWithoutAutomationMessageInput
@@ -932,14 +932,14 @@ export type AutomationMessageCreateWithoutShowcaseInput = {
 export type AutomationMessageUncheckedCreateWithoutShowcaseInput = {
   id?: string
   automationId: string
-  messageType?: $Enums.AutomationMessageType
   text?: string | null
-  mediaUrl?: string | null
-  mediaId?: string | null
-  formId?: string | null
   order: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  formId?: string | null
+  mediaId?: string | null
+  mediaUrl?: string | null
+  messageType?: $Enums.AutomationMessageType
   quickReplies?: Prisma.QuickReplyUncheckedCreateNestedManyWithoutAutomationMessageInput
   nextFromQuickReplies?: Prisma.QuickReplyUncheckedCreateNestedManyWithoutNextMessageInput
 }
@@ -972,13 +972,13 @@ export type AutomationMessageUpdateManyWithWhereWithoutShowcaseInput = {
 
 export type AutomationMessageCreateWithoutFormInput = {
   id?: string
-  messageType?: $Enums.AutomationMessageType
   text?: string | null
-  mediaUrl?: string | null
-  mediaId?: string | null
   order: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  mediaId?: string | null
+  mediaUrl?: string | null
+  messageType?: $Enums.AutomationMessageType
   automation: Prisma.AutomationCreateNestedOneWithoutMessagesInput
   showcase?: Prisma.ShowcaseCreateNestedOneWithoutMessagesInput
   quickReplies?: Prisma.QuickReplyCreateNestedManyWithoutAutomationMessageInput
@@ -988,14 +988,14 @@ export type AutomationMessageCreateWithoutFormInput = {
 export type AutomationMessageUncheckedCreateWithoutFormInput = {
   id?: string
   automationId: string
-  messageType?: $Enums.AutomationMessageType
   text?: string | null
-  mediaUrl?: string | null
-  mediaId?: string | null
-  showcaseId?: string | null
   order: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  mediaId?: string | null
+  mediaUrl?: string | null
+  messageType?: $Enums.AutomationMessageType
+  showcaseId?: string | null
   quickReplies?: Prisma.QuickReplyUncheckedCreateNestedManyWithoutAutomationMessageInput
   nextFromQuickReplies?: Prisma.QuickReplyUncheckedCreateNestedManyWithoutNextMessageInput
 }
@@ -1028,82 +1028,82 @@ export type AutomationMessageUpdateManyWithWhereWithoutFormInput = {
 
 export type AutomationMessageCreateManyAutomationInput = {
   id?: string
-  messageType?: $Enums.AutomationMessageType
   text?: string | null
-  mediaUrl?: string | null
-  mediaId?: string | null
-  showcaseId?: string | null
-  formId?: string | null
   order: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  formId?: string | null
+  mediaId?: string | null
+  mediaUrl?: string | null
+  messageType?: $Enums.AutomationMessageType
+  showcaseId?: string | null
 }
 
 export type AutomationMessageUpdateWithoutAutomationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  messageType?: Prisma.EnumAutomationMessageTypeFieldUpdateOperationsInput | $Enums.AutomationMessageType
   text?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   order?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  showcase?: Prisma.ShowcaseUpdateOneWithoutMessagesNestedInput
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  messageType?: Prisma.EnumAutomationMessageTypeFieldUpdateOperationsInput | $Enums.AutomationMessageType
   form?: Prisma.FormUpdateOneWithoutMessagesNestedInput
+  showcase?: Prisma.ShowcaseUpdateOneWithoutMessagesNestedInput
   quickReplies?: Prisma.QuickReplyUpdateManyWithoutAutomationMessageNestedInput
   nextFromQuickReplies?: Prisma.QuickReplyUpdateManyWithoutNextMessageNestedInput
 }
 
 export type AutomationMessageUncheckedUpdateWithoutAutomationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  messageType?: Prisma.EnumAutomationMessageTypeFieldUpdateOperationsInput | $Enums.AutomationMessageType
   text?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  showcaseId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  formId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   order?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  formId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  messageType?: Prisma.EnumAutomationMessageTypeFieldUpdateOperationsInput | $Enums.AutomationMessageType
+  showcaseId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quickReplies?: Prisma.QuickReplyUncheckedUpdateManyWithoutAutomationMessageNestedInput
   nextFromQuickReplies?: Prisma.QuickReplyUncheckedUpdateManyWithoutNextMessageNestedInput
 }
 
 export type AutomationMessageUncheckedUpdateManyWithoutAutomationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  messageType?: Prisma.EnumAutomationMessageTypeFieldUpdateOperationsInput | $Enums.AutomationMessageType
   text?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  showcaseId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  formId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   order?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  formId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  messageType?: Prisma.EnumAutomationMessageTypeFieldUpdateOperationsInput | $Enums.AutomationMessageType
+  showcaseId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type AutomationMessageCreateManyShowcaseInput = {
   id?: string
   automationId: string
-  messageType?: $Enums.AutomationMessageType
   text?: string | null
-  mediaUrl?: string | null
-  mediaId?: string | null
-  formId?: string | null
   order: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  formId?: string | null
+  mediaId?: string | null
+  mediaUrl?: string | null
+  messageType?: $Enums.AutomationMessageType
 }
 
 export type AutomationMessageUpdateWithoutShowcaseInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  messageType?: Prisma.EnumAutomationMessageTypeFieldUpdateOperationsInput | $Enums.AutomationMessageType
   text?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   order?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  messageType?: Prisma.EnumAutomationMessageTypeFieldUpdateOperationsInput | $Enums.AutomationMessageType
   automation?: Prisma.AutomationUpdateOneRequiredWithoutMessagesNestedInput
   form?: Prisma.FormUpdateOneWithoutMessagesNestedInput
   quickReplies?: Prisma.QuickReplyUpdateManyWithoutAutomationMessageNestedInput
@@ -1113,14 +1113,14 @@ export type AutomationMessageUpdateWithoutShowcaseInput = {
 export type AutomationMessageUncheckedUpdateWithoutShowcaseInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   automationId?: Prisma.StringFieldUpdateOperationsInput | string
-  messageType?: Prisma.EnumAutomationMessageTypeFieldUpdateOperationsInput | $Enums.AutomationMessageType
   text?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  formId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   order?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  formId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  messageType?: Prisma.EnumAutomationMessageTypeFieldUpdateOperationsInput | $Enums.AutomationMessageType
   quickReplies?: Prisma.QuickReplyUncheckedUpdateManyWithoutAutomationMessageNestedInput
   nextFromQuickReplies?: Prisma.QuickReplyUncheckedUpdateManyWithoutNextMessageNestedInput
 }
@@ -1128,38 +1128,38 @@ export type AutomationMessageUncheckedUpdateWithoutShowcaseInput = {
 export type AutomationMessageUncheckedUpdateManyWithoutShowcaseInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   automationId?: Prisma.StringFieldUpdateOperationsInput | string
-  messageType?: Prisma.EnumAutomationMessageTypeFieldUpdateOperationsInput | $Enums.AutomationMessageType
   text?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  formId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   order?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  formId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  messageType?: Prisma.EnumAutomationMessageTypeFieldUpdateOperationsInput | $Enums.AutomationMessageType
 }
 
 export type AutomationMessageCreateManyFormInput = {
   id?: string
   automationId: string
-  messageType?: $Enums.AutomationMessageType
   text?: string | null
-  mediaUrl?: string | null
-  mediaId?: string | null
-  showcaseId?: string | null
   order: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  mediaId?: string | null
+  mediaUrl?: string | null
+  messageType?: $Enums.AutomationMessageType
+  showcaseId?: string | null
 }
 
 export type AutomationMessageUpdateWithoutFormInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  messageType?: Prisma.EnumAutomationMessageTypeFieldUpdateOperationsInput | $Enums.AutomationMessageType
   text?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   order?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  messageType?: Prisma.EnumAutomationMessageTypeFieldUpdateOperationsInput | $Enums.AutomationMessageType
   automation?: Prisma.AutomationUpdateOneRequiredWithoutMessagesNestedInput
   showcase?: Prisma.ShowcaseUpdateOneWithoutMessagesNestedInput
   quickReplies?: Prisma.QuickReplyUpdateManyWithoutAutomationMessageNestedInput
@@ -1169,14 +1169,14 @@ export type AutomationMessageUpdateWithoutFormInput = {
 export type AutomationMessageUncheckedUpdateWithoutFormInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   automationId?: Prisma.StringFieldUpdateOperationsInput | string
-  messageType?: Prisma.EnumAutomationMessageTypeFieldUpdateOperationsInput | $Enums.AutomationMessageType
   text?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  showcaseId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   order?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  messageType?: Prisma.EnumAutomationMessageTypeFieldUpdateOperationsInput | $Enums.AutomationMessageType
+  showcaseId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quickReplies?: Prisma.QuickReplyUncheckedUpdateManyWithoutAutomationMessageNestedInput
   nextFromQuickReplies?: Prisma.QuickReplyUncheckedUpdateManyWithoutNextMessageNestedInput
 }
@@ -1184,14 +1184,14 @@ export type AutomationMessageUncheckedUpdateWithoutFormInput = {
 export type AutomationMessageUncheckedUpdateManyWithoutFormInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   automationId?: Prisma.StringFieldUpdateOperationsInput | string
-  messageType?: Prisma.EnumAutomationMessageTypeFieldUpdateOperationsInput | $Enums.AutomationMessageType
   text?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  showcaseId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   order?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  mediaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  messageType?: Prisma.EnumAutomationMessageTypeFieldUpdateOperationsInput | $Enums.AutomationMessageType
+  showcaseId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 
@@ -1237,18 +1237,18 @@ export type AutomationMessageCountOutputTypeCountNextFromQuickRepliesArgs<ExtArg
 export type AutomationMessageSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   automationId?: boolean
-  messageType?: boolean
   text?: boolean
-  mediaUrl?: boolean
-  mediaId?: boolean
-  showcaseId?: boolean
-  formId?: boolean
   order?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  formId?: boolean
+  mediaId?: boolean
+  mediaUrl?: boolean
+  messageType?: boolean
+  showcaseId?: boolean
   automation?: boolean | Prisma.AutomationDefaultArgs<ExtArgs>
-  showcase?: boolean | Prisma.AutomationMessage$showcaseArgs<ExtArgs>
   form?: boolean | Prisma.AutomationMessage$formArgs<ExtArgs>
+  showcase?: boolean | Prisma.AutomationMessage$showcaseArgs<ExtArgs>
   quickReplies?: boolean | Prisma.AutomationMessage$quickRepliesArgs<ExtArgs>
   nextFromQuickReplies?: boolean | Prisma.AutomationMessage$nextFromQuickRepliesArgs<ExtArgs>
   _count?: boolean | Prisma.AutomationMessageCountOutputTypeDefaultArgs<ExtArgs>
@@ -1257,92 +1257,92 @@ export type AutomationMessageSelect<ExtArgs extends runtime.Types.Extensions.Int
 export type AutomationMessageSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   automationId?: boolean
-  messageType?: boolean
   text?: boolean
-  mediaUrl?: boolean
-  mediaId?: boolean
-  showcaseId?: boolean
-  formId?: boolean
   order?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  formId?: boolean
+  mediaId?: boolean
+  mediaUrl?: boolean
+  messageType?: boolean
+  showcaseId?: boolean
   automation?: boolean | Prisma.AutomationDefaultArgs<ExtArgs>
-  showcase?: boolean | Prisma.AutomationMessage$showcaseArgs<ExtArgs>
   form?: boolean | Prisma.AutomationMessage$formArgs<ExtArgs>
+  showcase?: boolean | Prisma.AutomationMessage$showcaseArgs<ExtArgs>
 }, ExtArgs["result"]["automationMessage"]>
 
 export type AutomationMessageSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   automationId?: boolean
-  messageType?: boolean
   text?: boolean
-  mediaUrl?: boolean
-  mediaId?: boolean
-  showcaseId?: boolean
-  formId?: boolean
   order?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  formId?: boolean
+  mediaId?: boolean
+  mediaUrl?: boolean
+  messageType?: boolean
+  showcaseId?: boolean
   automation?: boolean | Prisma.AutomationDefaultArgs<ExtArgs>
-  showcase?: boolean | Prisma.AutomationMessage$showcaseArgs<ExtArgs>
   form?: boolean | Prisma.AutomationMessage$formArgs<ExtArgs>
+  showcase?: boolean | Prisma.AutomationMessage$showcaseArgs<ExtArgs>
 }, ExtArgs["result"]["automationMessage"]>
 
 export type AutomationMessageSelectScalar = {
   id?: boolean
   automationId?: boolean
-  messageType?: boolean
   text?: boolean
-  mediaUrl?: boolean
-  mediaId?: boolean
-  showcaseId?: boolean
-  formId?: boolean
   order?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  formId?: boolean
+  mediaId?: boolean
+  mediaUrl?: boolean
+  messageType?: boolean
+  showcaseId?: boolean
 }
 
-export type AutomationMessageOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "automationId" | "messageType" | "text" | "mediaUrl" | "mediaId" | "showcaseId" | "formId" | "order" | "createdAt" | "updatedAt", ExtArgs["result"]["automationMessage"]>
+export type AutomationMessageOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "automationId" | "text" | "order" | "createdAt" | "updatedAt" | "formId" | "mediaId" | "mediaUrl" | "messageType" | "showcaseId", ExtArgs["result"]["automationMessage"]>
 export type AutomationMessageInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   automation?: boolean | Prisma.AutomationDefaultArgs<ExtArgs>
-  showcase?: boolean | Prisma.AutomationMessage$showcaseArgs<ExtArgs>
   form?: boolean | Prisma.AutomationMessage$formArgs<ExtArgs>
+  showcase?: boolean | Prisma.AutomationMessage$showcaseArgs<ExtArgs>
   quickReplies?: boolean | Prisma.AutomationMessage$quickRepliesArgs<ExtArgs>
   nextFromQuickReplies?: boolean | Prisma.AutomationMessage$nextFromQuickRepliesArgs<ExtArgs>
   _count?: boolean | Prisma.AutomationMessageCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type AutomationMessageIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   automation?: boolean | Prisma.AutomationDefaultArgs<ExtArgs>
-  showcase?: boolean | Prisma.AutomationMessage$showcaseArgs<ExtArgs>
   form?: boolean | Prisma.AutomationMessage$formArgs<ExtArgs>
+  showcase?: boolean | Prisma.AutomationMessage$showcaseArgs<ExtArgs>
 }
 export type AutomationMessageIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   automation?: boolean | Prisma.AutomationDefaultArgs<ExtArgs>
-  showcase?: boolean | Prisma.AutomationMessage$showcaseArgs<ExtArgs>
   form?: boolean | Prisma.AutomationMessage$formArgs<ExtArgs>
+  showcase?: boolean | Prisma.AutomationMessage$showcaseArgs<ExtArgs>
 }
 
 export type $AutomationMessagePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "AutomationMessage"
   objects: {
     automation: Prisma.$AutomationPayload<ExtArgs>
-    showcase: Prisma.$ShowcasePayload<ExtArgs> | null
     form: Prisma.$FormPayload<ExtArgs> | null
+    showcase: Prisma.$ShowcasePayload<ExtArgs> | null
     quickReplies: Prisma.$QuickReplyPayload<ExtArgs>[]
     nextFromQuickReplies: Prisma.$QuickReplyPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     automationId: string
-    messageType: $Enums.AutomationMessageType
     text: string | null
-    mediaUrl: string | null
-    mediaId: string | null
-    showcaseId: string | null
-    formId: string | null
     order: number
     createdAt: Date
     updatedAt: Date
+    formId: string | null
+    mediaId: string | null
+    mediaUrl: string | null
+    messageType: $Enums.AutomationMessageType
+    showcaseId: string | null
   }, ExtArgs["result"]["automationMessage"]>
   composites: {}
 }
@@ -1738,8 +1738,8 @@ readonly fields: AutomationMessageFieldRefs;
 export interface Prisma__AutomationMessageClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   automation<T extends Prisma.AutomationDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AutomationDefaultArgs<ExtArgs>>): Prisma.Prisma__AutomationClient<runtime.Types.Result.GetResult<Prisma.$AutomationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-  showcase<T extends Prisma.AutomationMessage$showcaseArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AutomationMessage$showcaseArgs<ExtArgs>>): Prisma.Prisma__ShowcaseClient<runtime.Types.Result.GetResult<Prisma.$ShowcasePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   form<T extends Prisma.AutomationMessage$formArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AutomationMessage$formArgs<ExtArgs>>): Prisma.Prisma__FormClient<runtime.Types.Result.GetResult<Prisma.$FormPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  showcase<T extends Prisma.AutomationMessage$showcaseArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AutomationMessage$showcaseArgs<ExtArgs>>): Prisma.Prisma__ShowcaseClient<runtime.Types.Result.GetResult<Prisma.$ShowcasePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   quickReplies<T extends Prisma.AutomationMessage$quickRepliesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AutomationMessage$quickRepliesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$QuickReplyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   nextFromQuickReplies<T extends Prisma.AutomationMessage$nextFromQuickRepliesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AutomationMessage$nextFromQuickRepliesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$QuickReplyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
@@ -1773,15 +1773,15 @@ export interface Prisma__AutomationMessageClient<T, Null = never, ExtArgs extend
 export interface AutomationMessageFieldRefs {
   readonly id: Prisma.FieldRef<"AutomationMessage", 'String'>
   readonly automationId: Prisma.FieldRef<"AutomationMessage", 'String'>
-  readonly messageType: Prisma.FieldRef<"AutomationMessage", 'AutomationMessageType'>
   readonly text: Prisma.FieldRef<"AutomationMessage", 'String'>
-  readonly mediaUrl: Prisma.FieldRef<"AutomationMessage", 'String'>
-  readonly mediaId: Prisma.FieldRef<"AutomationMessage", 'String'>
-  readonly showcaseId: Prisma.FieldRef<"AutomationMessage", 'String'>
-  readonly formId: Prisma.FieldRef<"AutomationMessage", 'String'>
   readonly order: Prisma.FieldRef<"AutomationMessage", 'Int'>
   readonly createdAt: Prisma.FieldRef<"AutomationMessage", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"AutomationMessage", 'DateTime'>
+  readonly formId: Prisma.FieldRef<"AutomationMessage", 'String'>
+  readonly mediaId: Prisma.FieldRef<"AutomationMessage", 'String'>
+  readonly mediaUrl: Prisma.FieldRef<"AutomationMessage", 'String'>
+  readonly messageType: Prisma.FieldRef<"AutomationMessage", 'AutomationMessageType'>
+  readonly showcaseId: Prisma.FieldRef<"AutomationMessage", 'String'>
 }
     
 
@@ -2183,25 +2183,6 @@ export type AutomationMessageDeleteManyArgs<ExtArgs extends runtime.Types.Extens
 }
 
 /**
- * AutomationMessage.showcase
- */
-export type AutomationMessage$showcaseArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the Showcase
-   */
-  select?: Prisma.ShowcaseSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the Showcase
-   */
-  omit?: Prisma.ShowcaseOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ShowcaseInclude<ExtArgs> | null
-  where?: Prisma.ShowcaseWhereInput
-}
-
-/**
  * AutomationMessage.form
  */
 export type AutomationMessage$formArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2218,6 +2199,25 @@ export type AutomationMessage$formArgs<ExtArgs extends runtime.Types.Extensions.
    */
   include?: Prisma.FormInclude<ExtArgs> | null
   where?: Prisma.FormWhereInput
+}
+
+/**
+ * AutomationMessage.showcase
+ */
+export type AutomationMessage$showcaseArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Showcase
+   */
+  select?: Prisma.ShowcaseSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Showcase
+   */
+  omit?: Prisma.ShowcaseOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ShowcaseInclude<ExtArgs> | null
+  where?: Prisma.ShowcaseWhereInput
 }
 
 /**

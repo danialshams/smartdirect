@@ -248,8 +248,8 @@ export type IceBreakerWhereInput = {
   isActive?: Prisma.BoolFilter<"IceBreaker"> | boolean
   createdAt?: Prisma.DateTimeFilter<"IceBreaker"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"IceBreaker"> | Date | string
-  instagramAccount?: Prisma.XOR<Prisma.InstagramAccountScalarRelationFilter, Prisma.InstagramAccountWhereInput>
   automation?: Prisma.XOR<Prisma.AutomationScalarRelationFilter, Prisma.AutomationWhereInput>
+  instagramAccount?: Prisma.XOR<Prisma.InstagramAccountScalarRelationFilter, Prisma.InstagramAccountWhereInput>
 }
 
 export type IceBreakerOrderByWithRelationInput = {
@@ -262,8 +262,8 @@ export type IceBreakerOrderByWithRelationInput = {
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  instagramAccount?: Prisma.InstagramAccountOrderByWithRelationInput
   automation?: Prisma.AutomationOrderByWithRelationInput
+  instagramAccount?: Prisma.InstagramAccountOrderByWithRelationInput
 }
 
 export type IceBreakerWhereUniqueInput = Prisma.AtLeast<{
@@ -280,8 +280,8 @@ export type IceBreakerWhereUniqueInput = Prisma.AtLeast<{
   isActive?: Prisma.BoolFilter<"IceBreaker"> | boolean
   createdAt?: Prisma.DateTimeFilter<"IceBreaker"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"IceBreaker"> | Date | string
-  instagramAccount?: Prisma.XOR<Prisma.InstagramAccountScalarRelationFilter, Prisma.InstagramAccountWhereInput>
   automation?: Prisma.XOR<Prisma.AutomationScalarRelationFilter, Prisma.AutomationWhereInput>
+  instagramAccount?: Prisma.XOR<Prisma.InstagramAccountScalarRelationFilter, Prisma.InstagramAccountWhereInput>
 }, "id" | "instagramAccountId_payload">
 
 export type IceBreakerOrderByWithAggregationInput = {
@@ -324,8 +324,8 @@ export type IceBreakerCreateInput = {
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
-  instagramAccount: Prisma.InstagramAccountCreateNestedOneWithoutIceBreakersInput
   automation: Prisma.AutomationCreateNestedOneWithoutIceBreakersInput
+  instagramAccount: Prisma.InstagramAccountCreateNestedOneWithoutIceBreakersInput
 }
 
 export type IceBreakerUncheckedCreateInput = {
@@ -348,8 +348,8 @@ export type IceBreakerUpdateInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  instagramAccount?: Prisma.InstagramAccountUpdateOneRequiredWithoutIceBreakersNestedInput
   automation?: Prisma.AutomationUpdateOneRequiredWithoutIceBreakersNestedInput
+  instagramAccount?: Prisma.InstagramAccountUpdateOneRequiredWithoutIceBreakersNestedInput
 }
 
 export type IceBreakerUncheckedUpdateInput = {
@@ -752,8 +752,8 @@ export type IceBreakerSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
   automation?: boolean | Prisma.AutomationDefaultArgs<ExtArgs>
+  instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["iceBreaker"]>
 
 export type IceBreakerSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -766,8 +766,8 @@ export type IceBreakerSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
   automation?: boolean | Prisma.AutomationDefaultArgs<ExtArgs>
+  instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["iceBreaker"]>
 
 export type IceBreakerSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -780,8 +780,8 @@ export type IceBreakerSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
   automation?: boolean | Prisma.AutomationDefaultArgs<ExtArgs>
+  instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["iceBreaker"]>
 
 export type IceBreakerSelectScalar = {
@@ -798,23 +798,23 @@ export type IceBreakerSelectScalar = {
 
 export type IceBreakerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "instagramAccountId" | "automationId" | "question" | "payload" | "order" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["iceBreaker"]>
 export type IceBreakerInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
   automation?: boolean | Prisma.AutomationDefaultArgs<ExtArgs>
+  instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
 }
 export type IceBreakerIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
   automation?: boolean | Prisma.AutomationDefaultArgs<ExtArgs>
+  instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
 }
 export type IceBreakerIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
   automation?: boolean | Prisma.AutomationDefaultArgs<ExtArgs>
+  instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
 }
 
 export type $IceBreakerPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "IceBreaker"
   objects: {
-    instagramAccount: Prisma.$InstagramAccountPayload<ExtArgs>
     automation: Prisma.$AutomationPayload<ExtArgs>
+    instagramAccount: Prisma.$InstagramAccountPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1220,8 +1220,8 @@ readonly fields: IceBreakerFieldRefs;
  */
 export interface Prisma__IceBreakerClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  instagramAccount<T extends Prisma.InstagramAccountDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.InstagramAccountDefaultArgs<ExtArgs>>): Prisma.Prisma__InstagramAccountClient<runtime.Types.Result.GetResult<Prisma.$InstagramAccountPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   automation<T extends Prisma.AutomationDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AutomationDefaultArgs<ExtArgs>>): Prisma.Prisma__AutomationClient<runtime.Types.Result.GetResult<Prisma.$AutomationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  instagramAccount<T extends Prisma.InstagramAccountDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.InstagramAccountDefaultArgs<ExtArgs>>): Prisma.Prisma__InstagramAccountClient<runtime.Types.Result.GetResult<Prisma.$InstagramAccountPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.

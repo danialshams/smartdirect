@@ -41,12 +41,6 @@ export type InstagramPublishJobMinAggregateOutputType = {
   type: $Enums.InstagramPublishType | null
   status: $Enums.InstagramPublishStatus | null
   caption: string | null
-  commentAutomationId: string | null
-  storyReplyAutomationId: string | null
-  commentTriggerKeywords: string | null
-  commentTriggerResponse: string | null
-  storyReplyTriggerKeywords: string | null
-  storyReplyTriggerResponse: string | null
   scheduledAt: Date | null
   publishedAt: Date | null
   instagramContainerId: string | null
@@ -57,6 +51,12 @@ export type InstagramPublishJobMinAggregateOutputType = {
   lastAttemptAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
+  commentAutomationId: string | null
+  storyReplyAutomationId: string | null
+  commentTriggerKeywords: string | null
+  commentTriggerResponse: string | null
+  storyReplyTriggerKeywords: string | null
+  storyReplyTriggerResponse: string | null
 }
 
 export type InstagramPublishJobMaxAggregateOutputType = {
@@ -66,12 +66,6 @@ export type InstagramPublishJobMaxAggregateOutputType = {
   type: $Enums.InstagramPublishType | null
   status: $Enums.InstagramPublishStatus | null
   caption: string | null
-  commentAutomationId: string | null
-  storyReplyAutomationId: string | null
-  commentTriggerKeywords: string | null
-  commentTriggerResponse: string | null
-  storyReplyTriggerKeywords: string | null
-  storyReplyTriggerResponse: string | null
   scheduledAt: Date | null
   publishedAt: Date | null
   instagramContainerId: string | null
@@ -82,6 +76,12 @@ export type InstagramPublishJobMaxAggregateOutputType = {
   lastAttemptAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
+  commentAutomationId: string | null
+  storyReplyAutomationId: string | null
+  commentTriggerKeywords: string | null
+  commentTriggerResponse: string | null
+  storyReplyTriggerKeywords: string | null
+  storyReplyTriggerResponse: string | null
 }
 
 export type InstagramPublishJobCountAggregateOutputType = {
@@ -91,13 +91,6 @@ export type InstagramPublishJobCountAggregateOutputType = {
   type: number
   status: number
   caption: number
-  userTags: number
-  commentAutomationId: number
-  storyReplyAutomationId: number
-  commentTriggerKeywords: number
-  commentTriggerResponse: number
-  storyReplyTriggerKeywords: number
-  storyReplyTriggerResponse: number
   scheduledAt: number
   publishedAt: number
   instagramContainerId: number
@@ -108,6 +101,13 @@ export type InstagramPublishJobCountAggregateOutputType = {
   lastAttemptAt: number
   createdAt: number
   updatedAt: number
+  userTags: number
+  commentAutomationId: number
+  storyReplyAutomationId: number
+  commentTriggerKeywords: number
+  commentTriggerResponse: number
+  storyReplyTriggerKeywords: number
+  storyReplyTriggerResponse: number
   _all: number
 }
 
@@ -127,12 +127,6 @@ export type InstagramPublishJobMinAggregateInputType = {
   type?: true
   status?: true
   caption?: true
-  commentAutomationId?: true
-  storyReplyAutomationId?: true
-  commentTriggerKeywords?: true
-  commentTriggerResponse?: true
-  storyReplyTriggerKeywords?: true
-  storyReplyTriggerResponse?: true
   scheduledAt?: true
   publishedAt?: true
   instagramContainerId?: true
@@ -143,6 +137,12 @@ export type InstagramPublishJobMinAggregateInputType = {
   lastAttemptAt?: true
   createdAt?: true
   updatedAt?: true
+  commentAutomationId?: true
+  storyReplyAutomationId?: true
+  commentTriggerKeywords?: true
+  commentTriggerResponse?: true
+  storyReplyTriggerKeywords?: true
+  storyReplyTriggerResponse?: true
 }
 
 export type InstagramPublishJobMaxAggregateInputType = {
@@ -152,12 +152,6 @@ export type InstagramPublishJobMaxAggregateInputType = {
   type?: true
   status?: true
   caption?: true
-  commentAutomationId?: true
-  storyReplyAutomationId?: true
-  commentTriggerKeywords?: true
-  commentTriggerResponse?: true
-  storyReplyTriggerKeywords?: true
-  storyReplyTriggerResponse?: true
   scheduledAt?: true
   publishedAt?: true
   instagramContainerId?: true
@@ -168,6 +162,12 @@ export type InstagramPublishJobMaxAggregateInputType = {
   lastAttemptAt?: true
   createdAt?: true
   updatedAt?: true
+  commentAutomationId?: true
+  storyReplyAutomationId?: true
+  commentTriggerKeywords?: true
+  commentTriggerResponse?: true
+  storyReplyTriggerKeywords?: true
+  storyReplyTriggerResponse?: true
 }
 
 export type InstagramPublishJobCountAggregateInputType = {
@@ -177,13 +177,6 @@ export type InstagramPublishJobCountAggregateInputType = {
   type?: true
   status?: true
   caption?: true
-  userTags?: true
-  commentAutomationId?: true
-  storyReplyAutomationId?: true
-  commentTriggerKeywords?: true
-  commentTriggerResponse?: true
-  storyReplyTriggerKeywords?: true
-  storyReplyTriggerResponse?: true
   scheduledAt?: true
   publishedAt?: true
   instagramContainerId?: true
@@ -194,6 +187,13 @@ export type InstagramPublishJobCountAggregateInputType = {
   lastAttemptAt?: true
   createdAt?: true
   updatedAt?: true
+  userTags?: true
+  commentAutomationId?: true
+  storyReplyAutomationId?: true
+  commentTriggerKeywords?: true
+  commentTriggerResponse?: true
+  storyReplyTriggerKeywords?: true
+  storyReplyTriggerResponse?: true
   _all?: true
 }
 
@@ -290,13 +290,6 @@ export type InstagramPublishJobGroupByOutputType = {
   type: $Enums.InstagramPublishType
   status: $Enums.InstagramPublishStatus
   caption: string | null
-  userTags: runtime.JsonValue | null
-  commentAutomationId: string | null
-  storyReplyAutomationId: string | null
-  commentTriggerKeywords: string | null
-  commentTriggerResponse: string | null
-  storyReplyTriggerKeywords: string | null
-  storyReplyTriggerResponse: string | null
   scheduledAt: Date | null
   publishedAt: Date | null
   instagramContainerId: string | null
@@ -307,6 +300,13 @@ export type InstagramPublishJobGroupByOutputType = {
   lastAttemptAt: Date | null
   createdAt: Date
   updatedAt: Date
+  userTags: runtime.JsonValue | null
+  commentAutomationId: string | null
+  storyReplyAutomationId: string | null
+  commentTriggerKeywords: string | null
+  commentTriggerResponse: string | null
+  storyReplyTriggerKeywords: string | null
+  storyReplyTriggerResponse: string | null
   _count: InstagramPublishJobCountAggregateOutputType | null
   _avg: InstagramPublishJobAvgAggregateOutputType | null
   _sum: InstagramPublishJobSumAggregateOutputType | null
@@ -339,13 +339,6 @@ export type InstagramPublishJobWhereInput = {
   type?: Prisma.EnumInstagramPublishTypeFilter<"InstagramPublishJob"> | $Enums.InstagramPublishType
   status?: Prisma.EnumInstagramPublishStatusFilter<"InstagramPublishJob"> | $Enums.InstagramPublishStatus
   caption?: Prisma.StringNullableFilter<"InstagramPublishJob"> | string | null
-  userTags?: Prisma.JsonNullableFilter<"InstagramPublishJob">
-  commentAutomationId?: Prisma.StringNullableFilter<"InstagramPublishJob"> | string | null
-  storyReplyAutomationId?: Prisma.StringNullableFilter<"InstagramPublishJob"> | string | null
-  commentTriggerKeywords?: Prisma.StringNullableFilter<"InstagramPublishJob"> | string | null
-  commentTriggerResponse?: Prisma.StringNullableFilter<"InstagramPublishJob"> | string | null
-  storyReplyTriggerKeywords?: Prisma.StringNullableFilter<"InstagramPublishJob"> | string | null
-  storyReplyTriggerResponse?: Prisma.StringNullableFilter<"InstagramPublishJob"> | string | null
   scheduledAt?: Prisma.DateTimeNullableFilter<"InstagramPublishJob"> | Date | string | null
   publishedAt?: Prisma.DateTimeNullableFilter<"InstagramPublishJob"> | Date | string | null
   instagramContainerId?: Prisma.StringNullableFilter<"InstagramPublishJob"> | string | null
@@ -356,8 +349,15 @@ export type InstagramPublishJobWhereInput = {
   lastAttemptAt?: Prisma.DateTimeNullableFilter<"InstagramPublishJob"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"InstagramPublishJob"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"InstagramPublishJob"> | Date | string
-  user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  userTags?: Prisma.JsonNullableFilter<"InstagramPublishJob">
+  commentAutomationId?: Prisma.StringNullableFilter<"InstagramPublishJob"> | string | null
+  storyReplyAutomationId?: Prisma.StringNullableFilter<"InstagramPublishJob"> | string | null
+  commentTriggerKeywords?: Prisma.StringNullableFilter<"InstagramPublishJob"> | string | null
+  commentTriggerResponse?: Prisma.StringNullableFilter<"InstagramPublishJob"> | string | null
+  storyReplyTriggerKeywords?: Prisma.StringNullableFilter<"InstagramPublishJob"> | string | null
+  storyReplyTriggerResponse?: Prisma.StringNullableFilter<"InstagramPublishJob"> | string | null
   instagramAccount?: Prisma.XOR<Prisma.InstagramAccountScalarRelationFilter, Prisma.InstagramAccountWhereInput>
+  user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   media?: Prisma.InstagramPublishMediaListRelationFilter
 }
 
@@ -368,13 +368,6 @@ export type InstagramPublishJobOrderByWithRelationInput = {
   type?: Prisma.SortOrder
   status?: Prisma.SortOrder
   caption?: Prisma.SortOrderInput | Prisma.SortOrder
-  userTags?: Prisma.SortOrderInput | Prisma.SortOrder
-  commentAutomationId?: Prisma.SortOrderInput | Prisma.SortOrder
-  storyReplyAutomationId?: Prisma.SortOrderInput | Prisma.SortOrder
-  commentTriggerKeywords?: Prisma.SortOrderInput | Prisma.SortOrder
-  commentTriggerResponse?: Prisma.SortOrderInput | Prisma.SortOrder
-  storyReplyTriggerKeywords?: Prisma.SortOrderInput | Prisma.SortOrder
-  storyReplyTriggerResponse?: Prisma.SortOrderInput | Prisma.SortOrder
   scheduledAt?: Prisma.SortOrderInput | Prisma.SortOrder
   publishedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   instagramContainerId?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -385,8 +378,15 @@ export type InstagramPublishJobOrderByWithRelationInput = {
   lastAttemptAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  user?: Prisma.UserOrderByWithRelationInput
+  userTags?: Prisma.SortOrderInput | Prisma.SortOrder
+  commentAutomationId?: Prisma.SortOrderInput | Prisma.SortOrder
+  storyReplyAutomationId?: Prisma.SortOrderInput | Prisma.SortOrder
+  commentTriggerKeywords?: Prisma.SortOrderInput | Prisma.SortOrder
+  commentTriggerResponse?: Prisma.SortOrderInput | Prisma.SortOrder
+  storyReplyTriggerKeywords?: Prisma.SortOrderInput | Prisma.SortOrder
+  storyReplyTriggerResponse?: Prisma.SortOrderInput | Prisma.SortOrder
   instagramAccount?: Prisma.InstagramAccountOrderByWithRelationInput
+  user?: Prisma.UserOrderByWithRelationInput
   media?: Prisma.InstagramPublishMediaOrderByRelationAggregateInput
 }
 
@@ -402,13 +402,6 @@ export type InstagramPublishJobWhereUniqueInput = Prisma.AtLeast<{
   type?: Prisma.EnumInstagramPublishTypeFilter<"InstagramPublishJob"> | $Enums.InstagramPublishType
   status?: Prisma.EnumInstagramPublishStatusFilter<"InstagramPublishJob"> | $Enums.InstagramPublishStatus
   caption?: Prisma.StringNullableFilter<"InstagramPublishJob"> | string | null
-  userTags?: Prisma.JsonNullableFilter<"InstagramPublishJob">
-  commentAutomationId?: Prisma.StringNullableFilter<"InstagramPublishJob"> | string | null
-  storyReplyAutomationId?: Prisma.StringNullableFilter<"InstagramPublishJob"> | string | null
-  commentTriggerKeywords?: Prisma.StringNullableFilter<"InstagramPublishJob"> | string | null
-  commentTriggerResponse?: Prisma.StringNullableFilter<"InstagramPublishJob"> | string | null
-  storyReplyTriggerKeywords?: Prisma.StringNullableFilter<"InstagramPublishJob"> | string | null
-  storyReplyTriggerResponse?: Prisma.StringNullableFilter<"InstagramPublishJob"> | string | null
   scheduledAt?: Prisma.DateTimeNullableFilter<"InstagramPublishJob"> | Date | string | null
   publishedAt?: Prisma.DateTimeNullableFilter<"InstagramPublishJob"> | Date | string | null
   instagramContainerId?: Prisma.StringNullableFilter<"InstagramPublishJob"> | string | null
@@ -418,8 +411,15 @@ export type InstagramPublishJobWhereUniqueInput = Prisma.AtLeast<{
   lastAttemptAt?: Prisma.DateTimeNullableFilter<"InstagramPublishJob"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"InstagramPublishJob"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"InstagramPublishJob"> | Date | string
-  user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  userTags?: Prisma.JsonNullableFilter<"InstagramPublishJob">
+  commentAutomationId?: Prisma.StringNullableFilter<"InstagramPublishJob"> | string | null
+  storyReplyAutomationId?: Prisma.StringNullableFilter<"InstagramPublishJob"> | string | null
+  commentTriggerKeywords?: Prisma.StringNullableFilter<"InstagramPublishJob"> | string | null
+  commentTriggerResponse?: Prisma.StringNullableFilter<"InstagramPublishJob"> | string | null
+  storyReplyTriggerKeywords?: Prisma.StringNullableFilter<"InstagramPublishJob"> | string | null
+  storyReplyTriggerResponse?: Prisma.StringNullableFilter<"InstagramPublishJob"> | string | null
   instagramAccount?: Prisma.XOR<Prisma.InstagramAccountScalarRelationFilter, Prisma.InstagramAccountWhereInput>
+  user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   media?: Prisma.InstagramPublishMediaListRelationFilter
 }, "id" | "idempotencyKey" | "instagramAccountId_scheduledAt">
 
@@ -430,13 +430,6 @@ export type InstagramPublishJobOrderByWithAggregationInput = {
   type?: Prisma.SortOrder
   status?: Prisma.SortOrder
   caption?: Prisma.SortOrderInput | Prisma.SortOrder
-  userTags?: Prisma.SortOrderInput | Prisma.SortOrder
-  commentAutomationId?: Prisma.SortOrderInput | Prisma.SortOrder
-  storyReplyAutomationId?: Prisma.SortOrderInput | Prisma.SortOrder
-  commentTriggerKeywords?: Prisma.SortOrderInput | Prisma.SortOrder
-  commentTriggerResponse?: Prisma.SortOrderInput | Prisma.SortOrder
-  storyReplyTriggerKeywords?: Prisma.SortOrderInput | Prisma.SortOrder
-  storyReplyTriggerResponse?: Prisma.SortOrderInput | Prisma.SortOrder
   scheduledAt?: Prisma.SortOrderInput | Prisma.SortOrder
   publishedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   instagramContainerId?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -447,6 +440,13 @@ export type InstagramPublishJobOrderByWithAggregationInput = {
   lastAttemptAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  userTags?: Prisma.SortOrderInput | Prisma.SortOrder
+  commentAutomationId?: Prisma.SortOrderInput | Prisma.SortOrder
+  storyReplyAutomationId?: Prisma.SortOrderInput | Prisma.SortOrder
+  commentTriggerKeywords?: Prisma.SortOrderInput | Prisma.SortOrder
+  commentTriggerResponse?: Prisma.SortOrderInput | Prisma.SortOrder
+  storyReplyTriggerKeywords?: Prisma.SortOrderInput | Prisma.SortOrder
+  storyReplyTriggerResponse?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.InstagramPublishJobCountOrderByAggregateInput
   _avg?: Prisma.InstagramPublishJobAvgOrderByAggregateInput
   _max?: Prisma.InstagramPublishJobMaxOrderByAggregateInput
@@ -464,13 +464,6 @@ export type InstagramPublishJobScalarWhereWithAggregatesInput = {
   type?: Prisma.EnumInstagramPublishTypeWithAggregatesFilter<"InstagramPublishJob"> | $Enums.InstagramPublishType
   status?: Prisma.EnumInstagramPublishStatusWithAggregatesFilter<"InstagramPublishJob"> | $Enums.InstagramPublishStatus
   caption?: Prisma.StringNullableWithAggregatesFilter<"InstagramPublishJob"> | string | null
-  userTags?: Prisma.JsonNullableWithAggregatesFilter<"InstagramPublishJob">
-  commentAutomationId?: Prisma.StringNullableWithAggregatesFilter<"InstagramPublishJob"> | string | null
-  storyReplyAutomationId?: Prisma.StringNullableWithAggregatesFilter<"InstagramPublishJob"> | string | null
-  commentTriggerKeywords?: Prisma.StringNullableWithAggregatesFilter<"InstagramPublishJob"> | string | null
-  commentTriggerResponse?: Prisma.StringNullableWithAggregatesFilter<"InstagramPublishJob"> | string | null
-  storyReplyTriggerKeywords?: Prisma.StringNullableWithAggregatesFilter<"InstagramPublishJob"> | string | null
-  storyReplyTriggerResponse?: Prisma.StringNullableWithAggregatesFilter<"InstagramPublishJob"> | string | null
   scheduledAt?: Prisma.DateTimeNullableWithAggregatesFilter<"InstagramPublishJob"> | Date | string | null
   publishedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"InstagramPublishJob"> | Date | string | null
   instagramContainerId?: Prisma.StringNullableWithAggregatesFilter<"InstagramPublishJob"> | string | null
@@ -481,6 +474,13 @@ export type InstagramPublishJobScalarWhereWithAggregatesInput = {
   lastAttemptAt?: Prisma.DateTimeNullableWithAggregatesFilter<"InstagramPublishJob"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"InstagramPublishJob"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"InstagramPublishJob"> | Date | string
+  userTags?: Prisma.JsonNullableWithAggregatesFilter<"InstagramPublishJob">
+  commentAutomationId?: Prisma.StringNullableWithAggregatesFilter<"InstagramPublishJob"> | string | null
+  storyReplyAutomationId?: Prisma.StringNullableWithAggregatesFilter<"InstagramPublishJob"> | string | null
+  commentTriggerKeywords?: Prisma.StringNullableWithAggregatesFilter<"InstagramPublishJob"> | string | null
+  commentTriggerResponse?: Prisma.StringNullableWithAggregatesFilter<"InstagramPublishJob"> | string | null
+  storyReplyTriggerKeywords?: Prisma.StringNullableWithAggregatesFilter<"InstagramPublishJob"> | string | null
+  storyReplyTriggerResponse?: Prisma.StringNullableWithAggregatesFilter<"InstagramPublishJob"> | string | null
 }
 
 export type InstagramPublishJobCreateInput = {
@@ -488,13 +488,6 @@ export type InstagramPublishJobCreateInput = {
   type: $Enums.InstagramPublishType
   status?: $Enums.InstagramPublishStatus
   caption?: string | null
-  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  commentAutomationId?: string | null
-  storyReplyAutomationId?: string | null
-  commentTriggerKeywords?: string | null
-  commentTriggerResponse?: string | null
-  storyReplyTriggerKeywords?: string | null
-  storyReplyTriggerResponse?: string | null
   scheduledAt?: Date | string | null
   publishedAt?: Date | string | null
   instagramContainerId?: string | null
@@ -505,8 +498,15 @@ export type InstagramPublishJobCreateInput = {
   lastAttemptAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  user: Prisma.UserCreateNestedOneWithoutInstagramPublishJobsInput
+  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  commentAutomationId?: string | null
+  storyReplyAutomationId?: string | null
+  commentTriggerKeywords?: string | null
+  commentTriggerResponse?: string | null
+  storyReplyTriggerKeywords?: string | null
+  storyReplyTriggerResponse?: string | null
   instagramAccount: Prisma.InstagramAccountCreateNestedOneWithoutPublishJobsInput
+  user: Prisma.UserCreateNestedOneWithoutInstagramPublishJobsInput
   media?: Prisma.InstagramPublishMediaCreateNestedManyWithoutPublishJobInput
 }
 
@@ -517,13 +517,6 @@ export type InstagramPublishJobUncheckedCreateInput = {
   type: $Enums.InstagramPublishType
   status?: $Enums.InstagramPublishStatus
   caption?: string | null
-  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  commentAutomationId?: string | null
-  storyReplyAutomationId?: string | null
-  commentTriggerKeywords?: string | null
-  commentTriggerResponse?: string | null
-  storyReplyTriggerKeywords?: string | null
-  storyReplyTriggerResponse?: string | null
   scheduledAt?: Date | string | null
   publishedAt?: Date | string | null
   instagramContainerId?: string | null
@@ -534,6 +527,13 @@ export type InstagramPublishJobUncheckedCreateInput = {
   lastAttemptAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  commentAutomationId?: string | null
+  storyReplyAutomationId?: string | null
+  commentTriggerKeywords?: string | null
+  commentTriggerResponse?: string | null
+  storyReplyTriggerKeywords?: string | null
+  storyReplyTriggerResponse?: string | null
   media?: Prisma.InstagramPublishMediaUncheckedCreateNestedManyWithoutPublishJobInput
 }
 
@@ -542,13 +542,6 @@ export type InstagramPublishJobUpdateInput = {
   type?: Prisma.EnumInstagramPublishTypeFieldUpdateOperationsInput | $Enums.InstagramPublishType
   status?: Prisma.EnumInstagramPublishStatusFieldUpdateOperationsInput | $Enums.InstagramPublishStatus
   caption?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  commentAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  storyReplyAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  commentTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  commentTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  storyReplyTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  storyReplyTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   scheduledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   instagramContainerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -559,8 +552,15 @@ export type InstagramPublishJobUpdateInput = {
   lastAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  user?: Prisma.UserUpdateOneRequiredWithoutInstagramPublishJobsNestedInput
+  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  commentAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storyReplyAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  commentTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  commentTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storyReplyTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storyReplyTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   instagramAccount?: Prisma.InstagramAccountUpdateOneRequiredWithoutPublishJobsNestedInput
+  user?: Prisma.UserUpdateOneRequiredWithoutInstagramPublishJobsNestedInput
   media?: Prisma.InstagramPublishMediaUpdateManyWithoutPublishJobNestedInput
 }
 
@@ -571,13 +571,6 @@ export type InstagramPublishJobUncheckedUpdateInput = {
   type?: Prisma.EnumInstagramPublishTypeFieldUpdateOperationsInput | $Enums.InstagramPublishType
   status?: Prisma.EnumInstagramPublishStatusFieldUpdateOperationsInput | $Enums.InstagramPublishStatus
   caption?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  commentAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  storyReplyAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  commentTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  commentTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  storyReplyTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  storyReplyTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   scheduledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   instagramContainerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -588,6 +581,13 @@ export type InstagramPublishJobUncheckedUpdateInput = {
   lastAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  commentAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storyReplyAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  commentTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  commentTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storyReplyTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storyReplyTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   media?: Prisma.InstagramPublishMediaUncheckedUpdateManyWithoutPublishJobNestedInput
 }
 
@@ -598,13 +598,6 @@ export type InstagramPublishJobCreateManyInput = {
   type: $Enums.InstagramPublishType
   status?: $Enums.InstagramPublishStatus
   caption?: string | null
-  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  commentAutomationId?: string | null
-  storyReplyAutomationId?: string | null
-  commentTriggerKeywords?: string | null
-  commentTriggerResponse?: string | null
-  storyReplyTriggerKeywords?: string | null
-  storyReplyTriggerResponse?: string | null
   scheduledAt?: Date | string | null
   publishedAt?: Date | string | null
   instagramContainerId?: string | null
@@ -615,6 +608,13 @@ export type InstagramPublishJobCreateManyInput = {
   lastAttemptAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  commentAutomationId?: string | null
+  storyReplyAutomationId?: string | null
+  commentTriggerKeywords?: string | null
+  commentTriggerResponse?: string | null
+  storyReplyTriggerKeywords?: string | null
+  storyReplyTriggerResponse?: string | null
 }
 
 export type InstagramPublishJobUpdateManyMutationInput = {
@@ -622,13 +622,6 @@ export type InstagramPublishJobUpdateManyMutationInput = {
   type?: Prisma.EnumInstagramPublishTypeFieldUpdateOperationsInput | $Enums.InstagramPublishType
   status?: Prisma.EnumInstagramPublishStatusFieldUpdateOperationsInput | $Enums.InstagramPublishStatus
   caption?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  commentAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  storyReplyAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  commentTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  commentTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  storyReplyTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  storyReplyTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   scheduledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   instagramContainerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -639,6 +632,13 @@ export type InstagramPublishJobUpdateManyMutationInput = {
   lastAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  commentAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storyReplyAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  commentTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  commentTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storyReplyTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storyReplyTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type InstagramPublishJobUncheckedUpdateManyInput = {
@@ -648,13 +648,6 @@ export type InstagramPublishJobUncheckedUpdateManyInput = {
   type?: Prisma.EnumInstagramPublishTypeFieldUpdateOperationsInput | $Enums.InstagramPublishType
   status?: Prisma.EnumInstagramPublishStatusFieldUpdateOperationsInput | $Enums.InstagramPublishStatus
   caption?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  commentAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  storyReplyAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  commentTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  commentTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  storyReplyTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  storyReplyTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   scheduledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   instagramContainerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -665,6 +658,13 @@ export type InstagramPublishJobUncheckedUpdateManyInput = {
   lastAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  commentAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storyReplyAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  commentTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  commentTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storyReplyTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storyReplyTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type InstagramPublishJobListRelationFilter = {
@@ -689,13 +689,6 @@ export type InstagramPublishJobCountOrderByAggregateInput = {
   type?: Prisma.SortOrder
   status?: Prisma.SortOrder
   caption?: Prisma.SortOrder
-  userTags?: Prisma.SortOrder
-  commentAutomationId?: Prisma.SortOrder
-  storyReplyAutomationId?: Prisma.SortOrder
-  commentTriggerKeywords?: Prisma.SortOrder
-  commentTriggerResponse?: Prisma.SortOrder
-  storyReplyTriggerKeywords?: Prisma.SortOrder
-  storyReplyTriggerResponse?: Prisma.SortOrder
   scheduledAt?: Prisma.SortOrder
   publishedAt?: Prisma.SortOrder
   instagramContainerId?: Prisma.SortOrder
@@ -706,6 +699,13 @@ export type InstagramPublishJobCountOrderByAggregateInput = {
   lastAttemptAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  userTags?: Prisma.SortOrder
+  commentAutomationId?: Prisma.SortOrder
+  storyReplyAutomationId?: Prisma.SortOrder
+  commentTriggerKeywords?: Prisma.SortOrder
+  commentTriggerResponse?: Prisma.SortOrder
+  storyReplyTriggerKeywords?: Prisma.SortOrder
+  storyReplyTriggerResponse?: Prisma.SortOrder
 }
 
 export type InstagramPublishJobAvgOrderByAggregateInput = {
@@ -719,12 +719,6 @@ export type InstagramPublishJobMaxOrderByAggregateInput = {
   type?: Prisma.SortOrder
   status?: Prisma.SortOrder
   caption?: Prisma.SortOrder
-  commentAutomationId?: Prisma.SortOrder
-  storyReplyAutomationId?: Prisma.SortOrder
-  commentTriggerKeywords?: Prisma.SortOrder
-  commentTriggerResponse?: Prisma.SortOrder
-  storyReplyTriggerKeywords?: Prisma.SortOrder
-  storyReplyTriggerResponse?: Prisma.SortOrder
   scheduledAt?: Prisma.SortOrder
   publishedAt?: Prisma.SortOrder
   instagramContainerId?: Prisma.SortOrder
@@ -735,6 +729,12 @@ export type InstagramPublishJobMaxOrderByAggregateInput = {
   lastAttemptAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  commentAutomationId?: Prisma.SortOrder
+  storyReplyAutomationId?: Prisma.SortOrder
+  commentTriggerKeywords?: Prisma.SortOrder
+  commentTriggerResponse?: Prisma.SortOrder
+  storyReplyTriggerKeywords?: Prisma.SortOrder
+  storyReplyTriggerResponse?: Prisma.SortOrder
 }
 
 export type InstagramPublishJobMinOrderByAggregateInput = {
@@ -744,12 +744,6 @@ export type InstagramPublishJobMinOrderByAggregateInput = {
   type?: Prisma.SortOrder
   status?: Prisma.SortOrder
   caption?: Prisma.SortOrder
-  commentAutomationId?: Prisma.SortOrder
-  storyReplyAutomationId?: Prisma.SortOrder
-  commentTriggerKeywords?: Prisma.SortOrder
-  commentTriggerResponse?: Prisma.SortOrder
-  storyReplyTriggerKeywords?: Prisma.SortOrder
-  storyReplyTriggerResponse?: Prisma.SortOrder
   scheduledAt?: Prisma.SortOrder
   publishedAt?: Prisma.SortOrder
   instagramContainerId?: Prisma.SortOrder
@@ -760,6 +754,12 @@ export type InstagramPublishJobMinOrderByAggregateInput = {
   lastAttemptAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  commentAutomationId?: Prisma.SortOrder
+  storyReplyAutomationId?: Prisma.SortOrder
+  commentTriggerKeywords?: Prisma.SortOrder
+  commentTriggerResponse?: Prisma.SortOrder
+  storyReplyTriggerKeywords?: Prisma.SortOrder
+  storyReplyTriggerResponse?: Prisma.SortOrder
 }
 
 export type InstagramPublishJobSumOrderByAggregateInput = {
@@ -882,13 +882,6 @@ export type InstagramPublishJobCreateWithoutUserInput = {
   type: $Enums.InstagramPublishType
   status?: $Enums.InstagramPublishStatus
   caption?: string | null
-  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  commentAutomationId?: string | null
-  storyReplyAutomationId?: string | null
-  commentTriggerKeywords?: string | null
-  commentTriggerResponse?: string | null
-  storyReplyTriggerKeywords?: string | null
-  storyReplyTriggerResponse?: string | null
   scheduledAt?: Date | string | null
   publishedAt?: Date | string | null
   instagramContainerId?: string | null
@@ -899,6 +892,13 @@ export type InstagramPublishJobCreateWithoutUserInput = {
   lastAttemptAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  commentAutomationId?: string | null
+  storyReplyAutomationId?: string | null
+  commentTriggerKeywords?: string | null
+  commentTriggerResponse?: string | null
+  storyReplyTriggerKeywords?: string | null
+  storyReplyTriggerResponse?: string | null
   instagramAccount: Prisma.InstagramAccountCreateNestedOneWithoutPublishJobsInput
   media?: Prisma.InstagramPublishMediaCreateNestedManyWithoutPublishJobInput
 }
@@ -909,13 +909,6 @@ export type InstagramPublishJobUncheckedCreateWithoutUserInput = {
   type: $Enums.InstagramPublishType
   status?: $Enums.InstagramPublishStatus
   caption?: string | null
-  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  commentAutomationId?: string | null
-  storyReplyAutomationId?: string | null
-  commentTriggerKeywords?: string | null
-  commentTriggerResponse?: string | null
-  storyReplyTriggerKeywords?: string | null
-  storyReplyTriggerResponse?: string | null
   scheduledAt?: Date | string | null
   publishedAt?: Date | string | null
   instagramContainerId?: string | null
@@ -926,6 +919,13 @@ export type InstagramPublishJobUncheckedCreateWithoutUserInput = {
   lastAttemptAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  commentAutomationId?: string | null
+  storyReplyAutomationId?: string | null
+  commentTriggerKeywords?: string | null
+  commentTriggerResponse?: string | null
+  storyReplyTriggerKeywords?: string | null
+  storyReplyTriggerResponse?: string | null
   media?: Prisma.InstagramPublishMediaUncheckedCreateNestedManyWithoutPublishJobInput
 }
 
@@ -965,13 +965,6 @@ export type InstagramPublishJobScalarWhereInput = {
   type?: Prisma.EnumInstagramPublishTypeFilter<"InstagramPublishJob"> | $Enums.InstagramPublishType
   status?: Prisma.EnumInstagramPublishStatusFilter<"InstagramPublishJob"> | $Enums.InstagramPublishStatus
   caption?: Prisma.StringNullableFilter<"InstagramPublishJob"> | string | null
-  userTags?: Prisma.JsonNullableFilter<"InstagramPublishJob">
-  commentAutomationId?: Prisma.StringNullableFilter<"InstagramPublishJob"> | string | null
-  storyReplyAutomationId?: Prisma.StringNullableFilter<"InstagramPublishJob"> | string | null
-  commentTriggerKeywords?: Prisma.StringNullableFilter<"InstagramPublishJob"> | string | null
-  commentTriggerResponse?: Prisma.StringNullableFilter<"InstagramPublishJob"> | string | null
-  storyReplyTriggerKeywords?: Prisma.StringNullableFilter<"InstagramPublishJob"> | string | null
-  storyReplyTriggerResponse?: Prisma.StringNullableFilter<"InstagramPublishJob"> | string | null
   scheduledAt?: Prisma.DateTimeNullableFilter<"InstagramPublishJob"> | Date | string | null
   publishedAt?: Prisma.DateTimeNullableFilter<"InstagramPublishJob"> | Date | string | null
   instagramContainerId?: Prisma.StringNullableFilter<"InstagramPublishJob"> | string | null
@@ -982,6 +975,13 @@ export type InstagramPublishJobScalarWhereInput = {
   lastAttemptAt?: Prisma.DateTimeNullableFilter<"InstagramPublishJob"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"InstagramPublishJob"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"InstagramPublishJob"> | Date | string
+  userTags?: Prisma.JsonNullableFilter<"InstagramPublishJob">
+  commentAutomationId?: Prisma.StringNullableFilter<"InstagramPublishJob"> | string | null
+  storyReplyAutomationId?: Prisma.StringNullableFilter<"InstagramPublishJob"> | string | null
+  commentTriggerKeywords?: Prisma.StringNullableFilter<"InstagramPublishJob"> | string | null
+  commentTriggerResponse?: Prisma.StringNullableFilter<"InstagramPublishJob"> | string | null
+  storyReplyTriggerKeywords?: Prisma.StringNullableFilter<"InstagramPublishJob"> | string | null
+  storyReplyTriggerResponse?: Prisma.StringNullableFilter<"InstagramPublishJob"> | string | null
 }
 
 export type InstagramPublishJobCreateWithoutInstagramAccountInput = {
@@ -989,13 +989,6 @@ export type InstagramPublishJobCreateWithoutInstagramAccountInput = {
   type: $Enums.InstagramPublishType
   status?: $Enums.InstagramPublishStatus
   caption?: string | null
-  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  commentAutomationId?: string | null
-  storyReplyAutomationId?: string | null
-  commentTriggerKeywords?: string | null
-  commentTriggerResponse?: string | null
-  storyReplyTriggerKeywords?: string | null
-  storyReplyTriggerResponse?: string | null
   scheduledAt?: Date | string | null
   publishedAt?: Date | string | null
   instagramContainerId?: string | null
@@ -1006,6 +999,13 @@ export type InstagramPublishJobCreateWithoutInstagramAccountInput = {
   lastAttemptAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  commentAutomationId?: string | null
+  storyReplyAutomationId?: string | null
+  commentTriggerKeywords?: string | null
+  commentTriggerResponse?: string | null
+  storyReplyTriggerKeywords?: string | null
+  storyReplyTriggerResponse?: string | null
   user: Prisma.UserCreateNestedOneWithoutInstagramPublishJobsInput
   media?: Prisma.InstagramPublishMediaCreateNestedManyWithoutPublishJobInput
 }
@@ -1016,13 +1016,6 @@ export type InstagramPublishJobUncheckedCreateWithoutInstagramAccountInput = {
   type: $Enums.InstagramPublishType
   status?: $Enums.InstagramPublishStatus
   caption?: string | null
-  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  commentAutomationId?: string | null
-  storyReplyAutomationId?: string | null
-  commentTriggerKeywords?: string | null
-  commentTriggerResponse?: string | null
-  storyReplyTriggerKeywords?: string | null
-  storyReplyTriggerResponse?: string | null
   scheduledAt?: Date | string | null
   publishedAt?: Date | string | null
   instagramContainerId?: string | null
@@ -1033,6 +1026,13 @@ export type InstagramPublishJobUncheckedCreateWithoutInstagramAccountInput = {
   lastAttemptAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  commentAutomationId?: string | null
+  storyReplyAutomationId?: string | null
+  commentTriggerKeywords?: string | null
+  commentTriggerResponse?: string | null
+  storyReplyTriggerKeywords?: string | null
+  storyReplyTriggerResponse?: string | null
   media?: Prisma.InstagramPublishMediaUncheckedCreateNestedManyWithoutPublishJobInput
 }
 
@@ -1067,13 +1067,6 @@ export type InstagramPublishJobCreateWithoutMediaInput = {
   type: $Enums.InstagramPublishType
   status?: $Enums.InstagramPublishStatus
   caption?: string | null
-  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  commentAutomationId?: string | null
-  storyReplyAutomationId?: string | null
-  commentTriggerKeywords?: string | null
-  commentTriggerResponse?: string | null
-  storyReplyTriggerKeywords?: string | null
-  storyReplyTriggerResponse?: string | null
   scheduledAt?: Date | string | null
   publishedAt?: Date | string | null
   instagramContainerId?: string | null
@@ -1084,8 +1077,15 @@ export type InstagramPublishJobCreateWithoutMediaInput = {
   lastAttemptAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  user: Prisma.UserCreateNestedOneWithoutInstagramPublishJobsInput
+  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  commentAutomationId?: string | null
+  storyReplyAutomationId?: string | null
+  commentTriggerKeywords?: string | null
+  commentTriggerResponse?: string | null
+  storyReplyTriggerKeywords?: string | null
+  storyReplyTriggerResponse?: string | null
   instagramAccount: Prisma.InstagramAccountCreateNestedOneWithoutPublishJobsInput
+  user: Prisma.UserCreateNestedOneWithoutInstagramPublishJobsInput
 }
 
 export type InstagramPublishJobUncheckedCreateWithoutMediaInput = {
@@ -1095,13 +1095,6 @@ export type InstagramPublishJobUncheckedCreateWithoutMediaInput = {
   type: $Enums.InstagramPublishType
   status?: $Enums.InstagramPublishStatus
   caption?: string | null
-  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  commentAutomationId?: string | null
-  storyReplyAutomationId?: string | null
-  commentTriggerKeywords?: string | null
-  commentTriggerResponse?: string | null
-  storyReplyTriggerKeywords?: string | null
-  storyReplyTriggerResponse?: string | null
   scheduledAt?: Date | string | null
   publishedAt?: Date | string | null
   instagramContainerId?: string | null
@@ -1112,6 +1105,13 @@ export type InstagramPublishJobUncheckedCreateWithoutMediaInput = {
   lastAttemptAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  commentAutomationId?: string | null
+  storyReplyAutomationId?: string | null
+  commentTriggerKeywords?: string | null
+  commentTriggerResponse?: string | null
+  storyReplyTriggerKeywords?: string | null
+  storyReplyTriggerResponse?: string | null
 }
 
 export type InstagramPublishJobCreateOrConnectWithoutMediaInput = {
@@ -1135,13 +1135,6 @@ export type InstagramPublishJobUpdateWithoutMediaInput = {
   type?: Prisma.EnumInstagramPublishTypeFieldUpdateOperationsInput | $Enums.InstagramPublishType
   status?: Prisma.EnumInstagramPublishStatusFieldUpdateOperationsInput | $Enums.InstagramPublishStatus
   caption?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  commentAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  storyReplyAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  commentTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  commentTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  storyReplyTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  storyReplyTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   scheduledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   instagramContainerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1152,8 +1145,15 @@ export type InstagramPublishJobUpdateWithoutMediaInput = {
   lastAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  user?: Prisma.UserUpdateOneRequiredWithoutInstagramPublishJobsNestedInput
+  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  commentAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storyReplyAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  commentTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  commentTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storyReplyTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storyReplyTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   instagramAccount?: Prisma.InstagramAccountUpdateOneRequiredWithoutPublishJobsNestedInput
+  user?: Prisma.UserUpdateOneRequiredWithoutInstagramPublishJobsNestedInput
 }
 
 export type InstagramPublishJobUncheckedUpdateWithoutMediaInput = {
@@ -1163,13 +1163,6 @@ export type InstagramPublishJobUncheckedUpdateWithoutMediaInput = {
   type?: Prisma.EnumInstagramPublishTypeFieldUpdateOperationsInput | $Enums.InstagramPublishType
   status?: Prisma.EnumInstagramPublishStatusFieldUpdateOperationsInput | $Enums.InstagramPublishStatus
   caption?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  commentAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  storyReplyAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  commentTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  commentTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  storyReplyTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  storyReplyTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   scheduledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   instagramContainerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1180,6 +1173,13 @@ export type InstagramPublishJobUncheckedUpdateWithoutMediaInput = {
   lastAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  commentAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storyReplyAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  commentTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  commentTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storyReplyTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storyReplyTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type InstagramPublishJobCreateManyUserInput = {
@@ -1188,13 +1188,6 @@ export type InstagramPublishJobCreateManyUserInput = {
   type: $Enums.InstagramPublishType
   status?: $Enums.InstagramPublishStatus
   caption?: string | null
-  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  commentAutomationId?: string | null
-  storyReplyAutomationId?: string | null
-  commentTriggerKeywords?: string | null
-  commentTriggerResponse?: string | null
-  storyReplyTriggerKeywords?: string | null
-  storyReplyTriggerResponse?: string | null
   scheduledAt?: Date | string | null
   publishedAt?: Date | string | null
   instagramContainerId?: string | null
@@ -1205,6 +1198,13 @@ export type InstagramPublishJobCreateManyUserInput = {
   lastAttemptAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  commentAutomationId?: string | null
+  storyReplyAutomationId?: string | null
+  commentTriggerKeywords?: string | null
+  commentTriggerResponse?: string | null
+  storyReplyTriggerKeywords?: string | null
+  storyReplyTriggerResponse?: string | null
 }
 
 export type InstagramPublishJobUpdateWithoutUserInput = {
@@ -1212,13 +1212,6 @@ export type InstagramPublishJobUpdateWithoutUserInput = {
   type?: Prisma.EnumInstagramPublishTypeFieldUpdateOperationsInput | $Enums.InstagramPublishType
   status?: Prisma.EnumInstagramPublishStatusFieldUpdateOperationsInput | $Enums.InstagramPublishStatus
   caption?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  commentAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  storyReplyAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  commentTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  commentTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  storyReplyTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  storyReplyTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   scheduledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   instagramContainerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1229,6 +1222,13 @@ export type InstagramPublishJobUpdateWithoutUserInput = {
   lastAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  commentAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storyReplyAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  commentTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  commentTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storyReplyTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storyReplyTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   instagramAccount?: Prisma.InstagramAccountUpdateOneRequiredWithoutPublishJobsNestedInput
   media?: Prisma.InstagramPublishMediaUpdateManyWithoutPublishJobNestedInput
 }
@@ -1239,13 +1239,6 @@ export type InstagramPublishJobUncheckedUpdateWithoutUserInput = {
   type?: Prisma.EnumInstagramPublishTypeFieldUpdateOperationsInput | $Enums.InstagramPublishType
   status?: Prisma.EnumInstagramPublishStatusFieldUpdateOperationsInput | $Enums.InstagramPublishStatus
   caption?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  commentAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  storyReplyAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  commentTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  commentTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  storyReplyTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  storyReplyTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   scheduledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   instagramContainerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1256,6 +1249,13 @@ export type InstagramPublishJobUncheckedUpdateWithoutUserInput = {
   lastAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  commentAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storyReplyAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  commentTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  commentTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storyReplyTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storyReplyTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   media?: Prisma.InstagramPublishMediaUncheckedUpdateManyWithoutPublishJobNestedInput
 }
 
@@ -1265,13 +1265,6 @@ export type InstagramPublishJobUncheckedUpdateManyWithoutUserInput = {
   type?: Prisma.EnumInstagramPublishTypeFieldUpdateOperationsInput | $Enums.InstagramPublishType
   status?: Prisma.EnumInstagramPublishStatusFieldUpdateOperationsInput | $Enums.InstagramPublishStatus
   caption?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  commentAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  storyReplyAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  commentTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  commentTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  storyReplyTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  storyReplyTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   scheduledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   instagramContainerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1282,6 +1275,13 @@ export type InstagramPublishJobUncheckedUpdateManyWithoutUserInput = {
   lastAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  commentAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storyReplyAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  commentTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  commentTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storyReplyTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storyReplyTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type InstagramPublishJobCreateManyInstagramAccountInput = {
@@ -1290,13 +1290,6 @@ export type InstagramPublishJobCreateManyInstagramAccountInput = {
   type: $Enums.InstagramPublishType
   status?: $Enums.InstagramPublishStatus
   caption?: string | null
-  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  commentAutomationId?: string | null
-  storyReplyAutomationId?: string | null
-  commentTriggerKeywords?: string | null
-  commentTriggerResponse?: string | null
-  storyReplyTriggerKeywords?: string | null
-  storyReplyTriggerResponse?: string | null
   scheduledAt?: Date | string | null
   publishedAt?: Date | string | null
   instagramContainerId?: string | null
@@ -1307,6 +1300,13 @@ export type InstagramPublishJobCreateManyInstagramAccountInput = {
   lastAttemptAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  commentAutomationId?: string | null
+  storyReplyAutomationId?: string | null
+  commentTriggerKeywords?: string | null
+  commentTriggerResponse?: string | null
+  storyReplyTriggerKeywords?: string | null
+  storyReplyTriggerResponse?: string | null
 }
 
 export type InstagramPublishJobUpdateWithoutInstagramAccountInput = {
@@ -1314,13 +1314,6 @@ export type InstagramPublishJobUpdateWithoutInstagramAccountInput = {
   type?: Prisma.EnumInstagramPublishTypeFieldUpdateOperationsInput | $Enums.InstagramPublishType
   status?: Prisma.EnumInstagramPublishStatusFieldUpdateOperationsInput | $Enums.InstagramPublishStatus
   caption?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  commentAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  storyReplyAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  commentTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  commentTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  storyReplyTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  storyReplyTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   scheduledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   instagramContainerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1331,6 +1324,13 @@ export type InstagramPublishJobUpdateWithoutInstagramAccountInput = {
   lastAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  commentAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storyReplyAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  commentTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  commentTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storyReplyTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storyReplyTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   user?: Prisma.UserUpdateOneRequiredWithoutInstagramPublishJobsNestedInput
   media?: Prisma.InstagramPublishMediaUpdateManyWithoutPublishJobNestedInput
 }
@@ -1341,13 +1341,6 @@ export type InstagramPublishJobUncheckedUpdateWithoutInstagramAccountInput = {
   type?: Prisma.EnumInstagramPublishTypeFieldUpdateOperationsInput | $Enums.InstagramPublishType
   status?: Prisma.EnumInstagramPublishStatusFieldUpdateOperationsInput | $Enums.InstagramPublishStatus
   caption?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  commentAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  storyReplyAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  commentTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  commentTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  storyReplyTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  storyReplyTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   scheduledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   instagramContainerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1358,6 +1351,13 @@ export type InstagramPublishJobUncheckedUpdateWithoutInstagramAccountInput = {
   lastAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  commentAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storyReplyAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  commentTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  commentTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storyReplyTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storyReplyTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   media?: Prisma.InstagramPublishMediaUncheckedUpdateManyWithoutPublishJobNestedInput
 }
 
@@ -1367,13 +1367,6 @@ export type InstagramPublishJobUncheckedUpdateManyWithoutInstagramAccountInput =
   type?: Prisma.EnumInstagramPublishTypeFieldUpdateOperationsInput | $Enums.InstagramPublishType
   status?: Prisma.EnumInstagramPublishStatusFieldUpdateOperationsInput | $Enums.InstagramPublishStatus
   caption?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  commentAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  storyReplyAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  commentTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  commentTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  storyReplyTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  storyReplyTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   scheduledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   instagramContainerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1384,6 +1377,13 @@ export type InstagramPublishJobUncheckedUpdateManyWithoutInstagramAccountInput =
   lastAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  userTags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  commentAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storyReplyAutomationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  commentTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  commentTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storyReplyTriggerKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storyReplyTriggerResponse?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 
@@ -1424,13 +1424,6 @@ export type InstagramPublishJobSelect<ExtArgs extends runtime.Types.Extensions.I
   type?: boolean
   status?: boolean
   caption?: boolean
-  userTags?: boolean
-  commentAutomationId?: boolean
-  storyReplyAutomationId?: boolean
-  commentTriggerKeywords?: boolean
-  commentTriggerResponse?: boolean
-  storyReplyTriggerKeywords?: boolean
-  storyReplyTriggerResponse?: boolean
   scheduledAt?: boolean
   publishedAt?: boolean
   instagramContainerId?: boolean
@@ -1441,8 +1434,15 @@ export type InstagramPublishJobSelect<ExtArgs extends runtime.Types.Extensions.I
   lastAttemptAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  userTags?: boolean
+  commentAutomationId?: boolean
+  storyReplyAutomationId?: boolean
+  commentTriggerKeywords?: boolean
+  commentTriggerResponse?: boolean
+  storyReplyTriggerKeywords?: boolean
+  storyReplyTriggerResponse?: boolean
   instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   media?: boolean | Prisma.InstagramPublishJob$mediaArgs<ExtArgs>
   _count?: boolean | Prisma.InstagramPublishJobCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["instagramPublishJob"]>
@@ -1454,13 +1454,6 @@ export type InstagramPublishJobSelectCreateManyAndReturn<ExtArgs extends runtime
   type?: boolean
   status?: boolean
   caption?: boolean
-  userTags?: boolean
-  commentAutomationId?: boolean
-  storyReplyAutomationId?: boolean
-  commentTriggerKeywords?: boolean
-  commentTriggerResponse?: boolean
-  storyReplyTriggerKeywords?: boolean
-  storyReplyTriggerResponse?: boolean
   scheduledAt?: boolean
   publishedAt?: boolean
   instagramContainerId?: boolean
@@ -1471,8 +1464,15 @@ export type InstagramPublishJobSelectCreateManyAndReturn<ExtArgs extends runtime
   lastAttemptAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  userTags?: boolean
+  commentAutomationId?: boolean
+  storyReplyAutomationId?: boolean
+  commentTriggerKeywords?: boolean
+  commentTriggerResponse?: boolean
+  storyReplyTriggerKeywords?: boolean
+  storyReplyTriggerResponse?: boolean
   instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["instagramPublishJob"]>
 
 export type InstagramPublishJobSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1482,13 +1482,6 @@ export type InstagramPublishJobSelectUpdateManyAndReturn<ExtArgs extends runtime
   type?: boolean
   status?: boolean
   caption?: boolean
-  userTags?: boolean
-  commentAutomationId?: boolean
-  storyReplyAutomationId?: boolean
-  commentTriggerKeywords?: boolean
-  commentTriggerResponse?: boolean
-  storyReplyTriggerKeywords?: boolean
-  storyReplyTriggerResponse?: boolean
   scheduledAt?: boolean
   publishedAt?: boolean
   instagramContainerId?: boolean
@@ -1499,8 +1492,15 @@ export type InstagramPublishJobSelectUpdateManyAndReturn<ExtArgs extends runtime
   lastAttemptAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  userTags?: boolean
+  commentAutomationId?: boolean
+  storyReplyAutomationId?: boolean
+  commentTriggerKeywords?: boolean
+  commentTriggerResponse?: boolean
+  storyReplyTriggerKeywords?: boolean
+  storyReplyTriggerResponse?: boolean
   instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["instagramPublishJob"]>
 
 export type InstagramPublishJobSelectScalar = {
@@ -1510,13 +1510,6 @@ export type InstagramPublishJobSelectScalar = {
   type?: boolean
   status?: boolean
   caption?: boolean
-  userTags?: boolean
-  commentAutomationId?: boolean
-  storyReplyAutomationId?: boolean
-  commentTriggerKeywords?: boolean
-  commentTriggerResponse?: boolean
-  storyReplyTriggerKeywords?: boolean
-  storyReplyTriggerResponse?: boolean
   scheduledAt?: boolean
   publishedAt?: boolean
   instagramContainerId?: boolean
@@ -1527,29 +1520,36 @@ export type InstagramPublishJobSelectScalar = {
   lastAttemptAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  userTags?: boolean
+  commentAutomationId?: boolean
+  storyReplyAutomationId?: boolean
+  commentTriggerKeywords?: boolean
+  commentTriggerResponse?: boolean
+  storyReplyTriggerKeywords?: boolean
+  storyReplyTriggerResponse?: boolean
 }
 
-export type InstagramPublishJobOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "instagramAccountId" | "type" | "status" | "caption" | "userTags" | "commentAutomationId" | "storyReplyAutomationId" | "commentTriggerKeywords" | "commentTriggerResponse" | "storyReplyTriggerKeywords" | "storyReplyTriggerResponse" | "scheduledAt" | "publishedAt" | "instagramContainerId" | "instagramMediaId" | "errorMessage" | "idempotencyKey" | "retryCount" | "lastAttemptAt" | "createdAt" | "updatedAt", ExtArgs["result"]["instagramPublishJob"]>
+export type InstagramPublishJobOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "instagramAccountId" | "type" | "status" | "caption" | "scheduledAt" | "publishedAt" | "instagramContainerId" | "instagramMediaId" | "errorMessage" | "idempotencyKey" | "retryCount" | "lastAttemptAt" | "createdAt" | "updatedAt" | "userTags" | "commentAutomationId" | "storyReplyAutomationId" | "commentTriggerKeywords" | "commentTriggerResponse" | "storyReplyTriggerKeywords" | "storyReplyTriggerResponse", ExtArgs["result"]["instagramPublishJob"]>
 export type InstagramPublishJobInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   media?: boolean | Prisma.InstagramPublishJob$mediaArgs<ExtArgs>
   _count?: boolean | Prisma.InstagramPublishJobCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type InstagramPublishJobIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 export type InstagramPublishJobIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   instagramAccount?: boolean | Prisma.InstagramAccountDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 
 export type $InstagramPublishJobPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "InstagramPublishJob"
   objects: {
-    user: Prisma.$UserPayload<ExtArgs>
     instagramAccount: Prisma.$InstagramAccountPayload<ExtArgs>
+    user: Prisma.$UserPayload<ExtArgs>
     media: Prisma.$InstagramPublishMediaPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -1559,13 +1559,6 @@ export type $InstagramPublishJobPayload<ExtArgs extends runtime.Types.Extensions
     type: $Enums.InstagramPublishType
     status: $Enums.InstagramPublishStatus
     caption: string | null
-    userTags: runtime.JsonValue | null
-    commentAutomationId: string | null
-    storyReplyAutomationId: string | null
-    commentTriggerKeywords: string | null
-    commentTriggerResponse: string | null
-    storyReplyTriggerKeywords: string | null
-    storyReplyTriggerResponse: string | null
     scheduledAt: Date | null
     publishedAt: Date | null
     instagramContainerId: string | null
@@ -1576,6 +1569,13 @@ export type $InstagramPublishJobPayload<ExtArgs extends runtime.Types.Extensions
     lastAttemptAt: Date | null
     createdAt: Date
     updatedAt: Date
+    userTags: runtime.JsonValue | null
+    commentAutomationId: string | null
+    storyReplyAutomationId: string | null
+    commentTriggerKeywords: string | null
+    commentTriggerResponse: string | null
+    storyReplyTriggerKeywords: string | null
+    storyReplyTriggerResponse: string | null
   }, ExtArgs["result"]["instagramPublishJob"]>
   composites: {}
 }
@@ -1970,8 +1970,8 @@ readonly fields: InstagramPublishJobFieldRefs;
  */
 export interface Prisma__InstagramPublishJobClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   instagramAccount<T extends Prisma.InstagramAccountDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.InstagramAccountDefaultArgs<ExtArgs>>): Prisma.Prisma__InstagramAccountClient<runtime.Types.Result.GetResult<Prisma.$InstagramAccountPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   media<T extends Prisma.InstagramPublishJob$mediaArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.InstagramPublishJob$mediaArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InstagramPublishMediaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -2008,13 +2008,6 @@ export interface InstagramPublishJobFieldRefs {
   readonly type: Prisma.FieldRef<"InstagramPublishJob", 'InstagramPublishType'>
   readonly status: Prisma.FieldRef<"InstagramPublishJob", 'InstagramPublishStatus'>
   readonly caption: Prisma.FieldRef<"InstagramPublishJob", 'String'>
-  readonly userTags: Prisma.FieldRef<"InstagramPublishJob", 'Json'>
-  readonly commentAutomationId: Prisma.FieldRef<"InstagramPublishJob", 'String'>
-  readonly storyReplyAutomationId: Prisma.FieldRef<"InstagramPublishJob", 'String'>
-  readonly commentTriggerKeywords: Prisma.FieldRef<"InstagramPublishJob", 'String'>
-  readonly commentTriggerResponse: Prisma.FieldRef<"InstagramPublishJob", 'String'>
-  readonly storyReplyTriggerKeywords: Prisma.FieldRef<"InstagramPublishJob", 'String'>
-  readonly storyReplyTriggerResponse: Prisma.FieldRef<"InstagramPublishJob", 'String'>
   readonly scheduledAt: Prisma.FieldRef<"InstagramPublishJob", 'DateTime'>
   readonly publishedAt: Prisma.FieldRef<"InstagramPublishJob", 'DateTime'>
   readonly instagramContainerId: Prisma.FieldRef<"InstagramPublishJob", 'String'>
@@ -2025,6 +2018,13 @@ export interface InstagramPublishJobFieldRefs {
   readonly lastAttemptAt: Prisma.FieldRef<"InstagramPublishJob", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"InstagramPublishJob", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"InstagramPublishJob", 'DateTime'>
+  readonly userTags: Prisma.FieldRef<"InstagramPublishJob", 'Json'>
+  readonly commentAutomationId: Prisma.FieldRef<"InstagramPublishJob", 'String'>
+  readonly storyReplyAutomationId: Prisma.FieldRef<"InstagramPublishJob", 'String'>
+  readonly commentTriggerKeywords: Prisma.FieldRef<"InstagramPublishJob", 'String'>
+  readonly commentTriggerResponse: Prisma.FieldRef<"InstagramPublishJob", 'String'>
+  readonly storyReplyTriggerKeywords: Prisma.FieldRef<"InstagramPublishJob", 'String'>
+  readonly storyReplyTriggerResponse: Prisma.FieldRef<"InstagramPublishJob", 'String'>
 }
     
 
