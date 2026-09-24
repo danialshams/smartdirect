@@ -8,13 +8,8 @@ import {
   UserMinus,
   UserPlus,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import "@ncdai/react-wheel-picker/style.css";
-import {
-  WheelPicker,
-  WheelPickerWrapper,
-  type WheelPickerOption,
-} from "@ncdai/react-wheel-picker";
+import { useEffect, useMemo, useState } from "react";
+import { Calendar } from "@/components/ui/calendar";
 import {
   CartesianGrid,
   Line,
@@ -134,197 +129,10 @@ function normalizeDateOnly(value: Date) {
   return new Date(value.getFullYear(), value.getMonth(), value.getDate());
 }
 
-type JalaliDate = {
-  year: number;
-  month: number;
-  day: number;
-};
-
-const jalaliMonthNames = [
-  "فروردین",
-  "اردیبهشت",
-  "خرداد",
-  "تیر",
-  "مرداد",
-  "شهریور",
-  "مهر",
-  "آبان",
-  "آذر",
-  "دی",
-  "بهمن",
-  "اسفند",
-];
-
-function gregorianToJalali(date: Date): JalaliDate {
-  const gy = date.getFullYear();
-  const gm = date.getMonth() + 1;
-  const gd = date.getDate();
-
-  const gDaysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-  const gy2 = gm > 2 ? gy + 1 : gy;
-
-  let days =
-    355666 +
-    365 * gy +
-    Math.floor((gy2 + 3) / 4) -
-    Math.floor((gy2 + 99) / 100) +
-    Math.floor((gy2 + 399) / 400) +
-    gd;
-
-  for (let i = 0; i < gm - 1; i++) {
-    days += gDaysInMonth[i];
-  }
-
-  const jalaliYearBase = -1595 + 33 * Math.floor(days / 12053);
-  let remaining = days % 12053;
-  let jalaliYear = jalaliYearBase + 4 * Math.floor(remaining / 1461);
-
-  remaining %= 1461;
-
-  if (remaining > 365) {
-    jalaliYear += Math.floor((remaining - 1) / 365);
-    remaining = (remaining - 1) % 365;
-  }
-
-  const jalaliMonth =
-    remaining < 186
-      ? 1 + Math.floor(remaining / 31)
-      : 7 + Math.floor((remaining - 186) / 30);
-  const jalaliDay =
-    1 +
-    (remaining < 186
-      ? remaining % 31
-      : (remaining - 186) % 30);
-
-  return { year: jalaliYear, month: jalaliMonth, day: jalaliDay };
-}
-
-function jalaliToGregorian(jalali: JalaliDate) {
-  const jy = jalali.year - 979;
-  const jm = jalali.month - 1;
-  const jd = jalali.day - 1;
-
-  let days =
-    365 * jy +
-    Math.floor(jy / 33) * 8 +
-    Math.floor(((jy % 33) + 3) / 4);
-
-  for (let i = 0; i < jm; i++) {
-    days += i < 6 ? 31 : 30;
-  }
-
-  days += jd;
-
-  let gy = 1600 + 400 * Math.floor(days / 146097);
-  days %= 146097;
-
-  let leap = true;
-
-  if (days >= 36525) {
-    days--;
-    gy += 100 * Math.floor(days / 36524);
-    days %= 36524;
-
-    if (days >= 365) {
-      days++;
-    } else {
-      leap = false;
-    }
-  }
-
-  gy += 4 * Math.floor(days / 1461);
-  days %= 1461;
-
-  if (days >= 366) {
-    leap = false;
-    days--;
-    gy += Math.floor(days / 365);
-    days %= 365;
-  }
-
-  let gm = 0;
-  const monthDays = [
-    31,
-    leap ? 29 : 28,
-    31,
-    30,
-    31,
-    30,
-    31,
-    31,
-    30,
-    31,
-    30,
-    31,
-  ];
-
-  while (gm < 12 && days >= monthDays[gm]) {
-    days -= monthDays[gm];
-    gm++;
-  }
-
-  return new Date(gy, gm, days + 1);
-}
-
-function jalaliDaysInMonth(year: number, month: number) {
-  if (month <= 6) return 31;
-  if (month <= 11) return 30;
-
-  const start = jalaliToGregorian({ year, month: 12, day: 1 });
-  const next = jalaliToGregorian({ year: year + 1, month: 1, day: 1 });
-
-  return Math.round((next.getTime() - start.getTime()) / 86400000);
-}
-
 function clampDate(value: Date, min: Date, max: Date) {
   if (value < min) return min;
   if (value > max) return max;
   return value;
-}
-
-function JalaliWheelColumn({
-  values,
-  selected,
-  formatValue,
-  disabled,
-  onSelect,
-}: {
-  values: number[];
-  selected: number;
-  formatValue: (value: number) => string;
-  disabled?: (value: number) => boolean;
-  onSelect: (value: number) => void;
-}) {
-  const options = useMemo<WheelPickerOption<number>[]>(
-    () =>
-      values.map((value) => ({
-        value,
-        label: formatValue(value),
-        textValue: formatValue(value),
-        disabled: disabled?.(value) ?? false,
-      })),
-    [values, formatValue, disabled],
-  );
-
-  return (
-    <WheelPicker<number>
-      options={options}
-      value={selected}
-      onValueChange={onSelect}
-      visibleCount={16}
-      optionItemHeight={44}
-      dragSensitivity={3}
-      scrollSensitivity={5}
-      classNames={{
-        optionItem:
-          "flex items-center justify-center px-1 text-[18px] font-normal leading-none tracking-[-0.025em] whitespace-nowrap text-white/35 data-disabled:pointer-events-none data-disabled:opacity-20",
-        highlightWrapper:
-          "pointer-events-none rounded-[11px] border border-white/[0.13] bg-white/[0.08] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.10),0_1px_5px_rgba(0,0,0,0.10)]",
-        highlightItem:
-          "flex items-center justify-center px-1 text-[18px] font-normal leading-none tracking-[-0.025em] whitespace-nowrap text-white",
-      }}
-    />
-  );
 }
 
 function JalaliDatePickerSheet({
@@ -347,8 +155,9 @@ function JalaliDatePickerSheet({
     normalizeDateOnly(minDate),
     normalizeDateOnly(maxDate),
   );
-  const initialJalali = gregorianToJalali(safeValue);
-  const [selected, setSelected] = useState<JalaliDate>(initialJalali);
+  const [selected, setSelected] = useState<Date>(safeValue);
+  const [visibleMonth, setVisibleMonth] = useState<Date>(safeValue);
+
   useEffect(() => {
     const body = document.body;
     const html = document.documentElement;
@@ -370,152 +179,38 @@ function JalaliDatePickerSheet({
     };
   }, []);
 
-
-  const minJalali = gregorianToJalali(normalizeDateOnly(minDate));
-  const maxJalali = gregorianToJalali(normalizeDateOnly(maxDate));
-
-  const years = useMemo(
-    () =>
-      Array.from(
-        { length: Math.max(1, maxJalali.year - minJalali.year + 1) },
-        (_, index) => minJalali.year + index,
-      ),
-    [minJalali.year, maxJalali.year],
-  );
-
-  const allMonths = useMemo(
-    () => Array.from({ length: 12 }, (_, index) => index + 1),
-    [],
-  );
-
-  const allDays = useMemo(
-    () => Array.from({ length: 31 }, (_, index) => index + 1),
-    [],
-  );
-
-  const isMonthAllowed = useCallback(
-    (month: number) => {
-      const first = jalaliToGregorian({
-        year: selected.year,
-        month,
-        day: 1,
-      });
-      const last = jalaliToGregorian({
-        year: selected.year,
-        month,
-        day: jalaliDaysInMonth(selected.year, month),
-      });
-
-      return last >= minDate && first <= maxDate;
-    },
-    [selected.year, minDate, maxDate],
-  );
-
-  const isDayAllowed = useCallback(
-    (day: number) => {
-      if (day > jalaliDaysInMonth(selected.year, selected.month)) {
-        return false;
-      }
-
-      const date = jalaliToGregorian({
-        year: selected.year,
-        month: selected.month,
-        day,
-      });
-
-      return date >= minDate && date <= maxDate;
-    },
-    [selected.year, selected.month, minDate, maxDate],
-  );
-
-  function updateYear(year: number) {
-    const allowedMonths = allMonths.filter((month) => {
-      const first = jalaliToGregorian({ year, month, day: 1 });
-      const last = jalaliToGregorian({
-        year,
-        month,
-        day: jalaliDaysInMonth(year, month),
-      });
-      return last >= minDate && first <= maxDate;
-    });
-
-    if (!allowedMonths.length) return;
-
-    const month = allowedMonths.includes(selected.month)
-      ? selected.month
-      : allowedMonths.reduce(
-          (closest, candidate) =>
-            Math.abs(candidate - selected.month) <
-            Math.abs(closest - selected.month)
-              ? candidate
-              : closest,
-          allowedMonths[0],
-        );
-
-    const allowedDays = allDays.filter((day) => {
-      if (day > jalaliDaysInMonth(year, month)) return false;
-      const date = jalaliToGregorian({ year, month, day });
-      return date >= minDate && date <= maxDate;
-    });
-
-    if (!allowedDays.length) return;
-
-    const day = allowedDays.includes(selected.day)
-      ? selected.day
-      : allowedDays[allowedDays.length - 1];
-
-    setSelected({ year, month, day });
-  }
-
-  function updateMonth(month: number) {
-    if (!isMonthAllowed(month)) return;
-
-    const maxDay = jalaliDaysInMonth(selected.year, month);
-    const candidateDay = Math.min(selected.day, maxDay);
-    const candidateDate = jalaliToGregorian({
-      year: selected.year,
-      month,
-      day: candidateDay,
-    });
-
-    let day = candidateDay;
-
-    if (candidateDate < minDate || candidateDate > maxDate) {
-      const validDays = allDays.filter((value) => {
-        if (value > maxDay) return false;
-        const date = jalaliToGregorian({
-          year: selected.year,
-          month,
-          day: value,
-        });
-        return date >= minDate && date <= maxDate;
-      });
-
-      if (!validDays.length) return;
-      day = validDays[validDays.length - 1];
-    }
-
-    setSelected((current) => ({ ...current, month, day }));
-  }
-
-  function confirm() {
-    onConfirm(
+  function handleSelect(next: Date | undefined) {
+    if (!next) return;
+    setSelected(
       clampDate(
-        normalizeDateOnly(jalaliToGregorian(selected)),
+        normalizeDateOnly(next),
         normalizeDateOnly(minDate),
         normalizeDateOnly(maxDate),
       ),
     );
   }
 
+  function confirm() {
+    onConfirm(
+      clampDate(
+        normalizeDateOnly(selected),
+        normalizeDateOnly(minDate),
+        normalizeDateOnly(maxDate),
+      ),
+    );
+  }
+
+  const selectedLabel = new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  }).format(selected);
+
   return (
     <div
-      className="fixed inset-0 z-[120] flex h-[100dvh] w-full items-end justify-center overflow-hidden overscroll-none bg-black/35 backdrop-blur-[7px] sm:items-center sm:p-4"
+      className="fixed inset-0 z-[120] flex h-[100dvh] w-full items-end justify-center overflow-hidden overscroll-none bg-black/40 px-0 pb-0 backdrop-blur-[8px] sm:items-center sm:px-4 sm:pb-4"
       role="presentation"
       onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
-      onTouchStart={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
     >
@@ -525,12 +220,11 @@ function JalaliDatePickerSheet({
         aria-modal="true"
         aria-label={title}
         onMouseDown={(event) => event.stopPropagation()}
-        onTouchStart={(event) => event.stopPropagation()}
-        className="relative w-full max-h-[min(520px,calc(100dvh-16px))] overflow-hidden rounded-t-[30px] border border-white/[0.14] bg-slate-950/70 text-white shadow-[0_-20px_80px_rgba(0,0,0,0.42)] backdrop-blur-[36px] supports-[backdrop-filter]:bg-slate-950/58 sm:max-w-[430px] sm:rounded-[30px] sm:shadow-[0_24px_80px_rgba(0,0,0,0.45)]"
+        className="relative w-full max-w-[430px] overflow-hidden rounded-t-[28px] border border-white/[0.14] bg-slate-950/92 text-white shadow-[0_-20px_80px_rgba(0,0,0,0.48)] backdrop-blur-[30px] sm:rounded-[28px] sm:shadow-[0_24px_80px_rgba(0,0,0,0.48)]"
       >
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/[0.10] via-transparent to-black/[0.16]" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/[0.07] via-transparent to-black/[0.12]" />
 
-        <div className="relative flex h-[56px] items-center px-5">
+        <div className="relative flex h-[58px] items-center px-5">
           <button
             type="button"
             onClick={onClose}
@@ -540,12 +234,8 @@ function JalaliDatePickerSheet({
           </button>
 
           <div className="mx-auto text-center">
-            <p className="text-[13px] font-medium text-white/90">
-              {title}
-            </p>
-            <p className="mt-0.5 text-[10px] text-white/45">
-              {numberFormatter.format(selected.year)}/{numberFormatter.format(selected.month)}/{numberFormatter.format(selected.day)}
-            </p>
+            <p className="text-[13px] font-semibold text-white/90">{title}</p>
+            <p className="mt-0.5 text-[10px] text-white/45">{selectedLabel}</p>
           </div>
 
           <button
@@ -557,41 +247,46 @@ function JalaliDatePickerSheet({
           </button>
         </div>
 
-        <div className="relative h-[244px] overflow-hidden px-0">
-          <WheelPickerWrapper
-            className="grid h-[244px] min-w-0 grid-cols-3 items-center gap-0 overflow-hidden bg-transparent"
-          >
-            <JalaliWheelColumn
-              values={allDays}
-              selected={selected.day}
-              formatValue={(day) => numberFormatter.format(day)}
-              disabled={(day) => !isDayAllowed(day)}
-              onSelect={(day) =>
-                setSelected((current) => ({ ...current, day }))
-              }
+        <div className="relative px-4 pb-5 pt-3 sm:px-5">
+          <div className="rounded-2xl border border-white/[0.09] bg-white/[0.025] p-2">
+            <Calendar
+              mode="single"
+              selected={selected}
+              onSelect={handleSelect}
+              month={visibleMonth}
+              onMonthChange={setVisibleMonth}
+              startMonth={normalizeDateOnly(minDate)}
+              endMonth={normalizeDateOnly(maxDate)}
+              disabled={{
+                before: normalizeDateOnly(minDate),
+                after: normalizeDateOnly(maxDate),
+              }}
+              captionLayout="dropdown"
+              className="w-full text-white"
+              classNames={{
+                month_caption: "mb-3 flex h-10 items-center justify-center",
+                dropdowns: "flex items-center justify-center gap-2",
+                dropdown_root:
+                  "relative overflow-hidden rounded-lg border border-white/10 bg-white/[0.06]",
+                caption_label:
+                  "flex h-9 items-center rounded-lg px-3 text-sm font-semibold text-white",
+                weekdays: "mb-1 grid grid-cols-7",
+                weekday:
+                  "flex h-8 items-center justify-center text-[11px] font-medium text-white/35",
+                week: "mt-1 grid grid-cols-7",
+                day: "relative flex aspect-square items-center justify-center p-0",
+                day_button:
+                  "flex aspect-square size-full min-w-9 items-center justify-center rounded-md text-sm font-normal text-white/75 transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 aria-selected:bg-white aria-selected:text-slate-950",
+                today: "font-bold text-blue-300",
+                outside: "text-white/15",
+                disabled: "cursor-not-allowed text-white/20 opacity-30",
+                hidden: "invisible",
+              }}
             />
-            <JalaliWheelColumn
-              values={allMonths}
-              selected={selected.month}
-              formatValue={(month) => jalaliMonthNames[month - 1]}
-              disabled={(month) => !isMonthAllowed(month)}
-              onSelect={updateMonth}
-            />
-            <JalaliWheelColumn
-              values={years}
-              selected={selected.year}
-              formatValue={(year) => numberFormatter.format(year)}
-              onSelect={updateYear}
-            />
-          </WheelPickerWrapper>
+          </div>
 
-          <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-[98px] bg-gradient-to-b from-slate-950/92 via-slate-950/50 to-transparent" />
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-[98px] bg-gradient-to-t from-slate-950/92 via-slate-950/50 to-transparent" />
-        </div>
-
-        <div className="relative px-5 pb-[max(16px,env(safe-area-inset-bottom))] pt-2">
-          <p className="text-center text-[11px] font-medium text-white/40">
-            تاریخ انتخاب‌شده: {formatDate(jalaliToGregorian(selected))}
+          <p className="pt-3 text-center text-[10px] font-medium text-white/35">
+            تاریخ انتخاب‌شده: {selectedLabel}
           </p>
         </div>
       </div>
