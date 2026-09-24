@@ -8,7 +8,7 @@ import {
   UserMinus,
   UserPlus,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Calendar } from "../ui/calendar";
 import {
   CartesianGrid,
