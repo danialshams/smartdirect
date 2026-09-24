@@ -22,6 +22,13 @@ type InstagramInsightMetric = {
   name?: string;
   total_value?: {
     value?: number | { follows?: number; unfollows?: number };
+    breakdowns?: Array<{
+      dimension_keys?: string[];
+      results?: Array<{
+        dimension_values?: string[];
+        value?: number;
+      }>;
+    }>;
   };
 };
 
@@ -92,22 +99,38 @@ function getFollowValues(data: InstagramInsightsResponse) {
   const metric = data.data?.find(
     (item) => item.name === "follows_and_unfollows",
   );
-  const value = metric?.total_value?.value;
 
-  if (!value || typeof value !== "object") {
-    return { follows: null, unfollows: null };
+  const breakdowns = metric?.total_value?.breakdowns ?? [];
+
+  let follows: number | null = null;
+  let unfollows: number | null = null;
+
+  for (const breakdown of breakdowns) {
+    const dimension = breakdown.dimension_keys?.[0];
+    if (dimension !== "follow_type") continue;
+
+    for (const result of breakdown.results ?? []) {
+      const key = result.dimension_values?.[0]?.toUpperCase();
+      const value = result.value;
+
+      if (typeof value !== "number" || !Number.isFinite(value)) continue;
+
+      if (key === "FOLLOWER") follows = value;
+      if (key === "NON_FOLLOWER") unfollows = value;
+    }
   }
 
-  return {
-    follows:
-      typeof value.follows === "number" && Number.isFinite(value.follows)
-        ? value.follows
-        : null,
-    unfollows:
-      typeof value.unfollows === "number" && Number.isFinite(value.unfollows)
-        ? value.unfollows
-        : null,
-  };
+  const directValue = metric?.total_value?.value;
+  if (directValue && typeof directValue === "object") {
+    if (follows == null && typeof directValue.follows === "number") {
+      follows = directValue.follows;
+    }
+    if (unfollows == null && typeof directValue.unfollows === "number") {
+      unfollows = directValue.unfollows;
+    }
+  }
+
+  return { follows, unfollows };
 }
 
 function getDayKeys(from: Date, to: Date) {
@@ -130,34 +153,68 @@ async function fetchDailyInsight(
   const start = new Date(dayKey + "T00:00:00.000Z");
   const end = new Date(dayKey + "T23:59:59.999Z");
 
-  const url = new URL(
+  const baseUrl = new URL(
     `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${igUserId}/insights`,
   );
 
-  url.searchParams.set("metric", INSIGHT_METRICS.join(","));
-  url.searchParams.set("period", "day");
-  url.searchParams.set("metric_type", "total_value");
-  url.searchParams.set("since", String(Math.floor(start.getTime() / 1000)));
-  url.searchParams.set("until", String(Math.floor(end.getTime() / 1000)));
-  url.searchParams.set("access_token", accessToken);
+  baseUrl.searchParams.set("metric", "views,total_interactions");
+  baseUrl.searchParams.set("period", "day");
+  baseUrl.searchParams.set("metric_type", "total_value");
+  baseUrl.searchParams.set("since", String(Math.floor(start.getTime() / 1000)));
+  baseUrl.searchParams.set("until", String(Math.floor(end.getTime() / 1000)));
+  baseUrl.searchParams.set("access_token", accessToken);
 
-  const { response, data } =
-    await fetchInstagram<InstagramInsightsResponse>(url.toString());
+  const baseResult =
+    await fetchInstagram<InstagramInsightsResponse>(baseUrl.toString());
 
-  if (!response.ok || !data.data) {
+  if (!baseResult.response.ok || !baseResult.data.data) {
     throw new Error(
-      `Meta daily insights failed for ${dayKey}: ${getErrorMessage(data)}`,
+      `Meta daily insights failed for ${dayKey}: ${getErrorMessage(
+        baseResult.data,
+      )}`,
     );
   }
 
-  const followValues = getFollowValues(data);
+  let follows: number | null = null;
+  let unfollows: number | null = null;
+
+  // follows_and_unfollows is a breakdown metric. It must be requested
+  // separately with breakdown=follow_type. If Meta does not expose this
+  // metric for the account (for example, accounts below the follower
+  // threshold), views/interactions must still be stored for that day.
+  try {
+    const followUrl = new URL(
+      `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${igUserId}/insights`,
+    );
+
+    followUrl.searchParams.set("metric", "follows_and_unfollows");
+    followUrl.searchParams.set("period", "day");
+    followUrl.searchParams.set("metric_type", "total_value");
+    followUrl.searchParams.set("breakdown", "follow_type");
+    followUrl.searchParams.set("since", String(Math.floor(start.getTime() / 1000)));
+    followUrl.searchParams.set("until", String(Math.floor(end.getTime() / 1000)));
+    followUrl.searchParams.set("access_token", accessToken);
+
+    const followResult =
+      await fetchInstagram<InstagramInsightsResponse>(followUrl.toString());
+
+    if (followResult.response.ok && followResult.data.data) {
+      ({ follows, unfollows } = getFollowValues(followResult.data));
+    }
+  } catch {
+    // Follow metrics are optional for the daily snapshot. Keep the base
+    // metrics even when Meta does not expose follows/unfollows.
+  }
 
   return {
     snapshotDate: start,
-    views: getMetricNumber(data, "views"),
-    totalInteractions: getMetricNumber(data, "total_interactions"),
-    follows: followValues.follows,
-    unfollows: followValues.unfollows,
+    views: getMetricNumber(baseResult.data, "views"),
+    totalInteractions: getMetricNumber(
+      baseResult.data,
+      "total_interactions",
+    ),
+    follows,
+    unfollows,
   };
 }
 
@@ -276,21 +333,22 @@ export async function GET(request: NextRequest) {
 
     const daysToSync = dayKeys.filter((day) => {
       const existing = existingByDay.get(day);
+      // Views/interactions are the base daily series. Follows/unfollows are
+      // optional because Meta may omit that metric for smaller accounts.
       return (
         !existing ||
         existing.views == null ||
-        existing.totalInteractions == null ||
-        existing.follows == null ||
-        existing.unfollows == null
+        existing.totalInteractions == null
       );
     });
 
     const synced = [];
     const syncErrors: Array<{ day: string; error: string }> = [];
 
-    // Meta does not reliably expose daily values for all four requested
-    // dashboard metrics through time_series. We therefore request each
-    // selected day as total_value and persist the result as a daily snapshot.
+    // Meta exposes views/interactions as regular account metrics and
+    // follows_and_unfollows as a separate follow_type breakdown. Request the
+    // daily window explicitly so one unavailable optional metric cannot break
+    // the continuous base series.
     for (let index = 0; index < daysToSync.length; index += 3) {
       const batch = daysToSync.slice(index, index + 3);
 
