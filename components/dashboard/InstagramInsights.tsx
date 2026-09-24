@@ -288,8 +288,10 @@ function WheelColumn({
   onSelect: (value: number) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const scrollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const ROW_HEIGHT = 44;
-  const TOP_PADDING = 100;
+  const VIEWPORT_HEIGHT = 244;
+  const EDGE_PADDING = (VIEWPORT_HEIGHT - ROW_HEIGHT) / 2;
 
   useEffect(() => {
     const container = ref.current;
@@ -298,23 +300,39 @@ function WheelColumn({
     const index = values.indexOf(selected);
     if (index < 0) return;
 
-    const targetScrollTop = index * ROW_HEIGHT;
-    container.scrollTop = targetScrollTop;
+    container.scrollTop = index * ROW_HEIGHT;
   }, [values, selected]);
 
-  function handleScroll() {
+  useEffect(() => {
+    return () => {
+      if (scrollTimer.current) clearTimeout(scrollTimer.current);
+    };
+  }, []);
+
+  function commitNearestValue() {
     const container = ref.current;
     if (!container || values.length === 0) return;
 
+    const rawIndex = container.scrollTop / ROW_HEIGHT;
     const index = Math.min(
       values.length - 1,
-      Math.max(0, Math.round(container.scrollTop / ROW_HEIGHT)),
+      Math.max(0, Math.round(rawIndex)),
     );
     const nextValue = values[index];
+
+    container.scrollTo({
+      top: index * ROW_HEIGHT,
+      behavior: "smooth",
+    });
 
     if (nextValue !== selected) {
       onSelect(nextValue);
     }
+  }
+
+  function handleScroll() {
+    if (scrollTimer.current) clearTimeout(scrollTimer.current);
+    scrollTimer.current = setTimeout(commitNearestValue, 90);
   }
 
   return (
@@ -322,16 +340,34 @@ function WheelColumn({
       ref={ref}
       onScroll={handleScroll}
       className="h-[244px] min-w-0 snap-y snap-mandatory overflow-y-auto overscroll-y-contain touch-pan-y select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      style={{ WebkitOverflowScrolling: "touch" }}
     >
-      <div className="h-[100px] shrink-0" aria-hidden="true" />
+      <div
+        className="shrink-0"
+        style={{ height: EDGE_PADDING }}
+        aria-hidden="true"
+      />
+
       {values.map((value) => (
         <button
           key={value}
           type="button"
-          onClick={() => onSelect(value)}
+          onClick={() => {
+            const index = values.indexOf(value);
+            const container = ref.current;
+            if (index >= 0 && container) {
+              container.scrollTo({
+                top: index * ROW_HEIGHT,
+                behavior: "smooth",
+              });
+            }
+            onSelect(value);
+          }}
           className={[
             "flex h-[44px] w-full shrink-0 snap-center items-center justify-center overflow-hidden rounded-none px-1 text-center text-[19px] font-normal leading-none tracking-[-0.02em] whitespace-nowrap transition-opacity",
-            value === selected ? "text-white opacity-100" : "text-white/45 opacity-100",
+            value === selected
+              ? "text-white opacity-100"
+              : "text-white/45 opacity-100",
           ].join(" ")}
         >
           <span className="block max-w-full truncate">
@@ -339,7 +375,12 @@ function WheelColumn({
           </span>
         </button>
       ))}
-      <div className="h-[100px] shrink-0" aria-hidden="true" />
+
+      <div
+        className="shrink-0"
+        style={{ height: EDGE_PADDING }}
+        aria-hidden="true"
+      />
     </div>
   );
 }
@@ -437,21 +478,24 @@ function JalaliDatePickerSheet({
   );
 
   useEffect(() => {
+    if (months.length === 0 || days.length === 0) return;
+
     const nextMonth = months.includes(selected.month)
       ? selected.month
-      : months[0] ?? 1;
+      : months[0];
+
     const nextDay = days.includes(selected.day)
       ? selected.day
-      : days[days.length - 1] ?? 1;
+      : days[days.length - 1];
 
     if (nextMonth !== selected.month || nextDay !== selected.day) {
-      setSelected({
-        year: selected.year,
+      setSelected((current) => ({
+        ...current,
         month: nextMonth,
         day: nextDay,
-      });
+      }));
     }
-  }, [months, days, selected]);
+  }, [months, days, selected.month, selected.day]);
 
   function updateYear(year: number) {
     const month = Math.min(
@@ -509,7 +553,7 @@ function JalaliDatePickerSheet({
       >
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/[0.10] via-transparent to-black/[0.16]" />
 
-        <div className="relative flex h-[56px] items-center bg-white/[0.025] px-5">
+        <div className="relative flex h-[56px] items-center px-5">
           <button
             type="button"
             onClick={onClose}
@@ -564,7 +608,7 @@ function JalaliDatePickerSheet({
           <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-[100px] bg-gradient-to-t from-slate-950/92 via-slate-950/50 to-transparent" />
         </div>
 
-        <div className="relative bg-white/[0.025] px-5 pb-[max(16px,env(safe-area-inset-bottom))] pt-2">
+        <div className="relative px-5 pb-[max(16px,env(safe-area-inset-bottom))] pt-2">
           <p className="text-center text-[11px] font-medium text-white/40">
             تاریخ انتخاب‌شده: {formatDate(jalaliToGregorian(selected))}
           </p>
