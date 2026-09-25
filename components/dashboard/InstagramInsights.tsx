@@ -149,6 +149,311 @@ function MetricCard({
   icon: typeof BarChart3;
 }) {
   return (
+    <Card className="min-w-0 py-3.5 sm:py-4">
+      <CardContent className="px-3.5 sm:px-4">
+        <div className="flex items-start justify-between gap-2">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+            <Icon size={16} strokeWidth={1.8} />
+          </span>
+          <span className="text-right text-[9px] leading-4 text-muted-foreground">{helper}</span>
+        </div>
+        <p className="mt-3 truncate text-lg font-bold tracking-tight sm:text-xl">{value}</p>
+        <p className="mt-1 truncate text-[11px] text-muted-foreground">{label}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function RateCard({
+  label,
+  value,
+  helper,
+}: {
+  label: string;
+  value: string;
+  helper: string;
+}) {
+  return (
+    <Card className="min-w-0 border-0 bg-muted px-3.5 py-3 shadow-none">
+      <CardContent className="p-0">
+        <p className="text-[10px] text-muted-foreground">{label}</p>
+        <p className="mt-1 text-base font-bold">{value}</p>
+        <p className="mt-0.5 truncate text-[9px] text-muted-foreground">{helper}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+export default function InstagramInsights({
+  accountId: externalAccountId,
+}: {
+  accountId?: string;
+}) {
+  const today = useMemo(() => new Date(), []);
+  const [accountId, setAccountId] = useState(externalAccountId || "");
+  const [loadingAccounts, setLoadingAccounts] = useState(!externalAccountId);
+  const [preset, setPreset] = useState<RangePreset>(30);
+  const [range, setRange] = useState<{ from?: Date; to?: Date }>({
+    from: addDays(today, -29),
+    to: today,
+  });
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [calendarTarget, setCalendarTarget] = useState<"from" | "to">("from");
+  const [metric, setMetric] = useState<Metric>("views");
+
+  const minSelectableDate = useMemo(() => {
+    const value = new Date(today);
+    value.setHours(0, 0, 0, 0);
+    value.setFullYear(value.getFullYear() - 2);
+    return value;
+  }, [today]);
+
+  const maxSelectableDate = useMemo(() => {
+    const value = new Date(today);
+    value.setHours(23, 59, 59, 999);
+    return value;
+  }, [today]);
+  const [data, setData] = useState<Data | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const effectiveRange = useMemo(() => {
+    if (!range.from || !range.to) return null;
+
+    return {
+      from: toIsoDate(range.from),
+      to: toIsoDate(range.to),
+    };
+  }, [range]);
+
+  const syncInsights = useCallback(async () => {
+    if (!accountId) return;
+
+    const response = await fetch(
+      "/api/instagram/insights?accountId=" +
+        encodeURIComponent(accountId) +
+        "&from=" +
+        encodeURIComponent(effectiveRange?.from ?? "") +
+        "&to=" +
+        encodeURIComponent(effectiveRange?.to ?? ""),
+      { cache: "no-store" },
+    );
+
+    if (!response.ok) {
+      const result = await response.json().catch(() => null);
+      throw new Error(result?.error || "خطا در بروزرسانی Instagram Insights");
+    }
+  }, [accountId, effectiveRange]);
+
+  const load = useCallback(async () => {
+    if (!accountId || !effectiveRange) {
+      setData(null);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await fetch(
+        "/api/instagram/insights/history?from=" +
+          encodeURIComponent(effectiveRange.from) +
+          "&to=" +
+          encodeURIComponent(effectiveRange.to) +
+          "&accountId=" +
+          encodeURIComponent(accountId),
+        { cache: "no-store" },
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "خطا در دریافت آمار پیج");
+      }
+
+      setData(result as Data);
+    } catch (requestError) {
+      setData(null);
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "خطا در دریافت آمار پیج",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [accountId, effectiveRange]);
+
+  useEffect(() => {
+    if (externalAccountId) {
+      setAccountId(externalAccountId);
+      setLoadingAccounts(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const response = await fetch("/api/instagram/accounts", { cache: "no-store" });
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.error || "خطا در دریافت اکانت‌های Instagram");
+        }
+
+        const accounts = Array.isArray(result.accounts) ? result.accounts : [];
+        const connected = accounts.find(
+          (account: { id?: string; isConnected?: boolean }) => account.isConnected,
+        );
+
+        if (!cancelled) {
+          setAccountId(connected?.id || accounts[0]?.id || "");
+        }
+      } catch (requestError) {
+        if (!cancelled) {
+          setError(
+            requestError instanceof Error
+              ? requestError.message
+              : "خطا در دریافت اکانت Instagram",
+          );
+        }
+      } finally {
+        if (!cancelled) setLoadingAccounts(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [externalAccountId]);
+
+  useEffect(() => {
+    if (!accountId) return;
+
+    // اول داده ذخیره‌شده را نمایش بده؛ بروزرسانی Meta نباید رندر صفحه را معطل کند.
+    void load();
+
+    void (async () => {
+      try {
+        await syncInsights();
+        await load();
+      } catch (requestError) {
+        // اگر Sync با Meta خطا داد، داده تاریخی همچنان باید قابل نمایش باشد.
+        setError(
+          requestError instanceof Error
+            ? requestError.message
+            : "خطا در بروزرسانی Instagram Insights",
+        );
+      }
+    })();
+  }, [accountId, syncInsights, load]);
+
+  useEffect(() => {
+    const handler = () => {
+      void (async () => {
+        try {
+          await syncInsights();
+        } catch (requestError) {
+          setError(
+            requestError instanceof Error
+              ? requestError.message
+              : "خطا در بروزرسانی Instagram Insights",
+          );
+        } finally {
+          await load();
+        }
+      })();
+    };
+    window.addEventListener("smartdirect:refresh", handler);
+    return () => window.removeEventListener("smartdirect:refresh", handler);
+  }, [load]);
+  function selectPreset(value: RangePreset) {
+    setPreset(value);
+    const end = new Date();
+    setRange({
+      from: addDays(end, -(value - 1)),
+      to: end,
+    });
+  }
+
+  function openCalendar(target: "from" | "to") {
+    setCalendarTarget(target);
+    setCalendarOpen(true);
+  }
+
+  function selectCalendarDate(value: Date | undefined) {
+    if (!value) return;
+
+    setPreset(30);
+
+    setRange((current) => {
+      if (calendarTarget === "from") {
+        const nextFrom = value < minSelectableDate ? minSelectableDate : value;
+        const nextTo =
+          current.to && current.to >= nextFrom ? current.to : nextFrom;
+
+        return { from: nextFrom, to: nextTo };
+      }
+
+      const nextTo = value > maxSelectableDate ? maxSelectableDate : value;
+      const nextFrom =
+        current.from && current.from <= nextTo ? current.from : nextTo;
+
+      return { from: nextFrom, to: nextTo };
+    });
+
+    setCalendarOpen(false);
+  }
+
+  const calendarDisabled = useMemo(() => {
+    if (calendarTarget === "from") {
+      return {
+        before: minSelectableDate,
+        after: maxSelectableDate,
+      };
+    }
+
+    return {
+      before: range.from ?? minSelectableDate,
+      after: maxSelectableDate,
+    };
+  }, [calendarTarget, maxSelectableDate, minSelectableDate, range.from]);
+
+  const chartData = useMemo(
+    () =>
+      (data?.snapshots ?? []).map((snapshot) => ({
+        date: snapshot.snapshotDate,
+        label: formatShortDate(snapshot.snapshotDate),
+        value: metricValue(snapshot, metric),
+      })),
+    [data?.snapshots, metric],
+  );
+
+  const rates = useMemo(() => {
+    if (!data) return null;
+
+    const totalViews = data.summary.views;
+    const totalInteractions = data.summary.totalInteractions;
+    const follows = data.summary.follows;
+    const unfollows = data.summary.unfollows;
+
+    return {
+      interactionRate:
+        totalViews > 0 ? (totalInteractions / totalViews) * 100 : null,
+      followRate:
+        totalViews > 0 && follows != null ? (follows / totalViews) * 100 : null,
+      unfollowRate:
+        totalViews > 0 && unfollows != null ? (unfollows / totalViews) * 100 : null,
+      netFollowerRate:
+        totalViews > 0 && follows != null && unfollows != null
+          ? ((follows - unfollows) / totalViews) * 100
+          : null,
+    };
+  }, [data]);
+
+  return (
     <section className="min-w-0">
       <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-3">
@@ -286,27 +591,25 @@ function MetricCard({
         ) : data ? (
           <div className="min-w-0">
             <div className="rounded-2xl border border-border bg-white p-3.5 sm:p-5">
-              <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                <div className="w-full overflow-x-auto sm:w-auto">
-                  <div className="flex min-w-max rounded-xl border border-border bg-white p-1">
-                    {(["views", "totalInteractions", "follows", "unfollows"] as Metric[]).map((value) => (
-                      <Button
-                        key={value}
-                        type="button"
-                        variant={metric === value ? "default" : "ghost"}
-                        title={metricDescriptions[value]}
-                        onClick={() => setMetric(value)}
-                        className={[
-                          "h-9 rounded-lg px-3 text-[10px] font-medium shadow-none",
-                          metric === value
-                            ? "bg-foreground text-background hover:bg-foreground/90"
-                            : "bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground",
-                        ].join(" ")}
-                      >
-                        {metricLabels[value]}
-                      </Button>
-                    ))}
-                  </div>
+              <div className="flex w-full justify-end overflow-x-auto">
+                <div className="flex min-w-max rounded-xl border border-border bg-white p-1">
+                  {(["views", "totalInteractions", "follows", "unfollows"] as Metric[]).map((value) => (
+                    <Button
+                      key={value}
+                      type="button"
+                      variant={metric === value ? "default" : "ghost"}
+                      title={metricDescriptions[value]}
+                      onClick={() => setMetric(value)}
+                      className={[
+                        "h-9 rounded-lg px-3 text-[10px] font-medium shadow-none sm:px-4",
+                        metric === value
+                          ? "bg-foreground text-background hover:bg-foreground/90"
+                          : "bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground",
+                      ].join(" ")}
+                    >
+                      {metricLabels[value]}
+                    </Button>
+                  ))}
                 </div>
               </div>
 
@@ -365,14 +668,7 @@ function MetricCard({
             </div>
 
             <div className="mt-4 rounded-2xl border border-border bg-white p-3.5 sm:p-5">
-              <div>
-                <h2 className="text-sm font-bold text-foreground">نرخ‌های عملکرد</h2>
-                <p className="mt-1 text-[10px] leading-5 text-muted-foreground">
-                  نرخ‌ها بر اساس مجموع بازه انتخابی محاسبه می‌شوند.
-                </p>
-              </div>
-
-              <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <RateCard label="نرخ تعامل" value={formatPercent(rates?.interactionRate)} helper="تعاملات نسبت به بازدید" />
                 <RateCard label="نرخ فالو" value={formatPercent(rates?.followRate)} helper="فالو نسبت به بازدید" />
                 <RateCard label="نرخ آنفالو" value={formatPercent(rates?.unfollowRate)} helper="آنفالو نسبت به بازدید" />
@@ -408,4 +704,5 @@ function MetricCard({
       </div>
     </section>
   )
+
 }
