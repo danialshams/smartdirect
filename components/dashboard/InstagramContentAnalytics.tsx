@@ -208,9 +208,9 @@ function Kpi({
     icon: typeof Eye;
 }) {
     return (
-        <div className="rounded-[22px] border border-slate-200/80 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.03)]">
+        <div className="rounded-xl border bg-card p-5 shadow-sm">
             <div className="flex items-center justify-between">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 text-slate-700">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-muted text-foreground">
                     <Icon
                         size={18}
                         strokeWidth={1.8}
@@ -223,11 +223,11 @@ function Kpi({
                 />
             </div>
 
-            <p className="mt-5 text-2xl font-bold tracking-tight text-slate-950">
+            <p className="mt-5 text-2xl font-bold tracking-tight text-foreground">
                 {value}
             </p>
 
-            <p className="mt-1 text-sm font-medium text-slate-600">
+            <p className="mt-1 text-sm font-medium text-muted-foreground">
                 {title}
             </p>
         </div>
@@ -242,8 +242,8 @@ function ContentCard({
     const image = mediaImage(item);
 
     return (
-        <article className="overflow-hidden rounded-[24px] border border-slate-200/80 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.03)] transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_18px_45px_rgba(15,23,42,0.07)]">
-            <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
+        <article className="overflow-hidden rounded-[24px] border border-border/80 bg-background shadow-[0_8px_30px_rgba(15,23,42,0.03)] transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_18px_45px_rgba(15,23,42,0.07)]">
+            <div className="relative aspect-[4/3] overflow-hidden bg-muted">
                 {image ? (
                     <img
                         src={image}
@@ -254,7 +254,7 @@ function ContentCard({
                         className="h-full w-full object-cover transition duration-500 hover:scale-[1.025]"
                     />
                 ) : (
-                    <div className="flex h-full items-center justify-center text-slate-400">
+                    <div className="flex h-full items-center justify-center text-muted-foreground">
                         <BarChart3
                             size={30}
                             strokeWidth={1.5}
@@ -268,7 +268,7 @@ function ContentCard({
 
                 {item.insights.engagementRate !==
                     null && (
-                        <div className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1.5 text-[10px] font-bold text-slate-900 shadow-sm backdrop-blur">
+                        <div className="absolute left-3 top-3 rounded-full bg-background/90 px-3 py-1.5 text-[10px] font-bold text-foreground shadow-sm backdrop-blur">
                             {percent(
                                 item.insights
                                     .engagementRate,
@@ -280,20 +280,20 @@ function ContentCard({
 
             <div className="p-5">
                 <div className="min-h-[66px]">
-                    <p className="text-sm leading-6 text-slate-700">
+                    <p className="text-sm leading-6 text-foreground">
                         {shortCaption(
                             item.caption,
                         )}
                     </p>
 
-                    <p className="mt-2 text-[11px] text-slate-400">
+                    <p className="mt-2 text-[11px] text-muted-foreground">
                         {date(
                             item.timestamp,
                         )}
                     </p>
                 </div>
 
-                <div className="mt-5 grid grid-cols-2 gap-2 border-t border-slate-100 pt-4">
+                <div className="mt-5 grid grid-cols-2 gap-2 border-t border-border/60 pt-4">
                     <Metric
                         icon={Eye}
                         label="بازدید"
@@ -349,13 +349,13 @@ function ContentCard({
                     />
                 </div>
 
-                <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4">
+                <div className="mt-4 flex items-center justify-between border-t border-border/60 pt-4">
                     <div>
-                        <p className="text-[10px] text-slate-400">
+                        <p className="text-[10px] text-muted-foreground">
                             تعاملات
                         </p>
 
-                        <p className="mt-1 text-sm font-bold text-slate-900">
+                        <p className="mt-1 text-sm font-bold text-foreground">
                             {number(
                                 item.insights
                                     .totalInteractions,
@@ -370,7 +370,7 @@ function ContentCard({
                             }
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-[11px] font-medium text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
+                            className="inline-flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-[11px] font-medium text-muted-foreground transition hover:border-slate-300 hover:bg-muted hover:text-foreground"
                         >
                             مشاهده محتوا
 
@@ -396,8 +396,8 @@ function Metric({
     value: string;
 }) {
     return (
-        <div className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2.5">
-            <div className="flex items-center gap-2 text-slate-400">
+        <div className="flex items-center justify-between rounded-xl bg-muted px-3 py-2.5">
+            <div className="flex items-center gap-2 text-muted-foreground">
                 <Icon
                     size={13}
                     strokeWidth={1.8}
@@ -408,7 +408,7 @@ function Metric({
                 </span>
             </div>
 
-            <span className="text-[11px] font-semibold text-slate-700">
+            <span className="text-[11px] font-semibold text-foreground">
                 {value}
             </span>
         </div>
@@ -719,7 +719,7 @@ export default function InstagramContentAnalytics() {
         >
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div>
-                    <div className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.18em] text-slate-400">
+                    <div className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.18em] text-muted-foreground">
                         <BarChart3
                             size={14}
                         />
@@ -727,17 +727,17 @@ export default function InstagramContentAnalytics() {
                         CONTENT ANALYTICS
                     </div>
 
-                    <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
+                    <h2 className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
                         عملکرد محتوا
                     </h2>
 
-                    <p className="mt-1.5 text-sm leading-6 text-slate-500">
+                    <p className="mt-1.5 text-sm leading-6 text-muted-foreground">
                         عملکرد تک‌تک پست‌ها و Reels را بررسی کنید و محتوای موفق‌تر را پیدا کنید.
                     </p>
                 </div>
 
                 <div className="flex flex-col gap-2 sm:flex-row">
-                    <div className="flex items-center rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-[0_6px_24px_rgba(15,23,42,0.03)]">
+                    <div className="flex items-center rounded-xl border bg-card px-3 py-2 shadow-[0_6px_24px_rgba(15,23,42,0.03)]">
                         <select
                             value={
                                 accountId
@@ -755,7 +755,7 @@ export default function InstagramContentAnalytics() {
                                 loadingAccounts ||
                                 !accounts.length
                             }
-                            className="min-w-[180px] bg-transparent text-sm font-semibold text-slate-900 outline-none"
+                            className="min-w-[180px] bg-transparent text-sm font-semibold text-foreground outline-none"
                             aria-label="انتخاب پیج Instagram"
                         >
                             {accounts.map(
@@ -780,7 +780,7 @@ export default function InstagramContentAnalytics() {
                         </select>
                     </div>
 
-                    <div className="flex rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_6px_24px_rgba(15,23,42,0.03)]">
+                    <div className="flex rounded-xl border bg-card p-1 shadow-[0_6px_24px_rgba(15,23,42,0.03)]">
                         {[
                             {
                                 key: "all",
@@ -815,7 +815,7 @@ export default function InstagramContentAnalytics() {
                                     className={`rounded-xl px-3 py-2 text-[11px] font-medium transition ${filter ===
                                         item.key
                                         ? "bg-slate-950 text-white"
-                                        : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
                                         }`}
                                 >
                                     {
@@ -858,24 +858,24 @@ export default function InstagramContentAnalytics() {
 
             {loading &&
                 !data && (
-                    <div className="rounded-[26px] border border-slate-200 bg-white px-6 py-20 text-center text-sm text-slate-400">
+                    <div className="rounded-xl border bg-card px-6 py-20 text-center text-sm text-muted-foreground">
                         در حال دریافت عملکرد محتوا...
                     </div>
                 )}
 
             {!loadingAccounts &&
                 !accounts.length && (
-                    <div className="rounded-[26px] border border-dashed border-slate-300 bg-white px-6 py-14 text-center">
+                    <div className="rounded-[26px] border border-dashed border-slate-300 bg-background px-6 py-14 text-center">
                         <BarChart3
                             size={28}
-                            className="mx-auto text-slate-400"
+                            className="mx-auto text-muted-foreground"
                         />
 
-                        <h3 className="mt-4 font-bold text-slate-900">
+                        <h3 className="mt-4 font-bold text-foreground">
                             هنوز پیجی متصل نشده است
                         </h3>
 
-                        <p className="mt-2 text-sm text-slate-400">
+                        <p className="mt-2 text-sm text-muted-foreground">
                             ابتدا یک پیج Instagram متصل کنید.
                         </p>
                     </div>
@@ -892,13 +892,13 @@ export default function InstagramContentAnalytics() {
                             <Kpi title="اشتراک" value={number(summary.shares)} icon={Share2} />
                         </div>
 
-                        <div className="flex flex-col gap-3 rounded-[24px] border border-slate-200/80 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex flex-col gap-3 rounded-[24px] border border-border/80 bg-background p-4 sm:flex-row sm:items-center sm:justify-between">
                             <div>
-                                <p className="text-sm font-bold text-slate-900">
+                                <p className="text-sm font-bold text-foreground">
                                     محتوای برتر
                                 </p>
 
-                                <p className="mt-1 text-xs text-slate-400">
+                                <p className="mt-1 text-xs text-muted-foreground">
                                     محتوا بر اساس معیار انتخاب‌شده مرتب می‌شود.
                                 </p>
                             </div>
@@ -938,7 +938,7 @@ export default function InstagramContentAnalytics() {
                                             className={`rounded-xl px-3 py-2 text-[11px] font-medium transition ${sort ===
                                                 item.key
                                                 ? "bg-slate-950 text-white"
-                                                : "border border-slate-200 text-slate-500 hover:bg-slate-50"
+                                                : "border border-border text-muted-foreground hover:bg-muted"
                                                 }`}
                                         >
                                             {
@@ -952,17 +952,17 @@ export default function InstagramContentAnalytics() {
 
                         {filteredContent.length ===
                             0 ? (
-                            <div className="rounded-[26px] border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
+                            <div className="rounded-[26px] border border-dashed border-slate-300 bg-background px-6 py-16 text-center">
                                 <BarChart3
                                     size={28}
-                                    className="mx-auto text-slate-400"
+                                    className="mx-auto text-muted-foreground"
                                 />
 
-                                <h3 className="mt-4 font-bold text-slate-900">
+                                <h3 className="mt-4 font-bold text-foreground">
                                     محتوایی برای نمایش وجود ندارد
                                 </h3>
 
-                                <p className="mt-2 text-sm text-slate-400">
+                                <p className="mt-2 text-sm text-muted-foreground">
                                     در این فیلتر هنوز محتوایی پیدا نشد.
                                 </p>
                             </div>
