@@ -7,7 +7,9 @@ import {
   UserRound,
   Users,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type InstagramAccount = {
   id: string;
@@ -77,8 +79,8 @@ export default function InstagramProfileDashboard({ accountId }: { accountId: st
       {error && <div className="mx-5 mt-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs leading-6 text-red-700 sm:mx-6">{error}</div>}
       {loading && !profile ? (
         <div className="grid gap-3 p-5 sm:grid-cols-[auto_1fr] sm:p-6">
-          <div className="mx-auto h-24 w-24 animate-pulse rounded-full bg-slate-100 sm:mx-0" />
-          <div className="space-y-3"><div className="h-5 w-40 animate-pulse rounded bg-slate-100" /><div className="h-4 w-28 animate-pulse rounded bg-slate-100" /><div className="h-16 w-full animate-pulse rounded bg-slate-100" /></div>
+          <Skeleton className="mx-auto h-24 w-24 rounded-full sm:mx-0" />
+          <div className="space-y-3"><Skeleton className="h-5 w-40" /><Skeleton className="h-4 w-28" /><Skeleton className="h-16 w-full" /></div>
         </div>
       ) : profile ? (
         <>
