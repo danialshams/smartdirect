@@ -225,7 +225,7 @@ function RateMetric({
 }) {
   const positive = value != null && value > 0;
   const negative = value != null && value < 0;
-  const iconPositionClass = iconPosition === "inner" ? "right-2 sm:right-4" : "right-5 sm:right-8";
+  const iconPositionClass = iconPosition === "inner" ? "right-0" : "right-5 sm:right-8";
 
   return (
     <div className="relative flex min-h-[116px] min-w-0 items-center justify-center px-12 py-4 text-center">
