@@ -172,6 +172,7 @@ export default function InstagramProfileDashboard({
                 label="پست"
                 value={profile.mediaCount}
                 visible={visible}
+                countDelay={1220}
               />
             </Reveal>
             <Reveal visible={visible} delay={680}>
@@ -179,6 +180,7 @@ export default function InstagramProfileDashboard({
                 label="فالوور"
                 value={profile.followersCount}
                 visible={visible}
+                countDelay={1380}
               />
             </Reveal>
             <Reveal visible={visible} delay={840}>
@@ -186,6 +188,7 @@ export default function InstagramProfileDashboard({
                 label="فالووینگ"
                 value={profile.followsCount}
                 visible={visible}
+                countDelay={1540}
               />
             </Reveal>
           </div>
@@ -199,10 +202,12 @@ function AnimatedProfileStat({
   label,
   value,
   visible,
+  countDelay,
 }: {
   label: string;
   value: number | null;
   visible: boolean;
+  countDelay: number;
 }) {
   const [displayValue, setDisplayValue] = useState(0);
 
@@ -210,23 +215,30 @@ function AnimatedProfileStat({
     if (!visible || value == null) return;
 
     let frame = 0;
-    const start = performance.now();
-    const duration = 900;
 
-    const animate = (timestamp: number) => {
-      const progress = Math.min((timestamp - start) / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setDisplayValue(value * eased);
+    const timeout = window.setTimeout(() => {
+      const start = performance.now();
+      const duration = 900;
 
-      if (progress < 1) {
-        frame = requestAnimationFrame(animate);
-      }
+      const animate = (timestamp: number) => {
+        const progress = Math.min((timestamp - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+
+        setDisplayValue(value * eased);
+
+        if (progress < 1) {
+          frame = requestAnimationFrame(animate);
+        }
+      };
+
+      frame = requestAnimationFrame(animate);
+    }, countDelay);
+
+    return () => {
+      window.clearTimeout(timeout);
+      cancelAnimationFrame(frame);
     };
-
-    frame = requestAnimationFrame(animate);
-
-    return () => cancelAnimationFrame(frame);
-  }, [value, visible]);
+  }, [countDelay, value, visible]);
 
   return (
     <div className="flex min-w-0 flex-col items-center justify-center text-center">
