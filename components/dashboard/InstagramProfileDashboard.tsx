@@ -3,11 +3,9 @@
 import {
   ExternalLink,
   Globe2,
-  Image as ImageIcon,
   UserRound,
-  Users,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type Profile = {
@@ -27,14 +25,16 @@ type Profile = {
 
 const numberFormatter = new Intl.NumberFormat("fa-IR");
 
-function formatNumber(value: number | null) {
-  return value == null ? "—" : numberFormatter.format(value);
+function formatNumber(value: number) {
+  return numberFormatter.format(Math.round(value));
 }
 
 export default function InstagramProfileDashboard({
   accountId,
+  onProfileLoaded,
 }: {
   accountId: string;
+  onProfileLoaded?: (name: string | null) => void;
 }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(false);
@@ -54,6 +54,7 @@ export default function InstagramProfileDashboard({
         throw new Error(result.error || "اطلاعات پروفایل دریافت نشد.");
       }
       setProfile(result.profile);
+      onProfileLoaded?.(result.profile.name);
     } catch (requestError) {
       setProfile(null);
       setError(
@@ -64,7 +65,7 @@ export default function InstagramProfileDashboard({
     } finally {
       setLoading(false);
     }
-  }, [accountId]);
+  }, [accountId, onProfileLoaded]);
 
   useEffect(() => {
     void loadProfile();
@@ -82,7 +83,7 @@ export default function InstagramProfileDashboard({
 
       {loading && !profile ? (
         <div className="grid gap-5 p-5 sm:grid-cols-[auto_1fr] sm:p-6">
-          <Skeleton className="mx-auto h-[72px] w-[72px] rounded-full sm:mx-0" />
+          <Skeleton className="mx-auto h-[92px] w-[92px] rounded-full sm:mx-0" />
           <div className="space-y-3">
             <Skeleton className="h-5 w-40" />
             <Skeleton className="h-4 w-28" />
@@ -91,9 +92,9 @@ export default function InstagramProfileDashboard({
         </div>
       ) : profile ? (
         <>
-          <div className="px-5 py-6 sm:px-6">
+          <div className="px-5 py-8 sm:px-8 sm:py-9">
             <div className="flex flex-col items-center text-center sm:flex-row sm:items-center sm:text-right">
-              <div className="h-[72px] w-[72px] shrink-0 overflow-hidden rounded-full border border-border bg-muted">
+              <div className="h-[92px] w-[92px] shrink-0 overflow-hidden rounded-full border border-border bg-muted sm:h-[104px] sm:w-[104px]">
                 {profile.profilePictureUrl ? (
                   <img
                     src={profile.profilePictureUrl}
@@ -102,12 +103,12 @@ export default function InstagramProfileDashboard({
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-                    <UserRound size={26} strokeWidth={1.5} />
+                    <UserRound size={30} strokeWidth={1.5} />
                   </div>
                 )}
               </div>
 
-              <div className="mt-4 min-w-0 sm:mr-5 sm:mt-0">
+              <div className="mt-5 min-w-0 sm:mr-6 sm:mt-0">
                 <h2 className="text-lg font-semibold tracking-tight text-foreground">
                   {profile.name || "بدون نام"}
                 </h2>
@@ -139,21 +140,21 @@ export default function InstagramProfileDashboard({
             </div>
           </div>
 
-          <div className="grid grid-cols-3 border-t border-border">
-            <ProfileStat
-              icon={<Users size={16} />}
-              label="فالوور"
-              value={formatNumber(profile.followersCount)}
-            />
-            <ProfileStat
-              icon={<UserRound size={16} />}
+          <div className="grid grid-cols-3 gap-0 border-t border-border px-5 py-5 sm:px-8 sm:py-6">
+            <AnimatedProfileStat
               label="فالووینگ"
-              value={formatNumber(profile.followsCount)}
+              value={profile.followsCount}
+              delay={120}
             />
-            <ProfileStat
-              icon={<ImageIcon size={16} />}
+            <AnimatedProfileStat
+              label="فالوور"
+              value={profile.followersCount}
+              delay={220}
+            />
+            <AnimatedProfileStat
               label="پست"
-              value={formatNumber(profile.mediaCount)}
+              value={profile.mediaCount}
+              delay={320}
             />
           </div>
         </>
@@ -166,26 +167,60 @@ export default function InstagramProfileDashboard({
   );
 }
 
-function ProfileStat({
-  icon,
+function AnimatedProfileStat({
   label,
   value,
+  delay,
 }: {
-  icon?: React.ReactNode;
   label: string;
-  value: string;
+  value: number | null;
+  delay: number;
 }) {
+  const [displayValue, setDisplayValue] = useState(0);
+  const itemRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (value == null) return;
+
+    let frame = 0;
+    let startTime = 0;
+    const duration = 1100;
+
+    const animate = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+
+      const progress = Math.min((timestamp - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+
+      setDisplayValue(value * eased);
+
+      if (progress < 1) {
+        frame = requestAnimationFrame(animate);
+      }
+    };
+
+    const timeout = window.setTimeout(() => {
+      frame = requestAnimationFrame(animate);
+    }, delay);
+
+    return () => {
+      window.clearTimeout(timeout);
+      cancelAnimationFrame(frame);
+    };
+  }, [value, delay]);
+
   return (
-    <div className="flex min-w-0 items-center justify-center gap-2 border-l border-border px-2 py-4 text-center last:border-l-0 sm:gap-3 sm:py-4">
-      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
-        {icon}
-      </span>
-      <div className="min-w-0">
-        <p className="truncate text-sm font-bold text-foreground">{value}</p>
-        <p className="mt-0.5 text-[10px] text-muted-foreground sm:text-xs">
-          {label}
-        </p>
-      </div>
+    <div
+      ref={itemRef}
+      className="flex min-w-0 flex-col items-center justify-center text-center opacity-0 animate-[dashboardStatReveal_.7s_ease-out_forwards]"
+      style={{ animationDelay: `${delay}ms` }}
+    >
+      <p className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
+        {value == null ? "—" : formatNumber(displayValue)}
+      </p>
+      <p className="mt-1 text-[11px] text-muted-foreground sm:text-xs">
+        {label}
+      </p>
     </div>
   );
 }
