@@ -410,21 +410,21 @@ export default function InstagramInsights({
   }, [data]);
 
   return (
-    <section className="min-w-0 overflow-visible rounded-2xl border border-slate-200 bg-white">
-      <div className="border-b border-slate-100 px-4 py-5 sm:px-6">
+    <section className="min-w-0 overflow-visible rounded-2xl border border-border bg-white">
+      <div className="border-b border-border px-4 py-5 sm:px-6">
         <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0">
-            <p className="text-xs font-medium text-slate-400">تحلیل پیج</p>
-            <h2 className="mt-1 text-lg font-bold tracking-tight text-slate-950">
+            <p className="text-xs font-medium text-muted-foreground">تحلیل پیج</p>
+            <h2 className="mt-1 text-lg font-bold tracking-tight text-foreground">
               روند عملکرد Instagram
             </h2>
-            <p className="mt-1 max-w-2xl text-xs leading-6 text-slate-500">
+            <p className="mt-1 max-w-2xl text-xs leading-6 text-muted-foreground">
               شاخص‌های عملکرد اکانت فعال را در یک بازه مشخص بررسی کنید.
             </p>
           </div>
 
           <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <div className="flex max-w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-1">
+            <div className="flex max-w-full overflow-hidden rounded-xl border border-border bg-muted p-1">
               {[7, 30, 90].map((days) => (
                 <button
                   key={days}
@@ -433,8 +433,8 @@ export default function InstagramInsights({
                   className={[
                     "shrink-0 rounded-lg px-3 py-2 text-[10px] font-semibold transition sm:px-3.5",
                     preset === days
-                      ? "bg-slate-950 text-white shadow-sm"
-                      : "text-slate-500 hover:bg-white hover:text-slate-800",
+                      ? "bg-primary text-white shadow-sm"
+                      : "text-muted-foreground hover:bg-white hover:text-foreground",
                   ].join(" ")}
                 >
                   {days} روز
@@ -447,19 +447,19 @@ export default function InstagramInsights({
                 <button
                   type="button"
                   onClick={() => openCalendar("from")}
-                  className="inline-flex h-10 min-w-[112px] items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-semibold text-slate-700 transition hover:bg-slate-50"
+                  className="inline-flex h-10 min-w-[112px] items-center justify-center rounded-xl border border-border bg-white px-3 text-[10px] font-semibold text-foreground transition hover:bg-muted"
                   aria-expanded={calendarOpen && calendarTarget === "from"}
                   aria-haspopup="dialog"
                 >
                   {range.from ? formatJalaliDate(range.from) : "تاریخ شروع"}
                 </button>
 
-                <span className="text-[10px] font-medium text-slate-400">تا</span>
+                <span className="text-[10px] font-medium text-muted-foreground">تا</span>
 
                 <button
                   type="button"
                   onClick={() => openCalendar("to")}
-                  className="inline-flex h-10 min-w-[112px] items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-semibold text-slate-700 transition hover:bg-slate-50"
+                  className="inline-flex h-10 min-w-[112px] items-center justify-center rounded-xl border border-border bg-white px-3 text-[10px] font-semibold text-foreground transition hover:bg-muted"
                   aria-expanded={calendarOpen && calendarTarget === "to"}
                   aria-haspopup="dialog"
                 >
@@ -476,7 +476,7 @@ export default function InstagramInsights({
                     <div
                       role="dialog"
                       aria-modal="true"
-                      className="rounded-xl border border-slate-200 bg-white p-2 shadow-[0_18px_50px_rgba(15,23,42,0.18)]"
+                      className="rounded-xl border border-border bg-white p-2 shadow-[0_18px_50px_rgba(15,23,42,0.18)]"
                       onClick={(event) => event.stopPropagation()}
                     >
                       <Calendar
@@ -490,7 +490,7 @@ export default function InstagramInsights({
                     </div>
                   </div>
 
-                  <div className="absolute right-0 top-12 z-50 hidden rounded-xl border border-slate-200 bg-white p-2 shadow-[0_18px_50px_rgba(15,23,42,0.12)] md:block">
+                  <div className="absolute right-0 top-12 z-50 hidden rounded-xl border border-border bg-white p-2 shadow-[0_18px_50px_rgba(15,23,42,0.12)] md:block">
                     <Calendar
                       mode="single"
                       selected={range[calendarTarget]}
@@ -546,7 +546,7 @@ export default function InstagramInsights({
                   }
                 })()
               }
-              className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 px-3 text-[10px] font-semibold text-slate-600 transition hover:bg-slate-50"
+              className="inline-flex h-9 items-center gap-2 rounded-lg border border-border px-3 text-[10px] font-semibold text-muted-foreground transition hover:bg-muted"
             >
               <RefreshCw size={13} />
               بروزرسانی
@@ -580,20 +580,20 @@ export default function InstagramInsights({
             />
           </div>
 
-          <div className="mt-5 min-w-0 rounded-xl border border-slate-200 p-3.5 sm:p-5">
+          <div className="mt-5 min-w-0 rounded-xl border border-border p-3.5 sm:p-5">
             <div className="flex min-w-0 flex-col gap-3">
               <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div className="min-w-0">
-                  <h3 className="text-sm font-bold text-slate-950">
+                  <h3 className="text-sm font-bold text-foreground">
                     روند روزانه
                   </h3>
-                  <p className="mt-1 text-[10px] leading-5 text-slate-400">
+                  <p className="mt-1 text-[10px] leading-5 text-muted-foreground">
                     محور افقی تاریخ روزهای بازه است؛ با انتخاب شاخص، روند همان
                     شاخص نمایش داده می‌شود.
                   </p>
                 </div>
                 <div className="w-full overflow-x-auto sm:w-auto sm:max-w-full">
-                  <div className="flex min-w-max rounded-lg border border-slate-200 bg-slate-50 p-1">
+                  <div className="flex min-w-max rounded-lg border border-border bg-muted p-1">
                     {(
                       [
                         "views",
@@ -610,8 +610,8 @@ export default function InstagramInsights({
                         className={[
                           "rounded-md px-2.5 py-1.5 text-[10px] font-medium transition",
                           metric === value
-                            ? "bg-slate-950 text-white"
-                            : "text-slate-500 hover:bg-white hover:text-slate-800",
+                            ? "bg-primary text-white"
+                            : "text-muted-foreground hover:bg-white hover:text-foreground",
                         ].join(" ")}
                       >
                         {metricLabels[value]}
@@ -678,19 +678,19 @@ export default function InstagramInsights({
                   </ResponsiveContainer>
                 </div>
               ) : (
-                <div className="flex h-[250px] items-center justify-center rounded-xl border border-dashed border-slate-200 text-xs text-slate-400">
+                <div className="flex h-[250px] items-center justify-center rounded-xl border border-dashed border-border text-xs text-muted-foreground">
                   برای این بازه داده تاریخی ثبت نشده است.
                 </div>
               )}
             </div>
           </div>
 
-          <div className="mt-3 min-w-0 rounded-xl border border-slate-200 p-3.5 sm:p-4">
+          <div className="mt-3 min-w-0 rounded-xl border border-border p-3.5 sm:p-4">
             <div className="mb-3">
-              <h3 className="text-sm font-bold text-slate-950">
+              <h3 className="text-sm font-bold text-foreground">
                 نرخ‌های عملکرد
               </h3>
-              <p className="mt-1 text-[10px] text-slate-400">
+              <p className="mt-1 text-[10px] text-muted-foreground">
                 همه نرخ‌ها فقط در این بخش محاسبه می‌شوند و با تغییر بازه به‌روزرسانی می‌شوند.
               </p>
             </div>
@@ -719,7 +719,7 @@ export default function InstagramInsights({
           </div>
         </div>
       ) : (
-        <div className="px-5 py-16 text-center text-sm text-slate-400">
+        <div className="px-5 py-16 text-center text-sm text-muted-foreground">
           داده‌ای برای نمایش وجود ندارد.
         </div>
       )}
