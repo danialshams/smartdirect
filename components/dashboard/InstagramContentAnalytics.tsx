@@ -220,7 +220,7 @@ function Kpi({
 
                 <TrendingUp
                     size={15}
-                    className="text-slate-300"
+                    className="text-muted-foreground"
                 />
             </div>
 
@@ -243,7 +243,7 @@ function ContentCard({
     const image = mediaImage(item);
 
     return (
-        <article className="overflow-hidden rounded-[24px] border border-border/80 bg-background shadow-[0_8px_30px_rgba(15,23,42,0.03)] transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_18px_45px_rgba(15,23,42,0.07)]">
+        <article className="overflow-hidden rounded-[24px] border border-border/80 bg-background shadow-[0_8px_30px_rgba(15,23,42,0.03)] transition duration-300 hover:-translate-y-0.5 hover:border-border hover:shadow-[0_18px_45px_rgba(15,23,42,0.07)]">
             <div className="relative aspect-[4/3] overflow-hidden bg-muted">
                 {image ? (
                     <img
@@ -263,7 +263,7 @@ function ContentCard({
                     </div>
                 )}
 
-                <div className="absolute right-3 top-3 rounded-full border border-white/20 bg-slate-950/75 px-3 py-1.5 text-[10px] font-semibold text-white backdrop-blur">
+                <div className="absolute right-3 top-3 rounded-full border border-white/20 bg-primary/75 px-3 py-1.5 text-[10px] font-semibold text-white backdrop-blur">
                     {mediaLabel(item)}
                 </div>
 
@@ -371,7 +371,7 @@ function ContentCard({
                             }
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-[11px] font-medium text-muted-foreground transition hover:border-slate-300 hover:bg-muted hover:text-foreground"
+                            className="inline-flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-[11px] font-medium text-muted-foreground transition hover:border-border hover:bg-muted hover:text-foreground"
                         >
                             مشاهده محتوا
 
@@ -815,7 +815,7 @@ export default function InstagramContentAnalytics() {
                                     }
                                     className={`rounded-xl px-3 py-2 text-[11px] font-medium transition ${filter ===
                                         item.key
-                                        ? "bg-slate-950 text-white"
+                                        ? "bg-primary text-white"
                                         : "text-muted-foreground hover:bg-muted hover:text-foreground"
                                         }`}
                                 >
@@ -866,7 +866,7 @@ export default function InstagramContentAnalytics() {
 
             {!loadingAccounts &&
                 !accounts.length && (
-                    <div className="rounded-[26px] border border-dashed border-slate-300 bg-background px-6 py-14 text-center">
+                    <div className="rounded-[26px] border border-dashed border-border bg-background px-6 py-14 text-center">
                         <BarChart3
                             size={28}
                             className="mx-auto text-muted-foreground"
@@ -938,7 +938,7 @@ export default function InstagramContentAnalytics() {
                                             }
                                             className={`rounded-xl px-3 py-2 text-[11px] font-medium transition ${sort ===
                                                 item.key
-                                                ? "bg-slate-950 text-white"
+                                                ? "bg-primary text-white"
                                                 : "border border-border text-muted-foreground hover:bg-muted"
                                                 }`}
                                         >
@@ -953,7 +953,7 @@ export default function InstagramContentAnalytics() {
 
                         {filteredContent.length ===
                             0 ? (
-                            <div className="rounded-[26px] border border-dashed border-slate-300 bg-background px-6 py-16 text-center">
+                            <div className="rounded-[26px] border border-dashed border-border bg-background px-6 py-16 text-center">
                                 <BarChart3
                                     size={28}
                                     className="mx-auto text-muted-foreground"
