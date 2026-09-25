@@ -9,7 +9,7 @@ const Sheet = Dialog.Root
 const SheetTrigger = Dialog.Trigger
 const SheetClose = Dialog.Close
 
-const SheetPortal = ({ className, children, ...props }: React.ComponentProps<typeof Dialog.Portal>) => (
+const SheetPortal = ({ children, ...props }: React.ComponentProps<typeof Dialog.Portal>) => (
   <Dialog.Portal {...props}>{children}</Dialog.Portal>
 )
 
