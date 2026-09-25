@@ -10,7 +10,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Calendar } from "@/components/ui/calendar";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -45,8 +45,7 @@ type Snapshot = {
 
 type Data = {
   success: boolean;
-  account: Account & {
-  };
+  account: Account;
   period: {
     days: number;
     from: string;
@@ -93,6 +92,13 @@ function formatPercent(value: number | null | undefined) {
   return value == null || !Number.isFinite(value)
     ? "—"
     : percentFormatter.format(value) + "٪";
+}
+
+function formatSignedPercent(value: number | null | undefined) {
+  if (value == null || !Number.isFinite(value)) return "—";
+  if (value > 0) return "+" + percentFormatter.format(value) + "٪";
+  if (value < 0) return "−" + percentFormatter.format(Math.abs(value)) + "٪";
+  return "۰٪";
 }
 
 function formatDate(value: string | Date) {
@@ -164,23 +170,32 @@ function MetricCard({
   );
 }
 
-function RateCard({
+function RateMetric({
   label,
   value,
-  helper,
+  signed,
 }: {
   label: string;
-  value: string;
-  helper: string;
+  value: number | null | undefined;
+  signed?: boolean;
 }) {
+  const positive = value != null && value > 0;
+  const negative = value != null && value < 0;
+
   return (
-    <Card className="min-w-0 border-0 bg-muted px-3.5 py-3 shadow-none">
-      <CardContent className="p-0">
-        <p className="text-[10px] text-muted-foreground">{label}</p>
-        <p className="mt-1 text-base font-bold">{value}</p>
-        <p className="mt-0.5 truncate text-[9px] text-muted-foreground">{helper}</p>
-      </CardContent>
-    </Card>
+    <div className="min-w-0 py-1">
+      <p className="text-[11px] font-medium text-muted-foreground">{label}</p>
+      <p
+        className={[
+          "mt-1 text-xl font-bold tracking-tight",
+          positive ? "text-emerald-600" : "",
+          negative ? "text-red-600" : "",
+          !positive && !negative ? "text-foreground" : "",
+        ].join(" ")}
+      >
+        {signed ? formatSignedPercent(value) : formatPercent(value)}
+      </p>
+    </div>
   );
 }
 
@@ -332,7 +347,6 @@ export default function InstagramInsights({
   useEffect(() => {
     if (!accountId) return;
 
-    // اول داده ذخیره‌شده را نمایش بده؛ بروزرسانی Meta نباید رندر صفحه را معطل کند.
     void load();
 
     void (async () => {
@@ -340,7 +354,6 @@ export default function InstagramInsights({
         await syncInsights();
         await load();
       } catch (requestError) {
-        // اگر Sync با Meta خطا داد، داده تاریخی همچنان باید قابل نمایش باشد.
         setError(
           requestError instanceof Error
             ? requestError.message
@@ -368,7 +381,8 @@ export default function InstagramInsights({
     };
     window.addEventListener("smartdirect:refresh", handler);
     return () => window.removeEventListener("smartdirect:refresh", handler);
-  }, [load]);
+  }, [load, syncInsights]);
+
   function selectPreset(value: RangePreset) {
     setPreset(value);
     const end = new Date();
@@ -442,16 +456,26 @@ export default function InstagramInsights({
     return {
       interactionRate:
         totalViews > 0 ? (totalInteractions / totalViews) * 100 : null,
-      followRate:
-        totalViews > 0 && follows != null ? (follows / totalViews) * 100 : null,
-      unfollowRate:
-        totalViews > 0 && unfollows != null ? (unfollows / totalViews) * 100 : null,
       netFollowerRate:
         totalViews > 0 && follows != null && unfollows != null
           ? ((follows - unfollows) / totalViews) * 100
           : null,
     };
   }, [data]);
+
+  const runRefresh = async () => {
+    try {
+      await syncInsights();
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "خطا در بروزرسانی Instagram Insights",
+      );
+    } finally {
+      await load();
+    }
+  };
 
   return (
     <section className="min-w-0">
@@ -460,21 +484,7 @@ export default function InstagramInsights({
           <Button
             type="button"
             variant="outline"
-            onClick={() =>
-              void (async () => {
-                try {
-                  await syncInsights();
-                } catch (requestError) {
-                  setError(
-                    requestError instanceof Error
-                      ? requestError.message
-                      : "خطا در بروزرسانی Instagram Insights",
-                  );
-                } finally {
-                  await load();
-                }
-              })()
-            }
+            onClick={() => void runRefresh()}
             className="h-10 w-full rounded-xl border-border bg-white px-4 text-xs font-semibold text-foreground shadow-none hover:bg-muted sm:w-fit"
           >
             <RefreshCw size={14} />
@@ -575,17 +585,16 @@ export default function InstagramInsights({
 
         {(loadingAccounts || (loading && !data)) ? (
           <div className="space-y-4">
-            <div className="h-10 w-full animate-pulse rounded-xl bg-muted sm:w-28" />
+            <Skeleton className="h-10 w-full rounded-xl sm:w-28" />
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div className="h-10 animate-pulse rounded-xl bg-muted" />
-              <div className="h-10 animate-pulse rounded-xl bg-muted" />
+              <Skeleton className="h-10 rounded-xl" />
+              <Skeleton className="h-10 rounded-xl" />
             </div>
-            <div className="h-[300px] animate-pulse rounded-2xl bg-muted sm:h-[340px]" />
-            <div className="h-[180px] animate-pulse rounded-2xl bg-muted" />
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-              {Array.from({ length: 4 }).map((_, index) => (
-                <div key={index} className="h-28 animate-pulse rounded-2xl bg-muted" />
-              ))}
+            <Skeleton className="h-[300px] w-full rounded-2xl sm:h-[340px]" />
+            <Skeleton className="h-28 w-full rounded-2xl" />
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Skeleton className="h-24 rounded-xl" />
+              <Skeleton className="h-24 rounded-xl" />
             </div>
           </div>
         ) : data ? (
@@ -616,8 +625,15 @@ export default function InstagramInsights({
               {chartData.length ? (
                 <div className="mt-5 h-[260px] w-full min-w-0 sm:h-[320px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={chartData} margin={{ top: 12, right: 4, left: 0, bottom: 4 }}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eef2f7" />
+                    <LineChart
+                      data={chartData}
+                      margin={{ top: 12, right: 4, left: 0, bottom: 4 }}
+                    >
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        vertical={false}
+                        stroke="#eef2f7"
+                      />
                       <XAxis
                         dataKey="date"
                         tickFormatter={formatShortDate}
@@ -667,20 +683,35 @@ export default function InstagramInsights({
               )}
             </div>
 
-            <div className="mt-4 rounded-2xl border border-border bg-white p-3.5 sm:p-5">
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <RateCard label="نرخ تعامل" value={formatPercent(rates?.interactionRate)} helper="تعاملات نسبت به بازدید" />
-                <RateCard label="نرخ فالو" value={formatPercent(rates?.followRate)} helper="فالو نسبت به بازدید" />
-                <RateCard label="نرخ آنفالو" value={formatPercent(rates?.unfollowRate)} helper="آنفالو نسبت به بازدید" />
-                <RateCard label="نرخ رشد خالص" value={formatPercent(rates?.netFollowerRate)} helper="فالو منهای آنفالو نسبت به بازدید" />
+            <div className="mt-4 rounded-2xl border border-border bg-white px-4 py-3.5 sm:px-5">
+              <div className="grid grid-cols-1 divide-y divide-border sm:grid-cols-2 sm:divide-y-0 sm:divide-x sm:divide-x-reverse">
+                <RateMetric
+                  label="نرخ تعامل"
+                  value={rates?.interactionRate}
+                />
+                <RateMetric
+                  label="نرخ رشد خالص"
+                  value={rates?.netFollowerRate}
+                  signed
+                />
               </div>
             </div>
 
             <div className="mt-4">
               <h2 className="mb-3 text-sm font-bold text-foreground">مجموع بازه انتخابی</h2>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <MetricCard label="بازدید" value={formatNumber(data.summary.views)} helper="مجموع بازه انتخابی" icon={Eye} />
-                <MetricCard label="تعاملات" value={formatNumber(data.summary.totalInteractions)} helper="مجموع بازه انتخابی" icon={BarChart3} />
+                <MetricCard
+                  label="بازدید"
+                  value={formatNumber(data.summary.views)}
+                  helper="مجموع بازه انتخابی"
+                  icon={Eye}
+                />
+                <MetricCard
+                  label="تعاملات"
+                  value={formatNumber(data.summary.totalInteractions)}
+                  helper="مجموع بازه انتخابی"
+                  icon={BarChart3}
+                />
                 <MetricCard
                   label="فالو"
                   value={formatNumber(data.summary.follows)}
@@ -703,6 +734,5 @@ export default function InstagramInsights({
         )}
       </div>
     </section>
-  )
-
+  );
 }
