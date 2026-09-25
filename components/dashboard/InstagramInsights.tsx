@@ -426,7 +426,7 @@ export default function InstagramInsights({
           <div className="flex min-w-0 flex-wrap items-center gap-2">
             <div className="flex max-w-full overflow-hidden rounded-xl border border-border bg-muted p-1">
               {[7, 30, 90].map((days) => (
-                <button
+                <Button
                   key={days}
                   type="button"
                   onClick={() => selectPreset(days as 7 | 30 | 90)}
@@ -438,13 +438,13 @@ export default function InstagramInsights({
                   ].join(" ")}
                 >
                   {days} روز
-                </button>
+                </Button>
               ))}
             </div>
 
             <div className="relative shrink-0">
               <div className="flex items-center gap-2">
-                <button
+                <Button
                   type="button"
                   onClick={() => openCalendar("from")}
                   className="inline-flex h-10 min-w-[112px] items-center justify-center rounded-xl border border-border bg-white px-3 text-[10px] font-semibold text-foreground transition hover:bg-muted"
@@ -452,11 +452,11 @@ export default function InstagramInsights({
                   aria-haspopup="dialog"
                 >
                   {range.from ? formatJalaliDate(range.from) : "تاریخ شروع"}
-                </button>
+                </Button>
 
                 <span className="text-[10px] font-medium text-muted-foreground">تا</span>
 
-                <button
+                <Button
                   type="button"
                   onClick={() => openCalendar("to")}
                   className="inline-flex h-10 min-w-[112px] items-center justify-center rounded-xl border border-border bg-white px-3 text-[10px] font-semibold text-foreground transition hover:bg-muted"
@@ -464,7 +464,7 @@ export default function InstagramInsights({
                   aria-haspopup="dialog"
                 >
                   {range.to ? formatJalaliDate(range.to) : "تاریخ پایان"}
-                </button>
+                </Button>
               </div>
 
               {calendarOpen && (
@@ -529,7 +529,7 @@ export default function InstagramInsights({
         <div className="min-w-0 p-4 sm:p-5 lg:p-6">
           <div className="mb-4 flex min-w-0 flex-wrap items-center justify-between gap-2">
 
-            <button
+            <Button
               type="button"
               onClick={() =>
                 void (async () => {
@@ -550,7 +550,7 @@ export default function InstagramInsights({
             >
               <RefreshCw size={13} />
               بروزرسانی
-            </button>
+            </Button>
           </div>
 
           <div className="grid min-w-0 grid-cols-2 gap-3 md:grid-cols-4">
@@ -602,7 +602,7 @@ export default function InstagramInsights({
                         "unfollows",
                       ] as Metric[]
                     ).map((value) => (
-                      <button
+                      <Button
                         key={value}
                         type="button"
                         title={metricDescriptions[value]}
@@ -615,7 +615,7 @@ export default function InstagramInsights({
                         ].join(" ")}
                       >
                         {metricLabels[value]}
-                      </button>
+                      </Button>
                     ))}
                   </div>
                 </div>
