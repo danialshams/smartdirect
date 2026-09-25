@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from "react";
 
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+
 import AutomationManager from "./AutomationManager";
 import IceBreakerManager from "./IceBreakerManager";
 import InstagramInbox from "./InstagramInbox";
@@ -67,17 +70,23 @@ export default function DashboardAccountsClient({
 
   if (loading) {
     return (
-      <div className="rounded-2xl border border-slate-200 bg-white px-5 py-16 text-center text-sm text-slate-400">
-        در حال دریافت اطلاعات پیج...
-      </div>
+      <Card>
+        <CardContent className="space-y-3 p-6">
+          <Skeleton className="mx-auto h-5 w-40" />
+          <Skeleton className="mx-auto h-4 w-64 max-w-full" />
+          <Skeleton className="mx-auto h-4 w-52 max-w-full" />
+        </CardContent>
+      </Card>
     );
   }
 
   if (error) {
     return (
-      <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-        {error}
-      </div>
+      <Card className="border-destructive/30 bg-destructive/5">
+        <CardContent className="p-4 text-sm text-destructive">
+          {error}
+        </CardContent>
+      </Card>
     );
   }
 
