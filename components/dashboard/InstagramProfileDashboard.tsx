@@ -59,15 +59,20 @@ export default function InstagramProfileDashboard({
   onProfileLoaded?: (name: string | null) => void;
 }) {
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(Boolean(accountId));
   const [error, setError] = useState("");
   const [visible, setVisible] = useState(false);
 
   const loadProfile = useCallback(async () => {
-    if (!accountId) return;
+    if (!accountId) {
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       setError("");
+      setProfile(null);
       setVisible(false);
 
       const response = await fetch(
@@ -102,29 +107,37 @@ export default function InstagramProfileDashboard({
   if (!accountId) return null;
 
   return (
-    <main className="flex flex-col items-center">
-      {error && (
-        <div className="mb-5 w-full rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs leading-6 text-red-700">
-          {error}
+    <main className="relative min-h-[calc(100dvh-5rem)] w-full">
+      {loading ? (
+        <div className="flex min-h-[calc(100dvh-5rem)] w-full flex-col items-center px-4 pt-8 sm:pt-10 md:pt-12">
+          <Skeleton className="h-5 w-36 self-start rounded-md sm:self-end" />
+          <div className="mt-[12vh] flex w-full flex-col items-center md:mt-[14vh] lg:mt-[16vh]">
+            <Skeleton className="h-28 w-28 rounded-full sm:h-32 sm:w-32 md:h-36 md:w-36 lg:h-40 lg:w-40" />
+            <Skeleton className="mt-5 h-5 w-32 rounded-md" />
+          </div>
+          <div className="mt-[18vh] grid w-full max-w-xl grid-cols-3 md:mt-[20vh] lg:mt-[22vh]">
+            <Skeleton className="mx-auto h-10 w-14" />
+            <Skeleton className="mx-auto h-10 w-14" />
+            <Skeleton className="mx-auto h-10 w-14" />
+          </div>
         </div>
-      )}
-
-      {loading && !profile ? (
-        <div className="flex w-full flex-col items-center gap-4 py-10">
-          <Skeleton className="h-[124px] w-[124px] rounded-full" />
-          <Skeleton className="h-5 w-32" />
+      ) : error ? (
+        <div className="flex min-h-[calc(100dvh-5rem)] w-full items-start justify-center px-4 pt-10">
+          <div className="w-full max-w-lg rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-center text-xs leading-6 text-red-700">
+            {error}
+          </div>
         </div>
       ) : profile ? (
-        <div className="flex w-full flex-col items-center">
+        <div className="relative flex min-h-[calc(100dvh-5rem)] w-full flex-col items-center px-4 pt-7 sm:px-6 sm:pt-9 md:px-8 md:pt-10 lg:px-10 lg:pt-12">
           <Reveal visible={visible} delay={0} className="w-full text-right">
-            <h1 className="text-xl font-medium tracking-tight text-foreground sm:text-2xl">
+            <h1 className="text-xl font-medium tracking-tight text-foreground sm:text-2xl md:text-[26px]">
               سلام، {greetingName}
             </h1>
           </Reveal>
 
           <div className="flex w-full flex-col items-center">
             <Reveal visible={visible} delay={180}>
-              <div className="mt-10 h-[128px] w-[128px] overflow-hidden rounded-full border border-border bg-muted sm:h-[150px] sm:w-[150px]">
+              <div className="mt-[12vh] h-28 w-28 overflow-hidden rounded-full border border-border bg-muted sm:mt-[14vh] sm:h-32 sm:w-32 md:mt-[15vh] md:h-36 md:w-36 lg:mt-[16vh] lg:h-40 lg:w-40">
                 {profile.profilePictureUrl ? (
                   <img
                     src={profile.profilePictureUrl}
@@ -140,13 +153,13 @@ export default function InstagramProfileDashboard({
             </Reveal>
 
             <Reveal visible={visible} delay={340} className="text-center">
-              <p dir="ltr" className="mt-5 text-sm font-medium text-muted-foreground">
+              <p dir="ltr" className="mt-5 text-sm font-medium text-muted-foreground md:text-[15px]">
                 @{profile.username}
               </p>
             </Reveal>
           </div>
 
-          <div className="mt-[min(28vh,260px)] grid w-full max-w-xl grid-cols-3 sm:mt-[min(30vh,280px)]">
+          <div className="mt-[18vh] grid w-full max-w-xl grid-cols-3 sm:mt-[19vh] md:mt-[20vh] lg:mt-[22vh]">
             <Reveal visible={visible} delay={520}>
               <AnimatedProfileStat
                 label="فالووینگ"
@@ -173,11 +186,7 @@ export default function InstagramProfileDashboard({
             </Reveal>
           </div>
         </div>
-      ) : (
-        <div className="py-10 text-center text-sm text-muted-foreground">
-          اطلاعات پروفایل در دسترس نیست.
-        </div>
-      )}
+      ) : null}
     </main>
   );
 }
@@ -222,10 +231,12 @@ function AnimatedProfileStat({
 
   return (
     <div className="flex min-w-0 flex-col items-center justify-center text-center">
-      <p className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
+      <p className="text-base font-semibold tracking-tight text-foreground sm:text-lg md:text-xl">
         {value == null ? "—" : formatNumber(displayValue)}
       </p>
-      <p className="mt-1 text-[11px] text-muted-foreground sm:text-xs">{label}</p>
+      <p className="mt-1 text-[11px] text-muted-foreground sm:text-xs md:text-sm">
+        {label}
+      </p>
     </div>
   );
 }
