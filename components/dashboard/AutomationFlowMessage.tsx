@@ -1,4 +1,5 @@
 "use client";
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select } from "@/components/ui/select"
@@ -141,9 +142,9 @@ export default function AutomationFlowMessage({
           <p className="mt-1 text-[11px] text-muted-foreground">{getMessageTypeLabel(message.messageType)}</p>
         </div>
         <div className="flex items-center gap-1">
-          <button type="button" disabled={index === 0} onClick={onMoveUp} className="rounded-lg p-2 text-muted-foreground hover:bg-muted disabled:opacity-30" aria-label="جابجایی به بالا"><ArrowUp size={16} /></button>
-          <button type="button" disabled={index === total - 1} onClick={onMoveDown} className="rounded-lg p-2 text-muted-foreground hover:bg-muted disabled:opacity-30" aria-label="جابجایی به پایین"><ArrowDown size={16} /></button>
-          <button type="button" disabled={total === 1} onClick={onRemove} className="rounded-lg p-2 text-muted-foreground hover:bg-red-50 hover:text-red-600 disabled:opacity-30" aria-label="حذف پیام"><Trash2 size={16} /></button>
+          <Button type="button" disabled={index === 0} onClick={onMoveUp} className="rounded-lg p-2 text-muted-foreground hover:bg-muted disabled:opacity-30" aria-label="جابجایی به بالا"><ArrowUp size={16} /></Button>
+          <Button type="button" disabled={index === total - 1} onClick={onMoveDown} className="rounded-lg p-2 text-muted-foreground hover:bg-muted disabled:opacity-30" aria-label="جابجایی به پایین"><ArrowDown size={16} /></Button>
+          <Button type="button" disabled={total === 1} onClick={onRemove} className="rounded-lg p-2 text-muted-foreground hover:bg-red-50 hover:text-red-600 disabled:opacity-30" aria-label="حذف پیام"><Trash2 size={16} /></Button>
         </div>
       </div>
 
@@ -189,11 +190,11 @@ export default function AutomationFlowMessage({
         <div className="space-y-3 rounded-xl border border-border bg-muted p-3">
           <div className="flex items-center justify-between gap-2">
             <div><p className="text-sm font-bold text-foreground">ویترین اسلایدی</p><p className="mt-1 text-[11px] text-muted-foreground">هر اسلاید فقط تصویر، نام و توضیح دارد و کاربر در Instagram آن را با دست ورق می‌زند.</p></div>
-            <button type="button" onClick={() => setShowcaseItems((current) => [...current, newShowcaseItem()])} className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-border bg-white px-3 py-2 text-xs font-semibold text-foreground"><Plus size={14} /> اسلاید</button>
+            <Button type="button" onClick={() => setShowcaseItems((current) => [...current, newShowcaseItem()])} className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-border bg-white px-3 py-2 text-xs font-semibold text-foreground"><Plus size={14} /> اسلاید</Button>
           </div>
           {showcaseItems.map((item, itemIndex) => (
             <div key={item.id} className="rounded-lg border bg-background p-3">
-              <div className="mb-3 flex items-center justify-between"><span className="text-xs font-bold text-muted-foreground">اسلاید {itemIndex + 1}</span>{showcaseItems.length > 1 && <button type="button" onClick={() => setShowcaseItems((current) => current.filter((entry) => entry.id !== item.id))} className="text-muted-foreground hover:text-red-600"><X size={15} /></button>}</div>
+              <div className="mb-3 flex items-center justify-between"><span className="text-xs font-bold text-muted-foreground">اسلاید {itemIndex + 1}</span>{showcaseItems.length > 1 && <Button type="button" onClick={() => setShowcaseItems((current) => current.filter((entry) => entry.id !== item.id))} className="text-muted-foreground hover:text-red-600"><X size={15} /></Button>}</div>
               <div className="grid gap-3 sm:grid-cols-[120px_1fr]">
                 <label className="flex min-h-[120px] cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-dashed border-border bg-muted">
                   {item.previewUrl ? <img src={item.previewUrl} alt="" className="h-full w-full object-cover" /> : <span className="flex flex-col items-center gap-2 text-[11px] text-muted-foreground"><ImagePlus size={24} />آپلود تصویر</span>}
@@ -211,25 +212,25 @@ export default function AutomationFlowMessage({
             <span className="font-bold">ویترین متصل شد:</span> {showcases.find((item) => item.id === message.showcaseId)?.title || "ویترین ساخته‌شده"}
             <span className="block text-[10px] text-emerald-700">شناسه ویترین: {message.showcaseId}</span>
           </div>}
-          <button type="button" disabled={showcaseSaving || loadingResources || Boolean(message.showcaseId)} onClick={() => void createShowcase()} className="w-full rounded-xl bg-primary px-4 py-3 text-xs font-semibold text-white disabled:opacity-50">{showcaseSaving ? "در حال ساخت ویترین..." : message.showcaseId ? "ویترین متصل است" : "ساخت و اتصال ویترین"}</button>
+          <Button type="button" disabled={showcaseSaving || loadingResources || Boolean(message.showcaseId)} onClick={() => void createShowcase()} className="w-full rounded-xl bg-primary px-4 py-3 text-xs font-semibold text-white disabled:opacity-50">{showcaseSaving ? "در حال ساخت ویترین..." : message.showcaseId ? "ویترین متصل است" : "ساخت و اتصال ویترین"}</Button>
         </div>
       )}
 
       {(message.quickReplies.length > 0 || isForm) && (
         <div className="space-y-3 rounded-xl border border-border bg-muted p-3">
-          <div className="flex items-center justify-between"><div><p className="text-xs font-bold text-foreground">{isForm ? "جواب‌های فرم" : "Quick Reply"}</p><p className="mt-1 text-[10px] text-muted-foreground">با انتخاب هر جواب، مسیر بعدی تعیین می‌شود.</p></div>{canAddReply && <button type="button" onClick={onAddQuickReply} className="inline-flex items-center gap-1 rounded-lg border border-border bg-white px-2.5 py-1.5 text-[11px] font-semibold text-foreground"><Plus size={13} /> افزودن جواب</button>}</div>
+          <div className="flex items-center justify-between"><div><p className="text-xs font-bold text-foreground">{isForm ? "جواب‌های فرم" : "Quick Reply"}</p><p className="mt-1 text-[10px] text-muted-foreground">با انتخاب هر جواب، مسیر بعدی تعیین می‌شود.</p></div>{canAddReply && <Button type="button" onClick={onAddQuickReply} className="inline-flex items-center gap-1 rounded-lg border border-border bg-white px-2.5 py-1.5 text-[11px] font-semibold text-foreground"><Plus size={13} /> افزودن جواب</Button>}</div>
           {message.quickReplies.map((quickReply, quickReplyIndex) => (
             <div key={quickReply.id} className="grid gap-2 sm:grid-cols-[1fr_1.4fr_auto]">
               <Input value={quickReply.title} onChange={(event) => onUpdateQuickReply(quickReply.id, { title: event.target.value })} placeholder={`جواب ${quickReplyIndex + 1}`} maxLength={20} className="rounded-lg border bg-background px-3 py-2.5 text-sm outline-none focus:border-ring" />
               <div className="relative"><Select value={quickReply.nextMessageId ?? ""} onChange={(event) => onUpdateQuickReply(quickReply.id, { nextMessageId: event.target.value || null })} className="w-full appearance-none rounded-lg border bg-background px-3 py-2.5 pl-8 text-xs outline-none focus:border-ring"><option value="">مقصد جواب را انتخاب کنید</option>{messageOptions.filter((option) => option.id !== message.id).map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}</Select><ChevronDown size={14} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" /></div>
-              <button type="button" onClick={() => onRemoveQuickReply(quickReply.id)} className="rounded-lg border bg-background px-3 text-muted-foreground hover:text-red-600" aria-label="حذف جواب"><Trash2 size={15} /></button>
+              <Button type="button" onClick={() => onRemoveQuickReply(quickReply.id)} className="rounded-lg border bg-background px-3 text-muted-foreground hover:text-red-600" aria-label="حذف جواب"><Trash2 size={15} /></Button>
             </div>
           ))}
-          {isForm && message.quickReplies.length === 0 && <button type="button" onClick={onAddQuickReply} className="w-full rounded-xl border border-dashed border-border px-3 py-3 text-xs font-semibold text-muted-foreground hover:bg-white">+ اولین جواب فرم را اضافه کنید</button>}
+          {isForm && message.quickReplies.length === 0 && <Button type="button" onClick={onAddQuickReply} className="w-full rounded-xl border border-dashed border-border px-3 py-3 text-xs font-semibold text-muted-foreground hover:bg-white">+ اولین جواب فرم را اضافه کنید</Button>}
         </div>
       )}
 
-      {message.messageType !== "FORM" && message.quickReplies.length === 0 && <button type="button" disabled={!canAddReply} onClick={onAddQuickReply} className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground disabled:opacity-40"><Plus size={14} /> افزودن Quick Reply</button>}
+      {message.messageType !== "FORM" && message.quickReplies.length === 0 && <Button type="button" disabled={!canAddReply} onClick={onAddQuickReply} className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground disabled:opacity-40"><Plus size={14} /> افزودن Quick Reply</Button>}
     </div>
   );
 }
