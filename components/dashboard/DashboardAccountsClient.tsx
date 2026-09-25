@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -97,7 +97,19 @@ export default function DashboardAccountsClient({
       return null;
     }
 
-    return <InstagramProfileDashboard accountId={activeAccount.id} />;
+    const [profileName, setProfileName] = useState("");
+
+    const handleProfileLoaded = useCallback((name: string | null) => {
+      setProfileName(name || "");
+    }, []);
+
+    return (
+      <InstagramProfileDashboard
+        accountId={activeAccount.id}
+        greetingName={profileName || activeAccount.igUsername}
+        onProfileLoaded={handleProfileLoaded}
+      />
+    );
   }
 
   if (mode === "inbox") {
