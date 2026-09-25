@@ -1,4 +1,5 @@
 "use client";
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select } from "@/components/ui/select"
 
@@ -595,7 +596,7 @@ export default function PersistentMenuManager({
                             </p>
                         </div>
 
-                        <button
+                        <Button
                             type="button"
                             onClick={() =>
                                 setEnabled(
@@ -621,7 +622,7 @@ export default function PersistentMenuManager({
                                         : "right-6",
                                 ].join(" ")}
                             />
-                        </button>
+                        </Button>
                     </div>
 
                     {/* ------------------------------------------------- */}
@@ -665,7 +666,7 @@ export default function PersistentMenuManager({
                                 اختصاصی آن را بسازید.
                             </p>
 
-                            <button
+                            <Button
                                 type="button"
                                 onClick={
                                     addItem
@@ -676,7 +677,7 @@ export default function PersistentMenuManager({
                                     size={16}
                                 />
                                 افزودن گزینه
-                            </button>
+                            </Button>
                         </div>
                     ) : (
                         <div className="space-y-5">
@@ -736,7 +737,7 @@ export default function PersistentMenuManager({
                                                 />
                                             </div>
 
-                                            <button
+                                            <Button
                                                 type="button"
                                                 onClick={() =>
                                                     removeItem(
@@ -751,7 +752,7 @@ export default function PersistentMenuManager({
                                                         17
                                                     }
                                                 />
-                                            </button>
+                                            </Button>
                                         </div>
 
                                         {/* Inline Flow Builder */}
@@ -785,7 +786,7 @@ export default function PersistentMenuManager({
 
                     {items.length > 0 && (
                         <div className="mt-5 flex flex-col gap-3 border-t border-border pt-5 sm:flex-row">
-                            <button
+                            <Button
                                 type="button"
                                 onClick={
                                     addItem
@@ -800,9 +801,9 @@ export default function PersistentMenuManager({
                                     size={16}
                                 />
                                 افزودن گزینه
-                            </button>
+                            </Button>
 
-                            <button
+                            <Button
                                 type="button"
                                 onClick={
                                     handleDisable
@@ -813,9 +814,9 @@ export default function PersistentMenuManager({
                                 className="inline-flex items-center justify-center gap-2 rounded-xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground transition hover:bg-muted disabled:opacity-50"
                             >
                                 غیرفعال کردن
-                            </button>
+                            </Button>
 
-                            <button
+                            <Button
                                 type="button"
                                 onClick={
                                     handleSave
@@ -841,7 +842,7 @@ export default function PersistentMenuManager({
                                 )}
 
                                 ذخیره منو
-                            </button>
+                            </Button>
                         </div>
                     )}
 
