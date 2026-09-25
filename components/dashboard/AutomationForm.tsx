@@ -1,4 +1,5 @@
 
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 "use client";
@@ -1482,7 +1483,7 @@ export default function AutomationForm({
                         </p>
                     </div>
 
-                    <button
+                    <Button
                         type="button"
                         onClick={
                             onClose
@@ -1494,7 +1495,7 @@ export default function AutomationForm({
                         aria-label="بستن"
                     >
                         <X size={19} />
-                    </button>
+                    </Button>
                 </div>
 
                 <form
@@ -1598,7 +1599,7 @@ export default function AutomationForm({
                                                     item.id;
 
                                                 return (
-                                                    <button
+                                                    <Button
                                                         key={
                                                             item.id
                                                         }
@@ -1644,7 +1645,7 @@ export default function AutomationForm({
                                                                     "بدون کپشن"}
                                                             </p>
                                                         </div>
-                                                    </button>
+                                                    </Button>
                                                 );
                                             }
                                         )}
@@ -1746,7 +1747,7 @@ export default function AutomationForm({
                                                         story.thumbnailUrl;
 
                                                 return (
-                                                    <button
+                                                    <Button
                                                         key={
                                                             story.id
                                                         }
@@ -1807,7 +1808,7 @@ export default function AutomationForm({
                                                                 )}
                                                             </p>
                                                         </div>
-                                                    </button>
+                                                    </Button>
                                                 );
                                             }
                                         )}
@@ -1829,7 +1830,7 @@ export default function AutomationForm({
                                             </p>
                                         </div>
 
-                                        <button
+                                        <Button
                                             type="button"
                                             onClick={() =>
                                                 setMediaId(
@@ -1839,7 +1840,7 @@ export default function AutomationForm({
                                             className="shrink-0 text-xs text-muted-foreground transition hover:text-foreground"
                                         >
                                             حذف انتخاب
-                                        </button>
+                                        </Button>
                                     </div>
                                 )}
 
@@ -2168,7 +2169,7 @@ export default function AutomationForm({
                                 )}
                             </div>
 
-                            <button
+                            <Button
                                 type="button"
                                 onClick={
                                     addMessage
@@ -2182,7 +2183,7 @@ export default function AutomationForm({
                                 />
 
                                 افزودن پیام
-                            </button>
+                            </Button>
                         </div>
 
                         {loadingMessages ? (
@@ -2215,7 +2216,7 @@ export default function AutomationForm({
                                     برای پاسخ چندمرحله‌ای، پیام اول را بسازید و سپس پیام‌های بعدی و Quick Replyها را اضافه کنید.
                                 </p>
 
-                                <button
+                                <Button
                                     type="button"
                                     onClick={
                                         addMessage
@@ -2229,7 +2230,7 @@ export default function AutomationForm({
                                     />
 
                                     ساخت پیام اول
-                                </button>
+                                </Button>
                             </div>
                         ) : (
                             <div className="mt-5 space-y-4">
@@ -2318,7 +2319,7 @@ export default function AutomationForm({
                                     )
                                 )}
 
-                                <button
+                                <Button
                                     type="button"
                                     onClick={
                                         addMessage
@@ -2332,7 +2333,7 @@ export default function AutomationForm({
                                     />
 
                                     افزودن پیام بعدی
-                                </button>
+                                </Button>
                             </div>
                         )}
                     </section>
@@ -2372,7 +2373,7 @@ export default function AutomationForm({
                     {/* Footer */}
 
                     <div className="flex flex-col-reverse gap-3 border-t border-border pt-5 sm:flex-row sm:justify-end">
-                        <button
+                        <Button
                             type="button"
                             onClick={
                                 onClose
@@ -2383,9 +2384,9 @@ export default function AutomationForm({
                             className="rounded-xl border border-border px-5 py-3 text-sm text-foreground transition hover:bg-muted disabled:opacity-50"
                         >
                             انصراف
-                        </button>
+                        </Button>
 
-                        <button
+                        <Button
                             type="submit"
                             disabled={
                                 saving
@@ -2406,7 +2407,7 @@ export default function AutomationForm({
                                 : isEditing
                                     ? "ذخیره تغییرات"
                                     : "ساخت Automation"}
-                        </button>
+                        </Button>
                     </div>
                 </form>
             </div>
@@ -2448,11 +2449,11 @@ function KeywordInput({
                 {keywords.map((item) => (
                     <span key={item} className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1.5 text-xs font-medium text-foreground">
                         {item}
-                        <button type="button" onClick={() => removeKeyword(item)} className="text-muted-foreground transition hover:text-foreground" aria-label={`حذف ${item}`}><X size={13} /></button>
+                        <Button type="button" onClick={() => removeKeyword(item)} className="text-muted-foreground transition hover:text-foreground" aria-label={`حذف ${item}`}><X size={13} /></Button>
                     </span>
                 ))}
                 <Input value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === "," || event.key === "،") { event.preventDefault(); addKeyword(); } }} onBlur={addKeyword} placeholder={keywords.length ? "کلمه بعدی..." : "مثلاً 1 یا یک"} className="min-w-[140px] flex-1 border-0 bg-transparent px-1 py-1 text-sm outline-none" />
-                <button type="button" onClick={addKeyword} className="shrink-0 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition hover:bg-muted">افزودن کلمه</button>
+                <Button type="button" onClick={addKeyword} className="shrink-0 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition hover:bg-muted">افزودن کلمه</Button>
             </div>
             <p className="mt-2 text-xs leading-5 text-muted-foreground">{description} چند کلمه را با Enter یا «افزودن کلمه» اضافه کنید.</p>
         </div>
@@ -2535,7 +2536,7 @@ function TriggerOption({
     onClick: () => void;
 }) {
     return (
-        <button
+        <Button
             type="button"
             onClick={
                 onClick
@@ -2569,7 +2570,7 @@ function TriggerOption({
                     description
                 }
             </div>
-        </button>
+        </Button>
     );
 }
 
