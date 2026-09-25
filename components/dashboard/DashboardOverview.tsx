@@ -40,10 +40,7 @@ export default function DashboardOverview({
 
   if (!connectedAccounts.length) {
     return (
-      <main
-        dir="rtl"
-        className="flex min-h-screen items-center justify-center bg-white px-5"
-      >
+      <main dir="rtl" className="flex min-h-screen items-center justify-center bg-white px-5">
         <a
           href="/api/instagram/connect"
           className="inline-flex h-11 items-center justify-center rounded-lg bg-foreground px-6 text-sm font-semibold text-background"
@@ -72,15 +69,10 @@ export default function DashboardOverview({
         </div>
       )}
 
-      <header className="flex min-h-[60px] items-center border-b border-border pb-4">
-        <h1 className="text-xl font-medium tracking-tight text-foreground sm:text-2xl">
-          سلام، {profileName || activeAccount.igUsername}
-        </h1>
-      </header>
-
       <InstagramProfileDashboard
         accountId={accountId}
         onProfileLoaded={handleProfileLoaded}
+        greetingName={profileName || activeAccount.igUsername}
       />
     </div>
   );
