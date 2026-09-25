@@ -182,6 +182,7 @@ function MetricCard({
   value,
   helper,
   icon: Icon,
+  iconPosition,
 }: {
   label: string;
   value: number | null | undefined;
