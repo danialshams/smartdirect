@@ -187,9 +187,12 @@ function MetricCard({
   value: number | null | undefined;
   helper: string;
   icon: typeof BarChart3;
+  iconPosition?: "outer" | "inner";
 }) {
+  const iconPositionClass = iconPosition === "inner" ? "right-0" : "right-5 sm:right-8";
+
   return (
-    <div className="relative flex min-h-[112px] min-w-0 items-center justify-center px-12 py-5 text-center sm:min-h-[124px]">
+    <div className="relative flex min-h-[116px] min-w-0 items-center justify-center px-12 py-5 text-center">
       <div className="flex flex-col items-center justify-center">
         <p className="text-lg font-bold leading-none tracking-tight sm:text-xl">
           <AnimatedNumber value={value} />
@@ -199,7 +202,7 @@ function MetricCard({
           <p className="mt-2 text-[9px] leading-4 text-muted-foreground">{helper}</p>
         )}
       </div>
-      <span className="absolute right-5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center text-muted-foreground sm:right-8">
+      <span className={`absolute ${iconPositionClass} top-[calc(50%+2px)] flex h-5 w-5 -translate-y-1/2 items-center justify-center text-muted-foreground`}>
         <Icon size={17} strokeWidth={1.8} />
       </span>
     </div>
@@ -216,12 +219,14 @@ function RateMetric({
   value: number | null | undefined;
   signed?: boolean;
   icon: typeof BarChart3;
+  iconPosition?: "outer" | "inner";
 }) {
   const positive = value != null && value > 0;
   const negative = value != null && value < 0;
+  const iconPositionClass = iconPosition === "inner" ? "right-0" : "right-5 sm:right-8";
 
   return (
-    <div className="relative flex min-h-[96px] min-w-0 items-center justify-center px-12 py-4 text-center sm:min-h-[108px]">
+    <div className="relative flex min-h-[116px] min-w-0 items-center justify-center px-12 py-4 text-center">
       <div className="flex flex-col items-center justify-center">
         <p
           className={[
@@ -239,7 +244,7 @@ function RateMetric({
         </p>
         <p className="mt-3 text-xs font-medium leading-none text-foreground">{label}</p>
       </div>
-      <span className="absolute right-5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center text-muted-foreground sm:right-8">
+      <span className={`absolute ${iconPositionClass} top-[calc(50%+2px)] flex h-5 w-5 -translate-y-1/2 items-center justify-center text-muted-foreground`}>
         <Icon size={17} strokeWidth={1.8} />
       </span>
     </div>
@@ -735,17 +740,19 @@ export default function InstagramInsights({
               <div className="pointer-events-none absolute inset-x-5 top-1/3 h-px -translate-y-1/2 bg-border sm:inset-x-8" />
               <div className="pointer-events-none absolute inset-x-5 top-2/3 h-px -translate-y-1/2 bg-border sm:inset-x-8" />
 
-              <div className="grid grid-cols-2">
+              <div className="grid grid-cols-2 grid-rows-3">
                 <RateMetric
                   label="نرخ تعامل"
                   value={rates?.interactionRate}
                   icon={BarChart3}
+                  iconPosition="outer"
                 />
                 <RateMetric
                   label="نرخ رشد خالص"
                   value={rates?.netFollowerRate}
                   signed
                   icon={UserPlus}
+                  iconPosition="inner"
                 />
 
                 <MetricCard
