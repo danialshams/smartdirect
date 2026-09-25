@@ -13,7 +13,7 @@ export default function DashboardShell({user,instagramAccounts,instagramStatus,c
  const hasConnectedAccount=instagramAccounts.some(account=>account.isConnected)
  if(!hasConnectedAccount) return <main dir="rtl" className="flex min-h-screen items-center justify-center bg-background px-5"><Button asChild size="lg"><a href="/api/instagram/connect">اتصال پیج</a></Button></main>
  return <SidebarProvider defaultOpen>
-   <DashboardSidebar open onClose={()=>undefined}/>
+   <DashboardSidebar onClose={()=>undefined}/>
    <div className="min-w-0 flex-1 lg:mr-64">
      <DashboardMobileHeader/>
      <main className="min-h-screen bg-background px-3 py-4 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
