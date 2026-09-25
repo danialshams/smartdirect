@@ -89,22 +89,22 @@ function publishStatus(value: string) {
 
 function Stat({ title, value, description, icon: Icon }: { title: string; value: string; description: string; icon: typeof Activity }) {
     return (
-        <div className="rounded-[22px] border border-slate-200/80 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.03)]">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
+        <div className="rounded-xl border bg-card p-5 shadow-sm">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted text-foreground">
                 <Icon size={18} strokeWidth={1.8} />
             </div>
-            <p className="mt-5 text-2xl font-bold tracking-tight text-slate-950">{value}</p>
-            <p className="mt-1 text-sm font-medium text-slate-700">{title}</p>
-            <p className="mt-1 text-xs text-slate-400">{description}</p>
+            <p className="mt-5 text-2xl font-bold tracking-tight text-foreground">{value}</p>
+            <p className="mt-1 text-sm font-medium text-foreground">{title}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{description}</p>
         </div>
     );
 }
 
 function StatusRow({ label, value, tone = "neutral" }: { label: string; value: string; tone?: "success" | "warning" | "neutral" }) {
-    const toneClass = tone === "success" ? "text-emerald-700" : tone === "warning" ? "text-amber-700" : "text-slate-700";
+    const toneClass = tone === "success" ? "text-emerald-700" : tone === "warning" ? "text-amber-700" : "text-foreground";
     return (
-        <div className="flex items-center justify-between gap-4 border-b border-slate-100 py-3 last:border-b-0">
-            <span className="text-sm text-slate-500">{label}</span>
+        <div className="flex items-center justify-between gap-4 border-b border-border/60 py-3 last:border-b-0">
+            <span className="text-sm text-muted-foreground">{label}</span>
             <span className={`text-sm font-semibold ${toneClass}`}>{value}</span>
         </div>
     );
@@ -149,12 +149,12 @@ export default function InstagramBusinessDashboard({ accounts }: { accounts: Acc
         <section id="business-dashboard" dir="rtl" className="scroll-mt-24 space-y-5">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div>
-                    <div className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.18em] text-slate-400">
+                    <div className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.18em] text-muted-foreground">
                         <Workflow size={14} />
                         BUSINESS CONTROL CENTER
                     </div>
-                    <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">داشبورد مدیریتی پیج</h2>
-                    <p className="mt-1.5 max-w-2xl text-sm leading-6 text-slate-500">
+                    <h2 className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">داشبورد مدیریتی پیج</h2>
+                    <p className="mt-1.5 max-w-2xl text-sm leading-6 text-muted-foreground">
                         وضعیت عملیاتی اتوماسیون، پیام‌رسانی، انتشار و ابزارهای فعال این پیج را یکجا ببینید؛ بدون تکرار آمار بخش Insights و Profile.
                     </p>
                 </div>
@@ -163,7 +163,7 @@ export default function InstagramBusinessDashboard({ accounts }: { accounts: Acc
                     <select
                         value={accountId}
                         onChange={(event) => setAccountId(event.target.value)}
-                        className="min-w-[190px] rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 outline-none"
+                        className="min-w-[190px] rounded-lg border bg-background px-3 py-2.5 text-sm font-medium text-foreground outline-none"
                         aria-label="انتخاب پیج Instagram"
                     >
                         {accounts.map((account) => (
@@ -172,7 +172,7 @@ export default function InstagramBusinessDashboard({ accounts }: { accounts: Acc
                             </option>
                         ))}
                     </select>
-                    <button type="button" onClick={() => void load()} disabled={loading || !accountId} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 disabled:opacity-50">
+                    <button type="button" onClick={() => void load()} disabled={loading || !accountId} className="inline-flex items-center gap-2 rounded-lg border bg-background px-4 py-2.5 text-sm font-medium text-muted-foreground transition hover:bg-muted disabled:opacity-50">
                         <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
                         بروزرسانی
                     </button>
@@ -187,27 +187,27 @@ export default function InstagramBusinessDashboard({ accounts }: { accounts: Acc
             )}
 
             {loading && !data ? (
-                <div className="rounded-[26px] border border-slate-200 bg-white px-6 py-20 text-center text-sm text-slate-400">در حال دریافت وضعیت مدیریتی پیج...</div>
+                <div className="rounded-xl border bg-card px-6 py-20 text-center text-sm text-muted-foreground">در حال دریافت وضعیت مدیریتی پیج...</div>
             ) : data ? (
                 <>
-                    <div className="rounded-[26px] border border-slate-200 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.03)] sm:p-6">
+                    <div className="rounded-xl border bg-card p-5 shadow-[0_8px_30px_rgba(15,23,42,0.03)] sm:p-6">
                         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
                             <div className="flex items-center gap-4">
                                 <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-950 text-sm font-bold text-white">IG</div>
                                 <div>
                                     <div className="flex flex-wrap items-center gap-2">
-                                        <h3 className="text-lg font-bold text-slate-950">@{data.account.username}</h3>
+                                        <h3 className="text-lg font-bold text-foreground">@{data.account.username}</h3>
                                         <span className={`rounded-full px-2.5 py-1 text-[10px] font-medium ${data.account.isConnected ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>
                                             {data.account.isConnected ? "اتصال فعال" : "نیاز به اتصال مجدد"}
                                         </span>
                                     </div>
-                                    <p className="mt-1 text-xs text-slate-400">Instagram ID: {data.account.igUserId}</p>
+                                    <p className="mt-1 text-xs text-muted-foreground">Instagram ID: {data.account.igUserId}</p>
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-xs sm:grid-cols-3">
-                                <div><p className="text-slate-400">اتوماسیون فعال</p><p className="mt-1 font-bold text-slate-800">{number(data.operations.automations.active)}</p></div>
-                                <div><p className="text-slate-400">گفتگوهای ثبت‌شده</p><p className="mt-1 font-bold text-slate-800">{number(data.operations.messaging.conversations)}</p></div>
-                                <div><p className="text-slate-400">انتشار زمان‌بندی‌شده</p><p className="mt-1 font-bold text-slate-800">{number(data.operations.publishing.scheduled)}</p></div>
+                                <div><p className="text-muted-foreground">اتوماسیون فعال</p><p className="mt-1 font-bold text-foreground">{number(data.operations.automations.active)}</p></div>
+                                <div><p className="text-muted-foreground">گفتگوهای ثبت‌شده</p><p className="mt-1 font-bold text-foreground">{number(data.operations.messaging.conversations)}</p></div>
+                                <div><p className="text-muted-foreground">انتشار زمان‌بندی‌شده</p><p className="mt-1 font-bold text-foreground">{number(data.operations.publishing.scheduled)}</p></div>
                             </div>
                         </div>
                     </div>
@@ -220,8 +220,8 @@ export default function InstagramBusinessDashboard({ accounts }: { accounts: Acc
                     </div>
 
                     <div className="grid gap-5 xl:grid-cols-3">
-                        <div className="rounded-[24px] border border-slate-200 bg-white p-5 sm:p-6">
-                            <div className="flex items-center gap-3"><Activity size={18} className="text-slate-500" /><h3 className="font-bold text-slate-900">سلامت عملیات</h3></div>
+                        <div className="rounded-xl border bg-card p-5 shadow-sm sm:p-6">
+                            <div className="flex items-center gap-3"><Activity size={18} className="text-muted-foreground" /><h3 className="font-bold text-foreground">سلامت عملیات</h3></div>
                             <div className="mt-4">
                                 <StatusRow label="اتصال Instagram" value={data.account.isConnected ? "فعال" : "قطع"} tone={data.account.isConnected ? "success" : "warning"} />
                                 <StatusRow label="اتوماسیون فعال" value={number(data.operations.automations.active)} tone={data.operations.automations.active ? "success" : "neutral"} />
@@ -230,56 +230,56 @@ export default function InstagramBusinessDashboard({ accounts }: { accounts: Acc
                             </div>
                         </div>
 
-                        <div className="rounded-[24px] border border-slate-200 bg-white p-5 sm:p-6">
-                            <div className="flex items-center gap-3"><MessageCircle size={18} className="text-slate-500" /><h3 className="font-bold text-slate-900">پیام‌رسانی</h3></div>
+                        <div className="rounded-xl border bg-card p-5 shadow-sm sm:p-6">
+                            <div className="flex items-center gap-3"><MessageCircle size={18} className="text-muted-foreground" /><h3 className="font-bold text-foreground">پیام‌رسانی</h3></div>
                             <div className="mt-4 space-y-3">
-                                <div className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3"><span className="text-xs text-slate-500">پیام ورودی</span><span className="font-bold text-slate-900">{number(data.operations.messaging.inboundMessages)}</span></div>
-                                <div className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3"><span className="text-xs text-slate-500">پیام خروجی</span><span className="font-bold text-slate-900">{number(data.operations.messaging.outboundMessages)}</span></div>
-                                <div className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3"><span className="text-xs text-slate-500">گفتگوهای فعال</span><span className="font-bold text-slate-900">{number(data.latest.conversations.filter((item) => item.isActive).length)}</span></div>
+                                <div className="flex items-center justify-between rounded-xl bg-muted px-4 py-3"><span className="text-xs text-muted-foreground">پیام ورودی</span><span className="font-bold text-foreground">{number(data.operations.messaging.inboundMessages)}</span></div>
+                                <div className="flex items-center justify-between rounded-xl bg-muted px-4 py-3"><span className="text-xs text-muted-foreground">پیام خروجی</span><span className="font-bold text-foreground">{number(data.operations.messaging.outboundMessages)}</span></div>
+                                <div className="flex items-center justify-between rounded-xl bg-muted px-4 py-3"><span className="text-xs text-muted-foreground">گفتگوهای فعال</span><span className="font-bold text-foreground">{number(data.latest.conversations.filter((item) => item.isActive).length)}</span></div>
                             </div>
                         </div>
 
-                        <div className="rounded-[24px] border border-slate-200 bg-white p-5 sm:p-6">
-                            <div className="flex items-center gap-3"><CalendarClock size={18} className="text-slate-500" /><h3 className="font-bold text-slate-900">انتشار محتوا</h3></div>
+                        <div className="rounded-xl border bg-card p-5 shadow-sm sm:p-6">
+                            <div className="flex items-center gap-3"><CalendarClock size={18} className="text-muted-foreground" /><h3 className="font-bold text-foreground">انتشار محتوا</h3></div>
                             <div className="mt-4 space-y-3">
-                                <div className="flex items-center justify-between"><span className="text-sm text-slate-500">کل Jobها</span><span className="font-bold text-slate-900">{number(data.operations.publishing.total)}</span></div>
-                                <div className="flex items-center justify-between"><span className="text-sm text-slate-500">زمان‌بندی‌شده</span><span className="font-bold text-slate-900">{number(data.operations.publishing.scheduled)}</span></div>
-                                <div className="flex items-center justify-between"><span className="text-sm text-slate-500">ناموفق</span><span className={`font-bold ${data.operations.publishing.failed ? "text-amber-700" : "text-emerald-700"}`}>{number(data.operations.publishing.failed)}</span></div>
+                                <div className="flex items-center justify-between"><span className="text-sm text-muted-foreground">کل Jobها</span><span className="font-bold text-foreground">{number(data.operations.publishing.total)}</span></div>
+                                <div className="flex items-center justify-between"><span className="text-sm text-muted-foreground">زمان‌بندی‌شده</span><span className="font-bold text-foreground">{number(data.operations.publishing.scheduled)}</span></div>
+                                <div className="flex items-center justify-between"><span className="text-sm text-muted-foreground">ناموفق</span><span className={`font-bold ${data.operations.publishing.failed ? "text-amber-700" : "text-emerald-700"}`}>{number(data.operations.publishing.failed)}</span></div>
                             </div>
                         </div>
                     </div>
 
                     <div className="grid gap-5 xl:grid-cols-2">
-                        <div className="rounded-[24px] border border-slate-200 bg-white p-5 sm:p-6">
-                            <div className="flex items-center justify-between gap-4"><div className="flex items-center gap-3"><MessageCircle size={18} className="text-slate-500" /><h3 className="font-bold text-slate-900">آخرین گفتگوها</h3></div><span className="text-xs text-slate-400">۵ مورد اخیر</span></div>
+                        <div className="rounded-xl border bg-card p-5 shadow-sm sm:p-6">
+                            <div className="flex items-center justify-between gap-4"><div className="flex items-center gap-3"><MessageCircle size={18} className="text-muted-foreground" /><h3 className="font-bold text-foreground">آخرین گفتگوها</h3></div><span className="text-xs text-muted-foreground">۵ مورد اخیر</span></div>
                             <div className="mt-4 divide-y divide-slate-100">
                                 {data.latest.conversations.length ? data.latest.conversations.map((conversation) => (
                                     <div key={conversation.id} className="flex items-center justify-between gap-4 py-3">
-                                        <div className="min-w-0"><p className="truncate text-sm font-medium text-slate-700">کاربر {conversation.participantId}</p><p className="mt-1 text-[11px] text-slate-400">{date(conversation.lastMessageAt)}</p></div>
-                                        <span className={`shrink-0 rounded-full px-2 py-1 text-[10px] ${conversation.isActive ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>{conversation.isActive ? "فعال" : "بسته"}</span>
+                                        <div className="min-w-0"><p className="truncate text-sm font-medium text-foreground">کاربر {conversation.participantId}</p><p className="mt-1 text-[11px] text-muted-foreground">{date(conversation.lastMessageAt)}</p></div>
+                                        <span className={`shrink-0 rounded-full px-2 py-1 text-[10px] ${conversation.isActive ? "bg-emerald-50 text-emerald-700" : "bg-muted text-muted-foreground"}`}>{conversation.isActive ? "فعال" : "بسته"}</span>
                                     </div>
                                 )) : <Empty text="هنوز گفتگویی ثبت نشده است." />}
                             </div>
                         </div>
 
-                        <div className="rounded-[24px] border border-slate-200 bg-white p-5 sm:p-6">
-                            <div className="flex items-center justify-between gap-4"><div className="flex items-center gap-3"><Send size={18} className="text-slate-500" /><h3 className="font-bold text-slate-900">آخرین فعالیت انتشار</h3></div><span className="text-xs text-slate-400">۵ مورد اخیر</span></div>
+                        <div className="rounded-xl border bg-card p-5 shadow-sm sm:p-6">
+                            <div className="flex items-center justify-between gap-4"><div className="flex items-center gap-3"><Send size={18} className="text-muted-foreground" /><h3 className="font-bold text-foreground">آخرین فعالیت انتشار</h3></div><span className="text-xs text-muted-foreground">۵ مورد اخیر</span></div>
                             <div className="mt-4 divide-y divide-slate-100">
                                 {data.latest.publishing.length ? data.latest.publishing.map((job) => (
                                     <div key={job.id} className="flex items-center justify-between gap-4 py-3">
-                                        <div><p className="text-sm font-medium text-slate-700">{publishType(job.type)}</p><p className="mt-1 text-[11px] text-slate-400">{date(job.updatedAt)}</p></div>
-                                        <span className={`rounded-full px-2 py-1 text-[10px] ${job.status === "PUBLISHED" ? "bg-emerald-50 text-emerald-700" : job.status === "FAILED" ? "bg-red-50 text-red-700" : "bg-slate-100 text-slate-600"}`}>{publishStatus(job.status)}</span>
+                                        <div><p className="text-sm font-medium text-foreground">{publishType(job.type)}</p><p className="mt-1 text-[11px] text-muted-foreground">{date(job.updatedAt)}</p></div>
+                                        <span className={`rounded-full px-2 py-1 text-[10px] ${job.status === "PUBLISHED" ? "bg-emerald-50 text-emerald-700" : job.status === "FAILED" ? "bg-red-50 text-red-700" : "bg-muted text-muted-foreground"}`}>{publishStatus(job.status)}</span>
                                     </div>
                                 )) : <Empty text="هنوز فعالیت انتشاری ثبت نشده است." />}
                             </div>
                         </div>
                     </div>
 
-                    <div className="rounded-[24px] border border-slate-200 bg-slate-50 p-5 sm:p-6">
-                        <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-xs text-slate-500">
+                    <div className="rounded-[24px] border border-border bg-muted p-5 sm:p-6">
+                        <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-xs text-muted-foreground">
                             <span className="inline-flex items-center gap-2"><CheckCircle2 size={15} className="text-emerald-600" />فرم فعال: {number(data.operations.tools.activeForms)}</span>
                             <span className="inline-flex items-center gap-2"><Store size={15} />ویترین فعال: {number(data.operations.tools.activeShowcases)}</span>
-                            <span className="inline-flex items-center gap-2"><TriangleAlert size={15} className={data.operations.publishing.failed ? "text-amber-600" : "text-slate-400"} />انتشار ناموفق: {number(data.operations.publishing.failed)}</span>
+                            <span className="inline-flex items-center gap-2"><TriangleAlert size={15} className={data.operations.publishing.failed ? "text-amber-600" : "text-muted-foreground"} />انتشار ناموفق: {number(data.operations.publishing.failed)}</span>
                             <span className="inline-flex items-center gap-2"><FileText size={15} />اتوماسیون غیرفعال: {number(data.operations.automations.inactive)}</span>
                         </div>
                     </div>
@@ -290,5 +290,5 @@ export default function InstagramBusinessDashboard({ accounts }: { accounts: Acc
 }
 
 function Empty({ text }: { text: string }) {
-    return <div className="py-8 text-center text-sm text-slate-400">{text}</div>;
+    return <div className="py-8 text-center text-sm text-muted-foreground">{text}</div>;
 }
