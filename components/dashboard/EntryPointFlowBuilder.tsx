@@ -1019,7 +1019,7 @@ export default function EntryPointFlowBuilder({
      */
 
     return (
-        <div className="mt-5 border-t border-slate-200 pt-5">
+        <div className="mt-5 border-t border-border pt-5">
             {/* Builder Header */}
             <button
                 type="button"
@@ -1029,7 +1029,7 @@ export default function EntryPointFlowBuilder({
                             !current,
                     )
                 }
-                className="flex w-full items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-right transition hover:bg-slate-50"
+                className="flex w-full items-center justify-between gap-4 rounded-xl border bg-card px-4 py-4 text-right transition hover:bg-muted"
             >
                 <div className="flex min-w-0 items-center gap-3">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-950 text-white">
@@ -1039,11 +1039,11 @@ export default function EntryPointFlowBuilder({
                     </div>
 
                     <div className="min-w-0">
-                        <p className="text-sm font-semibold text-slate-900">
+                        <p className="text-sm font-semibold text-foreground">
                             پاسخ و Flow اختصاصی
                         </p>
 
-                        <p className="mt-0.5 text-xs text-slate-400">
+                        <p className="mt-0.5 text-xs text-muted-foreground">
                             {messages.length > 0
                                 ? `${messages.length} پیام در این Flow`
                                 : "هنوز پاسخی برای این گزینه ساخته نشده است."}
@@ -1054,21 +1054,21 @@ export default function EntryPointFlowBuilder({
                 {open ? (
                     <ChevronUp
                         size={18}
-                        className="shrink-0 text-slate-400"
+                        className="shrink-0 text-muted-foreground"
                     />
                 ) : (
                     <ChevronDown
                         size={18}
-                        className="shrink-0 text-slate-400"
+                        className="shrink-0 text-muted-foreground"
                     />
                 )}
             </button>
 
             {open && (
-                <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
+                <div className="mt-4 rounded-xl border bg-card p-4 sm:p-5">
                     {/* Description */}
-                    <div className="mb-5 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
-                        <p className="text-xs leading-6 text-slate-500">
+                    <div className="mb-5 rounded-xl border border-border/60 bg-muted px-4 py-3">
+                        <p className="text-xs leading-6 text-muted-foreground">
                             این Flow مستقل از
                             Automationهای معمولی
                             شماست. پیام‌ها به ترتیب
@@ -1083,7 +1083,7 @@ export default function EntryPointFlowBuilder({
                         <div className="flex items-center justify-center py-10">
                             <Loader2
                                 size={20}
-                                className="animate-spin text-slate-400"
+                                className="animate-spin text-muted-foreground"
                             />
                         </div>
                     ) : (
@@ -1091,17 +1091,17 @@ export default function EntryPointFlowBuilder({
                             {/* Messages */}
                             {messages.length ===
                                 0 ? (
-                                <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50/50 px-5 py-10 text-center">
+                                <div className="rounded-xl border border-dashed border-slate-300 bg-muted/50 px-5 py-10 text-center">
                                     <MessageSquare
                                         size={22}
                                         className="mx-auto text-slate-300"
                                     />
 
-                                    <p className="mt-3 text-sm font-semibold text-slate-700">
+                                    <p className="mt-3 text-sm font-semibold text-foreground">
                                         Flow خالی است
                                     </p>
 
-                                    <p className="mt-1 text-xs leading-6 text-slate-400">
+                                    <p className="mt-1 text-xs leading-6 text-muted-foreground">
                                         اولین پیام پاسخ را
                                         اضافه کنید.
                                     </p>
@@ -1138,21 +1138,21 @@ export default function EntryPointFlowBuilder({
                                                     key={
                                                         message.id
                                                     }
-                                                    className="rounded-2xl border border-slate-200 bg-slate-50/50 p-3 sm:p-4"
+                                                    className="rounded-2xl border border-border bg-muted/50 p-3 sm:p-4"
                                                 >
                                                     <div className="mb-3 flex items-center justify-between gap-3">
                                                         <div className="flex min-w-0 items-center gap-2">
-                                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white border border-slate-200">
+                                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white border border-border">
                                                                 <Icon
                                                                     size={
                                                                         15
                                                                     }
-                                                                    className="text-slate-500"
+                                                                    className="text-muted-foreground"
                                                                 />
                                                             </div>
 
                                                             <div>
-                                                                <p className="text-xs font-semibold text-slate-700">
+                                                                <p className="text-xs font-semibold text-foreground">
                                                                     پیام{" "}
                                                                     {
                                                                         index +
@@ -1160,13 +1160,13 @@ export default function EntryPointFlowBuilder({
                                                                     }
                                                                 </p>
 
-                                                                <p className="text-[10px] text-slate-400">
+                                                                <p className="text-[10px] text-muted-foreground">
                                                                     {message.messageType}
                                                                 </p>
                                                             </div>
                                                         </div>
 
-                                                        <div className="text-[10px] text-slate-400">
+                                                        <div className="text-[10px] text-muted-foreground">
                                                             {index +
                                                                 1}
                                                             /
@@ -1263,7 +1263,7 @@ export default function EntryPointFlowBuilder({
                                         onClick={
                                             addMessage
                                         }
-                                        className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 bg-white px-4 py-3 text-xs font-semibold text-slate-600 transition hover:border-slate-400 hover:bg-slate-50"
+                                        className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 bg-white px-4 py-3 text-xs font-semibold text-muted-foreground transition hover:border-slate-400 hover:bg-muted"
                                     >
                                         <Plus
                                             size={
@@ -1275,7 +1275,7 @@ export default function EntryPointFlowBuilder({
                                 )}
 
                             {/* Save */}
-                            <div className="mt-5 border-t border-slate-200 pt-5">
+                            <div className="mt-5 border-t border-border pt-5">
                                 <button
                                     type="button"
                                     onClick={
