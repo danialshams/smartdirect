@@ -12,7 +12,7 @@ type DashboardShellProps={user:{name:string;email:string;role:string;createdAt:D
 export default function DashboardShell({user,instagramAccounts,instagramStatus,children}:DashboardShellProps){
  const hasConnectedAccount=instagramAccounts.some(account=>account.isConnected)
  if(!hasConnectedAccount) return <main dir="rtl" className="flex min-h-screen items-center justify-center bg-background px-5"><Button asChild size="lg"><a href="/api/instagram/connect">اتصال پیج</a></Button></main>
- return <SidebarProvider dir="rtl" defaultOpen>
+ return <SidebarProvider defaultOpen>
    <DashboardSidebar open onClose={()=>undefined}/>
    <div className="min-w-0 flex-1 lg:mr-64">
      <DashboardMobileHeader/>
