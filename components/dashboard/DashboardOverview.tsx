@@ -1,6 +1,8 @@
 "use client";
 
-import { ChevronDown, Plus, RefreshCw } from "lucide-react";
+import { Plus, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useEffect, useState } from "react";
 
 import InstagramInsights from "./InstagramInsights";
@@ -37,7 +39,7 @@ export default function DashboardOverview({ user, instagramAccounts, instagramSt
   }
 
   if (!connectedAccounts.length) {
-    return <main dir="rtl" className="flex min-h-screen items-center justify-center bg-white px-5"><a href="/api/instagram/connect" className="inline-flex h-12 min-w-[190px] items-center justify-center rounded-xl bg-[#2563eb] px-7 text-sm font-semibold text-white shadow-[0_10px_30px_rgba(37,99,235,0.18)] transition hover:bg-[#1d4ed8]">اتصال پیج</a></main>;
+    return <main dir="rtl" className="flex min-h-screen items-center justify-center bg-white px-5"><Button asChild size="lg"><a href="/api/instagram/connect">اتصال پیج</a></Button></main>;
   }
 
   const activeAccount = connectedAccounts.find((account) => account.id === accountId) ?? connectedAccounts[0];
@@ -75,7 +77,7 @@ export default function DashboardOverview({ user, instagramAccounts, instagramSt
                 </div>
               )}
             </div>
-            <button type="button" onClick={refreshAll} disabled={refreshing} aria-label="بروزرسانی اطلاعات" className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"><RefreshCw size={16} className={refreshing ? "animate-spin" : ""} /></button>
+            <Button type="button" variant="outline" size="icon" onClick={refreshAll} disabled={refreshing} aria-label="بروزرسانی اطلاعات"><RefreshCw className={refreshing ? "animate-spin" : ""} /></Button>
           </div>
         </div>
       </header>
