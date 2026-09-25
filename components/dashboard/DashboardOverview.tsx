@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Instagram, Plus, RefreshCw } from "lucide-react";
+import { ChevronDown, CircleUserRound, Plus, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 
@@ -78,7 +78,7 @@ export default function DashboardOverview({
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 items-center gap-3">
             <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-foreground">
-              <Instagram className="size-5" strokeWidth={1.8} />
+              <CircleUserRound className="size-5" strokeWidth={1.8} />
             </div>
 
             <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
@@ -99,7 +99,7 @@ export default function DashboardOverview({
                 aria-expanded={accountMenuOpen}
               >
                 <span className="flex min-w-0 items-center gap-2">
-                  <Instagram className="size-4 shrink-0 text-muted-foreground" />
+                  <CircleUserRound className="size-4 shrink-0 text-muted-foreground" />
                   <span
                     dir="ltr"
                     className="truncate text-xs font-bold text-foreground"
