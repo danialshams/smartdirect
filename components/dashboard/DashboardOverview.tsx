@@ -49,31 +49,31 @@ export default function DashboardOverview({ user, instagramAccounts, instagramSt
       {instagramStatus === "connected" && <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">پیج با موفقیت متصل شد.</div>}
       {instagramStatus && instagramStatus !== "connected" && <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">اتصال پیج انجام نشد. دوباره تلاش کنید.</div>}
 
-      <header className="border-b border-slate-200 pb-5 sm:pb-6">
+      <header className="border-b border-border pb-5 sm:pb-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-xs font-medium text-slate-400">داشبورد</p>
-            <h1 className="mt-1 text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">{user.name ? "سلام، " + user.name : "داشبورد پیج"}</h1>
-            <p className="mt-2 text-sm leading-6 text-slate-500">اطلاعات و عملکرد پیج فعال شما در یک نگاه.</p>
+            <p className="text-xs font-medium text-muted-foreground">داشبورد</p>
+            <h1 className="mt-1 text-xl font-bold tracking-tight text-foreground sm:text-2xl">{user.name ? "سلام، " + user.name : "داشبورد پیج"}</h1>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">اطلاعات و عملکرد پیج فعال شما در یک نگاه.</p>
           </div>
 
           <div className="flex w-full items-center gap-2 sm:w-auto">
             <div className="relative min-w-0 flex-1 sm:min-w-[250px]">
-              <button type="button" onClick={() => setAccountMenuOpen((open) => !open)} className="flex h-11 w-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 text-right transition hover:border-slate-300" aria-expanded={accountMenuOpen}>
-                <span className="min-w-0"><span className="block text-[9px] font-medium text-slate-400">پیج فعال</span><span className="mt-0.5 block truncate text-xs font-bold text-slate-800">@{activeAccount.igUsername}</span></span>
-                <ChevronDown size={16} className={accountMenuOpen ? "rotate-180 text-slate-500 transition" : "text-slate-400 transition"} />
+              <button type="button" onClick={() => setAccountMenuOpen((open) => !open)} className="flex h-11 w-full items-center justify-between gap-3 rounded-xl border border-border bg-white px-4 text-right transition hover:border-border" aria-expanded={accountMenuOpen}>
+                <span className="min-w-0"><span className="block text-[9px] font-medium text-muted-foreground">پیج فعال</span><span className="mt-0.5 block truncate text-xs font-bold text-foreground">@{activeAccount.igUsername}</span></span>
+                <ChevronDown size={16} className={accountMenuOpen ? "rotate-180 text-muted-foreground transition" : "text-muted-foreground transition"} />
               </button>
               {accountMenuOpen && (
-                <div className="absolute right-0 top-[calc(100%+8px)] z-30 w-full min-w-[250px] overflow-hidden rounded-xl border border-slate-200 bg-white p-2 shadow-[0_18px_50px_rgba(15,23,42,0.10)]">
-                  <p className="px-3 pb-2 pt-1 text-[10px] font-medium text-slate-400">اکانت‌های متصل</p>
+                <div className="absolute right-0 top-[calc(100%+8px)] z-30 w-full min-w-[250px] overflow-hidden rounded-xl border border-border bg-white p-2 shadow-[0_18px_50px_rgba(15,23,42,0.10)]">
+                  <p className="px-3 pb-2 pt-1 text-[10px] font-medium text-muted-foreground">اکانت‌های متصل</p>
                   <div className="space-y-1">
                     {connectedAccounts.map((account) => (
-                      <button key={account.id} type="button" onClick={() => { setAccountId(account.id); setAccountMenuOpen(false); }} className={account.id === accountId ? "flex w-full items-center justify-between rounded-lg bg-slate-50 px-3 py-2.5 text-xs font-semibold text-slate-900" : "flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-xs font-medium text-slate-600 hover:bg-slate-50"}>
+                      <button key={account.id} type="button" onClick={() => { setAccountId(account.id); setAccountMenuOpen(false); }} className={account.id === accountId ? "flex w-full items-center justify-between rounded-lg bg-muted px-3 py-2.5 text-xs font-semibold text-foreground" : "flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-xs font-medium text-muted-foreground hover:bg-muted"}>
                         <span>@{account.igUsername}</span>{account.id === accountId && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />}
                       </button>
                     ))}
                   </div>
-                  <a href="/api/instagram/connect" className="mt-2 flex items-center justify-center gap-2 border-t border-slate-100 px-3 pt-3 text-xs font-semibold text-slate-700 hover:text-slate-950"><Plus size={14} />افزودن اکانت</a>
+                  <a href="/api/instagram/connect" className="mt-2 flex items-center justify-center gap-2 border-t border-border px-3 pt-3 text-xs font-semibold text-foreground hover:text-foreground"><Plus size={14} />افزودن اکانت</a>
                 </div>
               )}
             </div>
