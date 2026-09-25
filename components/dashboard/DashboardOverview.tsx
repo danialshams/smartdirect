@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import InstagramProfileDashboard from "./InstagramProfileDashboard";
 
@@ -33,6 +33,10 @@ export default function DashboardOverview({
       setAccountId(connectedAccounts[0]?.id || "");
     }
   }, [accountId, connectedAccounts]);
+
+  const handleProfileLoaded = useCallback((name: string | null) => {
+    setProfileName(name || "");
+  }, []);
 
   if (!connectedAccounts.length) {
     return (
@@ -76,7 +80,7 @@ export default function DashboardOverview({
 
       <InstagramProfileDashboard
         accountId={accountId}
-        onProfileLoaded={(name) => setProfileName(name || activeAccount.igUsername)}
+        onProfileLoaded={handleProfileLoaded}
       />
     </div>
   );
