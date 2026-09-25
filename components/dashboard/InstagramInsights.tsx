@@ -10,6 +10,9 @@ import {
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Calendar } from "@/components/ui/calendar";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   CartesianGrid,
   Line,
@@ -146,18 +149,18 @@ function MetricCard({
   icon: typeof BarChart3;
 }) {
   return (
-    <div className="min-w-0 rounded-xl border border-slate-200 bg-white p-3.5 sm:p-4">
-      <div className="flex items-start justify-between gap-2">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-50 text-slate-500">
-          <Icon size={16} strokeWidth={1.8} />
-        </span>
-        <span className="text-right text-[9px] leading-4 text-slate-400">{helper}</span>
-      </div>
-      <p className="mt-3 truncate text-lg font-bold tracking-tight text-slate-950 sm:text-xl">
-        {value}
-      </p>
-      <p className="mt-1 truncate text-[11px] text-slate-500">{label}</p>
-    </div>
+    <Card className="min-w-0 py-3.5 sm:py-4">
+      <CardContent className="px-3.5 sm:px-4">
+        <div className="flex items-start justify-between gap-2">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+            <Icon size={16} strokeWidth={1.8} />
+          </span>
+          <span className="text-right text-[9px] leading-4 text-muted-foreground">{helper}</span>
+        </div>
+        <p className="mt-3 truncate text-lg font-bold tracking-tight sm:text-xl">{value}</p>
+        <p className="mt-1 truncate text-[11px] text-muted-foreground">{label}</p>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -171,11 +174,13 @@ function RateCard({
   helper: string;
 }) {
   return (
-    <div className="min-w-0 rounded-xl bg-slate-50 px-3.5 py-3">
-      <p className="text-[10px] text-slate-400">{label}</p>
-      <p className="mt-1 text-base font-bold text-slate-900">{value}</p>
-      <p className="mt-0.5 truncate text-[9px] text-slate-400">{helper}</p>
-    </div>
+    <Card className="min-w-0 border-0 bg-muted px-3.5 py-3 shadow-none">
+      <CardContent className="p-0">
+        <p className="text-[10px] text-muted-foreground">{label}</p>
+        <p className="mt-1 text-base font-bold">{value}</p>
+        <p className="mt-0.5 truncate text-[9px] text-muted-foreground">{helper}</p>
+      </CardContent>
+    </Card>
   );
 }
 
