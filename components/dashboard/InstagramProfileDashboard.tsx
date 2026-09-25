@@ -116,39 +116,41 @@ export default function InstagramProfileDashboard({
         </div>
       ) : profile ? (
         <div className="flex w-full flex-col items-center">
-          <Reveal visible={visible} delay={0} className="w-full text-center">
+          <Reveal visible={visible} delay={0} className="w-full text-right">
             <h1 className="text-xl font-medium tracking-tight text-foreground sm:text-2xl">
               سلام، {greetingName}
             </h1>
           </Reveal>
 
-          <Reveal visible={visible} delay={180}>
-            <div className="mt-10 h-[128px] w-[128px] overflow-hidden rounded-full border border-border bg-muted sm:h-[150px] sm:w-[150px]">
-              {profile.profilePictureUrl ? (
-                <img
-                  src={profile.profilePictureUrl}
-                  alt={profile.username}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-                  <span className="text-3xl font-light">?</span>
-                </div>
-              )}
-            </div>
-          </Reveal>
+          <div className="flex w-full flex-col items-center">
+            <Reveal visible={visible} delay={180}>
+              <div className="mt-10 h-[128px] w-[128px] overflow-hidden rounded-full border border-border bg-muted sm:h-[150px] sm:w-[150px]">
+                {profile.profilePictureUrl ? (
+                  <img
+                    src={profile.profilePictureUrl}
+                    alt={profile.username}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                    <span className="text-3xl font-light">?</span>
+                  </div>
+                )}
+              </div>
+            </Reveal>
 
-          <Reveal visible={visible} delay={340} className="text-center">
-            <p dir="ltr" className="mt-5 text-sm font-medium text-muted-foreground">
-              @{profile.username}
-            </p>
-          </Reveal>
+            <Reveal visible={visible} delay={340} className="text-center">
+              <p dir="ltr" className="mt-5 text-sm font-medium text-muted-foreground">
+                @{profile.username}
+              </p>
+            </Reveal>
+          </div>
 
           <div className="mt-[min(28vh,260px)] grid w-full max-w-xl grid-cols-3 sm:mt-[min(30vh,280px)]">
             <Reveal visible={visible} delay={520}>
               <AnimatedProfileStat
-                label="پست"
-                value={profile.mediaCount}
+                label="فالووینگ"
+                value={profile.followsCount}
                 delay={0}
                 visible={visible}
               />
@@ -163,8 +165,8 @@ export default function InstagramProfileDashboard({
             </Reveal>
             <Reveal visible={visible} delay={840}>
               <AnimatedProfileStat
-                label="فالووینگ"
-                value={profile.followsCount}
+                label="پست"
+                value={profile.mediaCount}
                 delay={320}
                 visible={visible}
               />
