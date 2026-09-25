@@ -1,4 +1,6 @@
 "use client";
+import { Input } from "@/components/ui/input"
+import { Select } from "@/components/ui/select"
 
 import {
     ChevronDown,
@@ -514,7 +516,7 @@ export default function PersistentMenuManager({
                     {connectedAccounts.length >
                         0 && (
                             <div className="relative w-full sm:w-[280px]">
-                                <select
+                                <Select
                                     value={
                                         selectedAccountId
                                     }
@@ -548,7 +550,7 @@ export default function PersistentMenuManager({
                                             </option>
                                         ),
                                     )}
-                                </select>
+                                </Select>
 
                                 <ChevronDown
                                     size={16}
@@ -712,7 +714,7 @@ export default function PersistentMenuManager({
                                                     </span>
                                                 </div>
 
-                                                <input
+                                                <Input
                                                     value={
                                                         item.title
                                                     }
