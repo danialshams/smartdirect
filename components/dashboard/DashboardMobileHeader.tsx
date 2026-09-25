@@ -34,8 +34,6 @@ export default function DashboardMobileHeader({
     >
       <div className="absolute right-3 sm:right-5 lg:hidden">
         <SidebarTrigger
-          variant="ghost"
-          size="icon"
           className="border-0 shadow-none"
         >
           <Menu className="size-4" />
