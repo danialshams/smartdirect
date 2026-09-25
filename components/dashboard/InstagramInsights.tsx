@@ -215,6 +215,7 @@ function RateMetric({
   value,
   signed,
   icon: Icon,
+  iconPosition,
 }: {
   label: string;
   value: number | null | undefined;
