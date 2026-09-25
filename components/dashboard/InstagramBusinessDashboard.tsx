@@ -1,4 +1,5 @@
 "use client";
+import { Button } from "@/components/ui/button"
 import { Select } from "@/components/ui/select"
 
 import { useCallback, useEffect, useState } from "react";
@@ -173,17 +174,17 @@ export default function InstagramBusinessDashboard({ accounts }: { accounts: Acc
                             </option>
                         ))}
                     </Select>
-                    <button type="button" onClick={() => void load()} disabled={loading || !accountId} className="inline-flex items-center gap-2 rounded-lg border bg-background px-4 py-2.5 text-sm font-medium text-muted-foreground transition hover:bg-muted disabled:opacity-50">
+                    <Button type="button" onClick={() => void load()} disabled={loading || !accountId} className="inline-flex items-center gap-2 rounded-lg border bg-background px-4 py-2.5 text-sm font-medium text-muted-foreground transition hover:bg-muted disabled:opacity-50">
                         <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
                         بروزرسانی
-                    </button>
+                    </Button>
                 </div>
             </div>
 
             {error && (
                 <div className="flex items-center justify-between gap-4 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
                     <span>{error}</span>
-                    <button type="button" onClick={() => void load()} className="font-medium hover:underline">تلاش مجدد</button>
+                    <Button type="button" onClick={() => void load()} className="font-medium hover:underline">تلاش مجدد</Button>
                 </div>
             )}
 
