@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/components/ui/select"
 
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -160,7 +161,7 @@ export default function InstagramBusinessDashboard({ accounts }: { accounts: Acc
                 </div>
 
                 <div className="flex gap-2">
-                    <select
+                    <Select
                         value={accountId}
                         onChange={(event) => setAccountId(event.target.value)}
                         className="min-w-[190px] rounded-lg border bg-background px-3 py-2.5 text-sm font-medium text-foreground outline-none"
@@ -171,7 +172,7 @@ export default function InstagramBusinessDashboard({ accounts }: { accounts: Acc
                                 @{account.igUsername}{account.isConnected ? "" : " — قطع اتصال"}
                             </option>
                         ))}
-                    </select>
+                    </Select>
                     <button type="button" onClick={() => void load()} disabled={loading || !accountId} className="inline-flex items-center gap-2 rounded-lg border bg-background px-4 py-2.5 text-sm font-medium text-muted-foreground transition hover:bg-muted disabled:opacity-50">
                         <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
                         بروزرسانی
