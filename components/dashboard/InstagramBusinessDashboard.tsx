@@ -194,7 +194,7 @@ export default function InstagramBusinessDashboard({ accounts }: { accounts: Acc
                     <div className="rounded-xl border bg-card p-5 shadow-[0_8px_30px_rgba(15,23,42,0.03)] sm:p-6">
                         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
                             <div className="flex items-center gap-4">
-                                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-950 text-sm font-bold text-white">IG</div>
+                                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-sm font-bold text-white">IG</div>
                                 <div>
                                     <div className="flex flex-wrap items-center gap-2">
                                         <h3 className="text-lg font-bold text-foreground">@{data.account.username}</h3>
