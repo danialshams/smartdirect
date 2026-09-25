@@ -7,7 +7,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
 } from "lucide-react"
-import { DayPicker } from "@daypicker/persian"
+import { DayPicker, faIR } from "@daypicker/persian"
 import {
   getDefaultClassNames,
   type DayButton,
@@ -19,7 +19,7 @@ function Calendar({
   className,
   classNames,
   showOutsideDays = true,
-  captionLayout = "label",
+  captionLayout = "dropdown",
   buttonVariant = "ghost",
   formatters,
   components,
@@ -39,6 +39,9 @@ function Calendar({
         className
       )}
       captionLayout={captionLayout}
+      locale={faIR}
+      numerals="arabext"
+      dir="rtl"
       formatters={{
         formatMonthDropdown: (date) =>
           date.toLocaleString("default", { month: "short" }),
