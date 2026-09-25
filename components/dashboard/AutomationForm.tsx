@@ -2542,7 +2542,7 @@ function TriggerOption({
                 "rounded-xl border p-4 text-right transition",
                 active
                     ? "border-slate-900 bg-slate-950 text-white"
-                    : "border-slate-200 bg-white text-slate-800 hover:border-slate-400",
+                    : "border-border bg-white text-foreground hover:border-slate-400",
             ].join(
                 " "
             )}
@@ -2558,7 +2558,7 @@ function TriggerOption({
                     "mt-1 text-xs leading-5",
                     active
                         ? "text-slate-300"
-                        : "text-slate-400",
+                        : "text-muted-foreground",
                 ].join(
                     " "
                 )}
