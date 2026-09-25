@@ -1,4 +1,5 @@
 "use client";
+import { Button } from "@/components/ui/button"
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { DateRange } from "react-day-picker";
@@ -201,7 +202,7 @@ export default function InsightsDashboard() {
                             </select>
                         )}
                         <div className="flex gap-1 border border bg-card p-1">
-                            {[7, 30, 90].map((days) => <button key={days} type="button" onClick={() => setRange(days as Range)} className={`min-w-16 px-4 py-2 text-sm transition-colors ${range === days ? "bg-zinc-950 text-white" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}>{days} روز</button>)}
+                            {[7, 30, 90].map((days) => <Button key={days} type="button" onClick={() => setRange(days as Range)} className={`min-w-16 px-4 py-2 text-sm transition-colors ${range === days ? "bg-zinc-950 text-white" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}>{days} روز</Button>)}
                         </div>
                     </div>
                 </header>
@@ -230,11 +231,11 @@ export default function InsightsDashboard() {
                                     <h2 className="text-xl font-semibold text-foreground">روند عملکرد Instagram</h2>
                                     <p className="mt-2 text-sm leading-6 text-muted-foreground">شاخص‌های عملکرد اکانت فعال را در یک بازه مشخص بررسی کنید.</p>
                                     <div className="mt-5 flex w-full gap-1 border border-zinc-200 p-1 sm:w-fit">
-                                        {([["reach", "دسترسی"], ["views", "بازدید"], ["interactions", "تعاملات"]] as const).map(([value, label]) => <button key={value} type="button" onClick={() => setMetric(value)} className={`px-3 py-2 text-xs sm:text-sm ${metric === value ? "bg-zinc-950 text-white" : "text-muted-foreground hover:bg-muted"}`}>{label}</button>)}
+                                        {([["reach", "دسترسی"], ["views", "بازدید"], ["interactions", "تعاملات"]] as const).map(([value, label]) => <Button key={value} type="button" onClick={() => setMetric(value)} className={`px-3 py-2 text-xs sm:text-sm ${metric === value ? "bg-zinc-950 text-white" : "text-muted-foreground hover:bg-muted"}`}>{label}</Button>)}
                                     </div>
                                 </div>
                                 <div className="relative shrink-0">
-                                    <button
+                                    <Button
                                         type="button"
                                         onClick={() => setCalendarOpen((open) => !open)}
                                         className="inline-flex h-11 min-w-48 items-center justify-center gap-3 border border bg-card px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted"
@@ -243,7 +244,7 @@ export default function InsightsDashboard() {
                                     >
                                         <span>{dateRange?.from ? (dateRange.to ? `${date(dateRange.from.toISOString())} تا ${date(dateRange.to.toISOString())}` : date(dateRange.from.toISOString())) : "انتخاب بازه زمانی"}</span>
                                         <span className="text-muted-foreground">⌄</span>
-                                    </button>
+                                    </Button>
 
                                     {calendarOpen && (
                                         <div className="absolute right-0 top-14 z-50 border border bg-card p-2 shadow-lg">
