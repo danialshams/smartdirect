@@ -1466,7 +1466,7 @@ export default function AutomationForm({
             <div className="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
                 {/* Header */}
 
-                <div className="flex shrink-0 items-center justify-between border-b border-gray-100 px-5 py-4 sm:px-6 sm:py-5">
+                <div className="flex shrink-0 items-center justify-between border-b border-border px-5 py-4 sm:px-6 sm:py-5">
                     <div>
                         <h2 className="text-lg font-semibold text-gray-900">
                             {isEditing
@@ -1474,7 +1474,7 @@ export default function AutomationForm({
                                 : "ساخت Automation"}
                         </h2>
 
-                        <p className="mt-1 text-sm text-gray-500">
+                        <p className="mt-1 text-sm text-muted-foreground">
                             @
                             {
                                 account.igUsername
@@ -1490,7 +1490,7 @@ export default function AutomationForm({
                         disabled={
                             saving
                         }
-                        className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
                         aria-label="بستن"
                     >
                         <X size={19} />
@@ -1506,7 +1506,7 @@ export default function AutomationForm({
                     {/* Trigger */}
 
                     <section>
-                        <label className="mb-3 block text-sm font-medium text-gray-800">
+                        <label className="mb-3 block text-sm font-medium text-foreground">
                             نوع Trigger
                         </label>
 
@@ -1559,12 +1559,12 @@ export default function AutomationForm({
                     {isComment && (
                         <section className="space-y-5">
                             <div>
-                                <label className="mb-2 block text-sm font-medium text-gray-800">
+                                <label className="mb-2 block text-sm font-medium text-foreground">
                                     پست مورد نظر
                                 </label>
 
                                 {loadingMedia ? (
-                                    <div className="flex items-center gap-2 rounded-xl border border-gray-200 p-4 text-sm text-gray-500">
+                                    <div className="flex items-center gap-2 rounded-xl border border-border p-4 text-sm text-muted-foreground">
                                         <Loader2
                                             size={
                                                 16
@@ -1576,7 +1576,7 @@ export default function AutomationForm({
                                     </div>
                                 ) : media.length ===
                                     0 ? (
-                                    <div className="rounded-xl border border-gray-200 p-4 text-sm text-gray-500">
+                                    <div className="rounded-xl border border-border p-4 text-sm text-muted-foreground">
                                         Media ای برای این اکانت پیدا نشد.
                                     </div>
                                 ) : (
@@ -1614,7 +1614,7 @@ export default function AutomationForm({
                                                             "overflow-hidden rounded-xl border text-right transition",
                                                             selected
                                                                 ? "border-gray-900 ring-2 ring-gray-900/10"
-                                                                : "border-gray-200 hover:border-gray-400",
+                                                                : "border-border hover:border-gray-400",
                                                         ].join(
                                                             " "
                                                         )}
@@ -1632,14 +1632,14 @@ export default function AutomationForm({
                                                                     className="h-full w-full object-cover"
                                                                 />
                                                             ) : (
-                                                                <div className="flex h-full items-center justify-center text-xs text-gray-400">
+                                                                <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
                                                                     بدون تصویر
                                                                 </div>
                                                             )}
                                                         </div>
 
                                                         <div className="p-2">
-                                                            <p className="line-clamp-2 text-xs text-gray-600">
+                                                            <p className="line-clamp-2 text-xs text-muted-foreground">
                                                                 {item.caption ||
                                                                     "بدون کپشن"}
                                                             </p>
@@ -1673,18 +1673,18 @@ export default function AutomationForm({
                             <div>
                                 <div className="mb-2 flex items-center justify-between gap-3">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-800">
+                                        <label className="block text-sm font-medium text-foreground">
                                             استوری مورد نظر
                                         </label>
 
-                                        <p className="mt-1 text-xs leading-5 text-gray-400">
+                                        <p className="mt-1 text-xs leading-5 text-muted-foreground">
                                             استوری‌ای را انتخاب کنید که می‌خواهید پاسخ‌های آن را مدیریت کنید.
                                         </p>
                                     </div>
 
                                     {stories.length >
                                         0 && (
-                                            <span className="shrink-0 rounded-full bg-gray-100 px-3 py-1 text-[11px] text-gray-500">
+                                            <span className="shrink-0 rounded-full bg-gray-100 px-3 py-1 text-[11px] text-muted-foreground">
                                                 {
                                                     stories.length
                                                 }{" "}
@@ -1694,7 +1694,7 @@ export default function AutomationForm({
                                 </div>
 
                                 {loadingStories ? (
-                                    <div className="flex items-center gap-2 rounded-xl border border-gray-200 p-5 text-sm text-gray-500">
+                                    <div className="flex items-center gap-2 rounded-xl border border-border p-5 text-sm text-muted-foreground">
                                         <Loader2
                                             size={
                                                 17
@@ -1710,8 +1710,8 @@ export default function AutomationForm({
                                     </div>
                                 ) : stories.length ===
                                     0 ? (
-                                    <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50/60 px-5 py-8 text-center">
-                                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-white text-gray-400 shadow-sm">
+                                    <div className="rounded-xl border border-dashed border-border bg-muted px-5 py-8 text-center">
+                                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-white text-muted-foreground shadow-sm">
                                             <MessageSquareText
                                                 size={
                                                     21
@@ -1719,11 +1719,11 @@ export default function AutomationForm({
                                             />
                                         </div>
 
-                                        <h4 className="mt-4 text-sm font-semibold text-gray-800">
+                                        <h4 className="mt-4 text-sm font-semibold text-foreground">
                                             استوری فعالی پیدا نشد
                                         </h4>
 
-                                        <p className="mx-auto mt-2 max-w-md text-xs leading-5 text-gray-400">
+                                        <p className="mx-auto mt-2 max-w-md text-xs leading-5 text-muted-foreground">
                                             برای ساخت Story Reply ابتدا یک استوری فعال در Instagram داشته باشید.
                                         </p>
                                     </div>
@@ -1762,7 +1762,7 @@ export default function AutomationForm({
                                                             "group overflow-hidden rounded-xl border bg-white text-right transition",
                                                             selected
                                                                 ? "border-gray-900 ring-2 ring-gray-900/10"
-                                                                : "border-gray-200 hover:border-gray-400",
+                                                                : "border-border hover:border-gray-400",
                                                         ].join(
                                                             " "
                                                         )}
@@ -1777,7 +1777,7 @@ export default function AutomationForm({
                                                                     className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
                                                                 />
                                                             ) : (
-                                                                <div className="flex h-full items-center justify-center px-3 text-center text-xs text-gray-400">
+                                                                <div className="flex h-full items-center justify-center px-3 text-center text-xs text-muted-foreground">
                                                                     پیش‌نمایش این استوری در دسترس نیست
                                                                 </div>
                                                             )}
@@ -1797,11 +1797,11 @@ export default function AutomationForm({
                                                         </div>
 
                                                         <div className="p-2.5">
-                                                            <p className="text-[11px] font-medium text-gray-700">
+                                                            <p className="text-[11px] font-medium text-foreground">
                                                                 استوری
                                                             </p>
 
-                                                            <p className="mt-1 truncate text-[10px] text-gray-400">
+                                                            <p className="mt-1 truncate text-[10px] text-muted-foreground">
                                                                 {formatStoryDate(
                                                                     story.timestamp
                                                                 )}
@@ -1815,13 +1815,13 @@ export default function AutomationForm({
                                 )}
 
                                 {selectedStory && (
-                                    <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+                                    <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-border bg-muted px-4 py-3">
                                         <div className="min-w-0">
-                                            <p className="text-xs font-medium text-gray-800">
+                                            <p className="text-xs font-medium text-foreground">
                                                 استوری انتخاب‌شده
                                             </p>
 
-                                            <p className="mt-1 truncate text-[11px] text-gray-400">
+                                            <p className="mt-1 truncate text-[11px] text-muted-foreground">
                                                 ID:{" "}
                                                 {
                                                     selectedStory.id
@@ -1836,7 +1836,7 @@ export default function AutomationForm({
                                                     ""
                                                 )
                                             }
-                                            className="shrink-0 text-xs text-gray-500 transition hover:text-gray-900"
+                                            className="shrink-0 text-xs text-muted-foreground transition hover:text-foreground"
                                         >
                                             حذف انتخاب
                                         </button>
@@ -1867,13 +1867,13 @@ export default function AutomationForm({
                     {/* ---------------------------------------------------------------- */}
 
                     {isComment && (
-                        <section className="border-t border-gray-100 pt-6">
+                        <section className="border-t border-border pt-6">
                             <h3 className="mb-4 text-sm font-semibold text-gray-900">
                                 Actions کامنت
                             </h3>
 
                             <div className="space-y-4">
-                                <label className="block rounded-xl border border-gray-200 p-4">
+                                <label className="block rounded-xl border border-border p-4">
                                     <div className="flex items-start gap-3">
                                         <Input
                                             type="checkbox"
@@ -1923,13 +1923,13 @@ export default function AutomationForm({
                                                     )
                                                 }
                                                 placeholder="متن پاسخ عمومی..."
-                                                className="mt-3 min-h-24 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-gray-900"
+                                                className="mt-3 min-h-24 w-full rounded-xl border border-border px-4 py-3 text-sm outline-none focus:border-gray-900"
                                             />
                                         </div>
                                     </div>
                                 </label>
 
-                                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 p-4">
+                                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border p-4">
                                     <Input
                                         type="checkbox"
                                         checked={
@@ -1952,7 +1952,7 @@ export default function AutomationForm({
                                             لایک کردن کامنت
                                         </div>
 
-                                        <p className="mt-1 text-xs leading-5 text-gray-500">
+                                        <p className="mt-1 text-xs leading-5 text-muted-foreground">
                                             بعد از تأیید Permission و تست API فعال می‌شود.
                                         </p>
                                     </div>
@@ -1962,12 +1962,12 @@ export default function AutomationForm({
                     )}
 
                     {(isComment || isStory) && (
-                        <section className="border-t border-gray-100 pt-6">
+                        <section className="border-t border-border pt-6">
                             <h3 className="mb-4 text-sm font-semibold text-gray-900">
                                 شرط فالو قبل از ارسال محتوا
                             </h3>
 
-                            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 p-4">
+                            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border p-4">
                                 <Input
                                     type="checkbox"
                                     checked={requireFollow}
@@ -1984,7 +1984,7 @@ export default function AutomationForm({
                                         کاربر ابتدا پیج را فالو کند
                                     </div>
 
-                                    <p className="mt-1 text-xs leading-5 text-gray-500">
+                                    <p className="mt-1 text-xs leading-5 text-muted-foreground">
                                         {isStory
                                             ? "بعد از اینکه کاربر به استوری پاسخ داد، ابتدا پیام درخواست فالو برای او ارسال می‌شود. تا زمانی که فالو بودن کاربر تأیید نشود، محتوای اصلی Automation ارسال نمی‌شود."
                                             : "بعد از اینکه کاربر کلمه کلیدی را در کامنت ارسال کرد، ابتدا پیام درخواست فالو برای او ارسال می‌شود. تا زمانی که فالو بودن کاربر تأیید نشود، محتوای اصلی Automation ارسال نمی‌شود."}
@@ -1993,8 +1993,8 @@ export default function AutomationForm({
                             </label>
 
                             {requireFollow && (
-                                <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50/70 p-4">
-                                    <label className="mb-2 block text-sm font-medium text-gray-800">
+                                <div className="mt-4 rounded-xl border border-border bg-muted p-4">
+                                    <label className="mb-2 block text-sm font-medium text-foreground">
                                         متن درخواست فالو
                                     </label>
 
@@ -2006,10 +2006,10 @@ export default function AutomationForm({
                                             )
                                         }
                                         placeholder="مثلاً برای دریافت این محتوا ابتدا پیج ما را فالو کنید."
-                                        className="min-h-24 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm leading-6 outline-none transition focus:border-gray-900"
+                                        className="min-h-24 w-full rounded-xl border border-border bg-white px-4 py-3 text-sm leading-6 outline-none transition focus:border-gray-900"
                                     />
 
-                                    <p className="mt-2 text-xs leading-5 text-gray-400">
+                                    <p className="mt-2 text-xs leading-5 text-muted-foreground">
                                         این متن قبل از ارسال Flow اصلی برای کاربر نمایش داده می‌شود.
                                     </p>
                                 </div>
@@ -2021,13 +2021,13 @@ export default function AutomationForm({
                     {/* Direct Reply                                                      */}
                     {/* ---------------------------------------------------------------- */}
 
-                    <section className="border-t border-gray-100 pt-6">
+                    <section className="border-t border-border pt-6">
                         <div className="mb-4">
                             <h3 className="text-sm font-semibold text-gray-900">
                                 پاسخ مستقیم
                             </h3>
 
-                            <p className="mt-1 text-xs leading-5 text-gray-400">
+                            <p className="mt-1 text-xs leading-5 text-muted-foreground">
                                 می‌توانید یک پاسخ متنی ساده قرار دهید. برای پاسخ چندمرحله‌ای یا ترکیبی، از Flow پایین استفاده کنید.
                             </p>
                         </div>
@@ -2052,11 +2052,11 @@ export default function AutomationForm({
                                         ? "مثلاً سلام، چطور می‌تونم کمکتون کنم؟"
                                         : "متن دایرکت..."
                             }
-                            className="min-h-24 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm leading-6 outline-none focus:border-gray-900"
+                            className="min-h-24 w-full rounded-xl border border-border px-4 py-3 text-sm leading-6 outline-none focus:border-gray-900"
                         />
 
                         {isDm && (
-                            <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 p-4">
+                            <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-xl border border-border p-4">
                                 <Input
                                     type="checkbox"
                                     checked={
@@ -2079,7 +2079,7 @@ export default function AutomationForm({
                                         لایک کردن پیام ورودی
                                     </div>
 
-                                    <p className="mt-1 text-xs leading-5 text-gray-500">
+                                    <p className="mt-1 text-xs leading-5 text-muted-foreground">
                                         بعد از دریافت پیام کاربر، پیام ورودی با Reaction انتخاب‌شده لایک می‌شود.
                                     </p>
                                 </div>
@@ -2087,7 +2087,7 @@ export default function AutomationForm({
                         )}
 
                         {isStory && (
-                            <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 p-4">
+                            <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-xl border border-border p-4">
                                 <Input
                                     type="checkbox"
                                     checked={
@@ -2110,7 +2110,7 @@ export default function AutomationForm({
                                         لایک کردن پاسخ استوری
                                     </div>
 
-                                    <p className="mt-1 text-xs leading-5 text-gray-500">
+                                    <p className="mt-1 text-xs leading-5 text-muted-foreground">
                                         بعد از دریافت Reply استوری، پیام کاربر با Reaction انتخاب‌شده لایک می‌شود.
                                     </p>
                                 </div>
@@ -2123,9 +2123,9 @@ export default function AutomationForm({
                     {/* ---------------------------------------------------------------- */}
 
                     {isStory && (
-                        <section className="rounded-2xl border border-gray-200 bg-gray-50/70 p-5">
+                        <section className="rounded-2xl border border-border bg-muted p-5">
                             <div className="flex items-start gap-3">
-                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-gray-700 shadow-sm">
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-foreground shadow-sm">
                                     <MessageSquareText
                                         size={
                                             17
@@ -2138,7 +2138,7 @@ export default function AutomationForm({
                                         پاسخ به Reply استوری
                                     </h3>
 
-                                    <p className="mt-1 text-xs leading-6 text-gray-500">
+                                    <p className="mt-1 text-xs leading-6 text-muted-foreground">
                                         مثلاً اگر کاربر به این استوری عبارت «1» را Reply کند، پاسخ مستقیم و تمام پیام‌های Flow برای او ارسال می‌شوند.
                                     </p>
                                 </div>
@@ -2150,19 +2150,19 @@ export default function AutomationForm({
                     {/* Flow Builder                                                      */}
                     {/* ---------------------------------------------------------------- */}
 
-                    <section className="border-t border-gray-100 pt-6">
+                    <section className="border-t border-border pt-6">
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                             <div>
                                 <h3 className="text-sm font-semibold text-gray-900">
                                     Flow پیام‌ها
                                 </h3>
 
-                                <p className="mt-1 max-w-2xl text-xs leading-5 text-gray-400">
+                                <p className="mt-1 max-w-2xl text-xs leading-5 text-muted-foreground">
                                     پیام‌ها را بسازید و با Quick Reply مشخص کنید هر انتخاب کاربر به کدام پیام منتقل شود.
                                 </p>
 
                                 {isStory && (
-                                    <p className="mt-2 text-xs font-medium text-gray-500">
+                                    <p className="mt-2 text-xs font-medium text-muted-foreground">
                                         Story Reply نیز می‌تواند از متن، عکس، ویدیو، ویس، ویترین، فرم و ترکیب چند پیام استفاده کند.
                                     </p>
                                 )}
@@ -2173,7 +2173,7 @@ export default function AutomationForm({
                                 onClick={
                                     addMessage
                                 }
-                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-900 px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-black"
+                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-black"
                             >
                                 <Plus
                                     size={
@@ -2186,7 +2186,7 @@ export default function AutomationForm({
                         </div>
 
                         {loadingMessages ? (
-                            <div className="mt-5 flex items-center justify-center rounded-xl border border-gray-200 p-10 text-sm text-gray-500">
+                            <div className="mt-5 flex items-center justify-center rounded-xl border border-border p-10 text-sm text-muted-foreground">
                                 <Loader2
                                     size={
                                         18
@@ -2198,8 +2198,8 @@ export default function AutomationForm({
                             </div>
                         ) : messages.length ===
                             0 ? (
-                            <div className="mt-5 rounded-2xl border border-dashed border-gray-300 bg-gray-50/60 px-5 py-10 text-center">
-                                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-white text-gray-400 shadow-sm">
+                            <div className="mt-5 rounded-2xl border border-dashed border-border bg-muted px-5 py-10 text-center">
+                                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-white text-muted-foreground shadow-sm">
                                     <MessageSquareText
                                         size={
                                             21
@@ -2207,11 +2207,11 @@ export default function AutomationForm({
                                     />
                                 </div>
 
-                                <h4 className="mt-4 text-sm font-semibold text-gray-800">
+                                <h4 className="mt-4 text-sm font-semibold text-foreground">
                                     هنوز پیامی به Flow اضافه نشده
                                 </h4>
 
-                                <p className="mx-auto mt-2 max-w-md text-xs leading-5 text-gray-400">
+                                <p className="mx-auto mt-2 max-w-md text-xs leading-5 text-muted-foreground">
                                     برای پاسخ چندمرحله‌ای، پیام اول را بسازید و سپس پیام‌های بعدی و Quick Replyها را اضافه کنید.
                                 </p>
 
@@ -2220,7 +2220,7 @@ export default function AutomationForm({
                                     onClick={
                                         addMessage
                                     }
-                                    className="mt-5 inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-xs font-semibold text-gray-700 transition hover:border-gray-400"
+                                    className="mt-5 inline-flex items-center gap-2 rounded-xl border border-border bg-white px-4 py-2.5 text-xs font-semibold text-foreground transition hover:border-gray-400"
                                 >
                                     <Plus
                                         size={
@@ -2323,7 +2323,7 @@ export default function AutomationForm({
                                     onClick={
                                         addMessage
                                     }
-                                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 py-3 text-xs font-medium text-gray-500 transition hover:border-gray-500 hover:text-gray-800"
+                                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border py-3 text-xs font-medium text-muted-foreground transition hover:border-gray-500 hover:text-foreground"
                                 >
                                     <Plus
                                         size={
@@ -2339,7 +2339,7 @@ export default function AutomationForm({
 
                     {/* Active */}
 
-                    <label className="flex cursor-pointer items-center gap-3 border-t border-gray-100 pt-5">
+                    <label className="flex cursor-pointer items-center gap-3 border-t border-border pt-5">
                         <Input
                             type="checkbox"
                             checked={
@@ -2356,7 +2356,7 @@ export default function AutomationForm({
                             }
                         />
 
-                        <span className="text-sm text-gray-800">
+                        <span className="text-sm text-foreground">
                             Automation فعال باشد
                         </span>
                     </label>
@@ -2371,7 +2371,7 @@ export default function AutomationForm({
 
                     {/* Footer */}
 
-                    <div className="flex flex-col-reverse gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:justify-end">
+                    <div className="flex flex-col-reverse gap-3 border-t border-border pt-5 sm:flex-row sm:justify-end">
                         <button
                             type="button"
                             onClick={
@@ -2380,7 +2380,7 @@ export default function AutomationForm({
                             disabled={
                                 saving
                             }
-                            className="rounded-xl border border-gray-200 px-5 py-3 text-sm text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+                            className="rounded-xl border border-border px-5 py-3 text-sm text-foreground transition hover:bg-muted disabled:opacity-50"
                         >
                             انصراف
                         </button>
@@ -2390,7 +2390,7 @@ export default function AutomationForm({
                             disabled={
                                 saving
                             }
-                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-900 px-6 py-3 text-sm font-medium text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-50"
+                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-medium text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             {saving && (
                                 <Loader2
@@ -2443,18 +2443,18 @@ function KeywordInput({
 
     return (
         <div>
-            <label className="mb-2 block text-sm font-medium text-gray-800">کلمات کلیدی Trigger</label>
-            <div className="flex min-h-[52px] flex-wrap items-center gap-2 rounded-xl border border-gray-200 px-3 py-2 transition focus-within:border-gray-900">
+            <label className="mb-2 block text-sm font-medium text-foreground">کلمات کلیدی Trigger</label>
+            <div className="flex min-h-[52px] flex-wrap items-center gap-2 rounded-xl border border-border px-3 py-2 transition focus-within:border-gray-900">
                 {keywords.map((item) => (
-                    <span key={item} className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700">
+                    <span key={item} className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1.5 text-xs font-medium text-foreground">
                         {item}
-                        <button type="button" onClick={() => removeKeyword(item)} className="text-gray-400 transition hover:text-gray-900" aria-label={`حذف ${item}`}><X size={13} /></button>
+                        <button type="button" onClick={() => removeKeyword(item)} className="text-muted-foreground transition hover:text-foreground" aria-label={`حذف ${item}`}><X size={13} /></button>
                     </span>
                 ))}
                 <Input value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === "," || event.key === "،") { event.preventDefault(); addKeyword(); } }} onBlur={addKeyword} placeholder={keywords.length ? "کلمه بعدی..." : "مثلاً 1 یا یک"} className="min-w-[140px] flex-1 border-0 bg-transparent px-1 py-1 text-sm outline-none" />
-                <button type="button" onClick={addKeyword} className="shrink-0 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 transition hover:bg-gray-50">افزودن کلمه</button>
+                <button type="button" onClick={addKeyword} className="shrink-0 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition hover:bg-muted">افزودن کلمه</button>
             </div>
-            <p className="mt-2 text-xs leading-5 text-gray-400">{description} چند کلمه را با Enter یا «افزودن کلمه» اضافه کنید.</p>
+            <p className="mt-2 text-xs leading-5 text-muted-foreground">{description} چند کلمه را با Enter یا «افزودن کلمه» اضافه کنید.</p>
         </div>
     );
 }
@@ -2543,8 +2543,8 @@ function TriggerOption({
             className={[
                 "rounded-xl border p-4 text-right transition",
                 active
-                    ? "border-slate-900 bg-slate-950 text-white"
-                    : "border-border bg-white text-foreground hover:border-slate-400",
+                    ? "border-slate-900 bg-primary text-white"
+                    : "border-border bg-white text-foreground hover:border-ring",
             ].join(
                 " "
             )}
@@ -2559,7 +2559,7 @@ function TriggerOption({
                 className={[
                     "mt-1 text-xs leading-5",
                     active
-                        ? "text-slate-300"
+                        ? "text-muted-foreground"
                         : "text-muted-foreground",
                 ].join(
                     " "
