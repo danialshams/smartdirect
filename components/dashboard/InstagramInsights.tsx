@@ -191,6 +191,7 @@ export default function InstagramInsights({
 }) {
   const today = useMemo(() => new Date(), []);
   const [accountId, setAccountId] = useState(externalAccountId || "");
+  const [loadingAccounts, setLoadingAccounts] = useState(!externalAccountId);
   const [preset, setPreset] = useState<RangePreset>(30);
   const [range, setRange] = useState<{ from?: Date; to?: Date }>({
     from: addDays(today, -29),
@@ -285,7 +286,47 @@ export default function InstagramInsights({
   }, [accountId, effectiveRange]);
 
   useEffect(() => {
-    if (externalAccountId) setAccountId(externalAccountId);
+    if (externalAccountId) {
+      setAccountId(externalAccountId);
+      setLoadingAccounts(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const response = await fetch("/api/instagram/accounts", { cache: "no-store" });
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.error || "خطا در دریافت اکانت‌های Instagram");
+        }
+
+        const accounts = Array.isArray(result.accounts) ? result.accounts : [];
+        const connected = accounts.find(
+          (account: { id?: string; isConnected?: boolean }) => account.isConnected,
+        );
+
+        if (!cancelled) {
+          setAccountId(connected?.id || accounts[0]?.id || "");
+        }
+      } catch (requestError) {
+        if (!cancelled) {
+          setError(
+            requestError instanceof Error
+              ? requestError.message
+              : "خطا در دریافت اکانت Instagram",
+          );
+        }
+      } finally {
+        if (!cancelled) setLoadingAccounts(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [externalAccountId]);
 
   useEffect(() => {
@@ -516,7 +557,7 @@ export default function InstagramInsights({
         </div>
       )}
 
-      {loading && !data ? (
+      {(loadingAccounts || (loading && !data)) ? (
         <div className="p-4 sm:p-6">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             {Array.from({ length: 5 }).map((_, index) => (
