@@ -1032,7 +1032,7 @@ export default function EntryPointFlowBuilder({
                 className="flex w-full items-center justify-between gap-4 rounded-xl border bg-card px-4 py-4 text-right transition hover:bg-muted"
             >
                 <div className="flex min-w-0 items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-950 text-white">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-white">
                         <MessageSquare
                             size={17}
                         />
@@ -1091,10 +1091,10 @@ export default function EntryPointFlowBuilder({
                             {/* Messages */}
                             {messages.length ===
                                 0 ? (
-                                <div className="rounded-xl border border-dashed border-slate-300 bg-muted/50 px-5 py-10 text-center">
+                                <div className="rounded-xl border border-dashed border-border bg-muted/50 px-5 py-10 text-center">
                                     <MessageSquare
                                         size={22}
-                                        className="mx-auto text-slate-300"
+                                        className="mx-auto text-muted-foreground"
                                     />
 
                                     <p className="mt-3 text-sm font-semibold text-foreground">
@@ -1111,7 +1111,7 @@ export default function EntryPointFlowBuilder({
                                         onClick={
                                             addMessage
                                         }
-                                        className="mt-4 inline-flex items-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-slate-800"
+                                        className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-primary/90"
                                     >
                                         <Plus
                                             size={
@@ -1263,7 +1263,7 @@ export default function EntryPointFlowBuilder({
                                         onClick={
                                             addMessage
                                         }
-                                        className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 bg-white px-4 py-3 text-xs font-semibold text-muted-foreground transition hover:border-slate-400 hover:bg-muted"
+                                        className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-white px-4 py-3 text-xs font-semibold text-muted-foreground transition hover:border-ring hover:bg-muted"
                                     >
                                         <Plus
                                             size={
@@ -1285,7 +1285,7 @@ export default function EntryPointFlowBuilder({
                                         saving ||
                                         loadingAutomation
                                     }
-                                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                     {saving ? (
                                         <Loader2
