@@ -189,19 +189,19 @@ function MetricCard({
   icon: typeof BarChart3;
 }) {
   return (
-    <div className="flex min-h-[112px] min-w-0 flex-col items-center justify-center px-4 py-5 text-center sm:min-h-[124px]">
-      <div className="flex items-center justify-center gap-1.5">
-        <span className="flex h-5 w-5 shrink-0 items-center justify-center text-muted-foreground">
-          <Icon size={17} strokeWidth={1.8} />
-        </span>
+    <div className="relative flex min-h-[112px] min-w-0 items-center justify-center px-12 py-5 text-center sm:min-h-[124px]">
+      <div className="flex flex-col items-center justify-center">
         <p className="text-lg font-bold leading-none tracking-tight sm:text-xl">
           <AnimatedNumber value={value} />
         </p>
+        <p className="mt-3 text-xs font-medium leading-none text-foreground">{label}</p>
+        {helper && (
+          <p className="mt-2 text-[9px] leading-4 text-muted-foreground">{helper}</p>
+        )}
       </div>
-      <p className="mt-3 text-xs font-medium leading-none text-foreground">{label}</p>
-      {helper && (
-        <p className="mt-2 text-[9px] leading-4 text-muted-foreground">{helper}</p>
-      )}
+      <span className="absolute right-5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center text-muted-foreground sm:right-8">
+        <Icon size={17} strokeWidth={1.8} />
+      </span>
     </div>
   );
 }
@@ -221,11 +221,8 @@ function RateMetric({
   const negative = value != null && value < 0;
 
   return (
-    <div className="flex min-h-[96px] min-w-0 flex-col items-center justify-center px-4 py-4 text-center sm:min-h-[108px]">
-      <div className="flex items-center justify-center gap-1.5">
-        <span className="flex h-5 w-5 shrink-0 items-center justify-center text-muted-foreground">
-          <Icon size={17} strokeWidth={1.8} />
-        </span>
+    <div className="relative flex min-h-[96px] min-w-0 items-center justify-center px-12 py-4 text-center sm:min-h-[108px]">
+      <div className="flex flex-col items-center justify-center">
         <p
           className={[
             "text-xl font-bold leading-none tracking-tight",
@@ -240,8 +237,11 @@ function RateMetric({
             <AnimatedNumber value={value} formatter={formatPercent} />
           )}
         </p>
+        <p className="mt-3 text-xs font-medium leading-none text-foreground">{label}</p>
       </div>
-      <p className="mt-3 text-xs font-medium leading-none text-foreground">{label}</p>
+      <span className="absolute right-5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center text-muted-foreground sm:right-8">
+        <Icon size={17} strokeWidth={1.8} />
+      </span>
     </div>
   );
 }
