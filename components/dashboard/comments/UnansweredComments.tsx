@@ -1,4 +1,6 @@
 "use client";
+import { Input } from "@/components/ui/input"
+import { Select } from "@/components/ui/select"
 
 import {
   ExternalLink,
@@ -215,7 +217,7 @@ export default function UnansweredComments({
             </span>
             <div className="flex min-w-0 flex-1 items-center gap-2 sm:w-72 sm:flex-none">
               <AccountAvatar account={accounts.find((account) => account.id === selectedAccountId) ?? accounts[0]} />
-              <select
+              <Select
                 value={selectedAccountId}
                 onChange={(event) => setSelectedAccountId(event.target.value)}
                 className="h-10 min-w-0 flex-1 rounded-lg border bg-background px-3 text-sm font-medium text-foreground outline-none focus:border-slate-400"
@@ -225,7 +227,7 @@ export default function UnansweredComments({
                     @{account.igUsername}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
           </label>
 
@@ -408,7 +410,7 @@ function PostCard({
                 </p>
 
                 <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-                  <input
+                  <Input
                     value={drafts[comment.id] ?? ""}
                     onChange={(event) =>
                       onDraftChange(comment.id, event.target.value)
