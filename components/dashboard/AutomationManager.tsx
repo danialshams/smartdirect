@@ -1,4 +1,5 @@
 
+import { Button } from "@/components/ui/button"
 import { Select } from "@/components/ui/select"
 "use client";
 
@@ -389,7 +390,7 @@ export default function AutomationManager({
                     </div>
 
                     {connectedAccounts.length > 0 && (
-                        <button
+                        <Button
                             type="button"
                             onClick={() => {
                                 setEditingAutomation(
@@ -402,7 +403,7 @@ export default function AutomationManager({
                             <Plus size={17} />
 
                             ساخت اتوماسیون
-                        </button>
+                        </Button>
                     )}
                 </div>
 
@@ -494,7 +495,7 @@ export default function AutomationManager({
                         پردازش کند.
                     </p>
 
-                    <button
+                    <Button
                         type="button"
                         onClick={() => {
                             setEditingAutomation(
@@ -507,7 +508,7 @@ export default function AutomationManager({
                         <Plus size={17} />
 
                         ساخت اولین اتوماسیون
-                    </button>
+                    </Button>
                 </div>
             ) : (
                 <div className="divide-y divide-slate-100">
@@ -695,7 +696,7 @@ function AutomationCard({
                 </div>
 
                 <div className="flex items-center justify-between gap-3 border-t border-border/60 pt-4 xl:border-0 xl:pt-0">
-                    <button
+                    <Button
                         type="button"
                         onClick={onToggle}
                         className="flex items-center gap-2 text-xs font-medium text-muted-foreground"
@@ -721,10 +722,10 @@ function AutomationCard({
                         {automation.isActive
                             ? "فعال"
                             : "غیرفعال"}
-                    </button>
+                    </Button>
 
                     <div className="relative">
-                        <button
+                        <Button
                             type="button"
                             onClick={onMenuToggle}
                             className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-background hover:text-foreground"
@@ -733,11 +734,11 @@ function AutomationCard({
                             <MoreHorizontal
                                 size={19}
                             />
-                        </button>
+                        </Button>
 
                         {menuOpen && (
                             <>
-                                <button
+                                <Button
                                     type="button"
                                     className="fixed inset-0 z-10 cursor-default"
                                     onClick={
@@ -747,7 +748,7 @@ function AutomationCard({
                                 />
 
                                 <div className="absolute left-0 top-11 z-20 w-40 overflow-hidden rounded-lg border bg-background p-1.5 shadow-xl">
-                                    <button
+                                    <Button
                                         type="button"
                                         onClick={onEdit}
                                         className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs text-muted-foreground transition hover:bg-muted"
@@ -757,9 +758,9 @@ function AutomationCard({
                                         />
 
                                         ویرایش
-                                    </button>
+                                    </Button>
 
-                                    <button
+                                    <Button
                                         type="button"
                                         onClick={
                                             onDelete
@@ -771,7 +772,7 @@ function AutomationCard({
                                         />
 
                                         حذف
-                                    </button>
+                                    </Button>
                                 </div>
                             </>
                         )}
