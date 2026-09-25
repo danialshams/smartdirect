@@ -189,17 +189,15 @@ function MetricCard({
   icon: typeof BarChart3;
 }) {
   return (
-    <div className="flex min-h-[112px] min-w-0 flex-col items-center justify-center px-4 py-5 text-center sm:min-h-[124px]">
-      <div className="flex items-center justify-center gap-2">
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center text-muted-foreground">
-          <Icon size={17} strokeWidth={1.8} />
-        </span>
-        <p className="text-lg font-bold tracking-tight sm:text-xl">
-          <AnimatedNumber value={value} />
-        </p>
-      </div>
+    <div className="relative flex min-h-[112px] min-w-0 flex-col items-center justify-center px-4 py-5 text-center sm:min-h-[124px]">
+      <span className="absolute right-4 top-4 flex h-7 w-7 items-center justify-center text-muted-foreground">
+        <Icon size={17} strokeWidth={1.8} />
+      </span>
+      <p className="text-lg font-bold tracking-tight sm:text-xl">
+        <AnimatedNumber value={value} />
+      </p>
       <p className="mt-2 text-xs font-medium text-foreground">{label}</p>
-      {helper !== "مجموع بازه انتخابی" && (
+      {helper && (
         <p className="mt-1 text-[9px] leading-4 text-muted-foreground">{helper}</p>
       )}
     </div>
@@ -221,26 +219,24 @@ function RateMetric({
   const negative = value != null && value < 0;
 
   return (
-    <div className="flex min-h-[96px] min-w-0 flex-col items-center justify-center px-4 py-4 text-center sm:min-h-[108px]">
-      <div className="flex items-center justify-center gap-2">
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center text-muted-foreground">
-          <Icon size={17} strokeWidth={1.8} />
-        </span>
-        <p
-          className={[
-            "text-xl font-bold tracking-tight",
-            positive ? "text-emerald-600" : "",
-            negative ? "text-red-600" : "",
-            !positive && !negative ? "text-foreground" : "",
-          ].join(" ")}
-        >
-          {signed ? (
-            <AnimatedNumber value={value} formatter={formatSignedPercent} />
-          ) : (
-            <AnimatedNumber value={value} formatter={formatPercent} />
-          )}
-        </p>
-      </div>
+    <div className="relative flex min-h-[96px] min-w-0 flex-col items-center justify-center px-4 py-4 text-center sm:min-h-[108px]">
+      <span className="absolute right-4 top-4 flex h-7 w-7 items-center justify-center text-muted-foreground">
+        <Icon size={17} strokeWidth={1.8} />
+      </span>
+      <p
+        className={[
+          "text-xl font-bold tracking-tight",
+          positive ? "text-emerald-600" : "",
+          negative ? "text-red-600" : "",
+          !positive && !negative ? "text-foreground" : "",
+        ].join(" ")}
+      >
+        {signed ? (
+          <AnimatedNumber value={value} formatter={formatSignedPercent} />
+        ) : (
+          <AnimatedNumber value={value} formatter={formatPercent} />
+        )}
+      </p>
       <p className="mt-2 text-xs font-medium text-foreground">{label}</p>
     </div>
   );
@@ -732,23 +728,6 @@ export default function InstagramInsights({
 
             <div className="relative mt-4 overflow-hidden bg-white">
               <div className="pointer-events-none absolute inset-y-4 left-1/2 w-px -translate-x-1/2 bg-border" />
-              <div className="grid grid-cols-2">
-                <RateMetric
-                  label="نرخ تعامل"
-                  value={rates?.interactionRate}
-                  icon={BarChart3}
-                />
-                <RateMetric
-                  label="نرخ رشد خالص"
-                  value={rates?.netFollowerRate}
-                  signed
-                  icon={UserPlus}
-                />
-              </div>
-            </div>
-
-            <div className="relative mt-4 overflow-hidden bg-white">
-              <div className="pointer-events-none absolute inset-y-5 left-1/2 w-px -translate-x-1/2 bg-border" />
               <div className="pointer-events-none absolute inset-x-5 top-1/2 h-px -translate-y-1/2 bg-border sm:inset-x-8" />
               <div className="grid grid-cols-2">
                 <MetricCard
@@ -762,6 +741,17 @@ export default function InstagramInsights({
                   value={data.summary.totalInteractions}
                   helper=""
                   icon={BarChart3}
+                />
+                <RateMetric
+                  label="نرخ تعامل"
+                  value={rates?.interactionRate}
+                  icon={BarChart3}
+                />
+                <RateMetric
+                  label="نرخ رشد خالص"
+                  value={rates?.netFollowerRate}
+                  signed
+                  icon={UserPlus}
                 />
                 <MetricCard
                   label="فالو"
