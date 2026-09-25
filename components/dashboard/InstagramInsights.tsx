@@ -190,7 +190,7 @@ function MetricCard({
   icon: typeof BarChart3;
   iconPosition?: "outer" | "inner";
 }) {
-  const iconPositionClass = iconPosition === "inner" ? "right-0" : "right-5 sm:right-8";
+  const iconPositionClass = iconPosition === "inner" ? "right-2 sm:right-4" : "right-5 sm:right-8";
 
   return (
     <div className="relative flex min-h-[116px] min-w-0 items-center justify-center px-12 py-5 text-center">
@@ -203,7 +203,7 @@ function MetricCard({
           <p className="mt-2 text-[9px] leading-4 text-muted-foreground">{helper}</p>
         )}
       </div>
-      <span className={`absolute ${iconPositionClass} top-[calc(50%+2px)] flex h-5 w-5 -translate-y-1/2 items-center justify-center text-muted-foreground`}>
+      <span className={`absolute ${iconPositionClass} top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center text-muted-foreground`}>
         <Icon size={17} strokeWidth={1.8} />
       </span>
     </div>
@@ -225,7 +225,7 @@ function RateMetric({
 }) {
   const positive = value != null && value > 0;
   const negative = value != null && value < 0;
-  const iconPositionClass = iconPosition === "inner" ? "right-0" : "right-5 sm:right-8";
+  const iconPositionClass = iconPosition === "inner" ? "right-2 sm:right-4" : "right-5 sm:right-8";
 
   return (
     <div className="relative flex min-h-[116px] min-w-0 items-center justify-center px-12 py-4 text-center">
@@ -246,7 +246,7 @@ function RateMetric({
         </p>
         <p className="mt-3 text-xs font-medium leading-none text-foreground">{label}</p>
       </div>
-      <span className={`absolute ${iconPositionClass} top-[calc(50%+2px)] flex h-5 w-5 -translate-y-1/2 items-center justify-center text-muted-foreground`}>
+      <span className={`absolute ${iconPositionClass} top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center text-muted-foreground`}>
         <Icon size={17} strokeWidth={1.8} />
       </span>
     </div>
@@ -768,6 +768,7 @@ export default function InstagramInsights({
                   value={data.summary.totalInteractions}
                   helper=""
                   icon={BarChart3}
+                  iconPosition="inner"
                 />
 
                 <MetricCard
@@ -781,6 +782,7 @@ export default function InstagramInsights({
                   value={data.summary.unfollows}
                   helper={data.summary.unfollows == null ? "داده از Meta در دسترس نیست" : ""}
                   icon={UserMinus}
+                  iconPosition="inner"
                 />
               </div>
             </div>
