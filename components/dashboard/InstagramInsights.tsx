@@ -101,7 +101,7 @@ function formatDate(value: string | Date) {
 }
 
 function formatJalaliDate(value: Date) {
-  return new Intl.DateTimeFormat("en-US-u-ca-persian", {
+  return new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
     year: "numeric",
     month: "numeric",
     day: "numeric",
@@ -194,6 +194,19 @@ export default function InstagramInsights({
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [calendarTarget, setCalendarTarget] = useState<"from" | "to">("from");
   const [metric, setMetric] = useState<Metric>("views");
+
+  const minSelectableDate = useMemo(() => {
+    const value = new Date(today);
+    value.setHours(0, 0, 0, 0);
+    value.setFullYear(value.getFullYear() - 2);
+    return value;
+  }, [today]);
+
+  const maxSelectableDate = useMemo(() => {
+    const value = new Date(today);
+    value.setHours(23, 59, 59, 999);
+    return value;
+  }, [today]);
   const [data, setData] = useState<Data | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -328,26 +341,36 @@ export default function InstagramInsights({
 
     setRange((current) => {
       if (calendarTarget === "from") {
-        return {
-          from: value,
-          to:
-            current.to && current.to < value
-              ? value
-              : current.to,
-        };
+        const nextFrom = value < minSelectableDate ? minSelectableDate : value;
+        const nextTo =
+          current.to && current.to >= nextFrom ? current.to : nextFrom;
+
+        return { from: nextFrom, to: nextTo };
       }
 
-      return {
-        from:
-          current.from && current.from > value
-            ? value
-            : current.from,
-        to: value,
-      };
+      const nextTo = value > maxSelectableDate ? maxSelectableDate : value;
+      const nextFrom =
+        current.from && current.from <= nextTo ? current.from : nextTo;
+
+      return { from: nextFrom, to: nextTo };
     });
 
     setCalendarOpen(false);
   }
+
+  const calendarDisabled = useMemo(() => {
+    if (calendarTarget === "from") {
+      return {
+        before: minSelectableDate,
+        after: maxSelectableDate,
+      };
+    }
+
+    return {
+      before: range.from ?? minSelectableDate,
+      after: maxSelectableDate,
+    };
+  }, [calendarTarget, maxSelectableDate, minSelectableDate, range.from]);
 
   const chartData = useMemo(
     () =>
@@ -455,6 +478,9 @@ export default function InstagramInsights({
                         mode="single"
                         selected={range[calendarTarget]}
                         onSelect={selectCalendarDate}
+                        disabled={calendarDisabled}
+                        startMonth={minSelectableDate}
+                        endMonth={maxSelectableDate}
                       />
                     </div>
                   </div>
@@ -464,6 +490,9 @@ export default function InstagramInsights({
                       mode="single"
                       selected={range[calendarTarget]}
                       onSelect={selectCalendarDate}
+                      disabled={calendarDisabled}
+                      startMonth={minSelectableDate}
+                      endMonth={maxSelectableDate}
                     />
                   </div>
                 </>
