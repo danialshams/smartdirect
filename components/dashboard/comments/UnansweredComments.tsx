@@ -199,7 +199,7 @@ export default function UnansweredComments({
             type="button"
             onClick={() => void loadComments()}
             disabled={loading}
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border bg-background px-4 text-sm font-medium text-foreground transition hover:border-slate-300 hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border bg-background px-4 text-sm font-medium text-foreground transition hover:border-border hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? (
               <Loader2 size={17} className="animate-spin" />
@@ -220,7 +220,7 @@ export default function UnansweredComments({
               <Select
                 value={selectedAccountId}
                 onChange={(event) => setSelectedAccountId(event.target.value)}
-                className="h-10 min-w-0 flex-1 rounded-lg border bg-background px-3 text-sm font-medium text-foreground outline-none focus:border-slate-400"
+                className="h-10 min-w-0 flex-1 rounded-lg border bg-background px-3 text-sm font-medium text-foreground outline-none focus:border-ring"
               >
                 {accounts.map((account) => (
                   <option key={account.id} value={account.id}>
@@ -287,7 +287,7 @@ function AccountAvatar({ account }: { account: Account }) {
       className="h-9 w-9 shrink-0 rounded-full object-cover"
     />
   ) : (
-    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-950 text-[10px] font-bold text-white">
+    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">
       IG
     </div>
   );
@@ -322,7 +322,7 @@ function PostCard({
                 alt={post.media.caption ?? "Instagram post"}
                 className="h-full w-full object-cover"
               />
-              <div className="absolute inset-0 flex items-center justify-center bg-slate-950/10">
+              <div className="absolute inset-0 flex items-center justify-center bg-primary/10">
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-background/90 text-foreground shadow-lg">
                   <Video size={21} />
                 </div>
@@ -389,7 +389,7 @@ function PostCard({
                   className="h-9 w-9 shrink-0 rounded-full object-cover"
                 />
               ) : (
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-950 text-[10px] font-bold text-white">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">
                   IG
                 </div>
               )}
@@ -401,7 +401,7 @@ function PostCard({
                   </p>
                   <MessageCircleReply
                     size={16}
-                    className="shrink-0 text-slate-300"
+                    className="shrink-0 text-muted-foreground"
                   />
                 </div>
 
@@ -427,7 +427,7 @@ function PostCard({
                     }}
                     maxLength={1000}
                     placeholder="پاسخ خود را بنویسید..."
-                    className="h-11 min-w-0 flex-1 rounded-lg border bg-background px-3 text-sm outline-none transition placeholder:text-muted-foreground focus:border-slate-400"
+                    className="h-11 min-w-0 flex-1 rounded-lg border bg-background px-3 text-sm outline-none transition placeholder:text-muted-foreground focus:border-ring"
                   />
 
                   <button
@@ -437,7 +437,7 @@ function PostCard({
                       replyingId === comment.id ||
                       !(drafts[comment.id] ?? "").trim()
                     }
-                    className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {replyingId === comment.id ? (
                       <Loader2 size={16} className="animate-spin" />
@@ -464,7 +464,7 @@ function EmptyState({
   description: string;
 }) {
   return (
-    <div className="rounded-[24px] border border-dashed border-slate-300 bg-background px-6 py-16 text-center">
+    <div className="rounded-[24px] border border-dashed border-border bg-background px-6 py-16 text-center">
       <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
         <MessageCircleReply size={25} strokeWidth={1.7} />
       </div>
