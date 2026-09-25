@@ -364,11 +364,11 @@ export default function AutomationManager({
     }
 
     return (
-        <div className="rounded-[26px] border border-slate-200 bg-white">
-            <div className="border-b border-slate-100 p-5 sm:p-7">
+        <div className="rounded-xl border bg-card">
+            <div className="border-b border-border/60 p-5 sm:p-7">
                 <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
                     <div>
-                        <div className="flex items-center gap-2 text-slate-400">
+                        <div className="flex items-center gap-2 text-muted-foreground">
                             <Bot size={16} />
 
                             <span className="text-[10px] font-semibold tracking-[0.16em]">
@@ -376,11 +376,11 @@ export default function AutomationManager({
                             </span>
                         </div>
 
-                        <h2 className="mt-2 text-xl font-bold tracking-tight text-slate-900">
+                        <h2 className="mt-2 text-xl font-bold tracking-tight text-foreground">
                             اتوماسیون پاسخ‌گویی
                         </h2>
 
-                        <p className="mt-1.5 max-w-xl text-sm leading-6 text-slate-400">
+                        <p className="mt-1.5 max-w-xl text-sm leading-6 text-muted-foreground">
                             رفتار SmartDirect را برای
                             کامنت، دایرکت و پاسخ استوری
                             مدیریت کنید.
@@ -407,7 +407,7 @@ export default function AutomationManager({
 
                 {connectedAccounts.length > 0 && (
                     <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center">
-                        <span className="text-xs text-slate-400">
+                        <span className="text-xs text-muted-foreground">
                             پیج فعال:
                         </span>
 
@@ -423,7 +423,7 @@ export default function AutomationManager({
                                         event.target.value
                                     )
                                 }
-                                className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 pl-10 text-sm font-medium text-slate-700 outline-none transition focus:border-slate-400"
+                                className="w-full appearance-none rounded-lg border bg-muted/30 px-4 py-3 pl-10 text-sm font-medium text-foreground outline-none transition focus:border-slate-400"
                             >
                                 {connectedAccounts.map(
                                     (account) => (
@@ -446,7 +446,7 @@ export default function AutomationManager({
 
                             <ChevronDown
                                 size={16}
-                                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                             />
                         </div>
                     </div>
@@ -455,15 +455,15 @@ export default function AutomationManager({
 
             {connectedAccounts.length === 0 ? (
                 <div className="px-6 py-16 text-center">
-                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
+                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
                         <MessageCircle size={24} />
                     </div>
 
-                    <h3 className="mt-5 text-base font-bold text-slate-800">
+                    <h3 className="mt-5 text-base font-bold text-foreground">
                         ابتدا یک پیج متصل کنید
                     </h3>
 
-                    <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-400">
+                    <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">
                         برای ساخت Automation حداقل
                         یک اکانت اینستاگرام باید به
                         SmartDirect متصل باشد.
@@ -473,20 +473,20 @@ export default function AutomationManager({
                 <div className="flex items-center justify-center px-6 py-20">
                     <Loader2
                         size={24}
-                        className="animate-spin text-slate-400"
+                        className="animate-spin text-muted-foreground"
                     />
                 </div>
             ) : automations.length === 0 ? (
                 <div className="px-6 py-16 text-center">
-                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
+                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
                         <Bot size={23} />
                     </div>
 
-                    <h3 className="mt-5 text-base font-bold text-slate-800">
+                    <h3 className="mt-5 text-base font-bold text-foreground">
                         هنوز اتوماسیونی ساخته نشده
                     </h3>
 
-                    <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-400">
+                    <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">
                         اولین Automation را بسازید
                         تا SmartDirect رویدادهای
                         اینستاگرام را به‌صورت خودکار
@@ -599,7 +599,7 @@ function AutomationCard({
     onDelete: () => void;
 }) {
     return (
-        <div className="group px-5 py-5 transition hover:bg-slate-50/60 sm:px-7">
+        <div className="group px-5 py-5 transition hover:bg-muted/20 sm:px-7">
             <div className="flex flex-col gap-5 xl:flex-row xl:items-center">
                 <div className="flex min-w-0 flex-1 items-start gap-4">
                     <div
@@ -607,7 +607,7 @@ function AutomationCard({
                             "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl",
                             automation.isActive
                                 ? "bg-slate-950 text-white"
-                                : "bg-slate-100 text-slate-400",
+                                : "bg-muted text-muted-foreground",
                         ].join(" ")}
                     >
                         <Bot
@@ -618,13 +618,13 @@ function AutomationCard({
 
                     <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                            <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
+                            <span className="rounded-lg bg-muted px-2.5 py-1 text-xs font-semibold text-foreground">
                                 {getTriggerLabel(
                                     automation.triggerType
                                 )}
                             </span>
 
-                            <span className="text-sm font-bold text-slate-900">
+                            <span className="text-sm font-bold text-foreground">
                                 {getTriggerDescription(
                                     automation
                                 )}
@@ -635,7 +635,7 @@ function AutomationCard({
                                     "rounded-full px-2 py-1 text-[9px] font-semibold",
                                     automation.isActive
                                         ? "bg-emerald-50 text-emerald-600"
-                                        : "bg-slate-100 text-slate-400",
+                                        : "bg-muted text-muted-foreground",
                                 ].join(" ")}
                             >
                                 {automation.isActive
@@ -646,21 +646,21 @@ function AutomationCard({
                             {automation.triggerType ===
                                 "COMMENT_KEYWORD" &&
                                 automation.requireFollow && (
-                                    <span className="rounded-full bg-slate-100 px-2 py-1 text-[9px] font-semibold text-slate-600">
+                                    <span className="rounded-full bg-muted px-2 py-1 text-[9px] font-semibold text-muted-foreground">
                                         شرط فالو فعال
                                     </span>
                                 )}
                         </div>
 
-                        <p className="mt-1 text-xs text-slate-400">
+                        <p className="mt-1 text-xs text-muted-foreground">
                             @{accountUsername}
                         </p>
 
                         <div className="mt-4 grid gap-3 md:grid-cols-2">
                             {automation.triggerType ===
                                 "COMMENT_KEYWORD" && (
-                                    <div className="rounded-xl border border-slate-100 bg-white p-3">
-                                        <div className="mb-1 flex items-center gap-2 text-[10px] font-medium text-slate-400">
+                                    <div className="rounded-xl border border-border/60 bg-background p-3">
+                                        <div className="mb-1 flex items-center gap-2 text-[10px] font-medium text-muted-foreground">
                                             <MessageCircle
                                                 size={13}
                                             />
@@ -668,15 +668,15 @@ function AutomationCard({
                                             پاسخ عمومی
                                         </div>
 
-                                        <p className="line-clamp-2 text-xs leading-6 text-slate-600">
+                                        <p className="line-clamp-2 text-xs leading-6 text-muted-foreground">
                                             {automation.commentReplyText ||
                                                 "بدون پاسخ عمومی"}
                                         </p>
                                     </div>
                                 )}
 
-                            <div className="rounded-xl border border-slate-100 bg-white p-3">
-                                <div className="mb-1 flex items-center gap-2 text-[10px] font-medium text-slate-400">
+                            <div className="rounded-xl border border-border/60 bg-background p-3">
+                                <div className="mb-1 flex items-center gap-2 text-[10px] font-medium text-muted-foreground">
                                     <MessageSquareText
                                         size={13}
                                     />
@@ -684,7 +684,7 @@ function AutomationCard({
                                     پاسخ دایرکت
                                 </div>
 
-                                <p className="line-clamp-2 text-xs leading-6 text-slate-600">
+                                <p className="line-clamp-2 text-xs leading-6 text-muted-foreground">
                                     {automation.replyText ||
                                         "از Flow پیام استفاده می‌شود"}
                                 </p>
@@ -693,11 +693,11 @@ function AutomationCard({
                     </div>
                 </div>
 
-                <div className="flex items-center justify-between gap-3 border-t border-slate-100 pt-4 xl:border-0 xl:pt-0">
+                <div className="flex items-center justify-between gap-3 border-t border-border/60 pt-4 xl:border-0 xl:pt-0">
                     <button
                         type="button"
                         onClick={onToggle}
-                        className="flex items-center gap-2 text-xs font-medium text-slate-500"
+                        className="flex items-center gap-2 text-xs font-medium text-muted-foreground"
                     >
                         <span
                             className={[
@@ -709,7 +709,7 @@ function AutomationCard({
                         >
                             <span
                                 className={[
-                                    "absolute top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-all",
+                                    "absolute top-1 h-4 w-4 rounded-full bg-background shadow-sm transition-all",
                                     automation.isActive
                                         ? "right-1"
                                         : "right-6",
@@ -726,7 +726,7 @@ function AutomationCard({
                         <button
                             type="button"
                             onClick={onMenuToggle}
-                            className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-white hover:text-slate-700"
+                            className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-background hover:text-foreground"
                             aria-label="گزینه‌ها"
                         >
                             <MoreHorizontal
@@ -745,11 +745,11 @@ function AutomationCard({
                                     aria-label="بستن"
                                 />
 
-                                <div className="absolute left-0 top-11 z-20 w-40 overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl">
+                                <div className="absolute left-0 top-11 z-20 w-40 overflow-hidden rounded-lg border bg-background p-1.5 shadow-xl">
                                     <button
                                         type="button"
                                         onClick={onEdit}
-                                        className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs text-slate-600 transition hover:bg-slate-50"
+                                        className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs text-muted-foreground transition hover:bg-muted"
                                     >
                                         <Pencil
                                             size={14}
