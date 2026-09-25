@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { ChevronDown, Instagram, Plus } from "lucide-react"
+import { ChevronDown, CircleUserRound, Plus } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -49,7 +49,7 @@ function AccountConnectDropdown({ activeAccount }: { activeAccount?: InstagramAc
         {activeAccount ? (
           <>
             <DropdownMenuItem disabled className="h-9 cursor-default gap-2 rounded-md px-2.5 text-xs font-medium opacity-100">
-              <Instagram className="size-3.5 shrink-0 text-muted-foreground" />
+              <CircleUserRound className="size-3.5 shrink-0 text-muted-foreground" />
               <span dir="ltr" className="truncate">@{activeAccount.igUsername}</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator className="my-1" />
