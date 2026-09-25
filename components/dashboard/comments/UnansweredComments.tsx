@@ -1,4 +1,5 @@
 "use client";
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select } from "@/components/ui/select"
 
@@ -195,7 +196,7 @@ export default function UnansweredComments({
             </p>
           </div>
 
-          <button
+          <Button
             type="button"
             onClick={() => void loadComments()}
             disabled={loading}
@@ -207,7 +208,7 @@ export default function UnansweredComments({
               <RefreshCw size={17} />
             )}
             بروزرسانی
-          </button>
+          </Button>
         </header>
 
         <section className="flex flex-col gap-3 rounded-xl border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -430,7 +431,7 @@ function PostCard({
                     className="h-11 min-w-0 flex-1 rounded-lg border bg-background px-3 text-sm outline-none transition placeholder:text-muted-foreground focus:border-ring"
                   />
 
-                  <button
+                  <Button
                     type="button"
                     onClick={() => onReply(comment.id)}
                     disabled={
@@ -445,7 +446,7 @@ function PostCard({
                       <Send size={16} />
                     )}
                     پاسخ
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>
