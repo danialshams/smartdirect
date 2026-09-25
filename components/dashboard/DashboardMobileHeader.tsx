@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { ChevronDown, CircleUserRound, Plus } from "lucide-react"
+import { ChevronDown, CircleUserRound, PanelLeft, Plus } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { SidebarTrigger } from "@/components/ui/sidebar"
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 
 type InstagramAccount = {
   id: string
@@ -24,15 +25,50 @@ export default function DashboardMobileHeader({ instagramAccounts }: { instagram
 
   return (
     <header dir="rtl" className="sticky top-0 z-30 flex h-14 items-center justify-center bg-white/95 px-3 backdrop-blur sm:h-16 sm:px-5">
-      <div className="absolute right-3 flex items-center gap-1 sm:right-5 lg:hidden">
+      <div className="absolute right-3 sm:right-5 lg:hidden">
         <SidebarTrigger className="border-0 shadow-none" />
-        <AccountConnectDropdown activeAccount={activeAccount} />
       </div>
       <div className="text-sm font-bold tracking-tight">SmartDirect</div>
       <div className="absolute left-3 hidden lg:block lg:left-5">
         <AccountConnectDropdown activeAccount={activeAccount} />
       </div>
+      <div className="fixed left-0 top-1/2 z-40 -translate-y-1/2 lg:hidden">
+        <MobileAccountSheet activeAccount={activeAccount} />
+      </div>
     </header>
+  )
+}
+
+function MobileAccountSheet({ activeAccount }: { activeAccount?: InstagramAccount }) {
+  return (
+    <Sheet>
+      <SheetTrigger asChild>
+        <button type="button" aria-label="مدیریت پیج‌های متصل" className="flex h-11 w-7 items-center justify-center rounded-r-md border border-l-0 border-border bg-background text-muted-foreground shadow-sm transition-all duration-300 hover:w-8 hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring/30">
+          <PanelLeft className="size-4" />
+        </button>
+      </SheetTrigger>
+      <SheetContent side="left" className="gap-6 border-border px-5 py-6">
+        <SheetHeader className="pr-7">
+          <SheetTitle>پیج‌های متصل</SheetTitle>
+          <SheetDescription>پیج فعال را مدیریت کنید یا یک پیج جدید متصل کنید.</SheetDescription>
+        </SheetHeader>
+        <div className="space-y-2">
+          {activeAccount ? (
+            <div className="flex items-center gap-3 rounded-lg bg-muted/50 px-3 py-3">
+              <CircleUserRound className="size-4 shrink-0 text-muted-foreground" />
+              <div className="min-w-0 flex-1 text-right">
+                <p className="truncate text-xs font-medium" dir="ltr">@{activeAccount.igUsername}</p>
+                <p className="mt-0.5 text-[10px] text-muted-foreground">پیج فعال</p>
+              </div>
+            </div>
+          ) : <p className="px-2 py-2 text-xs text-muted-foreground">هنوز پیجی متصل نشده است.</p>}
+        </div>
+        <Link href="/api/instagram/connect" className="mt-auto flex h-10 items-center justify-center gap-2 rounded-lg border border-border text-xs font-medium transition-colors hover:bg-muted">
+          <Plus className="size-3.5" />
+          اتصال پیج جدید
+        </Link>
+      </SheetContent>
+    </Sheet>
   )
 }
 
