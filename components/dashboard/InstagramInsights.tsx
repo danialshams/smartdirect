@@ -8,7 +8,6 @@ import {
   UserPlus,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { DateRange } from "react-day-picker";
 
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -101,6 +100,16 @@ function formatDate(value: string | Date) {
   }).format(typeof value === "string" ? new Date(value) : value);
 }
 
+function formatJalaliDate(value: Date) {
+  return new Intl.DateTimeFormat("en-US-u-ca-persian", {
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+  })
+    .format(value)
+    .replaceAll("/", ".");
+}
+
 function formatShortDate(value: string) {
   return new Intl.DateTimeFormat("fa-IR", {
     month: "short",
@@ -183,6 +192,7 @@ export default function InstagramInsights({
     to: today,
   });
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [calendarTarget, setCalendarTarget] = useState<"from" | "to">("from");
   const [metric, setMetric] = useState<Metric>("views");
   const [data, setData] = useState<Data | null>(null);
   const [loading, setLoading] = useState(true);
@@ -306,16 +316,37 @@ export default function InstagramInsights({
     });
   }
 
-  function selectCalendarRange(value: DateRange | undefined) {
-    if (!value?.from) {
-      setRange({});
-      return;
-    }
+  function openCalendar(target: "from" | "to") {
+    setCalendarTarget(target);
+    setCalendarOpen(true);
+  }
+
+  function selectCalendarDate(value: Date | undefined) {
+    if (!value) return;
 
     setPreset(30);
-    setRange({ from: value.from, to: value.to ?? value.from });
 
-    if (value.to) setCalendarOpen(false);
+    setRange((current) => {
+      if (calendarTarget === "from") {
+        return {
+          from: value,
+          to:
+            current.to && current.to < value
+              ? value
+              : current.to,
+        };
+      }
+
+      return {
+        from:
+          current.from && current.from > value
+            ? value
+            : current.from,
+        to: value,
+      };
+    });
+
+    setCalendarOpen(false);
   }
 
   const chartData = useMemo(
@@ -384,26 +415,36 @@ export default function InstagramInsights({
             </div>
 
             <div className="relative shrink-0">
-              <button
-                type="button"
-                onClick={() => setCalendarOpen((open) => !open)}
-                className="inline-flex h-10 min-w-[150px] items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-semibold text-slate-700 transition hover:bg-slate-50"
-                aria-expanded={calendarOpen}
-                aria-haspopup="dialog"
-              >
-                <span className="truncate">
-                  {range.from
-                    ? range.to
-                      ? `${formatDate(range.from)} تا ${formatDate(range.to)}`
-                      : formatDate(range.from)
-                    : "انتخاب بازه زمانی"}
-                </span>
-                <span className="text-slate-400">⌄</span>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => openCalendar("from")}
+                  className="inline-flex h-10 min-w-[112px] items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-semibold text-slate-700 transition hover:bg-slate-50"
+                  aria-expanded={calendarOpen && calendarTarget === "from"}
+                  aria-haspopup="dialog"
+                >
+                  {range.from ? formatJalaliDate(range.from) : "تاریخ شروع"}
+                </button>
+
+                <span className="text-[10px] font-medium text-slate-400">تا</span>
+
+                <button
+                  type="button"
+                  onClick={() => openCalendar("to")}
+                  className="inline-flex h-10 min-w-[112px] items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-semibold text-slate-700 transition hover:bg-slate-50"
+                  aria-expanded={calendarOpen && calendarTarget === "to"}
+                  aria-haspopup="dialog"
+                >
+                  {range.to ? formatJalaliDate(range.to) : "تاریخ پایان"}
+                </button>
+              </div>
 
               {calendarOpen && (
                 <>
-                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/10 p-4 md:hidden">
+                  <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/10 p-4 md:hidden"
+                    onClick={() => setCalendarOpen(false)}
+                  >
                     <div
                       role="dialog"
                       aria-modal="true"
@@ -411,26 +452,18 @@ export default function InstagramInsights({
                       onClick={(event) => event.stopPropagation()}
                     >
                       <Calendar
-                        mode="range"
-                        selected={
-                          range.from
-                            ? ({ from: range.from, to: range.to } satisfies DateRange)
-                            : undefined
-                        }
-                        onSelect={selectCalendarRange}
+                        mode="single"
+                        selected={range[calendarTarget]}
+                        onSelect={selectCalendarDate}
                       />
                     </div>
                   </div>
 
                   <div className="absolute right-0 top-12 z-50 hidden rounded-xl border border-slate-200 bg-white p-2 shadow-[0_18px_50px_rgba(15,23,42,0.12)] md:block">
                     <Calendar
-                      mode="range"
-                      selected={
-                        range.from
-                          ? ({ from: range.from, to: range.to } satisfies DateRange)
-                          : undefined
-                      }
-                      onSelect={selectCalendarRange}
+                      mode="single"
+                      selected={range[calendarTarget]}
+                      onSelect={selectCalendarDate}
                     />
                   </div>
                 </>
