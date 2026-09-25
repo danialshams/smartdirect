@@ -11,7 +11,7 @@ import {
   DayPicker,
   getDefaultClassNames,
   type DayButton,
-} from "react-day-picker"
+} from "@daypicker/persian"
 
 import { Button, buttonVariants } from "@/components/ui/button"
 
