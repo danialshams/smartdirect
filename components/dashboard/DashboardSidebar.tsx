@@ -2,14 +2,14 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { BarChart3, Bot, CreditCard, ImagePlus, Inbox, LayoutDashboard, MessageCircle, MessageCircleReply, Menu, Settings, UsersRound, X } from "lucide-react"
+import { BarChart3, Bot, CreditCard, ImagePlus, Inbox, LayoutDashboard, MessageCircle, MessageCircleReply, Menu, Settings, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sidebar, SidebarClose, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar"
 import SignOutButton from "../../components/auth/SignOutButton"
 
 type DashboardSidebarProps={open?:boolean; onClose?:()=>void}
 const menuGroups=[
-{label:"نمای کلی",items:[{title:"داشبورد",href:"/dashboard",icon:LayoutDashboard},{title:"تحلیل پیج",href:"/dashboard/insights",icon:BarChart3},{title:"اکانت‌های متصل",href:"/dashboard/accounts",icon:UsersRound}]},
+{label:"نمای کلی",items:[{title:"داشبورد",href:"/dashboard",icon:LayoutDashboard},{title:"تحلیل پیج",href:"/dashboard/insights",icon:BarChart3}]},
 {label:"مدیریت",items:[{title:"انتشار محتوا",href:"/dashboard/publishing",icon:ImagePlus},{title:"کامنت‌ها",href:"/dashboard/comments",icon:MessageCircleReply},{title:"پیام‌ها",href:"/dashboard/inbox",icon:Inbox},{title:"اتوماسیون‌ها",href:"/dashboard/automations",icon:Bot},{title:"Ice Breaker",href:"/dashboard/ice-breaker",icon:MessageCircle},{title:"منوی ثابت",href:"/dashboard/persistent-menu",icon:Menu}]},
 {label:"حساب",items:[{title:"اشتراک",href:"/dashboard/subscription",icon:CreditCard},{title:"تنظیمات",href:"/dashboard/settings",icon:Settings}]}
 ]
