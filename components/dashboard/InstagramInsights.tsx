@@ -190,7 +190,7 @@ function MetricCard({
 }) {
   return (
     <div className="relative flex min-h-[112px] min-w-0 flex-col items-center justify-center px-4 py-5 text-center sm:min-h-[124px]">
-      <span className="absolute right-4 top-4 flex h-7 w-7 items-center justify-center text-muted-foreground">
+      <span className="absolute right-5 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center text-muted-foreground">
         <Icon size={17} strokeWidth={1.8} />
       </span>
       <p className="text-lg font-bold tracking-tight sm:text-xl">
@@ -220,7 +220,7 @@ function RateMetric({
 
   return (
     <div className="relative flex min-h-[96px] min-w-0 flex-col items-center justify-center px-4 py-4 text-center sm:min-h-[108px]">
-      <span className="absolute right-4 top-4 flex h-7 w-7 items-center justify-center text-muted-foreground">
+      <span className="absolute right-5 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center text-muted-foreground">
         <Icon size={17} strokeWidth={1.8} />
       </span>
       <p
@@ -732,6 +732,18 @@ export default function InstagramInsights({
               <div className="pointer-events-none absolute inset-x-5 top-2/3 h-px -translate-y-1/2 bg-border sm:inset-x-8" />
 
               <div className="grid grid-cols-2">
+                <RateMetric
+                  label="نرخ تعامل"
+                  value={rates?.interactionRate}
+                  icon={BarChart3}
+                />
+                <RateMetric
+                  label="نرخ رشد خالص"
+                  value={rates?.netFollowerRate}
+                  signed
+                  icon={UserPlus}
+                />
+
                 <MetricCard
                   label="بازدید"
                   value={data.summary.views}
@@ -743,18 +755,6 @@ export default function InstagramInsights({
                   value={data.summary.totalInteractions}
                   helper=""
                   icon={BarChart3}
-                />
-
-                <RateMetric
-                  label="نرخ تعامل"
-                  value={rates?.interactionRate}
-                  icon={BarChart3}
-                />
-                <RateMetric
-                  label="نرخ رشد خالص"
-                  value={rates?.netFollowerRate}
-                  signed
-                  icon={UserPlus}
                 />
 
                 <MetricCard
