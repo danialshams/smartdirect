@@ -7,11 +7,11 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
 } from "lucide-react"
+import { DayPicker } from "@daypicker/persian"
 import {
-  DayPicker,
   getDefaultClassNames,
   type DayButton,
-} from "@daypicker/persian"
+} from "react-day-picker"
 
 import { Button, buttonVariants } from "@/components/ui/button"
 
