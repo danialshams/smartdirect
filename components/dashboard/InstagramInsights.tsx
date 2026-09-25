@@ -728,7 +728,9 @@ export default function InstagramInsights({
 
             <div className="relative mt-4 overflow-hidden bg-white">
               <div className="pointer-events-none absolute inset-y-4 left-1/2 w-px -translate-x-1/2 bg-border" />
-              <div className="pointer-events-none absolute inset-x-5 top-1/2 h-px -translate-y-1/2 bg-border sm:inset-x-8" />
+              <div className="pointer-events-none absolute inset-x-5 top-1/3 h-px -translate-y-1/2 bg-border sm:inset-x-8" />
+              <div className="pointer-events-none absolute inset-x-5 top-2/3 h-px -translate-y-1/2 bg-border sm:inset-x-8" />
+
               <div className="grid grid-cols-2">
                 <MetricCard
                   label="بازدید"
@@ -742,6 +744,7 @@ export default function InstagramInsights({
                   helper=""
                   icon={BarChart3}
                 />
+
                 <RateMetric
                   label="نرخ تعامل"
                   value={rates?.interactionRate}
@@ -753,6 +756,7 @@ export default function InstagramInsights({
                   signed
                   icon={UserPlus}
                 />
+
                 <MetricCard
                   label="فالو"
                   value={data.summary.follows}
