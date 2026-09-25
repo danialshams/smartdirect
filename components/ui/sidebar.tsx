@@ -25,13 +25,13 @@ function SidebarProvider({ children, defaultOpen=true }: { children: React.React
 }
 function useSidebar(){const c=React.useContext(SidebarContext); if(!c) throw new Error("useSidebar must be used within SidebarProvider"); return c}
 
-function Sidebar({side="right",className,children,...props}:{side?:"left"|"right"; className?:string; children:React.ReactNode}) {
+function Sidebar({side="right",dir="rtl",className,children,...props}:{side?:"left"|"right"; dir?:"rtl"|"ltr"; className?:string; children:React.ReactNode}) {
  const {open,openMobile,setOpenMobile,isMobile}=useSidebar()
  const visible=isMobile?openMobile:open
  return <>
    {isMobile && visible && <button aria-label="بستن منو" onClick={()=>setOpenMobile(false)} className="fixed inset-0 z-40 bg-black/10 lg:hidden"/>}
-   <aside data-slot="sidebar" data-side={side} className={cn("fixed inset-y-0 z-50 hidden w-64 border-border bg-white lg:flex",side==="right"?"right-0 border-l":"left-0 border-r",!open&&"lg:w-16",className)} {...props}>{children}</aside>
-   {isMobile && visible && <aside data-slot="sidebar-mobile" className={cn("fixed inset-y-0 right-0 z-50 flex w-72 max-w-[85vw] border-l bg-white shadow-xl lg:hidden",className)}>{children}</aside>}
+   <aside dir={dir} data-slot="sidebar" data-side={side} className={cn("fixed inset-y-0 z-50 hidden w-64 border-border bg-white lg:flex",side==="right"?"right-0 border-l":"left-0 border-r",!open&&"lg:w-16",className)} {...props}>{children}</aside>
+   {isMobile && visible && <aside dir={dir} data-slot="sidebar-mobile" className={cn("fixed inset-y-0 right-0 z-50 flex w-72 max-w-[85vw] border-l bg-white shadow-xl lg:hidden",className)}>{children}</aside>}
  </>}
 function SidebarHeader({className,...props}:React.ComponentProps<"div">){return <div data-slot="sidebar-header" className={cn("p-3",className)} {...props}/>}
 function SidebarContent({className,...props}:React.ComponentProps<"div">){return <div data-slot="sidebar-content" className={cn("min-h-0 flex-1 overflow-y-auto px-3 py-4",className)} {...props}/>}
