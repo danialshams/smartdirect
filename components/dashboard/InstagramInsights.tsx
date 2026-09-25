@@ -10,7 +10,6 @@ import {
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Calendar } from "@/components/ui/calendar";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -143,6 +142,41 @@ function metricValue(snapshot: Snapshot, metric: Metric) {
   return snapshot[metric];
 }
 
+function AnimatedNumber({
+  value,
+  formatter = formatNumber,
+  duration = 900,
+}: {
+  value: number | null | undefined;
+  formatter?: (value: number | null | undefined) => string;
+  duration?: number;
+}) {
+  const [displayValue, setDisplayValue] = useState(0);
+
+  useEffect(() => {
+    if (value == null || !Number.isFinite(value)) {
+      setDisplayValue(0);
+      return;
+    }
+
+    let frame = 0;
+    const start = performance.now();
+
+    const tick = (now: number) => {
+      const progress = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplayValue(value * eased);
+
+      if (progress < 1) frame = requestAnimationFrame(tick);
+    };
+
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [value, duration]);
+
+  return <>{formatter(value == null ? null : displayValue)}</>;
+}
+
 function MetricCard({
   label,
   value,
@@ -150,23 +184,25 @@ function MetricCard({
   icon: Icon,
 }: {
   label: string;
-  value: string;
+  value: number | null | undefined;
   helper: string;
   icon: typeof BarChart3;
 }) {
   return (
-    <Card className="min-w-0 py-3.5 sm:py-4">
-      <CardContent className="px-3.5 sm:px-4">
-        <div className="flex items-start justify-between gap-2">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-            <Icon size={16} strokeWidth={1.8} />
+    <div className="min-w-0 px-3 py-3.5 sm:px-5 sm:py-4">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+            <Icon size={14} strokeWidth={1.8} />
           </span>
-          <span className="text-right text-[9px] leading-4 text-muted-foreground">{helper}</span>
+          <p className="truncate text-xs font-medium text-muted-foreground">{label}</p>
         </div>
-        <p className="mt-3 truncate text-lg font-bold tracking-tight sm:text-xl">{value}</p>
-        <p className="mt-1 truncate text-[11px] text-muted-foreground">{label}</p>
-      </CardContent>
-    </Card>
+        <span className="truncate text-right text-[9px] leading-4 text-muted-foreground">{helper}</span>
+      </div>
+      <p className="mt-2 text-lg font-bold tracking-tight sm:text-xl">
+        <AnimatedNumber value={value} />
+      </p>
+    </div>
   );
 }
 
@@ -183,7 +219,7 @@ function RateMetric({
   const negative = value != null && value < 0;
 
   return (
-    <div className="min-w-0 py-1">
+    <div className="min-w-0 px-3 py-2.5 sm:px-5 sm:py-3">
       <p className="text-[11px] font-medium text-muted-foreground">{label}</p>
       <p
         className={[
@@ -193,7 +229,11 @@ function RateMetric({
           !positive && !negative ? "text-foreground" : "",
         ].join(" ")}
       >
-        {signed ? formatSignedPercent(value) : formatPercent(value)}
+        {signed ? (
+          <AnimatedNumber value={value} formatter={formatSignedPercent} />
+        ) : (
+          <AnimatedNumber value={value} formatter={formatPercent} />
+        )}
       </p>
     </div>
   );
@@ -511,8 +551,8 @@ export default function InstagramInsights({
               ))}
             </div>
 
-            <div className="relative min-w-0">
-              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+            <div className="relative min-w-0 sm:justify-self-end">
+              <div className="grid w-full max-w-full grid-cols-[1fr_auto_1fr] items-center gap-2 sm:max-w-[360px]">
                 <Button
                   type="button"
                   variant="outline"
@@ -683,8 +723,8 @@ export default function InstagramInsights({
               )}
             </div>
 
-            <div className="mt-4 rounded-2xl border border-border bg-white px-4 py-3.5 sm:px-5">
-              <div className="grid grid-cols-1 divide-y divide-border sm:grid-cols-2 sm:divide-y-0 sm:divide-x sm:divide-x-reverse">
+            <div className="mt-4 border-y border-border bg-white">
+              <div className="grid grid-cols-2 divide-x divide-x-reverse divide-border">
                 <RateMetric
                   label="نرخ تعامل"
                   value={rates?.interactionRate}
@@ -697,30 +737,30 @@ export default function InstagramInsights({
               </div>
             </div>
 
-            <div className="mt-4">
-              <h2 className="mb-3 text-sm font-bold text-foreground">مجموع بازه انتخابی</h2>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-4 border-y border-border bg-white">
+              <h2 className="px-3 pt-3 text-sm font-bold text-foreground sm:px-5 sm:pt-4">مجموع بازه انتخابی</h2>
+              <div className="mt-2 grid grid-cols-2 divide-x divide-x-reverse divide-y divide-border">
                 <MetricCard
                   label="بازدید"
-                  value={formatNumber(data.summary.views)}
+                  value={data.summary.views}
                   helper="مجموع بازه انتخابی"
                   icon={Eye}
                 />
                 <MetricCard
                   label="تعاملات"
-                  value={formatNumber(data.summary.totalInteractions)}
+                  value={data.summary.totalInteractions}
                   helper="مجموع بازه انتخابی"
                   icon={BarChart3}
                 />
                 <MetricCard
                   label="فالو"
-                  value={formatNumber(data.summary.follows)}
+                  value={data.summary.follows}
                   helper={data.summary.follows == null ? "داده از Meta در دسترس نیست" : "مجموع بازه انتخابی"}
                   icon={UserPlus}
                 />
                 <MetricCard
                   label="آنفالو"
-                  value={formatNumber(data.summary.unfollows)}
+                  value={data.summary.unfollows}
                   helper={data.summary.unfollows == null ? "داده از Meta در دسترس نیست" : "مجموع بازه انتخابی"}
                   icon={UserMinus}
                 />
