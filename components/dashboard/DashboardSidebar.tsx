@@ -7,16 +7,16 @@ import { Button } from "@/components/ui/button"
 import { Sidebar, SidebarClose, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar"
 import SignOutButton from "../../components/auth/SignOutButton"
 
-type DashboardSidebarProps={open:boolean; onClose:()=>void}
+type DashboardSidebarProps={open?:boolean; onClose?:()=>void}
 const menuGroups=[
 {label:"نمای کلی",items:[{title:"داشبورد",href:"/dashboard",icon:LayoutDashboard},{title:"تحلیل محتوا",href:"/dashboard/content-analytics",icon:BarChart3},{title:"اکانت‌های متصل",href:"/dashboard/accounts",icon:UsersRound}]},
 {label:"مدیریت",items:[{title:"انتشار محتوا",href:"/dashboard/publishing",icon:ImagePlus},{title:"کامنت‌ها",href:"/dashboard/comments",icon:MessageCircleReply},{title:"پیام‌ها",href:"/dashboard/inbox",icon:Inbox},{title:"اتوماسیون‌ها",href:"/dashboard/automations",icon:Bot},{title:"Ice Breaker",href:"/dashboard/ice-breaker",icon:MessageCircle},{title:"منوی ثابت",href:"/dashboard/persistent-menu",icon:Menu}]},
 {label:"حساب",items:[{title:"اشتراک",href:"/dashboard/subscription",icon:CreditCard},{title:"تنظیمات",href:"/dashboard/settings",icon:Settings}]}
 ]
-export default function DashboardSidebar({open,onClose}:DashboardSidebarProps){
+export default function DashboardSidebar({onClose}:DashboardSidebarProps){
  const pathname=usePathname()
  const {setOpenMobile}=useSidebar()
- const close=()=>{onClose();setOpenMobile(false)}
+ const close=()=>{onClose?.();setOpenMobile(false)}
  return <Sidebar dir="rtl" side="right" className="border-slate-200 bg-white">
    <SidebarHeader>
      <div className="flex items-center justify-between">
@@ -24,7 +24,7 @@ export default function DashboardSidebar({open,onClose}:DashboardSidebarProps){
          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary text-xs font-bold text-primary-foreground">SD</div>
          <div className="min-w-0"><div className="truncate text-sm font-bold tracking-tight">SmartDirect</div><div className="mt-0.5 truncate text-[10px] text-muted-foreground">Instagram Automation</div></div>
        </Link>
-       <Button variant="ghost" size="icon-sm" className="lg:hidden" onClick={close} aria-label="بستن"><X/></Button>
+       <Button variant="ghost" size="icon" className="lg:hidden" onClick={close} aria-label="بستن"><X/></Button>
      </div>
    </SidebarHeader>
    <SidebarContent>
