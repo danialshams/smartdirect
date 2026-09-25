@@ -1,4 +1,5 @@
 
+import { Select } from "@/components/ui/select"
 "use client";
 
 import {
@@ -412,7 +413,7 @@ export default function AutomationManager({
                         </span>
 
                         <div className="relative w-full sm:w-[280px]">
-                            <select
+                            <Select
                                 value={
                                     selectedAccountId ||
                                     connectedAccounts[0]?.id ||
@@ -442,7 +443,7 @@ export default function AutomationManager({
                                         </option>
                                     )
                                 )}
-                            </select>
+                            </Select>
 
                             <ChevronDown
                                 size={16}
