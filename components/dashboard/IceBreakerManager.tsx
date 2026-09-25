@@ -1,4 +1,6 @@
 "use client";
+import { Input } from "@/components/ui/input"
+import { Select } from "@/components/ui/select"
 
 import {
     ChevronDown,
@@ -482,7 +484,7 @@ export default function IceBreakerManager({
                     {connectedAccounts.length >
                         0 && (
                             <div className="relative w-full sm:w-[280px]">
-                                <select
+                                <Select
                                     value={
                                         selectedAccountId
                                     }
@@ -516,7 +518,7 @@ export default function IceBreakerManager({
                                             </option>
                                         ),
                                     )}
-                                </select>
+                                </Select>
 
                                 <ChevronDown
                                     size={16}
@@ -636,7 +638,7 @@ export default function IceBreakerManager({
                                                     </span>
                                                 </div>
 
-                                                <input
+                                                <Input
                                                     value={
                                                         item.question
                                                     }
