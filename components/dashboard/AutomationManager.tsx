@@ -397,7 +397,7 @@ export default function AutomationManager({
                                 );
                                 setFormOpen(true);
                             }}
-                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white transition hover:bg-primary/90"
                         >
                             <Plus size={17} />
 
@@ -424,7 +424,7 @@ export default function AutomationManager({
                                         event.target.value
                                     )
                                 }
-                                className="w-full appearance-none rounded-lg border bg-muted/30 px-4 py-3 pl-10 text-sm font-medium text-foreground outline-none transition focus:border-slate-400"
+                                className="w-full appearance-none rounded-lg border bg-muted/30 px-4 py-3 pl-10 text-sm font-medium text-foreground outline-none transition focus:border-ring"
                             >
                                 {connectedAccounts.map(
                                     (account) => (
@@ -502,7 +502,7 @@ export default function AutomationManager({
                             );
                             setFormOpen(true);
                         }}
-                        className="mt-6 inline-flex items-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white"
+                        className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white"
                     >
                         <Plus size={17} />
 
@@ -607,7 +607,7 @@ function AutomationCard({
                         className={[
                             "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl",
                             automation.isActive
-                                ? "bg-slate-950 text-white"
+                                ? "bg-primary text-white"
                                 : "bg-muted text-muted-foreground",
                         ].join(" ")}
                     >
@@ -704,8 +704,8 @@ function AutomationCard({
                             className={[
                                 "relative h-6 w-11 rounded-full transition",
                                 automation.isActive
-                                    ? "bg-slate-950"
-                                    : "bg-slate-200",
+                                    ? "bg-primary"
+                                    : "bg-muted",
                             ].join(" ")}
                         >
                             <span
