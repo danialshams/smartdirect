@@ -287,13 +287,6 @@ function MetricCard({
           <div className="min-w-0">
             <div className="rounded-2xl border border-border bg-white p-3.5 sm:p-5">
               <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                <div className="min-w-0">
-                  <h2 className="text-sm font-bold text-foreground">روند روزانه</h2>
-                  <p className="mt-1 text-[10px] leading-5 text-muted-foreground">
-                    روند شاخص انتخاب‌شده در روزهای بازه را مشاهده کنید.
-                  </p>
-                </div>
-
                 <div className="w-full overflow-x-auto sm:w-auto">
                   <div className="flex min-w-max rounded-xl border border-border bg-white p-1">
                     {(["views", "totalInteractions", "follows", "unfollows"] as Metric[]).map((value) => (
