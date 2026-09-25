@@ -446,16 +446,16 @@ export default function IceBreakerManager({
     return (
         <section
             id="ice-breakers"
-            className="scroll-mt-24 rounded-[26px] border border-slate-200 bg-white"
+            className="scroll-mt-24 rounded-xl border bg-card"
         >
             {/* --------------------------------------------------------- */}
             {/* Header                                                    */}
             {/* --------------------------------------------------------- */}
 
-            <div className="border-b border-slate-100 p-5 sm:p-7">
+            <div className="border-b border-border/60 p-5 sm:p-7">
                 <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
                     <div>
-                        <div className="flex items-center gap-2 text-slate-400">
+                        <div className="flex items-center gap-2 text-muted-foreground">
                             <HelpCircle
                                 size={16}
                             />
@@ -465,11 +465,11 @@ export default function IceBreakerManager({
                             </span>
                         </div>
 
-                        <h2 className="mt-2 text-xl font-bold tracking-tight text-slate-900">
+                        <h2 className="mt-2 text-xl font-bold tracking-tight text-foreground">
                             سوال‌های شروع گفتگو
                         </h2>
 
-                        <p className="mt-1.5 max-w-xl text-sm leading-6 text-slate-400">
+                        <p className="mt-1.5 max-w-xl text-sm leading-6 text-muted-foreground">
                             کاربر این سوال‌ها را
                             هنگام شروع گفتگو
                             می‌بیند. برای هر سوال
@@ -495,7 +495,7 @@ export default function IceBreakerManager({
                                                 .value,
                                         )
                                     }
-                                    className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 pl-10 text-sm font-medium text-slate-700 outline-none focus:border-slate-400"
+                                    className="w-full appearance-none rounded-lg border bg-muted/30 px-4 py-3 pl-10 text-sm font-medium text-foreground outline-none focus:border-slate-400"
                                 >
                                     {connectedAccounts.map(
                                         (
@@ -520,7 +520,7 @@ export default function IceBreakerManager({
 
                                 <ChevronDown
                                     size={16}
-                                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                                 />
                             </div>
                         )}
@@ -533,14 +533,14 @@ export default function IceBreakerManager({
 
             {connectedAccounts.length ===
                 0 ? (
-                <div className="px-6 py-16 text-center text-sm text-slate-400">
+                <div className="px-6 py-16 text-center text-sm text-muted-foreground">
                     ابتدا یک پیج اینستاگرام متصل کنید.
                 </div>
             ) : loading ? (
                 <div className="flex justify-center px-6 py-20">
                     <Loader2
                         size={24}
-                        className="animate-spin text-slate-400"
+                        className="animate-spin text-muted-foreground"
                     />
                 </div>
             ) : (
@@ -549,12 +549,12 @@ export default function IceBreakerManager({
                     {/* Explanation                                       */}
                     {/* ------------------------------------------------- */}
 
-                    <div className="mb-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                        <p className="text-sm font-semibold text-slate-800">
+                    <div className="mb-6 rounded-2xl border border-border bg-muted p-4">
+                        <p className="text-sm font-semibold text-foreground">
                             پاسخ هر سوال را همین‌جا بسازید
                         </p>
 
-                        <p className="mt-1 text-xs leading-6 text-slate-500">
+                        <p className="mt-1 text-xs leading-6 text-muted-foreground">
                             دیگر لازم نیست یک
                             Automation را انتخاب
                             کنید. برای هر سوال،
@@ -571,17 +571,17 @@ export default function IceBreakerManager({
                     {/* ------------------------------------------------- */}
 
                     {items.length === 0 ? (
-                        <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/50 px-6 py-12 text-center">
+                        <div className="rounded-2xl border border-dashed border-slate-300 bg-muted/50 px-6 py-12 text-center">
                             <HelpCircle
                                 size={22}
                                 className="mx-auto text-slate-300"
                             />
 
-                            <p className="mt-3 text-sm font-semibold text-slate-700">
+                            <p className="mt-3 text-sm font-semibold text-foreground">
                                 هنوز سوالی اضافه نشده است.
                             </p>
 
-                            <p className="mt-1 text-xs leading-6 text-slate-400">
+                            <p className="mt-1 text-xs leading-6 text-muted-foreground">
                                 اولین سوال را اضافه
                                 کنید و پاسخ
                                 اختصاصی آن را بسازید.
@@ -612,13 +612,13 @@ export default function IceBreakerManager({
                                             item.id ??
                                             `new-${index}`
                                         }
-                                        className="rounded-[22px] border border-slate-200 bg-slate-50/60 p-4 sm:p-5"
+                                        className="rounded-[22px] border border-border bg-muted/20 p-4 sm:p-5"
                                     >
                                         {/* Question header */}
                                         <div className="flex items-start gap-3">
                                             <div className="flex min-w-0 flex-1 flex-col">
                                                 <div className="mb-2 flex items-center justify-between gap-3">
-                                                    <label className="block text-xs font-semibold text-slate-600">
+                                                    <label className="block text-xs font-semibold text-muted-foreground">
                                                         سوال{" "}
                                                         {
                                                             index +
@@ -626,7 +626,7 @@ export default function IceBreakerManager({
                                                         }
                                                     </label>
 
-                                                    <span className="text-[10px] font-medium text-slate-400">
+                                                    <span className="text-[10px] font-medium text-muted-foreground">
                                                         {
                                                             item
                                                                 .question
@@ -654,7 +654,7 @@ export default function IceBreakerManager({
                                                         80
                                                     }
                                                     placeholder="مثلاً: محصولات شما را ببینم"
-                                                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                                                    className="w-full rounded-lg border bg-background px-4 py-3 text-sm outline-none transition focus:border-slate-400"
                                                 />
                                             </div>
 
@@ -665,7 +665,7 @@ export default function IceBreakerManager({
                                                         index,
                                                     )
                                                 }
-                                                className="mt-6 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                                                className="mt-6 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border bg-background text-muted-foreground transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
                                                 aria-label="حذف سوال"
                                             >
                                                 <Trash2
@@ -706,7 +706,7 @@ export default function IceBreakerManager({
                     {/* ------------------------------------------------- */}
 
                     {items.length > 0 && (
-                        <div className="mt-5 flex flex-col gap-3 border-t border-slate-200 pt-5 sm:flex-row">
+                        <div className="mt-5 flex flex-col gap-3 border-t border-border pt-5 sm:flex-row">
                             <button
                                 type="button"
                                 onClick={
@@ -716,7 +716,7 @@ export default function IceBreakerManager({
                                     items.length >=
                                     4
                                 }
-                                className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                                className="inline-flex items-center justify-center gap-2 rounded-lg border bg-background px-4 py-3 text-sm font-medium text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
                             >
                                 <Plus
                                     size={16}
@@ -732,7 +732,7 @@ export default function IceBreakerManager({
                                 disabled={
                                     saving
                                 }
-                                className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-3 text-sm font-medium text-slate-500 transition hover:bg-slate-50 disabled:opacity-50"
+                                className="inline-flex items-center justify-center gap-2 rounded-xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground transition hover:bg-muted disabled:opacity-50"
                             >
                                 غیرفعال کردن
                             </button>
