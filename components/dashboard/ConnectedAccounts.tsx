@@ -3,6 +3,18 @@
 import { CheckCircle2, Link2, RefreshCw, UserRound, UsersRound } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+
 type Account = {
   id: string;
   igUserId: string;
@@ -48,105 +60,107 @@ export default function ConnectedAccounts() {
   }, []);
 
   return (
-    <div className="space-y-5">
-      <header className="flex flex-col gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
+    <div dir="rtl" className="space-y-5">
+      <header className="flex flex-col gap-4 border-b pb-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-xs font-medium text-slate-400">مدیریت اتصال</p>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-950">
-            اکانت‌های متصل
-          </h1>
-          <p className="mt-2 text-sm text-slate-500">
+          <p className="text-xs font-medium text-muted-foreground">مدیریت اتصال</p>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight">اکانت‌های متصل</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
             پیج‌های متصل به SmartDirect را مدیریت کنید.
           </p>
         </div>
 
-        <a
-          href="/api/instagram/connect"
-          className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#2563eb] px-4 text-xs font-semibold text-white transition hover:bg-[#1d4ed8]"
-        >
-          <Link2 size={15} />
-          اتصال پیج
-        </a>
+        <Button asChild className="w-full sm:w-auto">
+          <a href="/api/instagram/connect">
+            <Link2 />
+            اتصال پیج
+          </a>
+        </Button>
       </header>
 
       {error && (
-        <div className="flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          <span>{error}</span>
-          <button
-            type="button"
-            onClick={() => void load()}
-            className="inline-flex items-center gap-1.5 font-semibold"
-          >
-            <RefreshCw size={14} />
-            تلاش مجدد
-          </button>
-        </div>
+        <Card className="border-destructive/30 bg-destructive/5">
+          <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-destructive">{error}</p>
+            <Button type="button" variant="outline" size="sm" onClick={() => void load()}>
+              <RefreshCw />
+              تلاش مجدد
+            </Button>
+          </CardContent>
+        </Card>
       )}
 
       {loading ? (
-        <div className="rounded-2xl border border-slate-200 bg-white px-5 py-16 text-center text-sm text-slate-400">
-          در حال دریافت اکانت‌ها...
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <Card key={index}>
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <Skeleton className="size-14 rounded-full" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-28" />
+                    <Skeleton className="h-3 w-36" />
+                  </div>
+                </div>
+              </CardHeader>
+              <CardFooter className="border-t">
+                <Skeleton className="h-4 w-24" />
+              </CardFooter>
+            </Card>
+          ))}
         </div>
       ) : accounts.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-5 py-16 text-center">
-          <UsersRound className="mx-auto text-slate-300" size={30} strokeWidth={1.6} />
-          <h2 className="mt-4 text-base font-bold text-slate-900">اکانتی متصل نیست</h2>
-          <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-slate-400">
-            برای شروع، اولین پیج Instagram خود را متصل کنید.
-          </p>
-          <a
-            href="/api/instagram/connect"
-            className="mt-5 inline-flex h-10 items-center justify-center rounded-lg bg-[#2563eb] px-5 text-xs font-semibold text-white"
-          >
-            اتصال پیج
-          </a>
-        </div>
+        <Card className="border-dashed">
+          <CardContent className="flex flex-col items-center px-5 py-16 text-center">
+            <UsersRound className="size-8 text-muted-foreground/50" strokeWidth={1.6} />
+            <h2 className="mt-4 text-base font-bold">اکانتی متصل نیست</h2>
+            <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-muted-foreground">
+              برای شروع، اولین پیج Instagram خود را متصل کنید.
+            </p>
+            <Button asChild className="mt-5">
+              <a href="/api/instagram/connect">اتصال پیج</a>
+            </Button>
+          </CardContent>
+        </Card>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {accounts.map((account) => (
-            <article
-              key={account.id}
-              className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
-            >
-              <div className="flex items-center gap-3 p-5">
-                <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-slate-100">
-                  {account.profilePictureUrl ? (
-                    <img
-                      src={account.profilePictureUrl}
-                      alt={account.username}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-slate-400">
-                      <UserRound size={22} />
-                    </div>
-                  )}
-                </div>
+            <Card key={account.id} className="overflow-hidden">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="size-14 shrink-0 overflow-hidden rounded-full border bg-muted">
+                    {account.profilePictureUrl ? (
+                      <img
+                        src={account.profilePictureUrl}
+                        alt={account.username}
+                        className="size-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex size-full items-center justify-center text-muted-foreground">
+                        <UserRound className="size-6" />
+                      </div>
+                    )}
+                  </div>
 
-                <div className="min-w-0">
-                  <h2 className="truncate text-sm font-bold text-slate-950">
-                    @{account.username}
-                  </h2>
-                  <p className="mt-1 truncate text-xs text-slate-400">
-                    {account.igUserId}
-                  </p>
+                  <div className="min-w-0">
+                    <CardTitle className="truncate text-sm">
+                      @{account.username}
+                    </CardTitle>
+                    <CardDescription className="mt-1 truncate text-xs">
+                      {account.igUserId}
+                    </CardDescription>
+                  </div>
                 </div>
-              </div>
+              </CardHeader>
 
-              <div className="flex items-center justify-between border-t border-slate-100 px-5 py-3">
-                <span className="text-xs text-slate-400">وضعیت اتصال</span>
-                <span
-                  className={
-                    account.isConnected
-                      ? "inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600"
-                      : "inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400"
-                  }
-                >
-                  <CheckCircle2 size={14} />
+              <CardFooter className="justify-between border-t">
+                <span className="text-xs text-muted-foreground">وضعیت اتصال</span>
+                <Badge variant={account.isConnected ? "secondary" : "outline"} className="gap-1.5">
+                  <CheckCircle2 className="size-3.5" />
                   {account.isConnected ? "متصل" : "قطع"}
-                </span>
-              </div>
-            </article>
+                </Badge>
+              </CardFooter>
+            </Card>
           ))}
         </div>
       )}
