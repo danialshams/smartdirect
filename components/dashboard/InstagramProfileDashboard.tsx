@@ -144,25 +144,28 @@ export default function InstagramProfileDashboard({
             </p>
           </Reveal>
 
-          <div className="mt-[min(28vh,260px)] flex w-full max-w-xl flex-col items-center gap-7 sm:mt-[min(30vh,280px)]">
-            <Reveal visible={visible} delay={520} className="w-full">
+          <div className="mt-[min(28vh,260px)] grid w-full max-w-xl grid-cols-3 sm:mt-[min(30vh,280px)]">
+            <Reveal visible={visible} delay={520}>
               <AnimatedProfileStat
                 label="پست"
                 value={profile.mediaCount}
+                delay={0}
                 visible={visible}
               />
             </Reveal>
-            <Reveal visible={visible} delay={680} className="w-full">
+            <Reveal visible={visible} delay={680}>
               <AnimatedProfileStat
                 label="فالوور"
                 value={profile.followersCount}
+                delay={160}
                 visible={visible}
               />
             </Reveal>
-            <Reveal visible={visible} delay={840} className="w-full">
+            <Reveal visible={visible} delay={840}>
               <AnimatedProfileStat
                 label="فالووینگ"
                 value={profile.followsCount}
+                delay={320}
                 visible={visible}
               />
             </Reveal>
@@ -180,10 +183,12 @@ export default function InstagramProfileDashboard({
 function AnimatedProfileStat({
   label,
   value,
+  delay,
   visible,
 }: {
   label: string;
   value: number | null;
+  delay: number;
   visible: boolean;
 }) {
   const [displayValue, setDisplayValue] = useState(0);
@@ -203,9 +208,12 @@ function AnimatedProfileStat({
       if (progress < 1) frame = requestAnimationFrame(animate);
     };
 
-    frame = requestAnimationFrame(animate);
+    const timeout = window.setTimeout(() => {
+      frame = requestAnimationFrame(animate);
+    }, delay);
 
     return () => {
+      window.clearTimeout(timeout);
       cancelAnimationFrame(frame);
     };
   }, [delay, value, visible]);
