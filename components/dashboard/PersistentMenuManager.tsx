@@ -529,7 +529,7 @@ export default function PersistentMenuManager({
                                                 .value,
                                         )
                                     }
-                                    className="w-full appearance-none rounded-lg border bg-muted/30 px-4 py-3 pl-10 text-sm font-medium text-foreground outline-none focus:border-slate-400"
+                                    className="w-full appearance-none rounded-lg border bg-muted/30 px-4 py-3 pl-10 text-sm font-medium text-foreground outline-none focus:border-ring"
                                 >
                                     {connectedAccounts.map(
                                         (
@@ -608,8 +608,8 @@ export default function PersistentMenuManager({
                             className={[
                                 "relative h-6 w-11 rounded-full transition",
                                 enabled
-                                    ? "bg-slate-950"
-                                    : "bg-slate-200",
+                                    ? "bg-primary"
+                                    : "bg-muted",
                             ].join(" ")}
                             aria-label="فعال یا غیرفعال کردن"
                         >
@@ -649,10 +649,10 @@ export default function PersistentMenuManager({
                     {/* ------------------------------------------------- */}
 
                     {items.length === 0 ? (
-                        <div className="rounded-2xl border border-dashed border-slate-300 bg-muted/50 px-6 py-12 text-center">
+                        <div className="rounded-2xl border border-dashed border-border bg-muted/50 px-6 py-12 text-center">
                             <Menu
                                 size={22}
-                                className="mx-auto text-slate-300"
+                                className="mx-auto text-muted-foreground"
                             />
 
                             <p className="mt-3 text-sm font-semibold text-foreground">
@@ -670,7 +670,7 @@ export default function PersistentMenuManager({
                                 onClick={
                                     addItem
                                 }
-                                className="mt-5 inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                                className="mt-5 inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white transition hover:bg-primary/90"
                             >
                                 <Plus
                                     size={16}
@@ -732,7 +732,7 @@ export default function PersistentMenuManager({
                                                         30
                                                     }
                                                     placeholder="مثلاً: مشاهده محصولات"
-                                                    className="w-full rounded-lg border bg-background px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                                                    className="w-full rounded-lg border bg-background px-4 py-3 text-sm outline-none transition focus:border-ring"
                                                 />
                                             </div>
 
@@ -823,7 +823,7 @@ export default function PersistentMenuManager({
                                 disabled={
                                     saving
                                 }
-                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50 sm:mr-auto"
+                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white transition hover:bg-primary/90 disabled:opacity-50 sm:mr-auto"
                             >
                                 {saving ? (
                                     <Loader2
