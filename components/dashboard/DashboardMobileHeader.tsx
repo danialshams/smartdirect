@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { ChevronDown, CircleUserRound, Link2, Plus } from "lucide-react"
+import { ChevronDown, CircleUserRound, Plus } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -24,22 +24,24 @@ export default function DashboardMobileHeader({ instagramAccounts }: { instagram
   const activeAccount = instagramAccounts.find((account) => account.isConnected)
 
   return (
-    <header dir="rtl" className="sticky top-0 z-30 flex h-14 items-center justify-center bg-white/95 px-3 backdrop-blur sm:h-16 sm:px-5">
-      <div className="absolute right-3 sm:right-5 lg:hidden">
-        <SidebarTrigger className="border-0 shadow-none" />
-      </div>
-      <div className="text-sm font-bold tracking-tight">SmartDirect</div>
+    <>
+      <header dir="rtl" className="sticky top-0 z-30 flex h-14 items-center justify-center bg-white/95 px-3 backdrop-blur sm:h-16 sm:px-5">
+        <div className="absolute right-3 sm:right-5 lg:hidden">
+          <SidebarTrigger className="border-0 shadow-none" />
+        </div>
+        <div className="text-sm font-bold tracking-tight">SmartDirect</div>
 
-      {/* Mobile/tablet account connection control lives outside the header. */}
-      <div className="fixed left-0 top-1/2 z-40 -translate-y-1/2 lg:hidden">
+        {/* Desktop only: account connection stays in the header. */}
+        <div className="absolute left-3 hidden lg:block lg:left-5">
+          <AccountConnectDropdown activeAccount={activeAccount} />
+        </div>
+      </header>
+
+      {/* Mobile/tablet: this control is a sibling of the header, not inside it. */}
+      <div className="fixed left-0 top-1/2 z-50 -translate-y-1/2 lg:hidden">
         <MobileAccountSheet activeAccount={activeAccount} />
       </div>
-
-      {/* Desktop keeps the account control in the header. */}
-      <div className="absolute left-3 hidden lg:block lg:left-5">
-        <AccountConnectDropdown activeAccount={activeAccount} />
-      </div>
-    </header>
+    </>
   )
 }
 
@@ -51,15 +53,18 @@ function MobileAccountSheet({ activeAccount }: { activeAccount?: InstagramAccoun
           type="button"
           aria-label="اتصال پیج جدید"
           title="اتصال پیج جدید"
-          className="flex h-10 w-8 items-center justify-center rounded-r-md border border-l-0 border-border/70 bg-white text-muted-foreground shadow-sm transition-colors hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring/20"
+          className="relative flex h-10 w-8 items-center justify-center rounded-r-md border border-l-0 border-border/70 bg-white text-muted-foreground shadow-sm transition-colors hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring/20"
         >
-          <Link2 className="size-4" />
+          <CircleUserRound className="size-4" />
+          <span className="absolute bottom-1 right-1 flex size-3 items-center justify-center rounded-full bg-white">
+            <Plus className="size-2.5 text-foreground" strokeWidth={2.5} />
+          </span>
         </button>
       </SheetTrigger>
 
       <SheetContent
         side="left"
-        className="h-auto max-h-[70vh] w-[250px] rounded-r-xl border-r border-border/60 px-4 py-5 sm:w-[280px]"
+        className="inset-y-auto top-1/2 h-auto max-h-none w-[250px] -translate-y-1/2 rounded-r-xl border-r border-border/60 px-4 py-4 sm:w-[280px]"
       >
         <SheetHeader className="pr-7">
           <SheetTitle>پیج‌های متصل</SheetTitle>
@@ -99,7 +104,9 @@ function AccountConnectDropdown({ activeAccount }: { activeAccount?: InstagramAc
     <DropdownMenu dir="rtl">
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="h-9 gap-1.5 px-2 text-xs font-medium text-foreground hover:bg-muted/60">
-          <span dir="ltr" className="max-w-32 truncate">{activeAccount ? `@${activeAccount.igUsername}` : "اتصال پیج"}</span>
+          <span dir="ltr" className="max-w-32 truncate">
+            {activeAccount ? `@${activeAccount.igUsername}` : "اتصال پیج"}
+          </span>
           <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" />
         </Button>
       </DropdownMenuTrigger>
