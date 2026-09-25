@@ -110,7 +110,7 @@ export default function InstagramProfileDashboard({
     <main className="relative min-h-[calc(100dvh-5rem)] w-full">
       {loading ? (
         <div className="flex min-h-[calc(100dvh-5rem)] w-full flex-col items-center px-4 pt-8 sm:pt-10 md:pt-12">
-          <Skeleton className="h-5 w-36 self-start rounded-md sm:self-end" />
+          <Skeleton className="h-5 w-36 self-end rounded-md" />
           <div className="mt-[12vh] flex w-full flex-col items-center md:mt-[14vh] lg:mt-[16vh]">
             <Skeleton className="h-28 w-28 rounded-full sm:h-32 sm:w-32 md:h-36 md:w-36 lg:h-40 lg:w-40" />
             <Skeleton className="mt-5 h-5 w-32 rounded-md" />
@@ -129,7 +129,7 @@ export default function InstagramProfileDashboard({
         </div>
       ) : profile ? (
         <div className="relative flex min-h-[calc(100dvh-5rem)] w-full flex-col items-center px-4 pt-7 sm:px-6 sm:pt-9 md:px-8 md:pt-10 lg:px-10 lg:pt-12">
-          <Reveal visible={visible} delay={0} className="w-full text-right">
+          <Reveal visible={visible} delay={0} className="w-full flex justify-start">
             <h1 className="text-xl font-medium tracking-tight text-foreground sm:text-2xl md:text-[26px]">
               سلام، {greetingName}
             </h1>
@@ -159,11 +159,11 @@ export default function InstagramProfileDashboard({
             </Reveal>
           </div>
 
-          <div className="mt-[18vh] grid w-full max-w-xl grid-cols-3 sm:mt-[19vh] md:mt-[20vh] lg:mt-[22vh]">
+          <div dir="ltr" className="mt-[18vh] grid w-full max-w-xl grid-cols-3 sm:mt-[19vh] md:mt-[20vh] lg:mt-[22vh]">
             <Reveal visible={visible} delay={520}>
               <AnimatedProfileStat
-                label="فالووینگ"
-                value={profile.followsCount}
+                label="پست"
+                value={profile.mediaCount}
                 delay={0}
                 visible={visible}
               />
@@ -178,8 +178,8 @@ export default function InstagramProfileDashboard({
             </Reveal>
             <Reveal visible={visible} delay={840}>
               <AnimatedProfileStat
-                label="پست"
-                value={profile.mediaCount}
+                label="فالووینگ"
+                value={profile.followsCount}
                 delay={320}
                 visible={visible}
               />
