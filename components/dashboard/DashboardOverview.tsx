@@ -26,6 +26,7 @@ export default function DashboardOverview({
     (account) => account.isConnected
   );
   const [accountId, setAccountId] = useState(connectedAccounts[0]?.id || "");
+  const [profileName, setProfileName] = useState("");
 
   useEffect(() => {
     if (!connectedAccounts.some((account) => account.id === accountId)) {
@@ -69,14 +70,14 @@ export default function DashboardOverview({
 
       <header className="flex min-h-[60px] items-center border-b border-border pb-4">
         <h1 className="text-xl font-medium tracking-tight text-foreground sm:text-2xl">
-          سلام،{" "}
-          <span dir="ltr" className="inline-block">
-            @{activeAccount.igUsername}
-          </span>
+          سلام، {profileName || activeAccount.igUsername}
         </h1>
       </header>
 
-      <InstagramProfileDashboard accountId={accountId} />
+      <InstagramProfileDashboard
+        accountId={accountId}
+        onProfileLoaded={(name) => setProfileName(name || activeAccount.igUsername)}
+      />
     </div>
   );
 }
