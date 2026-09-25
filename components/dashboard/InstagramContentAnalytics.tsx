@@ -1,4 +1,5 @@
 
+import { Button } from "@/components/ui/button"
 import { Select } from "@/components/ui/select"
 "use client";
 
@@ -803,7 +804,7 @@ export default function InstagramContentAnalytics() {
                             (
                                 item,
                             ) => (
-                                <button
+                                <Button
                                     key={
                                         item.key
                                     }
@@ -822,7 +823,7 @@ export default function InstagramContentAnalytics() {
                                     {
                                         item.label
                                     }
-                                </button>
+                                </Button>
                             ),
                         )}
                     </div>
@@ -835,7 +836,7 @@ export default function InstagramContentAnalytics() {
                         {error}
                     </span>
 
-                    <button
+                    <Button
                         type="button"
                         onClick={() => {
                             if (
@@ -853,7 +854,7 @@ export default function InstagramContentAnalytics() {
                         />
 
                         تلاش مجدد
-                    </button>
+                    </Button>
                 </div>
             )}
 
@@ -926,7 +927,7 @@ export default function InstagramContentAnalytics() {
                                     (
                                         item,
                                     ) => (
-                                        <button
+                                        <Button
                                             key={
                                                 item.key
                                             }
@@ -945,7 +946,7 @@ export default function InstagramContentAnalytics() {
                                             {
                                                 item.label
                                             }
-                                        </button>
+                                        </Button>
                                     ),
                                 )}
                             </div>
