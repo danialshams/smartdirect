@@ -1,4 +1,5 @@
 "use client";
+import { Button } from "@/components/ui/button"
 
 import {
     ChevronDown,
@@ -1021,7 +1022,7 @@ export default function EntryPointFlowBuilder({
     return (
         <div className="mt-5 border-t border-border pt-5">
             {/* Builder Header */}
-            <button
+            <Button
                 type="button"
                 onClick={() =>
                     setOpen(
@@ -1062,7 +1063,7 @@ export default function EntryPointFlowBuilder({
                         className="shrink-0 text-muted-foreground"
                     />
                 )}
-            </button>
+            </Button>
 
             {open && (
                 <div className="mt-4 rounded-xl border bg-card p-4 sm:p-5">
@@ -1106,7 +1107,7 @@ export default function EntryPointFlowBuilder({
                                         اضافه کنید.
                                     </p>
 
-                                    <button
+                                    <Button
                                         type="button"
                                         onClick={
                                             addMessage
@@ -1119,7 +1120,7 @@ export default function EntryPointFlowBuilder({
                                             }
                                         />
                                         افزودن پیام
-                                    </button>
+                                    </Button>
                                 </div>
                             ) : (
                                 <div className="space-y-4">
@@ -1258,7 +1259,7 @@ export default function EntryPointFlowBuilder({
                             {/* Add message */}
                             {messages.length >
                                 0 && (
-                                    <button
+                                    <Button
                                         type="button"
                                         onClick={
                                             addMessage
@@ -1271,12 +1272,12 @@ export default function EntryPointFlowBuilder({
                                             }
                                         />
                                         افزودن پیام
-                                    </button>
+                                    </Button>
                                 )}
 
                             {/* Save */}
                             <div className="mt-5 border-t border-border pt-5">
-                                <button
+                                <Button
                                     type="button"
                                     onClick={
                                         saveAutomation
@@ -1305,7 +1306,7 @@ export default function EntryPointFlowBuilder({
                                     {automationId
                                         ? "ذخیره تغییرات Flow"
                                         : "ساخت و ذخیره پاسخ"}
-                                </button>
+                                </Button>
                             </div>
 
                             {error && (
