@@ -107,14 +107,18 @@ export default function InstagramProfileDashboard({
   if (!accountId) return null;
 
   return (
-    <main className="relative min-h-[calc(100dvh-5rem)] w-full">
+    <main className="relative min-h-[calc(100dvh-5rem)] w-full" dir="rtl">
       {loading ? (
         <div className="flex min-h-[calc(100dvh-5rem)] w-full flex-col items-center px-4 pt-8 sm:pt-10 md:pt-12">
-          <Skeleton className="h-5 w-36 self-end rounded-md" />
+          <div className="w-full text-right">
+            <Skeleton className="ml-auto h-5 w-36 rounded-md" />
+          </div>
+
           <div className="mt-[12vh] flex w-full flex-col items-center md:mt-[14vh] lg:mt-[16vh]">
             <Skeleton className="h-28 w-28 rounded-full sm:h-32 sm:w-32 md:h-36 md:w-36 lg:h-40 lg:w-40" />
             <Skeleton className="mt-5 h-5 w-32 rounded-md" />
           </div>
+
           <div className="mt-[18vh] grid w-full max-w-xl grid-cols-3 md:mt-[20vh] lg:mt-[22vh]">
             <Skeleton className="mx-auto h-10 w-14" />
             <Skeleton className="mx-auto h-10 w-14" />
@@ -129,7 +133,7 @@ export default function InstagramProfileDashboard({
         </div>
       ) : profile ? (
         <div className="relative flex min-h-[calc(100dvh-5rem)] w-full flex-col items-center px-4 pt-7 sm:px-6 sm:pt-9 md:px-8 md:pt-10 lg:px-10 lg:pt-12">
-          <Reveal visible={visible} delay={0} className="w-full flex justify-start">
+          <Reveal visible={visible} delay={0} className="w-full self-start text-right">
             <h1 className="text-xl font-medium tracking-tight text-foreground sm:text-2xl md:text-[26px]">
               سلام، {greetingName}
             </h1>
@@ -159,12 +163,14 @@ export default function InstagramProfileDashboard({
             </Reveal>
           </div>
 
-          <div dir="ltr" className="mt-[18vh] grid w-full max-w-xl grid-cols-3 sm:mt-[19vh] md:mt-[20vh] lg:mt-[22vh]">
+          <div
+            dir="ltr"
+            className="mt-[18vh] grid w-full max-w-xl grid-cols-3 sm:mt-[19vh] md:mt-[20vh] lg:mt-[22vh]"
+          >
             <Reveal visible={visible} delay={520}>
               <AnimatedProfileStat
                 label="پست"
                 value={profile.mediaCount}
-                delay={0}
                 visible={visible}
               />
             </Reveal>
@@ -172,7 +178,6 @@ export default function InstagramProfileDashboard({
               <AnimatedProfileStat
                 label="فالوور"
                 value={profile.followersCount}
-                delay={160}
                 visible={visible}
               />
             </Reveal>
@@ -180,7 +185,6 @@ export default function InstagramProfileDashboard({
               <AnimatedProfileStat
                 label="فالووینگ"
                 value={profile.followsCount}
-                delay={320}
                 visible={visible}
               />
             </Reveal>
@@ -194,12 +198,10 @@ export default function InstagramProfileDashboard({
 function AnimatedProfileStat({
   label,
   value,
-  delay,
   visible,
 }: {
   label: string;
   value: number | null;
-  delay: number;
   visible: boolean;
 }) {
   const [displayValue, setDisplayValue] = useState(0);
@@ -209,25 +211,22 @@ function AnimatedProfileStat({
 
     let frame = 0;
     const start = performance.now();
-    const duration = 1100;
+    const duration = 900;
 
     const animate = (timestamp: number) => {
       const progress = Math.min((timestamp - start) / duration, 1);
       const eased = 1 - Math.pow(1 - progress, 3);
       setDisplayValue(value * eased);
 
-      if (progress < 1) frame = requestAnimationFrame(animate);
+      if (progress < 1) {
+        frame = requestAnimationFrame(animate);
+      }
     };
 
-    const timeout = window.setTimeout(() => {
-      frame = requestAnimationFrame(animate);
-    }, delay);
+    frame = requestAnimationFrame(animate);
 
-    return () => {
-      window.clearTimeout(timeout);
-      cancelAnimationFrame(frame);
-    };
-  }, [delay, value, visible]);
+    return () => cancelAnimationFrame(frame);
+  }, [value, visible]);
 
   return (
     <div className="flex min-w-0 flex-col items-center justify-center text-center">
