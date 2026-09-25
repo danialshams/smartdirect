@@ -85,7 +85,7 @@ function Chart({ snapshots, metric }: { snapshots: Snapshot[]; metric: Metric })
     }, [metric, snapshots]);
 
     if (!points.length) {
-        return <div className="flex h-[300px] items-center justify-center border border-dashed border-zinc-200 text-sm text-zinc-400">هنوز داده تاریخی برای این بازه وجود ندارد.</div>;
+        return <div className="flex h-[300px] items-center justify-center border border-dashed border-zinc-200 text-sm text-muted-foreground">هنوز داده تاریخی برای این بازه وجود ندارد.</div>;
     }
 
     const line = points.map((p, i) => `${i ? "L" : "M"} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(" ");
@@ -95,15 +95,15 @@ function Chart({ snapshots, metric }: { snapshots: Snapshot[]; metric: Metric })
     return (
         <div className="overflow-hidden">
             <div className="mb-4 flex items-center justify-between text-sm">
-                <span className="text-zinc-500">{metric === "reach" ? "دسترسی" : metric === "views" ? "بازدید" : "تعاملات"}</span>
-                <span className="text-xs text-zinc-400">{number(points.at(-1)!.value)} آخرین مقدار</span>
+                <span className="text-muted-foreground">{metric === "reach" ? "دسترسی" : metric === "views" ? "بازدید" : "تعاملات"}</span>
+                <span className="text-xs text-muted-foreground">{number(points.at(-1)!.value)} آخرین مقدار</span>
             </div>
             <div className="overflow-x-auto">
                 <svg viewBox={`0 0 ${width} ${height}`} className="h-[300px] min-w-[680px] w-full" role="img">
                     {[0.25, 0.5, 0.75].map((ratio) => <line key={ratio} x1={px} x2={width - px} y1={height * ratio} y2={height * ratio} stroke="currentColor" className="text-zinc-100" />)}
                     <path d={area} fill="currentColor" className="text-zinc-100" />
-                    <path d={line} fill="none" stroke="currentColor" className="text-zinc-900" strokeWidth="2" vectorEffect="non-scaling-stroke" />
-                    {points.map((p) => <circle key={`${p.date}-${p.value}`} cx={p.x} cy={p.y} r="3.5" fill="currentColor" className="text-zinc-900" />)}
+                    <path d={line} fill="none" stroke="currentColor" className="text-foreground" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+                    {points.map((p) => <circle key={`${p.date}-${p.value}`} cx={p.x} cy={p.y} r="3.5" fill="currentColor" className="text-foreground" />)}
                     {labels.map((i) => <text key={points[i].date} x={points[i].x} y={height - 4} textAnchor={i === 0 ? "start" : i === points.length - 1 ? "end" : "middle"} className="fill-zinc-400 text-[12px]">{new Intl.DateTimeFormat("fa-IR", { month: "short", day: "numeric" }).format(new Date(points[i].date))}</text>)}
                 </svg>
             </div>
@@ -112,7 +112,7 @@ function Chart({ snapshots, metric }: { snapshots: Snapshot[]; metric: Metric })
 }
 
 function Stat({ label, value, helper }: { label: string; value: string; helper?: string }) {
-    return <div className="border border-zinc-200 bg-white p-5 sm:p-6"><div className="text-sm text-zinc-500">{label}</div><div className="mt-3 text-2xl font-semibold tracking-tight text-zinc-950 sm:text-3xl">{value}</div>{helper && <div className="mt-2 text-xs text-zinc-400">{helper}</div>}</div>;
+    return <div className="border border bg-card p-5 sm:p-6"><div className="text-sm text-muted-foreground">{label}</div><div className="mt-3 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">{value}</div>{helper && <div className="mt-2 text-xs text-muted-foreground">{helper}</div>}</div>;
 }
 
 export default function InsightsDashboard() {
@@ -182,17 +182,17 @@ export default function InsightsDashboard() {
     }, [data?.snapshots, dateRange]);
 
     return (
-        <main dir="rtl" className="min-h-screen bg-zinc-50/40 px-4 py-5 sm:px-6 sm:py-8">
+        <main dir="rtl" className="min-h-screen bg-muted/40 px-4 py-5 sm:px-6 sm:py-8">
             <div className="mx-auto max-w-7xl space-y-6 sm:space-y-8">
                 <header className="flex flex-col gap-5 border-b border-zinc-200 pb-6 lg:flex-row lg:items-end lg:justify-between">
                     <div>
-                        <div className="text-xs font-medium uppercase tracking-[0.18em] text-zinc-400">Instagram Insights</div>
-                        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950 sm:text-3xl">تحلیل پیج</h1>
+                        <div className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Instagram Insights</div>
+                        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">تحلیل پیج</h1>
                     </div>
 
                     <div className="flex w-full flex-col gap-3 sm:flex-row lg:w-auto">
                         {accounts.length > 0 && (
-                            <select value={accountId} onChange={(e) => setAccountId(e.target.value)} className="h-11 min-w-64 border border-zinc-200 bg-white px-4 text-sm text-zinc-900 outline-none focus:border-zinc-500">
+                            <select value={accountId} onChange={(e) => setAccountId(e.target.value)} className="h-11 min-w-64 border border bg-card px-4 text-sm text-foreground outline-none focus:border-zinc-500">
                                 {accounts.map((account) => (
                                     <option key={account.id} value={account.id}>
                                         @{account.username}{account.isConnected ? "" : " — قطع اتصال"}
@@ -200,16 +200,16 @@ export default function InsightsDashboard() {
                                 ))}
                             </select>
                         )}
-                        <div className="flex gap-1 border border-zinc-200 bg-white p-1">
-                            {[7, 30, 90].map((days) => <button key={days} type="button" onClick={() => setRange(days as Range)} className={`min-w-16 px-4 py-2 text-sm transition-colors ${range === days ? "bg-zinc-950 text-white" : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900"}`}>{days} روز</button>)}
+                        <div className="flex gap-1 border border bg-card p-1">
+                            {[7, 30, 90].map((days) => <button key={days} type="button" onClick={() => setRange(days as Range)} className={`min-w-16 px-4 py-2 text-sm transition-colors ${range === days ? "bg-zinc-950 text-white" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}>{days} روز</button>)}
                         </div>
                     </div>
                 </header>
 
                 {error && <div className="border border-red-200 bg-red-50 p-5 text-sm text-red-700">{error}</div>}
-                {loadingAccounts && <div className="border border-zinc-200 bg-white p-8 text-center text-sm text-zinc-500">در حال دریافت اکانت‌ها...</div>}
-                {!loadingAccounts && accounts.length === 0 && <div className="border border-zinc-200 bg-white p-8 text-center text-sm text-zinc-500">هیچ اکانت Instagram برای این حساب پیدا نشد.</div>}
-                {loading && accountId && !data && <div className="border border-zinc-200 bg-white p-10 text-center text-sm text-zinc-500">در حال دریافت آمار...</div>}
+                {loadingAccounts && <div className="border border bg-card p-8 text-center text-sm text-muted-foreground">در حال دریافت اکانت‌ها...</div>}
+                {!loadingAccounts && accounts.length === 0 && <div className="border border bg-card p-8 text-center text-sm text-muted-foreground">هیچ اکانت Instagram برای این حساب پیدا نشد.</div>}
+                {loading && accountId && !data && <div className="border border bg-card p-10 text-center text-sm text-muted-foreground">در حال دریافت آمار...</div>}
 
                 {data && summary && (
                     <>
@@ -224,29 +224,29 @@ export default function InsightsDashboard() {
                             <Stat label="دنبال‌کنندگان" value={number(summary.followerCount)} helper={summary.followerGrowth === 0 ? "بدون تغییر در بازه" : `${summary.followerGrowth > 0 ? "+" : ""}${number(summary.followerGrowth)} در بازه`} />
                         </section>
 
-                        <section className="border border-zinc-200 bg-white p-5 sm:p-6">
+                        <section className="border border bg-card p-5 sm:p-6">
                             <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
                                 <div className="max-w-2xl">
-                                    <h2 className="text-xl font-semibold text-zinc-950">روند عملکرد Instagram</h2>
-                                    <p className="mt-2 text-sm leading-6 text-zinc-500">شاخص‌های عملکرد اکانت فعال را در یک بازه مشخص بررسی کنید.</p>
+                                    <h2 className="text-xl font-semibold text-foreground">روند عملکرد Instagram</h2>
+                                    <p className="mt-2 text-sm leading-6 text-muted-foreground">شاخص‌های عملکرد اکانت فعال را در یک بازه مشخص بررسی کنید.</p>
                                     <div className="mt-5 flex w-full gap-1 border border-zinc-200 p-1 sm:w-fit">
-                                        {([["reach", "دسترسی"], ["views", "بازدید"], ["interactions", "تعاملات"]] as const).map(([value, label]) => <button key={value} type="button" onClick={() => setMetric(value)} className={`px-3 py-2 text-xs sm:text-sm ${metric === value ? "bg-zinc-950 text-white" : "text-zinc-500 hover:bg-zinc-50"}`}>{label}</button>)}
+                                        {([["reach", "دسترسی"], ["views", "بازدید"], ["interactions", "تعاملات"]] as const).map(([value, label]) => <button key={value} type="button" onClick={() => setMetric(value)} className={`px-3 py-2 text-xs sm:text-sm ${metric === value ? "bg-zinc-950 text-white" : "text-muted-foreground hover:bg-muted"}`}>{label}</button>)}
                                     </div>
                                 </div>
                                 <div className="relative shrink-0">
                                     <button
                                         type="button"
                                         onClick={() => setCalendarOpen((open) => !open)}
-                                        className="inline-flex h-11 min-w-48 items-center justify-center gap-3 border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-50"
+                                        className="inline-flex h-11 min-w-48 items-center justify-center gap-3 border border bg-card px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted"
                                         aria-expanded={calendarOpen}
                                         aria-haspopup="dialog"
                                     >
                                         <span>{dateRange?.from ? (dateRange.to ? `${date(dateRange.from.toISOString())} تا ${date(dateRange.to.toISOString())}` : date(dateRange.from.toISOString())) : "انتخاب بازه زمانی"}</span>
-                                        <span className="text-zinc-400">⌄</span>
+                                        <span className="text-muted-foreground">⌄</span>
                                     </button>
 
                                     {calendarOpen && (
-                                        <div className="absolute right-0 top-14 z-50 border border-zinc-200 bg-white p-2 shadow-lg">
+                                        <div className="absolute right-0 top-14 z-50 border border bg-card p-2 shadow-lg">
                                             <Calendar
                                                 mode="range"
                                                 selected={dateRange}
@@ -260,27 +260,27 @@ export default function InsightsDashboard() {
                                 </div>
                             </div>
 
-                            <div className="mt-8 border-t border-zinc-100 pt-6">
+                            <div className="mt-8 border-t border-border/60 pt-6">
                                 <Chart snapshots={chartSnapshots} metric={metric} />
                             </div>
                         </section>
 
                         <section className="grid grid-cols-1 gap-6 lg:grid-cols-1">
-                            <aside className="border border-zinc-200 bg-white p-5 sm:p-6">
-                                <div className="text-xs uppercase tracking-[0.16em] text-zinc-400">وضعیت فعلی</div>
-                                <h2 className="mt-2 text-lg font-semibold text-zinc-950">خلاصه عملکرد</h2>
+                            <aside className="border border bg-card p-5 sm:p-6">
+                                <div className="text-xs uppercase tracking-[0.16em] text-muted-foreground">وضعیت فعلی</div>
+                                <h2 className="mt-2 text-lg font-semibold text-foreground">خلاصه عملکرد</h2>
                                 <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                                    <div><div className="text-sm text-zinc-500">نرخ تعامل</div><div className="mt-1 text-2xl font-semibold text-zinc-950">{percent(summary.engagementRate)}</div></div>
-                                    <div className="border-t border-zinc-100 pt-5 sm:border-t-0 sm:border-r sm:pt-0 sm:pr-5"><div className="text-sm text-zinc-500">آخرین دسترسی</div><div className="mt-1 text-xl font-semibold text-zinc-950">{number(latest?.reach)}</div></div>
-                                    <div className="border-t border-zinc-100 pt-5 sm:border-t-0 sm:border-r sm:pt-0 sm:pr-5"><div className="text-sm text-zinc-500">آخرین تعاملات</div><div className="mt-1 text-xl font-semibold text-zinc-950">{number(latest?.totalInteractions)}</div></div>
-                                    <div className="border-t border-zinc-100 pt-5 sm:border-t-0 sm:border-r sm:pt-0 sm:pr-5"><div className="text-sm text-zinc-500">آخرین Snapshot</div><div className="mt-1 text-sm font-medium text-zinc-900">{latest ? date(latest.snapshotDate) : "—"}</div></div>
+                                    <div><div className="text-sm text-muted-foreground">نرخ تعامل</div><div className="mt-1 text-2xl font-semibold text-foreground">{percent(summary.engagementRate)}</div></div>
+                                    <div className="border-t border-border/60 pt-5 sm:border-t-0 sm:border-r sm:pt-0 sm:pr-5"><div className="text-sm text-muted-foreground">آخرین دسترسی</div><div className="mt-1 text-xl font-semibold text-foreground">{number(latest?.reach)}</div></div>
+                                    <div className="border-t border-border/60 pt-5 sm:border-t-0 sm:border-r sm:pt-0 sm:pr-5"><div className="text-sm text-muted-foreground">آخرین تعاملات</div><div className="mt-1 text-xl font-semibold text-foreground">{number(latest?.totalInteractions)}</div></div>
+                                    <div className="border-t border-border/60 pt-5 sm:border-t-0 sm:border-r sm:pt-0 sm:pr-5"><div className="text-sm text-muted-foreground">آخرین Snapshot</div><div className="mt-1 text-sm font-medium text-foreground">{latest ? date(latest.snapshotDate) : "—"}</div></div>
                                 </div>
                             </aside>
                         </section>
 
-                        <section className="border border-zinc-200 bg-white p-5 sm:p-6">
-                            <div className="mb-5"><h2 className="text-lg font-semibold text-zinc-950">تاریخچه روزانه</h2><p className="mt-1 text-sm text-zinc-500">{data.snapshots.length} Snapshot در این بازه ذخیره شده است.</p></div>
-                            {data.snapshots.length === 0 ? <div className="border border-dashed border-zinc-200 py-12 text-center text-sm text-zinc-400">هنوز داده تاریخی برای این بازه وجود ندارد.</div> : <div className="overflow-x-auto"><table className="w-full min-w-[760px] text-right text-sm"><thead><tr className="border-b border-zinc-200 text-zinc-500"><th className="px-4 py-3 font-medium">تاریخ</th><th className="px-4 py-3 font-medium">دسترسی</th><th className="px-4 py-3 font-medium">بازدید</th><th className="px-4 py-3 font-medium">اکانت‌های درگیر</th><th className="px-4 py-3 font-medium">تعاملات</th><th className="px-4 py-3 font-medium">دنبال‌کنندگان</th></tr></thead><tbody>{[...data.snapshots].reverse().map((snapshot) => <tr key={snapshot.id} className="border-b border-zinc-100 last:border-b-0"><td className="px-4 py-4 text-zinc-700">{date(snapshot.snapshotDate)}</td><td className="px-4 py-4 font-medium text-zinc-950">{number(snapshot.reach)}</td><td className="px-4 py-4 text-zinc-700">{number(snapshot.views)}</td><td className="px-4 py-4 text-zinc-700">{number(snapshot.accountsEngaged)}</td><td className="px-4 py-4 text-zinc-700">{number(snapshot.totalInteractions)}</td><td className="px-4 py-4 text-zinc-700">{number(snapshot.followerCount)}</td></tr>)}</tbody></table></div>}
+                        <section className="border border bg-card p-5 sm:p-6">
+                            <div className="mb-5"><h2 className="text-lg font-semibold text-foreground">تاریخچه روزانه</h2><p className="mt-1 text-sm text-muted-foreground">{data.snapshots.length} Snapshot در این بازه ذخیره شده است.</p></div>
+                            {data.snapshots.length === 0 ? <div className="border border-dashed border-zinc-200 py-12 text-center text-sm text-muted-foreground">هنوز داده تاریخی برای این بازه وجود ندارد.</div> : <div className="overflow-x-auto"><table className="w-full min-w-[760px] text-right text-sm"><thead><tr className="border-b border-zinc-200 text-muted-foreground"><th className="px-4 py-3 font-medium">تاریخ</th><th className="px-4 py-3 font-medium">دسترسی</th><th className="px-4 py-3 font-medium">بازدید</th><th className="px-4 py-3 font-medium">اکانت‌های درگیر</th><th className="px-4 py-3 font-medium">تعاملات</th><th className="px-4 py-3 font-medium">دنبال‌کنندگان</th></tr></thead><tbody>{[...data.snapshots].reverse().map((snapshot) => <tr key={snapshot.id} className="border-b border-border/60 last:border-b-0"><td className="px-4 py-4 text-foreground">{date(snapshot.snapshotDate)}</td><td className="px-4 py-4 font-medium text-foreground">{number(snapshot.reach)}</td><td className="px-4 py-4 text-foreground">{number(snapshot.views)}</td><td className="px-4 py-4 text-foreground">{number(snapshot.accountsEngaged)}</td><td className="px-4 py-4 text-foreground">{number(snapshot.totalInteractions)}</td><td className="px-4 py-4 text-foreground">{number(snapshot.followerCount)}</td></tr>)}</tbody></table></div>}
                         </section>
                     </>
                 )}
