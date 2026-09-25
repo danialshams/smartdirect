@@ -1,11 +1,7 @@
 "use client";
 
-import {
-  ExternalLink,
-  Globe2,
-  UserRound,
-} from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { ExternalLink, Globe2, UserRound } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type Profile = {
@@ -39,22 +35,28 @@ export default function InstagramProfileDashboard({
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [visible, setVisible] = useState(false);
 
   const loadProfile = useCallback(async () => {
     if (!accountId) return;
     try {
       setLoading(true);
       setError("");
+      setVisible(false);
+
       const response = await fetch(
         "/api/instagram/profile?accountId=" + encodeURIComponent(accountId),
         { cache: "no-store" }
       );
       const result = await response.json();
+
       if (!response.ok || !result.success || !result.profile) {
         throw new Error(result.error || "اطلاعات پروفایل دریافت نشد.");
       }
+
       setProfile(result.profile);
       onProfileLoaded?.(result.profile.name);
+      window.setTimeout(() => setVisible(true), 50);
     } catch (requestError) {
       setProfile(null);
       setError(
@@ -74,7 +76,12 @@ export default function InstagramProfileDashboard({
   if (!accountId) return null;
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-border bg-white">
+    <section
+      className={
+        "overflow-hidden rounded-2xl border border-border bg-white transition-all duration-700 ease-out " +
+        (visible ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0")
+      }
+    >
       {error && (
         <div className="mx-4 mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs leading-6 text-red-700 sm:mx-5 sm:mt-5">
           {error}
@@ -140,21 +147,24 @@ export default function InstagramProfileDashboard({
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-0 border-t border-border px-5 py-5 sm:px-8 sm:py-6">
+          <div className="grid grid-cols-3 gap-0 border-t border-border px-5 py-6 sm:px-8 sm:py-7">
             <AnimatedProfileStat
               label="فالووینگ"
               value={profile.followsCount}
-              delay={120}
+              delay={0}
+              visible={visible}
             />
             <AnimatedProfileStat
               label="فالوور"
               value={profile.followersCount}
-              delay={220}
+              delay={120}
+              visible={visible}
             />
             <AnimatedProfileStat
               label="پست"
               value={profile.mediaCount}
-              delay={320}
+              delay={240}
+              visible={visible}
             />
           </div>
         </>
@@ -171,25 +181,24 @@ function AnimatedProfileStat({
   label,
   value,
   delay,
+  visible,
 }: {
   label: string;
   value: number | null;
   delay: number;
+  visible: boolean;
 }) {
   const [displayValue, setDisplayValue] = useState(0);
-  const itemRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (value == null) return;
+    if (!visible || value == null) return;
 
     let frame = 0;
-    let startTime = 0;
+    const start = performance.now();
     const duration = 1100;
 
     const animate = (timestamp: number) => {
-      if (!startTime) startTime = timestamp;
-
-      const progress = Math.min((timestamp - startTime) / duration, 1);
+      const progress = Math.min((timestamp - start) / duration, 1);
       const eased = 1 - Math.pow(1 - progress, 3);
 
       setDisplayValue(value * eased);
@@ -207,13 +216,15 @@ function AnimatedProfileStat({
       window.clearTimeout(timeout);
       cancelAnimationFrame(frame);
     };
-  }, [value, delay]);
+  }, [delay, value, visible]);
 
   return (
     <div
-      ref={itemRef}
-      className="flex min-w-0 flex-col items-center justify-center text-center opacity-0 animate-[dashboardStatReveal_.7s_ease-out_forwards]"
-      style={{ animationDelay: `${delay}ms` }}
+      className={
+        "flex min-w-0 flex-col items-center justify-center text-center transition-all duration-700 ease-out " +
+        (visible ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0")
+      }
+      style={{ transitionDelay: delay + "ms" }}
     >
       <p className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
         {value == null ? "—" : formatNumber(displayValue)}
