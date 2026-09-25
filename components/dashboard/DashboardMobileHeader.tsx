@@ -31,13 +31,11 @@ export default function DashboardMobileHeader({ instagramAccounts }: { instagram
         </div>
         <div className="text-sm font-bold tracking-tight">SmartDirect</div>
 
-        {/* Desktop only: account connection stays in the header. */}
         <div className="absolute left-3 hidden lg:block lg:left-5">
           <AccountConnectDropdown activeAccount={activeAccount} />
         </div>
       </header>
 
-      {/* Mobile/tablet: this control is a sibling of the header, not inside it. */}
       <div className="fixed left-0 top-1/2 z-50 -translate-y-1/2 lg:hidden">
         <MobileAccountSheet activeAccount={activeAccount} />
       </div>
@@ -53,7 +51,7 @@ function MobileAccountSheet({ activeAccount }: { activeAccount?: InstagramAccoun
           type="button"
           aria-label="اتصال پیج جدید"
           title="اتصال پیج جدید"
-          className="relative flex h-10 w-8 items-center justify-center rounded-r-md border border-l-0 border-border/70 bg-white text-muted-foreground shadow-sm transition-colors hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring/20"
+          className="relative flex h-10 w-8 items-center justify-center rounded-r-md border border-l-0 border-border/70 bg-white text-muted-foreground shadow-sm transition-colors hover:bg-muted focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0"
         >
           <CircleUserRound className="size-4" />
           <span className="absolute bottom-1 right-1 flex size-3 items-center justify-center rounded-full bg-white">
