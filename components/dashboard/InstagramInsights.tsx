@@ -189,19 +189,19 @@ function MetricCard({
   icon: typeof BarChart3;
 }) {
   return (
-    <div className="min-w-0 px-3 py-3.5 sm:px-5 sm:py-4">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-2">
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-            <Icon size={14} strokeWidth={1.8} />
-          </span>
-          <p className="truncate text-xs font-medium text-muted-foreground">{label}</p>
-        </div>
-        <span className="truncate text-right text-[9px] leading-4 text-muted-foreground">{helper}</span>
+    <div className="flex min-h-[112px] min-w-0 flex-col items-center justify-center px-4 py-5 text-center sm:min-h-[124px]">
+      <div className="flex items-center justify-center gap-2">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center text-muted-foreground">
+          <Icon size={17} strokeWidth={1.8} />
+        </span>
+        <p className="text-lg font-bold tracking-tight sm:text-xl">
+          <AnimatedNumber value={value} />
+        </p>
       </div>
-      <p className="mt-2 text-lg font-bold tracking-tight sm:text-xl">
-        <AnimatedNumber value={value} />
-      </p>
+      <p className="mt-2 text-xs font-medium text-foreground">{label}</p>
+      {helper !== "مجموع بازه انتخابی" && (
+        <p className="mt-1 text-[9px] leading-4 text-muted-foreground">{helper}</p>
+      )}
     </div>
   );
 }
@@ -210,31 +210,38 @@ function RateMetric({
   label,
   value,
   signed,
+  icon: Icon,
 }: {
   label: string;
   value: number | null | undefined;
   signed?: boolean;
+  icon: typeof BarChart3;
 }) {
   const positive = value != null && value > 0;
   const negative = value != null && value < 0;
 
   return (
-    <div className="min-w-0 px-3 py-2.5 sm:px-5 sm:py-3">
-      <p className="text-[11px] font-medium text-muted-foreground">{label}</p>
-      <p
-        className={[
-          "mt-1 text-xl font-bold tracking-tight",
-          positive ? "text-emerald-600" : "",
-          negative ? "text-red-600" : "",
-          !positive && !negative ? "text-foreground" : "",
-        ].join(" ")}
-      >
-        {signed ? (
-          <AnimatedNumber value={value} formatter={formatSignedPercent} />
-        ) : (
-          <AnimatedNumber value={value} formatter={formatPercent} />
-        )}
-      </p>
+    <div className="flex min-h-[96px] min-w-0 flex-col items-center justify-center px-4 py-4 text-center sm:min-h-[108px]">
+      <div className="flex items-center justify-center gap-2">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center text-muted-foreground">
+          <Icon size={17} strokeWidth={1.8} />
+        </span>
+        <p
+          className={[
+            "text-xl font-bold tracking-tight",
+            positive ? "text-emerald-600" : "",
+            negative ? "text-red-600" : "",
+            !positive && !negative ? "text-foreground" : "",
+          ].join(" ")}
+        >
+          {signed ? (
+            <AnimatedNumber value={value} formatter={formatSignedPercent} />
+          ) : (
+            <AnimatedNumber value={value} formatter={formatPercent} />
+          )}
+        </p>
+      </div>
+      <p className="mt-2 text-xs font-medium text-foreground">{label}</p>
     </div>
   );
 }
@@ -723,45 +730,49 @@ export default function InstagramInsights({
               )}
             </div>
 
-            <div className="mt-4 border-y border-border bg-white">
-              <div className="grid grid-cols-2 divide-x divide-x-reverse divide-border">
+            <div className="relative mt-4 overflow-hidden bg-white">
+              <div className="pointer-events-none absolute inset-y-4 left-1/2 w-px -translate-x-1/2 bg-border" />
+              <div className="grid grid-cols-2">
                 <RateMetric
                   label="نرخ تعامل"
                   value={rates?.interactionRate}
+                  icon={BarChart3}
                 />
                 <RateMetric
                   label="نرخ رشد خالص"
                   value={rates?.netFollowerRate}
                   signed
+                  icon={UserPlus}
                 />
               </div>
             </div>
 
-            <div className="mt-4 border-y border-border bg-white">
-              <h2 className="px-3 pt-3 text-sm font-bold text-foreground sm:px-5 sm:pt-4">مجموع بازه انتخابی</h2>
-              <div className="mt-2 grid grid-cols-2 divide-x divide-x-reverse divide-y divide-border">
+            <div className="relative mt-4 overflow-hidden bg-white">
+              <div className="pointer-events-none absolute inset-y-5 left-1/2 w-px -translate-x-1/2 bg-border" />
+              <div className="pointer-events-none absolute inset-x-5 top-1/2 h-px -translate-y-1/2 bg-border sm:inset-x-8" />
+              <div className="grid grid-cols-2">
                 <MetricCard
                   label="بازدید"
                   value={data.summary.views}
-                  helper="مجموع بازه انتخابی"
+                  helper=""
                   icon={Eye}
                 />
                 <MetricCard
                   label="تعاملات"
                   value={data.summary.totalInteractions}
-                  helper="مجموع بازه انتخابی"
+                  helper=""
                   icon={BarChart3}
                 />
                 <MetricCard
                   label="فالو"
                   value={data.summary.follows}
-                  helper={data.summary.follows == null ? "داده از Meta در دسترس نیست" : "مجموع بازه انتخابی"}
+                  helper={data.summary.follows == null ? "داده از Meta در دسترس نیست" : ""}
                   icon={UserPlus}
                 />
                 <MetricCard
                   label="آنفالو"
                   value={data.summary.unfollows}
-                  helper={data.summary.unfollows == null ? "داده از Meta در دسترس نیست" : "مجموع بازه انتخابی"}
+                  helper={data.summary.unfollows == null ? "داده از Meta در دسترس نیست" : ""}
                   icon={UserMinus}
                 />
               </div>
