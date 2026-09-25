@@ -1,6 +1,5 @@
 "use client";
 
-import { ExternalLink, Globe2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -145,50 +144,29 @@ export default function InstagramProfileDashboard({
             </p>
           </Reveal>
 
-          <Reveal visible={visible} delay={500} className="mt-12 w-full max-w-xl">
-            <div className="grid grid-cols-3 gap-0 border-y border-border py-6 sm:py-7">
+          <div className="mt-[min(28vh,260px)] flex w-full max-w-xl flex-col items-center gap-7 sm:mt-[min(30vh,280px)]">
+            <Reveal visible={visible} delay={520} className="w-full">
               <AnimatedProfileStat
                 label="پست"
                 value={profile.mediaCount}
-                delay={0}
                 visible={visible}
               />
+            </Reveal>
+            <Reveal visible={visible} delay={680} className="w-full">
               <AnimatedProfileStat
                 label="فالوور"
                 value={profile.followersCount}
-                delay={120}
                 visible={visible}
               />
+            </Reveal>
+            <Reveal visible={visible} delay={840} className="w-full">
               <AnimatedProfileStat
                 label="فالووینگ"
                 value={profile.followsCount}
-                delay={240}
                 visible={visible}
               />
-            </div>
-          </Reveal>
-
-          {(profile.biography || profile.website) && (
-            <Reveal visible={visible} delay={780} className="mt-8 max-w-xl text-center">
-              {profile.biography && (
-                <p className="whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
-                  {profile.biography}
-                </p>
-              )}
-              {profile.website && (
-                <a
-                  href={profile.website}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-3 inline-flex max-w-full items-center gap-1.5 text-xs font-medium text-foreground hover:underline"
-                >
-                  <Globe2 size={13} />
-                  <span className="max-w-[260px] truncate">{profile.website}</span>
-                  <ExternalLink size={11} />
-                </a>
-              )}
             </Reveal>
-          )}
+          </div>
         </div>
       ) : (
         <div className="py-10 text-center text-sm text-muted-foreground">
@@ -202,12 +180,10 @@ export default function InstagramProfileDashboard({
 function AnimatedProfileStat({
   label,
   value,
-  delay,
   visible,
 }: {
   label: string;
   value: number | null;
-  delay: number;
   visible: boolean;
 }) {
   const [displayValue, setDisplayValue] = useState(0);
@@ -227,12 +203,9 @@ function AnimatedProfileStat({
       if (progress < 1) frame = requestAnimationFrame(animate);
     };
 
-    const timeout = window.setTimeout(() => {
-      frame = requestAnimationFrame(animate);
-    }, delay);
+    frame = requestAnimationFrame(animate);
 
     return () => {
-      window.clearTimeout(timeout);
       cancelAnimationFrame(frame);
     };
   }, [delay, value, visible]);
