@@ -291,17 +291,20 @@ export default function InstagramInsights({
   useEffect(() => {
     if (!accountId) return;
 
+    // اول داده ذخیره‌شده را نمایش بده؛ بروزرسانی Meta نباید رندر صفحه را معطل کند.
+    void load();
+
     void (async () => {
       try {
         await syncInsights();
+        await load();
       } catch (requestError) {
+        // اگر Sync با Meta خطا داد، داده تاریخی همچنان باید قابل نمایش باشد.
         setError(
           requestError instanceof Error
             ? requestError.message
             : "خطا در بروزرسانی Instagram Insights",
         );
-      } finally {
-        await load();
       }
     })();
   }, [accountId, syncInsights, load]);
