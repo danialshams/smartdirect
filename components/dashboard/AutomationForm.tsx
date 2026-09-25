@@ -1,4 +1,6 @@
 
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 "use client";
 
 import type { FormEvent } from "react";
@@ -1873,7 +1875,7 @@ export default function AutomationForm({
                             <div className="space-y-4">
                                 <label className="block rounded-xl border border-gray-200 p-4">
                                     <div className="flex items-start gap-3">
-                                        <input
+                                        <Input
                                             type="checkbox"
                                             checked={Boolean(
                                                 commentReplyText.trim()
@@ -1907,7 +1909,7 @@ export default function AutomationForm({
                                                 پاسخ عمومی به کامنت
                                             </div>
 
-                                            <textarea
+                                            <Textarea
                                                 value={
                                                     commentReplyText
                                                 }
@@ -1928,7 +1930,7 @@ export default function AutomationForm({
                                 </label>
 
                                 <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 p-4">
-                                    <input
+                                    <Input
                                         type="checkbox"
                                         checked={
                                             likeComment
@@ -1966,7 +1968,7 @@ export default function AutomationForm({
                             </h3>
 
                             <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 p-4">
-                                <input
+                                <Input
                                     type="checkbox"
                                     checked={requireFollow}
                                     onChange={(event) =>
@@ -1996,7 +1998,7 @@ export default function AutomationForm({
                                         متن درخواست فالو
                                     </label>
 
-                                    <textarea
+                                    <Textarea
                                         value={followGateText}
                                         onChange={(event) =>
                                             setFollowGateText(
@@ -2030,7 +2032,7 @@ export default function AutomationForm({
                             </p>
                         </div>
 
-                        <textarea
+                        <Textarea
                             value={
                                 replyText
                             }
@@ -2055,7 +2057,7 @@ export default function AutomationForm({
 
                         {isDm && (
                             <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 p-4">
-                                <input
+                                <Input
                                     type="checkbox"
                                     checked={
                                         likeIncomingDm
@@ -2086,7 +2088,7 @@ export default function AutomationForm({
 
                         {isStory && (
                             <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 p-4">
-                                <input
+                                <Input
                                     type="checkbox"
                                     checked={
                                         likeStoryReply
@@ -2338,7 +2340,7 @@ export default function AutomationForm({
                     {/* Active */}
 
                     <label className="flex cursor-pointer items-center gap-3 border-t border-gray-100 pt-5">
-                        <input
+                        <Input
                             type="checkbox"
                             checked={
                                 isActive
@@ -2449,7 +2451,7 @@ function KeywordInput({
                         <button type="button" onClick={() => removeKeyword(item)} className="text-gray-400 transition hover:text-gray-900" aria-label={`حذف ${item}`}><X size={13} /></button>
                     </span>
                 ))}
-                <input value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === "," || event.key === "،") { event.preventDefault(); addKeyword(); } }} onBlur={addKeyword} placeholder={keywords.length ? "کلمه بعدی..." : "مثلاً 1 یا یک"} className="min-w-[140px] flex-1 border-0 bg-transparent px-1 py-1 text-sm outline-none" />
+                <Input value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === "," || event.key === "،") { event.preventDefault(); addKeyword(); } }} onBlur={addKeyword} placeholder={keywords.length ? "کلمه بعدی..." : "مثلاً 1 یا یک"} className="min-w-[140px] flex-1 border-0 bg-transparent px-1 py-1 text-sm outline-none" />
                 <button type="button" onClick={addKeyword} className="shrink-0 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 transition hover:bg-gray-50">افزودن کلمه</button>
             </div>
             <p className="mt-2 text-xs leading-5 text-gray-400">{description} چند کلمه را با Enter یا «افزودن کلمه» اضافه کنید.</p>
