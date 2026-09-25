@@ -1,4 +1,5 @@
 
+import { Select } from "@/components/ui/select"
 "use client";
 
 import {
@@ -738,7 +739,7 @@ export default function InstagramContentAnalytics() {
 
                 <div className="flex flex-col gap-2 sm:flex-row">
                     <div className="flex items-center rounded-xl border bg-card px-3 py-2 shadow-[0_6px_24px_rgba(15,23,42,0.03)]">
-                        <select
+                        <Select
                             value={
                                 accountId
                             }
@@ -777,7 +778,7 @@ export default function InstagramContentAnalytics() {
                                     </option>
                                 ),
                             )}
-                        </select>
+                        </Select>
                     </div>
 
                     <div className="flex rounded-xl border bg-card p-1 shadow-[0_6px_24px_rgba(15,23,42,0.03)]">
