@@ -244,9 +244,9 @@ function SidebarTrigger({
   return (
     <Button
       type="button"
-      variant="outline"
+      variant="ghost"
       size="icon"
-      className={cn("lg:hidden", className)}
+      className={cn("lg:hidden border-0 shadow-none", className)}
       onClick={toggleSidebar}
       aria-label="باز کردن منو"
       {...props}
