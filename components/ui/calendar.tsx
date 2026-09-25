@@ -44,7 +44,7 @@ function Calendar({
       dir="rtl"
       formatters={{
         formatMonthDropdown: (date) =>
-          date.toLocaleString("default", { month: "short" }),
+          date.toLocaleString("fa-IR-u-ca-persian", { month: "long" }),
         ...formatters,
       }}
       classNames={{
