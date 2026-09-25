@@ -1,4 +1,5 @@
 "use client";
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select } from "@/components/ui/select"
 
@@ -589,7 +590,7 @@ export default function IceBreakerManager({
                                 اختصاصی آن را بسازید.
                             </p>
 
-                            <button
+                            <Button
                                 type="button"
                                 onClick={
                                     addItem
@@ -600,7 +601,7 @@ export default function IceBreakerManager({
                                     size={16}
                                 />
                                 افزودن سوال
-                            </button>
+                            </Button>
                         </div>
                     ) : (
                         <div className="space-y-5">
@@ -660,7 +661,7 @@ export default function IceBreakerManager({
                                                 />
                                             </div>
 
-                                            <button
+                                            <Button
                                                 type="button"
                                                 onClick={() =>
                                                     removeItem(
@@ -675,7 +676,7 @@ export default function IceBreakerManager({
                                                         17
                                                     }
                                                 />
-                                            </button>
+                                            </Button>
                                         </div>
 
                                         {/* Inline Flow Builder */}
@@ -709,7 +710,7 @@ export default function IceBreakerManager({
 
                     {items.length > 0 && (
                         <div className="mt-5 flex flex-col gap-3 border-t border-border pt-5 sm:flex-row">
-                            <button
+                            <Button
                                 type="button"
                                 onClick={
                                     addItem
@@ -724,9 +725,9 @@ export default function IceBreakerManager({
                                     size={16}
                                 />
                                 افزودن سوال
-                            </button>
+                            </Button>
 
-                            <button
+                            <Button
                                 type="button"
                                 onClick={
                                     handleDisable
@@ -737,9 +738,9 @@ export default function IceBreakerManager({
                                 className="inline-flex items-center justify-center gap-2 rounded-xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground transition hover:bg-muted disabled:opacity-50"
                             >
                                 غیرفعال کردن
-                            </button>
+                            </Button>
 
-                            <button
+                            <Button
                                 type="button"
                                 onClick={
                                     handleSave
@@ -765,7 +766,7 @@ export default function IceBreakerManager({
                                 )}
 
                                 ذخیره Ice Breakerها
-                            </button>
+                            </Button>
                         </div>
                     )}
 
