@@ -28,23 +28,6 @@ type AutomationFlowMessageProps = {
 };
 
 type ShowcaseItemDraft = { id: string; title: string; description: string; imageUrl: string; previewUrl: string };
-type FormBuilderField = {
-  id: string;
-  label: string;
-  type: "TEXT" | "TEXTAREA" | "PHONE" | "EMAIL" | "NUMBER" | "SELECT" | "RADIO" | "CHECKBOX";
-  required: boolean;
-  placeholder: string;
-  options: string;
-};
-const newFormBuilderField = (): FormBuilderField => ({
-  id: `form_field_${crypto.randomUUID()}`,
-  label: "",
-  type: "TEXT",
-  required: false,
-  placeholder: "",
-  options: "",
-});
-
 const newShowcaseItem = (): ShowcaseItemDraft => ({
   id: `showcase_item_${crypto.randomUUID()}`,
   title: "",
@@ -85,11 +68,7 @@ export default function AutomationFlowMessage({
   const [showcaseSaving, setShowcaseSaving] = useState(false);
   const [showcaseError, setShowcaseError] = useState("");
   const [mediaUploading, setMediaUploading] = useState(false);
-  const [formTitle, setFormTitle] = useState("");
-  const [formDescription, setFormDescription] = useState("");
-  const [formFields, setFormFields] = useState<FormBuilderField[]>([newFormBuilderField()]);
-  const [formSaving, setFormSaving] = useState(false);
-  const [formError, setFormError] = useState("");
+
 
   const isForm = message.messageType === "FORM";
   const canAddReply = message.quickReplies.length < 13;
@@ -131,66 +110,51 @@ export default function AutomationFlowMessage({
     }
   }
 
-  function updateFormField(id: string, patch: Partial<FormBuilderField>) {
-    setFormFields((current) =>
-      current.map((field) => field.id === id ? { ...field, ...patch } : field)
-    );
+  function createBranchAnswer(): QuickReplyDraft {
+    return {
+      id: "branch_" + crypto.randomUUID(),
+      title: "",
+      payload: "payload_" + crypto.randomUUID(),
+      nextMessageId: null,
+      destinationType: null,
+      destinationText: "",
+      destinationFormId: "",
+      destinationShowcaseId: "",
+      destinationMediaUrl: "",
+      destinationMediaId: "",
+      destinationQuestion: "",
+      destinationQuickReplies: [],
+    };
   }
 
-  function removeFormField(id: string) {
-    setFormFields((current) => {
-      const next = current.filter((field) => field.id !== id);
-      return next.length > 0 ? next : [newFormBuilderField()];
+  function updateNestedReply(replies: QuickReplyDraft[], replyId: string, patch: Partial<QuickReplyDraft>): QuickReplyDraft[] {
+    return replies.map((reply) => {
+      if (reply.id === replyId) return { ...reply, ...patch };
+      if (reply.destinationQuickReplies.length) {
+        return { ...reply, destinationQuickReplies: updateNestedReply(reply.destinationQuickReplies, replyId, patch) };
+      }
+      return reply;
     });
   }
 
-  async function createForm() {
-    try {
-      if (!instagramAccountId) throw new Error("اکانت Instagram انتخاب نشده است.");
-      if (!formTitle.trim()) throw new Error("عنوان فرم را وارد کنید.");
-      for (let index = 0; index < formFields.length; index += 1) {
-        const field = formFields[index];
-        if (!field.label.trim()) throw new Error(`متن سؤال ${index + 1} را وارد کنید.`);
-        if (["SELECT", "RADIO", "CHECKBOX"].includes(field.type)) {
-          const options = field.options.split("\n").map((item) => item.trim()).filter(Boolean);
-          if (options.length === 0) throw new Error(`برای سؤال ${index + 1} حداقل یک گزینه وارد کنید.`);
-        }
-      }
-      setFormSaving(true);
-      setFormError("");
-      const response = await fetch("/api/forms", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          instagramAccountId,
-          title: formTitle.trim(),
-          description: formDescription.trim() || null,
-          isActive: true,
-          fields: formFields.map((field, index) => ({
-            label: field.label.trim(),
-            name: `field_${index + 1}_${field.id.replace("form_field_", "").slice(0, 8)}`,
-            type: field.type,
-            required: field.required,
-            placeholder: field.placeholder.trim() || null,
-            options: ["SELECT", "RADIO", "CHECKBOX"].includes(field.type)
-              ? field.options.split("\n").map((item) => item.trim()).filter(Boolean)
-              : null,
-            order: index,
-          })),
-        }),
-      });
-      const result = await response.json();
-      if (!response.ok || result?.error) throw new Error(result?.error || "ساخت فرم ناموفق بود.");
-      const created = result.data ?? result;
-      onUpdate({ formId: created.id, text: formDescription.trim() });
-      onFormCreated?.(created);
-    } catch (error) {
-      setFormError(error instanceof Error ? error.message : "ساخت فرم ناموفق بود.");
-    } finally {
-      setFormSaving(false);
+  function updateNestedRootReply(replyId: string, patch: Partial<QuickReplyDraft>) {
+    const target = message.quickReplies.find((reply) => reply.id === replyId);
+    if (target) {
+      onUpdateQuickReply(replyId, patch);
+      return;
     }
+    onUpdate({
+      quickReplies: message.quickReplies.map((reply) => ({
+        ...reply,
+        destinationQuickReplies: updateNestedReply(reply.destinationQuickReplies, replyId, patch),
+      })),
+    });
   }
+
+  function updateNestedTree(rootReplyId: string, replies: QuickReplyDraft[]) {
+    onUpdateQuickReply(rootReplyId, { destinationQuickReplies: replies });
+  }
+
 
   async function createShowcase() {
     try {
