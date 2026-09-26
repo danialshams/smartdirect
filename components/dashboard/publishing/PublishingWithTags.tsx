@@ -119,9 +119,9 @@ export default function PublishingWithTags() {
       <PublishingDashboardV2 onTypeChange={handleTypeChange} />
 
       {showTags && (
-        <section className="mx-auto w-full max-w-2xl rounded-xl border bg-card p-5 shadow-sm">
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-3 sm:flex-row">
+        <section className="mx-auto w-full max-w-2xl rounded-3xl border border-border/80 bg-card p-4 shadow-sm sm:p-5">
+          <div className="space-y-3"><div><p className="text-sm font-bold text-foreground">تگ کردن اکانت‌ها</p><p className="mt-1 text-[11px] leading-5 text-muted-foreground">برای پست، Carousel و Reel اکانت‌های موردنظر را اضافه کنید.</p></div>
+            <div className="flex flex-col gap-2.5 sm:flex-row">
               <Input
                 value={draftUsername}
                 onChange={(event) => setDraftUsername(event.target.value)}
@@ -132,13 +132,13 @@ export default function PublishingWithTags() {
                   }
                 }}
                 placeholder="username یا @username"
-                className="h-11 flex-1 rounded-xl border border-border px-3 text-sm outline-none transition focus:border-ring"
+                className="h-11 flex-1 rounded-xl border border-border/70 bg-background px-3 text-sm outline-none transition focus:border-ring"
                 dir="ltr"
               />
               <Button
                 type="button"
                 onClick={addTag}
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary/90"
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
               >
                 <Plus size={17} />
                 افزودن
