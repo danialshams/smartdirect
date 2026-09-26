@@ -184,29 +184,72 @@ async function executeAutomationInternal(input: ExecuteAutomationInput) {
   // =========================================================
 
   if (input.selectedQuickReplyId) {
-    const selectedReply = automation.messages.flatMap((message) => message.quickReplies).find((reply) => reply.id === input.selectedQuickReplyId);
-    if (!selectedReply) throw new Error("Quick reply not found");
+    const allQuickReplies = automation.messages.flatMap((message) => message.quickReplies);
+    let selectedReply = allQuickReplies.find((reply) => reply.id === input.selectedQuickReplyId);
+    let destination: {
+      type: "TEXT" | "FORM" | "SHOWCASE" | "IMAGE" | "VIDEO" | "AUDIO";
+      text?: string | null;
+      formId?: string | null;
+      showcaseId?: string | null;
+      mediaUrl?: string | null;
+      mediaId?: string | null;
+      question?: string | null;
+      quickReplies?: Array<{ id: string; title: string; payload: string }>;
+    } | null = null;
 
-    let destination: { type: "TEXT" | "FORM" | "SHOWCASE"; text?: string | null; formId?: string | null; showcaseId?: string | null } | null = null;
-    if (selectedReply.replyText) {
+    if (selectedReply) {
       try {
-        const parsed = JSON.parse(selectedReply.replyText);
-        if (parsed?.type === "TEXT" || parsed?.type === "FORM" || parsed?.type === "SHOWCASE") destination = parsed;
+        const parsed = selectedReply.replyText ? JSON.parse(selectedReply.replyText) : null;
+        if (parsed?.type) destination = parsed;
       } catch {
         destination = null;
       }
     }
 
+    if (!selectedReply && input.selectedQuickReplyId?.includes("::")) {
+      const [rootId, nestedPayload] = input.selectedQuickReplyId.split("::");
+      selectedReply = allQuickReplies.find((reply) => reply.id === rootId);
+      if (selectedReply?.replyText && nestedPayload) {
+        try {
+          const root = JSON.parse(selectedReply.replyText);
+          const findDestination = (node: any): any => {
+            if (!node) return null;
+            if (Array.isArray(node.quickReplies)) {
+              for (const child of node.quickReplies) {
+                if (child?.payload === nestedPayload) return child;
+                const nested = findDestination(child);
+                if (nested) return nested;
+              }
+            }
+            return null;
+          };
+          destination = findDestination(root);
+        } catch {
+          destination = null;
+        }
+      }
+    }
+
+    if (!selectedReply || !destination) throw new Error("Quick reply destination not found");
+
     if (destination) {
       const destinationMessage = {
-        id: `destination:${selectedReply.id}`,
-        messageType: destination.type === "TEXT" ? AutomationMessageType.TEXT : destination.type === "FORM" ? AutomationMessageType.FORM : AutomationMessageType.SHOWCASE,
-        text: destination.text ?? null,
-        mediaUrl: null,
-        mediaId: null,
+        id: `destination:${selectedReply.id}:${Date.now()}`,
+        messageType:
+          destination.type === "TEXT" ? AutomationMessageType.TEXT :
+          destination.type === "FORM" ? AutomationMessageType.FORM :
+          destination.type === "SHOWCASE" ? AutomationMessageType.SHOWCASE :
+          destination.type === "IMAGE" ? AutomationMessageType.IMAGE :
+          destination.type === "VIDEO" ? AutomationMessageType.VIDEO :
+          AutomationMessageType.AUDIO,
+        text: destination.type === "FORM" ? (destination.question ?? "") : (destination.text ?? null),
+        mediaUrl: destination.mediaUrl ?? null,
+        mediaId: destination.mediaId ?? null,
         showcaseId: destination.showcaseId ?? null,
         formId: destination.formId ?? null,
-        quickReplies: [],
+        quickReplies: Array.isArray(destination.quickReplies)
+          ? destination.quickReplies.map((item) => ({ id: item.id, title: item.title, payload: item.payload }))
+          : [],
       };
       const destinationResult = await sendAutomationMessage({
         instagramAccountId: instagramAccount.id,
