@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select } from "@/components/ui/select"
 
-import { ArrowDown, ArrowUp, ChevronDown, ImagePlus, MessageSquare, Plus, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, ImagePlus, MessageSquare, Plus, Trash2, Upload, X } from "lucide-react";
 import { useState } from "react";
 import type { AutomationTriggerType } from "./AutomationManager";
 import type { FormItem, MessageDraft, QuickReplyDraft, Showcase } from "./automation-form-utils";
@@ -74,6 +74,8 @@ export default function AutomationFlowMessage({
   const [showcaseItems, setShowcaseItems] = useState<ShowcaseItemDraft[]>([newShowcaseItem()]);
   const [showcaseSaving, setShowcaseSaving] = useState(false);
   const [showcaseError, setShowcaseError] = useState("");
+  const [mediaUploading, setMediaUploading] = useState(false);
+  const messageMediaError = message.messageType !== "SHOWCASE" ? showcaseError : "";
 
   const isForm = message.messageType === "FORM";
   const canAddReply = message.quickReplies.length < 13;
@@ -92,6 +94,26 @@ export default function AutomationFlowMessage({
       updateShowcaseItem(id, { imageUrl: uploaded.publicUrl, previewUrl: uploaded.publicUrl });
     } catch (error) {
       setShowcaseError(error instanceof Error ? error.message : "آپلود تصویر ناموفق بود.");
+    }
+  }
+
+  async function handleMessageMedia(file?: File) {
+    if (!file) return;
+    try {
+      setMediaUploading(true);
+      setShowcaseError("");
+      const formData = new FormData();
+      formData.append("file", file);
+      const response = await fetch("/api/instagram/publishing/upload", { method: "POST", body: formData });
+      const result = await response.json();
+      if (!response.ok || !result?.success || !result?.data?.publicUrl) {
+        throw new Error(result?.message || "آپلود فایل ناموفق بود.");
+      }
+      onUpdate({ mediaUrl: result.data.publicUrl, mediaId: "" });
+    } catch (error) {
+      setShowcaseError(error instanceof Error ? error.message : "آپلود فایل ناموفق بود.");
+    } finally {
+      setMediaUploading(false);
     }
   }
 
@@ -153,11 +175,15 @@ export default function AutomationFlowMessage({
         <div className="relative">
           <Select value={message.messageType} onChange={(event) => onUpdate({ messageType: event.target.value as MessageDraft["messageType"], text: "", mediaUrl: "", mediaId: "", showcaseId: "", formId: "" })} className="w-full appearance-none rounded-lg border bg-background px-4 py-3 pl-10 text-sm outline-none focus:border-ring">
             <option value="TEXT">متن</option>
-            <option value="IMAGE">عکس</option>
-            <option value="VIDEO">ویدیو</option>
-            <option value="AUDIO">وویس</option>
-            <option value="SHOWCASE">ویترین</option>
-            <option value="FORM">فرم / سوال</option>
+            {triggerType === "STORY_REPLY_KEYWORD" && (
+              <>
+                <option value="IMAGE">عکس</option>
+                <option value="VIDEO">ویدیو</option>
+                <option value="AUDIO">وویس</option>
+                <option value="SHOWCASE">ویترین</option>
+                <option value="FORM">فرم / سوال</option>
+              </>
+            )}
           </Select>
           <ChevronDown size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
         </div>
@@ -176,9 +202,22 @@ export default function AutomationFlowMessage({
       )}
 
       {(message.messageType === "IMAGE" || message.messageType === "VIDEO" || message.messageType === "AUDIO") && (
-        <div className="space-y-3">
-          <Input value={message.mediaUrl} onChange={(event) => onUpdate({ mediaUrl: event.target.value })} placeholder="Media URL" dir="ltr" className="w-full rounded-xl border border-border px-4 py-3 text-sm outline-none focus:border-ring" />
-          <Input value={message.mediaId} onChange={(event) => onUpdate({ mediaId: event.target.value })} placeholder="Media ID" dir="ltr" className="w-full rounded-xl border border-border px-4 py-3 text-sm outline-none focus:border-ring" />
+        <div className="space-y-3 rounded-xl border border-border bg-muted p-3">
+          <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-background px-4 py-4 text-sm font-semibold text-foreground transition hover:bg-white">
+            <Upload size={17} />
+            {mediaUploading ? "در حال آپلود..." : message.mediaUrl ? "انتخاب فایل دیگر" : "انتخاب فایل از دستگاه"}
+            <Input
+              type="file"
+              accept={message.messageType === "IMAGE" ? "image/jpeg,image/png,image/webp" : message.messageType === "VIDEO" ? "video/mp4,video/quicktime" : "audio/*"}
+              className="hidden"
+              disabled={mediaUploading}
+              onChange={(event) => void handleMessageMedia(event.target.files?.[0])}
+            />
+          </label>
+          {message.mediaUrl && (
+            <p className="truncate text-xs text-muted-foreground" dir="ltr">{message.mediaUrl}</p>
+          )}
+          {showcaseError && <p className="text-xs text-red-600">{showcaseError}</p>}
         </div>
       )}
 
