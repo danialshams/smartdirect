@@ -1228,34 +1228,39 @@ async function processMessagingEventLocked(
     if (quickReplyPayload && automation) {
       console.log("Resolving Quick Reply payload:", quickReplyPayload);
 
-      const selectedQuickReply = automation.messages
-        .flatMap((automationMessage) => automationMessage.quickReplies)
-        .find((quickReply) => quickReply.payload === quickReplyPayload);
+      const topLevelQuickReplies = automation.messages.flatMap((automationMessage) => automationMessage.quickReplies);
+      const selectedQuickReply = topLevelQuickReplies.find((quickReply) => quickReply.payload === quickReplyPayload);
 
       if (selectedQuickReply) {
         selectedQuickReplyId = selectedQuickReply.id;
-
-        console.log("========================================");
-
-        console.log("QUICK REPLY SELECTED");
-
-        console.log("Quick Reply ID:", selectedQuickReply.id);
-
-        console.log("Quick Reply title:", selectedQuickReply.title);
-
-        console.log("Quick Reply payload:", selectedQuickReply.payload);
-
-        console.log(
-          "Next Message ID:",
-          selectedQuickReply.nextMessageId ?? "NONE",
-        );
-
-        console.log("========================================");
+        console.log("QUICK REPLY SELECTED:", selectedQuickReply.id, selectedQuickReply.title);
       } else {
-        console.warn(
-          "Quick reply payload does not belong to this automation:",
-          quickReplyPayload,
-        );
+        const findNestedPayload = (node: any): boolean => {
+          if (!node) return false;
+          if (Array.isArray(node.quickReplies)) {
+            for (const child of node.quickReplies) {
+              if (child?.payload === quickReplyPayload) return true;
+              if (findNestedPayload(child)) return true;
+            }
+          }
+          return false;
+        };
+
+        const root = topLevelQuickReplies.find((reply) => {
+          if (!reply.replyText) return false;
+          try {
+            return findNestedPayload(JSON.parse(reply.replyText));
+          } catch {
+            return false;
+          }
+        });
+
+        if (root) {
+          selectedQuickReplyId = root.id + "::" + quickReplyPayload;
+          console.log("NESTED QUICK REPLY SELECTED:", quickReplyPayload, "root:", root.id);
+        } else {
+          console.warn("Quick reply payload does not belong to this automation:", quickReplyPayload);
+        }
       }
     } else if (quickReplyPayload && !automation) {
       console.warn("Quick reply received but no active DM automation exists.");
