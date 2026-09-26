@@ -2256,9 +2256,6 @@ export default function AutomationForm({
                                             total={
                                                 messages.length
                                             }
-                                            messageOptions={
-                                                messageOptions
-                                            }
                                             showcases={
                                                 showcases
                                             }
