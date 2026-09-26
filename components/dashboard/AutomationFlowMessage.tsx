@@ -201,9 +201,17 @@ export default function AutomationFlowMessage({
 
       {isForm && (
         <div className="space-y-3 rounded-2xl border border-border/70 bg-muted/30 p-3.5">
-          <div className="flex items-center gap-2"><MessageSquare size={16} className="text-primary" /><span className="text-sm font-bold text-foreground">سوال فرم</span></div>
-          <Textarea value={message.text} onChange={(event) => onUpdate({ text: event.target.value })} rows={3} placeholder="مثلاً: کدام رنگ را می‌پسندید؟" className="w-full resize-none rounded-xl border border-border/70 bg-background px-3.5 py-3 text-sm leading-7 outline-none focus:border-ring" />
-          <p className="text-[11px] leading-6 text-muted-foreground">برای هر جواب یک دکمه بسازید و مقصد بعدی آن را مشخص کنید.</p>
+          <div className="flex items-center gap-2"><MessageSquare size={16} className="text-primary" /><span className="text-sm font-bold text-foreground">فرم</span></div>
+          <div className="relative">
+            <Select value={message.formId} onChange={(event) => onUpdate({ formId: event.target.value })} disabled={loadingResources} className="w-full appearance-none rounded-xl border border-border/70 bg-background px-3 py-2.5 pl-8 text-xs outline-none focus:border-ring">
+              <option value="">فرم را انتخاب کنید</option>
+              {availableForms.map((form) => <option key={form.id} value={form.id}>{form.title}</option>)}
+            </Select>
+            <ChevronDown size={14} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          </div>
+          {message.formId && <Textarea value={message.text} onChange={(event) => onUpdate({ text: event.target.value })} rows={3} placeholder="متن معرفی فرم (اختیاری)" className="w-full resize-none rounded-xl border border-border/70 bg-background px-3.5 py-3 text-sm leading-7 outline-none focus:border-ring" />}
+          {!loadingResources && availableForms.length === 0 && <p className="text-[11px] leading-6 text-amber-700">برای ارسال فرم، ابتدا حداقل یک فرم برای این اکانت بسازید.</p>}
+          <p className="text-[11px] leading-6 text-muted-foreground">فرم انتخاب‌شده مستقیماً برای کاربر ارسال می‌شود.</p>
         </div>
       )}
 
