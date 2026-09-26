@@ -184,6 +184,42 @@ async function executeAutomationInternal(input: ExecuteAutomationInput) {
   // =========================================================
 
   if (input.selectedQuickReplyId) {
+    const selectedReply = automation.messages.flatMap((message) => message.quickReplies).find((reply) => reply.id === input.selectedQuickReplyId);
+    if (!selectedReply) throw new Error("Quick reply not found");
+
+    if (selectedReply.destinationType) {
+      const destinationMessage = {
+        id: `destination:${selectedReply.id}`,
+        messageType: selectedReply.destinationType === "TEXT" ? AutomationMessageType.TEXT : selectedReply.destinationType === "FORM" ? AutomationMessageType.FORM : AutomationMessageType.SHOWCASE,
+        text: selectedReply.destinationText,
+        mediaUrl: null,
+        mediaId: null,
+        showcaseId: selectedReply.destinationShowcaseId,
+        formId: selectedReply.destinationFormId,
+        quickReplies: [],
+      };
+      const destinationResult = await sendAutomationMessage({
+        instagramAccountId: instagramAccount.id,
+        recipientId: input.participantId,
+        instagramUserId: instagramAccount.igUserId,
+        executionId: input.executionId ? `${input.executionId}:reply:${selectedReply.id}` : null,
+        message: destinationMessage,
+      });
+      if (!destinationResult.success) throw new Error(destinationResult.error || "Quick reply destination could not be sent.");
+      await prisma.conversationMessage.create({
+        data: {
+          conversationId: conversation.id,
+          direction: MessageDirection.OUTBOUND,
+          messageType: getConversationMessageType(destinationMessage.messageType),
+          text: destinationResult.conversationText ?? destinationMessage.text ?? null,
+          mediaUrl: destinationMessage.mediaUrl,
+          mediaId: destinationMessage.mediaId,
+          igMessageId: destinationResult.igMessageId ?? null,
+        },
+      });
+      return { success: true, executed: true, conversationId: conversation.id, executedMessages: [destinationMessage.id] };
+    }
+
     const nextMessageId = resolveQuickReplyDestination(
       automation.messages,
       input.selectedQuickReplyId,
