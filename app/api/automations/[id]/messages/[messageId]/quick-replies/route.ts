@@ -193,15 +193,20 @@ export async function POST(
         : null;
 
     const nextMessageId = null;
-    const destinationType = ["TEXT", "FORM", "SHOWCASE"].includes(body.destinationType) ? body.destinationType : null;
+    const destinationType = ["TEXT", "FORM", "SHOWCASE", "IMAGE", "VIDEO", "AUDIO"].includes(body.destinationType) ? body.destinationType : null;
     const destinationText = normalizeString(body.destinationText) || null;
     const destinationFormId = normalizeString(body.destinationFormId) || null;
     const destinationShowcaseId = normalizeString(body.destinationShowcaseId) || null;
+    const destinationMediaUrl = normalizeString(body.destinationMediaUrl) || null;
+    const destinationMediaId = normalizeString(body.destinationMediaId) || null;
+    const destinationQuestion = normalizeString(body.destinationQuestion) || null;
+    const destinationQuickReplies = Array.isArray(body.destinationQuickReplies) ? body.destinationQuickReplies : [];
 
     if (!destinationType) return NextResponse.json({ success: false, error: "نوع مقصد پاسخ الزامی است" }, { status: 400 });
     if (destinationType === "TEXT" && !destinationText) return NextResponse.json({ success: false, error: "متن مقصد الزامی است" }, { status: 400 });
-    if (destinationType === "FORM" && !destinationFormId) return NextResponse.json({ success: false, error: "فرم مقصد الزامی است" }, { status: 400 });
+    if (destinationType === "FORM" && (!destinationQuestion || destinationQuickReplies.length === 0)) return NextResponse.json({ success: false, error: "سؤال و حداقل یک جواب برای فرم مقصد الزامی است" }, { status: 400 });
     if (destinationType === "SHOWCASE" && !destinationShowcaseId) return NextResponse.json({ success: false, error: "ویترین مقصد الزامی است" }, { status: 400 });
+    if (["IMAGE", "VIDEO", "AUDIO"].includes(destinationType) && !destinationMediaUrl && !destinationMediaId) return NextResponse.json({ success: false, error: "فایل مقصد الزامی است" }, { status: 400 });
 
     /**
      * Title
@@ -301,7 +306,16 @@ export async function POST(
 
         payload,
 
-        replyText: JSON.stringify({ type: destinationType, text: destinationText, formId: destinationFormId, showcaseId: destinationShowcaseId }),
+        replyText: JSON.stringify({
+          type: destinationType,
+          text: destinationText,
+          formId: destinationFormId,
+          showcaseId: destinationShowcaseId,
+          mediaUrl: destinationMediaUrl,
+          mediaId: destinationMediaId,
+          question: destinationQuestion,
+          quickReplies: destinationQuickReplies,
+        }),
 
         nextMessageId,
       },
