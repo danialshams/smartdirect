@@ -1188,9 +1188,6 @@ export default function EntryPointFlowBuilder({
                                                         total={
                                                             messages.length
                                                         }
-                                                        messageOptions={
-                                                            messageOptions
-                                                        }
                                                         showcases={
                                                             showcases
                                                         }
