@@ -166,10 +166,10 @@ export function normalizeMessages(value: unknown): MessageDraft[] {
         const rawType = typeof item.messageType === "string" ? item.messageType : "TEXT";
         const messageType: MessageType = MESSAGE_TYPES.includes(rawType as MessageType) ? rawType as MessageType : "TEXT";
         const rawQuickReplies = Array.isArray(item.quickReplies) ? item.quickReplies : [];
-        const quickReplies = rawQuickReplies.map((rawQuickReply): QuickReplyDraft | null => {
-            if (!rawQuickReply || typeof rawQuickReply !== "object") return null;
-            const qr = rawQuickReply as Record<string, unknown>;
-            return {
+        const quickReplies = rawQuickReplies
+            .map((rawQuickReply) => normalizeQuickReplyDraft(rawQuickReply))
+            .filter((item): item is QuickReplyDraft => item !== null);
+        return {
                 id: typeof qr.id === "string" ? qr.id : createLocalId("quick_reply"),
                 title: typeof qr.title === "string" ? qr.title : "",
                 payload: typeof qr.payload === "string" ? qr.payload : createLocalId("payload"),
