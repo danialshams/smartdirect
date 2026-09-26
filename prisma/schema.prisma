@@ -133,10 +133,6 @@ model QuickReply {
   payload              String
   replyText            String?
   nextMessageId        String?
-  destinationType      QuickReplyDestinationType?
-  destinationText      String?
-  destinationFormId    String?
-  destinationShowcaseId String?
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
   conversationMessages ConversationMessage[]
@@ -500,12 +496,6 @@ enum AutomationTriggerType {
   COMMENT_KEYWORD
   DM
   STORY_REPLY_KEYWORD
-}
-
-enum QuickReplyDestinationType {
-  TEXT
-  FORM
-  SHOWCASE
 }
 
 enum AutomationMessageType {
