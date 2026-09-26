@@ -192,9 +192,16 @@ export async function POST(
         ? normalizeString(body.replyText) || null
         : null;
 
-    const nextMessageId = body.nextMessageId
-      ? normalizeString(body.nextMessageId) || null
-      : null;
+    const nextMessageId = null;
+    const destinationType = ["TEXT", "FORM", "SHOWCASE"].includes(body.destinationType) ? body.destinationType : null;
+    const destinationText = normalizeString(body.destinationText) || null;
+    const destinationFormId = normalizeString(body.destinationFormId) || null;
+    const destinationShowcaseId = normalizeString(body.destinationShowcaseId) || null;
+
+    if (!destinationType) return NextResponse.json({ success: false, error: "نوع مقصد پاسخ الزامی است" }, { status: 400 });
+    if (destinationType === "TEXT" && !destinationText) return NextResponse.json({ success: false, error: "متن مقصد الزامی است" }, { status: 400 });
+    if (destinationType === "FORM" && !destinationFormId) return NextResponse.json({ success: false, error: "فرم مقصد الزامی است" }, { status: 400 });
+    if (destinationType === "SHOWCASE" && !destinationShowcaseId) return NextResponse.json({ success: false, error: "ویترین مقصد الزامی است" }, { status: 400 });
 
     /**
      * Title
@@ -286,39 +293,6 @@ export async function POST(
       );
     }
 
-    /**
-     * Next message
-     */
-    if (nextMessageId) {
-      const nextMessage = await prisma.automationMessage.findFirst({
-        where: {
-          id: nextMessageId,
-
-          automationId: id,
-        },
-      });
-
-      if (!nextMessage) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: "پیام مقصد متعلق به این Automation نیست",
-          },
-          { status: 400 },
-        );
-      }
-
-      if (nextMessageId === messageId) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: "Quick Reply نمی‌تواند به همان پیام خودش متصل شود",
-          },
-          { status: 400 },
-        );
-      }
-    }
-
     const quickReply = await prisma.quickReply.create({
       data: {
         automationMessageId: messageId,
@@ -330,6 +304,10 @@ export async function POST(
         replyText,
 
         nextMessageId,
+        destinationType,
+        destinationText,
+        destinationFormId,
+        destinationShowcaseId,
       },
 
       include: {
