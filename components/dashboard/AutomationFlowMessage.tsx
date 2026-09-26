@@ -75,7 +75,7 @@ export default function AutomationFlowMessage({
   const [showcaseSaving, setShowcaseSaving] = useState(false);
   const [showcaseError, setShowcaseError] = useState("");
   const [mediaUploading, setMediaUploading] = useState(false);
-  const messageMediaError = message.messageType !== "SHOWCASE" ? showcaseError : "";
+
 
   const isForm = message.messageType === "FORM";
   const canAddReply = message.quickReplies.length < 13;
@@ -175,15 +175,11 @@ export default function AutomationFlowMessage({
         <div className="relative">
           <Select value={message.messageType} onChange={(event) => onUpdate({ messageType: event.target.value as MessageDraft["messageType"], text: "", mediaUrl: "", mediaId: "", showcaseId: "", formId: "" })} className="w-full appearance-none rounded-lg border bg-background px-4 py-3 pl-10 text-sm outline-none focus:border-ring">
             <option value="TEXT">متن</option>
-            {triggerType === "STORY_REPLY_KEYWORD" && (
-              <>
-                <option value="IMAGE">عکس</option>
-                <option value="VIDEO">ویدیو</option>
-                <option value="AUDIO">وویس</option>
-                <option value="SHOWCASE">ویترین</option>
-                <option value="FORM">فرم / سوال</option>
-              </>
-            )}
+            {triggerType === "STORY_REPLY_KEYWORD" ? <option value="IMAGE">عکس</option> : null}
+            {triggerType === "STORY_REPLY_KEYWORD" ? <option value="VIDEO">ویدیو</option> : null}
+            {triggerType === "STORY_REPLY_KEYWORD" ? <option value="AUDIO">وویس</option> : null}
+            {triggerType === "STORY_REPLY_KEYWORD" ? <option value="SHOWCASE">ویترین</option> : null}
+            {triggerType === "STORY_REPLY_KEYWORD" ? <option value="FORM">فرم / سوال</option> : null}
           </Select>
           <ChevronDown size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
         </div>
