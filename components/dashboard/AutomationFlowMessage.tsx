@@ -16,7 +16,7 @@ type AutomationFlowMessageProps = {
   index: number;
   total: number;
   showcases: Showcase[];
-  forms: FormItem[];
+  forms?: FormItem[];
   loadingResources: boolean;
   instagramAccountId?: string;
   onUpdate: (patch: Partial<MessageDraft>) => void;
@@ -63,6 +63,7 @@ export default function AutomationFlowMessage({
   onShowcaseCreated,
   onFormCreated,
 }: AutomationFlowMessageProps) {
+  const availableForms = forms ?? [];
   const [showcaseItems, setShowcaseItems] = useState<ShowcaseItemDraft[]>([newShowcaseItem()]);
   const [showcaseSaving, setShowcaseSaving] = useState(false);
   const [showcaseError, setShowcaseError] = useState("");
@@ -270,7 +271,7 @@ export default function AutomationFlowMessage({
                 <Button type="button" onClick={() => onRemoveQuickReply(answer.id)} className="rounded-xl border border-border/70 bg-background px-3 text-muted-foreground hover:text-red-600" aria-label="حذف پاسخ"><Trash2 size={15} /></Button>
               </div>
               {answer.destinationType === "TEXT" && <Textarea value={answer.destinationText} onChange={(event) => onUpdateQuickReply(answer.id, { destinationText: event.target.value })} rows={3} placeholder="متن مقصد را وارد کنید." className="w-full resize-none rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm leading-6 outline-none focus:border-ring" />}
-              {answer.destinationType === "FORM" && <div className="relative"><Select value={answer.destinationFormId} onChange={(event) => onUpdateQuickReply(answer.id, { destinationFormId: event.target.value })} className="w-full appearance-none rounded-xl border border-border/70 bg-background px-3 py-2.5 pl-8 text-xs outline-none focus:border-ring"><option value="">فرم مقصد را انتخاب کنید</option>{forms.map((form) => <option key={form.id} value={form.id}>{form.title}</option>)}</Select><ChevronDown size={14} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" /></div>}
+              {answer.destinationType === "FORM" && <div className="relative"><Select value={answer.destinationFormId} onChange={(event) => onUpdateQuickReply(answer.id, { destinationFormId: event.target.value })} className="w-full appearance-none rounded-xl border border-border/70 bg-background px-3 py-2.5 pl-8 text-xs outline-none focus:border-ring"><option value="">فرم مقصد را انتخاب کنید</option>{availableForms.map((form) => <option key={form.id} value={form.id}>{form.title}</option>)}</Select><ChevronDown size={14} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" /></div>}
               {answer.destinationType === "SHOWCASE" && <div className="relative"><Select value={answer.destinationShowcaseId} onChange={(event) => onUpdateQuickReply(answer.id, { destinationShowcaseId: event.target.value })} className="w-full appearance-none rounded-xl border border-border/70 bg-background px-3 py-2.5 pl-8 text-xs outline-none focus:border-ring"><option value="">ویترین مقصد را انتخاب کنید</option>{showcases.map((showcase) => <option key={showcase.id} value={showcase.id}>{showcase.title}</option>)}</Select><ChevronDown size={14} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" /></div>}
             </div>
           ))}
