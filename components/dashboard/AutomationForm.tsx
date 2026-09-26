@@ -2273,23 +2273,6 @@ export default function AutomationForm({
                                                     patch
                                                 )
                                             }
-                                            onRemove={() =>
-                                                removeMessage(
-                                                    message.id
-                                                )
-                                            }
-                                            onMoveUp={() =>
-                                                moveMessage(
-                                                    message.id,
-                                                    "up"
-                                                )
-                                            }
-                                            onMoveDown={() =>
-                                                moveMessage(
-                                                    message.id,
-                                                    "down"
-                                                )
-                                            }
                                             onAddQuickReply={() =>
                                                 addQuickReply(
                                                     message.id
