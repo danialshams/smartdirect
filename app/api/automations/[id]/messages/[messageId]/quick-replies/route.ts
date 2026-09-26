@@ -304,10 +304,7 @@ export async function POST(
         replyText,
 
         nextMessageId,
-        destinationType,
-        destinationText,
-        destinationFormId,
-        destinationShowcaseId,
+        replyText: JSON.stringify({ type: destinationType, text: destinationText, formId: destinationFormId, showcaseId: destinationShowcaseId }),
       },
 
       include: {
