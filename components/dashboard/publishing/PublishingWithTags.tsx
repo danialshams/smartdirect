@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, UserRound, X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import PublishingDashboardV2 from "./PublishingDashboardV2";
@@ -119,12 +119,7 @@ export default function PublishingWithTags() {
       {showTags && (
         <section className="mx-auto w-full max-w-6xl rounded-xl border bg-card p-5 shadow-sm">
           <div className="flex flex-col gap-4">
-            <div className="flex items-center gap-2 text-foreground">
-              <UserRound size={18} />
-              <h2 className="text-base font-bold">Tag People</h2>
-            </div>
-
-            <div className="flex flex-col gap-3 sm:flex-row">
+              <div className="flex flex-col gap-3 sm:flex-row">
               <Input
                 value={draftUsername}
                 onChange={(event) => setDraftUsername(event.target.value)}
