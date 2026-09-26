@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select } from "@/components/ui/select"
 
-import { ArrowDown, ArrowUp, ChevronDown, ClipboardList, ImagePlus, MessageSquare, Mic, Plus, Store, Trash2, Upload, Video, X, type LucideIcon } from "lucide-react";
+import { ChevronDown, ClipboardList, ImagePlus, MessageSquare, Mic, Plus, Store, Trash2, Upload, Video, X, type LucideIcon } from "lucide-react";
 import { useState } from "react";
 import type { AutomationTriggerType } from "./AutomationManager";
 import type { FormItem, MessageDraft, QuickReplyDraft, Showcase } from "./automation-form-utils";
@@ -15,15 +15,11 @@ type AutomationFlowMessageProps = {
   triggerType: AutomationTriggerType;
   index: number;
   total: number;
-  messageOptions: { id: string; label: string }[];
   showcases: Showcase[];
   forms: FormItem[];
   loadingResources: boolean;
   instagramAccountId?: string;
   onUpdate: (patch: Partial<MessageDraft>) => void;
-  onRemove: () => void;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
   onAddQuickReply: () => void;
   onUpdateQuickReply: (quickReplyId: string, patch: Partial<QuickReplyDraft>) => void;
   onRemoveQuickReply: (quickReplyId: string) => void;
@@ -57,14 +53,10 @@ export default function AutomationFlowMessage({
   triggerType,
   index,
   total,
-  messageOptions,
   showcases,
   loadingResources,
   instagramAccountId,
   onUpdate,
-  onRemove,
-  onMoveUp,
-  onMoveDown,
   onAddQuickReply,
   onUpdateQuickReply,
   onRemoveQuickReply,
@@ -174,16 +166,9 @@ export default function AutomationFlowMessage({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className="text-xs font-semibold text-muted-foreground">نوع پیام</p>
-          <p className="mt-1 text-[11px] text-muted-foreground">نوع پاسخی که کاربر دریافت می‌کند را انتخاب کنید.</p>
-        </div>
-        <div className="flex items-center gap-1">
-          <Button type="button" disabled={index === 0} onClick={onMoveUp} className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/70 bg-background p-0 text-muted-foreground disabled:opacity-30" aria-label="جابجایی به بالا"><ArrowUp size={14} /></Button>
-          <Button type="button" disabled={index === total - 1} onClick={onMoveDown} className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/70 bg-background p-0 text-muted-foreground disabled:opacity-30" aria-label="جابجایی به پایین"><ArrowDown size={14} /></Button>
-          <Button type="button" disabled={total === 1} onClick={onRemove} className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/70 bg-background p-0 text-muted-foreground hover:text-red-600 disabled:opacity-30" aria-label="حذف پیام"><Trash2 size={14} /></Button>
-        </div>
+      <div>
+        <p className="text-xs font-semibold text-muted-foreground">نوع پیام</p>
+        <p className="mt-1 text-[11px] text-muted-foreground">نوع پاسخی که کاربر دریافت می‌کند را انتخاب کنید.</p>
       </div>
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -273,15 +258,21 @@ export default function AutomationFlowMessage({
             <div key={answer.id} className="grid gap-2 sm:grid-cols-[1fr_1.4fr_auto]">
               <Input value={answer.title} onChange={(event) => onUpdateQuickReply(answer.id, { title: event.target.value })} placeholder={"جواب " + (answerIndex + 1)} maxLength={20} className="rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm outline-none focus:border-ring" />
               <div className="relative">
-                <Select value={answer.nextMessageId ?? ""} onChange={(event) => onUpdateQuickReply(answer.id, { nextMessageId: event.target.value || null })} className="w-full appearance-none rounded-xl border border-border/70 bg-background px-3 py-2.5 pl-8 text-xs outline-none focus:border-ring">
-                  <option value="">مقصد پاسخ را انتخاب کنید</option>
-                  {messageOptions.filter((option) => option.id !== message.id).map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
+                <Select value={answer.destinationType ?? ""} onChange={(event) => onUpdateQuickReply(answer.id, { destinationType: (event.target.value || null) as QuickReplyDraft["destinationType"], destinationText: "", destinationFormId: "", destinationShowcaseId: "", nextMessageId: null })} className="w-full appearance-none rounded-xl border border-border/70 bg-background px-3 py-2.5 pl-8 text-xs outline-none focus:border-ring">
+                  <option value="">نوع مقصد پاسخ را انتخاب کنید</option>
+                  <option value="TEXT">متن</option>
+                  <option value="FORM">فرم</option>
+                  <option value="SHOWCASE">ویترین</option>
                 </Select>
                 <ChevronDown size={14} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
               </div>
               <Button type="button" onClick={() => onRemoveQuickReply(answer.id)} className="rounded-xl border border-border/70 bg-background px-3 text-muted-foreground hover:text-red-600" aria-label="حذف پاسخ"><Trash2 size={15} /></Button>
             </div>
           ))}
+            {answer.destinationType === "TEXT" && <Textarea value={answer.destinationText} onChange={(event) => onUpdateQuickReply(answer.id, { destinationText: event.target.value })} rows={3} placeholder="متن مقصد را وارد کنید." className="col-span-full w-full resize-none rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm leading-6 outline-none focus:border-ring" />}
+            {answer.destinationType === "FORM" && <div className="col-span-full relative"><Select value={answer.destinationFormId} onChange={(event) => onUpdateQuickReply(answer.id, { destinationFormId: event.target.value })} className="w-full appearance-none rounded-xl border border-border/70 bg-background px-3 py-2.5 pl-8 text-xs outline-none focus:border-ring"><option value="">فرم مقصد را انتخاب کنید</option>{forms.map((form) => <option key={form.id} value={form.id}>{form.title}</option>)}</Select><ChevronDown size={14} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" /></div>}
+            {answer.destinationType === "SHOWCASE" && <div className="col-span-full relative"><Select value={answer.destinationShowcaseId} onChange={(event) => onUpdateQuickReply(answer.id, { destinationShowcaseId: event.target.value })} className="w-full appearance-none rounded-xl border border-border/70 bg-background px-3 py-2.5 pl-8 text-xs outline-none focus:border-ring"><option value="">ویترین مقصد را انتخاب کنید</option>{showcases.map((showcase) => <option key={showcase.id} value={showcase.id}>{showcase.title}</option>)}</div>}
+
           {message.quickReplies.length === 0 && <Button type="button" onClick={onAddQuickReply} className="w-full rounded-xl border border-dashed border-border/70 px-3 py-3 text-xs font-semibold text-muted-foreground hover:bg-background">+ اولین پاسخ فرم</Button>}
         </div>
       )}
