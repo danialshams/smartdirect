@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Select } from "@/components/ui/select"
 
 import { toast } from "sonner";
-import { CalendarClock, ImagePlus, Loader2, Plus, Send, Video, X } from "lucide-react";
+import { CalendarClock, Camera, Clapperboard, ImagePlus, Images, Loader2, Plus, Send, Video, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent } from "react";
 
 import AutomationFlowMessage from "../AutomationFlowMessage";
@@ -35,7 +35,6 @@ type JalaliDate = { year: number; month: number; day: number };
 type AutomationDraftConfig = {
   triggerType: "COMMENT_KEYWORD" | "STORY_REPLY_KEYWORD";
   keyword: string;
-  likeComment: boolean;
   commentReplyText: string;
   likeStoryReply: boolean;
   requireFollow: boolean;
@@ -107,7 +106,6 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const [showcases, setShowcases] = useState<Showcase[]>([]);
   const [forms, setForms] = useState<FormItem[]>([]);
   const [loadingResources, setLoadingResources] = useState(false);
-  const [likeComment, setLikeComment] = useState(false);
   const [commentReplyText, setCommentReplyText] = useState("");
   const [likeStoryReply, setLikeStoryReply] = useState(false);
   const [requireFollow, setRequireFollow] = useState(false);
@@ -169,7 +167,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
   function revokeLocalMedia(items: LocalMedia[]) { items.forEach((item) => URL.revokeObjectURL(item.previewUrl)); }
   function clearLocalMedia() { setMedia((current) => { revokeLocalMedia(current); return []; }); }
-  function resetAutomation() { setKeywords(""); setMessages([createEmptyMessage()]); setLikeComment(false); setCommentReplyText(""); setLikeStoryReply(false); setRequireFollow(false); setFollowGateText("برای دریافت پاسخ، ابتدا پیج را Follow کنید."); }
+  function resetAutomation() { setKeywords(""); setMessages([createEmptyMessage()]); setCommentReplyText(""); setLikeStoryReply(false); setRequireFollow(false); setFollowGateText("برای دریافت پاسخ، ابتدا پیج را Follow کنید."); }
   function handleTypeChange(nextType: PublishType) { clearLocalMedia(); setUploadedMedia([]); setType(nextType); onTypeChange?.(nextType); setUploadProgress(0); setCaption(""); resetAutomation(); }
   function prepareFiles(files: File[]) { if (!files.length || uploading || publishing) return; const accepted = type === "REEL" ? files.filter((file) => file.type.startsWith("video/")) : type === "STORY" ? files.filter((file) => file.type.startsWith("image/") || file.type.startsWith("video/")) : files.filter((file) => file.type.startsWith("image/")); if (!accepted.length) { setError(type === "REEL" ? "برای Reel یک فایل ویدیویی انتخاب کنید." : "فرمت فایل انتخاب‌شده برای این نوع محتوا معتبر نیست."); return; } const remaining = type === "CAROUSEL" ? Math.max(0, 10 - uploadedMedia.length) : 1; const selected = accepted.slice(0, remaining); if (type !== "CAROUSEL") setUploadedMedia([]); if (type === "CAROUSEL" && selected.length < 2 && uploadedMedia.length === 0) { setError("برای Carousel حداقل دو تصویر را همزمان انتخاب کنید."); return; } clearLocalMedia(); const nextMedia = selected.map((file, index): LocalMedia => ({ file, type: file.type.startsWith("video/") ? "VIDEO" : "IMAGE", previewUrl: URL.createObjectURL(file), sortOrder: index })); setMedia(nextMedia); setError(""); window.setTimeout(() => void uploadSelectedMedia(nextMedia), 0); }
   function handleFiles(event: ChangeEvent<HTMLInputElement>) { const files = Array.from(event.target.files ?? []); event.target.value = ""; prepareFiles(files); }
@@ -198,7 +196,6 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       triggerType,
       keyword: keywords,
       mediaId: pendingMediaId,
-      likeComment: triggerType === "COMMENT_KEYWORD" ? likeComment : false,
       commentReplyText: triggerType === "COMMENT_KEYWORD" ? commentReplyText.trim() || null : null,
       sendDm: true,
       likeStoryReply: triggerType === "STORY_REPLY_KEYWORD" ? likeStoryReply : false,
@@ -296,9 +293,9 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                 <div className="grid grid-cols-4 gap-1.5 rounded-2xl bg-muted/60 p-1.5">
                   {([
                     ["POST", "پست", ImagePlus],
-                    ["CAROUSEL", "Carousel", ImagePlus],
-                    ["REEL", "Reel", Video],
-                    ["STORY", "Story", ImagePlus],
+                    ["CAROUSEL", "Carousel", Images],
+                    ["REEL", "Reel", Clapperboard],
+                    ["STORY", "Story", Camera],
                   ] as const).map(([value, label, Icon]) => (
                     <Button key={value} type="button" onClick={() => handleTypeChange(value)} className={["flex min-h-14 flex-col items-center justify-center gap-1.5 rounded-xl px-1.5 text-[11px] font-semibold transition sm:min-h-16 sm:text-xs", type === value ? "bg-background text-foreground shadow-sm ring-1 ring-border" : "bg-transparent text-muted-foreground hover:bg-background/70"].join(" ")}>
                       <Icon size={17} />{label}
@@ -349,7 +346,6 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                     <KeywordChipsInput value={keywords} onChange={setKeywords} placeholder={type === "STORY" ? "مثلاً 1، اطلاعات، قیمت" : "مثلاً 1، یک، قیمت"} />
                   </label>
                   {type !== "STORY" && <>
-                    <label className="flex min-h-12 items-center justify-between gap-3 rounded-xl border border-border/70 bg-muted/30 px-3.5"><span className="text-sm text-foreground">لایک خودکار کامنت</span><Checkbox checked={likeComment} onCheckedChange={(checked) => setLikeComment(Boolean(checked))} /></label>
                     <label className="block"><span className="mb-2 block text-xs font-semibold text-foreground">پاسخ عمومی کامنت</span><Textarea value={commentReplyText} onChange={(e) => setCommentReplyText(e.target.value)} rows={2} className="w-full resize-none rounded-xl border border-border/70 bg-background px-3 py-3 text-sm leading-6 outline-none focus:border-ring" placeholder="در صورت نیاز، پاسخ عمومی کامنت را بنویسید." /></label>
                   </>}
                   {type === "STORY" && <label className="flex min-h-12 items-center justify-between gap-3 rounded-xl border border-border/70 bg-muted/30 px-3.5"><span className="text-sm text-foreground">لایک خودکار Reply استوری</span><Checkbox checked={likeStoryReply} onCheckedChange={(checked) => setLikeStoryReply(Boolean(checked))} /></label>}
