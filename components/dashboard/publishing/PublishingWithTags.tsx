@@ -116,10 +116,12 @@ export default function PublishingWithTags() {
 
   return (
     <div className="space-y-6">
+      <PublishingDashboardV2 onTypeChange={handleTypeChange} />
+
       {showTags && (
-        <section className="mx-auto w-full max-w-6xl rounded-xl border bg-card p-5 shadow-sm">
+        <section className="mx-auto w-full max-w-2xl rounded-xl border bg-card p-5 shadow-sm">
           <div className="flex flex-col gap-4">
-              <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <Input
                 value={draftUsername}
                 onChange={(event) => setDraftUsername(event.target.value)}
@@ -171,8 +173,6 @@ export default function PublishingWithTags() {
           </div>
         </section>
       )}
-
-      <PublishingDashboardV2 onTypeChange={handleTypeChange} />
     </div>
   );
 }
