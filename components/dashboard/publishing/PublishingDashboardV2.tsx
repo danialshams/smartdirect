@@ -310,5 +310,5 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       <div className="min-w-0 flex-1"><div className="flex items-center justify-between gap-2"><span className="text-sm font-medium">{typeLabels[job.type]}</span><span className="text-xs text-muted-foreground">{statusLabels[job.status] || job.status}</span></div><p className="mt-1 text-xs text-muted-foreground">{job.status === "SCHEDULED" ? `انتشار در ${formatDate(job.scheduledAt)}` : "محتوا در حال پردازش است."}</p></div>
       {job.status !== "SCHEDULED" && <Loader2 size={16} className="shrink-0 animate-spin text-muted-foreground" />}
     </div>)}</div>
-  </section>}</div></div></div>;
+  </section></div></div>;
 }
