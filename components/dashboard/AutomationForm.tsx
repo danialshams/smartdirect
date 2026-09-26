@@ -1105,76 +1105,44 @@ export default function AutomationForm({
             );
         }
 
-        /* Step 2: Create Quick Replies */
+        /* Step 2: Create Quick Replies / branching destinations */
 
-        for (
-            const message of messages
-        ) {
-            if (!message) {
-                continue;
-            }
+        for (const message of messages) {
+            if (!message) continue;
 
-            const serverMessageId =
-                serverMessageIds.get(
-                    message.id
+            const serverMessageId = serverMessageIds.get(message.id);
+            if (!serverMessageId) continue;
+
+            for (const quickReply of message.quickReplies) {
+                const response = await fetch(
+                    \`/api/automations/\${targetAutomationId}/messages/\${serverMessageId}/quick-replies\`,
+                    {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        credentials: "include",
+                        body: JSON.stringify({
+                            title: quickReply.title.trim(),
+                            payload: quickReply.payload,
+                            destinationType: quickReply.destinationType,
+                            destinationText: quickReply.destinationText,
+                            destinationFormId: quickReply.destinationFormId,
+                            destinationShowcaseId: quickReply.destinationShowcaseId,
+                            destinationMediaUrl: quickReply.destinationMediaUrl,
+                            destinationMediaId: quickReply.destinationMediaId,
+                            destinationQuestion: quickReply.destinationQuestion,
+                            destinationQuickReplies: quickReply.destinationQuickReplies,
+                            nextMessageId: null,
+                        }),
+                    },
                 );
 
-            if (!serverMessageId) {
-                continue;
-            }
+                const result = await response.json();
 
-            for (
-                const quickReply of
-                message.quickReplies
-            ) {
-                const destinationId =
-                    quickReply.nextMessageId
-                        ? serverMessageIds.get(
-                            quickReply.nextMessageId
-                        ) ?? null
-                        : null;
-
-                if (!destinationId) {
-                    throw new Error(
-                        `مقصد Quick Reply «${quickReply.title}» پیدا نشد.`
-                    );
-                }
-
-                const response =
-                    await fetch(
-                        `/api/automations/${targetAutomationId}/messages/${serverMessageId}/quick-replies`,
-                        {
-                            method: "POST",
-                            headers: {
-                                "Content-Type":
-                                    "application/json",
-                            },
-                            credentials:
-                                "include",
-                            body: JSON.stringify({
-                                title:
-                                    quickReply.title.trim(),
-
-                                payload:
-                                    quickReply.payload,
-
-                                nextMessageId:
-                                    destinationId,
-                            }),
-                        }
-                    );
-
-                const result =
-                    await response.json();
-
-                if (
-                    !response.ok ||
-                    !result.success
-                ) {
+                if (!response.ok || !result.success) {
                     throw new Error(
                         result.error ||
                         result.message ||
-                        `ذخیره Quick Reply «${quickReply.title}» ناموفق بود.`
+                        \`ذخیره Quick Reply «\${quickReply.title}» ناموفق بود.\`,
                     );
                 }
             }
