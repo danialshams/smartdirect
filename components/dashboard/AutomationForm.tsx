@@ -2265,6 +2265,17 @@ export default function AutomationForm({
                                             loadingResources={
                                                 loadingResources
                                             }
+                                            instagramAccountId={
+                                                account.id
+                                            }
+                                            onFormCreated={(form) =>
+                                                setForms((current) => [
+                                                    form,
+                                                    ...current.filter(
+                                                        (item) => item.id !== form.id
+                                                    ),
+                                                ])
+                                            }
                                             onUpdate={(
                                                 patch
                                             ) =>
