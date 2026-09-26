@@ -178,7 +178,7 @@ export async function POST(request: NextRequest) {
             type: type as (typeof validFieldTypes)[number],
             required,
             placeholder,
-            options,
+            ...(options !== null ? { options } : {}),
             order: Number.isInteger(item.order) ? Number(item.order) : index,
           };
         })
