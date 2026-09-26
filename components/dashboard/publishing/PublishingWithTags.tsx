@@ -42,7 +42,7 @@ export default function PublishingWithTags() {
           const body = JSON.parse(String(init.body)) as Record<string, unknown>;
 
           body.userTags =
-            type === "POST" || type === "REEL"
+            type === "POST" || type === "CAROUSEL" || type === "REEL"
               ? tags.map((tag) => ({
                   username: normalizeUsername(tag.username),
                 }))
@@ -105,14 +105,14 @@ export default function PublishingWithTags() {
   function handleTypeChange(nextType: PublishType) {
     setType(nextType);
 
-    if (nextType !== "POST" && nextType !== "REEL") {
+    if (nextType !== "POST" && nextType !== "CAROUSEL" && nextType !== "REEL") {
       setTags([]);
       setDraftUsername("");
       setMessage("");
     }
   }
 
-  const showTags = type === "POST" || type === "REEL";
+  const showTags = type === "POST" || type === "CAROUSEL" || type === "REEL";
 
   return (
     <div className="space-y-6">
