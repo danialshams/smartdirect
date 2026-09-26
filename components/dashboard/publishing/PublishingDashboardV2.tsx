@@ -222,9 +222,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
         const serverMessageId = serverMessageIds.get(message.id);
         if (!serverMessageId) throw new Error("شناسه پیام Automation پیدا نشد.");
         for (const quickReply of message.quickReplies) {
-          const nextMessageId = quickReply.nextMessageId ? serverMessageIds.get(quickReply.nextMessageId) : null;
-          if (!nextMessageId) throw new Error(`مقصد پاسخ «${quickReply.title || "بدون عنوان"}» معتبر نیست.`);
-          const response = await fetch(`/api/automations/${automationId}/messages/${serverMessageId}/quick-replies`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title: quickReply.title.trim(), payload: quickReply.payload, nextMessageId }) });
+          const response = await fetch(`/api/automations/${automationId}/messages/${serverMessageId}/quick-replies`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title: quickReply.title.trim(), payload: quickReply.payload, destinationType: quickReply.destinationType, destinationText: quickReply.destinationText.trim() || null, destinationFormId: quickReply.destinationFormId || null, destinationShowcaseId: quickReply.destinationShowcaseId || null }) });
           const result = await response.json();
           if (!response.ok || !result.success) throw new Error(result.error || `ساخت پاسخ «${quickReply.title}" ناموفق بود.`);
         }
@@ -360,13 +358,12 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   <span className="text-[11px] text-muted-foreground">{toPersianDigits(messages.length)} پیام</span>
                 </div>
                 <div className="space-y-3">
-                  {messages.map((message, index) => (
+                  {messages.slice(0, 1).map((message, index) => (
                     <div key={message.id} className="rounded-2xl border border-border/70 bg-muted/20 p-3.5 sm:p-4">
                       <div className="mb-3 flex items-center justify-between gap-3"><span className="text-sm font-bold text-foreground">پیام {toPersianDigits(index + 1)}</span><span className="rounded-full bg-background px-2.5 py-1 text-[10px] text-muted-foreground ring-1 ring-border/70">{getMessageTypeLabel(message.messageType)}</span></div>
-                      <AutomationFlowMessage triggerType={triggerType} message={message} index={index} total={messages.length} messageOptions={messageOptions} showcases={showcases} forms={forms} loadingResources={loadingResources} instagramAccountId={selectedAccountId} onShowcaseCreated={(showcase) => setShowcases((current) => [showcase, ...current.filter((item) => item.id !== showcase.id)])} onUpdate={(patch) => updateMessage(index, patch)} onRemove={() => removeMessage(index)} onMoveUp={() => moveMessage(index, -1)} onMoveDown={() => moveMessage(index, 1)} onAddQuickReply={() => addQuickReply(index)} onUpdateQuickReply={(quickReplyId, patch) => updateQuickReply(index, quickReplyId, patch)} onRemoveQuickReply={(quickReplyId) => removeQuickReply(index, quickReplyId)} />
+                      <AutomationFlowMessage triggerType={triggerType} message={message} index={index} total={messages.length} showcases={showcases} forms={forms} loadingResources={loadingResources} instagramAccountId={selectedAccountId} onShowcaseCreated={(showcase) => setShowcases((current) => [showcase, ...current.filter((item) => item.id !== showcase.id)])} onUpdate={(patch) => updateMessage(index, patch)} onAddQuickReply={() => addQuickReply(index)} onUpdateQuickReply={(quickReplyId, patch) => updateQuickReply(index, quickReplyId, patch)} onRemoveQuickReply={(quickReplyId) => removeQuickReply(index, quickReplyId)} />
                     </div>
                   ))}
-                  <Button type="button" onClick={addMessage} className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-background px-4 py-3.5 text-sm font-semibold text-muted-foreground hover:bg-muted"><Plus size={17} />افزودن پیام</Button>
                 </div>
               </div>
 
