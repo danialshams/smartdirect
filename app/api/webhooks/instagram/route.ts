@@ -1324,7 +1324,7 @@ async function processMessagingEventLocked(
 
           igMessageId: messageId,
 
-          quickReplyId: selectedQuickReplyId,
+          quickReplyId: selectedQuickReplyId?.includes("::") ? selectedQuickReplyId.split("::")[0] : selectedQuickReplyId,
 
           createdAt: new Date(),
         },
