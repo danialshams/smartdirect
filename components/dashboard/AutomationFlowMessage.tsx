@@ -311,3 +311,180 @@ export default function AutomationFlowMessage({
     </div>
   );
 }
+
+
+function createBranchAnswerDraft(): QuickReplyDraft {
+  return {
+    id: "branch_" + crypto.randomUUID(),
+    title: "",
+    payload: "payload_" + crypto.randomUUID(),
+    nextMessageId: null,
+    destinationType: null,
+    destinationText: "",
+    destinationFormId: "",
+    destinationShowcaseId: "",
+    destinationMediaUrl: "",
+    destinationMediaId: "",
+    destinationQuestion: "",
+    destinationQuickReplies: [],
+  };
+}
+
+async function uploadBranchMedia(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const response = await fetch("/api/instagram/publishing/upload", { method: "POST", body: formData });
+  const result = await response.json();
+  if (!response.ok || !result?.success || !result?.data?.publicUrl) {
+    throw new Error(result?.message || "آپلود فایل ناموفق بود.");
+  }
+  return result.data.publicUrl as string;
+}
+
+function BranchAnswerEditor({
+  replies,
+  showcases,
+  onChange,
+  depth = 0,
+}: {
+  replies: QuickReplyDraft[];
+  showcases: Showcase[];
+  onChange: (replies: QuickReplyDraft[]) => void;
+  depth?: number;
+}) {
+  function updateReply(id: string, patch: Partial<QuickReplyDraft>) {
+    onChange(replies.map((reply) => reply.id === id ? { ...reply, ...patch } : reply));
+  }
+
+  function removeReply(id: string) {
+    onChange(replies.filter((reply) => reply.id !== id));
+  }
+
+  function addReply() {
+    if (replies.length >= 13) return;
+    onChange([...replies, createBranchAnswerDraft()]);
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs font-bold text-foreground">{depth === 0 ? "جواب‌ها" : "جواب‌های سؤال بعدی"}</p>
+        <Button type="button" onClick={addReply} disabled={replies.length >= 13} className="inline-flex items-center gap-1 rounded-lg border border-border/70 bg-background px-2.5 py-1.5 text-[11px] font-semibold text-foreground disabled:opacity-40">
+          <Plus size={13} />افزودن جواب
+        </Button>
+      </div>
+
+      {replies.length === 0 && (
+        <div className="rounded-xl border border-dashed border-border/70 bg-background px-3 py-4 text-center text-[11px] text-muted-foreground">
+          حداقل یک جواب اضافه کنید.
+        </div>
+      )}
+
+      {replies.map((reply, index) => (
+        <div key={reply.id} className="space-y-3 rounded-xl border border-border/70 bg-background p-3">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[11px] font-bold text-muted-foreground">جواب {index + 1}</span>
+            <Button type="button" onClick={() => removeReply(reply.id)} className="flex h-7 w-7 items-center justify-center rounded-lg p-0 text-muted-foreground hover:text-red-600" aria-label="حذف جواب"><Trash2 size={14} /></Button>
+          </div>
+
+          <Input
+            value={reply.title}
+            maxLength={20}
+            onChange={(event) => updateReply(reply.id, { title: event.target.value })}
+            placeholder="متن جواب"
+            className="rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm"
+          />
+
+          <div className="relative">
+            <Select
+              value={reply.destinationType ?? ""}
+              onChange={(event) => updateReply(reply.id, {
+                destinationType: (event.target.value || null) as QuickReplyDraft["destinationType"],
+                destinationText: "",
+                destinationShowcaseId: "",
+                destinationMediaUrl: "",
+                destinationMediaId: "",
+                destinationQuestion: "",
+                destinationQuickReplies: [],
+              })}
+              className="w-full appearance-none rounded-xl border border-border/70 bg-background px-3 py-2.5 text-xs"
+            >
+              <option value="">مقصد این جواب را انتخاب کنید</option>
+              <option value="TEXT">متن</option>
+              <option value="FORM">فرم / سؤال بعدی</option>
+              <option value="SHOWCASE">ویترین</option>
+              <option value="IMAGE">عکس</option>
+              <option value="VIDEO">ویدیو</option>
+              <option value="AUDIO">وویس</option>
+            </Select>
+            <ChevronDown size={14} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          </div>
+
+          {reply.destinationType === "TEXT" && (
+            <Textarea
+              value={reply.destinationText}
+              onChange={(event) => updateReply(reply.id, { destinationText: event.target.value })}
+              rows={3}
+              placeholder="متن پاسخ را وارد کنید..."
+              className="w-full resize-none rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm leading-6"
+            />
+          )}
+
+          {reply.destinationType === "SHOWCASE" && (
+            <div className="relative">
+              <Select
+                value={reply.destinationShowcaseId}
+                onChange={(event) => updateReply(reply.id, { destinationShowcaseId: event.target.value })}
+                className="w-full appearance-none rounded-xl border border-border/70 bg-background px-3 py-2.5 text-xs"
+              >
+                <option value="">ویترین را انتخاب کنید</option>
+                {showcases.map((showcase) => <option key={showcase.id} value={showcase.id}>{showcase.title}</option>)}
+              </Select>
+              <ChevronDown size={14} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            </div>
+          )}
+
+          {["IMAGE", "VIDEO", "AUDIO"].includes(reply.destinationType ?? "") && (
+            <label className="flex min-h-24 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-border bg-muted/20 px-3 py-4 text-center text-xs font-semibold">
+              {reply.destinationMediaUrl ? "فایل انتخاب شده؛ برای تغییر کلیک کنید." : "فایل مقصد را انتخاب کنید"}
+              <span className="text-[10px] font-normal text-muted-foreground">عکس، ویدیو یا وویس</span>
+              <Input
+                type="file"
+                accept={reply.destinationType === "IMAGE" ? "image/*" : reply.destinationType === "VIDEO" ? "video/*" : "audio/*"}
+                className="hidden"
+                onChange={async (event) => {
+                  const file = event.target.files?.[0];
+                  if (!file) return;
+                  try {
+                    const url = await uploadBranchMedia(file);
+                    updateReply(reply.id, { destinationMediaUrl: url, destinationMediaId: "" });
+                  } catch {
+                    // Validation on submit will surface a missing destination file.
+                  }
+                }}
+              />
+            </label>
+          )}
+
+          {reply.destinationType === "FORM" && (
+            <div className="space-y-3 rounded-xl border border-border/70 bg-muted/20 p-3">
+              <Textarea
+                value={reply.destinationQuestion}
+                onChange={(event) => updateReply(reply.id, { destinationQuestion: event.target.value })}
+                rows={2}
+                placeholder="سؤال بعدی را وارد کنید..."
+                className="w-full resize-none rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm leading-6"
+              />
+              <BranchAnswerEditor
+                replies={reply.destinationQuickReplies}
+                showcases={showcases}
+                depth={depth + 1}
+                onChange={(children) => updateReply(reply.id, { destinationQuickReplies: children })}
+              />
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
