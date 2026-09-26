@@ -86,7 +86,6 @@ export async function POST(request: NextRequest) {
     if (hasStoryTrigger && data.storyReplyAutomationId) return NextResponse.json({ success: false, message: "همزمان انتخاب Automation استوری و شرط سفارشی Reply مجاز نیست." }, { status: 400 });
     const normalizedUserTags = data.userTags.map((tag) => ({ username: tag.username.replace(/^@/, "") }));
     if (normalizedUserTags.length && data.type === "STORY") return NextResponse.json({ success: false, message: "Tag کردن با این روش برای Story فعال نیست." }, { status: 400 });
-    if (normalizedUserTags.length && data.type === "CAROUSEL") return NextResponse.json({ success: false, message: "Tag کردن در Carousel فعلاً در پنل انتشار فعال نیست." }, { status: 400 });
 
     const account = await prisma.instagramAccount.findFirst({ where: { id: data.instagramAccountId, userId: session.user.id, isConnected: true } });
     if (!account) return NextResponse.json({ success: false, message: "اکانت Instagram پیدا نشد یا متصل نیست." }, { status: 404 });
