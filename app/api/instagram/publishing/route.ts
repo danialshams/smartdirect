@@ -12,7 +12,7 @@ import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 
 export const dynamic = "force-dynamic";
 const INSTAGRAM_API_VERSION = "v26.0";
-const userTagSchema = z.object({ username: z.string().trim().min(1).max(30).regex(/^@?[A-Za-z0-9._]+$/), x: z.number().min(0).max(1).optional(), y: z.number().min(0).max(1).optional() });
+const userTagSchema = z.object({ username: z.string().trim().min(1).max(30).regex(/^@?[A-Za-z0-9._]+$/) });
 const createSchema = z.object({
   instagramAccountId: z.string().min(1),
   type: z.enum(["POST", "CAROUSEL", "REEL", "STORY"]),
@@ -84,10 +84,9 @@ export async function POST(request: NextRequest) {
     if (hasStoryTrigger && (!data.storyReplyTriggerKeywords?.trim() || !data.storyReplyTriggerResponse?.trim())) return NextResponse.json({ success: false, message: "برای شرط Reply استوری، کلمات کلیدی و پاسخ الزامی است." }, { status: 400 });
     if (hasCommentTrigger && data.commentAutomationId) return NextResponse.json({ success: false, message: "همزمان انتخاب Automation کامنت و شرط سفارشی کامنت مجاز نیست." }, { status: 400 });
     if (hasStoryTrigger && data.storyReplyAutomationId) return NextResponse.json({ success: false, message: "همزمان انتخاب Automation استوری و شرط سفارشی Reply مجاز نیست." }, { status: 400 });
-    const normalizedUserTags = data.userTags.map((tag) => ({ username: tag.username.replace(/^@/, ""), ...(tag.x !== undefined ? { x: tag.x } : {}), ...(tag.y !== undefined ? { y: tag.y } : {}) }));
+    const normalizedUserTags = data.userTags.map((tag) => ({ username: tag.username.replace(/^@/, "") }));
     if (normalizedUserTags.length && data.type === "STORY") return NextResponse.json({ success: false, message: "Tag کردن با این روش برای Story فعال نیست." }, { status: 400 });
     if (normalizedUserTags.length && data.type === "CAROUSEL") return NextResponse.json({ success: false, message: "Tag کردن در Carousel فعلاً در پنل انتشار فعال نیست." }, { status: 400 });
-    if (data.type === "POST" && normalizedUserTags.some((tag) => tag.x === undefined || tag.y === undefined)) return NextResponse.json({ success: false, message: "برای Tag در پست، موقعیت X و Y هر تگ الزامی است." }, { status: 400 });
 
     const account = await prisma.instagramAccount.findFirst({ where: { id: data.instagramAccountId, userId: session.user.id, isConnected: true } });
     if (!account) return NextResponse.json({ success: false, message: "اکانت Instagram پیدا نشد یا متصل نیست." }, { status: 404 });
