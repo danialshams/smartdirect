@@ -28,6 +28,22 @@ type AutomationFlowMessageProps = {
 };
 
 type ShowcaseItemDraft = { id: string; title: string; description: string; imageUrl: string; previewUrl: string };
+type FormBuilderField = {
+  id: string;
+  label: string;
+  type: "TEXT" | "TEXTAREA" | "PHONE" | "EMAIL" | "NUMBER" | "SELECT" | "RADIO" | "CHECKBOX";
+  required: boolean;
+  placeholder: string;
+  options: string;
+};
+const newFormBuilderField = (): FormBuilderField => ({
+  id: `form_field_${crypto.randomUUID()}`,
+  label: "",
+  type: "TEXT",
+  required: false,
+  placeholder: "",
+  options: "",
+});
 
 const newShowcaseItem = (): ShowcaseItemDraft => ({
   id: `showcase_item_${crypto.randomUUID()}`,
@@ -69,6 +85,11 @@ export default function AutomationFlowMessage({
   const [showcaseSaving, setShowcaseSaving] = useState(false);
   const [showcaseError, setShowcaseError] = useState("");
   const [mediaUploading, setMediaUploading] = useState(false);
+  const [formTitle, setFormTitle] = useState("");
+  const [formDescription, setFormDescription] = useState("");
+  const [formFields, setFormFields] = useState<FormBuilderField[]>([newFormBuilderField()]);
+  const [formSaving, setFormSaving] = useState(false);
+  const [formError, setFormError] = useState("");
 
   const isForm = message.messageType === "FORM";
   const canAddReply = message.quickReplies.length < 13;
@@ -107,6 +128,67 @@ export default function AutomationFlowMessage({
       setShowcaseError(error instanceof Error ? error.message : "آپلود فایل ناموفق بود.");
     } finally {
       setMediaUploading(false);
+    }
+  }
+
+  function updateFormField(id: string, patch: Partial<FormBuilderField>) {
+    setFormFields((current) =>
+      current.map((field) => field.id === id ? { ...field, ...patch } : field)
+    );
+  }
+
+  function removeFormField(id: string) {
+    setFormFields((current) => {
+      const next = current.filter((field) => field.id !== id);
+      return next.length > 0 ? next : [newFormBuilderField()];
+    });
+  }
+
+  async function createForm() {
+    try {
+      if (!instagramAccountId) throw new Error("اکانت Instagram انتخاب نشده است.");
+      if (!formTitle.trim()) throw new Error("عنوان فرم را وارد کنید.");
+      for (let index = 0; index < formFields.length; index += 1) {
+        const field = formFields[index];
+        if (!field.label.trim()) throw new Error(`متن سؤال ${index + 1} را وارد کنید.`);
+        if (["SELECT", "RADIO", "CHECKBOX"].includes(field.type)) {
+          const options = field.options.split("\n").map((item) => item.trim()).filter(Boolean);
+          if (options.length === 0) throw new Error(`برای سؤال ${index + 1} حداقل یک گزینه وارد کنید.`);
+        }
+      }
+      setFormSaving(true);
+      setFormError("");
+      const response = await fetch("/api/forms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          instagramAccountId,
+          title: formTitle.trim(),
+          description: formDescription.trim() || null,
+          isActive: true,
+          fields: formFields.map((field, index) => ({
+            label: field.label.trim(),
+            name: `field_${index + 1}_${field.id.replace("form_field_", "").slice(0, 8)}`,
+            type: field.type,
+            required: field.required,
+            placeholder: field.placeholder.trim() || null,
+            options: ["SELECT", "RADIO", "CHECKBOX"].includes(field.type)
+              ? field.options.split("\n").map((item) => item.trim()).filter(Boolean)
+              : null,
+            order: index,
+          })),
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok || result?.error) throw new Error(result?.error || "ساخت فرم ناموفق بود.");
+      const created = result.data ?? result;
+      onUpdate({ formId: created.id, text: formDescription.trim() });
+      onFormCreated?.(created);
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : "ساخت فرم ناموفق بود.");
+    } finally {
+      setFormSaving(false);
     }
   }
 
@@ -200,18 +282,49 @@ export default function AutomationFlowMessage({
       )}
 
       {isForm && (
-        <div className="space-y-3 rounded-2xl border border-border/70 bg-muted/30 p-3.5">
-          <div className="flex items-center gap-2"><MessageSquare size={16} className="text-primary" /><span className="text-sm font-bold text-foreground">فرم</span></div>
-          <div className="relative">
-            <Select value={message.formId} onChange={(event) => onUpdate({ formId: event.target.value })} disabled={loadingResources} className="w-full appearance-none rounded-xl border border-border/70 bg-background px-3 py-2.5 pl-8 text-xs outline-none focus:border-ring">
-              <option value="">فرم را انتخاب کنید</option>
-              {availableForms.map((form) => <option key={form.id} value={form.id}>{form.title}</option>)}
-            </Select>
-            <ChevronDown size={14} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+        <div className="space-y-4 rounded-2xl border border-border/70 bg-muted/30 p-3.5">
+          <div>
+            <p className="text-sm font-bold text-foreground">ساخت فرم برای همین پیام</p>
+            <p className="mt-1 text-[10px] leading-5 text-muted-foreground">فرم را همین‌جا بسازید؛ بعد از تأیید، فرم به همین پاسخ متصل می‌شود.</p>
           </div>
-          {message.formId && <Textarea value={message.text} onChange={(event) => onUpdate({ text: event.target.value })} rows={3} placeholder="متن معرفی فرم (اختیاری)" className="w-full resize-none rounded-xl border border-border/70 bg-background px-3.5 py-3 text-sm leading-7 outline-none focus:border-ring" />}
-          {!loadingResources && availableForms.length === 0 && <p className="text-[11px] leading-6 text-amber-700">برای ارسال فرم، ابتدا حداقل یک فرم برای این اکانت بسازید.</p>}
-          <p className="text-[11px] leading-6 text-muted-foreground">فرم انتخاب‌شده مستقیماً برای کاربر ارسال می‌شود.</p>
+          {message.formId ? (
+            <div className="space-y-2">
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-xs text-emerald-800">فرم ساخته و به این پیام متصل شد.</div>
+              <Textarea value={message.text} onChange={(event) => onUpdate({ text: event.target.value })} rows={3} placeholder="متن معرفی فرم (اختیاری)" className="w-full resize-none rounded-xl border border-border/70 bg-background px-3.5 py-3 text-sm leading-7 outline-none focus:border-ring" />
+            </div>
+          ) : (
+            <>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Input value={formTitle} onChange={(event) => setFormTitle(event.target.value)} placeholder="عنوان فرم" className="rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm" />
+                <Input value={formDescription} onChange={(event) => setFormDescription(event.target.value)} placeholder="توضیح کوتاه (اختیاری)" className="rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm" />
+              </div>
+              <div className="space-y-3">
+                {formFields.map((field, fieldIndex) => (
+                  <div key={field.id} className="space-y-3 rounded-xl border border-border/70 bg-background p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[11px] font-bold text-muted-foreground">سؤال {fieldIndex + 1}</span>
+                      {formFields.length > 1 && <Button type="button" onClick={() => removeFormField(field.id)} className="flex h-7 w-7 items-center justify-center rounded-lg p-0 text-muted-foreground hover:text-red-600" aria-label="حذف سؤال"><Trash2 size={14} /></Button>}
+                    </div>
+                    <Input value={field.label} onChange={(event) => updateFormField(field.id, { label: event.target.value })} placeholder="متن سؤال" className="rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm" />
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <div className="relative">
+                        <Select value={field.type} onChange={(event) => updateFormField(field.id, { type: event.target.value as FormBuilderField["type"] })} className="w-full appearance-none rounded-xl border border-border/70 bg-background px-3 py-2.5 pl-8 text-xs">
+                          <option value="TEXT">متن کوتاه</option><option value="TEXTAREA">متن بلند</option><option value="PHONE">شماره تلفن</option><option value="EMAIL">ایمیل</option><option value="NUMBER">عدد</option><option value="SELECT">انتخاب از لیست</option><option value="RADIO">انتخاب یک گزینه</option><option value="CHECKBOX">انتخاب چند گزینه</option>
+                        </Select>
+                        <ChevronDown size={14} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                      </div>
+                      <Input value={field.placeholder} onChange={(event) => updateFormField(field.id, { placeholder: event.target.value })} placeholder="Placeholder (اختیاری)" className="rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm" />
+                    </div>
+                    {["SELECT", "RADIO", "CHECKBOX"].includes(field.type) && <Textarea value={field.options} onChange={(event) => updateFormField(field.id, { options: event.target.value })} rows={3} placeholder="گزینه‌ها را هر کدام در یک خط وارد کنید" className="w-full resize-none rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm leading-6" />}
+                    <label className="flex items-center gap-2 text-[11px] font-medium text-foreground"><input type="checkbox" checked={field.required} onChange={(event) => updateFormField(field.id, { required: event.target.checked })} />این سؤال اجباری باشد</label>
+                  </div>
+                ))}
+              </div>
+              <Button type="button" onClick={() => setFormFields((current) => [...current, newFormBuilderField()])} className="inline-flex w-full items-center justify-center gap-1 rounded-xl border border-dashed border-border/70 bg-background px-3 py-3 text-xs font-semibold text-foreground"><Plus size={14} />افزودن سؤال</Button>
+              {formError && <p className="text-xs text-red-600">{formError}</p>}
+              <Button type="button" disabled={formSaving || loadingResources} onClick={() => void createForm()} className="w-full rounded-xl bg-primary px-4 py-3 text-xs font-semibold text-white disabled:opacity-50">{formSaving ? "در حال ساخت فرم..." : "تأیید و ساخت فرم"}</Button>
+            </>
+          )}
         </div>
       )}
 
