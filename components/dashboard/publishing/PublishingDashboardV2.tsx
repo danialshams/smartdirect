@@ -274,41 +274,145 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const canPublish = uploadedMedia.length > 0 && !uploading && !publishing;
   const accept = type === "REEL" ? "video/mp4,video/quicktime" : type === "STORY" ? "image/jpeg,image/png,image/webp,video/mp4,video/quicktime" : "image/jpeg,image/png,image/webp";
 
-  return <div dir="rtl" className="min-h-screen bg-background px-4 py-5 sm:px-6"><div className="mx-auto w-full max-w-2xl"><div>{error && <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
+  return (
+    <div dir="rtl" className="min-h-screen bg-background px-3 py-4 sm:px-5 lg:px-6">
+      <div className="mx-auto w-full max-w-2xl">
+        {error && <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-700">{error}</div>}
+        <div className="space-y-4">
+          <section className="overflow-hidden rounded-3xl border border-border/80 bg-card shadow-sm">
+            <div className="border-b border-border/70 px-4 pb-4 pt-5 sm:px-6">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-base font-bold text-foreground">انتشار محتوا</p>
+                  {activeInstagramAccount?.igUsername && <p className="mt-1 text-xs text-muted-foreground" dir="ltr">@{activeInstagramAccount.igUsername}</p>}
+                </div>
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-muted text-muted-foreground">{type === "REEL" ? <Video size={18} /> : <ImagePlus size={18} />}</div>
+              </div>
+            </div>
 
-  <div className="space-y-5"><section className="rounded-xl border bg-card p-4 shadow-sm sm:p-6"><h2 className="font-bold text-foreground">محتوای جدید</h2>
-  <div className="my-6 grid grid-cols-2 gap-2 sm:grid-cols-4">{([['POST', 'پست', ImagePlus], ['CAROUSEL', 'Carousel', ImagePlus], ['REEL', 'Reel', Video], ['STORY', 'Story', ImagePlus]] as const).map(([value, label, Icon]) => <Button key={value} type="button" onClick={() => handleTypeChange(value)} className={["flex flex-col items-center justify-center gap-2 rounded-xl border px-3 py-4 text-sm transition", type === value ? "border-slate-950 bg-primary text-white" : "border-border bg-background text-muted-foreground hover:bg-muted"].join(" ")}><Icon size={20} />{label}</Button>)}</div>
-  {activeInstagramAccount?.igUsername && <p className="mb-5 text-xs text-muted-foreground">انتشار در @{activeInstagramAccount.igUsername}</p>}
-  <div
-    onDragOver={(event) => { event.preventDefault(); setIsDragging(true); }}
-    onDragLeave={() => setIsDragging(false)}
-    onDrop={(event) => { event.preventDefault(); setIsDragging(false); prepareFiles(Array.from(event.dataTransfer.files ?? [])); }}
-    className={["mb-5 relative flex min-h-[280px] items-center justify-center rounded-2xl border-2 border-dashed p-5 text-center transition", isDragging ? "border-primary bg-primary/5" : "border-border bg-muted/30", uploading || publishing ? "pointer-events-none opacity-70" : ""].join(" ")}
-  >
-    <Input id="publishing-media-upload" type="file" accept={accept} multiple={type === "CAROUSEL"} onChange={handleFiles} disabled={uploading || publishing || (type === "CAROUSEL" && uploadedMedia.length >= 10)} className="sr-only" />
-    <label htmlFor="publishing-media-upload" className="flex min-h-[250px] w-full cursor-pointer flex-col items-center justify-center">
-      {uploading ? <Loader2 size={34} className="animate-spin text-muted-foreground" /> : <ImagePlus size={38} className="text-muted-foreground" />}
-      <span className="mt-4 text-sm font-medium text-foreground">{uploading ? "در حال آپلود..." : "برای انتخاب محتوا کلیک کنید"}</span>
-      <span className="mt-2 max-w-xs text-xs leading-5 text-muted-foreground">{type === "CAROUSEL" ? "۲ تا ۱۰ تصویر را همزمان انتخاب کنید." : type === "REEL" ? "ویدیوی Reel را انتخاب کنید." : type === "STORY" ? "تصویر یا ویدیوی Story را انتخاب کنید." : "تصویر پست را انتخاب کنید."}</span>
-      {uploading && <div className="mt-5 w-full max-w-xs"><div className="mb-2 flex justify-between text-xs text-muted-foreground"><span>آپلود فایل {toPersianDigits(uploadIndex)}</span><span>{toPersianDigits(uploadProgress)}٪</span></div><div className="h-1.5 overflow-hidden rounded-full bg-muted"><div className="h-full bg-primary transition-[width]" style={{ width: `${uploadProgress}%` }} /></div></div>}
-    </label>
-  </div>
+            <div className="space-y-5 p-4 sm:p-6">
+              <div>
+                <p className="mb-2.5 text-xs font-semibold text-muted-foreground">نوع محتوا</p>
+                <div className="grid grid-cols-4 gap-1.5 rounded-2xl bg-muted/60 p-1.5">
+                  {([
+                    ["POST", "پست", ImagePlus],
+                    ["CAROUSEL", "Carousel", ImagePlus],
+                    ["REEL", "Reel", Video],
+                    ["STORY", "Story", ImagePlus],
+                  ] as const).map(([value, label, Icon]) => (
+                    <Button key={value} type="button" onClick={() => handleTypeChange(value)} className={["flex min-h-14 flex-col items-center justify-center gap-1.5 rounded-xl px-1.5 text-[11px] font-semibold transition sm:min-h-16 sm:text-xs", type === value ? "bg-background text-foreground shadow-sm ring-1 ring-border" : "bg-transparent text-muted-foreground hover:bg-background/70"].join(" ")}>
+                      <Icon size={17} />{label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
 
+              <div
+                onDragOver={(event) => { event.preventDefault(); setIsDragging(true); }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={(event) => { event.preventDefault(); setIsDragging(false); prepareFiles(Array.from(event.dataTransfer.files ?? [])); }}
+                className={["relative overflow-hidden rounded-2xl border border-dashed p-5 text-center transition sm:p-8", isDragging ? "border-primary bg-primary/5" : "border-border bg-muted/20 hover:bg-muted/30", uploading || publishing ? "pointer-events-none opacity-70" : ""].join(" ")}
+              >
+                <Input id="publishing-media-upload" type="file" accept={accept} multiple={type === "CAROUSEL"} onChange={handleFiles} disabled={uploading || publishing || (type === "CAROUSEL" && uploadedMedia.length >= 10)} className="sr-only" />
+                <label htmlFor="publishing-media-upload" className="flex min-h-[210px] cursor-pointer flex-col items-center justify-center sm:min-h-[250px]">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-background shadow-sm ring-1 ring-border/70">{uploading ? <Loader2 size={25} className="animate-spin text-primary" /> : <ImagePlus size={25} className="text-primary" />}</div>
+                  <span className="mt-4 text-sm font-bold text-foreground">{uploading ? "در حال آپلود..." : "محتوا را انتخاب کنید"}</span>
+                  <span className="mt-1.5 max-w-[280px] text-xs leading-6 text-muted-foreground">{type === "CAROUSEL" ? "۲ تا ۱۰ تصویر را همزمان انتخاب کنید." : type === "REEL" ? "ویدیوی Reel را انتخاب کنید." : type === "STORY" ? "تصویر یا ویدیوی Story را انتخاب کنید." : "تصویر پست را انتخاب کنید."}</span>
+                  {uploading && <div className="mt-5 w-full max-w-xs"><div className="mb-2 flex justify-between text-[11px] text-muted-foreground"><span>فایل {toPersianDigits(uploadIndex)}</span><span>{toPersianDigits(uploadProgress)}٪</span></div><div className="h-1.5 overflow-hidden rounded-full bg-muted"><div className="h-full bg-primary transition-[width]" style={{ width: String(uploadProgress) + "%" }} /></div></div>}
+                </label>
+              </div>
 
-  <div className="mb-5 rounded-2xl border border-border bg-muted p-4"><div className="mb-4"><span className="block text-sm font-bold text-foreground">Automation اختصاصی این محتوا</span><span className="mt-1 block text-xs leading-5 text-muted-foreground">برای همین محتوا یک Automation جدید از صفر ساخته می‌شود. هیچ Automation موجودی انتخاب یا استفاده نمی‌شود.</span></div><div className="space-y-4"><label className="block"><span className="mb-2 block text-xs font-semibold text-muted-foreground">{type === "STORY" ? "کلمات کلیدی Reply استوری" : "کلمات کلیدی کامنت"}</span><KeywordChipsInput value={keywords} onChange={setKeywords} placeholder={type === "STORY" ? "مثلاً 1، اطلاعات، قیمت" : "مثلاً 1، یک، قیمت"} /></label>{type !== "STORY" && <><label className="flex items-center gap-3 text-sm text-foreground"><Checkbox checked={likeComment} onCheckedChange={(checked) => setLikeComment(Boolean(checked))} /> لایک خودکار کامنت</label><label className="block"><span className="mb-2 block text-xs font-semibold text-muted-foreground">پاسخ عمومی کامنت (اختیاری)</span><Textarea value={commentReplyText} onChange={(e) => setCommentReplyText(e.target.value)} rows={2} className="w-full resize-none rounded-lg border bg-background px-3 py-3 text-sm outline-none focus:border-ring" placeholder="اگر بخواهید خود کامنت هم پاسخ عمومی بگیرد..." /></label></>}{type === "STORY" && <label className="flex items-center gap-3 text-sm text-foreground"><Checkbox checked={likeStoryReply} onCheckedChange={(checked) => setLikeStoryReply(Boolean(checked))} /> لایک خودکار Reply استوری</label>}<label className="flex items-center gap-3 text-sm text-foreground"><Checkbox checked={requireFollow} onCheckedChange={(checked) => setRequireFollow(Boolean(checked))} /> قبل از ارسال پاسخ، Follow Gate بررسی شود</label>{requireFollow && <Textarea value={followGateText} onChange={(e) => setFollowGateText(e.target.value)} rows={2} className="w-full resize-none rounded-lg border bg-background px-3 py-3 text-sm outline-none focus:border-ring" placeholder="متن درخواست Follow..." />}</div></div>
+              {(media.length > 0 || uploadedMedia.length > 0) && (
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between"><p className="text-xs font-semibold text-muted-foreground">محتوای انتخاب‌شده</p><span className="text-[11px] text-muted-foreground">{toPersianDigits(uploadedMedia.length + media.length)} فایل</span></div>
+                  <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+                    {uploadedMedia.map((item) => <div key={item.storageKey} className="group relative overflow-hidden rounded-2xl border bg-muted">
+                      {item.type === "IMAGE" ? <img src={item.publicUrl} alt={item.fileName} className="aspect-square w-full object-cover" /> : <video src={item.publicUrl} controls className="aspect-square w-full object-cover" />}
+                      <Button type="button" onClick={() => void removeUploaded(item)} className="absolute left-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-background/95 p-0 text-red-600 shadow-sm" aria-label="حذف فایل"><X size={15} /></Button>
+                    </div>)}
+                    {media.map((item, index) => <div key={item.file.name + "-" + item.sortOrder} className="relative overflow-hidden rounded-2xl border border-dashed bg-muted">
+                      {item.type === "IMAGE" ? <img src={item.previewUrl} alt={item.file.name} className="aspect-square w-full object-cover" /> : <video src={item.previewUrl} controls className="aspect-square w-full object-cover" />}
+                      <Button type="button" onClick={() => removeLocal(index)} className="absolute left-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-background/95 p-0 text-red-600 shadow-sm" aria-label="حذف فایل"><X size={15} /></Button>
+                    </div>)}
+                  </div>
+                </div>
+              )}
 
-  <div className="mb-5 space-y-4"><div className="flex items-center justify-between"><div><h3 className="text-sm font-bold text-foreground">Flow پاسخ</h3><p className="mt-1 text-xs text-muted-foreground">متن، عکس، ویدیو، وویس، ویترین و فرم را آزادانه پشت سر هم بچینید.</p></div><span className="text-xs text-muted-foreground">{messages.length} پیام</span></div>{messages.map((message, index) => <div key={message.id} className="rounded-xl border bg-card p-4 shadow-sm"><div className="mb-4 flex items-center justify-between"><span className="text-sm font-bold text-foreground">پیام {index + 1}</span><span className="rounded-full bg-muted px-2.5 py-1 text-[10px] text-muted-foreground">{getMessageTypeLabel(message.messageType)}</span></div><AutomationFlowMessage triggerType={triggerType} message={message} index={index} total={messages.length} messageOptions={messageOptions} showcases={showcases} forms={forms} loadingResources={loadingResources} instagramAccountId={selectedAccountId} onShowcaseCreated={(showcase) => setShowcases((current) => [showcase, ...current.filter((item) => item.id !== showcase.id)])} onUpdate={(patch) => updateMessage(index, patch)} onRemove={() => removeMessage(index)} onMoveUp={() => moveMessage(index, -1)} onMoveDown={() => moveMessage(index, 1)} onAddQuickReply={() => addQuickReply(index)} onUpdateQuickReply={(quickReplyId, patch) => updateQuickReply(index, quickReplyId, patch)} onRemoveQuickReply={(quickReplyId) => removeQuickReply(index, quickReplyId)} /></div>)}<Button type="button" onClick={addMessage} className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-muted px-4 py-3 text-sm font-medium text-muted-foreground hover:bg-muted"><Plus size={17} /> افزودن پیام به Flow</Button></div>
+              <div className="border-t border-border/70 pt-5">
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <div><p className="text-sm font-bold text-foreground">اتوماسیون این محتوا</p><p className="mt-1 text-xs leading-5 text-muted-foreground">واکنش Instagram را برای همین محتوا تنظیم کنید.</p></div>
+                  <span className="rounded-full bg-muted px-2.5 py-1 text-[10px] font-medium text-muted-foreground">{type === "STORY" ? "Reply استوری" : "کامنت"}</span>
+                </div>
+                <div className="space-y-4">
+                  <label className="block">
+                    <span className="mb-2 block text-xs font-semibold text-foreground">{type === "STORY" ? "کلمات کلیدی Reply استوری" : "کلمات کلیدی کامنت"}</span>
+                    <KeywordChipsInput value={keywords} onChange={setKeywords} placeholder={type === "STORY" ? "مثلاً 1، اطلاعات، قیمت" : "مثلاً 1، یک، قیمت"} />
+                  </label>
+                  {type !== "STORY" && <>
+                    <label className="flex min-h-12 items-center justify-between gap-3 rounded-xl border border-border/70 bg-muted/30 px-3.5"><span className="text-sm text-foreground">لایک خودکار کامنت</span><Checkbox checked={likeComment} onCheckedChange={(checked) => setLikeComment(Boolean(checked))} /></label>
+                    <label className="block"><span className="mb-2 block text-xs font-semibold text-foreground">پاسخ عمومی کامنت</span><Textarea value={commentReplyText} onChange={(e) => setCommentReplyText(e.target.value)} rows={2} className="w-full resize-none rounded-xl border border-border/70 bg-background px-3 py-3 text-sm leading-6 outline-none focus:border-ring" placeholder="در صورت نیاز، پاسخ عمومی کامنت را بنویسید." /></label>
+                  </>}
+                  {type === "STORY" && <label className="flex min-h-12 items-center justify-between gap-3 rounded-xl border border-border/70 bg-muted/30 px-3.5"><span className="text-sm text-foreground">لایک خودکار Reply استوری</span><Checkbox checked={likeStoryReply} onCheckedChange={(checked) => setLikeStoryReply(Boolean(checked))} /></label>}
+                  <label className="flex min-h-12 items-center justify-between gap-3 rounded-xl border border-border/70 bg-muted/30 px-3.5"><span className="text-sm text-foreground">بررسی Follow قبل از پاسخ</span><Checkbox checked={requireFollow} onCheckedChange={(checked) => setRequireFollow(Boolean(checked))} /></label>
+                  {requireFollow && <Textarea value={followGateText} onChange={(e) => setFollowGateText(e.target.value)} rows={2} className="w-full resize-none rounded-xl border border-border/70 bg-background px-3 py-3 text-sm leading-6 outline-none focus:border-ring" placeholder="متن درخواست Follow را وارد کنید." />}
+                </div>
+              </div>
 
-  {(media.length > 0 || uploadedMedia.length > 0) && <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-3">{uploadedMedia.map((item) => <div key={item.storageKey} className="relative overflow-hidden rounded-lg border bg-background">{item.type === "IMAGE" ? <img src={item.publicUrl} alt={item.fileName} className="aspect-square w-full object-cover" /> : <video src={item.publicUrl} controls className="aspect-square w-full object-cover" />}<Button type="button" onClick={() => void removeUploaded(item)} className="absolute left-2 top-2 rounded-full bg-background/95 p-1.5 text-red-600 shadow-sm"><X size={15} /></Button></div>)}{media.map((item, index) => <div key={`${item.file.name}-${item.sortOrder}`} className="relative overflow-hidden rounded-xl border border-dashed border-border bg-muted">{item.type === "IMAGE" ? <img src={item.previewUrl} alt={item.file.name} className="aspect-square w-full object-cover" /> : <video src={item.previewUrl} controls className="aspect-square w-full object-cover" />}<Button type="button" onClick={() => removeLocal(index)} className="absolute left-2 top-2 rounded-full bg-background/95 p-1.5 text-red-600 shadow-sm"><X size={15} /></Button></div>)}</div>}
-  {uploadedMedia.length > 0 && <><label className="mb-5 block">{type !== "STORY" && <><span className="mb-2 block text-sm font-medium text-foreground">Caption</span><Textarea value={caption} onChange={(e) => setCaption(e.target.value)} maxLength={2200} rows={4} className="w-full resize-none rounded-xl border border-border px-4 py-3 text-sm outline-none focus:border-ring" /><span className="mt-1 block text-left text-xs text-muted-foreground">{caption.length}/2200</span></>}</label><div className="mb-5 rounded-2xl border border-border bg-muted p-4"><div className="mb-3 flex items-center justify-between"><div><span className="block text-sm font-medium text-foreground">زمان‌بندی انتشار</span><span className="mt-1 block text-xs text-muted-foreground">تقویم کاملاً شمسی</span></div><CalendarClock size={18} className="text-muted-foreground" /></div><PersianDatePicker value={scheduledDate} onChange={setScheduledDate} /><div className="mt-3 grid grid-cols-2 gap-3"><label><span className="mb-1 block text-xs text-muted-foreground">ساعت</span><Select value={hour} onChange={(e) => setHour(Number(e.target.value))} className="w-full rounded-lg border bg-background px-3 py-3 text-sm">{Array.from({ length: 24 }, (_, v) => <option key={v} value={v}>{toPersianDigits(String(v).padStart(2, "0"))}</option>)}</Select></label><label><span className="mb-1 block text-xs text-muted-foreground">دقیقه</span><Select value={minute} onChange={(e) => setMinute(Number(e.target.value))} className="w-full rounded-lg border bg-background px-3 py-3 text-sm">{Array.from({ length: 12 }, (_, v) => v * 5).map((v) => <option key={v} value={v}>{toPersianDigits(String(v).padStart(2, "0"))}</option>)}</Select></label></div></div><div className="grid gap-3 sm:grid-cols-2"><Button type="button" disabled={!canPublish || loading} onClick={() => void createJob(true)} className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-medium text-white disabled:opacity-50">{publishing ? <Loader2 size={17} className="animate-spin" /> : <Send size={17} />} انتشار الآن</Button><Button type="button" disabled={!canPublish || loading} onClick={() => void createJob(false)} className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-background px-4 py-3 text-sm font-medium text-foreground disabled:opacity-50"><CalendarClock size={17} /> زمان‌بندی انتشار</Button></div></>}
-  </section>
+              <div className="border-t border-border/70 pt-5">
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <div><p className="text-sm font-bold text-foreground">پاسخ</p><p className="mt-1 text-xs leading-5 text-muted-foreground">نوع پیام را انتخاب کنید و مسیر پاسخ را بسازید.</p></div>
+                  <span className="text-[11px] text-muted-foreground">{toPersianDigits(messages.length)} پیام</span>
+                </div>
+                <div className="space-y-3">
+                  {messages.map((message, index) => (
+                    <div key={message.id} className="rounded-2xl border border-border/70 bg-muted/20 p-3.5 sm:p-4">
+                      <div className="mb-3 flex items-center justify-between gap-3"><span className="text-sm font-bold text-foreground">پیام {toPersianDigits(index + 1)}</span><span className="rounded-full bg-background px-2.5 py-1 text-[10px] text-muted-foreground ring-1 ring-border/70">{getMessageTypeLabel(message.messageType)}</span></div>
+                      <AutomationFlowMessage triggerType={triggerType} message={message} index={index} total={messages.length} messageOptions={messageOptions} showcases={showcases} forms={forms} loadingResources={loadingResources} instagramAccountId={selectedAccountId} onShowcaseCreated={(showcase) => setShowcases((current) => [showcase, ...current.filter((item) => item.id !== showcase.id)])} onUpdate={(patch) => updateMessage(index, patch)} onRemove={() => removeMessage(index)} onMoveUp={() => moveMessage(index, -1)} onMoveDown={() => moveMessage(index, 1)} onAddQuickReply={() => addQuickReply(index)} onUpdateQuickReply={(quickReplyId, patch) => updateQuickReply(index, quickReplyId, patch)} onRemoveQuickReply={(quickReplyId) => removeQuickReply(index, quickReplyId)} />
+                    </div>
+                  ))}
+                  <Button type="button" onClick={addMessage} className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-background px-4 py-3.5 text-sm font-semibold text-muted-foreground hover:bg-muted"><Plus size={17} />افزودن پیام</Button>
+                </div>
+              </div>
 
-  {jobs.filter((job) => job.status !== "PUBLISHED" && job.status !== "CANCELLED").length > 0 && <section className="space-y-3">
-    <div className="flex items-center justify-between"><h2 className="text-sm font-semibold text-foreground">وضعیت انتشار</h2><span className="text-xs text-muted-foreground">{toPersianDigits(jobs.filter((job) => job.status !== "PUBLISHED" && job.status !== "CANCELLED").length)} مورد فعال</span></div>
-    <div className="space-y-2">{jobs.filter((job) => job.status !== "PUBLISHED" && job.status !== "CANCELLED").map((job) => <div key={job.id} className="flex items-center gap-3 rounded-xl border bg-card p-3">
-      {job.media[0] ? (job.media[0].type === "IMAGE" ? <img src={job.media[0].publicUrl} alt="" className="h-14 w-14 shrink-0 rounded-lg object-cover" /> : <video src={job.media[0].publicUrl} className="h-14 w-14 shrink-0 rounded-lg object-cover" />) : <div className="h-14 w-14 shrink-0 rounded-lg bg-muted" />}
-      <div className="min-w-0 flex-1"><div className="flex items-center justify-between gap-2"><span className="text-sm font-medium">{typeLabels[job.type]}</span><span className="text-xs text-muted-foreground">{statusLabels[job.status] || job.status}</span></div><p className="mt-1 text-xs text-muted-foreground">{job.status === "SCHEDULED" ? `انتشار در ${formatDate(job.scheduledAt)}` : "محتوا در حال پردازش است."}</p></div>
-      {job.status !== "SCHEDULED" && <Loader2 size={16} className="shrink-0 animate-spin text-muted-foreground" />}
-    </div>)}</div>
-  </section>}</div></div></div></div>;
+              {uploadedMedia.length > 0 && (
+                <div className="space-y-4 border-t border-border/70 pt-5">
+                  {type !== "STORY" && <label className="block"><div className="mb-2 flex items-center justify-between"><span className="text-xs font-semibold text-foreground">Caption</span><span className="text-[10px] text-muted-foreground">{toPersianDigits(caption.length)}/2200</span></div><Textarea value={caption} onChange={(e) => setCaption(e.target.value)} maxLength={2200} rows={4} className="w-full resize-none rounded-2xl border border-border/70 bg-background px-4 py-3 text-sm leading-7 outline-none focus:border-ring" placeholder="کپشن محتوا را بنویسید." /></label>}
+                  <div className="rounded-2xl border border-border/70 bg-muted/25 p-3.5 sm:p-4">
+                    <div className="mb-3 flex items-center justify-between"><div><p className="text-sm font-bold text-foreground">زمان‌بندی</p><p className="mt-1 text-[11px] text-muted-foreground">تاریخ و ساعت انتشار</p></div><CalendarClock size={18} className="text-muted-foreground" /></div>
+                    <PersianDatePicker value={scheduledDate} onChange={setScheduledDate} />
+                    <div className="mt-3 grid grid-cols-2 gap-2.5">
+                      <label><span className="mb-1.5 block text-[11px] font-medium text-muted-foreground">ساعت</span><Select value={hour} onChange={(e) => setHour(Number(e.target.value))} className="w-full rounded-xl border border-border/70 bg-background px-3 py-3 text-sm">{Array.from({ length: 24 }, (_, v) => <option key={v} value={v}>{toPersianDigits(String(v).padStart(2, "0"))}</option>)}</Select></label>
+                      <label><span className="mb-1.5 block text-[11px] font-medium text-muted-foreground">دقیقه</span><Select value={minute} onChange={(e) => setMinute(Number(e.target.value))} className="w-full rounded-xl border border-border/70 bg-background px-3 py-3 text-sm">{Array.from({ length: 12 }, (_, v) => v * 5).map((v) => <option key={v} value={v}>{toPersianDigits(String(v).padStart(2, "0"))}</option>)}</Select></label>
+                    </div>
+                  </div>
+                  <div className="grid gap-2.5 sm:grid-cols-2">
+                    <Button type="button" disabled={!canPublish || loading} onClick={() => void createJob(true)} className="min-h-12 rounded-2xl bg-primary px-4 text-sm font-semibold text-white shadow-sm disabled:opacity-50">{publishing ? <Loader2 size={17} className="animate-spin" /> : <Send size={17} />}انتشار الآن</Button>
+                    <Button type="button" disabled={!canPublish || loading} onClick={() => void createJob(false)} className="min-h-12 rounded-2xl border border-border bg-background px-4 text-sm font-semibold text-foreground hover:bg-muted disabled:opacity-50"><CalendarClock size={17} />زمان‌بندی انتشار</Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </section>
+
+          {jobs.filter((job) => job.status !== "PUBLISHED" && job.status !== "CANCELLED").length > 0 && (
+            <section className="rounded-3xl border border-border/80 bg-card p-4 shadow-sm sm:p-5">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div><p className="text-sm font-bold text-foreground">محتوای فعال</p><p className="mt-1 text-[11px] text-muted-foreground">آپلود، انتشار یا زمان‌بندی‌های در انتظار</p></div>
+                <span className="rounded-full bg-muted px-2.5 py-1 text-[10px] text-muted-foreground">{toPersianDigits(jobs.filter((job) => job.status !== "PUBLISHED" && job.status !== "CANCELLED").length)}</span>
+              </div>
+              <div className="space-y-2">
+                {jobs.filter((job) => job.status !== "PUBLISHED" && job.status !== "CANCELLED").map((job) => (
+                  <div key={job.id} className="flex items-center gap-3 rounded-2xl border border-border/70 bg-muted/20 p-2.5">
+                    {job.media[0] ? (job.media[0].type === "IMAGE" ? <img src={job.media[0].publicUrl} alt="" className="h-14 w-14 shrink-0 rounded-xl object-cover" /> : <video src={job.media[0].publicUrl} className="h-14 w-14 shrink-0 rounded-xl object-cover" />) : <div className="h-14 w-14 shrink-0 rounded-xl bg-muted" />}
+                    <div className="min-w-0 flex-1"><div className="flex items-center justify-between gap-2"><span className="text-sm font-semibold text-foreground">{typeLabels[job.type]}</span><span className="text-[11px] text-muted-foreground">{statusLabels[job.status] || job.status}</span></div><p className="mt-1 truncate text-[11px] text-muted-foreground">{job.status === "SCHEDULED" ? "انتشار در " + formatDate(job.scheduledAt) : "محتوا در حال پردازش است."}</p></div>
+                    {job.status !== "SCHEDULED" && <Loader2 size={16} className="shrink-0 animate-spin text-muted-foreground" />}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
