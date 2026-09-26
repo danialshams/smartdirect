@@ -189,7 +189,7 @@ export function validateMessages(messages: MessageDraft[], triggerType?: "COMMEN
             if (!quickReply) continue;
             if (!quickReply.title.trim()) throw new Error(`عنوان Quick Reply شماره ${qrIndex + 1} در پیام ${messageNumber} را وارد کنید.`);
             if (quickReply.title.trim().length > 20) throw new Error(`عنوان پاسخ شماره ${qrIndex + 1} در پیام ${messageNumber} نباید بیشتر از ۲۰ کاراکتر باشد.`);
-            if (!quickReply.nextMessageId) throw new Error(`مقصد Quick Reply شماره ${qrIndex + 1} در پیام ${messageNumber} را انتخاب کنید.`);
+            if (!quickReply.nextMessageId) throw new Error(`مقصد پاسخ شماره ${qrIndex + 1} در پیام ${messageNumber} را انتخاب کنید.`);
             if (!messageIds.has(quickReply.nextMessageId)) throw new Error(`مقصد پاسخ شماره ${qrIndex + 1} در پیام ${messageNumber} معتبر نیست.`);
             if (quickReply.nextMessageId === message.id) throw new Error(`پاسخ شماره ${qrIndex + 1} نمی‌تواند به همان فرم متصل شود.`);
         }
