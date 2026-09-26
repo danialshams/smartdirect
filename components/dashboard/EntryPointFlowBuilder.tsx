@@ -1205,11 +1205,6 @@ export default function EntryPointFlowBuilder({
                                                                 patch,
                                                             )
                                                         }
-                                                        onRemove={() =>
-                                                            removeMessage(
-                                                                message.id,
-                                                            )
-                                                        }
                                                         onMoveUp={() =>
                                                             moveMessage(
                                                                 message.id,
