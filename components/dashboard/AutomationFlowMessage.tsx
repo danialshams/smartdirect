@@ -76,7 +76,6 @@ export default function AutomationFlowMessage({
   const [showcaseError, setShowcaseError] = useState("");
   const [mediaUploading, setMediaUploading] = useState(false);
 
-
   const isForm = message.messageType === "FORM";
   const canAddReply = message.quickReplies.length < 13;
 
@@ -156,6 +155,23 @@ export default function AutomationFlowMessage({
     }
   }
 
+  const messageTypeOptions: Array<{
+    value: MessageDraft["messageType"];
+    label: string;
+    Icon: LucideIcon;
+  }> = [
+    { value: "TEXT", label: "متن", Icon: MessageSquare },
+    ...(triggerType === "STORY_REPLY_KEYWORD"
+      ? [
+          { value: "IMAGE" as const, label: "عکس", Icon: ImagePlus },
+          { value: "VIDEO" as const, label: "ویدیو", Icon: Video },
+          { value: "AUDIO" as const, label: "وویس", Icon: Mic },
+          { value: "SHOWCASE" as const, label: "ویترین", Icon: Store },
+          { value: "FORM" as const, label: "فرم / سوال", Icon: ClipboardList },
+        ]
+      : []),
+  ];
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
@@ -171,16 +187,7 @@ export default function AutomationFlowMessage({
       </div>
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-        {([
-          ["TEXT", "متن", MessageSquare],
-          ...(triggerType === "STORY_REPLY_KEYWORD" ? [
-            ["IMAGE", "عکس", ImagePlus],
-            ["VIDEO", "ویدیو", Video],
-            ["AUDIO", "وویس", Mic],
-            ["SHOWCASE", "ویترین", Store],
-            ["FORM", "فرم / سوال", ClipboardList],
-          ] : []),
-        ] as const).map(([value, label, Icon]) => (
+        {messageTypeOptions.map(({ value, label, Icon }) => (
           <Button
             key={value}
             type="button"
