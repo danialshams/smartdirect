@@ -38,7 +38,7 @@ export type MessageType =
     | "SHOWCASE"
     | "FORM";
 
-export type QuickReplyDestinationType = "TEXT" | "FORM" | "SHOWCASE";
+export type QuickReplyDestinationType = "TEXT" | "FORM" | "SHOWCASE" | "IMAGE" | "VIDEO" | "AUDIO";
 
 export type QuickReplyDraft = {
     id: string;
@@ -49,6 +49,10 @@ export type QuickReplyDraft = {
     destinationText: string;
     destinationFormId: string;
     destinationShowcaseId: string;
+    destinationMediaUrl: string;
+    destinationMediaId: string;
+    destinationQuestion: string;
+    destinationQuickReplies: QuickReplyDraft[];
 };
 
 export type MessageDraft = {
@@ -92,7 +96,7 @@ export function createLocalId(prefix = "local") {
 }
 
 export function createEmptyQuickReply(): QuickReplyDraft {
-    return { id: createLocalId("quick_reply"), title: "", payload: createLocalId("payload"), nextMessageId: null, destinationType: null, destinationText: "", destinationFormId: "", destinationShowcaseId: "" };
+    return { id: createLocalId("quick_reply"), title: "", payload: createLocalId("payload"), nextMessageId: null, destinationType: null, destinationText: "", destinationFormId: "", destinationShowcaseId: "", destinationMediaUrl: "", destinationMediaId: "", destinationQuestion: "", destinationQuickReplies: [] };
 }
 
 export function createEmptyMessage(): MessageDraft {
@@ -130,6 +134,30 @@ export function getMessageIcon(type: MessageType) {
     }
 }
 
+function normalizeQuickReplyDraft(rawQuickReply: unknown): QuickReplyDraft | null {
+    if (!rawQuickReply || typeof rawQuickReply !== "object") return null;
+    const qr = rawQuickReply as Record<string, unknown>;
+    const destinationType = ["TEXT", "FORM", "SHOWCASE", "IMAGE", "VIDEO", "AUDIO"].includes(String(qr.destinationType))
+        ? qr.destinationType as QuickReplyDestinationType
+        : null;
+    return {
+        id: typeof qr.id === "string" ? qr.id : createLocalId("quick_reply"),
+        title: typeof qr.title === "string" ? qr.title : "",
+        payload: typeof qr.payload === "string" ? qr.payload : createLocalId("payload"),
+        nextMessageId: typeof qr.nextMessageId === "string" ? qr.nextMessageId : null,
+        destinationType,
+        destinationText: typeof qr.destinationText === "string" ? qr.destinationText : "",
+        destinationFormId: typeof qr.destinationFormId === "string" ? qr.destinationFormId : "",
+        destinationShowcaseId: typeof qr.destinationShowcaseId === "string" ? qr.destinationShowcaseId : "",
+        destinationMediaUrl: typeof qr.destinationMediaUrl === "string" ? qr.destinationMediaUrl : "",
+        destinationMediaId: typeof qr.destinationMediaId === "string" ? qr.destinationMediaId : "",
+        destinationQuestion: typeof qr.destinationQuestion === "string" ? qr.destinationQuestion : "",
+        destinationQuickReplies: Array.isArray(qr.destinationQuickReplies)
+            ? qr.destinationQuickReplies.map((child) => normalizeQuickReplyDraft(child)).filter((item): item is QuickReplyDraft => item !== null)
+            : [],
+    };
+}
+
 export function normalizeMessages(value: unknown): MessageDraft[] {
     if (!Array.isArray(value)) return [];
     return value.map((raw): MessageDraft | null => {
@@ -146,10 +174,14 @@ export function normalizeMessages(value: unknown): MessageDraft[] {
                 title: typeof qr.title === "string" ? qr.title : "",
                 payload: typeof qr.payload === "string" ? qr.payload : createLocalId("payload"),
                 nextMessageId: typeof qr.nextMessageId === "string" ? qr.nextMessageId : null,
-                destinationType: qr.destinationType === "TEXT" || qr.destinationType === "FORM" || qr.destinationType === "SHOWCASE" ? qr.destinationType : null,
+                destinationType: ["TEXT", "FORM", "SHOWCASE", "IMAGE", "VIDEO", "AUDIO"].includes(String(qr.destinationType)) ? qr.destinationType as QuickReplyDestinationType : null,
                 destinationText: typeof qr.destinationText === "string" ? qr.destinationText : "",
                 destinationFormId: typeof qr.destinationFormId === "string" ? qr.destinationFormId : "",
                 destinationShowcaseId: typeof qr.destinationShowcaseId === "string" ? qr.destinationShowcaseId : "",
+                destinationMediaUrl: typeof qr.destinationMediaUrl === "string" ? qr.destinationMediaUrl : "",
+                destinationMediaId: typeof qr.destinationMediaId === "string" ? qr.destinationMediaId : "",
+                destinationQuestion: typeof qr.destinationQuestion === "string" ? qr.destinationQuestion : "",
+                destinationQuickReplies: Array.isArray(qr.destinationQuickReplies) ? qr.destinationQuickReplies.map((child) => normalizeQuickReplyDraft(child)).filter((item): item is QuickReplyDraft => item !== null) : [],
             };
         }).filter((item): item is QuickReplyDraft => item !== null);
         return {
