@@ -8,8 +8,9 @@ import { faIR } from "@daypicker/persian"
 import { Input } from "@/components/ui/input"
 import { Select } from "@/components/ui/select"
 
-import { CalendarClock, CheckCircle2, ChevronDown, Clock3, ImagePlus, Loader2, Plus, RefreshCw, Send, Trash2, Video, X } from "lucide-react";
-import { useEffect, useMemo, useState, type ChangeEvent } from "react";
+import { toast } from "sonner";
+import { CalendarClock, CheckCircle2, ImagePlus, Loader2, Plus, Send, Video, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent } from "react";
 
 import AutomationFlowMessage from "../AutomationFlowMessage";
 import {
@@ -95,7 +96,8 @@ function KeywordChipsInput({ value, onChange, placeholder }: { value: string; on
 export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?: (type: PublishType) => void }) {
   const [accounts, setAccounts] = useState<InstagramAccount[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
-  const [selectedAccount, setSelectedAccount] = useState("");
+  const knownJobIdsRef = useRef(new Set<string>());
+  const [isDragging, setIsDragging] = useState(false);
   const [type, setType] = useState<PublishType>("POST");
   const [caption, setCaption] = useState("");
   const [media, setMedia] = useState<LocalMedia[]>([]);
@@ -121,11 +123,11 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const [error, setError] = useState("");
 
   const triggerType = type === "STORY" ? "STORY_REPLY_KEYWORD" : "COMMENT_KEYWORD";
-  const selectedInstagramAccount = accounts.find((account) => account.id === selectedAccount);
-  const selectedAccountId = selectedInstagramAccount?.id ?? "";
+  const activeInstagramAccount = accounts.find((account) => account.isConnected !== false);
+  const selectedAccountId = activeInstagramAccount?.id ?? "";
   const automationAccount: AutomationAccount = {
     id: selectedAccountId,
-    igUsername: selectedInstagramAccount?.igUsername ?? selectedInstagramAccount?.username ?? "",
+    igUsername: activeInstagramAccount?.igUsername ?? activeInstagramAccount?.username ?? "",
   };
   const messageOptions = useMemo(() => messages.map((message, index) => ({ id: message.id, label: `پیام ${index + 1} — ${getMessageTypeLabel(message.messageType)}` })), [messages]);
 
@@ -148,11 +150,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       : [];
 
     setAccounts(list);
-    setSelectedAccount((current) => {
-      if (current && list.some((account) => account.id === current)) return current;
-      return list.find((account) => account.isConnected !== false)?.id ?? list[0]?.id ?? "";
-    });
-  }
+    }
   async function loadJobs() { const response = await fetch("/api/instagram/publishing", { cache: "no-store" }); if (!response.ok) throw new Error("دریافت Publishing Jobs ناموفق بود."); const result = await response.json(); setJobs(result.data ?? []); }
   async function loadResources(accountId: string) { if (!accountId) return; setLoadingResources(true); try { const [showcaseResponse, formResponse] = await Promise.all([fetch(`/api/showcases?instagramAccountId=${encodeURIComponent(accountId)}`, { cache: "no-store" }), fetch(`/api/forms?instagramAccountId=${encodeURIComponent(accountId)}`, { cache: "no-store" })]); const showcaseResult = await showcaseResponse.json(); const formResult = await formResponse.json(); setShowcases(
         Array.isArray(showcaseResult)
@@ -162,8 +160,12 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             : [],
       ); setForms(Array.isArray(formResult.data) ? formResult.data : []); } finally { setLoadingResources(false); } }
   async function load() { try { setLoading(true); setError(""); await Promise.all([loadAccounts(), loadJobs()]); } catch (e) { setError(e instanceof Error ? e.message : "خطا در دریافت اطلاعات."); } finally { setLoading(false); } }
-  useEffect(() => { void load(); }, []);
-  useEffect(() => { if (selectedAccount) void loadResources(selectedAccount); }, [selectedAccount]);
+  useEffect(() => {
+    void load();
+    const interval = window.setInterval(() => void loadJobs(), 5000);
+    return () => window.clearInterval(interval);
+  }, []);
+  useEffect(() => { if (selectedAccountId) void loadResources(selectedAccountId); }, [selectedAccountId]);
 
   function revokeLocalMedia(items: LocalMedia[]) { items.forEach((item) => URL.revokeObjectURL(item.previewUrl)); }
   function clearLocalMedia() { revokeLocalMedia(media); setMedia([]); }
@@ -172,7 +174,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   function handleFiles(event: ChangeEvent<HTMLInputElement>) { const files = Array.from(event.target.files ?? []); event.target.value = ""; if (!files.length) return; const accepted = type === "REEL" ? files.filter((file) => file.type.startsWith("video/")) : type === "STORY" ? files.filter((file) => file.type.startsWith("image/") || file.type.startsWith("video/")) : files.filter((file) => file.type.startsWith("image/")); if (type !== "CAROUSEL") { clearLocalMedia(); setUploadedMedia([]); } const remaining = type === "CAROUSEL" ? Math.max(0, 10 - media.length - uploadedMedia.length) : 1; setMedia((current) => [...current, ...accepted.slice(0, remaining).map((file, index): LocalMedia => ({ file, type: file.type.startsWith("video/") ? "VIDEO" : "IMAGE", previewUrl: URL.createObjectURL(file), sortOrder: uploadedMedia.length + current.length + index }))]); }
   function removeLocal(index: number) { const item = media[index]; if (item) URL.revokeObjectURL(item.previewUrl); setMedia((current) => current.filter((_, i) => i !== index).map((item, i) => ({ ...item, sortOrder: i + uploadedMedia.length }))); }
   async function removeUploaded(item: UploadedMedia) { try { const response = await fetch("/api/instagram/publishing/upload", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ storageKey: item.storageKey }) }); const result = await response.json(); if (!response.ok || !result.success) throw new Error(result.message || "حذف فایل ناموفق بود."); setUploadedMedia((current) => current.filter((m) => m.storageKey !== item.storageKey).map((m, i) => ({ ...m, sortOrder: i }))); } catch (e) { setError(e instanceof Error ? e.message : "حذف فایل ناموفق بود."); } }
-  async function uploadSelectedMedia() { if (!selectedAccount) { setError("ابتدا یک اکانت Instagram انتخاب کنید."); return; } if (!media.length) return; if (type === "CAROUSEL" && media.length + uploadedMedia.length < 2) { setError("Carousel باید حداقل دو تصویر داشته باشد."); return; } try { setUploading(true); setError(""); setUploadProgress(0); const totalBytes = media.reduce((sum, item) => sum + item.file.size, 0); let completedBytes = 0; const results: UploadedMedia[] = []; for (let index = 0; index < media.length; index += 1) { const item = media[index]; setUploadIndex(index + 1); const result = await uploadFileWithProgress(item.file, (progress) => setUploadProgress(totalBytes ? Math.min(100, Math.round(((completedBytes + item.file.size * progress / 100) / totalBytes) * 100)) : progress)); results.push({ ...result, sortOrder: uploadedMedia.length + results.length }); completedBytes += item.file.size; } revokeLocalMedia(media); setMedia([]); setUploadedMedia((current) => [...current, ...results].map((item, index) => ({ ...item, sortOrder: index }))); setUploadProgress(100); } catch (e) { setError(e instanceof Error ? e.message : "آپلود فایل ناموفق بود."); } finally { setUploading(false); } }
+  async function uploadSelectedMedia() { if (!selectedAccountId) { setError("اکانت فعال Instagram پیدا نشد."); return; } if (!media.length) return; if (type === "CAROUSEL" && media.length + uploadedMedia.length < 2) { setError("Carousel باید حداقل دو تصویر داشته باشد."); return; } try { setUploading(true); setError(""); setUploadProgress(0); const totalBytes = media.reduce((sum, item) => sum + item.file.size, 0); let completedBytes = 0; const results: UploadedMedia[] = []; for (let index = 0; index < media.length; index += 1) { const item = media[index]; setUploadIndex(index + 1); const result = await uploadFileWithProgress(item.file, (progress) => setUploadProgress(totalBytes ? Math.min(100, Math.round(((completedBytes + item.file.size * progress / 100) / totalBytes) * 100)) : progress)); results.push({ ...result, sortOrder: uploadedMedia.length + results.length }); completedBytes += item.file.size; } revokeLocalMedia(media); setMedia([]); setUploadedMedia((current) => [...current, ...results].map((item, index) => ({ ...item, sortOrder: index }))); setUploadProgress(100); } catch (e) { setError(e instanceof Error ? e.message : "آپلود فایل ناموفق بود."); } finally { setUploading(false); } }
 
   function updateMessage(index: number, patch: Partial<MessageDraft>) { setMessages((current) => current.map((message, messageIndex) => messageIndex === index ? { ...message, ...patch } : message)); }
   function removeMessage(index: number) { if (messages.length === 1) return; const removedId = messages[index]?.id; setMessages((current) => current.filter((_, messageIndex) => messageIndex !== index).map((message) => ({ ...message, quickReplies: message.quickReplies.map((qr) => qr.nextMessageId === removedId ? { ...qr, nextMessageId: null } : qr) }))); }
@@ -190,7 +192,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
     const pendingMediaId = `pending:${crypto.randomUUID()}`;
     const automationPayload = {
-      instagramAccountId: selectedAccount,
+      instagramAccountId: selectedAccountId,
       triggerType,
       keyword: keywords,
       mediaId: pendingMediaId,
@@ -236,8 +238,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   }
 
   async function createJob(publishNow: boolean) {
-    const accountId = selectedInstagramAccount?.id ?? "";
-    if (!accountId) { setError("اکانت Instagram انتخاب نشده است."); return; }
+    const accountId = selectedAccountId;
+    if (!accountId) { setError("اکانت فعال Instagram پیدا نشد."); return; }
     if (!uploadedMedia.length) { setError("ابتدا فایل را آپلود کنید."); return; }
     if (type === "CAROUSEL" && uploadedMedia.length < 2) { setError("Carousel باید حداقل دو تصویر داشته باشد."); return; }
     if (type !== "CAROUSEL" && uploadedMedia.length !== 1) { setError(`${typeLabels[type]} باید دقیقاً یک فایل داشته باشد.`); return; }
@@ -250,7 +252,16 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       const result = await response.json();
       if (!response.ok) { await fetch(`/api/automations/${automationId}`, { method: "DELETE" }).catch(() => undefined); throw new Error(result.message || "ساخت Publishing Job ناموفق بود."); }
       const job = result.data as Job;
-      if (publishNow) { const publishResponse = await fetch(`/api/instagram/publishing/${job.id}/publish`, { method: "POST" }); const publishResult = await publishResponse.json(); if (!publishResponse.ok) throw new Error(publishResult.message || "انتشار ناموفق بود."); }
+      if (publishNow) {
+        const publishResponse = await fetch(`/api/instagram/publishing/${job.id}/publish`, { method: "POST" });
+        const publishResult = await publishResponse.json();
+        if (!publishResponse.ok) throw new Error(publishResult.message || "انتشار ناموفق بود.");
+        toast.success("محتوا با موفقیت منتشر شد.");
+      } else {
+        knownJobIdsRef.current.add(job.id);
+        setJobs((current) => [job, ...current.filter((item) => item.id !== job.id)]);
+        toast.success("محتوا برای زمان‌بندی ثبت شد.");
+      }
       setCaption(""); setUploadedMedia([]); resetAutomation(); setUploadProgress(0); setScheduledDate(currentJalaliDate()); await loadJobs();
     } catch (e) { setError(e instanceof Error ? e.message : "خطا در انتشار محتوا."); } finally { setPublishing(false); }
   }
@@ -261,17 +272,30 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const canPublish = uploadedMedia.length > 0 && !uploading && !publishing;
   const accept = type === "REEL" ? "video/mp4,video/quicktime" : type === "STORY" ? "image/jpeg,image/png,image/webp,video/mp4,video/quicktime" : "image/jpeg,image/png,image/webp";
 
-  return <div dir="rtl" className="min-h-screen bg-muted px-4 py-6 sm:px-6 lg:px-8"><div className="mx-auto max-w-7xl"><div className="mb-8 flex justify-end"><Button type="button" onClick={() => void load()} className="inline-flex items-center justify-center gap-2 rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground hover:bg-muted"><RefreshCw size={16} /> بروزرسانی</Button></div>{error && <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
+  return <div dir="rtl" className="min-h-screen bg-background px-4 py-5 sm:px-6"><div className="mx-auto w-full max-w-2xl"><div>{error && <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
 
-  <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]"><section className="rounded-xl border bg-card p-5 shadow-sm"><h2 className="font-bold text-foreground">محتوای جدید</h2>
+  <div className="space-y-5"><section className="rounded-xl border bg-card p-4 shadow-sm sm:p-6"><h2 className="font-bold text-foreground">محتوای جدید</h2>
   <div className="my-6 grid grid-cols-2 gap-2 sm:grid-cols-4">{([['POST', 'پست', ImagePlus], ['CAROUSEL', 'Carousel', ImagePlus], ['REEL', 'Reel', Video], ['STORY', 'Story', ImagePlus]] as const).map(([value, label, Icon]) => <Button key={value} type="button" onClick={() => handleTypeChange(value)} className={["flex flex-col items-center justify-center gap-2 rounded-xl border px-3 py-4 text-sm transition", type === value ? "border-slate-950 bg-primary text-white" : "border-border bg-background text-muted-foreground hover:bg-muted"].join(" ")}><Icon size={20} />{label}</Button>)}</div>
-  <label className="mb-5 block"><span className="mb-2 block text-sm font-medium text-foreground">اکانت Instagram</span><Select value={selectedAccount} onChange={(e) => setSelectedAccount(e.target.value)} className="w-full rounded-lg border bg-background px-4 py-3 text-sm outline-none focus:border-ring"><option value="">انتخاب اکانت</option>{accounts.map((account) => { const username = account.igUsername ?? account.username ?? account.igUserId; return <option key={account.id} value={account.id}>{username ? `@${username}` : "اکانت Instagram"}</option>; })}</Select></label>
+  {activeInstagramAccount?.igUsername && <p className="mb-5 text-xs text-muted-foreground">انتشار در @{activeInstagramAccount.igUsername}</p>}
 
   <div className="mb-5 rounded-2xl border border-border bg-muted p-4"><div className="mb-4"><span className="block text-sm font-bold text-foreground">Automation اختصاصی این محتوا</span><span className="mt-1 block text-xs leading-5 text-muted-foreground">برای همین محتوا یک Automation جدید از صفر ساخته می‌شود. هیچ Automation موجودی انتخاب یا استفاده نمی‌شود.</span></div><div className="space-y-4"><label className="block"><span className="mb-2 block text-xs font-semibold text-muted-foreground">{type === "STORY" ? "کلمات کلیدی Reply استوری" : "کلمات کلیدی کامنت"}</span><KeywordChipsInput value={keywords} onChange={setKeywords} placeholder={type === "STORY" ? "مثلاً 1، اطلاعات، قیمت" : "مثلاً 1، یک، قیمت"} /></label>{type !== "STORY" && <><label className="flex items-center gap-3 text-sm text-foreground"><Checkbox checked={likeComment} onCheckedChange={(checked) => setLikeComment(Boolean(checked))} /> لایک خودکار کامنت</label><label className="block"><span className="mb-2 block text-xs font-semibold text-muted-foreground">پاسخ عمومی کامنت (اختیاری)</span><Textarea value={commentReplyText} onChange={(e) => setCommentReplyText(e.target.value)} rows={2} className="w-full resize-none rounded-lg border bg-background px-3 py-3 text-sm outline-none focus:border-ring" placeholder="اگر بخواهید خود کامنت هم پاسخ عمومی بگیرد..." /></label></>}{type === "STORY" && <label className="flex items-center gap-3 text-sm text-foreground"><Checkbox checked={likeStoryReply} onCheckedChange={(checked) => setLikeStoryReply(Boolean(checked))} /> لایک خودکار Reply استوری</label>}<label className="flex items-center gap-3 text-sm text-foreground"><Checkbox checked={requireFollow} onCheckedChange={(checked) => setRequireFollow(Boolean(checked))} /> قبل از ارسال پاسخ، Follow Gate بررسی شود</label>{requireFollow && <Textarea value={followGateText} onChange={(e) => setFollowGateText(e.target.value)} rows={2} className="w-full resize-none rounded-lg border bg-background px-3 py-3 text-sm outline-none focus:border-ring" placeholder="متن درخواست Follow..." />}</div></div>
 
   <div className="mb-5 space-y-4"><div className="flex items-center justify-between"><div><h3 className="text-sm font-bold text-foreground">Flow پاسخ</h3><p className="mt-1 text-xs text-muted-foreground">متن، عکس، ویدیو، وویس، ویترین و فرم را آزادانه پشت سر هم بچینید.</p></div><span className="text-xs text-muted-foreground">{messages.length} پیام</span></div>{messages.map((message, index) => <div key={message.id} className="rounded-xl border bg-card p-4 shadow-sm"><div className="mb-4 flex items-center justify-between"><span className="text-sm font-bold text-foreground">پیام {index + 1}</span><span className="rounded-full bg-muted px-2.5 py-1 text-[10px] text-muted-foreground">{getMessageTypeLabel(message.messageType)}</span></div><AutomationFlowMessage triggerType={triggerType} message={message} index={index} total={messages.length} messageOptions={messageOptions} showcases={showcases} forms={forms} loadingResources={loadingResources} instagramAccountId={selectedAccountId} onShowcaseCreated={(showcase) => setShowcases((current) => [showcase, ...current.filter((item) => item.id !== showcase.id)])} onUpdate={(patch) => updateMessage(index, patch)} onRemove={() => removeMessage(index)} onMoveUp={() => moveMessage(index, -1)} onMoveDown={() => moveMessage(index, 1)} onAddQuickReply={() => addQuickReply(index)} onUpdateQuickReply={(quickReplyId, patch) => updateQuickReply(index, quickReplyId, patch)} onRemoveQuickReply={(quickReplyId) => removeQuickReply(index, quickReplyId)} /></div>)}<Button type="button" onClick={addMessage} className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-muted px-4 py-3 text-sm font-medium text-muted-foreground hover:bg-muted"><Plus size={17} /> افزودن پیام به Flow</Button></div>
 
-  <div className="mb-5 rounded-2xl border border-dashed border-border bg-muted p-4"><label className="block cursor-pointer"><span className="mb-2 block text-sm font-medium text-foreground">{type === "CAROUSEL" ? "تصاویر Carousel" : type === "REEL" ? "ویدیوی Reel" : type === "STORY" ? "تصویر یا ویدیوی Story" : "تصویر پست"}</span><Input type="file" accept={accept} multiple={type === "CAROUSEL"} onChange={handleFiles} disabled={uploading || publishing || (type === "CAROUSEL" && uploadedMedia.length >= 10)} className="block w-full cursor-pointer text-sm" /></label><p className="mt-2 text-xs text-muted-foreground">{type === "CAROUSEL" ? `حداکثر ۱۰ تصویر — ${toPersianDigits(uploadedMedia.length + media.length)} فایل` : "یک فایل"}</p></div>
+  <div
+    onDragOver={(event) => { event.preventDefault(); setIsDragging(true); }}
+    onDragLeave={() => setIsDragging(false)}
+    onDrop={(event) => { event.preventDefault(); setIsDragging(false); prepareFiles(Array.from(event.dataTransfer.files ?? [])); }}
+    className={["mb-5 relative flex min-h-[280px] items-center justify-center rounded-2xl border-2 border-dashed p-5 text-center transition", isDragging ? "border-primary bg-primary/5" : "border-border bg-muted/30", uploading || publishing ? "pointer-events-none opacity-70" : ""].join(" ")}
+  >
+    <Input id="publishing-media-upload" type="file" accept={accept} multiple={type === "CAROUSEL"} onChange={handleFiles} disabled={uploading || publishing || (type === "CAROUSEL" && uploadedMedia.length >= 10)} className="sr-only" />
+    <label htmlFor="publishing-media-upload" className="flex min-h-[250px] w-full cursor-pointer flex-col items-center justify-center">
+      {uploading ? <Loader2 size={34} className="animate-spin text-muted-foreground" /> : <ImagePlus size={38} className="text-muted-foreground" />}
+      <span className="mt-4 text-sm font-medium text-foreground">{uploading ? "در حال آپلود..." : "برای انتخاب محتوا کلیک کنید"}</span>
+      <span className="mt-2 max-w-xs text-xs leading-5 text-muted-foreground">{type === "CAROUSEL" ? "۲ تا ۱۰ تصویر را همزمان انتخاب کنید." : type === "REEL" ? "ویدیوی Reel را انتخاب کنید." : type === "STORY" ? "تصویر یا ویدیوی Story را انتخاب کنید." : "تصویر پست را انتخاب کنید."}</span>
+      {uploading && <div className="mt-5 w-full max-w-xs"><div className="mb-2 flex justify-between text-xs text-muted-foreground"><span>آپلود فایل {toPersianDigits(uploadIndex)}</span><span>{toPersianDigits(uploadProgress)}٪</span></div><div className="h-1.5 overflow-hidden rounded-full bg-muted"><div className="h-full bg-primary transition-[width]" style={{ width: `${uploadProgress}%` }} /></div></div>}
+    </label>
+  </div>
   {(media.length > 0 || uploadedMedia.length > 0) && <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-3">{uploadedMedia.map((item) => <div key={item.storageKey} className="relative overflow-hidden rounded-lg border bg-background">{item.type === "IMAGE" ? <img src={item.publicUrl} alt={item.fileName} className="aspect-square w-full object-cover" /> : <video src={item.publicUrl} controls className="aspect-square w-full object-cover" />}<Button type="button" onClick={() => void removeUploaded(item)} className="absolute left-2 top-2 rounded-full bg-background/95 p-1.5 text-red-600 shadow-sm"><X size={15} /></Button></div>)}{media.map((item, index) => <div key={`${item.file.name}-${item.sortOrder}`} className="relative overflow-hidden rounded-xl border border-dashed border-border bg-muted">{item.type === "IMAGE" ? <img src={item.previewUrl} alt={item.file.name} className="aspect-square w-full object-cover" /> : <video src={item.previewUrl} controls className="aspect-square w-full object-cover" />}<Button type="button" onClick={() => removeLocal(index)} className="absolute left-2 top-2 rounded-full bg-background/95 p-1.5 text-red-600 shadow-sm"><X size={15} /></Button></div>)}</div>}
   {uploading && <div className="mb-5 rounded-xl border bg-card p-4"><div className="mb-2 flex items-center justify-between text-sm"><span>در حال آپلود</span><b>{toPersianDigits(uploadProgress)}٪</b></div><div className="h-2 overflow-hidden rounded-full bg-muted"><div className="h-full bg-primary" style={{ width: `${uploadProgress}%` }} /></div><p className="mt-2 text-xs text-muted-foreground">فایل {toPersianDigits(uploadIndex)} از {toPersianDigits(media.length)}</p></div>}
   {!uploading && uploadedMedia.length > 0 && <div className="mb-5 flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"><CheckCircle2 size={19} /> محتوا آماده انتشار است.</div>}
@@ -279,5 +303,12 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   {uploadedMedia.length > 0 && <><label className="mb-5 block">{type !== "STORY" && <><span className="mb-2 block text-sm font-medium text-foreground">Caption</span><Textarea value={caption} onChange={(e) => setCaption(e.target.value)} maxLength={2200} rows={4} className="w-full resize-none rounded-xl border border-border px-4 py-3 text-sm outline-none focus:border-ring" /><span className="mt-1 block text-left text-xs text-muted-foreground">{caption.length}/2200</span></>}</label><div className="mb-5 rounded-2xl border border-border bg-muted p-4"><div className="mb-3 flex items-center justify-between"><div><span className="block text-sm font-medium text-foreground">زمان‌بندی انتشار</span><span className="mt-1 block text-xs text-muted-foreground">تقویم کاملاً شمسی</span></div><CalendarClock size={18} className="text-muted-foreground" /></div><PersianDatePicker value={scheduledDate} onChange={setScheduledDate} /><div className="mt-3 grid grid-cols-2 gap-3"><label><span className="mb-1 block text-xs text-muted-foreground">ساعت</span><Select value={hour} onChange={(e) => setHour(Number(e.target.value))} className="w-full rounded-lg border bg-background px-3 py-3 text-sm">{Array.from({ length: 24 }, (_, v) => <option key={v} value={v}>{toPersianDigits(String(v).padStart(2, "0"))}</option>)}</Select></label><label><span className="mb-1 block text-xs text-muted-foreground">دقیقه</span><Select value={minute} onChange={(e) => setMinute(Number(e.target.value))} className="w-full rounded-lg border bg-background px-3 py-3 text-sm">{Array.from({ length: 12 }, (_, v) => v * 5).map((v) => <option key={v} value={v}>{toPersianDigits(String(v).padStart(2, "0"))}</option>)}</Select></label></div></div><div className="grid gap-3 sm:grid-cols-2"><Button type="button" disabled={!canPublish || loading} onClick={() => void createJob(true)} className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-medium text-white disabled:opacity-50">{publishing ? <Loader2 size={17} className="animate-spin" /> : <Send size={17} />} انتشار الآن</Button><Button type="button" disabled={!canPublish || loading} onClick={() => void createJob(false)} className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-background px-4 py-3 text-sm font-medium text-foreground disabled:opacity-50"><CalendarClock size={17} /> زمان‌بندی انتشار</Button></div></>}
   </section>
 
-  <section className="rounded-xl border bg-card p-5 shadow-sm"><div className="mb-5 flex items-center justify-between"><div><h2 className="font-bold text-foreground">تاریخچه انتشار</h2><p className="mt-1 text-xs text-muted-foreground">آخرین ۱۰۰ Job</p></div><Clock3 size={18} className="text-muted-foreground" /></div>{loading ? <div className="flex items-center justify-center py-10 text-muted-foreground"><Loader2 className="animate-spin" size={22} /></div> : jobs.length === 0 ? <div className="py-10 text-center text-sm text-muted-foreground">هنوز محتوایی ثبت نشده است.</div> : <div className="space-y-3">{jobs.map((job) => <div key={job.id} className="rounded-xl border border-border p-3"><div className="flex items-start gap-3">{job.media[0] ? (job.media[0].type === "IMAGE" ? <img src={job.media[0].publicUrl} alt={job.media[0].fileName || ""} className="h-16 w-16 shrink-0 rounded-lg object-cover" /> : <video src={job.media[0].publicUrl} className="h-16 w-16 shrink-0 rounded-lg object-cover" />) : <div className="h-16 w-16 shrink-0 rounded-lg bg-muted" />}<div className="min-w-0 flex-1"><div className="flex items-center justify-between gap-2"><span className="text-sm font-bold text-foreground">{typeLabels[job.type]}</span><span className="text-xs text-muted-foreground">{statusLabels[job.status] || job.status}</span></div><p className="mt-1 truncate text-xs text-muted-foreground">@{job.instagramAccount?.igUsername || "Instagram"}</p><p className="mt-1 text-xs text-muted-foreground">{job.status === "PUBLISHED" ? formatDate(job.publishedAt) : formatDate(job.scheduledAt)}</p></div></div>{job.errorMessage && <div className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">{job.errorMessage}</div>}<div className="mt-3 flex gap-2">{job.status === "FAILED" && <Button type="button" onClick={() => void retryJob(job.id)} className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs text-foreground"><RefreshCw size={13} /> تلاش مجدد</Button>}{job.status !== "PUBLISHED" && job.status !== "CANCELLED" && <Button type="button" onClick={() => void cancelJob(job.id)} className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 px-3 py-2 text-xs text-red-600"><Trash2 size={13} /> لغو</Button>}</div></div>)}</div>}</section></div></div></div>;
+  {jobs.filter((job) => job.status !== "PUBLISHED" && job.status !== "CANCELLED").length > 0 && <section className="space-y-3">
+    <div className="flex items-center justify-between"><h2 className="text-sm font-semibold text-foreground">وضعیت انتشار</h2><span className="text-xs text-muted-foreground">{toPersianDigits(jobs.filter((job) => job.status !== "PUBLISHED" && job.status !== "CANCELLED").length)} مورد فعال</span></div>
+    <div className="space-y-2">{jobs.filter((job) => job.status !== "PUBLISHED" && job.status !== "CANCELLED").map((job) => <div key={job.id} className="flex items-center gap-3 rounded-xl border bg-card p-3">
+      {job.media[0] ? (job.media[0].type === "IMAGE" ? <img src={job.media[0].publicUrl} alt="" className="h-14 w-14 shrink-0 rounded-lg object-cover" /> : <video src={job.media[0].publicUrl} className="h-14 w-14 shrink-0 rounded-lg object-cover" />) : <div className="h-14 w-14 shrink-0 rounded-lg bg-muted" />}
+      <div className="min-w-0 flex-1"><div className="flex items-center justify-between gap-2"><span className="text-sm font-medium">{typeLabels[job.type]}</span><span className="text-xs text-muted-foreground">{statusLabels[job.status] || job.status}</span></div><p className="mt-1 text-xs text-muted-foreground">{job.status === "SCHEDULED" ? `انتشار در ${formatDate(job.scheduledAt)}` : "محتوا در حال پردازش است."}</p></div>
+      {job.status !== "SCHEDULED" && <Loader2 size={16} className="shrink-0 animate-spin text-muted-foreground" />}
+    </div>)}</div>
+  </section>}</div></div></div>;
 }
