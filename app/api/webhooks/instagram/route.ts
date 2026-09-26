@@ -13,7 +13,7 @@ import { enqueueInstagramWebhookEvent } from "@/lib/webhook/queue";
 import { processInstagramWebhookQueueJob } from "@/lib/webhook/workflow";
 
 import { executeAutomation } from "@/lib/automation/execute-automation";
-import { findMatchingAutomation } from "@/lib/automation/find-matching-automation";
+import { findAutomationByQuickReplyPayload, findMatchingAutomation } from "@/lib/automation/find-matching-automation";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 import { reactToInstagramMessage } from "@/lib/instagram/react-to-message";
 import { InstagramApiError, instagramApiRequest } from "@/lib/instagram/client";
@@ -1205,49 +1205,91 @@ async function processMessagingEventLocked(
     }
 
     // =======================================================
-    // Find active DM automation
+    // Resolve automation
+    //
+    // For Quick Replies we MUST resolve by the payload itself.
+    // The first active DM automation is not necessarily the automation
+    // that sent this button, especially when multiple automations exist.
     // =======================================================
 
-    const automation = await findMatchingAutomation({
-      instagramAccountId: instagramAccount.id,
-      triggerType: "DM",
-    });
+    let automation = null;
 
-    if (automation) {
-      console.log("DM automation found:", automation.id);
+    if (quickReplyPayload) {
+      console.log("Resolving Quick Reply payload across active automations:", quickReplyPayload);
+
+      automation = await findAutomationByQuickReplyPayload({
+        instagramAccountId: instagramAccount.id,
+        payload: quickReplyPayload,
+      });
+
+      if (automation) {
+        console.log("Quick Reply automation resolved:", automation.id);
+        console.log("Quick Reply automation trigger:", automation.triggerType);
+      } else {
+        console.warn(
+          "Quick reply payload does not belong to any active automation:",
+          quickReplyPayload,
+        );
+      }
     } else {
-      console.log("No active DM automation found.");
+      automation = await findMatchingAutomation({
+        instagramAccountId: instagramAccount.id,
+        triggerType: "DM",
+      });
+
+      if (automation) {
+        console.log("DM automation found:", automation.id);
+      } else {
+        console.log("No active DM automation found.");
+      }
     }
 
     // =======================================================
-    // Resolve Quick Reply
+    // Resolve Quick Reply ID inside the resolved automation
     // =======================================================
 
     let selectedQuickReplyId: string | null = null;
 
     if (quickReplyPayload && automation) {
-      console.log("Resolving Quick Reply payload:", quickReplyPayload);
+      const topLevelQuickReplies = automation.messages.flatMap(
+        (automationMessage) => automationMessage.quickReplies,
+      );
 
-      const topLevelQuickReplies = automation.messages.flatMap((automationMessage) => automationMessage.quickReplies);
-      const selectedQuickReply = topLevelQuickReplies.find((quickReply) => quickReply.payload === quickReplyPayload);
+      const selectedQuickReply = topLevelQuickReplies.find(
+        (quickReply) => quickReply.payload === quickReplyPayload,
+      );
 
       if (selectedQuickReply) {
         selectedQuickReplyId = selectedQuickReply.id;
-        console.log("QUICK REPLY SELECTED:", selectedQuickReply.id, selectedQuickReply.title);
+
+        console.log(
+          "QUICK REPLY SELECTED:",
+          selectedQuickReply.id,
+          selectedQuickReply.title,
+        );
       } else {
-        const findNestedPayload = (node: any): boolean => {
-          if (!node) return false;
-          if (Array.isArray(node.quickReplies)) {
-            for (const child of node.quickReplies) {
-              if (child?.payload === quickReplyPayload) return true;
-              if (findNestedPayload(child)) return true;
-            }
+        const findNestedPayload = (node: unknown): boolean => {
+          if (!node || typeof node !== "object") return false;
+
+          const value = node as {
+            payload?: unknown;
+            quickReplies?: unknown;
+          };
+
+          if (value.payload === quickReplyPayload) return true;
+
+          if (Array.isArray(value.quickReplies)) {
+            return value.quickReplies.some((child) =>
+              findNestedPayload(child),
+            );
           }
+
           return false;
         };
 
         const root = topLevelQuickReplies.find((reply) => {
           if (!reply.replyText) return false;
+
           try {
             return findNestedPayload(JSON.parse(reply.replyText));
           } catch {
@@ -1257,13 +1299,20 @@ async function processMessagingEventLocked(
 
         if (root) {
           selectedQuickReplyId = root.id + "::" + quickReplyPayload;
-          console.log("NESTED QUICK REPLY SELECTED:", quickReplyPayload, "root:", root.id);
+
+          console.log(
+            "NESTED QUICK REPLY SELECTED:",
+            quickReplyPayload,
+            "root:",
+            root.id,
+          );
         } else {
-          console.warn("Quick reply payload does not belong to this automation:", quickReplyPayload);
+          console.warn(
+            "Quick reply payload was resolved to an automation but could not be resolved inside it:",
+            quickReplyPayload,
+          );
         }
       }
-    } else if (quickReplyPayload && !automation) {
-      console.warn("Quick reply received but no active DM automation exists.");
     }
 
     // =======================================================
