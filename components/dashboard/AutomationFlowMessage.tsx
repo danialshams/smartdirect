@@ -260,25 +260,30 @@ export default function AutomationFlowMessage({
         </div>
       )}
 
-      {(message.quickReplies.length > 0 || isForm) && (
+      {isForm && (
         <div className="space-y-3 rounded-2xl border border-border/70 bg-muted/30 p-3.5">
           <div className="flex items-center justify-between gap-2">
-            <div><p className="text-xs font-bold text-foreground">{isForm ? "جواب‌های فرم" : "Quick Reply"}</p><p className="mt-1 text-[10px] text-muted-foreground">با انتخاب جواب، مسیر بعدی را مشخص کنید.</p></div>
-            {canAddReply && <Button type="button" onClick={onAddQuickReply} className="inline-flex items-center gap-1 rounded-lg border border-border/70 bg-background px-2.5 py-1.5 text-[11px] font-semibold text-foreground"><Plus size={13} />افزودن</Button>}
+            <div>
+              <p className="text-xs font-bold text-foreground">پاسخ‌های فرم</p>
+              <p className="mt-1 text-[10px] leading-5 text-muted-foreground">برای هر جواب، مقصد بعدی را انتخاب کنید. مقصد می‌تواند متن، فرم یا ویترین باشد.</p>
+            </div>
+            {canAddReply && <Button type="button" onClick={onAddQuickReply} className="inline-flex items-center gap-1 rounded-lg border border-border/70 bg-background px-2.5 py-1.5 text-[11px] font-semibold text-foreground"><Plus size={13} />افزودن پاسخ</Button>}
           </div>
-          {message.quickReplies.map((quickReply, quickReplyIndex) => (
-            <div key={quickReply.id} className="grid gap-2 sm:grid-cols-[1fr_1.4fr_auto]">
-              <Input value={quickReply.title} onChange={(event) => onUpdateQuickReply(quickReply.id, { title: event.target.value })} placeholder={"جواب " + (quickReplyIndex + 1)} maxLength={20} className="rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm outline-none focus:border-ring" />
-              <div className="relative"><Select value={quickReply.nextMessageId ?? ""} onChange={(event) => onUpdateQuickReply(quickReply.id, { nextMessageId: event.target.value || null })} className="w-full appearance-none rounded-xl border border-border/70 bg-background px-3 py-2.5 pl-8 text-xs outline-none focus:border-ring"><option value="">مقصد جواب را انتخاب کنید</option>{messageOptions.filter((option) => option.id !== message.id).map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}</Select><ChevronDown size={14} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" /></div>
-              <Button type="button" onClick={() => onRemoveQuickReply(quickReply.id)} className="rounded-xl border border-border/70 bg-background px-3 text-muted-foreground hover:text-red-600" aria-label="حذف جواب"><Trash2 size={15} /></Button>
+          {message.quickReplies.map((answer, answerIndex) => (
+            <div key={answer.id} className="grid gap-2 sm:grid-cols-[1fr_1.4fr_auto]">
+              <Input value={answer.title} onChange={(event) => onUpdateQuickReply(answer.id, { title: event.target.value })} placeholder={"جواب " + (answerIndex + 1)} maxLength={20} className="rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm outline-none focus:border-ring" />
+              <div className="relative">
+                <Select value={answer.nextMessageId ?? ""} onChange={(event) => onUpdateQuickReply(answer.id, { nextMessageId: event.target.value || null })} className="w-full appearance-none rounded-xl border border-border/70 bg-background px-3 py-2.5 pl-8 text-xs outline-none focus:border-ring">
+                  <option value="">مقصد پاسخ را انتخاب کنید</option>
+                  {messageOptions.filter((option) => option.id !== message.id).map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
+                </Select>
+                <ChevronDown size={14} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              </div>
+              <Button type="button" onClick={() => onRemoveQuickReply(answer.id)} className="rounded-xl border border-border/70 bg-background px-3 text-muted-foreground hover:text-red-600" aria-label="حذف پاسخ"><Trash2 size={15} /></Button>
             </div>
           ))}
-          {isForm && message.quickReplies.length === 0 && <Button type="button" onClick={onAddQuickReply} className="w-full rounded-xl border border-dashed border-border/70 px-3 py-3 text-xs font-semibold text-muted-foreground hover:bg-background">+ اولین جواب فرم</Button>}
+          {message.quickReplies.length === 0 && <Button type="button" onClick={onAddQuickReply} className="w-full rounded-xl border border-dashed border-border/70 px-3 py-3 text-xs font-semibold text-muted-foreground hover:bg-background">+ اولین پاسخ فرم</Button>}
         </div>
-      )}
-
-      {message.messageType !== "FORM" && message.quickReplies.length === 0 && (
-        <Button type="button" disabled={!canAddReply} onClick={onAddQuickReply} className="inline-flex items-center gap-1 rounded-lg px-1 text-xs font-semibold text-muted-foreground disabled:opacity-40"><Plus size={14} />افزودن Quick Reply</Button>
       )}
     </div>
   );
