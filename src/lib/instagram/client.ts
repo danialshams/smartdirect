@@ -345,6 +345,14 @@ export async function instagramApiRequest<T = unknown>(
           ? ((data as { error?: InstagramApiErrorDetails }).error ?? undefined)
           : undefined;
 
+      const responseHeaders = {
+        requestId: response.headers.get("x-fb-request-id"),
+        traceId: response.headers.get("x-fb-trace-id"),
+        revision: response.headers.get("x-fb-rev"),
+        apiVersion: response.headers.get("instagram-api-version"),
+        contentType: response.headers.get("content-type"),
+      };
+
       if (!response.ok || details) {
         const message =
           details?.message ||
@@ -368,6 +376,9 @@ export async function instagramApiRequest<T = unknown>(
           retrying: canRetry,
           errorCode: details?.code,
           errorSubcode: details?.error_subcode,
+          fbtraceId: details?.fbtrace_id,
+          metaResponse: data,
+          responseHeaders,
         });
         void recordLatency(operation, latencyMs);
         void recordFailure(
