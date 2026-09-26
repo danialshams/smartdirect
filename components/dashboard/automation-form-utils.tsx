@@ -197,12 +197,41 @@ export function normalizeMessages(value: unknown): MessageDraft[] {
     }).filter((item): item is MessageDraft => item !== null);
 }
 
+function validateQuickReplyTree(replies: QuickReplyDraft[], messageNumber: number, path = "") {
+    if (replies.length === 0) throw new Error(`برای سؤال فرم پیام ${messageNumber} حداقل یک پاسخ اضافه کنید.`);
+    if (replies.length > 13) throw new Error(`هر سؤال حداکثر ۱۳ پاسخ می‌تواند داشته باشد.`);
+    for (let index = 0; index < replies.length; index += 1) {
+        const quickReply = replies[index];
+        if (!quickReply) continue;
+        const answerNumber = index + 1;
+        if (!quickReply.title.trim()) throw new Error(`متن پاسخ شماره ${answerNumber} در سؤال ${messageNumber} را وارد کنید.`);
+        if (quickReply.title.trim().length > 20) throw new Error(`متن پاسخ شماره ${answerNumber} در سؤال ${messageNumber} نباید بیشتر از ۲۰ کاراکتر باشد.`);
+        if (!quickReply.destinationType) throw new Error(`مقصد پاسخ «${quickReply.title}» را انتخاب کنید.`);
+        switch (quickReply.destinationType) {
+            case "TEXT":
+                if (!quickReply.destinationText.trim()) throw new Error(`متن مقصد پاسخ «${quickReply.title}» را وارد کنید.`);
+                break;
+            case "SHOWCASE":
+                if (!quickReply.destinationShowcaseId) throw new Error(`ویترین مقصد پاسخ «${quickReply.title}» را انتخاب کنید.`);
+                break;
+            case "IMAGE":
+            case "VIDEO":
+            case "AUDIO":
+                if (!quickReply.destinationMediaUrl.trim() && !quickReply.destinationMediaId.trim()) throw new Error(`فایل مقصد پاسخ «${quickReply.title}» را انتخاب کنید.`);
+                break;
+            case "FORM":
+                if (!quickReply.destinationQuestion.trim()) throw new Error(`سؤال مقصد پاسخ «${quickReply.title}» را وارد کنید.`);
+                validateQuickReplyTree(quickReply.destinationQuickReplies, messageNumber, path + answerNumber + ".");
+                break;
+        }
+    }
+}
+
 export function validateMessages(messages: MessageDraft[], triggerType?: "COMMENT_KEYWORD" | "DM" | "STORY_REPLY_KEYWORD") {
     if (messages.length === 0) throw new Error("حداقل یک پیام اضافه کنید.");
     if (triggerType === "COMMENT_KEYWORD" && messages.some((message) => message.messageType !== "TEXT")) {
         throw new Error("در Automation کامنت فقط پیام متنی به‌عنوان Private Reply قابل استفاده است.");
     }
-    const messageIds = new Set(messages.map((message) => message.id));
     for (let index = 0; index < messages.length; index += 1) {
         const message = messages[index];
         if (!message) continue;
@@ -214,43 +243,18 @@ export function validateMessages(messages: MessageDraft[], triggerType?: "COMMEN
             case "IMAGE":
             case "VIDEO":
             case "AUDIO":
-                if (!message.mediaUrl.trim() && !message.mediaId.trim()) throw new Error(`برای پیام ${messageNumber}، Media URL یا Media ID را وارد کنید.`);
+                if (!message.mediaUrl.trim() && !message.mediaId.trim()) throw new Error(`برای پیام ${messageNumber}، فایل را انتخاب کنید.`);
                 break;
             case "SHOWCASE":
                 if (!message.showcaseId) throw new Error(`برای پیام ${messageNumber} یک ویترین انتخاب کنید.`);
                 break;
             case "FORM":
-                if (!message.text.trim()) throw new Error(`سوال فرم پیام ${messageNumber} را وارد کنید.`);
-                if (message.formId && message.formId !== "INLINE_FORM") throw new Error(`فرم پیام ${messageNumber} نامعتبر است.`);
-                if (message.quickReplies.length === 0) throw new Error(`برای سوال فرم پیام ${messageNumber} حداقل یک پاسخ اضافه کنید.`);
+                if (!message.text.trim()) throw new Error(`سؤال فرم پیام ${messageNumber} را وارد کنید.`);
+                validateQuickReplyTree(message.quickReplies, messageNumber);
                 break;
         }
         if (message.quickReplies.length > 13) throw new Error(`پیام ${messageNumber} نمی‌تواند بیشتر از ۱۳ پاسخ داشته باشد.`);
-        for (let qrIndex = 0; qrIndex < message.quickReplies.length; qrIndex += 1) {
-            const quickReply = message.quickReplies[qrIndex];
-            if (!quickReply) continue;
-            if (!quickReply.title.trim()) throw new Error(`عنوان پاسخ شماره ${qrIndex + 1} در پیام ${messageNumber} را وارد کنید.`);
-            if (quickReply.title.trim().length > 20) throw new Error(`عنوان پاسخ شماره ${qrIndex + 1} در پیام ${messageNumber} نباید بیشتر از ۲۰ کاراکتر باشد.`);
-            if (!quickReply.destinationType) throw new Error(`نوع مقصد پاسخ شماره ${qrIndex + 1} را انتخاب کنید.`);
-            if (quickReply.destinationType === "TEXT" && !quickReply.destinationText.trim()) throw new Error(`متن مقصد پاسخ شماره ${qrIndex + 1} را وارد کنید.`);
-            if (quickReply.destinationType === "FORM" && !quickReply.destinationFormId) throw new Error(`فرم مقصد پاسخ شماره ${qrIndex + 1} را انتخاب کنید.`);
-            if (quickReply.destinationType === "SHOWCASE" && !quickReply.destinationShowcaseId) throw new Error(`ویترین مقصد پاسخ شماره ${qrIndex + 1} را انتخاب کنید.`);
-        }
     }
-    const graph = new Map<string, string[]>();
-    for (const message of messages) graph.set(message.id, message.quickReplies.map((quickReply) => quickReply.nextMessageId).filter((id): id is string => Boolean(id)));
-    const visiting = new Set<string>();
-    const visited = new Set<string>();
-    function visit(messageId: string): boolean {
-        if (visiting.has(messageId)) return true;
-        if (visited.has(messageId)) return false;
-        visiting.add(messageId);
-        for (const nextId of graph.get(messageId) ?? []) if (visit(nextId)) return true;
-        visiting.delete(messageId);
-        visited.add(messageId);
-        return false;
-    }
-    for (const message of messages) if (visit(message.id)) throw new Error("در مسیر Quick Reply یک حلقه ایجاد شده است.");
     return true;
 }
 
