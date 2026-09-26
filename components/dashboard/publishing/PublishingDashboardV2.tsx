@@ -168,7 +168,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   useEffect(() => { if (selectedAccountId) void loadResources(selectedAccountId); }, [selectedAccountId]);
 
   function revokeLocalMedia(items: LocalMedia[]) { items.forEach((item) => URL.revokeObjectURL(item.previewUrl)); }
-  function clearLocalMedia() { revokeLocalMedia(items); setMedia((current) => current.filter((item) => !items.includes(item))); }
+  function clearLocalMedia() { setMedia((current) => { revokeLocalMedia(current); return []; }); }
   function resetAutomation() { setKeywords(""); setMessages([createEmptyMessage()]); setLikeComment(false); setCommentReplyText(""); setLikeStoryReply(false); setRequireFollow(false); setFollowGateText("برای دریافت پاسخ، ابتدا پیج را Follow کنید."); }
   function handleTypeChange(nextType: PublishType) { clearLocalMedia(); setUploadedMedia([]); setType(nextType); onTypeChange?.(nextType); setUploadProgress(0); setCaption(""); resetAutomation(); }
   function prepareFiles(files: File[]) { if (!files.length || uploading || publishing) return; const accepted = type === "REEL" ? files.filter((file) => file.type.startsWith("video/")) : type === "STORY" ? files.filter((file) => file.type.startsWith("image/") || file.type.startsWith("video/")) : files.filter((file) => file.type.startsWith("image/")); if (!accepted.length) { setError(type === "REEL" ? "برای Reel یک فایل ویدیویی انتخاب کنید." : "فرمت فایل انتخاب‌شده برای این نوع محتوا معتبر نیست."); return; } const remaining = type === "CAROUSEL" ? Math.max(0, 10 - uploadedMedia.length) : 1; const selected = accepted.slice(0, remaining); if (type !== "CAROUSEL") setUploadedMedia([]); if (type === "CAROUSEL" && selected.length < 2 && uploadedMedia.length === 0) { setError("برای Carousel حداقل دو تصویر را همزمان انتخاب کنید."); return; } clearLocalMedia(); const nextMedia = selected.map((file, index): LocalMedia => ({ file, type: file.type.startsWith("video/") ? "VIDEO" : "IMAGE", previewUrl: URL.createObjectURL(file), sortOrder: index })); setMedia(nextMedia); setError(""); window.setTimeout(() => void uploadSelectedMedia(nextMedia), 0); }
@@ -187,7 +187,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   function removeQuickReply(messageIndex: number, quickReplyId: string) { setMessages((current) => current.map((message, index) => index === messageIndex ? { ...message, quickReplies: message.quickReplies.filter((qr) => qr.id !== quickReplyId) } : message)); }
 
   async function createAutomation(): Promise<string> {
-    if (!selectedAccount) throw new Error("ابتدا یک اکانت Instagram انتخاب کنید.");
+    if (!selectedAccountId) throw new Error("اکانت فعال Instagram پیدا نشد.");
     if (!keywords.trim()) throw new Error(type === "STORY" ? "حداقل یک کلمه برای Reply استوری وارد کنید." : "حداقل یک کلمه برای کامنت وارد کنید.");
     validateMessages(messages);
     if (requireFollow && !followGateText.trim()) throw new Error("متن Follow Gate را وارد کنید.");
@@ -310,5 +310,5 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       <div className="min-w-0 flex-1"><div className="flex items-center justify-between gap-2"><span className="text-sm font-medium">{typeLabels[job.type]}</span><span className="text-xs text-muted-foreground">{statusLabels[job.status] || job.status}</span></div><p className="mt-1 text-xs text-muted-foreground">{job.status === "SCHEDULED" ? `انتشار در ${formatDate(job.scheduledAt)}` : "محتوا در حال پردازش است."}</p></div>
       {job.status !== "SCHEDULED" && <Loader2 size={16} className="shrink-0 animate-spin text-muted-foreground" />}
     </div>)}</div>
-  </section></div></div>;
+  </section>}</div></div></div></div>;
 }
