@@ -249,13 +249,13 @@ export default function AutomationFlowMessage({
         <div className="space-y-4 rounded-2xl border border-border/70 bg-muted/30 p-3.5">
           <div>
             <p className="text-sm font-bold text-foreground">فرم</p>
-            <p className="mt-1 text-[10px] leading-5 text-muted-foreground">یک سؤال بنویسید و برای هر جواب، مسیر بعدی را مشخص کنید.</p>
+            
           </div>
           <Textarea
             value={message.text}
             onChange={(event) => onUpdate({ text: event.target.value })}
             rows={3}
-            placeholder="سؤال را وارد کنید..."
+            placeholder="سؤال را بنویسید..."
             className="w-full resize-none rounded-xl border border-border/70 bg-background px-3.5 py-3 text-sm leading-7 outline-none focus:border-ring"
           />
           <BranchAnswerEditor
@@ -282,7 +282,7 @@ export default function AutomationFlowMessage({
       {message.messageType === "SHOWCASE" && (
         <div className="space-y-3 rounded-2xl border border-border/70 bg-muted/30 p-3.5">
           <div className="flex items-center justify-between gap-2">
-            <div><p className="text-sm font-bold text-foreground">ویترین</p><p className="mt-1 text-[10px] leading-5 text-muted-foreground">اسلایدهای تصویری که کاربر در Instagram ورق می‌زند.</p></div>
+            <div><p className="text-sm font-bold text-foreground">ویترین</p><p className="mt-1 text-[10px] leading-5 text-muted-foreground">محتوای تصویری پاسخ.</p></div>
             <Button type="button" onClick={() => setShowcaseItems((current) => [...current, newShowcaseItem()])} className="inline-flex items-center gap-1 rounded-lg border border-border/70 bg-background px-2.5 py-2 text-[11px] font-semibold text-foreground"><Plus size={13} />اسلاید</Button>
           </div>
           {showcaseItems.map((item, itemIndex) => (
