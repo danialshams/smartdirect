@@ -38,11 +38,17 @@ export type MessageType =
     | "SHOWCASE"
     | "FORM";
 
+export type QuickReplyDestinationType = "TEXT" | "FORM" | "SHOWCASE";
+
 export type QuickReplyDraft = {
     id: string;
     title: string;
     payload: string;
     nextMessageId: string | null;
+    destinationType: QuickReplyDestinationType | null;
+    destinationText: string;
+    destinationFormId: string;
+    destinationShowcaseId: string;
 };
 
 export type MessageDraft = {
@@ -86,7 +92,7 @@ export function createLocalId(prefix = "local") {
 }
 
 export function createEmptyQuickReply(): QuickReplyDraft {
-    return { id: createLocalId("quick_reply"), title: "", payload: createLocalId("payload"), nextMessageId: null };
+    return { id: createLocalId("quick_reply"), title: "", payload: createLocalId("payload"), nextMessageId: null, destinationType: null, destinationText: "", destinationFormId: "", destinationShowcaseId: "" };
 }
 
 export function createEmptyMessage(): MessageDraft {
@@ -140,6 +146,10 @@ export function normalizeMessages(value: unknown): MessageDraft[] {
                 title: typeof qr.title === "string" ? qr.title : "",
                 payload: typeof qr.payload === "string" ? qr.payload : createLocalId("payload"),
                 nextMessageId: typeof qr.nextMessageId === "string" ? qr.nextMessageId : null,
+                destinationType: qr.destinationType === "TEXT" || qr.destinationType === "FORM" || qr.destinationType === "SHOWCASE" ? qr.destinationType : null,
+                destinationText: typeof qr.destinationText === "string" ? qr.destinationText : "",
+                destinationFormId: typeof qr.destinationFormId === "string" ? qr.destinationFormId : "",
+                destinationShowcaseId: typeof qr.destinationShowcaseId === "string" ? qr.destinationShowcaseId : "",
             };
         }).filter((item): item is QuickReplyDraft => item !== null);
         return {
@@ -183,15 +193,16 @@ export function validateMessages(messages: MessageDraft[], triggerType?: "COMMEN
                 if (message.quickReplies.length === 0) throw new Error(`برای سوال فرم پیام ${messageNumber} حداقل یک پاسخ اضافه کنید.`);
                 break;
         }
-        if (message.quickReplies.length > 13) throw new Error(`پیام ${messageNumber} نمی‌تواند بیشتر از ۱۳ Quick Reply داشته باشد.`);
+        if (message.quickReplies.length > 13) throw new Error(`پیام ${messageNumber} نمی‌تواند بیشتر از ۱۳ پاسخ داشته باشد.`);
         for (let qrIndex = 0; qrIndex < message.quickReplies.length; qrIndex += 1) {
             const quickReply = message.quickReplies[qrIndex];
             if (!quickReply) continue;
-            if (!quickReply.title.trim()) throw new Error(`عنوان Quick Reply شماره ${qrIndex + 1} در پیام ${messageNumber} را وارد کنید.`);
+            if (!quickReply.title.trim()) throw new Error(`عنوان پاسخ شماره ${qrIndex + 1} در پیام ${messageNumber} را وارد کنید.`);
             if (quickReply.title.trim().length > 20) throw new Error(`عنوان پاسخ شماره ${qrIndex + 1} در پیام ${messageNumber} نباید بیشتر از ۲۰ کاراکتر باشد.`);
-            if (!quickReply.nextMessageId) throw new Error(`مقصد پاسخ شماره ${qrIndex + 1} در پیام ${messageNumber} را انتخاب کنید.`);
-            if (!messageIds.has(quickReply.nextMessageId)) throw new Error(`مقصد پاسخ شماره ${qrIndex + 1} در پیام ${messageNumber} معتبر نیست.`);
-            if (quickReply.nextMessageId === message.id) throw new Error(`پاسخ شماره ${qrIndex + 1} نمی‌تواند به همان فرم متصل شود.`);
+            if (!quickReply.destinationType) throw new Error(`نوع مقصد پاسخ شماره ${qrIndex + 1} را انتخاب کنید.`);
+            if (quickReply.destinationType === "TEXT" && !quickReply.destinationText.trim()) throw new Error(`متن مقصد پاسخ شماره ${qrIndex + 1} را وارد کنید.`);
+            if (quickReply.destinationType === "FORM" && !quickReply.destinationFormId) throw new Error(`فرم مقصد پاسخ شماره ${qrIndex + 1} را انتخاب کنید.`);
+            if (quickReply.destinationType === "SHOWCASE" && !quickReply.destinationShowcaseId) throw new Error(`ویترین مقصد پاسخ شماره ${qrIndex + 1} را انتخاب کنید.`);
         }
     }
     const graph = new Map<string, string[]>();
