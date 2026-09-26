@@ -1,22 +1,16 @@
 "use client";
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Plus, UserRound, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import PublishingDashboardV2 from "./PublishingDashboardV2";
 
+type PublishType = "POST" | "CAROUSEL" | "REEL" | "STORY";
+
 type UserTag = {
   username: string;
-  x: number;
-  y: number;
-};
-
-const emptyTag: UserTag = {
-  username: "",
-  x: 0.5,
-  y: 0.5,
 };
 
 function normalizeUsername(value: string) {
@@ -24,8 +18,9 @@ function normalizeUsername(value: string) {
 }
 
 export default function PublishingWithTags() {
+  const [type, setType] = useState<PublishType>("POST");
   const [tags, setTags] = useState<UserTag[]>([]);
-  const [draft, setDraft] = useState<UserTag>(emptyTag);
+  const [draftUsername, setDraftUsername] = useState("");
   const [message, setMessage] = useState("");
 
   useEffect(() => {
@@ -34,18 +29,24 @@ export default function PublishingWithTags() {
     window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
       const requestUrl = input instanceof Request ? input.url : String(input);
       const pathname = new URL(requestUrl, window.location.href).pathname;
-      const method = (init?.method ?? (input instanceof Request ? input.method : "GET")).toUpperCase();
+      const method = (
+        init?.method ?? (input instanceof Request ? input.method : "GET")
+      ).toUpperCase();
 
-      if (pathname === "/api/instagram/publishing" && method === "POST" && init?.body) {
+      if (
+        pathname === "/api/instagram/publishing" &&
+        method === "POST" &&
+        init?.body
+      ) {
         try {
           const body = JSON.parse(String(init.body)) as Record<string, unknown>;
-          body.userTags = tags.length
-            ? tags.map((tag) => ({
-                username: normalizeUsername(tag.username),
-                x: tag.x,
-                y: tag.y,
-              }))
-            : [];
+
+          body.userTags =
+            type === "POST" || type === "REEL"
+              ? tags.map((tag) => ({
+                  username: normalizeUsername(tag.username),
+                }))
+              : [];
 
           return originalFetch(input, {
             ...init,
@@ -66,10 +67,10 @@ export default function PublishingWithTags() {
     return () => {
       window.fetch = originalFetch;
     };
-  }, [tags]);
+  }, [tags, type]);
 
   function addTag() {
-    const username = normalizeUsername(draft.username);
+    const username = normalizeUsername(draftUsername);
 
     if (!username) {
       setMessage("نام کاربری Instagram را وارد کنید.");
@@ -91,8 +92,8 @@ export default function PublishingWithTags() {
       return;
     }
 
-    setTags((current) => [...current, { ...draft, username }]);
-    setDraft(emptyTag);
+    setTags((current) => [...current, { username }]);
+    setDraftUsername("");
     setMessage("");
   }
 
@@ -101,47 +102,82 @@ export default function PublishingWithTags() {
     setMessage("");
   }
 
-  function updateTag(username: string, field: "x" | "y", value: string) {
-    const numeric = Number(value);
-    if (!Number.isFinite(numeric)) return;
+  function handleTypeChange(nextType: PublishType) {
+    setType(nextType);
 
-    setTags((current) =>
-      current.map((tag) =>
-        tag.username === username
-          ? { ...tag, [field]: Math.min(1, Math.max(0, numeric)) }
-          : tag,
-      ),
-    );
+    if (nextType !== "POST" && nextType !== "REEL") {
+      setTags([]);
+      setDraftUsername("");
+      setMessage("");
+    }
   }
+
+  const showTags = type === "POST" || type === "REEL";
 
   return (
     <div className="space-y-6">
-      <section className="mx-auto w-full max-w-6xl rounded-xl border bg-card p-5 shadow-sm">
-        <div className="flex flex-col gap-4">
-          <div>
+      {showTags && (
+        <section className="mx-auto w-full max-w-6xl rounded-xl border bg-card p-5 shadow-sm">
+          <div className="flex flex-col gap-4">
             <div className="flex items-center gap-2 text-foreground">
               <UserRound size={18} />
               <h2 className="text-base font-bold">Tag People</h2>
             </div>
-            <p className="mt-1 text-sm text-muted-foreground">
-              برای Post و Reel می‌توانید حداکثر ۱۰ اکانت Instagram را Tag کنید.
-              برای Post، X و Y محل Tag روی تصویر است و از ۰ تا ۱ تنظیم می‌شود.
-            </p>
+
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Input
+                value={draftUsername}
+                onChange={(event) => setDraftUsername(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    addTag();
+                  }
+                }}
+                placeholder="username یا @username"
+                className="h-11 flex-1 rounded-xl border border-border px-3 text-sm outline-none transition focus:border-ring"
+                dir="ltr"
+              />
+              <Button
+                type="button"
+                onClick={addTag}
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary/90"
+              >
+                <Plus size={17} />
+                افزودن
+              </Button>
+            </div>
+
+            {tags.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {tags.map((tag) => (
+                  <div
+                    key={tag.username}
+                    className="flex items-center gap-2 rounded-lg border bg-muted/30 px-3 py-2"
+                    dir="ltr"
+                  >
+                    <span className="text-sm font-medium text-foreground">
+                      @{tag.username}
+                    </span>
+                    <Button
+                      type="button"
+                      onClick={() => removeTag(tag.username)}
+                      className="rounded-md p-1 text-muted-foreground hover:bg-background hover:text-foreground"
+                      aria-label={`حذف تگ ${tag.username}`}
+                    >
+                      <X size={15} />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {message && <p className="text-sm text-red-600">{message}</p>}
           </div>
+        </section>
+      )}
 
-          <div className="grid gap-3 md:grid-cols-[1fr_120px_120px_auto]">
-            <Input value={draft.username} onChange={(event) => setDraft((current) => ({ ...current, username: event.target.value }))} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); addTag(); } }} placeholder="username یا @username" className="h-11 rounded-xl border border-border px-3 text-sm outline-none transition focus:border-ring" dir="ltr" />
-            <Input value={draft.x} onChange={(event) => setDraft((current) => ({ ...current, x: Number(event.target.value) }))} type="number" min="0" max="1" step="0.01" placeholder="X" className="h-11 rounded-xl border border-border px-3 text-sm outline-none transition focus:border-ring" dir="ltr" aria-label="X position" />
-            <Input value={draft.y} onChange={(event) => setDraft((current) => ({ ...current, y: Number(event.target.value) }))} type="number" min="0" max="1" step="0.01" placeholder="Y" className="h-11 rounded-xl border border-border px-3 text-sm outline-none transition focus:border-ring" dir="ltr" aria-label="Y position" />
-            <Button type="button" onClick={addTag} className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary/90"><Plus size={17} /> افزودن</Button>
-          </div>
-
-          {tags.length > 0 && <div className="flex flex-wrap gap-2">{tags.map((tag) => <div key={tag.username} className="flex items-center gap-2 rounded-lg border bg-muted/30 px-3 py-2" dir="ltr"><span className="text-sm font-medium text-foreground">@{tag.username}</span><label className="text-xs text-muted-foreground">X<Input value={tag.x} onChange={(event) => updateTag(tag.username, "x", event.target.value)} type="number" min="0" max="1" step="0.01" className="ml-1 w-14 rounded-md border border-border bg-background px-1.5 py-1 text-xs text-foreground outline-none" /></label><label className="text-xs text-muted-foreground">Y<Input value={tag.y} onChange={(event) => updateTag(tag.username, "y", event.target.value)} type="number" min="0" max="1" step="0.01" className="ml-1 w-14 rounded-md border border-border bg-background px-1.5 py-1 text-xs text-foreground outline-none" /></label><Button type="button" onClick={() => removeTag(tag.username)} className="rounded-md p-1 text-muted-foreground hover:bg-background hover:text-foreground" aria-label={`حذف تگ ${tag.username}`}><X size={15} /></Button></div>)}</div>}
-          {message && <p className="text-sm text-red-600">{message}</p>}
-        </div>
-      </section>
-
-      <PublishingDashboardV2 />
+      <PublishingDashboardV2 onTypeChange={handleTypeChange} />
     </div>
   );
 }
