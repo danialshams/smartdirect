@@ -52,6 +52,7 @@ export async function reactToInstagramMessage({
               instagramAccountId: instagramAccount.id,
               operation: "MESSAGE_REACTION",
             },
+            logRequestBody: true,
             body: {
               recipient: { id: recipientId },
               sender_action: "react",
@@ -59,6 +60,21 @@ export async function reactToInstagramMessage({
             },
           },
         );
+
+        console.info("[Instagram Reaction] Meta reaction request succeeded.", {
+          instagramAccountId: instagramAccount.id,
+          igUserId: instagramAccount.igUserId,
+          recipientId,
+          messageId,
+          reaction,
+          endpoint: `${instagramAccount.igUserId}/messages`,
+          payload: {
+            recipient: { id: recipientId },
+            sender_action: "react",
+            payload: { message_id: messageId, reaction },
+          },
+          metaResponse: data,
+        });
 
         return { success: true, recipientId, messageId, reaction, meta: data };
       } catch (error) {
@@ -70,6 +86,17 @@ export async function reactToInstagramMessage({
         }
 
         console.warn("[Instagram Reaction] Meta returned a transient reaction error.", {
+          instagramAccountId: instagramAccount.id,
+          igUserId: instagramAccount.igUserId,
+          recipientId,
+          messageId,
+          reaction,
+          endpoint: `${instagramAccount.igUserId}/messages`,
+          payload: {
+            recipient: { id: recipientId },
+            sender_action: "react",
+            payload: { message_id: messageId, reaction },
+          },
           attempt,
           nextAttempt: attempt + 1,
           status: error.status,
