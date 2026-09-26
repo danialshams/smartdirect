@@ -248,47 +248,21 @@ export default function AutomationFlowMessage({
       {isForm && (
         <div className="space-y-4 rounded-2xl border border-border/70 bg-muted/30 p-3.5">
           <div>
-            <p className="text-sm font-bold text-foreground">ساخت فرم برای همین پیام</p>
-            <p className="mt-1 text-[10px] leading-5 text-muted-foreground">فرم را همین‌جا بسازید؛ بعد از تأیید، فرم به همین پاسخ متصل می‌شود.</p>
+            <p className="text-sm font-bold text-foreground">فرم</p>
+            <p className="mt-1 text-[10px] leading-5 text-muted-foreground">یک سؤال بنویسید و برای هر جواب، مسیر بعدی را مشخص کنید.</p>
           </div>
-          {message.formId ? (
-            <div className="space-y-2">
-              <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-xs text-emerald-800">فرم ساخته و به این پیام متصل شد.</div>
-              <Textarea value={message.text} onChange={(event) => onUpdate({ text: event.target.value })} rows={3} placeholder="متن معرفی فرم (اختیاری)" className="w-full resize-none rounded-xl border border-border/70 bg-background px-3.5 py-3 text-sm leading-7 outline-none focus:border-ring" />
-            </div>
-          ) : (
-            <>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Input value={formTitle} onChange={(event) => setFormTitle(event.target.value)} placeholder="عنوان فرم" className="rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm" />
-                <Input value={formDescription} onChange={(event) => setFormDescription(event.target.value)} placeholder="توضیح کوتاه (اختیاری)" className="rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm" />
-              </div>
-              <div className="space-y-3">
-                {formFields.map((field, fieldIndex) => (
-                  <div key={field.id} className="space-y-3 rounded-xl border border-border/70 bg-background p-3">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-[11px] font-bold text-muted-foreground">سؤال {fieldIndex + 1}</span>
-                      {formFields.length > 1 && <Button type="button" onClick={() => removeFormField(field.id)} className="flex h-7 w-7 items-center justify-center rounded-lg p-0 text-muted-foreground hover:text-red-600" aria-label="حذف سؤال"><Trash2 size={14} /></Button>}
-                    </div>
-                    <Input value={field.label} onChange={(event) => updateFormField(field.id, { label: event.target.value })} placeholder="متن سؤال" className="rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm" />
-                    <div className="grid gap-2 sm:grid-cols-2">
-                      <div className="relative">
-                        <Select value={field.type} onChange={(event) => updateFormField(field.id, { type: event.target.value as FormBuilderField["type"] })} className="w-full appearance-none rounded-xl border border-border/70 bg-background px-3 py-2.5 pl-8 text-xs">
-                          <option value="TEXT">متن کوتاه</option><option value="TEXTAREA">متن بلند</option><option value="PHONE">شماره تلفن</option><option value="EMAIL">ایمیل</option><option value="NUMBER">عدد</option><option value="SELECT">انتخاب از لیست</option><option value="RADIO">انتخاب یک گزینه</option><option value="CHECKBOX">انتخاب چند گزینه</option>
-                        </Select>
-                        <ChevronDown size={14} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                      </div>
-                      <Input value={field.placeholder} onChange={(event) => updateFormField(field.id, { placeholder: event.target.value })} placeholder="Placeholder (اختیاری)" className="rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm" />
-                    </div>
-                    {["SELECT", "RADIO", "CHECKBOX"].includes(field.type) && <Textarea value={field.options} onChange={(event) => updateFormField(field.id, { options: event.target.value })} rows={3} placeholder="گزینه‌ها را هر کدام در یک خط وارد کنید" className="w-full resize-none rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm leading-6" />}
-                    <label className="flex items-center gap-2 text-[11px] font-medium text-foreground"><input type="checkbox" checked={field.required} onChange={(event) => updateFormField(field.id, { required: event.target.checked })} />این سؤال اجباری باشد</label>
-                  </div>
-                ))}
-              </div>
-              <Button type="button" onClick={() => setFormFields((current) => [...current, newFormBuilderField()])} className="inline-flex w-full items-center justify-center gap-1 rounded-xl border border-dashed border-border/70 bg-background px-3 py-3 text-xs font-semibold text-foreground"><Plus size={14} />افزودن سؤال</Button>
-              {formError && <p className="text-xs text-red-600">{formError}</p>}
-              <Button type="button" disabled={formSaving || loadingResources} onClick={() => void createForm()} className="w-full rounded-xl bg-primary px-4 py-3 text-xs font-semibold text-white disabled:opacity-50">{formSaving ? "در حال ساخت فرم..." : "تأیید و ساخت فرم"}</Button>
-            </>
-          )}
+          <Textarea
+            value={message.text}
+            onChange={(event) => onUpdate({ text: event.target.value })}
+            rows={3}
+            placeholder="سؤال را وارد کنید..."
+            className="w-full resize-none rounded-xl border border-border/70 bg-background px-3.5 py-3 text-sm leading-7 outline-none focus:border-ring"
+          />
+          <BranchAnswerEditor
+            replies={message.quickReplies}
+            showcases={showcases}
+            onChange={(replies) => onUpdate({ quickReplies: replies })}
+          />
         </div>
       )}
 
@@ -332,38 +306,8 @@ export default function AutomationFlowMessage({
         </div>
       )}
 
-      {isForm && (
-        <div className="space-y-3 rounded-2xl border border-border/70 bg-muted/30 p-3.5">
-          <div className="flex items-center justify-between gap-2">
-            <div>
-              <p className="text-xs font-bold text-foreground">پاسخ‌های فرم</p>
-              <p className="mt-1 text-[10px] leading-5 text-muted-foreground">برای هر جواب، مقصد بعدی را انتخاب کنید. مقصد می‌تواند متن، فرم یا ویترین باشد.</p>
-            </div>
-            {canAddReply && <Button type="button" onClick={onAddQuickReply} className="inline-flex items-center gap-1 rounded-lg border border-border/70 bg-background px-2.5 py-1.5 text-[11px] font-semibold text-foreground"><Plus size={13} />افزودن پاسخ</Button>}
-          </div>
-          {message.quickReplies.map((answer, answerIndex) => (
-            <div key={answer.id} className="space-y-2">
-              <div className="grid gap-2 sm:grid-cols-[1fr_1.4fr_auto]">
-                <Input value={answer.title} onChange={(event) => onUpdateQuickReply(answer.id, { title: event.target.value })} placeholder={"جواب " + (answerIndex + 1)} maxLength={20} className="rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm outline-none focus:border-ring" />
-                <div className="relative">
-                  <Select value={answer.destinationType ?? ""} onChange={(event) => onUpdateQuickReply(answer.id, { destinationType: (event.target.value || null) as QuickReplyDraft["destinationType"], destinationText: "", destinationFormId: "", destinationShowcaseId: "", nextMessageId: null })} className="w-full appearance-none rounded-xl border border-border/70 bg-background px-3 py-2.5 pl-8 text-xs outline-none focus:border-ring">
-                    <option value="">نوع مقصد پاسخ را انتخاب کنید</option>
-                    <option value="TEXT">متن</option>
-                    <option value="FORM">فرم</option>
-                    <option value="SHOWCASE">ویترین</option>
-                  </Select>
-                  <ChevronDown size={14} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                </div>
-                <Button type="button" onClick={() => onRemoveQuickReply(answer.id)} className="rounded-xl border border-border/70 bg-background px-3 text-muted-foreground hover:text-red-600" aria-label="حذف پاسخ"><Trash2 size={15} /></Button>
-              </div>
-              {answer.destinationType === "TEXT" && <Textarea value={answer.destinationText} onChange={(event) => onUpdateQuickReply(answer.id, { destinationText: event.target.value })} rows={3} placeholder="متن مقصد را وارد کنید." className="w-full resize-none rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm leading-6 outline-none focus:border-ring" />}
-              {answer.destinationType === "FORM" && <div className="relative"><Select value={answer.destinationFormId} onChange={(event) => onUpdateQuickReply(answer.id, { destinationFormId: event.target.value })} className="w-full appearance-none rounded-xl border border-border/70 bg-background px-3 py-2.5 pl-8 text-xs outline-none focus:border-ring"><option value="">فرم مقصد را انتخاب کنید</option>{availableForms.map((form) => <option key={form.id} value={form.id}>{form.title}</option>)}</Select><ChevronDown size={14} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" /></div>}
-              {answer.destinationType === "SHOWCASE" && <div className="relative"><Select value={answer.destinationShowcaseId} onChange={(event) => onUpdateQuickReply(answer.id, { destinationShowcaseId: event.target.value })} className="w-full appearance-none rounded-xl border border-border/70 bg-background px-3 py-2.5 pl-8 text-xs outline-none focus:border-ring"><option value="">ویترین مقصد را انتخاب کنید</option>{showcases.map((showcase) => <option key={showcase.id} value={showcase.id}>{showcase.title}</option>)}</Select><ChevronDown size={14} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" /></div>}
-            </div>
-          ))}
-          {message.quickReplies.length === 0 && <Button type="button" onClick={onAddQuickReply} className="w-full rounded-xl border border-dashed border-border/70 px-3 py-3 text-xs font-semibold text-muted-foreground hover:bg-background">+ اولین پاسخ فرم</Button>}
-        </div>
-      )}
+      {false && <div />}
+
     </div>
   );
 }
