@@ -54,6 +54,7 @@ export default function AutomationFlowMessage({
   index,
   total,
   showcases,
+  forms,
   loadingResources,
   instagramAccountId,
   onUpdate,
