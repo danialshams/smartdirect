@@ -75,3 +75,88 @@ export async function findMatchingAutomation(input: FindAutomationInput) {
     ) ?? null
   );
 }
+
+
+function findQuickReplyPayload(node: unknown, payload: string): boolean {
+  if (!node || typeof node !== "object") return false;
+
+  const value = node as { payload?: unknown; quickReplies?: unknown };
+
+  if (value.payload === payload) return true;
+
+  if (Array.isArray(value.quickReplies)) {
+    return value.quickReplies.some((child) =>
+      findQuickReplyPayload(child, payload),
+    );
+  }
+
+  return false;
+}
+
+export async function findAutomationByQuickReplyPayload({
+  instagramAccountId,
+  payload,
+}: {
+  instagramAccountId: string;
+  payload: string;
+}) {
+  if (!instagramAccountId || !payload) return null;
+
+  const cacheKeyValue = cacheKey(
+    "automation",
+    instagramAccountId,
+    "QUICK_REPLY_PAYLOAD",
+  );
+
+  const automations = await getOrSetCachedJson(cacheKeyValue, () =>
+    prisma.automation.findMany({
+      where: {
+        instagramAccountId,
+        isActive: true,
+      },
+      include: {
+        messages: {
+          orderBy: { order: "asc" },
+          include: {
+            quickReplies: { orderBy: { createdAt: "asc" } },
+            showcase: {
+              include: {
+                items: {
+                  where: { isActive: true },
+                  orderBy: { order: "asc" },
+                },
+              },
+            },
+            form: {
+              include: {
+                fields: { orderBy: { order: "asc" } },
+              },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: "asc" },
+    }),
+    CACHE_TTL.AUTOMATION,
+  );
+
+  return (
+    automations.find((automation) =>
+      automation.messages.some((message) =>
+        message.quickReplies.some((quickReply) => {
+          if (quickReply.payload === payload) return true;
+          if (!quickReply.replyText) return false;
+
+          try {
+            return findQuickReplyPayload(
+              JSON.parse(quickReply.replyText),
+              payload,
+            );
+          } catch {
+            return false;
+          }
+        }),
+      ),
+    ) ?? null
+  );
+}
