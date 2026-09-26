@@ -9,9 +9,11 @@ export const dynamic = "force-dynamic";
 
 const MAX_IMAGE_SIZE = 20 * 1024 * 1024;
 const MAX_VIDEO_SIZE = 200 * 1024 * 1024;
+const MAX_AUDIO_SIZE = 50 * 1024 * 1024;
 
 const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const allowedVideoTypes = new Set(["video/mp4", "video/quicktime"]);
+const allowedAudioTypes = new Set(["audio/mpeg", "audio/mp3", "audio/mp4", "audio/aac", "audio/wav", "audio/x-wav", "audio/ogg", "audio/webm", "audio/m4a"]);
 
 function sanitizeFileName(name: string) {
   return path.basename(name).replace(/[^a-zA-Z0-9._-]/g, "-");
@@ -34,18 +36,19 @@ export async function POST(request: NextRequest) {
 
     const isImage = allowedImageTypes.has(file.type);
     const isVideo = allowedVideoTypes.has(file.type);
+    const isAudio = allowedAudioTypes.has(file.type) || file.type.startsWith("audio/");
 
-    if (!isImage && !isVideo) {
+    if (!isImage && !isVideo && !isAudio) {
       return NextResponse.json({ success: false, message: "فرمت فایل پشتیبانی نمی‌شود." }, { status: 400 });
     }
 
-    const maxSize = isVideo ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE;
+    const maxSize = isVideo ? MAX_VIDEO_SIZE : isAudio ? MAX_AUDIO_SIZE : MAX_IMAGE_SIZE;
 
     if (file.size > maxSize) {
       return NextResponse.json({ success: false, message: "حجم فایل بیش از حد مجاز است." }, { status: 400 });
     }
 
-    const extension = path.extname(file.name) || (isImage ? ".jpg" : ".mp4");
+    const extension = path.extname(file.name) || (isImage ? ".jpg" : isVideo ? ".mp4" : ".mp3");
     const safeName = sanitizeFileName(path.basename(file.name, extension));
     const key = ["pending", session.user.id, `${crypto.randomUUID()}-${safeName}${extension}`].join("/");
 
@@ -61,7 +64,7 @@ export async function POST(request: NextRequest) {
       data: {
         storageKey: result.storageKey,
         publicUrl: result.publicUrl,
-        type: isVideo ? "VIDEO" : "IMAGE",
+        type: isVideo ? "VIDEO" : isAudio ? "AUDIO" : "IMAGE",
         fileName: file.name,
         mimeType: file.type,
         fileSize: file.size,
