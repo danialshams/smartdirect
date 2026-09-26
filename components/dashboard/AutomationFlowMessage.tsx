@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select } from "@/components/ui/select"
 
-import { ArrowDown, ArrowUp, ChevronDown, ImagePlus, MessageSquare, Plus, Trash2, Upload, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, ClipboardList, ImagePlus, MessageSquare, Mic, Plus, Store, Trash2, Upload, Video, X } from "lucide-react";
 import { useState } from "react";
 import type { AutomationTriggerType } from "./AutomationManager";
 import type { FormItem, MessageDraft, QuickReplyDraft, Showcase } from "./automation-form-utils";
@@ -157,111 +157,123 @@ export default function AutomationFlowMessage({
   }
 
   return (
-    <div className="space-y-4 rounded-xl border bg-card p-4">
+    <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-sm font-bold text-foreground">پیام {index + 1}</p>
-          <p className="mt-1 text-[11px] text-muted-foreground">{getMessageTypeLabel(message.messageType)}</p>
+          <p className="text-xs font-semibold text-muted-foreground">نوع پیام</p>
+          <p className="mt-1 text-[11px] text-muted-foreground">نوع پاسخی که کاربر دریافت می‌کند را انتخاب کنید.</p>
         </div>
         <div className="flex items-center gap-1">
-          <Button type="button" disabled={index === 0} onClick={onMoveUp} className="rounded-lg p-2 text-muted-foreground hover:bg-muted disabled:opacity-30" aria-label="جابجایی به بالا"><ArrowUp size={16} /></Button>
-          <Button type="button" disabled={index === total - 1} onClick={onMoveDown} className="rounded-lg p-2 text-muted-foreground hover:bg-muted disabled:opacity-30" aria-label="جابجایی به پایین"><ArrowDown size={16} /></Button>
-          <Button type="button" disabled={total === 1} onClick={onRemove} className="rounded-lg p-2 text-muted-foreground hover:bg-red-50 hover:text-red-600 disabled:opacity-30" aria-label="حذف پیام"><Trash2 size={16} /></Button>
+          <Button type="button" disabled={index === 0} onClick={onMoveUp} className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/70 bg-background p-0 text-muted-foreground disabled:opacity-30" aria-label="جابجایی به بالا"><ArrowUp size={14} /></Button>
+          <Button type="button" disabled={index === total - 1} onClick={onMoveDown} className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/70 bg-background p-0 text-muted-foreground disabled:opacity-30" aria-label="جابجایی به پایین"><ArrowDown size={14} /></Button>
+          <Button type="button" disabled={total === 1} onClick={onRemove} className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/70 bg-background p-0 text-muted-foreground hover:text-red-600 disabled:opacity-30" aria-label="حذف پیام"><Trash2 size={14} /></Button>
         </div>
       </div>
 
-      <div>
-        <label className="mb-2 block text-xs font-semibold text-muted-foreground">نوع پیام</label>
-        <div className="relative">
-          <Select value={message.messageType} onChange={(event) => onUpdate({ messageType: event.target.value as MessageDraft["messageType"], text: "", mediaUrl: "", mediaId: "", showcaseId: "", formId: "" })} className="w-full appearance-none rounded-lg border bg-background px-4 py-3 pl-10 text-sm outline-none focus:border-ring">
-            <option value="TEXT">متن</option>
-            {triggerType === "STORY_REPLY_KEYWORD" ? <option value="IMAGE">عکس</option> : null}
-            {triggerType === "STORY_REPLY_KEYWORD" ? <option value="VIDEO">ویدیو</option> : null}
-            {triggerType === "STORY_REPLY_KEYWORD" ? <option value="AUDIO">وویس</option> : null}
-            {triggerType === "STORY_REPLY_KEYWORD" ? <option value="SHOWCASE">ویترین</option> : null}
-            {triggerType === "STORY_REPLY_KEYWORD" ? <option value="FORM">فرم / سوال</option> : null}
-          </Select>
-          <ChevronDown size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-        </div>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+        {([
+          ["TEXT", "متن", MessageSquare],
+          ...(triggerType === "STORY_REPLY_KEYWORD" ? [
+            ["IMAGE", "عکس", ImagePlus],
+            ["VIDEO", "ویدیو", Video],
+            ["AUDIO", "وویس", Mic],
+            ["SHOWCASE", "ویترین", Store],
+            ["FORM", "فرم / سوال", ClipboardList],
+          ] : []),
+        ] as const).map(([value, label, Icon]) => (
+          <Button
+            key={value}
+            type="button"
+            onClick={() => onUpdate({ messageType: value, text: "", mediaUrl: "", mediaId: "", showcaseId: "", formId: "" })}
+            className={[
+              "flex min-h-[76px] flex-col items-center justify-center gap-2 rounded-2xl border px-2 text-xs font-semibold transition",
+              message.messageType === value
+                ? "border-primary bg-primary/5 text-primary ring-1 ring-primary/20"
+                : "border-border/70 bg-background text-muted-foreground hover:bg-muted",
+            ].join(" ")}
+          >
+            <Icon size={20} />
+            {label}
+          </Button>
+        ))}
       </div>
 
       {message.messageType === "TEXT" && (
-        <Textarea value={message.text} onChange={(event) => onUpdate({ text: event.target.value })} rows={4} placeholder="متن پاسخ را وارد کنید..." className="w-full resize-y rounded-xl border border-border px-4 py-3 text-sm leading-7 outline-none focus:border-ring" />
+        <div className="space-y-2">
+          <label className="text-xs font-semibold text-foreground">متن پاسخ</label>
+          <Textarea value={message.text} onChange={(event) => onUpdate({ text: event.target.value })} rows={5} placeholder="متن پاسخ را وارد کنید..." className="w-full resize-none rounded-2xl border border-border/70 bg-background px-4 py-3 text-sm leading-7 outline-none focus:border-ring" />
+        </div>
       )}
 
       {isForm && (
-        <div className="space-y-3 rounded-xl border border-border bg-muted p-3">
-          <div className="flex items-center gap-2 text-sm font-bold text-foreground"><MessageSquare size={16} /> سوال فرم</div>
-          <Textarea value={message.text} onChange={(event) => onUpdate({ text: event.target.value })} rows={3} placeholder="مثلاً: کدام رنگ را می‌پسندید؟" className="w-full resize-y rounded-lg border bg-background px-4 py-3 text-sm leading-7 outline-none focus:border-ring" />
-          <p className="text-[11px] leading-6 text-muted-foreground">هر جواب یک دکمه است. برای هر دکمه مقصد را انتخاب کنید؛ مقصد می‌تواند متن، سوال بعدی، ویترین، عکس، ویدیو یا صوت باشد.</p>
+        <div className="space-y-3 rounded-2xl border border-border/70 bg-muted/30 p-3.5">
+          <div className="flex items-center gap-2"><MessageSquare size={16} className="text-primary" /><span className="text-sm font-bold text-foreground">سوال فرم</span></div>
+          <Textarea value={message.text} onChange={(event) => onUpdate({ text: event.target.value })} rows={3} placeholder="مثلاً: کدام رنگ را می‌پسندید؟" className="w-full resize-none rounded-xl border border-border/70 bg-background px-3.5 py-3 text-sm leading-7 outline-none focus:border-ring" />
+          <p className="text-[11px] leading-6 text-muted-foreground">برای هر جواب یک دکمه بسازید و مقصد بعدی آن را مشخص کنید.</p>
         </div>
       )}
 
       {(message.messageType === "IMAGE" || message.messageType === "VIDEO" || message.messageType === "AUDIO") && (
-        <div className="space-y-3 rounded-xl border border-border bg-muted p-3">
-          <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-background px-4 py-4 text-sm font-semibold text-foreground transition hover:bg-white">
-            <Upload size={17} />
-            {mediaUploading ? "در حال آپلود..." : message.mediaUrl ? "انتخاب فایل دیگر" : "انتخاب فایل از دستگاه"}
-            <Input
-              type="file"
-              accept={message.messageType === "IMAGE" ? "image/jpeg,image/png,image/webp" : message.messageType === "VIDEO" ? "video/mp4,video/quicktime" : "audio/*"}
-              className="hidden"
-              disabled={mediaUploading}
-              onChange={(event) => void handleMessageMedia(event.target.files?.[0])}
-            />
+        <div className="space-y-3 rounded-2xl border border-border/70 bg-muted/30 p-3.5">
+          <label className="flex min-h-28 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-background px-4 py-5 text-center text-xs font-semibold text-foreground transition hover:bg-muted/40">
+            {message.messageType === "IMAGE" ? <ImagePlus size={24} className="text-primary" /> : message.messageType === "VIDEO" ? <Video size={24} className="text-primary" /> : <Mic size={24} className="text-primary" />}
+            {mediaUploading ? "در حال آپلود..." : message.mediaUrl ? "انتخاب فایل دیگر" : "انتخاب فایل"}
+            <span className="text-[10px] font-normal text-muted-foreground">فایل را از دستگاه انتخاب کنید.</span>
+            <Input type="file" accept={message.messageType === "IMAGE" ? "image/jpeg,image/png,image/webp" : message.messageType === "VIDEO" ? "video/mp4,video/quicktime" : "audio/*"} className="hidden" disabled={mediaUploading} onChange={(event) => void handleMessageMedia(event.target.files?.[0])} />
           </label>
-          {message.mediaUrl && (
-            <p className="truncate text-xs text-muted-foreground" dir="ltr">{message.mediaUrl}</p>
-          )}
+          {message.mediaUrl && <p className="truncate rounded-lg bg-background px-3 py-2 text-[10px] text-muted-foreground" dir="ltr">{message.mediaUrl}</p>}
           {showcaseError && <p className="text-xs text-red-600">{showcaseError}</p>}
         </div>
       )}
 
       {message.messageType === "SHOWCASE" && (
-        <div className="space-y-3 rounded-xl border border-border bg-muted p-3">
+        <div className="space-y-3 rounded-2xl border border-border/70 bg-muted/30 p-3.5">
           <div className="flex items-center justify-between gap-2">
-            <div><p className="text-sm font-bold text-foreground">ویترین اسلایدی</p><p className="mt-1 text-[11px] text-muted-foreground">هر اسلاید فقط تصویر، نام و توضیح دارد و کاربر در Instagram آن را با دست ورق می‌زند.</p></div>
-            <Button type="button" onClick={() => setShowcaseItems((current) => [...current, newShowcaseItem()])} className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-border bg-white px-3 py-2 text-xs font-semibold text-foreground"><Plus size={14} /> اسلاید</Button>
+            <div><p className="text-sm font-bold text-foreground">ویترین</p><p className="mt-1 text-[10px] leading-5 text-muted-foreground">اسلایدهای تصویری که کاربر در Instagram ورق می‌زند.</p></div>
+            <Button type="button" onClick={() => setShowcaseItems((current) => [...current, newShowcaseItem()])} className="inline-flex items-center gap-1 rounded-lg border border-border/70 bg-background px-2.5 py-2 text-[11px] font-semibold text-foreground"><Plus size={13} />اسلاید</Button>
           </div>
           {showcaseItems.map((item, itemIndex) => (
-            <div key={item.id} className="rounded-lg border bg-background p-3">
-              <div className="mb-3 flex items-center justify-between"><span className="text-xs font-bold text-muted-foreground">اسلاید {itemIndex + 1}</span>{showcaseItems.length > 1 && <Button type="button" onClick={() => setShowcaseItems((current) => current.filter((entry) => entry.id !== item.id))} className="text-muted-foreground hover:text-red-600"><X size={15} /></Button>}</div>
-              <div className="grid gap-3 sm:grid-cols-[120px_1fr]">
-                <label className="flex min-h-[120px] cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-dashed border-border bg-muted">
-                  {item.previewUrl ? <img src={item.previewUrl} alt="" className="h-full w-full object-cover" /> : <span className="flex flex-col items-center gap-2 text-[11px] text-muted-foreground"><ImagePlus size={24} />آپلود تصویر</span>}
+            <div key={item.id} className="rounded-xl border border-border/70 bg-background p-3">
+              <div className="mb-2.5 flex items-center justify-between"><span className="text-[11px] font-bold text-muted-foreground">اسلاید {itemIndex + 1}</span>{showcaseItems.length > 1 && <Button type="button" onClick={() => setShowcaseItems((current) => current.filter((entry) => entry.id !== item.id))} className="flex h-7 w-7 items-center justify-center rounded-lg p-0 text-muted-foreground hover:text-red-600"><X size={14} /></Button>}</div>
+              <div className="grid gap-3 sm:grid-cols-[112px_1fr]">
+                <label className="flex min-h-[112px] cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-dashed border-border bg-muted">
+                  {item.previewUrl ? <img src={item.previewUrl} alt="" className="h-full w-full object-cover" /> : <span className="flex flex-col items-center gap-1.5 text-[10px] text-muted-foreground"><ImagePlus size={22} />تصویر</span>}
                   <Input type="file" accept="image/*" className="hidden" onChange={(event) => void handleShowcaseImage(item.id, event.target.files?.[0])} />
                 </label>
-                <div className="space-y-3">
-                  <Input value={item.title} onChange={(event) => updateShowcaseItem(item.id, { title: event.target.value })} placeholder="نام اسلاید" className="w-full rounded-xl border border-border px-3 py-2.5 text-sm outline-none focus:border-ring" />
-                  <Textarea value={item.description} onChange={(event) => updateShowcaseItem(item.id, { description: event.target.value })} rows={3} placeholder="توضیح اسلاید" className="w-full resize-none rounded-xl border border-border px-3 py-2.5 text-sm outline-none focus:border-ring" />
+                <div className="space-y-2.5">
+                  <Input value={item.title} onChange={(event) => updateShowcaseItem(item.id, { title: event.target.value })} placeholder="نام اسلاید" className="w-full rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm outline-none focus:border-ring" />
+                  <Textarea value={item.description} onChange={(event) => updateShowcaseItem(item.id, { description: event.target.value })} rows={3} placeholder="توضیح اسلاید" className="w-full resize-none rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm leading-6 outline-none focus:border-ring" />
                 </div>
               </div>
             </div>
           ))}
           {showcaseError && <p className="text-xs text-red-600">{showcaseError}</p>}
-          {message.showcaseId && <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-xs leading-6 text-emerald-800">
-            <span className="font-bold">ویترین متصل شد:</span> {showcases.find((item) => item.id === message.showcaseId)?.title || "ویترین ساخته‌شده"}
-            <span className="block text-[10px] text-emerald-700">شناسه ویترین: {message.showcaseId}</span>
-          </div>}
+          {message.showcaseId && <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-xs leading-6 text-emerald-800"><span className="font-bold">ویترین متصل شد:</span> {showcases.find((item) => item.id === message.showcaseId)?.title || "ویترین ساخته‌شده"}</div>}
           <Button type="button" disabled={showcaseSaving || loadingResources || Boolean(message.showcaseId)} onClick={() => void createShowcase()} className="w-full rounded-xl bg-primary px-4 py-3 text-xs font-semibold text-white disabled:opacity-50">{showcaseSaving ? "در حال ساخت ویترین..." : message.showcaseId ? "ویترین متصل است" : "ساخت و اتصال ویترین"}</Button>
         </div>
       )}
 
       {(message.quickReplies.length > 0 || isForm) && (
-        <div className="space-y-3 rounded-xl border border-border bg-muted p-3">
-          <div className="flex items-center justify-between"><div><p className="text-xs font-bold text-foreground">{isForm ? "جواب‌های فرم" : "Quick Reply"}</p><p className="mt-1 text-[10px] text-muted-foreground">با انتخاب هر جواب، مسیر بعدی تعیین می‌شود.</p></div>{canAddReply && <Button type="button" onClick={onAddQuickReply} className="inline-flex items-center gap-1 rounded-lg border border-border bg-white px-2.5 py-1.5 text-[11px] font-semibold text-foreground"><Plus size={13} /> افزودن جواب</Button>}</div>
+        <div className="space-y-3 rounded-2xl border border-border/70 bg-muted/30 p-3.5">
+          <div className="flex items-center justify-between gap-2">
+            <div><p className="text-xs font-bold text-foreground">{isForm ? "جواب‌های فرم" : "Quick Reply"}</p><p className="mt-1 text-[10px] text-muted-foreground">با انتخاب جواب، مسیر بعدی را مشخص کنید.</p></div>
+            {canAddReply && <Button type="button" onClick={onAddQuickReply} className="inline-flex items-center gap-1 rounded-lg border border-border/70 bg-background px-2.5 py-1.5 text-[11px] font-semibold text-foreground"><Plus size={13} />افزودن</Button>}
+          </div>
           {message.quickReplies.map((quickReply, quickReplyIndex) => (
             <div key={quickReply.id} className="grid gap-2 sm:grid-cols-[1fr_1.4fr_auto]">
-              <Input value={quickReply.title} onChange={(event) => onUpdateQuickReply(quickReply.id, { title: event.target.value })} placeholder={`جواب ${quickReplyIndex + 1}`} maxLength={20} className="rounded-lg border bg-background px-3 py-2.5 text-sm outline-none focus:border-ring" />
-              <div className="relative"><Select value={quickReply.nextMessageId ?? ""} onChange={(event) => onUpdateQuickReply(quickReply.id, { nextMessageId: event.target.value || null })} className="w-full appearance-none rounded-lg border bg-background px-3 py-2.5 pl-8 text-xs outline-none focus:border-ring"><option value="">مقصد جواب را انتخاب کنید</option>{messageOptions.filter((option) => option.id !== message.id).map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}</Select><ChevronDown size={14} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" /></div>
-              <Button type="button" onClick={() => onRemoveQuickReply(quickReply.id)} className="rounded-lg border bg-background px-3 text-muted-foreground hover:text-red-600" aria-label="حذف جواب"><Trash2 size={15} /></Button>
+              <Input value={quickReply.title} onChange={(event) => onUpdateQuickReply(quickReply.id, { title: event.target.value })} placeholder={"جواب " + (quickReplyIndex + 1)} maxLength={20} className="rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm outline-none focus:border-ring" />
+              <div className="relative"><Select value={quickReply.nextMessageId ?? ""} onChange={(event) => onUpdateQuickReply(quickReply.id, { nextMessageId: event.target.value || null })} className="w-full appearance-none rounded-xl border border-border/70 bg-background px-3 py-2.5 pl-8 text-xs outline-none focus:border-ring"><option value="">مقصد جواب را انتخاب کنید</option>{messageOptions.filter((option) => option.id !== message.id).map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}</Select><ChevronDown size={14} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" /></div>
+              <Button type="button" onClick={() => onRemoveQuickReply(quickReply.id)} className="rounded-xl border border-border/70 bg-background px-3 text-muted-foreground hover:text-red-600" aria-label="حذف جواب"><Trash2 size={15} /></Button>
             </div>
           ))}
-          {isForm && message.quickReplies.length === 0 && <Button type="button" onClick={onAddQuickReply} className="w-full rounded-xl border border-dashed border-border px-3 py-3 text-xs font-semibold text-muted-foreground hover:bg-white">+ اولین جواب فرم را اضافه کنید</Button>}
+          {isForm && message.quickReplies.length === 0 && <Button type="button" onClick={onAddQuickReply} className="w-full rounded-xl border border-dashed border-border/70 px-3 py-3 text-xs font-semibold text-muted-foreground hover:bg-background">+ اولین جواب فرم</Button>}
         </div>
       )}
 
-      {message.messageType !== "FORM" && message.quickReplies.length === 0 && <Button type="button" disabled={!canAddReply} onClick={onAddQuickReply} className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground disabled:opacity-40"><Plus size={14} /> افزودن Quick Reply</Button>}
+      {message.messageType !== "FORM" && message.quickReplies.length === 0 && (
+        <Button type="button" disabled={!canAddReply} onClick={onAddQuickReply} className="inline-flex items-center gap-1 rounded-lg px-1 text-xs font-semibold text-muted-foreground disabled:opacity-40"><Plus size={14} />افزودن Quick Reply</Button>
+      )}
     </div>
   );
+}
 }
