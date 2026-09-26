@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
-import { instagramApiRequest } from "@/lib/instagram/client";
+import { InstagramApiError, instagramApiRequest } from "@/lib/instagram/client";
 
 type ReactToInstagramMessageInput = {
   instagramAccountId: string;
@@ -17,6 +17,8 @@ type ReactToInstagramMessageResult = {
   error?: string;
   meta?: unknown;
 };
+
+const MAX_REACTION_ATTEMPTS = 3;
 
 export async function reactToInstagramMessage({
   instagramAccountId,
@@ -38,21 +40,45 @@ export async function reactToInstagramMessage({
 
     const accessToken = await getValidInstagramAccessToken(instagramAccount.id);
 
-    const data = await instagramApiRequest(
-      `${encodeURIComponent(instagramAccount.igUserId)}/messages`,
-      {
-        method: "POST",
-        accessToken,
-        rateLimit: { instagramAccountId: instagramAccount.id, operation: "MESSAGE_REACTION" },
-        body: {
-          recipient: { id: recipientId },
-          sender_action: "react",
-          payload: { message_id: messageId, reaction },
-        },
-      },
-    );
+    for (let attempt = 1; attempt <= MAX_REACTION_ATTEMPTS; attempt += 1) {
+      try {
+        const data = await instagramApiRequest(
+          `${encodeURIComponent(instagramAccount.igUserId)}/messages`,
+          {
+            method: "POST",
+            accessToken,
+            rateLimit: {
+              instagramAccountId: instagramAccount.id,
+              operation: "MESSAGE_REACTION",
+            },
+            body: {
+              recipient: { id: recipientId },
+              sender_action: "react",
+              payload: { message_id: messageId, reaction },
+            },
+          },
+        );
 
-    return { success: true, recipientId, messageId, reaction, meta: data };
+        return { success: true, recipientId, messageId, reaction, meta: data };
+      } catch (error) {
+        const isTransient =
+          error instanceof InstagramApiError && error.status >= 500 && error.status < 600;
+
+        if (!isTransient || attempt === MAX_REACTION_ATTEMPTS) {
+          throw error;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, attempt * 1000));
+      }
+    }
+
+    return {
+      success: false,
+      recipientId,
+      messageId,
+      reaction,
+      error: "Instagram reaction request failed.",
+    };
   } catch (error) {
     return {
       success: false,
