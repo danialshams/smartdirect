@@ -73,6 +73,7 @@ export type InstagramApiRequestOptions = {
   retryBaseDelayMs?: number;
   rateLimit?: InstagramRateLimitContext;
   rateLimitWaitMs?: number;
+  logRequestBody?: boolean;
 };
 
 function getTimeoutMs(timeoutMs?: number) {
@@ -264,6 +265,7 @@ export async function instagramApiRequest<T = unknown>(
     operation,
     hasAccessToken: Boolean(options.accessToken),
     hasRateLimit: Boolean(options.rateLimit),
+    ...(options.logRequestBody ? { requestBody: options.body } : {}),
   });
 
   if (options.rateLimit) {
