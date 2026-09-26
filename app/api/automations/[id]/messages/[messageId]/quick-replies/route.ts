@@ -301,10 +301,9 @@ export async function POST(
 
         payload,
 
-        replyText,
+        replyText: JSON.stringify({ type: destinationType, text: destinationText, formId: destinationFormId, showcaseId: destinationShowcaseId }),
 
         nextMessageId,
-        replyText: JSON.stringify({ type: destinationType, text: destinationText, formId: destinationFormId, showcaseId: destinationShowcaseId }),
       },
 
       include: {
