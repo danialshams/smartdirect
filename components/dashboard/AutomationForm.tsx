@@ -1115,7 +1115,7 @@ export default function AutomationForm({
 
             for (const quickReply of message.quickReplies) {
                 const response = await fetch(
-                    \`/api/automations/\${targetAutomationId}/messages/\${serverMessageId}/quick-replies\`,
+                    `/api/automations/${targetAutomationId}/messages/${serverMessageId}/quick-replies`,
                     {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
@@ -1142,7 +1142,7 @@ export default function AutomationForm({
                     throw new Error(
                         result.error ||
                         result.message ||
-                        \`ذخیره Quick Reply «\${quickReply.title}» ناموفق بود.\`,
+                        `ذخیره Quick Reply «${quickReply.title}» ناموفق بود.`,
                     );
                 }
             }
