@@ -187,15 +187,25 @@ async function executeAutomationInternal(input: ExecuteAutomationInput) {
     const selectedReply = automation.messages.flatMap((message) => message.quickReplies).find((reply) => reply.id === input.selectedQuickReplyId);
     if (!selectedReply) throw new Error("Quick reply not found");
 
-    if (selectedReply.destinationType) {
+    let destination: { type: "TEXT" | "FORM" | "SHOWCASE"; text?: string | null; formId?: string | null; showcaseId?: string | null } | null = null;
+    if (selectedReply.replyText) {
+      try {
+        const parsed = JSON.parse(selectedReply.replyText);
+        if (parsed?.type === "TEXT" || parsed?.type === "FORM" || parsed?.type === "SHOWCASE") destination = parsed;
+      } catch {
+        destination = null;
+      }
+    }
+
+    if (destination) {
       const destinationMessage = {
         id: `destination:${selectedReply.id}`,
-        messageType: selectedReply.destinationType === "TEXT" ? AutomationMessageType.TEXT : selectedReply.destinationType === "FORM" ? AutomationMessageType.FORM : AutomationMessageType.SHOWCASE,
-        text: selectedReply.destinationText,
+        messageType: destination.type === "TEXT" ? AutomationMessageType.TEXT : destination.type === "FORM" ? AutomationMessageType.FORM : AutomationMessageType.SHOWCASE,
+        text: destination.text ?? null,
         mediaUrl: null,
         mediaId: null,
-        showcaseId: selectedReply.destinationShowcaseId,
-        formId: selectedReply.destinationFormId,
+        showcaseId: destination.showcaseId ?? null,
+        formId: destination.formId ?? null,
         quickReplies: [],
       };
       const destinationResult = await sendAutomationMessage({
