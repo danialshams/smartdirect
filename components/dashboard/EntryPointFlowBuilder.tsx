@@ -1205,18 +1205,6 @@ export default function EntryPointFlowBuilder({
                                                                 patch,
                                                             )
                                                         }
-                                                        onMoveUp={() =>
-                                                            moveMessage(
-                                                                message.id,
-                                                                "up",
-                                                            )
-                                                        }
-                                                        onMoveDown={() =>
-                                                            moveMessage(
-                                                                message.id,
-                                                                "down",
-                                                            )
-                                                        }
                                                         onAddQuickReply={() =>
                                                             addQuickReply(
                                                                 message.id,
