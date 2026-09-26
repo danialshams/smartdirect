@@ -223,10 +223,10 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
         if (!serverMessageId) throw new Error("شناسه پیام Automation پیدا نشد.");
         for (const quickReply of message.quickReplies) {
           const nextMessageId = quickReply.nextMessageId ? serverMessageIds.get(quickReply.nextMessageId) : null;
-          if (!nextMessageId) throw new Error(`مقصد Quick Reply «${quickReply.title || "بدون عنوان"}» معتبر نیست.`);
+          if (!nextMessageId) throw new Error(`مقصد پاسخ «${quickReply.title || "بدون عنوان"}» معتبر نیست.`);
           const response = await fetch(`/api/automations/${automationId}/messages/${serverMessageId}/quick-replies`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title: quickReply.title.trim(), payload: quickReply.payload, nextMessageId }) });
           const result = await response.json();
-          if (!response.ok || !result.success) throw new Error(result.error || `ساخت Quick Reply «${quickReply.title}" ناموفق بود.`);
+          if (!response.ok || !result.success) throw new Error(result.error || `ساخت پاسخ «${quickReply.title}" ناموفق بود.`);
         }
       }
       return automationId;
