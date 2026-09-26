@@ -19,6 +19,7 @@ type ReactToInstagramMessageResult = {
 };
 
 const MAX_REACTION_ATTEMPTS = 3;
+const REACTION_RETRY_DELAYS_MS = [2000, 5000];
 
 export async function reactToInstagramMessage({
   instagramAccountId,
@@ -68,7 +69,23 @@ export async function reactToInstagramMessage({
           throw error;
         }
 
-        await new Promise((resolve) => setTimeout(resolve, attempt * 1000));
+        console.warn("[Instagram Reaction] Meta returned a transient reaction error.", {
+          attempt,
+          nextAttempt: attempt + 1,
+          status: error.status,
+          code: error.details?.code,
+          subcode: error.details?.error_subcode,
+          message: error.details?.message,
+          fbtraceId: error.details?.fbtrace_id,
+        });
+
+        await new Promise((resolve) =>
+          setTimeout(
+            resolve,
+            REACTION_RETRY_DELAYS_MS[attempt - 1] ??
+              REACTION_RETRY_DELAYS_MS[REACTION_RETRY_DELAYS_MS.length - 1],
+          ),
+        );
       }
     }
 
