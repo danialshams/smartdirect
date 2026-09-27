@@ -1427,10 +1427,6 @@ async function processMessagingEventLocked(
 
       console.log("========================================");
 
-      // TEMPORARY REACTION-ONLY DIAGNOSTIC TEST.
-      // This intentionally stops before executeAutomation().
-      console.log("REACTION-ONLY TEST: Automation execution is temporarily skipped.");
-      return;
     } else {
       console.log(
         "DM reaction skipped:",
