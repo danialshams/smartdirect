@@ -9,11 +9,11 @@ export const dynamic = "force-dynamic";
 
 const MAX_IMAGE_SIZE = 20 * 1024 * 1024;
 const MAX_VIDEO_SIZE = 200 * 1024 * 1024;
-const MAX_AUDIO_SIZE = 50 * 1024 * 1024;
+const MAX_AUDIO_SIZE = 25 * 1024 * 1024;
 
 const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const allowedVideoTypes = new Set(["video/mp4", "video/quicktime"]);
-const allowedAudioTypes = new Set(["audio/mpeg", "audio/mp3", "audio/mp4", "audio/aac", "audio/wav", "audio/x-wav", "audio/ogg", "audio/webm", "audio/m4a"]);
+const allowedAudioTypes = new Set(["audio/mp4", "audio/aac", "audio/wav", "audio/x-wav", "audio/m4a"]);
 
 function sanitizeFileName(name: string) {
   return path.basename(name).replace(/[^a-zA-Z0-9._-]/g, "-");
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
 
     const isImage = allowedImageTypes.has(file.type);
     const isVideo = allowedVideoTypes.has(file.type);
-    const isAudio = allowedAudioTypes.has(file.type) || file.type.startsWith("audio/");
+    const isAudio = allowedAudioTypes.has(file.type);
 
     if (!isImage && !isVideo && !isAudio) {
       return NextResponse.json({ success: false, message: "فرمت فایل پشتیبانی نمی‌شود." }, { status: 400 });
