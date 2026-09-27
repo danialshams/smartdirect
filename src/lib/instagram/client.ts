@@ -382,6 +382,25 @@ export async function instagramApiRequest<T = unknown>(
           metaResponse: data,
           responseHeaders,
         });
+        console.error("[INSTAGRAM_API_ERROR_DETAIL]", {
+          method,
+          path,
+          operation,
+          status: response.status,
+          attempt,
+          errorCode: details?.code ?? null,
+          errorSubcode: details?.error_subcode ?? null,
+          message: details?.message ?? message,
+          type: details?.type ?? null,
+          fbtraceId: details?.fbtrace_id ?? null,
+          params: Object.fromEntries(
+            Object.entries(params).filter(([key]) => key !== "access_token"),
+          ),
+          requestBody: options.body ?? null,
+          metaResponse: data,
+          responseHeaders,
+        });
+
         void recordLatency(operation, latencyMs);
         void recordFailure(
           operation,
