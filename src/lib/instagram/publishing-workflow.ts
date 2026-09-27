@@ -1,4 +1,4 @@
-import { getJob, completeJob } from "@/lib/queue/core";
+import { getJob, completeJob, failJob } from "@/lib/queue/core";
 import { acquireLock, releaseLock } from "@/lib/lock/redis-lock";
 import type { DistributedLockHandle } from "@/lib/lock/types";
 import { publishInstagramJob } from "@/lib/instagram/publishing";
@@ -65,7 +65,18 @@ export async function processPublishingQueueJobStep(jobId: string) {
       error: message,
     });
 
-    throw error;
+    // publishInstagramJob already records the InstagramPublishJob as FAILED.
+    // Keep the Redis queue state in sync as well. Throwing here would make the
+    // workflow engine retry the whole publishing step even for permanent
+    // Instagram API errors such as invalid parameters.
+    await failJob(job.id, error);
+
+    return {
+      ok: false,
+      skipped: false,
+      message,
+      failed: true,
+    };
   } finally {
     if (lockHandle) {
       await releaseLock(lockHandle);
