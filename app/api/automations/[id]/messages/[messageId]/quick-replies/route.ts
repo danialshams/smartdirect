@@ -202,9 +202,28 @@ export async function POST(
     const destinationQuestion = normalizeString(body.destinationQuestion ?? body.question) || null;
     const destinationQuickReplies = Array.isArray(body.destinationQuickReplies) ? body.destinationQuickReplies : [];
 
+    console.log("[AUTOMATION_FORM_DEBUG] quick-reply-api-received", JSON.stringify({
+      automationId: id,
+      messageId,
+      title,
+      destinationType,
+      destinationQuestion,
+      destinationQuickReplies,
+    }));
+
     if (!destinationType) return NextResponse.json({ success: false, error: "نوع مقصد پاسخ الزامی است" }, { status: 400 });
     if (destinationType === "TEXT" && !destinationText) return NextResponse.json({ success: false, error: "متن مقصد الزامی است" }, { status: 400 });
-    if (destinationType === "FORM" && !destinationQuestion) return NextResponse.json({ success: false, error: "سؤال بعدی را وارد کنید." }, { status: 400 });
+    if (destinationType === "FORM" && !destinationQuestion) {
+      console.error("[AUTOMATION_FORM_DEBUG] missing-destination-question", JSON.stringify({
+        automationId: id,
+        messageId,
+        title,
+        destinationType,
+        destinationQuestion,
+        destinationQuickReplies,
+      }));
+      return NextResponse.json({ success: false, error: "سؤال بعدی را وارد کنید." }, { status: 400 });
+    }
     if (destinationType === "FORM" && destinationQuickReplies.length === 0) return NextResponse.json({ success: false, error: "برای سؤال بعدی حداقل یک جواب اضافه کنید." }, { status: 400 });
     if (destinationType === "SHOWCASE" && !destinationShowcaseId) return NextResponse.json({ success: false, error: "ویترین مقصد الزامی است" }, { status: 400 });
     if (["IMAGE", "VIDEO", "AUDIO"].includes(destinationType) && !destinationMediaUrl && !destinationMediaId) return NextResponse.json({ success: false, error: "فایل مقصد الزامی است" }, { status: 400 });
