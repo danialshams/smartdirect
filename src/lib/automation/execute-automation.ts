@@ -181,139 +181,103 @@ async function executeAutomationInternal(input: ExecuteAutomationInput) {
 
   // =========================================================
   // 6. Quick Reply branch
+  //
+  // A Quick Reply may point to an arbitrarily deep recursive
+  // branch. Resolve the selected node directly from the stored
+  // tree instead of converting only one level into a message.
   // =========================================================
 
   if (input.selectedQuickReplyId) {
     const allQuickReplies = automation.messages.flatMap((message) => message.quickReplies);
-    let selectedReply = allQuickReplies.find((reply) => reply.id === input.selectedQuickReplyId);
-    let destination: {
-      type: "TEXT" | "FORM" | "SHOWCASE" | "IMAGE" | "VIDEO" | "AUDIO";
-      text?: string | null;
-      formId?: string | null;
-      showcaseId?: string | null;
-      mediaUrl?: string | null;
-      mediaId?: string | null;
-      question?: string | null;
-      quickReplies?: Array<{ id: string; title: string; payload: string }>;
-    } | null = null;
+    const [rootId, selectedPayload] = input.selectedQuickReplyId.split("::");
+    const rootReply = allQuickReplies.find((reply) => reply.id === rootId);
 
-    if (selectedReply) {
-      try {
-        const parsed = selectedReply.replyText ? JSON.parse(selectedReply.replyText) : null;
-        if (parsed?.type) destination = parsed;
-      } catch {
-        destination = null;
-      }
+    if (!rootReply) {
+      throw new Error("Quick reply root not found");
     }
 
-    if (!selectedReply && input.selectedQuickReplyId?.includes("::")) {
-      const [rootId, nestedPayload] = input.selectedQuickReplyId.split("::");
-      selectedReply = allQuickReplies.find((reply) => reply.id === rootId);
-      if (selectedReply?.replyText && nestedPayload) {
-        try {
-          const root = JSON.parse(selectedReply.replyText);
-          const findDestination = (node: any): any => {
-            if (!node) return null;
-            if (Array.isArray(node.quickReplies)) {
-              for (const child of node.quickReplies) {
-                if (child?.payload === nestedPayload) return child;
-                const nested = findDestination(child);
-                if (nested) return nested;
-              }
+    let selectedNode: any = null;
+    try {
+      const root = rootReply.replyText ? JSON.parse(rootReply.replyText) : null;
+      if (selectedPayload) {
+        const findNode = (node: any): any => {
+          if (!node) return null;
+          if (node.payload === selectedPayload) return node;
+          if (Array.isArray(node.quickReplies)) {
+            for (const child of node.quickReplies) {
+              const found = findNode(child);
+              if (found) return found;
             }
-            return null;
-          };
-          destination = findDestination(root);
-        } catch {
-          destination = null;
-        }
+          }
+          return null;
+        };
+        selectedNode = findNode(root);
+      } else {
+        selectedNode = root;
       }
+    } catch {
+      selectedNode = null;
     }
 
-    if (!selectedReply || !destination) throw new Error("Quick reply destination not found");
-
-    if (destination) {
-      const destinationMessage = {
-        id: `destination:${selectedReply.id}:${Date.now()}`,
-        messageType:
-          destination.type === "TEXT" ? AutomationMessageType.TEXT :
-          destination.type === "FORM" ? AutomationMessageType.FORM :
-          destination.type === "SHOWCASE" ? AutomationMessageType.SHOWCASE :
-          destination.type === "IMAGE" ? AutomationMessageType.IMAGE :
-          destination.type === "VIDEO" ? AutomationMessageType.VIDEO :
-          AutomationMessageType.AUDIO,
-        text: destination.type === "FORM" ? (destination.question ?? "") : (destination.text ?? null),
-        mediaUrl: destination.mediaUrl ?? null,
-        mediaId: destination.mediaId ?? null,
-        showcaseId: destination.showcaseId ?? null,
-        formId: destination.formId ?? null,
-        quickReplies: Array.isArray(destination.quickReplies)
-          ? destination.quickReplies.map((item) => ({ id: item.id, title: item.title, payload: item.payload }))
-          : [],
-      };
-      const destinationResult = await sendAutomationMessage({
-        instagramAccountId: instagramAccount.id,
-        recipientId: input.participantId,
-        instagramUserId: instagramAccount.igUserId,
-        executionId: input.executionId ? `${input.executionId}:reply:${selectedReply.id}` : null,
-        message: destinationMessage,
-      });
-      if (!destinationResult.success) throw new Error(destinationResult.error || "Quick reply destination could not be sent.");
-      await prisma.conversationMessage.create({
-        data: {
-          conversationId: conversation.id,
-          direction: MessageDirection.OUTBOUND,
-          messageType: getConversationMessageType(destinationMessage.messageType),
-          text: destinationResult.conversationText ?? destinationMessage.text ?? null,
-          mediaUrl: destinationMessage.mediaUrl,
-          mediaId: destinationMessage.mediaId,
-          igMessageId: destinationResult.igMessageId ?? null,
-        },
-      });
-      return { success: true, executed: true, conversationId: conversation.id, executedMessages: [destinationMessage.id] };
+    if (!selectedNode) {
+      throw new Error("Quick reply destination not found");
     }
 
-    const nextMessageId = resolveQuickReplyDestination(
-      automation.messages,
-      input.selectedQuickReplyId,
-    );
+    const destination = selectedNode;
+    const destinationMessage = {
+      id: `destination:${rootReply.id}:${selectedPayload ?? rootReply.payload}:${Date.now()}`,
+      messageType:
+        destination.type === "TEXT" ? AutomationMessageType.TEXT :
+        destination.type === "FORM" ? AutomationMessageType.FORM :
+        destination.type === "SHOWCASE" ? AutomationMessageType.SHOWCASE :
+        destination.type === "IMAGE" ? AutomationMessageType.IMAGE :
+        destination.type === "VIDEO" ? AutomationMessageType.VIDEO :
+        AutomationMessageType.AUDIO,
+      text: destination.type === "FORM" ? (destination.question ?? destination.destinationQuestion ?? "") : (destination.text ?? null),
+      mediaUrl: destination.mediaUrl ?? null,
+      mediaId: destination.mediaId ?? null,
+      showcaseId: destination.showcaseId ?? null,
+      formId: destination.formId ?? null,
+      quickReplies: Array.isArray(destination.quickReplies)
+        ? destination.quickReplies.map((item: any) => ({
+            id: item.id,
+            title: item.title,
+            payload: item.payload,
+          }))
+        : [],
+    };
 
-    if (!nextMessageId) {
-      await prisma.conversation.update({
-        where: {
-          id: conversation.id,
-        },
-        data: {
-          lastMessageAt: new Date(),
-          isActive: true,
-        },
-      });
+    const destinationResult = await sendAutomationMessage({
+      instagramAccountId: instagramAccount.id,
+      recipientId: input.participantId,
+      instagramUserId: instagramAccount.igUserId,
+      executionId: input.executionId ? `${input.executionId}:reply:${rootReply.id}:${selectedPayload ?? rootReply.payload}` : null,
+      message: destinationMessage,
+    });
 
-      const result = {
-        success: true,
-        executed: false,
-        reason: "FLOW_FINISHED",
+    if (!destinationResult.success) {
+      throw new Error(destinationResult.error || "Quick reply destination could not be sent.");
+    }
+
+    await prisma.conversationMessage.create({
+      data: {
         conversationId: conversation.id,
-      };
+        direction: MessageDirection.OUTBOUND,
+        messageType: getConversationMessageType(destinationMessage.messageType),
+        text: destinationResult.conversationText ?? destinationMessage.text ?? null,
+        mediaUrl: destinationMessage.mediaUrl,
+        mediaId: destinationMessage.mediaId,
+        igMessageId: destinationResult.igMessageId ?? null,
+      },
+    });
 
-      if (idempotencyKey) {
-        await completeAutomationExecution(idempotencyKey, result);
-      }
-
-      return result;
-    }
-
-    const nextMessage = automation.messages.find(
-      (message) => message.id === nextMessageId,
-    );
-
-    if (!nextMessage) {
-      throw new Error("Quick reply destination message not found");
-    }
-
-    currentMessage = nextMessage;
+    return {
+      success: true,
+      executed: true,
+      conversationId: conversation.id,
+      executedMessages: [destinationMessage.id],
+    };
   }
-
   // =========================================================
   // 7. Prevent circular flow
   // =========================================================
