@@ -536,6 +536,7 @@ function BranchAnswerEditor({
 
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [error, setError] = useState("");
 
   return (
     <div className="space-y-3">
@@ -608,6 +609,10 @@ function BranchAnswerEditor({
               showcaseId={reply.destinationShowcaseId}
               onCreated={(showcaseId) => updateReply(reply.id, { destinationShowcaseId: showcaseId })}
             />
+          )}
+
+          {error && ["IMAGE", "VIDEO", "AUDIO"].includes(reply.destinationType ?? "") && (
+            <p className="text-xs text-red-600">{error}</p>
           )}
 
           {["IMAGE", "VIDEO", "AUDIO"].includes(reply.destinationType ?? "") && (
