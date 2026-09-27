@@ -203,12 +203,17 @@ async function executeAutomationInternal(input: ExecuteAutomationInput) {
         const findNode = (node: any): any => {
           if (!node) return null;
           if (node.payload === selectedPayload) return node;
-          if (Array.isArray(node.quickReplies)) {
-            for (const child of node.quickReplies) {
-              const found = findNode(child);
-              if (found) return found;
-            }
+
+          const children = [
+            ...(Array.isArray(node.quickReplies) ? node.quickReplies : []),
+            ...(Array.isArray(node.destinationQuickReplies) ? node.destinationQuickReplies : []),
+          ];
+
+          for (const child of children) {
+            const found = findNode(child);
+            if (found) return found;
           }
+
           return null;
         };
         selectedNode = findNode(root);
@@ -257,13 +262,17 @@ async function executeAutomationInternal(input: ExecuteAutomationInput) {
         destination.showcaseId ?? destination.destinationShowcaseId ?? null,
       formId:
         destination.formId ?? destination.destinationFormId ?? null,
-      quickReplies: Array.isArray(destination.quickReplies)
-        ? destination.quickReplies.map((item: any) => ({
-            id: item.id,
-            title: item.title,
-            payload: item.payload,
-          }))
-        : [],
+      quickReplies: (
+        Array.isArray(destination.quickReplies)
+          ? destination.quickReplies
+          : Array.isArray(destination.destinationQuickReplies)
+            ? destination.destinationQuickReplies
+            : []
+      ).map((item: any) => ({
+        id: item.id,
+        title: item.title,
+        payload: item.payload,
+      })),
     };
 
     const destinationResult = await sendAutomationMessage({
