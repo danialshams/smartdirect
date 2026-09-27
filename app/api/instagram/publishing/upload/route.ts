@@ -13,7 +13,7 @@ const MAX_AUDIO_SIZE = 25 * 1024 * 1024;
 
 const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const allowedVideoTypes = new Set(["video/mp4", "video/quicktime"]);
-const allowedAudioTypes = new Set(["audio/mp4", "audio/aac", "audio/wav", "audio/x-wav", "audio/m4a"]);
+const allowedAudioTypes = new Set(["audio/mpeg", "audio/mp3", "audio/aac", "audio/wav", "audio/x-wav", "audio/m4a"]);
 
 function sanitizeFileName(name: string) {
   return path.basename(name).replace(/[^a-zA-Z0-9._-]/g, "-");
