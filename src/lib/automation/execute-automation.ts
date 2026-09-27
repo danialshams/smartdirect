@@ -224,20 +224,39 @@ async function executeAutomationInternal(input: ExecuteAutomationInput) {
     }
 
     const destination = selectedNode;
+
+    // Root Quick Replies use "type"; nested nodes from the client
+    // serializer use "destinationType". Normalize both shapes.
+    const destinationType =
+      destination.type ?? destination.destinationType ?? null;
+
+    const destinationText =
+      destination.text ?? destination.destinationText ?? null;
+
+    const destinationQuestion =
+      destination.question ?? destination.destinationQuestion ?? null;
+
     const destinationMessage = {
       id: `destination:${rootReply.id}:${selectedPayload ?? rootReply.payload}:${Date.now()}`,
       messageType:
-        destination.type === "TEXT" ? AutomationMessageType.TEXT :
-        destination.type === "FORM" ? AutomationMessageType.FORM :
-        destination.type === "SHOWCASE" ? AutomationMessageType.SHOWCASE :
-        destination.type === "IMAGE" ? AutomationMessageType.IMAGE :
-        destination.type === "VIDEO" ? AutomationMessageType.VIDEO :
+        destinationType === "TEXT" ? AutomationMessageType.TEXT :
+        destinationType === "FORM" ? AutomationMessageType.FORM :
+        destinationType === "SHOWCASE" ? AutomationMessageType.SHOWCASE :
+        destinationType === "IMAGE" ? AutomationMessageType.IMAGE :
+        destinationType === "VIDEO" ? AutomationMessageType.VIDEO :
         AutomationMessageType.AUDIO,
-      text: destination.type === "FORM" ? (destination.question ?? destination.destinationQuestion ?? "") : (destination.text ?? null),
-      mediaUrl: destination.mediaUrl ?? null,
-      mediaId: destination.mediaId ?? null,
-      showcaseId: destination.showcaseId ?? null,
-      formId: destination.formId ?? null,
+      text:
+        destinationType === "FORM"
+          ? (destinationQuestion ?? "")
+          : destinationText,
+      mediaUrl:
+        destination.mediaUrl ?? destination.destinationMediaUrl ?? null,
+      mediaId:
+        destination.mediaId ?? destination.destinationMediaId ?? null,
+      showcaseId:
+        destination.showcaseId ?? destination.destinationShowcaseId ?? null,
+      formId:
+        destination.formId ?? destination.destinationFormId ?? null,
       quickReplies: Array.isArray(destination.quickReplies)
         ? destination.quickReplies.map((item: any) => ({
             id: item.id,
