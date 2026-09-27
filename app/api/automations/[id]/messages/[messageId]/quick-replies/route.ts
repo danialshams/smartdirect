@@ -199,7 +199,7 @@ export async function POST(
     const destinationShowcaseId = normalizeString(body.destinationShowcaseId) || null;
     const destinationMediaUrl = normalizeString(body.destinationMediaUrl) || null;
     const destinationMediaId = normalizeString(body.destinationMediaId) || null;
-    const destinationQuestion = normalizeString(body.destinationQuestion) || null;
+    const destinationQuestion = normalizeString(body.destinationQuestion ?? body.question) || null;
     const destinationQuickReplies = Array.isArray(body.destinationQuickReplies) ? body.destinationQuickReplies : [];
 
     if (!destinationType) return NextResponse.json({ success: false, error: "نوع مقصد پاسخ الزامی است" }, { status: 400 });
@@ -315,6 +315,8 @@ export async function POST(
           mediaUrl: destinationMediaUrl,
           mediaId: destinationMediaId,
           question: destinationQuestion,
+          // Keep the field name explicit for backward/forward compatibility.
+          destinationQuestion,
           quickReplies: destinationQuickReplies,
         }),
 
