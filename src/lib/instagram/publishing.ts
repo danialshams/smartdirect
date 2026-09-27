@@ -16,19 +16,38 @@ type UserTag = { username: string; x?: number; y?: number };
 
 function normalizeUserTags(value: unknown): UserTag[] {
   if (!Array.isArray(value)) return [];
-  return value
+
+  const usernames = value
     .filter(
-      (item): item is UserTag =>
+      (item): item is { username: string } =>
         !!item &&
         typeof item === "object" &&
         typeof (item as Record<string, unknown>).username === "string" &&
         String((item as Record<string, unknown>).username).trim().length > 0,
     )
-    .map((tag) => ({
-      username: tag.username.replace(/^@/, "").trim(),
-      ...(typeof tag.x === "number" ? { x: tag.x } : {}),
-      ...(typeof tag.y === "number" ? { y: tag.y } : {}),
-    }));
+    .map((item) => item.username.replace(/^@/, "").trim())
+    .filter(Boolean);
+
+  // The dashboard intentionally asks the user for usernames only.
+  // Meta requires x/y positions for image user tags, so generate safe
+  // normalized positions on the server instead of exposing coordinates in UI.
+  const positions = [
+    { x: 0.5, y: 0.5 },
+    { x: 0.3, y: 0.5 },
+    { x: 0.7, y: 0.5 },
+    { x: 0.3, y: 0.3 },
+    { x: 0.7, y: 0.3 },
+    { x: 0.3, y: 0.7 },
+    { x: 0.7, y: 0.7 },
+    { x: 0.5, y: 0.3 },
+    { x: 0.5, y: 0.7 },
+    { x: 0.5, y: 0.5 },
+  ];
+
+  return usernames.map((username, index) => ({
+    username,
+    ...(positions[index] ?? positions[positions.length - 1]),
+  }));
 }
 
 async function createImageContainer(
