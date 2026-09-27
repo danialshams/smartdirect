@@ -616,7 +616,7 @@ function BranchAnswerEditor({
               <span className="text-[10px] font-normal text-muted-foreground">{reply.destinationType === "AUDIO" ? "فقط فایل صوتی (وویس)" : reply.destinationType === "VIDEO" ? "فقط فایل ویدیویی" : "فقط فایل تصویری"}</span>
               {uploading && (
                 <div className="mt-1 h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-muted">
-                  <div className="h-full bg-primary transition-[width]" style={{ width: \`${uploadProgress}%\` }} />
+                  <div className="h-full bg-primary transition-[width]" style={{ width: `${uploadProgress}%` }} />
                 </div>
               )}
               <Input
