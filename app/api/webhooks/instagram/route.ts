@@ -1464,6 +1464,7 @@ async function processMessagingEventLocked(
       igUserId: participantId,
 
       selectedQuickReplyId,
+      selectedQuickReplyPayload: quickReplyPayload,
       executionId: executionId,
     });
 
