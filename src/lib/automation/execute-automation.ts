@@ -220,7 +220,16 @@ async function executeAutomationInternal(input: ExecuteAutomationInput) {
 
     let selectedNode: any = null;
 
-    if (selectedPayload) {
+    // A top-level quick reply has its destination stored directly in
+    // that row's replyText. Nested replies are stored inside that JSON
+    // tree and must be resolved by payload.
+    if (rootReply?.replyText && input.selectedQuickReplyId && !input.selectedQuickReplyId.includes("::")) {
+      try {
+        selectedNode = JSON.parse(rootReply.replyText);
+      } catch {
+        selectedNode = null;
+      }
+    } else if (selectedPayload) {
       for (const reply of allQuickReplies) {
         if (!reply.replyText) continue;
         try {
@@ -229,12 +238,6 @@ async function executeAutomationInternal(input: ExecuteAutomationInput) {
         } catch {
           // Ignore malformed legacy reply metadata and continue searching.
         }
-      }
-    } else if (rootReply?.replyText) {
-      try {
-        selectedNode = JSON.parse(rootReply.replyText);
-      } catch {
-        selectedNode = null;
       }
     }
 
