@@ -23,6 +23,7 @@ type ExecuteAutomationInput = {
   igUserId: string;
   commentId?: string | null;
   selectedQuickReplyId?: string | null;
+  selectedQuickReplyPayload?: string | null;
   executionId?: string | null;
 };
 
@@ -187,42 +188,63 @@ async function executeAutomationInternal(input: ExecuteAutomationInput) {
   // tree instead of converting only one level into a message.
   // =========================================================
 
-  if (input.selectedQuickReplyId) {
-    const allQuickReplies = automation.messages.flatMap((message) => message.quickReplies);
-    const [rootId, selectedPayload] = input.selectedQuickReplyId.split("::");
-    const rootReply = allQuickReplies.find((reply) => reply.id === rootId);
+  const selectedPayload =
+    input.selectedQuickReplyPayload?.trim() ||
+    (input.selectedQuickReplyId?.includes("::")
+      ? input.selectedQuickReplyId.slice(input.selectedQuickReplyId.indexOf("::") + 2)
+      : null);
 
-    if (!rootReply) {
-      throw new Error("Quick reply root not found");
-    }
+  if (selectedPayload || input.selectedQuickReplyId) {
+    const allQuickReplies = automation.messages.flatMap((message) => message.quickReplies);
+
+    const rootReply = input.selectedQuickReplyId && !input.selectedQuickReplyId.includes("::")
+      ? allQuickReplies.find((reply) => reply.id === input.selectedQuickReplyId)
+      : null;
+
+    const findNode = (node: any, payload: string): any => {
+      if (!node || typeof node !== "object") return null;
+      if (node.payload === payload) return node;
+
+      const children = [
+        ...(Array.isArray(node.quickReplies) ? node.quickReplies : []),
+        ...(Array.isArray(node.destinationQuickReplies) ? node.destinationQuickReplies : []),
+      ];
+
+      for (const child of children) {
+        const found = findNode(child, payload);
+        if (found) return found;
+      }
+
+      return null;
+    };
 
     let selectedNode: any = null;
-    try {
-      const root = rootReply.replyText ? JSON.parse(rootReply.replyText) : null;
-      if (selectedPayload) {
-        const findNode = (node: any): any => {
-          if (!node) return null;
-          if (node.payload === selectedPayload) return node;
 
-          const children = [
-            ...(Array.isArray(node.quickReplies) ? node.quickReplies : []),
-            ...(Array.isArray(node.destinationQuickReplies) ? node.destinationQuickReplies : []),
-          ];
-
-          for (const child of children) {
-            const found = findNode(child);
-            if (found) return found;
-          }
-
-          return null;
-        };
-        selectedNode = findNode(root);
-      } else {
-        selectedNode = root;
+    if (selectedPayload) {
+      for (const reply of allQuickReplies) {
+        if (!reply.replyText) continue;
+        try {
+          selectedNode = findNode(JSON.parse(reply.replyText), selectedPayload);
+          if (selectedNode) break;
+        } catch {
+          // Ignore malformed legacy reply metadata and continue searching.
+        }
       }
-    } catch {
-      selectedNode = null;
+    } else if (rootReply?.replyText) {
+      try {
+        selectedNode = JSON.parse(rootReply.replyText);
+      } catch {
+        selectedNode = null;
+      }
     }
+
+    console.log("[Automation Engine] Quick Reply destination lookup:", {
+      automationId: automation.id,
+      selectedQuickReplyId: input.selectedQuickReplyId ?? null,
+      selectedQuickReplyPayload: selectedPayload,
+      found: Boolean(selectedNode),
+      rootQuickReplyCount: allQuickReplies.length,
+    });
 
     if (!selectedNode) {
       throw new Error("Quick reply destination not found");
