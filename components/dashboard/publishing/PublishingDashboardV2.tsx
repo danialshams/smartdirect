@@ -149,7 +149,35 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
     setAccounts(list);
     }
-  async function loadJobs() { const response = await fetch("/api/instagram/publishing", { cache: "no-store" }); if (!response.ok) throw new Error("دریافت Publishing Jobs ناموفق بود."); const result = await response.json(); setJobs(result.data ?? []); }
+  async function loadJobs() {
+    const response = await fetch("/api/instagram/publishing", { cache: "no-store" });
+    if (!response.ok) throw new Error("دریافت Publishing Jobs ناموفق بود.");
+    const result = await response.json();
+    const nextJobs: Job[] = result.data ?? [];
+    const previousJobs = jobs;
+    const previousById = new Map(previousJobs.map((job) => [job.id, job]));
+    const nextById = new Map(nextJobs.map((job) => [job.id, job]));
+
+    for (const job of nextJobs) {
+      if (!knownJobIdsRef.current.has(job.id)) continue;
+      const previousStatus = previousById.get(job.id)?.status;
+      if (previousStatus === job.status) continue;
+
+      if (job.status === "PUBLISHED") {
+        toast.success("محتوا با موفقیت منتشر شد.");
+        knownJobIdsRef.current.delete(job.id);
+      } else if (job.status === "FAILED") {
+        toast.error(job.errorMessage || "انتشار محتوا ناموفق بود.");
+        knownJobIdsRef.current.delete(job.id);
+      }
+    }
+
+    for (const id of knownJobIdsRef.current) {
+      if (!nextById.has(id)) knownJobIdsRef.current.delete(id);
+    }
+
+    setJobs(nextJobs);
+  }
   async function loadResources(accountId: string) { if (!accountId) return; setLoadingResources(true); try { const [showcaseResponse, formResponse] = await Promise.all([fetch(`/api/showcases?instagramAccountId=${encodeURIComponent(accountId)}`, { cache: "no-store" }), fetch(`/api/forms?instagramAccountId=${encodeURIComponent(accountId)}`, { cache: "no-store" })]); const showcaseResult = await showcaseResponse.json(); const formResult = await formResponse.json(); setShowcases(
         Array.isArray(showcaseResult)
           ? showcaseResult
@@ -299,7 +327,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
         const publishResponse = await fetch(`/api/instagram/publishing/${job.id}/publish`, { method: "POST" });
         const publishResult = await publishResponse.json();
         if (!publishResponse.ok) throw new Error(publishResult.message || "انتشار ناموفق بود.");
-        toast.success("محتوا با موفقیت منتشر شد.");
+        knownJobIdsRef.current.add(job.id);
       } else {
         knownJobIdsRef.current.add(job.id);
         setJobs((current) => [job, ...current.filter((item) => item.id !== job.id)]);
@@ -433,17 +461,17 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             </div>
           </section>
 
-          {jobs.filter((job) => job.status !== "PUBLISHED" && job.status !== "CANCELLED").length > 0 && (
+          {jobs.filter((job) => ["PROCESSING", "PUBLISHING", "SCHEDULED"].includes(job.status)).length > 0 && (
             <section className="rounded-3xl border border-border/80 bg-card p-4 shadow-sm sm:p-5">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div><p className="text-sm font-bold text-foreground">محتوای فعال</p><p className="mt-1 text-[11px] text-muted-foreground">آپلود، انتشار یا زمان‌بندی‌های در انتظار</p></div>
-                <span className="rounded-full bg-muted px-2.5 py-1 text-[10px] text-muted-foreground">{toPersianDigits(jobs.filter((job) => job.status !== "PUBLISHED" && job.status !== "CANCELLED").length)}</span>
+                <span className="rounded-full bg-muted px-2.5 py-1 text-[10px] text-muted-foreground">{toPersianDigits(jobs.filter((job) => ["PROCESSING", "PUBLISHING", "SCHEDULED"].includes(job.status)).length)}</span>
               </div>
               <div className="space-y-2">
-                {jobs.filter((job) => job.status !== "PUBLISHED" && job.status !== "CANCELLED").map((job) => (
+                {jobs.filter((job) => ["PROCESSING", "PUBLISHING", "SCHEDULED"].includes(job.status)).map((job) => (
                   <div key={job.id} className="flex items-center gap-3 rounded-2xl border border-border/70 bg-muted/20 p-2.5">
                     {job.media[0] ? (job.media[0].type === "IMAGE" ? <img src={job.media[0].publicUrl} alt="" className="h-14 w-14 shrink-0 rounded-xl object-cover" /> : <video src={job.media[0].publicUrl} className="h-14 w-14 shrink-0 rounded-xl object-cover" />) : <div className="h-14 w-14 shrink-0 rounded-xl bg-muted" />}
-                    <div className="min-w-0 flex-1"><div className="flex items-center justify-between gap-2"><span className="text-sm font-semibold text-foreground">{typeLabels[job.type]}</span><span className="text-[11px] text-muted-foreground">{statusLabels[job.status] || job.status}</span></div><p className="mt-1 truncate text-[11px] text-muted-foreground">{job.status === "SCHEDULED" ? "انتشار در " + formatDate(job.scheduledAt) : "محتوا در حال پردازش است."}</p></div>
+                    <div className="min-w-0 flex-1"><div className="flex items-center justify-between gap-2"><span className="text-sm font-semibold text-foreground">{typeLabels[job.type]}</span><span className="text-[11px] text-muted-foreground">{statusLabels[job.status] || job.status}</span></div><p className="mt-1 truncate text-[11px] text-muted-foreground">{job.status === "SCHEDULED" ? "انتشار در " + formatDate(job.scheduledAt) : job.status === "PUBLISHING" ? "محتوا در حال انتشار است." : "محتوا در حال پردازش است."}</p></div>
                     {job.status !== "SCHEDULED" && <Loader2 size={16} className="shrink-0 animate-spin text-muted-foreground" />}
                   </div>
                 ))}
