@@ -35,7 +35,11 @@ export function createIdempotencyKey(
   scope: IdempotencyScope,
   clientKey: string,
 ): string {
-  const normalizedClientKey = normalizeIdempotencyKey(clientKey);
+  const normalizedClientKey = clientKey.trim();
+
+  if (!normalizedClientKey) {
+    throw new InvalidIdempotencyKeyError("Idempotency client key cannot be empty.");
+  }
   const tenantId = scope.tenantId.trim();
   const operation = scope.operation.trim();
   const resourceId = scope.resourceId?.trim() ?? "";
