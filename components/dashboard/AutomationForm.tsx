@@ -841,6 +841,46 @@ export default function AutomationForm({
         );
     }
 
+
+    function updateQuickReplyTree(
+        messageId: string,
+        quickReplyId: string,
+        updater: (quickReply: QuickReplyDraft) => QuickReplyDraft
+    ) {
+        setMessages((current) =>
+            current.map((message) => {
+                if (message.id !== messageId) {
+                    return message;
+                }
+
+                const updateTree = (
+                    replies: QuickReplyDraft[]
+                ): QuickReplyDraft[] =>
+                    replies.map((reply) => {
+                        if (reply.id === quickReplyId) {
+                            return updater(reply);
+                        }
+
+                        if (reply.destinationQuickReplies.length) {
+                            return {
+                                ...reply,
+                                destinationQuickReplies: updateTree(
+                                    reply.destinationQuickReplies
+                                ),
+                            };
+                        }
+
+                        return reply;
+                    });
+
+                return {
+                    ...message,
+                    quickReplies: updateTree(message.quickReplies),
+                };
+            })
+        );
+    }
+
     function removeQuickReply(
         messageId: string,
         quickReplyId: string
@@ -2298,6 +2338,16 @@ export default function AutomationForm({
                                                     message.id,
                                                     quickReplyId,
                                                     patch
+                                                )
+                                            }
+                                            onUpdateQuickReplyTree={(
+                                                quickReplyId,
+                                                updater
+                                            ) =>
+                                                updateQuickReplyTree(
+                                                    message.id,
+                                                    quickReplyId,
+                                                    updater
                                                 )
                                             }
                                             onRemoveQuickReply={(
