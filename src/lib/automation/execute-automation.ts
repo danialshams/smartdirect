@@ -300,12 +300,38 @@ async function executeAutomationInternal(input: ExecuteAutomationInput) {
       })),
     };
 
+    console.log("[Automation Engine] Quick Reply destination resolved:", {
+      automationId: automation.id,
+      selectedQuickReplyId: input.selectedQuickReplyId ?? null,
+      selectedQuickReplyPayload: selectedPayload,
+      destinationType,
+      destinationMessageType: destinationMessage.messageType,
+      hasMediaUrl: Boolean(destinationMessage.mediaUrl),
+      mediaUrl: destinationMessage.mediaUrl,
+      hasMediaId: Boolean(destinationMessage.mediaId),
+      mediaId: destinationMessage.mediaId,
+      destinationText: destinationMessage.text,
+      quickReplyCount: destinationMessage.quickReplies?.length ?? 0,
+    });
+
+    if ((destinationType === "IMAGE" || destinationType === "VIDEO" || destinationType === "AUDIO") && !destinationMessage.mediaUrl && !destinationMessage.mediaId) {
+      throw new Error(`فایل مقصد ${destinationType} برای این پاسخ پیدا نشد.`);
+    }
+
     const destinationResult = await sendAutomationMessage({
       instagramAccountId: instagramAccount.id,
       recipientId: input.participantId,
       instagramUserId: instagramAccount.igUserId,
       executionId: input.executionId ? `${input.executionId}:reply:${rootReply?.id ?? "payload"}:${selectedPayload ?? "selected"}` : null,
       message: destinationMessage,
+    });
+
+    console.log("[Automation Engine] Quick Reply destination send result:", {
+      automationId: automation.id,
+      destinationType,
+      success: destinationResult.success,
+      igMessageId: destinationResult.igMessageId ?? null,
+      error: destinationResult.error ?? null,
     });
 
     if (!destinationResult.success) {
