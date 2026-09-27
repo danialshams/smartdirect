@@ -620,7 +620,7 @@ function BranchAnswerEditor({
               />
               <BranchAnswerEditor
                 replies={reply.destinationQuickReplies}
-                showcases={showcases}
+                instagramAccountId={instagramAccountId}
                 depth={depth + 1}
                 onChange={(children) =>
                   updateReply(reply.id, { destinationQuickReplies: children })
