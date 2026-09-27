@@ -264,7 +264,7 @@ async function executeAutomationInternal(input: ExecuteAutomationInput) {
       destination.question ?? destination.destinationQuestion ?? null;
 
     const destinationMessage = {
-      id: `destination:${rootReply.id}:${selectedPayload ?? rootReply.payload}:${Date.now()}`,
+      id: `destination:${rootReply?.id ?? "payload"}:${selectedPayload ?? "selected"}:${Date.now()}`,
       messageType:
         destinationType === "TEXT" ? AutomationMessageType.TEXT :
         destinationType === "FORM" ? AutomationMessageType.FORM :
@@ -301,7 +301,7 @@ async function executeAutomationInternal(input: ExecuteAutomationInput) {
       instagramAccountId: instagramAccount.id,
       recipientId: input.participantId,
       instagramUserId: instagramAccount.igUserId,
-      executionId: input.executionId ? `${input.executionId}:reply:${rootReply.id}:${selectedPayload ?? rootReply.payload}` : null,
+      executionId: input.executionId ? `${input.executionId}:reply:${rootReply?.id ?? "payload"}:${selectedPayload ?? "selected"}` : null,
       message: destinationMessage,
     });
 
