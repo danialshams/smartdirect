@@ -274,7 +274,8 @@ export function validateMessages(messages: MessageDraft[], triggerType?: "COMMEN
                 if (!message.showcaseId) throw new Error(`برای پیام ${messageNumber} یک ویترین انتخاب کنید.`);
                 break;
             case "FORM":
-                if (!message.quickReplies.length) throw new Error(`برای سؤال فرم پیام ${messageNumber} حداقل یک جواب اضافه کنید.`);
+                if (!message.text.trim()) throw new Error(`سؤال پیام ${messageNumber} را وارد کنید.`);
+                if (!message.quickReplies.length) throw new Error(`برای سؤال پیام ${messageNumber} حداقل یک جواب اضافه کنید.`);
                 validateQuickReplyTree(message.quickReplies, messageNumber);
                 break;
         }
