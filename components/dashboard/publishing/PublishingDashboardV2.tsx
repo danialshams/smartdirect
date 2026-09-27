@@ -89,7 +89,7 @@ function KeywordChipsInput({ value, onChange, placeholder }: { value: string; on
   const [draft, setDraft] = useState("");
   const sync = (next: string[]) => onChange(next.map((item) => item.trim()).filter(Boolean).filter((item, index, list) => list.indexOf(item) === index).join(","));
   const add = () => { const item = draft.trim(); if (!item) return; sync([...keywords, item]); setDraft(""); };
-  return <div className="flex min-h-[52px] flex-wrap items-center gap-2 rounded-lg border bg-background px-3 py-2 focus-within:border-ring">{keywords.map((item) => <span key={item} className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1.5 text-xs font-medium text-foreground">{item}<Button type="button" onClick={() => sync(keywords.filter((keyword) => keyword !== item))} className="text-muted-foreground hover:text-foreground" aria-label={`حذف ${item}`}><X size={13} /></Button></span>)}<Input value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (["Enter", ",", "،"].includes(event.key)) { event.preventDefault(); add(); } }} onBlur={add} placeholder={keywords.length ? "کلمه بعدی..." : placeholder} className="min-w-[140px] flex-1 border-0 bg-transparent px-1 py-1 text-sm outline-none" /><Button type="button" onClick={add} className="shrink-0 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted">افزودن کلمه</Button></div>;
+  return <div className="flex min-h-[52px] flex-wrap items-center gap-2 rounded-lg border bg-background px-3 py-2 focus-within:border-ring">{keywords.map((item) => <span key={item} className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1.5 text-xs font-medium text-foreground">{item}<Button type="button" onClick={() => sync(keywords.filter((keyword) => keyword !== item))} className="text-muted-foreground hover:text-foreground" aria-label={`حذف ${item}`}><X size={13} /></Button></span>)}<Input value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (["Enter", ",", "،"].includes(event.key)) { event.preventDefault(); add(); } }} onBlur={add} placeholder={keywords.length ? "کلمه بعدی..." : placeholder} className="min-w-[140px] flex-1 border-0 bg-transparent px-1 py-1 text-sm outline-none" /><Button type="button" onPointerDown={(event) => event.preventDefault()} onClick={add} className="shrink-0 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted">افزودن کلمه</Button></div>;
 }
 
 export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?: (type: PublishType) => void }) {
@@ -101,6 +101,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const [caption, setCaption] = useState("");
   const [media, setMedia] = useState<LocalMedia[]>([]);
   const [uploadedMedia, setUploadedMedia] = useState<UploadedMedia[]>([]);
+  const [automationEnabled, setAutomationEnabled] = useState(false);
   const [keywords, setKeywords] = useState("");
   const [messages, setMessages] = useState<MessageDraft[]>([createEmptyMessage()]);
   const [showcases, setShowcases] = useState<Showcase[]>([]);
@@ -166,7 +167,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
   function revokeLocalMedia(items: LocalMedia[]) { items.forEach((item) => URL.revokeObjectURL(item.previewUrl)); }
   function clearLocalMedia() { setMedia((current) => { revokeLocalMedia(current); return []; }); }
-  function resetAutomation() { setKeywords(""); setMessages([createEmptyMessage()]); setCommentReplyText(""); setLikeStoryReply(false); setRequireFollow(false); setFollowGateText("برای دریافت پاسخ، ابتدا پیج را Follow کنید."); }
+  function resetAutomation() { setAutomationEnabled(false); setKeywords(""); setMessages([createEmptyMessage()]); setCommentReplyText(""); setLikeStoryReply(false); setRequireFollow(false); setFollowGateText("برای دریافت پاسخ، ابتدا پیج را Follow کنید."); }
   function handleTypeChange(nextType: PublishType) { clearLocalMedia(); setUploadedMedia([]); setType(nextType); onTypeChange?.(nextType); setUploadProgress(0); setCaption(""); resetAutomation(); }
   function prepareFiles(files: File[]) { if (!files.length || uploading || publishing) return; const accepted = type === "REEL" ? files.filter((file) => file.type.startsWith("video/")) : type === "STORY" ? files.filter((file) => file.type.startsWith("image/") || file.type.startsWith("video/")) : files.filter((file) => file.type.startsWith("image/")); if (!accepted.length) { setError(type === "REEL" ? "برای Reel یک فایل ویدیویی انتخاب کنید." : "فرمت فایل انتخاب‌شده برای این نوع محتوا معتبر نیست."); return; } const remaining = type === "CAROUSEL" ? Math.max(0, 10 - uploadedMedia.length) : 1; const selected = accepted.slice(0, remaining); if (type !== "CAROUSEL") setUploadedMedia([]); if (type === "CAROUSEL" && selected.length < 2 && uploadedMedia.length === 0) { setError("برای Carousel حداقل دو تصویر را همزمان انتخاب کنید."); return; } clearLocalMedia(); const nextMedia = selected.map((file, index): LocalMedia => ({ file, type: file.type.startsWith("video/") ? "VIDEO" : "IMAGE", previewUrl: URL.createObjectURL(file), sortOrder: index })); setMedia(nextMedia); setError(""); window.setTimeout(() => void uploadSelectedMedia(nextMedia), 0); }
   function handleFiles(event: ChangeEvent<HTMLInputElement>) { const files = Array.from(event.target.files ?? []); event.target.value = ""; prepareFiles(files); }
@@ -289,10 +290,10 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     if (!publishNow && scheduled.getTime() <= Date.now()) { setError("زمان‌بندی باید در آینده باشد."); return; }
     try {
       setPublishing(true); setError("");
-      const automationId = await createAutomation();
+      const automationId = automationEnabled ? await createAutomation() : null;
       const response = await fetch("/api/instagram/publishing", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ instagramAccountId: accountId, type, caption: type === "STORY" ? null : caption.trim() || null, scheduledAt: publishNow ? null : scheduled.toISOString(), idempotencyKey: crypto.randomUUID(), commentAutomationId: type === "STORY" ? null : automationId, storyReplyAutomationId: type === "STORY" ? automationId : null, media: uploadedMedia }) });
       const result = await response.json();
-      if (!response.ok) { await fetch(`/api/automations/${automationId}`, { method: "DELETE" }).catch(() => undefined); throw new Error(result.message || "ساخت Publishing Job ناموفق بود."); }
+      if (!response.ok) { if (automationId) await fetch(`/api/automations/${automationId}`, { method: "DELETE" }).catch(() => undefined); throw new Error(result.message || "ساخت Publishing Job ناموفق بود."); }
       const job = result.data as Job;
       if (publishNow) {
         const publishResponse = await fetch(`/api/instagram/publishing/${job.id}/publish`, { method: "POST" });
@@ -380,10 +381,10 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
               <div className="border-t border-border/70 pt-5">
                 <div className="mb-4 flex items-center justify-between gap-3">
-                  <div><p className="text-sm font-bold text-foreground">اتوماسیون این محتوا</p><p className="mt-1 text-xs leading-5 text-muted-foreground">واکنش Instagram را برای همین محتوا تنظیم کنید.</p></div>
-                  <span className="rounded-full bg-muted px-2.5 py-1 text-[10px] font-medium text-muted-foreground">{type === "STORY" ? "Reply استوری" : "کامنت"}</span>
+                  <div><p className="text-sm font-bold text-foreground">اتوماسیون این محتوا</p><p className="mt-1 text-xs leading-5 text-muted-foreground">ساخت اتوماسیون اختیاری است و انتشار محتوا بدون آن انجام می‌شود.</p></div>
+                  <Checkbox checked={automationEnabled} onCheckedChange={(checked) => setAutomationEnabled(Boolean(checked))} />
                 </div>
-                <div className="space-y-4">
+                {automationEnabled && <div className="space-y-4">
                   <label className="block">
                     <span className="mb-2 block text-xs font-semibold text-foreground">{type === "STORY" ? "کلمات کلیدی Reply استوری" : "کلمات کلیدی کامنت"}</span>
                     <KeywordChipsInput value={keywords} onChange={setKeywords} placeholder={type === "STORY" ? "مثلاً 1، اطلاعات، قیمت" : "مثلاً 1، یک، قیمت"} />
@@ -394,10 +395,10 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   {type === "STORY" && <label className="flex min-h-12 items-center justify-between gap-3 rounded-xl border border-border/70 bg-muted/30 px-3.5"><span className="text-sm text-foreground">لایک خودکار Reply استوری</span><Checkbox checked={likeStoryReply} onCheckedChange={(checked) => setLikeStoryReply(Boolean(checked))} /></label>}
                   <label className="flex min-h-12 items-center justify-between gap-3 rounded-xl border border-border/70 bg-muted/30 px-3.5"><span className="text-sm text-foreground">بررسی Follow قبل از پاسخ</span><Checkbox checked={requireFollow} onCheckedChange={(checked) => setRequireFollow(Boolean(checked))} /></label>
                   {requireFollow && <Textarea value={followGateText} onChange={(e) => setFollowGateText(e.target.value)} rows={2} className="w-full resize-none rounded-xl border border-border/70 bg-background px-3 py-3 text-sm leading-6 outline-none focus:border-ring" placeholder="متن درخواست Follow را وارد کنید." />}
-                </div>
+                </div>}
               </div>
 
-              <div className="border-t border-border/70 pt-5">
+              {automationEnabled && <div className="border-t border-border/70 pt-5">
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <div><p className="text-sm font-bold text-foreground">پاسخ</p><p className="mt-1 text-xs leading-5 text-muted-foreground">نوع پیام را انتخاب کنید و مسیر پاسخ را بسازید.</p></div>
                   <span className="text-[11px] text-muted-foreground">{toPersianDigits(messages.length)} پیام</span>
