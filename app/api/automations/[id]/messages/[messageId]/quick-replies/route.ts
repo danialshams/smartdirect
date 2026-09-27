@@ -201,6 +201,7 @@ export async function POST(
     const destinationMediaId = normalizeString(body.destinationMediaId) || null;
     const destinationQuestion = normalizeString(body.destinationQuestion ?? body.question) || null;
     const destinationQuickReplies = Array.isArray(body.destinationQuickReplies) ? body.destinationQuickReplies : [];
+    const debugClientState = body._debugClientState ?? null;
 
     console.log("[AUTOMATION_FORM_DEBUG] quick-reply-api-received", JSON.stringify({
       automationId: id,
@@ -209,6 +210,7 @@ export async function POST(
       destinationType,
       destinationQuestion,
       destinationQuickReplies,
+      debugClientState,
     }));
 
     if (!destinationType) return NextResponse.json({ success: false, error: "نوع مقصد پاسخ الزامی است" }, { status: 400 });
