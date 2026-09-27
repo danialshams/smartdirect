@@ -179,6 +179,21 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   function addMessage() { setMessages((current) => [...current, createEmptyMessage()]); }
   function addQuickReply(index: number) { setMessages((current) => current.map((message, messageIndex) => messageIndex === index ? { ...message, quickReplies: [...message.quickReplies, createEmptyQuickReply()] } : message)); }
   function updateQuickReply(messageIndex: number, quickReplyId: string, patch: Partial<MessageDraft["quickReplies"][number]>) { setMessages((current) => current.map((message, index) => index === messageIndex ? { ...message, quickReplies: message.quickReplies.map((qr) => qr.id === quickReplyId ? { ...qr, ...patch } : qr) } : message)); }
+  function updateQuickReplyTree(messageIndex: number, quickReplyId: string, updater: (quickReply: MessageDraft["quickReplies"][number]) => MessageDraft["quickReplies"][number]) {
+    setMessages((current) => current.map((message, index) => {
+      if (index !== messageIndex) return message;
+      const updateTree = (replies: MessageDraft["quickReplies"]): MessageDraft["quickReplies"] =>
+        replies.map((reply) => {
+          if (reply.id === quickReplyId) return updater(reply);
+          if (reply.destinationQuickReplies.length) {
+            return { ...reply, destinationQuickReplies: updateTree(reply.destinationQuickReplies) };
+          }
+          return reply;
+        });
+      return { ...message, quickReplies: updateTree(message.quickReplies) };
+    }));
+  }
+
   function removeQuickReply(messageIndex: number, quickReplyId: string) { setMessages((current) => current.map((message, index) => index === messageIndex ? { ...message, quickReplies: message.quickReplies.filter((qr) => qr.id !== quickReplyId) } : message)); }
 
   async function createAutomation(): Promise<string> {
@@ -358,7 +373,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   {messages.slice(0, 1).map((message, index) => (
                     <div key={message.id} className="rounded-2xl border border-border/70 bg-muted/20 p-3.5 sm:p-4">
                       <div className="mb-3 flex items-center justify-between gap-3"><span className="text-sm font-bold text-foreground">پیام {toPersianDigits(index + 1)}</span><span className="rounded-full bg-background px-2.5 py-1 text-[10px] text-muted-foreground ring-1 ring-border/70">{getMessageTypeLabel(message.messageType)}</span></div>
-                      <AutomationFlowMessage triggerType={triggerType} message={message} index={index} total={messages.length} showcases={showcases} forms={forms} loadingResources={loadingResources} instagramAccountId={selectedAccountId} onShowcaseCreated={(showcase) => setShowcases((current) => [showcase, ...current.filter((item) => item.id !== showcase.id)])} onFormCreated={(form) => setForms((current) => [form, ...current.filter((item) => item.id !== form.id)])} onUpdate={(patch) => updateMessage(index, patch)} onAddQuickReply={() => addQuickReply(index)} onUpdateQuickReply={(quickReplyId, patch) => updateQuickReply(index, quickReplyId, patch)} onRemoveQuickReply={(quickReplyId) => removeQuickReply(index, quickReplyId)} />
+                      <AutomationFlowMessage triggerType={triggerType} message={message} index={index} total={messages.length} showcases={showcases} forms={forms} loadingResources={loadingResources} instagramAccountId={selectedAccountId} onShowcaseCreated={(showcase) => setShowcases((current) => [showcase, ...current.filter((item) => item.id !== showcase.id)])} onFormCreated={(form) => setForms((current) => [form, ...current.filter((item) => item.id !== form.id)])} onUpdate={(patch) => updateMessage(index, patch)} onAddQuickReply={() => addQuickReply(index)} onUpdateQuickReply={(quickReplyId, patch) => updateQuickReply(index, quickReplyId, patch)} onUpdateQuickReplyTree={(quickReplyId, updater) => updateQuickReplyTree(index, quickReplyId, updater)} onRemoveQuickReply={(quickReplyId) => removeQuickReply(index, quickReplyId)} />
                     </div>
                   ))}
                 </div>
