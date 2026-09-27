@@ -234,7 +234,40 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
         const serverMessageId = serverMessageIds.get(message.id);
         if (!serverMessageId) throw new Error("شناسه پیام Automation پیدا نشد.");
         for (const quickReply of message.quickReplies) {
-          const response = await fetch(`/api/automations/${automationId}/messages/${serverMessageId}/quick-replies`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title: quickReply.title.trim(), payload: quickReply.payload, destinationType: quickReply.destinationType, destinationText: quickReply.destinationText.trim() || null, destinationFormId: quickReply.destinationFormId || null, destinationShowcaseId: quickReply.destinationShowcaseId || null }) });
+          const serializeQuickReplyTree = (replies: MessageDraft["quickReplies"]): unknown[] =>
+            replies.map((reply) => ({
+              id: reply.id,
+              title: reply.title.trim(),
+              payload: reply.payload,
+              destinationType: reply.destinationType,
+              destinationText: reply.destinationText.trim(),
+              destinationFormId: reply.destinationFormId,
+              destinationShowcaseId: reply.destinationShowcaseId,
+              destinationMediaUrl: reply.destinationMediaUrl,
+              destinationMediaId: reply.destinationMediaId,
+              destinationQuestion: reply.destinationQuestion.trim(),
+              question: reply.destinationQuestion.trim(),
+              destinationQuickReplies: serializeQuickReplyTree(reply.destinationQuickReplies),
+            }));
+
+          const response = await fetch(`/api/automations/${automationId}/messages/${serverMessageId}/quick-replies`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              title: quickReply.title.trim(),
+              payload: quickReply.payload,
+              destinationType: quickReply.destinationType,
+              destinationText: quickReply.destinationText.trim() || null,
+              destinationFormId: quickReply.destinationFormId || null,
+              destinationShowcaseId: quickReply.destinationShowcaseId || null,
+              destinationMediaUrl: quickReply.destinationMediaUrl || null,
+              destinationMediaId: quickReply.destinationMediaId || null,
+              destinationQuestion: quickReply.destinationQuestion.trim() || null,
+              question: quickReply.destinationQuestion.trim() || null,
+              destinationQuickReplies: serializeQuickReplyTree(quickReply.destinationQuickReplies),
+            }),
+          });
+
           const result = await response.json();
           if (!response.ok || !result.success) throw new Error(result.error || `ساخت پاسخ «${quickReply.title}" ناموفق بود.`);
         }
