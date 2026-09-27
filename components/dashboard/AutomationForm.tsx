@@ -998,6 +998,23 @@ export default function AutomationForm({
     /* Sync Messages                                                          */
     /* ---------------------------------------------------------------------- */
 
+    function serializeQuickReplyTree(replies: QuickReplyDraft[]): unknown[] {
+        return replies.map((reply) => ({
+            id: reply.id,
+            title: reply.title.trim(),
+            payload: reply.payload,
+            destinationType: reply.destinationType,
+            destinationText: reply.destinationText.trim(),
+            destinationFormId: reply.destinationFormId,
+            destinationShowcaseId: reply.destinationShowcaseId,
+            destinationMediaUrl: reply.destinationMediaUrl,
+            destinationMediaId: reply.destinationMediaId,
+            destinationQuestion: reply.destinationQuestion.trim(),
+            question: reply.destinationQuestion.trim(),
+            destinationQuickReplies: serializeQuickReplyTree(reply.destinationQuickReplies),
+        }));
+    }
+
     async function syncMessages(
         targetAutomationId: string
     ) {
@@ -1114,6 +1131,15 @@ export default function AutomationForm({
             if (!serverMessageId) continue;
 
             for (const quickReply of message.quickReplies) {
+                console.log("[AUTOMATION_FORM_DEBUG] quick-reply-before-api", JSON.stringify({
+                    automationId: targetAutomationId,
+                    messageId: serverMessageId,
+                    title: quickReply.title,
+                    destinationType: quickReply.destinationType,
+                    destinationQuestion: quickReply.destinationQuestion,
+                    destinationQuickReplies: serializeQuickReplyTree(quickReply.destinationQuickReplies),
+                }));
+
                 const response = await fetch(
                     `/api/automations/${targetAutomationId}/messages/${serverMessageId}/quick-replies`,
                     {
@@ -1131,13 +1157,7 @@ export default function AutomationForm({
                             destinationMediaId: quickReply.destinationMediaId,
                             destinationQuestion: quickReply.destinationQuestion.trim(),
                             question: quickReply.destinationQuestion.trim(),
-                            destinationQuickReplies: quickReply.destinationQuickReplies.map((child) => ({
-                                ...child,
-                                title: child.title.trim(),
-                                destinationQuestion: child.destinationQuestion.trim(),
-                                question: child.destinationQuestion.trim(),
-                                destinationQuickReplies: child.destinationQuickReplies,
-                            })),
+                            destinationQuickReplies: serializeQuickReplyTree(quickReply.destinationQuickReplies),
                             nextMessageId: null,
                         }),
                     },
