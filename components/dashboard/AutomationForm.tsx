@@ -1158,6 +1158,12 @@ export default function AutomationForm({
                             destinationQuestion: quickReply.destinationQuestion.trim(),
                             question: quickReply.destinationQuestion.trim(),
                             destinationQuickReplies: serializeQuickReplyTree(quickReply.destinationQuickReplies),
+                            _debugClientState: {
+                                title: quickReply.title,
+                                destinationType: quickReply.destinationType,
+                                destinationQuestion: quickReply.destinationQuestion,
+                                destinationQuickReplies: serializeQuickReplyTree(quickReply.destinationQuickReplies),
+                            },
                             nextMessageId: null,
                         }),
                     },
