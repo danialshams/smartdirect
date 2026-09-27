@@ -590,10 +590,10 @@ function BranchAnswerEditor({
           {["IMAGE", "VIDEO", "AUDIO"].includes(reply.destinationType ?? "") && (
             <label className="flex min-h-24 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-border bg-muted/20 px-3 py-4 text-center text-xs font-semibold">
               {reply.destinationMediaUrl ? "فایل انتخاب شده؛ برای تغییر کلیک کنید." : "فایل مقصد را انتخاب کنید"}
-              <span className="text-[10px] font-normal text-muted-foreground">عکس، ویدیو یا وویس</span>
+              <span className="text-[10px] font-normal text-muted-foreground">فقط فایل صوتی (وویس)</span>
               <Input
                 type="file"
-                accept={reply.destinationType === "IMAGE" ? "image/*" : reply.destinationType === "VIDEO" ? "video/*" : "audio/mp4,audio/aac,audio/wav,audio/x-wav,audio/m4a,.m4a,.aac,.wav,.mp4"}
+                accept={reply.destinationType === "IMAGE" ? "image/*" : reply.destinationType === "VIDEO" ? "video/*" : "audio/*"}
                 className="hidden"
                 onChange={async (event) => {
                   const file = event.target.files?.[0];
