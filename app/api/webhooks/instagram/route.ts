@@ -1274,17 +1274,19 @@ async function processMessagingEventLocked(
           const value = node as {
             payload?: unknown;
             quickReplies?: unknown;
+            destinationQuickReplies?: unknown;
           };
 
           if (value.payload === quickReplyPayload) return true;
 
-          if (Array.isArray(value.quickReplies)) {
-            return value.quickReplies.some((child) =>
-              findNestedPayload(child),
-            );
-          }
+          const children = [
+            ...(Array.isArray(value.quickReplies) ? value.quickReplies : []),
+            ...(Array.isArray(value.destinationQuickReplies)
+              ? value.destinationQuickReplies
+              : []),
+          ];
 
-          return false;
+          return children.some((child) => findNestedPayload(child));
         };
 
         const root = topLevelQuickReplies.find((reply) => {
