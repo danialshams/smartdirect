@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import path from "node:path";
+import { execFile } from "node:child_process";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import os from "node:os";
+import { promisify } from "node:util";
+import ffmpegPath from "ffmpeg-static";
 
 import { authOptions } from "@/lib/auth";
 import { getStorageProvider } from "@/lib/storage/provider";
@@ -10,6 +15,8 @@ export const dynamic = "force-dynamic";
 const MAX_IMAGE_SIZE = 20 * 1024 * 1024;
 const MAX_VIDEO_SIZE = 200 * 1024 * 1024;
 const MAX_AUDIO_SIZE = 25 * 1024 * 1024;
+const SAFE_AUDIO_SIZE = 24 * 1024 * 1024;
+const execFileAsync = promisify(execFile);
 
 const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const allowedVideoTypes = new Set(["video/mp4", "video/quicktime"]);
@@ -48,15 +55,42 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: "حجم فایل بیش از حد مجاز است." }, { status: 400 });
     }
 
-    const extension = path.extname(file.name) || (isImage ? ".jpg" : isVideo ? ".mp4" : ".mp3");
-    const safeName = sanitizeFileName(path.basename(file.name, extension));
+    let uploadBuffer = Buffer.from(await file.arrayBuffer());
+    let uploadFileName = file.name;
+    let uploadContentType = file.type;
+
+    if (isAudio) {
+      if (!ffmpegPath) throw new Error("FFmpeg در سرور در دسترس نیست.");
+      const tempDir = await mkdtemp(path.join(os.tmpdir(), "smartdirect-audio-"));
+      const inputPath = path.join(tempDir, "input" + (path.extname(file.name) || ".audio"));
+      const outputPath = path.join(tempDir, "output.m4a");
+      try {
+        await writeFile(inputPath, uploadBuffer);
+        let normalized: Buffer | null = null;
+        for (const bitrate of ["96k", "64k", "48k"]) {
+          await rm(outputPath, { force: true });
+          await execFileAsync(ffmpegPath, ["-hide_banner", "-loglevel", "error", "-y", "-i", inputPath, "-vn", "-c:a", "aac", "-b:a", bitrate, "-ar", "44100", "-ac", "2", "-movflags", "+faststart", outputPath], { timeout: 120000, maxBuffer: 4 * 1024 * 1024 });
+          normalized = await readFile(outputPath);
+          if (normalized.length <= SAFE_AUDIO_SIZE) break;
+        }
+        if (!normalized || normalized.length > SAFE_AUDIO_SIZE) throw new Error("حجم فایل صوتی پس از تبدیل باید حداکثر 24 مگابایت باشد.");
+        uploadBuffer = normalized;
+        uploadFileName = path.basename(file.name, path.extname(file.name)) + ".m4a";
+        uploadContentType = "audio/mp4";
+      } finally {
+        await rm(tempDir, { recursive: true, force: true }).catch(() => undefined);
+      }
+    }
+
+    const extension = path.extname(uploadFileName) || (isImage ? ".jpg" : isVideo ? ".mp4" : ".m4a");
+    const safeName = sanitizeFileName(path.basename(uploadFileName, extension));
     const key = ["pending", session.user.id, `${crypto.randomUUID()}-${safeName}${extension}`].join("/");
 
     const provider = getStorageProvider();
     const result = await provider.upload({
       key,
-      body: Buffer.from(await file.arrayBuffer()),
-      contentType: file.type,
+      body: uploadBuffer,
+      contentType: uploadContentType,
     });
 
     return NextResponse.json({
@@ -65,9 +99,9 @@ export async function POST(request: NextRequest) {
         storageKey: result.storageKey,
         publicUrl: result.publicUrl,
         type: isVideo ? "VIDEO" : isAudio ? "AUDIO" : "IMAGE",
-        fileName: file.name,
-        mimeType: file.type,
-        fileSize: file.size,
+        fileName: uploadFileName,
+        mimeType: uploadContentType,
+        fileSize: uploadBuffer.length,
       },
     });
   } catch (error) {
