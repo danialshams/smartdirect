@@ -411,7 +411,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                     </div>
                   ))}
                 </div>
-              </div>
+              </div>}
 
               {uploadedMedia.length > 0 && (
                 <div className="space-y-4 border-t border-border/70 pt-5">
