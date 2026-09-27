@@ -80,17 +80,22 @@ export async function findMatchingAutomation(input: FindAutomationInput) {
 function findQuickReplyPayload(node: unknown, payload: string): boolean {
   if (!node || typeof node !== "object") return false;
 
-  const value = node as { payload?: unknown; quickReplies?: unknown };
+  const value = node as {
+    payload?: unknown;
+    quickReplies?: unknown;
+    destinationQuickReplies?: unknown;
+  };
 
   if (value.payload === payload) return true;
 
-  if (Array.isArray(value.quickReplies)) {
-    return value.quickReplies.some((child) =>
-      findQuickReplyPayload(child, payload),
-    );
-  }
+  const children = [
+    ...(Array.isArray(value.quickReplies) ? value.quickReplies : []),
+    ...(Array.isArray(value.destinationQuickReplies)
+      ? value.destinationQuickReplies
+      : []),
+  ];
 
-  return false;
+  return children.some((child) => findQuickReplyPayload(child, payload));
 }
 
 export async function findAutomationByQuickReplyPayload({
