@@ -12,7 +12,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="fa" dir="rtl" className="h-full antialiased">
       <body className="min-h-full flex flex-col">
         {children}
-        <Toaster position="bottom-left" dir="rtl" richColors />
+        <Toaster position="top-center" dir="rtl" richColors duration={4500} visibleToasts={1} />
       </body>
     </html>
   );
