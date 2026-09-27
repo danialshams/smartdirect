@@ -351,8 +351,6 @@ function BranchShowcaseCreator({
   const [items, setItems] = useState<ShowcaseItemDraft[]>([newShowcaseItem()]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
 
   async function uploadImage(id: string, file?: File) {
     if (!file) return;
@@ -536,6 +534,9 @@ function BranchAnswerEditor({
     onChange([...replies, createBranchAnswerDraft()]);
   }
 
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
@@ -611,7 +612,7 @@ function BranchAnswerEditor({
 
           {["IMAGE", "VIDEO", "AUDIO"].includes(reply.destinationType ?? "") && (
             <label className={["flex min-h-24 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-border bg-muted/20 px-3 py-4 text-center text-xs font-semibold", uploading ? "pointer-events-none opacity-70" : ""].join(" ")}>
-              {uploading ? `در حال آپلود... ${toPersianDigits(uploadProgress)}٪` : reply.destinationMediaUrl ? "فایل انتخاب شده؛ برای تغییر کلیک کنید." : "فایل مقصد را انتخاب کنید"}
+              {uploading ? `در حال آپلود... ${uploadProgress}٪` : reply.destinationMediaUrl ? "فایل انتخاب شده؛ برای تغییر کلیک کنید." : "فایل مقصد را انتخاب کنید"}
               <span className="text-[10px] font-normal text-muted-foreground">{reply.destinationType === "AUDIO" ? "فقط فایل صوتی (وویس)" : reply.destinationType === "VIDEO" ? "فقط فایل ویدیویی" : "فقط فایل تصویری"}</span>
               {uploading && (
                 <div className="mt-1 h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-muted">
