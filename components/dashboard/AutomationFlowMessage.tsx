@@ -308,15 +308,35 @@ function createBranchAnswerDraft(): QuickReplyDraft {
   };
 }
 
-async function uploadBranchMedia(file: File): Promise<string> {
+async function uploadBranchMedia(file: File, onProgress?: (progress: number) => void): Promise<string> {
   const formData = new FormData();
   formData.append("file", file);
-  const response = await fetch("/api/instagram/publishing/upload", { method: "POST", body: formData });
-  const result = await response.json();
-  if (!response.ok || !result?.success || !result?.data?.publicUrl) {
-    throw new Error(result?.message || "آپلود فایل ناموفق بود.");
-  }
-  return result.data.publicUrl as string;
+
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/api/instagram/publishing/upload");
+    xhr.responseType = "json";
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        onProgress?.(Math.round((event.loaded / event.total) * 100));
+      }
+    };
+
+    xhr.onload = () => {
+      const result = xhr.response;
+      if (xhr.status < 200 || xhr.status >= 300 || !result?.success || !result?.data?.publicUrl) {
+        reject(new Error(result?.message || "آپلود فایل ناموفق بود."));
+        return;
+      }
+      onProgress?.(100);
+      resolve(result.data.publicUrl as string);
+    };
+
+    xhr.onerror = () => reject(new Error("ارتباط با سرور برای آپلود فایل برقرار نشد."));
+    xhr.onabort = () => reject(new Error("آپلود فایل لغو شد."));
+    xhr.send(formData);
+  });
 }
 
 function BranchShowcaseCreator({
@@ -331,6 +351,8 @@ function BranchShowcaseCreator({
   const [items, setItems] = useState<ShowcaseItemDraft[]>([newShowcaseItem()]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   async function uploadImage(id: string, file?: File) {
     if (!file) return;
@@ -588,21 +610,33 @@ function BranchAnswerEditor({
           )}
 
           {["IMAGE", "VIDEO", "AUDIO"].includes(reply.destinationType ?? "") && (
-            <label className="flex min-h-24 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-border bg-muted/20 px-3 py-4 text-center text-xs font-semibold">
-              {reply.destinationMediaUrl ? "فایل انتخاب شده؛ برای تغییر کلیک کنید." : "فایل مقصد را انتخاب کنید"}
-              <span className="text-[10px] font-normal text-muted-foreground">فقط فایل صوتی (وویس)</span>
+            <label className={["flex min-h-24 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-border bg-muted/20 px-3 py-4 text-center text-xs font-semibold", uploading ? "pointer-events-none opacity-70" : ""].join(" ")}>
+              {uploading ? `در حال آپلود... ${toPersianDigits(uploadProgress)}٪` : reply.destinationMediaUrl ? "فایل انتخاب شده؛ برای تغییر کلیک کنید." : "فایل مقصد را انتخاب کنید"}
+              <span className="text-[10px] font-normal text-muted-foreground">{reply.destinationType === "AUDIO" ? "فقط فایل صوتی (وویس)" : reply.destinationType === "VIDEO" ? "فقط فایل ویدیویی" : "فقط فایل تصویری"}</span>
+              {uploading && (
+                <div className="mt-1 h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-muted">
+                  <div className="h-full bg-primary transition-[width]" style={{ width: \`${uploadProgress}%\` }} />
+                </div>
+              )}
               <Input
                 type="file"
                 accept={reply.destinationType === "IMAGE" ? "image/*" : reply.destinationType === "VIDEO" ? "video/*" : "audio/*"}
                 className="hidden"
+                disabled={uploading}
                 onChange={async (event) => {
                   const file = event.target.files?.[0];
+                  event.currentTarget.value = "";
                   if (!file) return;
                   try {
-                    const url = await uploadBranchMedia(file);
-                    updateReply(reply.id, { destinationMediaUrl: url, destinationMediaId: "" });
-                  } catch {
-                    // Validation on submit will surface a missing destination file.
+                    setError("");
+                    setUploading(true);
+                    setUploadProgress(0);
+                    const url = await uploadBranchMedia(file, setUploadProgress);
+                    onUpdateReply(reply.id, (current) => ({ ...current, destinationMediaUrl: url, destinationMediaId: "" }));
+                  } catch (uploadError) {
+                    setError(uploadError instanceof Error ? uploadError.message : "آپلود فایل ناموفق بود.");
+                  } finally {
+                    setUploading(false);
                   }
                 }}
               />
