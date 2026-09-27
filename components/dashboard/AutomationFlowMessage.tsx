@@ -250,7 +250,7 @@ export default function AutomationFlowMessage({
             {message.messageType === "IMAGE" ? <ImagePlus size={24} className="text-primary" /> : message.messageType === "VIDEO" ? <Video size={24} className="text-primary" /> : <Mic size={24} className="text-primary" />}
             {mediaUploading ? "در حال آپلود..." : message.mediaUrl ? "انتخاب فایل دیگر" : "انتخاب فایل"}
             <span className="text-[10px] font-normal text-muted-foreground">فایل را از دستگاه انتخاب کنید.</span>
-            <Input type="file" accept={message.messageType === "IMAGE" ? "image/jpeg,image/png,image/webp" : message.messageType === "VIDEO" ? "video/mp4,video/quicktime" : "audio/mp4,audio/aac,audio/wav,audio/x-wav,audio/m4a,.m4a,.aac,.wav,.mp4"} className="hidden" disabled={mediaUploading} onChange={(event) => void handleMessageMedia(event.target.files?.[0])} />
+            <Input type="file" accept={message.messageType === "IMAGE" ? "image/jpeg,image/png,image/webp" : message.messageType === "VIDEO" ? "video/mp4,video/quicktime" : "audio/mpeg,audio/mp3,audio/aac,audio/wav,audio/x-wav,audio/m4a,.mp3,.m4a,.aac,.wav"} className="hidden" disabled={mediaUploading} onChange={(event) => void handleMessageMedia(event.target.files?.[0])} />
           </label>
           {message.mediaUrl && <p className="truncate rounded-lg bg-background px-3 py-2 text-[10px] text-muted-foreground" dir="ltr">{message.mediaUrl}</p>}
           {showcaseError && <p className="text-xs text-red-600">{showcaseError}</p>}
