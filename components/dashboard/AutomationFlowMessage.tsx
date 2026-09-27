@@ -237,7 +237,7 @@ export default function AutomationFlowMessage({
           />
           <BranchAnswerEditor
             replies={message.quickReplies}
-            showcases={showcases}
+            instagramAccountId={instagramAccountId}
             onChange={(replies) => onUpdate({ quickReplies: replies })}
             onUpdateReply={onUpdateQuickReplyTree}
           />
@@ -319,15 +319,181 @@ async function uploadBranchMedia(file: File): Promise<string> {
   return result.data.publicUrl as string;
 }
 
+function BranchShowcaseCreator({
+  instagramAccountId,
+  showcaseId,
+  onCreated,
+}: {
+  instagramAccountId?: string;
+  showcaseId: string;
+  onCreated: (showcaseId: string) => void;
+}) {
+  const [items, setItems] = useState<ShowcaseItemDraft[]>([newShowcaseItem()]);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  async function uploadImage(id: string, file?: File) {
+    if (!file) return;
+    try {
+      setError("");
+      const previewUrl = URL.createObjectURL(file);
+      setItems((current) => current.map((item) => item.id === id ? { ...item, previewUrl } : item));
+      const uploaded = await uploadShowcaseImage(file);
+      setItems((current) => current.map((item) => item.id === id ? { ...item, imageUrl: uploaded.publicUrl, previewUrl: uploaded.publicUrl } : item));
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "آپلود تصویر ناموفق بود.");
+    }
+  }
+
+  async function createInlineShowcase() {
+    try {
+      if (!instagramAccountId) throw new Error("اکانت Instagram انتخاب نشده است.");
+      for (let i = 0; i < items.length; i += 1) {
+        if (!items[i].title.trim()) throw new Error(`نام اسلاید ${i + 1} را وارد کنید.`);
+        if (!items[i].imageUrl.trim()) throw new Error(`تصویر اسلاید ${i + 1} را آپلود کنید.`);
+      }
+      setSaving(true);
+      setError("");
+
+      const response = await fetch("/api/showcases", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          instagramAccountId,
+          title: `ویترین ${new Date().toLocaleDateString("fa-IR")}`,
+          description: null,
+          isActive: true,
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok || result?.error) {
+        throw new Error(result?.error || "ساخت ویترین ناموفق بود.");
+      }
+
+      const created = result.data ?? result;
+      for (let i = 0; i < items.length; i += 1) {
+        const item = items[i];
+        const itemResponse = await fetch(`/api/showcases/${created.id}/items`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: item.title.trim(),
+            description: item.description.trim() || null,
+            imageUrl: item.imageUrl.trim(),
+            order: i,
+            isActive: true,
+          }),
+        });
+        const itemResult = await itemResponse.json();
+        if (!itemResponse.ok || itemResult?.error) {
+          throw new Error(itemResult?.error || `ساخت اسلاید ${i + 1} ناموفق بود.`);
+        }
+      }
+
+      onCreated(created.id);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "ساخت ویترین ناموفق بود.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="space-y-3 rounded-xl border border-border/70 bg-muted/20 p-3">
+      {showcaseId ? (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-xs text-emerald-800">
+          ویترین ساخته و به این جواب متصل شد.
+        </div>
+      ) : (
+        <>
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <p className="text-xs font-bold text-foreground">ساخت ویترین</p>
+              <p className="mt-1 text-[10px] leading-5 text-muted-foreground">ویترین همین‌جا ساخته می‌شود و نیازی به انتخاب ویترین قبلی نیست.</p>
+            </div>
+            <Button
+              type="button"
+              onClick={() => setItems((current) => [...current, newShowcaseItem()])}
+              className="inline-flex items-center gap-1 rounded-lg border border-border/70 bg-background px-2.5 py-1.5 text-[11px] font-semibold text-foreground"
+            >
+              <Plus size={13} />اسلاید
+            </Button>
+          </div>
+
+          {items.map((item, itemIndex) => (
+            <div key={item.id} className="rounded-xl border border-border/70 bg-background p-3">
+              <div className="mb-2.5 flex items-center justify-between">
+                <span className="text-[11px] font-bold text-muted-foreground">اسلاید {itemIndex + 1}</span>
+                {items.length > 1 && (
+                  <Button
+                    type="button"
+                    onClick={() => setItems((current) => current.filter((entry) => entry.id !== item.id))}
+                    className="flex h-7 w-7 items-center justify-center rounded-lg p-0 text-muted-foreground hover:text-red-600"
+                  >
+                    <X size={14} />
+                  </Button>
+                )}
+              </div>
+              <div className="grid gap-3 sm:grid-cols-[112px_1fr]">
+                <label className="flex min-h-[112px] cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-dashed border-border bg-muted">
+                  {item.previewUrl ? (
+                    <img src={item.previewUrl} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="flex flex-col items-center gap-1.5 text-[10px] text-muted-foreground">
+                      <ImagePlus size={22} />تصویر
+                    </span>
+                  )}
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(event) => void uploadImage(item.id, event.target.files?.[0])}
+                  />
+                </label>
+                <div className="space-y-2.5">
+                  <Input
+                    value={item.title}
+                    onChange={(event) => setItems((current) => current.map((entry) => entry.id === item.id ? { ...entry, title: event.target.value } : entry))}
+                    placeholder="نام اسلاید"
+                    className="w-full rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm outline-none focus:border-ring"
+                  />
+                  <Textarea
+                    value={item.description}
+                    onChange={(event) => setItems((current) => current.map((entry) => entry.id === item.id ? { ...entry, description: event.target.value } : entry))}
+                    rows={3}
+                    placeholder="توضیح اسلاید"
+                    className="w-full resize-none rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm leading-6 outline-none focus:border-ring"
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {error && <p className="text-xs text-red-600">{error}</p>}
+
+          <Button
+            type="button"
+            disabled={saving}
+            onClick={() => void createInlineShowcase()}
+            className="w-full rounded-xl bg-primary px-4 py-3 text-xs font-semibold text-white disabled:opacity-50"
+          >
+            {saving ? "در حال ساخت ویترین..." : "ساخت و اتصال ویترین"}
+          </Button>
+        </>
+      )}
+    </div>
+  );
+}
+
 function BranchAnswerEditor({
   replies,
-  showcases,
+  instagramAccountId,
   onChange,
   onUpdateReply,
   depth = 0,
 }: {
   replies: QuickReplyDraft[];
-  showcases: Showcase[];
+  instagramAccountId?: string;
   onChange: (replies: QuickReplyDraft[]) => void;
   onUpdateReply: (
     replyId: string,
@@ -414,17 +580,11 @@ function BranchAnswerEditor({
           )}
 
           {reply.destinationType === "SHOWCASE" && (
-            <div className="relative">
-              <Select
-                value={reply.destinationShowcaseId}
-                onChange={(event) => updateReply(reply.id, { destinationShowcaseId: event.target.value })}
-                className="w-full appearance-none rounded-xl border border-border/70 bg-background px-3 py-2.5 text-xs"
-              >
-                <option value="">ویترین را انتخاب کنید</option>
-                {showcases.map((showcase) => <option key={showcase.id} value={showcase.id}>{showcase.title}</option>)}
-              </Select>
-              <ChevronDown size={14} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            </div>
+            <BranchShowcaseCreator
+              instagramAccountId={instagramAccountId}
+              showcaseId={reply.destinationShowcaseId}
+              onCreated={(showcaseId) => updateReply(reply.id, { destinationShowcaseId: showcaseId })}
+            />
           )}
 
           {["IMAGE", "VIDEO", "AUDIO"].includes(reply.destinationType ?? "") && (
