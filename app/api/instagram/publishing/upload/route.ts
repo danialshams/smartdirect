@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: "حجم فایل بیش از حد مجاز است." }, { status: 400 });
     }
 
-    let uploadBuffer = Buffer.from(await file.arrayBuffer());
+    let uploadBuffer: Buffer<ArrayBufferLike> = Buffer.from(await file.arrayBuffer());
     let uploadFileName = file.name;
     let uploadContentType = file.type;
 
