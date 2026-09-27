@@ -22,6 +22,10 @@ type AutomationFlowMessageProps = {
   onUpdate: (patch: Partial<MessageDraft>) => void;
   onAddQuickReply: () => void;
   onUpdateQuickReply: (quickReplyId: string, patch: Partial<QuickReplyDraft>) => void;
+  onUpdateQuickReplyTree: (
+    quickReplyId: string,
+    updater: (quickReply: QuickReplyDraft) => QuickReplyDraft
+  ) => void;
   onRemoveQuickReply: (quickReplyId: string) => void;
   onShowcaseCreated?: (showcase: Showcase) => void;
   onFormCreated?: (form: FormItem) => void;
@@ -59,6 +63,7 @@ export default function AutomationFlowMessage({
   onUpdate,
   onAddQuickReply,
   onUpdateQuickReply,
+  onUpdateQuickReplyTree,
   onRemoveQuickReply,
   onShowcaseCreated,
   onFormCreated,
@@ -125,34 +130,6 @@ export default function AutomationFlowMessage({
       destinationQuestion: "",
       destinationQuickReplies: [],
     };
-  }
-
-  function updateNestedReply(replies: QuickReplyDraft[], replyId: string, patch: Partial<QuickReplyDraft>): QuickReplyDraft[] {
-    return replies.map((reply) => {
-      if (reply.id === replyId) return { ...reply, ...patch };
-      if (reply.destinationQuickReplies.length) {
-        return { ...reply, destinationQuickReplies: updateNestedReply(reply.destinationQuickReplies, replyId, patch) };
-      }
-      return reply;
-    });
-  }
-
-  function updateNestedRootReply(replyId: string, patch: Partial<QuickReplyDraft>) {
-    const target = message.quickReplies.find((reply) => reply.id === replyId);
-    if (target) {
-      onUpdateQuickReply(replyId, patch);
-      return;
-    }
-    onUpdate({
-      quickReplies: message.quickReplies.map((reply) => ({
-        ...reply,
-        destinationQuickReplies: updateNestedReply(reply.destinationQuickReplies, replyId, patch),
-      })),
-    });
-  }
-
-  function updateNestedTree(rootReplyId: string, replies: QuickReplyDraft[]) {
-    onUpdateQuickReply(rootReplyId, { destinationQuickReplies: replies });
   }
 
 
@@ -262,6 +239,7 @@ export default function AutomationFlowMessage({
             replies={message.quickReplies}
             showcases={showcases}
             onChange={(replies) => onUpdate({ quickReplies: replies })}
+            onUpdateReply={onUpdateQuickReplyTree}
           />
         </div>
       )}
@@ -345,15 +323,20 @@ function BranchAnswerEditor({
   replies,
   showcases,
   onChange,
+  onUpdateReply,
   depth = 0,
 }: {
   replies: QuickReplyDraft[];
   showcases: Showcase[];
   onChange: (replies: QuickReplyDraft[]) => void;
+  onUpdateReply: (
+    replyId: string,
+    updater: (reply: QuickReplyDraft) => QuickReplyDraft
+  ) => void;
   depth?: number;
 }) {
   function updateReply(id: string, patch: Partial<QuickReplyDraft>) {
-    onChange(replies.map((reply) => reply.id === id ? { ...reply, ...patch } : reply));
+    onUpdateReply(id, (reply) => ({ ...reply, ...patch }));
   }
 
   function removeReply(id: string) {
@@ -479,7 +462,10 @@ function BranchAnswerEditor({
                 replies={reply.destinationQuickReplies}
                 showcases={showcases}
                 depth={depth + 1}
-                onChange={(children) => updateReply(reply.id, { destinationQuickReplies: children })}
+                onChange={(children) =>
+                  updateReply(reply.id, { destinationQuickReplies: children })
+                }
+                onUpdateReply={onUpdateReply}
               />
             </div>
           )}
