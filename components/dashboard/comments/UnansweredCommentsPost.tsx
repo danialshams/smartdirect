@@ -205,26 +205,30 @@ export default function UnansweredCommentsPost({
                 </button>
 
                 <div className="absolute bottom-4 inset-x-4 z-10 text-white sm:inset-x-6">
-                  <div className="mb-2 flex flex-col items-start gap-1">
-                    <div className="flex items-center gap-1.5 rounded-full bg-black/35 px-2.5 py-1 text-[10px] backdrop-blur-md">
-                      <MessageCircle size={13} />
-                      <span>{post.comments.length.toLocaleString("fa-IR")} بی‌پاسخ</span>
-                    </div>
-                    {post.media.timestamp && (
-                      <p className="text-[10px] text-white/75">
-                        {new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
-                          year: "numeric",
-                          month: "2-digit",
-                          day: "2-digit",
-                        }).format(new Date(post.media.timestamp))}
+                  <div className="flex items-end justify-between gap-4">
+                    {post.media.caption ? (
+                      <p className="min-w-0 flex-1 overflow-hidden whitespace-pre-wrap text-sm font-medium leading-6 drop-shadow-sm [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]">
+                        {post.media.caption}
                       </p>
+                    ) : (
+                      <div className="min-w-0 flex-1" />
                     )}
+                    <div className="shrink-0 text-left">
+                      <div className="flex items-center gap-1.5 rounded-full bg-black/35 px-2.5 py-1 text-[10px] backdrop-blur-md">
+                        <MessageCircle size={13} />
+                        <span>{post.comments.length.toLocaleString("fa-IR")} بی‌پاسخ</span>
+                      </div>
+                      {post.media.timestamp && (
+                        <p className="mt-1 text-[10px] text-white/75">
+                          {new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
+                            year: "numeric",
+                            month: "2-digit",
+                            day: "2-digit",
+                          }).format(new Date(post.media.timestamp))}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  {post.media.caption && (
-                    <p className="whitespace-pre-wrap text-sm font-medium leading-6 drop-shadow-sm">
-                      {post.media.caption}
-                    </p>
-                  )}
                 </div>
               </div>
             </section>
