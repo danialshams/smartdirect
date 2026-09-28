@@ -3,8 +3,6 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getInstagramProfile } from "@/lib/instagram/api";
-import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 import { proxyInstagramAccountProfileUrl } from "@/lib/instagram/media-proxy";
 import DashboardRoute from "../../../../components/dashboard/DashboardRoute";
 import UnansweredCommentsPost from "../../../../components/dashboard/comments/UnansweredCommentsPost";
@@ -45,21 +43,10 @@ export default async function UnansweredCommentsPostPage({
     );
   }
 
-  let activeAccount = {
+  const activeAccount = {
     ...account,
     profilePictureUrl: proxyInstagramAccountProfileUrl(account.id),
   };
-
-  try {
-    const accessToken = await getValidInstagramAccessToken(account.id);
-    const profile = await getInstagramProfile(accessToken);
-    activeAccount = {
-      ...activeAccount,
-      igUsername: profile.username ?? account.igUsername,
-    };
-  } catch {
-    // Use the stored username when Meta profile lookup is unavailable.
-  }
 
   return (
     <DashboardRoute>
