@@ -218,58 +218,70 @@ function PostTile({
       : index % 5 === 2
         ? "col-span-2 sm:col-span-1 lg:col-span-1"
         : "col-span-1";
-  const hasCaption = Boolean(post.media.caption?.trim());
 
   return (
     <button
       type="button"
       onClick={onClick}
       onMouseEnter={() => {
-        // Warm the dynamic route before a desktop click.
         router.prefetch(
           `/dashboard/comments/${encodeURIComponent(post.media.id)}`,
         );
       }}
       className={[
-        "group relative aspect-square overflow-hidden rounded-2xl bg-muted text-right outline-none",
-        "transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/5",
-        "focus-visible:ring-2 focus-visible:ring-ring/40 lg:rounded-xl",
+        "group text-right outline-none",
+        "focus-visible:ring-2 focus-visible:ring-ring/40",
         bentoLayout,
+        "relative aspect-square overflow-hidden rounded-2xl bg-muted",
+        "transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/5",
+        "lg:aspect-auto lg:overflow-visible lg:rounded-none lg:bg-transparent lg:shadow-none lg:hover:translate-y-0 lg:hover:shadow-none",
       ].join(" ")}
     >
-      {mediaSrc ? (
-        <img
-          src={mediaSrc}
-          alt={post.media.caption ?? ""}
-          className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
-        />
-      ) : (
-        <div className="flex h-full items-center justify-center text-muted-foreground">
-          <ImageIcon size={26} strokeWidth={1.5} />
+      <div className="relative aspect-square overflow-hidden rounded-2xl bg-muted lg:rounded-xl">
+        {mediaSrc ? (
+          <img
+            src={mediaSrc}
+            alt={post.media.caption ?? ""}
+            className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.025]"
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center text-muted-foreground">
+            <ImageIcon size={26} strokeWidth={1.5} />
+          </div>
+        )}
+
+        <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
+
+        <div className="absolute right-3 top-3 flex items-center gap-1.5 rounded-full bg-white/92 px-2.5 py-1.5 text-[10px] font-semibold text-foreground shadow-sm backdrop-blur-md">
+          {isReel ? "ریل" : "پست"}
+          {post.media.mediaType === "VIDEO" && <Video size={10} />}
         </div>
-      )}
 
-      <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
-
-      <div className="absolute right-3 top-3 flex items-center gap-1.5 rounded-full bg-white/92 px-2.5 py-1.5 text-[10px] font-semibold text-foreground shadow-sm backdrop-blur-md">
-        {isReel ? "ریل" : "پست"}
-        {post.media.mediaType === "VIDEO" && <Video size={10} />}
+        <div className="absolute inset-x-3 bottom-3 flex items-end justify-between gap-3 text-white lg:hidden">
+          <span className="text-[11px] font-semibold">
+            {post.comments.length.toLocaleString("fa-IR")} کامنت بی‌پاسخ
+          </span>
+          <span className="flex h-8 min-w-8 shrink-0 items-center justify-center rounded-full bg-white text-foreground shadow-sm">
+            <MessageCircle size={13} />
+          </span>
+        </div>
       </div>
 
-      <div className="absolute inset-x-3 bottom-3 flex items-end justify-between gap-3 text-white">
-        <div className="min-w-0 text-right">
-          <div className="text-[11px] font-semibold">
-            {post.comments.length.toLocaleString("fa-IR")} کامنت بی‌پاسخ
-          </div>
-          {hasCaption && (
-            <div className="mt-1 hidden max-w-[190px] truncate text-[10px] text-white/75 lg:block">
-              {post.media.caption}
-            </div>
-          )}
+      <div className="hidden pt-3 lg:block">
+        <div className="flex items-center justify-between gap-3">
+          <span className="truncate text-xs font-medium text-foreground">
+            {isReel ? "ریل" : "پست"}
+          </span>
+          <span className="flex shrink-0 items-center gap-1 text-[11px] font-medium text-muted-foreground">
+            <MessageCircle size={12} />
+            {post.comments.length.toLocaleString("fa-IR")}
+          </span>
         </div>
-        <span className="flex h-8 min-w-8 shrink-0 items-center justify-center rounded-full bg-white text-foreground shadow-sm">
-          <MessageCircle size={13} />
-        </span>
+        {post.media.caption && (
+          <p className="mt-1.5 truncate text-xs leading-5 text-muted-foreground">
+            {post.media.caption}
+          </p>
+        )}
       </div>
     </button>
   );
