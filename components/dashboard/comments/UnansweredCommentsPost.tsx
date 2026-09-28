@@ -141,7 +141,7 @@ export default function UnansweredCommentsPost({
       : post?.media.mediaUrl ?? post?.media.thumbnailUrl;
 
   return (
-    <main dir="rtl" className="h-[100dvh] overflow-hidden bg-background">
+    <main dir="rtl" className="fixed inset-0 h-[100dvh] w-screen overflow-hidden bg-background">
       {loading ? (
         <PostDetailSkeleton />
       ) : error ? (
@@ -165,8 +165,8 @@ export default function UnansweredCommentsPost({
         </div>
       ) : (
         <article className="relative flex h-full w-full flex-col overflow-hidden bg-black">
-          <section className="relative min-h-0 flex-1 bg-black">
-            <div className="relative h-full w-full">
+          <section className="relative min-h-0 flex-[0_0_58dvh] bg-black sm:flex-[0_0_60dvh]">
+            <div className="absolute inset-0 h-full w-full">
                 {mediaSrc ? (
                   post.media.mediaType === "VIDEO" ? (
                     <div className="relative h-full w-full">
@@ -205,52 +205,32 @@ export default function UnansweredCommentsPost({
                   بازگشت
                 </button>
 
-                <div className="absolute left-4 top-4 z-10 flex items-center gap-2 rounded-full bg-black/45 px-3 py-2 text-white backdrop-blur-md">
-                  {account.profilePictureUrl ? (
-                    <img
-                      src={account.profilePictureUrl}
-                      alt=""
-                      className="h-6 w-6 rounded-full object-cover"
-                    />
-                  ) : (
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/15 text-[8px] font-semibold">
-                      IG
-                    </span>
-                  )}
-                  <span dir="ltr" className="text-[10px] font-semibold">
-                    @{account.igUsername}
-                  </span>
-                </div>
-
                 <div className="absolute bottom-5 inset-x-4 z-10 text-white sm:inset-x-6">
-                  <div className="mb-2 flex items-center justify-between gap-3">
-                    <span className="rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-semibold backdrop-blur-md">
-                      {post.media.mediaProductType === "REELS" ? "ریل" : "پست"}
-                    </span>
+                  <div className="mb-2 flex flex-col items-start gap-1">
                     <div className="flex items-center gap-1.5 rounded-full bg-black/35 px-2.5 py-1 text-[10px] backdrop-blur-md">
                       <MessageCircle size={13} />
                       <span>{post.comments.length.toLocaleString("fa-IR")} بی‌پاسخ</span>
                     </div>
+                    {post.media.timestamp && (
+                      <p className="text-[10px] text-white/75">
+                        {new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
+                          year: "numeric",
+                          month: "2-digit",
+                          day: "2-digit",
+                        }).format(new Date(post.media.timestamp))}
+                      </p>
+                    )}
                   </div>
                   {post.media.caption && (
                     <p className="whitespace-pre-wrap text-sm font-medium leading-6 drop-shadow-sm">
                       {post.media.caption}
                     </p>
                   )}
-                  {post.media.timestamp && (
-                    <p className="mt-1 text-[10px] text-white/70">
-                      {new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
-                        year: "numeric",
-                        month: "2-digit",
-                        day: "2-digit",
-                      }).format(new Date(post.media.timestamp))}
-                    </p>
-                  )}
                 </div>
               </div>
             </section>
 
-            <section className="relative z-20 -mt-5 min-h-0 flex-1 overflow-y-auto rounded-t-[24px] bg-background px-4 pb-8 pt-5 shadow-[0_-12px_30px_rgba(0,0,0,0.08)] sm:px-6">
+            <section className="relative z-20 -mt-5 min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-t-[24px] bg-background px-4 pb-8 pt-5 shadow-[0_-12px_30px_rgba(0,0,0,0.08)] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden sm:px-6">
               <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-muted-foreground/20" />
               <div className="flex items-end justify-between gap-3">
                 <div>
