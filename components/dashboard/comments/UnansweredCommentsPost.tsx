@@ -338,28 +338,46 @@ export default function UnansweredCommentsPost({
 
 function PostDetailSkeleton() {
   return (
-    <div className="h-[100dvh] overflow-hidden bg-background">
-      <div className="relative h-full bg-muted animate-pulse">
-        <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-black/50 to-transparent" />
-        <div className="absolute inset-x-0 bottom-0 z-10 rounded-t-[24px] bg-background px-4 pb-8 pt-5 sm:px-6">
-          <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-muted" />
-          <div className="h-5 w-40 rounded-full bg-muted" />
-          <div className="mt-2 h-3 w-64 rounded-full bg-muted" />
-          <div className="mt-5 space-y-5">
-            {Array.from({ length: 5 }).map((_, index) => (
-              <div key={index} className="flex items-start gap-3">
-                <div className="h-9 w-9 shrink-0 rounded-full bg-muted" />
+    <div className="fixed inset-0 h-[100dvh] w-screen overflow-hidden bg-black">
+      <section className="absolute inset-x-0 top-0 h-[58dvh] bg-muted sm:h-[60dvh]">
+        <div className="absolute right-4 top-4 h-9 w-20 animate-pulse rounded-full bg-white/10" />
+        <div className="absolute inset-x-4 bottom-5 space-y-2 sm:inset-x-6">
+          <div className="h-8 w-28 animate-pulse rounded-full bg-white/10" />
+          <div className="h-3 w-3/4 animate-pulse rounded-full bg-white/10" />
+          <div className="h-3 w-1/2 animate-pulse rounded-full bg-white/10" />
+        </div>
+      </section>
+
+      <section className="absolute inset-x-0 bottom-0 top-[calc(58dvh-1.25rem)] overflow-hidden rounded-t-[24px] bg-background px-4 pb-8 pt-5 shadow-[0_-12px_30px_rgba(0,0,0,0.08)] sm:top-[calc(60dvh-1.25rem)] sm:px-6">
+        <div className="mx-auto mb-4 h-1 w-10 animate-pulse rounded-full bg-muted" />
+
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <div className="h-5 w-40 animate-pulse rounded-full bg-muted" />
+            <div className="mt-2 h-3 w-64 animate-pulse rounded-full bg-muted" />
+          </div>
+          <div className="h-4 w-8 animate-pulse rounded-full bg-muted" />
+        </div>
+
+        <div className="mt-4 divide-y border-t border-border">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <div key={index} className="py-5">
+              <div className="flex items-start gap-3">
+                <div className="h-9 w-9 shrink-0 animate-pulse rounded-full bg-muted" />
                 <div className="min-w-0 flex-1">
-                  <div className="h-3 w-24 rounded-full bg-muted" />
-                  <div className="mt-3 h-3 w-full rounded-full bg-muted" />
-                  <div className="mt-2 h-3 w-2/3 rounded-full bg-muted" />
-                  <div className="mt-4 h-9 w-full rounded-lg bg-muted" />
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="h-3 w-24 animate-pulse rounded-full bg-muted" />
+                    <div className="h-2.5 w-16 animate-pulse rounded-full bg-muted" />
+                  </div>
+                  <div className="mt-3 h-3 w-full animate-pulse rounded-full bg-muted" />
+                  <div className="mt-2 h-3 w-2/3 animate-pulse rounded-full bg-muted" />
+                  <div className="mt-4 flex h-10 animate-pulse rounded-xl bg-muted/70" />
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
-      </div>
+      </section>
     </div>
   );
 }
