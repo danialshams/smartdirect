@@ -122,7 +122,7 @@ export default function UnansweredComments({
           <div
             role="tablist"
             aria-label="فیلتر محتوا"
-            className="inline-flex w-full rounded-lg bg-muted/60 p-1 sm:w-auto"
+            className="flex w-full items-center justify-start gap-2 sm:w-auto"
           >
             {(
               [
@@ -138,10 +138,10 @@ export default function UnansweredComments({
                 aria-selected={filter === value}
                 onClick={() => setFilter(value)}
                 className={[
-                  "h-8 flex-1 rounded-md px-4 text-xs font-medium transition-colors sm:flex-none",
+                  "h-9 min-w-[72px] rounded-full border px-5 text-xs font-medium transition-all sm:min-w-0",
                   filter === value
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground",
+                    ? "border-foreground bg-foreground text-background shadow-sm"
+                    : "border-border bg-background text-muted-foreground hover:border-foreground/30 hover:text-foreground",
                 ].join(" ")}
               >
                 {label}
@@ -219,6 +219,22 @@ function PostTile({
         ? "col-span-2 sm:col-span-1 lg:col-span-1"
         : "col-span-1";
 
+  const latestCommenters = post.comments
+    .slice()
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    )
+    .slice(0, 3);
+
+  const publishedDate = post.media.timestamp
+    ? new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(new Date(post.media.timestamp))
+    : null;
+
   return (
     <button
       type="button"
@@ -237,12 +253,12 @@ function PostTile({
         "group text-right outline-none",
         "focus-visible:ring-2 focus-visible:ring-ring/40",
         bentoLayout,
-        "relative aspect-square overflow-hidden rounded-2xl bg-muted",
-        "transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/5",
-        "lg:aspect-auto lg:overflow-visible lg:rounded-none lg:bg-transparent lg:shadow-none lg:hover:translate-y-0 lg:hover:shadow-none",
+        "overflow-hidden rounded-2xl border border-border/60 bg-background shadow-sm",
+        "transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-black/5",
+        "lg:rounded-xl lg:border-0 lg:bg-transparent lg:shadow-none lg:hover:translate-y-0 lg:hover:shadow-none",
       ].join(" ")}
     >
-      <div className="relative aspect-square overflow-hidden rounded-2xl bg-muted lg:rounded-xl">
+      <div className="relative aspect-square overflow-hidden bg-muted lg:rounded-xl">
         {mediaSrc ? (
           <img
             src={mediaSrc}
@@ -255,38 +271,63 @@ function PostTile({
           </div>
         )}
 
-        <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/55 to-transparent" />
 
-        <div className="absolute right-3 top-3 flex items-center gap-1.5 rounded-full bg-white/92 px-2.5 py-1.5 text-[10px] font-semibold text-foreground shadow-sm backdrop-blur-md">
+        <div className="absolute right-3 top-3 flex items-center gap-1.5 rounded-full bg-white/95 px-2.5 py-1.5 text-[10px] font-semibold text-foreground shadow-sm backdrop-blur-md">
           {isReel ? "ریل" : "پست"}
           {post.media.mediaType === "VIDEO" && <Video size={10} />}
         </div>
 
-        <div className="absolute inset-x-3 bottom-3 flex items-end justify-between gap-3 text-white lg:hidden">
-          <span className="text-[11px] font-semibold">
-            {post.comments.length.toLocaleString("fa-IR")} کامنت بی‌پاسخ
-          </span>
-          <span className="flex h-8 min-w-8 shrink-0 items-center justify-center rounded-full bg-white text-foreground shadow-sm">
-            <MessageCircle size={13} />
+        <div className="absolute bottom-3 left-3 flex h-8 items-center gap-1.5 rounded-full bg-white px-2.5 text-foreground shadow-md">
+          <MessageCircle size={13} strokeWidth={2} />
+          <span className="text-[11px] font-bold">
+            {post.comments.length.toLocaleString("fa-IR")}
           </span>
         </div>
       </div>
 
-      <div className="hidden pt-3 lg:block">
-        <div className="flex items-center justify-between gap-3">
-          <span className="truncate text-xs font-medium text-foreground">
-            {isReel ? "ریل" : "پست"}
-          </span>
-          <span className="flex shrink-0 items-center gap-1 text-[11px] font-medium text-muted-foreground">
-            <MessageCircle size={12} />
-            {post.comments.length.toLocaleString("fa-IR")}
-          </span>
+      <div className="bg-background px-3.5 pb-3.5 pt-3 text-right lg:rounded-b-xl lg:px-0 lg:pt-3">
+        <p
+          className="min-h-[2.5rem] overflow-hidden text-xs leading-5 text-foreground"
+          style={{
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+          }}
+        >
+          {post.media.caption?.trim() || "بدون کپشن"}
+        </p>
+
+        <div className="mt-3 flex items-center justify-between gap-3">
+          <div className="flex min-w-0 -space-x-2 space-x-reverse" dir="ltr">
+            {latestCommenters.map((commenter) =>
+              commenter.profilePictureUrl ? (
+                <img
+                  key={commenter.id}
+                  src={commenter.profilePictureUrl}
+                  alt=""
+                  className="h-7 w-7 rounded-full border-2 border-background object-cover"
+                />
+              ) : (
+                <div
+                  key={commenter.id}
+                  className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-background bg-muted text-[9px] font-medium text-muted-foreground"
+                >
+                  {commenter.username.slice(0, 1).toUpperCase()}
+                </div>
+              ),
+            )}
+          </div>
+
+          {publishedDate && (
+            <time
+              dateTime={post.media.timestamp ?? undefined}
+              className="shrink-0 text-[10px] font-medium text-muted-foreground"
+            >
+              {publishedDate}
+            </time>
+          )}
         </div>
-        {post.media.caption && (
-          <p className="mt-1.5 truncate text-xs leading-5 text-muted-foreground">
-            {post.media.caption}
-          </p>
-        )}
       </div>
     </button>
   );
