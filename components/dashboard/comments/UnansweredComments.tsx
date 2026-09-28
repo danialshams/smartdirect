@@ -205,6 +205,7 @@ function PostTile({
   index: number;
   onClick: () => void;
 }) {
+  const router = useRouter();
   const mediaSrc =
     post.media.mediaType === "VIDEO"
       ? post.media.thumbnailUrl ?? post.media.mediaUrl
