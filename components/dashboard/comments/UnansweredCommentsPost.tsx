@@ -164,7 +164,7 @@ export default function UnansweredCommentsPost({
         </div>
       ) : (
         <article className="relative flex h-full w-full flex-col overflow-hidden bg-black">
-          <section className="relative min-h-0 flex-[0_0_52dvh] bg-black sm:flex-[0_0_54dvh]">
+          <section className="relative min-h-0 flex-[0_0_40dvh] bg-black sm:flex-[0_0_42dvh]">
             <div className="absolute inset-0 h-full w-full">
                 {mediaSrc ? (
                   post.media.mediaType === "VIDEO" ? (
@@ -247,7 +247,7 @@ export default function UnansweredCommentsPost({
 
               <div className="mt-4 divide-y border-t border-border">
                 {post.comments.map((comment) => (
-                  <div key={comment.id} className="py-3.5">
+                  <div key={comment.id} className="py-2.5">
                     <div className="flex items-start gap-3">
                       {comment.profilePictureUrl ? (
                         <img
@@ -276,11 +276,11 @@ export default function UnansweredCommentsPost({
                           </span>
                         </div>
 
-                        <p className="mt-1.5 whitespace-pre-wrap text-sm leading-6 text-foreground">
+                        <p className="mt-1 whitespace-pre-wrap text-[13px] leading-5.5 text-foreground">
                           {comment.text}
                         </p>
 
-                        <div className="mt-2.5 flex items-center gap-2 rounded-xl border border-border bg-muted/30 p-1.5">
+                        <div className="mt-2 flex items-center gap-2 rounded-xl border border-border bg-muted/30 p-1.5">
                           <Input
                             value={drafts[comment.id] ?? ""}
                             onChange={(event) =>
@@ -338,7 +338,7 @@ export default function UnansweredCommentsPost({
 function PostDetailSkeleton() {
   return (
     <div className="fixed inset-x-0 bottom-0 top-14 h-[calc(100dvh-3.5rem)] overflow-hidden bg-black sm:top-16 sm:h-[calc(100dvh-4rem)] lg:top-0 lg:right-64 lg:h-[100dvh]">
-      <section className="absolute inset-x-0 top-0 h-[52dvh] bg-muted sm:h-[54dvh]">
+      <section className="absolute inset-x-0 top-0 h-[40dvh] bg-muted sm:h-[42dvh]">
         <div className="absolute right-4 top-4 h-9 w-20 animate-pulse rounded-full bg-white/10" />
         <div className="absolute inset-x-4 bottom-5 space-y-2 sm:inset-x-6">
           <div className="h-8 w-28 animate-pulse rounded-full bg-white/10" />
@@ -347,7 +347,7 @@ function PostDetailSkeleton() {
         </div>
       </section>
 
-      <section className="absolute inset-x-0 bottom-0 top-[calc(52dvh-1.25rem)] overflow-hidden rounded-t-[24px] bg-background px-4 pb-8 pt-5 shadow-[0_-12px_30px_rgba(0,0,0,0.08)] sm:top-[calc(54dvh-1.25rem)] sm:px-6">
+      <section className="absolute inset-x-0 bottom-0 top-[calc(40dvh-1.25rem)] overflow-hidden rounded-t-[24px] bg-background px-4 pb-8 pt-5 shadow-[0_-12px_30px_rgba(0,0,0,0.08)] sm:top-[calc(42dvh-1.25rem)] sm:px-6">
         <div className="mx-auto mb-4 h-1 w-10 animate-pulse rounded-full bg-muted" />
 
         <div className="flex items-end justify-between gap-3">
@@ -360,7 +360,7 @@ function PostDetailSkeleton() {
 
         <div className="mt-4 divide-y border-t border-border">
           {Array.from({ length: 5 }).map((_, index) => (
-            <div key={index} className="py-3.5">
+            <div key={index} className="py-2.5">
               <div className="flex items-start gap-3">
                 <div className="h-9 w-9 shrink-0 animate-pulse rounded-full bg-muted" />
                 <div className="min-w-0 flex-1">
@@ -370,7 +370,7 @@ function PostDetailSkeleton() {
                   </div>
                   <div className="mt-3 h-3 w-full animate-pulse rounded-full bg-muted" />
                   <div className="mt-2 h-3 w-2/3 animate-pulse rounded-full bg-muted" />
-                  <div className="mt-4 flex h-10 animate-pulse rounded-xl bg-muted/70" />
+                  <div className="mt-3 flex h-9 animate-pulse rounded-xl bg-muted/70" />
                 </div>
               </div>
             </div>
