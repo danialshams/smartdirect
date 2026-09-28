@@ -205,7 +205,7 @@ export default function UnansweredCommentsPost({
                 </button>
 
                 <div className="absolute bottom-9 inset-x-4 z-30 text-white sm:bottom-10 sm:inset-x-6">
-                  <div className="flex items-end justify-between gap-4">
+                  <div className="flex items-end justify-between gap-5">
                     {post.media.caption ? (
                       <p className="min-w-0 flex-1 overflow-hidden whitespace-pre-wrap text-sm font-medium leading-6 drop-shadow-sm [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]">
                         {post.media.caption}
@@ -213,13 +213,13 @@ export default function UnansweredCommentsPost({
                     ) : (
                       <div className="min-w-0 flex-1" />
                     )}
-                    <div className="shrink-0 text-left">
-                      <div className="flex items-center gap-1.5 rounded-full bg-black/35 px-2.5 py-1 text-[10px] backdrop-blur-md">
+                    <div className="flex w-[7.5rem] shrink-0 flex-col items-end justify-end gap-2 text-right">
+                      <div className="flex items-center gap-1.5 text-[10px] font-medium text-white">
                         <MessageCircle size={13} />
                         <span>{post.comments.length.toLocaleString("fa-IR")} بی‌پاسخ</span>
                       </div>
                       {post.media.timestamp && (
-                        <p className="mt-1 text-[10px] text-white/75">
+                        <p className="text-[10px] leading-none text-white/75">
                           {new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
                             year: "numeric",
                             month: "2-digit",
@@ -234,7 +234,6 @@ export default function UnansweredCommentsPost({
             </section>
 
             <section className="relative z-20 -mt-5 min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-t-[24px] bg-background px-4 pb-8 pt-5 shadow-[0_-12px_30px_rgba(0,0,0,0.08)] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden sm:px-6">
-              <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-muted-foreground/20" />
               <div className="flex items-end justify-between gap-3">
                 <div>
                   <h1 className="text-base font-semibold text-foreground">
@@ -249,9 +248,9 @@ export default function UnansweredCommentsPost({
                 </span>
               </div>
 
-              <div className="mt-4 divide-y border-t border-border">
+              <div className="mt-4 space-y-2">
                 {post.comments.map((comment) => (
-                  <div key={comment.id} className="py-2.5">
+                  <div key={comment.id} className="rounded-xl border border-border/70 bg-muted/10 px-3 py-2.5">
                     <div className="flex items-start gap-3">
                       {comment.profilePictureUrl ? (
                         <img
@@ -352,8 +351,6 @@ function PostDetailSkeleton() {
       </section>
 
       <section className="absolute inset-x-0 bottom-0 top-[calc(40dvh-1.25rem)] overflow-hidden rounded-t-[24px] bg-background px-4 pb-8 pt-5 shadow-[0_-12px_30px_rgba(0,0,0,0.08)] sm:top-[calc(42dvh-1.25rem)] sm:px-6">
-        <div className="mx-auto mb-4 h-1 w-10 animate-pulse rounded-full bg-muted" />
-
         <div className="flex items-end justify-between gap-3">
           <div>
             <div className="h-5 w-40 animate-pulse rounded-full bg-muted" />
@@ -362,9 +359,9 @@ function PostDetailSkeleton() {
           <div className="h-4 w-8 animate-pulse rounded-full bg-muted" />
         </div>
 
-        <div className="mt-4 divide-y border-t border-border">
+        <div className="mt-4 space-y-2">
           {Array.from({ length: 5 }).map((_, index) => (
-            <div key={index} className="py-2.5">
+            <div key={index} className="rounded-xl border border-border/70 bg-muted/10 px-3 py-2.5">
               <div className="flex items-start gap-3">
                 <div className="h-9 w-9 shrink-0 animate-pulse rounded-full bg-muted" />
                 <div className="min-w-0 flex-1">
