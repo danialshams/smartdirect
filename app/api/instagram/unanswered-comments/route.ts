@@ -95,6 +95,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const instagramAccountId = searchParams.get("instagramAccountId");
+    const requestedMediaId = searchParams.get("mediaId");
 
     if (!instagramAccountId) {
       return NextResponse.json(
@@ -130,7 +131,9 @@ export async function GET(request: NextRequest) {
       MEDIA_LIMIT,
     );
 
-    const media = mediaResult.data ?? [];
+    const media = (mediaResult.data ?? []).filter(
+      (item) => !requestedMediaId || item.id === requestedMediaId,
+    );
     const syncedMediaIds: string[] = [];
 
     for (let index = 0; index < media.length; index += COMMENT_BATCH_SIZE) {
