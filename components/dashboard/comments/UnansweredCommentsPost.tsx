@@ -2,7 +2,6 @@
 
 import {
   ArrowRight,
-  ExternalLink,
   Image as ImageIcon,
   Loader2,
   MessageCircle,
@@ -141,7 +140,7 @@ export default function UnansweredCommentsPost({
       : post?.media.mediaUrl ?? post?.media.thumbnailUrl;
 
   return (
-    <main dir="rtl" className="fixed inset-0 h-[100dvh] w-screen overflow-hidden bg-background">
+    <main dir="rtl" className="fixed inset-x-0 bottom-0 top-14 h-[calc(100dvh-3.5rem)] overflow-hidden bg-background sm:top-16 sm:h-[calc(100dvh-4rem)] lg:top-0 lg:right-64 lg:h-[100dvh]">
       {loading ? (
         <PostDetailSkeleton />
       ) : error ? (
@@ -338,7 +337,7 @@ export default function UnansweredCommentsPost({
 
 function PostDetailSkeleton() {
   return (
-    <div className="fixed inset-0 h-[100dvh] w-screen overflow-hidden bg-black">
+    <div className="fixed inset-x-0 bottom-0 top-14 h-[calc(100dvh-3.5rem)] overflow-hidden bg-black sm:top-16 sm:h-[calc(100dvh-4rem)] lg:top-0 lg:right-64 lg:h-[100dvh]">
       <section className="absolute inset-x-0 top-0 h-[58dvh] bg-muted sm:h-[60dvh]">
         <div className="absolute right-4 top-4 h-9 w-20 animate-pulse rounded-full bg-white/10" />
         <div className="absolute inset-x-4 bottom-5 space-y-2 sm:inset-x-6">
