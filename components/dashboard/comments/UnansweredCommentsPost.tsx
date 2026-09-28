@@ -375,6 +375,7 @@ export default function UnansweredCommentsPost({
       </div>
     </main>
   );
+}
 
 function PostDetailSkeleton() {
   return (
