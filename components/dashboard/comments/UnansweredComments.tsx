@@ -157,11 +157,26 @@ export default function UnansweredComments({
                 <div
                   key={index}
                   className={[
-                    "aspect-square animate-pulse rounded-2xl bg-muted",
+                    "overflow-hidden rounded-2xl border border-border/60 bg-background",
                     index % 5 === 1 ? "col-span-1 sm:col-span-2 lg:col-span-1" : "",
                     index % 5 === 2 ? "col-span-2 sm:col-span-1 lg:col-span-1" : "",
+                    "lg:rounded-xl",
                   ].join(" ")}
-                />
+                >
+                  <div className="aspect-square animate-pulse bg-muted" />
+                  <div className="space-y-3 px-3.5 py-3.5">
+                    <div className="h-3 w-full animate-pulse rounded-full bg-muted" />
+                    <div className="h-3 w-2/3 animate-pulse rounded-full bg-muted" />
+                    <div className="flex items-center justify-between">
+                      <div className="flex gap-1.5">
+                        <div className="h-7 w-7 animate-pulse rounded-full bg-muted" />
+                        <div className="h-7 w-7 animate-pulse rounded-full bg-muted" />
+                        <div className="h-7 w-7 animate-pulse rounded-full bg-muted" />
+                      </div>
+                      <div className="h-2.5 w-16 animate-pulse rounded-full bg-muted" />
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
           ) : filteredPosts.length === 0 ? (
