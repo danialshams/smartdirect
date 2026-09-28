@@ -141,12 +141,12 @@ export default function UnansweredCommentsPost({
       : post?.media.mediaUrl ?? post?.media.thumbnailUrl;
 
   return (
-    <main dir="rtl" className="min-h-screen">
-      <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
+    <main dir="rtl" className="min-h-screen bg-background">
+      <div className="mx-auto max-w-5xl px-3 py-4 sm:px-5 sm:py-6 lg:px-8">
         <button
           type="button"
           onClick={() => router.back()}
-          className="mb-5 inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+          className="mb-4 inline-flex h-9 items-center gap-1.5 rounded-full border border-border bg-background px-3.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
           <ArrowRight size={15} />
           بازگشت
@@ -155,14 +155,14 @@ export default function UnansweredCommentsPost({
         {loading ? (
           <PostDetailSkeleton />
         ) : error ? (
-          <div className="rounded-xl border border-destructive/15 bg-destructive/5 px-4 py-3 text-xs text-destructive">
+          <div className="rounded-2xl border border-destructive/15 bg-destructive/5 px-4 py-3 text-xs text-destructive">
             {error}
           </div>
         ) : !post ? (
-          <div className="py-24 text-center">
+          <div className="rounded-2xl border border-border bg-background py-24 text-center">
             <MessageCircle
               className="mx-auto text-muted-foreground"
-              size={22}
+              size={24}
               strokeWidth={1.5}
             />
             <h1 className="mt-3 text-sm font-medium text-foreground">
@@ -170,81 +170,123 @@ export default function UnansweredCommentsPost({
             </h1>
           </div>
         ) : (
-          <div className="grid gap-8 lg:grid-cols-[minmax(280px,400px)_1fr] lg:items-start">
-            <section className="lg:sticky lg:top-6">
-              <div className="overflow-hidden rounded-xl bg-muted">
-                <div className="relative aspect-square">
-                  {mediaSrc ? (
-                    post.media.mediaType === "VIDEO" ? (
-                      <div className="relative h-full w-full">
-                        <img
-                          src={mediaSrc}
-                          alt={post.media.caption ?? ""}
-                          className="h-full w-full object-cover"
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-foreground shadow-sm">
-                            <Video size={17} />
-                          </span>
-                        </div>
-                      </div>
-                    ) : (
+          <article className="overflow-hidden rounded-2xl border border-border bg-background shadow-sm">
+            <section className="relative bg-muted">
+              <div className="relative aspect-[4/5] max-h-[720px] w-full sm:aspect-[16/10] lg:aspect-[16/8.5]">
+                {mediaSrc ? (
+                  post.media.mediaType === "VIDEO" ? (
+                    <div className="relative h-full w-full">
                       <img
                         src={mediaSrc}
                         alt={post.media.caption ?? ""}
                         className="h-full w-full object-cover"
                       />
-                    )
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-muted-foreground">
-                      <ImageIcon size={28} strokeWidth={1.5} />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 text-foreground shadow-lg">
+                          <Video size={19} />
+                        </span>
+                      </div>
                     </div>
-                  )}
-                </div>
-              </div>
+                  ) : (
+                    <img
+                      src={mediaSrc}
+                      alt={post.media.caption ?? ""}
+                      className="h-full w-full object-cover"
+                    />
+                  )
+                ) : (
+                  <div className="flex h-full items-center justify-center text-muted-foreground">
+                    <ImageIcon size={32} strokeWidth={1.5} />
+                  </div>
+                )}
 
-              <div className="pt-3">
-                <div className="flex items-center justify-between gap-3 text-xs">
-                  <span className="text-muted-foreground">
-                    {post.media.mediaProductType === "REELS" ? "ریل" : "پست"} ·{" "}
-                    <span dir="ltr">@{account.igUsername}</span>
-                  </span>
-                  <span className="font-medium text-foreground">
+                <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/60 to-transparent" />
+
+                <div className="absolute right-4 top-4 rounded-full bg-white/95 px-3 py-1.5 text-[10px] font-semibold text-foreground shadow-sm">
+                  {post.media.mediaProductType === "REELS" ? "ریل" : "پست"}
+                </div>
+
+                <div className="absolute bottom-4 right-4 flex items-center gap-2 rounded-full bg-white px-3 py-2 text-foreground shadow-lg">
+                  <MessageCircle size={15} />
+                  <span className="text-xs font-bold">
                     {post.comments.length.toLocaleString("fa-IR")}
                   </span>
+                  <span className="text-[10px] font-medium text-muted-foreground">
+                    بی‌پاسخ
+                  </span>
                 </div>
+              </div>
+            </section>
 
-                {post.media.caption && (
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                    {post.media.caption}
-                  </p>
-                )}
+            <section className="border-b border-border px-4 py-4 sm:px-6">
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    {account.profilePictureUrl ? (
+                      <img
+                        src={account.profilePictureUrl}
+                        alt=""
+                        className="h-9 w-9 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-[9px] font-semibold text-muted-foreground">
+                        IG
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <div dir="ltr" className="truncate text-xs font-semibold text-foreground">
+                        @{account.igUsername}
+                      </div>
+                      <div className="mt-0.5 text-[10px] text-muted-foreground">
+                        {post.media.mediaProductType === "REELS" ? "ریل" : "پست"}
+                        {post.media.timestamp
+                          ? ` · ${new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
+                              year: "numeric",
+                              month: "2-digit",
+                              day: "2-digit",
+                            }).format(new Date(post.media.timestamp))}`
+                          : ""}
+                      </div>
+                    </div>
+                  </div>
+
+                  {post.media.caption && (
+                    <p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-foreground">
+                      {post.media.caption}
+                    </p>
+                  )}
+                </div>
 
                 {post.media.permalink && (
                   <a
                     href={post.media.permalink}
                     target="_blank"
                     rel="noreferrer"
-                    className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                    className="shrink-0 rounded-full border border-border p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    aria-label="مشاهده در اینستاگرام"
                   >
-                    مشاهده در Instagram
-                    <ExternalLink size={12} />
+                    <ExternalLink size={14} />
                   </a>
                 )}
               </div>
             </section>
 
-            <section className="min-w-0">
-              <div className="mb-1">
-                <h1 className="text-base font-semibold text-foreground">
-                  کامنت‌های بی‌پاسخ
-                </h1>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  پاسخ هر کامنت را مستقیم ارسال کنید.
-                </p>
+            <section className="px-4 py-5 sm:px-6">
+              <div className="flex items-end justify-between gap-3">
+                <div>
+                  <h1 className="text-base font-semibold text-foreground">
+                    کامنت‌های بی‌پاسخ
+                  </h1>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    برای هر کامنت، پاسخ را مستقیم ارسال کنید.
+                  </p>
+                </div>
+                <span className="shrink-0 text-xs font-semibold text-muted-foreground">
+                  {post.comments.length.toLocaleString("fa-IR")}
+                </span>
               </div>
 
-              <div className="mt-5 divide-y border-t border-border">
+              <div className="mt-4 divide-y border-t border-border">
                 {post.comments.map((comment) => (
                   <div key={comment.id} className="py-5">
                     <div className="flex items-start gap-3">
@@ -252,19 +294,19 @@ export default function UnansweredCommentsPost({
                         <img
                           src={comment.profilePictureUrl}
                           alt={comment.username}
-                          className="h-8 w-8 shrink-0 rounded-full object-cover"
+                          className="h-9 w-9 shrink-0 rounded-full object-cover"
                         />
                       ) : (
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-[9px] font-semibold text-muted-foreground">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-[9px] font-semibold text-muted-foreground">
                           IG
                         </div>
                       )}
 
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center justify-between gap-3">
                           <span
                             dir="ltr"
-                            className="truncate text-xs font-medium text-foreground"
+                            className="truncate text-xs font-semibold text-foreground"
                           >
                             @{comment.username}
                           </span>
@@ -275,11 +317,11 @@ export default function UnansweredCommentsPost({
                           </span>
                         </div>
 
-                        <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-foreground">
+                        <p className="mt-2 whitespace-pre-wrap text-sm leading-7 text-foreground">
                           {comment.text}
                         </p>
 
-                        <div className="mt-3 flex gap-2">
+                        <div className="mt-3 flex items-center gap-2 rounded-xl border border-border bg-muted/30 p-1.5">
                           <Input
                             value={drafts[comment.id] ?? ""}
                             onChange={(event) =>
@@ -299,8 +341,8 @@ export default function UnansweredCommentsPost({
                               }
                             }}
                             maxLength={1000}
-                            placeholder="پاسخ..."
-                            className="h-9 min-w-0 flex-1 rounded-lg text-xs"
+                            placeholder="پاسخ به کامنت..."
+                            className="h-9 border-0 bg-transparent text-xs shadow-none focus-visible:ring-0"
                           />
                           <Button
                             type="button"
@@ -309,13 +351,16 @@ export default function UnansweredCommentsPost({
                               replyingId === comment.id ||
                               !(drafts[comment.id] ?? "").trim()
                             }
-                            className="h-9 w-9 shrink-0 rounded-lg p-0"
+                            className="h-9 shrink-0 rounded-lg px-3 text-xs"
                             aria-label="ارسال پاسخ"
                           >
                             {replyingId === comment.id ? (
                               <Loader2 size={14} className="animate-spin" />
                             ) : (
-                              <Send size={14} />
+                              <>
+                                ارسال
+                                <Send size={13} className="mr-1.5" />
+                              </>
                             )}
                           </Button>
                         </div>
@@ -325,13 +370,11 @@ export default function UnansweredCommentsPost({
                 ))}
               </div>
             </section>
-          </div>
+          </article>
         )}
       </div>
     </main>
   );
-}
-
 
 function PostDetailSkeleton() {
   return (
