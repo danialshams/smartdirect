@@ -151,7 +151,9 @@ export async function GET(request: NextRequest) {
             await syncMediaComments(
               session.user.id,
               item.id,
-              commentsResult.data ?? [],
+              (commentsResult.data ?? []).filter(
+                (comment) => comment.from?.id !== account.igUserId,
+              ),
               accessToken,
             );
 
@@ -170,7 +172,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const storedComments = await prisma.comment.findMany({
+    let storedComments = await prisma.comment.findMany({
       where: {
         userId: session.user.id,
         replied: false,
@@ -182,6 +184,7 @@ export async function GET(request: NextRequest) {
     });
 
     const commentProfilePictures = new Map<string, string>();
+    const ownCommentIds = new Set<string>();
 
     await Promise.all(
       storedComments.map(async (comment) => {
@@ -192,15 +195,12 @@ export async function GET(request: NextRequest) {
           );
           const scopedUserId = metaComment.from?.id;
 
-          if (!scopedUserId) return;
-
           if (scopedUserId === account.igUserId) {
-            commentProfilePictures.set(
-              comment.id,
-              proxyInstagramAccountProfileUrl(account.id),
-            );
+            ownCommentIds.add(comment.id);
             return;
           }
+
+          if (!scopedUserId) return;
 
           const profile = await getInstagramUserProfile(
             scopedUserId,
@@ -217,6 +217,11 @@ export async function GET(request: NextRequest) {
           // A commenter profile picture is optional in Meta's API.
         }
       }),
+    );
+
+    // Never expose comments written by the connected Instagram account.
+    storedComments = storedComments.filter(
+      (comment) => !ownCommentIds.has(comment.id),
     );
 
     const mediaById = new Map(
