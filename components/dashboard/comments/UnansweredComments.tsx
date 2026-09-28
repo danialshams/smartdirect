@@ -156,7 +156,11 @@ export default function UnansweredComments({
               {Array.from({ length: 10 }).map((_, index) => (
                 <div
                   key={index}
-                  className="aspect-square animate-pulse rounded-xl bg-muted"
+                  className={[
+                    "aspect-square animate-pulse rounded-2xl bg-muted",
+                    index % 5 === 1 ? "col-span-1 sm:col-span-2 lg:col-span-1" : "",
+                    index % 5 === 2 ? "col-span-2 sm:col-span-1 lg:col-span-1" : "",
+                  ].join(" ")}
                 />
               ))}
             </div>
@@ -172,10 +176,11 @@ export default function UnansweredComments({
             />
           ) : (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
-              {filteredPosts.map((post) => (
+              {filteredPosts.map((post, index) => (
                 <PostTile
                   key={post.media.id}
                   post={post}
+                  index={index}
                   onClick={() =>
                     router.push(
                       `/dashboard/comments/${encodeURIComponent(post.media.id)}`,
@@ -193,9 +198,11 @@ export default function UnansweredComments({
 
 function PostTile({
   post,
+  index,
   onClick,
 }: {
   post: PostGroup;
+  index: number;
   onClick: () => void;
 }) {
   const mediaSrc =
@@ -204,12 +211,30 @@ function PostTile({
       : post.media.mediaUrl ?? post.media.thumbnailUrl;
 
   const isReel = post.media.mediaProductType === "REELS";
+  const bentoLayout =
+    index % 5 === 1
+      ? "col-span-1 sm:col-span-2 lg:col-span-1"
+      : index % 5 === 2
+        ? "col-span-2 sm:col-span-1 lg:col-span-1"
+        : "col-span-1";
+  const hasCaption = Boolean(post.media.caption?.trim());
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className="group relative aspect-square overflow-hidden rounded-xl bg-muted text-right outline-none transition-transform duration-200 hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-ring/40"
+      onMouseEnter={() => {
+        // Warm the dynamic route before a desktop click.
+        router.prefetch(
+          `/dashboard/comments/${encodeURIComponent(post.media.id)}`,
+        );
+      }}
+      className={[
+        "group relative aspect-square overflow-hidden rounded-2xl bg-muted text-right outline-none",
+        "transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/5",
+        "focus-visible:ring-2 focus-visible:ring-ring/40 lg:rounded-xl",
+        bentoLayout,
+      ].join(" ")}
     >
       {mediaSrc ? (
         <img
@@ -223,19 +248,26 @@ function PostTile({
         </div>
       )}
 
-      <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/65 to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
 
-      <div className="absolute right-2.5 top-2.5 flex items-center gap-1.5 rounded-md bg-black/45 px-2 py-1 text-[10px] font-medium text-white backdrop-blur-sm">
+      <div className="absolute right-3 top-3 flex items-center gap-1.5 rounded-full bg-white/92 px-2.5 py-1.5 text-[10px] font-semibold text-foreground shadow-sm backdrop-blur-md">
         {isReel ? "ریل" : "پست"}
         {post.media.mediaType === "VIDEO" && <Video size={10} />}
       </div>
 
-      <div className="absolute inset-x-2.5 bottom-2.5 flex items-center justify-between gap-2 text-white">
-        <span className="text-[11px] font-medium">
-          {post.comments.length.toLocaleString("fa-IR")} کامنت بی‌پاسخ
-        </span>
-        <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-white/95 px-1.5 text-[10px] font-semibold text-foreground">
-          <MessageCircle size={11} />
+      <div className="absolute inset-x-3 bottom-3 flex items-end justify-between gap-3 text-white">
+        <div className="min-w-0 text-right">
+          <div className="text-[11px] font-semibold">
+            {post.comments.length.toLocaleString("fa-IR")} کامنت بی‌پاسخ
+          </div>
+          {hasCaption && (
+            <div className="mt-1 hidden max-w-[190px] truncate text-[10px] text-white/75 lg:block">
+              {post.media.caption}
+            </div>
+          )}
+        </div>
+        <span className="flex h-8 min-w-8 shrink-0 items-center justify-center rounded-full bg-white text-foreground shadow-sm">
+          <MessageCircle size={13} />
         </span>
       </div>
     </button>
