@@ -151,9 +151,13 @@ export async function GET(request: NextRequest) {
             await syncMediaComments(
               session.user.id,
               item.id,
-              (commentsResult.data ?? []).filter(
-                (comment) => comment.from?.id !== account.igUserId,
-              ),
+              (commentsResult.data ?? []).filter((comment) => {
+                const ownById = comment.from?.id === account.igUserId;
+                const ownByUsername =
+                  comment.username?.toLowerCase() === account.igUsername.toLowerCase() ||
+                  comment.from?.username?.toLowerCase() === account.igUsername.toLowerCase();
+                return !ownById && !ownByUsername;
+              }),
               accessToken,
             );
 
@@ -195,7 +199,13 @@ export async function GET(request: NextRequest) {
           );
           const scopedUserId = metaComment.from?.id;
 
-          if (scopedUserId === account.igUserId) {
+          const ownById = scopedUserId === account.igUserId;
+          const ownByUsername =
+            metaComment.username?.toLowerCase() === account.igUsername.toLowerCase() ||
+            metaComment.from?.username?.toLowerCase() === account.igUsername.toLowerCase() ||
+            comment.username.toLowerCase() === account.igUsername.toLowerCase();
+
+          if (ownById || ownByUsername) {
             ownCommentIds.add(comment.id);
             return;
           }
