@@ -228,6 +228,11 @@ function PostTile({
           `/dashboard/comments/${encodeURIComponent(post.media.id)}`,
         );
       }}
+      onPointerDown={() => {
+        router.prefetch(
+          `/dashboard/comments/${encodeURIComponent(post.media.id)}`,
+        );
+      }}
       className={[
         "group text-right outline-none",
         "focus-visible:ring-2 focus-visible:ring-ring/40",
