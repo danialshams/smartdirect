@@ -14,11 +14,9 @@ export const dynamic = "force-dynamic";
 export default async function UnansweredCommentsPage() {
   const session = await getServerSession(authOptions);
 
-  if (!session?.user?.id) {
-    redirect("/login");
-  }
+  if (!session?.user?.id) redirect("/login");
 
-  const accounts = await prisma.instagramAccount.findMany({
+  const account = await prisma.instagramAccount.findFirst({
     where: {
       userId: session.user.id,
       isConnected: true,
@@ -32,40 +30,43 @@ export default async function UnansweredCommentsPage() {
     },
   });
 
-  const accountsWithProfiles = await Promise.all(
-    accounts.map(async (account) => {
-      try {
-        const accessToken = await getValidInstagramAccessToken(account.id);
-        const profile = await getInstagramProfile(accessToken);
+  if (!account) {
+    return (
+      <DashboardRoute>
+        <div dir="rtl" className="py-24 text-center">
+          <p className="text-sm font-medium text-foreground">
+            هیچ پیج متصلی وجود ندارد
+          </p>
+          <a
+            href="/api/instagram/connect"
+            className="mt-4 inline-flex h-9 items-center rounded-lg bg-foreground px-4 text-xs font-medium text-background"
+          >
+            اتصال پیج
+          </a>
+        </div>
+      </DashboardRoute>
+    );
+  }
 
-        return {
-          ...account,
-          profilePictureUrl: proxyInstagramAccountProfileUrl(account.id),
-          igUsername: profile.username ?? account.igUsername,
-        };
-      } catch {
-        return {
-          ...account,
-          profilePictureUrl: null,
-        };
-      }
-    }),
-  );
+  let activeAccount = {
+    ...account,
+    profilePictureUrl: proxyInstagramAccountProfileUrl(account.id),
+  };
+
+  try {
+    const accessToken = await getValidInstagramAccessToken(account.id);
+    const profile = await getInstagramProfile(accessToken);
+    activeAccount = {
+      ...activeAccount,
+      igUsername: profile.username ?? account.igUsername,
+    };
+  } catch {
+    // The username stored on the connected account is a sufficient fallback.
+  }
 
   return (
     <DashboardRoute>
-      <div className="space-y-5">
-        <header className="border-b border-slate-200 pb-5">
-          <p className="text-xs font-medium text-slate-400">ارتباطات</p>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-950">
-            کامنت‌ها
-          </h1>
-          <p className="mt-2 text-sm text-slate-500">
-            کامنت‌های بدون پاسخ را بررسی و مدیریت کنید.
-          </p>
-        </header>
-        <UnansweredComments accounts={accountsWithProfiles} />
-      </div>
+      <UnansweredComments account={activeAccount} />
     </DashboardRoute>
   );
 }
