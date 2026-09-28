@@ -204,7 +204,7 @@ export default function UnansweredCommentsPost({
                   بازگشت
                 </button>
 
-                <div className="absolute bottom-4 inset-x-4 z-10 text-white sm:inset-x-6">
+                <div className="absolute bottom-9 inset-x-4 z-30 text-white sm:bottom-10 sm:inset-x-6">
                   <div className="flex items-end justify-between gap-4">
                     {post.media.caption ? (
                       <p className="min-w-0 flex-1 overflow-hidden whitespace-pre-wrap text-sm font-medium leading-6 drop-shadow-sm [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]">
