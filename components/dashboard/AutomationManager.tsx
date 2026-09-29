@@ -90,7 +90,7 @@ function getPreview(automation: Automation) {
   return automation.replyText?.trim() || "Flow پاسخ آماده است";
 }
 
-export default function AutomationManager({ accounts }: { accounts: InstagramAccount[] }) {
+export default function AutomationManager({ accounts, onlyTab }: { accounts: InstagramAccount[]; onlyTab?: "comments" | "stories" }) {
   const connectedAccounts = useMemo(
     () => accounts.filter((account) => account.isConnected),
     [accounts],
@@ -101,12 +101,12 @@ export default function AutomationManager({ accounts }: { accounts: InstagramAcc
   const [loading, setLoading] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
   const [editingAutomation, setEditingAutomation] = useState<Automation | null>(null);
-  const [activeTab, setActiveTab] = useState<Tab>("comments");
+  const [activeTab, setActiveTab] = useState<Tab>(onlyTab ?? "comments");
   const [menuId, setMenuId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Automation | null>(null);
   const [actionError, setActionError] = useState("");
 
-  const selectedAccount = connectedAccounts.find((account) => account.id === selectedAccountId);
+  const selectedAccount = connectedAccounts.find((account) => account.id === selectedAccountId);\n\n  useEffect(() => {\n    if (onlyTab && activeTab !== onlyTab) setActiveTab(onlyTab);\n  }, [onlyTab, activeTab]);
 
   useEffect(() => {
     if (!selectedAccountId && connectedAccounts[0]) {
