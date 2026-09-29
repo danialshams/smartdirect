@@ -11,7 +11,17 @@ export function proxyInstagramMediaUrl(
   if (!url) return null;
 
   if (isAlreadyProxied(url)) {
-    return url;
+    if (!accountId) return url;
+
+    try {
+      const proxied = new URL(url, "https://smartdirect.local");
+      if (!proxied.searchParams.get("accountId")) {
+        proxied.searchParams.set("accountId", accountId);
+      }
+      return `${proxied.pathname}?${proxied.searchParams.toString()}`;
+    } catch {
+      return url;
+    }
   }
 
   const params = new URLSearchParams({ url });
