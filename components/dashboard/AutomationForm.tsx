@@ -1131,7 +1131,7 @@ export default function AutomationForm({
                 );
 
             const result =
-                await readApiResponse(response, url);
+                await readApiResponse(\n                response,\n                `/api/automations/${targetAutomationId}/messages`\n            );
 
             if (
                 !response.ok ||
@@ -1238,7 +1238,7 @@ export default function AutomationForm({
                 success?: boolean;
                 error?: string;
                 message?: string;
-                data?: unknown;
+                data?: {\n                    id?: unknown;\n                };
             };
         } catch {
             throw new Error(
