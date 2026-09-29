@@ -673,15 +673,27 @@ async function processInstagramReadReceipt(
 ) {
   try {
     const senderId = messagingEvent?.sender?.id;
+    const recipientId = messagingEvent?.recipient?.id;
     const read = messagingEvent?.read;
 
-    if (!senderId || !read) {
-      console.warn("Instagram read receipt is missing sender/read data.");
+    if ((!senderId && !recipientId) || !read) {
+      console.warn("Instagram read receipt is missing sender/read data.", {
+        senderId: senderId ?? null,
+        recipientId: recipientId ?? null,
+        read: read ?? null,
+      });
 
       return;
     }
 
-    const participantId = String(senderId);
+    // For the normal Instagram read event, sender.id is the customer.
+    // Be defensive about payloads where the account itself appears as sender
+    // and the customer is only available as recipient.id.
+    const participantId = String(
+      String(senderId) === String(instagramAccount.igUserId)
+        ? recipientId ?? senderId
+        : senderId ?? recipientId,
+    );
 
     // =======================================================
     // Read Message ID
@@ -689,6 +701,14 @@ async function processInstagramReadReceipt(
 
     const readMid =
       typeof read.mid === "string" && read.mid.trim() ? read.mid.trim() : null;
+
+    console.log("[INSTAGRAM_READ_DEBUG] receipt-received", {
+      senderId: senderId ?? null,
+      recipientId: recipientId ?? null,
+      participantId,
+      readMid,
+      watermark: read.watermark ?? null,
+    });
 
     // =======================================================
     // Read Watermark
