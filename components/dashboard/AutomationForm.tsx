@@ -1489,8 +1489,8 @@ export default function AutomationForm({
     /* ---------------------------------------------------------------------- */
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-3 sm:p-4">
-            <div className="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 sm:p-4">
+            <div className="flex h-[100dvh] max-h-[100dvh] w-full flex-col overflow-hidden bg-background shadow-2xl sm:h-auto sm:max-h-[92vh] sm:max-w-4xl sm:rounded-2xl">
                 {/* Header */}
 
                 <div className="flex shrink-0 items-center justify-between border-b border-border px-5 py-4 sm:px-6 sm:py-5">
@@ -1528,7 +1528,7 @@ export default function AutomationForm({
                     onSubmit={
                         handleSubmit
                     }
-                    className="min-h-0 space-y-7 overflow-y-auto p-5 sm:p-6"
+                    className="min-h-0 space-y-6 overflow-y-auto px-4 pb-6 pt-4 sm:space-y-7 sm:p-6"
                 >
                     {/* Trigger */}
 
