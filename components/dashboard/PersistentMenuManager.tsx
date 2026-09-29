@@ -39,10 +39,12 @@ type PersistentMenuDraft = {
 
 type PersistentMenuManagerProps = {
     accounts: InstagramAccount[];
+    embedded?: boolean;
 };
 
 export default function PersistentMenuManager({
     accounts,
+    embedded = false,
 }: PersistentMenuManagerProps) {
     const connectedAccounts = useMemo(
         () =>
@@ -486,7 +488,7 @@ export default function PersistentMenuManager({
             className={embedded ? "rounded-3xl border border-border/80 bg-card shadow-sm" : "scroll-mt-24 rounded-xl border bg-card"}
         >
             {/* --------------------------------------------------------- */}
-            {embedded ? null : (\n{/* Header                                                    */}
+            {embedded ? null : (\n            {/* Header                                                    */}
             {/* --------------------------------------------------------- */}
 
             <div className="border-b border-border/60 p-5 sm:p-7">
@@ -561,9 +563,14 @@ export default function PersistentMenuManager({
                         )}
                 </div>
             </div>
+            )}
+
+
 
             {/* --------------------------------------------------------- */}
-                        )}\n\n            {/* Content                                                   */}
+                        )}
+
+            {/* Content                                                   */}
             {/* --------------------------------------------------------- */}
 
             {connectedAccounts.length ===
