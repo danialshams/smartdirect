@@ -360,7 +360,11 @@ export async function POST(
       },
     });
 
-    await invalidateAutomationCache(id);
+    try {
+      await invalidateAutomationCache(id);
+    } catch (cacheError) {
+      console.warn("Automation cache invalidation failed:", cacheError);
+    }
     return NextResponse.json(
       {
         success: true,
