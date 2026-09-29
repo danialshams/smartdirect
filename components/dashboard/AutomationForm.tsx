@@ -87,6 +87,18 @@ export default function AutomationForm({
     const isEditing =
         automationId !== null;
 
+    async function readApiResponse(response: Response, endpoint: string) {
+        const raw = await response.text();
+        if (!raw.trim()) {
+            throw new Error(`سرور برای ${endpoint} پاسخ خالی برگرداند. وضعیت: ${response.status}`);
+        }
+        try {
+            return JSON.parse(raw) as any;
+        } catch {
+            throw new Error(`پاسخ نامعتبر از ${endpoint} دریافت شد. وضعیت: ${response.status}`);
+        }
+    }
+
     /* ---------------------------------------------------------------------- */
     /* Trigger / Basic State                                                  */
     /* ---------------------------------------------------------------------- */
@@ -299,7 +311,7 @@ export default function AutomationForm({
                     );
 
                 const result =
-                    await response.json();
+                    await readApiResponse(response, "/api/instagram/media");
 
                 if (
                     !response.ok ||
@@ -379,7 +391,7 @@ export default function AutomationForm({
                     );
 
                 const result =
-                    await response.json();
+                    await readApiResponse(response, "/api/instagram/stories");
 
                 if (
                     !response.ok ||
@@ -468,10 +480,10 @@ export default function AutomationForm({
                 ]);
 
                 const showcaseResult =
-                    await showcaseResponse.json();
+                    await readApiResponse(showcaseResponse, "/api/showcases");
 
                 const formResult =
-                    await formResponse.json();
+                    await readApiResponse(formResponse, "/api/forms");
 
                 if (cancelled) {
                     return;
@@ -554,7 +566,7 @@ export default function AutomationForm({
                     );
 
                 const result =
-                    await response.json();
+                    await readApiResponse(response, `/api/automations/${automationId}`);
 
                 if (
                     !response.ok ||
@@ -924,7 +936,7 @@ export default function AutomationForm({
             );
 
         const existingResult =
-            await existingResponse.json();
+            await readApiResponse(existingResponse, `/api/automations/${targetAutomationId}`);
 
         if (
             !existingResponse.ok ||
@@ -1438,7 +1450,7 @@ export default function AutomationForm({
                 });
 
             const result =
-                await response.json();
+                await readApiResponse(response, `/api/automations/${targetAutomationId}`);
 
             if (
                 !response.ok ||
