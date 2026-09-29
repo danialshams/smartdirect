@@ -240,6 +240,7 @@ export default function AutomationFlowMessage({
             instagramAccountId={instagramAccountId}
             onChange={(replies) => onUpdate({ quickReplies: replies })}
             onUpdateReply={onUpdateQuickReplyTree}
+            allowRichDestinations={triggerType === "STORY_REPLY_KEYWORD"}
           />
         </div>
       )}
@@ -510,6 +511,7 @@ function BranchAnswerEditor({
   instagramAccountId,
   onChange,
   onUpdateReply,
+  allowRichDestinations = true,
   depth = 0,
 }: {
   replies: QuickReplyDraft[];
@@ -519,6 +521,7 @@ function BranchAnswerEditor({
     replyId: string,
     updater: (reply: QuickReplyDraft) => QuickReplyDraft
   ) => void;
+  allowRichDestinations?: boolean;
   depth?: number;
 }) {
   function updateReply(id: string, patch: Partial<QuickReplyDraft>) {
@@ -537,6 +540,17 @@ function BranchAnswerEditor({
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState("");
+
+  const destinationOptions = allowRichDestinations
+    ? [
+        ["TEXT", "متن"],
+        ["FORM", "فرم / سؤال بعدی"],
+        ["SHOWCASE", "ویترین"],
+        ["IMAGE", "عکس"],
+        ["VIDEO", "ویدیو"],
+        ["AUDIO", "وویس"],
+      ]
+    : [["TEXT", "متن"]];
 
   return (
     <div className="space-y-3">
@@ -583,12 +597,9 @@ function BranchAnswerEditor({
               className="w-full appearance-none rounded-xl border border-border/70 bg-background px-3 py-2.5 text-xs"
             >
               <option value="">مقصد این جواب را انتخاب کنید</option>
-              <option value="TEXT">متن</option>
-              <option value="FORM">فرم / سؤال بعدی</option>
-              <option value="SHOWCASE">ویترین</option>
-              <option value="IMAGE">عکس</option>
-              <option value="VIDEO">ویدیو</option>
-              <option value="AUDIO">وویس</option>
+              {destinationOptions.map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
             </Select>
             <ChevronDown size={14} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
           </div>
@@ -603,7 +614,7 @@ function BranchAnswerEditor({
             />
           )}
 
-          {reply.destinationType === "SHOWCASE" && (
+          {allowRichDestinations && reply.destinationType === "SHOWCASE" && (
             <BranchShowcaseCreator
               instagramAccountId={instagramAccountId}
               showcaseId={reply.destinationShowcaseId}
@@ -611,11 +622,11 @@ function BranchAnswerEditor({
             />
           )}
 
-          {error && ["IMAGE", "VIDEO", "AUDIO"].includes(reply.destinationType ?? "") && (
+          {allowRichDestinations && error && ["IMAGE", "VIDEO", "AUDIO"].includes(reply.destinationType ?? "") && (
             <p className="text-xs text-red-600">{error}</p>
           )}
 
-          {["IMAGE", "VIDEO", "AUDIO"].includes(reply.destinationType ?? "") && (
+          {allowRichDestinations && ["IMAGE", "VIDEO", "AUDIO"].includes(reply.destinationType ?? "") && (
             <label className={["flex min-h-24 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-border bg-muted/20 px-3 py-4 text-center text-xs font-semibold", uploading ? "pointer-events-none opacity-70" : ""].join(" ")}>
               {uploading ? `در حال آپلود... ${uploadProgress}٪` : reply.destinationMediaUrl ? "فایل انتخاب شده؛ برای تغییر کلیک کنید." : "فایل مقصد را انتخاب کنید"}
               <span className="text-[10px] font-normal text-muted-foreground">{reply.destinationType === "AUDIO" ? "فقط فایل صوتی (وویس)" : reply.destinationType === "VIDEO" ? "فقط فایل ویدیویی" : "فقط فایل تصویری"}</span>
@@ -649,7 +660,7 @@ function BranchAnswerEditor({
             </label>
           )}
 
-          {reply.destinationType === "FORM" && (
+          {allowRichDestinations && reply.destinationType === "FORM" && (
             <div className="space-y-3 rounded-xl border border-border/70 bg-muted/20 p-3">
               <Textarea
                 value={reply.destinationQuestion}
@@ -666,6 +677,7 @@ function BranchAnswerEditor({
                   updateReply(reply.id, { destinationQuickReplies: children })
                 }
                 onUpdateReply={onUpdateReply}
+                allowRichDestinations={allowRichDestinations}
               />
             </div>
           )}
