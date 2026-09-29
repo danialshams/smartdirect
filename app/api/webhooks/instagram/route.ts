@@ -73,6 +73,48 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+async function resolveInstagramMessageMediaUrl(
+  messageId: string | null,
+  instagramAccount: InstagramAccountData,
+): Promise<string | null> {
+  if (!messageId) return null;
+
+  try {
+    const accessToken = await getValidInstagramAccessToken(instagramAccount.id);
+    const data = await instagramApiRequest<{
+      attachments?: {
+        data?: Array<{
+          file_url?: string;
+          image_data?: { url?: string; medial_url?: string };
+          video_data?: { url?: string };
+        }>;
+      };
+    }>(`/${encodeURIComponent(messageId)}`, {
+      params: { fields: "attachments" },
+      accessToken,
+      timeoutMs: 30_000,
+      rateLimit: {
+        instagramAccountId: instagramAccount.id,
+        tenantId: instagramAccount.userId,
+        operation: "MESSAGE_MEDIA",
+      },
+    });
+
+    const attachment = data.attachments?.data?.[0];
+    return attachment?.file_url ??
+      attachment?.image_data?.url ??
+      attachment?.image_data?.medial_url ??
+      attachment?.video_data?.url ??
+      null;
+  } catch (error) {
+    console.warn("[INBOX_MEDIA_DEBUG] webhook-media-url-lookup-failed", {
+      messageId,
+      errorMessage: error instanceof Error ? error.message : String(error),
+    });
+    return null;
+  }
+}
+
 // =========================================================
 // Story Reply helpers
 // =========================================================
