@@ -265,11 +265,37 @@ export async function instagramApiRequest<T = unknown>(
     operation,
     hasAccessToken: Boolean(options.accessToken),
     hasRateLimit: Boolean(options.rateLimit),
-    ...(options.logRequestBody ? { requestBody: options.body } : {}),
+    ...(options.logRequestBody
+      ? {
+          requestBody:
+            options.body instanceof FormData
+              ? { type: "FormData" }
+              : options.body instanceof URLSearchParams
+                ? Object.fromEntries(options.body.entries())
+                : options.body,
+        }
+      : {}),
   });
 
   if (options.rateLimit) {
+    console.info("[INSTAGRAM_CLIENT_DEBUG] rate-limit-start", {
+      method,
+      path,
+      operation,
+      rateLimit: options.rateLimit,
+    });
+
     const rateLimit = await consumeInstagramRateLimit(options.rateLimit);
+
+    console.info("[INSTAGRAM_CLIENT_DEBUG] rate-limit-result", {
+      method,
+      path,
+      operation,
+      allowed: rateLimit.allowed,
+      remaining: rateLimit.remaining,
+      retryAfterMs: rateLimit.retryAfterMs,
+      scope: rateLimit.scope,
+    });
 
     if (!rateLimit.allowed) {
       if (
@@ -314,6 +340,21 @@ export async function instagramApiRequest<T = unknown>(
     const startedAt = Date.now();
 
     try {
+      console.info("[INSTAGRAM_CLIENT_DEBUG] fetch-start", {
+        method,
+        path,
+        operation,
+        attempt,
+        url: url.toString().replace(/([?&])access_token=[^&]*/g, "$1access_token=[REDACTED]"),
+        hasBody: options.body !== undefined,
+        bodyType:
+          options.body instanceof FormData
+            ? "FormData"
+            : options.body instanceof URLSearchParams
+              ? "URLSearchParams"
+              : typeof options.body,
+      });
+
       const response = await fetch(url, {
         method,
         signal: timeout.signal,
@@ -341,6 +382,24 @@ export async function instagramApiRequest<T = unknown>(
       });
 
       const data = await parseResponse(response);
+
+      console.info("[INSTAGRAM_CLIENT_DEBUG] fetch-response", {
+        method,
+        path,
+        operation,
+        attempt,
+        status: response.status,
+        ok: response.ok,
+        contentType: response.headers.get("content-type"),
+        requestId: response.headers.get("x-fb-request-id"),
+        traceId: response.headers.get("x-fb-trace-id"),
+        data:
+          data && typeof data === "object"
+            ? data
+            : typeof data === "string"
+              ? data.slice(0, 1000)
+              : data,
+      });
 
       const details =
         data && typeof data === "object" && "error" in data
