@@ -69,6 +69,8 @@ export default function DashboardAccountsClient({
   }, []);
 
   if (loading) {
+    if (mode === "inbox") return null;
+
     return (
       <Card>
         <CardContent className="space-y-3 p-6">
