@@ -114,7 +114,11 @@ export async function POST(request: NextRequest) {
     if (supportsFollowGate && normalizedRequireFollow && !normalizedFollowGateText) return NextResponse.json({ success: false, error: "وقتی Follow Gate فعال است، متن درخواست فالو الزامی است" }, { status: 400 });
 
     const duplicate = await prisma.automation.findFirst({
-      where: { instagramAccountId, triggerType, keyword: normalizedKeyword, mediaId: normalizedMediaId },
+      where: {
+        instagramAccountId,
+        triggerType,
+        mediaId: normalizedMediaId,
+      },
     });
     if (duplicate) return NextResponse.json({ success: false, error: "Automation مشابه قبلاً وجود دارد", data: duplicate }, { status: 409 });
 
