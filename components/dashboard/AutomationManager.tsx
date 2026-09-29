@@ -79,8 +79,7 @@ function getTriggerLabel(triggerType: AutomationTriggerType) {
 
 function getAutomationName(automation: Automation) {
   const keyword = automation.keyword?.trim();
-  if (keyword) return `پاسخ «${keyword.split(/[,،;؛
-]/)[0]?.trim() || keyword}»`;
+  if (keyword) return `پاسخ «${keyword.split(/[,،;؛]/)[0]?.trim() || keyword}»`;
   return getTriggerLabel(automation.triggerType);
 }
 
