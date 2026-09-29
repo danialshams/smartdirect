@@ -1590,6 +1590,8 @@ export default function AutomationForm({
     /* ---------------------------------------------------------------------- */
 
     if (pageMode && isStory) {
+        const responseMessage = messages[0] ?? null;
+
         return (
             <div dir="rtl" className="min-h-[calc(100dvh-2rem)]">
                 <div className="mx-auto w-full max-w-[1200px]">
@@ -1653,52 +1655,85 @@ export default function AutomationForm({
                                 )}
 
                                 <section className="rounded-3xl border border-border/80 bg-card p-4 shadow-sm sm:p-5">
-                                    <div className="mb-4">
-                                        <h2 className="text-base font-bold">کلمات کلیدی</h2>
-                                        <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                                            وقتی کاربر یکی از این عبارت‌ها را در پاسخ استوری ارسال کند، این Automation اجرا می‌شود.
-                                        </p>
-                                    </div>
                                     <KeywordInput
                                         keyword={keyword}
                                         setKeyword={setKeyword}
-                                        description="چند کلمه کلیدی می‌توانید اضافه کنید."
+                                        description="کلمه یا عبارت‌هایی که با Reply استوری باعث اجرای این پاسخ می‌شوند."
                                     />
                                 </section>
 
                                 <section className="rounded-3xl border border-border/80 bg-card p-4 shadow-sm sm:p-5">
-                                    <div className="mb-4">
-                                        <h2 className="text-base font-bold">پاسخ استوری</h2>
-                                        <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                                            یک پاسخ متنی مستقیم برای Reply کاربر بنویسید.
-                                        </p>
-                                    </div>
-                                    <Textarea
-                                        value={replyText}
-                                        onChange={(event) => setReplyText(event.target.value)}
-                                        placeholder="متن پاسخ استوری..."
-                                        className="min-h-28 resize-none rounded-xl text-sm leading-6"
-                                    />
-                                </section>
-
-                                <section className="rounded-3xl border border-border/80 bg-card p-4 shadow-sm sm:p-5">
-                                    <label className="flex cursor-pointer items-start gap-3">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <div>
+                                            <p className="text-sm font-semibold text-foreground">لایک Reply استوری</p>
+                                            <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                                                Reply کاربر را به‌صورت خودکار Like کن.
+                                            </p>
+                                        </div>
                                         <Input
                                             type="checkbox"
                                             checked={likeStoryReply}
                                             onChange={(event) => setLikeStoryReply(event.target.checked)}
-                                            className="mt-1"
+                                            className="h-5 w-5 shrink-0"
                                         />
-                                        <div>
-                                            <h2 className="text-base font-bold">لایک کردن Reply استوری</h2>
-                                            <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                                                اگر فعال باشد، پاسخ کاربر به استوری نیز Like می‌شود.
-                                            </p>
-                                        </div>
-                                    </label>
+                                    </div>
                                 </section>
 
-                                {renderFlowBuilder()}
+                                <section className="rounded-3xl border border-border/80 bg-card p-4 shadow-sm sm:p-5">
+                                    <div className="mb-4">
+                                        <h2 className="text-base font-bold">پاسخ</h2>
+                                        <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                                            نوع پاسخی را که کاربر بعد از Reply دریافت می‌کند انتخاب کنید.
+                                        </p>
+                                    </div>
+
+                                    {responseMessage ? (
+                                        <AutomationFlowMessage
+                                            message={responseMessage}
+                                            triggerType="STORY_REPLY_KEYWORD"
+                                            index={0}
+                                            total={1}
+                                            showcases={showcases}
+                                            forms={forms}
+                                            loadingResources={loadingResources}
+                                            instagramAccountId={account.id}
+                                            onFormCreated={(form) =>
+                                                setForms((current) => [
+                                                    form,
+                                                    ...current.filter((item) => item.id !== form.id),
+                                                ])
+                                            }
+                                            onUpdate={(patch) =>
+                                                updateMessage(responseMessage.id, patch)
+                                            }
+                                            onAddQuickReply={() =>
+                                                addQuickReply(responseMessage.id)
+                                            }
+                                            onUpdateQuickReply={(quickReplyId, patch) =>
+                                                updateQuickReply(responseMessage.id, quickReplyId, patch)
+                                            }
+                                            onUpdateQuickReplyTree={(quickReplyId, updater) =>
+                                                updateQuickReplyTree(responseMessage.id, quickReplyId, updater)
+                                            }
+                                            onRemoveQuickReply={(quickReplyId) =>
+                                                removeQuickReply(responseMessage.id, quickReplyId)
+                                            }
+                                        />
+                                    ) : (
+                                        <div className="rounded-2xl border border-dashed border-border bg-muted/30 p-6 text-center">
+                                            <p className="text-sm text-muted-foreground">
+                                                در حال آماده‌سازی بخش پاسخ...
+                                            </p>
+                                            <Button
+                                                type="button"
+                                                onClick={addMessage}
+                                                className="mt-4 rounded-xl"
+                                            >
+                                                افزودن پاسخ
+                                            </Button>
+                                        </div>
+                                    )}
+                                </section>
 
                                 {error && (
                                     <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-700">
@@ -1708,7 +1743,7 @@ export default function AutomationForm({
 
                                 <Button
                                     type="submit"
-                                    disabled={saving || selectedStoryIsExpired}
+                                    disabled={saving || selectedStoryIsExpired || !responseMessage}
                                     className="min-h-12 w-full rounded-2xl text-sm font-semibold shadow-sm"
                                 >
                                     {saving ? <Loader2 size={17} className="animate-spin" /> : null}
