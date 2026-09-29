@@ -6,6 +6,7 @@ function isAlreadyProxied(url: string) {
 
 export function proxyInstagramMediaUrl(
   url: string | null | undefined,
+  accountId?: string | null,
 ): string | null {
   if (!url) return null;
 
@@ -13,7 +14,10 @@ export function proxyInstagramMediaUrl(
     return url;
   }
 
-  return `${PROXY_PATH}?url=${encodeURIComponent(url)}`;
+  const params = new URLSearchParams({ url });
+  if (accountId) params.set("accountId", accountId);
+
+  return `${PROXY_PATH}?${params.toString()}`;
 }
 
 export function proxyInstagramParticipantProfileUrl(
