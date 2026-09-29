@@ -141,7 +141,11 @@ export async function POST(request: NextRequest) {
       include: { messages: { orderBy: { order: "asc" } } },
     });
 
-    await invalidateAutomationCache(instagramAccountId);
+    try {
+      await invalidateAutomationCache(instagramAccountId);
+    } catch (cacheError) {
+      console.warn("Automation cache invalidation failed:", cacheError);
+    }
     return NextResponse.json({ success: true, data: automation }, { status: 201 });
   } catch (error) {
     console.error("POST /api/automations error:", error);
