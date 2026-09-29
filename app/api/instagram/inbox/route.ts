@@ -195,7 +195,7 @@ async function uploadInstagramAttachment({
     throw new Error("حجم فایل نمی‌تواند بیشتر از ۲۵ مگابایت باشد.");
   }
 
-  let uploadBuffer = Buffer.from(await file.arrayBuffer());
+  let uploadBuffer: Uint8Array<ArrayBufferLike> = new Uint8Array(await file.arrayBuffer());
   let uploadFileName = file.name || "smartdirect-media";
   let uploadContentType = mimeType;
 
@@ -210,7 +210,7 @@ async function uploadInstagramAttachment({
 
     try {
       await writeFile(inputPath, uploadBuffer);
-      let normalized: Buffer | null = null;
+      let normalized: Uint8Array<ArrayBufferLike> | null = null;
 
       for (const bitrate of ["96k", "64k", "48k"]) {
         await rm(outputPath, { force: true });
@@ -239,7 +239,7 @@ async function uploadInstagramAttachment({
           { timeout: 120000, maxBuffer: 4 * 1024 * 1024 },
         );
 
-        normalized = await readFile(outputPath);
+        normalized = new Uint8Array(await readFile(outputPath));
         if (normalized.length <= SAFE_AUDIO_SIZE) break;
       }
 
