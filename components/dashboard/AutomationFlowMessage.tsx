@@ -40,12 +40,24 @@ const newShowcaseItem = (): ShowcaseItemDraft => ({
   previewUrl: "",
 });
 
+async function readJsonResponse(response: Response, fallbackMessage: string) {
+  const raw = await response.text();
+  if (!raw.trim()) {
+    throw new Error(`${fallbackMessage} (پاسخ خالی از سرور)`);
+  }
+  try {
+    return JSON.parse(raw) as Record<string, any>;
+  } catch {
+    throw new Error(`${fallbackMessage} (پاسخ نامعتبر از سرور)`);
+  }
+}
+
 async function uploadShowcaseImage(file: File): Promise<{ publicUrl: string }> {
   const formData = new FormData();
   formData.append("file", file);
   const response = await fetch("/api/instagram/publishing/upload", { method: "POST", body: formData });
-  const result = await response.json();
-  if (!response.ok || !result?.success || !result?.data?.publicUrl) {
+  const result = await readJsonResponse(response, "آپلود تصویر ویترین ناموفق بود.");
+  if (!response.ok || !result?.success || typeof result?.data?.publicUrl !== "string" || !result.data.publicUrl.trim()) {
     throw new Error(result?.message || "آپلود تصویر ویترین ناموفق بود.");
   }
   return { publicUrl: result.data.publicUrl };
@@ -73,6 +85,7 @@ export default function AutomationFlowMessage({
   const [showcaseSaving, setShowcaseSaving] = useState(false);
   const [showcaseError, setShowcaseError] = useState("");
   const [mediaUploading, setMediaUploading] = useState(false);
+  const [showcaseUploadingItems, setShowcaseUploadingItems] = useState<string[]>([]);
 
 
   const isForm = message.messageType === "FORM";
@@ -84,14 +97,18 @@ export default function AutomationFlowMessage({
 
   async function handleShowcaseImage(id: string, file?: File) {
     if (!file) return;
+    setShowcaseUploadingItems((current) => current.includes(id) ? current : [...current, id]);
     try {
       setShowcaseError("");
       const localUrl = URL.createObjectURL(file);
-      updateShowcaseItem(id, { previewUrl: localUrl });
+      updateShowcaseItem(id, { previewUrl: localUrl, imageUrl: "" });
       const uploaded = await uploadShowcaseImage(file);
       updateShowcaseItem(id, { imageUrl: uploaded.publicUrl, previewUrl: uploaded.publicUrl });
     } catch (error) {
+      updateShowcaseItem(id, { imageUrl: "" });
       setShowcaseError(error instanceof Error ? error.message : "آپلود تصویر ناموفق بود.");
+    } finally {
+      setShowcaseUploadingItems((current) => current.filter((itemId) => itemId !== id));
     }
   }
 
@@ -137,6 +154,7 @@ export default function AutomationFlowMessage({
     try {
       if (!instagramAccountId) throw new Error("اکانت Instagram انتخاب نشده است.");
       if (!showcaseItems.length) throw new Error("حداقل یک اسلاید اضافه کنید.");
+      if (showcaseUploadingItems.length > 0) throw new Error("لطفاً صبر کنید تا آپلود تصویر اسلاید کامل شود.");
       for (let i = 0; i < showcaseItems.length; i += 1) {
         const item = showcaseItems[i];
         if (!item?.title.trim()) throw new Error(`نام اسلاید ${i + 1} را وارد کنید.`);
@@ -149,8 +167,8 @@ export default function AutomationFlowMessage({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ instagramAccountId, title: `ویترین ${new Date().toLocaleDateString("fa-IR")}`, description: null, isActive: true }),
       });
-      const result = await response.json();
-      if (!response.ok || result?.error) throw new Error(result?.error || "ساخت ویترین ناموفق بود.");
+      const result = await readJsonResponse(response, "ساخت ویترین ناموفق بود.");
+      if (!response.ok || result?.error) throw new Error(result?.error || result?.message || "ساخت ویترین ناموفق بود.");
       const created = result.data ?? result;
       for (let i = 0; i < showcaseItems.length; i += 1) {
         const item = showcaseItems[i];
@@ -159,8 +177,8 @@ export default function AutomationFlowMessage({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ title: item.title.trim(), description: item.description.trim() || null, imageUrl: item.imageUrl.trim(), order: i, isActive: true }),
         }).then(async (itemResponse) => {
-          const itemResult = await itemResponse.json();
-          if (!itemResponse.ok || itemResult?.error) throw new Error(itemResult?.error || `ساخت اسلاید ${i + 1} ناموفق بود.`);
+          const itemResult = await readJsonResponse(itemResponse, `ساخت اسلاید ${i + 1} ناموفق بود.`);
+          if (!itemResponse.ok || itemResult?.error) throw new Error(itemResult?.error || itemResult?.message || `ساخت اسلاید ${i + 1} ناموفق بود.`);
         });
       }
       onUpdate({ showcaseId: created.id });
@@ -281,7 +299,7 @@ export default function AutomationFlowMessage({
           ))}
           {showcaseError && <p className="text-xs text-red-600">{showcaseError}</p>}
           {message.showcaseId && <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-xs leading-6 text-emerald-800"><span className="font-bold">ویترین متصل شد:</span> {showcases.find((item) => item.id === message.showcaseId)?.title || "ویترین ساخته‌شده"}</div>}
-          <Button type="button" disabled={showcaseSaving || loadingResources || Boolean(message.showcaseId)} onClick={() => void createShowcase()} className="w-full rounded-xl bg-primary px-4 py-3 text-xs font-semibold text-white disabled:opacity-50">{showcaseSaving ? "در حال ساخت ویترین..." : message.showcaseId ? "ویترین متصل است" : "ساخت و اتصال ویترین"}</Button>
+          <Button type="button" disabled={showcaseSaving || loadingResources || showcaseUploadingItems.length > 0 || Boolean(message.showcaseId)} onClick={() => void createShowcase()} className="w-full rounded-xl bg-primary px-4 py-3 text-xs font-semibold text-white disabled:opacity-50">{showcaseUploadingItems.length > 0 ? "در حال آپلود تصویر..." : showcaseSaving ? "در حال ساخت ویترین..." : message.showcaseId ? "ویترین متصل است" : "ساخت و اتصال ویترین"}</Button>
         </div>
       )}
 
