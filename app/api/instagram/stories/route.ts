@@ -188,6 +188,13 @@ export async function GET(request: NextRequest) {
      * ---------------------------------------------------------
      */
 
+    const toProxyUrl = (url: string | null | undefined) =>
+      url
+        ? `/api/instagram/media-proxy?accountId=${encodeURIComponent(
+            account.id,
+          )}&url=${encodeURIComponent(url)}`
+        : null;
+
     const stories = (result.data ?? []).map((story) => ({
       id: String(story.id),
 
@@ -195,9 +202,9 @@ export async function GET(request: NextRequest) {
 
       mediaProductType: story.media_product_type ?? null,
 
-      mediaUrl: story.media_url ?? null,
+      mediaUrl: toProxyUrl(story.media_url),
 
-      thumbnailUrl: story.thumbnail_url ?? null,
+      thumbnailUrl: toProxyUrl(story.thumbnail_url ?? story.media_url),
 
       permalink: story.permalink ?? null,
 
