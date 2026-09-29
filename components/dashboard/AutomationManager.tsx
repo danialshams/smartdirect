@@ -343,7 +343,7 @@ export default function AutomationManager({
                 />
               </div>
 
-              {selectedIds.length > 0 && (
+              {selectedIds.length > 1 && (
                 <Button
                   type="button"
                   onClick={() => setBulkDeleteOpen(true)}
@@ -371,7 +371,7 @@ export default function AutomationManager({
                   >
                     {allFilteredSelected && <Check size={13} strokeWidth={3} />}
                   </span>
-                  {allFilteredSelected ? "لغو انتخاب همه" : "انتخاب همه"}
+                  انتخاب همه
                 </button>
 
                 <span className="text-xs text-muted-foreground">
