@@ -377,8 +377,6 @@ export async function GET(request: NextRequest) {
       return jsonError("اکانت متصل Instagram پیدا نشد.", 404);
     }
 
-    const accessToken = await getValidInstagramAccessToken(account.id);
-
     if (conversationId) {
       const conversation = await prisma.conversation.findFirst({
         where: {
