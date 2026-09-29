@@ -70,7 +70,7 @@ export default function DashboardAccountsClient({
   }, []);
 
   if (loading) {
-    if (mode === "inbox") return null;
+    if (mode === "inbox" || mode === "comments" || mode === "stories") return null;
 
     return (
       <Card>
