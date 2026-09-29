@@ -116,20 +116,40 @@ export default function AutomationManager({
       try {
         setLoading(true);
         setActionError("");
-        const response = await fetch(
+        const automationResponse = await fetch(
           `/api/automations?instagramAccountId=${encodeURIComponent(selectedAccount.id)}`,
           { cache: "no-store", credentials: "include" },
         );
-        const result = await response.json();
-        if (!response.ok || !result.success) {
+        const result = await automationResponse.json();
+        if (!automationResponse.ok || !result.success) {
           throw new Error(result.error || result.message || "دریافت پاسخ‌های خودکار ناموفق بود.");
         }
-        if (!cancelled) {
-          setAutomations(
-            (Array.isArray(result.data) ? result.data : []).filter(
-              (item: Automation) => item.triggerType === triggerType,
-            ),
+
+        let nextAutomations = (Array.isArray(result.data) ? result.data : []).filter(
+          (item: Automation) => item.triggerType === triggerType,
+        );
+
+        if (triggerType === "STORY_REPLY_KEYWORD") {
+          const storiesResponse = await fetch(
+            `/api/instagram/stories?instagramAccountId=${encodeURIComponent(selectedAccount.id)}`,
+            { cache: "no-store", credentials: "include" },
           );
+          const storiesResult = await storiesResponse.json();
+
+          if (storiesResponse.ok && storiesResult.success) {
+            const activeStoryIds = new Set(
+              (Array.isArray(storiesResult.data) ? storiesResult.data : []).map(
+                (story: { id: string }) => story.id,
+              ),
+            );
+            nextAutomations = nextAutomations.filter(
+              (item: Automation) => Boolean(item.mediaId && activeStoryIds.has(item.mediaId)),
+            );
+          }
+        }
+
+        if (!cancelled) {
+          setAutomations(nextAutomations);
           setSelectedIds([]);
         }
       } catch (error) {
