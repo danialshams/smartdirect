@@ -119,8 +119,20 @@ export default function DashboardAccountsClient({
     return <InstagramInbox accounts={accounts} />;
   }
 
-  if (mode === "automations") {
-    return <AutomationManager accounts={accounts} />;
+  if (mode === "comments") {
+    return <AutomationManager accounts={accounts} onlyTab="comments" />;
+  }
+
+  if (mode === "stories") {
+    return <AutomationManager accounts={accounts} onlyTab="stories" />;
+  }
+
+  if (mode === "ice-breaker") {
+    return <IceBreakerManager accounts={accounts} />;
+  }
+
+  if (mode === "persistent-menu") {
+    return <PersistentMenuManager accounts={accounts} />;
   }
 
   return null;
