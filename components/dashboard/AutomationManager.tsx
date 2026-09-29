@@ -1,789 +1,481 @@
 "use client";
 
-import { Input } from "@/components/ui/input"
-
-import { Button } from "@/components/ui/button"
-
-import { Select } from "@/components/ui/select"
-
-
+import { Button } from "@/components/ui/button";
 import {
-    Bot,
-    ChevronDown,
-    Loader2,
-    MessageCircle,
-    MoreHorizontal,
-    Pencil,
-    Plus,
-    Trash2,
-    MessageSquareText,
+  Bot,
+  Check,
+  ChevronLeft,
+  Loader2,
+  MessageCircle,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Trash2,
+  HelpCircle,
+  Menu,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import AutomationForm from "./AutomationForm";
+import IceBreakerManager from "./IceBreakerManager";
+import PersistentMenuManager from "./PersistentMenuManager";
 
 type InstagramAccount = {
-    id: string;
-    igUsername: string;
-    igUserId: string;
-    isConnected: boolean;
-    createdAt: Date;
+  id: string;
+  igUsername: string;
+  igUserId: string;
+  isConnected: boolean;
+  createdAt: Date;
 };
 
 export type AutomationTriggerType =
-    | "COMMENT_KEYWORD"
-    | "DM"
-    | "STORY_REPLY_KEYWORD";
+  | "COMMENT_KEYWORD"
+  | "DM"
+  | "STORY_REPLY_KEYWORD";
 
 export type Automation = {
-    id: string;
-    instagramAccountId: string;
-
-    triggerType: AutomationTriggerType;
-
-    mediaId: string | null;
-    keyword: string | null;
-
-    commentReplyText: string | null;
-    replyText: string | null;
-
-    likeComment: boolean;
-    sendDm: boolean;
-    likeIncomingDm: boolean;
-    likeStoryReply: boolean;
-
-    /*
-     * Follow Gate
-     *
-     * فقط برای COMMENT_KEYWORD کاربرد دارد.
-     *
-     * اگر true باشد، قبل از ارسال Flow اصلی
-     * باید فالو بودن کاربر توسط Instagram API
-     * تأیید شود.
-     */
-    requireFollow: boolean;
-    followGateText: string | null;
-
-    isActive: boolean;
-
-    createdAt: string;
-    updatedAt: string;
-
-    messages?: unknown[];
+  id: string;
+  instagramAccountId: string;
+  triggerType: AutomationTriggerType;
+  mediaId: string | null;
+  keyword: string | null;
+  commentReplyText: string | null;
+  replyText: string | null;
+  likeComment: boolean;
+  sendDm: boolean;
+  likeIncomingDm: boolean;
+  likeStoryReply: boolean;
+  requireFollow: boolean;
+  followGateText: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  messages?: unknown[];
 };
 
-type AutomationManagerProps = {
-    accounts: InstagramAccount[];
-};
+type Tab = "comments" | "stories" | "ice" | "menu";
 
-function getTriggerLabel(
-    triggerType: AutomationTriggerType
-) {
-    switch (triggerType) {
-        case "COMMENT_KEYWORD":
-            return "کامنت";
+const tabs: Array<{
+  id: Tab;
+  label: string;
+  description: string;
+  icon: typeof MessageCircle;
+}> = [
+  { id: "comments", label: "کامنت‌ها", description: "پاسخ خودکار به کامنت‌ها", icon: MessageCircle },
+  { id: "stories", label: "پاسخ استوری", description: "پاسخ به Reply استوری", icon: MessageCircle },
+  { id: "ice", label: "سؤال‌های شروع گفتگو", description: "سؤال‌های آماده شروع DM", icon: HelpCircle },
+  { id: "menu", label: "منوی دایرکت", description: "گزینه‌های منوی ثابت", icon: Menu },
+];
 
-        case "DM":
-            return "دایرکت";
-
-        case "STORY_REPLY_KEYWORD":
-            return "پاسخ استوری";
-
-        default:
-            return "Automation";
-    }
+function getTriggerLabel(triggerType: AutomationTriggerType) {
+  switch (triggerType) {
+    case "COMMENT_KEYWORD":
+      return "کامنت";
+    case "STORY_REPLY_KEYWORD":
+      return "پاسخ استوری";
+    default:
+      return "پاسخ خودکار";
+  }
 }
 
-function getTriggerDescription(
-    automation: Automation
-) {
-    switch (automation.triggerType) {
-        case "COMMENT_KEYWORD":
-            return `اگر کاربر در کامنت «${automation.keyword ?? ""
-                }» را بنویسد`;
-
-        case "DM":
-            return "وقتی کاربر وارد دایرکت شود";
-
-        case "STORY_REPLY_KEYWORD":
-            return `اگر کاربر در پاسخ استوری «${automation.keyword ?? ""
-                }» را ارسال کند`;
-
-        default:
-            return "Automation";
-    }
+function getAutomationName(automation: Automation) {
+  const keyword = automation.keyword?.trim();
+  if (keyword) return `پاسخ «${keyword.split(/[,،;؛\n]/)[0]?.trim() || keyword}»`;
+  return getTriggerLabel(automation.triggerType);
 }
 
-export default function AutomationManager({
-    accounts,
-}: AutomationManagerProps) {
-    const connectedAccounts = useMemo(
-        () =>
-            accounts.filter(
-                (account) => account.isConnected
-            ),
-        [accounts]
+function getPreview(automation: Automation) {
+  if (automation.triggerType === "COMMENT_KEYWORD") {
+    return automation.commentReplyText?.trim() || "Flow پاسخ آماده است";
+  }
+  return automation.replyText?.trim() || "Flow پاسخ آماده است";
+}
+
+export default function AutomationManager({ accounts }: { accounts: InstagramAccount[] }) {
+  const connectedAccounts = useMemo(
+    () => accounts.filter((account) => account.isConnected),
+    [accounts],
+  );
+
+  const [selectedAccountId, setSelectedAccountId] = useState("");
+  const [automations, setAutomations] = useState<Automation[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingAutomation, setEditingAutomation] = useState<Automation | null>(null);
+  const [activeTab, setActiveTab] = useState<Tab>("comments");
+  const [menuId, setMenuId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Automation | null>(null);
+  const [actionError, setActionError] = useState("");
+
+  const selectedAccount = connectedAccounts.find((account) => account.id === selectedAccountId);
+
+  useEffect(() => {
+    if (!selectedAccountId && connectedAccounts[0]) {
+      setSelectedAccountId(connectedAccounts[0].id);
+    }
+    if (selectedAccountId && !connectedAccounts.some((account) => account.id === selectedAccountId)) {
+      setSelectedAccountId(connectedAccounts[0]?.id ?? "");
+    }
+  }, [connectedAccounts, selectedAccountId]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      if (!selectedAccountId) {
+        setAutomations([]);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setActionError("");
+        const response = await fetch(
+          `/api/automations?instagramAccountId=${encodeURIComponent(selectedAccountId)}`,
+          { cache: "no-store", credentials: "include" },
+        );
+        const result = await response.json();
+        if (!response.ok || !result.success) {
+          throw new Error(result.error || result.message || "دریافت پاسخ‌های خودکار ناموفق بود.");
+        }
+        if (!cancelled) setAutomations(Array.isArray(result.data) ? result.data : []);
+      } catch (error) {
+        if (!cancelled) {
+          setAutomations([]);
+          setActionError(error instanceof Error ? error.message : "دریافت پاسخ‌های خودکار ناموفق بود.");
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedAccountId]);
+
+  const commentAutomations = automations.filter((item) => item.triggerType === "COMMENT_KEYWORD");
+  const storyAutomations = automations.filter((item) => item.triggerType === "STORY_REPLY_KEYWORD");
+  const currentAutomations = activeTab === "comments" ? commentAutomations : storyAutomations;
+
+  async function handleToggle(automation: Automation) {
+    try {
+      setActionError("");
+      const response = await fetch(`/api/automations/${automation.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ isActive: !automation.isActive }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || result.message || "تغییر وضعیت ناموفق بود.");
+      }
+      setAutomations((current) =>
+        current.map((item) =>
+          item.id === automation.id ? { ...item, isActive: !item.isActive } : item,
+        ),
+      );
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "تغییر وضعیت ناموفق بود.");
+    }
+  }
+
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    try {
+      setActionError("");
+      const response = await fetch(`/api/automations/${deleteTarget.id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || result.message || "حذف پاسخ خودکار ناموفق بود.");
+      }
+      setAutomations((current) => current.filter((item) => item.id !== deleteTarget.id));
+      setDeleteTarget(null);
+      setMenuId(null);
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "حذف پاسخ خودکار ناموفق بود.");
+    }
+  }
+
+  function openCreate(triggerType: "COMMENT_KEYWORD" | "STORY_REPLY_KEYWORD") {
+    setEditingAutomation({
+      id: "",
+      instagramAccountId: selectedAccountId,
+      triggerType,
+      mediaId: null,
+      keyword: null,
+      commentReplyText: null,
+      replyText: null,
+      likeComment: false,
+      sendDm: false,
+      likeIncomingDm: false,
+      likeStoryReply: false,
+      requireFollow: false,
+      followGateText: null,
+      isActive: true,
+      createdAt: "",
+      updatedAt: "",
+    });
+    setFormOpen(true);
+  }
+
+  function closeForm() {
+    setFormOpen(false);
+    setEditingAutomation(null);
+  }
+
+  function handleCreated(automation: Automation) {
+    setAutomations((current) => [automation, ...current]);
+    closeForm();
+  }
+
+  function handleUpdated(automation: Automation) {
+    setAutomations((current) =>
+      current.map((item) => (item.id === automation.id ? automation : item)),
     );
+    closeForm();
+  }
 
-    const [selectedAccountId, setSelectedAccountId] =
-        useState("");
-
-    const [automations, setAutomations] = useState<
-        Automation[]
-    >([]);
-
-    const [loading, setLoading] = useState(false);
-
-    const [formOpen, setFormOpen] = useState(false);
-
-    const [
-        editingAutomation,
-        setEditingAutomation,
-    ] = useState<Automation | null>(null);
-
-    const [menuId, setMenuId] = useState<string | null>(
-        null
-    );
-
-    const selectedAccount =
-        connectedAccounts.find(
-            (account) =>
-                account.id === selectedAccountId
-        );
-
-    useEffect(() => {
-        if (
-            connectedAccounts.length > 0 &&
-            !selectedAccountId
-        ) {
-            setSelectedAccountId(
-                connectedAccounts[0].id
-            );
-        }
-
-        if (
-            selectedAccountId &&
-            !connectedAccounts.some(
-                (account) =>
-                    account.id === selectedAccountId
-            )
-        ) {
-            setSelectedAccountId(
-                connectedAccounts[0]?.id ?? ""
-            );
-        }
-    }, [
-        connectedAccounts,
-        selectedAccountId,
-    ]);
-
-    useEffect(() => {
-        let cancelled = false;
-
-        async function fetchAutomations() {
-            if (!selectedAccountId) {
-                if (!cancelled) {
-                    setAutomations([]);
-                    setLoading(false);
-                }
-
-                return;
-            }
-
-            try {
-                setLoading(true);
-
-                const response = await fetch(
-                    `/api/automations?instagramAccountId=${encodeURIComponent(
-                        selectedAccountId
-                    )}`,
-                    {
-                        method: "GET",
-                        cache: "no-store",
-                        credentials: "include",
-                    }
-                );
-
-                const result = await response.json();
-
-                if (!response.ok || !result.success) {
-                    throw new Error(
-                        result.error ||
-                        result.message ||
-                        "دریافت اتوماسیون‌ها ناموفق بود."
-                    );
-                }
-
-                if (!cancelled) {
-                    setAutomations(
-                        result.data ?? []
-                    );
-                }
-            } catch (error) {
-                console.error(
-                    "fetch automations error:",
-                    error
-                );
-
-                if (!cancelled) {
-                    setAutomations([]);
-                }
-            } finally {
-                if (!cancelled) {
-                    setLoading(false);
-                }
-            }
-        }
-
-        fetchAutomations();
-
-        return () => {
-            cancelled = true;
-        };
-    }, [selectedAccountId]);
-
-    async function handleToggle(
-        automation: Automation
-    ) {
-        try {
-            const response = await fetch(
-                `/api/automations/${automation.id}`,
-                {
-                    method: "PATCH",
-                    headers: {
-                        "Content-Type":
-                            "application/json",
-                    },
-                    credentials: "include",
-                    body: JSON.stringify({
-                        isActive:
-                            !automation.isActive,
-                    }),
-                }
-            );
-
-            const result = await response.json();
-
-            if (!response.ok || !result.success) {
-                throw new Error(
-                    result.error ||
-                    result.message ||
-                    "تغییر وضعیت ناموفق بود."
-                );
-            }
-
-            setAutomations((current) =>
-                current.map((item) =>
-                    item.id === automation.id
-                        ? {
-                            ...item,
-                            isActive:
-                                !item.isActive,
-                        }
-                        : item
-                )
-            );
-        } catch (error) {
-            console.error(error);
-
-            alert(
-                error instanceof Error
-                    ? error.message
-                    : "تغییر وضعیت ناموفق بود."
-            );
-        }
-    }
-
-    async function handleDelete(
-        automation: Automation
-    ) {
-        const confirmed = window.confirm(
-            "آیا از حذف این اتوماسیون مطمئن هستید؟"
-        );
-
-        if (!confirmed) {
-            return;
-        }
-
-        try {
-            const response = await fetch(
-                `/api/automations/${automation.id}`,
-                {
-                    method: "DELETE",
-                    credentials: "include",
-                }
-            );
-
-            const result = await response.json();
-
-            if (!response.ok || !result.success) {
-                throw new Error(
-                    result.error ||
-                    result.message ||
-                    "حذف اتوماسیون ناموفق بود."
-                );
-            }
-
-            setAutomations((current) =>
-                current.filter(
-                    (item) =>
-                        item.id !== automation.id
-                )
-            );
-
-            setMenuId(null);
-        } catch (error) {
-            console.error(error);
-
-            alert(
-                error instanceof Error
-                    ? error.message
-                    : "حذف اتوماسیون ناموفق بود."
-            );
-        }
-    }
-
-    function handleCreated(
-        automation: Automation
-    ) {
-        setAutomations((current) => [
-            automation,
-            ...current,
-        ]);
-
-        setFormOpen(false);
-    }
-
-    function handleUpdated(
-        automation: Automation
-    ) {
-        setAutomations((current) =>
-            current.map((item) =>
-                item.id === automation.id
-                    ? automation
-                    : item
-            )
-        );
-
-        setEditingAutomation(null);
-        setFormOpen(false);
-    }
-
-    return (
-        <div className="rounded-xl border bg-card">
-            <div className="border-b border-border/60 p-5 sm:p-7">
-                <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-                    <div>
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                            <Bot size={16} />
-
-                            <span className="text-[10px] font-semibold tracking-[0.16em]">
-                                AUTOMATION
-                            </span>
-                        </div>
-
-                        <h2 className="mt-2 text-xl font-bold tracking-tight text-foreground">
-                            اتوماسیون پاسخ‌گویی
-                        </h2>
-
-                        <p className="mt-1.5 max-w-xl text-sm leading-6 text-muted-foreground">
-                            رفتار SmartDirect را برای
-                            کامنت، دایرکت و پاسخ استوری
-                            مدیریت کنید.
-                        </p>
-                    </div>
-
-                    {connectedAccounts.length > 0 && (
-                        <Button
-                            type="button"
-                            onClick={() => {
-                                setEditingAutomation(
-                                    null
-                                );
-                                setFormOpen(true);
-                            }}
-                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white transition hover:bg-primary/90"
-                        >
-                            <Plus size={17} />
-
-                            ساخت اتوماسیون
-                        </Button>
-                    )}
-                </div>
-
-                {connectedAccounts.length > 0 && (
-                    <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center">
-                        <span className="text-xs text-muted-foreground">
-                            پیج فعال:
-                        </span>
-
-                        <div className="relative w-full sm:w-[280px]">
-                            <Select
-                                value={
-                                    selectedAccountId ||
-                                    connectedAccounts[0]?.id ||
-                                    ""
-                                }
-                                onChange={(event) =>
-                                    setSelectedAccountId(
-                                        event.target.value
-                                    )
-                                }
-                                className="w-full appearance-none rounded-lg border bg-muted/30 px-4 py-3 pl-10 text-sm font-medium text-foreground outline-none transition focus:border-ring"
-                            >
-                                {connectedAccounts.map(
-                                    (account) => (
-                                        <option
-                                            key={
-                                                account.id
-                                            }
-                                            value={
-                                                account.id
-                                            }
-                                        >
-                                            @
-                                            {
-                                                account.igUsername
-                                            }
-                                        </option>
-                                    )
-                                )}
-                            </Select>
-
-                            <ChevronDown
-                                size={16}
-                                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                            />
-                        </div>
-                    </div>
-                )}
+  return (
+    <div dir="rtl" className="min-h-screen bg-background">
+      <div className="mx-auto w-full max-w-[1400px] space-y-4">
+        <section className="rounded-3xl border border-border/80 bg-card shadow-sm">
+          <div className="flex flex-col gap-5 p-4 sm:p-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-muted-foreground">پاسخ خودکار</p>
+              <h1 className="mt-1 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                پاسخ خودکار
+              </h1>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+                همه پاسخ‌های خودکار، سؤال‌های شروع گفتگو و منوی دایرکت را از یک صفحه مدیریت کنید.
+              </p>
             </div>
 
-            {connectedAccounts.length === 0 ? (
-                <div className="px-6 py-16 text-center">
-                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
-                        <MessageCircle size={24} />
-                    </div>
-
-                    <h3 className="mt-5 text-base font-bold text-foreground">
-                        ابتدا یک پیج متصل کنید
-                    </h3>
-
-                    <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">
-                        برای ساخت Automation حداقل
-                        یک اکانت اینستاگرام باید به
-                        SmartDirect متصل باشد.
-                    </p>
+            {selectedAccount && (
+              <div className="flex shrink-0 items-center gap-3 rounded-2xl border border-border/70 bg-muted/30 px-3 py-2.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-background text-xs font-bold shadow-sm ring-1 ring-border/60">
+                  @
                 </div>
-            ) : loading ? (
-                <div className="flex items-center justify-center px-6 py-20">
-                    <Loader2
-                        size={24}
-                        className="animate-spin text-muted-foreground"
-                    />
+                <div className="min-w-0">
+                  <p className="text-[10px] text-muted-foreground">پیج فعال</p>
+                  <p className="max-w-[180px] truncate text-sm font-semibold text-foreground">
+                    @{selectedAccount.igUsername}
+                  </p>
                 </div>
-            ) : automations.length === 0 ? (
-                <div className="px-6 py-16 text-center">
-                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
-                        <Bot size={23} />
-                    </div>
+              </div>
+            )}
+          </div>
 
-                    <h3 className="mt-5 text-base font-bold text-foreground">
-                        هنوز اتوماسیونی ساخته نشده
-                    </h3>
+          <div className="border-t border-border/70 p-2 sm:p-3">
+            <div className="grid grid-cols-2 gap-1.5 rounded-2xl bg-muted/50 p-1.5 lg:grid-cols-4">
+              {tabs.map((tab) => {
+                const Icon = tab.icon;
+                const active = activeTab === tab.id;
+                return (
+                  <Button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActiveTab(tab.id)}
+                    className={[
+                      "min-h-[68px] rounded-xl px-2 py-2 text-right transition sm:min-h-[74px]",
+                      active
+                        ? "bg-background text-foreground shadow-sm ring-1 ring-border"
+                        : "bg-transparent text-muted-foreground hover:bg-background/70",
+                    ].join(" ")}
+                  >
+                    <span className="flex w-full items-center gap-2.5">
+                      <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${active ? "bg-primary/10 text-primary" : "bg-background text-muted-foreground"}`}>
+                        <Icon size={17} />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block truncate text-xs font-bold sm:text-sm">{tab.label}</span>
+                        <span className="mt-0.5 hidden truncate text-[10px] font-normal text-muted-foreground sm:block">
+                          {tab.description}
+                        </span>
+                      </span>
+                    </span>
+                  </Button>
+                );
+              })}
+            </div>
+          </div>
+        </section>
 
-                    <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">
-                        اولین Automation را بسازید
-                        تا SmartDirect رویدادهای
-                        اینستاگرام را به‌صورت خودکار
-                        پردازش کند.
-                    </p>
+        {actionError && (
+          <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-700">
+            {actionError}
+          </div>
+        )}
 
-                    <Button
-                        type="button"
-                        onClick={() => {
-                            setEditingAutomation(
-                                null
-                            );
-                            setFormOpen(true);
-                        }}
-                        className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white"
-                    >
-                        <Plus size={17} />
+        {!selectedAccount ? (
+          <section className="rounded-3xl border border-dashed border-border bg-card px-6 py-16 text-center">
+            <Bot className="mx-auto text-muted-foreground" size={24} />
+            <h2 className="mt-4 text-base font-bold">ابتدا یک پیج اینستاگرام متصل کنید</h2>
+            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">
+              برای ساخت و مدیریت پاسخ‌های خودکار، حداقل یک پیج متصل لازم است.
+            </p>
+          </section>
+        ) : activeTab === "ice" ? (
+          <IceBreakerManager accounts={accounts} embedded />
+        ) : activeTab === "menu" ? (
+          <PersistentMenuManager accounts={accounts} embedded />
+        ) : (
+          <section className="overflow-hidden rounded-3xl border border-border/80 bg-card shadow-sm">
+            <div className="flex flex-col gap-4 border-b border-border/70 p-4 sm:p-6 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-base font-bold text-foreground">
+                  {activeTab === "comments" ? "پاسخ خودکار کامنت‌ها" : "پاسخ خودکار استوری"}
+                </h2>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                  {activeTab === "comments"
+                    ? "برای هر کلمه کلیدی، فقط پاسخ متنی به کامنت و Flow متنی دایرکت را تنظیم کنید."
+                    : "برای هر پاسخ استوری، می‌توانید Flow کامل شامل متن، عکس، ویدیو، وویس، ویترین و فرم بسازید."}
+                </p>
+              </div>
+              <Button
+                type="button"
+                onClick={() => openCreate(activeTab === "comments" ? "COMMENT_KEYWORD" : "STORY_REPLY_KEYWORD")}
+                className="min-h-11 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm"
+              >
+                <Plus size={16} />
+                {activeTab === "comments" ? "پاسخ جدید" : "پاسخ جدید"}
+              </Button>
+            </div>
 
-                        ساخت اولین اتوماسیون
-                    </Button>
+            {loading ? (
+              <div className="flex min-h-64 items-center justify-center">
+                <Loader2 className="animate-spin text-muted-foreground" size={22} />
+              </div>
+            ) : currentAutomations.length === 0 ? (
+              <div className="px-6 py-16 text-center">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
+                  <Bot size={21} />
                 </div>
+                <h3 className="mt-4 text-sm font-bold text-foreground">
+                  {activeTab === "comments" ? "هنوز پاسخ خودکار کامنتی ندارید" : "هنوز پاسخ خودکار استوری ندارید"}
+                </h3>
+                <p className="mx-auto mt-2 max-w-md text-xs leading-6 text-muted-foreground">
+                  یک پاسخ جدید بسازید؛ بعداً همین Flow را می‌توانید کامل ویرایش یا حذف کنید.
+                </p>
+                <Button
+                  type="button"
+                  onClick={() => openCreate(activeTab === "comments" ? "COMMENT_KEYWORD" : "STORY_REPLY_KEYWORD")}
+                  className="mt-5 min-h-11 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground"
+                >
+                  <Plus size={16} />
+                  ساخت اولین پاسخ
+                </Button>
+              </div>
             ) : (
-                <div className="divide-y divide-slate-100">
-                    {automations.map(
-                        (automation) => (
-                            <AutomationCard
-                                key={automation.id}
-                                automation={
-                                    automation
-                                }
-                                accountUsername={
-                                    selectedAccount?.igUsername
-                                }
-                                menuOpen={
-                                    menuId ===
-                                    automation.id
-                                }
-                                onMenuToggle={() =>
-                                    setMenuId(
-                                        menuId ===
-                                            automation.id
-                                            ? null
-                                            : automation.id
-                                    )
-                                }
-                                onToggle={() =>
-                                    handleToggle(
-                                        automation
-                                    )
-                                }
-                                onEdit={() => {
-                                    setMenuId(null);
-
-                                    setEditingAutomation(
-                                        automation
-                                    );
-
-                                    setFormOpen(true);
-                                }}
-                                onDelete={() =>
-                                    handleDelete(
-                                        automation
-                                    )
-                                }
-                            />
-                        )
-                    )}
-                </div>
-            )}
-
-            {formOpen && selectedAccount && (
-                <AutomationForm
-                    key={
-                        editingAutomation?.id ??
-                        "new"
-                    }
-                    account={selectedAccount}
-                    automation={
-                        editingAutomation
-                    }
-                    onClose={() => {
-                        setFormOpen(false);
-                        setEditingAutomation(
-                            null
-                        );
-                    }}
-                    onCreated={handleCreated}
-                    onUpdated={handleUpdated}
-                />
-            )}
-        </div>
-    );
-}
-
-function AutomationCard({
-    automation,
-    accountUsername,
-    menuOpen,
-    onMenuToggle,
-    onToggle,
-    onEdit,
-    onDelete,
-}: {
-    automation: Automation;
-    accountUsername?: string;
-    menuOpen: boolean;
-    onMenuToggle: () => void;
-    onToggle: () => void;
-    onEdit: () => void;
-    onDelete: () => void;
-}) {
-    return (
-        <div className="group px-5 py-5 transition hover:bg-muted/20 sm:px-7">
-            <div className="flex flex-col gap-5 xl:flex-row xl:items-center">
-                <div className="flex min-w-0 flex-1 items-start gap-4">
-                    <div
-                        className={[
-                            "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl",
-                            automation.isActive
-                                ? "bg-primary text-white"
-                                : "bg-muted text-muted-foreground",
-                        ].join(" ")}
-                    >
-                        <Bot
-                            size={20}
-                            strokeWidth={1.7}
-                        />
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                            <span className="rounded-lg bg-muted px-2.5 py-1 text-xs font-semibold text-foreground">
-                                {getTriggerLabel(
-                                    automation.triggerType
-                                )}
-                            </span>
-
-                            <span className="text-sm font-bold text-foreground">
-                                {getTriggerDescription(
-                                    automation
-                                )}
-                            </span>
-
-                            <span
-                                className={[
-                                    "rounded-full px-2 py-1 text-[9px] font-semibold",
-                                    automation.isActive
-                                        ? "bg-emerald-50 text-emerald-600"
-                                        : "bg-muted text-muted-foreground",
-                                ].join(" ")}
-                            >
-                                {automation.isActive
-                                    ? "فعال"
-                                    : "غیرفعال"}
-                            </span>
-
-                            {automation.triggerType ===
-                                "COMMENT_KEYWORD" &&
-                                automation.requireFollow && (
-                                    <span className="rounded-full bg-muted px-2 py-1 text-[9px] font-semibold text-muted-foreground">
-                                        شرط فالو فعال
-                                    </span>
-                                )}
-                        </div>
-
-                        <p className="mt-1 text-xs text-muted-foreground">
-                            @{accountUsername}
-                        </p>
-
-                        <div className="mt-4 grid gap-3 md:grid-cols-2">
-                            {automation.triggerType ===
-                                "COMMENT_KEYWORD" && (
-                                    <div className="rounded-xl border border-border/60 bg-background p-3">
-                                        <div className="mb-1 flex items-center gap-2 text-[10px] font-medium text-muted-foreground">
-                                            <MessageCircle
-                                                size={13}
-                                            />
-
-                                            پاسخ عمومی
-                                        </div>
-
-                                        <p className="line-clamp-2 text-xs leading-6 text-muted-foreground">
-                                            {automation.commentReplyText ||
-                                                "بدون پاسخ عمومی"}
-                                        </p>
-                                    </div>
-                                )}
-
-                            <div className="rounded-xl border border-border/60 bg-background p-3">
-                                <div className="mb-1 flex items-center gap-2 text-[10px] font-medium text-muted-foreground">
-                                    <MessageSquareText
-                                        size={13}
-                                    />
-
-                                    پاسخ دایرکت
-                                </div>
-
-                                <p className="line-clamp-2 text-xs leading-6 text-muted-foreground">
-                                    {automation.replyText ||
-                                        "از Flow پیام استفاده می‌شود"}
-                                </p>
+              <div className="divide-y divide-border/70">
+                {currentAutomations.map((automation) => (
+                  <div key={automation.id} className="group p-4 transition hover:bg-muted/20 sm:p-5">
+                    <div className="flex items-start gap-3 sm:gap-4">
+                      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${automation.isActive ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                        {activeTab === "comments" ? <MessageCircle size={19} /> : <MessageCircle size={19} />}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <h3 className="truncate text-sm font-bold text-foreground">{getAutomationName(automation)}</h3>
+                              <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${automation.isActive ? "bg-emerald-50 text-emerald-700" : "bg-muted text-muted-foreground"}`}>
+                                {automation.isActive ? "فعال" : "غیرفعال"}
+                              </span>
                             </div>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              {activeTab === "comments" ? "کلمه کلیدی:" : "کلمه / پاسخ استوری:"}{" "}
+                              <span className="font-semibold text-foreground">{automation.keyword || "—"}</span>
+                            </p>
+                          </div>
+
+                          <div className="relative shrink-0">
+                            <Button
+                              type="button"
+                              onClick={() => setMenuId(menuId === automation.id ? null : automation.id)}
+                              className="flex h-9 w-9 items-center justify-center rounded-lg p-0 text-muted-foreground hover:bg-muted"
+                              aria-label="گزینه‌ها"
+                            >
+                              <MoreHorizontal size={18} />
+                            </Button>
+                            {menuId === automation.id && (
+                              <div className="absolute left-0 top-10 z-20 w-36 overflow-hidden rounded-xl border border-border bg-background p-1 shadow-lg">
+                                <Button type="button" onClick={() => { setMenuId(null); setEditingAutomation(automation); setFormOpen(true); }} className="w-full justify-start rounded-lg px-3 py-2 text-xs hover:bg-muted">
+                                  <Pencil size={14} /> ویرایش
+                                </Button>
+                                <Button type="button" onClick={() => { setMenuId(null); setDeleteTarget(automation); }} className="w-full justify-start rounded-lg px-3 py-2 text-xs text-red-600 hover:bg-red-50">
+                                  <Trash2 size={14} /> حذف
+                                </Button>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                    </div>
-                </div>
 
-                <div className="flex items-center justify-between gap-3 border-t border-border/60 pt-4 xl:border-0 xl:pt-0">
-                    <Button
-                        type="button"
-                        onClick={onToggle}
-                        className="flex items-center gap-2 text-xs font-medium text-muted-foreground"
-                    >
-                        <span
-                            className={[
-                                "relative h-6 w-11 rounded-full transition",
-                                automation.isActive
-                                    ? "bg-primary"
-                                    : "bg-muted",
-                            ].join(" ")}
-                        >
-                            <span
-                                className={[
-                                    "absolute top-1 h-4 w-4 rounded-full bg-background shadow-sm transition-all",
-                                    automation.isActive
-                                        ? "right-1"
-                                        : "right-6",
-                                ].join(" ")}
-                            />
-                        </span>
+                        <div className="mt-3 rounded-2xl border border-border/70 bg-muted/25 px-3.5 py-3">
+                          <p className="line-clamp-2 text-xs leading-6 text-muted-foreground">{getPreview(automation)}</p>
+                        </div>
 
-                        {automation.isActive
-                            ? "فعال"
-                            : "غیرفعال"}
-                    </Button>
-
-                    <div className="relative">
-                        <Button
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                          <Button
                             type="button"
-                            onClick={onMenuToggle}
-                            className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-background hover:text-foreground"
-                            aria-label="گزینه‌ها"
-                        >
-                            <MoreHorizontal
-                                size={19}
-                            />
-                        </Button>
-
-                        {menuOpen && (
-                            <>
-                                <Button
-                                    type="button"
-                                    className="fixed inset-0 z-10 cursor-default"
-                                    onClick={
-                                        onMenuToggle
-                                    }
-                                    aria-label="بستن"
-                                />
-
-                                <div className="absolute left-0 top-11 z-20 w-40 overflow-hidden rounded-lg border bg-background p-1.5 shadow-xl">
-                                    <Button
-                                        type="button"
-                                        onClick={onEdit}
-                                        className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs text-muted-foreground transition hover:bg-muted"
-                                    >
-                                        <Pencil
-                                            size={14}
-                                        />
-
-                                        ویرایش
-                                    </Button>
-
-                                    <Button
-                                        type="button"
-                                        onClick={
-                                            onDelete
-                                        }
-                                        className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs text-red-600 transition hover:bg-red-50"
-                                    >
-                                        <Trash2
-                                            size={14}
-                                        />
-
-                                        حذف
-                                    </Button>
-                                </div>
-                            </>
-                        )}
+                            onClick={() => { setEditingAutomation(automation); setFormOpen(true); }}
+                            className="min-h-9 rounded-lg bg-foreground px-3 text-xs font-semibold text-background"
+                          >
+                            مشاهده و ویرایش
+                            <ChevronLeft size={14} />
+                          </Button>
+                          <Button
+                            type="button"
+                            onClick={() => void handleToggle(automation)}
+                            className={`min-h-9 rounded-lg border px-3 text-xs font-semibold ${automation.isActive ? "border-border bg-background text-foreground hover:bg-muted" : "border-emerald-200 bg-emerald-50 text-emerald-700"}`}
+                          >
+                            {automation.isActive ? "غیرفعال کردن" : "فعال کردن"}
+                          </Button>
+                        </div>
+                      </div>
                     </div>
-                </div>
-            </div>
-        </div>
-    );
-}
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+      </div>
 
+      {formOpen && selectedAccount && editingAutomation && (
+        <AutomationForm
+          key={editingAutomation.id || `new-${editingAutomation.triggerType}`}
+          account={selectedAccount}
+          automation={editingAutomation.id ? editingAutomation : null}
+          onClose={closeForm}
+          onCreated={handleCreated}
+          onUpdated={handleUpdated}
+        />
+      )}
+
+      {deleteTarget && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-border bg-background p-5 shadow-2xl">
+            <h3 className="text-base font-bold text-foreground">حذف پاسخ خودکار؟</h3>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              این پاسخ و Flow متصل به آن حذف می‌شود و قابل بازگشت نیست.
+            </p>
+            <div className="mt-5 flex gap-2">
+              <Button type="button" onClick={() => setDeleteTarget(null)} className="flex-1 rounded-xl border border-border bg-background py-2.5 text-sm">
+                انصراف
+              </Button>
+              <Button type="button" onClick={() => void handleDelete()} className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-semibold text-white">
+                حذف
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
