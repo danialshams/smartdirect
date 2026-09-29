@@ -451,7 +451,7 @@ export default function AutomationManager({ accounts }: { accounts: InstagramAcc
         <AutomationForm
           key={editingAutomation.id || `new-${editingAutomation.triggerType}`}
           account={selectedAccount}
-          automation={editingAutomation.id ? editingAutomation : null}
+          automation={editingAutomation}
           onClose={closeForm}
           onCreated={handleCreated}
           onUpdated={handleUpdated}
