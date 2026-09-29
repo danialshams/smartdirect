@@ -9,7 +9,6 @@ import {
   MessageCircle,
   Plus,
   Search,
-  Trash2,
   Video,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -68,11 +67,6 @@ function getKeywordsForSearch(automation: Automation) {
     .filter(Boolean);
 }
 
-function getMediaLabel(mediaType: MediaPreview["mediaType"], triggerType: AutomationTriggerType) {
-  if (triggerType === "STORY_REPLY_KEYWORD") return "استوری";
-  if (mediaType === "VIDEO") return "ریلز";
-  return "پست";
-}
 
 export default function AutomationManager({
   accounts,
@@ -548,8 +542,22 @@ export default function AutomationManager({
       )}
 
       {(deleteTarget || bulkDeleteOpen) && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-sm rounded-2xl border border-border bg-background p-5 shadow-2xl">
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/45 p-4 backdrop-blur-[2px]"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !deleting) {
+              setDeleteTarget(null);
+              setBulkDeleteOpen(false);
+            }
+          }}
+        >
+          <div className="w-full max-w-[380px] overflow-hidden rounded-[28px] border border-border/80 bg-background shadow-2xl">
+            <div className="px-6 pb-1 pt-6">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-red-50 text-red-600">
+                <span className="text-lg font-bold">!</span>
+              </div>
+            </div>
+            <div className="px-6">
             <h3 className="text-base font-bold text-foreground">
               {bulkDeleteOpen
                 ? `پاک کردن ${selectedIds.length} پاسخ خودکار؟`
@@ -558,7 +566,8 @@ export default function AutomationManager({
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
               این پاسخ و Flow متصل به آن حذف می‌شود و قابل بازگشت نیست.
             </p>
-            <div className="mt-5 flex gap-2">
+            </div>
+            <div className="flex gap-2 px-6 pb-6 pt-6">
               <Button
                 type="button"
                 disabled={deleting}
