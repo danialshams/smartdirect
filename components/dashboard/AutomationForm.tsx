@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea"
 import type { FormEvent } from "react";
 
 import {
+    ArrowRight,
     Loader2,
     MessageSquareText,
     Plus,
@@ -51,6 +52,7 @@ type Props = {
     onClose: () => void;
     onCreated: (automation: Automation) => void;
     onUpdated: (automation: Automation) => void;
+    pageMode?: boolean;
 };
 
 /* -------------------------------------------------------------------------- */
@@ -77,6 +79,7 @@ export default function AutomationForm({
     onClose,
     onCreated,
     onUpdated,
+    pageMode = false,
 }: Props) {
     const automationId =
         automation?.id ?? null;
@@ -1484,6 +1487,147 @@ export default function AutomationForm({
     }
 
     /* ---------------------------------------------------------------------- */
+    /* Story page UI                                                           */
+    /* ---------------------------------------------------------------------- */
+
+    if (pageMode && isStory) {
+        return (
+            <div dir="rtl" className="min-h-[calc(100dvh-2rem)]">
+                <div className="mx-auto w-full max-w-[1200px]">
+                    <div className="mb-5">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            disabled={saving}
+                            className="inline-flex min-h-10 items-center gap-2 rounded-xl px-2 text-sm font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:opacity-50"
+                        >
+                            <ArrowRight size={18} />
+                            بازگشت
+                        </button>
+                        <h1 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">
+                            {isEditing ? "ویرایش پاسخ استوری" : "پاسخ جدید"}
+                        </h1>
+                    </div>
+
+                    <form onSubmit={handleSubmit}>
+                        <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+                            <section className="overflow-hidden rounded-3xl border border-border/80 bg-card shadow-sm lg:sticky lg:top-5">
+                                <div className="p-4 sm:p-5">
+                                    <div className="mb-4">
+                                        <p className="text-xs text-muted-foreground">استوری انتخاب‌شده</p>
+                                        <p className="mt-1 truncate text-sm font-semibold">@{account.igUsername}</p>
+                                    </div>
+                                    <div className="overflow-hidden rounded-2xl bg-muted">
+                                        <div className="mx-auto aspect-[9/14] w-full max-w-[430px]">
+                                            {selectedStory?.mediaUrl || selectedStory?.thumbnailUrl ? (
+                                                selectedStory.mediaType === "VIDEO" && selectedStory.mediaUrl ? (
+                                                    <video
+                                                        src={selectedStory.mediaUrl}
+                                                        poster={selectedStory.thumbnailUrl || undefined}
+                                                        className="h-full w-full object-cover"
+                                                        muted
+                                                        playsInline
+                                                        preload="metadata"
+                                                    />
+                                                ) : (
+                                                    <img
+                                                        src={selectedStory.mediaUrl || selectedStory.thumbnailUrl || ""}
+                                                        alt="Instagram Story"
+                                                        className="h-full w-full object-cover"
+                                                    />
+                                                )
+                                            ) : (
+                                                <div className="flex h-full items-center justify-center px-6 text-center text-sm text-muted-foreground">
+                                                    پیش‌نمایش استوری در دسترس نیست
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <div className="space-y-4">
+                                {selectedStoryIsExpired && (
+                                    <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-700">
+                                        این استوری دیگر فعال نیست و امکان ذخیره تغییرات وجود ندارد.
+                                    </div>
+                                )}
+
+                                <section className="rounded-3xl border border-border/80 bg-card p-4 shadow-sm sm:p-5">
+                                    <div className="mb-4">
+                                        <h2 className="text-base font-bold">کلمات کلیدی</h2>
+                                        <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                                            وقتی کاربر یکی از این عبارت‌ها را در پاسخ استوری ارسال کند، این Automation اجرا می‌شود.
+                                        </p>
+                                    </div>
+                                    <KeywordInput
+                                        keyword={keyword}
+                                        setKeyword={setKeyword}
+                                        description="چند کلمه کلیدی می‌توانید اضافه کنید."
+                                    />
+                                </section>
+
+                                <section className="rounded-3xl border border-border/80 bg-card p-4 shadow-sm sm:p-5">
+                                    <div className="mb-4">
+                                        <h2 className="text-base font-bold">پاسخ استوری</h2>
+                                        <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                                            یک پاسخ متنی مستقیم برای Reply کاربر بنویسید.
+                                        </p>
+                                    </div>
+                                    <Textarea
+                                        value={replyText}
+                                        onChange={(event) => setReplyText(event.target.value)}
+                                        placeholder="متن پاسخ استوری..."
+                                        className="min-h-28 resize-none rounded-xl text-sm leading-6"
+                                    />
+                                </section>
+
+                                <section className="rounded-3xl border border-border/80 bg-card p-4 shadow-sm sm:p-5">
+                                    <label className="flex cursor-pointer items-start gap-3">
+                                        <Input
+                                            type="checkbox"
+                                            checked={likeStoryReply}
+                                            onChange={(event) => setLikeStoryReply(event.target.checked)}
+                                            className="mt-1"
+                                        />
+                                        <div>
+                                            <h2 className="text-base font-bold">لایک کردن Reply استوری</h2>
+                                            <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                                                اگر فعال باشد، پاسخ کاربر به استوری نیز Like می‌شود.
+                                            </p>
+                                        </div>
+                                    </label>
+                                </section>
+
+                                {renderFlowBuilder()}
+
+                                {error && (
+                                    <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-700">
+                                        {error}
+                                    </div>
+                                )}
+
+                                <Button
+                                    type="submit"
+                                    disabled={saving || selectedStoryIsExpired}
+                                    className="min-h-12 w-full rounded-2xl text-sm font-semibold shadow-sm"
+                                >
+                                    {saving ? <Loader2 size={17} className="animate-spin" /> : null}
+                                    {saving
+                                        ? "در حال ذخیره..."
+                                        : isEditing
+                                            ? "ذخیره تغییرات"
+                                            : "ساخت پاسخ خودکار"}
+                                </Button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        );
+    }
+
+    /* ---------------------------------------------------------------------- */
     /* UI                                                                      */
     /* ---------------------------------------------------------------------- */
 
@@ -2101,197 +2245,7 @@ export default function AutomationForm({
                         </section>
                     )}
 
-                    {/* ---------------------------------------------------------------- */}
-                    {/* Flow Builder                                                      */}
-                    {/* ---------------------------------------------------------------- */}
-
-                    <section className="border-t border-border pt-6">
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                            <div>
-                                <h3 className="text-sm font-semibold text-gray-900">
-                                    Flow پیام‌ها
-                                </h3>
-
-                                <p className="mt-1 max-w-2xl text-xs leading-5 text-muted-foreground">
-                                    پیام‌ها را بسازید و با Quick Reply مشخص کنید هر انتخاب کاربر به کدام پیام منتقل شود.
-                                </p>
-
-                                {isStory && (
-                                    <p className="mt-2 text-xs font-medium text-muted-foreground">
-                                        Story Reply نیز می‌تواند از متن، عکس، ویدیو، ویس، ویترین، فرم و ترکیب چند پیام استفاده کند.
-                                    </p>
-                                )}
-                            </div>
-
-                            <Button
-                                type="button"
-                                onClick={
-                                    addMessage
-                                }
-                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-black"
-                            >
-                                <Plus
-                                    size={
-                                        15
-                                    }
-                                />
-
-                                افزودن پیام
-                            </Button>
-                        </div>
-
-                        {loadingMessages ? (
-                            <div className="mt-5 flex items-center justify-center rounded-xl border border-border p-10 text-sm text-muted-foreground">
-                                <Loader2
-                                    size={
-                                        18
-                                    }
-                                    className="ml-2 animate-spin"
-                                />
-
-                                در حال دریافت Flow...
-                            </div>
-                        ) : messages.length ===
-                            0 ? (
-                            <div className="mt-5 rounded-2xl border border-dashed border-border bg-muted px-5 py-10 text-center">
-                                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-white text-muted-foreground shadow-sm">
-                                    <MessageSquareText
-                                        size={
-                                            21
-                                        }
-                                    />
-                                </div>
-
-                                <h4 className="mt-4 text-sm font-semibold text-foreground">
-                                    هنوز پیامی به Flow اضافه نشده
-                                </h4>
-
-                                <p className="mx-auto mt-2 max-w-md text-xs leading-5 text-muted-foreground">
-                                    برای پاسخ چندمرحله‌ای، پیام اول را بسازید و سپس پیام‌های بعدی و Quick Replyها را اضافه کنید.
-                                </p>
-
-                                <Button
-                                    type="button"
-                                    onClick={
-                                        addMessage
-                                    }
-                                    className="mt-5 inline-flex items-center gap-2 rounded-xl border border-border bg-white px-4 py-2.5 text-xs font-semibold text-foreground transition hover:border-gray-400"
-                                >
-                                    <Plus
-                                        size={
-                                            15
-                                        }
-                                    />
-
-                                    ساخت پیام اول
-                                </Button>
-                            </div>
-                        ) : (
-                            <div className="mt-5 space-y-4">
-                                {messages.map(
-                                    (
-                                        message,
-                                        index
-                                    ) => (
-                                        <AutomationFlowMessage
-                                            key={
-                                                message.id
-                                            }
-                                            message={
-                                                message
-                                            }
-                                            triggerType={
-                                                triggerType
-                                            }
-                                            index={
-                                                index
-                                            }
-                                            total={
-                                                messages.length
-                                            }
-                                            showcases={
-                                                showcases
-                                            }
-                                            forms={
-                                                forms
-                                            }
-                                            loadingResources={
-                                                loadingResources
-                                            }
-                                            instagramAccountId={
-                                                account.id
-                                            }
-                                            onFormCreated={(form) =>
-                                                setForms((current) => [
-                                                    form,
-                                                    ...current.filter(
-                                                        (item) => item.id !== form.id
-                                                    ),
-                                                ])
-                                            }
-                                            onUpdate={(
-                                                patch
-                                            ) =>
-                                                updateMessage(
-                                                    message.id,
-                                                    patch
-                                                )
-                                            }
-                                            onAddQuickReply={() =>
-                                                addQuickReply(
-                                                    message.id
-                                                )
-                                            }
-                                            onUpdateQuickReply={(
-                                                quickReplyId,
-                                                patch
-                                            ) =>
-                                                updateQuickReply(
-                                                    message.id,
-                                                    quickReplyId,
-                                                    patch
-                                                )
-                                            }
-                                            onUpdateQuickReplyTree={(
-                                                quickReplyId,
-                                                updater
-                                            ) =>
-                                                updateQuickReplyTree(
-                                                    message.id,
-                                                    quickReplyId,
-                                                    updater
-                                                )
-                                            }
-                                            onRemoveQuickReply={(
-                                                quickReplyId
-                                            ) =>
-                                                removeQuickReply(
-                                                    message.id,
-                                                    quickReplyId
-                                                )
-                                            }
-                                        />
-                                    )
-                                )}
-
-                                <Button
-                                    type="button"
-                                    onClick={
-                                        addMessage
-                                    }
-                                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border py-3 text-xs font-medium text-muted-foreground transition hover:border-gray-500 hover:text-foreground"
-                                >
-                                    <Plus
-                                        size={
-                                            15
-                                        }
-                                    />
-
-                                    افزودن پیام بعدی
-                                </Button>
-                            </div>
-                        )}
-                    </section>
+                    {renderFlowBuilder()}
 
                     {/* Active */}
 
