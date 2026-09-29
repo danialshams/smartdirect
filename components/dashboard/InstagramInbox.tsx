@@ -274,7 +274,13 @@ function AudioBubble({ src }: { src: string }) {
   );
 }
 
-function MediaBubble({ message }: { message: Message }) {
+function MediaBubble({
+  message,
+  onMediaLoad,
+}: {
+  message: Message;
+  onMediaLoad?: () => void;
+}) {
   if (!message.mediaUrl) {
     return (
       <div className="flex items-center gap-2 px-4 py-3 text-xs text-muted-foreground">
@@ -295,6 +301,7 @@ function MediaBubble({ message }: { message: Message }) {
         <img
           src={message.mediaUrl}
           alt="Instagram media"
+          onLoad={onMediaLoad}
           className="mx-auto max-h-[280px] max-w-full object-contain transition hover:opacity-95 sm:max-h-[320px]"
         />
       </a>
@@ -308,6 +315,8 @@ function MediaBubble({ message }: { message: Message }) {
         controls
         preload="metadata"
         playsInline
+        onLoadedMetadata={onMediaLoad}
+        onLoadedData={onMediaLoad}
         className="mx-auto max-h-[280px] w-full min-w-0 max-w-[420px] bg-black sm:max-h-[320px]"
       />
     );
@@ -1331,9 +1340,10 @@ export default function InstagramInbox({
                           }`}
                         >
                           {hasMedia && (
-                            <div onLoad={scrollToInitialBottom}>
-                              <MediaBubble message={message} />
-                            </div>
+                            <MediaBubble
+                              message={message}
+                              onMediaLoad={scrollToInitialBottom}
+                            />
                           )}
 
                           {message.text && (
