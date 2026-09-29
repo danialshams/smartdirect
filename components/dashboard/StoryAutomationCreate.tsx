@@ -117,7 +117,33 @@ export default function StoryAutomationCreate() {
                 const hasAutomation = automations.some((item) => item.mediaId === story.id);
                 return (
                   <button key={story.id} type="button" onClick={() => selectStory(story)} className="group relative aspect-[9/14] overflow-hidden rounded-2xl bg-muted text-right transition ring-offset-2 focus:outline-none focus:ring-2 focus:ring-primary hover:scale-[1.01]">
-                    {image ? <img src={image} alt="Instagram Story" className="h-full w-full object-cover" loading="lazy" /> : <div className="flex h-full items-center justify-center">{story.mediaType === "VIDEO" ? <Video size={25} className="text-muted-foreground" /> : <ImageIcon size={25} className="text-muted-foreground" />}</div>}
+                    {image ? (
+                      story.mediaType === "VIDEO" && story.mediaUrl ? (
+                        <video
+                          src={story.mediaUrl}
+                          poster={story.thumbnailUrl || undefined}
+                          className="h-full w-full object-cover"
+                          muted
+                          playsInline
+                          preload="metadata"
+                        />
+                      ) : (
+                        <img
+                          src={image}
+                          alt="Instagram Story"
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                        />
+                      )
+                    ) : (
+                      <div className="flex h-full items-center justify-center">
+                        {story.mediaType === "VIDEO" ? (
+                          <Video size={25} className="text-muted-foreground" />
+                        ) : (
+                          <ImageIcon size={25} className="text-muted-foreground" />
+                        )}
+                      </div>
+                    )}
                     <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent p-2.5 pt-12 text-right text-[10px] font-semibold text-white">
                       {story.mediaType === "VIDEO" ? "ویدیو" : "استوری"}
                     </div>
