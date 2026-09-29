@@ -10,7 +10,7 @@
     },
     {
       "path": "/api/cron/cleanup-story-automations",
-      "schedule": "15 * * * *"
+      "schedule": "*/15 * * * *"
     }
   ]
 }
