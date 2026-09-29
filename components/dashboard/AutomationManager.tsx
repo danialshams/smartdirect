@@ -282,25 +282,7 @@ export default function AutomationManager({
       return;
     }
 
-    setEditingAutomation({
-      id: "",
-      instagramAccountId: selectedAccount.id,
-      triggerType,
-      mediaId: null,
-      keyword: null,
-      commentReplyText: null,
-      replyText: null,
-      likeComment: false,
-      sendDm: false,
-      likeIncomingDm: false,
-      likeStoryReply: false,
-      requireFollow: false,
-      followGateText: null,
-      isActive: true,
-      createdAt: "",
-      updatedAt: "",
-    });
-    setFormOpen(true);
+    router.push("/dashboard/story-automation/new");
   }
 
   function closeForm() {
