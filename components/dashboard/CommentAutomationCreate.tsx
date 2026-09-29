@@ -302,7 +302,7 @@ export default function CommentAutomationCreate() {
                 </h3>
                 <p className="mt-2 text-xs leading-6 text-muted-foreground">
                   {search
-                    ? "عبارت جستجو را تغییر دهید."
+                    ? "بخشی از متن کپشن را تغییر دهید."
                     : "برای این پیج هنوز محتوای قابل انتخابی دریافت نشده است."}
                 </p>
               </div>
@@ -310,7 +310,6 @@ export default function CommentAutomationCreate() {
               <div className="grid grid-cols-2 gap-2.5 p-3 sm:grid-cols-3 sm:gap-3 sm:p-4 lg:grid-cols-4">
                 {filteredMedia.map((item) => {
                   const imageUrl = getMediaImage(item);
-                  const isSelected = selectedMedia?.id === item.id;
                   const hasAutomation = automations.some(
                     (automation) =>
                       automation.mediaId === item.id &&
