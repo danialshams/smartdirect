@@ -833,7 +833,7 @@ export async function POST(request: NextRequest) {
             rateLimit: {
               instagramAccountId: account.id,
               tenantId: session.user.id,
-              operation: "MESSAGE_READ",
+              operation: "CONVERSATION_READ",
             },
           },
         );
