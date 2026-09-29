@@ -1486,6 +1486,105 @@ export default function AutomationForm({
         }
     }
 
+
+    function renderFlowBuilder() {
+        return (
+            <section className="border-t border-border pt-6">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                        <h3 className="text-sm font-semibold text-gray-900">
+                            Flow پیام‌ها
+                        </h3>
+                        <p className="mt-1 max-w-2xl text-xs leading-5 text-muted-foreground">
+                            پیام‌ها را بسازید و با Quick Reply مشخص کنید هر انتخاب کاربر به کدام پیام منتقل شود.
+                        </p>
+                        {isStory && (
+                            <p className="mt-2 text-xs font-medium text-muted-foreground">
+                                Story Reply می‌تواند از متن، ویس، ویترین، فرم و ترکیب چند پیام استفاده کند.
+                            </p>
+                        )}
+                    </div>
+                    <Button
+                        type="button"
+                        onClick={addMessage}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-black"
+                    >
+                        <Plus size={15} />
+                        افزودن پیام
+                    </Button>
+                </div>
+
+                {loadingMessages ? (
+                    <div className="mt-5 flex items-center justify-center rounded-xl border border-border p-10 text-sm text-muted-foreground">
+                        <Loader2 size={18} className="ml-2 animate-spin" />
+                        در حال دریافت Flow...
+                    </div>
+                ) : messages.length === 0 ? (
+                    <div className="mt-5 rounded-2xl border border-dashed border-border bg-muted px-5 py-10 text-center">
+                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-white text-muted-foreground shadow-sm">
+                            <MessageSquareText size={21} />
+                        </div>
+                        <h4 className="mt-4 text-sm font-semibold text-foreground">
+                            هنوز پیامی به Flow اضافه نشده
+                        </h4>
+                        <p className="mx-auto mt-2 max-w-md text-xs leading-5 text-muted-foreground">
+                            برای پاسخ چندمرحله‌ای، پیام اول را بسازید و سپس پیام‌های بعدی و Quick Replyها را اضافه کنید.
+                        </p>
+                        <Button
+                            type="button"
+                            onClick={addMessage}
+                            className="mt-5 inline-flex items-center gap-2 rounded-xl border border-border bg-white px-4 py-2.5 text-xs font-semibold text-foreground transition hover:border-gray-400"
+                        >
+                            <Plus size={15} />
+                            ساخت پیام اول
+                        </Button>
+                    </div>
+                ) : (
+                    <div className="mt-5 space-y-4">
+                        {messages.map((message, index) => (
+                            <AutomationFlowMessage
+                                key={message.id}
+                                message={message}
+                                triggerType={triggerType}
+                                index={index}
+                                total={messages.length}
+                                showcases={showcases}
+                                forms={forms}
+                                loadingResources={loadingResources}
+                                instagramAccountId={account.id}
+                                onFormCreated={(form) =>
+                                    setForms((current) => [
+                                        form,
+                                        ...current.filter((item) => item.id !== form.id),
+                                    ])
+                                }
+                                onUpdate={(patch) => updateMessage(message.id, patch)}
+                                onAddQuickReply={() => addQuickReply(message.id)}
+                                onUpdateQuickReply={(quickReplyId, patch) =>
+                                    updateQuickReply(message.id, quickReplyId, patch)
+                                }
+                                onUpdateQuickReplyTree={(quickReplyId, updater) =>
+                                    updateQuickReplyTree(message.id, quickReplyId, updater)
+                                }
+                                onRemoveQuickReply={(quickReplyId) =>
+                                    removeQuickReply(message.id, quickReplyId)
+                                }
+                            />
+                        ))}
+                        <Button
+                            type="button"
+                            onClick={addMessage}
+                            className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border py-3 text-xs font-medium text-muted-foreground transition hover:border-gray-500 hover:text-foreground"
+                        >
+                            <Plus size={15} />
+                            افزودن پیام بعدی
+                        </Button>
+                    </div>
+                )}
+            </section>
+        );
+    }
+
     /* ---------------------------------------------------------------------- */
     /* Story page UI                                                           */
     /* ---------------------------------------------------------------------- */
