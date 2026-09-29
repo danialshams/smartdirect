@@ -253,7 +253,7 @@ export default function AutomationManager({ accounts, onlyTab }: { accounts: Ins
             <div className="min-w-0">
               <p className="text-xs font-semibold text-muted-foreground">{onlyTab === "comments" ? "پاسخ خودکار کامنت" : onlyTab === "stories" ? "پاسخ خودکار استوری" : "پاسخ خودکار"}</p>
               <h1 className="mt-1 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-                پاسخ خودکار
+                {onlyTab === "comments" ? "پاسخ خودکار کامنت" : onlyTab === "stories" ? "پاسخ خودکار استوری" : "پاسخ خودکار"}
               </h1>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
                 {onlyTab === "comments" ? "پاسخ‌های خودکار کامنت را بسازید و مدیریت کنید." : onlyTab === "stories" ? "پاسخ‌های خودکار استوری را بسازید و مدیریت کنید." : "پاسخ‌های خودکار را مدیریت کنید."}
