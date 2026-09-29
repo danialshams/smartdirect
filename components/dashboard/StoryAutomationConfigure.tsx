@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import AutomationForm from "./AutomationForm";
 import type { Automation } from "./AutomationManager";
 
