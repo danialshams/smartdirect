@@ -15,14 +15,23 @@ import {
   Pause,
   Play,
   RefreshCw,
+  Rewind,
   Search,
   Send,
+  FastForward,
   UserRound,
   UserRoundCheck,
   Video,
   X,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { FormEvent } from "react";
 
 type Account = {
@@ -127,8 +136,17 @@ async function readApiResult(response: Response): Promise<ApiResult> {
 function AudioBubble({ src }: { src: string }) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [speed, setSpeed] = useState(1);
+
+  const formatAudioTime = (value: number) => {
+    if (!Number.isFinite(value)) return "00:00";
+    const total = Math.max(0, Math.floor(value));
+    return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(
+      total % 60,
+    ).padStart(2, "0")}`;
+  };
 
   const toggle = async () => {
     const audio = audioRef.current;
@@ -145,63 +163,130 @@ function AudioBubble({ src }: { src: string }) {
     }
   };
 
-  const formatAudioTime = (value: number) => {
-    if (!Number.isFinite(value)) return "00:00";
-    const total = Math.max(0, Math.floor(value));
-    return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(
-      total % 60,
-    ).padStart(2, "0")}`;
+  const seek = (seconds: number) => {
+    const audio = audioRef.current;
+    if (!audio || !Number.isFinite(audio.duration)) return;
+    audio.currentTime = Math.max(
+      0,
+      Math.min(audio.duration, audio.currentTime + seconds),
+    );
+  };
+
+  const cycleSpeed = () => {
+    const audio = audioRef.current;
+    const next = speed === 1 ? 1.5 : speed === 1.5 ? 2 : 1;
+    setSpeed(next);
+    if (audio) audio.playbackRate = next;
   };
 
   return (
-    <div className="flex w-[250px] max-w-full items-center gap-2.5 px-3 py-2.5">
+    <div className="w-[292px] max-w-full rounded-[22px] px-3 py-2.5" dir="ltr">
       <audio
         ref={audioRef}
         src={src}
         preload="metadata"
         className="hidden"
-        onLoadedMetadata={(event) => setDuration(event.currentTarget.duration)}
-        onTimeUpdate={(event) => {
-          const current = event.currentTarget.currentTime;
-          const total = event.currentTarget.duration || 0;
-          setProgress(total > 0 ? current / total : 0);
+        onLoadedMetadata={(event) => {
+          const audio = event.currentTarget;
+          setDuration(Number.isFinite(audio.duration) ? audio.duration : 0);
+          audio.playbackRate = speed;
         }}
+        onTimeUpdate={(event) =>
+          setCurrentTime(event.currentTarget.currentTime)
+        }
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
         onEnded={() => {
           setPlaying(false);
-          setProgress(0);
+          setCurrentTime(0);
         }}
         onError={() => setPlaying(false)}
       />
 
-      <button
-        type="button"
-        onClick={() => void toggle()}
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-foreground text-background transition-transform active:scale-95"
-        aria-label={playing ? "توقف پخش" : "پخش پیام صوتی"}
-      >
-        {playing ? <Pause size={14} /> : <Play size={14} className="mr-0.5" />}
-      </button>
+      <div className="flex items-center gap-2.5">
+        <button
+          type="button"
+          onClick={() => void toggle()}
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-foreground text-background shadow-sm transition active:scale-95"
+          aria-label={playing ? "توقف پخش" : "پخش پیام صوتی"}
+        >
+          {playing ? (
+            <Pause size={15} />
+          ) : (
+            <Play size={15} className="ml-0.5" />
+          )}
+        </button>
 
-      <div className="min-w-0 flex-1">
-        <div className="mb-1.5 flex h-5 items-end gap-0.5 overflow-hidden">
-          {Array.from({ length: 30 }, (_, index) => {
-            const seed = (index * 17) % 11;
-            const height = 5 + (seed % 6);
-            const active = index / 30 <= progress;
-            return (
-              <span
-                key={index}
-                className={`w-0.5 shrink-0 rounded-full ${active ? "bg-foreground" : "bg-foreground/20"}`}
-                style={{ height: `${height}px` }}
-              />
-            );
-          })}
+        <div className="min-w-0 flex-1">
+          <div className="mb-1 flex h-7 items-center gap-[2px] overflow-hidden">
+            {Array.from({ length: 32 }, (_, index) => {
+              const pattern = [6, 10, 14, 8, 17, 11, 7, 13, 18, 9, 12, 6];
+              const height = pattern[index % pattern.length];
+              const active =
+                duration > 0 && index / 32 <= currentTime / duration;
+              return (
+                <span
+                  key={index}
+                  className={`w-[3px] shrink-0 rounded-full transition-[height,opacity] ${
+                    active ? "bg-current opacity-100" : "bg-current opacity-25"
+                  }`}
+                  style={{ height: `${height}px` }}
+                />
+              );
+            })}
+          </div>
+
+          <input
+            type="range"
+            min={0}
+            max={Math.max(duration, 0.01)}
+            step={0.1}
+            value={Math.min(currentTime, duration || 0)}
+            onChange={(event) => {
+              const audio = audioRef.current;
+              const next = Number(event.target.value);
+              if (audio) audio.currentTime = next;
+              setCurrentTime(next);
+            }}
+            disabled={!duration}
+            aria-label="موقعیت پیام صوتی"
+            className="h-1.5 w-full cursor-pointer accent-current"
+          />
+
+          <div className="mt-0.5 flex items-center justify-between text-[9px] tabular-nums opacity-65">
+            <span>{formatAudioTime(currentTime)}</span>
+            <span>{formatAudioTime(duration)}</span>
+          </div>
         </div>
-        <div className="flex items-center justify-between text-[9px] tabular-nums text-muted-foreground">
-          <span>{formatAudioTime(progress * duration)}</span>
-          <span>{formatAudioTime(duration)}</span>
+
+        <div className="flex shrink-0 items-center gap-0.5">
+          <button
+            type="button"
+            onClick={() => seek(-10)}
+            className="flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-black/5 active:scale-95"
+            aria-label="۱۰ ثانیه عقب"
+            title="۱۰ ثانیه عقب"
+          >
+            <Rewind size={15} />
+          </button>
+          <button
+            type="button"
+            onClick={() => seek(10)}
+            className="flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-black/5 active:scale-95"
+            aria-label="۱۰ ثانیه جلو"
+            title="۱۰ ثانیه جلو"
+          >
+            <FastForward size={15} />
+          </button>
+          <button
+            type="button"
+            onClick={cycleSpeed}
+            className="flex h-8 min-w-9 items-center justify-center rounded-full text-[10px] font-bold tabular-nums transition hover:bg-black/5 active:scale-95"
+            aria-label={`سرعت پخش ${speed} برابر`}
+            title="تغییر سرعت پخش"
+          >
+            {speed}x
+          </button>
         </div>
       </div>
     </div>
@@ -287,6 +372,7 @@ export default function InstagramInbox({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesScrollRef = useRef<HTMLDivElement>(null);
   const optimisticMediaRef = useRef<Map<string, string>>(new Map());
+  const lastMarkedInboundRef = useRef<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordingStreamRef = useRef<MediaStream | null>(null);
@@ -342,6 +428,37 @@ export default function InstagramInbox({
       setLoading(false);
     }
   }, [accountId]);
+  const markConversationSeen = useCallback(
+    async (inboundMarker: string) => {
+      if (!accountId || !selectedId || !inboundMarker) return;
+      if (lastMarkedInboundRef.current === inboundMarker) return;
+
+      try {
+        const response = await fetch("/api/instagram/inbox", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            accountId,
+            conversationId: selectedId,
+            action: "mark_seen",
+          }),
+        });
+
+        const result = await readApiResult(response);
+
+        if (response.ok && result.success) {
+          lastMarkedInboundRef.current = inboundMarker;
+        }
+      } catch {
+        // A failed read receipt must never block the inbox.
+      }
+    },
+    [accountId, selectedId],
+  );
+
 
   const loadMessages = useCallback(async () => {
     if (!accountId || !selectedId) {
@@ -389,11 +506,25 @@ export default function InstagramInbox({
             : item,
         ),
       );
+
+      const latestInbound = [...serverMessages]
+        .reverse()
+        .find((message) => message.direction === "INBOUND");
+
+      if (latestInbound) {
+        void markConversationSeen(
+          latestInbound.igMessageId || latestInbound.id,
+        );
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "خطا در دریافت پیام‌ها");
     } finally {
       setMessagesLoading(false);
     }
+  }, [accountId, selectedId, markConversationSeen]);
+
+  useEffect(() => {
+    lastMarkedInboundRef.current = "";
   }, [accountId, selectedId]);
 
   useEffect(() => {
@@ -423,15 +554,27 @@ export default function InstagramInbox({
     });
   }, []);
 
-  useEffect(() => {
-    if (!selectedId) return;
+  useLayoutEffect(() => {
+    if (!selectedId || !messages.length) return;
 
-    const timers = [0, 80, 250, 600].map((delay) =>
-      window.setTimeout(scrollMessagesToBottom, delay),
+    const container = messagesScrollRef.current;
+    if (!container) return;
+
+    const scroll = () => {
+      container.scrollTop = container.scrollHeight;
+    };
+
+    scroll();
+    const frame = window.requestAnimationFrame(scroll);
+    const timers = [50, 150, 350, 700].map((delay) =>
+      window.setTimeout(scroll, delay),
     );
 
-    return () => timers.forEach((timer) => window.clearTimeout(timer));
-  }, [messages.length, messagesLoading, selectedId, scrollMessagesToBottom]);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      timers.forEach((timer) => window.clearTimeout(timer));
+    };
+  }, [messages.length, messagesLoading, selectedId]);
 
   useEffect(() => {
     return () => {
@@ -1098,10 +1241,19 @@ export default function InstagramInbox({
                     >
                       <div className="max-w-[88%] sm:max-w-[70%]">
                         <div
-                          className={`overflow-hidden rounded-2xl shadow-sm ${
-                            outbound
-                              ? "rounded-bl-md bg-primary text-primary-foreground"
-                              : "rounded-br-md border border-border bg-background text-foreground"
+                          className={`overflow-hidden shadow-sm ${
+                            message.messageType === "AUDIO"
+                              ? "rounded-[22px]"
+                              : "rounded-2xl " +
+                                (outbound
+                                  ? "rounded-bl-md bg-primary text-primary-foreground"
+                                  : "rounded-br-md border border-border bg-background text-foreground")
+                          } ${
+                            message.messageType === "AUDIO"
+                              ? outbound
+                                ? "bg-primary text-primary-foreground"
+                                : "border border-border bg-background text-foreground"
+                              : ""
                           }`}
                         >
                           {hasMedia && <MediaBubble message={message} />}
@@ -1129,7 +1281,10 @@ export default function InstagramInbox({
                           <span>{formatTime(message.createdAt)}</span>
                           {outbound &&
                             (message.seenAt ? (
-                              <CheckCheck size={12} />
+                              <span className="flex items-center gap-0.5 font-medium text-blue-500">
+                                <CheckCheck size={12} strokeWidth={2.5} />
+                                <span>Seen</span>
+                              </span>
                             ) : (
                               <Check size={12} />
                             ))}
