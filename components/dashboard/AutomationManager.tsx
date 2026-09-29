@@ -55,18 +55,24 @@ type MediaPreview = {
   mediaType: "IMAGE" | "VIDEO" | "UNKNOWN";
 };
 
-function getFirstKeyword(automation: Automation) {
-  const keyword = automation.keyword?.trim();
-  return keyword?.split(/[,،;؛\n]+/)[0]?.trim() || keyword || "بدون کلمه کلیدی";
-}
+type AutomationGroup = {
+  key: string;
+  mediaId: string | null;
+  automations: Automation[];
+  ids: string[];
+  keywords: string[];
+};
 
-function getKeywordsForSearch(automation: Automation) {
+function getKeywords(automation: Automation) {
   return (automation.keyword || "")
     .split(/[,،;؛\n]+/)
-    .map((item) => item.trim().toLowerCase())
+    .map((item) => item.trim())
     .filter(Boolean);
 }
 
+function getKeywordsForSearch(automation: Automation) {
+  return getKeywords(automation).map((item) => item.toLowerCase());
+}
 
 export default function AutomationManager({
   accounts,
@@ -84,12 +90,14 @@ export default function AutomationManager({
 
   const [automations, setAutomations] = useState<Automation[]>([]);
   const [mediaPreviews, setMediaPreviews] = useState<Record<string, MediaPreview>>({});
-  const [loading, setLoading] = useState(false);
+  const [mediaLoading, setMediaLoading] = useState<Record<string, boolean>>({});
+  const [mediaFailed, setMediaFailed] = useState<Record<string, boolean>>({});
+  const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
   const [editingAutomation, setEditingAutomation] = useState<Automation | null>(null);
   const [search, setSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [deleteTarget, setDeleteTarget] = useState<Automation | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<AutomationGroup | null>(null);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [actionError, setActionError] = useState("");
@@ -147,37 +155,42 @@ export default function AutomationManager({
   useEffect(() => {
     if (!selectedAccount || automations.length === 0) {
       setMediaPreviews({});
+      setMediaLoading({});
+      setMediaFailed({});
       return;
     }
 
     let cancelled = false;
+    const mediaIds = [...new Set(automations.map((item) => item.mediaId).filter(Boolean) as string[])];
+
+    setMediaLoading(Object.fromEntries(mediaIds.map((id) => [id, true])));
+    setMediaFailed({});
 
     async function loadPreviews() {
       const entries = await Promise.all(
-        automations
-          .filter((automation) => automation.mediaId)
-          .map(async (automation) => {
-            try {
-              const response = await fetch(
-                `/api/automations/media-preview?instagramAccountId=${encodeURIComponent(
-                  selectedAccount!.id,
-                )}&mediaId=${encodeURIComponent(automation.mediaId!)}`,
-                { cache: "no-store", credentials: "include" },
-              );
-              if (!response.ok) return null;
-              const result = await response.json();
-              if (!result.success) return null;
-              return [automation.id, result.data as MediaPreview] as const;
-            } catch {
-              return null;
-            }
-          }),
+        mediaIds.map(async (mediaId) => {
+          try {
+            const response = await fetch(
+              `/api/automations/media-preview?instagramAccountId=${encodeURIComponent(
+                selectedAccount!.id,
+              )}&mediaId=${encodeURIComponent(mediaId)}`,
+              { cache: "no-store", credentials: "include" },
+            );
+            if (!response.ok) return null;
+            const result = await response.json();
+            if (!result.success) return null;
+            return [mediaId, result.data as MediaPreview] as const;
+          } catch {
+            return null;
+          }
+        }),
       );
 
       if (!cancelled) {
         setMediaPreviews(
           Object.fromEntries(entries.filter(Boolean) as Array<[string, MediaPreview]>),
         );
+        setMediaLoading(Object.fromEntries(mediaIds.map((id) => [id, false])));
       }
     }
 
@@ -187,25 +200,61 @@ export default function AutomationManager({
     };
   }, [automations, selectedAccount?.id]);
 
-  const filteredAutomations = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    if (!query) return automations;
+  const automationGroups = useMemo<AutomationGroup[]>(() => {
+    const groups = new Map<string, AutomationGroup>();
 
-    return automations.filter((automation) =>
-      getKeywordsForSearch(automation).some((keyword) => keyword.includes(query)),
+    for (const automation of automations) {
+      const key = automation.mediaId
+        ? `media:${automation.mediaId}`
+        : `automation:${automation.id}`;
+      const existing = groups.get(key);
+
+      if (existing) {
+        existing.automations.push(automation);
+        existing.ids.push(automation.id);
+        for (const keyword of getKeywords(automation)) {
+          if (!existing.keywords.some((item) => item.toLowerCase() === keyword.toLowerCase())) {
+            existing.keywords.push(keyword);
+          }
+        }
+      } else {
+        groups.set(key, {
+          key,
+          mediaId: automation.mediaId,
+          automations: [automation],
+          ids: [automation.id],
+          keywords: getKeywords(automation),
+        });
+      }
+    }
+
+    return [...groups.values()];
+  }, [automations]);
+
+  const filteredGroups = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return automationGroups;
+
+    return automationGroups.filter((group) =>
+      group.keywords.some((keyword) => keyword.toLowerCase().includes(query)),
     );
-  }, [automations, search]);
+  }, [automationGroups, search]);
 
   const allFilteredSelected =
-    filteredAutomations.length > 0 &&
-    filteredAutomations.every((automation) => selectedIds.includes(automation.id));
+    filteredGroups.length > 0 &&
+    filteredGroups.every((group) => group.ids.every((id) => selectedIds.includes(id)));
 
-  function toggleSelected(id: string) {
-    setSelectedIds((current) =>
-      current.includes(id)
-        ? current.filter((item) => item !== id)
-        : [...current, id],
-    );
+  const selectedGroupCount = filteredGroups.filter((group) =>
+    group.ids.every((id) => selectedIds.includes(id)),
+  ).length;
+
+  function toggleSelected(ids: string[]) {
+    setSelectedIds((current) => {
+      const allSelected = ids.every((id) => current.includes(id));
+      return allSelected
+        ? current.filter((id) => !ids.includes(id))
+        : [...new Set([...current, ...ids])];
+    });
   }
 
   function toggleSelectAll() {
@@ -343,13 +392,13 @@ export default function AutomationManager({
                 />
               </div>
 
-              {selectedIds.length > 1 && (
+              {selectedGroupCount > 1 && (
                 <Button
                   type="button"
                   onClick={() => setBulkDeleteOpen(true)}
                   className="min-h-11 rounded-xl bg-red-600 px-4 text-sm font-semibold text-white hover:bg-red-700"
                 >
-                  پاک کردن {selectedIds.length} مورد
+                  پاک کردن {selectedGroupCount} مورد
                 </Button>
               )}
             </div>
@@ -375,7 +424,7 @@ export default function AutomationManager({
                 </button>
 
                 <span className="text-xs text-muted-foreground">
-                  {filteredAutomations.length} پاسخ
+                  {filteredGroups.length} پاسخ
                 </span>
               </div>
             )}
@@ -412,7 +461,7 @@ export default function AutomationManager({
               ))}
             </div>
           </section>
-        ) : filteredAutomations.length === 0 ? (
+        ) : filteredGroups.length === 0 ? (
           <section className="rounded-3xl border border-dashed border-border bg-card px-6 py-20 text-center">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
               <Bot size={21} />
@@ -429,15 +478,16 @@ export default function AutomationManager({
         ) : (
           <section className="overflow-hidden rounded-3xl border border-border/80 bg-card shadow-sm">
             <div className="divide-y divide-border/70">
-              {filteredAutomations.map((automation) => {
-                const preview = mediaPreviews[automation.id];
+              {filteredGroups.map((group) => {
+                const automation = group.automations[0];
+                const preview = group.mediaId ? mediaPreviews[group.mediaId] : undefined;
                 const imageUrl = preview?.thumbnailUrl || preview?.mediaUrl || null;
-                
-                const selected = selectedIds.includes(automation.id);
+                const imageLoading = group.mediaId ? mediaLoading[group.mediaId] !== false : false;
+                const selected = group.ids.every((id) => selectedIds.includes(id));
 
                 return (
                   <div
-                    key={automation.id}
+                    key={group.key}
                     role="button"
                     tabIndex={0}
                     onClick={() =>
@@ -468,7 +518,7 @@ export default function AutomationManager({
                       aria-label={selected ? "لغو انتخاب" : "انتخاب"}
                       onClick={(event) => {
                         event.stopPropagation();
-                        toggleSelected(automation.id);
+                        toggleSelected(group.ids);
                       }}
                       className={[
                         "flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition",
@@ -481,13 +531,38 @@ export default function AutomationManager({
                     </button>
 
                     <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-muted sm:h-20 sm:w-20">
-                      {imageUrl ? (
-                        <img
-                          src={imageUrl}
-                          alt=""
-                          className="h-full w-full object-cover"
-                          loading="lazy"
-                        />
+                      {imageUrl && !mediaFailed[group.mediaId || ""] ? (
+                        <>
+                          {imageLoading && (
+                            <div className="absolute inset-0 z-10 animate-pulse bg-muted" />
+                          )}
+                          <img
+                            src={imageUrl}
+                            alt=""
+                            className={`h-full w-full object-cover transition-opacity ${imageLoading ? "opacity-0" : "opacity-100"}`}
+                            loading="lazy"
+                            onLoad={() => {
+                              if (group.mediaId) {
+                                setMediaLoading((current) => ({
+                                  ...current,
+                                  [group.mediaId!]: false,
+                                }));
+                              }
+                            }}
+                            onError={() => {
+                              if (group.mediaId) {
+                                setMediaLoading((current) => ({
+                                  ...current,
+                                  [group.mediaId!]: false,
+                                }));
+                                setMediaFailed((current) => ({
+                                  ...current,
+                                  [group.mediaId!]: true,
+                                }));
+                              }
+                            }}
+                          />
+                        </>
                       ) : (
                         <div className="flex h-full w-full items-center justify-center text-muted-foreground">
                           {preview?.mediaType === "VIDEO" ? (
@@ -503,19 +578,16 @@ export default function AutomationManager({
                       <div className="flex items-center gap-2">
                         <MessageCircle size={15} className="shrink-0 text-muted-foreground" />
                         <p className="truncate text-sm font-bold text-foreground sm:text-[15px]">
-                          {getFirstKeyword(automation)}
+                          {group.keywords.length ? group.keywords.join(", ") : "بدون کلمه کلیدی"}
                         </p>
                       </div>
-                      <p className="mt-1 truncate text-xs text-muted-foreground">
-                        {automation.keyword || "بدون کلمه کلیدی"}
-                      </p>
                     </div>
 
                     <Button
                       type="button"
                       onClick={(event) => {
                         event.stopPropagation();
-                        setDeleteTarget(automation);
+                        setDeleteTarget(group);
                       }}
                       className="min-h-9 shrink-0 rounded-lg border border-red-200 bg-background px-3 text-xs font-semibold text-red-600 hover:bg-red-50"
                     >
@@ -523,7 +595,7 @@ export default function AutomationManager({
                     </Button>
                   </div>
                 );
-              })}
+              })}}
             </div>
           </section>
         )}
@@ -559,7 +631,7 @@ export default function AutomationManager({
             <div className="px-6">
             <h3 className="text-base font-bold text-foreground">
               {bulkDeleteOpen
-                ? `پاک کردن ${selectedIds.length} پاسخ خودکار؟`
+                ? `پاک کردن ${selectedGroupCount} پاسخ خودکار؟`
                 : "پاک کردن پاسخ خودکار؟"}
             </h3>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
@@ -586,7 +658,7 @@ export default function AutomationManager({
                     bulkDeleteOpen
                       ? selectedIds
                       : deleteTarget
-                        ? [deleteTarget.id]
+                        ? deleteTarget.ids
                         : [],
                   )
                 }
