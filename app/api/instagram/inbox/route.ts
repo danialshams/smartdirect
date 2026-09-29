@@ -320,8 +320,11 @@ async function getInstagramMessageMediaUrl({
       attachments?: {
         data?: Array<{
           file_url?: string;
+          url?: string;
           image_data?: { url?: string; medial_url?: string };
           video_data?: { url?: string };
+          audio_data?: { url?: string };
+          payload?: { url?: string };
         }>;
       };
     }>(`/${encodeURIComponent(messageId)}`, {
@@ -341,9 +344,12 @@ async function getInstagramMessageMediaUrl({
 
     return (
       attachment?.file_url ??
+      attachment?.url ??
+      attachment?.payload?.url ??
       attachment?.image_data?.url ??
       attachment?.image_data?.medial_url ??
       attachment?.video_data?.url ??
+      attachment?.audio_data?.url ??
       null
     );
   } catch (error) {
