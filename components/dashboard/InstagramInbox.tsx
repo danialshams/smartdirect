@@ -7,8 +7,7 @@ import {
   ArrowRight,
   Check,
   CheckCheck,
-  ChevronLeft,
-  File,
+  File as FileIcon,
   Image as ImageIcon,
   MessageCircle,
   Mic,
@@ -129,7 +128,7 @@ function MediaBubble({ message }: { message: Message }) {
   if (!message.mediaUrl) {
     return (
       <div className="flex items-center gap-2 px-4 py-3 text-xs text-muted-foreground">
-        <File size={15} />
+        <FileIcon size={15} />
         <span>{preview(message)} آماده نمایش نیست.</span>
       </div>
     );
