@@ -1131,7 +1131,7 @@ export default function AutomationForm({
                 );
 
             const result =
-                await response.json();
+                await readApiResponse(response, url);
 
             if (
                 !response.ok ||
@@ -1209,7 +1209,10 @@ export default function AutomationForm({
                     },
                 );
 
-                const result = await response.json();
+                const result = await readApiResponse(
+                    response,
+                    `/api/automations/${targetAutomationId}/messages/${serverMessageId}/quick-replies`
+                );
 
                 if (!response.ok || !result.success) {
                     throw new Error(
@@ -1219,6 +1222,28 @@ export default function AutomationForm({
                     );
                 }
             }
+        }
+    }
+
+    async function readApiResponse(response: Response, endpoint: string) {
+        const raw = await response.text();
+        if (!raw.trim()) {
+            throw new Error(
+                `سرور برای ${endpoint} پاسخ خالی برگرداند. وضعیت: ${response.status}`
+            );
+        }
+
+        try {
+            return JSON.parse(raw) as {
+                success?: boolean;
+                error?: string;
+                message?: string;
+                data?: unknown;
+            };
+        } catch {
+            throw new Error(
+                `پاسخ نامعتبر از ${endpoint} دریافت شد. وضعیت: ${response.status}`
+            );
         }
     }
 
@@ -1455,7 +1480,10 @@ export default function AutomationForm({
                 );
 
             const finalResult =
-                await finalResponse.json();
+                await readApiResponse(
+                    finalResponse,
+                    `/api/automations/${savedAutomation.id}`
+                );
 
             const finalAutomation =
                 finalResponse.ok &&
