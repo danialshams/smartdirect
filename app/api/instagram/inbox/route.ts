@@ -333,7 +333,7 @@ async function getInstagramMessageMediaUrl({
       rateLimit: {
         instagramAccountId,
         tenantId,
-        operation: "CONVERSATION_READ",
+        operation: "MESSAGE_MEDIA",
       },
     });
 
