@@ -1180,14 +1180,9 @@ export default function InstagramInbox({
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
             <MessageCircle size={21} />
           </div>
-          <div>
-            <h2 className="text-lg font-bold text-foreground">
-              پیام‌ها
-            </h2>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              برای استفاده از پیام‌ها ابتدا یک اکانت Instagram متصل کنید.
-            </p>
-          </div>
+          <p className="text-sm leading-6 text-muted-foreground">
+            برای استفاده از پیام‌ها ابتدا یک اکانت Instagram متصل کنید.
+          </p>
         </div>
       </section>
     );
@@ -1196,13 +1191,7 @@ export default function InstagramInbox({
   const listPanel = (
     <aside className="flex min-h-0 flex-1 flex-col bg-background lg:w-[360px] lg:flex-none lg:border-l lg:border-border">
       <div className="shrink-0 border-b border-border px-4 pb-3 pt-4 sm:px-5">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h2 className="text-base font-bold text-foreground">پیام‌ها</h2>
-            <p className="mt-1 text-[11px] text-muted-foreground">
-              گفتگوهای Instagram
-            </p>
-          </div>
+        <div className="flex items-center justify-end gap-3">
           <Button
             type="button"
             onClick={() => {
