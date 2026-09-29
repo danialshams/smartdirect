@@ -73,11 +73,18 @@ export async function GET(request: NextRequest) {
           ? "IMAGE"
           : "UNKNOWN";
 
+    const toProxyUrl = (url: string | null | undefined) =>
+      url
+        ? `/api/instagram/media-proxy?accountId=${encodeURIComponent(
+            account.id,
+          )}&url=${encodeURIComponent(url)}`
+        : null;
+
     return NextResponse.json({
       success: true,
       data: {
-        mediaUrl: media.media_url ?? null,
-        thumbnailUrl: media.thumbnail_url ?? null,
+        mediaUrl: toProxyUrl(media.media_url),
+        thumbnailUrl: toProxyUrl(media.thumbnail_url ?? media.media_url),
         mediaType,
       },
     });
