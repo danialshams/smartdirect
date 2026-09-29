@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
-import AutomationManager from "./AutomationManager";
+import AutomationManager from "./AutomationManager";\nimport IceBreakerManager from "./IceBreakerManager";\nimport PersistentMenuManager from "./PersistentMenuManager";
 import InstagramInbox from "./InstagramInbox";
 import InstagramProfileDashboard from "./InstagramProfileDashboard";
 
@@ -20,7 +20,7 @@ type Account = {
 type Mode =
   | "profile"
   | "inbox"
-  | "automations";
+  | "comments"\n  | "stories"\n  | "ice-breaker"\n  | "persistent-menu";
 
 export default function DashboardAccountsClient({
   mode,
