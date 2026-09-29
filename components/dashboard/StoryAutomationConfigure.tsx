@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import AutomationForm from "./AutomationForm";
 import type { Automation } from "./AutomationManager";
 
-type Account = { id: string; igUsername: string; igUserId: string; isConnected: boolean };
+type Account = { id: string; igUsername: string; igUserId: string; isConnected: boolean; createdAt?: string };
 
 export default function StoryAutomationConfigure() {
   const router = useRouter();
