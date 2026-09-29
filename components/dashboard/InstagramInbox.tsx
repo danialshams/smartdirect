@@ -144,7 +144,7 @@ function MediaBubble({ message }: { message: Message }) {
         <img
           src={message.mediaUrl}
           alt="Instagram media"
-          className="max-h-[360px] w-full object-cover transition hover:opacity-95"
+          className="mx-auto max-h-[280px] max-w-full object-contain transition hover:opacity-95 sm:max-h-[320px]"
         />
       </a>
     );
@@ -157,14 +157,14 @@ function MediaBubble({ message }: { message: Message }) {
         controls
         preload="metadata"
         playsInline
-        className="max-h-[360px] w-full min-w-[240px] max-w-[460px] bg-black"
+        className="mx-auto max-h-[280px] w-full min-w-0 max-w-[420px] bg-black sm:max-h-[320px]"
       />
     );
   }
 
   if (message.messageType === "AUDIO") {
     return (
-      <div className="flex min-w-[260px] items-center gap-3 px-3 py-3">
+      <div className="flex min-w-[220px] max-w-[340px] items-center gap-3 px-3 py-3">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted">
           <Play size={15} />
         </div>
