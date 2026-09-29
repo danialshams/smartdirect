@@ -184,11 +184,33 @@ export async function consumeInstagramRateLimit(
     String(bucket.windowMs),
   ]);
 
-  const result = (await redis.eval(
-    LUA_CONSUME,
-    keys,
-    args,
-  )) as [number, number, number, number];
+  let result: [number, number, number, number];
+
+  try {
+    result = (await redis.eval(
+      LUA_CONSUME,
+      keys,
+      args,
+    )) as [number, number, number, number];
+  } catch (error) {
+    // Redis is an optimization/safety layer; a Redis outage must not make
+    // Instagram messaging completely unavailable. Fail open here and let
+    // Instagram enforce its own limits.
+    console.error("Instagram rate-limit Redis unavailable; allowing request:", {
+      operation: context.operation,
+      instagramAccountId: context.instagramAccountId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+
+    return {
+      allowed: true,
+      limit: Math.min(...buckets.map((bucket) => bucket.limit)),
+      remaining: 0,
+      retryAfterMs: 0,
+      resetAt: now + Math.min(...buckets.map((bucket) => bucket.windowMs)),
+      scope: "OPERATION",
+    };
+  }
 
   const allowed = Number(result[0]) === 1;
 
