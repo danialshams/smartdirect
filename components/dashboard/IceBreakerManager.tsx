@@ -481,14 +481,8 @@ export default function IceBreakerManager({
                         </p>
 
                         <p className="mt-1 text-xs leading-6 text-muted-foreground">
-                            دیگر لازم نیست یک
-                            Automation را انتخاب
-                            کنید. برای هر سوال،
-                            Flow مخصوص خودش را
-                            بسازید؛ شامل چند پیام،
-                            عکس، ویدیو، صوت،
-                            Showcase، Form و
-                            Quick Reply.
+                            برای هر سوال، Flow مخصوص خودش را
+                            بسازید و مسیر پاسخ را مرحله‌به‌مرحله تنظیم کنید.
                         </p>
                     </div>
 
