@@ -187,10 +187,14 @@ export default function AutomationManager({
       );
 
       if (!cancelled) {
-        setMediaPreviews(
-          Object.fromEntries(entries.filter(Boolean) as Array<[string, MediaPreview]>),
+        const previewEntries = entries.filter(Boolean) as Array<[string, MediaPreview]>;
+        const previews = Object.fromEntries(previewEntries);
+        setMediaPreviews(previews);
+        setMediaLoading(
+          Object.fromEntries(
+            mediaIds.map((id) => [id, !previews[id]?.thumbnailUrl && !previews[id]?.mediaUrl ? false : true]),
+          ),
         );
-        setMediaLoading(Object.fromEntries(mediaIds.map((id) => [id, false])));
       }
     }
 
@@ -260,12 +264,12 @@ export default function AutomationManager({
   function toggleSelectAll() {
     setSelectedIds((current) => {
       if (allFilteredSelected) {
-        const visibleIds = new Set(filteredAutomations.map((item) => item.id));
+        const visibleIds = new Set(filteredGroups.flatMap((group) => group.ids));
         return current.filter((id) => !visibleIds.has(id));
       }
 
       const next = new Set(current);
-      filteredAutomations.forEach((item) => next.add(item.id));
+      filteredGroups.flatMap((group) => group.ids).forEach((id) => next.add(id));
       return [...next];
     });
   }
@@ -595,7 +599,7 @@ export default function AutomationManager({
                     </Button>
                   </div>
                 );
-              })}}
+              })}
             </div>
           </section>
         )}
