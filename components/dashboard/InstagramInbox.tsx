@@ -697,6 +697,7 @@ export default function InstagramInbox({
     }
 
     await loadConversations();
+  }
 
   async function sendTextMessage(messageText: string) {
     if (!messageText.trim() || !accountId || !selectedId || sending) return;
@@ -727,6 +728,7 @@ export default function InstagramInbox({
     }
 
     await loadConversations();
+  }
 
   async function sendMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
