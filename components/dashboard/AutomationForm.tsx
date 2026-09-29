@@ -85,7 +85,7 @@ export default function AutomationForm({
         automation?.id ?? null;
 
     const isEditing =
-        automationId !== null;
+        Boolean(automationId?.trim());
 
     async function readApiResponse(response: Response, endpoint: string) {
         const raw = await response.text();
