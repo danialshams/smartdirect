@@ -7,7 +7,7 @@ import type { Automation } from "./AutomationManager";
 
 export default function StoryAutomationEdit({ id }: { id: string }) {
   const router = useRouter();
-  const [automation, setAutomation] = useState<Automation | null>(null);
+  const [automation, setAutomation] = useState<(Automation & { instagramAccount?: { igUsername: string; igUserId: string; isConnected: boolean } }) | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
