@@ -38,9 +38,6 @@ export default function StoryAutomationEdit({ id }: { id: string }) {
       account={{
         id: automation.instagramAccountId,
         igUsername: automation.instagramAccount?.igUsername || "Instagram",
-        igUserId: automation.instagramAccount?.igUserId || "",
-        isConnected: automation.instagramAccount?.isConnected ?? true,
-        createdAt: new Date(),
       }}
       automation={automation}
       onClose={() => router.back()}
