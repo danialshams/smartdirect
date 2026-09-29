@@ -1121,6 +1121,51 @@ async function processMessagingEventLocked(
     if (isEcho) {
       console.log("This is an outgoing message echo.");
 
+      if (messageId) {
+        const existingOutbound = await prisma.conversationMessage.findUnique({
+          where: { igMessageId: messageId },
+          select: {
+            id: true,
+            messageType: true,
+            mediaUrl: true,
+          },
+        });
+
+        if (existingOutbound) {
+          let echoMediaUrl: string | null = null;
+
+          const attachment = attachments[0];
+          echoMediaUrl =
+            attachment?.file_url ??
+            attachment?.url ??
+            attachment?.payload?.url ??
+            attachment?.image_data?.url ??
+            attachment?.image_data?.medial_url ??
+            attachment?.video_data?.url ??
+            attachment?.audio_data?.url ??
+            null;
+
+          if (!echoMediaUrl && ["IMAGE", "VIDEO", "AUDIO"].includes(existingOutbound.messageType)) {
+            echoMediaUrl = await resolveInstagramMessageMediaUrl(
+              messageId,
+              instagramAccount,
+            );
+          }
+
+          if (echoMediaUrl && echoMediaUrl !== existingOutbound.mediaUrl) {
+            await prisma.conversationMessage.update({
+              where: { id: existingOutbound.id },
+              data: { mediaUrl: echoMediaUrl },
+            });
+
+            console.log("[INBOX_MEDIA_DEBUG] outbound-echo-media-synced", {
+              messageId,
+              messageType: existingOutbound.messageType,
+            });
+          }
+        }
+      }
+
       console.log("Ignoring as incoming message.");
 
       console.log("========================================");
