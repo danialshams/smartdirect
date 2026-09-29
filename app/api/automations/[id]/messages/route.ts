@@ -81,7 +81,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       },
       include: await getMessageInclude(),
     });
-    await invalidateAutomationCache(automation.instagramAccountId);
+    try {
+      await invalidateAutomationCache(automation.instagramAccountId);
+    } catch (cacheError) {
+      console.warn("Automation cache invalidation failed:", cacheError);
+    }
     return NextResponse.json({ success: true, data: message }, { status: 201 });
   } catch (error) {
     console.error("POST /api/automations/[id]/messages error:", error);
