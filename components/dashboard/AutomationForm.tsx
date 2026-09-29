@@ -1240,28 +1240,6 @@ export default function AutomationForm({
         }
     }
 
-    async function readApiResponse(response: Response, endpoint: string) {
-        const raw = await response.text();
-        if (!raw.trim()) {
-            throw new Error(
-                `سرور برای ${endpoint} پاسخ خالی برگرداند. وضعیت: ${response.status}`
-            );
-        }
-
-        try {
-            return JSON.parse(raw) as {
-                success?: boolean;
-                error?: string;
-                message?: string;
-                data?: { id?: unknown };
-            };
-        } catch {
-            throw new Error(
-                `پاسخ نامعتبر از ${endpoint} دریافت شد. وضعیت: ${response.status}`
-            );
-        }
-    }
-
     /* ---------------------------------------------------------------------- */
     /* Submit                                                                 */
     /* ---------------------------------------------------------------------- */
@@ -1450,7 +1428,7 @@ export default function AutomationForm({
                 });
 
             const result =
-                await readApiResponse(response, `/api/automations/${targetAutomationId}`);
+                await readApiResponse(response, url);
 
             if (
                 !response.ok ||
