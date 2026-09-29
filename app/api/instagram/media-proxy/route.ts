@@ -104,6 +104,7 @@ export async function GET(request: NextRequest) {
     const rawUrl = request.nextUrl.searchParams.get("url");
 
     let targetUrl: URL;
+    let mediaAccessToken: string | null = null;
 
     if (accountId) {
       const account = await prisma.instagramAccount.findFirst({
@@ -118,6 +119,8 @@ export async function GET(request: NextRequest) {
       if (!account) {
         return new NextResponse("Instagram account not found", { status: 404 });
       }
+
+      mediaAccessToken = await getValidInstagramAccessToken(account.id);
 
       const freshImageUrl = await fetchInstagramImageUrl(
         account.id,
@@ -163,6 +166,9 @@ export async function GET(request: NextRequest) {
       const range = request.headers.get("range");
       const upstreamHeaders: Record<string, string> = {
         Accept: "*/*",
+        ...(mediaAccessToken
+          ? { Authorization: `Bearer ${mediaAccessToken}` }
+          : {}),
         "User-Agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/153.0 Safari/537.36",
         Referer: "https://www.instagram.com/",
