@@ -10,7 +10,7 @@ import SignOutButton from "../../components/auth/SignOutButton"
 type DashboardSidebarProps={open?:boolean; onClose?:()=>void}
 const menuGroups=[
 {label:"نمای کلی",items:[{title:"داشبورد",href:"/dashboard",icon:LayoutDashboard},{title:"تحلیل پیج",href:"/dashboard/insights",icon:BarChart3}]},
-{label:"مدیریت",items:[{title:"انتشار محتوا",href:"/dashboard/publishing",icon:ImagePlus},{title:"کامنت‌ها",href:"/dashboard/comments",icon:MessageCircleReply},{title:"پیام‌ها",href:"/dashboard/inbox",icon:Inbox},{title:"اتوماسیون‌ها",href:"/dashboard/automations",icon:Bot}]},
+{label:"مدیریت",items:[{title:"انتشار محتوا",href:"/dashboard/publishing",icon:ImagePlus},{title:"کامنت‌ها",href:"/dashboard/comments",icon:MessageCircleReply},{title:"پیام‌ها",href:"/dashboard/inbox",icon:Inbox},{title:"پاسخ خودکار کامنت",href:"/dashboard/comment-automation",icon:Bot},{title:"پاسخ خودکار استوری",href:"/dashboard/story-automation",icon:Bot},{title:"سؤال‌های شروع گفتگو",href:"/dashboard/ice-breaker",icon:MessageCircle},{title:"منوی دایرکت",href:"/dashboard/persistent-menu",icon:MessageCircle}]},
 {label:"حساب",items:[{title:"اشتراک",href:"/dashboard/subscription",icon:CreditCard},{title:"تنظیمات",href:"/dashboard/settings",icon:Settings}]}
 ]
 export default function DashboardSidebar({onClose}:DashboardSidebarProps){
