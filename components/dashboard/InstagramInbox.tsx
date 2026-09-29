@@ -30,7 +30,7 @@ import {
   useRef,
   useState,
 } from "react";
-import type { FormEvent } from "react";
+import type { FormEvent, PointerEvent as ReactPointerEvent } from "react";
 
 type Account = {
   id: string;
@@ -161,7 +161,7 @@ function AudioBubble({ src }: { src: string }) {
     }
   };
 
-  const seekFromWaveform = (event: React.PointerEvent<HTMLDivElement>) => {
+  const seekFromWaveform = (event: ReactPointerEvent<HTMLDivElement>) => {
     const audio = audioRef.current;
     if (!audio || !Number.isFinite(audio.duration) || audio.duration <= 0) return;
 
