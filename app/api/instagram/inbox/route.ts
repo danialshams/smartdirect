@@ -257,6 +257,9 @@ async function uploadInstagramAttachment({
 
   const uploadBody = new FormData();
 
+  const blobBuffer = new ArrayBuffer(uploadBuffer.byteLength);
+  new Uint8Array(blobBuffer).set(uploadBuffer);
+
   uploadBody.append(
     "message",
     JSON.stringify({
@@ -271,7 +274,7 @@ async function uploadInstagramAttachment({
 
   uploadBody.append(
     "filedata",
-    new Blob([uploadBuffer], {
+    new Blob([blobBuffer], {
       type: uploadContentType,
     }),
     uploadFileName,
