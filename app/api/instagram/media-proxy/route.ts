@@ -132,9 +132,17 @@ export async function GET(request: NextRequest) {
       }
 
       mediaAccessToken = await getValidInstagramAccessToken(account.id);
+    }
 
+    if (rawUrl) {
+      try {
+        targetUrl = new URL(rawUrl);
+      } catch {
+        return new NextResponse("Invalid media URL", { status: 400 });
+      }
+    } else if (accountId) {
       const freshImageUrl = await fetchInstagramImageUrl(
-        account.id,
+        accountId,
         participantId || null,
       );
 
@@ -152,15 +160,7 @@ export async function GET(request: NextRequest) {
         });
       }
     } else {
-      if (!rawUrl) {
-        return new NextResponse("Media URL is required", { status: 400 });
-      }
-
-      try {
-        targetUrl = new URL(rawUrl);
-      } catch {
-        return new NextResponse("Invalid media URL", { status: 400 });
-      }
+      return new NextResponse("Media URL is required", { status: 400 });
     }
 
     if (
