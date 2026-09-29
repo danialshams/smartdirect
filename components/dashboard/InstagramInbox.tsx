@@ -1116,7 +1116,7 @@ export default function InstagramInbox({
                         className="w-[3px] shrink-0 rounded-full bg-foreground/60 transition-[height] duration-75"
                         style={{ height: height + "px" }}
                       />
-                    ))})}
+                    ))}
                   </div>
                   <span className="w-10 shrink-0 text-center text-[11px] font-semibold tabular-nums">
                     {String(Math.floor(recordingSeconds / 60)).padStart(2, "0")}:
