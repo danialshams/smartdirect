@@ -429,6 +429,22 @@ export async function POST(request: NextRequest) {
         console.log("Messaging events received:", entry.messaging.length);
 
         for (const messagingEvent of entry.messaging) {
+          if (messagingEvent?.read) {
+            console.log("[INSTAGRAM_READ_WEBHOOK_RECEIVED]", {
+              accountId: accountData.id,
+              igUserId: accountData.igUserId,
+              senderId: messagingEvent?.sender?.id ?? null,
+              recipientId: messagingEvent?.recipient?.id ?? null,
+              mid: messagingEvent?.read?.mid ?? null,
+              watermark: messagingEvent?.read?.watermark ?? null,
+              eventId: normalizeInstagramWebhookEvent({
+                type: "MESSAGING",
+                event: messagingEvent,
+                accountId: accountData.id,
+              }).eventId,
+            });
+          }
+
           await processMessagingEventWithIdempotency(messagingEvent, accountData);
         }
       }
@@ -859,21 +875,19 @@ console.log("========================================");
     // Preserve the existing fallback behavior.
     // =======================================================
     else if (readMid) {
-      const result = await prisma.conversationMessage.updateMany({
-        where: {
-          conversationId: conversation.id,
-
-          direction: "OUTBOUND",
-
-          seenAt: null,
-        },
-
-        data: {
-          seenAt,
-        },
+      console.warn("[INSTAGRAM_READ_DEBUG] read-mid-not-found-in-db", {
+        conversationId: conversation.id,
+        participantId,
+        readMid,
       });
 
-      updatedCount = result.count;
+      // Do not mark every outbound message as Seen when the exact
+      // Meta message ID is not present in our database. That would
+      // produce false blue checks. If Meta also supplies a watermark,
+      // the watermark branch below is the safe fallback.
+      if (!Number.isFinite(readWatermark)) {
+        return;
+      }
     }
 
     // =======================================================
@@ -884,7 +898,7 @@ console.log("========================================");
     // Every outbound message created before or at that point
     // is considered Seen.
     // =======================================================
-    else if (Number.isFinite(readWatermark)) {
+    if (!anchorCreatedAt && Number.isFinite(readWatermark)) {
       const watermarkDate = new Date(readWatermark as number);
 
       if (Number.isNaN(watermarkDate.getTime())) {
@@ -953,6 +967,13 @@ console.log("========================================");
     console.log("Conversation ID:", conversation.id);
 
     console.log("Outbound messages marked seen:", updatedCount);
+    console.log("[INSTAGRAM_READ_DEBUG] database-updated", {
+      conversationId: conversation.id,
+      participantId,
+      readMid,
+      readWatermark,
+      updatedCount,
+    });
 
     console.log("========================================");
   } catch (error) {
@@ -969,6 +990,18 @@ async function processMessagingEvent(
   instagramAccount: InstagramAccountData,
   executionId: string,
 ) {
+  if (messagingEvent?.read) {
+    await processInstagramReadReceipt(messagingEvent, instagramAccount);
+    console.log("[INSTAGRAM_READ_DEBUG] receipt-processed", {
+      accountId: instagramAccount.id,
+      senderId: messagingEvent?.sender?.id ?? null,
+      recipientId: messagingEvent?.recipient?.id ?? null,
+      mid: messagingEvent?.read?.mid ?? null,
+      watermark: messagingEvent?.read?.watermark ?? null,
+    });
+    return;
+  }
+
   const senderId = messagingEvent?.sender?.id;
 
   if (!senderId) {
