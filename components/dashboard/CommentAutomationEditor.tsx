@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowRight, Check, Loader2, MessageCircle, Send } from "lucide-react";
+import { ArrowRight, Check, Loader2, MessageCircle, Plus, Send, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -56,7 +56,8 @@ export default function CommentAutomationEditor({ id }: { id: string }) {
 
   const [automation, setAutomation] = useState<Automation | null>(null);
   const [preview, setPreview] = useState<MediaPreview | null>(null);
-  const [keywords, setKeywords] = useState("");
+  const [keywords, setKeywords] = useState<string[]>([]);
+  const [keywordInput, setKeywordInput] = useState("");
   const [commentReply, setCommentReply] = useState("");
   const [dmReply, setDmReply] = useState("");
   const [sendDm, setSendDm] = useState(false);
@@ -100,7 +101,12 @@ export default function CommentAutomationEditor({ id }: { id: string }) {
               .split(/[,،;؛\n]+/)
               .map((v) => v.trim())
               .filter(Boolean)
-              .join("، "),
+              .filter(
+                (value, index, list) =>
+                  list.findIndex(
+                    (item) => item.toLowerCase() === value.toLowerCase(),
+                  ) === index,
+              ),
           );
           setCommentReply(item.commentReplyText || "");
           setDmReply(existingDmText);
@@ -159,14 +165,7 @@ export default function CommentAutomationEditor({ id }: { id: string }) {
     setError("");
     setSaved(false);
 
-    const normalizedKeywords = keywords
-      .split(/[,،;؛\n]+/)
-      .map((value) => value.trim())
-      .filter(Boolean)
-      .filter((value, index, list) =>
-        list.findIndex((item) => item.toLowerCase() === value.toLowerCase()) === index,
-      )
-      .join(", ");
+    const normalizedKeywords = keywords.join(", ");
 
     if (!normalizedKeywords) {
       setError("حداقل یک کلمه کلیدی وارد کنید.");
@@ -220,7 +219,9 @@ export default function CommentAutomationEditor({ id }: { id: string }) {
           "برای دریافت این محتوا ابتدا پیج ما را فالو کنید.",
       );
       setSaved(true);
-      window.setTimeout(() => setSaved(false), 2200);
+      window.setTimeout(() => {
+        router.push("/dashboard/comment-automation");
+      }, 650);
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "ذخیره تغییرات ناموفق بود.");
     } finally {
@@ -312,7 +313,7 @@ export default function CommentAutomationEditor({ id }: { id: string }) {
               <div className="mt-4 rounded-2xl border border-border/70 bg-muted/40 p-4">
                 <p className="text-xs font-medium text-muted-foreground">کلمات کلیدی فعال</p>
                 <p className="mt-1.5 break-words text-sm font-medium leading-6 text-foreground">
-                  {keywords || "بدون کلمه کلیدی"}
+                  {keywords.length ? keywords.join("، ") : "بدون کلمه کلیدی"}
                 </p>
               </div>
             </div>
@@ -322,9 +323,66 @@ export default function CommentAutomationEditor({ id }: { id: string }) {
             <div className="rounded-3xl border border-border/80 bg-card p-4 shadow-sm sm:p-5">
               <div className="mb-4">
                 <h2 className="text-base font-bold">کلمات کلیدی</h2>
-                <p className="mt-1 text-xs leading-5 text-muted-foreground">چند کلمه را با ویرگول جدا کنید.</p>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">هر کلمه را جداگانه اضافه کنید.</p>
               </div>
-              <Input value={keywords} onChange={(event) => setKeywords(event.target.value)} placeholder="مثلاً قیمت، خرید، اطلاعات" className="h-12 rounded-xl text-sm" dir="rtl" />
+              <div className="flex gap-2">
+                <Input
+                  value={keywordInput}
+                  onChange={(event) => setKeywordInput(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      const value = keywordInput.trim();
+                      if (!value) return;
+                      if (!keywords.some((item) => item.toLowerCase() === value.toLowerCase())) {
+                        setKeywords((current) => [...current, value]);
+                      }
+                      setKeywordInput("");
+                    }
+                  }}
+                  placeholder="مثلاً قیمت"
+                  className="h-12 rounded-xl text-sm"
+                  dir="rtl"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    const value = keywordInput.trim();
+                    if (!value) return;
+                    if (!keywords.some((item) => item.toLowerCase() === value.toLowerCase())) {
+                      setKeywords((current) => [...current, value]);
+                    }
+                    setKeywordInput("");
+                  }}
+                  className="h-12 shrink-0 rounded-xl px-4"
+                >
+                  <Plus size={16} />
+                  افزودن
+                </Button>
+              </div>
+              {keywords.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {keywords.map((keyword) => (
+                    <span
+                      key={keyword}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/50 px-3 py-1.5 text-xs font-medium"
+                    >
+                      {keyword}
+                      <button
+                        type="button"
+                        aria-label={"حذف کلمه کلیدی " + keyword}
+                        onClick={() =>
+                          setKeywords((current) => current.filter((item) => item !== keyword))
+                        }
+                        className="rounded-full p-0.5 text-muted-foreground transition hover:bg-background hover:text-foreground"
+                      >
+                        <X size={13} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="rounded-3xl border border-border/80 bg-card p-4 shadow-sm sm:p-5">
