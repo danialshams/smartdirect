@@ -935,7 +935,7 @@ console.log("========================================");
     // CASE 4:
     // Neither message ID nor valid watermark exists
     // =======================================================
-    else {
+    if (!anchorCreatedAt && !Number.isFinite(readWatermark)) {
       console.warn(
         "Instagram read receipt has neither a usable message ID nor watermark. No message state was changed.",
       );
