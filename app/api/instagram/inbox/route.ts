@@ -745,6 +745,7 @@ export async function POST(request: NextRequest) {
       typeof body.conversationId === "string" ? body.conversationId : "";
 
     const text = typeof body.text === "string" ? body.text.trim() : "";
+    const action = typeof body.action === "string" ? body.action : "";
 
     console.info("[INBOX_SEND_DEBUG] parsed-request", {
       debugId,
@@ -752,6 +753,7 @@ export async function POST(request: NextRequest) {
       conversationId,
       hasText: Boolean(text),
       textLength: text.length,
+      action: action || null,
       hasFile: Boolean(file),
       file: file
         ? {
@@ -770,11 +772,11 @@ export async function POST(request: NextRequest) {
       return jsonError("accountId و conversationId الزامی هستند.");
     }
 
-    if (!text && !file) {
+    if (action !== "mark_seen" && !text && !file) {
       return jsonError("متن یا فایل پیام الزامی است.");
     }
 
-    if (text.length > 1000) {
+    if (action !== "mark_seen" && text.length > 1000) {
       return jsonError("متن پیام نمی‌تواند بیشتر از ۱۰۰۰ کاراکتر باشد.");
     }
 
@@ -813,6 +815,63 @@ export async function POST(request: NextRequest) {
     });
 
     const accessToken = await getValidInstagramAccessToken(account.id);
+
+    if (action === "mark_seen") {
+      try {
+        await instagramApiRequest(
+          `/${encodeURIComponent(account.igUserId)}/messages`,
+          {
+            method: "POST",
+            accessToken,
+            body: {
+              recipient: {
+                id: conversation.participantId,
+              },
+              sender_action: "mark_seen",
+            },
+            timeoutMs: 30_000,
+            rateLimit: {
+              instagramAccountId: account.id,
+              tenantId: session.user.id,
+              operation: "MESSAGE_READ",
+            },
+          },
+        );
+
+        await prisma.conversationMessage.updateMany({
+          where: {
+            conversationId: conversation.id,
+            direction: "INBOUND",
+            readAt: null,
+          },
+          data: {
+            readAt: new Date(),
+          },
+        });
+
+        console.info("[INBOX_READ_DEBUG] mark-seen-success", {
+          accountId: account.id,
+          conversationId: conversation.id,
+          participantId: conversation.participantId,
+        });
+
+        return NextResponse.json({
+          success: true,
+          markedSeen: true,
+        });
+      } catch (error) {
+        console.error("[INBOX_READ_DEBUG] mark-seen-failed", {
+          accountId: account.id,
+          conversationId: conversation.id,
+          errorMessage: getErrorMessage(error, "Instagram mark_seen failed"),
+        });
+
+        return jsonError(
+          getErrorMessage(error, "علامت‌گذاری پیام‌ها به‌عنوان خوانده‌شده ناموفق بود."),
+          502,
+        );
+      }
+    }
 
     console.info("[INBOX_SEND_DEBUG] access-token-resolved", {
       debugId,
