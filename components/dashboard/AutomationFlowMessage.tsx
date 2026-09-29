@@ -180,8 +180,6 @@ export default function AutomationFlowMessage({
     { value: "TEXT", label: "متن", Icon: MessageSquare },
     ...(triggerType === "STORY_REPLY_KEYWORD"
       ? [
-          { value: "IMAGE" as const, label: "عکس", Icon: ImagePlus },
-          { value: "VIDEO" as const, label: "ویدیو", Icon: Video },
           { value: "AUDIO" as const, label: "وویس", Icon: Mic },
           { value: "SHOWCASE" as const, label: "ویترین", Icon: Store },
           { value: "FORM" as const, label: "فرم / سوال", Icon: ClipboardList },
@@ -546,8 +544,6 @@ function BranchAnswerEditor({
         ["TEXT", "متن"],
         ["FORM", "فرم / سؤال بعدی"],
         ["SHOWCASE", "ویترین"],
-        ["IMAGE", "عکس"],
-        ["VIDEO", "ویدیو"],
         ["AUDIO", "وویس"],
       ]
     : [["TEXT", "متن"]];
