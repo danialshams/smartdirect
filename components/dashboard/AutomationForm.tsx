@@ -1265,7 +1265,6 @@ export default function AutomationForm({
             isComment &&
             !commentReplyText.trim() &&
             !replyText.trim() &&
-            !likeComment &&
             messages.length === 0 &&
             !requireFollow
         ) {
