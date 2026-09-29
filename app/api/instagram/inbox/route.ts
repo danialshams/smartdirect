@@ -304,6 +304,59 @@ async function uploadInstagramAttachment({
   };
 }
 
+async function getInstagramMessageMediaUrl({
+  messageId,
+  accessToken,
+  instagramAccountId,
+  tenantId,
+}: {
+  messageId: string;
+  accessToken: string;
+  instagramAccountId: string;
+  tenantId: string;
+}) {
+  try {
+    const data = await instagramApiRequest<{
+      attachments?: {
+        data?: Array<{
+          file_url?: string;
+          image_data?: { url?: string; medial_url?: string };
+          video_data?: { url?: string };
+        }>;
+      };
+    }>(`/${encodeURIComponent(messageId)}`, {
+      params: {
+        fields: "attachments",
+      },
+      accessToken,
+      timeoutMs: 30_000,
+      rateLimit: {
+        instagramAccountId,
+        tenantId,
+        operation: "CONVERSATION_READ",
+      },
+    });
+
+    const attachment = data.attachments?.data?.[0];
+
+    return (
+      attachment?.file_url ??
+      attachment?.image_data?.url ??
+      attachment?.image_data?.medial_url ??
+      attachment?.video_data?.url ??
+      null
+    );
+  } catch (error) {
+    console.warn("[INBOX_SEND_DEBUG] sent-media-url-lookup-failed", {
+      messageId,
+      errorName: error instanceof Error ? error.name : typeof error,
+      errorMessage: error instanceof Error ? error.message : String(error),
+    });
+
+    return null;
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -368,16 +421,6 @@ export async function GET(request: NextRequest) {
           readAt: new Date(),
         },
       });
-
-      if (!conversation.participantUsername || !conversation.participantProfilePicture) {
-        await enrichParticipantProfile(
-          account.id,
-          conversation.participantId,
-          accessToken,
-          session.user.id,
-        );
-      }
-
       const refreshed = await prisma.conversation.findUnique({
         where: {
           id: conversation.id,
@@ -460,16 +503,6 @@ export async function GET(request: NextRequest) {
         },
       },
     });
-
-    await Promise.all(
-      conversations
-        .filter((item) => !item.participantUsername || !item.participantProfilePicture)
-        .slice(0, 25)
-        .map((item) =>
-          enrichParticipantProfile(account.id, item.participantId, accessToken, session.user.id),
-        ),
-    );
-
     const unread = await prisma.conversationMessage.groupBy({
       by: ["conversationId"],
       where: {
@@ -790,6 +823,21 @@ export async function POST(request: NextRequest) {
     if (!data.message_id) {
       console.error("[INBOX_SEND_DEBUG] missing-message-id", { debugId, data });
       return jsonError("Instagram پاسخ موفق داد اما message_id برنگرداند.", 502);
+    }
+
+    if (mediaId) {
+      mediaUrl = await getInstagramMessageMediaUrl({
+        messageId: data.message_id,
+        accessToken,
+        instagramAccountId: account.id,
+        tenantId: session.user.id,
+      });
+
+      console.info("[INBOX_SEND_DEBUG] sent-media-url-resolved", {
+        debugId,
+        messageId: data.message_id,
+        hasMediaUrl: Boolean(mediaUrl),
+      });
     }
 
     const createdMessage = await prisma.conversationMessage.create({
