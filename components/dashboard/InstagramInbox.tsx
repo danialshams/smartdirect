@@ -359,6 +359,13 @@ export default function InstagramInbox({
     Array.from({ length: 34 }, () => 4),
   );
 
+  const inboxStorageKey = accountId
+    ? `smartdirect:inbox:selected:${accountId}`
+    : ";
+  const inboxMobileStorageKey = accountId
+    ? `smartdirect:inbox:mobile-open:${accountId}`
+    : ";
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesScrollRef = useRef<HTMLDivElement>(null);
   const previousMessageCountRef = useRef(0);
@@ -387,6 +394,7 @@ export default function InstagramInbox({
       setConversations([]);
       setSelectedId("");
       setMessages([]);
+      setMobileChatOpen(false);
       return;
     }
 
@@ -410,30 +418,36 @@ export default function InstagramInbox({
 
       const next = result.conversations || [];
       setConversations(next);
+
+      const savedId =
+        typeof window !== "undefined"
+          ? new URLSearchParams(window.location.search).get("conversation") ||
+            (inboxStorageKey ? window.sessionStorage.getItem(inboxStorageKey) : null)
+          : null;
+      const savedMobileOpen =
+        typeof window !== "undefined" && inboxMobileStorageKey
+          ? window.sessionStorage.getItem(inboxMobileStorageKey) === "1"
+          : false;
+      const savedIdIsValid = Boolean(savedId && next.some((item) => item.id === savedId));
+
       setSelectedId((current) => {
-        if (current && next.some((item) => item.id === current)) return current;
-        const savedId =
-          typeof window !== "undefined"
-            ? window.sessionStorage.getItem(
-                `smartdirect:inbox:selected:${accountId}`,
-              )
-            : null;
-        const nextId =
-          (savedId && next.some((item) => item.id === savedId)
-            ? savedId
-            : next[0]?.id) || "";
+        const currentIsValid = Boolean(current && next.some((item) => item.id === current));
+        const nextId = currentIsValid
+          ? current
+          : (savedIdIsValid ? savedId : next[0]?.id) || "";
+
         if (nextId) {
           initialScrollPendingRef.current = true;
-          if (savedId === nextId && typeof window !== "undefined") {
-            setMobileChatOpen(
-              window.sessionStorage.getItem(
-                `smartdirect:inbox:mobile-open:${accountId}`,
-              ) === "1",
-            );
-          }
         }
+
         return nextId;
       });
+
+      if (savedIdIsValid) {
+        setMobileChatOpen(savedMobileOpen);
+      } else if (!selectedId) {
+        setMobileChatOpen(false);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "خطا در دریافت گفتگوها");
     } finally {
@@ -537,7 +551,23 @@ export default function InstagramInbox({
 
   useEffect(() => {
     lastMarkedInboundRef.current = "";
+    previousMessageCountRef.current = 0;
+    initialScrollPendingRef.current = Boolean(selectedId);
   }, [accountId, selectedId]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !accountId || !selectedId) return;
+
+    window.sessionStorage.setItem(inboxStorageKey, selectedId);
+    window.sessionStorage.setItem(
+      inboxMobileStorageKey,
+      mobileChatOpen ? "1" : "0",
+    );
+
+    const url = new URL(window.location.href);
+    url.searchParams.set("conversation", selectedId);
+    window.history.replaceState(window.history.state, "", url.toString());
+  }, [accountId, selectedId, mobileChatOpen, inboxMobileStorageKey, inboxStorageKey]);
 
   useEffect(() => {
     void loadConversations();
@@ -556,10 +586,24 @@ export default function InstagramInbox({
     return () => window.clearInterval(interval);
   }, [loadConversations, loadMessages, selectedId]);
 
-  useLayoutEffect(() => {
-    if (!selectedId || !messages.length) return;
+  const forceScrollToBottom = useCallback(() => {
     const container = messagesScrollRef.current;
     if (!container) return;
+
+    container.scrollTop = Math.max(0, container.scrollHeight - container.clientHeight);
+    messagesEndRef.current?.scrollIntoView({
+      behavior: "auto",
+      block: "end",
+      inline: "nearest",
+    });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!selectedId || !messages.length) return;
+
+    const container = messagesScrollRef.current;
+    if (!container) return;
+
     const previousCount = previousMessageCountRef.current;
     const nextCount = messages.length;
     const isInitialLoad = previousCount === 0;
@@ -567,24 +611,51 @@ export default function InstagramInbox({
     const distanceFromBottom =
       container.scrollHeight - container.scrollTop - container.clientHeight;
     const wasNearBottom = distanceFromBottom <= 120;
+
     if (isInitialLoad || (addedMessages && wasNearBottom)) {
       initialScrollPendingRef.current = isInitialLoad;
       requestAnimationFrame(() => {
-        container.scrollTop = container.scrollHeight;
+        forceScrollToBottom();
         requestAnimationFrame(() => {
-          container.scrollTop = container.scrollHeight;
+          forceScrollToBottom();
         });
       });
     }
-    previousMessageCountRef.current = nextCount;
-  }, [messages.length, selectedId]);
 
-  const scrollToInitialBottom = useCallback(() => {
-    if (!initialScrollPendingRef.current) return;
+    previousMessageCountRef.current = nextCount;
+  }, [messages.length, selectedId, mobileChatOpen, forceScrollToBottom]);
+
+  useEffect(() => {
+    if (!selectedId || !messages.length || !initialScrollPendingRef.current) return;
+
     const container = messagesScrollRef.current;
     if (!container) return;
-    container.scrollTop = container.scrollHeight;
-  }, []);
+
+    let frame = 0;
+    const settle = () => {
+      forceScrollToBottom();
+      frame = requestAnimationFrame(() => {
+        forceScrollToBottom();
+        initialScrollPendingRef.current = false;
+      });
+    };
+
+    settle();
+
+    const observer = new ResizeObserver(() => {
+      if (initialScrollPendingRef.current) forceScrollToBottom();
+    });
+    observer.observe(container);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
+  }, [selectedId, messages.length, mobileChatOpen, forceScrollToBottom]);
+
+  const scrollToInitialBottom = useCallback(() => {
+    if (initialScrollPendingRef.current) forceScrollToBottom();
+  }, [forceScrollToBottom]);
 
   useEffect(() => {
     return () => {
@@ -1189,7 +1260,7 @@ export default function InstagramInbox({
                           : "text-muted-foreground"
                       }`}
                     >
-                      {preview(conversation.messages[0])}
+                      {preview(conversation.messages[conversation.messages.length - 1])}
                     </p>
                     {unread && (
                       <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-foreground px-1.5 text-[9px] font-semibold text-background">
