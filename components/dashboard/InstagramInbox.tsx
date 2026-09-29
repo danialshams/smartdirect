@@ -12,6 +12,7 @@ import {
   MessageCircle,
   Mic,
   Paperclip,
+  Pause,
   Play,
   RefreshCw,
   Search,
@@ -123,6 +124,90 @@ async function readApiResult(response: Response): Promise<ApiResult> {
   }
 }
 
+function AudioBubble({ src }: { src: string }) {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [playing, setPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [duration, setDuration] = useState(0);
+
+  const toggle = async () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (audio.paused) {
+      try {
+        await audio.play();
+      } catch {
+        setPlaying(false);
+      }
+    } else {
+      audio.pause();
+    }
+  };
+
+  const formatAudioTime = (value: number) => {
+    if (!Number.isFinite(value)) return "00:00";
+    const total = Math.max(0, Math.floor(value));
+    return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(
+      total % 60,
+    ).padStart(2, "0")}`;
+  };
+
+  return (
+    <div className="flex w-[250px] max-w-full items-center gap-2.5 px-3 py-2.5">
+      <audio
+        ref={audioRef}
+        src={src}
+        preload="metadata"
+        className="hidden"
+        onLoadedMetadata={(event) => setDuration(event.currentTarget.duration)}
+        onTimeUpdate={(event) => {
+          const current = event.currentTarget.currentTime;
+          const total = event.currentTarget.duration || 0;
+          setProgress(total > 0 ? current / total : 0);
+        }}
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+        onEnded={() => {
+          setPlaying(false);
+          setProgress(0);
+        }}
+        onError={() => setPlaying(false)}
+      />
+
+      <button
+        type="button"
+        onClick={() => void toggle()}
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-foreground text-background transition-transform active:scale-95"
+        aria-label={playing ? "توقف پخش" : "پخش پیام صوتی"}
+      >
+        {playing ? <Pause size={14} /> : <Play size={14} className="mr-0.5" />}
+      </button>
+
+      <div className="min-w-0 flex-1">
+        <div className="mb-1.5 flex h-5 items-end gap-0.5 overflow-hidden">
+          {Array.from({ length: 30 }, (_, index) => {
+            const seed = (index * 17) % 11;
+            const height = 5 + (seed % 6);
+            const active = index / 30 <= progress;
+            return (
+              <span
+                key={index}
+                className={`w-0.5 shrink-0 rounded-full ${active ? "bg-foreground" : "bg-foreground/20"}`}
+                style={{ height: `${height}px` }}
+              />
+            );
+          })}
+        </div>
+        <div className="flex items-center justify-between text-[9px] tabular-nums text-muted-foreground">
+          <span>{formatAudioTime(progress * duration)}</span>
+          <span>{formatAudioTime(duration)}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function MediaBubble({ message }: { message: Message }) {
   if (!message.mediaUrl) {
     return (
@@ -144,6 +229,7 @@ function MediaBubble({ message }: { message: Message }) {
         <img
           src={message.mediaUrl}
           alt="Instagram media"
+          onLoad={scrollMessagesToBottom}
           className="mx-auto max-h-[280px] max-w-full object-contain transition hover:opacity-95 sm:max-h-[320px]"
         />
       </a>
@@ -157,20 +243,14 @@ function MediaBubble({ message }: { message: Message }) {
         controls
         preload="metadata"
         playsInline
+        onLoadedMetadata={scrollMessagesToBottom}
         className="mx-auto max-h-[280px] w-full min-w-0 max-w-[420px] bg-black sm:max-h-[320px]"
       />
     );
   }
 
   if (message.messageType === "AUDIO") {
-    return (
-      <div className="flex min-w-[220px] max-w-[340px] items-center gap-3 px-3 py-3">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted">
-          <Play size={15} />
-        </div>
-        <audio src={message.mediaUrl} controls preload="metadata" className="h-9 w-full min-w-0" />
-      </div>
-    );
+    return <AudioBubble src={message.mediaUrl} />;
   }
 
   return null;
@@ -208,6 +288,7 @@ export default function InstagramInbox({
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesScrollRef = useRef<HTMLDivElement>(null);
+  const optimisticMediaRef = useRef<Map<string, string>>(new Map());
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordingStreamRef = useRef<MediaStream | null>(null);
@@ -287,7 +368,22 @@ export default function InstagramInbox({
         throw new Error(result.error || "خطا در دریافت پیام‌ها");
       }
 
-      setMessages(result.conversation.messages || []);
+      const serverMessages = (result.conversation.messages || []) as Message[];
+      const mergedMessages = serverMessages.map((message) => {
+        const optimisticUrl = optimisticMediaRef.current.get(message.id);
+
+        if (message.mediaUrl && optimisticUrl) {
+          URL.revokeObjectURL(optimisticUrl);
+          optimisticMediaRef.current.delete(message.id);
+          return message;
+        }
+
+        return message.mediaUrl || !optimisticUrl
+          ? message
+          : { ...message, mediaUrl: optimisticUrl };
+      });
+
+      setMessages(mergedMessages);
       setConversations((current) =>
         current.map((item) =>
           item.id === selectedId
@@ -319,22 +415,25 @@ export default function InstagramInbox({
     return () => window.clearInterval(interval);
   }, [loadConversations, loadMessages, selectedId]);
 
-  useEffect(() => {
-    const frame = window.requestAnimationFrame(() => {
-      const container = messagesScrollRef.current;
+  const scrollMessagesToBottom = useCallback(() => {
+    const container = messagesScrollRef.current;
+    if (!container) return;
 
-      if (container) {
-        container.scrollTop = container.scrollHeight;
-      }
-
-      messagesEndRef.current?.scrollIntoView({
-        behavior: "auto",
-        block: "end",
-      });
+    container.scrollTo({
+      top: container.scrollHeight,
+      behavior: "auto",
     });
+  }, []);
 
-    return () => window.cancelAnimationFrame(frame);
-  }, [messages.length, selectedId]);
+  useEffect(() => {
+    if (!selectedId) return;
+
+    const timers = [0, 80, 250, 600].map((delay) =>
+      window.setTimeout(scrollMessagesToBottom, delay),
+    );
+
+    return () => timers.forEach((timer) => window.clearTimeout(timer));
+  }, [messages.length, messagesLoading, selectedId, scrollMessagesToBottom]);
 
   useEffect(() => {
     return () => {
@@ -420,6 +519,11 @@ export default function InstagramInbox({
       const serverMessage = result.message as Message;
       const optimisticMediaUrl =
         serverMessage.mediaUrl || URL.createObjectURL(file);
+
+      if (!serverMessage.mediaUrl) {
+        optimisticMediaRef.current.set(serverMessage.id, optimisticMediaUrl);
+      }
+
       setMessages((current) => [
         ...current,
         {
@@ -427,9 +531,6 @@ export default function InstagramInbox({
           mediaUrl: optimisticMediaUrl,
         },
       ]);
-      if (serverMessage.mediaUrl !== optimisticMediaUrl) {
-        window.setTimeout(() => URL.revokeObjectURL(optimisticMediaUrl), 60_000);
-      }
       setSelectedFile(null);
 
       if (fileInputRef.current) {
