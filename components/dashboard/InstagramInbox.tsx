@@ -203,12 +203,17 @@ export default function InstagramInbox({
   const [mobileChatOpen, setMobileChatOpen] = useState(false);
   const [recording, setRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const [recordingWaveform, setRecordingWaveform] = useState<number[]>(
+    Array.from({ length: 34 }, () => 4),
+  );
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordingStreamRef = useRef<MediaStream | null>(null);
   const recordingTimerRef = useRef<number | null>(null);
+  const recordingAnimationFrameRef = useRef<number | null>(null);
+  const recordingAudioContextRef = useRef<AudioContext | null>(null);
 
   useEffect(() => {
     if (
@@ -327,6 +332,10 @@ export default function InstagramInbox({
         window.clearInterval(recordingTimerRef.current);
       }
       recordingStreamRef.current?.getTracks().forEach((track) => track.stop());
+      if (recordingAnimationFrameRef.current) {
+        window.cancelAnimationFrame(recordingAnimationFrameRef.current);
+      }
+      void recordingAudioContextRef.current?.close().catch(() => undefined);
     };
   }, []);
 
@@ -487,6 +496,37 @@ export default function InstagramInbox({
 
       const chunks: BlobPart[] = [];
 
+      const audioContext = new AudioContext();
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 128;
+      analyser.smoothingTimeConstant = 0.78;
+      const source = audioContext.createMediaStreamSource(stream);
+      source.connect(analyser);
+      recordingAudioContextRef.current = audioContext;
+
+      const frequencyData = new Uint8Array(analyser.frequencyBinCount);
+      const animateWaveform = () => {
+        analyser.getByteFrequencyData(frequencyData);
+        const next = Array.from({ length: 34 }, (_, index) => {
+          const start = Math.floor(
+            (index / 34) * frequencyData.length,
+          );
+          const end = Math.max(
+            start + 1,
+            Math.floor(((index + 1) / 34) * frequencyData.length),
+          );
+          let sum = 0;
+          for (let i = start; i < end; i += 1) sum += frequencyData[i];
+          const average = sum / Math.max(1, end - start);
+          return Math.max(3, Math.min(18, Math.round(3 + average / 18)));
+        });
+        setRecordingWaveform(next);
+        recordingAnimationFrameRef.current =
+          window.requestAnimationFrame(animateWaveform);
+      };
+
+      animateWaveform();
+
       recorder.ondataavailable = (event) => {
         if (event.data.size > 0) chunks.push(event.data);
       };
@@ -499,6 +539,12 @@ export default function InstagramInbox({
           window.clearInterval(recordingTimerRef.current);
           recordingTimerRef.current = null;
         }
+        if (recordingAnimationFrameRef.current) {
+          window.cancelAnimationFrame(recordingAnimationFrameRef.current);
+          recordingAnimationFrameRef.current = null;
+        }
+        void recordingAudioContextRef.current?.close().catch(() => undefined);
+        recordingAudioContextRef.current = null;
 
         setRecording(false);
         setRecordingSeconds(0);
@@ -524,6 +570,7 @@ export default function InstagramInbox({
       recorder.start(250);
       setRecording(true);
       setRecordingSeconds(0);
+      setRecordingWaveform(Array.from({ length: 34 }, () => 4));
 
       recordingTimerRef.current = window.setInterval(() => {
         setRecordingSeconds((current) => current + 1);
@@ -558,6 +605,12 @@ export default function InstagramInbox({
     recordingStreamRef.current?.getTracks().forEach((track) => track.stop());
     recordingStreamRef.current = null;
     mediaRecorderRef.current = null;
+    if (recordingAnimationFrameRef.current) {
+      window.cancelAnimationFrame(recordingAnimationFrameRef.current);
+      recordingAnimationFrameRef.current = null;
+    }
+    void recordingAudioContextRef.current?.close().catch(() => undefined);
+    recordingAudioContextRef.current = null;
 
     if (recordingTimerRef.current) {
       window.clearInterval(recordingTimerRef.current);
@@ -566,6 +619,7 @@ export default function InstagramInbox({
 
     setRecording(false);
     setRecordingSeconds(0);
+    setRecordingWaveform(Array.from({ length: 34 }, () => 4));
   }
 
   function selectConversation(conversationId: string) {
@@ -984,7 +1038,7 @@ export default function InstagramInbox({
             className="shrink-0 border-t border-border bg-background p-3 sm:p-4"
           >
             {selectedFile && (
-              <div className="mb-3 overflow-hidden rounded-2xl border border-border bg-muted/30">
+              <div className="mb-3 max-h-52 overflow-hidden rounded-2xl border border-border bg-muted/30 sm:max-h-60">
                 <div className="flex items-center justify-between gap-3 px-3 py-2.5">
                   <div className="flex min-w-0 items-center gap-2">
                     {selectedFile.type.startsWith("image/") ? (
@@ -1018,7 +1072,7 @@ export default function InstagramInbox({
                   <img
                     src={selectedFileUrl}
                     alt=""
-                    className="max-h-44 w-full object-cover"
+                    className="mx-auto max-h-36 max-w-full object-contain sm:max-h-48"
                   />
                 )}
 
@@ -1026,7 +1080,7 @@ export default function InstagramInbox({
                   <video
                     src={selectedFileUrl}
                     controls
-                    className="max-h-44 w-full bg-black"
+                    className="mx-auto max-h-36 max-w-full bg-black object-contain sm:max-h-48"
                   />
                 )}
 
@@ -1043,30 +1097,28 @@ export default function InstagramInbox({
             )}
 
             {recording ? (
-              <div className="flex items-center gap-2 rounded-2xl border border-border bg-muted/40 p-2">
+              <div className="flex min-w-0 items-center gap-2 rounded-full border border-border bg-background px-2 py-1.5 shadow-sm">
                 <Button
                   type="button"
                   onClick={cancelRecording}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl p-0 text-muted-foreground hover:bg-background"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full p-0 text-muted-foreground hover:bg-muted"
                   aria-label="لغو ضبط"
                 >
                   <X size={17} />
                 </Button>
 
-                <div className="flex min-w-0 flex-1 items-center gap-3 px-2">
-                  <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-foreground" />
+                <div className="flex min-w-0 flex-1 items-center gap-2 px-1.5">
+                  <span className="h-2.5 w-2.5 shrink-0 animate-pulse rounded-full bg-red-500" />
                   <div className="flex h-7 flex-1 items-center gap-1 overflow-hidden">
-                    {Array.from({ length: 26 }).map((_, index) => (
+                    {recordingWaveform.map((height, index) => (
                       <span
                         key={index}
-                        className="w-1 shrink-0 rounded-full bg-muted-foreground/50"
-                        style={{
-                          height: `${8 + ((index * 17 + recordingSeconds * 7) % 18)}px`,
-                        }}
+                        className="w-[3px] shrink-0 rounded-full bg-foreground/60 transition-[height] duration-75"
+                        style={{ height: height + "px" }}
                       />
-                    ))}
+                    ))})}
                   </div>
-                  <span className="w-10 text-center text-xs font-semibold tabular-nums">
+                  <span className="w-10 shrink-0 text-center text-[11px] font-semibold tabular-nums">
                     {String(Math.floor(recordingSeconds / 60)).padStart(2, "0")}:
                     {String(recordingSeconds % 60).padStart(2, "0")}
                   </span>
@@ -1075,7 +1127,7 @@ export default function InstagramInbox({
                 <Button
                   type="button"
                   onClick={stopRecording}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-foreground p-0 text-background hover:bg-foreground/90"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-foreground p-0 text-background hover:bg-foreground/90"
                   aria-label="ارسال Voice"
                 >
                   <Square size={14} fill="currentColor" />
