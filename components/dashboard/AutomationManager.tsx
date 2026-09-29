@@ -11,7 +11,6 @@ import {
   Search,
   Trash2,
   Video,
-  X,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -356,7 +355,6 @@ export default function AutomationManager({
                   onClick={() => setBulkDeleteOpen(true)}
                   className="min-h-11 rounded-xl bg-red-600 px-4 text-sm font-semibold text-white hover:bg-red-700"
                 >
-                  <Trash2 size={16} />
                   پاک کردن {selectedIds.length} مورد
                 </Button>
               )}
@@ -405,8 +403,20 @@ export default function AutomationManager({
             </p>
           </section>
         ) : loading ? (
-          <section className="rounded-3xl border border-border/80 bg-card px-6 py-20 text-center">
-            <Loader2 className="mx-auto animate-spin text-muted-foreground" size={24} />
+          <section className="overflow-hidden rounded-3xl border border-border/80 bg-card shadow-sm">
+            <div className="divide-y divide-border/70">
+              {Array.from({ length: 5 }).map((_, index) => (
+                <div key={index} className="flex animate-pulse items-center gap-3 p-3 sm:gap-4 sm:p-4">
+                  <div className="h-5 w-5 shrink-0 rounded-md bg-muted" />
+                  <div className="h-16 w-16 shrink-0 rounded-xl bg-muted sm:h-20 sm:w-20" />
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <div className="h-4 w-32 rounded-md bg-muted sm:w-44" />
+                    <div className="h-3 w-48 max-w-full rounded-md bg-muted" />
+                  </div>
+                  <div className="h-9 w-16 shrink-0 rounded-lg bg-muted sm:w-24" />
+                </div>
+              ))}
+            </div>
           </section>
         ) : filteredAutomations.length === 0 ? (
           <section className="rounded-3xl border border-dashed border-border bg-card px-6 py-20 text-center">
@@ -428,10 +438,7 @@ export default function AutomationManager({
               {filteredAutomations.map((automation) => {
                 const preview = mediaPreviews[automation.id];
                 const imageUrl = preview?.thumbnailUrl || preview?.mediaUrl || null;
-                const mediaLabel = getMediaLabel(
-                  preview?.mediaType || "UNKNOWN",
-                  automation.triggerType,
-                );
+                
                 const selected = selectedIds.includes(automation.id);
 
                 return (
@@ -489,16 +496,13 @@ export default function AutomationManager({
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-                          {mediaLabel === "ریلز" ? (
+                          {preview?.mediaType === "VIDEO" ? (
                             <Video size={21} />
                           ) : (
                             <ImageIcon size={21} />
                           )}
                         </div>
                       )}
-                      <span className="absolute bottom-1 right-1 rounded-md bg-black/65 px-1.5 py-0.5 text-[9px] font-medium text-white">
-                        {mediaLabel}
-                      </span>
                     </div>
 
                     <div className="min-w-0 flex-1">
