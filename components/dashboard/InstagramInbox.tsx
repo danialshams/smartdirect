@@ -229,7 +229,6 @@ function MediaBubble({ message }: { message: Message }) {
         <img
           src={message.mediaUrl}
           alt="Instagram media"
-          onLoad={scrollMessagesToBottom}
           className="mx-auto max-h-[280px] max-w-full object-contain transition hover:opacity-95 sm:max-h-[320px]"
         />
       </a>
@@ -243,7 +242,6 @@ function MediaBubble({ message }: { message: Message }) {
         controls
         preload="metadata"
         playsInline
-        onLoadedMetadata={scrollMessagesToBottom}
         className="mx-auto max-h-[280px] w-full min-w-0 max-w-[420px] bg-black sm:max-h-[320px]"
       />
     );
