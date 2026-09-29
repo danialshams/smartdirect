@@ -7,6 +7,13 @@ import { ArrowRight, Check, Loader2, MessageCircle, Send } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
+type AutomationMessage = {
+  id: string;
+  messageType: string;
+  text: string | null;
+  order: number;
+};
+
 type Automation = {
   id: string;
   instagramAccountId: string;
@@ -19,6 +26,7 @@ type Automation = {
   requireFollow: boolean;
   followGateText: string | null;
   isActive: boolean;
+  messages?: AutomationMessage[];
   instagramAccount?: {
     id: string;
     igUserId: string;
@@ -32,6 +40,16 @@ type MediaPreview = {
   thumbnailUrl: string | null;
   mediaType: "IMAGE" | "VIDEO" | "UNKNOWN";
 };
+
+function getExistingDmText(item: Automation) {
+  if (item.replyText?.trim()) return item.replyText;
+
+  const firstTextMessage = [...(item.messages ?? [])]
+    .sort((a, b) => a.order - b.order)
+    .find((message) => message.messageType === "TEXT" && message.text?.trim());
+
+  return firstTextMessage?.text ?? "";
+}
 
 export default function CommentAutomationEditor({ id }: { id: string }) {
   const router = useRouter();
@@ -73,24 +91,34 @@ export default function CommentAutomationEditor({ id }: { id: string }) {
           throw new Error("این صفحه فقط برای پاسخ خودکار کامنت است.");
         }
 
+        const existingDmText = getExistingDmText(item);
+
         if (!cancelled) {
           setAutomation(item);
-          setKeywords((item.keyword || "").split(/[,،;؛\n]+/).map((v) => v.trim()).filter(Boolean).join("، "));
+          setKeywords(
+            (item.keyword || "")
+              .split(/[,،;؛\n]+/)
+              .map((v) => v.trim())
+              .filter(Boolean)
+              .join("، "),
+          );
           setCommentReply(item.commentReplyText || "");
-          setDmReply(item.replyText || "");
-          setSendDm(Boolean(item.sendDm || item.replyText));
+          setDmReply(existingDmText);
+          setSendDm(Boolean(item.sendDm || existingDmText.trim()));
           setRequireFollow(Boolean(item.requireFollow));
-          setFollowGateText(item.followGateText || "برای دریافت این محتوا ابتدا پیج ما را فالو کنید.");
+          setFollowGateText(
+            item.followGateText?.trim() ||
+              "برای دریافت این محتوا ابتدا پیج ما را فالو کنید.",
+          );
         }
 
-        const accountId = item.instagramAccountId;
         if (!item.mediaId) {
           if (!cancelled) setMediaLoading(false);
           return;
         }
 
         const mediaResponse = await fetch(
-          `/api/automations/media-preview?instagramAccountId=${encodeURIComponent(accountId)}&mediaId=${encodeURIComponent(item.mediaId)}`,
+          `/api/automations/media-preview?instagramAccountId=${encodeURIComponent(item.instagramAccountId)}&mediaId=${encodeURIComponent(item.mediaId)}`,
           { cache: "no-store", credentials: "include" },
         );
         const mediaResult = await mediaResponse.json();
@@ -135,7 +163,9 @@ export default function CommentAutomationEditor({ id }: { id: string }) {
       .split(/[,،;؛\n]+/)
       .map((value) => value.trim())
       .filter(Boolean)
-      .filter((value, index, list) => list.findIndex((item) => item.toLowerCase() === value.toLowerCase()) === index)
+      .filter((value, index, list) =>
+        list.findIndex((item) => item.toLowerCase() === value.toLowerCase()) === index,
+      )
       .join(", ");
 
     if (!normalizedKeywords) {
@@ -180,7 +210,15 @@ export default function CommentAutomationEditor({ id }: { id: string }) {
         throw new Error(result.error || result.message || "ذخیره تغییرات ناموفق بود.");
       }
 
-      setAutomation(result.data as Automation);
+      const savedAutomation = result.data as Automation;
+      setAutomation(savedAutomation);
+      setDmReply(getExistingDmText(savedAutomation));
+      setSendDm(Boolean(savedAutomation.sendDm || getExistingDmText(savedAutomation).trim()));
+      setRequireFollow(Boolean(savedAutomation.requireFollow));
+      setFollowGateText(
+        savedAutomation.followGateText?.trim() ||
+          "برای دریافت این محتوا ابتدا پیج ما را فالو کنید.",
+      );
       setSaved(true);
       window.setTimeout(() => setSaved(false), 2200);
     } catch (saveError) {
@@ -215,7 +253,6 @@ export default function CommentAutomationEditor({ id }: { id: string }) {
   }
 
   const accountName = automation.instagramAccount?.igUsername || "Instagram";
-  const postImage = previewImage;
 
   return (
     <div dir="rtl" className="min-h-[calc(100dvh-2rem)]">
@@ -230,30 +267,19 @@ export default function CommentAutomationEditor({ id }: { id: string }) {
             بازگشت
           </button>
 
-          <Button
-            type="button"
-            onClick={save}
-            disabled={saving}
-            className="min-h-11 rounded-xl px-5 text-sm font-semibold shadow-sm"
-          >
+          <Button type="button" onClick={save} disabled={saving} className="min-h-11 rounded-xl px-5 text-sm font-semibold shadow-sm">
             {saving ? <Loader2 size={17} className="animate-spin" /> : saved ? <Check size={17} /> : null}
             {saving ? "در حال ذخیره..." : saved ? "ذخیره شد" : "ذخیره تغییرات"}
           </Button>
         </div>
 
         <div className="mb-5">
-          <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-            ویرایش پاسخ خودکار کامنت
-          </h1>
-          <p className="mt-1.5 text-sm text-muted-foreground">
-            تنظیمات پاسخ خودکار این پست را ویرایش کنید.
-          </p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">ویرایش پاسخ خودکار کامنت</h1>
+          <p className="mt-1.5 text-sm text-muted-foreground">تنظیمات پاسخ خودکار این پست را ویرایش کنید.</p>
         </div>
 
         {error && (
-          <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-700">
-            {error}
-          </div>
+          <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-700">{error}</div>
         )}
 
         <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
@@ -273,12 +299,8 @@ export default function CommentAutomationEditor({ id }: { id: string }) {
                 <div className="aspect-square w-full">
                   {mediaLoading ? (
                     <div className="h-full w-full animate-pulse bg-muted" />
-                  ) : postImage ? (
-                    <img
-                      src={postImage}
-                      alt="پست اینستاگرام"
-                      className="h-full w-full object-cover"
-                    />
+                  ) : previewImage ? (
+                    <img src={previewImage} alt="پست اینستاگرام" className="h-full w-full object-cover" />
                   ) : (
                     <div className="flex h-full items-center justify-center px-6 text-center text-sm text-muted-foreground">
                       پیش‌نمایش این پست در دسترس نیست
@@ -300,104 +322,53 @@ export default function CommentAutomationEditor({ id }: { id: string }) {
             <div className="rounded-3xl border border-border/80 bg-card p-4 shadow-sm sm:p-5">
               <div className="mb-4">
                 <h2 className="text-base font-bold">کلمات کلیدی</h2>
-                <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                  چند کلمه را با ویرگول جدا کنید.
-                </p>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">چند کلمه را با ویرگول جدا کنید.</p>
               </div>
-              <Input
-                value={keywords}
-                onChange={(event) => setKeywords(event.target.value)}
-                placeholder="مثلاً قیمت، خرید، اطلاعات"
-                className="h-12 rounded-xl text-sm"
-                dir="rtl"
-              />
+              <Input value={keywords} onChange={(event) => setKeywords(event.target.value)} placeholder="مثلاً قیمت، خرید، اطلاعات" className="h-12 rounded-xl text-sm" dir="rtl" />
             </div>
 
             <div className="rounded-3xl border border-border/80 bg-card p-4 shadow-sm sm:p-5">
               <div className="mb-4 flex items-start gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-muted">
-                  <MessageCircle size={17} />
-                </div>
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-muted"><MessageCircle size={17} /></div>
                 <div>
                   <h2 className="text-base font-bold">پاسخ کامنت</h2>
-                  <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                    پاسخ عمومی که زیر کامنت کاربر ارسال می‌شود.
-                  </p>
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">پاسخ عمومی که زیر کامنت کاربر ارسال می‌شود.</p>
                 </div>
               </div>
-              <Textarea
-                value={commentReply}
-                onChange={(event) => setCommentReply(event.target.value)}
-                placeholder="متن پاسخ کامنت..."
-                className="min-h-28 resize-none rounded-xl text-sm leading-6"
-              />
+              <Textarea value={commentReply} onChange={(event) => setCommentReply(event.target.value)} placeholder="متن پاسخ کامنت..." className="min-h-28 resize-none rounded-xl text-sm leading-6" />
             </div>
 
             <div className="rounded-3xl border border-border/80 bg-card p-4 shadow-sm sm:p-5">
               <div className="mb-4 flex items-start gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-muted">
-                  <Send size={17} />
-                </div>
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-muted"><Send size={17} /></div>
                 <div className="min-w-0 flex-1">
                   <h2 className="text-base font-bold">پاسخ دایرکت</h2>
-                  <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                    بعد از کامنت، یک پیام خصوصی متنی برای کاربر ارسال شود.
-                  </p>
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">بعد از کامنت، یک پیام خصوصی متنی برای کاربر ارسال شود.</p>
                 </div>
-                <Input
-                  type="checkbox"
-                  checked={sendDm}
-                  onChange={(event) => setSendDm(event.target.checked)}
-                  className="mt-1 h-5 w-5 shrink-0"
-                  aria-label="فعال کردن پاسخ دایرکت"
-                />
+                <Input type="checkbox" checked={sendDm} onChange={(event) => setSendDm(event.target.checked)} className="mt-1 h-5 w-5 shrink-0" aria-label="فعال کردن پاسخ دایرکت" />
               </div>
 
-              <Textarea
-                value={dmReply}
-                onChange={(event) => setDmReply(event.target.value)}
-                disabled={!sendDm}
-                placeholder="متن پاسخ دایرکت..."
-                className="min-h-28 resize-none rounded-xl text-sm leading-6 disabled:cursor-not-allowed disabled:opacity-50"
-              />
+              <Textarea value={dmReply} onChange={(event) => setDmReply(event.target.value)} disabled={!sendDm} placeholder="متن پاسخ دایرکت..." className="min-h-28 resize-none rounded-xl text-sm leading-6 disabled:cursor-not-allowed disabled:opacity-50" />
             </div>
 
             <div className="rounded-3xl border border-border/80 bg-card p-4 shadow-sm sm:p-5">
               <div className="flex items-start gap-3">
-                <Input
-                  type="checkbox"
-                  checked={requireFollow}
-                  onChange={(event) => setRequireFollow(event.target.checked)}
-                  className="mt-1 h-5 w-5 shrink-0"
-                  aria-label="فعال کردن اجبار به فالو"
-                />
+                <Input type="checkbox" checked={requireFollow} onChange={(event) => setRequireFollow(event.target.checked)} className="mt-1 h-5 w-5 shrink-0" aria-label="فعال کردن اجبار به فالو" />
                 <div className="min-w-0 flex-1">
                   <h2 className="text-base font-bold">اجبار به فالو</h2>
-                  <p className="mt-1 text-xs leading-6 text-muted-foreground">
-                    اگر فعال باشد، قبل از ارسال محتوای اصلی ابتدا پیام درخواست فالو برای کاربر ارسال می‌شود.
-                  </p>
+                  <p className="mt-1 text-xs leading-6 text-muted-foreground">اگر فعال باشد، قبل از ارسال محتوای اصلی ابتدا پیام درخواست فالو برای کاربر ارسال می‌شود.</p>
                 </div>
               </div>
 
               {requireFollow && (
                 <div className="mt-4 border-t border-border/70 pt-4">
                   <label className="mb-2 block text-sm font-medium">متن درخواست فالو</label>
-                  <Textarea
-                    value={followGateText}
-                    onChange={(event) => setFollowGateText(event.target.value)}
-                    placeholder="برای دریافت این محتوا ابتدا پیج ما را فالو کنید."
-                    className="min-h-24 resize-none rounded-xl text-sm leading-6"
-                  />
+                  <Textarea value={followGateText} onChange={(event) => setFollowGateText(event.target.value)} placeholder="برای دریافت این محتوا ابتدا پیج ما را فالو کنید." className="min-h-24 resize-none rounded-xl text-sm leading-6" />
                 </div>
               )}
             </div>
 
-            <Button
-              type="button"
-              onClick={save}
-              disabled={saving}
-              className="min-h-12 w-full rounded-2xl text-sm font-semibold shadow-sm lg:hidden"
-            >
+            <Button type="button" onClick={save} disabled={saving} className="min-h-12 w-full rounded-2xl text-sm font-semibold shadow-sm lg:hidden">
               {saving ? <Loader2 size={17} className="animate-spin" /> : saved ? <Check size={17} /> : null}
               {saving ? "در حال ذخیره..." : saved ? "ذخیره شد" : "ذخیره تغییرات"}
             </Button>
