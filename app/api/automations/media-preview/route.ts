@@ -11,6 +11,14 @@ type MediaResponse = {
   media_type?: string;
   media_url?: string;
   thumbnail_url?: string;
+  children?: {
+    data?: Array<{
+      id?: string;
+      media_type?: string;
+      media_url?: string;
+      thumbnail_url?: string;
+    }>;
+  };
 };
 
 export async function GET(request: NextRequest) {
@@ -55,7 +63,7 @@ export async function GET(request: NextRequest) {
     const media = await instagramApiRequest<MediaResponse>(`/${encodeURIComponent(mediaId)}`, {
       accessToken: token,
       params: {
-        fields: "id,media_type,media_url,thumbnail_url",
+        fields: "id,media_type,media_url,thumbnail_url,children{id,media_type,media_url,thumbnail_url}",
       },
       timeoutMs: 15_000,
       maxRetries: 1,
@@ -66,10 +74,18 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    const firstChild = media.children?.data?.[0];
+    const resolvedMediaUrl = media.media_url ?? firstChild?.media_url ?? null;
+    const resolvedThumbnailUrl =
+      media.thumbnail_url ??
+      firstChild?.thumbnail_url ??
+      firstChild?.media_url ??
+      resolvedMediaUrl;
+
     const mediaType =
-      media.media_type === "VIDEO"
+      media.media_type === "VIDEO" || firstChild?.media_type === "VIDEO"
         ? "VIDEO"
-        : media.media_type === "IMAGE"
+        : media.media_type === "IMAGE" || firstChild?.media_type === "IMAGE"
           ? "IMAGE"
           : "UNKNOWN";
 
@@ -83,8 +99,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: {
-        mediaUrl: toProxyUrl(media.media_url),
-        thumbnailUrl: toProxyUrl(media.thumbnail_url ?? media.media_url),
+        mediaUrl: toProxyUrl(resolvedMediaUrl),
+        thumbnailUrl: toProxyUrl(resolvedThumbnailUrl),
         mediaType,
       },
     });
