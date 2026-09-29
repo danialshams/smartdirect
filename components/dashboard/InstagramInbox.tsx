@@ -417,7 +417,19 @@ export default function InstagramInbox({
         throw new Error(result.error || "ارسال رسانه ناموفق بود");
       }
 
-      setMessages((current) => [...current, result.message as Message]);
+      const serverMessage = result.message as Message;
+      const optimisticMediaUrl =
+        serverMessage.mediaUrl || URL.createObjectURL(file);
+      setMessages((current) => [
+        ...current,
+        {
+          ...serverMessage,
+          mediaUrl: optimisticMediaUrl,
+        },
+      ]);
+      if (serverMessage.mediaUrl !== optimisticMediaUrl) {
+        window.setTimeout(() => URL.revokeObjectURL(optimisticMediaUrl), 60_000);
+      }
       setSelectedFile(null);
 
       if (fileInputRef.current) {
