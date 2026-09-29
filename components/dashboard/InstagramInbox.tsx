@@ -544,16 +544,6 @@ export default function InstagramInbox({
     return () => window.clearInterval(interval);
   }, [loadConversations, loadMessages, selectedId]);
 
-  const scrollMessagesToBottom = useCallback(() => {
-    const container = messagesScrollRef.current;
-    if (!container) return;
-
-    container.scrollTo({
-      top: container.scrollHeight,
-      behavior: "auto",
-    });
-  }, []);
-
   useLayoutEffect(() => {
     if (!selectedId || !messages.length) return;
 
