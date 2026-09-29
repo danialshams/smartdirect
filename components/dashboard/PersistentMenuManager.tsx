@@ -485,91 +485,9 @@ export default function PersistentMenuManager({
     return (
         <section
             id="persistent-menu"
-            className={embedded ? "rounded-3xl border border-border/80 bg-card shadow-sm" : "scroll-mt-24 rounded-xl border bg-card"}
+            className="rounded-3xl border border-border/80 bg-card shadow-sm"
         >
             {/* --------------------------------------------------------- */}
-            {embedded ? null : (\n            {/* Header                                                    */}
-            {/* --------------------------------------------------------- */}
-
-            <div className="border-b border-border/60 p-5 sm:p-7">
-                <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-                    <div>
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                            <Menu
-                                size={16}
-                            />
-
-                            <span className="text-[10px] font-semibold tracking-[0.16em]">
-                                PERSISTENT MENU
-                            </span>
-                        </div>
-
-                        <h2 className="mt-2 text-xl font-bold tracking-tight text-foreground">
-                            منوی ثابت دایرکت
-                        </h2>
-
-                        <p className="mt-1.5 max-w-xl text-sm leading-6 text-muted-foreground">
-                            برای هر گزینه منو،
-                            پاسخ و Flow اختصاصی
-                            خودتان را مستقیماً
-                            داخل همان گزینه بسازید.
-                        </p>
-                    </div>
-
-                    {connectedAccounts.length >
-                        0 && (
-                            <div className="relative w-full sm:w-[280px]">
-                                <Select
-                                    value={
-                                        selectedAccountId
-                                    }
-                                    onChange={(
-                                        event,
-                                    ) =>
-                                        setSelectedAccountId(
-                                            event
-                                                .target
-                                                .value,
-                                        )
-                                    }
-                                    className="w-full appearance-none rounded-lg border bg-muted/30 px-4 py-3 pl-10 text-sm font-medium text-foreground outline-none focus:border-ring"
-                                >
-                                    {connectedAccounts.map(
-                                        (
-                                            account,
-                                        ) => (
-                                            <option
-                                                key={
-                                                    account.id
-                                                }
-                                                value={
-                                                    account.id
-                                                }
-                                            >
-                                                @
-                                                {
-                                                    account.igUsername
-                                                }
-                                            </option>
-                                        ),
-                                    )}
-                                </Select>
-
-                                <ChevronDown
-                                    size={16}
-                                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                                />
-                            </div>
-                        )}
-                </div>
-            </div>
-            )}
-
-
-
-            {/* --------------------------------------------------------- */}
-                        )}
-
             {/* Content                                                   */}
             {/* --------------------------------------------------------- */}
 
