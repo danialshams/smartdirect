@@ -21,6 +21,7 @@ import {
   UserRoundCheck,
   Video,
   X,
+  CircleHelp,
 } from "lucide-react";
 import {
   useCallback,
@@ -50,7 +51,12 @@ type Message = {
   readAt: string | null;
   seenAt: string | null;
   createdAt: string;
+  sendStatus?: "FAILED";
 };
+
+type RetryPayload =
+  | { kind: "TEXT"; text: string }
+  | { kind: "FILE"; file: File };
 
 type Handoff = {
   conversationId: string;
@@ -347,6 +353,8 @@ export default function InstagramInbox({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesScrollRef = useRef<HTMLDivElement>(null);
   const previousMessageCountRef = useRef(0);
+  const initialScrollPendingRef = useRef(false);
+  const failedRetryRef = useRef<Map<string, RetryPayload>>(new Map());
   const optimisticMediaRef = useRef<Map<string, string>>(new Map());
   const lastMarkedInboundRef = useRef<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -393,11 +401,30 @@ export default function InstagramInbox({
 
       const next = result.conversations || [];
       setConversations(next);
-      setSelectedId((current) =>
-        current && next.some((item) => item.id === current)
-          ? current
-          : next[0]?.id || "",
-      );
+      setSelectedId((current) => {
+        if (current && next.some((item) => item.id === current)) return current;
+        const savedId =
+          typeof window !== "undefined"
+            ? window.sessionStorage.getItem(
+                `smartdirect:inbox:selected:${accountId}`,
+              )
+            : null;
+        const nextId =
+          (savedId && next.some((item) => item.id === savedId)
+            ? savedId
+            : next[0]?.id) || "";
+        if (nextId) {
+          initialScrollPendingRef.current = true;
+          if (savedId === nextId && typeof window !== "undefined") {
+            setMobileChatOpen(
+              window.sessionStorage.getItem(
+                `smartdirect:inbox:mobile-open:${accountId}`,
+              ) === "1",
+            );
+          }
+        }
+        return nextId;
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "خطا در دریافت گفتگوها");
     } finally {
@@ -522,25 +549,33 @@ export default function InstagramInbox({
 
   useLayoutEffect(() => {
     if (!selectedId || !messages.length) return;
-
     const container = messagesScrollRef.current;
     if (!container) return;
-
     const previousCount = previousMessageCountRef.current;
     const nextCount = messages.length;
     const isInitialLoad = previousCount === 0;
     const addedMessages = nextCount > previousCount;
-
     const distanceFromBottom =
       container.scrollHeight - container.scrollTop - container.clientHeight;
     const wasNearBottom = distanceFromBottom <= 120;
-
     if (isInitialLoad || (addedMessages && wasNearBottom)) {
-      container.scrollTop = container.scrollHeight;
+      initialScrollPendingRef.current = isInitialLoad;
+      requestAnimationFrame(() => {
+        container.scrollTop = container.scrollHeight;
+        requestAnimationFrame(() => {
+          container.scrollTop = container.scrollHeight;
+        });
+      });
     }
-
     previousMessageCountRef.current = nextCount;
   }, [messages.length, selectedId]);
+
+  const scrollToInitialBottom = useCallback(() => {
+    if (!initialScrollPendingRef.current) return;
+    const container = messagesScrollRef.current;
+    if (!container) return;
+    container.scrollTop = container.scrollHeight;
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -645,8 +680,41 @@ export default function InstagramInbox({
       }
 
       await loadConversations();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "ارسال رسانه ناموفق بود");
+    } catch {
+      addFailedOutgoingMessage({ kind: "FILE", file });
+      setSelectedFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      setError("");
+    } finally {
+      setSending(false);
+    }
+  }
+
+  async function sendTextMessage(messageText: string) {
+    if (!messageText.trim() || !accountId || !selectedId || sending) return;
+    try {
+      setSending(true);
+      setError("");
+      const form = new FormData();
+      form.append("accountId", accountId);
+      form.append("conversationId", selectedId);
+      form.append("text", messageText.trim());
+      const response = await fetch("/api/instagram/inbox", {
+        method: "POST",
+        body: form,
+        headers: { Accept: "application/json" },
+      });
+      const result = await readApiResult(response);
+      if (!response.ok || !result.success || !result.message) {
+        throw new Error(result.error || "ارسال پیام ناموفق بود");
+      }
+      setMessages((current) => [...current, result.message as Message]);
+      setText("");
+      await loadConversations();
+    } catch {
+      addFailedOutgoingMessage({ kind: "TEXT", text: messageText.trim() });
+      setText("");
+      setError("");
     } finally {
       setSending(false);
     }
@@ -672,35 +740,7 @@ export default function InstagramInbox({
       return;
     }
 
-    try {
-      setSending(true);
-      setError("");
-
-      const form = new FormData();
-      form.append("accountId", accountId);
-      form.append("conversationId", selectedId);
-      form.append("text", text.trim());
-
-      const response = await fetch("/api/instagram/inbox", {
-        method: "POST",
-        body: form,
-        headers: { Accept: "application/json" },
-      });
-
-      const result = await readApiResult(response);
-
-      if (!response.ok || !result.success || !result.message) {
-        throw new Error(result.error || "ارسال پیام ناموفق بود");
-      }
-
-      setMessages((current) => [...current, result.message as Message]);
-      setText("");
-      await loadConversations();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "ارسال پیام ناموفق بود");
-    } finally {
-      setSending(false);
-    }
+    await sendTextMessage(text);
   }
 
   async function startRecording() {
@@ -859,12 +899,23 @@ export default function InstagramInbox({
     }
 
     setSelectedId(conversationId);
+    initialScrollPendingRef.current = true;
     previousMessageCountRef.current = 0;
     setMessages([]);
     setText("");
     setSelectedFile(null);
     setError("");
     setMobileChatOpen(true);
+    if (typeof window !== "undefined") {
+      window.sessionStorage.setItem(
+        `smartdirect:inbox:selected:${accountId}`,
+        conversationId,
+      );
+      window.sessionStorage.setItem(
+        `smartdirect:inbox:mobile-open:${accountId}`,
+        "1",
+      );
+    }
 
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -873,6 +924,63 @@ export default function InstagramInbox({
 
   function goBackToList() {
     setMobileChatOpen(false);
+    if (typeof window !== "undefined") {
+      window.sessionStorage.setItem(
+        `smartdirect:inbox:mobile-open:${accountId}`,
+        "0",
+      );
+    }
+  }
+
+  function addFailedOutgoingMessage(payload: RetryPayload) {
+    const failedId = `failed-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const file = payload.kind === "FILE" ? payload.file : null;
+    const mediaUrl = file ? URL.createObjectURL(file) : null;
+    const messageType = file
+      ? file.type.startsWith("image/")
+        ? "IMAGE"
+        : file.type.startsWith("video/")
+          ? "VIDEO"
+          : file.type.startsWith("audio/")
+            ? "AUDIO"
+            : "TEXT"
+      : "TEXT";
+    if (mediaUrl) optimisticMediaRef.current.set(failedId, mediaUrl);
+    failedRetryRef.current.set(failedId, payload);
+    setMessages((current) => [
+      ...current,
+      {
+        id: failedId,
+        direction: "OUTBOUND",
+        messageType,
+        text: payload.kind === "TEXT" ? payload.text : null,
+        mediaUrl,
+        mediaId: null,
+        igMessageId: null,
+        readAt: null,
+        seenAt: null,
+        createdAt: new Date().toISOString(),
+        sendStatus: "FAILED",
+      },
+    ]);
+    initialScrollPendingRef.current = true;
+  }
+
+  async function retryFailedMessage(messageId: string) {
+    const payload = failedRetryRef.current.get(messageId);
+    if (!payload || sending) return;
+    const localUrl = optimisticMediaRef.current.get(messageId);
+    if (localUrl) {
+      URL.revokeObjectURL(localUrl);
+      optimisticMediaRef.current.delete(messageId);
+    }
+    failedRetryRef.current.delete(messageId);
+    setMessages((current) => current.filter((message) => message.id !== messageId));
+    if (payload.kind === "FILE") {
+      await sendFile(payload.file);
+      return;
+    }
+    await sendTextMessage(payload.text);
   }
 
   const filteredConversations = conversations.filter((conversation) => {
@@ -1223,7 +1331,11 @@ export default function InstagramInbox({
                               : ""
                           }`}
                         >
-                          {hasMedia && <MediaBubble message={message} />}
+                          {hasMedia && (
+                            <div onLoad={scrollToInitialBottom}>
+                              <MediaBubble message={message} />
+                            </div>
+                          )}
 
                           {message.text && (
                             <div className="px-3.5 py-2.5">
@@ -1246,7 +1358,18 @@ export default function InstagramInbox({
                           }`}
                         >
                           <span>{formatTime(message.createdAt)}</span>
-                          {outbound &&
+                          {outbound && message.sendStatus === "FAILED" ? (
+                            <button
+                              type="button"
+                              onClick={() => void retryFailedMessage(message.id)}
+                              disabled={sending}
+                              className="flex items-center gap-1 rounded-full text-red-500 transition hover:bg-red-50 disabled:opacity-50"
+                              title="ارسال مجدد"
+                              aria-label="ارسال مجدد پیام"
+                            >
+                              <CircleHelp size={14} strokeWidth={2.5} />
+                            </button>
+                          ) : outbound &&
                             (message.seenAt ? (
                               <span className="flex items-center gap-0.5 font-medium text-blue-500">
                                 <CheckCheck size={12} strokeWidth={2.5} />
