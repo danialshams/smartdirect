@@ -160,17 +160,23 @@ export async function GET(request: NextRequest) {
     const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
     try {
+      const range = request.headers.get("range");
+      const upstreamHeaders: Record<string, string> = {
+        Accept: "*/*",
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/153.0 Safari/537.36",
+        Referer: "https://www.instagram.com/",
+      };
+
+      if (range) {
+        upstreamHeaders.Range = range;
+      }
+
       const response = await fetch(targetUrl.toString(), {
         method: "GET",
         cache: "no-store",
         signal: controller.signal,
-        headers: {
-          Accept:
-            "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/153.0 Safari/537.36",
-          Referer: "https://www.instagram.com/",
-        },
+        headers: upstreamHeaders,
       });
 
       if (!response.ok || !response.body) {
@@ -198,9 +204,14 @@ export async function GET(request: NextRequest) {
 
       if (contentType) headers.set("content-type", contentType);
       if (contentLength) headers.set("content-length", contentLength);
+      const contentRange = response.headers.get("content-range");
+      const acceptRanges = response.headers.get("accept-ranges");
+      if (contentRange) headers.set("content-range", contentRange);
+      if (acceptRanges) headers.set("accept-ranges", acceptRanges);
       if (etag) headers.set("etag", etag);
       if (lastModified) headers.set("last-modified", lastModified);
 
+      headers.set("accept-ranges", "bytes");
       headers.set(
         "cache-control",
         accountId
@@ -210,7 +221,7 @@ export async function GET(request: NextRequest) {
       headers.set("x-content-type-options", "nosniff");
 
       return new NextResponse(response.body, {
-        status: 200,
+        status: response.status === 206 ? 206 : 200,
         headers,
       });
     } finally {
