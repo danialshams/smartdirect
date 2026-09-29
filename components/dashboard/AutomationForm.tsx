@@ -122,11 +122,6 @@ export default function AutomationForm({
             automation?.replyText ?? ""
         );
 
-    const [likeComment, setLikeComment] =
-        useState(
-            automation?.likeComment ?? false
-        );
-
     const [
         likeIncomingDm,
         setLikeIncomingDm,
@@ -622,7 +617,7 @@ export default function AutomationForm({
             setKeyword("");
             setMediaId("");
             setCommentReplyText("");
-            setLikeComment(false);
+            // Comment likes are intentionally disabled.
             setLikeStoryReply(false);
             setRequireFollow(false);
         }
@@ -648,7 +643,7 @@ export default function AutomationForm({
             "STORY_REPLY_KEYWORD"
         ) {
             setCommentReplyText("");
-            setLikeComment(false);
+            // Comment likes are intentionally disabled.
             setLikeIncomingDm(false);
             setMediaId("");
         }
@@ -1281,17 +1276,6 @@ export default function AutomationForm({
         }
 
         if (
-            isDm &&
-            !replyText.trim() &&
-            messages.length === 0
-        ) {
-            setError(
-                "برای Automation دایرکت حداقل یک پیام یا Flow بسازید."
-            );
-            return;
-        }
-
-        if (
             isStory &&
             !replyText.trim() &&
             messages.length === 0
@@ -1394,7 +1378,7 @@ export default function AutomationForm({
                             replyText.trim() ||
                             null,
 
-                        likeComment,
+                        likeComment: false,
 
                         sendDm:
                             Boolean(
@@ -1431,7 +1415,7 @@ export default function AutomationForm({
                 throw new Error(
                     result.error ||
                     result.message ||
-                    "ذخیره Automation ناموفق بود."
+                    "ذخیره پاسخ خودکار ناموفق بود."
                 );
             }
 
@@ -1513,8 +1497,8 @@ export default function AutomationForm({
                     <div>
                         <h2 className="text-lg font-semibold text-gray-900">
                             {isEditing
-                                ? "ویرایش Automation"
-                                : "ساخت Automation"}
+                                ? "ویرایش پاسخ خودکار"
+                                : "ساخت پاسخ خودکار"}
                         </h2>
 
                         <p className="mt-1 text-sm text-muted-foreground">
@@ -1550,7 +1534,7 @@ export default function AutomationForm({
 
                     <section>
                         <label className="mb-3 block text-sm font-medium text-foreground">
-                            نوع Trigger
+                            نوع پاسخ خودکار
                         </label>
 
                         <div className="grid gap-3 sm:grid-cols-3">
@@ -1563,19 +1547,6 @@ export default function AutomationForm({
                                 onClick={() =>
                                     handleTriggerChange(
                                         "COMMENT_KEYWORD"
-                                    )
-                                }
-                            />
-
-                            <TriggerOption
-                                active={
-                                    isDm
-                                }
-                                title="دایرکت"
-                                description="وقتی کاربر وارد گفتگو شود"
-                                onClick={() =>
-                                    handleTriggerChange(
-                                        "DM"
                                     )
                                 }
                             />
@@ -1972,34 +1943,7 @@ export default function AutomationForm({
                                     </div>
                                 </label>
 
-                                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border p-4">
-                                    <Input
-                                        type="checkbox"
-                                        checked={
-                                            likeComment
-                                        }
-                                        onChange={(
-                                            event
-                                        ) =>
-                                            setLikeComment(
-                                                event
-                                                    .target
-                                                    .checked
-                                            )
-                                        }
-                                        className="mt-1"
-                                    />
 
-                                    <div>
-                                        <div className="text-sm font-medium text-gray-900">
-                                            لایک کردن کامنت
-                                        </div>
-
-                                        <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                                            بعد از تأیید Permission و تست API فعال می‌شود.
-                                        </p>
-                                    </div>
-                                </label>
                             </div>
                         </section>
                     )}
@@ -2091,43 +2035,12 @@ export default function AutomationForm({
                             placeholder={
                                 isStory
                                     ? "مثلاً سلام، اطلاعات کامل در ادامه برای شما ارسال می‌شود."
-                                    : isDm
-                                        ? "مثلاً سلام، چطور می‌تونم کمکتون کنم؟"
-                                        : "متن دایرکت..."
+                                    : "متن پاسخ خصوصی..."
                             }
                             className="min-h-24 w-full rounded-xl border border-border px-4 py-3 text-sm leading-6 outline-none focus:border-gray-900"
                         />
 
-                        {isDm && (
-                            <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-xl border border-border p-4">
-                                <Input
-                                    type="checkbox"
-                                    checked={
-                                        likeIncomingDm
-                                    }
-                                    onChange={(
-                                        event
-                                    ) =>
-                                        setLikeIncomingDm(
-                                            event
-                                                .target
-                                                .checked
-                                        )
-                                    }
-                                    className="mt-1"
-                                />
 
-                                <div>
-                                    <div className="text-sm font-medium text-gray-900">
-                                        لایک کردن پیام ورودی
-                                    </div>
-
-                                    <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                                        بعد از دریافت پیام کاربر، پیام ورودی با Reaction انتخاب‌شده لایک می‌شود.
-                                    </p>
-                                </div>
-                            </label>
-                        )}
 
                         {isStory && (
                             <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-xl border border-border p-4">
@@ -2449,7 +2362,7 @@ export default function AutomationForm({
                                 ? "در حال ذخیره..."
                                 : isEditing
                                     ? "ذخیره تغییرات"
-                                    : "ساخت Automation"}
+                                    : "ساخت پاسخ خودکار"}
                         </Button>
                     </div>
                 </form>
