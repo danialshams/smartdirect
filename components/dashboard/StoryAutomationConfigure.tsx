@@ -1,7 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import AutomationForm from "./AutomationForm";
@@ -68,15 +66,13 @@ export default function StoryAutomationConfigure() {
   if (!account) return <div dir="rtl" className="mx-auto max-w-xl rounded-3xl border border-red-200 bg-red-50 p-6 text-sm leading-7 text-red-700">{error || "استوری پیدا نشد."}<div><Button type="button" onClick={() => router.back()} className="mt-5 rounded-xl">بازگشت</Button></div></div>;
 
   return (
-    <div dir="rtl" className="min-h-[calc(100dvh-2rem)]">
-      <div className="mb-5 flex justify-start"><button type="button" onClick={() => router.back()} className="inline-flex min-h-10 items-center gap-2 rounded-xl px-2 text-sm font-medium text-muted-foreground hover:bg-muted"><ArrowRight size={18} />بازگشت</button></div>
-      <AutomationForm
+    <AutomationForm
         account={account as never}
         automation={emptyAutomation}
         onClose={() => router.back()}
         onCreated={() => router.push("/dashboard/story-automation")}
         onUpdated={() => router.push("/dashboard/story-automation")}
+        pageMode
       />
-    </div>
   );
 }
