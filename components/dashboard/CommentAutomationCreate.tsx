@@ -324,7 +324,6 @@ export default function CommentAutomationCreate() {
                       className={[
                         "group relative aspect-square overflow-hidden rounded-2xl bg-muted text-right transition",
                         "ring-offset-2 focus:outline-none focus:ring-2 focus:ring-primary",
-                        isSelected ? "ring-2 ring-primary" : "hover:scale-[1.01]",
                       ].join(" ")}
                     >
                       {imageUrl && !mediaFailed[item.id] ? (
@@ -375,70 +374,7 @@ export default function CommentAutomationCreate() {
             )}
           </section>
 
-          <section className="rounded-3xl border border-border/80 bg-card shadow-sm">
-            {filteredMedia.length === 0 ? (
-              <div className="px-6 py-20 text-center">
-                <ImageIcon className="mx-auto text-muted-foreground" size={25} />
-                <h3 className="mt-4 text-sm font-bold">
-                  {search ? "محتوایی پیدا نشد" : "پست یا ریلزی پیدا نشد"}
-                </h3>
-                <p className="mt-2 text-xs leading-6 text-muted-foreground">
-                  {search ? "بخشی از متن کپشن را تغییر دهید." : "برای این پیج هنوز محتوای قابل انتخابی دریافت نشده است."}
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-2.5 p-3 sm:grid-cols-3 sm:gap-3 sm:p-4 lg:grid-cols-4">
-                {filteredMedia.map((item) => {
-                  const imageUrl = getMediaImage(item);
-                  const hasAutomation = automations.some(
-                    (automation) =>
-                      automation.mediaId === item.id &&
-                      automation.triggerType === "COMMENT_KEYWORD",
-                  );
 
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => selectMedia(item)}
-                      className="group relative aspect-square overflow-hidden rounded-2xl bg-muted text-right transition ring-offset-2 focus:outline-none focus:ring-2 focus:ring-primary hover:scale-[1.01]"
-                    >
-                      {imageUrl && !mediaFailed[item.id] ? (
-                        <img
-                          src={imageUrl}
-                          alt={item.caption || mediaLabel(item)}
-                          className="h-full w-full object-cover"
-                          loading="lazy"
-                          onError={() =>
-                            setMediaFailed((current) => ({ ...current, [item.id]: true }))
-                          }
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center">
-                          {item.media_type === "VIDEO" ? <Video size={25} className="text-muted-foreground" /> : <ImageIcon size={25} className="text-muted-foreground" />}
-                        </div>
-                      )}
-                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent p-2.5 pt-10">
-                        <div className="flex items-center justify-between gap-2 text-white">
-                          <span className="rounded-lg bg-black/35 px-2 py-1 text-[10px] font-semibold backdrop-blur-sm">
-                            {mediaLabel(item)}
-                          </span>
-                          {item.media_type === "VIDEO" && <Play size={13} fill="currentColor" />}
-                        </div>
-                      </div>
-                      {hasAutomation && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/45">
-                          <span className="rounded-xl bg-white px-3 py-2 text-xs font-bold text-foreground shadow-lg">
-                            این {mediaLabel(item)} قبلاً انتخاب شده
-                          </span>
-                        </div>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </section>
         </div>
       </div>
 
