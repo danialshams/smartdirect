@@ -251,12 +251,12 @@ export default function AutomationManager({ accounts, onlyTab }: { accounts: Ins
         <section className="rounded-3xl border border-border/80 bg-card shadow-sm">
           <div className="flex flex-col gap-5 p-4 sm:p-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="min-w-0">
-              <p className="text-xs font-semibold text-muted-foreground">پاسخ خودکار</p>
+              <p className="text-xs font-semibold text-muted-foreground">{onlyTab === "comments" ? "پاسخ خودکار کامنت" : onlyTab === "stories" ? "پاسخ خودکار استوری" : "پاسخ خودکار"}</p>
               <h1 className="mt-1 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
                 پاسخ خودکار
               </h1>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-                همه پاسخ‌های خودکار، سؤال‌های شروع گفتگو و منوی دایرکت را از یک صفحه مدیریت کنید.
+                {onlyTab === "comments" ? "پاسخ‌های خودکار کامنت را بسازید و مدیریت کنید." : onlyTab === "stories" ? "پاسخ‌های خودکار استوری را بسازید و مدیریت کنید." : "پاسخ‌های خودکار را مدیریت کنید."}
               </p>
             </div>
 
@@ -275,7 +275,7 @@ export default function AutomationManager({ accounts, onlyTab }: { accounts: Ins
             )}
           </div>
 
-          <div className="border-t border-border/70 p-2 sm:p-3">
+          <div className={onlyTab ? "hidden" : "border-t border-border/70 p-2 sm:p-3"}>
             <div className="grid grid-cols-2 gap-1.5 rounded-2xl bg-muted/50 p-1.5 lg:grid-cols-4">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
