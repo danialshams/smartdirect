@@ -445,6 +445,21 @@ export async function POST(request: NextRequest) {
             });
           }
 
+          // Read/seen receipts are a tiny DB-only state update. Process them
+          // synchronously instead of sending them through the webhook queue.
+          // This prevents a stuck/duplicate queue claim from dropping the receipt.
+          if (messagingEvent?.read) {
+            await processInstagramReadReceipt(messagingEvent, accountData);
+            console.log("[INSTAGRAM_READ_DEBUG] receipt-processed", {
+              accountId: accountData.id,
+              senderId: messagingEvent?.sender?.id ?? null,
+              recipientId: messagingEvent?.recipient?.id ?? null,
+              mid: messagingEvent?.read?.mid ?? null,
+              watermark: messagingEvent?.read?.watermark ?? null,
+            });
+            continue;
+          }
+
           await processMessagingEventWithIdempotency(messagingEvent, accountData);
         }
       }
