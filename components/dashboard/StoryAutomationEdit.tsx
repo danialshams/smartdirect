@@ -43,6 +43,7 @@ export default function StoryAutomationEdit({ id }: { id: string }) {
       onClose={() => router.back()}
       onCreated={() => router.push("/dashboard/story-automation")}
       onUpdated={() => router.push("/dashboard/story-automation")}
+      pageMode
     />
   );
 }
