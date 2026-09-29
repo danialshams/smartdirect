@@ -339,9 +339,18 @@ export default function InstagramInbox({
     [accounts],
   );
 
-  const [accountId, setAccountId] = useState(connectedAccounts[0]?.id || "");
+  const initialAccountId = connectedAccounts[0]?.id || "";
+  const initialStoredSelection = (() => {
+    if (typeof window === "undefined" || !initialAccountId) return null;
+    const urlSelection = new URLSearchParams(window.location.search).get("conversation");
+    const storedSelection = window.sessionStorage.getItem(
+      `smartdirect:inbox:selected:${initialAccountId}`,
+    );
+    return urlSelection || storedSelection;
+  })();
+  const [accountId, setAccountId] = useState(initialAccountId);
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [selectedId, setSelectedId] = useState("");
+  const [selectedId, setSelectedId] = useState(initialStoredSelection || "");
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const [messagesLoading, setMessagesLoading] = useState(false);
@@ -352,7 +361,16 @@ export default function InstagramInbox({
   const [filter, setFilter] = useState<InboxFilter>("ALL");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [error, setError] = useState("");
-  const [mobileChatOpen, setMobileChatOpen] = useState(false);
+  const [mobileChatOpen, setMobileChatOpen] = useState(() => {
+    if (typeof window === "undefined" || !initialAccountId || !initialStoredSelection) {
+      return false;
+    }
+    return (
+      window.sessionStorage.getItem(
+        `smartdirect:inbox:mobile-open:${initialAccountId}`,
+      ) === "1"
+    );
+  });
   const [recording, setRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const [recordingWaveform, setRecordingWaveform] = useState<number[]>(
@@ -443,7 +461,7 @@ export default function InstagramInbox({
         return nextId;
       });
 
-      if (savedIdIsValid) {
+      if (savedIdIsValid && !selectedId) {
         setMobileChatOpen(savedMobileOpen);
       }
     } catch (err) {
@@ -562,6 +580,10 @@ export default function InstagramInbox({
       mobileChatOpen ? "1" : "0",
     );
 
+    if (!mobileChatOpen && window.matchMedia("(max-width: 1023px)").matches) {
+      return;
+    }
+
     const url = new URL(window.location.href);
     url.searchParams.set("conversation", selectedId);
     window.history.replaceState(window.history.state, "", url.toString());
@@ -588,67 +610,49 @@ export default function InstagramInbox({
     const container = messagesScrollRef.current;
     if (!container) return;
 
-    container.scrollTop = Math.max(0, container.scrollHeight - container.clientHeight);
-    messagesEndRef.current?.scrollIntoView({
-      behavior: "auto",
-      block: "end",
-      inline: "nearest",
-    });
+    container.scrollTop = container.scrollHeight;
   }, []);
 
   useLayoutEffect(() => {
-    if (!selectedId || !messages.length) return;
-
-    const container = messagesScrollRef.current;
-    if (!container) return;
-
-    const previousCount = previousMessageCountRef.current;
-    const nextCount = messages.length;
-    const isInitialLoad = previousCount === 0;
-    const addedMessages = nextCount > previousCount;
-    const distanceFromBottom =
-      container.scrollHeight - container.scrollTop - container.clientHeight;
-    const wasNearBottom = distanceFromBottom <= 120;
-
-    if (isInitialLoad || (addedMessages && wasNearBottom)) {
-      initialScrollPendingRef.current = isInitialLoad;
-      requestAnimationFrame(() => {
-        forceScrollToBottom();
-        requestAnimationFrame(() => {
-          forceScrollToBottom();
-        });
-      });
-    }
-
-    previousMessageCountRef.current = nextCount;
-  }, [messages.length, selectedId, mobileChatOpen, forceScrollToBottom]);
-
-  useEffect(() => {
     if (!selectedId || !messages.length || !initialScrollPendingRef.current) return;
 
     const container = messagesScrollRef.current;
     if (!container) return;
 
-    let frame = 0;
-    const settle = () => {
-      forceScrollToBottom();
-      frame = requestAnimationFrame(() => {
-        forceScrollToBottom();
-        initialScrollPendingRef.current = false;
-      });
-    };
-
-    settle();
+    const scrollPasses = [0, 40, 100, 200, 400, 700];
+    const timers = scrollPasses.map((delay) =>
+      window.setTimeout(() => {
+        if (initialScrollPendingRef.current) forceScrollToBottom();
+      }, delay),
+    );
 
     const observer = new ResizeObserver(() => {
       if (initialScrollPendingRef.current) forceScrollToBottom();
     });
     observer.observe(container);
+    if (container.firstElementChild) observer.observe(container.firstElementChild);
+
+    const mutationObserver = new MutationObserver(() => {
+      if (initialScrollPendingRef.current) forceScrollToBottom();
+    });
+    mutationObserver.observe(container, { childList: true, subtree: true });
+
+    const settleTimer = window.setTimeout(() => {
+      forceScrollToBottom();
+      initialScrollPendingRef.current = false;
+    }, 850);
 
     return () => {
-      cancelAnimationFrame(frame);
+      timers.forEach((timer) => window.clearTimeout(timer));
+      window.clearTimeout(settleTimer);
       observer.disconnect();
+      mutationObserver.disconnect();
     };
+  }, [selectedId, messages.length, mobileChatOpen, forceScrollToBottom]);
+
+  useEffect(() => {
+    if (!selectedId || !messages.length || !initialScrollPendingRef.current) return;
+    forceScrollToBottom();
   }, [selectedId, messages.length, mobileChatOpen, forceScrollToBottom]);
 
   const scrollToInitialBottom = useCallback(() => {
@@ -1008,6 +1012,9 @@ export default function InstagramInbox({
         `smartdirect:inbox:mobile-open:${accountId}`,
         "0",
       );
+      const url = new URL(window.location.href);
+      url.searchParams.delete("conversation");
+      window.history.replaceState(window.history.state, "", url.toString());
     }
   }
 
