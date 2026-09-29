@@ -192,7 +192,9 @@ export default function AutomationForm({
     >([]);
 
     const [messages, setMessages] =
-        useState<MessageDraft[]>([]);
+        useState<MessageDraft[]>(() =>
+            pageMode ? [createEmptyMessage()] : []
+        );
 
     const [loadingResources, setLoadingResources] =
         useState(false);
@@ -1620,7 +1622,9 @@ export default function AutomationForm({
                                     </div>
                                     <div className="overflow-hidden rounded-2xl bg-muted">
                                         <div className="mx-auto aspect-[9/14] w-full max-w-[430px]">
-                                            {selectedStory?.mediaUrl || selectedStory?.thumbnailUrl ? (
+                                            {loadingStories ? (
+                                                <div className="h-full w-full animate-pulse bg-muted" />
+                                            ) : selectedStory?.mediaUrl || selectedStory?.thumbnailUrl ? (
                                                 selectedStory.mediaType === "VIDEO" && selectedStory.mediaUrl ? (
                                                     <video
                                                         src={selectedStory.mediaUrl}
@@ -1682,9 +1686,6 @@ export default function AutomationForm({
                                 <section className="rounded-3xl border border-border/80 bg-card p-4 shadow-sm sm:p-5">
                                     <div className="mb-4">
                                         <h2 className="text-base font-bold">پاسخ</h2>
-                                        <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                                            نوع پاسخی را که کاربر بعد از Reply دریافت می‌کند انتخاب کنید.
-                                        </p>
                                     </div>
 
                                     {responseMessage ? (
@@ -1720,18 +1721,33 @@ export default function AutomationForm({
                                             }
                                         />
                                     ) : (
-                                        <div className="rounded-2xl border border-dashed border-border bg-muted/30 p-6 text-center">
-                                            <p className="text-sm text-muted-foreground">
-                                                در حال آماده‌سازی بخش پاسخ...
-                                            </p>
-                                            <Button
-                                                type="button"
-                                                onClick={addMessage}
-                                                className="mt-4 rounded-xl"
-                                            >
-                                                افزودن پاسخ
-                                            </Button>
-                                        </div>
+                                        <AutomationFlowMessage
+                                            message={createEmptyMessage()}
+                                            triggerType="STORY_REPLY_KEYWORD"
+                                            index={0}
+                                            total={1}
+                                            showcases={showcases}
+                                            forms={forms}
+                                            loadingResources={loadingResources}
+                                            instagramAccountId={account.id}
+                                            onFormCreated={(form) =>
+                                                setForms((current) => [
+                                                    form,
+                                                    ...current.filter((item) => item.id !== form.id),
+                                                ])
+                                            }
+                                            onUpdate={(patch) => {
+                                                const next = createEmptyMessage();
+                                                updateMessage(next.id, patch);
+                                                setMessages((current) =>
+                                                    current.length ? current : [next]
+                                                );
+                                            }}
+                                            onAddQuickReply={() => undefined}
+                                            onUpdateQuickReply={() => undefined}
+                                            onUpdateQuickReplyTree={() => undefined}
+                                            onRemoveQuickReply={() => undefined}
+                                        />
                                     )}
                                 </section>
 
