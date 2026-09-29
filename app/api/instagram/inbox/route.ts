@@ -320,6 +320,7 @@ export async function GET(request: NextRequest) {
     const account = await getOwnedAccount(session.user.id, accountId);
 
     if (!account) {
+      console.error("[INBOX_SEND_DEBUG] account-not-found", { debugId, accountId });
       return jsonError("اکانت متصل Instagram پیدا نشد.", 404);
     }
 
@@ -561,7 +562,15 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const debugId = `inbox-send-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
   try {
+    console.info("[INBOX_SEND_DEBUG] request-start", {
+      debugId,
+      method: request.method,
+      contentType: request.headers.get("content-type"),
+      contentLength: request.headers.get("content-length"),
+    });
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
@@ -596,7 +605,27 @@ export async function POST(request: NextRequest) {
 
     const text = typeof body.text === "string" ? body.text.trim() : "";
 
+    console.info("[INBOX_SEND_DEBUG] parsed-request", {
+      debugId,
+      accountId,
+      conversationId,
+      hasText: Boolean(text),
+      textLength: text.length,
+      hasFile: Boolean(file),
+      file: file
+        ? {
+            name: file.name,
+            type: file.type,
+            size: file.size,
+          }
+        : null,
+    });
+
     if (!accountId || !conversationId) {
+      console.error("[INBOX_SEND_DEBUG] validation-failed", {
+        debugId,
+        reason: "missing-account-or-conversation",
+      });
       return jsonError("accountId و conversationId الزامی هستند.");
     }
 
@@ -627,10 +656,28 @@ export async function POST(request: NextRequest) {
     });
 
     if (!conversation) {
+      console.error("[INBOX_SEND_DEBUG] conversation-not-found", {
+        debugId,
+        conversationId,
+        accountId: account.id,
+      });
       return jsonError("گفتگو پیدا نشد.", 404);
     }
 
+    console.info("[INBOX_SEND_DEBUG] conversation-resolved", {
+      debugId,
+      accountId: account.id,
+      igUserId: account.igUserId,
+      participantId: conversation.participantId,
+    });
+
     const accessToken = await getValidInstagramAccessToken(account.id);
+
+    console.info("[INBOX_SEND_DEBUG] access-token-resolved", {
+      debugId,
+      accountId: account.id,
+      hasAccessToken: Boolean(accessToken),
+    });
 
     let messageType: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO" = "TEXT";
 
@@ -644,12 +691,25 @@ export async function POST(request: NextRequest) {
     };
 
     if (file) {
+      console.info("[INBOX_SEND_DEBUG] attachment-upload-start", {
+        debugId,
+        attachmentType: file.type,
+        fileName: file.name,
+        fileSize: file.size,
+      });
+
       const uploaded = await uploadInstagramAttachment({
         instagramAccountId: account.id,
         tenantId: session.user.id,
         igUserId: account.igUserId,
         accessToken,
         file,
+      });
+
+      console.info("[INBOX_SEND_DEBUG] attachment-upload-success", {
+        debugId,
+        attachmentId: uploaded.attachmentId,
+        attachmentType: uploaded.attachmentType,
       });
 
       mediaId = uploaded.attachmentId;
@@ -677,7 +737,7 @@ export async function POST(request: NextRequest) {
 
 
     console.info(
-      "Instagram inbox send:",
+      "[INBOX_SEND_DEBUG] meta-message-send-start",
       JSON.stringify({
         accountId: account.id,
         conversationId: conversation.id,
@@ -703,14 +763,32 @@ export async function POST(request: NextRequest) {
         },
       );
     } catch (error) {
-      console.error("Instagram send failed:", error);
+      console.error("[INBOX_SEND_DEBUG] meta-message-send-failed", {
+        debugId,
+        errorName: error instanceof Error ? error.name : typeof error,
+        errorMessage: error instanceof Error ? error.message : String(error),
+        error:
+          error instanceof InstagramApiError
+            ? {
+                status: error.status,
+                details: error.details,
+                response: error.response,
+              }
+            : null,
+      });
       const status = error instanceof InstagramApiError ? error.status : 502;
       const message = error instanceof Error ? error.message : "Instagram پیام را ارسال نکرد.";
       return jsonError(message, status >= 400 && status < 500 ? status : 502);
     }
 
+    console.info("[INBOX_SEND_DEBUG] meta-message-send-success", {
+      debugId,
+      messageId: data.message_id ?? null,
+      messageType,
+    });
+
     if (!data.message_id) {
-      console.error("Instagram send returned no message_id:", data);
+      console.error("[INBOX_SEND_DEBUG] missing-message-id", { debugId, data });
       return jsonError("Instagram پاسخ موفق داد اما message_id برنگرداند.", 502);
     }
 
@@ -747,6 +825,13 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    console.info("[INBOX_SEND_DEBUG] db-message-created", {
+      debugId,
+      dbMessageId: createdMessage.id,
+      igMessageId: createdMessage.igMessageId,
+      messageType: createdMessage.messageType,
+    });
+
     return NextResponse.json({
       success: true,
       message: {
@@ -755,7 +840,12 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Instagram inbox POST error:", error);
+    console.error("[INBOX_SEND_DEBUG] unhandled-error", {
+      debugId,
+      errorName: error instanceof Error ? error.name : typeof error,
+      errorMessage: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
 
     return jsonError(
       error instanceof Error ? error.message : "خطا در ارسال پیام",
