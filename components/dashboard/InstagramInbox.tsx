@@ -1691,7 +1691,7 @@ export default function InstagramInbox({
                     rows={1}
                     maxLength={1000}
                     placeholder="پیام خود را بنویسید..."
-                    className="min-h-11 flex-1 resize-none rounded-2xl border-border bg-muted/40 px-4 py-2.5 text-sm leading-6 outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    className="min-h-11 flex-1 resize-none rounded-2xl border-border bg-muted/40 px-4 py-2.5 text-base leading-6 outline-none focus-visible:ring-1 focus-visible:ring-ring sm:text-sm"
                   />
 
                   <Button
@@ -1741,7 +1741,7 @@ export default function InstagramInbox({
   );
 
   return (
-    <section id="messages" dir="rtl" className="scroll-mt-24">
+    <section id="messages" dir="rtl" className="scroll-mt-24 overflow-x-hidden">
       {error && (
         <div className="mb-3 flex items-center justify-between gap-4 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-xs text-red-700">
           <span>{error}</span>
