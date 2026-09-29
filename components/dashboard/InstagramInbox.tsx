@@ -992,7 +992,7 @@ export default function InstagramInbox({
                     ) : selectedFile.type.startsWith("video/") ? (
                       <Video size={15} />
                     ) : (
-                      <File size={15} />
+                      <FileIcon size={15} />
                     )}
                     <span className="truncate text-xs font-medium">
                       {selectedFile.name}
