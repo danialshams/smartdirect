@@ -107,7 +107,7 @@ export default function PersistentMenuManager({
     ]);
 
     /*
-     * Load Persistent Menu.
+     * Load منوی دایرکت.
      *
      * We no longer load /api/automations.
      * The Automation behind each item is
@@ -149,7 +149,7 @@ export default function PersistentMenuManager({
                 ) {
                     throw new Error(
                         result.error ||
-                        "دریافت Persistent Menu ناموفق بود.",
+                        "دریافت منوی دایرکت ناموفق بود.",
                     );
                 }
 
@@ -291,13 +291,13 @@ export default function PersistentMenuManager({
                 items.length === 0
             ) {
                 throw new Error(
-                    "برای فعال کردن Persistent Menu حداقل یک آیتم اضافه کنید.",
+                    "برای فعال کردن منوی دایرکت حداقل یک آیتم اضافه کنید.",
                 );
             }
 
             if (items.length > 3) {
                 throw new Error(
-                    "حداکثر ۳ گزینه برای Persistent Menu مجاز است.",
+                    "حداکثر ۳ گزینه برای منوی دایرکت مجاز است.",
                 );
             }
 
@@ -376,7 +376,7 @@ export default function PersistentMenuManager({
             ) {
                 throw new Error(
                     result.error ||
-                    "ذخیره Persistent Menu ناموفق بود.",
+                    "ذخیره منوی دایرکت ناموفق بود.",
                 );
             }
 
@@ -778,7 +778,7 @@ export default function PersistentMenuManager({
 
                     {success && (
                         <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs leading-6 text-emerald-700">
-                            تنظیمات Persistent Menu
+                            تنظیمات منوی دایرکت
                             با موفقیت ذخیره شد.
                         </div>
                     )}
