@@ -361,10 +361,10 @@ export default function InstagramInbox({
 
   const inboxStorageKey = accountId
     ? `smartdirect:inbox:selected:${accountId}`
-    : ";
+    : "";
   const inboxMobileStorageKey = accountId
     ? `smartdirect:inbox:mobile-open:${accountId}`
-    : ";
+    : "";
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesScrollRef = useRef<HTMLDivElement>(null);
