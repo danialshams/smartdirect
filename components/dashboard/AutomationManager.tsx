@@ -519,8 +519,7 @@ export default function AutomationManager({
                       }}
                       className="min-h-9 shrink-0 rounded-lg border border-red-200 bg-background px-3 text-xs font-semibold text-red-600 hover:bg-red-50"
                     >
-                      <Trash2 size={14} />
-                      <span className="hidden sm:inline">پاک کردن</span>
+                      <span>پاک کردن</span>
                     </Button>
                   </div>
                 );
@@ -593,7 +592,7 @@ export default function AutomationManager({
                 }
                 className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-semibold text-white"
               >
-                {deleting ? <Loader2 className="animate-spin" size={16} /> : <Trash2 size={16} />}
+                {deleting ? <Loader2 className="animate-spin" size={16} /> : null}
                 پاک کردن
               </Button>
             </div>
