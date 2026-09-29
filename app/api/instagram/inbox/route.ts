@@ -63,7 +63,7 @@ function proxyConversationMedia<
       : proxyInstagramMediaUrl(conversation.participantProfilePicture),
     messages: conversation.messages?.map((message) => ({
       ...message,
-      mediaUrl: proxyInstagramMediaUrl(message.mediaUrl),
+      mediaUrl: proxyInstagramMediaUrl(message.mediaUrl, conversation.instagramAccountId),
     })),
   };
 }
@@ -751,7 +751,7 @@ export async function POST(request: NextRequest) {
       success: true,
       message: {
         ...createdMessage,
-        mediaUrl: proxyInstagramMediaUrl(createdMessage.mediaUrl),
+        mediaUrl: proxyInstagramMediaUrl(createdMessage.mediaUrl, account.id),
       },
     });
   } catch (error) {
