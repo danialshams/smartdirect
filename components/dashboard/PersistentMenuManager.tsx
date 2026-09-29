@@ -560,13 +560,8 @@ export default function PersistentMenuManager({
                         </p>
 
                         <p className="mt-1 text-xs leading-6 text-muted-foreground">
-                            دیگر لازم نیست برای
-                            گزینه منو یک Automation
-                            انتخاب کنید. برای هر
-                            گزینه یک Flow اختصاصی
-                            بسازید؛ شامل چند پیام،
-                            Media، Showcase، Form و
-                            Quick Reply.
+                            برای هر گزینه، Flow اختصاصی خودش را
+                            بسازید و مسیر پاسخ را مرحله‌به‌مرحله تنظیم کنید.
                         </p>
                     </div>
 
