@@ -258,20 +258,22 @@ export default function CommentAutomationEditor({ id }: { id: string }) {
   return (
     <div dir="rtl" className="min-h-[calc(100dvh-2rem)]">
       <div className="mx-auto w-full max-w-[1200px]">
-        <div className="mb-5 flex items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="inline-flex min-h-10 items-center gap-2 rounded-xl px-2 text-sm font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground"
-          >
-            <ArrowRight size={18} />
-            بازگشت
-          </button>
+        <div className="mb-5">
+          <div className="flex justify-start">
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="inline-flex min-h-10 items-center gap-2 rounded-xl px-2 text-sm font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground"
+            >
+              <ArrowRight size={18} />
+              بازگشت
+            </button>
+          </div>
 
-          <Button type="button" onClick={save} disabled={saving} className="min-h-11 rounded-xl px-5 text-sm font-semibold shadow-sm">
-            {saving ? <Loader2 size={17} className="animate-spin" /> : saved ? <Check size={17} /> : null}
-            {saving ? "در حال ذخیره..." : saved ? "ذخیره شد" : "ذخیره تغییرات"}
-          </Button>
+          <div className="mt-4">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">ویرایش پاسخ خودکار کامنت</h1>
+            <p className="mt-1.5 text-sm text-muted-foreground">تنظیمات پاسخ خودکار این پست را ویرایش کنید.</p>
+          </div>
         </div>
 
         <div className="mb-5">
@@ -426,7 +428,7 @@ export default function CommentAutomationEditor({ id }: { id: string }) {
               )}
             </div>
 
-            <Button type="button" onClick={save} disabled={saving} className="min-h-12 w-full rounded-2xl text-sm font-semibold shadow-sm lg:hidden">
+            <Button type="button" onClick={save} disabled={saving} className="min-h-12 w-full rounded-2xl text-sm font-semibold shadow-sm">
               {saving ? <Loader2 size={17} className="animate-spin" /> : saved ? <Check size={17} /> : null}
               {saving ? "در حال ذخیره..." : saved ? "ذخیره شد" : "ذخیره تغییرات"}
             </Button>
