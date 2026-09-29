@@ -445,8 +445,6 @@ export default function InstagramInbox({
 
       if (savedIdIsValid) {
         setMobileChatOpen(savedMobileOpen);
-      } else if (!selectedId) {
-        setMobileChatOpen(false);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "خطا در دریافت گفتگوها");
