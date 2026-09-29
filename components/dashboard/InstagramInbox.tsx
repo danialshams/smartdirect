@@ -1072,7 +1072,7 @@ export default function InstagramInbox({
                   <img
                     src={selectedFileUrl}
                     alt=""
-                    className="mx-auto max-h-36 max-w-full object-contain sm:max-h-48"
+                    className="mx-auto block h-32 max-h-32 max-w-full object-contain sm:h-40 sm:max-h-40"
                   />
                 )}
 
@@ -1080,7 +1080,7 @@ export default function InstagramInbox({
                   <video
                     src={selectedFileUrl}
                     controls
-                    className="mx-auto max-h-36 max-w-full bg-black object-contain sm:max-h-48"
+                    className="mx-auto block h-32 max-h-32 max-w-full bg-black object-contain sm:h-40 sm:max-h-40"
                   />
                 )}
 
@@ -1097,7 +1097,7 @@ export default function InstagramInbox({
             )}
 
             {recording ? (
-              <div className="flex min-w-0 items-center gap-2 rounded-full border border-border bg-background px-2 py-1.5 shadow-sm">
+              <div className="grid min-w-0 w-full grid-cols-[40px_minmax(0,1fr)_40px] items-center gap-2 rounded-full border border-border bg-background px-2 py-1.5 shadow-sm">
                 <Button
                   type="button"
                   onClick={cancelRecording}
@@ -1107,13 +1107,13 @@ export default function InstagramInbox({
                   <X size={17} />
                 </Button>
 
-                <div className="flex min-w-0 flex-1 items-center gap-2 px-1.5">
+                <div className="flex min-w-0 w-full items-center gap-2 overflow-hidden px-0.5">
                   <span className="h-2.5 w-2.5 shrink-0 animate-pulse rounded-full bg-red-500" />
-                  <div className="flex h-7 flex-1 items-center gap-1 overflow-hidden">
+                  <div className="flex h-7 min-w-0 flex-1 items-center justify-center gap-0.5 overflow-hidden">
                     {recordingWaveform.map((height, index) => (
                       <span
                         key={index}
-                        className="w-[3px] shrink-0 rounded-full bg-foreground/60 transition-[height] duration-75"
+                        className="w-[2px] min-w-[2px] shrink-0 rounded-full bg-foreground/60 transition-[height] duration-75"
                         style={{ height: height + "px" }}
                       />
                     ))}
@@ -1127,10 +1127,11 @@ export default function InstagramInbox({
                 <Button
                   type="button"
                   onClick={stopRecording}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-foreground p-0 text-background hover:bg-foreground/90"
+                  disabled={sending}
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-foreground p-0 text-background hover:bg-foreground/90 disabled:opacity-50"
                   aria-label="ارسال Voice"
                 >
-                  <Square size={14} fill="currentColor" />
+                  <Send size={16} />
                 </Button>
               </div>
             ) : (
