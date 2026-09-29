@@ -8,6 +8,9 @@ const nextConfig: NextConfig = {
     "/api/instagram/publishing/upload": [
       "./node_modules/ffmpeg-static/**/*",
     ],
+    "/api/instagram/inbox": [
+      "./node_modules/ffmpeg-static/**/*",
+    ],
   },
 };
 
