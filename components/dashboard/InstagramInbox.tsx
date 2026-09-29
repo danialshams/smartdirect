@@ -207,6 +207,7 @@ export default function InstagramInbox({
   );
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesScrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordingStreamRef = useRef<MediaStream | null>(null);
@@ -319,10 +320,20 @@ export default function InstagramInbox({
   }, [loadConversations, loadMessages, selectedId]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "end",
+    const frame = window.requestAnimationFrame(() => {
+      const container = messagesScrollRef.current;
+
+      if (container) {
+        container.scrollTop = container.scrollHeight;
+      }
+
+      messagesEndRef.current?.scrollIntoView({
+        behavior: "auto",
+        block: "end",
+      });
     });
+
+    return () => window.cancelAnimationFrame(frame);
   }, [messages.length, selectedId]);
 
   useEffect(() => {
@@ -948,7 +959,10 @@ export default function InstagramInbox({
             </div>
           )}
 
-          <div className="min-h-0 flex-1 overflow-y-auto bg-muted/20 px-3 py-4 sm:px-5 sm:py-5">
+          <div
+            ref={messagesScrollRef}
+            className="min-h-0 flex-1 overflow-y-auto bg-muted/20 px-3 py-4 sm:px-5 sm:py-5"
+          >
             {messagesLoading && !messages.length ? (
               <div className="space-y-4">
                 {Array.from({ length: 6 }).map((_, index) => (
