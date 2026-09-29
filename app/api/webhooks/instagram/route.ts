@@ -1378,7 +1378,6 @@ async function processMessagingEventLocked(
       incomingMessageType = "QUICK_REPLY";
     } else if (attachments.length > 0) {
       const attachmentType = String(attachments[0]?.type ?? "").toLowerCase();
-
       const attachmentUrl = attachments[0]?.payload?.url ?? null;
 
       incomingMediaUrl = attachmentUrl;
@@ -1393,6 +1392,24 @@ async function processMessagingEventLocked(
         incomingMessageType = "STICKER";
       } else {
         incomingMessageType = "TEXT";
+      }
+
+      if (
+        messageId &&
+        ["IMAGE", "VIDEO", "AUDIO"].includes(incomingMessageType)
+      ) {
+        const resolvedMediaUrl = await resolveInstagramMessageMediaUrl(
+          messageId,
+          instagramAccount,
+        );
+
+        if (resolvedMediaUrl) {
+          incomingMediaUrl = resolvedMediaUrl;
+          console.log("[INBOX_MEDIA_DEBUG] webhook-media-url-resolved", {
+            messageId,
+            incomingMessageType,
+          });
+        }
       }
     }
 
