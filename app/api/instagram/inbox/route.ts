@@ -385,7 +385,8 @@ async function refreshConversationMediaUrls({
   const mediaMessages = messages.filter(
     (message) =>
       ["IMAGE", "VIDEO", "AUDIO", "STICKER"].includes(message.messageType) &&
-      Boolean(message.igMessageId),
+      Boolean(message.igMessageId) &&
+      !message.mediaUrl,
   );
 
   if (!mediaMessages.length) return messages;
@@ -900,21 +901,9 @@ export async function POST(request: NextRequest) {
       return jsonError("Instagram پاسخ موفق داد اما message_id برنگرداند.", 502);
     }
 
-    if (mediaId) {
-      mediaUrl = await getInstagramMessageMediaUrl({
-        messageId: data.message_id,
-        accessToken,
-        instagramAccountId: account.id,
-        tenantId: session.user.id,
-      });
-
-      console.info("[INBOX_SEND_DEBUG] sent-media-url-resolved", {
-        debugId,
-        messageId: data.message_id,
-        hasMediaUrl: Boolean(mediaUrl),
-      });
-    }
-
+    // Do not block the send response on a second Graph API lookup for the
+    // attachment URL. The UI can render the local file immediately, and the
+    // media URL is resolved lazily when the conversation is loaded.
     const createdMessage = await prisma.conversationMessage.create({
       data: {
         conversationId: conversation.id,
