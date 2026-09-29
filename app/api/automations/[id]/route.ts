@@ -96,7 +96,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     };
 
     const automation = await prisma.automation.update({ where: { id }, data: updateData, include: automationInclude });
-    await invalidateAutomationCache(existingAutomation.instagramAccountId);
+    try {
+      await invalidateAutomationCache(existingAutomation.instagramAccountId);
+    } catch (cacheError) {
+      console.warn("Automation cache invalidation failed:", cacheError);
+    }
     return NextResponse.json({ success: true, data: automation });
   } catch (error) {
     console.error("PATCH /api/automations/[id] error:", error);
@@ -113,7 +117,11 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     const automation = await prisma.automation.findFirst({ where: { id, instagramAccount: { userId: session.user.id } } });
     if (!automation) return NextResponse.json({ success: false, error: "Automation پیدا نشد" }, { status: 404 });
     await prisma.automation.delete({ where: { id } });
-    await invalidateAutomationCache(automation.instagramAccountId);
+    try {
+      await invalidateAutomationCache(automation.instagramAccountId);
+    } catch (cacheError) {
+      console.warn("Automation cache invalidation failed:", cacheError);
+    }
     return NextResponse.json({ success: true, message: "Automation با موفقیت حذف شد" });
   } catch (error) {
     console.error("DELETE /api/automations/[id] error:", error);
