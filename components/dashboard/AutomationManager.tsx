@@ -79,7 +79,8 @@ function getTriggerLabel(triggerType: AutomationTriggerType) {
 
 function getAutomationName(automation: Automation) {
   const keyword = automation.keyword?.trim();
-  if (keyword) return `پاسخ «${keyword.split(/[,،;؛\n]/)[0]?.trim() || keyword}»`;
+  if (keyword) return `پاسخ «${keyword.split(/[,،;؛
+]/)[0]?.trim() || keyword}»`;
   return getTriggerLabel(automation.triggerType);
 }
 
@@ -106,7 +107,11 @@ export default function AutomationManager({ accounts, onlyTab }: { accounts: Ins
   const [deleteTarget, setDeleteTarget] = useState<Automation | null>(null);
   const [actionError, setActionError] = useState("");
 
-  const selectedAccount = connectedAccounts.find((account) => account.id === selectedAccountId);\n\n  useEffect(() => {\n    if (onlyTab && activeTab !== onlyTab) setActiveTab(onlyTab);\n  }, [onlyTab, activeTab]);
+  const selectedAccount = connectedAccounts.find((account) => account.id === selectedAccountId);
+
+  useEffect(() => {
+    if (onlyTab && activeTab !== onlyTab) setActiveTab(onlyTab);
+  }, [onlyTab, activeTab]);
 
   useEffect(() => {
     if (!selectedAccountId && connectedAccounts[0]) {
