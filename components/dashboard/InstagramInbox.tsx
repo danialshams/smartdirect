@@ -521,27 +521,22 @@ export default function InstagramInbox({
   }, [loadConversations, loadMessages, selectedId]);
 
   useLayoutEffect(() => {
-    if (!selectedId) return;
+    if (!selectedId || !messages.length) return;
 
     const container = messagesScrollRef.current;
-    const bottom = messagesEndRef.current;
-    if (!container || !bottom) return;
+    if (!container) return;
 
-    const wasInitialLoad = previousMessageCountRef.current === 0;
     const previousCount = previousMessageCountRef.current;
     const nextCount = messages.length;
+    const isInitialLoad = previousCount === 0;
     const addedMessages = nextCount > previousCount;
 
     const distanceFromBottom =
       container.scrollHeight - container.scrollTop - container.clientHeight;
     const wasNearBottom = distanceFromBottom <= 120;
 
-    if (wasInitialLoad || (addedMessages && wasNearBottom)) {
-      bottom.scrollIntoView({
-        behavior: "auto",
-        block: "end",
-        inline: "nearest",
-      });
+    if (isInitialLoad || (addedMessages && wasNearBottom)) {
+      container.scrollTop = container.scrollHeight;
     }
 
     previousMessageCountRef.current = nextCount;
@@ -1187,7 +1182,7 @@ export default function InstagramInbox({
 
           <div
             ref={messagesScrollRef}
-            className="min-h-0 flex-1 overflow-y-auto bg-muted/20 px-3 py-4 sm:px-5 sm:py-5"
+            className="h-0 min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain bg-muted/20 px-3 py-4 sm:px-5 sm:py-5"
           >
             {messagesLoading && !messages.length ? (
               <div className="space-y-4">
@@ -1484,7 +1479,7 @@ export default function InstagramInbox({
       )}
 
       <div className="h-[calc(100dvh-8.5rem)] min-h-[560px] overflow-hidden rounded-2xl border border-border bg-card shadow-[0_12px_40px_rgba(15,23,42,0.04)]">
-        <div className="flex h-full min-h-0">
+        <div className="flex h-full min-h-0 overflow-hidden">
           <div
             className={`flex min-h-0 flex-1 flex-col lg:flex-none ${
               mobileChatOpen ? "hidden lg:flex" : "flex"
@@ -1494,7 +1489,7 @@ export default function InstagramInbox({
           </div>
 
           <div
-            className={`min-h-0 flex-1 ${
+            className={`flex h-0 min-h-0 flex-1 ${
               mobileChatOpen ? "flex" : "hidden lg:flex"
             }`}
           >
