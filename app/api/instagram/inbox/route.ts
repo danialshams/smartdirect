@@ -320,7 +320,7 @@ export async function GET(request: NextRequest) {
     const account = await getOwnedAccount(session.user.id, accountId);
 
     if (!account) {
-      console.error("[INBOX_SEND_DEBUG] account-not-found", { debugId, accountId });
+      console.error("[INBOX_DEBUG] account-not-found", { accountId });
       return jsonError("اکانت متصل Instagram پیدا نشد.", 404);
     }
 
