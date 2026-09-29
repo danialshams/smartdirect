@@ -678,8 +678,6 @@ export default function InstagramInbox({
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
-
-      await loadConversations();
     } catch {
       addFailedOutgoingMessage({ kind: "FILE", file });
       setSelectedFile(null);
@@ -688,7 +686,8 @@ export default function InstagramInbox({
     } finally {
       setSending(false);
     }
-  }
+
+    await loadConversations();
 
   async function sendTextMessage(messageText: string) {
     if (!messageText.trim() || !accountId || !selectedId || sending) return;
@@ -710,7 +709,6 @@ export default function InstagramInbox({
       }
       setMessages((current) => [...current, result.message as Message]);
       setText("");
-      await loadConversations();
     } catch {
       addFailedOutgoingMessage({ kind: "TEXT", text: messageText.trim() });
       setText("");
@@ -718,7 +716,8 @@ export default function InstagramInbox({
     } finally {
       setSending(false);
     }
-  }
+
+    await loadConversations();
 
   async function sendMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
