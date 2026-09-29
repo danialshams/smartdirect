@@ -120,8 +120,8 @@ export default function AutomationFlowMessage({
       const formData = new FormData();
       formData.append("file", file);
       const response = await fetch("/api/instagram/publishing/upload", { method: "POST", body: formData });
-      const result = await response.json();
-      if (!response.ok || !result?.success || !result?.data?.publicUrl) {
+      const result = await readJsonResponse(response, "آپلود فایل ناموفق بود.");
+      if (!response.ok || !result?.success || typeof result?.data?.publicUrl !== "string" || !result.data.publicUrl.trim()) {
         throw new Error(result?.message || "آپلود فایل ناموفق بود.");
       }
       onUpdate({ mediaUrl: result.data.publicUrl, mediaId: "" });
@@ -404,9 +404,9 @@ function BranchShowcaseCreator({
           isActive: true,
         }),
       });
-      const result = await response.json();
+      const result = await readJsonResponse(response, "ساخت ویترین ناموفق بود.");
       if (!response.ok || result?.error) {
-        throw new Error(result?.error || "ساخت ویترین ناموفق بود.");
+        throw new Error(result?.error || result?.message || "ساخت ویترین ناموفق بود.");
       }
 
       const created = result.data ?? result;
@@ -423,9 +423,9 @@ function BranchShowcaseCreator({
             isActive: true,
           }),
         });
-        const itemResult = await itemResponse.json();
+        const itemResult = await readJsonResponse(itemResponse, `ساخت اسلاید ${i + 1} ناموفق بود.`);
         if (!itemResponse.ok || itemResult?.error) {
-          throw new Error(itemResult?.error || `ساخت اسلاید ${i + 1} ناموفق بود.`);
+          throw new Error(itemResult?.error || itemResult?.message || `ساخت اسلاید ${i + 1} ناموفق بود.`);
         }
       }
 
