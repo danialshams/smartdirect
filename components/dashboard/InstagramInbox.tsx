@@ -1182,7 +1182,7 @@ export default function InstagramInbox({
 
           <div
             ref={messagesScrollRef}
-            className="h-0 min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain bg-muted/20 px-3 py-4 sm:px-5 sm:py-5"
+            className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain bg-muted/20 px-3 py-4 sm:px-5 sm:py-5"
           >
             {messagesLoading && !messages.length ? (
               <div className="space-y-4">
@@ -1479,7 +1479,7 @@ export default function InstagramInbox({
       )}
 
       <div className="h-[calc(100dvh-8.5rem)] min-h-[560px] overflow-hidden rounded-2xl border border-border bg-card shadow-[0_12px_40px_rgba(15,23,42,0.04)]">
-        <div className="flex h-full min-h-0 overflow-hidden">
+        <div className="flex h-full min-h-0">
           <div
             className={`flex min-h-0 flex-1 flex-col lg:flex-none ${
               mobileChatOpen ? "hidden lg:flex" : "flex"
@@ -1489,7 +1489,7 @@ export default function InstagramInbox({
           </div>
 
           <div
-            className={`flex h-0 min-h-0 flex-1 ${
+            className={`min-h-0 flex-1 ${
               mobileChatOpen ? "flex" : "hidden lg:flex"
             }`}
           >
