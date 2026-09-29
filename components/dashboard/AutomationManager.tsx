@@ -277,6 +277,11 @@ export default function AutomationManager({
   function openCreate() {
     if (!selectedAccount) return;
 
+    if (triggerType === "COMMENT_KEYWORD") {
+      router.push("/dashboard/comment-automation/new");
+      return;
+    }
+
     setEditingAutomation({
       id: "",
       instagramAccountId: selectedAccount.id,
