@@ -3,7 +3,6 @@
 import { Button } from "@/components/ui/button";
 import {
   Bot,
-  Check,
   ChevronLeft,
   Loader2,
   MessageCircle,
