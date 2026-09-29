@@ -16,7 +16,6 @@ import {
   RefreshCw,
   Search,
   Send,
-  Square,
   UserRound,
   UserRoundCheck,
   Video,
