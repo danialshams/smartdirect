@@ -11,7 +11,8 @@ export type InstagramRateLimitOperation =
   | "PUBLISH_MEDIA"
   | "PUBLISH_REEL"
   | "PUBLISH_CAROUSEL"
-  | "PUBLISH_STORY";
+  | "PUBLISH_STORY"
+  | "AUTOMATION_MEDIA_PREVIEW";
 
 export type InstagramRateLimitScope =
   | "GLOBAL"
@@ -55,6 +56,7 @@ const DEFAULTS: Record<InstagramRateLimitOperation, { limit: number; windowMs: n
   PUBLISH_REEL: { limit: 100, windowMs: 24 * 60 * 60 * 1_000 },
   PUBLISH_CAROUSEL: { limit: 100, windowMs: 24 * 60 * 60 * 1_000 },
   PUBLISH_STORY: { limit: 100, windowMs: 24 * 60 * 60 * 1_000 },
+  AUTOMATION_MEDIA_PREVIEW: { limit: 100, windowMs: 60 * 1_000 },
 };
 
 const LUA_CONSUME = `
