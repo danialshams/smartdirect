@@ -6,10 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import AutomationManager from "./AutomationManager";
-import IceBreakerManager from "./IceBreakerManager";
 import InstagramInbox from "./InstagramInbox";
 import InstagramProfileDashboard from "./InstagramProfileDashboard";
-import PersistentMenuManager from "./PersistentMenuManager";
 
 type Account = {
   id: string;
@@ -22,9 +20,7 @@ type Account = {
 type Mode =
   | "profile"
   | "inbox"
-  | "automations"
-  | "ice-breaker"
-  | "persistent-menu";
+  | "automations";
 
 export default function DashboardAccountsClient({
   mode,
@@ -122,9 +118,5 @@ export default function DashboardAccountsClient({
     return <AutomationManager accounts={accounts} />;
   }
 
-  if (mode === "ice-breaker") {
-    return <IceBreakerManager accounts={accounts} />;
-  }
-
-  return <PersistentMenuManager accounts={accounts} />;
+  return null;
 }
