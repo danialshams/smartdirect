@@ -610,50 +610,116 @@ export default function InstagramInbox({
     const container = messagesScrollRef.current;
     if (!container) return;
 
-    container.scrollTop = container.scrollHeight;
+    container.scrollTop = Math.max(0, container.scrollHeight - container.clientHeight);
   }, []);
 
   useLayoutEffect(() => {
-    if (!selectedId || !messages.length || !initialScrollPendingRef.current) return;
+    // Initial positioning must wait until the mobile chat panel is actually
+    // visible and the message-loading phase has finished.
+    if (
+      !selectedId ||
+      !mobileChatOpen ||
+      messagesLoading ||
+      !messages.length ||
+      !initialScrollPendingRef.current
+    ) {
+      return;
+    }
 
+    let cancelled = false;
+    const timers: number[] = [];
+
+    const scrollNow = () => {
+      if (cancelled || !initialScrollPendingRef.current) return;
+      const container = messagesScrollRef.current;
+      if (!container) return;
+
+      container.scrollTop = Math.max(
+        0,
+        container.scrollHeight - container.clientHeight,
+      );
+    };
+
+    // The first pass happens after the visible Chat DOM has painted.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(scrollNow);
+    });
+
+    // Media/layout can change the scrollHeight after the messages render.
     const container = messagesScrollRef.current;
-    if (!container) return;
+    let resizeObserver: ResizeObserver | null = null;
+    let mutationObserver: MutationObserver | null = null;
 
-    const scrollPasses = [0, 40, 100, 200, 400, 700];
-    const timers = scrollPasses.map((delay) =>
-      window.setTimeout(() => {
-        if (initialScrollPendingRef.current) forceScrollToBottom();
-      }, delay),
-    );
+    if (container) {
+      resizeObserver = new ResizeObserver(scrollNow);
+      resizeObserver.observe(container);
 
-    const observer = new ResizeObserver(() => {
-      if (initialScrollPendingRef.current) forceScrollToBottom();
-    });
-    observer.observe(container);
-    if (container.firstElementChild) observer.observe(container.firstElementChild);
+      if (container.firstElementChild) {
+        resizeObserver.observe(container.firstElementChild);
+      }
 
-    const mutationObserver = new MutationObserver(() => {
-      if (initialScrollPendingRef.current) forceScrollToBottom();
-    });
-    mutationObserver.observe(container, { childList: true, subtree: true });
+      mutationObserver = new MutationObserver(scrollNow);
+      mutationObserver.observe(container, {
+        childList: true,
+        subtree: true,
+      });
+    }
+
+    // A few short passes cover browser layout/media settling without
+    // relying on a long arbitrary timeout.
+    for (const delay of [40, 100, 200, 350, 550]) {
+      timers.push(
+        window.setTimeout(() => {
+          if (!cancelled) scrollNow();
+        }, delay),
+      );
+    }
 
     const settleTimer = window.setTimeout(() => {
-      forceScrollToBottom();
+      if (cancelled) return;
+      scrollNow();
       initialScrollPendingRef.current = false;
-    }, 850);
+    }, 700);
 
     return () => {
+      cancelled = true;
       timers.forEach((timer) => window.clearTimeout(timer));
       window.clearTimeout(settleTimer);
-      observer.disconnect();
-      mutationObserver.disconnect();
+      resizeObserver?.disconnect();
+      mutationObserver?.disconnect();
     };
-  }, [selectedId, messages.length, mobileChatOpen, forceScrollToBottom]);
+  }, [
+    selectedId,
+    mobileChatOpen,
+    messagesLoading,
+    messages.length,
+  ]);
 
+  // If the chat becomes visible after messages have already been loaded,
+  // run the initial positioning again on the next frame.
   useEffect(() => {
-    if (!selectedId || !messages.length || !initialScrollPendingRef.current) return;
-    forceScrollToBottom();
-  }, [selectedId, messages.length, mobileChatOpen, forceScrollToBottom]);
+    if (
+      !selectedId ||
+      !mobileChatOpen ||
+      messagesLoading ||
+      !messages.length ||
+      !initialScrollPendingRef.current
+    ) {
+      return;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      forceScrollToBottom();
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [
+    selectedId,
+    mobileChatOpen,
+    messagesLoading,
+    messages.length,
+    forceScrollToBottom,
+  ]);
 
   const scrollToInitialBottom = useCallback(() => {
     if (initialScrollPendingRef.current) forceScrollToBottom();
@@ -988,6 +1054,7 @@ export default function InstagramInbox({
     setText("");
     setSelectedFile(null);
     setError("");
+    initialScrollPendingRef.current = true;
     setMobileChatOpen(true);
     if (typeof window !== "undefined") {
       window.sessionStorage.setItem(
