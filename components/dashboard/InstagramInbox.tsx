@@ -15,10 +15,8 @@ import {
   Pause,
   Play,
   RefreshCw,
-  Rewind,
   Search,
   Send,
-  FastForward,
   UserRound,
   UserRoundCheck,
   Video,
@@ -163,13 +161,18 @@ function AudioBubble({ src }: { src: string }) {
     }
   };
 
-  const seek = (seconds: number) => {
+  const seekFromWaveform = (event: React.PointerEvent<HTMLDivElement>) => {
     const audio = audioRef.current;
-    if (!audio || !Number.isFinite(audio.duration)) return;
-    audio.currentTime = Math.max(
-      0,
-      Math.min(audio.duration, audio.currentTime + seconds),
+    if (!audio || !Number.isFinite(audio.duration) || audio.duration <= 0) return;
+
+    const rect = event.currentTarget.getBoundingClientRect();
+    const ratio = Math.min(
+      1,
+      Math.max(0, (event.clientX - rect.left) / rect.width),
     );
+
+    audio.currentTime = ratio * audio.duration;
+    setCurrentTime(audio.currentTime);
   };
 
   const cycleSpeed = () => {
@@ -180,7 +183,7 @@ function AudioBubble({ src }: { src: string }) {
   };
 
   return (
-    <div className="w-[292px] max-w-full rounded-[22px] px-3 py-2.5" dir="ltr">
+    <div className="w-[292px] max-w-full px-3 py-2.5" dir="ltr">
       <audio
         ref={audioRef}
         src={src}
@@ -218,16 +221,25 @@ function AudioBubble({ src }: { src: string }) {
         </button>
 
         <div className="min-w-0 flex-1">
-          <div className="mb-1 flex h-7 items-center gap-[2px] overflow-hidden">
-            {Array.from({ length: 32 }, (_, index) => {
+          <div
+            className="flex h-8 min-w-0 cursor-pointer items-center gap-[2px] overflow-hidden rounded-full select-none touch-none"
+            onPointerDown={seekFromWaveform}
+            role="slider"
+            aria-label="موقعیت پیام صوتی"
+            aria-valuemin={0}
+            aria-valuemax={duration || 0}
+            aria-valuenow={Math.min(currentTime, duration || 0)}
+            tabIndex={0}
+          >
+            {Array.from({ length: 34 }, (_, index) => {
               const pattern = [6, 10, 14, 8, 17, 11, 7, 13, 18, 9, 12, 6];
               const height = pattern[index % pattern.length];
               const active =
-                duration > 0 && index / 32 <= currentTime / duration;
+                duration > 0 && index / 34 <= currentTime / duration;
               return (
                 <span
                   key={index}
-                  className={`w-[3px] shrink-0 rounded-full transition-[height,opacity] ${
+                  className={`w-[3px] shrink-0 rounded-full transition-opacity ${
                     active ? "bg-current opacity-100" : "bg-current opacity-25"
                   }`}
                   style={{ height: `${height}px` }}
@@ -236,58 +248,21 @@ function AudioBubble({ src }: { src: string }) {
             })}
           </div>
 
-          <input
-            type="range"
-            min={0}
-            max={Math.max(duration, 0.01)}
-            step={0.1}
-            value={Math.min(currentTime, duration || 0)}
-            onChange={(event) => {
-              const audio = audioRef.current;
-              const next = Number(event.target.value);
-              if (audio) audio.currentTime = next;
-              setCurrentTime(next);
-            }}
-            disabled={!duration}
-            aria-label="موقعیت پیام صوتی"
-            className="h-1.5 w-full cursor-pointer accent-current"
-          />
-
           <div className="mt-0.5 flex items-center justify-between text-[9px] tabular-nums opacity-65">
             <span>{formatAudioTime(currentTime)}</span>
             <span>{formatAudioTime(duration)}</span>
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center gap-0.5">
-          <button
-            type="button"
-            onClick={() => seek(-10)}
-            className="flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-black/5 active:scale-95"
-            aria-label="۱۰ ثانیه عقب"
-            title="۱۰ ثانیه عقب"
-          >
-            <Rewind size={15} />
-          </button>
-          <button
-            type="button"
-            onClick={() => seek(10)}
-            className="flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-black/5 active:scale-95"
-            aria-label="۱۰ ثانیه جلو"
-            title="۱۰ ثانیه جلو"
-          >
-            <FastForward size={15} />
-          </button>
-          <button
-            type="button"
-            onClick={cycleSpeed}
-            className="flex h-8 min-w-9 items-center justify-center rounded-full text-[10px] font-bold tabular-nums transition hover:bg-black/5 active:scale-95"
-            aria-label={`سرعت پخش ${speed} برابر`}
-            title="تغییر سرعت پخش"
-          >
-            {speed}x
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={cycleSpeed}
+          className="flex h-8 min-w-9 shrink-0 items-center justify-center rounded-full text-[10px] font-bold tabular-nums transition hover:bg-black/5 active:scale-95"
+          aria-label={`سرعت پخش ${speed} برابر`}
+          title="تغییر سرعت پخش"
+        >
+          {speed}x
+        </button>
       </div>
     </div>
   );
@@ -371,6 +346,7 @@ export default function InstagramInbox({
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesScrollRef = useRef<HTMLDivElement>(null);
+  const previousMessageCountRef = useRef(0);
   const optimisticMediaRef = useRef<Map<string, string>>(new Map());
   const lastMarkedInboundRef = useRef<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -545,26 +521,31 @@ export default function InstagramInbox({
   }, [loadConversations, loadMessages, selectedId]);
 
   useLayoutEffect(() => {
-    if (!selectedId || !messages.length) return;
+    if (!selectedId) return;
 
     const container = messagesScrollRef.current;
-    if (!container) return;
+    const bottom = messagesEndRef.current;
+    if (!container || !bottom) return;
 
-    const scroll = () => {
-      container.scrollTop = container.scrollHeight;
-    };
+    const wasInitialLoad = previousMessageCountRef.current === 0;
+    const previousCount = previousMessageCountRef.current;
+    const nextCount = messages.length;
+    const addedMessages = nextCount > previousCount;
 
-    scroll();
-    const frame = window.requestAnimationFrame(scroll);
-    const timers = [50, 150, 350, 700].map((delay) =>
-      window.setTimeout(scroll, delay),
-    );
+    const distanceFromBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight;
+    const wasNearBottom = distanceFromBottom <= 120;
 
-    return () => {
-      window.cancelAnimationFrame(frame);
-      timers.forEach((timer) => window.clearTimeout(timer));
-    };
-  }, [messages.length, messagesLoading, selectedId]);
+    if (wasInitialLoad || (addedMessages && wasNearBottom)) {
+      bottom.scrollIntoView({
+        behavior: "auto",
+        block: "end",
+        inline: "nearest",
+      });
+    }
+
+    previousMessageCountRef.current = nextCount;
+  }, [messages.length, selectedId]);
 
   useEffect(() => {
     return () => {
@@ -883,6 +864,7 @@ export default function InstagramInbox({
     }
 
     setSelectedId(conversationId);
+    previousMessageCountRef.current = 0;
     setMessages([]);
     setText("");
     setSelectedFile(null);
@@ -1440,30 +1422,28 @@ export default function InstagramInbox({
                     className="min-h-11 flex-1 resize-none rounded-2xl border-border bg-muted/40 px-4 py-2.5 text-sm leading-6 outline-none focus-visible:ring-1 focus-visible:ring-ring"
                   />
 
-                  {text.trim() || selectedFile ? (
-                    <Button
-                      type="submit"
-                      disabled={sending}
-                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary p-0 text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-                      aria-label="ارسال"
-                    >
-                      <Send size={17} />
-                    </Button>
-                  ) : (
-                    <Button
-                      type="button"
-                      onClick={() => void startRecording()}
-                      disabled={sending}
-                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-foreground p-0 text-background hover:bg-foreground/90 disabled:opacity-50"
-                      aria-label="ضبط Voice"
-                    >
-                      <Mic size={18} />
-                    </Button>
-                  )}
+                  <Button
+                    type="button"
+                    onClick={() => void startRecording()}
+                    disabled={sending}
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border bg-background p-0 text-muted-foreground hover:bg-muted disabled:opacity-50"
+                    aria-label="ضبط Voice"
+                  >
+                    <Mic size={18} />
+                  </Button>
+
+                  <Button
+                    type="submit"
+                    disabled={sending || (!text.trim() && !selectedFile)}
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary p-0 text-primary-foreground hover:bg-primary/90 disabled:opacity-40"
+                    aria-label="ارسال"
+                  >
+                    <Send size={17} />
+                  </Button>
                 </div>
 
                 <div className="mt-1.5 flex items-center justify-between px-1 text-[9px] text-muted-foreground">
-                  <span>+ برای عکس، ویدیو و Voice فایل</span>
+                  <span>+ برای عکس، ویدیو و فایل صوتی</span>
                   <span>{text.length.toLocaleString("fa-IR")} / ۱۰۰۰</span>
                 </div>
               </>
