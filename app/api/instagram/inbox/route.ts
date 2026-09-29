@@ -45,6 +45,38 @@ function jsonError(message: string, status = 400) {
   );
 }
 
+function getErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error && error.message) return error.message;
+
+  if (error && typeof error === "object") {
+    const candidate = error as {
+      message?: unknown;
+      error?: { message?: unknown } | unknown;
+    };
+
+    if (typeof candidate.message === "string" && candidate.message) {
+      return candidate.message;
+    }
+
+    if (
+      candidate.error &&
+      typeof candidate.error === "object" &&
+      typeof (candidate.error as { message?: unknown }).message === "string"
+    ) {
+      return (candidate.error as { message: string }).message;
+    }
+
+    try {
+      const serialized = JSON.stringify(error);
+      if (serialized && serialized !== "{}") return serialized;
+    } catch {
+      // Fall through to the safe fallback.
+    }
+  }
+
+  return fallback;
+}
+
 function proxyConversationMedia<
   T extends {
     instagramAccountId: string;
@@ -886,7 +918,10 @@ export async function POST(request: NextRequest) {
             : null,
       });
       const status = error instanceof InstagramApiError ? error.status : 502;
-      const message = error instanceof Error ? error.message : "Instagram پیام را ارسال نکرد.";
+      const message = getErrorMessage(
+        error,
+        "Instagram پیام را ارسال نکرد.",
+      );
       return jsonError(message, status >= 400 && status < 500 ? status : 502);
     }
 
@@ -960,7 +995,7 @@ export async function POST(request: NextRequest) {
     });
 
     return jsonError(
-      error instanceof Error ? error.message : "خطا در ارسال پیام",
+      getErrorMessage(error, "خطا در ارسال پیام"),
       500,
     );
   }
