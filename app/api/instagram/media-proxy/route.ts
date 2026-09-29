@@ -92,6 +92,8 @@ async function fetchInstagramImageUrl(
 }
 
 export async function GET(request: NextRequest) {
+  const debugId = `media-proxy-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
   try {
     const session = await getServerSession(authOptions);
 
@@ -102,6 +104,14 @@ export async function GET(request: NextRequest) {
     const accountId = request.nextUrl.searchParams.get("accountId");
     const participantId = request.nextUrl.searchParams.get("participantId");
     const rawUrl = request.nextUrl.searchParams.get("url");
+
+    console.info("[MEDIA_PROXY_DEBUG] request-start", {
+      debugId,
+      accountId,
+      participantId,
+      hasRawUrl: Boolean(rawUrl),
+      range: request.headers.get("range"),
+    });
 
     let targetUrl: URL;
     let mediaAccessToken: string | null = null;
@@ -117,6 +127,7 @@ export async function GET(request: NextRequest) {
       });
 
       if (!account) {
+        console.error("[MEDIA_PROXY_DEBUG] account-not-found", { debugId, accountId });
         return new NextResponse("Instagram account not found", { status: 404 });
       }
 
@@ -178,11 +189,29 @@ export async function GET(request: NextRequest) {
         upstreamHeaders.Range = range;
       }
 
+      console.info("[MEDIA_PROXY_DEBUG] upstream-start", {
+        debugId,
+        targetHost: targetUrl.hostname,
+        targetPath: targetUrl.pathname,
+        hasAuth: Boolean(mediaAccessToken),
+        range: range || null,
+      });
+
       const response = await fetch(targetUrl.toString(), {
         method: "GET",
         cache: "no-store",
         signal: controller.signal,
         headers: upstreamHeaders,
+      });
+
+      console.info("[MEDIA_PROXY_DEBUG] upstream-response", {
+        debugId,
+        status: response.status,
+        ok: response.ok,
+        contentType: response.headers.get("content-type"),
+        contentLength: response.headers.get("content-length"),
+        contentRange: response.headers.get("content-range"),
+        acceptRanges: response.headers.get("accept-ranges"),
       });
 
       if (!response.ok || !response.body) {
@@ -234,7 +263,12 @@ export async function GET(request: NextRequest) {
       clearTimeout(timeout);
     }
   } catch (error) {
-    console.error("Instagram media proxy error:", error);
+    console.error("[MEDIA_PROXY_DEBUG] unhandled-error", {
+      debugId,
+      errorName: error instanceof Error ? error.name : typeof error,
+      errorMessage: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
 
     return new NextResponse("Instagram media proxy error", {
       status: 502,
