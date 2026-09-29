@@ -347,7 +347,7 @@ async function getInstagramMessageMediaUrl({
       null
     );
   } catch (error) {
-    console.warn("[INBOX_SEND_DEBUG] sent-media-url-lookup-failed", {
+    console.warn("[INBOX_MEDIA_DEBUG] message-media-lookup-failed", {
       messageId,
       errorName: error instanceof Error ? error.name : typeof error,
       errorMessage: error instanceof Error ? error.message : String(error),
@@ -355,6 +355,63 @@ async function getInstagramMessageMediaUrl({
 
     return null;
   }
+}
+
+async function refreshConversationMediaUrls({
+  conversationId,
+  accountId,
+  tenantId,
+  accessToken,
+  messages,
+}: {
+  conversationId: string;
+  accountId: string;
+  tenantId: string;
+  accessToken: string;
+  messages: Array<{
+    id: string;
+    messageType: string;
+    mediaUrl: string | null;
+    mediaId: string | null;
+    igMessageId: string | null;
+  }>;
+}) {
+  const mediaMessages = messages.filter(
+    (message) =>
+      ["IMAGE", "VIDEO", "AUDIO", "STICKER"].includes(message.messageType) &&
+      Boolean(message.igMessageId),
+  );
+
+  if (!mediaMessages.length) return messages;
+
+  const refreshed = await Promise.all(
+    mediaMessages.map(async (message) => {
+      const freshUrl = await getInstagramMessageMediaUrl({
+        messageId: message.igMessageId!,
+        accessToken,
+        instagramAccountId: accountId,
+        tenantId,
+      });
+
+      if (!freshUrl) return message;
+
+      if (freshUrl !== message.mediaUrl) {
+        await prisma.conversationMessage.update({
+          where: { id: message.id },
+          data: { mediaUrl: freshUrl },
+        });
+      }
+
+      return {
+        ...message,
+        mediaUrl: freshUrl,
+      };
+    }),
+  );
+
+  const refreshedMap = new Map(refreshed.map((message) => [message.id, message]));
+
+  return messages.map((message) => refreshedMap.get(message.id) ?? message);
 }
 
 export async function GET(request: NextRequest) {
@@ -444,6 +501,20 @@ export async function GET(request: NextRequest) {
         },
       });
 
+      const accessToken = await getValidInstagramAccessToken(account.id);
+      const refreshedMessages = await refreshConversationMediaUrls({
+        conversationId: conversation.id,
+        accountId: account.id,
+        tenantId: session.user.id,
+        accessToken,
+        messages: (refreshed || conversation).messages,
+      });
+
+      const conversationWithFreshMedia = {
+        ...(refreshed || conversation),
+        messages: refreshedMessages,
+      };
+
       const handoff = await getHandoffState(conversation.id);
 
       return NextResponse.json({
@@ -454,7 +525,7 @@ export async function GET(request: NextRequest) {
           igUserId: account.igUserId,
         },
         conversation: {
-          ...proxyConversationMedia(refreshed || conversation),
+          ...proxyConversationMedia(conversationWithFreshMedia),
           humanMode: handoff?.active ?? false,
           handoff,
         },
