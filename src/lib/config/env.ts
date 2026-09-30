@@ -55,8 +55,8 @@ export function validateServerEnvironment(): ServerEnvironment {
   const databasePoolMax = parseBoundedNumber("DB_POOL_MAX", 5, 1, 50);
   const databaseConnectionTimeoutMs = parseBoundedNumber("DB_CONNECTION_TIMEOUT_MS", 5000, 1000, 60000);
   const databaseIdleTimeoutMs = parseBoundedNumber("DB_IDLE_TIMEOUT_MS", 10000, 1000, 300000);
-  const redisRestUrl = required("UPSTASH_REDIS_REST_URL");
-  const redisRestToken = required("UPSTASH_REDIS_REST_TOKEN");
+  const redisRestUrl = redisDriver === "redis" ? "" : required("UPSTASH_REDIS_REST_URL");
+  const redisRestToken = redisDriver === "redis" ? "" : required("UPSTASH_REDIS_REST_TOKEN");
 
   try {
     new URL(databaseUrl);
@@ -64,6 +64,7 @@ export function validateServerEnvironment(): ServerEnvironment {
     throw new Error("INVALID_ENV:DATABASE_URL");
   }
 
+  if (redisDriver === "upstash") {
   try {
     const redisUrl = new URL(redisRestUrl);
     if (redisUrl.protocol !== "https:") {
@@ -71,6 +72,7 @@ export function validateServerEnvironment(): ServerEnvironment {
     }
   } catch {
     throw new Error("INVALID_ENV:UPSTASH_REDIS_REST_URL");
+  }
   }
 
   const nextAuthSecret = process.env.NEXTAUTH_SECRET?.trim();
