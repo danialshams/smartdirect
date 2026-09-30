@@ -610,9 +610,9 @@ export async function claimJobById(
       jobId,
       CLAIM_PREFIX,
       workerId,
+      crypto.randomUUID(),
       String(getQueueClaimTtlSeconds()),
-      String(Date.now()),
-    ],
+      String(Date.now()),    ],
   );
 
   if (!result) return null;
