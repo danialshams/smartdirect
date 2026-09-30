@@ -161,7 +161,9 @@ async function main() {
 
     // 3) 100-way distributed-lock race: exactly one owner.
     const lockResults = await Promise.all(Array.from({ length: 100 }, () =>
-      acquireLock({ scope: "maximum", resourceId: "lock-" + ns }).catch(() => ({ acquired: false }))
+      acquireLock({ scope: "job", resourceId: "maximum-lock-" + ns }).catch((error) => {
+        throw error;
+      })
     ));
     const lockOwners = lockResults.filter(x => x.acquired);
     assert(lockOwners.length === 1, "Distributed lock allowed multiple owners");
