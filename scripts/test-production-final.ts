@@ -307,7 +307,11 @@ async function main() {
     const controller = new AbortController();
     const workerPromise = runQueueWorker(
       async (job) => {
-        const scenario = (job.payload as { scenario?: string }).scenario ?? "unknown";
+        const payload = job.payload as {
+          scenario?: string;
+          event?: { scenario?: string };
+        };
+        const scenario = payload.scenario ?? payload.event?.scenario ?? "unknown";
         const attempts = (attemptsByJob.get(job.id) ?? 0) + 1;
         attemptsByJob.set(job.id, attempts);
 
