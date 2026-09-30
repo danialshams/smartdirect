@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { AppRouterCacheProvider } from "@mui/material-nextjs/v1X-appRouter";
+import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
 import { CssBaseline, ThemeProvider, createTheme } from "@mui/material";
 import { prefixer } from "stylis";
 import rtlPlugin from "stylis-plugin-rtl";
