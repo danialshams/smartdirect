@@ -34,7 +34,7 @@ function getRedisConfig() {
 function createNativeRedisClient(): RedisClientLike {
   const url = process.env["REDIS_URL"]?.trim();
   if (!url) throw new Error("REDIS_URL is not configured.");
-  return new NativeRedisAdapter(new IORedis(url));
+  return new NativeRedisAdapter(new IORedis(url, { commandTimeout: getRedisCommandTimeoutMs() }));
 }
 
 function createRedisClient(): RedisClientLike {
