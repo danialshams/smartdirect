@@ -1,44 +1,26 @@
-import "dotenv/config";
-
-import { Redis } from "@upstash/redis";
+import { redisHealthCheck } from "../src/lib/redis/client";
 
 async function main() {
-  const url = process.env.UPSTASH_REDIS_REST_URL?.trim();
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
-
-  if (!url || !token) {
-    throw new Error(
-      "UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN are not configured",
-    );
-  }
-
-  const redis = new Redis({
-    url,
-    token,
-  });
-
-  const startedAt = Date.now();
-
-  const response = await redis.ping();
-
-  const latencyMs = Date.now() - startedAt;
+  const health = await redisHealthCheck();
 
   console.log(
     JSON.stringify(
       {
-        service: "redis-local",
-        ok: response === "PONG",
-        configured: true,
-        latencyMs,
-        status: response === "PONG" ? "ready" : "error",
-        response,
+        service: health.driver === "redis" ? "redis-local" : "redis-upstash",
+        ok: health.ok,
+        configured: health.configured,
+        latencyMs: health.latencyMs,
+        status: health.status,
+        response: health.ok ? "PONG" : undefined,
+        driver: health.driver,
+        error: health.error,
       },
       null,
       2,
     ),
   );
 
-  if (response !== "PONG") {
+  if (!health.ok) {
     process.exitCode = 1;
   }
 }
@@ -47,7 +29,7 @@ main().catch((error) => {
   console.error(
     JSON.stringify(
       {
-        service: "redis-local",
+        service: "redis",
         ok: false,
         status: "error",
         error: error instanceof Error ? error.message : String(error),
