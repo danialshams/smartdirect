@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Avatar, Card, Input, Table, Tag, Typography } from "antd";
+import { Avatar, Card, Input, Table, Tag } from "antd";
+import Title from "antd/es/typography/Title";
+import Text from "antd/es/typography/Text";
 import type { ColumnsType } from "antd/es/table";
 import { Search, Users } from "lucide-react";
 
@@ -28,7 +30,7 @@ export default function AdminUsersPage() {
   ];
 
   return <div className="space-y-5">
-    <div><Typography.Title level={3} className="!mb-1 !text-[22px]">کاربران</Typography.Title><Typography.Text className="!text-[#64748B]">اطلاعات کاربران، پیج‌های متصل و اشتراک</Typography.Text></div>
+    <div><Title level={3} className="!mb-1 !text-[22px]">کاربران</Title><Text className="!text-[#64748B]">اطلاعات کاربران، پیج‌های متصل و اشتراک</Text></div>
     <Card className="!border-[#E2E8F0] !shadow-none">
       <div className="mb-4 flex flex-col gap-3 sm:flex-row"><Input allowClear prefix={<Search size={17}/>} placeholder="جستجو بر اساس نام یا ایمیل..." value={q} onChange={e=>{setPage(1);setQ(e.target.value)}} className="sm:max-w-md"/></div>
       <Table rowKey="id" loading={loading} dataSource={rows} columns={columns} scroll={{x:560}} onRow={r=>({onClick:()=>router.push(`/rickandmorty/users/${r.id}`),style:{cursor:"pointer"}})} pagination={{current:page,total,pageSize:20,showSizeChanger:false,onChange:setPage,showTotal:t=>`${t} کاربر`}} locale={{emptyText:<div className="py-8"><Users className="mx-auto mb-2 text-[#94A3B8]"/><div>کاربری پیدا نشد</div></div>}}/>
