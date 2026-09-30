@@ -71,9 +71,38 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       if (!nextKeyword) return NextResponse.json({ success: false, error: "حداقل یک Keyword معتبر وارد کنید" }, { status: 400 });
     }
 
-    const nextMediaId = mediaId !== undefined ? (typeof mediaId === "string" && mediaId.trim() ? mediaId.trim() : null) : existingAutomation.mediaId;
-    const duplicate = await prisma.automation.findFirst({ where: { id: { not: id }, instagramAccountId: existingAutomation.instagramAccountId, triggerType: nextTriggerType, keyword: nextKeyword, mediaId: nextMediaId } });
-    if (duplicate) return NextResponse.json({ success: false, error: "Automation مشابه قبلاً وجود دارد", data: duplicate }, { status: 409 });
+    const nextMediaId = mediaId !== undefined
+      ? (typeof mediaId === "string" && mediaId.trim() ? mediaId.trim() : null)
+      : existingAutomation.mediaId;
+
+    // Only media-based automations have the duplicate constraint.
+    // Multiple DM automations are required for separate Ice Breaker and
+    // Persistent Menu entries.
+    const isMediaBasedTrigger =
+      nextTriggerType === "COMMENT_KEYWORD" ||
+      nextTriggerType === "STORY_REPLY_KEYWORD";
+
+    if (isMediaBasedTrigger) {
+      const duplicate = await prisma.automation.findFirst({
+        where: {
+          id: { not: id },
+          instagramAccountId: existingAutomation.instagramAccountId,
+          triggerType: nextTriggerType,
+          mediaId: nextMediaId,
+        },
+      });
+
+      if (duplicate) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Automation مشابه قبلاً وجود دارد",
+            data: duplicate,
+          },
+          { status: 409 },
+        );
+      }
+    }
 
     const supportsFollowGate = nextTriggerType === "COMMENT_KEYWORD" || nextTriggerType === "STORY_REPLY_KEYWORD";
     const nextRequireFollow = !supportsFollowGate ? false : requireFollow !== undefined ? Boolean(requireFollow) : existingAutomation.requireFollow;
