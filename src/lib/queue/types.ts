@@ -59,7 +59,7 @@ export interface QueueJob<T extends QueueJobType = QueueJobType> {
   attempts: number;
   maxAttempts: number;
   lastError?: string;
-  workerId?: string;
+  workerId?: string;\n  claimToken?: string;
   idempotency?: QueueJobIdempotency;
   recoveryId?: string;
   queueNamespace?: string;
