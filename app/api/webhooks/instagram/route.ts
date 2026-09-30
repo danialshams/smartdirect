@@ -2867,6 +2867,8 @@ async function processInstagramPostback(
         sourceTitle: iceBreaker.question,
 
         payload,
+
+        executionId,
       });
 
       return;
@@ -2963,6 +2965,8 @@ async function processInstagramPostback(
         sourceTitle: persistentMenuItem.title,
 
         payload,
+
+        executionId,
       });
 
       return;
@@ -3005,6 +3009,7 @@ async function executeEntryPointAutomation({
   sourceId,
   sourceTitle,
   payload,
+  executionId,
 }: {
   automationId: string;
   participantId: string;
@@ -3014,6 +3019,7 @@ async function executeEntryPointAutomation({
   sourceId: string;
   sourceTitle: string;
   payload: string;
+  executionId: string;
 }) {
   try {
     console.log("========================================");
@@ -3025,6 +3031,8 @@ async function executeEntryPointAutomation({
     console.log("Source:", source);
 
     console.log("Source ID:", sourceId);
+
+    console.log("Webhook execution ID:", executionId);
 
     console.log("Source title:", sourceTitle);
 
@@ -3111,12 +3119,13 @@ async function executeEntryPointAutomation({
       igUserId,
 
       selectedQuickReplyId: null,
-      executionId: sourceId,
+      executionId,
     });
 
     console.log("Entry point automation result:", {
       source,
       sourceId,
+      executionId,
       automationId,
       payload,
       result,
