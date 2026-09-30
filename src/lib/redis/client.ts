@@ -38,6 +38,12 @@ function createNativeRedisClient(): RedisClientLike {
 }
 
 function createRedisClient(): RedisClientLike {
+  switch (getRedisDriver()) {
+    case "redis":
+      return createNativeRedisClient();
+    default:
+      break;
+  }
   const { url, token } = getRedisConfig();
   return new Redis({
     url,
