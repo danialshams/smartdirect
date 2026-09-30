@@ -101,3 +101,28 @@ body {
   color: var(--foreground);
   font-family: "Vazirmatn", Arial, sans-serif;
 }
+
+
+@keyframes adminFade {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.ant-layout,
+.ant-card,
+.ant-table,
+.ant-input,
+.ant-select-selector,
+.ant-btn,
+.ant-modal-content,
+.ant-drawer-content {
+  transition-duration: 180ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
