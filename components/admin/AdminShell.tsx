@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { Avatar, Button, Drawer, Layout, Menu, Space, Typography } from "antd";
 import {
@@ -33,6 +33,7 @@ function selectedKey(pathname: string) {
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const menu = (
@@ -40,7 +41,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       mode="inline"
       selectedKeys={[selectedKey(pathname)]}
       items={items}
-      onClick={() => setMobileOpen(false)}
+      onClick={({ key }) => { setMobileOpen(false); router.push(key); }}
       className="!border-none !bg-transparent"
     />
   );
