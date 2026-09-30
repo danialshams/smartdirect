@@ -899,21 +899,12 @@ export default function EntryPointFlowBuilder({
 
                 for (const quickReply of
                     message.quickReplies) {
-                    const destinationId =
-                        quickReply.nextMessageId
-                            ? serverMessageIds.get(
-                                quickReply.nextMessageId,
-                            )
-                            : null;
-
-                    if (
-                        !destinationId
-                    ) {
-                        throw new Error(
-                            `مقصد Quick Reply «${quickReply.title}» پیدا نشد.`,
-                        );
-                    }
-
+                    /*
+                     * Rich destinations (including nested Forms) are stored
+                     * inside quickReply.replyText by the Quick Reply API.
+                     * They are not server AutomationMessage IDs, so a nested
+                     * Form must not be resolved through nextMessageId.
+                     */
                     const response =
                         await fetch(
                             `/api/automations/${encodeURIComponent(
@@ -936,8 +927,22 @@ export default function EntryPointFlowBuilder({
                                         payload:
                                             quickReply.payload ||
                                             crypto.randomUUID(),
-                                        nextMessageId:
-                                            destinationId,
+                                        destinationType:
+                                            quickReply.destinationType,
+                                        destinationText:
+                                            quickReply.destinationText,
+                                        destinationFormId:
+                                            quickReply.destinationFormId,
+                                        destinationShowcaseId:
+                                            quickReply.destinationShowcaseId,
+                                        destinationMediaUrl:
+                                            quickReply.destinationMediaUrl,
+                                        destinationMediaId:
+                                            quickReply.destinationMediaId,
+                                        destinationQuestion:
+                                            quickReply.destinationQuestion,
+                                        destinationQuickReplies:
+                                            quickReply.destinationQuickReplies,
                                     },
                                 ),
                             },
