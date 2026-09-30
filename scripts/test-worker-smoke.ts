@@ -8,6 +8,7 @@ import {
   getJob,
   getQueueDepth,
 } from "../src/lib/queue/core";
+import { disconnectRedis } from "../src/lib/redis/client";
 
 async function main() {
   const queueNamespace = `group18-smoke-${Date.now()}`;
@@ -104,7 +105,8 @@ async function main() {
 
     console.log("Worker Smoke Test: OK");
   } finally {
-    await deleteJob(job.id);
+    await deleteJob(job.id).catch(() => undefined);
+    await disconnectRedis().catch(() => undefined);
   }
 }
 
