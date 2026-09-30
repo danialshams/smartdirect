@@ -14,6 +14,39 @@ type PublishResponse = { id?: string };
 type MediaItem = { type: "IMAGE" | "VIDEO"; publicUrl: string; sortOrder: number };
 type UserTag = { username: string; x?: number; y?: number };
 
+type PublishingQuotaResponse = {
+  data?: Array<{ quota_usage?: number; config?: { quota_total?: number; quota_duration?: number } }>;
+};
+
+async function checkPublishingQuota(igUserId: string, token: string, instagramAccountId: string, tenantId: string) {
+  try {
+    const response = await instagramApiRequest<PublishingQuotaResponse>(
+      `/${igUserId}/content_publishing_limit`,
+      {
+        accessToken: token,
+        params: { fields: "quota_usage,config{quota_total,quota_duration}" },
+        timeoutMs: 10_000,
+        maxRetries: 1,
+        rateLimit: { instagramAccountId, tenantId, operation: "PUBLISH_QUOTA_READ" },
+      },
+    );
+    const quota = response.data?.[0];
+    const usage = Number(quota?.quota_usage);
+    const total = Number(quota?.config?.quota_total);
+    if (Number.isFinite(usage) && Number.isFinite(total) && total > 0 && usage >= total) {
+      throw new Error(`Instagram publishing quota reached (${usage}/${total}).`);
+    }
+    return { usage: Number.isFinite(usage) ? usage : null, total: Number.isFinite(total) ? total : null };
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith("Instagram publishing quota reached")) throw error;
+    console.warn("[Instagram Publishing] quota preflight unavailable; Meta remains authoritative.", {
+      instagramAccountId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return null;
+  }
+}
+
 function normalizeUserTags(value: unknown): UserTag[] {
   if (!Array.isArray(value)) return [];
 
@@ -422,7 +455,7 @@ async function publishInstagramJobInternal(jobId: string) {
 
   const tags = normalizeUserTags(job.userTags);
   const token = await getValidInstagramAccessToken(job.instagramAccountId);
-  const tenantId = job.instagramAccount.userId;
+  const tenantId = job.instagramAccount.userId;\n\n  await checkPublishingQuota(job.instagramAccount.igUserId, token, job.instagramAccountId, tenantId);
 
   await prisma.instagramPublishJob.update({
     where: { id: job.id },
