@@ -458,8 +458,14 @@ export async function failJob(jobId: string, error: unknown, options: { force?: 
 
   if (!job) return null;
 
+  const currentClaim = await redis.get<string>(claimKey(jobId));
+  if (!options.force && job.status === "active" && job.claimToken && currentClaim !== job.claimToken) {
+    return null;
+  }
+
   job.lastError = error instanceof Error ? error.message : String(error);
   job.workerId = undefined;
+  job.claimToken = undefined;
 
   await redis.del(claimKey(jobId));
   const keys = getQueueKeys(job.queueNamespace);
