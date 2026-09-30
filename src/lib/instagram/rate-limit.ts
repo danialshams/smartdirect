@@ -4,7 +4,8 @@ export type InstagramRateLimitOperation =
   | "MESSAGE_TEXT" | "MESSAGE_MEDIA" | "MESSAGE_REACTION" | "CONVERSATION_READ"
   | "COMMENT_REPLY" | "COMMENT_LIKE" | "COMMENT_PRIVATE_REPLY"
   | "PUBLISH_MEDIA" | "PUBLISH_REEL" | "PUBLISH_CAROUSEL" | "PUBLISH_STORY"
-  | "PUBLISH_QUOTA_READ"\n  | "AUTOMATION_MEDIA_PREVIEW";
+  | "PUBLISH_QUOTA_READ"
+  | "AUTOMATION_MEDIA_PREVIEW";
 
 export type InstagramRateLimitScope = "GLOBAL" | "TENANT" | "INSTAGRAM_ACCOUNT" | "OPERATION";
 
@@ -43,7 +44,8 @@ const DEFAULTS: Record<InstagramRateLimitOperation, { limit: number; windowMs: n
   PUBLISH_MEDIA: { limit: 100, windowMs: 24 * 60 * 60 * 1_000 },
   PUBLISH_REEL: { limit: 100, windowMs: 24 * 60 * 60 * 1_000 },
   PUBLISH_CAROUSEL: { limit: 100, windowMs: 24 * 60 * 60 * 1_000 },
-  PUBLISH_STORY: { limit: 100, windowMs: 24 * 60 * 60 * 1_000 },\n  PUBLISH_QUOTA_READ: { limit: 2, windowMs: 1_000 },
+  PUBLISH_STORY: { limit: 100, windowMs: 24 * 60 * 60 * 1_000 },
+  PUBLISH_QUOTA_READ: { limit: 2, windowMs: 1_000 },
   AUTOMATION_MEDIA_PREVIEW: { limit: 100, windowMs: 60 * 1_000 },
 };
 
