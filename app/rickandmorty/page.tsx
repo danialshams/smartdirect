@@ -29,9 +29,9 @@ export default function AdminDashboardPage() {
   ] : [];
 
   return (
-    <Stack spacing={2.5}>
+    <Stack spacing={{ xs: 1.5, sm: 2.5 }}>
       <Box>
-        <Typography variant="h5" fontWeight={700}>داشبورد</Typography>
+        <Typography variant="h5" fontWeight={700} sx={{ fontSize: { xs: 20, sm: 24 } }}>داشبورد</Typography>
         <Typography variant="body2" color="text.secondary">نمای کلی وضعیت کاربران، اشتراک‌ها و پشتیبانی</Typography>
       </Box>
 
