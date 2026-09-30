@@ -451,11 +451,14 @@ async function publishInstagramJobInternal(jobId: string) {
     return job;
   }
 
-  const idempotencyKey = idempotency.key;\n  const idempotencyLeaseToken = idempotency.leaseToken;
+  const idempotencyKey = idempotency.key;
+  const idempotencyLeaseToken = idempotency.leaseToken;
 
   const tags = normalizeUserTags(job.userTags);
   const token = await getValidInstagramAccessToken(job.instagramAccountId);
-  const tenantId = job.instagramAccount.userId;\n\n  await checkPublishingQuota(job.instagramAccount.igUserId, token, job.instagramAccountId, tenantId);
+  const tenantId = job.instagramAccount.userId;
+
+  await checkPublishingQuota(job.instagramAccount.igUserId, token, job.instagramAccountId, tenantId);
 
   await prisma.instagramPublishJob.update({
     where: { id: job.id },
