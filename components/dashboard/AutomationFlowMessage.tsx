@@ -764,12 +764,6 @@ function BranchAnswerEditor({
               value={reply.destinationType ?? ""}
               onChange={(event) => updateReply(reply.id, {
                 destinationType: (event.target.value || null) as QuickReplyDraft["destinationType"],
-                destinationText: "",
-                destinationShowcaseId: "",
-                destinationMediaUrl: "",
-                destinationMediaId: "",
-                destinationQuestion: "",
-                destinationQuickReplies: [],
               })}
               className="w-full appearance-none rounded-xl border border-border/70 bg-background px-3 py-2.5 text-xs"
             >
