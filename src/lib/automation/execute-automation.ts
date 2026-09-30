@@ -350,12 +350,18 @@ async function executeAutomationInternal(input: ExecuteAutomationInput) {
       },
     });
 
-    return {
+    const quickReplyResult = {
       success: true,
       executed: true,
       conversationId: conversation.id,
       executedMessages: [destinationMessage.id],
     };
+
+    if (idempotencyKey) {
+      await completeAutomationExecution(idempotencyKey, quickReplyResult, idempotencyLeaseToken);
+    }
+
+    return quickReplyResult;
   }
   // =========================================================
   // 7. Prevent circular flow
