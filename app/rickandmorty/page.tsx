@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, Col, Row, Skeleton, Statistic, Typography } from "antd";
-import { BadgePercent, Headphones, Instagram, UserRound, Users } from "lucide-react";
+import { BadgePercent, Camera, Headphones, UserRound, Users } from "lucide-react";
 
 type Stats = { users: number; pages: number; activeSubscriptions: number; expiredSubscriptions: number; openTickets: number };
 
@@ -20,7 +20,7 @@ export default function AdminDashboardPage() {
 
   const cards = stats ? [
     { title: "کاربران", value: stats.users, icon: UserRound, href: "/rickandmorty/users", className: "text-[#2563EB]" },
-    { title: "پیج‌های متصل", value: stats.pages, icon: Instagram, href: "/rickandmorty/users", className: "text-[#0F172A]" },
+    { title: "پیج‌های متصل", value: stats.pages, icon: Camera, href: "/rickandmorty/users", className: "text-[#0F172A]" },
     { title: "اشتراک فعال", value: stats.activeSubscriptions, icon: Users, href: "/rickandmorty/users", className: "text-[#16A34A]" },
     { title: "تیکت‌های باز", value: stats.openTickets, icon: Headphones, href: "/rickandmorty/tickets", className: "text-[#D97706]" },
   ] : [];
