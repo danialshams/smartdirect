@@ -120,7 +120,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     <Box sx={{ minHeight: "100vh", bgcolor: "#F8FAFC" }}>
       <Drawer
         variant="permanent"
-        anchor="right"
+        anchor="left"
         sx={{
           display: { xs: "none", lg: "block" },
           width: 248,
@@ -150,7 +150,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       </Drawer>
 
       <Drawer
-        anchor="right"
+        anchor="left"
         open={mobileOpen}
         onClose={() => setMobileOpen(false)}
         ModalProps={{ keepMounted: true }}
@@ -171,7 +171,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
         <Box sx={{ p: 1.5 }}><AdminNav onNavigate={() => setMobileOpen(false)} /></Box>
       </Drawer>
 
-      <Box sx={{ mr: { lg: "248px" } }}>
+      <Box sx={{ ml: { lg: "248px" } }}>
         <AppBar
           position="sticky"
           color="inherit"
