@@ -170,6 +170,12 @@ async function main() {
     assert(lockResults.some(x => !x.acquired), "Lock contention was not observed");
     if (lockOwners[0].handle) await releaseLock(lockOwners[0].handle);
 
+    // Stop the primary worker before the manual crash/recovery scenario.
+    // Otherwise it can legitimately claim the synthetic crash job between enqueue
+    // and claimJobById(), making this test race against its own worker.
+    controller.abort();
+    await worker;
+
     // 4) Real claimed job -> simulated worker death -> stalled recovery.
     const crashJob = await enqueueJob("TEST", {
       message: JSON.stringify({ tenant: tenant(1), account: account(1), phase: "normal", created: Date.now() } satisfies P)
