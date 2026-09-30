@@ -26,8 +26,33 @@ async function main() {
 
   console.log("[17] Redis health: OK");
 
-  await prisma.$queryRawUnsafe("SELECT 1");
-  console.log("[17] Database connectivity: OK");
+  let databaseConnected = false;
+  let databaseLastError: unknown;
+
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      await prisma.$queryRawUnsafe("SELECT 1");
+      databaseConnected = true;
+      if (attempt > 1) {
+        console.log(`[17] Database connectivity: OK (attempt ${attempt})`);
+      } else {
+        console.log("[17] Database connectivity: OK");
+      }
+      break;
+    } catch (error) {
+      databaseLastError = error;
+      if (attempt < 3) {
+        console.warn(`[17] Database connectivity attempt ${attempt} failed; retrying...`);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+    }
+  }
+
+  if (!databaseConnected) {
+    throw databaseLastError instanceof Error
+      ? databaseLastError
+      : new Error("Database connectivity check failed.");
+  }
 
   const redis = getRedisClient();
   const key = `smartdirect:portability:test:${Date.now()}`;
