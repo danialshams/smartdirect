@@ -310,8 +310,32 @@ async function main() {
         const payload = job.payload as {
           scenario?: string;
           event?: { scenario?: string };
+          automationId?: string;
+          message?: { scenario?: string };
+          publishingJobId?: string;
         };
-        const scenario = payload.scenario ?? payload.event?.scenario ?? "unknown";
+
+        let scenario = payload.scenario ?? payload.event?.scenario;
+
+        if (!scenario && payload.automationId) {
+          if (payload.automationId.includes("-comment-")) scenario = "comment";
+          else if (payload.automationId.includes("-story-")) scenario = "story";
+          else scenario = "automation";
+        }
+
+        if (!scenario && payload.message?.scenario) {
+          scenario = payload.message.scenario;
+        }
+
+        if (!scenario && payload.publishingJobId) {
+          scenario = "publishing";
+        }
+
+        if (!scenario && job.type === "INSTAGRAM_WEBHOOK") {
+          scenario = "webhook";
+        }
+
+        scenario ??= "unknown";
         const attempts = (attemptsByJob.get(job.id) ?? 0) + 1;
         attemptsByJob.set(job.id, attempts);
 
