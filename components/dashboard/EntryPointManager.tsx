@@ -7,6 +7,8 @@ import {
   Check,
   ChevronDown,
   Loader2,
+  Menu,
+  MessageSquare,
   Plus,
   Search,
   Trash2,
@@ -601,7 +603,7 @@ export default function EntryPointManager({ accounts, kind }: Props) {
                       className="flex min-w-0 flex-1 items-center gap-3 text-right"
                     >
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground">
-                        {kind === "ice-breaker" ? "?" : "☰"}
+                        {kind === "ice-breaker" ? <MessageSquare size={18} /> : <Menu size={18} />}
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-semibold text-foreground">
