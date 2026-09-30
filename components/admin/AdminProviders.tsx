@@ -36,7 +36,58 @@ const theme = createTheme({
     MuiPaper: { defaultProps: { elevation: 0 } },
     MuiCard: { styleOverrides: { root: { border: "1px solid #E2E8F0" } } },
     MuiButton: { defaultProps: { disableElevation: true } },
-    MuiTableCell: { styleOverrides: { head: { fontWeight: 700, backgroundColor: "#F8FAFC" } } },
+    MuiTableCell: {
+      styleOverrides: {
+        root: {
+          padding: "12px 16px",
+          whiteSpace: "nowrap",
+          "@media (max-width:600px)": {
+            padding: "9px 10px",
+            fontSize: "0.78rem",
+          },
+        },
+        head: {
+          fontWeight: 700,
+          backgroundColor: "#F8FAFC",
+          "@media (max-width:600px)": {
+            fontSize: "0.72rem",
+          },
+        },
+      },
+    },
+    MuiTable: {
+      styleOverrides: {
+        root: {
+          minWidth: 620,
+          "@media (max-width:600px)": {
+            minWidth: 560,
+          },
+        },
+      },
+    },
+    MuiCardContent: {
+      styleOverrides: {
+        root: {
+          padding: 20,
+          "@media (max-width:600px)": {
+            padding: 14,
+            "&:last-child": { paddingBottom: 14 },
+          },
+        },
+      },
+    },
+    MuiDialog: {
+      styleOverrides: {
+        paper: {
+          margin: 12,
+          width: "calc(100% - 24px)",
+          "@media (min-width:600px)": {
+            margin: 32,
+            width: "100%",
+          },
+        },
+      },
+    },
   },
 });
 
