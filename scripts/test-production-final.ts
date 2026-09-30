@@ -490,20 +490,28 @@ async function main() {
     // Redis failure/recovery: controlled timeout injection only.
     // We never destroy production data or credentials.
     // ------------------------------------------------------------
+    await redis.disconnect();
     setRedisCommandTimeoutMs(1);
     let redisFailureObserved = false;
+    const failureRedis = getRedisClient();
 
     try {
-      await redis.get(`smartdirect:production-final:redis-failure:${namespace}`);
+      await failureRedis.eval<number>(
+        "local x = 0 for i = 1, 5000000 do x = x + i end return x",
+        [],
+        [],
+      );
     } catch {
       redisFailureObserved = true;
     } finally {
+      await failureRedis.disconnect().catch(() => undefined);
       setRedisCommandTimeoutMs(30_000);
     }
 
     assert(redisFailureObserved, "Controlled Redis failure injection was not observed");
 
-    const redisRecovered = await redis.get(
+    const recoveredRedisClient = getRedisClient();
+    const redisRecovered = await recoveredRedisClient.get(
       `smartdirect:production-final:redis-recovered:${namespace}`,
     );
     assert(redisRecovered === null, "Redis did not recover after timeout injection");
