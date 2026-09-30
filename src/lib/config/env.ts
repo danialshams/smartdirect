@@ -57,6 +57,7 @@ export function validateServerEnvironment(): ServerEnvironment {
   const databaseIdleTimeoutMs = parseBoundedNumber("DB_IDLE_TIMEOUT_MS", 10000, 1000, 300000);
   const redisRestUrl = redisDriver === "redis" ? "" : required("UPSTASH_REDIS_REST_URL");
   const redisRestToken = redisDriver === "redis" ? "" : required("UPSTASH_REDIS_REST_TOKEN");
+  if (redisDriver === "redis") required("REDIS_URL");
 
   try {
     new URL(databaseUrl);
