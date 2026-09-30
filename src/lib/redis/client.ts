@@ -31,6 +31,12 @@ function getRedisConfig() {
   return { url, token };
 }
 
+function createNativeRedisClient(): RedisClientLike {
+  const url = process.env["REDIS_URL"]?.trim();
+  if (!url) throw new Error("REDIS_URL is not configured.");
+  return new NativeRedisAdapter(new IORedis(url));
+}
+
 function createRedisClient(): RedisClientLike {
   const { url, token } = getRedisConfig();
   return new Redis({
