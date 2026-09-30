@@ -404,14 +404,41 @@ export async function cancelJob(jobId: string) {
   return await redis.get<QueueJob>(jobKey(jobId));
 }
 
+const COMPLETE_JOB_SCRIPT = `
+local rawJob = redis.call("GET", KEYS[1])
+if not rawJob then return nil end
+local job = cjson.decode(rawJob)
+local claim = redis.call("GET", KEYS[2])
+if job.status ~= "active" then return nil end
+if not job.claimToken or claim ~= job.claimToken then return nil end
+job.status = "completed"
+job.workerId = nil
+job.claimToken = nil
+redis.call("SET", KEYS[1], cjson.encode(job))
+redis.call("ZREM", KEYS[3], ARGV[1])
+redis.call("ZREM", KEYS[4], ARGV[1])
+redis.call("ZREM", KEYS[5], ARGV[1])
+redis.call("DEL", KEYS[2])
+return cjson.encode(job)
+`;
+
 export async function completeJob(jobId: string) {
   const redis = createQueueRedis();
-  const job = await redis.get<QueueJob>(jobKey(jobId));
+  const current = await redis.get<QueueJob>(jobKey(jobId));
+  if (!current) return null;
+  const keys = getQueueKeys(current.queueNamespace);
+  const result = await redis.eval(
+    COMPLETE_JOB_SCRIPT,
+    [jobKey(jobId), claimKey(jobId), keys.active, keys.ready, keys.delayed],
+    [jobId],
+  );
 
-  if (!job) return null;
+  if (!result) return null;
 
-  job.status = "completed";
-  job.workerId = undefined;
+  const job =
+    typeof result === "string"
+      ? (JSON.parse(result) as QueueJob)
+      : (result as QueueJob);
 
   if (job.recoveryId) {
     await prisma.queueFailure.updateMany({
@@ -419,14 +446,6 @@ export async function completeJob(jobId: string) {
       data: { status: "RESOLVED", resolvedAt: new Date() },
     });
   }
-
-  const keys = getQueueKeys(job.queueNamespace);
-
-  await Promise.all([
-    redis.zrem(keys.active, jobId),
-    redis.set(jobKey(jobId), job),
-    removeJobFromQueue(redis, jobId, job.queueNamespace),
-  ]);
 
   return job;
 }
