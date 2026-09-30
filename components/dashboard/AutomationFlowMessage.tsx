@@ -336,7 +336,7 @@ export default function AutomationFlowMessage({
             showcases={showcases}
             onChange={(replies) => onUpdate({ quickReplies: replies })}
             onUpdateReply={onUpdateQuickReplyTree}
-            allowRichDestinations={triggerType === "STORY_REPLY_KEYWORD"}
+            allowRichDestinations={triggerType === "STORY_REPLY_KEYWORD" || triggerType === "DM"}
           />
         </div>
       )}
