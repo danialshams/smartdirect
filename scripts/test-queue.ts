@@ -1,6 +1,7 @@
 import "dotenv/config";
 
 import {
+  claimJobById,
   completeJob,
   enqueueJob,
   getJob,
@@ -38,6 +39,12 @@ async function main() {
 
   if (!stored || stored.id !== job.id) {
     throw new Error("Queue job could not be read back from Redis");
+  }
+
+  const claimed = await claimJobById(job.id, "queue-test-worker");
+
+  if (!claimed || claimed.status !== "active") {
+    throw new Error("Queue job could not be claimed for completion test");
   }
 
   await completeJob(job.id);
