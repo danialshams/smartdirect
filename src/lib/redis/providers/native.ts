@@ -43,7 +43,7 @@ export class NativeRedisAdapter implements RedisClientLike {
     return this.client.scan(cursor, ...(options?.match ? ["MATCH", options.match] : []), ...(options?.count ? ["COUNT", String(options.count)] : [])) as Promise<[string, string[]]>;
   }
   eval<T = unknown>(script: string, keys: string[], args: string[]) {
-    return this.client.eval(script, keys.length, ...keys, ...args) as T;
+    return this.client.eval(script, keys.length, ...keys, ...args) as unknown as Promise<T>;
   }
   ping() { return this.client.ping(); }
   async disconnect() { this.client.disconnect(); }
