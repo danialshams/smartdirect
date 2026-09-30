@@ -2,46 +2,59 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { z } from "zod";
 
-// Schema برای اعتبارسنجی فرم با Zod
 const loginSchema = z.object({
     email: z.string().email({ message: "ایمیل نامعتبر است" }),
     password: z.string().min(6, { message: "رمز عبور باید حداقل ۶ کاراکتر باشد" }),
 });
 
-// استخراج Type از schema
 type LoginInput = z.infer<typeof loginSchema>;
 
+function getSafeCallbackUrl(value: string | null) {
+    if (!value) return "/dashboard";
+
+    try {
+        const decoded = decodeURIComponent(value);
+        if (decoded.startsWith("/") && !decoded.startsWith("//")) {
+            return decoded;
+        }
+    } catch {
+        // مقدار نامعتبر است؛ مقصد پیش‌فرض استفاده می‌شود.
+    }
+
+    return "/dashboard";
+}
+
 export default function LoginForm() {
-    const router = useRouter();
+    const searchParams = useSearchParams();
 
     const {
         register,
         handleSubmit,
         formState: { errors, isSubmitting },
-        setError, // برای ست کردن خطاها از سمت سرور
+        setError,
     } = useForm<LoginInput>({
         resolver: zodResolver(loginSchema),
     });
 
     const onSubmit: SubmitHandler<LoginInput> = async (data) => {
-        const result = await signIn("credentials", { // "credentials" همان provider هست که در auth.ts تعریف کردی
-            redirect: false, // جلوی ری‌دایرکت خودکار next-auth رو می‌گیریم
+        const callbackUrl = getSafeCallbackUrl(searchParams.get("callbackUrl"));
+
+        const result = await signIn("credentials", {
+            redirect: false,
             email: data.email,
             password: data.password,
         });
 
         if (result?.error) {
             console.error("خطای لاگین:", result.error);
-            // بر اساس خطای برگشتی از سرور، خطا رو توی فرم نشون بده
             setError("email", { type: "manual", message: "ایمیل یا رمز عبور اشتباه است" });
             setError("password", { type: "manual", message: "ایمیل یا رمز عبور اشتباه است" });
         } else {
-            // لاگین موفق بود، ری‌دایرکت کن به صفحه داشبورد
-            router.push("/dashboard"); // مسیر داشبورد رو اینجا بذار
+            window.location.assign(callbackUrl);
         }
     };
 
