@@ -12,6 +12,8 @@ export default function AdminProviders({ children }: { children: ReactNode }) {
       theme={{
         token: {
           colorPrimary: "#2563EB",
+          colorPrimaryHover: "#1D4ED8",
+          colorPrimaryActive: "#1D4ED8",
           colorInfo: "#2563EB",
           colorSuccess: "#16A34A",
           colorWarning: "#D97706",
