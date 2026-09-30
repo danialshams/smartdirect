@@ -210,7 +210,7 @@ async function sendLegacyForm({ instagramAccountId, tenantId, instagramUserId, r
 }
 
 export async function sendAutomationMessage(payload: AutomationMessagePayload): Promise<SendAutomationMessageResult> {
-  let idempotencyKey: string | null = null;
+  let idempotencyKey: string | null = null;\n  let idempotencyLeaseToken: string | null = null;
 
   try {
 
@@ -231,7 +231,7 @@ export async function sendAutomationMessage(payload: AutomationMessagePayload): 
       };
     }
 
-    idempotencyKey = claim.key;
+    idempotencyKey = claim.key;\n    idempotencyLeaseToken = claim.leaseToken;
   }
 
   const finalizeResult = async (
@@ -244,7 +244,7 @@ export async function sendAutomationMessage(payload: AutomationMessagePayload): 
           igMessageId: result.igMessageId ?? null,
         });
       } else {
-        await failSendMessage(idempotencyKey, result.error ?? "Instagram message sending failed.");
+        await failSendMessage(idempotencyKey, result.error ?? "Instagram message sending failed.", idempotencyLeaseToken);
       }
     }
 
@@ -300,7 +300,7 @@ export async function sendAutomationMessage(payload: AutomationMessagePayload): 
   throw new Error(`Unsupported automation message type: ${message.messageType}`);
   } catch (error) {
     if (idempotencyKey) {
-      await failSendMessage(idempotencyKey, error);
+      await failSendMessage(idempotencyKey, error, idempotencyLeaseToken);
     }
     throw error;
   }
