@@ -2,6 +2,7 @@ import "dotenv/config";
 
 import { getQueueDepth } from "../src/lib/queue/core";
 import { recoverStalledJobs } from "../src/lib/queue/recovery";
+import { disconnectRedis } from "../src/lib/redis/client";
 
 async function main() {
   const before = await getQueueDepth();
@@ -53,7 +54,11 @@ async function main() {
   console.log("Recovery Smoke Test: OK");
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+main()
+  .catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+  })
+  .finally(async () => {
+    await disconnectRedis().catch(() => undefined);
+  });
