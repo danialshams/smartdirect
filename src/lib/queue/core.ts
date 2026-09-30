@@ -340,7 +340,6 @@ export async function claimNextJob(
       JOB_PREFIX,
       workerId,
       crypto.randomUUID(),
-      crypto.randomUUID(),
       String(getQueueClaimTtlSeconds()),
       String(Date.now()),
     ],
