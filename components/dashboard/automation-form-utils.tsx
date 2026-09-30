@@ -136,25 +136,71 @@ export function getMessageIcon(type: MessageType) {
 
 function normalizeQuickReplyDraft(rawQuickReply: unknown): QuickReplyDraft | null {
     if (!rawQuickReply || typeof rawQuickReply !== "object") return null;
+
     const qr = rawQuickReply as Record<string, unknown>;
-    const destinationType = ["TEXT", "FORM", "SHOWCASE", "IMAGE", "VIDEO", "AUDIO"].includes(String(qr.destinationType))
-        ? qr.destinationType as QuickReplyDestinationType
-        : null;
+    let storedDestination: Record<string, unknown> = {};
+
+    /*
+     * مقصد پاسخ‌ها داخل replyText به‌صورت JSON ذخیره شده است.
+     * این JSON می‌تواند خودش یک درخت کامل از destinationQuickReplies داشته باشد.
+     * اول آن را باز می‌کنیم و سپس در صورت وجود فیلدهای جدید، همان‌ها را ترجیح می‌دهیم.
+     */
+    if (typeof qr.replyText === "string" && qr.replyText.trim()) {
+        try {
+            const parsed = JSON.parse(qr.replyText) as unknown;
+            if (parsed && typeof parsed === "object") {
+                storedDestination = parsed as Record<string, unknown>;
+            }
+        } catch {
+            // رکوردهای قدیمی که replyText متن ساده دارند را نادیده می‌گیریم.
+        }
+    } else if (qr.replyText && typeof qr.replyText === "object") {
+        storedDestination = qr.replyText as Record<string, unknown>;
+    }
+
+    const readString = (key: string, fallback = "") =>
+        typeof qr[key] === "string"
+            ? qr[key] as string
+            : typeof storedDestination[key] === "string"
+                ? storedDestination[key] as string
+                : fallback;
+
+    const rawDestinationType =
+        qr.destinationType ??
+        storedDestination.destinationType ??
+        storedDestination.type;
+
+    const destinationType =
+        ["TEXT", "FORM", "SHOWCASE", "IMAGE", "VIDEO", "AUDIO"].includes(
+            String(rawDestinationType),
+        )
+            ? rawDestinationType as QuickReplyDestinationType
+            : null;
+
+    const rawChildren =
+        Array.isArray(qr.destinationQuickReplies)
+            ? qr.destinationQuickReplies
+            : Array.isArray(storedDestination.destinationQuickReplies)
+                ? storedDestination.destinationQuickReplies
+                : Array.isArray(storedDestination.quickReplies)
+                    ? storedDestination.quickReplies
+                    : [];
+
     return {
         id: typeof qr.id === "string" ? qr.id : createLocalId("quick_reply"),
         title: typeof qr.title === "string" ? qr.title : "",
         payload: typeof qr.payload === "string" ? qr.payload : createLocalId("payload"),
         nextMessageId: typeof qr.nextMessageId === "string" ? qr.nextMessageId : null,
         destinationType,
-        destinationText: typeof qr.destinationText === "string" ? qr.destinationText : "",
-        destinationFormId: typeof qr.destinationFormId === "string" ? qr.destinationFormId : "",
-        destinationShowcaseId: typeof qr.destinationShowcaseId === "string" ? qr.destinationShowcaseId : "",
-        destinationMediaUrl: typeof qr.destinationMediaUrl === "string" ? qr.destinationMediaUrl : "",
-        destinationMediaId: typeof qr.destinationMediaId === "string" ? qr.destinationMediaId : "",
-        destinationQuestion: typeof qr.destinationQuestion === "string" ? qr.destinationQuestion : "",
-        destinationQuickReplies: Array.isArray(qr.destinationQuickReplies)
-            ? qr.destinationQuickReplies.map((child) => normalizeQuickReplyDraft(child)).filter((item): item is QuickReplyDraft => item !== null)
-            : [],
+        destinationText: readString("destinationText", readString("text")),
+        destinationFormId: readString("destinationFormId", readString("formId")),
+        destinationShowcaseId: readString("destinationShowcaseId", readString("showcaseId")),
+        destinationMediaUrl: readString("destinationMediaUrl", readString("mediaUrl")),
+        destinationMediaId: readString("destinationMediaId", readString("mediaId")),
+        destinationQuestion: readString("destinationQuestion", readString("question")),
+        destinationQuickReplies: rawChildren
+            .map((child) => normalizeQuickReplyDraft(child))
+            .filter((item): item is QuickReplyDraft => item !== null),
     };
 }
 
