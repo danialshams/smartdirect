@@ -1,7 +1,10 @@
 import { Redis } from "@upstash/redis";
+import IORedis from "ioredis";
+import { NativeRedisAdapter } from "./providers/native";
+import type { RedisClientLike } from "./types";
 
 const globalForRedis = globalThis as unknown as {
-  smartDirectRedis?: Redis;
+  smartDirectRedis?: RedisClientLike;
 };
 
 const DEFAULT_REDIS_COMMAND_TIMEOUT_MS = 5_000;
@@ -15,6 +18,10 @@ function getRedisCommandTimeoutMs() {
   return Number.isFinite(value) && value > 0 ? value : DEFAULT_REDIS_COMMAND_TIMEOUT_MS;
 }
 
+function getRedisDriver() {
+  return process.env.REDIS_DRIVER?.trim().toLowerCase() === "redis" ? "redis" : "upstash";
+}
+
 function getRedisConfig() {
   const url = process.env.UPSTASH_REDIS_REST_URL?.trim();
   const token = process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
@@ -24,13 +31,25 @@ function getRedisConfig() {
   return { url, token };
 }
 
-function createRedisClient(): Redis {
+function createNativeRedisClient(): RedisClientLike {
+  const url = process.env["REDIS_URL"]?.trim();
+  if (!url) throw new Error("REDIS_URL is not configured.");
+  return new NativeRedisAdapter(new IORedis(url));
+}
+
+function createRedisClient(): RedisClientLike {
+  switch (getRedisDriver()) {
+    case "redis":
+      return createNativeRedisClient();
+    default:
+      break;
+  }
   const { url, token } = getRedisConfig();
   return new Redis({
     url,
     token,
     signal: () => AbortSignal.timeout(getRedisCommandTimeoutMs()),
-  });
+  }) as unknown as RedisClientLike;
 }
 
 export function setRedisCommandTimeoutMs(timeoutMs: number) {
@@ -41,7 +60,7 @@ export function setRedisCommandTimeoutMs(timeoutMs: number) {
   globalForRedis.smartDirectRedis = undefined;
 }
 
-export function getRedisClient(): Redis {
+export function getRedisClient(): RedisClientLike {
   if (!globalForRedis.smartDirectRedis) {
     globalForRedis.smartDirectRedis = createRedisClient();
   }
@@ -53,8 +72,9 @@ export async function connectRedis() {
 }
 
 export async function disconnectRedis() {
-  // @upstash/redis is HTTP based and has no persistent socket to close.
-  return;
+  const client = globalForRedis.smartDirectRedis;
+  globalForRedis.smartDirectRedis = undefined;
+  if (client) await client.disconnect();
 }
 
 export async function redisHealthCheck() {
@@ -67,13 +87,15 @@ export async function redisHealthCheck() {
       configured: true,
       latencyMs: Date.now() - startedAt,
       status: "ready",
+      driver: getRedisDriver(),
     };
   } catch (error) {
     return {
       ok: false,
       configured: Boolean(
-        process.env.UPSTASH_REDIS_REST_URL?.trim() &&
-        process.env.UPSTASH_REDIS_REST_TOKEN?.trim(),
+        getRedisDriver() === "redis"
+          ? process.env["REDIS_URL"]?.trim()
+          : process.env.UPSTASH_REDIS_REST_URL?.trim() && process.env.UPSTASH_REDIS_REST_TOKEN?.trim(),
       ),
       latencyMs: Date.now() - startedAt,
       status: "error",

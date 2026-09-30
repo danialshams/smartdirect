@@ -1,5 +1,5 @@
-import type { Redis } from "@upstash/redis";
 import { getRedisClient } from "@/lib/redis/client";
+import type { RedisClientLike } from "@/lib/redis/types";
 import { prisma } from "@/lib/prisma";
 
 import type {
@@ -365,7 +365,7 @@ export async function claimNextJob(
 }
 
 async function removeJobFromQueue(
-  redis: Redis,
+  redis: RedisClientLike,
   jobId: string,
   queueNamespace = DEFAULT_QUEUE_NAMESPACE,
 ) {
@@ -590,8 +590,9 @@ end
 job.status = "active"
 job.attempts = (job.attempts or 0) + 1
 job.workerId = ARGV[4]
+job.claimToken = ARGV[5]
 
-redis.call("SET", claimKey, ARGV[4], "EX", ARGV[5])
+redis.call("SET", claimKey, ARGV[5], "EX", ARGV[6])
 redis.call("SET", jobKey, cjson.encode(job))
 redis.call("ZADD", KEYS[1], ARGV[6], ARGV[2])
 redis.call("ZREM", KEYS[2], ARGV[2])
