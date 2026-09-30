@@ -70,7 +70,7 @@ export async function recoverStalledJobs(limit = 50, queueNamespace = "default")
     }
 
     if (job.attempts >= job.maxAttempts) {
-      await failJob(id, new Error("JOB_STALLED_MAX_ATTEMPTS"));
+      await failJob(id, new Error("JOB_STALLED_MAX_ATTEMPTS"), { force: true });
       permanentlyFailed++;
       console.log(JSON.stringify({
         event: "queue:stalled:permanent-failure",
@@ -82,7 +82,7 @@ export async function recoverStalledJobs(limit = 50, queueNamespace = "default")
     }
 
     job.status = "waiting";
-    job.workerId = undefined;
+    job.workerId = undefined;\n    job.claimToken = undefined;
 
     await redis.set(jobKey(id), job);
     await redis.zrem(keys.active, id);
