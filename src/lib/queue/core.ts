@@ -608,17 +608,17 @@ end
 return 0
 `
 
-export async function refreshJobClaim(jobId: string, workerId: string) {
+export async function refreshJobClaim(jobId: string, claimToken: string) {
   const redis = createQueueRedis();
   const result = await redis.eval(
     REFRESH_CLAIM_SCRIPT,
     [claimKey(jobId)],
-    [workerId, String(getQueueClaimTtlSeconds())],
+    [claimToken, String(getQueueClaimTtlSeconds())],
   );
   return Number(result) === 1;
 }
 
-export function startJobClaimHeartbeat(jobId: string, workerId: string, maxDurationMs?: number) {
+export function startJobClaimHeartbeat(jobId: string, claimToken: string, maxDurationMs?: number) {
   const intervalMs = Math.max(1_000, Math.floor((getQueueClaimTtlSeconds() * 1000) / 3));
   let stopped = false;
   let inFlight = false;
@@ -632,7 +632,7 @@ export function startJobClaimHeartbeat(jobId: string, workerId: string, maxDurat
     }
     if (stopped || inFlight) return;
     inFlight = true;
-    void refreshJobClaim(jobId, workerId).catch(() => undefined).finally(() => {
+    void refreshJobClaim(jobId, claimToken).catch(() => undefined).finally(() => {
       inFlight = false;
     });
   }, intervalMs);
