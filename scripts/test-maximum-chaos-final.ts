@@ -185,7 +185,15 @@ async function main() {
     await redis.del("smartdirect:queue:claim:" + crashJob.id);
     await redis.zadd("smartdirect:queue:" + ns + ":active", { score: Date.now() - 120_000, member: crashJob.id });
     crashCount++;
-    assert((await recoverStalledJobs(100, ns)).recovered >= 1, "Stalled recovery failed");
+    const stalledRecovery = await recoverStalledJobs(100, ns);
+    assert(stalledRecovery.recovered >= 1, "Stalled recovery failed");
+
+    // The crash job is intentionally recovered back to the queue. The primary
+    // worker is stopped for this deterministic crash scenario, so remove the
+    // recovered synthetic job before the later drain checks. The recovery
+    // itself has already been asserted above; leaving this job queued would
+    // make the drain wait forever until the global test timeout.
+    await deleteJob(crashJob.id);
 
     // 5) Heavy Redis pressure while workers are active.
     const prefix = "smartdirect:maximum:" + ns + ":";
