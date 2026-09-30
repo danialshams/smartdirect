@@ -210,7 +210,8 @@ async function sendLegacyForm({ instagramAccountId, tenantId, instagramUserId, r
 }
 
 export async function sendAutomationMessage(payload: AutomationMessagePayload): Promise<SendAutomationMessageResult> {
-  let idempotencyKey: string | null = null;\n  let idempotencyLeaseToken: string | null = null;
+  let idempotencyKey: string | null = null;
+  let idempotencyLeaseToken: string | null = null;
 
   try {
 
@@ -231,7 +232,8 @@ export async function sendAutomationMessage(payload: AutomationMessagePayload): 
       };
     }
 
-    idempotencyKey = claim.key;\n    idempotencyLeaseToken = claim.leaseToken;
+    idempotencyKey = claim.key;
+    idempotencyLeaseToken = claim.leaseToken;
   }
 
   const finalizeResult = async (
