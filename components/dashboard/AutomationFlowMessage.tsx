@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select } from "@/components/ui/select"
 
 import { ChevronDown, ClipboardList, ImagePlus, MessageSquare, Mic, Plus, Store, Trash2, Upload, Video, X, type LucideIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { AutomationTriggerType } from "./AutomationManager";
 import type { FormItem, MessageDraft, QuickReplyDraft, Showcase } from "./automation-form-utils";
 import { getMessageTypeLabel } from "./automation-form-utils";
@@ -83,6 +83,33 @@ export default function AutomationFlowMessage({
   const availableForms = forms ?? [];
   const [showcaseItems, setShowcaseItems] = useState<ShowcaseItemDraft[]>([newShowcaseItem()]);
   const [showcaseSaving, setShowcaseSaving] = useState(false);
+  const [showcaseItemSaving, setShowcaseItemSaving] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (message.messageType !== "SHOWCASE" || !message.showcaseId) {
+      setShowcaseItems([newShowcaseItem()]);
+      return;
+    }
+
+    const showcase = (showcases ?? []).find((item) => item.id === message.showcaseId);
+    const rawItems = Array.isArray(showcase?.items) ? showcase.items : [];
+
+    if (rawItems.length > 0) {
+      setShowcaseItems(
+        rawItems
+          .filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object")
+          .map((item) => ({
+            id: typeof item.id === "string" ? item.id : `showcase_item_${crypto.randomUUID()}`,
+            title: typeof item.title === "string" ? item.title : "",
+            description: typeof item.description === "string" ? item.description : "",
+            imageUrl: typeof item.imageUrl === "string" ? item.imageUrl : "",
+            previewUrl: typeof item.imageUrl === "string" ? item.imageUrl : "",
+          })),
+      );
+    } else {
+      setShowcaseItems([]);
+    }
+  }, [message.messageType, message.showcaseId, showcases]);
   const [showcaseError, setShowcaseError] = useState("");
   const [mediaUploading, setMediaUploading] = useState(false);
   const [showcaseUploadingItems, setShowcaseUploadingItems] = useState<string[]>([]);
@@ -95,6 +122,46 @@ export default function AutomationFlowMessage({
     setShowcaseItems((current) => current.map((item) => item.id === id ? { ...item, ...patch } : item));
   }
 
+  async function persistExistingShowcaseItem(item: ShowcaseItemDraft, patch: Partial<ShowcaseItemDraft> = {}) {
+    if (!message.showcaseId || !item.id || item.id.startsWith("showcase_item_")) return;
+
+    const next = { ...item, ...patch };
+    if (!next.title.trim()) {
+      setShowcaseError("نام اسلاید نمی‌تواند خالی باشد.");
+      return;
+    }
+
+    setShowcaseItemSaving((current) => current.includes(item.id) ? current : [...current, item.id]);
+    try {
+      setShowcaseError("");
+      const response = await fetch(`/api/showcases/${encodeURIComponent(message.showcaseId)}/items`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          itemId: item.id,
+          title: next.title.trim(),
+          description: next.description.trim() || null,
+          imageUrl: next.imageUrl.trim() || null,
+        }),
+      });
+      const result = await readJsonResponse(response, "ذخیره تغییرات اسلاید ناموفق بود.");
+      if (!response.ok || result?.error) {
+        throw new Error(result?.error || result?.message || "ذخیره تغییرات اسلاید ناموفق بود.");
+      }
+      updateShowcaseItem(item.id, {
+        title: next.title,
+        description: next.description,
+        imageUrl: next.imageUrl,
+        previewUrl: next.previewUrl,
+      });
+    } catch (error) {
+      setShowcaseError(error instanceof Error ? error.message : "ذخیره تغییرات اسلاید ناموفق بود.");
+    } finally {
+      setShowcaseItemSaving((current) => current.filter((itemId) => itemId !== item.id));
+    }
+  }
+
   async function handleShowcaseImage(id: string, file?: File) {
     if (!file) return;
     setShowcaseUploadingItems((current) => current.includes(id) ? current : [...current, id]);
@@ -104,6 +171,16 @@ export default function AutomationFlowMessage({
       updateShowcaseItem(id, { previewUrl: localUrl, imageUrl: "" });
       const uploaded = await uploadShowcaseImage(file);
       updateShowcaseItem(id, { imageUrl: uploaded.publicUrl, previewUrl: uploaded.publicUrl });
+
+      if (message.showcaseId && !id.startsWith("showcase_item_")) {
+        const currentItem = showcaseItems.find((item) => item.id === id);
+        if (currentItem) {
+          await persistExistingShowcaseItem(currentItem, {
+            imageUrl: uploaded.publicUrl,
+            previewUrl: uploaded.publicUrl,
+          });
+        }
+      }
     } catch (error) {
       updateShowcaseItem(id, { imageUrl: "" });
       setShowcaseError(error instanceof Error ? error.message : "آپلود تصویر ناموفق بود.");
@@ -291,8 +368,26 @@ export default function AutomationFlowMessage({
                   <Input type="file" accept="image/*" className="hidden" onChange={(event) => void handleShowcaseImage(item.id, event.target.files?.[0])} />
                 </label>
                 <div className="space-y-2.5">
-                  <Input value={item.title} onChange={(event) => updateShowcaseItem(item.id, { title: event.target.value })} placeholder="نام اسلاید" className="w-full rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm outline-none focus:border-ring" />
-                  <Textarea value={item.description} onChange={(event) => updateShowcaseItem(item.id, { description: event.target.value })} rows={3} placeholder="توضیح اسلاید" className="w-full resize-none rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm leading-6 outline-none focus:border-ring" />
+                  <Input
+                    value={item.title}
+                    onChange={(event) => updateShowcaseItem(item.id, { title: event.target.value })}
+                    onBlur={() => void persistExistingShowcaseItem(item)}
+                    placeholder="نام اسلاید"
+                    className="w-full rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm outline-none focus:border-ring"
+                    disabled={showcaseItemSaving.includes(item.id)}
+                  />
+                  <Textarea
+                    value={item.description}
+                    onChange={(event) => updateShowcaseItem(item.id, { description: event.target.value })}
+                    onBlur={() => void persistExistingShowcaseItem(item)}
+                    rows={3}
+                    placeholder="توضیح اسلاید"
+                    className="w-full resize-none rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm leading-6 outline-none focus:border-ring"
+                    disabled={showcaseItemSaving.includes(item.id)}
+                  />
+                  {showcaseItemSaving.includes(item.id) && (
+                    <p className="text-[10px] text-muted-foreground">در حال ذخیره تغییرات...</p>
+                  )}
                 </div>
               </div>
             </div>
