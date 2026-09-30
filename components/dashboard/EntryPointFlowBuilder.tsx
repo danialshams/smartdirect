@@ -450,10 +450,11 @@ export default function EntryPointFlowBuilder({
     }
 
     function addMessage() {
-        setMessages((current) => [
-            ...current,
-            createEmptyMessage(),
-        ]);
+        setMessages((current) =>
+            current.length > 0
+                ? current
+                : [createEmptyMessage()],
+        );
 
         setOpen(true);
         setSuccess(false);
@@ -1092,12 +1093,9 @@ export default function EntryPointFlowBuilder({
                     {/* Description */}
                     <div className="mb-5 rounded-xl border border-border/60 bg-muted px-4 py-3">
                         <p className="text-xs leading-6 text-muted-foreground">
-                            این Flow مستقل از
-                            Automationهای معمولی
-                            شماست. پیام‌ها به ترتیب
-                            اجرا می‌شوند و Quick Reply
-                            می‌تواند کاربر را به پیام
-                            دیگری هدایت کند.
+                            برای این گزینه فقط یک پیام اصلی می‌سازید.
+                            پاسخ‌های بعدی را می‌توانید با Quick Reply
+                            و فرم‌های تو در تو مرحله‌به‌مرحله بسازید.
                         </p>
                     </div>
 
@@ -1267,25 +1265,6 @@ export default function EntryPointFlowBuilder({
                                     )}
                                 </div>
                             )}
-
-                            {/* Add message */}
-                            {messages.length >
-                                0 && (
-                                    <Button
-                                        type="button"
-                                        onClick={
-                                            addMessage
-                                        }
-                                        className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-white px-4 py-3 text-xs font-semibold text-muted-foreground transition hover:border-ring hover:bg-muted"
-                                    >
-                                        <Plus
-                                            size={
-                                                15
-                                            }
-                                        />
-                                        افزودن پیام
-                                    </Button>
-                                )}
 
                             {/* Save */}
                             <div className="mt-5 border-t border-border pt-5">
