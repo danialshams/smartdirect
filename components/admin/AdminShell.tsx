@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { Avatar, Button, Drawer, Layout, Menu, Space, Typography } from "antd";
 import {
@@ -18,10 +18,10 @@ import {
 const { Header, Sider, Content } = Layout;
 
 const items = [
-  { key: "/rickandmorty", label: <Link href="/rickandmorty">داشبورد</Link>, icon: <LayoutDashboard size={18} />, exact: true },
-  { key: "/rickandmorty/users", label: <Link href="/rickandmorty/users">کاربران</Link>, icon: <Users size={18} /> },
-  { key: "/rickandmorty/tickets", label: <Link href="/rickandmorty/tickets">تیکت‌ها</Link>, icon: <Ticket size={18} /> },
-  { key: "/rickandmorty/coupons", label: <Link href="/rickandmorty/coupons">کدهای تخفیف</Link>, icon: <BadgePercent size={18} /> },
+  { key: "/rickandmorty", label: "داشبورد", icon: <LayoutDashboard size={18} /> },
+  { key: "/rickandmorty/users", label: "کاربران", icon: <Users size={18} /> },
+  { key: "/rickandmorty/tickets", label: "تیکت‌ها", icon: <Ticket size={18} /> },
+  { key: "/rickandmorty/coupons", label: "کدهای تخفیف", icon: <BadgePercent size={18} /> },
 ];
 
 function selectedKey(pathname: string) {
@@ -33,14 +33,20 @@ function selectedKey(pathname: string) {
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const handleMenuClick = ({ key }: { key: string }) => {
+    setMobileOpen(false);
+    if (key !== pathname) router.push(key);
+  };
 
   const menu = (
     <Menu
       mode="inline"
       selectedKeys={[selectedKey(pathname)]}
       items={items}
-      onClick={() => setMobileOpen(false)}
+      onClick={handleMenuClick}
       className="!border-none !bg-transparent"
     />
   );
