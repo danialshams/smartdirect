@@ -8,8 +8,6 @@ import {
   deleteJob,
   enqueueJob,
   getJob,
-  getQueueDepth,
-  promoteDueJobs,
   startJobClaimHeartbeat,
 } from "../src/lib/queue/core";
 import { recoverStalledJobs } from "../src/lib/queue/recovery";
@@ -21,7 +19,7 @@ function assert(condition: unknown, message: string) {
 
 async function main() {
   const ns = `group21-${Date.now()}`;
-  const redis = createQueueRedis();
+  let redis = createQueueRedis();
   const results = {
     atLeastOnceDelivery: false,
     stalledDetection: false,
@@ -133,16 +131,29 @@ async function main() {
     assert(timeoutRecovery.recovered === 1, "Job timeout watchdog did not make the job recoverable");
     results.jobTimeoutWatchdog = true;
 
+    // Do not rely on a 1ms PING failing: local Redis can legitimately answer
+    // faster than that. Instead, run a deliberately CPU-bound Lua command
+    // against a freshly-created client so commandTimeout is tested deterministically.
+    await redis.disconnect();
     setRedisCommandTimeoutMs(1);
+    redis = createQueueRedis();
+
     let failed = false;
     try {
-      await redis.ping();
+      await redis.eval<number>(
+        "local x = 0 for i = 1, 5000000 do x = x + i end return x",
+        [],
+        [],
+      );
     } catch {
       failed = true;
-    } finally {
-      setRedisCommandTimeoutMs(Number(originalTimeout ?? 5000));
     }
+
     assert(failed, "Redis failure injection did not produce a timeout");
+
+    await redis.disconnect();
+    setRedisCommandTimeoutMs(Number(originalTimeout ?? 5000));
+    redis = createQueueRedis();
     assert((await redis.ping()) === "PONG", "Redis did not recover after failure injection");
     results.redisFailureHandling = true;
 
@@ -160,6 +171,7 @@ async function main() {
     await redis.del(`smartdirect:queue:${ns}:delayed`);
     await redis.del(`smartdirect:queue:${ns}:active`);
     await redis.del(`smartdirect:queue:${ns}:failed`);
+    await redis.disconnect().catch(() => undefined);
   }
 }
 
