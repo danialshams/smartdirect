@@ -13,7 +13,7 @@ export default withAuth(async function middleware(req: NextAuthRequest) {
   const token = req.nextauth.token;
   const path = req.nextUrl.pathname;
 
-  if (path.startsWith("/admin") && token?.role !== "ADMIN") {
+  if (path.startsWith("/rickandmorty") && token?.role !== "ADMIN") {
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
@@ -21,5 +21,5 @@ export default withAuth(async function middleware(req: NextAuthRequest) {
 });
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/admin/:path*"],
+  matcher: ["/dashboard/:path*", "/rickandmorty/:path*"],
 };
