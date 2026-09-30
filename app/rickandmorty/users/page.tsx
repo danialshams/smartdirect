@@ -22,13 +22,13 @@ export default function AdminUsersPage() {
   const load=async()=>{setLoading(true);try{const r=await fetch(`/api/admin/users?q=${encodeURIComponent(q)}&page=${page}&pageSize=20`,{cache:"no-store"});const j=await r.json();if(!r.ok)throw new Error(j.message);setRows(j.data);setTotal(j.total);}finally{setLoading(false);}};
   useEffect(()=>{load().catch(()=>{});},[q,page]);
 
-  return <Stack spacing={2.5}>
-    <Box><Typography variant="h5" fontWeight={700}>کاربران</Typography><Typography variant="body2" color="text.secondary">اطلاعات کاربران، پیج‌های متصل و اشتراک</Typography></Box>
-    <Card><CardContent>
+  return <Stack spacing={{ xs: 1.5, sm: 2.5 }}>
+    <Box><Typography variant="h5" fontWeight={700} sx={{ fontSize: { xs: 20, sm: 24 } }}>کاربران</Typography><Typography variant="body2" color="text.secondary">اطلاعات کاربران، پیج‌های متصل و اشتراک</Typography></Box>
+    <Card><CardContent sx={{ p: { xs: 1.25, sm: 2.5 }, "&:last-child": { pb: { xs: 1.25, sm: 2.5 } } }}>
       <TextField fullWidth size="small" value={q} placeholder="جستجو بر اساس نام یا ایمیل..." onChange={e=>{setPage(1);setQ(e.target.value)}} sx={{maxWidth:520,mb:2}} InputProps={{startAdornment:<InputAdornment position="start"><Search size={18}/></InputAdornment>}}/>
-      <TableContainer sx={{overflowX:"auto"}}>
-        <Table sx={{minWidth:680}}>
-          <TableHead><TableRow><TableCell>کاربر</TableCell><TableCell>پیج‌های متصل</TableCell><TableCell>اشتراک</TableCell><TableCell>انقضا</TableCell><TableCell>نقش</TableCell></TableRow></TableHead>
+      <TableContainer sx={{ overflowX: "auto", mx: { xs: -1.25, sm: 0 }, width: { xs: "calc(100% + 20px)", sm: "100%" } }}>
+        <Table sx={{ minWidth: 620 }}>
+          <TableHead><TableRow><TableCell sx={{ position: { xs: "sticky", sm: "static" }, right: { xs: 0, sm: "auto" }, zIndex: { xs: 2, sm: "auto" }, bgcolor: { xs: "#fff", sm: "#F8FAFC" } }}>کاربر</TableCell><TableCell>پیج‌های متصل</TableCell><TableCell>اشتراک</TableCell><TableCell>انقضا</TableCell><TableCell>نقش</TableCell></TableRow></TableHead>
           <TableBody>
             {loading ? <TableRow><TableCell colSpan={5} align="center" sx={{py:6}}><CircularProgress size={28}/></TableCell></TableRow> :
             rows.length ? rows.map(r=><TableRow key={r.id} hover onClick={()=>router.push(`/rickandmorty/users/${r.id}`)} sx={{cursor:"pointer"}}>
