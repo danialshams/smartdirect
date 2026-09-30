@@ -64,6 +64,73 @@ export async function GET(
 }
 
 /**
+ * PATCH /api/showcases/[id]/items/[itemId]
+ *
+ * ویرایش یک اسلاید موجود در ویترین
+ */
+export async function PATCH(
+  request: NextRequest,
+  {
+    params,
+  }: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "احراز هویت انجام نشده است" }, { status: 401 });
+    }
+
+    const { id } = await params;
+    const showcase = await prisma.showcase.findFirst({
+      where: { id, userId: session.user.id },
+    });
+    if (!showcase) {
+      return NextResponse.json({ error: "ویترین پیدا نشد" }, { status: 404 });
+    }
+
+    const body = await request.json();
+    const itemId = typeof body.itemId === "string" ? body.itemId.trim() : "";
+    if (!itemId) {
+      return NextResponse.json({ error: "شناسه اسلاید الزامی است" }, { status: 400 });
+    }
+
+    const existingItem = await prisma.showcaseItem.findFirst({
+      where: { id: itemId, showcaseId: id },
+    });
+    if (!existingItem) {
+      return NextResponse.json({ error: "اسلاید پیدا نشد" }, { status: 404 });
+    }
+
+    const { title, description, imageUrl, order, isActive } = body;
+    if (title !== undefined && (typeof title !== "string" || !title.trim())) {
+      return NextResponse.json({ error: "عنوان اسلاید معتبر نیست" }, { status: 400 });
+    }
+
+    const item = await prisma.showcaseItem.update({
+      where: { id: itemId },
+      data: {
+        ...(title !== undefined ? { title: title.trim() } : {}),
+        ...(description !== undefined
+          ? { description: typeof description === "string" && description.trim() ? description.trim() : null }
+          : {}),
+        ...(imageUrl !== undefined
+          ? { imageUrl: typeof imageUrl === "string" && imageUrl.trim() ? imageUrl.trim() : null }
+          : {}),
+        ...(typeof order === "number" && Number.isInteger(order) ? { order } : {}),
+        ...(isActive !== undefined ? { isActive: Boolean(isActive) } : {}),
+      },
+    });
+
+    return NextResponse.json(item);
+  } catch (error) {
+    console.error("PATCH /api/showcases/[id]/items error:", error);
+    return NextResponse.json({ error: "خطا در ویرایش اسلاید ویترین" }, { status: 500 });
+  }
+}
+
+/**
  * POST /api/showcases/[id]/items
  */
 export async function POST(
