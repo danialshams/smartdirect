@@ -82,7 +82,8 @@ export async function recoverStalledJobs(limit = 50, queueNamespace = "default")
     }
 
     job.status = "waiting";
-    job.workerId = undefined;\n    job.claimToken = undefined;
+    job.workerId = undefined;
+    job.claimToken = undefined;
 
     await redis.set(jobKey(id), job);
     await redis.zrem(keys.active, id);
