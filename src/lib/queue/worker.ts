@@ -11,7 +11,7 @@ import {
   completeIdempotency,
   failIdempotency,
 } from "../idempotency/store";
-import { acquireLock, releaseLock } from "../lock/redis-lock";
+import { acquireLock, releaseLock, startLockHeartbeat } from "../lock/redis-lock";
 import type { DistributedLockHandle } from "../lock/types";
 import type { QueueJob } from "./types";
 import { recoverStalledJobs } from "./recovery";
@@ -133,9 +133,11 @@ export async function runQueueWorker(
     enterObservabilityContext({ jobId: job.id });
 
     let lockHandle: DistributedLockHandle | undefined;
+    let idempotencyLeaseToken: string | null = null;
     let stopClaimHeartbeat: (() => void) | undefined;
+    let stopLockHeartbeat: (() => void) | undefined;
     const jobTimeoutMs = Math.max(0, Number(process.env.QUEUE_JOB_TIMEOUT_MS ?? 0));
-    stopClaimHeartbeat = startJobClaimHeartbeat(job.id, workerId, jobTimeoutMs || undefined);
+    stopClaimHeartbeat = startJobClaimHeartbeat(job.id, job.claimToken ?? workerId, jobTimeoutMs || undefined);
 
     try {
       const lock = await acquireLock({
@@ -148,6 +150,7 @@ export async function runQueueWorker(
       }
 
       lockHandle = lock.handle;
+      stopLockHeartbeat = startLockHeartbeat(lockHandle, jobTimeoutMs || undefined);
 
       if (job.idempotency) {
         const claim = await claimIdempotency({
@@ -161,6 +164,8 @@ export async function runQueueWorker(
           await completeJob(job.id);
           return;
         }
+
+        idempotencyLeaseToken = claim.record.leaseToken;
       }
 
       await handler(job);
@@ -170,11 +175,26 @@ export async function runQueueWorker(
         return;
       }
 
-      if (job.idempotency) {
-        await completeIdempotency(job.idempotency.key, { jobId: job.id });
+      if (!latestJob || latestJob.status !== "active" || latestJob.claimToken !== job.claimToken) {
+        observabilityLogger.warn("queue_job_ownership_lost", {
+          jobId: job.id,
+          workerId,
+          attempt: job.attempts,
+        });
+        return;
       }
 
-      await completeJob(job.id);
+      if (job.idempotency) {
+        await completeIdempotency(job.idempotency.key, { jobId: job.id }, idempotencyLeaseToken);
+      }
+
+      const completed = await completeJob(job.id);
+      if (!completed) {
+        observabilityLogger.warn("queue_job_completion_rejected", {
+          jobId: job.id,
+          workerId,
+        });
+      }
     } catch (error) {
       observabilityLogger.error("queue_job_failed", {
         type: job.type,
@@ -188,6 +208,7 @@ export async function runQueueWorker(
           await failIdempotency(
             job.idempotency.key,
             error instanceof Error ? error.message : String(error),
+            idempotencyLeaseToken,
           );
         } catch (idempotencyError) {
           observabilityLogger.error("queue_idempotency_failure_marking_error", {
@@ -199,6 +220,7 @@ export async function runQueueWorker(
       await failJob(job.id, error);
     } finally {
       stopClaimHeartbeat?.();
+      stopLockHeartbeat?.();
       if (lockHandle) {
         await releaseLock(lockHandle);
       }

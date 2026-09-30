@@ -1,24 +1,13 @@
 import { getRedisClient } from "@/lib/redis/client";
 
 export type InstagramRateLimitOperation =
-  | "MESSAGE_TEXT"
-  | "MESSAGE_MEDIA"
-  | "MESSAGE_REACTION"
-  | "CONVERSATION_READ"
-  | "COMMENT_REPLY"
-  | "COMMENT_LIKE"
-  | "COMMENT_PRIVATE_REPLY"
-  | "PUBLISH_MEDIA"
-  | "PUBLISH_REEL"
-  | "PUBLISH_CAROUSEL"
-  | "PUBLISH_STORY"
+  | "MESSAGE_TEXT" | "MESSAGE_MEDIA" | "MESSAGE_REACTION" | "CONVERSATION_READ"
+  | "COMMENT_REPLY" | "COMMENT_LIKE" | "COMMENT_PRIVATE_REPLY"
+  | "PUBLISH_MEDIA" | "PUBLISH_REEL" | "PUBLISH_CAROUSEL" | "PUBLISH_STORY"
+  | "PUBLISH_QUOTA_READ"
   | "AUTOMATION_MEDIA_PREVIEW";
 
-export type InstagramRateLimitScope =
-  | "GLOBAL"
-  | "TENANT"
-  | "INSTAGRAM_ACCOUNT"
-  | "OPERATION";
+export type InstagramRateLimitScope = "GLOBAL" | "TENANT" | "INSTAGRAM_ACCOUNT" | "OPERATION";
 
 export type InstagramRateLimitBucket = {
   scope: InstagramRateLimitScope;
@@ -42,7 +31,7 @@ export type InstagramRateLimitContext = {
   operation: InstagramRateLimitOperation;
 };
 
-const PREFIX = "smartdirect:rate-limit:v1";
+const PREFIX = "smartdirect:rate-limit:v2";
 
 const DEFAULTS: Record<InstagramRateLimitOperation, { limit: number; windowMs: number }> = {
   MESSAGE_TEXT: { limit: 100, windowMs: 1_000 },
@@ -56,31 +45,9 @@ const DEFAULTS: Record<InstagramRateLimitOperation, { limit: number; windowMs: n
   PUBLISH_REEL: { limit: 100, windowMs: 24 * 60 * 60 * 1_000 },
   PUBLISH_CAROUSEL: { limit: 100, windowMs: 24 * 60 * 60 * 1_000 },
   PUBLISH_STORY: { limit: 100, windowMs: 24 * 60 * 60 * 1_000 },
+  PUBLISH_QUOTA_READ: { limit: 2, windowMs: 1_000 },
   AUTOMATION_MEDIA_PREVIEW: { limit: 100, windowMs: 60 * 1_000 },
 };
-
-const LUA_CONSUME = `
-for i = 1, #KEYS do
-  local current = tonumber(redis.call("GET", KEYS[i]) or "0")
-  local limit = tonumber(ARGV[(i - 1) * 2 + 1])
-  local ttl = redis.call("PTTL", KEYS[i])
-
-  if current >= limit then
-    return { 0, i, current, ttl }
-  end
-end
-
-for i = 1, #KEYS do
-  local current = redis.call("INCR", KEYS[i])
-  local window = tonumber(ARGV[(i - 1) * 2 + 2])
-
-  if current == 1 then
-    redis.call("PEXPIRE", KEYS[i], window)
-  end
-end
-
-return { 1, 0, 0, -1 }
-`;
 
 function envNumber(name: string, fallback: number) {
   const value = Number(process.env[name]);
@@ -89,79 +56,42 @@ function envNumber(name: string, fallback: number) {
 
 function getOperationConfig(operation: InstagramRateLimitOperation) {
   const defaults = DEFAULTS[operation];
-
   return {
-    limit: Math.floor(
-      envNumber(`INSTAGRAM_RATE_LIMIT_${operation}_LIMIT`, defaults.limit),
-    ),
-    windowMs: Math.floor(
-      envNumber(
-        `INSTAGRAM_RATE_LIMIT_${operation}_WINDOW_MS`,
-        defaults.windowMs,
-      ),
-    ),
+    limit: Math.max(1, Math.floor(envNumber(`INSTAGRAM_RATE_LIMIT_${operation}_LIMIT`, defaults.limit))),
+    windowMs: Math.max(100, Math.floor(envNumber(`INSTAGRAM_RATE_LIMIT_${operation}_WINDOW_MS`, defaults.windowMs))),
   };
 }
 
 function getGlobalConfig() {
   return {
-    limit: Math.floor(envNumber("INSTAGRAM_RATE_LIMIT_GLOBAL_LIMIT", 1000)),
-    windowMs: Math.floor(
-      envNumber("INSTAGRAM_RATE_LIMIT_GLOBAL_WINDOW_MS", 1_000),
-    ),
+    limit: Math.max(1, Math.floor(envNumber("INSTAGRAM_RATE_LIMIT_GLOBAL_LIMIT", 1000))),
+    windowMs: Math.max(100, Math.floor(envNumber("INSTAGRAM_RATE_LIMIT_GLOBAL_WINDOW_MS", 1_000))),
   };
 }
 
 function getTenantConfig() {
   return {
-    limit: Math.floor(envNumber("INSTAGRAM_RATE_LIMIT_TENANT_LIMIT", 200)),
-    windowMs: Math.floor(
-      envNumber("INSTAGRAM_RATE_LIMIT_TENANT_WINDOW_MS", 1_000),
-    ),
+    limit: Math.max(1, Math.floor(envNumber("INSTAGRAM_RATE_LIMIT_TENANT_LIMIT", 200))),
+    windowMs: Math.max(100, Math.floor(envNumber("INSTAGRAM_RATE_LIMIT_TENANT_WINDOW_MS", 1_000))),
   };
 }
 
-function windowId(now: number, windowMs: number) {
-  return Math.floor(now / windowMs);
-}
-
-function bucketKey(bucket: InstagramRateLimitBucket, now: number) {
-  return `${PREFIX}:${bucket.key}:${windowId(now, bucket.windowMs)}`;
-}
-
-export function getInstagramRateLimitBuckets(
-  context: InstagramRateLimitContext,
-): InstagramRateLimitBucket[] {
+export function getInstagramRateLimitBuckets(context: InstagramRateLimitContext): InstagramRateLimitBucket[] {
   const operation = getOperationConfig(context.operation);
-
   const buckets: InstagramRateLimitBucket[] = [
-    {
-      scope: "GLOBAL",
-      key: "global",
-      ...getGlobalConfig(),
-    },
+    { scope: "GLOBAL", key: "global", ...getGlobalConfig() },
   ];
 
   if (context.tenantId) {
-    buckets.push({
-      scope: "TENANT",
-      key: `tenant:${context.tenantId}`,
-      ...getTenantConfig(),
-    });
+    buckets.push({ scope: "TENANT", key: `tenant:${context.tenantId}`, ...getTenantConfig() });
   }
 
   buckets.push(
     {
       scope: "INSTAGRAM_ACCOUNT",
       key: `account:${context.instagramAccountId}`,
-      limit: envNumber(
-        "INSTAGRAM_RATE_LIMIT_ACCOUNT_LIMIT",
-        operation.limit,
-      ),
-      windowMs: envNumber(
-        "INSTAGRAM_RATE_LIMIT_ACCOUNT_WINDOW_MS",
-        operation.windowMs,
-      ),
+      limit: Math.floor(envNumber("INSTAGRAM_RATE_LIMIT_ACCOUNT_LIMIT", operation.limit)),
+      windowMs: Math.floor(envNumber("INSTAGRAM_RATE_LIMIT_ACCOUNT_WINDOW_MS", operation.windowMs)),
     },
     {
       scope: "OPERATION",
@@ -173,76 +103,154 @@ export function getInstagramRateLimitBuckets(
   return buckets;
 }
 
-export async function consumeInstagramRateLimit(
-  context: InstagramRateLimitContext,
-): Promise<InstagramRateLimitResult> {
-  const buckets = getInstagramRateLimitBuckets(context);
-  const now = Date.now();
-  const redis = getRedisClient();
+/**
+ * Token-bucket limiter. Unlike the previous fixed-window counter it does not
+ * allow a double burst at a second/window boundary. The same Redis/Lua
+ * contract works with Upstash today and a normal Redis/Valkey server later.
+ */
+const LUA_TOKEN_BUCKET = `
+local now = tonumber(ARGV[1])
+local count = #KEYS / 2
+local denied = 0
+local retry = 0
+local minRemaining = 9223372036854775807
 
-  const keys = buckets.map((bucket) => bucketKey(bucket, now));
-  const args = buckets.flatMap((bucket) => [
-    String(bucket.limit),
-    String(bucket.windowMs),
-  ]);
+for i = 1, count do
+  local tokenKey = KEYS[(i - 1) * 2 + 1]
+  local timeKey = KEYS[(i - 1) * 2 + 2]
+  local limit = tonumber(ARGV[(i - 1) * 3 + 2])
+  local windowMs = tonumber(ARGV[(i - 1) * 3 + 3])
+  local tokens = tonumber(redis.call("GET", tokenKey))
+  local last = tonumber(redis.call("GET", timeKey))
 
-  let result: [number, number, number, number];
+  if not tokens then tokens = limit end
+  if not last then last = now end
 
-  try {
-    result = (await redis.eval(
-      LUA_CONSUME,
-      keys,
-      args,
-    )) as [number, number, number, number];
-  } catch (error) {
-    // Redis is an optimization/safety layer; a Redis outage must not make
-    // Instagram messaging completely unavailable. Fail open here and let
-    // Instagram enforce its own limits.
-    console.error("Instagram rate-limit Redis unavailable; allowing request:", {
-      operation: context.operation,
-      instagramAccountId: context.instagramAccountId,
-      error: error instanceof Error ? error.message : String(error),
-    });
+  local elapsed = math.max(0, now - last)
+  local refill = (elapsed * limit) / windowMs
+  tokens = math.min(limit, tokens + refill)
 
+  if tokens < 1 and denied == 0 then
+    denied = i
+    retry = math.ceil((1 - tokens) * windowMs / limit)
+  end
+
+  minRemaining = math.min(minRemaining, math.floor(tokens))
+  redis.call("SET", tokenKey, tostring(tokens), "PX", math.max(windowMs * 2, 1000))
+  redis.call("SET", timeKey, tostring(now), "PX", math.max(windowMs * 2, 1000))
+end
+
+if denied ~= 0 then
+  return {0, denied, minRemaining, retry}
+end
+
+for i = 1, count do
+  local tokenKey = KEYS[(i - 1) * 2 + 1]
+  local tokens = tonumber(redis.call("GET", tokenKey))
+  tokens = math.max(0, tokens - 1)
+  redis.call("SET", tokenKey, tostring(tokens), "PX", math.max(tonumber(ARGV[(i - 1) * 3 + 3]) * 2, 1000))
+end
+
+return {1, 0, minRemaining - 1, 0}
+`;
+
+type LocalBucket = { tokens: number; updatedAt: number };
+const localBuckets = new Map<string, LocalBucket>();
+
+function consumeLocalFallback(buckets: InstagramRateLimitBucket[], now: number): InstagramRateLimitResult {
+  let minRemaining = Number.MAX_SAFE_INTEGER;
+  let denied: InstagramRateLimitBucket | null = null;
+  let retryAfterMs = 0;
+
+  for (const bucket of buckets) {
+    const key = `${bucket.key}:${bucket.windowMs}:${bucket.limit}`;
+    const current = localBuckets.get(key) ?? { tokens: bucket.limit, updatedAt: now };
+    const elapsed = Math.max(0, now - current.updatedAt);
+    current.tokens = Math.min(bucket.limit, current.tokens + elapsed * bucket.limit / bucket.windowMs);
+    current.updatedAt = now;
+
+    if (current.tokens < 1 && !denied) {
+      denied = bucket;
+      retryAfterMs = Math.ceil((1 - current.tokens) * bucket.windowMs / bucket.limit);
+    }
+    minRemaining = Math.min(minRemaining, Math.floor(current.tokens));
+    localBuckets.set(key, current);
+  }
+
+  if (denied) {
     return {
-      allowed: true,
-      limit: Math.min(...buckets.map((bucket) => bucket.limit)),
-      remaining: 0,
-      retryAfterMs: 0,
-      resetAt: now + Math.min(...buckets.map((bucket) => bucket.windowMs)),
-      scope: "OPERATION",
+      allowed: false,
+      limit: denied.limit,
+      remaining: Math.max(0, minRemaining),
+      retryAfterMs,
+      resetAt: now + retryAfterMs,
+      scope: denied.scope,
     };
   }
 
-  const allowed = Number(result[0]) === 1;
-
-  if (!allowed) {
-    const deniedIndex = Math.max(
-      0,
-      Math.min(buckets.length - 1, Number(result[1]) - 1),
-    );
-    const bucket = buckets[deniedIndex];
-    const current = Number(result[2]);
-    const retryAfterMs = Math.max(0, Number(result[3]));
-
-    return {
-      allowed: false,
-      limit: bucket.limit,
-      remaining: Math.max(0, bucket.limit - current),
-      retryAfterMs,
-      resetAt: now + retryAfterMs,
-      scope: bucket.scope,
-    };
+  for (const bucket of buckets) {
+    const key = `${bucket.key}:${bucket.windowMs}:${bucket.limit}`;
+    const current = localBuckets.get(key);
+    if (current) current.tokens = Math.max(0, current.tokens - 1);
   }
 
   return {
     allowed: true,
     limit: Math.min(...buckets.map((bucket) => bucket.limit)),
-    remaining: Math.min(...buckets.map((bucket) => Math.max(0, bucket.limit - 1))),
+    remaining: Math.max(0, minRemaining - 1),
     retryAfterMs: 0,
-    resetAt: Math.min(...buckets.map((bucket) => now + bucket.windowMs)),
+    resetAt: now + Math.min(...buckets.map((bucket) => bucket.windowMs)),
     scope: "OPERATION",
   };
+}
+
+export async function consumeInstagramRateLimit(context: InstagramRateLimitContext): Promise<InstagramRateLimitResult> {
+  const buckets = getInstagramRateLimitBuckets(context);
+  const now = Date.now();
+  const redis = getRedisClient();
+
+  const keys: string[] = [];
+  const args: string[] = [String(now)];
+
+  for (const bucket of buckets) {
+    keys.push(`${PREFIX}:${bucket.key}:tokens`, `${PREFIX}:${bucket.key}:time`);
+    args.push("0", String(bucket.limit), String(bucket.windowMs));
+  }
+
+  try {
+    const result = (await redis.eval(LUA_TOKEN_BUCKET, keys, args)) as [number, number, number, number];
+    const allowed = Number(result[0]) === 1;
+
+    if (!allowed) {
+      const index = Math.max(0, Math.min(buckets.length - 1, Number(result[1]) - 1));
+      const bucket = buckets[index];
+      const retryAfterMs = Math.max(1, Number(result[3]));
+      return {
+        allowed: false,
+        limit: bucket.limit,
+        remaining: Math.max(0, Number(result[2])),
+        retryAfterMs,
+        resetAt: now + retryAfterMs,
+        scope: bucket.scope,
+      };
+    }
+
+    return {
+      allowed: true,
+      limit: Math.min(...buckets.map((bucket) => bucket.limit)),
+      remaining: Math.max(0, Number(result[2])),
+      retryAfterMs: 0,
+      resetAt: now + Math.min(...buckets.map((bucket) => bucket.windowMs)),
+      scope: "OPERATION",
+    };
+  } catch (error) {
+    console.error("[Instagram RateLimit] Redis unavailable; using local emergency limiter.", {
+      operation: context.operation,
+      instagramAccountId: context.instagramAccountId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return consumeLocalFallback(buckets, now);
+  }
 }
 
 export async function waitForInstagramRateLimit(
@@ -251,23 +259,14 @@ export async function waitForInstagramRateLimit(
 ) {
   const maxWaitMs = options.maxWaitMs ?? 0;
   const result = await consumeInstagramRateLimit(context);
-
-  if (result.allowed || result.retryAfterMs <= 0) {
-    return result;
-  }
-
-  if (maxWaitMs <= 0 || result.retryAfterMs > maxWaitMs) {
-    return result;
-  }
+  if (result.allowed || result.retryAfterMs <= 0 || result.retryAfterMs > maxWaitMs) return result;
 
   await new Promise<void>((resolve, reject) => {
     const timer = setTimeout(resolve, result.retryAfterMs);
-
     const onAbort = () => {
       clearTimeout(timer);
       reject(new Error("Instagram rate-limit wait aborted"));
     };
-
     options.signal?.addEventListener("abort", onAbort, { once: true });
   });
 

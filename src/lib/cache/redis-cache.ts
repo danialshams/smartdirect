@@ -53,9 +53,21 @@ export async function deleteCachedJson(key: string): Promise<boolean> {
 export async function invalidateCacheByPrefix(prefix: string): Promise<boolean> {
   try {
     const redis = createQueueRedis();
-    const keys = await redis.keys(prefix.endsWith("*") ? prefix : `${prefix}*`);
-    if (!keys.length) return true;
-    await Promise.all(keys.map((key) => redis.del(key)));
+    const pattern = prefix.endsWith("*") ? prefix : `${prefix}*`;
+    let cursor = "0";
+
+    do {
+      const result = await redis.scan(cursor, { match: pattern, count: 100 });
+      cursor = String(result[0]);
+      const keys = result[1] as string[];
+
+      if (keys.length) {
+        for (let i = 0; i < keys.length; i += 100) {
+          await redis.del(...keys.slice(i, i + 100));
+        }
+      }
+    } while (cursor !== "0");
+
     return true;
   } catch (error) {
     console.warn("[Redis Cache] PREFIX invalidation failed:", { prefix, error });

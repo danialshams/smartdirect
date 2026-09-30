@@ -14,6 +14,39 @@ type PublishResponse = { id?: string };
 type MediaItem = { type: "IMAGE" | "VIDEO"; publicUrl: string; sortOrder: number };
 type UserTag = { username: string; x?: number; y?: number };
 
+type PublishingQuotaResponse = {
+  data?: Array<{ quota_usage?: number; config?: { quota_total?: number; quota_duration?: number } }>;
+};
+
+async function checkPublishingQuota(igUserId: string, token: string, instagramAccountId: string, tenantId: string) {
+  try {
+    const response = await instagramApiRequest<PublishingQuotaResponse>(
+      `/${igUserId}/content_publishing_limit`,
+      {
+        accessToken: token,
+        params: { fields: "quota_usage,config{quota_total,quota_duration}" },
+        timeoutMs: 10_000,
+        maxRetries: 1,
+        rateLimit: { instagramAccountId, tenantId, operation: "PUBLISH_QUOTA_READ" },
+      },
+    );
+    const quota = response.data?.[0];
+    const usage = Number(quota?.quota_usage);
+    const total = Number(quota?.config?.quota_total);
+    if (Number.isFinite(usage) && Number.isFinite(total) && total > 0 && usage >= total) {
+      throw new Error(`Instagram publishing quota reached (${usage}/${total}).`);
+    }
+    return { usage: Number.isFinite(usage) ? usage : null, total: Number.isFinite(total) ? total : null };
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith("Instagram publishing quota reached")) throw error;
+    console.warn("[Instagram Publishing] quota preflight unavailable; Meta remains authoritative.", {
+      instagramAccountId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return null;
+  }
+}
+
 function normalizeUserTags(value: unknown): UserTag[] {
   if (!Array.isArray(value)) return [];
 
@@ -419,10 +452,61 @@ async function publishInstagramJobInternal(jobId: string) {
   }
 
   const idempotencyKey = idempotency.key;
+  const idempotencyLeaseToken = idempotency.leaseToken;
 
   const tags = normalizeUserTags(job.userTags);
   const token = await getValidInstagramAccessToken(job.instagramAccountId);
   const tenantId = job.instagramAccount.userId;
+
+  await checkPublishingQuota(job.instagramAccount.igUserId, token, job.instagramAccountId, tenantId);
+
+  if (job.status === "PUBLISHED" && job.instagramMediaId) {
+    await completePublishingExecution(
+      idempotencyKey,
+      { publishingJobId: job.id, instagramMediaId: job.instagramMediaId },
+      idempotencyLeaseToken,
+    );
+    return job;
+  }
+
+  const publishOperation = job.type === "REEL"
+    ? "PUBLISH_REEL"
+    : job.type === "CAROUSEL"
+      ? "PUBLISH_CAROUSEL"
+      : job.type === "STORY"
+        ? "PUBLISH_STORY"
+        : "PUBLISH_MEDIA";
+
+  let reusableContainerId: string | null = null;
+  if (job.instagramContainerId && (job.status === "PROCESSING" || job.status === "PUBLISHING")) {
+    try {
+      const existingStatus = await containerStatus(
+        job.instagramContainerId,
+        token,
+        job.instagramAccountId,
+        tenantId,
+        publishOperation,
+      );
+      if (existingStatus.statusCode === "FINISHED") {
+        reusableContainerId = job.instagramContainerId;
+      } else if (existingStatus.statusCode === "IN_PROGRESS") {
+        await waitReady(job.instagramContainerId, token, job.instagramAccountId, tenantId, 3000, 20, publishOperation);
+        reusableContainerId = job.instagramContainerId;
+      } else if (existingStatus.statusCode === "PUBLISHED") {
+        throw new Error("Instagram container is already published but the final media ID was not persisted. Manual reconciliation is required.");
+      }
+    } catch (error) {
+      if (error instanceof InstagramApiError) {
+        console.warn("[Instagram Publishing] existing container reconciliation failed; creating a fresh container.", {
+          publishingJobId: job.id,
+          containerId: job.instagramContainerId,
+          status: error.status,
+        });
+      } else if (error instanceof Error && error.message.includes("already published")) {
+        throw error;
+      }
+    }
+  }
 
   await prisma.instagramPublishJob.update({
     where: { id: job.id },
@@ -430,9 +514,10 @@ async function publishInstagramJobInternal(jobId: string) {
   });
 
   try {
-    let containerId: string;
+    let containerId: string = reusableContainerId ?? "";
 
-    if (job.type === "STORY") {
+    if (!containerId) {
+      if (job.type === "STORY") {
       if (
         media.length !== 1 ||
         !["IMAGE", "VIDEO"].includes(media[0].type)
@@ -512,7 +597,9 @@ async function publishInstagramJobInternal(jobId: string) {
         tenantId,
         job.instagramAccountId,
       );
-    }
+      }
+
+  }
 
     await prisma.instagramPublishJob.update({
       where: { id: job.id },
@@ -522,7 +609,6 @@ async function publishInstagramJobInternal(jobId: string) {
       },
     });
 
-    const publishOperation = job.type === "REEL" ? "PUBLISH_REEL" : job.type === "CAROUSEL" ? "PUBLISH_CAROUSEL" : job.type === "STORY" ? "PUBLISH_STORY" : "PUBLISH_MEDIA";
     await waitReady(containerId, token, job.instagramAccountId, tenantId, 3000, 20, publishOperation);
 
     const instagramMediaId = await publishContainer(
@@ -549,10 +635,14 @@ async function publishInstagramJobInternal(jobId: string) {
 
     await cleanupPublishedMedia(updatedJob.media);
 
-    await completePublishingExecution(idempotencyKey, {
-      publishingJobId: job.id,
-      instagramMediaId,
-    });
+    await completePublishingExecution(
+      idempotencyKey,
+      {
+        publishingJobId: job.id,
+        instagramMediaId,
+      },
+      idempotencyLeaseToken,
+    );
 
     return updatedJob;
   } catch (error) {
@@ -569,7 +659,7 @@ async function publishInstagramJobInternal(jobId: string) {
     });
 
     try {
-      await failPublishingExecution(idempotencyKey, error);
+      await failPublishingExecution(idempotencyKey, error, idempotencyLeaseToken);
     } catch (idempotencyError) {
       console.error("Failed to mark publishing idempotency as FAILED:", idempotencyError);
     }

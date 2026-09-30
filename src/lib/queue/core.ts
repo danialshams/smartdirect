@@ -309,8 +309,9 @@ for _, id in ipairs(ids) do
         job.status = "active"
         job.attempts = (job.attempts or 0) + 1
         job.workerId = ARGV[3]
+        job.claimToken = ARGV[4]
 
-        redis.call("SET", claimKey, ARGV[3], "EX", ARGV[4])
+        redis.call("SET", claimKey, ARGV[4], "EX", ARGV[5])
         redis.call("SET", ARGV[2] .. id, cjson.encode(job))
         redis.call("ZADD", KEYS[2], ARGV[5], id)
         redis.call("ZREM", KEYS[1], id)
@@ -338,6 +339,7 @@ export async function claimNextJob(
       CLAIM_PREFIX,
       JOB_PREFIX,
       workerId,
+      crypto.randomUUID(),
       String(getQueueClaimTtlSeconds()),
       String(Date.now()),
     ],
@@ -404,14 +406,41 @@ export async function cancelJob(jobId: string) {
   return await redis.get<QueueJob>(jobKey(jobId));
 }
 
+const COMPLETE_JOB_SCRIPT = `
+local rawJob = redis.call("GET", KEYS[1])
+if not rawJob then return nil end
+local job = cjson.decode(rawJob)
+local claim = redis.call("GET", KEYS[2])
+if job.status ~= "active" then return nil end
+if not job.claimToken or claim ~= job.claimToken then return nil end
+job.status = "completed"
+job.workerId = nil
+job.claimToken = nil
+redis.call("SET", KEYS[1], cjson.encode(job))
+redis.call("ZREM", KEYS[3], ARGV[1])
+redis.call("ZREM", KEYS[4], ARGV[1])
+redis.call("ZREM", KEYS[5], ARGV[1])
+redis.call("DEL", KEYS[2])
+return cjson.encode(job)
+`;
+
 export async function completeJob(jobId: string) {
   const redis = createQueueRedis();
-  const job = await redis.get<QueueJob>(jobKey(jobId));
+  const current = await redis.get<QueueJob>(jobKey(jobId));
+  if (!current) return null;
+  const keys = getQueueKeys(current.queueNamespace);
+  const result = await redis.eval(
+    COMPLETE_JOB_SCRIPT,
+    [jobKey(jobId), claimKey(jobId), keys.active, keys.ready, keys.delayed],
+    [jobId],
+  );
 
-  if (!job) return null;
+  if (!result) return null;
 
-  job.status = "completed";
-  job.workerId = undefined;
+  const job =
+    typeof result === "string"
+      ? (JSON.parse(result) as QueueJob)
+      : (result as QueueJob);
 
   if (job.recoveryId) {
     await prisma.queueFailure.updateMany({
@@ -420,25 +449,23 @@ export async function completeJob(jobId: string) {
     });
   }
 
-  const keys = getQueueKeys(job.queueNamespace);
-
-  await Promise.all([
-    redis.zrem(keys.active, jobId),
-    redis.set(jobKey(jobId), job),
-    removeJobFromQueue(redis, jobId, job.queueNamespace),
-  ]);
-
   return job;
 }
 
-export async function failJob(jobId: string, error: unknown) {
+export async function failJob(jobId: string, error: unknown, options: { force?: boolean } = {}) {
   const redis = createQueueRedis();
   const job = await redis.get<QueueJob>(jobKey(jobId));
 
   if (!job) return null;
 
+  const currentClaim = await redis.get<string>(claimKey(jobId));
+  if (!options.force && job.status === "active" && job.claimToken && currentClaim !== job.claimToken) {
+    return null;
+  }
+
   job.lastError = error instanceof Error ? error.message : String(error);
   job.workerId = undefined;
+  job.claimToken = undefined;
 
   await redis.del(claimKey(jobId));
   const keys = getQueueKeys(job.queueNamespace);
@@ -589,9 +616,9 @@ export async function claimJobById(
       jobId,
       CLAIM_PREFIX,
       workerId,
+      crypto.randomUUID(),
       String(getQueueClaimTtlSeconds()),
-      String(Date.now()),
-    ],
+      String(Date.now()),    ],
   );
 
   if (!result) return null;
@@ -608,17 +635,17 @@ end
 return 0
 `
 
-export async function refreshJobClaim(jobId: string, workerId: string) {
+export async function refreshJobClaim(jobId: string, claimToken: string) {
   const redis = createQueueRedis();
   const result = await redis.eval(
     REFRESH_CLAIM_SCRIPT,
     [claimKey(jobId)],
-    [workerId, String(getQueueClaimTtlSeconds())],
+    [claimToken, String(getQueueClaimTtlSeconds())],
   );
   return Number(result) === 1;
 }
 
-export function startJobClaimHeartbeat(jobId: string, workerId: string, maxDurationMs?: number) {
+export function startJobClaimHeartbeat(jobId: string, claimToken: string, maxDurationMs?: number) {
   const intervalMs = Math.max(1_000, Math.floor((getQueueClaimTtlSeconds() * 1000) / 3));
   let stopped = false;
   let inFlight = false;
@@ -632,7 +659,7 @@ export function startJobClaimHeartbeat(jobId: string, workerId: string, maxDurat
     }
     if (stopped || inFlight) return;
     inFlight = true;
-    void refreshJobClaim(jobId, workerId).catch(() => undefined).finally(() => {
+    void refreshJobClaim(jobId, claimToken).catch(() => undefined).finally(() => {
       inFlight = false;
     });
   }, intervalMs);
