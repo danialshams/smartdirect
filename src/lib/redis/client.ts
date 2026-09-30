@@ -86,13 +86,15 @@ export async function redisHealthCheck() {
       configured: true,
       latencyMs: Date.now() - startedAt,
       status: "ready",
+      driver: getRedisDriver(),
     };
   } catch (error) {
     return {
       ok: false,
       configured: Boolean(
-        process.env.UPSTASH_REDIS_REST_URL?.trim() &&
-        process.env.UPSTASH_REDIS_REST_TOKEN?.trim(),
+        getRedisDriver() === "redis"
+          ? process.env["REDIS_URL"]?.trim()
+          : process.env.UPSTASH_REDIS_REST_URL?.trim() && process.env.UPSTASH_REDIS_REST_TOKEN?.trim(),
       ),
       latencyMs: Date.now() - startedAt,
       status: "error",
