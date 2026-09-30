@@ -241,10 +241,14 @@ export async function sendAutomationMessage(payload: AutomationMessagePayload): 
   ): Promise<SendAutomationMessageResult> => {
     if (idempotencyKey) {
       if (result.success) {
-        await completeSendMessage(idempotencyKey, {
-          messageId: message.id,
-          igMessageId: result.igMessageId ?? null,
-        });
+        await completeSendMessage(
+          idempotencyKey,
+          {
+            messageId: message.id,
+            igMessageId: result.igMessageId ?? null,
+          },
+          idempotencyLeaseToken,
+        );
       } else {
         await failSendMessage(idempotencyKey, result.error ?? "Instagram message sending failed.", idempotencyLeaseToken);
       }
