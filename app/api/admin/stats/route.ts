@@ -8,8 +8,8 @@ export async function GET() {
 
   const now = new Date();
   const [users, pages, activeSubscriptions, expiredSubscriptions, openTickets] = await Promise.all([
-    prisma.user.count(),
-    prisma.instagramAccount.count(),
+    prisma.user.count({ where: { role: "USER" } }),
+    prisma.instagramAccount.count({ where: { isConnected: true } }),
     prisma.subscription.count({ where: { status: "ACTIVE", expiresAt: { gt: now } } }),
     prisma.subscription.count({ where: { OR: [{ status: "EXPIRED" }, { expiresAt: { lte: now } }] } }),
     prisma.ticket.count({ where: { status: { in: ["OPEN", "IN_PROGRESS", "WAITING_USER"] } } }),
