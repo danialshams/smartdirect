@@ -103,7 +103,17 @@ async function main() {
     // ------------------------------------------------------------
     const env = validateServerEnvironment();
     assert(env.databaseUrl, "Production database configuration is missing");
-    assert(env.redisRestUrl && env.redisRestToken, "Redis configuration is missing");
+    if (env.redisDriver === "upstash") {
+      assert(
+        env.redisRestUrl && env.redisRestToken,
+        "Redis configuration is missing",
+      );
+    } else {
+      assert(
+        process.env.REDIS_URL?.trim(),
+        "Redis configuration is missing",
+      );
+    }
     results.productionEnvironment = true;
 
     const redisHealth = await redisHealthCheck();
