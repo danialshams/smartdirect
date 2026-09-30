@@ -338,7 +338,9 @@ export default function EntryPointManager({ accounts, kind }: Props) {
                 enabled: enabled && remaining.length > 0,
                 items: remaining.map((current) => ({
                   title: current.label.trim(),
-                  automationId: current.automationId,
+                  type: current.type,
+                  automationId: current.type === "web_url" ? null : current.automationId,
+                  url: current.type === "web_url" ? current.url.trim() : null,
                 })),
               },
         ),
@@ -402,7 +404,9 @@ export default function EntryPointManager({ accounts, kind }: Props) {
                 enabled: enabled && remaining.length > 0,
                 items: remaining.map((item) => ({
                   title: item.label.trim(),
-                  automationId: item.automationId,
+                  type: item.type,
+                  automationId: item.type === "web_url" ? null : item.automationId,
+                  url: item.type === "web_url" ? item.url.trim() : null,
                 })),
               },
         ),
