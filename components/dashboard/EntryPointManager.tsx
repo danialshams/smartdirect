@@ -63,7 +63,7 @@ const config = {
     emptyTitle: "هنوز گزینه‌ای برای منوی دایرکت ندارید",
     emptyText: "با «گزینه جدید» اولین گزینه را بسازید و پاسخ آن را تنظیم کنید.",
     searchPlaceholder: "جستجو بر اساس عنوان گزینه...",
-    max: 3,
+    max: 20,
     maxLength: 30,
     placeholder: "مثلاً: مشاهده محصولات",
     api: "/api/instagram/persistent-menu",
