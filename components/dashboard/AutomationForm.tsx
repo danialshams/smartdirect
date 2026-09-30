@@ -489,32 +489,24 @@ export default function AutomationForm({
                     return;
                 }
 
-                if (
-                    showcaseResponse.ok &&
-                    showcaseResult.success
-                ) {
-                    setShowcases(
-                        Array.isArray(
-                            showcaseResult.data
-                        )
+                if (showcaseResponse.ok) {
+                    const showcaseData = Array.isArray(showcaseResult)
+                        ? showcaseResult
+                        : Array.isArray(showcaseResult?.data)
                             ? showcaseResult.data
-                            : []
-                    );
+                            : [];
+                    setShowcases(showcaseData as Showcase[]);
                 } else {
                     setShowcases([]);
                 }
 
-                if (
-                    formResponse.ok &&
-                    formResult.success
-                ) {
-                    setForms(
-                        Array.isArray(
-                            formResult.data
-                        )
+                if (formResponse.ok) {
+                    const formData = Array.isArray(formResult)
+                        ? formResult
+                        : Array.isArray(formResult?.data)
                             ? formResult.data
-                            : []
-                    );
+                            : [];
+                    setForms(formData as FormItem[]);
                 } else {
                     setForms([]);
                 }
