@@ -12,8 +12,12 @@ export const dynamic = "force-dynamic";
 
 type MenuItemInput = {
   title: string;
+  type?: "postback" | "web_url";
   automationId?: string | null;
+  url?: string | null;
 };
+
+const WEB_URL_PREFIX = "__web_url__:";
 
 function generatePayload() {
   return `persistent_${crypto.randomUUID()}`;
@@ -142,10 +146,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (items.length > 3) {
+    if (items.length > 20) {
       return NextResponse.json(
         {
-          error: "Persistent Menu supports up to 3 top-level items",
+          error: "Persistent Menu supports up to 20 top-level items",
         },
         { status: 400 },
       );
@@ -187,10 +191,20 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      if (!item.automationId) {
+      if (item.type === "web_url") {
+        if (!item.url?.trim()) {
+          return NextResponse.json({ error: "Web URL is required" }, { status: 400 });
+        }
+        try {
+          const url = new URL(item.url.trim());
+          if (!["http:", "https:"].includes(url.protocol)) throw new Error();
+        } catch {
+          return NextResponse.json({ error: "Web URL is invalid" }, { status: 400 });
+        }
+      } else if (!item.automationId) {
         return NextResponse.json(
           {
-            error: "Every menu item must have an automation",
+            error: "Every automatic menu item must have an automation",
           },
           { status: 400 },
         );
@@ -275,12 +289,17 @@ export async function POST(request: NextRequest) {
     /*
      * Generate payloads before sending to Meta.
      */
-    const preparedItems = items.map((item, index) => ({
-      title: item.title.trim(),
-      automationId: item.automationId!,
-      payload: generatePayload(),
-      order: index,
-    }));
+    const preparedItems = items.map((item, index) => {
+      const isWebUrl = item.type === "web_url";
+      return {
+        title: item.title.trim(),
+        automationId: isWebUrl ? null : item.automationId!,
+        payload: isWebUrl ? `${WEB_URL_PREFIX}${item.url!.trim()}` : generatePayload(),
+        type: isWebUrl ? "web_url" as const : "postback" as const,
+        url: isWebUrl ? item.url!.trim() : null,
+        order: index,
+      };
+    });
 
     /*
      * Sync with Instagram first.
@@ -290,7 +309,9 @@ export async function POST(request: NextRequest) {
       instagramUserId: account.igUserId,
       items: preparedItems.map((item) => ({
         title: item.title,
-        payload: item.payload,
+        type: item.type,
+        payload: item.type === "web_url" ? undefined : item.payload,
+        url: item.url ?? undefined,
       })),
     });
 
