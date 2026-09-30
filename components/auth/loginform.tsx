@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
-import { useSearchParams } from "next/navigation";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { z } from "zod";
 
@@ -28,9 +27,7 @@ function getSafeCallbackUrl(value: string | null) {
     return "/dashboard";
 }
 
-export default function LoginForm() {
-    const searchParams = useSearchParams();
-
+export default function LoginForm({ callbackUrl }: { callbackUrl?: string | null }) {
     const {
         register,
         handleSubmit,
@@ -41,7 +38,7 @@ export default function LoginForm() {
     });
 
     const onSubmit: SubmitHandler<LoginInput> = async (data) => {
-        const callbackUrl = getSafeCallbackUrl(searchParams.get("callbackUrl"));
+        const safeCallbackUrl = getSafeCallbackUrl(callbackUrl ?? null);
 
         const result = await signIn("credentials", {
             redirect: false,
@@ -54,7 +51,7 @@ export default function LoginForm() {
             setError("email", { type: "manual", message: "ایمیل یا رمز عبور اشتباه است" });
             setError("password", { type: "manual", message: "ایمیل یا رمز عبور اشتباه است" });
         } else {
-            window.location.assign(callbackUrl);
+            window.location.assign(safeCallbackUrl);
         }
     };
 
