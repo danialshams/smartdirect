@@ -172,7 +172,8 @@ async function executeAutomationInternal(input: ExecuteAutomationInput) {
       };
     }
 
-    idempotencyKey = claim.key;\n    idempotencyLeaseToken = claim.leaseToken;
+    idempotencyKey = claim.key;
+    idempotencyLeaseToken = claim.leaseToken;
   }
 
   // =========================================================
