@@ -6,6 +6,7 @@ import {
   getJob,
 } from "../src/lib/queue/core";
 import { runQueueWorker } from "../src/lib/queue/worker";
+import { disconnectRedis } from "../src/lib/redis/client";
 
 const JOB_COUNT = Number(process.env.QUEUE_WORKER_TEST_JOBS ?? 10);
 const POLL_MS = 250;
@@ -106,6 +107,7 @@ async function main() {
     controller.abort();
     await workerPromise.catch(() => undefined);
     await Promise.allSettled(jobs.map((job) => deleteJob(job.id)));
+    await disconnectRedis().catch(() => undefined);
   }
 }
 
