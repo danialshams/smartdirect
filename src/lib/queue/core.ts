@@ -309,8 +309,9 @@ for _, id in ipairs(ids) do
         job.status = "active"
         job.attempts = (job.attempts or 0) + 1
         job.workerId = ARGV[3]
+        job.claimToken = ARGV[4]
 
-        redis.call("SET", claimKey, ARGV[3], "EX", ARGV[4])
+        redis.call("SET", claimKey, ARGV[4], "EX", ARGV[5])
         redis.call("SET", ARGV[2] .. id, cjson.encode(job))
         redis.call("ZADD", KEYS[2], ARGV[5], id)
         redis.call("ZREM", KEYS[1], id)
@@ -338,6 +339,7 @@ export async function claimNextJob(
       CLAIM_PREFIX,
       JOB_PREFIX,
       workerId,
+      crypto.randomUUID(),
       String(getQueueClaimTtlSeconds()),
       String(Date.now()),
     ],
