@@ -585,10 +585,14 @@ async function publishInstagramJobInternal(jobId: string) {
 
     await cleanupPublishedMedia(updatedJob.media);
 
-    await completePublishingExecution(idempotencyKey, {
-      publishingJobId: job.id,
-      instagramMediaId,
-    });
+    await completePublishingExecution(
+      idempotencyKey,
+      {
+        publishingJobId: job.id,
+        instagramMediaId,
+      },
+      idempotencyLeaseToken,
+    );
 
     return updatedJob;
   } catch (error) {
