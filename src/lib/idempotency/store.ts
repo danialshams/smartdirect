@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { IdempotencyStatus } from "@/generated/prisma/client";
-import { getIdempotencyTtlSeconds } from "./key";
+import { getIdempotencyLeaseTtlSeconds, getIdempotencyTtlSeconds } from "./key";
 
 export type IdempotencyRecord = {
   id: string;
@@ -15,6 +15,7 @@ export type IdempotencyRecord = {
   completedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
+  leaseToken: string | null;
 };
 
 export type ClaimIdempotencyInput = {
@@ -22,7 +23,7 @@ export type ClaimIdempotencyInput = {
   tenantId: string;
   operation: string;
   resourceId?: string | null;
-  ttlSeconds?: number;
+  ttlSeconds?: number;\n  leaseToken?: string;
 };
 
 export type ClaimIdempotencyResult = {
@@ -83,7 +84,7 @@ export async function claimIdempotency(
     throw new Error("Idempotency TTL must be a positive integer.");
   }
 
-  const expiresAt = new Date(Date.now() + ttlSeconds * 1000);
+  const leaseTtlSeconds = getIdempotencyLeaseTtlSeconds();\n  const expiresAt = new Date(Date.now() + leaseTtlSeconds * 1000);
 
   try {
     const created = await prisma.idempotencyRecord.create({
@@ -139,7 +140,7 @@ export async function claimIdempotency(
           expiresAt,
           response: { set: null },
           errorMessage: null,
-          completedAt: null,
+          completedAt: null,\n          leaseToken: crypto.randomUUID(),
         },
       });
 
@@ -185,7 +186,7 @@ export async function completeIdempotency(
     data: {
       status: "COMPLETED",
       response: response === undefined ? undefined : response as never,
-      completedAt: new Date(),
+      completedAt: new Date(),\n      expiresAt: new Date(Date.now() + getIdempotencyTtlSeconds() * 1000),
     },
   });
 
@@ -265,7 +266,7 @@ export async function retryFailedIdempotency(
     throw new Error("Idempotency TTL must be a positive integer.");
   }
 
-  const expiresAt = new Date(Date.now() + ttlSeconds * 1000);
+  const expiresAt = new Date(Date.now() + getIdempotencyLeaseTtlSeconds() * 1000);
 
   const updated = await prisma.idempotencyRecord.updateMany({
     where: {
