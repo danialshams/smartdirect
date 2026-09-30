@@ -8,7 +8,9 @@ type IceBreakerPayload = {
 
 type PersistentMenuItemPayload = {
   title: string;
-  payload: string;
+  type?: "postback" | "web_url";
+  payload?: string;
+  url?: string;
 };
 
 async function callMessengerProfileApi({
@@ -96,16 +98,33 @@ export async function setInstagramPersistentMenu({
   instagramUserId: string;
   items: PersistentMenuItemPayload[];
 }) {
-  if (items.length > 3) {
-    throw new Error("Instagram Persistent Menu supports up to 3 top-level items");
+  if (items.length > 20) {
+    throw new Error("Instagram Persistent Menu supports up to 20 top-level items");
   }
 
   const normalizedItems = items.map((item) => {
     const title = item.title.trim();
-    const payload = item.payload.trim();
+    const type = item.type ?? "postback";
     if (!title) throw new Error("Persistent menu item title cannot be empty");
-    if (!payload) throw new Error("Persistent menu item payload cannot be empty");
     if (title.length > 30) throw new Error("Persistent menu item title must be 30 characters or less");
+
+    if (type === "web_url") {
+      const url = item.url?.trim() ?? "";
+      if (!url) throw new Error("Persistent menu web URL cannot be empty");
+      let parsedUrl: URL;
+      try {
+        parsedUrl = new URL(url);
+      } catch {
+        throw new Error("Persistent menu web URL is invalid");
+      }
+      if (!["http:", "https:"].includes(parsedUrl.protocol)) {
+        throw new Error("Persistent menu web URL must use http or https");
+      }
+      return { type: "web_url", title, url: parsedUrl.toString(), webview_height_ratio: "full" };
+    }
+
+    const payload = item.payload?.trim() ?? "";
+    if (!payload) throw new Error("Persistent menu item payload cannot be empty");
     return { type: "postback", title, payload };
   });
 
