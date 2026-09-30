@@ -333,6 +333,7 @@ export default function AutomationFlowMessage({
           <BranchAnswerEditor
             replies={message.quickReplies}
             instagramAccountId={instagramAccountId}
+            showcases={showcases}
             onChange={(replies) => onUpdate({ quickReplies: replies })}
             onUpdateReply={onUpdateQuickReplyTree}
             allowRichDestinations={triggerType === "STORY_REPLY_KEYWORD"}
@@ -456,15 +457,56 @@ async function uploadBranchMedia(file: File, onProgress?: (progress: number) => 
 function BranchShowcaseCreator({
   instagramAccountId,
   showcaseId,
+  showcases,
   onCreated,
 }: {
   instagramAccountId?: string;
   showcaseId: string;
+  showcases?: Showcase[];
   onCreated: (showcaseId: string) => void;
 }) {
   const [items, setItems] = useState<ShowcaseItemDraft[]>([newShowcaseItem()]);
   const [saving, setSaving] = useState(false);
+  const [itemSaving, setItemSaving] = useState<string[]>([]);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!showcaseId) {
+      setItems([newShowcaseItem()]);
+      return;
+    }
+    const showcase = (showcases ?? []).find((item) => item.id === showcaseId);
+    const rawItems = Array.isArray(showcase?.items) ? showcase.items : [];
+    setItems(rawItems.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object").map((item) => ({
+      id: typeof item.id === "string" ? item.id : `showcase_item_${crypto.randomUUID()}`,
+      title: typeof item.title === "string" ? item.title : "",
+      description: typeof item.description === "string" ? item.description : "",
+      imageUrl: typeof item.imageUrl === "string" ? item.imageUrl : "",
+      previewUrl: typeof item.imageUrl === "string" ? item.imageUrl : "",
+    })));
+  }, [showcaseId, showcases]);
+
+  async function saveExistingItem(item: ShowcaseItemDraft, patch: Partial<ShowcaseItemDraft> = {}) {
+    if (!showcaseId || item.id.startsWith("showcase_item_")) return;
+    const next = { ...item, ...patch };
+    if (!next.title.trim()) { setError("نام اسلاید نمی‌تواند خالی باشد."); return; }
+    setItemSaving((current) => current.includes(item.id) ? current : [...current, item.id]);
+    try {
+      setError("");
+      const response = await fetch(`/api/showcases/${encodeURIComponent(showcaseId)}/items`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ itemId: item.id, title: next.title.trim(), description: next.description.trim() || null, imageUrl: next.imageUrl.trim() || null }),
+      });
+      const result = await readJsonResponse(response, "ذخیره تغییرات اسلاید ناموفق بود.");
+      if (!response.ok || result?.error) throw new Error(result?.error || result?.message || "ذخیره تغییرات اسلاید ناموفق بود.");
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "ذخیره تغییرات اسلاید ناموفق بود.");
+    } finally {
+      setItemSaving((current) => current.filter((itemId) => itemId !== item.id));
+    }
+  }
 
   async function uploadImage(id: string, file?: File) {
     if (!file) return;
@@ -474,6 +516,8 @@ function BranchShowcaseCreator({
       setItems((current) => current.map((item) => item.id === id ? { ...item, previewUrl } : item));
       const uploaded = await uploadShowcaseImage(file);
       setItems((current) => current.map((item) => item.id === id ? { ...item, imageUrl: uploaded.publicUrl, previewUrl: uploaded.publicUrl } : item));
+      const currentItem = items.find((item) => item.id === id);
+      if (showcaseId && currentItem && !id.startsWith("showcase_item_")) await saveExistingItem(currentItem, { imageUrl: uploaded.publicUrl, previewUrl: uploaded.publicUrl });
     } catch (error) {
       setError(error instanceof Error ? error.message : "آپلود تصویر ناموفق بود.");
     }
@@ -535,8 +579,26 @@ function BranchShowcaseCreator({
   return (
     <div className="space-y-3 rounded-xl border border-border/70 bg-muted/20 p-3">
       {showcaseId ? (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-xs text-emerald-800">
-          ویترین ساخته و به این جواب متصل شد.
+        <div className="space-y-3">
+          <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-xs text-emerald-800">
+            ویترین متصل است. تصویر، نام و توضیح هر اسلاید قابل ویرایش است.
+          </div>
+          {items.map((item, itemIndex) => (
+            <div key={item.id} className="rounded-xl border border-border/70 bg-background p-3">
+              <div className="mb-2.5 flex items-center justify-between"><span className="text-[11px] font-bold text-muted-foreground">اسلاید {itemIndex + 1}</span>{itemSaving.includes(item.id) && <span className="text-[10px] text-muted-foreground">در حال ذخیره...</span>}</div>
+              <div className="grid gap-3 sm:grid-cols-[112px_1fr]">
+                <label className="flex min-h-[112px] cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-dashed border-border bg-muted">
+                  {item.previewUrl ? <img src={item.previewUrl} alt="" className="h-full w-full object-cover" /> : <span className="flex flex-col items-center gap-1.5 text-[10px] text-muted-foreground"><ImagePlus size={22} />تصویر</span>}
+                  <Input type="file" accept="image/*" className="hidden" onChange={(event) => void uploadImage(item.id, event.target.files?.[0])} />
+                </label>
+                <div className="space-y-2.5">
+                  <Input value={item.title} onChange={(event) => setItems((current) => current.map((entry) => entry.id === item.id ? { ...entry, title: event.target.value } : entry))} onBlur={() => void saveExistingItem(item)} placeholder="نام اسلاید" className="w-full rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm outline-none focus:border-ring" disabled={itemSaving.includes(item.id)} />
+                  <Textarea value={item.description} onChange={(event) => setItems((current) => current.map((entry) => entry.id === item.id ? { ...entry, description: event.target.value } : entry))} onBlur={() => void saveExistingItem(item)} rows={3} placeholder="توضیح اسلاید" className="w-full resize-none rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm leading-6 outline-none focus:border-ring" disabled={itemSaving.includes(item.id)} />
+                </div>
+              </div>
+            </div>
+          ))}
+          {error && <p className="text-xs text-red-600">{error}</p>}
         </div>
       ) : (
         <>
@@ -729,6 +791,7 @@ function BranchAnswerEditor({
             <BranchShowcaseCreator
               instagramAccountId={instagramAccountId}
               showcaseId={reply.destinationShowcaseId}
+              showcases={showcases}
               onCreated={(showcaseId) => updateReply(reply.id, { destinationShowcaseId: showcaseId })}
             />
           )}
