@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Card, Col, Row, Skeleton, Statistic, Typography } from "antd";
+import { Card, Col, Row, Skeleton, Statistic } from "antd";
+import Title from "antd/es/typography/Title";
+import Text from "antd/es/typography/Text";
 import { BadgePercent, Camera, Headphones, UserRound, Users } from "lucide-react";
 
 type Stats = { users: number; pages: number; activeSubscriptions: number; expiredSubscriptions: number; openTickets: number };
@@ -28,10 +30,10 @@ export default function AdminDashboardPage() {
   return (
     <div className="space-y-5">
       <div>
-        <Typography.Title level={3} className="!mb-1 !text-[22px] sm:!text-2xl">داشبورد</Typography.Title>
-        <Typography.Text className="!text-[#64748B]">نمای کلی وضعیت کاربران، اشتراک‌ها و پشتیبانی</Typography.Text>
+        <Title level={3} className="!mb-1 !text-[22px] sm:!text-2xl">داشبورد</Title>
+        <Text className="!text-[#64748B]">نمای کلی وضعیت کاربران، اشتراک‌ها و پشتیبانی</Text>
       </div>
-      {error ? <Card className="!border-red-200 !bg-red-50"><Typography.Text type="danger">{error}</Typography.Text></Card> : null}
+      {error ? <Card className="!border-red-200 !bg-red-50"><Text type="danger">{error}</Text></Card> : null}
       <Row gutter={[16, 16]}>
         {stats ? cards.map(card => {
           const Icon = card.icon;
