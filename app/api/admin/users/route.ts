@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
   const q = params.get("q")?.trim() ?? "";
   const page = Math.max(1, Number(params.get("page") ?? 1));
   const pageSize = Math.min(50, Math.max(10, Number(params.get("pageSize") ?? 20)));
-  const where = q ? { OR: [{ name: { contains: q, mode: "insensitive" as const } }, { email: { contains: q, mode: "insensitive" as const } }] } : {};
+  const where = q ? { role: "USER", AND: [{ OR: [{ name: { contains: q, mode: "insensitive" as const } }, { email: { contains: q, mode: "insensitive" as const } }] }] } : { role: "USER" };
 
   const [items, total] = await Promise.all([
     prisma.user.findMany({
@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
       take: pageSize,
       select: {
         id: true, name: true, email: true, role: true, createdAt: true,
-        instagramAccounts: { select: { id: true, igUsername: true, isConnected: true } },
+        instagramAccounts: { where: { isConnected: true }, select: { id: true, igUsername: true, isConnected: true } },
         subscriptions: { orderBy: { expiresAt: "desc" }, take: 1, select: { id: true, planKey: true, status: true, startedAt: true, expiresAt: true } },
       },
     }),
