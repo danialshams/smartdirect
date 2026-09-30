@@ -460,15 +460,63 @@ async function publishInstagramJobInternal(jobId: string) {
 
   await checkPublishingQuota(job.instagramAccount.igUserId, token, job.instagramAccountId, tenantId);
 
+  if (job.status === "PUBLISHED" && job.instagramMediaId) {
+    await completePublishingExecution(
+      idempotencyKey,
+      { publishingJobId: job.id, instagramMediaId: job.instagramMediaId },
+      idempotencyLeaseToken,
+    );
+    return job;
+  }
+
+  const publishOperation = job.type === "REEL"
+    ? "PUBLISH_REEL"
+    : job.type === "CAROUSEL"
+      ? "PUBLISH_CAROUSEL"
+      : job.type === "STORY"
+        ? "PUBLISH_STORY"
+        : "PUBLISH_MEDIA";
+
+  let reusableContainerId: string | null = null;
+  if (job.instagramContainerId && (job.status === "PROCESSING" || job.status === "PUBLISHING")) {
+    try {
+      const existingStatus = await containerStatus(
+        job.instagramContainerId,
+        token,
+        job.instagramAccountId,
+        tenantId,
+        publishOperation,
+      );
+      if (existingStatus.statusCode === "FINISHED") {
+        reusableContainerId = job.instagramContainerId;
+      } else if (existingStatus.statusCode === "IN_PROGRESS") {
+        await waitReady(job.instagramContainerId, token, job.instagramAccountId, tenantId, 3000, 20, publishOperation);
+        reusableContainerId = job.instagramContainerId;
+      } else if (existingStatus.statusCode === "PUBLISHED") {
+        throw new Error("Instagram container is already published but the final media ID was not persisted. Manual reconciliation is required.");
+      }
+    } catch (error) {
+      if (error instanceof InstagramApiError) {
+        console.warn("[Instagram Publishing] existing container reconciliation failed; creating a fresh container.", {
+          publishingJobId: job.id,
+          containerId: job.instagramContainerId,
+          status: error.status,
+        });
+      } else if (error instanceof Error && error.message.includes("already published")) {
+        throw error;
+      }
+    }
+  }
+
   await prisma.instagramPublishJob.update({
     where: { id: job.id },
     data: { status: "PROCESSING", lastAttemptAt: new Date() },
   });
 
   try {
-    let containerId: string;
+    let containerId: string = reusableContainerId ?? "";
 
-    if (job.type === "STORY") {
+    if (!containerId) {\n    if (job.type === "STORY") {
       if (
         media.length !== 1 ||
         !["IMAGE", "VIDEO"].includes(media[0].type)
