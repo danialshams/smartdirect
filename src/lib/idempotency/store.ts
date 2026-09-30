@@ -9,7 +9,7 @@ export type IdempotencyRecord = {
   leaseToken: string | null;
 };
 
-export type ClaimIdempotencyInput = { key: string; tenantId: string; operation: string; resourceId?: string | null };
+export type ClaimIdempotencyInput = {\n  key: string;\n  tenantId: string;\n  operation: string;\n  resourceId?: string | null;\n  /** @deprecated Use the configured lease TTL. Kept for legacy test callers. */\n  ttlSeconds?: number;\n};
 export type ClaimIdempotencyResult = { claimed: boolean; record: IdempotencyRecord };
 export type IdempotencyExecutionState = "IN_PROGRESS" | "COMPLETED" | "FAILED";
 
@@ -25,7 +25,7 @@ export async function claimIdempotency(input: ClaimIdempotencyInput): Promise<Cl
   if (!tenantId) throw new Error("Idempotency tenantId cannot be empty.");
   if (!operation) throw new Error("Idempotency operation cannot be empty.");
 
-  const expiresAt = new Date(Date.now() + getIdempotencyLeaseTtlSeconds() * 1000);
+  const leaseTtlSeconds = input.ttlSeconds ?? getIdempotencyLeaseTtlSeconds();\n  if (!Number.isInteger(leaseTtlSeconds) || leaseTtlSeconds <= 0) {\n    throw new Error("Idempotency lease TTL must be a positive integer.");\n  }\n  const expiresAt = new Date(Date.now() + leaseTtlSeconds * 1000);
   const leaseToken = crypto.randomUUID();
 
   try {
