@@ -1,5 +1,7 @@
 import "dotenv/config";
 
+import { disconnectRedis } from "../src/lib/redis/client";
+
 import {
   claimJobById,
   completeJob,
@@ -69,7 +71,11 @@ async function main() {
   );
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+main()
+  .catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+  })
+  .finally(async () => {
+    await disconnectRedis().catch(() => undefined);
+  });
