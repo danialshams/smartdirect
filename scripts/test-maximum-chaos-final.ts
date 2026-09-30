@@ -105,6 +105,21 @@ async function main() {
     }
 
     // 2) 100-way idempotency race: exactly one owner, with no swallowed errors.
+    // Let the initial DB-heavy worker storm drain first. This keeps the race a
+    // deterministic 100-way idempotency test instead of measuring connection
+    // pool starvation caused by the unrelated 32-worker queue storm.
+    const idempotencyDrainDeadline = Date.now() + TIMEOUT;
+    while (Date.now() < idempotencyDrainDeadline) {
+      const d = await getQueueDepth(ns);
+      if (d.ready === 0 && d.delayed === 0 && d.active === 0) break;
+      await sleep(100);
+    }
+    const idempotencyDepth = await getQueueDepth(ns);
+    assert(
+      idempotencyDepth.ready === 0 && idempotencyDepth.delayed === 0 && idempotencyDepth.active === 0,
+      "Idempotency race started before the queue storm drained: " + JSON.stringify(idempotencyDepth),
+    );
+
     const idemKey = "maximum-idem-" + ns;
     const claimResults = await Promise.all(
       Array.from({ length: 100 }, async (_, index) => {
