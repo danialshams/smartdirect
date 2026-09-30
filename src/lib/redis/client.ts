@@ -18,7 +18,11 @@ function getRedisCommandTimeoutMs() {
   return Number.isFinite(value) && value > 0 ? value : DEFAULT_REDIS_COMMAND_TIMEOUT_MS;
 }
 
-function getRedisDriver() {\n  return process.env.REDIS_DRIVER?.trim().toLowerCase() === "native" ? "native" : "upstash";\n}\n\nfunction getRedisConfig() {
+function getRedisDriver() {
+  return process.env.REDIS_DRIVER?.trim().toLowerCase() === "native" ? "native" : "upstash";
+}
+
+function getRedisConfig() {
   const url = process.env.UPSTASH_REDIS_REST_URL?.trim();
   const token = process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
   if (!url || !token) {
