@@ -293,6 +293,7 @@ async function main() {
     await redis.del(`smartdirect:queue:${ns}:delayed`);
     await redis.del(`smartdirect:queue:${ns}:active`);
     await redis.del(`smartdirect:queue:${ns}:failed`);
+    await redis.disconnect().catch(() => undefined);
   }
 }
 
