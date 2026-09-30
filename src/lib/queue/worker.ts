@@ -208,6 +208,7 @@ export async function runQueueWorker(
           await failIdempotency(
             job.idempotency.key,
             error instanceof Error ? error.message : String(error),
+            idempotencyLeaseToken,
           );
         } catch (idempotencyError) {
           observabilityLogger.error("queue_idempotency_failure_marking_error", {
@@ -219,6 +220,7 @@ export async function runQueueWorker(
       await failJob(job.id, error);
     } finally {
       stopClaimHeartbeat?.();
+      stopLockHeartbeat?.();
       if (lockHandle) {
         await releaseLock(lockHandle);
       }
