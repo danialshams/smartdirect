@@ -6,6 +6,7 @@ import {
   Box, Card, CardContent, Grid, Skeleton, Stack, Typography,
 } from "@mui/material";
 import { BadgePercent, Camera, Headphones, UserRound, Users } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 type Stats = { users: number; pages: number; activeSubscriptions: number; expiredSubscriptions: number; openTickets: number };
 
@@ -20,7 +21,7 @@ export default function AdminDashboardPage() {
       .catch(e => setError(e.message || "خطا در دریافت اطلاعات"));
   }, []);
 
-  const cards = stats ? [
+  const cards: Array<{ title: string; value: number; icon: LucideIcon; href: string; color: string }> = stats ? [
     { title: "کاربران", value: stats.users, icon: UserRound, href: "/rickandmorty/users", color: "#2563EB" },
     { title: "پیج‌های متصل", value: stats.pages, icon: Camera, href: "/rickandmorty/users", color: "#0F172A" },
     { title: "اشتراک فعال", value: stats.activeSubscriptions, icon: Users, href: "/rickandmorty/users", color: "#16A34A" },
@@ -84,13 +85,13 @@ export default function AdminDashboardPage() {
             <Typography variant="subtitle1" fontWeight={700} mb={2}>دسترسی سریع</Typography>
             <Stack spacing={1}>
               {[
-                ["/rickandmorty/users", "مدیریت کاربران", UserRound, "#2563EB"],
-                ["/rickandmorty/tickets", "مدیریت تیکت‌ها", Headphones, "#D97706"],
-                ["/rickandmorty/coupons", "مدیریت کدهای تخفیف", BadgePercent, "#16A34A"],
-              ].map(([href, label, Icon, color]) => (
+                { href: "/rickandmorty/users", label: "مدیریت کاربران", Icon: UserRound, color: "#2563EB" },
+                { href: "/rickandmorty/tickets", label: "مدیریت تیکت‌ها", Icon: Headphones, color: "#D97706" },
+                { href: "/rickandmorty/coupons", label: "مدیریت کدهای تخفیف", Icon: BadgePercent, color: "#16A34A" },
+              ].map(({ href, label, Icon, color }) => (
                 <Link key={String(href)} href={String(href)} style={{ textDecoration: "none" }}>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, p: 1.5, border: "1px solid #E2E8F0", borderRadius: 2, color: "#0F172A", "&:hover": { bgcolor: "#F8FAFC", borderColor: "#BFDBFE" } }}>
-                    {typeof Icon === "function" && <Icon size={18} color={String(color)} />}
+                    <Icon size={18} color={color} />
                     <Typography variant="body2">{label}</Typography>
                   </Box>
                 </Link>
