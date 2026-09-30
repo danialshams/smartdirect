@@ -681,13 +681,53 @@ export default function EntryPointManager({ accounts, kind }: Props) {
                         </div>
                       </div>
 
-                      <EntryPointFlowBuilder
-                        accountId={account.id}
-                        automationId={item.automationId}
-                        onAutomationReady={(automationId) =>
-                          updateItem(id, { automationId })
-                        }
-                      />
+                      {kind === "persistent-menu" && (
+                        <div className="mb-5 rounded-2xl border border-border/70 bg-background p-3.5">
+                          <p className="mb-3 text-xs font-semibold text-foreground">عمل گزینه</p>
+                          <div className="grid grid-cols-2 gap-2">
+                            <Button
+                              type="button"
+                              variant={item.type === "postback" ? "default" : "outline"}
+                              className="h-10 rounded-xl text-xs"
+                              onClick={() => updateItem(id, { type: "postback", url: "" })}
+                            >
+                              پاسخ خودکار
+                            </Button>
+                            <Button
+                              type="button"
+                              variant={item.type === "web_url" ? "default" : "outline"}
+                              className="h-10 rounded-xl text-xs"
+                              onClick={() => updateItem(id, { type: "web_url", automationId: null })}
+                            >
+                              لینک
+                            </Button>
+                          </div>
+
+                          {item.type === "web_url" && (
+                            <div className="mt-3 space-y-2">
+                              <label className="text-xs font-semibold text-foreground">آدرس لینک</label>
+                              <Input
+                                value={item.url}
+                                onChange={(event) => updateItem(id, { url: event.target.value })}
+                                placeholder="https://example.com"
+                                type="url"
+                                dir="ltr"
+                                className="h-11 rounded-xl"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {kind === "persistent-menu" && item.type === "web_url" ? null : (
+                        <EntryPointFlowBuilder
+                          accountId={account.id}
+                          automationId={item.automationId}
+                          onAutomationReady={(automationId) =>
+                            updateItem(id, { automationId })
+                          }
+                        />
+                      )}
                     </div>
                   )}
                 </div>
