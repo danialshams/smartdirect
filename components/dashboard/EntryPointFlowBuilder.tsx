@@ -109,7 +109,7 @@ export default function EntryPointFlowBuilder({
     onAutomationReady,
 }: EntryPointFlowBuilderProps) {
     const [open, setOpen] =
-        useState(false);
+        useState(Boolean(automationId));
 
     const [messages, setMessages] =
         useState<MessageDraft[]>([]);
