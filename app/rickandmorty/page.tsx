@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Card, Col, Row, Skeleton, Statistic } from "antd";
+import {
+  Box, Card, CardContent, Grid, Skeleton, Stack, Typography,
+} from "@mui/material";
 import { BadgePercent, Camera, Headphones, UserRound, Users } from "lucide-react";
 
 type Stats = { users: number; pages: number; activeSubscriptions: number; expiredSubscriptions: number; openTickets: number };
@@ -19,55 +21,84 @@ export default function AdminDashboardPage() {
   }, []);
 
   const cards = stats ? [
-    { title: "کاربران", value: stats.users, icon: UserRound, href: "/rickandmorty/users", className: "text-[#2563EB]" },
-    { title: "پیج‌های متصل", value: stats.pages, icon: Camera, href: "/rickandmorty/users", className: "text-[#0F172A]" },
-    { title: "اشتراک فعال", value: stats.activeSubscriptions, icon: Users, href: "/rickandmorty/users", className: "text-[#16A34A]" },
-    { title: "تیکت‌های باز", value: stats.openTickets, icon: Headphones, href: "/rickandmorty/tickets", className: "text-[#D97706]" },
+    { title: "کاربران", value: stats.users, icon: UserRound, href: "/rickandmorty/users", color: "#2563EB" },
+    { title: "پیج‌های متصل", value: stats.pages, icon: Camera, href: "/rickandmorty/users", color: "#0F172A" },
+    { title: "اشتراک فعال", value: stats.activeSubscriptions, icon: Users, href: "/rickandmorty/users", color: "#16A34A" },
+    { title: "تیکت‌های باز", value: stats.openTickets, icon: Headphones, href: "/rickandmorty/tickets", color: "#D97706" },
   ] : [];
 
   return (
-    <div className="space-y-5">
-      <div>
-        <h1 className="mb-1 text-[22px] font-bold text-[#0F172A] sm:text-2xl">داشبورد</h1>
-        <p className="text-sm text-[#64748B]">نمای کلی وضعیت کاربران، اشتراک‌ها و پشتیبانی</p>
-      </div>
-      {error ? <Card className="!border-red-200 !bg-red-50"><span className="text-sm text-red-700">{error}</span></Card> : null}
-      <Row gutter={[16, 16]}>
+    <Stack spacing={2.5}>
+      <Box>
+        <Typography variant="h5" fontWeight={700}>داشبورد</Typography>
+        <Typography variant="body2" color="text.secondary">نمای کلی وضعیت کاربران، اشتراک‌ها و پشتیبانی</Typography>
+      </Box>
+
+      {error && <Card sx={{ borderColor: "#FECACA", bgcolor: "#FEF2F2" }}><CardContent><Typography color="error" variant="body2">{error}</Typography></CardContent></Card>}
+
+      <Grid container spacing={2}>
         {stats ? cards.map(card => {
           const Icon = card.icon;
-          return <Col xs={24} sm={12} xl={6} key={card.title}>
-            <Link href={card.href}>
-              <Card hoverable className="h-full !border-[#E2E8F0] !shadow-none transition-all duration-200 hover:!-translate-y-0.5 hover:!shadow-[0_8px_24px_rgba(15,23,42,0.06)]">
-                <div className="mb-5 flex items-center justify-between">
-                  <div className="flex size-10 items-center justify-center rounded-xl bg-[#F8FAFC]"><Icon size={20} className={card.className} /></div>
-                  <span className="text-xs text-[#64748B]">{card.title}</span>
-                </div>
-                <Statistic value={card.value} valueStyle={{ fontSize: 28, fontWeight: 700, color: "#0F172A" }} />
-              </Card>
-            </Link>
-          </Col>;
-        }) : Array.from({ length: 4 }).map((_, i) => <Col xs={24} sm={12} xl={6} key={i}><Card><Skeleton active paragraph={{ rows: 2 }} /></Card></Col>)}
-      </Row>
-      <Row gutter={[16, 16]}>
-        <Col xs={24} lg={14}>
-          <Card title="وضعیت اشتراک" className="!border-[#E2E8F0] !shadow-none">
-            {stats ? <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              <div className="rounded-xl bg-[#F8FAFC] p-4"><div className="text-xs text-[#64748B]">فعال</div><div className="mt-1 text-2xl font-bold text-[#16A34A]">{stats.activeSubscriptions}</div></div>
-              <div className="rounded-xl bg-[#F8FAFC] p-4"><div className="text-xs text-[#64748B]">منقضی</div><div className="mt-1 text-2xl font-bold text-[#DC2626]">{stats.expiredSubscriptions}</div></div>
-              <div className="col-span-2 rounded-xl bg-[#F8FAFC] p-4 sm:col-span-1"><div className="text-xs text-[#64748B]">پیج‌های متصل</div><div className="mt-1 text-2xl font-bold text-[#0F172A]">{stats.pages}</div></div>
-            </div> : <Skeleton active paragraph={{ rows: 4 }} />}
-          </Card>
-        </Col>
-        <Col xs={24} lg={10}>
-          <Card title="دسترسی سریع" className="!border-[#E2E8F0] !shadow-none">
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-1">
-              <Link href="/rickandmorty/users" className="flex items-center gap-3 rounded-xl border border-[#E2E8F0] p-3 transition-colors hover:border-[#BFDBFE] hover:bg-[#F8FAFC]"><UserRound size={18} className="text-[#2563EB]" /><span className="text-sm">مدیریت کاربران</span></Link>
-              <Link href="/rickandmorty/tickets" className="flex items-center gap-3 rounded-xl border border-[#E2E8F0] p-3 transition-colors hover:border-[#BFDBFE] hover:bg-[#F8FAFC]"><Headphones size={18} className="text-[#D97706]" /><span className="text-sm">مدیریت تیکت‌ها</span></Link>
-              <Link href="/rickandmorty/coupons" className="flex items-center gap-3 rounded-xl border border-[#E2E8F0] p-3 transition-colors hover:border-[#BFDBFE] hover:bg-[#F8FAFC]"><BadgePercent size={18} className="text-[#16A34A]" /><span className="text-sm">مدیریت کدهای تخفیف</span></Link>
-            </div>
-          </Card>
-        </Col>
-      </Row>
-    </div>
+          return (
+            <Grid key={card.title} size={{ xs: 12, sm: 6, xl: 3 }}>
+              <Link href={card.href} style={{ textDecoration: "none" }}>
+                <Card sx={{ height: "100%", transition: "transform .2s, box-shadow .2s", "&:hover": { transform: "translateY(-2px)", boxShadow: "0 8px 24px rgba(15,23,42,.06)" } }}>
+                  <CardContent>
+                    <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2.5}>
+                      <Box sx={{ width: 40, height: 40, display: "grid", placeItems: "center", borderRadius: 2, bgcolor: "#F8FAFC" }}><Icon size={20} color={card.color} /></Box>
+                      <Typography variant="caption" color="text.secondary">{card.title}</Typography>
+                    </Stack>
+                    <Typography variant="h4" fontWeight={700} color="text.primary">{card.value}</Typography>
+                  </CardContent>
+                </Card>
+              </Link>
+            </Grid>
+          );
+        }) : Array.from({ length: 4 }).map((_, i) => (
+          <Grid key={i} size={{ xs: 12, sm: 6, xl: 3 }}><Card sx={{ p: 2 }}><Skeleton variant="rounded" height={108} /></Card></Grid>
+        ))}
+      </Grid>
+
+      <Grid container spacing={2}>
+        <Grid size={{ xs: 12, lg: 7 }}>
+          <Card><CardContent>
+            <Typography variant="subtitle1" fontWeight={700} mb={2}>وضعیت اشتراک</Typography>
+            {stats ? <Grid container spacing={1.5}>
+              {[
+                ["فعال", stats.activeSubscriptions, "#16A34A"],
+                ["منقضی", stats.expiredSubscriptions, "#DC2626"],
+                ["پیج‌های متصل", stats.pages, "#0F172A"],
+              ].map(([label, value, color]) => (
+                <Grid key={String(label)} size={{ xs: 12, sm: 4 }}>
+                  <Box sx={{ p: 2, borderRadius: 2.5, bgcolor: "#F8FAFC" }}>
+                    <Typography variant="caption" color="text.secondary">{label}</Typography>
+                    <Typography variant="h5" fontWeight={700} sx={{ mt: .5, color: String(color) }}>{value}</Typography>
+                  </Box>
+                </Grid>
+              ))}
+            </Grid> : <Skeleton variant="rounded" height={120} />}
+          </CardContent></Card>
+        </Grid>
+        <Grid size={{ xs: 12, lg: 5 }}>
+          <Card><CardContent>
+            <Typography variant="subtitle1" fontWeight={700} mb={2}>دسترسی سریع</Typography>
+            <Stack spacing={1}>
+              {[
+                ["/rickandmorty/users", "مدیریت کاربران", UserRound, "#2563EB"],
+                ["/rickandmorty/tickets", "مدیریت تیکت‌ها", Headphones, "#D97706"],
+                ["/rickandmorty/coupons", "مدیریت کدهای تخفیف", BadgePercent, "#16A34A"],
+              ].map(([href, label, Icon, color]) => (
+                <Link key={String(href)} href={String(href)} style={{ textDecoration: "none" }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, p: 1.5, border: "1px solid #E2E8F0", borderRadius: 2, color: "#0F172A", "&:hover": { bgcolor: "#F8FAFC", borderColor: "#BFDBFE" } }}>
+                    {typeof Icon === "function" && <Icon size={18} color={String(color)} />}
+                    <Typography variant="body2">{label}</Typography>
+                  </Box>
+                </Link>
+              ))}
+            </Stack>
+          </CardContent></Card>
+        </Grid>
+      </Grid>
+    </Stack>
   );
 }
