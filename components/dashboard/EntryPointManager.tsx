@@ -436,6 +436,19 @@ export default function EntryPointManager({ accounts, kind }: Props) {
             : "غیرفعال‌سازی ناموفق بود.",
         );
       }
+      const automationIds = items
+        .map((item) => item.automationId)
+        .filter(Boolean) as string[];
+
+      await Promise.all(
+        automationIds.map((automationId) =>
+          fetch(`/api/automations/${encodeURIComponent(automationId)}`, {
+            method: "DELETE",
+            credentials: "include",
+          }).catch(() => undefined),
+        ),
+      );
+
       setItems([]);
       setSelectedIds([]);
       setEnabled(false);
