@@ -1,4 +1,4 @@
-export type RedisDriver = "upstash" | "native";
+export type RedisDriver = string;
 
 export type ServerEnvironment = {
   nodeEnv: "development" | "test" | "production";
