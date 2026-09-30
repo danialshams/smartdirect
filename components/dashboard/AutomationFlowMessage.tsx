@@ -273,7 +273,7 @@ export default function AutomationFlowMessage({
     Icon: LucideIcon;
   }> = [
     { value: "TEXT", label: "متن", Icon: MessageSquare },
-    ...(triggerType === "STORY_REPLY_KEYWORD"
+    ...(triggerType === "STORY_REPLY_KEYWORD" || triggerType === "DM"
       ? [
           { value: "IMAGE" as const, label: "عکس", Icon: ImagePlus },
           { value: "VIDEO" as const, label: "ویدیو", Icon: Video },
