@@ -450,7 +450,7 @@ export async function completeJob(jobId: string) {
   return job;
 }
 
-export async function failJob(jobId: string, error: unknown) {
+export async function failJob(jobId: string, error: unknown, options: { force?: boolean } = {}) {
   const redis = createQueueRedis();
   const job = await redis.get<QueueJob>(jobKey(jobId));
 
