@@ -107,7 +107,7 @@ async function main() {
     // 2) 100-way idempotency race: exactly one owner.
     const idemKey = "maximum-idem-" + ns;
     const claims = await Promise.all(Array.from({ length: 100 }, () =>
-      claimIdempotency({ key: idemKey, tenantId: tenant(0), operation: "maximum", resourceId: account(0) }).catch(() => null)
+      claimIdempotency({ key: idemKey, tenantId: tenant(0), operation: "maximum", resourceId: account(0), ttlSeconds: 60 }).catch(() => null)
     ));
     assert(claims.filter(x => x?.claimed).length === 1, "Idempotency race allowed multiple owners");
     const lease = claims.find(x => x?.claimed)?.record.leaseToken;
