@@ -72,8 +72,9 @@ export async function connectRedis() {
 }
 
 export async function disconnectRedis() {
-  // @upstash/redis is HTTP based and has no persistent socket to close.
-  return;
+  const client = globalForRedis.smartDirectRedis;
+  globalForRedis.smartDirectRedis = undefined;
+  if (client) await client.disconnect();
 }
 
 export async function redisHealthCheck() {
