@@ -285,6 +285,7 @@ async function main() {
       keys,
       ["smartdirect:queue:job:", "smartdirect:queue:claim:"],
     ).catch(() => undefined);
+    await redis.disconnect().catch(() => undefined);
   }
 }
 
