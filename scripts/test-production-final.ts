@@ -273,9 +273,15 @@ async function main() {
     allJobIds.push(...jobs.map((job) => job.id));
 
     const tenantSet = new Set(
-      jobs.map(
-        (job) => (job.payload as { tenantId?: string }).tenantId,
-      ),
+      jobs
+        .map((job) => {
+          const payload = job.payload as {
+            tenantId?: string;
+            event?: { tenantId?: string };
+          };
+          return payload.tenantId ?? payload.event?.tenantId;
+        })
+        .filter((tenantId): tenantId is string => Boolean(tenantId)),
     );
     const accountSet = new Set(
       jobs.map(
