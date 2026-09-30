@@ -284,10 +284,12 @@ async function main() {
         .filter((tenantId): tenantId is string => Boolean(tenantId)),
     );
     const accountSet = new Set(
-      jobs.map(
-        (job) =>
-          (job.payload as { instagramAccountId?: string }).instagramAccountId,
-      ),
+      jobs
+        .map(
+          (job) =>
+            (job.payload as { instagramAccountId?: string }).instagramAccountId,
+        )
+        .filter((accountId): accountId is string => Boolean(accountId)),
     );
 
     assert(tenantSet.size === tenantCount, "Multi-tenant load did not cover all tenants");
