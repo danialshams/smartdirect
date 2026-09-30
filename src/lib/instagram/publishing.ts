@@ -516,7 +516,8 @@ async function publishInstagramJobInternal(jobId: string) {
   try {
     let containerId: string = reusableContainerId ?? "";
 
-    if (!containerId) {\n    if (job.type === "STORY") {
+    if (!containerId) {
+      if (job.type === "STORY") {
       if (
         media.length !== 1 ||
         !["IMAGE", "VIDEO"].includes(media[0].type)
@@ -596,7 +597,9 @@ async function publishInstagramJobInternal(jobId: string) {
         tenantId,
         job.instagramAccountId,
       );
-    }
+      }
+
+  }
 
     await prisma.instagramPublishJob.update({
       where: { id: job.id },
@@ -606,7 +609,6 @@ async function publishInstagramJobInternal(jobId: string) {
       },
     });
 
-    const publishOperation = job.type === "REEL" ? "PUBLISH_REEL" : job.type === "CAROUSEL" ? "PUBLISH_CAROUSEL" : job.type === "STORY" ? "PUBLISH_STORY" : "PUBLISH_MEDIA";
     await waitReady(containerId, token, job.instagramAccountId, tenantId, 3000, 20, publishOperation);
 
     const instagramMediaId = await publishContainer(
