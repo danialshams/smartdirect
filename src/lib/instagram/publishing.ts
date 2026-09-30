@@ -451,7 +451,7 @@ async function publishInstagramJobInternal(jobId: string) {
     return job;
   }
 
-  const idempotencyKey = idempotency.key;
+  const idempotencyKey = idempotency.key;\n  const idempotencyLeaseToken = idempotency.leaseToken;
 
   const tags = normalizeUserTags(job.userTags);
   const token = await getValidInstagramAccessToken(job.instagramAccountId);
@@ -602,7 +602,7 @@ async function publishInstagramJobInternal(jobId: string) {
     });
 
     try {
-      await failPublishingExecution(idempotencyKey, error);
+      await failPublishingExecution(idempotencyKey, error, idempotencyLeaseToken);
     } catch (idempotencyError) {
       console.error("Failed to mark publishing idempotency as FAILED:", idempotencyError);
     }
