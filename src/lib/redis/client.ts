@@ -19,7 +19,7 @@ function getRedisCommandTimeoutMs() {
 }
 
 function getRedisDriver() {
-  return process.env.REDIS_DRIVER?.trim().toLowerCase() === "native" ? "native" : "upstash";
+  return process.env.REDIS_DRIVER?.trim().toLowerCase() === "redis" ? "redis" : "upstash";
 }
 
 function getRedisConfig() {
