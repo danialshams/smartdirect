@@ -439,6 +439,7 @@ model IdempotencyRecord {
   completedAt  DateTime?
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
+  leaseToken   String?
 
   @@index([tenantId, operation])
   @@index([tenantId, operation, status])
