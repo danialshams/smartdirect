@@ -10,6 +10,7 @@ import { getLoadTestConfig } from "./load-test/config";
 import { calculateLatency } from "./load-test/metrics";
 import { printLoadTestReport } from "./load-test/report";
 import type { LoadTestSample } from "./load-test/types";
+import { disconnectRedis } from "../src/lib/redis/client";
 
 const JOB_PREFIX = "smartdirect:queue:job:";
 const LOAD_TEST_QUEUE_NAMESPACE = "load-test-worker";
@@ -339,7 +340,11 @@ async function main() {
   console.log("178 Worker Load Test: OK");
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+main()
+  .catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+  })
+  .finally(async () => {
+    await disconnectRedis().catch(() => undefined);
+  });
