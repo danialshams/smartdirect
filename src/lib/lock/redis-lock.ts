@@ -140,3 +140,46 @@ export async function isLockOwned(
   const value = await redis.get<string>(handle.key);
   return value === handle.token;
 }
+
+
+const RENEW_LOCK_SCRIPT = `
+if redis.call("get", KEYS[1]) == ARGV[1] then
+  redis.call("expire", KEYS[1], ARGV[2])
+  return 1
+end
+return 0
+`;
+
+export async function renewLock(handle: DistributedLockHandle): Promise<boolean> {
+  const redis = getRedisClient();
+  const ttlSeconds = getLockTtlSeconds();
+  const result = await redis.eval(RENEW_LOCK_SCRIPT, [handle.key], [handle.token, String(ttlSeconds)]);
+  if (Number(result) !== 1) return false;
+  handle.expiresAt = Date.now() + ttlSeconds * 1000;
+  return true;
+}
+
+export function startLockHeartbeat(handle: DistributedLockHandle, maxDurationMs?: number) {
+  const intervalMs = Math.max(1_000, Math.floor((getLockTtlSeconds() * 1000) / 3));
+  const startedAt = Date.now();
+  let stopped = false;
+  let inFlight = false;
+
+  const timer = setInterval(() => {
+    if (stopped || inFlight) return;
+    if (maxDurationMs && Date.now() - startedAt >= maxDurationMs) {
+      stopped = true;
+      clearInterval(timer);
+      return;
+    }
+    inFlight = true;
+    void renewLock(handle).catch(() => undefined).finally(() => {
+      inFlight = false;
+    });
+  }, intervalMs);
+
+  return () => {
+    stopped = true;
+    clearInterval(timer);
+  };
+}
