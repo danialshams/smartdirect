@@ -132,8 +132,10 @@ export async function runQueueWorker(
 
     enterObservabilityContext({ jobId: job.id });
 
-    let lockHandle: DistributedLockHandle | undefined;\n    let idempotencyLeaseToken: string | null = null;
-    let stopClaimHeartbeat: (() => void) | undefined;\n    let stopLockHeartbeat: (() => void) | undefined;
+    let lockHandle: DistributedLockHandle | undefined;
+    let idempotencyLeaseToken: string | null = null;
+    let stopClaimHeartbeat: (() => void) | undefined;
+    let stopLockHeartbeat: (() => void) | undefined;
     const jobTimeoutMs = Math.max(0, Number(process.env.QUEUE_JOB_TIMEOUT_MS ?? 0));
     stopClaimHeartbeat = startJobClaimHeartbeat(job.id, job.claimToken ?? workerId, jobTimeoutMs || undefined);
 
@@ -147,7 +149,8 @@ export async function runQueueWorker(
         throw new Error(`Distributed lock is already held for job ${job.id}.`);
       }
 
-      lockHandle = lock.handle;\n      stopLockHeartbeat = startLockHeartbeat(lockHandle, jobTimeoutMs || undefined);
+      lockHandle = lock.handle;
+      stopLockHeartbeat = startLockHeartbeat(lockHandle, jobTimeoutMs || undefined);
 
       if (job.idempotency) {
         const claim = await claimIdempotency({
@@ -161,6 +164,8 @@ export async function runQueueWorker(
           await completeJob(job.id);
           return;
         }
+
+        idempotencyLeaseToken = claim.record.leaseToken;
       }
 
       await handler(job);
