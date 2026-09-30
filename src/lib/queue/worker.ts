@@ -170,11 +170,26 @@ export async function runQueueWorker(
         return;
       }
 
-      if (job.idempotency) {
-        await completeIdempotency(job.idempotency.key, { jobId: job.id });
+      if (!latestJob || latestJob.status !== "active" || latestJob.claimToken !== job.claimToken) {
+        observabilityLogger.warn("queue_job_ownership_lost", {
+          jobId: job.id,
+          workerId,
+          attempt: job.attempts,
+        });
+        return;
       }
 
-      await completeJob(job.id);
+      if (job.idempotency) {
+        await completeIdempotency(job.idempotency.key, { jobId: job.id }, undefined);
+      }
+
+      const completed = await completeJob(job.id);
+      if (!completed) {
+        observabilityLogger.warn("queue_job_completion_rejected", {
+          jobId: job.id,
+          workerId,
+        });
+      }
     } catch (error) {
       observabilityLogger.error("queue_job_failed", {
         type: job.type,
