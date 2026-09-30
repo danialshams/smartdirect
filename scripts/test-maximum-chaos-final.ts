@@ -148,10 +148,10 @@ async function main() {
     const lockResults = await Promise.all(Array.from({ length: 100 }, () =>
       acquireLock({ scope: "maximum", resourceId: "lock-" + ns }).catch(() => ({ acquired: false }))
     ));
-    const owners = lockResults.filter(x => x.acquired);
-    assert(owners.length === 1, "Distributed lock allowed multiple owners");
+    const lockOwners = lockResults.filter(x => x.acquired);
+    assert(lockOwners.length === 1, "Distributed lock allowed multiple owners");
     assert(lockResults.some(x => !x.acquired), "Lock contention was not observed");
-    if (owners[0].handle) await releaseLock(owners[0].handle);
+    if (lockOwners[0].handle) await releaseLock(lockOwners[0].handle);
 
     // 4) Real claimed job -> simulated worker death -> stalled recovery.
     const crashJob = await enqueueJob("TEST", {
