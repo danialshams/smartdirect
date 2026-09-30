@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Card, Input, Select, Table, Tag, Typography } from "antd";
+import { Card, Input, Select, Table, Tag } from "antd";
+import Title from "antd/es/typography/Title";
+import Text from "antd/es/typography/Text";
 import type { ColumnsType } from "antd/es/table";
 import { Search, Ticket } from "lucide-react";
 
@@ -21,6 +23,6 @@ export default function TicketsPage(){
   {title:"پیام",key:"messages",width:80,responsive:["sm"],render:(_,r)=>r._count.messages},
   {title:"آخرین تغییر",dataIndex:"updatedAt",width:145,responsive:["md"],render:v=>new Date(v).toLocaleDateString("fa-IR")},
  ];
- return <div className="space-y-5"><div><Typography.Title level={3} className="!mb-1 !text-[22px]">تیکت‌ها</Typography.Title><Typography.Text className="!text-[#64748B]">مدیریت و پاسخ‌گویی به درخواست‌های کاربران</Typography.Text></div>
+ return <div className="space-y-5"><div><Title level={3} className="!mb-1 !text-[22px]">تیکت‌ها</Title><Text className="!text-[#64748B]">مدیریت و پاسخ‌گویی به درخواست‌های کاربران</Text></div>
  <Card className="!border-[#E2E8F0] !shadow-none"><div className="mb-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_180px]"><Input prefix={<Search size={17}/>} allowClear placeholder="جستجو در عنوان یا کاربر..." value={q} onChange={e=>setQ(e.target.value)}/><Select value={status} onChange={setStatus} options={[{value:"",label:"همه وضعیت‌ها"},...Object.entries(statusLabels).map(([value,label])=>({value,label}))]}/></div><Table rowKey="id" loading={loading} dataSource={rows} columns={columns} scroll={{x:560}} onRow={r=>({onClick:()=>router.push(`/rickandmorty/tickets/${r.id}`),style:{cursor:"pointer"}})} pagination={{pageSize:20,showSizeChanger:false}} locale={{emptyText:<div className="py-8"><Ticket className="mx-auto mb-2 text-[#94A3B8]"/><div>تیکتی پیدا نشد</div></div>}}/></Card></div>;
 }
