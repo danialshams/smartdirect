@@ -1,7 +1,10 @@
 import { Redis } from "@upstash/redis";
+import IORedis from "ioredis";
+import { NativeRedisAdapter } from "./providers/native";
+import type { RedisClientLike } from "./types";
 
 const globalForRedis = globalThis as unknown as {
-  smartDirectRedis?: Redis;
+  smartDirectRedis?: RedisClientLike;
 };
 
 const DEFAULT_REDIS_COMMAND_TIMEOUT_MS = 5_000;
@@ -15,7 +18,7 @@ function getRedisCommandTimeoutMs() {
   return Number.isFinite(value) && value > 0 ? value : DEFAULT_REDIS_COMMAND_TIMEOUT_MS;
 }
 
-function getRedisConfig() {
+function getRedisDriver() {\n  return process.env.REDIS_DRIVER?.trim().toLowerCase() === "native" ? "native" : "upstash";\n}\n\nfunction getRedisConfig() {
   const url = process.env.UPSTASH_REDIS_REST_URL?.trim();
   const token = process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
   if (!url || !token) {
@@ -41,7 +44,7 @@ export function setRedisCommandTimeoutMs(timeoutMs: number) {
   globalForRedis.smartDirectRedis = undefined;
 }
 
-export function getRedisClient(): Redis {
+export function getRedisClient(): RedisClientLike {
   if (!globalForRedis.smartDirectRedis) {
     globalForRedis.smartDirectRedis = createRedisClient();
   }
