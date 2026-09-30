@@ -32,7 +32,8 @@ type HandoffState = {
 };
 
 async function executeAutomationInternal(input: ExecuteAutomationInput) {
-  let idempotencyKey: string | null = null;\n  let idempotencyLeaseToken: string | null = null;
+  let idempotencyKey: string | null = null;
+  let idempotencyLeaseToken: string | null = null;
 
   try {
   // =========================================================
