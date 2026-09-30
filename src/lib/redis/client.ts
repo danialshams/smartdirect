@@ -31,13 +31,13 @@ function getRedisConfig() {
   return { url, token };
 }
 
-function createRedisClient(): Redis {
+function createRedisClient(): RedisClientLike {
   const { url, token } = getRedisConfig();
   return new Redis({
     url,
     token,
     signal: () => AbortSignal.timeout(getRedisCommandTimeoutMs()),
-  });
+  }) as unknown as RedisClientLike;
 }
 
 export function setRedisCommandTimeoutMs(timeoutMs: number) {
