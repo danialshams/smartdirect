@@ -7,6 +7,8 @@ export type IdempotencyScope = {
 };
 
 const MAX_KEY_LENGTH = 200;
+const DEFAULT_RETENTION_SECONDS = 24 * 60 * 60;
+const DEFAULT_LEASE_SECONDS = 5 * 60;
 
 export class InvalidIdempotencyKeyError extends Error {
   constructor(message = "Invalid idempotency key.") {
@@ -67,13 +69,22 @@ export function createIdempotencyKey(
 export function getIdempotencyTtlSeconds(): number {
   const raw = process.env.IDEMPOTENCY_TTL_SECONDS?.trim();
 
-  if (!raw) return 24 * 60 * 60;
+  if (!raw) return DEFAULT_RETENTION_SECONDS;
 
   const value = Number(raw);
 
   if (!Number.isInteger(value) || value <= 0) {
-    return 24 * 60 * 60;
+    return DEFAULT_RETENTION_SECONDS;
   }
 
+  return value;
+}
+
+
+export function getIdempotencyLeaseTtlSeconds(): number {
+  const raw = process.env.IDEMPOTENCY_LEASE_TTL_SECONDS?.trim();
+  if (!raw) return DEFAULT_LEASE_SECONDS;
+  const value = Number(raw);
+  if (!Number.isInteger(value) || value < 30 || value > 60 * 60) return DEFAULT_LEASE_SECONDS;
   return value;
 }
