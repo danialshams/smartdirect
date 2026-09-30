@@ -9,6 +9,7 @@ import {
 import { getLoadTestConfig } from "./load-test/config";
 import { printLoadTestReport } from "./load-test/report";
 import { runLoadTest } from "./load-test/runner";
+import { disconnectRedis } from "../src/lib/redis/client";
 
 async function main() {
   const config = getLoadTestConfig("queue-load", {
@@ -119,6 +120,7 @@ async function main() {
       );
       process.exitCode = 1;
     }
+    await disconnectRedis().catch(() => undefined);
   }
 }
 
