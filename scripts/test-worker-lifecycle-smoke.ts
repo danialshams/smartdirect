@@ -8,6 +8,7 @@ import {
   getQueueDepth,
 } from "../src/lib/queue/core";
 import { runQueueWorker } from "../src/lib/queue/worker";
+import { disconnectRedis } from "../src/lib/redis/client";
 
 const READY_KEY = "smartdirect:queue:default:ready";
 const TIMEOUT_MS = 15_000;
@@ -106,6 +107,7 @@ async function main() {
     if (jobId) {
       await deleteJob(jobId).catch(() => undefined);
     }
+    await disconnectRedis().catch(() => undefined);
   }
 }
 
