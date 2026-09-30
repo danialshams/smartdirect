@@ -6,8 +6,8 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 const databaseUrl = process.env.DATABASE_URL;
-const databasePoolMax = Number(process.env.DB_POOL_MAX ?? 5);
-const databaseConnectionTimeoutMs = Number(process.env.DB_CONNECTION_TIMEOUT_MS ?? 5000);
+const databasePoolMax = Number(process.env.DB_POOL_MAX ?? 10);
+const databaseConnectionTimeoutMs = Number(process.env.DB_CONNECTION_TIMEOUT_MS ?? 15000);
 const databaseIdleTimeoutMs = Number(process.env.DB_IDLE_TIMEOUT_MS ?? 10000);
 
 const adapter = new PrismaPg({
