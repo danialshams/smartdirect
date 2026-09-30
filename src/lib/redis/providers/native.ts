@@ -25,6 +25,7 @@ class NativeRedisPipeline implements RedisPipelineLike {
 
   async exec<T = unknown>(): Promise<T[]> {
     const results = await this.pipeline.exec();
+    if (results === null) return [];
     return results.map(([error, value]) => {
       if (error) throw error;
       return value as T;
@@ -77,7 +78,7 @@ export class NativeRedisAdapter implements RedisClientLike {
           : []),
       ) as unknown as T;
     }
-    return this.client.zrange(key, min, max) as unknown as T;
+    return (this.client as any).zrange(key, min, max) as T;
   }
 
   lpush(key: string, ...values: string[]) {
