@@ -5,6 +5,7 @@ import {
   createQueueRedis,
   enqueueJob,
   getJob,
+  claimNextJob,
   completeJob,
   failJob,
 } from "../src/lib/queue/core";
@@ -46,6 +47,11 @@ async function main() {
 
   if (!retriedJob || retriedJob.status !== "waiting" || retriedJob.recoveryId !== failedRecord.id) {
     throw new Error("Manual retry did not requeue the failed job correctly.");
+  }
+
+  const retriedClaim = await claimNextJob("recovery-test-worker", queueNamespace);
+  if (!retriedClaim || retriedClaim.id !== retried.id) {
+    throw new Error("Manual retry job could not be claimed before completion.");
   }
 
   await completeJob(retried.id);
