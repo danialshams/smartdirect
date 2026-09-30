@@ -10,6 +10,7 @@ import {
 import { acquireLock, releaseLock } from "../src/lib/lock/redis-lock";
 import type { DistributedLockHandle } from "../src/lib/lock/types";
 import { createQueueRedis } from "../src/lib/queue/core";
+import { disconnectRedis } from "../src/lib/redis/client";
 
 const STEP_TIMEOUT_MS = 10_000;
 
@@ -137,6 +138,7 @@ async function main() {
     if (jobId) {
       await deleteJob(jobId).catch(() => undefined);
     }
+    await disconnectRedis().catch(() => undefined);
   }
 }
 
