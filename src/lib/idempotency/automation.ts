@@ -47,7 +47,7 @@ export async function completeAutomationExecution(
   key: string,
   response?: unknown,
 ): Promise<void> {
-  await completeIdempotency(key, response);
+  await completeIdempotency(key, response, leaseToken);
 }
 
 export async function failAutomationExecution(
@@ -59,5 +59,5 @@ export async function failAutomationExecution(
       ? error.message
       : "Automation execution failed.";
 
-  await failIdempotency(key, message);
+  await failIdempotency(key, message, leaseToken);
 }
