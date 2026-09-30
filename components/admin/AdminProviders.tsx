@@ -1,41 +1,54 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { ConfigProvider } from "antd";
-import faIR from "antd/locale/fa_IR";
+import { AppRouterCacheProvider } from "@mui/material-nextjs/v1X-appRouter";
+import { CssBaseline, ThemeProvider, createTheme } from "@mui/material";
+import { prefixer } from "stylis";
+import rtlPlugin from "stylis-plugin-rtl";
+import { CacheProvider } from "@emotion/react";
+import createCache from "@emotion/cache";
+
+const cache = createCache({ key: "mui-rtl", stylisPlugins: [prefixer, rtlPlugin] });
+
+const theme = createTheme({
+  direction: "rtl",
+  palette: {
+    primary: { main: "#2563EB", dark: "#1D4ED8", light: "#EFF6FF" },
+    secondary: { main: "#64748B" },
+    success: { main: "#16A34A" },
+    warning: { main: "#D97706" },
+    error: { main: "#DC2626" },
+    background: { default: "#F8FAFC", paper: "#FFFFFF" },
+    text: { primary: "#0F172A", secondary: "#64748B" },
+    divider: "#E2E8F0",
+  },
+  typography: {
+    fontFamily: "Vazirmatn, Arial, sans-serif",
+    h1: { fontWeight: 700 },
+    h2: { fontWeight: 700 },
+    h3: { fontWeight: 700 },
+    h4: { fontWeight: 700 },
+    h5: { fontWeight: 700 },
+    h6: { fontWeight: 700 },
+  },
+  shape: { borderRadius: 10 },
+  components: {
+    MuiPaper: { defaultProps: { elevation: 0 } },
+    MuiCard: { styleOverrides: { root: { border: "1px solid #E2E8F0" } } },
+    MuiButton: { defaultProps: { disableElevation: true } },
+    MuiTableCell: { styleOverrides: { head: { fontWeight: 700, backgroundColor: "#F8FAFC" } } },
+  },
+});
 
 export default function AdminProviders({ children }: { children: ReactNode }) {
   return (
-    <ConfigProvider
-      direction="rtl"
-      locale={faIR}
-      theme={{
-        token: {
-          colorPrimary: "#2563EB",
-          colorPrimaryHover: "#1D4ED8",
-          colorPrimaryActive: "#1D4ED8",
-          colorInfo: "#2563EB",
-          colorSuccess: "#16A34A",
-          colorWarning: "#D97706",
-          colorError: "#DC2626",
-          colorText: "#0F172A",
-          colorTextSecondary: "#64748B",
-          colorBorder: "#E2E8F0",
-          colorBgLayout: "#F8FAFC",
-          colorBgContainer: "#FFFFFF",
-          borderRadius: 10,
-          controlHeight: 40,
-          fontFamily: "Vazirmatn, Arial, sans-serif",
-        },
-        components: {
-          Layout: { headerBg: "#FFFFFF", siderBg: "#FFFFFF", bodyBg: "#F8FAFC" },
-          Menu: { itemBorderRadius: 8, itemSelectedBg: "#EFF6FF", itemSelectedColor: "#2563EB" },
-          Table: { headerBg: "#F8FAFC", headerColor: "#0F172A" },
-          Card: { borderRadiusLG: 12 },
-        },
-      }}
-    >
-      {children}
-    </ConfigProvider>
+    <AppRouterCacheProvider options={{ enableCssLayer: true }}>
+      <CacheProvider value={cache}>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          {children}
+        </ThemeProvider>
+      </CacheProvider>
+    </AppRouterCacheProvider>
   );
 }
