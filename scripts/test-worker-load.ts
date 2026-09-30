@@ -3,6 +3,7 @@ import "dotenv/config";
 import {
   createQueueRedis,
   enqueueJobsBatch,
+  getJob,
   getQueueDepth,
 } from "../src/lib/queue/core";
 import { runQueueWorker } from "../src/lib/queue/worker";
@@ -18,21 +19,20 @@ const ENQUEUE_BATCH_SIZE = 25;
 const VERIFY_BATCH_SIZE = 100;
 
 async function getJobsBatch(jobIds: string[]) {
-  const redis = createQueueRedis();
   const results: Array<{ id: string; job: { status?: string } | null }> = [];
 
+  // Verify through the same queue abstraction used by workers instead of
+  // relying on provider-specific pipeline response semantics. This keeps the
+  // load test valid for both native Redis and Upstash drivers.
   for (let start = 0; start < jobIds.length; start += VERIFY_BATCH_SIZE) {
     const batch = jobIds.slice(start, start + VERIFY_BATCH_SIZE);
-    const pipeline = redis.pipeline();
-
-    for (const jobId of batch) {
-      pipeline.get<{ status?: string }>(JOB_PREFIX + jobId);
-    }
-
-    const values = await pipeline.exec<{ status?: string } | null>();
+    const jobs = await Promise.all(batch.map((jobId) => getJob(jobId)));
 
     batch.forEach((id, index) => {
-      results.push({ id, job: values[index] ?? null });
+      results.push({
+        id,
+        job: jobs[index] ? { status: jobs[index]?.status } : null,
+      });
     });
   }
 
