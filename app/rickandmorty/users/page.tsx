@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Avatar, Card, Input, Table, Tag } from "antd";
-import Title from "antd/es/typography/Title";
-import Text from "antd/es/typography/Text";
-import type { ColumnsType } from "antd/es/table";
+import {
+  Avatar, Box, Card, CardContent, Chip, CircularProgress, InputAdornment,
+  Pagination, Stack, Table, TableBody, TableCell, TableContainer, TableHead,
+  TableRow, TextField, Typography,
+} from "@mui/material";
 import { Search, Users } from "lucide-react";
 
 type UserRow = { id:string; name:string; email:string; role:string; pagesCount:number; createdAt:string; subscription?: { planKey:string; effectiveStatus:string; expiresAt:string } | null };
@@ -21,19 +22,27 @@ export default function AdminUsersPage() {
   const load=async()=>{setLoading(true);try{const r=await fetch(`/api/admin/users?q=${encodeURIComponent(q)}&page=${page}&pageSize=20`,{cache:"no-store"});const j=await r.json();if(!r.ok)throw new Error(j.message);setRows(j.data);setTotal(j.total);}finally{setLoading(false);}};
   useEffect(()=>{load().catch(()=>{});},[q,page]);
 
-  const columns:ColumnsType<UserRow>=[
-    {title:"کاربر",key:"user",render:(_,r)=><div className="flex items-center gap-3"><Avatar className="!bg-[#EFF6FF] !text-[#2563EB]">{r.name?.[0]||"U"}</Avatar><div className="min-w-0"><div className="truncate font-medium text-[#0F172A]">{r.name}</div><div className="truncate text-xs text-[#64748B]">{r.email}</div></div></div>},
-    {title:"پیج‌های متصل",dataIndex:"pagesCount",width:130,responsive:["sm"]},
-    {title:"اشتراک",key:"subscription",width:150,render:(_,r)=>r.subscription?<Tag color={r.subscription.effectiveStatus==="ACTIVE"?"green":"red"}>{r.subscription.effectiveStatus==="ACTIVE"?"فعال":"منقضی"}</Tag>:<Tag>بدون اشتراک</Tag>},
-    {title:"انقضا",key:"expiresAt",width:150,responsive:["md"],render:(_,r)=>r.subscription?new Date(r.subscription.expiresAt).toLocaleDateString("fa-IR"):"—"},
-    {title:"نقش",dataIndex:"role",width:100,responsive:["lg"],render:v=><Tag color={v==="ADMIN"?"blue":"default"}>{v==="ADMIN"?"مدیر":"کاربر"}</Tag>},
-  ];
-
-  return <div className="space-y-5">
-    <div><Title level={3} className="!mb-1 !text-[22px]">کاربران</Title><Text className="!text-[#64748B]">اطلاعات کاربران، پیج‌های متصل و اشتراک</Text></div>
-    <Card className="!border-[#E2E8F0] !shadow-none">
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row"><Input allowClear prefix={<Search size={17}/>} placeholder="جستجو بر اساس نام یا ایمیل..." value={q} onChange={e=>{setPage(1);setQ(e.target.value)}} className="sm:max-w-md"/></div>
-      <Table rowKey="id" loading={loading} dataSource={rows} columns={columns} scroll={{x:560}} onRow={r=>({onClick:()=>router.push(`/rickandmorty/users/${r.id}`),style:{cursor:"pointer"}})} pagination={{current:page,total,pageSize:20,showSizeChanger:false,onChange:setPage,showTotal:t=>`${t} کاربر`}} locale={{emptyText:<div className="py-8"><Users className="mx-auto mb-2 text-[#94A3B8]"/><div>کاربری پیدا نشد</div></div>}}/>
-    </Card>
-  </div>;
+  return <Stack spacing={2.5}>
+    <Box><Typography variant="h5" fontWeight={700}>کاربران</Typography><Typography variant="body2" color="text.secondary">اطلاعات کاربران، پیج‌های متصل و اشتراک</Typography></Box>
+    <Card><CardContent>
+      <TextField fullWidth size="small" value={q} placeholder="جستجو بر اساس نام یا ایمیل..." onChange={e=>{setPage(1);setQ(e.target.value)}} sx={{maxWidth:520,mb:2}} InputProps={{startAdornment:<InputAdornment position="start"><Search size={18}/></InputAdornment>}}/>
+      <TableContainer sx={{overflowX:"auto"}}>
+        <Table sx={{minWidth:680}}>
+          <TableHead><TableRow><TableCell>کاربر</TableCell><TableCell>پیج‌های متصل</TableCell><TableCell>اشتراک</TableCell><TableCell>انقضا</TableCell><TableCell>نقش</TableCell></TableRow></TableHead>
+          <TableBody>
+            {loading ? <TableRow><TableCell colSpan={5} align="center" sx={{py:6}}><CircularProgress size={28}/></TableCell></TableRow> :
+            rows.length ? rows.map(r=><TableRow key={r.id} hover onClick={()=>router.push(`/rickandmorty/users/${r.id}`)} sx={{cursor:"pointer"}}>
+              <TableCell><Stack direction="row" spacing={1.5} alignItems="center"><Avatar sx={{bgcolor:"#EFF6FF",color:"#2563EB",width:38,height:38}}>{r.name?.[0]||"U"}</Avatar><Box sx={{minWidth:0}}><Typography variant="body2" fontWeight={600} noWrap>{r.name}</Typography><Typography variant="caption" color="text.secondary" noWrap>{r.email}</Typography></Box></Stack></TableCell>
+              <TableCell>{r.pagesCount}</TableCell>
+              <TableCell>{r.subscription?<Chip size="small" label={r.subscription.effectiveStatus==="ACTIVE"?"فعال":"منقضی"} color={r.subscription.effectiveStatus==="ACTIVE"?"success":"error"} variant="outlined"/>:<Chip size="small" label="بدون اشتراک"/>}</TableCell>
+              <TableCell>{r.subscription?new Date(r.subscription.expiresAt).toLocaleDateString("fa-IR"):"—"}</TableCell>
+              <TableCell><Chip size="small" label={r.role==="ADMIN"?"مدیر":"کاربر"} color={r.role==="ADMIN"?"primary":"default"} variant="outlined"/></TableCell>
+            </TableRow>) :
+            <TableRow><TableCell colSpan={5} align="center"><Stack alignItems="center" spacing={1} sx={{py:5}}><Users size={30} color="#94A3B8"/><Typography variant="body2" color="text.secondary">کاربری پیدا نشد</Typography></Stack></TableCell></TableRow>}
+          </TableBody>
+        </Table>
+      </TableContainer>
+      {!loading && total>20 && <Box sx={{display:"flex",justifyContent:"center",mt:2}}><Pagination page={page} count={Math.ceil(total/20)} onChange={(_,v)=>setPage(v)} color="primary"/></Box>}
+    </CardContent></Card>
+  </Stack>;
 }
