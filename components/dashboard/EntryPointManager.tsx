@@ -28,13 +28,18 @@ type Item = {
   id?: string;
   label: string;
   automationId: string | null;
+  type: "postback" | "web_url";
+  url: string;
 };
 
 type ServerItem = {
   id: string;
   question?: string;
   title?: string;
-  automationId: string;
+  automationId?: string | null;
+  payload?: string;
+  type?: "postback" | "web_url";
+  url?: string | null;
 };
 
 type Props = {
@@ -176,7 +181,7 @@ export default function EntryPointManager({ accounts, kind }: Props) {
     const id = `draft-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     setItems((current) => [
       ...current,
-      { id, label: "", automationId: null },
+      { id, label: "", automationId: null, type: "postback", url: "" },
     ]);
     setOpenId(id);
     setSuccess(false);
@@ -228,7 +233,17 @@ export default function EntryPointManager({ accounts, kind }: Props) {
           `${c.shortTitle} ${index + 1} نباید بیشتر از ${c.maxLength} کاراکتر باشد.`,
         );
       }
-      if (!item.automationId) {
+      if (kind === "persistent-menu" && item.type === "web_url") {
+        if (!item.url.trim()) {
+          throw new Error(`لینک گزینه ${index + 1} را وارد کنید.`);
+        }
+        try {
+          const url = new URL(item.url.trim());
+          if (!["http:", "https:"].includes(url.protocol)) throw new Error();
+        } catch {
+          throw new Error(`لینک گزینه ${index + 1} معتبر نیست.`);
+        }
+      } else if (!item.automationId) {
         throw new Error(
           `پاسخ ${c.shortTitle} ${index + 1} هنوز ذخیره نشده است.`,
         );
@@ -262,7 +277,9 @@ export default function EntryPointManager({ accounts, kind }: Props) {
                 enabled: enabled && items.length > 0,
                 items: items.map((item) => ({
                   title: item.label.trim(),
-                  automationId: item.automationId,
+                  type: item.type,
+                  automationId: item.type === "web_url" ? null : item.automationId,
+                  url: item.type === "web_url" ? item.url.trim() : null,
                 })),
               },
         ),
