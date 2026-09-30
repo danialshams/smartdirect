@@ -36,42 +36,63 @@ export async function claimIdempotency(input: ClaimIdempotencyInput): Promise<Cl
   if (!Number.isInteger(leaseTtlSeconds) || leaseTtlSeconds <= 0) {
     throw new Error("Idempotency lease TTL must be a positive integer.");
   }
+
   const expiresAt = new Date(Date.now() + leaseTtlSeconds * 1000);
   const leaseToken = crypto.randomUUID();
 
-  try {
-    const created = await prisma.idempotencyRecord.create({
-      data: { key: input.key, tenantId, operation, resourceId, status: "IN_PROGRESS", expiresAt, leaseToken },
-    });
-    return { claimed: true, record: created as IdempotencyRecord };
-  } catch (error) {
-    const code = typeof error === "object" && error !== null && "code" in error && typeof error.code === "string" ? error.code : null;
-    if (code !== "P2002") throw error;
+  // The claim itself must be decided atomically by PostgreSQL. A create -> P2002 ->
+  // findUnique sequence is correct at low contention, but it is unnecessarily
+  // dependent on multiple round trips under a high fan-in race.
+  const inserted = await prisma.$queryRawUnsafe<IdempotencyRecord[]>(
+    `INSERT INTO "IdempotencyRecord"
+      ("id", "key", "tenantId", "operation", "resourceId", "status", "expiresAt", "createdAt", "updatedAt", "leaseToken")
+     VALUES ($1, $2, $3, $4, $5, 'IN_PROGRESS', $6, NOW(), NOW(), $7)
+     ON CONFLICT ("key") DO NOTHING
+     RETURNING *`,
+    crypto.randomUUID(),
+    input.key,
+    tenantId,
+    operation,
+    resourceId,
+    expiresAt,
+    leaseToken,
+  );
 
-    const existing = await prisma.idempotencyRecord.findUnique({ where: { key: input.key } });
-    if (!existing) throw error;
-    const now = new Date();
-
-    if (existing.status === "IN_PROGRESS" && existing.expiresAt.getTime() <= now.getTime()) {
-      const reclaimed = await prisma.idempotencyRecord.updateMany({
-        where: { key: input.key, status: "IN_PROGRESS", expiresAt: { lte: now } },
-        data: {
-          status: "IN_PROGRESS", expiresAt,
-          response: { set: null }, errorMessage: null, completedAt: null,
-          leaseToken: crypto.randomUUID(),
-        },
-      });
-      if (reclaimed.count === 1) {
-        const record = await getIdempotencyRecord(input.key);
-        if (!record) throw new Error("Idempotency record disappeared after reclaim.");
-        return { claimed: true, record };
-      }
-    }
-
-    const latest = await getIdempotencyRecord(input.key);
-    if (!latest) throw error;
-    return { claimed: false, record: latest };
+  if (inserted.length === 1) {
+    return { claimed: true, record: inserted[0] };
   }
+
+  const now = new Date();
+  const existing = await getIdempotencyRecord(input.key);
+  if (!existing) {
+    throw new Error("Idempotency record disappeared after conflict.");
+  }
+
+  // Reclaim is also conditional/atomic: only one concurrent caller can change
+  // the expired IN_PROGRESS row and therefore only that caller can become owner.
+  if (existing.status === "IN_PROGRESS" && existing.expiresAt.getTime() <= now.getTime()) {
+    const reclaimed = await prisma.idempotencyRecord.updateMany({
+      where: { key: input.key, status: "IN_PROGRESS", expiresAt: { lte: now } },
+      data: {
+        status: "IN_PROGRESS",
+        expiresAt,
+        response: { set: null },
+        errorMessage: null,
+        completedAt: null,
+        leaseToken,
+      },
+    });
+
+    if (reclaimed.count === 1) {
+      const record = await getIdempotencyRecord(input.key);
+      if (!record) throw new Error("Idempotency record disappeared after reclaim.");
+      return { claimed: true, record };
+    }
+  }
+
+  const latest = await getIdempotencyRecord(input.key);
+  if (!latest) throw new Error("Idempotency record disappeared after conflict.");
+  return { claimed: false, record: latest };
 }
 
 export async function completeIdempotency(key: string, response?: unknown, leaseToken?: string | null): Promise<IdempotencyRecord> {
