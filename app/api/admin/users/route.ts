@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
   const q = params.get("q")?.trim() ?? "";
   const page = Math.max(1, Number(params.get("page") ?? 1));
   const pageSize = Math.min(50, Math.max(10, Number(params.get("pageSize") ?? 20)));
-  const where = q ? { role: "USER", AND: [{ OR: [{ name: { contains: q, mode: "insensitive" as const } }, { email: { contains: q, mode: "insensitive" as const } }] }] } : { role: "USER" };
+  const where = q\n    ? {\n        role: "USER" as const,\n        AND: [{ OR: [{ name: { contains: q, mode: "insensitive" as const } }, { email: { contains: q, mode: "insensitive" as const } }] }],\n      }\n    : { role: "USER" as const };
 
   const [items, total] = await Promise.all([
     prisma.user.findMany({
