@@ -4,7 +4,7 @@ import "dotenv/config";
 
 import { validateServerEnvironment } from "../src/lib/config/env";
 import { prisma } from "../src/lib/prisma";
-import { getRedisClient, redisHealthCheck } from "../src/lib/redis/client";
+import { disconnectRedis, getRedisClient, redisHealthCheck } from "../src/lib/redis/client";
 
 async function main() {
   const env = validateServerEnvironment();
@@ -51,5 +51,6 @@ main()
     process.exitCode = 1;
   })
   .finally(async () => {
+    await disconnectRedis().catch(() => undefined);
     await prisma.$disconnect().catch(() => undefined);
   });
