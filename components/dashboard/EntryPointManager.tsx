@@ -644,7 +644,7 @@ export default function EntryPointManager({ accounts, kind }: Props) {
                           {item.label || `بدون ${c.shortTitle}`}
                         </p>
                         <p className="mt-1 text-xs text-muted-foreground">
-                          {item.automationId ? "پاسخ تنظیم شده" : "پاسخ تنظیم نشده"}
+                          {item.type === "web_url" ? "لینک" : item.automationId ? "پاسخ تنظیم شده" : "پاسخ تنظیم نشده"}
                         </p>
                       </div>
                       <ChevronDown
