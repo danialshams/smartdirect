@@ -41,15 +41,16 @@ export async function claimIdempotency(input: ClaimIdempotencyInput): Promise<Cl
   const leaseToken = crypto.randomUUID();
   const candidateId = crypto.randomUUID();
 
-  // PostgreSQL decides ownership in one statement. The conflict branch is a
-  // no-op update that returns the already-existing row, avoiding a
-  // create/P2002/findUnique sequence under very high fan-in.
-  const rows = await prisma.$queryRawUnsafe<IdempotencyRecord[]>(
+  // PostgreSQL decides ownership atomically. Duplicate callers use
+  // DO NOTHING rather than a no-op UPDATE: updating the same idempotency row
+  // under a high fan-in race creates an unnecessary write hotspot and can
+  // exhaust a small database connection pool. Only the winner writes; losers
+  // read the already-existing row.
+  const inserted = await prisma.$queryRawUnsafe<IdempotencyRecord[]>(
     `INSERT INTO "IdempotencyRecord"
       ("id", "key", "tenantId", "operation", "resourceId", "status", "expiresAt", "createdAt", "updatedAt", "leaseToken")
      VALUES ($1, $2, $3, $4, $5, 'IN_PROGRESS', $6, NOW(), NOW(), $7)
-     ON CONFLICT ("key") DO UPDATE
-       SET "key" = EXCLUDED."key"
+     ON CONFLICT ("key") DO NOTHING
      RETURNING *`,
     candidateId,
     input.key,
@@ -60,15 +61,16 @@ export async function claimIdempotency(input: ClaimIdempotencyInput): Promise<Cl
     leaseToken,
   );
 
-  const row = rows[0];
-  if (!row) throw new Error("Idempotency claim did not return a record.");
-
-  if (row.id === candidateId) {
-    return { claimed: true, record: row };
+  if (inserted.length === 1) {
+    return { claimed: true, record: inserted[0] };
   }
 
+  const row = await prisma.idempotencyRecord.findUnique({ where: { key: input.key } });
+  if (!row) throw new Error("Idempotency record disappeared after a concurrent conflict.");
+  const existing = row as IdempotencyRecord;
+
   const now = new Date();
-  if (row.status === "IN_PROGRESS" && row.expiresAt.getTime() <= now.getTime()) {
+  if (existing.status === "IN_PROGRESS" && existing.expiresAt.getTime() <= now.getTime()) {
     const reclaimed = await prisma.$queryRawUnsafe<IdempotencyRecord[]>(
       `UPDATE "IdempotencyRecord"
        SET "status" = 'IN_PROGRESS',
@@ -92,7 +94,7 @@ export async function claimIdempotency(input: ClaimIdempotencyInput): Promise<Cl
     }
   }
 
-  return { claimed: false, record: row };
+  return { claimed: false, record: existing };
 }
 
 export async function completeIdempotency(key: string, response?: unknown, leaseToken?: string | null): Promise<IdempotencyRecord> {
