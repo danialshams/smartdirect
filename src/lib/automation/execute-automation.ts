@@ -32,7 +32,7 @@ type HandoffState = {
 };
 
 async function executeAutomationInternal(input: ExecuteAutomationInput) {
-  let idempotencyKey: string | null = null;
+  let idempotencyKey: string | null = null;\n  let idempotencyLeaseToken: string | null = null;
 
   try {
   // =========================================================
@@ -171,7 +171,7 @@ async function executeAutomationInternal(input: ExecuteAutomationInput) {
       };
     }
 
-    idempotencyKey = claim.key;
+    idempotencyKey = claim.key;\n    idempotencyLeaseToken = claim.leaseToken;
   }
 
   // =========================================================
@@ -527,13 +527,13 @@ async function executeAutomationInternal(input: ExecuteAutomationInput) {
   };
 
   if (idempotencyKey) {
-    await completeAutomationExecution(idempotencyKey, result);
+    await completeAutomationExecution(idempotencyKey, result, idempotencyLeaseToken);
   }
 
   return result;
   } catch (error) {
     if (idempotencyKey) {
-      await failAutomationExecution(idempotencyKey, error);
+      await failAutomationExecution(idempotencyKey, error, idempotencyLeaseToken);
     }
     throw error;
   }
