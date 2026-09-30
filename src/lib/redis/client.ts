@@ -9,62 +9,27 @@ let redisCommandTimeoutOverrideMs: number | undefined;
 
 function getRedisCommandTimeoutMs() {
   if (redisCommandTimeoutOverrideMs) return redisCommandTimeoutOverrideMs;
-
   const raw = process.env.REDIS_COMMAND_TIMEOUT_MS?.trim();
   if (!raw) return DEFAULT_REDIS_COMMAND_TIMEOUT_MS;
-
   const value = Number(raw);
-  return Number.isFinite(value) && value > 0
-    ? value
-    : DEFAULT_REDIS_COMMAND_TIMEOUT_MS;
-}
-
-function withRedisTimeout<T>(promise: Promise<T>): Promise<T> {
-  const timeoutMs = getRedisCommandTimeoutMs();
-
-  return Promise.race([
-    promise,
-    new Promise<T>((_, reject) => {
-      setTimeout(() => {
-        reject(new Error(`Redis command timed out after ${timeoutMs}ms`));
-      }, timeoutMs);
-    }),
-  ]);
+  return Number.isFinite(value) && value > 0 ? value : DEFAULT_REDIS_COMMAND_TIMEOUT_MS;
 }
 
 function getRedisConfig() {
   const url = process.env.UPSTASH_REDIS_REST_URL?.trim();
   const token = process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
-
   if (!url || !token) {
-    throw new Error(
-      "UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN are not configured",
-    );
+    throw new Error("UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN are not configured");
   }
-
   return { url, token };
 }
 
-function createTimedRedisClient(): Redis {
+function createRedisClient(): Redis {
   const { url, token } = getRedisConfig();
-  const client = new Redis({ url, token });
-
-  return new Proxy(client, {
-    get(target, property, receiver) {
-      const value = Reflect.get(target, property, receiver);
-
-      if (typeof value !== "function") return value;
-
-      return (...args: unknown[]) => {
-        const result = value.apply(target, args);
-
-        if (result && typeof result.then === "function") {
-          return withRedisTimeout(Promise.resolve(result));
-        }
-
-        return result;
-      };
-    },
+  return new Redis({
+    url,
+    token,
+    signal: () => AbortSignal.timeout(getRedisCommandTimeoutMs()),
   });
 }
 
@@ -72,22 +37,15 @@ export function setRedisCommandTimeoutMs(timeoutMs: number) {
   if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
     throw new Error("INVALID_REDIS_COMMAND_TIMEOUT_MS");
   }
-
   redisCommandTimeoutOverrideMs = timeoutMs;
+  globalForRedis.smartDirectRedis = undefined;
 }
 
-export function getRedisClient() {
-  if (globalForRedis.smartDirectRedis) {
-    return globalForRedis.smartDirectRedis;
+export function getRedisClient(): Redis {
+  if (!globalForRedis.smartDirectRedis) {
+    globalForRedis.smartDirectRedis = createRedisClient();
   }
-
-  const client = createTimedRedisClient();
-
-  if (process.env.NODE_ENV !== "production") {
-    globalForRedis.smartDirectRedis = client;
-  }
-
-  return client;
+  return globalForRedis.smartDirectRedis;
 }
 
 export async function connectRedis() {
@@ -95,16 +53,15 @@ export async function connectRedis() {
 }
 
 export async function disconnectRedis() {
+  // @upstash/redis is HTTP based and has no persistent socket to close.
   return;
 }
 
 export async function redisHealthCheck() {
   const startedAt = Date.now();
-
   try {
     const client = getRedisClient();
     const response = await client.ping();
-
     return {
       ok: response === "PONG",
       configured: true,
@@ -116,7 +73,7 @@ export async function redisHealthCheck() {
       ok: false,
       configured: Boolean(
         process.env.UPSTASH_REDIS_REST_URL?.trim() &&
-          process.env.UPSTASH_REDIS_REST_TOKEN?.trim(),
+        process.env.UPSTASH_REDIS_REST_TOKEN?.trim(),
       ),
       latencyMs: Date.now() - startedAt,
       status: "error",
