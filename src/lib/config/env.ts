@@ -47,7 +47,7 @@ export function validateServerEnvironment(): ServerEnvironment {
   const env = nodeEnv();
   const redisDriver = (process.env.REDIS_DRIVER?.trim() || "upstash") as RedisDriver;
 
-  if (redisDriver !== "upstash") {
+  if (redisDriver !== "upstash" && redisDriver !== "redis") {
     throw new Error(`UNSUPPORTED_REDIS_DRIVER:${redisDriver}`);
   }
 
