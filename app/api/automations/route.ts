@@ -113,14 +113,33 @@ export async function POST(request: NextRequest) {
 
     if (supportsFollowGate && normalizedRequireFollow && !normalizedFollowGateText) return NextResponse.json({ success: false, error: "وقتی Follow Gate فعال است، متن درخواست فالو الزامی است" }, { status: 400 });
 
-    const duplicate = await prisma.automation.findFirst({
-      where: {
-        instagramAccountId,
-        triggerType,
-        mediaId: normalizedMediaId,
-      },
-    });
-    if (duplicate) return NextResponse.json({ success: false, error: "Automation مشابه قبلاً وجود دارد", data: duplicate }, { status: 409 });
+    // Comment/Story automations are unique per media. DM automations are
+    // intentionally allowed to coexist because Ice Breakers and Persistent
+    // Menu items each need their own hidden DM automation.
+    const isMediaBasedTrigger =
+      triggerType === "COMMENT_KEYWORD" ||
+      triggerType === "STORY_REPLY_KEYWORD";
+
+    if (isMediaBasedTrigger) {
+      const duplicate = await prisma.automation.findFirst({
+        where: {
+          instagramAccountId,
+          triggerType,
+          mediaId: normalizedMediaId,
+        },
+      });
+
+      if (duplicate) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Automation مشابه قبلاً وجود دارد",
+            data: duplicate,
+          },
+          { status: 409 },
+        );
+      }
+    }
 
     const automation = await prisma.automation.create({
       data: {
