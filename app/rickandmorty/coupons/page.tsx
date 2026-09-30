@@ -13,7 +13,7 @@ export default function CouponsPage(){
  const load=async()=>{setLoading(true);try{const r=await fetch("/api/admin/coupons",{cache:"no-store"});const j=await r.json();if(!r.ok)throw new Error(j.message);setRows(j.data);}catch(e){api.error(e instanceof Error?e.message:"خطا");}finally{setLoading(false);}};
  useEffect(()=>{load();},[]);
  const create=async(v:any)=>{setBusy(true);try{const r=await fetch("/api/admin/coupons",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...v,validFrom:v.validFrom?.toISOString(),expiresAt:v.expiresAt?.toISOString()})});const j=await r.json();if(!r.ok)throw new Error(j.message);api.success("کد تخفیف ایجاد شد");setOpen(false);form.resetFields();await load();}catch(e){api.error(e instanceof Error?e.message:"خطا");}finally{setBusy(false);}};
- const toggle=async(c:Coupon)=>{const r=await fetch(\`/api/admin/coupons/\${c.id}\`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({isActive:!c.isActive})});const j=await r.json();if(!r.ok){api.error(j.message);return;}setRows(x=>x.map(i=>i.id===c.id?j:i));};
+ const toggle=async(c:Coupon)=>{const r=await fetch(`/api/admin/coupons/\${c.id}`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({isActive:!c.isActive})});const j=await r.json();if(!r.ok){api.error(j.message);return;}setRows(x=>x.map(i=>i.id===c.id?j:i));};
  const columns:ColumnsType<Coupon>=[
   {title:"کد",dataIndex:"code",render:v=><span className="font-mono font-semibold tracking-wide">{v}</span>},
   {title:"تخفیف",key:"discount",render:(_,r)=>r.discountType==="PERCENTAGE"?r.value+"%":r.value+" "+(r.currency||"")},
