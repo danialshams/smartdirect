@@ -47,7 +47,7 @@ export async function completeSendMessage(
   key: string,
   response?: unknown,
 ): Promise<void> {
-  await completeIdempotency(key, response);
+  await completeIdempotency(key, response, leaseToken);
 }
 
 export async function failSendMessage(
@@ -57,5 +57,5 @@ export async function failSendMessage(
   const message =
     error instanceof Error ? error.message : "Instagram message sending failed.";
 
-  await failIdempotency(key, message);
+  await failIdempotency(key, message, leaseToken);
 }
