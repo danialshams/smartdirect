@@ -196,30 +196,22 @@ export default function EntryPointFlowBuilder({
                     return;
                 }
 
-                if (
-                    showcasesResponse.ok &&
-                    showcasesResult.success
-                ) {
-                    setShowcases(
-                        Array.isArray(
-                            showcasesResult.data,
-                        )
+                if (showcasesResponse.ok) {
+                    const showcaseData = Array.isArray(showcasesResult)
+                        ? showcasesResult
+                        : Array.isArray(showcasesResult?.data)
                             ? showcasesResult.data
-                            : [],
-                    );
+                            : [];
+                    setShowcases(showcaseData as Showcase[]);
                 }
 
-                if (
-                    formsResponse.ok &&
-                    formsResult.success
-                ) {
-                    setForms(
-                        Array.isArray(
-                            formsResult.data,
-                        )
+                if (formsResponse.ok) {
+                    const formData = Array.isArray(formsResult)
+                        ? formsResult
+                        : Array.isArray(formsResult?.data)
                             ? formsResult.data
-                            : [],
-                    );
+                            : [];
+                    setForms(formData as FormItem[]);
                 }
             } catch (resourceError) {
                 console.error(
