@@ -28,7 +28,7 @@ async function getJobsBatch(jobIds: string[]) {
       pipeline.get<{ status?: string }>(JOB_PREFIX + jobId);
     }
 
-    const values = await pipeline.exec<Array<{ status?: string } | null>>();
+    const values = await pipeline.exec<{ status?: string } | null>();
 
     batch.forEach((id, index) => {
       results.push({ id, job: values[index] ?? null });
