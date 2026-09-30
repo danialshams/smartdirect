@@ -1,5 +1,5 @@
-import type { Redis } from "@upstash/redis";
 import { getRedisClient } from "@/lib/redis/client";
+import type { RedisClientLike } from "@/lib/redis/types";
 import { prisma } from "@/lib/prisma";
 
 import type {
@@ -340,6 +340,7 @@ export async function claimNextJob(
       JOB_PREFIX,
       workerId,
       crypto.randomUUID(),
+      crypto.randomUUID(),
       String(getQueueClaimTtlSeconds()),
       String(Date.now()),
     ],
@@ -365,7 +366,7 @@ export async function claimNextJob(
 }
 
 async function removeJobFromQueue(
-  redis: Redis,
+  redis: RedisClientLike,
   jobId: string,
   queueNamespace = DEFAULT_QUEUE_NAMESPACE,
 ) {
