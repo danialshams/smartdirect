@@ -104,15 +104,45 @@ async function main() {
       }
     }
 
-    // 2) 100-way idempotency race: exactly one owner.
+    // 2) 100-way idempotency race: exactly one owner, with no swallowed errors.
     const idemKey = "maximum-idem-" + ns;
-    const claims = await Promise.all(Array.from({ length: 100 }, () =>
-      claimIdempotency({ key: idemKey, tenantId: tenant(0), operation: "maximum", resourceId: account(0), ttlSeconds: 60 }).catch(() => null)
-    ));
-    assert(claims.filter(x => x?.claimed).length === 1, "Idempotency race allowed multiple owners");
-    const lease = claims.find(x => x?.claimed)?.record.leaseToken;
+    const claimResults = await Promise.all(
+      Array.from({ length: 100 }, async (_, index) => {
+        try {
+          const result = await claimIdempotency({
+            key: idemKey,
+            tenantId: tenant(0),
+            operation: "maximum",
+            resourceId: account(0),
+            ttlSeconds: 60,
+          });
+          return { index, result, error: null as string | null };
+        } catch (error) {
+          return {
+            index,
+            result: null,
+            error: error instanceof Error ? `${error.name}: ${error.message}` : String(error),
+          };
+        }
+      }),
+    );
+
+    const claimErrors = claimResults.filter((entry) => entry.error !== null);
+    if (claimErrors.length > 0) {
+      throw new Error(
+        `Idempotency race produced ${claimErrors.length} request errors. ${JSON.stringify(claimErrors)}`,
+      );
+    }
+
+    const successfulClaims = claimResults.flatMap((entry) => entry.result ? [entry.result] : []);
+    const owners = successfulClaims.filter((result) => result.claimed);
+    const duplicates = successfulClaims.filter((result) => !result.claimed);
+
+    assert(owners.length === 1, `Idempotency race allowed ${owners.length} owners`);
+    assert(duplicates.length === 99, `Idempotency duplicate blocking failed: duplicates=${duplicates.length}, owners=${owners.length}`);
+
+    const lease = owners[0].record.leaseToken;
     await completeIdempotency(idemKey, { ok: true }, lease);
-    assert(claims.filter(x => x && !x.claimed).length === 99, "Idempotency duplicate blocking failed");
 
     // 3) 100-way distributed-lock race: exactly one owner.
     const lockResults = await Promise.all(Array.from({ length: 100 }, () =>
