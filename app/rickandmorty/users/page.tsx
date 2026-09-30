@@ -16,7 +16,7 @@ export default function AdminUsersPage() {
   const [total,setTotal]=useState(0);
   const [page,setPage]=useState(1);
 
-  const load=async()=>{setLoading(true);try{const r=await fetch(`/api/admin/users?q=\${encodeURIComponent(q)}&page=\${page}&pageSize=20`,{cache:"no-store"});const j=await r.json();if(!r.ok)throw new Error(j.message);setRows(j.data);setTotal(j.total);}finally{setLoading(false);}};
+  const load=async()=>{setLoading(true);try{const r=await fetch(`/api/admin/users?q=${encodeURIComponent(q)}&page=${page}&pageSize=20`,{cache:"no-store"});const j=await r.json();if(!r.ok)throw new Error(j.message);setRows(j.data);setTotal(j.total);}finally{setLoading(false);}};
   useEffect(()=>{load().catch(()=>{});},[q,page]);
 
   const columns:ColumnsType<UserRow>=[
@@ -31,7 +31,7 @@ export default function AdminUsersPage() {
     <div><Typography.Title level={3} className="!mb-1 !text-[22px]">کاربران</Typography.Title><Typography.Text className="!text-[#64748B]">اطلاعات کاربران، پیج‌های متصل و اشتراک</Typography.Text></div>
     <Card className="!border-[#E2E8F0] !shadow-none">
       <div className="mb-4 flex flex-col gap-3 sm:flex-row"><Input allowClear prefix={<Search size={17}/>} placeholder="جستجو بر اساس نام یا ایمیل..." value={q} onChange={e=>{setPage(1);setQ(e.target.value)}} className="sm:max-w-md"/></div>
-      <Table rowKey="id" loading={loading} dataSource={rows} columns={columns} scroll={{x:560}} onRow={r=>({onClick:()=>router.push(`/rickandmorty/users/\${r.id}`),style:{cursor:"pointer"}})} pagination={{current:page,total,pageSize:20,showSizeChanger:false,onChange:setPage,showTotal:t=>`\${t} کاربر`}} locale={{emptyText:<div className="py-8"><Users className="mx-auto mb-2 text-[#94A3B8]"/><div>کاربری پیدا نشد</div></div>}}/>
+      <Table rowKey="id" loading={loading} dataSource={rows} columns={columns} scroll={{x:560}} onRow={r=>({onClick:()=>router.push(`/rickandmorty/users/${r.id}`),style:{cursor:"pointer"}})} pagination={{current:page,total,pageSize:20,showSizeChanger:false,onChange:setPage,showTotal:t=>`${t} کاربر`}} locale={{emptyText:<div className="py-8"><Users className="mx-auto mb-2 text-[#94A3B8]"/><div>کاربری پیدا نشد</div></div>}}/>
     </Card>
   </div>;
 }
