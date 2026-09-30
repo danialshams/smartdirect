@@ -684,6 +684,7 @@ function BranchShowcaseCreator({
 function BranchAnswerEditor({
   replies,
   instagramAccountId,
+  showcases,
   onChange,
   onUpdateReply,
   allowRichDestinations = true,
@@ -691,6 +692,7 @@ function BranchAnswerEditor({
 }: {
   replies: QuickReplyDraft[];
   instagramAccountId?: string;
+  showcases?: Showcase[];
   onChange: (replies: QuickReplyDraft[]) => void;
   onUpdateReply: (
     replyId: string,
@@ -721,6 +723,8 @@ function BranchAnswerEditor({
         ["TEXT", "متن"],
         ["FORM", "فرم / سؤال بعدی"],
         ["SHOWCASE", "ویترین"],
+        ["IMAGE", "عکس"],
+        ["VIDEO", "ویدیو"],
         ["AUDIO", "وویس"],
       ]
     : [["TEXT", "متن"]];
@@ -847,6 +851,7 @@ function BranchAnswerEditor({
                 replies={reply.destinationQuickReplies}
                 instagramAccountId={instagramAccountId}
                 depth={depth + 1}
+                showcases={showcases}
                 onChange={(children) =>
                   updateReply(reply.id, { destinationQuickReplies: children })
                 }
