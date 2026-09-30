@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "tsx scripts/validate-production-env.ts && next start",
     "lint": "eslint",
     "redis:test": "tsx scripts/test-redis.ts",
