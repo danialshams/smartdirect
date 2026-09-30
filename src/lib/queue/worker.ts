@@ -11,7 +11,7 @@ import {
   completeIdempotency,
   failIdempotency,
 } from "../idempotency/store";
-import { acquireLock, releaseLock } from "../lock/redis-lock";
+import { acquireLock, releaseLock, startLockHeartbeat } from "../lock/redis-lock";
 import type { DistributedLockHandle } from "../lock/types";
 import type { QueueJob } from "./types";
 import { recoverStalledJobs } from "./recovery";
@@ -133,7 +133,7 @@ export async function runQueueWorker(
     enterObservabilityContext({ jobId: job.id });
 
     let lockHandle: DistributedLockHandle | undefined;
-    let stopClaimHeartbeat: (() => void) | undefined;
+    let stopClaimHeartbeat: (() => void) | undefined;\n    let stopLockHeartbeat: (() => void) | undefined;
     const jobTimeoutMs = Math.max(0, Number(process.env.QUEUE_JOB_TIMEOUT_MS ?? 0));
     stopClaimHeartbeat = startJobClaimHeartbeat(job.id, workerId, jobTimeoutMs || undefined);
 
@@ -147,7 +147,7 @@ export async function runQueueWorker(
         throw new Error(`Distributed lock is already held for job ${job.id}.`);
       }
 
-      lockHandle = lock.handle;
+      lockHandle = lock.handle;\n      stopLockHeartbeat = startLockHeartbeat(lockHandle, jobTimeoutMs || undefined);
 
       if (job.idempotency) {
         const claim = await claimIdempotency({
