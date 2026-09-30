@@ -58,7 +58,7 @@ export async function completePublishingExecution(
   key: string,
   response?: unknown,
 ): Promise<void> {
-  await completeIdempotency(key, response);
+  await completeIdempotency(key, response, leaseToken);
 }
 
 export async function failPublishingExecution(
@@ -66,5 +66,5 @@ export async function failPublishingExecution(
   error: unknown,
 ): Promise<void> {
   const message = error instanceof Error ? error.message : "Instagram publishing failed.";
-  await failIdempotency(key, message);
+  await failIdempotency(key, message, leaseToken);
 }
