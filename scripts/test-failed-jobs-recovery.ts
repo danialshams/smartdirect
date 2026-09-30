@@ -10,6 +10,7 @@ import {
   failJob,
 } from "../src/lib/queue/core";
 import { recoverStalledJobs, retryFailedJob } from "../src/lib/queue/recovery";
+import { disconnectRedis } from "../src/lib/redis/client";
 
 async function main() {
   const queueNamespace = `group18-recovery-${Date.now()}`;
@@ -135,5 +136,6 @@ main()
     process.exitCode = 1;
   })
   .finally(async () => {
+    await disconnectRedis().catch(() => undefined);
     await prisma.$disconnect();
   });
