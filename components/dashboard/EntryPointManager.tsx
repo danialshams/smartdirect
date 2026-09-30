@@ -138,6 +138,8 @@ export default function EntryPointManager({ accounts, kind }: Props) {
               id: value.id,
               label: value.question ?? "",
               automationId: value.automationId ?? null,
+              type: "postback",
+              url: "",
             };
           }),
         );
@@ -154,6 +156,8 @@ export default function EntryPointManager({ accounts, kind }: Props) {
             id: item.id,
             label: item.title ?? "",
             automationId: item.automationId ?? null,
+            type: item.type ?? (item.payload?.startsWith("__web_url__:") ? "web_url" : "postback"),
+            url: item.url ?? (item.payload?.startsWith("__web_url__:") ? item.payload.slice("__web_url__:".length) : ""),
           })),
         );
       }
