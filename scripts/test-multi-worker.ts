@@ -1,15 +1,19 @@
 import "dotenv/config";
 
 import {
+  deleteJob,
   enqueueJob,
   getJob,
 } from "../src/lib/queue/core";
+import { runQueueWorker } from "../src/lib/queue/worker";
 
 const JOB_COUNT = Number(process.env.QUEUE_WORKER_TEST_JOBS ?? 10);
 const POLL_MS = 250;
 const TIMEOUT_MS = 30_000;
 
 async function main() {
+  const queueNamespace = `multi-worker-test-${Date.now()}`;
+  const controller = new AbortController();
   const jobs = await Promise.all(
     Array.from({ length: JOB_COUNT }, (_, index) =>
       enqueueJob(
@@ -17,6 +21,8 @@ async function main() {
         { message: `multi-worker-test-${index + 1}` },
         {
           priority: "normal",
+          queueNamespace,
+          maxAttempts: 1,
         },
       ),
     ),
@@ -34,9 +40,21 @@ async function main() {
     ),
   );
 
+  const workerPromise = runQueueWorker(
+    async () => undefined,
+    {
+      concurrency: Math.min(4, Math.max(1, JOB_COUNT)),
+      pollIntervalMs: 50,
+      workerId: `multi-worker-test-${process.pid}-${Date.now()}`,
+      queueNamespace,
+      signal: controller.signal,
+    },
+  );
+
   const startedAt = Date.now();
 
-  while (Date.now() - startedAt < TIMEOUT_MS) {
+  try {
+    while (Date.now() - startedAt < TIMEOUT_MS) {
     const current = await Promise.all(
       jobs.map((job) => getJob(job.id)),
     );
@@ -79,11 +97,16 @@ async function main() {
     }
 
     await new Promise((resolve) => setTimeout(resolve, POLL_MS));
-  }
+    }
 
-  throw new Error(
-    `Timed out after ${TIMEOUT_MS}ms waiting for workers to process ${JOB_COUNT} jobs`,
-  );
+      throw new Error(
+      `Timed out after ${TIMEOUT_MS}ms waiting for workers to process ${JOB_COUNT} jobs`,
+    );
+  } finally {
+    controller.abort();
+    await workerPromise.catch(() => undefined);
+    await Promise.allSettled(jobs.map((job) => deleteJob(job.id)));
+  }
 }
 
 main().catch((error) => {
