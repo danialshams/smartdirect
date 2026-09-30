@@ -39,17 +39,19 @@ export async function claimIdempotency(input: ClaimIdempotencyInput): Promise<Cl
 
   const expiresAt = new Date(Date.now() + leaseTtlSeconds * 1000);
   const leaseToken = crypto.randomUUID();
+  const candidateId = crypto.randomUUID();
 
-  // The claim itself must be decided atomically by PostgreSQL. A create -> P2002 ->
-  // findUnique sequence is correct at low contention, but it is unnecessarily
-  // dependent on multiple round trips under a high fan-in race.
-  const inserted = await prisma.$queryRawUnsafe<IdempotencyRecord[]>(
+  // PostgreSQL decides ownership in one statement. The conflict branch is a
+  // no-op update that returns the already-existing row, avoiding a
+  // create/P2002/findUnique sequence under very high fan-in.
+  const rows = await prisma.$queryRawUnsafe<IdempotencyRecord[]>(
     `INSERT INTO "IdempotencyRecord"
       ("id", "key", "tenantId", "operation", "resourceId", "status", "expiresAt", "createdAt", "updatedAt", "leaseToken")
      VALUES ($1, $2, $3, $4, $5, 'IN_PROGRESS', $6, NOW(), NOW(), $7)
-     ON CONFLICT ("key") DO NOTHING
+     ON CONFLICT ("key") DO UPDATE
+       SET "key" = EXCLUDED."key"
      RETURNING *`,
-    crypto.randomUUID(),
+    candidateId,
     input.key,
     tenantId,
     operation,
@@ -58,41 +60,39 @@ export async function claimIdempotency(input: ClaimIdempotencyInput): Promise<Cl
     leaseToken,
   );
 
-  if (inserted.length === 1) {
-    return { claimed: true, record: inserted[0] };
+  const row = rows[0];
+  if (!row) throw new Error("Idempotency claim did not return a record.");
+
+  if (row.id === candidateId) {
+    return { claimed: true, record: row };
   }
 
   const now = new Date();
-  const existing = await getIdempotencyRecord(input.key);
-  if (!existing) {
-    throw new Error("Idempotency record disappeared after conflict.");
-  }
+  if (row.status === "IN_PROGRESS" && row.expiresAt.getTime() <= now.getTime()) {
+    const reclaimed = await prisma.$queryRawUnsafe<IdempotencyRecord[]>(
+      `UPDATE "IdempotencyRecord"
+       SET "status" = 'IN_PROGRESS',
+           "expiresAt" = $2,
+           "response" = NULL,
+           "errorMessage" = NULL,
+           "completedAt" = NULL,
+           "leaseToken" = $3,
+           "updatedAt" = NOW()
+       WHERE "key" = $1
+         AND "status" = 'IN_PROGRESS'
+         AND "expiresAt" <= NOW()
+       RETURNING *`,
+      input.key,
+      expiresAt,
+      leaseToken,
+    );
 
-  // Reclaim is also conditional/atomic: only one concurrent caller can change
-  // the expired IN_PROGRESS row and therefore only that caller can become owner.
-  if (existing.status === "IN_PROGRESS" && existing.expiresAt.getTime() <= now.getTime()) {
-    const reclaimed = await prisma.idempotencyRecord.updateMany({
-      where: { key: input.key, status: "IN_PROGRESS", expiresAt: { lte: now } },
-      data: {
-        status: "IN_PROGRESS",
-        expiresAt,
-        response: { set: null },
-        errorMessage: null,
-        completedAt: null,
-        leaseToken,
-      },
-    });
-
-    if (reclaimed.count === 1) {
-      const record = await getIdempotencyRecord(input.key);
-      if (!record) throw new Error("Idempotency record disappeared after reclaim.");
-      return { claimed: true, record };
+    if (reclaimed.length === 1) {
+      return { claimed: true, record: reclaimed[0] };
     }
   }
 
-  const latest = await getIdempotencyRecord(input.key);
-  if (!latest) throw new Error("Idempotency record disappeared after conflict.");
-  return { claimed: false, record: latest };
+  return { claimed: false, record: row };
 }
 
 export async function completeIdempotency(key: string, response?: unknown, leaseToken?: string | null): Promise<IdempotencyRecord> {
