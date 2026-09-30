@@ -296,7 +296,7 @@ export default function AutomationFlowMessage({
           <Button
             key={value}
             type="button"
-            onClick={() => onUpdate({ messageType: value, text: "", mediaUrl: "", mediaId: "", showcaseId: "", formId: "" })}
+            onClick={() => onUpdate({ messageType: value })}
             className={[
               "flex min-h-[76px] flex-col items-center justify-center gap-2 rounded-2xl border px-2 text-xs font-semibold transition",
               message.messageType === value
