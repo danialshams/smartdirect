@@ -120,8 +120,8 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
                   sx={{
                     minHeight: 42,
                     direction: "rtl",
-                    display: "grid",
-                    gridTemplateColumns: "1fr 36px",
+                    display: "flex",
+                    flexDirection: "row-reverse",
                     alignItems: "center",
                     borderRadius: 2,
                     px: 1.25,
@@ -132,10 +132,10 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
                     "&:hover": { bgcolor: "#F8FAFC", color: "#1D4ED8" },
                   }}
                 >
-                  <ListItemIcon sx={{ minWidth: 36, gridColumn: 1, gridRow: 1, justifyContent: "center" }}>
+                  <ListItemIcon sx={{ minWidth: 36, justifyContent: "center", flexShrink: 0 }}>
                     <Icon size={18} strokeWidth={1.9} />
                   </ListItemIcon>
-                  <ListItemText sx={{ gridColumn: 2, gridRow: 1, textAlign: "right", minWidth: 0 }} primary={title} primaryTypographyProps={{ fontSize: 13, fontWeight: active ? 700 : 500 }} />
+                  <ListItemText sx={{ flex: 1, minWidth: 0, textAlign: "right", direction: "rtl", m: 0 }} primary={title} primaryTypographyProps={{ fontSize: 13, fontWeight: active ? 700 : 500 }} />
                 </ListItemButton>
               );
             })}
@@ -201,7 +201,7 @@ export default function DashboardSidebar({ mobileOpen, onMobileClose }: Dashboar
     <>
       <Drawer
         variant="permanent"
-        anchor="right"
+        anchor="left"
         dir="rtl"
         sx={{
           display: { xs: "none", lg: "block" },
@@ -210,8 +210,7 @@ export default function DashboardSidebar({ mobileOpen, onMobileClose }: Dashboar
           "& .MuiDrawer-paper": {
             width: 248,
             boxSizing: "border-box",
-            borderLeft: "1px solid #E2E8F0",
-            borderRight: 0,
+            borderInlineEnd: "1px solid #E2E8F0",
             direction: "rtl",
           },
         }}
@@ -221,7 +220,7 @@ export default function DashboardSidebar({ mobileOpen, onMobileClose }: Dashboar
 
       <Drawer
         variant="temporary"
-        anchor="right"
+        anchor="left"
         dir="rtl"
         open={mobileOpen}
         onClose={onMobileClose}
@@ -231,8 +230,7 @@ export default function DashboardSidebar({ mobileOpen, onMobileClose }: Dashboar
           "& .MuiDrawer-paper": {
             width: { xs: "min(84vw, 320px)", sm: 340 },
             boxSizing: "border-box",
-            borderLeft: "1px solid #E2E8F0",
-            borderRight: 0,
+            borderInlineEnd: "1px solid #E2E8F0",
             direction: "rtl",
           },
         }}
