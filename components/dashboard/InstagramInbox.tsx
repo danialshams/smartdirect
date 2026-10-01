@@ -1,8 +1,8 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/dashboard/DashboardUI";
+import { Input } from "@/components/dashboard/DashboardUI";
+import { Textarea } from "@/components/dashboard/DashboardUI";
 import {
   ArrowRight,
   Check,
