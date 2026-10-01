@@ -3,6 +3,7 @@
 import { Image as ImageIcon, MessageCircle, Video } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Box, Button, Card, CardContent, Chip, Grid, Skeleton, Stack, Typography } from "@mui/material";
 
 type Account = { id: string; igUsername: string; profilePictureUrl: string | null };
 type Media = {
