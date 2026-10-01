@@ -470,7 +470,7 @@ export function Calendar({ className, ...props }: DashboardCalendarProps) {
           color: COLORS.text,
           border: 0,
           outline: 0,
-          appearance: "auto",
+          appearance: "none",
           cursor: "pointer",
         },
         "& .rdp-button_previous, & .rdp-button_next": {
