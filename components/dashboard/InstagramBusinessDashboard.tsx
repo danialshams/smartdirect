@@ -163,7 +163,7 @@ export default function InstagramBusinessDashboard({ accounts }: { accounts: Acc
                 <div className="flex gap-2">
                     <Select
                         value={accountId}
-                        onChange={(event: { target: { value: string } }) => setAccountId(event.target.value)
+                        onChange={(event: { target: { value: string } }) => setAccountId(event.target.value)}
                         className="min-w-[190px] rounded-lg border bg-background px-3 py-2.5 text-sm font-medium text-foreground outline-none"
                         aria-label="انتخاب پیج Instagram"
                     >
