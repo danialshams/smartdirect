@@ -1,6 +1,7 @@
 import "dotenv/config";
 
-import { instagramApiRequest, InstagramCircuitOpenError } from "../src/lib/instagram/client";
+import { instagramApiRequest } from "../src/lib/instagram/client";
+import { InstagramCircuitOpenError } from "../src/lib/instagram/traffic-control";
 import { getRedisClient } from "../src/lib/redis/client";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
