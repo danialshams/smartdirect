@@ -600,7 +600,8 @@ export default function AutomationManager({
                         event.stopPropagation();
                         setDeleteTarget(group);
                       }}
-                      className="min-h-9 shrink-0 rounded-lg border border-red-600 bg-white px-3 text-xs font-semibold text-red-600 hover:bg-white hover:text-red-700"
+                      variant="destructive"
+                       className="min-h-9 shrink-0 rounded-lg px-3 text-xs font-semibold"
                     >
                       <span>پاک کردن</span>
                     </Button>
@@ -673,7 +674,8 @@ export default function AutomationManager({
                         : [],
                   )
                 }
-                className="flex-1 rounded-xl border border-red-600 bg-white py-2.5 text-sm font-semibold text-red-600 hover:bg-white hover:text-red-700"
+                variant="destructive"
+                 className="flex-1 rounded-xl py-2.5 text-sm font-semibold"
               >
                 {deleting ? <Loader2 className="animate-spin" size={16} /> : null}
                 پاک کردن
