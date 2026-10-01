@@ -39,7 +39,7 @@ export function Button({
   asChild = false,
   children,
   ...props
-}: React.ComponentProps<"button"> & {
+}: Omit<React.ComponentProps<"button">, "color"> & {
   variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
   size?: "default" | "xs" | "sm" | "lg" | "icon" | "icon-xs" | "icon-sm" | "icon-lg";
   asChild?: boolean;
