@@ -104,6 +104,8 @@ const dashboardTheme = createTheme({
           display: "inline-flex",
           alignItems: "center",
           flex: "0 0 auto",
+          width: "auto",
+          maxWidth: "none",
           overflow: "hidden",
         },
         ".rdp-dropdown_root select": {
