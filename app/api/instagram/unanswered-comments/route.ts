@@ -38,7 +38,7 @@ async function syncMediaComments(
             userId,
             igMediaId: mediaId,
             igCommentId: comment.id,
-            text: comment.text,
+            text: comment.text ?? "",
             username: comment.username ?? comment.from?.username ?? "instagram-user",
             createdAt: comment.timestamp ? new Date(comment.timestamp) : undefined,
           },
