@@ -100,14 +100,14 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <Box sx={{ px: 1.5, py: 1.5 }}>
-      {[...menuGroups].reverse().map((group) => (
+      {menuGroups.map((group) => (
         <Box key={group.label} sx={{ mb: 2.5 }}>
           <Typography sx={{ px: 1.25, mb: 0.75, color: "#94A3B8", fontSize: 10.5, fontWeight: 700 }}>
             {group.label}
           </Typography>
 
           <List disablePadding sx={{ display: "grid", gap: 0.5 }}>
-            {[...group.items].reverse().map(({ href, title, icon: Icon }) => {
+            {group.items.map(({ href, title, icon: Icon }) => {
               const active = href === "/dashboard" ? pathname === "/dashboard" : pathname === href || pathname.startsWith(href + "/");
 
               return (
@@ -119,9 +119,9 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
                   selected={active}
                   sx={{
                     minHeight: 42,
-                    direction: "ltr",
+                    direction: "rtl",
                     display: "flex",
-                    flexDirection: "row-reverse",
+                    flexDirection: "row",
                     alignItems: "center",
                     borderRadius: 2,
                     px: 1.25,
