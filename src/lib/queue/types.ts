@@ -63,6 +63,7 @@ export interface QueueJob<T extends QueueJobType = QueueJobType> {
   claimToken?: string;
   idempotency?: QueueJobIdempotency;
   recoveryId?: string;
+  instagramAccountId?: string;
   queueNamespace?: string;
 }
 
@@ -72,5 +73,6 @@ export interface EnqueueJobOptions {
   maxAttempts?: number;
   idempotency?: QueueJobIdempotency;
   recoveryId?: string;
+  instagramAccountId?: string;
   queueNamespace?: string;
 }
