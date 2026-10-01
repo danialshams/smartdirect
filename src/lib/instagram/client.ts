@@ -3,7 +3,6 @@ import {
   acquireInstagramTrafficSlot,
   releaseInstagramTrafficSlot,
   recordInstagramTrafficOutcome,
-  InstagramCircuitOpenError,
 } from "@/lib/instagram/traffic-control";
 import { observabilityLogger } from "@/lib/observability/logger";
 import { recordFailure, recordLatency } from "@/lib/observability/metrics";
