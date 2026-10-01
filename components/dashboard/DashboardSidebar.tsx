@@ -110,7 +110,7 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
     <Box dir="rtl" sx={{ px: 1.5, py: 1.5 }}>
       {menuGroups.map((group) => (
         <Box key={group.label} sx={{ mb: 2.5 }}>
-          <Typography
+          <Box
             component="div"
             dir="rtl"
             sx={{
@@ -120,12 +120,15 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
               color: "#94A3B8",
               fontSize: 10.5,
               fontWeight: 700,
+              lineHeight: 1.5,
+            }}
+            style={{
               textAlign: "right",
               direction: "rtl",
             }}
           >
             {group.label}
-          </Typography>
+          </Box>
 
           <List disablePadding sx={{ display: "grid", gap: 0.5 }}>
             {group.items.map(({ href, title, icon: Icon }) => {
