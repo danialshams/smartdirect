@@ -1,7 +1,7 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/components/dashboard/DashboardUI";
+import { Input } from "@/components/dashboard/DashboardUI";
 import { Plus, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
