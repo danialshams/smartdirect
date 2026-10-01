@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import {
   BarChart3,
   Bot,
+  Check,
   CreditCard,
   ImagePlus,
   Inbox,
@@ -120,12 +121,16 @@ function AccountSection({ instagramAccounts }: { instagramAccounts: InstagramAcc
           <Typography dir="ltr" noWrap fontSize={11.5} fontWeight={600} color="#0F172A" sx={{ textAlign: "right" }}>
             {activeAccount ? `@${activeAccount.igUsername}` : "پیجی متصل نیست"}
           </Typography>
-          <Typography noWrap fontSize={9.5} sx={{ mt: 0.15, color: "#64748B" }}>
-            {activeAccount ? "پیج فعال" : "برای شروع پیج متصل کنید"}
-          </Typography>
         </Box>
-        <Box component={Link} href="/api/instagram/connect" aria-label="اتصال پیج جدید" sx={{ width: 28, height: 28, flexShrink: 0, display: "grid", placeItems: "center", borderRadius: 1.5, color: "#2563EB", bgcolor: "#EFF6FF", textDecoration: "none", "&:hover": { bgcolor: "#DBEAFE" } }}>
-          <Plus size={15} strokeWidth={2} />
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.45, flexShrink: 0 }}>
+          {activeAccount ? (
+            <Box aria-label="پیج فعال" sx={{ width: 22, height: 22, display: "grid", placeItems: "center", color: "#16A34A" }}>
+              <Check size={14} strokeWidth={2.4} />
+            </Box>
+          ) : null}
+          <Box component={Link} href="/api/instagram/connect" aria-label="اتصال پیج جدید" sx={{ width: 28, height: 28, display: "grid", placeItems: "center", borderRadius: 1.5, color: "#2563EB", bgcolor: "#EFF6FF", textDecoration: "none", "&:hover": { bgcolor: "#DBEAFE" } }}>
+            <Plus size={15} strokeWidth={2} />
+          </Box>
         </Box>
       </Box>
     </Box>
@@ -231,7 +236,7 @@ export default function DashboardSidebar({
         <SidebarContent instagramAccounts={instagramAccounts} />
       </Drawer>
       <Drawer variant="temporary" anchor="left" open={mobileOpen} onClose={onMobileClose} ModalProps={{ keepMounted: true }}
-        sx={{ display: { xs: "block", lg: "none" }, "& .MuiDrawer-paper": { width: { xs: "min(78vw, 270px)", sm: 290 }, boxSizing: "border-box", borderLeft: "1px solid #E2E8F0", borderRight: 0, direction: "rtl" } }}>
+        sx={{ display: { xs: "block", lg: "none" }, "& .MuiDrawer-paper": { width: { xs: "min(68vw, 220px)", sm: 235 }, boxSizing: "border-box", borderLeft: "1px solid #E2E8F0", borderRight: 0, direction: "rtl" } }}>
         <SidebarContent mobile onClose={onMobileClose} instagramAccounts={instagramAccounts} />
       </Drawer>
     </>
