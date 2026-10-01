@@ -276,11 +276,6 @@ export default function CommentAutomationEditor({ id }: { id: string }) {
           </div>
         </div>
 
-        <div className="mb-5">
-          <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">ویرایش پاسخ خودکار کامنت</h1>
-          <p className="mt-1.5 text-sm text-muted-foreground">تنظیمات پاسخ خودکار این پست را ویرایش کنید.</p>
-        </div>
-
         {error && (
           <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-700">{error}</div>
         )}
@@ -377,7 +372,7 @@ export default function CommentAutomationEditor({ id }: { id: string }) {
                         onClick={() =>
                           setKeywords((current) => current.filter((item) => item !== keyword))
                         }
-                        className="rounded-full p-0.5 text-muted-foreground transition hover:bg-background hover:text-foreground"
+                        className="rounded-full p-0.5 text-red-500 transition hover:bg-red-50 hover:text-red-600"
                       >
                         <X size={13} />
                       </button>
