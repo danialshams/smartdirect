@@ -14,7 +14,9 @@ import {
   Menu as MenuIcon,
   MessageCircle,
   MessageCircleReply,
+  MessageCircleQuestion,
   Plus,
+  Ticket,
   UserRound,
   X,
   Zap,
@@ -62,9 +64,9 @@ const menuGroups = [
       { title: "پیام‌ها", href: "/dashboard/inbox", icon: Inbox },
       { title: "پاسخ خودکار کامنت", href: "/dashboard/comment-automation", icon: Bot },
       { title: "پاسخ خودکار استوری", href: "/dashboard/story-automation", icon: Zap },
-      { title: "سؤال‌های شروع گفتگو", href: "/dashboard/ice-breaker", icon: MessageCircle },
+      { title: "سؤال‌های شروع گفتگو", href: "/dashboard/ice-breaker", icon: MessageCircleQuestion },
       { title: "منوی دایرکت", href: "/dashboard/persistent-menu", icon: MenuIcon },
-      { title: "تیکت‌ها", href: "/dashboard/tickets", icon: MessageCircle },
+      { title: "تیکت‌ها", href: "/dashboard/tickets", icon: Ticket },
     ],
   },
   {
@@ -201,7 +203,9 @@ function SidebarContent({
       </Box>
       <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
         <Navigation onNavigate={onClose} />
-        <Divider sx={{ mx: 1.25, borderColor: "#E2E8F0" }} />
+      </Box>
+      <Divider sx={{ mx: 1.25, borderColor: "#E2E8F0" }} />
+      <Box sx={{ flexShrink: 0 }}>
         <AccountSection instagramAccounts={instagramAccounts} />
       </Box>
       <Divider sx={{ borderColor: "#E2E8F0" }} />
@@ -223,11 +227,11 @@ export default function DashboardSidebar({
 }: DashboardSidebarProps) {
   return (
     <>
-      <Drawer variant="permanent" anchor="left" sx={{ display: { xs: "none", lg: "block" }, width: 220, flexShrink: 0, "& .MuiDrawer-paper": { width: 220, boxSizing: "border-box", borderLeft: "1px solid #E2E8F0", borderRight: 0, direction: "rtl" } }}>
+      <Drawer variant="permanent" anchor="left" sx={{ display: { xs: "none", lg: "block" }, width: 196, flexShrink: 0, "& .MuiDrawer-paper": { width: 196, boxSizing: "border-box", borderLeft: "1px solid #E2E8F0", borderRight: 0, direction: "rtl" } }}>
         <SidebarContent instagramAccounts={instagramAccounts} />
       </Drawer>
       <Drawer variant="temporary" anchor="left" open={mobileOpen} onClose={onMobileClose} ModalProps={{ keepMounted: true }}
-        sx={{ display: { xs: "block", lg: "none" }, "& .MuiDrawer-paper": { width: { xs: "min(84vw, 300px)", sm: 320 }, boxSizing: "border-box", borderLeft: "1px solid #E2E8F0", borderRight: 0, direction: "rtl" } }}>
+        sx={{ display: { xs: "block", lg: "none" }, "& .MuiDrawer-paper": { width: { xs: "min(78vw, 270px)", sm: 290 }, boxSizing: "border-box", borderLeft: "1px solid #E2E8F0", borderRight: 0, direction: "rtl" } }}>
         <SidebarContent mobile onClose={onMobileClose} instagramAccounts={instagramAccounts} />
       </Drawer>
     </>
