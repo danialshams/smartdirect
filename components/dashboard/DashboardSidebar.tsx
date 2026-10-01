@@ -162,12 +162,12 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
                   <ListItemIcon
                     sx={{
                       minWidth: 0,
-                      width: 28,
+                      width: 24,
                       flexShrink: 0,
                       color: "inherit",
                       display: "flex",
                       justifyContent: "center",
-                      ml: 1.5,
+                      ml: 0.75,
                       mr: 0,
                     }}
                   >
