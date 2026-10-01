@@ -64,7 +64,8 @@
     "worst-case:final:test": "tsx --env-file=.env --env-file=.env.local scripts/test-worst-case-final.ts",
     "worst-case:cleanup": "tsx scripts/cleanup-worst-case-final.ts",
     "subscriptions:expire": "tsx scripts/expire-subscriptions.ts",
-    "maximum:final:test": "tsx --env-file=.env --env-file=.env.local scripts/test-maximum-chaos-final.ts"
+    "maximum:final:test": "tsx --env-file=.env --env-file=.env.local scripts/test-maximum-chaos-final.ts",
+    "instagram:traffic:test": "tsx --env-file=.env --env-file=.env.local scripts/test-instagram-traffic-control.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",
