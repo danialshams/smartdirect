@@ -59,6 +59,7 @@ export default function DashboardMobileHeader({
           sx={{
             minHeight: { xs: 56, sm: 64 },
             px: { xs: 1.5, sm: 2.5, lg: 3.5 },
+            position: "relative",
           }}
         >
           <IconButton
@@ -66,6 +67,8 @@ export default function DashboardMobileHeader({
             aria-label="باز کردن منو"
             sx={{
               display: { xs: "inline-flex", lg: "none" },
+              position: { xs: "absolute", lg: "static" },
+              right: { xs: 12, sm: 20 },
               color: "#0F172A",
               width: 40,
               height: 40,
@@ -74,14 +77,17 @@ export default function DashboardMobileHeader({
             <MenuIcon size={20} strokeWidth={2} />
           </IconButton>
 
-          <Box sx={{ flex: 1 }} />
-
           <Typography
             sx={{
               display: { xs: "block", lg: "none" },
+              position: "absolute",
+              left: "50%",
+              transform: "translateX(-50%)",
               fontSize: { xs: 14, sm: 15 },
               fontWeight: 800,
               color: "#0F172A",
+              whiteSpace: "nowrap",
+              pointerEvents: "none",
             }}
           >
             SmartDirect
