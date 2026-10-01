@@ -501,67 +501,59 @@ function SidebarContent({
 }
 
 export default function DashboardSidebar({
-  mobileOpen,
-  onMobileClose,
+  mobileOpen: _mobileOpen,
+  onMobileClose: _onMobileClose,
   instagramAccounts,
 }: DashboardSidebarProps) {
   const isDesktop = useMediaQuery("(min-width:1200px)", { noSsr: true });
   const [compact, setCompact] = useState(true);
 
   useEffect(() => {
-    if (isDesktop) setCompact(false);
-  }, [isDesktop]);
+    if (isDesktop) {
+      setCompact(false);
+      document.documentElement.style.setProperty(
+        "--dashboard-sidebar-width",
+        "208px",
+      );
+      return;
+    }
+
+    const width = compact ? "64px" : "240px";
+    document.documentElement.style.setProperty(
+      "--dashboard-sidebar-width",
+      width,
+    );
+
+    return () => {
+      document.documentElement.style.removeProperty(
+        "--dashboard-sidebar-width",
+      );
+    };
+  }, [compact, isDesktop]);
 
   return (
-    <>
-      <Drawer
-        variant="permanent"
-        anchor="left"
-        sx={{
-          display: { xs: "block" },
-          width: isDesktop ? 208 : 64,
-          flexShrink: 0,
-          "& .MuiDrawer-paper": {
-            width: isDesktop ? 208 : 64,
-            boxSizing: "border-box",
-            borderRight: "1px solid #E2E8F0",
-            direction: "rtl",
-            overflow: "visible",
-            transition: "width 180ms ease",
-          },
-        }}
-      >
-        <SidebarContent
-          compact={!isDesktop && compact}
-          instagramAccounts={instagramAccounts}
-          onToggle={!isDesktop ? () => setCompact((value) => !value) : undefined}
-        />
-      </Drawer>
-
-      {!isDesktop && !compact && (
-        <Drawer
-          variant="temporary"
-          anchor="left"
-          open={mobileOpen}
-          onClose={onMobileClose}
-          ModalProps={{ keepMounted: true }}
-          sx={{
-            "& .MuiDrawer-paper": {
-              width: { xs: 240, sm: 248, md: 248 },
-              boxSizing: "border-box",
-              borderRight: "1px solid #E2E8F0",
-              direction: "rtl",
-            },
-          }}
-        >
-          <SidebarContent
-            compact={false}
-            onClose={onMobileClose}
-            onToggle={() => setCompact(true)}
-            instagramAccounts={instagramAccounts}
-          />
-        </Drawer>
-      )}
-    </>
+    <Drawer
+      variant="permanent"
+      anchor="left"
+      sx={{
+        display: { xs: "block" },
+        width: isDesktop ? 208 : compact ? 64 : 240,
+        flexShrink: 0,
+        "& .MuiDrawer-paper": {
+          width: isDesktop ? 208 : compact ? 64 : 240,
+          boxSizing: "border-box",
+          borderRight: "1px solid #E2E8F0",
+          direction: "rtl",
+          overflow: "visible",
+          transition: "width 180ms ease",
+        },
+      }}
+    >
+      <SidebarContent
+        compact={!isDesktop && compact}
+        instagramAccounts={instagramAccounts}
+        onToggle={!isDesktop ? () => setCompact((value) => !value) : undefined}
+      />
+    </Drawer>
   );
 }
