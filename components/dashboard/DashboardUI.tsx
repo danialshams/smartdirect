@@ -460,15 +460,6 @@ export function Calendar({ className, ...props }: DashboardCalendarProps) {
           opacity: 0.45,
           cursor: "not-allowed",
         },
-        "& .rdp-button_previous, & .rdp-button_next": {
-          width: 34,
-          height: 34,
-          border: "1px solid " + COLORS.border,
-          borderRadius: 1.5,
-          background: COLORS.surface,
-          color: COLORS.text,
-          cursor: "pointer",
-        },
         "& select": {
           fontFamily: '"Vazirmatn", Arial, sans-serif',
           fontSize: 11,
