@@ -111,13 +111,17 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
       {menuGroups.map((group) => (
         <Box key={group.label} sx={{ mb: 2.5 }}>
           <Typography
+            component="div"
+            dir="rtl"
             sx={{
+              width: "100%",
               px: 1.25,
               mb: 0.75,
               color: "#94A3B8",
               fontSize: 10.5,
               fontWeight: 700,
               textAlign: "right",
+              direction: "rtl",
             }}
           >
             {group.label}
@@ -143,7 +147,7 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
                     display: "flex",
                     flexDirection: "row",
                     alignItems: "center",
-                    columnGap: 0.5,
+                    columnGap: 1,
                     borderRadius: 2,
                     px: 1.25,
                     color: active ? "#2563EB" : "#475569",
