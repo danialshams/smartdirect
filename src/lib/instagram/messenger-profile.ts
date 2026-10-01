@@ -35,6 +35,7 @@ async function callMessengerProfileApi({
       platform: "instagram",
       ...(fields ? { fields } : {}),
     },
+    rateLimit: { instagramAccountId, operation: "MESSENGER_PROFILE" },
     body,
   });
 }
