@@ -340,10 +340,8 @@ export async function instagramApiRequest<T = unknown>(
       const data = await parseResponse(response);
 
       if (options.rateLimit) {
-        void recordInstagramTrafficOutcome(
-          options.rateLimit,
-          response.status === 429 ? "429" : response.status >= 500 ? "5xx" : response.ok ? "success" : "network",
-        ).catch(() => undefined);
+        const outcome = response.ok ? "success" : response.status === 429 ? "429" : response.status >= 500 ? "5xx" : null;
+        if (outcome) void recordInstagramTrafficOutcome(options.rateLimit, outcome).catch(() => undefined);
       }
 
       console.info("[INSTAGRAM_CLIENT_DEBUG] fetch-response", {
