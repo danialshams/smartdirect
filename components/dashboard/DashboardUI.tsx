@@ -420,6 +420,8 @@ export function Calendar({ className, ...props }: DashboardCalendarProps) {
           position: "relative",
           background: COLORS.surface,
         },
+        "& .rdp-dropdown_root:nth-child(1) select": { width: 112 },
+        "& .rdp-dropdown_root:nth-child(2) select": { width: 76 },
         "& .rdp-dropdown_root svg, & .rdp-chevron": {
           display: "none",
         },
@@ -464,6 +466,8 @@ export function Calendar({ className, ...props }: DashboardCalendarProps) {
           cursor: "not-allowed",
         },
         "& select": {
+          width: "auto",
+          maxWidth: "100%",
           fontFamily: '"Vazirmatn", Arial, sans-serif',
           fontSize: 11,
           minHeight: 32,
