@@ -21,6 +21,9 @@ function minLimit() { return Math.max(1, Math.floor(num("INSTAGRAM_CONCURRENCY_M
 function maxLimit() { return Math.max(minLimit(), Math.floor(num("INSTAGRAM_CONCURRENCY_MAX", MAX))); }
 function leaseSeconds() { return Math.max(30, Math.floor(num("INSTAGRAM_CONCURRENCY_LEASE_SECONDS", LEASE_SECONDS))); }
 function maxWaitMs() { return Math.max(0, Math.floor(num("INSTAGRAM_CONCURRENCY_MAX_WAIT_MS", MAX_WAIT_MS))); }
+function failureThreshold() { return Math.max(1, Math.floor(num("INSTAGRAM_CIRCUIT_FAILURE_THRESHOLD", FAILURE_THRESHOLD))); }
+function failureWindowMs() { return Math.max(1000, Math.floor(num("INSTAGRAM_CIRCUIT_FAILURE_WINDOW_MS", FAILURE_WINDOW_MS))); }
+function circuitOpenMs() { return Math.max(100, Math.floor(num("INSTAGRAM_CIRCUIT_OPEN_MS", CIRCUIT_OPEN_MS))); }
 
 function keyPart(value: string) { return value.replace(/[^a-zA-Z0-9_-]/g, "_"); }
 function keys(accountId: string) {
@@ -167,7 +170,7 @@ export async function recordInstagramTrafficOutcome(context: InstagramRateLimitC
   const result = await redis.eval(
     OUTCOME_SCRIPT,
     [k.limit, k.successes, k.failures, k.failureAt, k.circuit],
-    [String(Date.now()), outcome, String(minLimit()), String(maxLimit()), String(FAILURE_THRESHOLD), String(FAILURE_WINDOW_MS), String(CIRCUIT_OPEN_MS)],
+    [String(Date.now()), outcome, String(minLimit()), String(maxLimit()), String(failureThreshold()), String(failureWindowMs()), String(circuitOpenMs())],
   ) as [number, number, number, number];
 
   observabilityLogger.info("instagram_account_traffic_outcome", {
