@@ -170,7 +170,7 @@ export default function DashboardMobileHeader({
       <Box
         sx={{
           position: "fixed",
-          left: 0,
+          right: 0,
           top: "50%",
           transform: "translateY(-50%)",
           zIndex: (theme) => theme.zIndex.drawer + 1,
@@ -185,9 +185,9 @@ export default function DashboardMobileHeader({
             width: 34,
             height: 48,
             p: 0,
-            borderRadius: "0 10px 10px 0",
+            borderRadius: "10px 0 0 10px",
             border: "1px solid #E2E8F0",
-            borderLeft: 0,
+            borderRight: 0,
             bgcolor: "#FFFFFF",
             color: "#64748B",
             boxShadow: "0 4px 16px rgba(15,23,42,0.08)",
@@ -216,7 +216,7 @@ export default function DashboardMobileHeader({
       </Box>
 
       <Drawer
-        anchor="left"
+        anchor="right"
         open={accountSheetOpen}
         onClose={() => setAccountSheetOpen(false)}
         PaperProps={{
@@ -226,9 +226,9 @@ export default function DashboardMobileHeader({
             maxHeight: "none",
             top: "50%",
             transform: "translateY(-50%) !important",
-            borderRadius: "0 14px 14px 0",
+            borderRadius: "14px 0 0 14px",
             border: "1px solid #E2E8F0",
-            borderLeft: 0,
+            borderRight: 0,
             boxSizing: "border-box",
           },
         }}
