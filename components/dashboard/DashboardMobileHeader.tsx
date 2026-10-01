@@ -76,7 +76,7 @@ function SubscriptionIndicator() {
   return (
     <>
       <Box component="button" type="button" onClick={(event) => setAnchorEl(event.currentTarget)} aria-label="وضعیت اشتراک"
-        sx={{ position: "absolute", left: { xs: 10, sm: 18, lg: 24 }, top: "50%", transform: "translateY(-50%)", width: { xs: 48, sm: 52, lg: 56 }, height: { xs: 48, sm: 52, lg: 56 }, p: 0, border: 0, bgcolor: "transparent", cursor: "pointer", fontFamily: "inherit", display: "grid", placeItems: "center" }}>
+        sx={{ position: "absolute", right: { xs: 10, sm: 18, lg: 24 }, top: "50%", transform: "translateY(-50%)", width: { xs: 48, sm: 52, lg: 56 }, height: { xs: 48, sm: 52, lg: 56 }, p: 0, border: 0, bgcolor: "transparent", cursor: "pointer", fontFamily: "inherit", display: "grid", placeItems: "center" }}>
         <Box sx={{ position: "absolute", inset: 0, display: "grid", placeItems: "center" }}>
           <svg width="100%" height="100%" viewBox="0 0 60 60" aria-hidden="true" style={{ display: "block" }}>
             <circle cx="30" cy="30" r="27" fill="none" stroke="#E2E8F0" strokeWidth="3.5" />
@@ -91,8 +91,11 @@ function SubscriptionIndicator() {
               pathLength="100"
               strokeDasharray="100"
               strokeDashoffset={100 - progress}
-              transform="rotate(-90 30 30) scale(-1 1) translate(-60 0)"
-              style={{ transition: "stroke-dashoffset 50ms linear, stroke 150ms linear" }}
+              style={{
+                transformOrigin: "50% 50%",
+                transform: "rotate(-90deg) scaleX(-1)",
+                transition: "stroke-dashoffset 50ms linear, stroke 150ms linear",
+              }}
             />
           </svg>
         </Box>
@@ -131,7 +134,7 @@ export default function DashboardMobileHeader({ onMenuOpen }: DashboardMobileHea
       sx={{ bgcolor: "rgba(255,255,255,0.96)", color: "#0F172A", borderBottom: "1px solid #E2E8F0", backdropFilter: "blur(12px)", zIndex: (theme) => theme.zIndex.drawer - 1 }}>
       <Toolbar sx={{ minHeight: { xs: 68, sm: 72, lg: 76 }, px: { xs: 1.5, sm: 2.5, lg: 3.5 }, position: "relative" }}>
         <IconButton onClick={onMenuOpen} aria-label="باز کردن منو"
-          sx={{ display: { xs: "inline-flex", lg: "none" }, position: "absolute", insetInlineStart: "auto", insetInlineEnd: { xs: 12, sm: 20 }, color: "#0F172A", width: 40, height: 40 }}>
+          sx={{ display: { xs: "inline-flex", lg: "none" }, position: "absolute", left: { xs: 12, sm: 20 }, color: "#0F172A", width: 40, height: 40 }}>
           <MenuIcon size={20} strokeWidth={2} />
         </IconButton>
         <Typography sx={{ display: { xs: "block", lg: "none" }, position: "absolute", left: "50%", transform: "translateX(-50%)", fontSize: { xs: 14, sm: 15 }, fontWeight: 800, color: "#0F172A", whiteSpace: "nowrap", pointerEvents: "none" }}>SmartDirect</Typography>
