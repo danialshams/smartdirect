@@ -111,11 +111,10 @@ function AccountSection({ instagramAccounts }: { instagramAccounts: InstagramAcc
   return (
     <Box sx={{ px: 1.25, py: 1 }}>
       <Box sx={{ display: "flex", alignItems: "center", gap: 0.9, minWidth: 0, px: 0.9, py: 0.85, borderRadius: 1.75, bgcolor: "#F8FAFC", border: "1px solid #E2E8F0" }}>
-        <Box sx={{ position: "relative", flexShrink: 0 }}>
+        <Box sx={{ flexShrink: 0 }}>
           <Avatar src={activeAccount?.profilePictureUrl || undefined} alt={activeAccount?.igUsername || "Instagram"} sx={{ width: 34, height: 34, bgcolor: "#E2E8F0", color: "#64748B" }}>
             {!activeAccount?.profilePictureUrl ? <UserRound size={16} /> : null}
           </Avatar>
-          {activeAccount && <Box sx={{ position: "absolute", right: -1, bottom: -1, width: 9, height: 9, borderRadius: "50%", bgcolor: "#22C55E", border: "2px solid #F8FAFC" }} />}
         </Box>
         <Box sx={{ minWidth: 0, flex: 1 }}>
           <Typography dir="ltr" noWrap fontSize={11.5} fontWeight={600} color="#0F172A" sx={{ textAlign: "right" }}>
