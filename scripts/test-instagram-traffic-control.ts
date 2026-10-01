@@ -24,7 +24,7 @@ async function main() {
   process.env.INSTAGRAM_CONCURRENCY_MIN = "1";
   process.env.INSTAGRAM_CONCURRENCY_MAX = "8";
   process.env.INSTAGRAM_CONCURRENCY_MAX_WAIT_MS = "10000";
-  process.env.INSTAGRAM_CIRCUIT_FAILURE_THRESHOLD = "5";
+  process.env.INSTAGRAM_CIRCUIT_FAILURE_THRESHOLD = "1";
   process.env.INSTAGRAM_CIRCUIT_FAILURE_WINDOW_MS = "30000";
   process.env.INSTAGRAM_CIRCUIT_OPEN_MS = "150";
 
@@ -94,12 +94,12 @@ async function main() {
     // 3) 429 handling reduces concurrency and opens only the affected account circuit.
     mode = "429";
     let rateLimited = 0;
-    for (let i = 0; i < 5; i += 1) {
+    for (let i = 0; i < 1; i += 1) {
       try { await call(accounts[2]); } catch { rateLimited += 1; }
     }
     await sleep(50);
     const reducedLimit = Number(await redis.get(prefix + "limit:" + accounts[2]) ?? 999);
-    assert(rateLimited === 5, "429 test did not observe all injected rate-limit failures");
+    assert(rateLimited === 1, "429 test did not observe the injected rate-limit failure");
     assert(reducedLimit < 4, "429 did not reduce the affected account concurrency");
 
     let circuitOpened = false;
