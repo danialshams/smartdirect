@@ -5,6 +5,21 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, Check, Loader2, MessageCircle, Plus, Send, UserRoundCheck, X } from "lucide-react";
 import { Box, Button, Card, CardContent, Checkbox, CircularProgress, Divider, IconButton, Paper, Stack, TextField, Typography } from "@mui/material";
 
+type AutomationMessage = { id:string; messageType:string; text:string|null; order:number };
+type Automation = {
+  id:string; instagramAccountId:string; triggerType:string; mediaId:string|null;
+  keyword:string|null; commentReplyText:string|null; replyText:string|null;
+  sendDm:boolean; requireFollow:boolean; followGateText:string|null; isActive:boolean;
+  messages?: AutomationMessage[];
+  instagramAccount?: { id:string; igUserId:string; igUsername:string; isConnected:boolean };
+};
+type MediaPreview = { mediaUrl:string|null; thumbnailUrl:string|null; mediaType:"IMAGE"|"VIDEO"|"UNKNOWN" };
+
+function getExistingDmText(item:Automation){
+  if(item.replyText?.trim()) return item.replyText;
+  return [...(item.messages??[])].sort((a,b)=>a.order-b.order).find(m=>m.messageType==="TEXT"&&m.text?.trim())?.text??"";
+}
+
 export default function CommentAutomationEditor({ id }: { id: string }) {
   const router = useRouter();
 
