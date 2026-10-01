@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Alert,
   Box,
@@ -37,7 +37,6 @@ export default function DashboardAccountsClient({
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [profileName, setProfileName] = useState("");
 
   useEffect(() => {
     void (async () => {
@@ -78,10 +77,6 @@ export default function DashboardAccountsClient({
         setLoading(false);
       }
     })();
-  }, []);
-
-  const handleProfileLoaded = useCallback((name: string | null) => {
-    setProfileName(name || "");
   }, []);
 
   if (loading) {
@@ -131,8 +126,6 @@ export default function DashboardAccountsClient({
     return (
       <InstagramProfileDashboard
         accountId={activeAccount.id}
-        greetingName={profileName || activeAccount.igUsername}
-        onProfileLoaded={handleProfileLoaded}
       />
     );
   }
