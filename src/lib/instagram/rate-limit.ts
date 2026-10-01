@@ -218,7 +218,7 @@ export async function consumeInstagramRateLimit(context: InstagramRateLimitConte
 
   for (const bucket of buckets) {
     keys.push(`${PREFIX}:${bucket.key}:tokens`, `${PREFIX}:${bucket.key}:time`);
-    args.push("0", String(bucket.limit), String(bucket.windowMs));
+    args.push(String(bucket.limit), String(bucket.windowMs));
   }
 
   try {
