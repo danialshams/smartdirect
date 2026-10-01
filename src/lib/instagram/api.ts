@@ -39,6 +39,7 @@ export async function getInstagramProfile(accessToken: string) {
       fields:
         "id,username,name,biography,website,profile_picture_url,followers_count,follows_count,media_count,account_type",
     },
+    rateLimit: { instagramAccountId: accessToken.slice(0, 24), operation: "PROFILE_READ" },
   });
 }
 
@@ -62,6 +63,7 @@ export async function getInstagramAccountInsights(
         since,
         until,
       },
+      rateLimit: { instagramAccountId: instagramUserId, operation: "INSIGHTS_READ" },
     },
   );
 }
@@ -92,6 +94,7 @@ export async function getInstagramMedia(
         "id,caption,media_type,media_product_type,media_url,thumbnail_url,permalink,timestamp",
       limit,
     },
+    rateLimit: { instagramAccountId: instagramUserId, operation: "MEDIA_READ" },
   });
 }
 
@@ -145,6 +148,7 @@ export async function getInstagramMediaComments(
       fields: "id,text,username,timestamp,from",
       limit,
     },
+    rateLimit: { instagramAccountId: mediaId, operation: "MEDIA_READ" },
   });
 }
 
@@ -166,6 +170,7 @@ export async function getInstagramComment(
     params: {
       fields: "id,text,username,timestamp,from",
     },
+    rateLimit: { instagramAccountId: commentId, operation: "CONVERSATION_READ" },
   });
 }
 
