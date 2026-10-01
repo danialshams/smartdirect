@@ -1,10 +1,9 @@
 "use client";
-import { Button } from "@/components/ui/button"
+import { Button, Calendar } from "@/components/dashboard/DashboardUI";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { DateRange } from "react-day-picker";
 
-import { Calendar } from "@/components/ui/calendar";
 
 type Range = 7 | 30 | 90;
 type Metric = "reach" | "views" | "interactions";
@@ -251,7 +250,7 @@ export default function InsightsDashboard() {
                                             <Calendar
                                                 mode="range"
                                                 selected={dateRange}
-                                                onSelect={(value) => {
+                                                onSelect={(value: DateRange | undefined) => {
                                                     setDateRange(value);
                                                     if (value?.from && value?.to) setCalendarOpen(false);
                                                 }}
