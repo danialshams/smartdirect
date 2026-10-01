@@ -10,10 +10,13 @@ import {
   Inbox,
   LayoutDashboard,
   LogOut,
+  Menu as MenuIcon,
   MessageCircle,
   MessageCircleReply,
-  Settings,
+  Plus,
+  UserRound,
   X,
+  Zap,
 } from "lucide-react";
 import {
   Box,
@@ -31,6 +34,11 @@ import { signOut } from "next-auth/react";
 type DashboardSidebarProps = {
   mobileOpen: boolean;
   onMobileClose: () => void;
+  instagramAccounts: {
+    id: string;
+    igUsername: string;
+    isConnected: boolean;
+  }[];
 };
 
 const menuGroups = [
@@ -48,54 +56,44 @@ const menuGroups = [
       { title: "کامنت‌ها", href: "/dashboard/comments", icon: MessageCircleReply },
       { title: "پیام‌ها", href: "/dashboard/inbox", icon: Inbox },
       { title: "پاسخ خودکار کامنت", href: "/dashboard/comment-automation", icon: Bot },
-      { title: "پاسخ خودکار استوری", href: "/dashboard/story-automation", icon: Bot },
+      { title: "پاسخ خودکار استوری", href: "/dashboard/story-automation", icon: Zap },
       { title: "سؤال‌های شروع گفتگو", href: "/dashboard/ice-breaker", icon: MessageCircle },
-      { title: "منوی دایرکت", href: "/dashboard/persistent-menu", icon: MessageCircle },
+      { title: "منوی دایرکت", href: "/dashboard/persistent-menu", icon: MenuIcon },
     ],
   },
   {
     label: "حساب",
     items: [
       { title: "اشتراک", href: "/dashboard/subscription", icon: CreditCard },
-      { title: "تنظیمات", href: "/dashboard/settings", icon: Settings },
     ],
   },
 ];
 
 function Brand({ compact = false }: { compact?: boolean }) {
   return (
-    <Box
-      dir="rtl"
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        gap: 1.25,
-        minWidth: 0,
-      }}
-    >
+    <Box dir="rtl" sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0 }}>
       <Box
         sx={{
-          width: compact ? 38 : 42,
-          height: compact ? 38 : 42,
+          width: compact ? 38 : 40,
+          height: compact ? 38 : 40,
           flexShrink: 0,
           display: "grid",
           placeItems: "center",
           borderRadius: 2.5,
           bgcolor: "#2563EB",
           color: "#FFFFFF",
-          fontSize: compact ? 15 : 17,
+          fontSize: compact ? 15 : 16,
           fontWeight: 900,
           letterSpacing: "-0.04em",
         }}
       >
         S
       </Box>
-
       <Box dir="ltr" sx={{ minWidth: 0, textAlign: "left" }}>
-        <Typography fontSize={15} fontWeight={800} noWrap color="#0F172A">
+        <Typography fontSize={14.5} fontWeight={800} noWrap color="#0F172A">
           SmartDirect
         </Typography>
-        <Typography fontSize={10.5} noWrap sx={{ mt: 0.25, color: "#64748B" }}>
+        <Typography fontSize={10} noWrap sx={{ mt: 0.2, color: "#64748B" }}>
           Automate · Connect · Grow
         </Typography>
       </Box>
@@ -107,30 +105,27 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
 
   return (
-    <Box dir="rtl" sx={{ px: 1.5, py: 1.5 }}>
+    <Box dir="rtl" sx={{ px: 1.25, py: 1.25 }}>
       {menuGroups.map((group) => (
-        <Box key={group.label} sx={{ mb: 2.5 }}>
+        <Box key={group.label} sx={{ mb: 2 }}>
           <Box
             component="div"
             dir="rtl"
             sx={{
               width: "100%",
-              px: 1.25,
-              mb: 0.75,
+              px: 1.1,
+              mb: 0.65,
               color: "#94A3B8",
-              fontSize: 10.5,
+              fontSize: 10,
               fontWeight: 700,
               lineHeight: 1.5,
-            }}
-            style={{
               textAlign: "right",
-              direction: "rtl",
             }}
           >
             {group.label}
           </Box>
 
-          <List disablePadding sx={{ display: "grid", gap: 0.5 }}>
+          <List disablePadding sx={{ display: "grid", gap: 0.35 }}>
             {group.items.map(({ href, title, icon: Icon }) => {
               const active =
                 href === "/dashboard"
@@ -146,25 +141,17 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
                   selected={active}
                   dir="rtl"
                   sx={{
-                    minHeight: 42,
+                    minHeight: 40,
                     display: "flex",
                     flexDirection: "row",
                     alignItems: "center",
                     columnGap: 1,
-                    borderRadius: 2,
-                    px: 1.25,
+                    borderRadius: 1.75,
+                    px: 1.1,
                     color: active ? "#2563EB" : "#475569",
-                    "&.Mui-selected": {
-                      bgcolor: "#EFF6FF",
-                      color: "#2563EB",
-                    },
-                    "&.Mui-selected:hover": {
-                      bgcolor: "#EFF6FF",
-                    },
-                    "&:hover": {
-                      bgcolor: "#F8FAFC",
-                      color: "#1D4ED8",
-                    },
+                    "&.Mui-selected": { bgcolor: "#EFF6FF", color: "#2563EB" },
+                    "&.Mui-selected:hover": { bgcolor: "#EFF6FF" },
+                    "&:hover": { bgcolor: "#F8FAFC", color: "#1D4ED8" },
                   }}
                 >
                   <ListItemIcon
@@ -172,7 +159,6 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
                       minWidth: 0,
                       width: 18,
                       flex: "0 0 18px",
-                      flexShrink: 0,
                       color: "inherit",
                       display: "flex",
                       justifyContent: "center",
@@ -182,21 +168,10 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
                   >
                     <Icon size={18} strokeWidth={1.9} />
                   </ListItemIcon>
-
                   <ListItemText
                     primary={title}
-                    sx={{
-                      minWidth: 0,
-                      width: "auto",
-                      flex: "0 1 auto",
-                      m: 0,
-                      textAlign: "right",
-                      direction: "rtl",
-                    }}
-                    primaryTypographyProps={{
-                      fontSize: 13,
-                      fontWeight: active ? 700 : 500,
-                    }}
+                    sx={{ minWidth: 0, flex: "0 1 auto", m: 0, textAlign: "right", direction: "rtl" }}
+                    primaryTypographyProps={{ fontSize: 12.5, fontWeight: active ? 700 : 500 }}
                   />
                 </ListItemButton>
               );
@@ -211,49 +186,31 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
 function SidebarContent({
   mobile = false,
   onClose,
+  instagramAccounts,
 }: {
   mobile?: boolean;
   onClose?: () => void;
+  instagramAccounts: { id: string; igUsername: string; isConnected: boolean }[];
 }) {
+  const activeAccount = instagramAccounts.find((account) => account.isConnected);
+
   return (
-    <Box
-      dir="rtl"
-      sx={{
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        bgcolor: "#FFFFFF",
-      }}
-    >
+    <Box dir="rtl" sx={{ height: "100%", display: "flex", flexDirection: "column", bgcolor: "#FFFFFF" }}>
       <Box
         sx={{
-          minHeight: 72,
+          minHeight: 68,
           display: "flex",
           alignItems: "center",
-          gap: 1.5,
-          px: 2,
+          gap: 1.25,
+          px: 1.75,
           borderBottom: "1px solid #E2E8F0",
         }}
       >
-        <Link
-          href="/dashboard"
-          onClick={onClose}
-          style={{
-            textDecoration: "none",
-            minWidth: 0,
-            flex: 1,
-          }}
-        >
+        <Link href="/dashboard" onClick={onClose} style={{ textDecoration: "none", minWidth: 0, flex: 1 }}>
           <Brand compact={mobile} />
         </Link>
-
         {mobile && (
-          <IconButton
-            size="small"
-            onClick={onClose}
-            aria-label="بستن منو"
-            sx={{ color: "#64748B" }}
-          >
+          <IconButton size="small" onClick={onClose} aria-label="بستن منو" sx={{ color: "#64748B" }}>
             <X size={18} />
           </IconButton>
         )}
@@ -265,7 +222,63 @@ function SidebarContent({
 
       <Divider sx={{ borderColor: "#E2E8F0" }} />
 
-      <Box sx={{ p: 1.5 }}>
+      <Box sx={{ px: 1.25, py: 1 }}>
+        <Typography sx={{ px: 0.65, mb: 0.65, color: "#94A3B8", fontSize: 10, fontWeight: 700 }}>
+          اکانت اینستاگرام
+        </Typography>
+
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 0.9,
+            minWidth: 0,
+            px: 0.9,
+            py: 0.85,
+            borderRadius: 1.75,
+            bgcolor: "#F8FAFC",
+            border: "1px solid #E2E8F0",
+          }}
+        >
+          <UserRound size={17} strokeWidth={1.9} color="#64748B" />
+          <Box sx={{ minWidth: 0, flex: 1 }}>
+            <Typography dir="ltr" noWrap fontSize={11.5} fontWeight={600} color="#0F172A">
+              {activeAccount ? `@${activeAccount.igUsername}` : "پیجی متصل نیست"}
+            </Typography>
+            <Typography fontSize={9.5} sx={{ mt: 0.15, color: "#64748B" }}>
+              {activeAccount ? "پیج فعال" : "برای شروع پیج متصل کنید"}
+            </Typography>
+          </Box>
+        </Box>
+
+        <Box
+          component={Link}
+          href="/api/instagram/connect"
+          onClick={onClose}
+          sx={{
+            mt: 0.65,
+            minHeight: 34,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 0.7,
+            borderRadius: 1.75,
+            color: "#2563EB",
+            bgcolor: "#EFF6FF",
+            textDecoration: "none",
+            fontSize: 11.5,
+            fontWeight: 600,
+            "&:hover": { bgcolor: "#DBEAFE" },
+          }}
+        >
+          <Plus size={15} strokeWidth={2} />
+          اتصال پیج جدید
+        </Box>
+      </Box>
+
+      <Divider sx={{ borderColor: "#E2E8F0" }} />
+
+      <Box sx={{ p: 1.25 }}>
         <Box
           component="button"
           type="button"
@@ -273,26 +286,22 @@ function SidebarContent({
           sx={{
             width: "100%",
             display: "flex",
-            flexDirection: "row",
             alignItems: "center",
-            gap: 1.5,
+            gap: 1.25,
             border: 0,
-            borderRadius: 2,
+            borderRadius: 1.75,
             bgcolor: "transparent",
-            color: "#64748B",
-            px: 1.25,
-            py: 1.25,
+            color: "#DC2626",
+            px: 1.1,
+            py: 1.1,
             cursor: "pointer",
             fontFamily: "inherit",
             textAlign: "right",
-            "&:hover": {
-              bgcolor: "#FEF2F2",
-              color: "#DC2626",
-            },
+            "&:hover": { bgcolor: "#FEF2F2", color: "#B91C1C" },
           }}
         >
           <LogOut size={18} strokeWidth={1.9} style={{ flexShrink: 0 }} />
-          <Typography component="span" fontSize={13} fontWeight={500}>
+          <Typography component="span" fontSize={12.5} fontWeight={600}>
             خروج از حساب
           </Typography>
         </Box>
@@ -304,6 +313,7 @@ function SidebarContent({
 export default function DashboardSidebar({
   mobileOpen,
   onMobileClose,
+  instagramAccounts,
 }: DashboardSidebarProps) {
   return (
     <>
@@ -312,17 +322,17 @@ export default function DashboardSidebar({
         anchor="left"
         sx={{
           display: { xs: "none", lg: "block" },
-          width: 248,
+          width: 220,
           flexShrink: 0,
           "& .MuiDrawer-paper": {
-            width: 248,
+            width: 220,
             boxSizing: "border-box",
             borderRight: "1px solid #E2E8F0",
             direction: "rtl",
           },
         }}
       >
-        <SidebarContent />
+        <SidebarContent instagramAccounts={instagramAccounts} />
       </Drawer>
 
       <Drawer
@@ -334,14 +344,14 @@ export default function DashboardSidebar({
         sx={{
           display: { xs: "block", lg: "none" },
           "& .MuiDrawer-paper": {
-            width: { xs: "min(84vw, 320px)", sm: 340 },
+            width: { xs: "min(84vw, 300px)", sm: 320 },
             boxSizing: "border-box",
             borderRight: "1px solid #E2E8F0",
             direction: "rtl",
           },
         }}
       >
-        <SidebarContent mobile onClose={onMobileClose} />
+        <SidebarContent mobile onClose={onMobileClose} instagramAccounts={instagramAccounts} />
       </Drawer>
     </>
   );
