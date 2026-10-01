@@ -534,7 +534,7 @@ export default function EntryPointManager({ accounts, kind }: Props) {
               <Button
                 type="button"
                 onClick={() => setBulkDeleteOpen(true)}
-                className="min-h-11 rounded-xl bg-red-600 px-4 text-sm font-semibold text-white hover:bg-red-700"
+                className="min-h-11 rounded-xl border border-red-600 bg-white px-4 text-sm font-semibold text-red-600 hover:bg-white hover:text-red-700"
               >
                 پاک کردن {selectedIds.length} مورد
               </Button>
@@ -849,7 +849,7 @@ export default function EntryPointManager({ accounts, kind }: Props) {
                   deleteTarget ? void deleteItem(deleteTarget) : void bulkDelete()
                 }
                 disabled={saving}
-                className="min-h-11 flex-1 rounded-xl bg-red-600 text-white hover:bg-red-700"
+                className="min-h-11 flex-1 rounded-xl border border-red-600 bg-white text-red-600 hover:bg-white hover:text-red-700"
               >
                 {saving && <Loader2 size={16} className="animate-spin" />}
                 پاک کردن
