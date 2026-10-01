@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowRight, Check, Loader2, MessageCircle, Plus, Send, UserRoundCheck, X } from "lucide-react";
+import { ArrowRight, Check , MessageCircle, Plus, Send, UserRoundCheck, X } from "lucide-react";
 import { Box, Button, Card, CardContent, Checkbox, CircularProgress, Divider, IconButton, Paper, Stack, TextField, Typography } from "@mui/material";
 
 type Account = { id:string; igUsername:string; igUserId:string; isConnected:boolean };
@@ -15,7 +15,7 @@ const fieldSx={"& .MuiOutlinedInput-root":{borderRadius:1.75,bgcolor:"#FFF",font
 const outlineButtonSx={minWidth:86,height:40,borderColor:"#E2E8F0",color:"#0F172A",fontSize:11.5,fontWeight:600,borderRadius:1.75,whiteSpace:"nowrap","&:hover":{borderColor:"#94A3B8",bgcolor:"#F8FAFC"}};
 
 function mediaLabel(item:MediaItem){return item.media_product_type==="REELS"?"ریلز":"پست"}
-function SectionTitle({icon,title,description}:{icon:React.ReactNode;title:string;description:string}){return <Stack direction="row" spacing={1.25} alignItems="flex-start"><Box sx={{width:36,height:36,borderRadius:1.75,display:"grid",placeItems:"center",bgcolor:"#EFF6FF",color:"#2563EB",flexShrink:0}}>{icon}</Box><Box><Typography sx={{fontSize:14,fontWeight:700,color:"#0F172A"}}>{title}</Typography><Typography sx={{mt:.5,fontSize:11.5,lineHeight:1.8,color:"#64748B"}}>{description}</Typography></Box></Stack>}
+function SectionTitle({icon,title,description}:{icon:ReactNode;title:string;description:string}){return <Stack direction="row" spacing={1.25} alignItems="flex-start"><Box sx={{width:36,height:36,borderRadius:1.75,display:"grid",placeItems:"center",bgcolor:"#EFF6FF",color:"#2563EB",flexShrink:0}}>{icon}</Box><Box><Typography sx={{fontSize:14,fontWeight:700,color:"#0F172A"}}>{title}</Typography><Typography sx={{mt:.5,fontSize:11.5,lineHeight:1.8,color:"#64748B"}}>{description}</Typography></Box></Stack>}
 
 export default function CommentAutomationCreateConfigure(){
   const router=useRouter(); const params=useSearchParams(); const mediaId=params.get("mediaId");
