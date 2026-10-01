@@ -77,11 +77,13 @@ function shouldRefreshToken(tokenExpiresAt: Date | null): boolean {
 
 async function fetchInstagram<T = InstagramTokenResponse>(
   params: Record<string, string>,
+  rateLimit?: { instagramAccountId: string; operation: "PROFILE_READ" },
 ): Promise<T> {
   return instagramApiRequest<T>("", {
     method: "GET",
     params,
     timeoutMs: REQUEST_TIMEOUT_MS,
+    rateLimit: { instagramAccountId, operation: "PROFILE_READ" },
   });
 }
 
