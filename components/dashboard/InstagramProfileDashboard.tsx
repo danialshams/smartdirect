@@ -57,12 +57,12 @@ function Reveal({
 
 export default function InstagramProfileDashboard({
   accountId,
-  greetingName,
   onProfileLoaded,
+  onProfileLoadingChange,
 }: {
   accountId: string;
-  greetingName: string;
   onProfileLoaded?: (name: string | null) => void;
+  onProfileLoadingChange?: (loading: boolean) => void;
 }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(Boolean(accountId));
@@ -77,6 +77,7 @@ export default function InstagramProfileDashboard({
 
     try {
       setLoading(true);
+      onProfileLoadingChange?.(true);
       setError("");
       setProfile(null);
       setVisible(false);
@@ -103,8 +104,9 @@ export default function InstagramProfileDashboard({
       );
     } finally {
       setLoading(false);
+      onProfileLoadingChange?.(false);
     }
-  }, [accountId, onProfileLoaded]);
+  }, [accountId, onProfileLoaded, onProfileLoadingChange]);
 
   useEffect(() => {
     void loadProfile();
@@ -245,24 +247,6 @@ export default function InstagramProfileDashboard({
         pt: { xs: 2.5, sm: 3.5, md: 4, lg: 5 },
       }}
     >
-      <Reveal
-        visible={visible}
-        delay={0}
-        sx={{ width: "100%", alignSelf: "flex-end" }}
-      >
-        <Typography
-          component="h1"
-          sx={{
-            fontSize: { xs: 20, sm: 24, md: 26 },
-            fontWeight: 500,
-            letterSpacing: "-0.02em",
-            color: "#0F172A",
-          }}
-        >
-          سلام، {greetingName}
-        </Typography>
-      </Reveal>
-
       <Box sx={{ display: "flex", width: "100%", flexDirection: "column", alignItems: "center" }}>
         <Reveal visible={visible} delay={180}>
           <Box
