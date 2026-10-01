@@ -132,10 +132,10 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
                     "&:hover": { bgcolor: "#F8FAFC", color: "#1D4ED8" },
                   }}
                 >
-                  <ListItemIcon sx={{ minWidth: 36, gridColumn: 2, gridRow: 1, justifyContent: "center" }}>
+                  <ListItemIcon sx={{ minWidth: 36, gridColumn: 1, gridRow: 1, justifyContent: "center" }}>
                     <Icon size={18} strokeWidth={1.9} />
                   </ListItemIcon>
-                  <ListItemText sx={{ gridColumn: 1, gridRow: 1, textAlign: "right", minWidth: 0 }} primary={title} primaryTypographyProps={{ fontSize: 13, fontWeight: active ? 700 : 500 }} />
+                  <ListItemText sx={{ gridColumn: 2, gridRow: 1, textAlign: "right", minWidth: 0 }} primary={title} primaryTypographyProps={{ fontSize: 13, fontWeight: active ? 700 : 500 }} />
                 </ListItemButton>
               );
             })}
