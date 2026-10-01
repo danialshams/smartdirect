@@ -38,6 +38,7 @@ export async function enqueueInstagramPublishing(
       delayMs: Math.max(0, options.delayMs ?? 0),
       maxAttempts: Math.max(1, options.maxAttempts ?? DEFAULT_MAX_ATTEMPTS),
       priority: "normal",
+      instagramAccountId: publishingJob.instagramAccountId,
     },
   );
 
