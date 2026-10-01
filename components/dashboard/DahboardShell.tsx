@@ -1,37 +1,94 @@
-"use client"
+"use client";
 
-import type { ReactNode } from "react"
-import { SidebarProvider } from "@/components/ui/sidebar"
-import DashboardSidebar from "./DashboardSidebar"
-import DashboardMobileHeader from "./DashboardMobileHeader"
-import DashboardOverview from "./DashboardOverview"
+import type { ReactNode } from "react";
+import { useState } from "react";
+import { Box } from "@mui/material";
 
-type InstagramAccount={id:string;igUsername:string;igUserId:string;isConnected:boolean;createdAt:Date}
-type DashboardShellProps={user:{name:string;email:string;role:string;createdAt:Date};instagramAccounts:InstagramAccount[];instagramStatus:string|null;children?:ReactNode}
+import DashboardTheme from "./DashboardTheme";
+import DashboardSidebar from "./DashboardSidebar";
+import DashboardMobileHeader from "./DashboardMobileHeader";
+import DashboardOverview from "./DashboardOverview";
+
+type InstagramAccount = {
+  id: string;
+  igUsername: string;
+  igUserId: string;
+  isConnected: boolean;
+  createdAt: Date;
+};
+
+type DashboardShellProps = {
+  user: {
+    name: string;
+    email: string;
+    role: string;
+    createdAt: Date;
+  };
+  instagramAccounts: InstagramAccount[];
+  instagramStatus: string | null;
+  children?: ReactNode;
+};
 
 export default function DashboardShell({
   user,
   instagramAccounts,
   instagramStatus,
   children,
-}: DashboardShellProps){
+}: DashboardShellProps) {
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
   return (
-    <SidebarProvider defaultOpen>
-      <DashboardSidebar onClose={()=>undefined}/>
-      <div className="min-w-0 flex-1 lg:mr-64">
-        <DashboardMobileHeader instagramAccounts={instagramAccounts}/>
-        <main className="min-h-screen bg-background px-3 py-4 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
-          <div className="mx-auto w-full max-w-[1400px]">
-            {children ?? (
-              <DashboardOverview
-                user={user}
-                instagramAccounts={instagramAccounts}
-                instagramStatus={instagramStatus}
-              />
-            )}
-          </div>
-        </main>
-      </div>
-    </SidebarProvider>
-  )
+    <DashboardTheme>
+      <Box
+        dir="rtl"
+        sx={{
+          minHeight: "100vh",
+          bgcolor: "background.default",
+          color: "text.primary",
+        }}
+      >
+        <DashboardSidebar
+          mobileOpen={mobileSidebarOpen}
+          onMobileClose={() => setMobileSidebarOpen(false)}
+        />
+
+        <Box
+          sx={{
+            minWidth: 0,
+            mr: { xs: 0, lg: "248px" },
+          }}
+        >
+          <DashboardMobileHeader
+            instagramAccounts={instagramAccounts}
+            onMenuOpen={() => setMobileSidebarOpen(true)}
+          />
+
+          <Box
+            component="main"
+            sx={{
+              minHeight: "calc(100vh - 64px)",
+              px: { xs: 1.5, sm: 2.5, md: 3.5, lg: 4 },
+              py: { xs: 2, sm: 3, lg: 4 },
+            }}
+          >
+            <Box
+              sx={{
+                width: "100%",
+                maxWidth: 1400,
+                mx: "auto",
+              }}
+            >
+              {children ?? (
+                <DashboardOverview
+                  user={user}
+                  instagramAccounts={instagramAccounts}
+                  instagramStatus={instagramStatus}
+                />
+              )}
+            </Box>
+          </Box>
+        </Box>
+      </Box>
+    </DashboardTheme>
+  );
 }
