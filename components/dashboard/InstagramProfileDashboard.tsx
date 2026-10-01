@@ -125,7 +125,7 @@ export default function InstagramProfileDashboard({
           pt: { xs: 4, sm: 5, md: 6 },
         }}
       >
-        <Box sx={{ width: "100%", display: "flex", justifyContent: "flex-end", direction: "rtl", textAlign: "right" }}>
+        <Box sx={{ width: "100%", display: "flex", justifyContent: "flex-start", direction: "rtl", textAlign: "right" }}>
           <Box
             sx={{
               width: 145,
