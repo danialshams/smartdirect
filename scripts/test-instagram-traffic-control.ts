@@ -97,7 +97,7 @@ async function main() {
     for (let i = 0; i < 1; i += 1) {
       try { await call(accounts[2]); } catch { rateLimited += 1; }
     }
-    await sleep(50);
+    await sleep(200);
     const reducedLimit = Number(await redis.get(prefix + "limit:" + accounts[2]) ?? 999);
     assert(rateLimited === 1, "429 test did not observe the injected rate-limit failure");
     assert(reducedLimit < 4, "429 did not reduce the affected account concurrency");
