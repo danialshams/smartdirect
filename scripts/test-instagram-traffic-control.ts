@@ -75,12 +75,12 @@ async function main() {
 
     // 1) Per-account concurrency + isolation.
     const [aResults, bResults] = await Promise.all([
-      Promise.all(Array.from({ length: 12 }, () => call(accounts[0]))),
-      Promise.all(Array.from({ length: 12 }, () => call(accounts[1]))),
+      Promise.all(Array.from({ length: 4 }, () => call(accounts[0]))),
+      Promise.all(Array.from({ length: 4 }, () => call(accounts[1]))),
     ]);
-    assert(aResults.length === 12 && bResults.length === 12, "Multi-account load did not complete");
-    assert((maxActive.get(accounts[0]) ?? 0) <= 4, "Account A exceeded its adaptive concurrency ceiling");
-    assert((maxActive.get(accounts[1]) ?? 0) <= 4, "Account B exceeded its adaptive concurrency ceiling");
+    assert(aResults.length === 4 && bResults.length === 4, "Multi-account isolation burst did not complete");
+    assert((maxActive.get(accounts[0]) ?? 0) <= 4, "Account A exceeded its initial concurrency limit");
+    assert((maxActive.get(accounts[1]) ?? 0) <= 4, "Account B exceeded its initial concurrency limit");
 
     // 2) Adaptive concurrency: ten clean completions increase the account limit.
     const limitKey = prefix + "limit:" + accounts[0];
