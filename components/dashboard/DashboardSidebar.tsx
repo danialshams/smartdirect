@@ -75,7 +75,7 @@ const menuGroups = [
 
 function Brand({ compact = false, collapsed = false }: { compact?: boolean; collapsed?: boolean }) {
   return (
-    <Box dir="rtl" sx={{ display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "flex-start", gap: 1.25, minWidth: 0 }}>
+    <Box dir="rtl" sx={{ display: "flex", alignItems: "center", justifyContent: isMini ? "center" : "flex-start", gap: 1.25, minWidth: 0 }}>
       <Box
         sx={{
           width: compact ? 38 : 42,
@@ -111,7 +111,7 @@ function Navigation({ collapsed }: { collapsed: boolean }) {
   const pathname = usePathname();
 
   return (
-    <Box dir="rtl" sx={{ px: collapsed ? 0.75 : 1.5, py: 1.5 }}>
+    <Box dir="rtl" sx={{ px: isMini ? 0.75 : 1.5, py: 1.5 }}>
       {menuGroups.map((group) => (
         <Box key={group.label} sx={{ mb: collapsed ? 1.5 : 2.5 }}>
           {!collapsed ? (
@@ -153,7 +153,7 @@ function Navigation({ collapsed }: { collapsed: boolean }) {
                     display: "flex",
                     flexDirection: "row",
                     alignItems: "center",
-                    justifyContent: collapsed ? "center" : "flex-start",
+                    justifyContent: isMini ? "center" : "flex-start",
                     columnGap: 1,
                     borderRadius: 2,
                     px: collapsed ? 1 : 1.25,
@@ -268,6 +268,8 @@ function AccountSection({ accounts, collapsed }: { accounts: InstagramAccount[];
 
 export default function DashboardSidebar({ instagramAccounts }: DashboardSidebarProps) {
   const [collapsed, setCollapsed] = useState(true);
+  const isDesktop = useMediaQuery("(min-width:1200px)", { noSsr: true });
+  const isMini = !isDesktop && collapsed;
 
   return (
     <Drawer
@@ -309,20 +311,20 @@ export default function DashboardSidebar({ instagramAccounts }: DashboardSidebar
           overflow: "hidden",
         }}
       >
-        <Box sx={{ minHeight: 72, display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "space-between", px: collapsed ? 1 : 2, borderBottom: "1px solid #E2E8F0" }}>
+        <Box sx={{ minHeight: 72, display: "flex", alignItems: "center", justifyContent: isMini ? "center" : "space-between", px: isMini ? 1 : 2, borderBottom: "1px solid #E2E8F0" }}>
           <Link href="/dashboard" style={{ textDecoration: "none", minWidth: 0 }}>
-            <Brand compact={collapsed} collapsed={collapsed} />
+            <Brand compact={isMini} collapsed={isMini} />
           </Link>
           <IconButton
             size="small"
             onClick={() => setCollapsed((value) => !value)}
-            aria-label={collapsed ? "باز کردن نوار کناری" : "جمع کردن نوار کناری"}
-            title={collapsed ? "باز کردن منو" : "جمع کردن منو"}
+            aria-label={isMini ? "باز کردن نوار کناری" : "جمع کردن نوار کناری"}
+            title={isMini ? "باز کردن منو" : "جمع کردن منو"}
             sx={{
               display: { xs: "inline-flex", lg: "none" },
               color: "#64748B",
-              position: collapsed ? "absolute" : "static",
-              right: collapsed ? -13 : "auto",
+              position: isMini ? "absolute" : "static",
+              right: isMini ? -13 : "auto",
               top: 25,
               width: 26,
               height: 26,
@@ -331,16 +333,16 @@ export default function DashboardSidebar({ instagramAccounts }: DashboardSidebar
               "&:hover": { bgcolor: "#F8FAFC" },
             }}
           >
-            {collapsed ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
+            {isMini ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
           </IconButton>
         </Box>
 
         <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
-          <Navigation collapsed={collapsed} />
+          <Navigation collapsed={isMini} />
         </Box>
 
         <Divider sx={{ borderColor: "#E2E8F0" }} />
-        <AccountSection accounts={instagramAccounts} collapsed={collapsed} />
+        <AccountSection accounts={instagramAccounts} collapsed={isMini} />
 
         <Box sx={{ px: collapsed ? 0.75 : 1.5, pb: 1.25 }}>
           <Box
@@ -360,7 +362,7 @@ export default function DashboardSidebar({ instagramAccounts }: DashboardSidebar
               borderRadius: 2,
               bgcolor: "transparent",
               color: "#64748B",
-              px: collapsed ? 0 : 1.25,
+              px: isMini ? 0 : 1.25,
               cursor: "pointer",
               fontFamily: "inherit",
               textAlign: "right",
@@ -368,7 +370,7 @@ export default function DashboardSidebar({ instagramAccounts }: DashboardSidebar
             }}
           >
             <LogOut size={18} strokeWidth={1.9} />
-            {!collapsed ? <Typography component="span" fontSize={12.5} fontWeight={500}>خروج از حساب</Typography> : null}
+            {!isMini ? <Typography component="span" fontSize={12.5} fontWeight={500}>خروج از حساب</Typography> : null}
           </Box>
         </Box>
       </Box>
