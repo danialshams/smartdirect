@@ -70,7 +70,7 @@ function PersianDatePicker({ value, onChange }: { value: JalaliDate; onChange: (
         <Calendar
           mode="single"
           selected={selected}
-          onSelect={(date) => {
+          onSelect={(date: Date | undefined) => {
             if (!date) return;
             onChange(gregorianToJalali(date.getFullYear(), date.getMonth() + 1, date.getDate()));
           }}
