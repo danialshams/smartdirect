@@ -127,7 +127,8 @@ function sleep(ms: number, signal?: AbortSignal) {
 export async function acquireInstagramTrafficSlot(context: InstagramRateLimitContext, options: { signal?: AbortSignal; maxWaitMs?: number } = {}) {
   const redis = getRedisClient();
   const k = keys(context.instagramAccountId);
-  const deadline = Date.now() + (options.maxWaitMs ?? maxWaitMs());
+  const configuredWait = options.maxWaitMs && options.maxWaitMs > 0 ? options.maxWaitMs : maxWaitMs();
+  const deadline = Date.now() + configuredWait;
   const token = crypto.randomUUID();
 
   while (true) {
