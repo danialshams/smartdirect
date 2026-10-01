@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { useState } from "react";
 import {
-  Add,
   ChevronDown,
-  Close,
   Menu as MenuIcon,
-  PersonOutline,
-} from "@mui/icons-material";
+  Plus,
+  UserRound,
+  X,
+} from "lucide-react";
 import {
   AppBar,
   Box,
