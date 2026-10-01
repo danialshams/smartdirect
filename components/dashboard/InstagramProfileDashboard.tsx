@@ -118,6 +118,7 @@ export default function InstagramProfileDashboard({
         dir="rtl"
         sx={{
           minHeight: "calc(100dvh - 120px)",
+          position: "relative",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -125,7 +126,7 @@ export default function InstagramProfileDashboard({
           pt: { xs: 4, sm: 5, md: 6 },
         }}
       >
-        <Box sx={{ width: "100%", display: "flex", justifyContent: "flex-end", direction: "ltr", textAlign: "right" }}>
+        <Box sx={{ position: "absolute", insetInlineEnd: 0, top: { xs: 32, sm: 40, md: 48 }, width: "100%", display: "flex", justifyContent: "flex-start", direction: "rtl", textAlign: "right" }}>
           <Box
             sx={{
               width: 145,
