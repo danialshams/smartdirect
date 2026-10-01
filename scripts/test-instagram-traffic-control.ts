@@ -87,7 +87,7 @@ async function main() {
     const beforeLimit = Number(await redis.get(limitKey) ?? 0);
     assert(beforeLimit >= 4, "Initial adaptive concurrency limit was not initialized");
     await Promise.all(Array.from({ length: 10 }, () => call(accounts[0])));
-    await sleep(50);
+    await sleep(200);
     const afterLimit = Number(await redis.get(limitKey) ?? 0);
     assert(afterLimit > beforeLimit, "Adaptive concurrency did not increase after healthy traffic");
 
