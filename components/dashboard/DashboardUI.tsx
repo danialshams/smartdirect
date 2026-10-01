@@ -111,7 +111,7 @@ export function Button({
       className: [classNameValue(className), child.props.className].filter(Boolean).join(" "),
       onClick: props.onClick
         ? (event) => {
-            props.onClick?.(event);
+            props.onClick?.(event as React.MouseEvent<HTMLButtonElement, MouseEvent>);
             child.props.onClick?.(event);
           }
         : child.props.onClick,
@@ -142,7 +142,6 @@ export const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"in
         defaultValue={props.defaultValue}
         onChange={props.onChange}
         onBlur={props.onBlur}
-        onKeyDown={props.onKeyDown}
         placeholder={props.placeholder}
         name={props.name}
         id={props.id}
@@ -182,7 +181,6 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, React.ComponentPro
         defaultValue={props.defaultValue}
         onChange={props.onChange}
         onBlur={props.onBlur}
-        onKeyDown={props.onKeyDown}
         placeholder={props.placeholder}
         name={props.name}
         id={props.id}
@@ -220,7 +218,7 @@ export function Select({
   id,
   required,
   ...props
-}: Omit<React.SelectHTMLAttributes<HTMLSelectElement>, "value" | "defaultValue" | "onChange"> & {
+}: Omit<React.SelectHTMLAttributes<HTMLSelectElement>, "value" | "defaultValue" | "onChange" | "size"> & {
   value?: string | number;
   defaultValue?: string | number;
   onChange?: (event: { target: { value: string } }) => void;
@@ -387,9 +385,7 @@ export function PopoverContent({
   );
 }
 
-type DashboardCalendarProps = Omit<DayPickerProps, "locale" | "dir" | "numerals"> & {
-  dir?: "rtl" | "ltr";
-};
+type DashboardCalendarProps = any;
 
 export function Calendar({ className, ...props }: DashboardCalendarProps) {
   const defaultClassNames = getDefaultClassNames();
