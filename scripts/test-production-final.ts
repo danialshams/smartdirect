@@ -655,4 +655,5 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect().catch(() => undefined);
+    await getRedisClient().disconnect().catch(() => undefined);
   });
