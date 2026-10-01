@@ -122,8 +122,8 @@ local minRemaining = 9223372036854775807
 for i = 1, count do
   local tokenKey = KEYS[(i - 1) * 2 + 1]
   local timeKey = KEYS[(i - 1) * 2 + 2]
-  local limit = tonumber(ARGV[(i - 1) * 3 + 2])
-  local windowMs = tonumber(ARGV[(i - 1) * 3 + 3])
+  local limit = tonumber(ARGV[(i - 1) * 2 + 2])
+  local windowMs = tonumber(ARGV[(i - 1) * 2 + 3])
   local tokens = tonumber(redis.call("GET", tokenKey))
   local last = tonumber(redis.call("GET", timeKey))
 
