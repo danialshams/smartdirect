@@ -32,74 +32,64 @@ function classNameValue(value?: string) {
   return value || "";
 }
 
-function PersianCalendarDropdown({ options, value, onChange, "aria-label": ariaLabel }: DropdownProps) {
-  const selectedValue = value == null ? "" : String(value);
-
+function PersianCalendarDropdown({
+  options,
+  value,
+  onChange,
+  "aria-label": ariaLabel,
+}: DropdownProps) {
   return (
-    <MuiSelect
-      value={selectedValue}
-      onChange={(event) => {
-        if (!onChange) return;
-        onChange({
-          target: { value: String(event.target.value) },
-        } as React.ChangeEvent<HTMLSelectElement>);
-      }}
-      displayEmpty
-      aria-label={ariaLabel}
-      variant="outlined"
-      MenuProps={{
-        dir: "rtl",
-        PaperProps: {
-          sx: {
-            fontFamily: '"Vazirmatn", Arial, sans-serif',
-          },
-        },
-      }}
+    <Box
       sx={{
-        width: "100%",
+        position: "relative",
         minWidth: 0,
-        height: 32,
+        flex: 1,
+        height: 34,
         direction: "rtl",
-        fontFamily: '"Vazirmatn", Arial, sans-serif',
-        fontSize: 11,
-        color: COLORS.text,
-        "& .MuiSelect-select": {
-          py: 0.5,
-          px: 1,
-          textAlign: "right",
-          direction: "rtl",
-          color: COLORS.text,
-          WebkitTextFillColor: COLORS.text,
-        },
-        "& .MuiOutlinedInput-notchedOutline": {
-          border: 0,
-        },
-        "&:hover .MuiOutlinedInput-notchedOutline": {
-          border: 0,
-        },
-        "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-          border: 0,
-        },
-        "& .MuiSelect-icon": {
-          display: "none",
-        },
       }}
     >
-      {options?.map((option) => (
-        <MenuItem
-          key={option.value}
-          value={String(option.value)}
-          disabled={option.disabled}
-          sx={{
-            direction: "rtl",
-            fontFamily: '"Vazirmatn", Arial, sans-serif',
-            fontSize: 11,
-          }}
-        >
-          {option.label}
-        </MenuItem>
-      ))}
-    </MuiSelect>
+      <select
+        value={value == null ? "" : String(value)}
+        aria-label={ariaLabel}
+        onChange={(event) => onChange?.(event as React.ChangeEvent<HTMLSelectElement>)}
+        style={{
+          width: "100%",
+          height: "100%",
+          appearance: "none",
+          WebkitAppearance: "none",
+          border: 0,
+          outline: 0,
+          background: "transparent",
+          color: COLORS.text,
+          fontFamily: '"Vazirmatn", Arial, sans-serif',
+          fontSize: 12,
+          fontWeight: 600,
+          textAlign: "right",
+          direction: "rtl",
+          padding: "0 10px 0 30px",
+          cursor: "pointer",
+        }}
+      >
+        {options?.map((option) => (
+          <option key={option.value} value={String(option.value)} disabled={option.disabled}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      <ChevronDown
+        size={15}
+        strokeWidth={1.8}
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          left: 9,
+          top: "50%",
+          transform: "translateY(-50%)",
+          pointerEvents: "none",
+          color: COLORS.secondary,
+        }}
+      />
+    </Box>
   );
 }
 
@@ -479,18 +469,31 @@ export function Calendar({ className, ...props }: DashboardCalendarProps) {
           alignItems: "center",
           justifyContent: "center",
         },
-        "& .rdp-dropdowns": { display: "flex", justifyContent: "center", alignItems: "center", gap: 0.75, flexWrap: "nowrap", width: "fit-content", maxWidth: "100%", margin: "0 auto" },
+        "& .rdp-dropdowns": {
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "stretch",
+          gap: 0,
+          flexWrap: "nowrap",
+          width: "100%",
+          maxWidth: 280,
+          margin: "0 auto",
+          padding: 3,
+          border: "1px solid " + COLORS.border,
+          borderRadius: 2,
+          background: COLORS.surface,
+          boxSizing: "border-box",
+        },
         "& .rdp-dropdown_root": {
-          width: "auto",
+          flex: 1,
           minWidth: 0,
           maxWidth: "none",
-          border: "1px solid " + COLORS.border,
-          borderRadius: 1.5,
+          border: 0,
           overflow: "hidden",
           display: "flex",
           alignItems: "center",
           position: "relative",
-          background: COLORS.surface,
+          background: "transparent",
         },
         "& .rdp-dropdown_root:nth-child(1)": { width: 112, flex: "0 0 112px" },
         "& .rdp-dropdown_root:nth-child(1) select": { width: "112px", maxWidth: "112px" },
@@ -538,28 +541,6 @@ export function Calendar({ className, ...props }: DashboardCalendarProps) {
           color: "#94A3B8",
           opacity: 0.45,
           cursor: "not-allowed",
-        },
-        "& select": {
-          width: "auto",
-          maxWidth: "100%",
-          fontFamily: '"Vazirmatn", Arial, sans-serif',
-          fontSize: 11,
-          minHeight: 32,
-          padding: "4px 8px",
-          paddingLeft: 28,
-          paddingRight: 8,
-          background: COLORS.surface,
-          color: COLORS.text + " !important",
-          WebkitTextFillColor: COLORS.text,
-          border: 0,
-          outline: 0,
-          appearance: "none",
-          cursor: "pointer",
-        },
-        "& .rdp-dropdown_root select option": {
-          color: COLORS.text,
-          backgroundColor: COLORS.surface,
-          fontFamily: '"Vazirmatn", Arial, sans-serif',
         },
         "& .rdp-button_previous, & .rdp-button_next": {
           display: "none",
