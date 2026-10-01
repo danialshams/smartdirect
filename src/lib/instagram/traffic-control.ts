@@ -29,9 +29,11 @@ function keys(accountId: string) {
     limit: PREFIX + ":limit:" + a,
     inflight: PREFIX + ":inflight:" + a,
     lease: PREFIX + ":lease:" + a,
+    probe: PREFIX + ":probe:" + a,
     circuit: PREFIX + ":circuit:" + a,
     failures: PREFIX + ":failures:" + a,
     successes: PREFIX + ":successes:" + a,
+    failureAt: PREFIX + ":failure-at:" + a,
   };
 }
 
@@ -134,7 +136,7 @@ export async function acquireInstagramTrafficSlot(context: InstagramRateLimitCon
 
     const result = await redis.eval(
       ACQUIRE_SCRIPT,
-      [k.limit, k.inflight, k.lease, k.circuit, k.lease],
+      [k.limit, k.inflight, k.lease, k.circuit, k.probe],
       [String(now), String(initialLimit()), String(minLimit()), String(maxLimit()), String(leaseSeconds()), token],
     ) as [number, number, number];
 
@@ -163,7 +165,7 @@ export async function recordInstagramTrafficOutcome(context: InstagramRateLimitC
   const k = keys(context.instagramAccountId);
   const result = await redis.eval(
     OUTCOME_SCRIPT,
-    [k.limit, k.successes, k.failures, k.failures, k.circuit],
+    [k.limit, k.successes, k.failures, k.failureAt, k.circuit],
     [String(Date.now()), outcome, String(minLimit()), String(maxLimit()), String(FAILURE_THRESHOLD), String(FAILURE_WINDOW_MS), String(CIRCUIT_OPEN_MS)],
   ) as [number, number, number, number];
 
