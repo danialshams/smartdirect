@@ -35,8 +35,6 @@ export default function DashboardShell({
   instagramStatus,
   children,
 }: DashboardShellProps) {
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-
   return (
     <DashboardTheme>
       <Box
@@ -47,21 +45,15 @@ export default function DashboardShell({
           color: "text.primary",
         }}
       >
-        <DashboardSidebar
-          mobileOpen={mobileSidebarOpen}
-          onMobileClose={() => setMobileSidebarOpen(false)}
-        />
+        <DashboardSidebar instagramAccounts={instagramAccounts} />
 
         <Box
           sx={{
             minWidth: 0,
-            marginInlineStart: { xs: 0, lg: "248px" },
+            marginInlineStart: { xs: "72px", lg: "248px" },
           }}
         >
-          <DashboardMobileHeader
-            instagramAccounts={instagramAccounts}
-            onMenuOpen={() => setMobileSidebarOpen(true)}
-          />
+          <DashboardMobileHeader />
 
           <Box
             component="main"
