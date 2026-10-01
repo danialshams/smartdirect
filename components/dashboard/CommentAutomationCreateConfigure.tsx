@@ -1,222 +1,100 @@
 "use client";
 
-import { Button } from "@/components/dashboard/DashboardUI";
-import { Input } from "@/components/dashboard/DashboardUI";
-import { Textarea } from "@/components/dashboard/DashboardUI";
-import { ArrowRight, Check, Image as ImageIcon, Loader2, MessageCircle, Send, UserRoundCheck, Plus, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { ArrowRight, Check, Loader2, MessageCircle, Plus, Send, UserRoundCheck, X } from "lucide-react";
+import { Box, Button, Card, CardContent, Checkbox, CircularProgress, Divider, IconButton, Paper, Stack, TextField, Typography } from "@mui/material";
 
-type Account = { id: string; igUsername: string; igUserId: string; isConnected: boolean };
-type MediaItem = { id: string; caption?: string; media_type?: string; media_product_type?: string; media_url?: string | null; thumbnail_url?: string | null };
-type Automation = { id: string; mediaId: string | null; triggerType: string };
+type Account = { id:string; igUsername:string; igUserId:string; isConnected:boolean };
+type MediaItem = { id:string; caption?:string; media_product_type?:string; media_url?:string|null; thumbnail_url?:string|null };
+type Automation = { id:string; mediaId:string|null; triggerType:string };
 
-function mediaLabel(item: MediaItem) {
-  return item.media_product_type === "REELS" ? "ریلز" : "پست";
-}
+const cardSx={border:"1px solid #E2E8F0",borderRadius:2.5,boxShadow:"0 1px 3px rgba(15,23,42,.035)",bgcolor:"#FFF"};
+const contentSx={p:{xs:2,sm:2.25},"&:last-child":{pb:{xs:2,sm:2.25}}};
+const fieldSx={"& .MuiOutlinedInput-root":{borderRadius:1.75,bgcolor:"#FFF",fontSize:12.5},"& .MuiInputBase-input":{fontFamily:'"Vazirmatn",Arial,sans-serif',lineHeight:1.8},"& .MuiInputLabel-root":{fontFamily:'"Vazirmatn",Arial,sans-serif',fontSize:12}};
+const outlineButtonSx={minWidth:86,height:40,borderColor:"#E2E8F0",color:"#0F172A",fontSize:11.5,fontWeight:600,borderRadius:1.75,whiteSpace:"nowrap","&:hover":{borderColor:"#94A3B8",bgcolor:"#F8FAFC"}};
 
-function getMediaImage(item: MediaItem) {
-  return item.thumbnail_url || item.media_url || null;
-}
+function mediaLabel(item:MediaItem){return item.media_product_type==="REELS"?"ریلز":"پست"}
+function SectionTitle({icon,title,description}:{icon:React.ReactNode;title:string;description:string}){return <Stack direction="row" spacing={1.25} alignItems="flex-start"><Box sx={{width:36,height:36,borderRadius:1.75,display:"grid",placeItems:"center",bgcolor:"#EFF6FF",color:"#2563EB",flexShrink:0}}>{icon}</Box><Box><Typography sx={{fontSize:14,fontWeight:700,color:"#0F172A"}}>{title}</Typography><Typography sx={{mt:.5,fontSize:11.5,lineHeight:1.8,color:"#64748B"}}>{description}</Typography></Box></Stack>}
 
-export default function CommentAutomationCreateConfigure() {
-  const router = useRouter();
-  const params = useSearchParams();
-  const mediaId = params.get("mediaId");
+export default function CommentAutomationCreateConfigure(){
+  const router=useRouter(); const params=useSearchParams(); const mediaId=params.get("mediaId");
+  const [account,setAccount]=useState<Account|null>(null); const [media,setMedia]=useState<MediaItem|null>(null);
+  const [keywords,setKeywords]=useState<string[]>([]); const [keywordInput,setKeywordInput]=useState("");
+  const [commentReply,setCommentReply]=useState(""); const [sendDm,setSendDm]=useState(false); const [dmReply,setDmReply]=useState("");
+  const [requireFollow,setRequireFollow]=useState(false); const [followGateText,setFollowGateText]=useState("برای دریافت این محتوا ابتدا پیج ما را فالو کنید.");
+  const [loading,setLoading]=useState(true); const [saving,setSaving]=useState(false); const [error,setError]=useState("");
 
-  const [account, setAccount] = useState<Account | null>(null);
-  const [media, setMedia] = useState<MediaItem | null>(null);
-  const [keywords, setKeywords] = useState<string[]>([]);
-  const [keywordInput, setKeywordInput] = useState("");
-  const [commentReply, setCommentReply] = useState("");
-  const [sendDm, setSendDm] = useState(false);
-  const [dmReply, setDmReply] = useState("");
-  const [requireFollow, setRequireFollow] = useState(false);
-  const [followGateText, setFollowGateText] = useState("برای دریافت این محتوا ابتدا پیج ما را فالو کنید.");
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      if (!mediaId) {
-        setError("محتوا انتخاب نشده است.");
-        setLoading(false);
-        return;
-      }
-      try {
-        const accountsResponse = await fetch("/api/instagram/accounts", { cache: "no-store", credentials: "include" });
-        const accountsResult = await accountsResponse.json();
-        if (!accountsResponse.ok || !accountsResult.success) throw new Error(accountsResult.error || "دریافت پیج اینستاگرام ناموفق بود.");
-        const active = (Array.isArray(accountsResult.accounts) ? accountsResult.accounts : []).find((item: Account) => item.isConnected) ?? null;
-        if (!active) throw new Error("پیج اینستاگرام متصل نیست.");
-
-        const [mediaResponse, automationsResponse] = await Promise.all([
-          fetch("/api/instagram/media?instagramAccountId=" + encodeURIComponent(active.id), { cache: "no-store", credentials: "include" }),
-          fetch("/api/automations?instagramAccountId=" + encodeURIComponent(active.id), { cache: "no-store", credentials: "include" }),
+  useEffect(()=>{
+    let cancelled=false;
+    async function load(){
+      if(!mediaId){setError("محتوا انتخاب نشده است.");setLoading(false);return;}
+      try{
+        setLoading(true);setError("");
+        const accountsResponse=await fetch("/api/instagram/accounts",{cache:"no-store",credentials:"include"});
+        const accountsResult=await accountsResponse.json();
+        if(!accountsResponse.ok||!accountsResult.success)throw new Error(accountsResult.error||"دریافت پیج اینستاگرام ناموفق بود.");
+        const active=(Array.isArray(accountsResult.accounts)?accountsResult.accounts:[]).find((item:Account)=>item.isConnected)??null;
+        if(!active)throw new Error("پیج اینستاگرام متصل نیست.");
+        const [mediaResponse,automationsResponse]=await Promise.all([
+          fetch("/api/instagram/media?instagramAccountId="+encodeURIComponent(active.id),{cache:"no-store",credentials:"include"}),
+          fetch("/api/automations?instagramAccountId="+encodeURIComponent(active.id),{cache:"no-store",credentials:"include"})
         ]);
-        const mediaResult = await mediaResponse.json();
-        const automationsResult = await automationsResponse.json();
-        if (!mediaResponse.ok || !mediaResult.success) throw new Error(mediaResult.error || "دریافت محتوا ناموفق بود.");
-        if (!automationsResponse.ok || !automationsResult.success) throw new Error(automationsResult.error || "دریافت اتوماسیون‌ها ناموفق بود.");
-
-        const selected = (Array.isArray(mediaResult.data) ? mediaResult.data : []).find((item: MediaItem) => item.id === mediaId) ?? null;
-        if (!selected) throw new Error("این محتوا دیگر در پیج پیدا نشد.");
-        const existing = (Array.isArray(automationsResult.data) ? automationsResult.data : []).find((item: Automation) => item.triggerType === "COMMENT_KEYWORD" && item.mediaId === mediaId);
-        if (existing) {
-          router.replace("/dashboard/comment-automation/" + existing.id);
-          return;
-        }
-        if (!cancelled) {
-          setAccount(active);
-          setMedia(selected);
-        }
-      } catch (e) {
-        if (!cancelled) setError(e instanceof Error ? e.message : "دریافت اطلاعات ناموفق بود.");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
+        const mediaResult=await mediaResponse.json();const automationsResult=await automationsResponse.json();
+        if(!mediaResponse.ok||!mediaResult.success)throw new Error(mediaResult.error||"دریافت محتوا ناموفق بود.");
+        if(!automationsResponse.ok||!automationsResult.success)throw new Error(automationsResult.error||"دریافت اتوماسیون‌ها ناموفق بود.");
+        const selected=(Array.isArray(mediaResult.data)?mediaResult.data:[]).find((item:MediaItem)=>item.id===mediaId);
+        if(!selected)throw new Error("این محتوا دیگر در پیج پیدا نشد.");
+        const existing=(Array.isArray(automationsResult.data)?automationsResult.data:[]).find((item:Automation)=>item.triggerType==="COMMENT_KEYWORD"&&item.mediaId===mediaId);
+        if(existing){router.replace("/dashboard/comment-automation/"+existing.id);return;}
+        if(!cancelled){setAccount(active);setMedia(selected);}
+      }catch(e){if(!cancelled)setError(e instanceof Error?e.message:"دریافت اطلاعات ناموفق بود.");}
+      finally{if(!cancelled)setLoading(false);}
     }
-    void load();
-    return () => { cancelled = true; };
-  }, [mediaId, router]);
+    void load();return()=>{cancelled=true};
+  },[mediaId,router]);
 
-  function addKeyword() {
-    const value = keywordInput.trim();
-    if (!value) return;
-    if (!keywords.some((item) => item.toLowerCase() === value.toLowerCase())) setKeywords((current) => [...current, value]);
-    setKeywordInput("");
-  }
+  function addKeyword(){const value=keywordInput.trim();if(!value)return;if(!keywords.some(x=>x.toLowerCase()===value.toLowerCase()))setKeywords(x=>[...x,value]);setKeywordInput("");}
 
-  async function save() {
-    if (!account || !media || saving) return;
+  async function save(){
+    if(!account||!media||saving)return;
     setError("");
-    if (!keywords.length) return setError("حداقل یک کلمه کلیدی وارد کنید.");
-    if (!commentReply.trim() && !sendDm && !requireFollow) return setError("حداقل یکی از پاسخ کامنت، پاسخ دایرکت یا اجبار به فالو را فعال کنید.");
-    if (sendDm && !dmReply.trim()) return setError("متن پاسخ دایرکت را وارد کنید.");
-    if (requireFollow && !followGateText.trim()) return setError("متن درخواست فالو را وارد کنید.");
-
-    try {
+    if(!keywords.length)return setError("حداقل یک کلمه کلیدی وارد کنید.");
+    if(!commentReply.trim()&&!sendDm&&!requireFollow)return setError("حداقل یکی از پاسخ کامنت، پاسخ دایرکت یا اجبار به فالو را فعال کنید.");
+    if(sendDm&&!dmReply.trim())return setError("متن پاسخ دایرکت را وارد کنید.");
+    if(requireFollow&&!followGateText.trim())return setError("متن درخواست فالو را وارد کنید.");
+    try{
       setSaving(true);
-      const response = await fetch("/api/automations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          instagramAccountId: account.id,
-          triggerType: "COMMENT_KEYWORD",
-          mediaId: media.id,
-          keyword: keywords.join(", "),
-          commentReplyText: commentReply.trim() || null,
-          sendDm: sendDm && Boolean(dmReply.trim()),
-          replyText: sendDm ? dmReply.trim() || null : null,
-          requireFollow,
-          followGateText: requireFollow ? followGateText.trim() : null,
-          isActive: true,
-        }),
-      });
-      const result = await response.json();
-      if (response.status === 409 && result.data?.id) {
-        router.replace("/dashboard/comment-automation/" + result.data.id);
-        return;
-      }
-      if (!response.ok || !result.success) throw new Error(result.error || result.message || "ساخت پاسخ خودکار ناموفق بود.");
+      const response=await fetch("/api/automations",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({instagramAccountId:account.id,triggerType:"COMMENT_KEYWORD",mediaId:media.id,keyword:keywords.join(", "),commentReplyText:commentReply.trim()||null,sendDm:sendDm&&Boolean(dmReply.trim()),replyText:sendDm?dmReply.trim()||null:null,requireFollow,followGateText:requireFollow?followGateText.trim():null,isActive:true})});
+      const result=await response.json();
+      if(response.status===409&&result.data?.id){router.replace("/dashboard/comment-automation/"+result.data.id);return;}
+      if(!response.ok||!result.success)throw new Error(result.error||result.message||"ساخت پاسخ خودکار ناموفق بود.");
       router.push("/dashboard/comment-automation");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "ساخت پاسخ خودکار ناموفق بود.");
-    } finally {
-      setSaving(false);
-    }
+    }catch(e){setError(e instanceof Error?e.message:"ساخت پاسخ خودکار ناموفق بود.");}
+    finally{setSaving(false);}
   }
 
-  if (loading) return (
-    <div dir="rtl" className="mx-auto w-full max-w-[1200px] animate-pulse">
-      <div className="mb-5 h-8 w-44 rounded-lg bg-muted" />
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-        <div className="h-[460px] rounded-3xl bg-muted" />
-        <div className="space-y-4"><div className="h-32 rounded-3xl bg-muted" /><div className="h-44 rounded-3xl bg-muted" /><div className="h-44 rounded-3xl bg-muted" /></div>
-      </div>
-    </div>
-  );
+  if(loading)return <Box dir="rtl" sx={{width:"100%",maxWidth:1200,mx:"auto"}}><Stack spacing={1} sx={{mb:2.5}}><Box sx={{width:160,height:30,borderRadius:1.5,bgcolor:"#E2E8F0"}}/><Box sx={{width:320,height:16,borderRadius:1.5,bgcolor:"#E2E8F0"}}/></Stack><Box sx={{display:"grid",gridTemplateColumns:{xs:"1fr",lg:"minmax(0,.9fr) minmax(0,1.1fr)"},gap:2.5}}><Paper sx={{height:520,borderRadius:3,bgcolor:"#E2E8F0",boxShadow:"none"}}/><Stack spacing={1.5}><Paper sx={{height:120,borderRadius:2.5,bgcolor:"#E2E8F0",boxShadow:"none"}}/><Paper sx={{height:170,borderRadius:2.5,bgcolor:"#E2E8F0",boxShadow:"none"}}/><Paper sx={{height:170,borderRadius:2.5,bgcolor:"#E2E8F0",boxShadow:"none"}}/></Stack></Box></Box>;
+  if(!media||!account)return <Box dir="rtl" sx={{maxWidth:560,mx:"auto",p:2.5,border:"1px solid #FECACA",bgcolor:"#FEF2F2",color:"#B91C1C",borderRadius:3,fontSize:13}}>{error||"محتوا پیدا نشد."}</Box>;
 
-  if (!media || !account) return (
-    <div dir="rtl" className="mx-auto max-w-xl rounded-3xl border border-red-200 bg-red-50 p-6 text-sm leading-7 text-red-700">{error || "محتوا پیدا نشد."}</div>
-  );
-
-  return (
-    <div dir="rtl" className="min-h-[calc(100dvh-2rem)]">
-      <div className="mx-auto w-full max-w-[1200px]">
-        <div className="mb-5">
-          <div className="flex justify-start">
-            <button type="button" onClick={() => router.back()} className="inline-flex min-h-10 items-center gap-2 rounded-xl px-2 text-sm font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground">
-              <ArrowRight size={18} /> بازگشت
-            </button>
-          </div>
-          <h1 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">پاسخ جدید</h1>
-        </div>
-
-        {error && <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-700">{error}</div>}
-
-        <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-          <section className="overflow-hidden rounded-3xl border border-border/80 bg-card shadow-sm lg:sticky lg:top-5">
-            <div className="p-4 sm:p-5">
-              <div className="mb-4 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted"><MessageCircle size={19} className="text-muted-foreground" /></div>
-                <div className="min-w-0">
-                  <p className="text-xs text-muted-foreground">{mediaLabel(media)}</p>
-                  <p className="truncate text-sm font-semibold">@{account.igUsername}</p>
-                </div>
-              </div>
-              <div className="overflow-hidden rounded-2xl bg-muted">
-                <div className="aspect-square w-full">
-                  {getMediaImage(media) ? <img src={getMediaImage(media) || ""} alt={media.caption || mediaLabel(media)} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-sm text-muted-foreground">پیش‌نمایش در دسترس نیست</div>}
-                </div>
-              </div>
-              <div className="mt-4 rounded-2xl border border-border/70 bg-muted/40 p-4">
-                <p className="text-xs text-muted-foreground">محتوای انتخاب‌شده</p>
-                <p className="mt-1 text-sm font-semibold">{mediaLabel(media)}</p>
-              </div>
-            </div>
-          </section>
-
-          <section className="space-y-4">
-            <div className="rounded-3xl border border-border/80 bg-card p-4 shadow-sm sm:p-5">
-              <div className="mb-4"><h2 className="text-base font-bold">کلمات کلیدی</h2><p className="mt-1 text-xs leading-5 text-muted-foreground">هر کلمه را جداگانه اضافه کنید.</p></div>
-              <div className="flex gap-2">
-                <Input value={keywordInput} onChange={(e) => setKeywordInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addKeyword(); } }} placeholder="مثلاً قیمت" className="h-12 rounded-xl text-sm" />
-                <Button type="button" variant="outline" onClick={addKeyword} className="h-12 shrink-0 rounded-xl px-4"><Plus size={16} /> افزودن</Button>
-              </div>
-              {keywords.length > 0 && <div className="mt-3 flex flex-wrap gap-2">{keywords.map((keyword) => (
-                <span key={keyword} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/50 px-3 py-1.5 text-xs font-medium">
-                  {keyword}
-                  <button type="button" onClick={() => setKeywords((current) => current.filter((item) => item !== keyword))} className="rounded-full p-0.5 text-red-500 hover:bg-red-50 hover:text-red-600"><X size={13} /></button>
-                </span>
-              ))}</div>}
-            </div>
-
-            <div className="rounded-3xl border border-border/80 bg-card p-4 shadow-sm sm:p-5">
-              <div className="mb-4 flex items-start gap-3"><div className="flex h-9 w-9 items-center justify-center rounded-xl bg-muted"><MessageCircle size={17} /></div><div><h2 className="text-base font-bold">پاسخ کامنت</h2><p className="mt-1 text-xs leading-5 text-muted-foreground">پاسخ عمومی که زیر کامنت کاربر ارسال می‌شود.</p></div></div>
-              <Textarea value={commentReply} onChange={(e) => setCommentReply(e.target.value)} placeholder="متن پاسخ کامنت..." className="min-h-28 resize-none rounded-xl text-sm leading-6" />
-            </div>
-
-            <div className="rounded-3xl border border-border/80 bg-card p-4 shadow-sm sm:p-5">
-              <div className="mb-4 flex items-start gap-3"><div className="flex h-9 w-9 items-center justify-center rounded-xl bg-muted"><Send size={17} /></div><div className="min-w-0 flex-1"><h2 className="text-base font-bold">پاسخ دایرکت</h2><p className="mt-1 text-xs leading-5 text-muted-foreground">بعد از کامنت، یک پیام خصوصی متنی برای کاربر ارسال شود.</p></div><input type="checkbox" checked={sendDm} onChange={(e) => setSendDm(e.target.checked)} className="mt-1 h-5 w-5 shrink-0" aria-label="فعال کردن پاسخ دایرکت" /></div>
-              <Textarea value={dmReply} onChange={(e) => setDmReply(e.target.value)} disabled={!sendDm} placeholder="متن پاسخ دایرکت..." className="min-h-28 resize-none rounded-xl text-sm leading-6 disabled:cursor-not-allowed disabled:opacity-50" />
-            </div>
-
-            <div className="rounded-3xl border border-border/80 bg-card p-4 shadow-sm sm:p-5">
-              <div className="flex items-start gap-3"><input type="checkbox" checked={requireFollow} onChange={(e) => setRequireFollow(e.target.checked)} className="mt-1 h-5 w-5 shrink-0" aria-label="فعال کردن اجبار به فالو" /><div className="min-w-0 flex-1"><h2 className="text-base font-bold">اجبار به فالو</h2><p className="mt-1 text-xs leading-6 text-muted-foreground">اگر فعال باشد، قبل از ارسال محتوای اصلی ابتدا پیام درخواست فالو برای کاربر ارسال می‌شود.</p></div></div>
-              {requireFollow && <div className="mt-4 border-t border-border/70 pt-4"><label className="mb-2 block text-sm font-medium">متن درخواست فالو</label><Textarea value={followGateText} onChange={(e) => setFollowGateText(e.target.value)} placeholder="برای دریافت این محتوا ابتدا پیج ما را فالو کنید." className="min-h-24 resize-none rounded-xl text-sm leading-6" /></div>}
-            </div>
-
-            <Button type="button" onClick={() => void save()} disabled={saving} className="min-h-12 w-full rounded-2xl text-sm font-semibold shadow-sm">
-              {saving ? <Loader2 size={17} className="animate-spin" /> : <Check size={17} />}
-              {saving ? "در حال ساخت..." : "ساخت پاسخ خودکار"}
-            </Button>
-          </section>
-        </div>
-      </div>
-    </div>
-  );
+  const image=media.thumbnail_url||media.media_url;
+  return <Box dir="rtl" sx={{width:"100%",maxWidth:1200,mx:"auto",pb:5}}>
+    <Stack direction="row" justifyContent="flex-start" sx={{mb:2}}><Button variant="text" startIcon={<ArrowRight size={17}/>} onClick={()=>router.back()} sx={{color:"#64748B",fontSize:12,fontWeight:600,minHeight:36,"&:hover":{bgcolor:"#F8FAFC"}}}>بازگشت</Button></Stack>
+    <Box sx={{mb:2.5}}><Typography component="h1" sx={{fontSize:{xs:22,sm:28},fontWeight:800,color:"#0F172A"}}>پاسخ جدید</Typography><Typography sx={{mt:.75,fontSize:12.5,color:"#64748B"}}>برای این پست، پاسخ خودکار کامنت را تنظیم کنید.</Typography></Box>
+    {error&&<Paper sx={{mb:2.5,p:1.5,border:"1px solid #FECACA",bgcolor:"#FEF2F2",color:"#B91C1C",borderRadius:2,boxShadow:"none",fontSize:12}}>{error}</Paper>}
+    <Box sx={{display:"grid",gridTemplateColumns:{xs:"1fr",lg:"minmax(0,.9fr) minmax(0,1.1fr)"},gap:2.5,alignItems:"start"}}>
+      <Card sx={{overflow:"hidden",border:"1px solid #E2E8F0",borderRadius:3,boxShadow:"0 1px 3px rgba(15,23,42,.04)",position:{lg:"sticky"},top:{lg:20}}}><CardContent sx={{p:{xs:2,sm:2.5}}}>
+        <Stack direction="row" spacing={1.25} alignItems="center" sx={{mb:2}}><Box sx={{width:40,height:40,borderRadius:2,display:"grid",placeItems:"center",bgcolor:"#EFF6FF",color:"#2563EB"}}><MessageCircle size={19}/></Box><Box><Typography sx={{fontSize:10.5,color:"#64748B"}}>{mediaLabel(media)}</Typography><Typography dir="ltr" noWrap sx={{fontSize:12,fontWeight:700,color:"#0F172A"}}>@{account.igUsername}</Typography></Box></Stack>
+        <Box sx={{overflow:"hidden",borderRadius:2.5,bgcolor:"#F1F5F9",aspectRatio:"1/1"}}>{image?<Box component="img" src={image} alt={media.caption||mediaLabel(media)} sx={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>:<Stack sx={{height:"100%"}} alignItems="center" justifyContent="center"><Typography sx={{fontSize:12,color:"#64748B"}}>پیش‌نمایش در دسترس نیست</Typography></Stack>}</Box>
+        <Paper variant="outlined" sx={{mt:2,p:1.5,borderColor:"#E2E8F0",bgcolor:"#F8FAFC",borderRadius:2,boxShadow:"none"}}><Typography sx={{fontSize:10.5,color:"#64748B"}}>محتوای انتخاب‌شده</Typography><Typography sx={{mt:.5,fontSize:12.5,fontWeight:600}}>{mediaLabel(media)}</Typography></Paper>
+      </CardContent></Card>
+      <Stack spacing={1.5}>
+        <Card sx={cardSx}><CardContent sx={contentSx}><SectionTitle icon={<MessageCircle size={17}/>} title="کلمات کلیدی" description="هر کلمه را جداگانه اضافه کنید."/><Stack direction="row" spacing={1} sx={{mt:1.5}}><TextField fullWidth size="small" value={keywordInput} onChange={e=>setKeywordInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();addKeyword()}}} placeholder="مثلاً قیمت" sx={fieldSx}/><Button variant="outlined" onClick={addKeyword} startIcon={<Plus size={16}/>} sx={outlineButtonSx}>افزودن</Button></Stack>{keywords.length>0&&<Stack direction="row" flexWrap="wrap" gap={1} sx={{mt:1.5}}>{keywords.map(keyword=><Paper key={keyword} sx={{display:"flex",alignItems:"center",gap:.75,pl:.75,pr:1.25,py:.5,border:"1px solid #E2E8F0",borderRadius:99,bgcolor:"#FFF",boxShadow:"none"}}><Typography sx={{fontSize:11.5}}>{keyword}</Typography><IconButton size="small" onClick={()=>setKeywords(x=>x.filter(i=>i!==keyword))} sx={{width:24,height:24,p:0,border:"1px solid #DC2626",color:"#DC2626",bgcolor:"transparent","&:hover":{bgcolor:"transparent",borderColor:"#B91C1C"}}}><X size={13}/></IconButton></Paper>)}</Stack>}</CardContent></Card>
+        <Card sx={cardSx}><CardContent sx={contentSx}><SectionTitle icon={<MessageCircle size={17}/>} title="پاسخ کامنت" description="پاسخ عمومی که زیر کامنت کاربر ارسال می‌شود."/><TextField fullWidth multiline minRows={4} value={commentReply} onChange={e=>setCommentReply(e.target.value)} placeholder="متن پاسخ کامنت..." sx={{...fieldSx,mt:1.5}}/></CardContent></Card>
+        <Card sx={cardSx}><CardContent sx={contentSx}><Stack direction="row" spacing={1.25} alignItems="flex-start"><Box sx={{width:36,height:36,borderRadius:1.75,display:"grid",placeItems:"center",bgcolor:"#EFF6FF",color:"#2563EB",flexShrink:0}}><Send size={17}/></Box><Box sx={{minWidth:0,flex:1}}><Typography sx={{fontSize:14,fontWeight:700}}>پاسخ دایرکت</Typography><Typography sx={{mt:.5,fontSize:11.5,lineHeight:1.8,color:"#64748B"}}>بعد از کامنت، یک پیام خصوصی متنی برای کاربر ارسال شود.</Typography></Box><Checkbox checked={sendDm} onChange={e=>setSendDm(e.target.checked)} sx={{p:.25,color:"#94A3B8","&.Mui-checked":{color:"#2563EB"}}}/></Stack><TextField fullWidth multiline minRows={4} value={dmReply} onChange={e=>setDmReply(e.target.value)} disabled={!sendDm} placeholder="متن پاسخ دایرکت..." sx={{...fieldSx,mt:1.5}}/></CardContent></Card>
+        <Card sx={cardSx}><CardContent sx={contentSx}><Stack direction="row" spacing={1.25} alignItems="flex-start"><Box sx={{width:36,height:36,borderRadius:1.75,display:"grid",placeItems:"center",bgcolor:"#F0FDF4",color:"#16A34A",flexShrink:0}}><UserRoundCheck size={17}/></Box><Box sx={{minWidth:0,flex:1}}><Typography sx={{fontSize:14,fontWeight:700}}>اجبار به فالو</Typography><Typography sx={{mt:.5,fontSize:11.5,lineHeight:1.8,color:"#64748B"}}>قبل از ارسال محتوای اصلی، ابتدا پیام درخواست فالو برای کاربر ارسال شود.</Typography></Box><Checkbox checked={requireFollow} onChange={e=>setRequireFollow(e.target.checked)} sx={{p:.25,color:"#94A3B8","&.Mui-checked":{color:"#2563EB"}}}/></Stack>{requireFollow&&<><Divider sx={{my:1.75}}/><TextField fullWidth multiline minRows={3} label="متن درخواست فالو" value={followGateText} onChange={e=>setFollowGateText(e.target.value)} placeholder="برای دریافت این محتوا ابتدا پیج ما را فالو کنید." sx={fieldSx}/></>}</CardContent></Card>
+        <Button variant="contained" onClick={save} disabled={saving} startIcon={saving?<CircularProgress size={16} sx={{color:"#FFF"}}/>:<Check size={17}/>} sx={{minHeight:46,borderRadius:2,fontSize:12.5,fontWeight:700,bgcolor:"#2563EB","&:hover":{bgcolor:"#1D4ED8"}}}>{saving?"در حال ساخت...":"ساخت پاسخ خودکار"}</Button>
+      </Stack>
+    </Box>
+  </Box>;
 }
