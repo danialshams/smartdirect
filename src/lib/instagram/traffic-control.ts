@@ -138,6 +138,13 @@ export async function acquireInstagramTrafficSlot(context: InstagramRateLimitCon
     const now = Date.now();
     if (now > deadline) throw new Error("INSTAGRAM_CONCURRENCY_WAIT_TIMEOUT");
 
+    const rate = await consumeInstagramRateLimit(context);
+    if (!rate.allowed) {
+      const wait = Math.min(Math.max(25, rate.retryAfterMs), Math.max(25, deadline - now));
+      await sleep(wait, options.signal);
+      continue;
+    }
+
     const result = await redis.eval(
       ACQUIRE_SCRIPT,
       [k.limit, k.inflight, k.lease, k.circuit, k.probe],
