@@ -478,11 +478,17 @@ export function Calendar({ className, ...props }: DashboardCalendarProps) {
           paddingLeft: 28,
           paddingRight: 8,
           background: COLORS.surface,
-          color: COLORS.text,
+          color: COLORS.text + " !important",
+          WebkitTextFillColor: COLORS.text,
           border: 0,
           outline: 0,
           appearance: "none",
           cursor: "pointer",
+        },
+        "& .rdp-dropdown_root select option": {
+          color: COLORS.text,
+          backgroundColor: COLORS.surface,
+          fontFamily: '"Vazirmatn", Arial, sans-serif',
         },
         "& .rdp-button_previous, & .rdp-button_next": {
           display: "none",
