@@ -9,9 +9,9 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { Calendar } from "@/components/ui/calendar";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Calendar } from "@/components/dashboard/DashboardUI";
+import { Button } from "@/components/dashboard/DashboardUI";
+import { Skeleton } from "@/components/dashboard/DashboardUI";
 import {
   CartesianGrid,
   Line,
