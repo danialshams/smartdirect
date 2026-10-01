@@ -43,13 +43,15 @@ async function main() {
     "traffic-test-429-" + Date.now(),
   ];
 
+  const loadAccounts: string[] = [];
   let active = new Map<string, number>();
   let maxActive = new Map<string, number>();
   let mode: "success" | "429" = "success";
 
   const originalFetch = globalThis.fetch;
   globalThis.fetch = (async (_input: RequestInfo | URL, _init?: RequestInit) => {
-    const account = (globalThis as unknown as { __trafficAccount?: string }).__trafficAccount ?? "unknown";
+    const url = new URL(String(_input));
+    const account = url.searchParams.get("test_account") ?? "unknown";
     const current = (active.get(account) ?? 0) + 1;
     active.set(account, current);
     maxActive.set(account, Math.max(maxActive.get(account) ?? 0, current));
@@ -62,11 +64,11 @@ async function main() {
 
   try {
     const call = async (accountId: string) => {
-      (globalThis as unknown as { __trafficAccount?: string }).__trafficAccount = accountId;
       return instagramApiRequest("me", {
         method: "GET",
         maxRetries: 0,
         accessToken: "test-token",
+        params: { test_account: accountId },
         rateLimit: { instagramAccountId: accountId, operation: "MESSAGE_TEXT" },
       });
     };
@@ -114,7 +116,7 @@ async function main() {
     await call(accounts[2]);
 
     // 5) Synthetic load: many requests across isolated accounts.
-    const loadAccounts = Array.from({ length: 10 }, (_, i) => "traffic-load-" + Date.now() + "-" + i);
+    loadAccounts.push(...Array.from({ length: 10 }, (_, i) => "traffic-load-" + Date.now() + "-" + i));
     const started = Date.now();
     const loadResults = await Promise.all(
       Array.from({ length: 300 }, (_, i) => call(loadAccounts[i % loadAccounts.length])),
@@ -147,7 +149,7 @@ async function main() {
     }, null, 2));
   } finally {
     globalThis.fetch = originalFetch;
-    const keys = accounts.flatMap((account) => [
+    const keys = [...accounts, ...loadAccounts].flatMap((account) => [
       prefix + "limit:" + account,
       prefix + "inflight:" + account,
       prefix + "circuit:" + account,
