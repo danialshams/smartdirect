@@ -1,12 +1,10 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useState } from "react";
 import { Box } from "@mui/material";
 
 import DashboardTheme from "./DashboardTheme";
 import DashboardSidebar from "./DashboardSidebar";
-import DashboardMobileHeader from "./DashboardMobileHeader";
 import DashboardOverview from "./DashboardOverview";
 
 type InstagramAccount = {
@@ -35,8 +33,6 @@ export default function DashboardShell({
   instagramStatus,
   children,
 }: DashboardShellProps) {
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-
   return (
     <DashboardTheme>
       <Box
@@ -49,22 +45,21 @@ export default function DashboardShell({
       >
         <DashboardSidebar
           instagramAccounts={instagramAccounts}
-          mobileOpen={mobileSidebarOpen}
-          onMobileClose={() => setMobileSidebarOpen(false)}
+          mobileOpen={false}
+          onMobileClose={() => undefined}
         />
 
         <Box
           sx={{
             minWidth: 0,
-            marginInlineStart: { xs: 0, lg: "220px" },
+            marginInlineStart: "var(--dashboard-sidebar-width, 208px)",
+            transition: "margin-inline-start 180ms ease",
           }}
         >
-          <DashboardMobileHeader onMenuOpen={() => setMobileSidebarOpen(true)} />
-
           <Box
             component="main"
             sx={{
-              minHeight: "calc(100vh - 64px)",
+              minHeight: "100vh",
               px: { xs: 1.5, sm: 2.5, md: 3.5, lg: 4 },
               py: { xs: 2, sm: 3, lg: 4 },
             }}
