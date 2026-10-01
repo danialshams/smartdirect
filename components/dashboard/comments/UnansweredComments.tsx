@@ -94,269 +94,97 @@ export default function UnansweredComments({
 
   if (error) {
     return (
-      <main dir="rtl" className="min-h-screen">
-        <div className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8">
-          <div className="rounded-xl border border-destructive/15 bg-destructive/5 px-4 py-3 text-xs text-destructive">
-            {error}
-          </div>
-        </div>
-      </main>
+      <Box dir="rtl" sx={{ width: "100%" }}>
+        <Box sx={{ p: 1.75, borderRadius: 2, border: "1px solid #FECACA", bgcolor: "#FEF2F2", color: "#B91C1C", fontSize: 12 }}>
+          {error}
+        </Box>
+      </Box>
     );
   }
 
   return (
-    <main dir="rtl" className="min-h-screen">
-      <div className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8">
-        <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h1 className="text-xl font-semibold tracking-tight text-foreground">
-              کامنت‌ها
-            </h1>
-            <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-              <span dir="ltr">@{account.igUsername}</span>
-              <span aria-hidden="true">·</span>
-              <span>{totalComments.toLocaleString("fa-IR")} بی‌پاسخ</span>
-            </div>
-          </div>
+    <Box dir="rtl" sx={{ width: "100%" }}>
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems={{ xs: "stretch", sm: "flex-end" }} justifyContent="space-between">
+        <Box>
+          <Typography component="h1" sx={{ fontSize: { xs: 20, sm: 22 }, fontWeight: 700, color: "#0F172A" }}>کامنت‌ها</Typography>
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.75 }}>
+            <Typography dir="ltr" sx={{ fontSize: 11, color: "#64748B" }}>@{account.igUsername}</Typography>
+            <Typography sx={{ color: "#CBD5E1" }}>·</Typography>
+            <Typography sx={{ fontSize: 11, color: "#64748B" }}>{totalComments.toLocaleString("fa-IR")} بی‌پاسخ</Typography>
+          </Stack>
+        </Box>
+        <Stack direction="row" spacing={0.75} role="tablist" aria-label="فیلتر محتوا">
+          {([["ALL","همه"],["POST","پست"],["REEL","ریل"]] as const).map(([value,label]) => (
+            <Button key={value} type="button" role="tab" aria-selected={filter === value} onClick={() => setFilter(value)}
+              variant={filter === value ? "contained" : "outlined"}
+              sx={{ minWidth:72,height:36,borderRadius:99,px:2,fontSize:11,fontWeight:600,boxShadow:"none",
+                ...(filter === value ? { bgcolor:"#0F172A",color:"#FFF","&:hover":{bgcolor:"#1E293B"} } : { borderColor:"#E2E8F0",color:"#64748B",bgcolor:"#FFF","&:hover":{borderColor:"#94A3B8",bgcolor:"#F8FAFC"} }) }}>
+              {label}
+            </Button>
+          ))}
+        </Stack>
+      </Stack>
 
-          <div
-            role="tablist"
-            aria-label="فیلتر محتوا"
-            className="flex w-full items-center justify-start gap-2 sm:w-auto"
-          >
-            {(
-              [
-                ["ALL", "همه"],
-                ["POST", "پست"],
-                ["REEL", "ریل"],
-              ] as const
-            ).map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                role="tab"
-                aria-selected={filter === value}
-                onClick={() => setFilter(value)}
-                className={[
-                  "h-9 min-w-[72px] rounded-full border px-5 text-xs font-medium transition-all sm:min-w-0",
-                  filter === value
-                    ? "border-foreground bg-foreground text-background shadow-sm"
-                    : "border-border bg-background text-muted-foreground hover:border-foreground/30 hover:text-foreground",
-                ].join(" ")}
-              >
-                {label}
-              </button>
+      <Box sx={{ mt: 3 }}>
+        {loading ? (
+          <Grid container spacing={1.5}>
+            {Array.from({ length: 10 }).map((_, index) => (
+              <Grid key={index} size={{ xs:6, sm:4, lg:3, xl:2.4 }}>
+                <Card sx={{ overflow:"hidden",border:"1px solid #E2E8F0",borderRadius:2.5 }}>
+                  <Skeleton variant="rectangular" animation="wave" sx={{ aspectRatio:"1 / 1",transform:"none" }} />
+                  <CardContent sx={{ p:1.5 }}><Skeleton width="100%" height={14}/><Skeleton width="65%" height={14} sx={{mt:.5}}/><Stack direction="row" justifyContent="space-between" sx={{mt:1}}><Skeleton variant="circular" width={28} height={28}/><Skeleton width={55} height={12}/></Stack></CardContent>
+                </Card>
+              </Grid>
             ))}
-          </div>
-        </header>
-
-        <div className="mt-7">
-          {loading ? (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
-              {Array.from({ length: 10 }).map((_, index) => (
-                <div
-                  key={index}
-                  className={[
-                    "overflow-hidden rounded-2xl border border-border/60 bg-background",
-                    index % 5 === 1 ? "col-span-1 sm:col-span-2 lg:col-span-1" : "",
-                    index % 5 === 2 ? "col-span-2 sm:col-span-1 lg:col-span-1" : "",
-                    "lg:rounded-xl",
-                  ].join(" ")}
-                >
-                  <div className="aspect-square animate-pulse bg-muted" />
-                  <div className="space-y-3 px-3.5 py-3.5">
-                    <div className="h-3 w-full animate-pulse rounded-full bg-muted" />
-                    <div className="h-3 w-2/3 animate-pulse rounded-full bg-muted" />
-                    <div className="flex items-center justify-between">
-                      <div className="flex gap-1.5">
-                        <div className="h-7 w-7 animate-pulse rounded-full bg-muted" />
-                        <div className="h-7 w-7 animate-pulse rounded-full bg-muted" />
-                        <div className="h-7 w-7 animate-pulse rounded-full bg-muted" />
-                      </div>
-                      <div className="h-2.5 w-16 animate-pulse rounded-full bg-muted" />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : filteredPosts.length === 0 ? (
-            <EmptyState
-              title={
-                filter === "ALL"
-                  ? "کامنت بی‌پاسخی وجود ندارد"
-                  : filter === "POST"
-                    ? "پست بدون کامنت بی‌پاسخ وجود ندارد"
-                    : "ریل بدون کامنت بی‌پاسخ وجود ندارد"
-              }
-            />
-          ) : (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
-              {filteredPosts.map((post, index) => (
-                <PostTile
-                  key={post.media.id}
-                  post={post}
-                  index={index}
-                  onClick={() =>
-                    router.push(
-                      `/dashboard/comments/${encodeURIComponent(post.media.id)}`,
-                    )
-                  }
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    </main>
+          </Grid>
+        ) : filteredPosts.length === 0 ? (
+          <EmptyState title={filter === "ALL" ? "کامنت بی‌پاسخی وجود ندارد" : filter === "POST" ? "پست بدون کامنت بی‌پاسخ وجود ندارد" : "ریل بدون کامنت بی‌پاسخ وجود ندارد"} />
+        ) : (
+          <Grid container spacing={1.5}>
+            {filteredPosts.map((post) => (
+              <Grid key={post.media.id} size={{ xs:6, sm:4, lg:3, xl:2.4 }}>
+                <PostTile post={post} onClick={() => router.push("/dashboard/comments/" + encodeURIComponent(post.media.id))} />
+              </Grid>
+            ))}
+          </Grid>
+        )}
+      </Box>
+    </Box>
   );
 }
 
-function PostTile({
-  post,
-  index,
-  onClick,
-}: {
-  post: PostGroup;
-  index: number;
-  onClick: () => void;
-}) {
+function PostTile({ post, onClick }: { post: PostGroup; onClick: () => void }) {
   const router = useRouter();
-  const mediaSrc =
-    post.media.mediaType === "VIDEO"
-      ? post.media.thumbnailUrl ?? post.media.mediaUrl
-      : post.media.mediaUrl ?? post.media.thumbnailUrl;
-
+  const mediaSrc = post.media.mediaType === "VIDEO" ? post.media.thumbnailUrl ?? post.media.mediaUrl : post.media.mediaUrl ?? post.media.thumbnailUrl;
   const isReel = post.media.mediaProductType === "REELS";
-  const bentoLayout =
-    index % 5 === 1
-      ? "col-span-1 sm:col-span-2 lg:col-span-1"
-      : index % 5 === 2
-        ? "col-span-2 sm:col-span-1 lg:col-span-1"
-        : "col-span-1";
-
-  const latestCommenters = post.comments
-    .slice()
-    .sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-    )
-    .slice(0, 3);
-
-  const publishedDate = post.media.timestamp
-    ? new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-      }).format(new Date(post.media.timestamp))
-    : null;
+  const latestCommenters = post.comments.slice().sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0,3);
+  const publishedDate = post.media.timestamp ? new Intl.DateTimeFormat("fa-IR-u-ca-persian",{year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date(post.media.timestamp)) : null;
 
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      onMouseEnter={() => {
-        router.prefetch(
-          `/dashboard/comments/${encodeURIComponent(post.media.id)}`,
-        );
-      }}
-      onPointerDown={() => {
-        router.prefetch(
-          `/dashboard/comments/${encodeURIComponent(post.media.id)}`,
-        );
-      }}
-      className={[
-        "group text-right outline-none",
-        "focus-visible:ring-2 focus-visible:ring-ring/40",
-        bentoLayout,
-        "overflow-hidden rounded-2xl border border-border/60 bg-background shadow-sm",
-        "transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-black/5",
-        "lg:rounded-xl lg:border-0 lg:bg-transparent lg:shadow-none lg:hover:translate-y-0 lg:hover:shadow-none",
-      ].join(" ")}
+    <Card component="button" type="button" onClick={onClick}
+      onMouseEnter={() => router.prefetch("/dashboard/comments/" + encodeURIComponent(post.media.id))}
+      onPointerDown={() => router.prefetch("/dashboard/comments/" + encodeURIComponent(post.media.id))}
+      sx={{ width:"100%",display:"block",p:0,overflow:"hidden",textAlign:"right",cursor:"pointer",border:"1px solid #E2E8F0",borderRadius:2.5,bgcolor:"#FFF",boxShadow:"0 1px 2px rgba(15,23,42,.04)",transition:"transform .2s ease, box-shadow .2s ease","&:hover":{transform:"translateY(-2px)",boxShadow:"0 12px 30px rgba(15,23,42,.08)"} }}
     >
-      <div className="relative aspect-square overflow-hidden bg-muted lg:rounded-xl">
-        {mediaSrc ? (
-          <img
-            src={mediaSrc}
-            alt={post.media.caption ?? ""}
-            className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.025]"
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center text-muted-foreground">
-            <ImageIcon size={26} strokeWidth={1.5} />
-          </div>
-        )}
-
-        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/55 to-transparent" />
-
-        <div className="absolute right-3 top-3 flex items-center gap-1.5 rounded-full bg-white/95 px-2.5 py-1.5 text-[10px] font-semibold text-foreground shadow-sm backdrop-blur-md">
-          {isReel ? "ریل" : "پست"}
-          {post.media.mediaType === "VIDEO" && <Video size={10} />}
-        </div>
-
-        <div className="absolute bottom-3 left-3 flex h-8 items-center gap-1.5 rounded-full bg-white px-2.5 text-foreground shadow-md">
-          <MessageCircle size={13} strokeWidth={2} />
-          <span className="text-[11px] font-bold">
-            {post.comments.length.toLocaleString("fa-IR")}
-          </span>
-        </div>
-      </div>
-
-      <div className="bg-background px-3.5 pb-3.5 pt-3 text-right lg:rounded-b-xl lg:px-0 lg:pt-3">
-        <p
-          className="min-h-[2.5rem] overflow-hidden text-xs leading-5 text-foreground"
-          style={{
-            display: "-webkit-box",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
-          }}
-        >
-          {post.media.caption?.trim() || "بدون کپشن"}
-        </p>
-
-        <div className="mt-3 flex items-center justify-between gap-3">
-          <div className="flex min-w-0 -space-x-2 space-x-reverse" dir="ltr">
-            {latestCommenters.map((commenter) =>
-              commenter.profilePictureUrl ? (
-                <img
-                  key={commenter.id}
-                  src={commenter.profilePictureUrl}
-                  alt=""
-                  className="h-7 w-7 rounded-full border-2 border-background object-cover"
-                />
-              ) : (
-                <div
-                  key={commenter.id}
-                  className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-background bg-muted text-[9px] font-medium text-muted-foreground"
-                >
-                  {commenter.username.slice(0, 1).toUpperCase()}
-                </div>
-              ),
-            )}
-          </div>
-
-          {publishedDate && (
-            <time
-              dateTime={post.media.timestamp ?? undefined}
-              className="shrink-0 text-[10px] font-medium text-muted-foreground"
-            >
-              {publishedDate}
-            </time>
-          )}
-        </div>
-      </div>
-    </button>
+      <Box sx={{position:"relative",aspectRatio:"1 / 1",overflow:"hidden",bgcolor:"#F1F5F9"}}>
+        {mediaSrc ? <Box component="img" src={mediaSrc} alt={post.media.caption ?? ""} sx={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/> : <Box sx={{width:"100%",height:"100%",display:"grid",placeItems:"center",color:"#64748B"}}><ImageIcon size={26} strokeWidth={1.5}/></Box>}
+        <Box sx={{position:"absolute",inset:"auto 0 0",height:88,background:"linear-gradient(to top, rgba(0,0,0,.58), transparent)"}}/>
+        <Chip label={isReel ? "ریل" : "پست"} icon={post.media.mediaType === "VIDEO" ? <Video size={11}/> : undefined} size="small" sx={{position:"absolute",top:10,right:10,height:27,bgcolor:"rgba(255,255,255,.95)",fontSize:10,fontWeight:700}}/>
+        <Box sx={{position:"absolute",left:10,bottom:10,display:"flex",alignItems:"center",gap:.6,px:1,height:30,borderRadius:99,bgcolor:"#FFF",color:"#0F172A",boxShadow:"0 4px 12px rgba(0,0,0,.16)"}}><MessageCircle size={13}/><Typography sx={{fontSize:11,fontWeight:700}}>{post.comments.length.toLocaleString("fa-IR")}</Typography></Box>
+      </Box>
+      <CardContent sx={{p:1.5,"&:last-child":{pb:1.5}}}>
+        <Typography sx={{minHeight:40,fontSize:11,lineHeight:1.8,color:"#0F172A",display:"-webkit-box",WebkitBoxOrient:"vertical",WebkitLineClamp:2,overflow:"hidden"}}>{post.media.caption?.trim() || "بدون کپشن"}</Typography>
+        <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1} sx={{mt:1.25}}>
+          <Stack direction="row" spacing={-0.7} dir="ltr">
+            {latestCommenters.map((commenter) => commenter.profilePictureUrl ? <Box key={commenter.id} component="img" src={commenter.profilePictureUrl} alt="" sx={{width:28,height:28,borderRadius:"50%",objectFit:"cover",border:"2px solid #FFF"}}/> : <Box key={commenter.id} sx={{width:28,height:28,borderRadius:"50%",display:"grid",placeItems:"center",bgcolor:"#E2E8F0",color:"#64748B",fontSize:9,fontWeight:600,border:"2px solid #FFF"}}>{commenter.username.slice(0,1).toUpperCase()}</Box>)}
+          </Stack>
+          {publishedDate ? <Typography component="time" sx={{fontSize:9.5,fontWeight:500,color:"#64748B"}}>{publishedDate}</Typography> : null}
+        </Stack>
+      </CardContent>
+    </Card>
   );
 }
 
 function EmptyState({ title }: { title: string }) {
-  return (
-    <div className="py-24 text-center">
-      <MessageCircle
-        className="mx-auto text-muted-foreground"
-        size={22}
-        strokeWidth={1.5}
-      />
-      <h2 className="mt-3 text-sm font-medium text-foreground">{title}</h2>
-    </div>
-  );
+  return <Stack alignItems="center" justifyContent="center" sx={{py:12,color:"#64748B"}}><MessageCircle size={23} strokeWidth={1.5}/><Typography sx={{mt:1.5,fontSize:13,fontWeight:600,color:"#0F172A"}}>{title}</Typography></Stack>;
 }
