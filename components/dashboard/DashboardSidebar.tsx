@@ -6,8 +6,6 @@ import { useEffect, useState } from "react";
 import {
   BarChart3,
   Bot,
-  ChevronLeft,
-  ChevronRight,
   CreditCard,
   ImagePlus,
   Inbox,
@@ -272,40 +270,32 @@ function AccountSection({
   );
 }
 
-function Navigation({
-  compact,
-  onNavigate,
-}: {
-  compact: boolean;
-  onNavigate?: () => void;
-}) {
+function Navigation({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
 
   return (
-    <Box dir="rtl" sx={{ px: compact ? 0.75 : 1.15, py: compact ? 0.9 : 1 }}>
+    <Box dir="rtl" sx={{ px: 1.25, py: 1.25 }}>
       {menuGroups.map((group) => (
-        <Box key={group.label} sx={{ mb: compact ? 0.9 : 1.35 }}>
-          {!compact && (
-            <Box
-              component="div"
-              dir="rtl"
-              sx={{
-                width: "100%",
-                px: 0.85,
-                mb: 0.45,
-                color: "#94A3B8",
-                fontSize: 9.5,
-                fontWeight: 700,
-                lineHeight: 1.4,
-                textAlign: "right !important",
-                direction: "rtl !important",
-              }}
-            >
-              {group.label}
-            </Box>
-          )}
+        <Box key={group.label} sx={{ mb: 2 }}>
+          <Box
+            component="div"
+            dir="rtl"
+            sx={{
+              width: "100%",
+              px: 1.1,
+              mb: 0.65,
+              color: "#94A3B8",
+              fontSize: 10,
+              fontWeight: 700,
+              lineHeight: 1.5,
+              textAlign: "right",
+              direction: "rtl",
+            }}
+          >
+            {group.label}
+          </Box>
 
-          <List disablePadding sx={{ display: "grid", gap: 0.2 }}>
+          <List disablePadding sx={{ display: "grid", gap: 0.35 }}>
             {group.items.map(({ href, title, icon: Icon }) => {
               const active =
                 href === "/dashboard"
@@ -320,16 +310,14 @@ function Navigation({
                   onClick={onNavigate}
                   selected={active}
                   dir="rtl"
-                  title={compact ? title : undefined}
                   sx={{
-                    minHeight: compact ? 42 : 36,
+                    minHeight: 40,
                     display: "flex",
                     flexDirection: "row",
                     alignItems: "center",
-                    justifyContent: compact ? "center" : "flex-start",
-                    columnGap: 0.9,
-                    borderRadius: 1.5,
-                    px: compact ? 0 : 0.9,
+                    columnGap: 1,
+                    borderRadius: 1.75,
+                    px: 1.1,
                     color: active ? "#2563EB" : "#475569",
                     "&.Mui-selected": { bgcolor: "#EFF6FF", color: "#2563EB" },
                     "&.Mui-selected:hover": { bgcolor: "#EFF6FF" },
@@ -348,24 +336,22 @@ function Navigation({
                       m: 0,
                     }}
                   >
-                    <Icon size={17} strokeWidth={1.9} />
+                    <Icon size={18} strokeWidth={1.9} />
                   </ListItemIcon>
-                  {!compact && (
-                    <ListItemText
-                      primary={title}
-                      sx={{
-                        minWidth: 0,
-                        flex: "0 1 auto",
-                        m: 0,
-                        textAlign: "right",
-                        direction: "rtl",
-                      }}
-                      primaryTypographyProps={{
-                        fontSize: 12,
-                        fontWeight: active ? 700 : 500,
-                      }}
-                    />
-                  )}
+                  <ListItemText
+                    primary={title}
+                    sx={{
+                      minWidth: 0,
+                      flex: "0 1 auto",
+                      m: 0,
+                      textAlign: "right",
+                      direction: "rtl",
+                    }}
+                    primaryTypographyProps={{
+                      fontSize: 12.5,
+                      fontWeight: active ? 700 : 500,
+                    }}
+                  />
                 </ListItemButton>
               );
             })}
@@ -499,59 +485,50 @@ function SidebarContent({
 }
 
 export default function DashboardSidebar({
-  mobileOpen: _mobileOpen,
-  onMobileClose: _onMobileClose,
+  mobileOpen,
+  onMobileClose,
   instagramAccounts,
 }: DashboardSidebarProps) {
-  const isDesktop = useMediaQuery("(min-width:1200px)", { noSsr: true });
-  const [compact, setCompact] = useState(true);
-
-  useEffect(() => {
-    if (isDesktop) {
-      setCompact(false);
-      document.documentElement.style.setProperty(
-        "--dashboard-sidebar-width",
-        "208px",
-      );
-      return;
-    }
-
-    const width = compact ? "64px" : "240px";
-    document.documentElement.style.setProperty(
-      "--dashboard-sidebar-width",
-      width,
-    );
-
-    return () => {
-      document.documentElement.style.removeProperty(
-        "--dashboard-sidebar-width",
-      );
-    };
-  }, [compact, isDesktop]);
-
   return (
-    <Drawer
-      variant="permanent"
-      anchor="left"
-      sx={{
-        display: { xs: "block" },
-        width: isDesktop ? 208 : compact ? 64 : 240,
-        flexShrink: 0,
-        "& .MuiDrawer-paper": {
-          width: isDesktop ? 208 : compact ? 64 : 240,
-          boxSizing: "border-box",
-          borderRight: "1px solid #E2E8F0",
-          direction: "rtl",
-          overflow: "visible",
-          transition: "width 180ms ease",
-        },
-      }}
-    >
-      <SidebarContent
-        compact={!isDesktop && compact}
-        instagramAccounts={instagramAccounts}
-        onToggle={!isDesktop ? () => setCompact((value) => !value) : undefined}
-      />
-    </Drawer>
+    <>
+      <Drawer
+        variant="permanent"
+        anchor="right"
+        sx={{
+          display: { xs: "none", lg: "block" },
+          width: 220,
+          flexShrink: 0,
+          "& .MuiDrawer-paper": {
+            width: 220,
+            boxSizing: "border-box",
+            borderLeft: "1px solid #E2E8F0",
+            borderRight: 0,
+            direction: "rtl",
+          },
+        }}
+      >
+        <SidebarContent instagramAccounts={instagramAccounts} />
+      </Drawer>
+
+      <Drawer
+        variant="temporary"
+        anchor="right"
+        open={mobileOpen}
+        onClose={onMobileClose}
+        ModalProps={{ keepMounted: true }}
+        sx={{
+          display: { xs: "block", lg: "none" },
+          "& .MuiDrawer-paper": {
+            width: { xs: "min(84vw, 300px)", sm: 320 },
+            boxSizing: "border-box",
+            borderLeft: "1px solid #E2E8F0",
+            borderRight: 0,
+            direction: "rtl",
+          },
+        }}
+      >
+        <SidebarContent mobile onClose={onMobileClose} instagramAccounts={instagramAccounts} />
+      </Drawer>
+    </>
   );
 }
