@@ -136,7 +136,7 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
     <Box dir="rtl" sx={{ px: 1.25, py: 1.25 }}>
       {menuGroups.map((group) => (
         <Box key={group.label} sx={{ mb: 2 }}>
-          <Box component="div" dir="rtl" sx={{ width: "100%", px: 1.1, mb: 0.65, color: "#94A3B8", fontSize: 10, fontWeight: 700, lineHeight: 1.5, textAlign: "right", direction: "rtl" }}>
+          <Box component="div" dir="ltr" sx={{ width: "100%", px: 1.1, mb: 0.65, color: "#94A3B8", fontSize: 10, fontWeight: 700, lineHeight: 1.5, textAlign: "right", direction: "ltr" }}>
             {group.label}
           </Box>
           <List disablePadding sx={{ display: "grid", gap: 0.35 }}>
