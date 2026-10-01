@@ -7,7 +7,6 @@ import {
   BarChart3,
   Bot,
   Check,
-  CreditCard,
   ImagePlus,
   Inbox,
   LayoutDashboard,
@@ -129,33 +128,6 @@ function AccountSection({ instagramAccounts }: { instagramAccounts: InstagramAcc
         ) : null}
       </Box>
 
-      <Box sx={{ mt: 1, pt: 0.9, borderTop: "1px solid #E2E8F0" }}>
-        <Box sx={{ px: 0.35, mb: 0.55 }}>
-          <Typography fontSize={10.5} fontWeight={700} color="#64748B">
-            حساب
-          </Typography>
-        </Box>
-        <Box
-          component={Link}
-          href="/dashboard/subscription"
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 1,
-            minHeight: 38,
-            px: 1.1,
-            borderRadius: 1.75,
-            color: "#475569",
-            textDecoration: "none",
-            "&:hover": { bgcolor: "#F8FAFC", color: "#1D4ED8" },
-          }}
-        >
-          <CreditCard size={17} strokeWidth={1.9} />
-          <Typography component="span" fontSize={12.5} fontWeight={500}>
-            اشتراک
-          </Typography>
-        </Box>
-      </Box>
     </Box>
   );
 }
