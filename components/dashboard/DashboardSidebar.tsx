@@ -119,7 +119,7 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
                   selected={active}
                   sx={{
                     minHeight: 42,
-                    direction: "rtl",
+                    direction: "ltr",
                     display: "flex",
                     flexDirection: "row-reverse",
                     alignItems: "center",
