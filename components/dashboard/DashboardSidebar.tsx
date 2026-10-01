@@ -143,6 +143,7 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
                     display: "flex",
                     flexDirection: "row",
                     alignItems: "center",
+                    columnGap: 0.5,
                     borderRadius: 2,
                     px: 1.25,
                     color: active ? "#2563EB" : "#475569",
@@ -162,13 +163,14 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
                   <ListItemIcon
                     sx={{
                       minWidth: 0,
-                      width: 24,
+                      width: 18,
+                      flex: "0 0 18px",
                       flexShrink: 0,
                       color: "inherit",
                       display: "flex",
                       justifyContent: "center",
-                      ml: 0.75,
-                      mr: 0,
+                      alignItems: "center",
+                      m: 0,
                     }}
                   >
                     <Icon size={18} strokeWidth={1.9} />
@@ -178,6 +180,8 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
                     primary={title}
                     sx={{
                       minWidth: 0,
+                      width: "auto",
+                      flex: "0 1 auto",
                       m: 0,
                       textAlign: "right",
                       direction: "rtl",
