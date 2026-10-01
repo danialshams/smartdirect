@@ -52,7 +52,7 @@ function SubscriptionIndicator() {
   }, []);
 
   useEffect(() => {
-    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    const timer = window.setInterval(() => setNow(Date.now()), 50);
     return () => window.clearInterval(timer);
   }, []);
 
@@ -77,11 +77,29 @@ function SubscriptionIndicator() {
     <>
       <Box component="button" type="button" onClick={(event) => setAnchorEl(event.currentTarget)} aria-label="وضعیت اشتراک"
         sx={{ position: "absolute", left: { xs: 10, sm: 18, lg: 24 }, top: "50%", transform: "translateY(-50%)", width: { xs: 48, sm: 52, lg: 56 }, height: { xs: 48, sm: 52, lg: 56 }, p: 0, border: 0, bgcolor: "transparent", cursor: "pointer", fontFamily: "inherit", display: "grid", placeItems: "center" }}>
-        <Box sx={{ position: "absolute", inset: 0, borderRadius: "50%", background: `conic-gradient(from -90deg, ${ringColor} 0deg, ${ringColor} ${progress * 3.6}deg, #E2E8F0 ${progress * 3.6}deg, #E2E8F0 360deg)` }} />
+        <Box sx={{ position: "absolute", inset: 0, display: "grid", placeItems: "center" }}>
+          <svg width="100%" height="100%" viewBox="0 0 60 60" aria-hidden="true" style={{ display: "block" }}>
+            <circle cx="30" cy="30" r="27" fill="none" stroke="#E2E8F0" strokeWidth="3.5" />
+            <circle
+              cx="30"
+              cy="30"
+              r="27"
+              fill="none"
+              stroke={ringColor}
+              strokeWidth="3.5"
+              strokeLinecap="round"
+              pathLength="100"
+              strokeDasharray="100"
+              strokeDashoffset={100 - progress}
+              transform="rotate(-90 30 30) scale(-1 1) translate(-60 0)"
+              style={{ transition: "stroke-dashoffset 50ms linear, stroke 150ms linear" }}
+            />
+          </svg>
+        </Box>
         <Box sx={{ position: "absolute", inset: 4, borderRadius: "50%", bgcolor: "rgba(255,255,255,0.96)" }} />
         <Box sx={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: "100%", height: "100%", color: "#0F172A" }}>
-          <Typography component="span" sx={{ fontSize: { xs: 11, sm: 12, lg: 12.5 }, fontWeight: 800, lineHeight: 1 }}>{remaining.value.toLocaleString("fa-IR")}</Typography>
-          <Typography component="span" sx={{ mt: 0.2, fontSize: { xs: 7, sm: 7.5, lg: 8 }, fontWeight: 600, lineHeight: 1, color: "#64748B" }}>{remaining.unit}</Typography>
+          <Typography component="span" sx={{ fontSize: { xs: 13, sm: 14, lg: 15 }, fontWeight: 800, lineHeight: 1 }}>{remaining.value.toLocaleString("fa-IR")}</Typography>
+          <Typography component="span" sx={{ mt: 0.2, fontSize: { xs: 8, sm: 8.5, lg: 9 }, fontWeight: 600, lineHeight: 1, color: "#64748B" }}>{remaining.unit}</Typography>
         </Box>
       </Box>
 
@@ -113,7 +131,7 @@ export default function DashboardMobileHeader({ onMenuOpen }: DashboardMobileHea
       sx={{ bgcolor: "rgba(255,255,255,0.96)", color: "#0F172A", borderBottom: "1px solid #E2E8F0", backdropFilter: "blur(12px)", zIndex: (theme) => theme.zIndex.drawer - 1 }}>
       <Toolbar sx={{ minHeight: { xs: 68, sm: 72, lg: 76 }, px: { xs: 1.5, sm: 2.5, lg: 3.5 }, position: "relative" }}>
         <IconButton onClick={onMenuOpen} aria-label="باز کردن منو"
-          sx={{ display: { xs: "inline-flex", lg: "none" }, position: "absolute", insetInlineStart: { xs: 12, sm: 20 }, insetInlineEnd: "auto", color: "#0F172A", width: 40, height: 40 }}>
+          sx={{ display: { xs: "inline-flex", lg: "none" }, position: "absolute", insetInlineStart: "auto", insetInlineEnd: { xs: 12, sm: 20 }, color: "#0F172A", width: 40, height: 40 }}>
           <MenuIcon size={20} strokeWidth={2} />
         </IconButton>
         <Typography sx={{ display: { xs: "block", lg: "none" }, position: "absolute", left: "50%", transform: "translateX(-50%)", fontSize: { xs: 14, sm: 15 }, fontWeight: 800, color: "#0F172A", whiteSpace: "nowrap", pointerEvents: "none" }}>SmartDirect</Typography>
