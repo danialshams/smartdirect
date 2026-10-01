@@ -123,9 +123,9 @@ export default function UnansweredComments({ account }: { account: Account }) {
             xs: "repeat(2, minmax(0, 1fr))",
             sm: "repeat(3, minmax(0, 1fr))",
             lg: "repeat(4, minmax(0, 1fr))",
-            "2xl": "repeat(5, minmax(0, 1fr))",
           },
           gap: { xs: 1.5, lg: 1.5 },
+          "@media (min-width:1536px)": { gridTemplateColumns: "repeat(5, minmax(0, 1fr))" },
         }}
       >
         {loading
