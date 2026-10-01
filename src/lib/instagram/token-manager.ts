@@ -83,7 +83,7 @@ async function fetchInstagram<T = InstagramTokenResponse>(
     method: "GET",
     params,
     timeoutMs: REQUEST_TIMEOUT_MS,
-    rateLimit: { instagramAccountId, operation: "PROFILE_READ" },
+    ...(rateLimit ? { rateLimit } : {}),
   });
 }
 
