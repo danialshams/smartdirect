@@ -279,25 +279,14 @@ export default function DashboardSidebar({ instagramAccounts }: DashboardSidebar
         width: { xs: 72, lg: 248 },
         flexShrink: 0,
         "& .MuiDrawer-paper": {
-          width: { xs: 72, lg: 248 },
+          width: isMini ? 72 : 248,
           boxSizing: "border-box",
           borderRight: "1px solid #E2E8F0",
           direction: "rtl",
           overflowX: "visible",
           transition: "width 180ms ease",
-          ...(collapsed
-            ? {
-                "@media (min-width: 0px) and (max-width: 1199.95px)": {
-                  width: 72,
-                },
-              }
-            : {
-                "@media (min-width: 0px) and (max-width: 1199.95px)": {
-                  width: 248,
-                  boxShadow: "12px 0 32px rgba(15,23,42,0.10)",
-                  zIndex: 1300,
-                },
-              }),
+          boxShadow: isMini ? "none" : { xs: "12px 0 32px rgba(15,23,42,0.10)", lg: "none" },
+          zIndex: { xs: 1300, lg: "auto" },
         },
       }}
     >
@@ -344,7 +333,7 @@ export default function DashboardSidebar({ instagramAccounts }: DashboardSidebar
         <Divider sx={{ borderColor: "#E2E8F0" }} />
         <AccountSection accounts={instagramAccounts} collapsed={isMini} />
 
-        <Box sx={{ px: collapsed ? 0.75 : 1.5, pb: 1.25 }}>
+        <Box sx={{ px: isMini ? 0.75 : 1.5, pb: 1.25 }}>
           <Box
             component="button"
             type="button"
@@ -356,7 +345,7 @@ export default function DashboardSidebar({ instagramAccounts }: DashboardSidebar
               display: "flex",
               flexDirection: "row",
               alignItems: "center",
-              justifyContent: collapsed ? "center" : "flex-start",
+              justifyContent: isMini ? "center" : "flex-start",
               gap: 1.25,
               border: 0,
               borderRadius: 2,
