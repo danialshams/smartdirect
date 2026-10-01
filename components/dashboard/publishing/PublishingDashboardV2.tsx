@@ -4,7 +4,6 @@ import { Textarea } from "@/components/dashboard/DashboardUI"
 import { Button } from "@/components/dashboard/DashboardUI"
 import { Calendar } from "@/components/dashboard/DashboardUI"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/dashboard/DashboardUI"
-import { faIR } from "@daypicker/persian"
 import { Input } from "@/components/dashboard/DashboardUI"
 import { Select } from "@/components/dashboard/DashboardUI"
 
@@ -75,10 +74,7 @@ function PersianDatePicker({ value, onChange }: { value: JalaliDate; onChange: (
             if (!date) return;
             onChange(gregorianToJalali(date.getFullYear(), date.getMonth() + 1, date.getDate()));
           }}
-          dir="rtl"
-          locale={faIR}
-          numerals="arabext"
-        />
+          />
       </PopoverContent>
     </Popover>
   );
