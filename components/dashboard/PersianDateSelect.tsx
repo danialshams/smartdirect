@@ -70,9 +70,9 @@ export default function PersianDateSelect({
   const years = Array.from({ length: 7 }, (_, index) => current.year - 3 + index);
 
   return (
-    <Box dir="rtl" sx={{ border: "1px solid #E2E8F0", bgcolor: "#FFFFFF", borderRadius: 2, px: 1.25, py: 0.75, minWidth: 190 }}>
+    <Box dir="rtl" sx={{ border: "1px solid #E2E8F0", bgcolor: "#FFFFFF", borderRadius: 2, px: 1.25, py: 0.75, minWidth: 0, width: "100%" }}>
       <Typography sx={{ display: "block", color: "#94A3B8", fontSize: 9 }}>{label}</Typography>
-      <Box sx={{ mt: 0.25, display: "flex", alignItems: "center", gap: 0.25 }}>
+      <Box sx={{ mt: 0.25, display: "flex", alignItems: "center", justifyContent: "center", gap: 0.25, direction: "rtl", overflow: "hidden" }}>
         <DatePartSelect value={current.day} onChange={(v) => update("day", v)} minWidth={42}>
           {Array.from({ length: days }, (_, i) => i + 1).map((day) => <MenuItem key={day} value={day} sx={{ fontSize: 12 }}>{new Intl.NumberFormat("fa-IR").format(day)}</MenuItem>)}
         </DatePartSelect>
