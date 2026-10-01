@@ -44,6 +44,7 @@ export async function syncPersistentMenu(instagramAccountId: string) {
     method: "POST",
     accessToken,
     params: { platform: "instagram" },
+    rateLimit: { instagramAccountId, operation: "MESSENGER_PROFILE" },
     body: {
       persistent_menu: persistentMenu,
     },
