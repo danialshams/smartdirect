@@ -39,6 +39,7 @@ export default function DashboardOverview({
 
   const [accountId, setAccountId] = useState(connectedAccounts[0]?.id || "");
   const [profileName, setProfileName] = useState("");
+  const [profileLoading, setProfileLoading] = useState(Boolean(connectedAccounts[0]?.id));
 
   useEffect(() => {
     if (!connectedAccounts.some((account) => account.id === accountId)) {
@@ -48,6 +49,10 @@ export default function DashboardOverview({
 
   const handleProfileLoaded = useCallback((name: string | null) => {
     setProfileName(name || "");
+  }, []);
+
+  const handleProfileLoadingChange = useCallback((loading: boolean) => {
+    setProfileLoading(loading);
   }, []);
 
   if (!connectedAccounts.length) {
@@ -84,6 +89,51 @@ export default function DashboardOverview({
 
   return (
     <Box dir="rtl" sx={{ width: "100%" }}>
+      <Box
+        dir="rtl"
+        sx={{
+          width: "100%",
+          px: { xs: 2, sm: 3, md: 4, lg: 5 },
+          pt: { xs: 2.5, sm: 3.5, md: 4, lg: 5 },
+          minHeight: 62,
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "flex-start",
+        }}
+      >
+        {profileLoading ? (
+          <Box
+            aria-hidden="true"
+            sx={{
+              width: { xs: 150, sm: 175, md: 195 },
+              height: { xs: 24, sm: 28, md: 30 },
+              borderRadius: 1.5,
+              bgcolor: "#E2E8F0",
+              animation: "sdGreetingPulse 1.6s ease-in-out infinite",
+            }}
+          />
+        ) : (
+          <Typography
+            component="h1"
+            sx={{
+              fontSize: { xs: 20, sm: 24, md: 26 },
+              fontWeight: 500,
+              letterSpacing: "-0.02em",
+              color: "#0F172A",
+            }}
+          >
+            سلام، {profileName || activeAccount.igUsername}
+          </Typography>
+        )}
+      </Box>
+
+      <style jsx global>{`
+        @keyframes sdGreetingPulse {
+          0%, 100% { opacity: 0.55; }
+          50% { opacity: 1; }
+        }
+      `}</style>
+
       {instagramStatus === "connected" ? (
         <Alert
           severity="success"
@@ -117,7 +167,7 @@ export default function DashboardOverview({
       <InstagramProfileDashboard
         accountId={accountId}
         onProfileLoaded={handleProfileLoaded}
-        greetingName={profileName || activeAccount.igUsername}
+        onProfileLoadingChange={handleProfileLoadingChange}
       />
     </Box>
   );
