@@ -2156,7 +2156,7 @@ export default function AutomationForm({
                                                     ""
                                                 )
                                             }
-                                            className="shrink-0 text-xs text-muted-foreground transition hover:text-foreground"
+                                            className="shrink-0 rounded-lg border border-red-600 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-white hover:text-red-700"
                                         >
                                             حذف انتخاب
                                         </Button>
