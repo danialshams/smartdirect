@@ -76,7 +76,7 @@ const menuGroups = [
 
 function Brand({ compact = false, collapsed = false }: { compact?: boolean; collapsed?: boolean }) {
   return (
-    <Box dir="rtl" sx={{ display: "flex", alignItems: "center", justifyContent: isMini ? "center" : "flex-start", gap: 1.25, minWidth: 0 }}>
+    <Box dir="rtl" sx={{ display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "flex-start", gap: 1.25, minWidth: 0 }}>
       <Box
         sx={{
           width: compact ? 38 : 42,
@@ -112,7 +112,7 @@ function Navigation({ collapsed }: { collapsed: boolean }) {
   const pathname = usePathname();
 
   return (
-    <Box dir="rtl" sx={{ px: isMini ? 0.75 : 1.5, py: 1.5 }}>
+    <Box dir="rtl" sx={{ px: collapsed ? 0.75 : 1.5, py: 1.5 }}>
       {menuGroups.map((group) => (
         <Box key={group.label} sx={{ mb: collapsed ? 1.5 : 2.5 }}>
           {!collapsed ? (
@@ -154,7 +154,7 @@ function Navigation({ collapsed }: { collapsed: boolean }) {
                     display: "flex",
                     flexDirection: "row",
                     alignItems: "center",
-                    justifyContent: isMini ? "center" : "flex-start",
+                    justifyContent: collapsed ? "center" : "flex-start",
                     columnGap: 1,
                     borderRadius: 2,
                     px: collapsed ? 1 : 1.25,
