@@ -110,6 +110,13 @@ function AccountSection({ instagramAccounts }: { instagramAccounts: InstagramAcc
 
   return (
     <Box sx={{ px: 1.25, py: 1 }}>
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.65, px: 0.35 }}>
+        <Typography fontSize={10.5} fontWeight={700} color="#64748B">پیج‌های اینستاگرام</Typography>
+        <Box component={Link} href="/api/instagram/connect" aria-label="افزودن حساب" sx={{ display: "flex", alignItems: "center", gap: 0.35, color: "#2563EB", textDecoration: "none", fontSize: 10.5, fontWeight: 700, "&:hover": { color: "#1D4ED8" } }}>
+          <Plus size={14} strokeWidth={2.2} />
+          <span>افزودن حساب</span>
+        </Box>
+      </Box>
       <Box sx={{ display: "flex", alignItems: "center", gap: 0.9, minWidth: 0, px: 0.9, py: 0.85, borderRadius: 1.75, bgcolor: "#F8FAFC", border: "1px solid #E2E8F0" }}>
         <Box sx={{ flexShrink: 0 }}>
           <Avatar src={activeAccount?.profilePictureUrl || undefined} alt={activeAccount?.igUsername || "Instagram"} sx={{ width: 34, height: 34, bgcolor: "#E2E8F0", color: "#64748B" }}>
@@ -121,16 +128,11 @@ function AccountSection({ instagramAccounts }: { instagramAccounts: InstagramAcc
             {activeAccount ? `@${activeAccount.igUsername}` : "پیجی متصل نیست"}
           </Typography>
         </Box>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.45, flexShrink: 0 }}>
-          {activeAccount ? (
-            <Box aria-label="پیج فعال" sx={{ width: 22, height: 22, display: "grid", placeItems: "center", color: "#16A34A" }}>
-              <Check size={14} strokeWidth={2.4} />
-            </Box>
-          ) : null}
-          <Box component={Link} href="/api/instagram/connect" aria-label="اتصال پیج جدید" sx={{ width: 28, height: 28, display: "grid", placeItems: "center", borderRadius: 1.5, color: "#2563EB", bgcolor: "#EFF6FF", textDecoration: "none", "&:hover": { bgcolor: "#DBEAFE" } }}>
-            <Plus size={15} strokeWidth={2} />
+        {activeAccount ? (
+          <Box aria-label="پیج فعال" sx={{ width: 22, height: 22, display: "grid", placeItems: "center", color: "#16A34A", flexShrink: 0 }}>
+            <Check size={14} strokeWidth={2.4} />
           </Box>
-        </Box>
+        ) : null}
       </Box>
     </Box>
   );
