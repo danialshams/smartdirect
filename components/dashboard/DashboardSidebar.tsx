@@ -1,38 +1,301 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { BarChart3, Bot, CreditCard, ImagePlus, Inbox, LayoutDashboard, MessageCircle, MessageCircleReply, Settings, X } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Sidebar, SidebarClose, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar"
-import SignOutButton from "../../components/auth/SignOutButton"
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  BarChart3,
+  Bot,
+  CreditCard,
+  ImagePlus,
+  Inbox,
+  LayoutDashboard,
+  LogOut,
+  MessageCircle,
+  MessageCircleReply,
+  Settings,
+  X,
+} from "lucide-react";
+import {
+  Box,
+  Divider,
+  Drawer,
+  IconButton,
+  List,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Typography,
+} from "@mui/material";
+import { signOut } from "next-auth/react";
 
-type DashboardSidebarProps={open?:boolean; onClose?:()=>void}
-const menuGroups=[
-{label:"نمای کلی",items:[{title:"داشبورد",href:"/dashboard",icon:LayoutDashboard},{title:"تحلیل پیج",href:"/dashboard/insights",icon:BarChart3}]},
-{label:"مدیریت",items:[{title:"انتشار محتوا",href:"/dashboard/publishing",icon:ImagePlus},{title:"کامنت‌ها",href:"/dashboard/comments",icon:MessageCircleReply},{title:"پیام‌ها",href:"/dashboard/inbox",icon:Inbox},{title:"پاسخ خودکار کامنت",href:"/dashboard/comment-automation",icon:Bot},{title:"پاسخ خودکار استوری",href:"/dashboard/story-automation",icon:Bot},{title:"سؤال‌های شروع گفتگو",href:"/dashboard/ice-breaker",icon:MessageCircle},{title:"منوی دایرکت",href:"/dashboard/persistent-menu",icon:MessageCircle}]},
-{label:"حساب",items:[{title:"اشتراک",href:"/dashboard/subscription",icon:CreditCard},{title:"تنظیمات",href:"/dashboard/settings",icon:Settings}]}
-]
-export default function DashboardSidebar({onClose}:DashboardSidebarProps){
- const pathname=usePathname()
- const {setOpenMobile}=useSidebar()
- const close=()=>{onClose?.();setOpenMobile(false)}
- return <Sidebar dir="rtl" side="right" className="border-slate-200 bg-white">
-   <SidebarHeader>
-     <div className="flex items-center justify-between">
-       <Link href="/dashboard" onClick={close} className="flex min-w-0 items-center gap-3">
-         <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary text-xs font-bold text-primary-foreground">SD</div>
-         <div className="min-w-0"><div className="truncate text-sm font-bold tracking-tight">SmartDirect</div><div className="mt-0.5 truncate text-[10px] text-muted-foreground">Instagram Automation</div></div>
-       </Link>
-       <Button variant="ghost" size="icon" className="lg:hidden" onClick={close} aria-label="بستن"><X/></Button>
-     </div>
-   </SidebarHeader>
-   <SidebarContent>
-     {menuGroups.map(group=><SidebarGroup key={group.label}>
-       <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
-       <SidebarGroupContent><SidebarMenu>{group.items.map(item=>{const Icon=item.icon; const active=item.href==="/dashboard"?pathname==="/dashboard":pathname===item.href||pathname.startsWith(item.href+"/"); return <SidebarMenuItem key={item.href}><SidebarMenuButton href={item.href} isActive={active} onClick={close}><Icon/><span>{item.title}</span></SidebarMenuButton></SidebarMenuItem>})}</SidebarMenu></SidebarGroupContent>
-     </SidebarGroup>)}
-   </SidebarContent>
-   <SidebarFooter><SignOutButton/></SidebarFooter>
- </Sidebar>
+type DashboardSidebarProps = {
+  mobileOpen: boolean;
+  onMobileClose: () => void;
+};
+
+const menuGroups = [
+  {
+    label: "نمای کلی",
+    items: [
+      { title: "داشبورد", href: "/dashboard", icon: LayoutDashboard },
+      { title: "تحلیل پیج", href: "/dashboard/insights", icon: BarChart3 },
+    ],
+  },
+  {
+    label: "مدیریت",
+    items: [
+      { title: "انتشار محتوا", href: "/dashboard/publishing", icon: ImagePlus },
+      { title: "کامنت‌ها", href: "/dashboard/comments", icon: MessageCircleReply },
+      { title: "پیام‌ها", href: "/dashboard/inbox", icon: Inbox },
+      { title: "پاسخ خودکار کامنت", href: "/dashboard/comment-automation", icon: Bot },
+      { title: "پاسخ خودکار استوری", href: "/dashboard/story-automation", icon: Bot },
+      { title: "سؤال‌های شروع گفتگو", href: "/dashboard/ice-breaker", icon: MessageCircle },
+      { title: "منوی دایرکت", href: "/dashboard/persistent-menu", icon: MessageCircle },
+    ],
+  },
+  {
+    label: "حساب",
+    items: [
+      { title: "اشتراک", href: "/dashboard/subscription", icon: CreditCard },
+      { title: "تنظیمات", href: "/dashboard/settings", icon: Settings },
+    ],
+  },
+];
+
+function Brand({ compact = false }: { compact?: boolean }) {
+  return (
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0 }}>
+      <Box
+        sx={{
+          width: compact ? 38 : 42,
+          height: compact ? 38 : 42,
+          flexShrink: 0,
+          display: "grid",
+          placeItems: "center",
+          borderRadius: 2.5,
+          bgcolor: "#2563EB",
+          color: "#FFFFFF",
+          fontSize: compact ? 15 : 17,
+          fontWeight: 900,
+          letterSpacing: "-0.04em",
+        }}
+      >
+        S
+      </Box>
+
+      <Box sx={{ minWidth: 0 }}>
+        <Typography fontSize={15} fontWeight={800} noWrap color="#0F172A">
+          SmartDirect
+        </Typography>
+        <Typography
+          fontSize={10.5}
+          noWrap
+          sx={{ mt: 0.25, color: "#64748B" }}
+        >
+          Automate · Connect · Grow
+        </Typography>
+      </Box>
+    </Box>
+  );
+}
+
+function Navigation({ onNavigate }: { onNavigate?: () => void }) {
+  const pathname = usePathname();
+
+  return (
+    <Box sx={{ px: 1.5, py: 1.5 }}>
+      {menuGroups.map((group) => (
+        <Box key={group.label} sx={{ mb: 2.5 }}>
+          <Typography
+            sx={{
+              px: 1.25,
+              mb: 0.75,
+              color: "#94A3B8",
+              fontSize: 10.5,
+              fontWeight: 700,
+            }}
+          >
+            {group.label}
+          </Typography>
+
+          <List disablePadding sx={{ display: "grid", gap: 0.5 }}>
+            {group.items.map(({ href, title, icon: Icon }) => {
+              const active =
+                href === "/dashboard"
+                  ? pathname === "/dashboard"
+                  : pathname === href || pathname.startsWith(href + "/");
+
+              return (
+                <ListItemButton
+                  key={href}
+                  component={Link}
+                  href={href}
+                  onClick={onNavigate}
+                  selected={active}
+                  sx={{
+                    minHeight: 42,
+                    borderRadius: 2,
+                    px: 1.25,
+                    color: active ? "#2563EB" : "#475569",
+                    "& .MuiListItemIcon-root": {
+                      color: "inherit",
+                    },
+                    "&.Mui-selected": {
+                      bgcolor: "#EFF6FF",
+                      color: "#2563EB",
+                    },
+                    "&.Mui-selected:hover": {
+                      bgcolor: "#EFF6FF",
+                    },
+                    "&:hover": {
+                      bgcolor: "#F8FAFC",
+                      color: "#1D4ED8",
+                    },
+                  }}
+                >
+                  <ListItemIcon sx={{ minWidth: 36 }}>
+                    <Icon size={18} strokeWidth={1.9} />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={title}
+                    primaryTypographyProps={{
+                      fontSize: 13,
+                      fontWeight: active ? 700 : 500,
+                    }}
+                  />
+                </ListItemButton>
+              );
+            })}
+          </List>
+        </Box>
+      ))}
+    </Box>
+  );
+}
+
+function SidebarContent({ mobile = false, onClose }: { mobile?: boolean; onClose?: () => void }) {
+  return (
+    <Box
+      sx={{
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        bgcolor: "#FFFFFF",
+      }}
+    >
+      <Box
+        sx={{
+          minHeight: 72,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          px: 2,
+          borderBottom: "1px solid #E2E8F0",
+        }}
+      >
+        <Link
+          href="/dashboard"
+          onClick={onClose}
+          style={{ textDecoration: "none", minWidth: 0 }}
+        >
+          <Brand compact={mobile} />
+        </Link>
+
+        {mobile ? (
+          <IconButton
+            size="small"
+            onClick={onClose}
+            aria-label="بستن منو"
+            sx={{ color: "#64748B" }}
+          >
+            <X size={18} />
+          </IconButton>
+        ) : null}
+      </Box>
+
+      <Box sx={{ flex: 1, overflowY: "auto" }}>
+        <Navigation onNavigate={onClose} />
+      </Box>
+
+      <Divider sx={{ borderColor: "#E2E8F0" }} />
+
+      <Box sx={{ p: 1.5 }}>
+        <Box
+          component="button"
+          type="button"
+          onClick={() => void signOut({ callbackUrl: "/login" })}
+          sx={{
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            gap: 1.25,
+            border: 0,
+            borderRadius: 2,
+            bgcolor: "transparent",
+            color: "#64748B",
+            px: 1.25,
+            py: 1.25,
+            cursor: "pointer",
+            fontFamily: "inherit",
+            textAlign: "right",
+            "&:hover": {
+              bgcolor: "#FEF2F2",
+              color: "#DC2626",
+            },
+          }}
+        >
+          <LogOut size={18} strokeWidth={1.9} />
+          <Typography component="span" fontSize={13} fontWeight={500}>
+            خروج از حساب
+          </Typography>
+        </Box>
+      </Box>
+    </Box>
+  );
+}
+
+export default function DashboardSidebar({
+  mobileOpen,
+  onMobileClose,
+}: DashboardSidebarProps) {
+  return (
+    <>
+      <Drawer
+        variant="permanent"
+        anchor="right"
+        sx={{
+          display: { xs: "none", lg: "block" },
+          width: 248,
+          flexShrink: 0,
+          "& .MuiDrawer-paper": {
+            width: 248,
+            boxSizing: "border-box",
+            borderLeft: "1px solid #E2E8F0",
+            borderRight: 0,
+          },
+        }}
+      >
+        <SidebarContent />
+      </Drawer>
+
+      <Drawer
+        variant="temporary"
+        anchor="right"
+        open={mobileOpen}
+        onClose={onMobileClose}
+        ModalProps={{ keepMounted: true }}
+        sx={{
+          display: { xs: "block", lg: "none" },
+          "& .MuiDrawer-paper": {
+            width: { xs: "min(84vw, 320px)", sm: 340 },
+            boxSizing: "border-box",
+            borderLeft: "1px solid #E2E8F0",
+            borderRight: 0,
+          },
+        }}
+      >
+        <SidebarContent mobile onClose={onMobileClose} />
+      </Drawer>
+    </>
+  );
 }
