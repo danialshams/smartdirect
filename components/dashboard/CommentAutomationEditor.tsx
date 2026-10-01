@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Check, Loader2, MessageCircle, Plus, Send, UserRoundCheck, X } from "lucide-react";
+import { ArrowRight, Check , MessageCircle, Plus, Send, UserRoundCheck, X } from "lucide-react";
 import { Box, Button, Card, CardContent, Checkbox, CircularProgress, Divider, IconButton, Paper, Stack, TextField, Typography } from "@mui/material";
 
 type AutomationMessage = { id:string; messageType:string; text:string|null; order:number };
@@ -289,4 +289,4 @@ const cardSx={border:"1px solid #E2E8F0",borderRadius:2.5,boxShadow:"0 1px 3px r
 const contentSx={p:{xs:2,sm:2.25},"&:last-child":{pb:{xs:2,sm:2.25}}};
 const fieldSx={"& .MuiOutlinedInput-root":{borderRadius:1.75,bgcolor:"#FFF",fontSize:12.5},"& .MuiInputBase-input":{fontFamily:'"Vazirmatn",Arial,sans-serif',lineHeight:1.8},"& .MuiInputLabel-root":{fontFamily:'"Vazirmatn",Arial,sans-serif',fontSize:12}};
 const outlineButtonSx={minWidth:86,height:40,borderColor:"#E2E8F0",color:"#0F172A",fontSize:11.5,fontWeight:600,borderRadius:1.75,whiteSpace:"nowrap","&:hover":{borderColor:"#94A3B8",bgcolor:"#F8FAFC"}};
-function SectionTitle({icon,title,description}:{icon:React.ReactNode;title:string;description:string}){return <Stack direction="row" spacing={1.25} alignItems="flex-start"><Box sx={{width:36,height:36,borderRadius:1.75,display:"grid",placeItems:"center",bgcolor:"#EFF6FF",color:"#2563EB",flexShrink:0}}>{icon}</Box><Box><Typography sx={{fontSize:14,fontWeight:700,color:"#0F172A"}}>{title}</Typography><Typography sx={{mt:.5,fontSize:11.5,lineHeight:1.8,color:"#64748B"}}>{description}</Typography></Box></Stack>}
+function SectionTitle({icon,title,description}:{icon:ReactNode;title:string;description:string}){return <Stack direction="row" spacing={1.25} alignItems="flex-start"><Box sx={{width:36,height:36,borderRadius:1.75,display:"grid",placeItems:"center",bgcolor:"#EFF6FF",color:"#2563EB",flexShrink:0}}>{icon}</Box><Box><Typography sx={{fontSize:14,fontWeight:700,color:"#0F172A"}}>{title}</Typography><Typography sx={{mt:.5,fontSize:11.5,lineHeight:1.8,color:"#64748B"}}>{description}</Typography></Box></Stack>}
