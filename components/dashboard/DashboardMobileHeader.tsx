@@ -92,7 +92,7 @@ export default function DashboardMobileHeader({
           <Box sx={{ display: { xs: "none", lg: "block" } }}>
             <Button
               onClick={(event) => setAccountMenuAnchor(event.currentTarget)}
-              endIcon={<ChevronDown sx={{ fontSize: 17 }} />}
+              endIcon={<ChevronDown size={17} strokeWidth={2} />}
               sx={{
                 minWidth: 0,
                 height: 38,
@@ -190,7 +190,7 @@ export default function DashboardMobileHeader({
             },
           }}
         >
-          <PersonOutline sx={{ fontSize: 18 }} />
+          <UserRound size={18} strokeWidth={1.9} />
           <Box
             sx={{
               position: "absolute",
@@ -204,7 +204,7 @@ export default function DashboardMobileHeader({
               bgcolor: "#FFFFFF",
             }}
           >
-            <Add sx={{ fontSize: 11, color: "#0F172A" }} />
+            <Plus size={11} strokeWidth={2.2} color="#0F172A" />
           </Box>
         </Button>
       </Box>
