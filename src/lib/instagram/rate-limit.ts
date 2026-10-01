@@ -152,7 +152,7 @@ for i = 1, count do
   local tokenKey = KEYS[(i - 1) * 2 + 1]
   local tokens = tonumber(redis.call("GET", tokenKey))
   tokens = math.max(0, tokens - 1)
-  redis.call("SET", tokenKey, tostring(tokens), "PX", math.max(tonumber(ARGV[(i - 1) * 3 + 3]) * 2, 1000))
+  redis.call("SET", tokenKey, tostring(tokens), "PX", math.max(tonumber(ARGV[(i - 1) * 2 + 3]) * 2, 1000))
 end
 
 return {1, 0, minRemaining - 1, 0}
