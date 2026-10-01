@@ -1,12 +1,12 @@
 "use client";
-import { Checkbox } from "@/components/ui/checkbox"
-import { Textarea } from "@/components/ui/textarea"
-import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Checkbox } from "@/components/dashboard/DashboardUI"
+import { Textarea } from "@/components/dashboard/DashboardUI"
+import { Button } from "@/components/dashboard/DashboardUI"
+import { Calendar } from "@/components/dashboard/DashboardUI"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/dashboard/DashboardUI"
 import { faIR } from "@daypicker/persian"
-import { Input } from "@/components/ui/input"
-import { Select } from "@/components/ui/select"
+import { Input } from "@/components/dashboard/DashboardUI"
+import { Select } from "@/components/dashboard/DashboardUI"
 
 import { toast } from "sonner";
 import { CalendarClock, Camera, Clapperboard, ImagePlus, Images, Loader2, Plus, Send, Video, X } from "lucide-react";
