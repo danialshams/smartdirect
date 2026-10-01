@@ -23,6 +23,7 @@ export async function enqueueInstagramWebhookEvent(
     {
       priority: "high",
       maxAttempts: 3,
+      instagramAccountId: input.instagramAccountId,
     },
   );
 }
