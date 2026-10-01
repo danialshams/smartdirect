@@ -89,7 +89,7 @@ async function main() {
     await Promise.all(Array.from({ length: 10 }, () => call(accounts[0])));
     await sleep(50);
     const afterLimit = Number(await redis.get(limitKey) ?? 0);
-    assert(afterLimit >= beforeLimit, "Adaptive concurrency did not preserve/increase after healthy traffic");
+    assert(afterLimit > beforeLimit, "Adaptive concurrency did not increase after healthy traffic");
 
     // 3) 429 handling reduces concurrency and opens only the affected account circuit.
     mode = "429";
