@@ -1,6 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import {
+  Alert,
+  Box,
+  Button,
+  Typography,
+} from "@mui/material";
 
 import InstagramProfileDashboard from "./InstagramProfileDashboard";
 
@@ -13,7 +19,12 @@ type InstagramAccount = {
 };
 
 type DashboardOverviewProps = {
-  user: { name: string; email: string; role: string; createdAt: Date };
+  user: {
+    name: string;
+    email: string;
+    role: string;
+    createdAt: Date;
+  };
   instagramAccounts: InstagramAccount[];
   instagramStatus: string | null;
 };
@@ -23,8 +34,9 @@ export default function DashboardOverview({
   instagramStatus,
 }: DashboardOverviewProps) {
   const connectedAccounts = instagramAccounts.filter(
-    (account) => account.isConnected
+    (account) => account.isConnected,
   );
+
   const [accountId, setAccountId] = useState(connectedAccounts[0]?.id || "");
   const [profileName, setProfileName] = useState("");
 
@@ -40,14 +52,29 @@ export default function DashboardOverview({
 
   if (!connectedAccounts.length) {
     return (
-      <main dir="rtl" className="flex min-h-screen items-center justify-center bg-white px-5">
-        <a
+      <Box
+        dir="rtl"
+        sx={{
+          minHeight: "calc(100vh - 120px)",
+          display: "grid",
+          placeItems: "center",
+          px: 2,
+        }}
+      >
+        <Button
+          component="a"
           href="/api/instagram/connect"
-          className="inline-flex h-11 items-center justify-center rounded-lg bg-foreground px-6 text-sm font-semibold text-background"
+          variant="contained"
+          sx={{
+            minHeight: 44,
+            px: 3,
+            bgcolor: "#2563EB",
+            "&:hover": { bgcolor: "#1D4ED8" },
+          }}
         >
           اتصال پیج
-        </a>
-      </main>
+        </Button>
+      </Box>
     );
   }
 
@@ -56,24 +83,42 @@ export default function DashboardOverview({
     connectedAccounts[0];
 
   return (
-    <div dir="rtl" className="space-y-6 sm:space-y-8">
-      {instagramStatus === "connected" && (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+    <Box dir="rtl" sx={{ width: "100%" }}>
+      {instagramStatus === "connected" ? (
+        <Alert
+          severity="success"
+          sx={{
+            mb: 2.5,
+            border: "1px solid #BBF7D0",
+            bgcolor: "#F0FDF4",
+            color: "#166534",
+            "& .MuiAlert-icon": { color: "#16A34A" },
+          }}
+        >
           پیج با موفقیت متصل شد.
-        </div>
-      )}
+        </Alert>
+      ) : null}
 
-      {instagramStatus && instagramStatus !== "connected" && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+      {instagramStatus && instagramStatus !== "connected" ? (
+        <Alert
+          severity="error"
+          sx={{
+            mb: 2.5,
+            border: "1px solid #FECACA",
+            bgcolor: "#FEF2F2",
+            color: "#991B1B",
+            "& .MuiAlert-icon": { color: "#DC2626" },
+          }}
+        >
           اتصال پیج انجام نشد. دوباره تلاش کنید.
-        </div>
-      )}
+        </Alert>
+      ) : null}
 
       <InstagramProfileDashboard
         accountId={accountId}
         onProfileLoaded={handleProfileLoaded}
         greetingName={profileName || activeAccount.igUsername}
       />
-    </div>
+    </Box>
   );
 }
