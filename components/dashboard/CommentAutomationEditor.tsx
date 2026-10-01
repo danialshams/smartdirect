@@ -1,55 +1,9 @@
 "use client";
 
-import { Button } from "@/components/dashboard/DashboardUI";
-import { Input } from "@/components/dashboard/DashboardUI";
-import { Textarea } from "@/components/dashboard/DashboardUI";
-import { ArrowRight, Check, Loader2, MessageCircle, Plus, Send, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-
-type AutomationMessage = {
-  id: string;
-  messageType: string;
-  text: string | null;
-  order: number;
-};
-
-type Automation = {
-  id: string;
-  instagramAccountId: string;
-  triggerType: string;
-  mediaId: string | null;
-  keyword: string | null;
-  commentReplyText: string | null;
-  replyText: string | null;
-  sendDm: boolean;
-  requireFollow: boolean;
-  followGateText: string | null;
-  isActive: boolean;
-  messages?: AutomationMessage[];
-  instagramAccount?: {
-    id: string;
-    igUserId: string;
-    igUsername: string;
-    isConnected: boolean;
-  };
-};
-
-type MediaPreview = {
-  mediaUrl: string | null;
-  thumbnailUrl: string | null;
-  mediaType: "IMAGE" | "VIDEO" | "UNKNOWN";
-};
-
-function getExistingDmText(item: Automation) {
-  if (item.replyText?.trim()) return item.replyText;
-
-  const firstTextMessage = [...(item.messages ?? [])]
-    .sort((a, b) => a.order - b.order)
-    .find((message) => message.messageType === "TEXT" && message.text?.trim());
-
-  return firstTextMessage?.text ?? "";
-}
+import { ArrowRight, Check, Loader2, MessageCircle, Plus, Send, UserRoundCheck, X } from "lucide-react";
+import { Box, Button, Card, CardContent, Checkbox, CircularProgress, Divider, IconButton, Paper, Stack, TextField, Typography } from "@mui/material";
 
 export default function CommentAutomationEditor({ id }: { id: string }) {
   const router = useRouter();
@@ -231,205 +185,93 @@ export default function CommentAutomationEditor({ id }: { id: string }) {
 
   if (loading) {
     return (
-      <div dir="rtl" className="mx-auto w-full max-w-[1200px] animate-pulse">
-        <div className="mb-5 h-8 w-44 rounded-lg bg-muted" />
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-          <div className="h-[460px] rounded-3xl bg-muted" />
-          <div className="space-y-4">
-            <div className="h-32 rounded-3xl bg-muted" />
-            <div className="h-44 rounded-3xl bg-muted" />
-            <div className="h-44 rounded-3xl bg-muted" />
-          </div>
-        </div>
-      </div>
+      <Box dir="rtl" sx={{ width:"100%", maxWidth:1200, mx:"auto" }}>
+        <Stack spacing={1} sx={{ mb:2.5 }}>
+          <Box sx={{ width:220, height:30, borderRadius:1.5, bgcolor:"#E2E8F0" }} />
+          <Box sx={{ width:340, height:16, borderRadius:1.5, bgcolor:"#E2E8F0" }} />
+        </Stack>
+        <Box sx={{ display:"grid", gridTemplateColumns:{xs:"1fr",lg:"minmax(0,.9fr) minmax(0,1.1fr)"}, gap:2.5 }}>
+          <Paper sx={{ height:520, borderRadius:3, bgcolor:"#E2E8F0", boxShadow:"none" }} />
+          <Stack spacing={1.5}><Paper sx={{height:120,borderRadius:2.5,bgcolor:"#E2E8F0",boxShadow:"none"}}/><Paper sx={{height:170,borderRadius:2.5,bgcolor:"#E2E8F0",boxShadow:"none"}}/><Paper sx={{height:170,borderRadius:2.5,bgcolor:"#E2E8F0",boxShadow:"none"}}/></Stack>
+        </Box>
+      </Box>
     );
   }
 
   if (!automation) {
-    return (
-      <div dir="rtl" className="mx-auto max-w-xl rounded-3xl border border-red-200 bg-red-50 p-6 text-sm leading-7 text-red-700">
-        {error || "اتوماسیون پیدا نشد."}
-      </div>
-    );
+    return <Box dir="rtl" sx={{ maxWidth:560, mx:"auto", p:2.5, border:"1px solid #FECACA", bgcolor:"#FEF2F2", color:"#B91C1C", borderRadius:3, fontSize:13 }}>{error || "اتوماسیون پیدا نشد."}</Box>;
   }
 
   const accountName = automation.instagramAccount?.igUsername || "Instagram";
 
   return (
-    <div dir="rtl" className="min-h-[calc(100dvh-2rem)]">
-      <div className="mx-auto w-full max-w-[1200px]">
-        <div className="mb-5">
-          <div className="flex justify-start">
-            <button
-              type="button"
-              onClick={() => router.back()}
-              className="inline-flex min-h-10 items-center gap-2 rounded-xl px-2 text-sm font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground"
-            >
-              <ArrowRight size={18} />
-              بازگشت
-            </button>
-          </div>
+    <Box dir="rtl" sx={{ width:"100%", maxWidth:1200, mx:"auto", pb:5 }}>
+      <Stack direction="row" justifyContent="flex-start" sx={{ mb:2 }}>
+        <Button variant="text" startIcon={<ArrowRight size={17}/>} onClick={()=>router.back()} sx={{color:"#64748B",fontSize:12,fontWeight:600,minHeight:36,"&:hover":{bgcolor:"#F8FAFC"}}}>بازگشت</Button>
+      </Stack>
+      <Box sx={{mb:2.5}}>
+        <Typography component="h1" sx={{fontSize:{xs:22,sm:28},fontWeight:800,color:"#0F172A"}}>ویرایش پاسخ خودکار کامنت</Typography>
+        <Typography sx={{mt:.75,fontSize:12.5,color:"#64748B"}}>تنظیمات این پاسخ خودکار را از همین صفحه مدیریت کنید.</Typography>
+      </Box>
+      {error && <Paper sx={{mb:2.5,p:1.5,border:"1px solid #FECACA",bgcolor:"#FEF2F2",color:"#B91C1C",borderRadius:2,boxShadow:"none",fontSize:12}}>{error}</Paper>}
 
-          <div className="mt-4">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">ویرایش پاسخ خودکار کامنت</h1>
-            <p className="mt-1.5 text-sm text-muted-foreground">تنظیمات پاسخ خودکار این پست را ویرایش کنید.</p>
-          </div>
-        </div>
+      <Box sx={{display:"grid",gridTemplateColumns:{xs:"1fr",lg:"minmax(0,.9fr) minmax(0,1.1fr)"},gap:2.5,alignItems:"start"}}>
+        <Card sx={{overflow:"hidden",border:"1px solid #E2E8F0",borderRadius:3,boxShadow:"0 1px 3px rgba(15,23,42,.04)",position:{lg:"sticky"},top:{lg:20}}}>
+          <CardContent sx={{p:{xs:2,sm:2.5}}}>
+            <Stack direction="row" spacing={1.25} alignItems="center" sx={{mb:2}}>
+              <Box sx={{width:40,height:40,borderRadius:2,display:"grid",placeItems:"center",bgcolor:"#EFF6FF",color:"#2563EB"}}><MessageCircle size={19}/></Box>
+              <Box sx={{minWidth:0}}><Typography sx={{fontSize:10.5,color:"#64748B"}}>پست</Typography><Typography dir="ltr" noWrap sx={{fontSize:12,fontWeight:700,color:"#0F172A"}}>@{accountName}</Typography></Box>
+            </Stack>
+            <Box sx={{overflow:"hidden",borderRadius:2.5,bgcolor:"#F1F5F9",aspectRatio:"1/1"}}>
+              {mediaLoading ? <Box sx={{width:"100%",height:"100%",bgcolor:"#E2E8F0",animation:"sdPulse 1.5s infinite"}}/> : previewImage ? <Box component="img" src={previewImage} alt="پست اینستاگرام" sx={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/> : <Stack sx={{height:"100%"}} alignItems="center" justifyContent="center"><Typography sx={{fontSize:12,color:"#64748B"}}>پیش‌نمایش این پست در دسترس نیست</Typography></Stack>}
+            </Box>
+            <Paper variant="outlined" sx={{mt:2,p:1.5,borderColor:"#E2E8F0",bgcolor:"#F8FAFC",borderRadius:2,boxShadow:"none"}}>
+              <Typography sx={{fontSize:10.5,color:"#64748B"}}>کلمات کلیدی فعال</Typography>
+              <Typography sx={{mt:.5,fontSize:12.5,fontWeight:600,lineHeight:1.9,color:"#0F172A",wordBreak:"break-word"}}>{keywords.length?keywords.join("، "):"بدون کلمه کلیدی"}</Typography>
+            </Paper>
+          </CardContent>
+        </Card>
 
-        {error && (
-          <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-700">{error}</div>
-        )}
+        <Stack spacing={1.5}>
+          <Card sx={cardSx}><CardContent sx={contentSx}>
+            <SectionTitle icon={<MessageCircle size={17}/>} title="کلمات کلیدی" description="هر کلمه را جداگانه اضافه کنید."/>
+            <Stack direction="row" spacing={1} sx={{mt:1.5}}>
+              <TextField fullWidth size="small" value={keywordInput} onChange={e=>setKeywordInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();const v=keywordInput.trim();if(v&&!keywords.some(x=>x.toLowerCase()===v.toLowerCase()))setKeywords(x=>[...x,v]);setKeywordInput("")}}} placeholder="مثلاً قیمت" sx={fieldSx}/>
+              <Button variant="outlined" onClick={()=>{const v=keywordInput.trim();if(v&&!keywords.some(x=>x.toLowerCase()===v.toLowerCase()))setKeywords(x=>[...x,v]);setKeywordInput("")}} startIcon={<Plus size={16}/>} sx={outlineButtonSx}>افزودن</Button>
+            </Stack>
+            {keywords.length>0&&<Stack direction="row" flexWrap="wrap" gap={1} sx={{mt:1.5}}>{keywords.map(keyword=><Paper key={keyword} sx={{display:"flex",alignItems:"center",gap:.75,pl:.75,pr:1.25,py:.5,border:"1px solid #E2E8F0",borderRadius:99,bgcolor:"#FFF",boxShadow:"none"}}><Typography sx={{fontSize:11.5,color:"#0F172A"}}>{keyword}</Typography><IconButton size="small" onClick={()=>setKeywords(current=>current.filter(item=>item!==keyword))} sx={{width:24,height:24,p:0,border:"1px solid #DC2626",color:"#DC2626",bgcolor:"transparent","&:hover":{bgcolor:"transparent",borderColor:"#B91C1C",color:"#B91C1C"}}}><X size={13}/></IconButton></Paper>)}</Stack>}
+          </CardContent></Card>
 
-        <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-          <section className="overflow-hidden rounded-3xl border border-border/80 bg-card shadow-sm lg:sticky lg:top-5">
-            <div className="p-4 sm:p-5">
-              <div className="mb-4 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted">
-                  <MessageCircle size={19} className="text-muted-foreground" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs text-muted-foreground">پست</p>
-                  <p className="truncate text-sm font-semibold">@{accountName}</p>
-                </div>
-              </div>
+          <Card sx={cardSx}><CardContent sx={contentSx}><SectionTitle icon={<MessageCircle size={17}/>} title="پاسخ کامنت" description="پاسخ عمومی که زیر کامنت کاربر ارسال می‌شود."/><TextField fullWidth multiline minRows={4} value={commentReply} onChange={e=>setCommentReply(e.target.value)} placeholder="متن پاسخ کامنت..." sx={{...fieldSx,mt:1.5}}/></CardContent></Card>
 
-              <div className="overflow-hidden rounded-2xl bg-muted">
-                <div className="aspect-square w-full">
-                  {mediaLoading ? (
-                    <div className="h-full w-full animate-pulse bg-muted" />
-                  ) : previewImage ? (
-                    <img src={previewImage} alt="پست اینستاگرام" className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="flex h-full items-center justify-center px-6 text-center text-sm text-muted-foreground">
-                      پیش‌نمایش این پست در دسترس نیست
-                    </div>
-                  )}
-                </div>
-              </div>
+          <Card sx={cardSx}><CardContent sx={contentSx}>
+            <Stack direction="row" spacing={1.25} alignItems="flex-start">
+              <Box sx={{width:36,height:36,borderRadius:1.75,display:"grid",placeItems:"center",bgcolor:"#EFF6FF",color:"#2563EB",flexShrink:0}}><Send size={17}/></Box>
+              <Box sx={{minWidth:0,flex:1}}><Typography sx={{fontSize:14,fontWeight:700,color:"#0F172A"}}>پاسخ دایرکت</Typography><Typography sx={{mt:.5,fontSize:11.5,lineHeight:1.8,color:"#64748B"}}>بعد از کامنت، یک پیام خصوصی متنی برای کاربر ارسال شود.</Typography></Box>
+              <Checkbox checked={sendDm} onChange={e=>setSendDm(e.target.checked)} sx={{p:.25,color:"#94A3B8","&.Mui-checked":{color:"#2563EB"}}}/>
+            </Stack>
+            <TextField fullWidth multiline minRows={4} value={dmReply} onChange={e=>setDmReply(e.target.value)} disabled={!sendDm} placeholder="متن پاسخ دایرکت..." sx={{...fieldSx,mt:1.5}}/>
+          </CardContent></Card>
 
-              <div className="mt-4 rounded-2xl border border-border/70 bg-muted/40 p-4">
-                <p className="text-xs font-medium text-muted-foreground">کلمات کلیدی فعال</p>
-                <p className="mt-1.5 break-words text-sm font-medium leading-6 text-foreground">
-                  {keywords.length ? keywords.join("، ") : "بدون کلمه کلیدی"}
-                </p>
-              </div>
-            </div>
-          </section>
+          <Card sx={cardSx}><CardContent sx={contentSx}>
+            <Stack direction="row" spacing={1.25} alignItems="flex-start">
+              <Box sx={{width:36,height:36,borderRadius:1.75,display:"grid",placeItems:"center",bgcolor:"#F0FDF4",color:"#16A34A",flexShrink:0}}><UserRoundCheck size={17}/></Box>
+              <Box sx={{minWidth:0,flex:1}}><Typography sx={{fontSize:14,fontWeight:700,color:"#0F172A"}}>اجبار به فالو</Typography><Typography sx={{mt:.5,fontSize:11.5,lineHeight:1.8,color:"#64748B"}}>قبل از ارسال محتوای اصلی، ابتدا پیام درخواست فالو برای کاربر ارسال شود.</Typography></Box>
+              <Checkbox checked={requireFollow} onChange={e=>setRequireFollow(e.target.checked)} sx={{p:.25,color:"#94A3B8","&.Mui-checked":{color:"#2563EB"}}}/>
+            </Stack>
+            {requireFollow&&<><Divider sx={{my:1.75}}/><TextField fullWidth multiline minRows={3} label="متن درخواست فالو" value={followGateText} onChange={e=>setFollowGateText(e.target.value)} placeholder="برای دریافت این محتوا ابتدا پیج ما را فالو کنید." sx={fieldSx}/></>}
+          </CardContent></Card>
 
-          <section className="space-y-4">
-            <div className="rounded-3xl border border-border/80 bg-card p-4 shadow-sm sm:p-5">
-              <div className="mb-4">
-                <h2 className="text-base font-bold">کلمات کلیدی</h2>
-                <p className="mt-1 text-xs leading-5 text-muted-foreground">هر کلمه را جداگانه اضافه کنید.</p>
-              </div>
-              <div className="flex gap-2">
-                <Input
-                  value={keywordInput}
-                  onChange={(event) => setKeywordInput(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                      event.preventDefault();
-                      const value = keywordInput.trim();
-                      if (!value) return;
-                      if (!keywords.some((item) => item.toLowerCase() === value.toLowerCase())) {
-                        setKeywords((current) => [...current, value]);
-                      }
-                      setKeywordInput("");
-                    }
-                  }}
-                  placeholder="مثلاً قیمت"
-                  className="h-12 rounded-xl text-sm"
-                  dir="rtl"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    const value = keywordInput.trim();
-                    if (!value) return;
-                    if (!keywords.some((item) => item.toLowerCase() === value.toLowerCase())) {
-                      setKeywords((current) => [...current, value]);
-                    }
-                    setKeywordInput("");
-                  }}
-                  className="h-12 shrink-0 rounded-xl px-4"
-                >
-                  <Plus size={16} />
-                  افزودن
-                </Button>
-              </div>
-              {keywords.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {keywords.map((keyword) => (
-                    <span
-                      key={keyword}
-                      className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/50 px-3 py-1.5 text-xs font-medium"
-                    >
-                      {keyword}
-                      <button
-                        type="button"
-                        aria-label={"حذف کلمه کلیدی " + keyword}
-                        onClick={() =>
-                          setKeywords((current) => current.filter((item) => item !== keyword))
-                        }
-                        className="rounded-full p-0.5 text-red-500 transition hover:bg-red-50 hover:text-red-600"
-                      >
-                        <X size={13} />
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="rounded-3xl border border-border/80 bg-card p-4 shadow-sm sm:p-5">
-              <div className="mb-4 flex items-start gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-muted"><MessageCircle size={17} /></div>
-                <div>
-                  <h2 className="text-base font-bold">پاسخ کامنت</h2>
-                  <p className="mt-1 text-xs leading-5 text-muted-foreground">پاسخ عمومی که زیر کامنت کاربر ارسال می‌شود.</p>
-                </div>
-              </div>
-              <Textarea value={commentReply} onChange={(event) => setCommentReply(event.target.value)} placeholder="متن پاسخ کامنت..." className="min-h-28 resize-none rounded-xl text-sm leading-6" />
-            </div>
-
-            <div className="rounded-3xl border border-border/80 bg-card p-4 shadow-sm sm:p-5">
-              <div className="mb-4 flex items-start gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-muted"><Send size={17} /></div>
-                <div className="min-w-0 flex-1">
-                  <h2 className="text-base font-bold">پاسخ دایرکت</h2>
-                  <p className="mt-1 text-xs leading-5 text-muted-foreground">بعد از کامنت، یک پیام خصوصی متنی برای کاربر ارسال شود.</p>
-                </div>
-                <Input type="checkbox" checked={sendDm} onChange={(event) => setSendDm(event.target.checked)} className="mt-1 h-5 w-5 shrink-0" aria-label="فعال کردن پاسخ دایرکت" />
-              </div>
-
-              <Textarea value={dmReply} onChange={(event) => setDmReply(event.target.value)} disabled={!sendDm} placeholder="متن پاسخ دایرکت..." className="min-h-28 resize-none rounded-xl text-sm leading-6 disabled:cursor-not-allowed disabled:opacity-50" />
-            </div>
-
-            <div className="rounded-3xl border border-border/80 bg-card p-4 shadow-sm sm:p-5">
-              <div className="flex items-start gap-3">
-                <Input type="checkbox" checked={requireFollow} onChange={(event) => setRequireFollow(event.target.checked)} className="mt-1 h-5 w-5 shrink-0" aria-label="فعال کردن اجبار به فالو" />
-                <div className="min-w-0 flex-1">
-                  <h2 className="text-base font-bold">اجبار به فالو</h2>
-                  <p className="mt-1 text-xs leading-6 text-muted-foreground">اگر فعال باشد، قبل از ارسال محتوای اصلی ابتدا پیام درخواست فالو برای کاربر ارسال می‌شود.</p>
-                </div>
-              </div>
-
-              {requireFollow && (
-                <div className="mt-4 border-t border-border/70 pt-4">
-                  <label className="mb-2 block text-sm font-medium">متن درخواست فالو</label>
-                  <Textarea value={followGateText} onChange={(event) => setFollowGateText(event.target.value)} placeholder="برای دریافت این محتوا ابتدا پیج ما را فالو کنید." className="min-h-24 resize-none rounded-xl text-sm leading-6" />
-                </div>
-              )}
-            </div>
-
-            <Button type="button" onClick={save} disabled={saving} className="min-h-12 w-full rounded-2xl text-sm font-semibold shadow-sm">
-              {saving ? <Loader2 size={17} className="animate-spin" /> : saved ? <Check size={17} /> : null}
-              {saving ? "در حال ذخیره..." : saved ? "ذخیره شد" : "ذخیره تغییرات"}
-            </Button>
-          </section>
-        </div>
-      </div>
-    </div>
+          <Button variant="contained" onClick={save} disabled={saving} startIcon={saving?<CircularProgress size={16} sx={{color:"#FFF"}}/>:saved?<Check size={17}/>:null} sx={{minHeight:46,borderRadius:2,fontSize:12.5,fontWeight:700,bgcolor:"#2563EB","&:hover":{bgcolor:"#1D4ED8"}}}>{saving?"در حال ذخیره...":saved?"ذخیره شد":"ذخیره تغییرات"}</Button>
+        </Stack>
+      </Box>
+      <style jsx global>{`@keyframes sdPulse{0%,100%{opacity:.55}50%{opacity:1}}`}</style>
+    </Box>
   );
 }
+
+const cardSx={border:"1px solid #E2E8F0",borderRadius:2.5,boxShadow:"0 1px 3px rgba(15,23,42,.035)",bgcolor:"#FFF"};
+const contentSx={p:{xs:2,sm:2.25},"&:last-child":{pb:{xs:2,sm:2.25}}};
+const fieldSx={"& .MuiOutlinedInput-root":{borderRadius:1.75,bgcolor:"#FFF",fontSize:12.5},"& .MuiInputBase-input":{fontFamily:'"Vazirmatn",Arial,sans-serif',lineHeight:1.8},"& .MuiInputLabel-root":{fontFamily:'"Vazirmatn",Arial,sans-serif',fontSize:12}};
+const outlineButtonSx={minWidth:86,height:40,borderColor:"#E2E8F0",color:"#0F172A",fontSize:11.5,fontWeight:600,borderRadius:1.75,whiteSpace:"nowrap","&:hover":{borderColor:"#94A3B8",bgcolor:"#F8FAFC"}};
+function SectionTitle({icon,title,description}:{icon:React.ReactNode;title:string;description:string}){return <Stack direction="row" spacing={1.25} alignItems="flex-start"><Box sx={{width:36,height:36,borderRadius:1.75,display:"grid",placeItems:"center",bgcolor:"#EFF6FF",color:"#2563EB",flexShrink:0}}>{icon}</Box><Box><Typography sx={{fontSize:14,fontWeight:700,color:"#0F172A"}}>{title}</Typography><Typography sx={{mt:.5,fontSize:11.5,lineHeight:1.8,color:"#64748B"}}>{description}</Typography></Box></Stack>}
