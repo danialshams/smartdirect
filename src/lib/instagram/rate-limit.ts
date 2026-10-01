@@ -5,7 +5,7 @@ export type InstagramRateLimitOperation =
   | "COMMENT_REPLY" | "COMMENT_LIKE" | "COMMENT_PRIVATE_REPLY"
   | "PUBLISH_MEDIA" | "PUBLISH_REEL" | "PUBLISH_CAROUSEL" | "PUBLISH_STORY"
   | "PUBLISH_QUOTA_READ"
-  | "AUTOMATION_MEDIA_PREVIEW";
+  | "AUTOMATION_MEDIA_PREVIEW" | "PROFILE_READ" | "MEDIA_READ" | "INSIGHTS_READ" | "MESSENGER_PROFILE";
 
 export type InstagramRateLimitScope = "GLOBAL" | "TENANT" | "INSTAGRAM_ACCOUNT" | "OPERATION";
 
@@ -47,6 +47,10 @@ const DEFAULTS: Record<InstagramRateLimitOperation, { limit: number; windowMs: n
   PUBLISH_STORY: { limit: 100, windowMs: 24 * 60 * 60 * 1_000 },
   PUBLISH_QUOTA_READ: { limit: 2, windowMs: 1_000 },
   AUTOMATION_MEDIA_PREVIEW: { limit: 100, windowMs: 60 * 1_000 },
+  PROFILE_READ: { limit: 20, windowMs: 1_000 },
+  MEDIA_READ: { limit: 20, windowMs: 1_000 },
+  INSIGHTS_READ: { limit: 10, windowMs: 1_000 },
+  MESSENGER_PROFILE: { limit: 10, windowMs: 1_000 },
 };
 
 function envNumber(name: string, fallback: number) {
