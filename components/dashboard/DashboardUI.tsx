@@ -412,6 +412,13 @@ export function Calendar({ className, ...props }: DashboardCalendarProps) {
           border: "1px solid " + COLORS.border,
           borderRadius: 1.5,
           overflow: "hidden",
+          display: "flex",
+          alignItems: "center",
+          position: "relative",
+          background: COLORS.surface,
+        },
+        "& .rdp-dropdown_root svg, & .rdp-chevron": {
+          display: "none",
         },
         "& .rdp-caption_label": { fontSize: 13, fontWeight: 700, color: COLORS.text },
         "& .rdp-weekdays": { display: "flex" },
@@ -465,11 +472,18 @@ export function Calendar({ className, ...props }: DashboardCalendarProps) {
         "& select": {
           fontFamily: '"Vazirmatn", Arial, sans-serif',
           fontSize: 11,
+          minHeight: 32,
           padding: "4px 8px",
+          paddingLeft: 28,
           background: COLORS.surface,
           color: COLORS.text,
           border: 0,
           outline: 0,
+          appearance: "auto",
+          cursor: "pointer",
+        },
+        "& .rdp-button_previous, & .rdp-button_next": {
+          display: "none",
         },
       }}
     >
@@ -485,6 +499,7 @@ export function Calendar({ className, ...props }: DashboardCalendarProps) {
             date.toLocaleString("fa-IR-u-ca-persian", { month: "long" }),
           ...(props.formatters || {}),
         }}
+        hideNavigation
         classNames={{
           ...defaultClassNames,
           month_grid: "rdp-month_grid",
