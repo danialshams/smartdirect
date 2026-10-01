@@ -75,7 +75,7 @@ export async function GET() {
                 username: account.igUsername,
                 isConnected: account.isConnected,
                 profilePictureUrl: account.isConnected
-                    ? await getProfilePicture(account.accessToken)
+                    ? proxyInstagramAccountProfileUrl(account.id)
                     : null,
             })),
         );
