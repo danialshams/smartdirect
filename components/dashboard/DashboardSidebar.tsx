@@ -16,8 +16,6 @@ import {
   Menu as MenuIcon,
   MessageCircle,
   MessageCircleReply,
-  PanelLeftClose,
-  PanelLeftOpen,
   Plus,
   UserRound,
   X,
