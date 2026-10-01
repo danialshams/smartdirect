@@ -128,7 +128,6 @@ function sleep(ms: number, signal?: AbortSignal) {
 
 export async function acquireInstagramTrafficSlot(context: InstagramRateLimitContext, options: { signal?: AbortSignal; maxWaitMs?: number } = {}) {
   const { getRedisClient } = await import("@/lib/redis/client");
-  const { getRedisClient } = await import("@/lib/redis/client");
   const redis = getRedisClient();
   const k = keys(context.instagramAccountId);
   const configuredWait = options.maxWaitMs && options.maxWaitMs > 0 ? options.maxWaitMs : maxWaitMs();
@@ -167,6 +166,7 @@ export async function releaseInstagramTrafficSlot(lease: InstagramTrafficLease) 
 }
 
 export async function recordInstagramTrafficOutcome(context: InstagramRateLimitContext, outcome: "success" | "429" | "5xx" | "timeout" | "network") {
+  const { getRedisClient } = await import("@/lib/redis/client");
   const redis = getRedisClient();
   const k = keys(context.instagramAccountId);
   const result = await redis.eval(
