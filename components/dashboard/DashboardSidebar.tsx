@@ -87,11 +87,7 @@ function Brand({ compact = false }: { compact?: boolean }) {
         <Typography fontSize={15} fontWeight={800} noWrap color="#0F172A">
           SmartDirect
         </Typography>
-        <Typography
-          fontSize={10.5}
-          noWrap
-          sx={{ mt: 0.25, color: "#64748B" }}
-        >
+        <Typography fontSize={10.5} noWrap sx={{ mt: 0.25, color: "#64748B" }}>
           Automate · Connect · Grow
         </Typography>
       </Box>
@@ -106,24 +102,13 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
     <Box sx={{ px: 1.5, py: 1.5 }}>
       {menuGroups.map((group) => (
         <Box key={group.label} sx={{ mb: 2.5 }}>
-          <Typography
-            sx={{
-              px: 1.25,
-              mb: 0.75,
-              color: "#94A3B8",
-              fontSize: 10.5,
-              fontWeight: 700,
-            }}
-          >
+          <Typography sx={{ px: 1.25, mb: 0.75, color: "#94A3B8", fontSize: 10.5, fontWeight: 700 }}>
             {group.label}
           </Typography>
 
           <List disablePadding sx={{ display: "grid", gap: 0.5 }}>
             {group.items.map(({ href, title, icon: Icon }) => {
-              const active =
-                href === "/dashboard"
-                  ? pathname === "/dashboard"
-                  : pathname === href || pathname.startsWith(href + "/");
+              const active = href === "/dashboard" ? pathname === "/dashboard" : pathname === href || pathname.startsWith(href + "/");
 
               return (
                 <ListItemButton
@@ -137,32 +122,16 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
                     borderRadius: 2,
                     px: 1.25,
                     color: active ? "#2563EB" : "#475569",
-                    "& .MuiListItemIcon-root": {
-                      color: "inherit",
-                    },
-                    "&.Mui-selected": {
-                      bgcolor: "#EFF6FF",
-                      color: "#2563EB",
-                    },
-                    "&.Mui-selected:hover": {
-                      bgcolor: "#EFF6FF",
-                    },
-                    "&:hover": {
-                      bgcolor: "#F8FAFC",
-                      color: "#1D4ED8",
-                    },
+                    "& .MuiListItemIcon-root": { color: "inherit" },
+                    "&.Mui-selected": { bgcolor: "#EFF6FF", color: "#2563EB" },
+                    "&.Mui-selected:hover": { bgcolor: "#EFF6FF" },
+                    "&:hover": { bgcolor: "#F8FAFC", color: "#1D4ED8" },
                   }}
                 >
                   <ListItemIcon sx={{ minWidth: 36 }}>
                     <Icon size={18} strokeWidth={1.9} />
                   </ListItemIcon>
-                  <ListItemText
-                    primary={title}
-                    primaryTypographyProps={{
-                      fontSize: 13,
-                      fontWeight: active ? 700 : 500,
-                    }}
-                  />
+                  <ListItemText primary={title} primaryTypographyProps={{ fontSize: 13, fontWeight: active ? 700 : 500 }} />
                 </ListItemButton>
               );
             })}
@@ -175,39 +144,13 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
 
 function SidebarContent({ mobile = false, onClose }: { mobile?: boolean; onClose?: () => void }) {
   return (
-    <Box
-      sx={{
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        bgcolor: "#FFFFFF",
-      }}
-    >
-      <Box
-        sx={{
-          minHeight: 72,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          px: 2,
-          borderBottom: "1px solid #E2E8F0",
-        }}
-      >
-        <Link
-          href="/dashboard"
-          onClick={onClose}
-          style={{ textDecoration: "none", minWidth: 0 }}
-        >
+    <Box sx={{ height: "100%", display: "flex", flexDirection: "column", bgcolor: "#FFFFFF" }}>
+      <Box sx={{ minHeight: 72, display: "flex", alignItems: "center", justifyContent: "space-between", px: 2, borderBottom: "1px solid #E2E8F0" }}>
+        <Link href="/dashboard" onClick={onClose} style={{ textDecoration: "none", minWidth: 0 }}>
           <Brand compact={mobile} />
         </Link>
-
         {mobile ? (
-          <IconButton
-            size="small"
-            onClick={onClose}
-            aria-label="بستن منو"
-            sx={{ color: "#64748B" }}
-          >
+          <IconButton size="small" onClick={onClose} aria-label="بستن منو" sx={{ color: "#64748B" }}>
             <X size={18} />
           </IconButton>
         ) : null}
@@ -238,31 +181,24 @@ function SidebarContent({ mobile = false, onClose }: { mobile?: boolean; onClose
             cursor: "pointer",
             fontFamily: "inherit",
             textAlign: "right",
-            "&:hover": {
-              bgcolor: "#FEF2F2",
-              color: "#DC2626",
-            },
+            "&:hover": { bgcolor: "#FEF2F2", color: "#DC2626" },
           }}
         >
           <LogOut size={18} strokeWidth={1.9} />
-          <Typography component="span" fontSize={13} fontWeight={500}>
-            خروج از حساب
-          </Typography>
+          <Typography component="span" fontSize={13} fontWeight={500}>خروج از حساب</Typography>
         </Box>
       </Box>
     </Box>
   );
 }
 
-export default function DashboardSidebar({
-  mobileOpen,
-  onMobileClose,
-}: DashboardSidebarProps) {
+export default function DashboardSidebar({ mobileOpen, onMobileClose }: DashboardSidebarProps) {
   return (
     <>
       <Drawer
         variant="permanent"
-        anchor="right"
+        anchor="left"
+        dir="rtl"
         sx={{
           display: { xs: "none", lg: "block" },
           width: 248,
@@ -270,8 +206,9 @@ export default function DashboardSidebar({
           "& .MuiDrawer-paper": {
             width: 248,
             boxSizing: "border-box",
-            borderLeft: "1px solid #E2E8F0",
-            borderRight: 0,
+            borderRight: "1px solid #E2E8F0",
+            borderLeft: 0,
+            direction: "rtl",
           },
         }}
       >
@@ -280,7 +217,8 @@ export default function DashboardSidebar({
 
       <Drawer
         variant="temporary"
-        anchor="right"
+        anchor="left"
+        dir="rtl"
         open={mobileOpen}
         onClose={onMobileClose}
         ModalProps={{ keepMounted: true }}
@@ -289,8 +227,9 @@ export default function DashboardSidebar({
           "& .MuiDrawer-paper": {
             width: { xs: "min(84vw, 320px)", sm: 340 },
             boxSizing: "border-box",
-            borderLeft: "1px solid #E2E8F0",
-            borderRight: 0,
+            borderRight: "1px solid #E2E8F0",
+            borderLeft: 0,
+            direction: "rtl",
           },
         }}
       >
