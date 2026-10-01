@@ -1,9 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-
-import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Alert,
+  Box,
+  CircularProgress,
+} from "@mui/material";
 
 import AutomationManager from "./AutomationManager";
 import IceBreakerManager from "./IceBreakerManager";
@@ -35,6 +37,7 @@ export default function DashboardAccountsClient({
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [profileName, setProfileName] = useState("");
 
   useEffect(() => {
     void (async () => {
@@ -50,10 +53,18 @@ export default function DashboardAccountsClient({
         }
 
         const list = Array.isArray(result.accounts)
-          ? result.accounts.map((account: Omit<Account, "createdAt"> & { createdAt?: string }) => ({
-              ...account,
-              createdAt: account.createdAt ? new Date(account.createdAt) : new Date(),
-            }))
+          ? result.accounts.map(
+              (
+                account: Omit<Account, "createdAt"> & {
+                  createdAt?: string;
+                },
+              ) => ({
+                ...account,
+                createdAt: account.createdAt
+                  ? new Date(account.createdAt)
+                  : new Date(),
+              }),
+            )
           : [];
 
         setAccounts(list);
@@ -69,27 +80,44 @@ export default function DashboardAccountsClient({
     })();
   }, []);
 
+  const handleProfileLoaded = useCallback((name: string | null) => {
+    setProfileName(name || "");
+  }, []);
+
   if (loading) {
-    if (mode === "inbox" || mode === "comments" || mode === "stories") return null;
+    if (mode === "inbox" || mode === "comments" || mode === "stories") {
+      return null;
+    }
 
     return (
-      <Card>
-        <CardContent className="space-y-3 p-6">
-          <Skeleton className="mx-auto h-5 w-40" />
-          <Skeleton className="mx-auto h-4 w-64 max-w-full" />
-          <Skeleton className="mx-auto h-4 w-52 max-w-full" />
-        </CardContent>
-      </Card>
+      <Box
+        sx={{
+          minHeight: 180,
+          display: "grid",
+          placeItems: "center",
+          border: "1px solid #E2E8F0",
+          borderRadius: 3,
+          bgcolor: "#FFFFFF",
+        }}
+      >
+        <CircularProgress size={24} thickness={4} sx={{ color: "#2563EB" }} />
+      </Box>
     );
   }
 
   if (error) {
     return (
-      <Card className="border-destructive/30 bg-destructive/5">
-        <CardContent className="p-4 text-sm text-destructive">
-          {error}
-        </CardContent>
-      </Card>
+      <Alert
+        severity="error"
+        sx={{
+          border: "1px solid #FECACA",
+          bgcolor: "#FEF2F2",
+          color: "#991B1B",
+          "& .MuiAlert-icon": { color: "#DC2626" },
+        }}
+      >
+        {error}
+      </Alert>
     );
   }
 
@@ -99,12 +127,6 @@ export default function DashboardAccountsClient({
     if (!activeAccount) {
       return null;
     }
-
-    const [profileName, setProfileName] = useState("");
-
-    const handleProfileLoaded = useCallback((name: string | null) => {
-      setProfileName(name || "");
-    }, []);
 
     return (
       <InstagramProfileDashboard
