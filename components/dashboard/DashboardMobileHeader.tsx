@@ -1,130 +1,310 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { ChevronDown, CircleUserRound, Plus } from "lucide-react"
-
-import { Button } from "@/components/ui/button"
+import Link from "next/link";
+import { useState } from "react";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { SidebarTrigger } from "@/components/ui/sidebar"
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+  Add,
+  ChevronDown,
+  Close,
+  Menu as MenuIcon,
+  PersonOutline,
+} from "@mui/icons-material";
+import {
+  AppBar,
+  Box,
+  Button,
+  Divider,
+  Drawer,
+  IconButton,
+  ListItemIcon,
+  Menu,
+  MenuItem,
+  Toolbar,
+  Typography,
+} from "@mui/material";
 
 type InstagramAccount = {
-  id: string
-  igUsername: string
-  isConnected: boolean
-}
+  id: string;
+  igUsername: string;
+  isConnected: boolean;
+};
 
-export default function DashboardMobileHeader({ instagramAccounts }: { instagramAccounts: InstagramAccount[] }) {
-  const activeAccount = instagramAccounts.find((account) => account.isConnected)
+type DashboardMobileHeaderProps = {
+  instagramAccounts: InstagramAccount[];
+  onMenuOpen: () => void;
+};
+
+export default function DashboardMobileHeader({
+  instagramAccounts,
+  onMenuOpen,
+}: DashboardMobileHeaderProps) {
+  const [accountSheetOpen, setAccountSheetOpen] = useState(false);
+  const [accountMenuAnchor, setAccountMenuAnchor] = useState<HTMLElement | null>(null);
+  const activeAccount = instagramAccounts.find((account) => account.isConnected);
 
   return (
     <>
-      <header dir="rtl" className="sticky top-0 z-30 flex h-14 items-center justify-center bg-white/95 px-3 backdrop-blur sm:h-16 sm:px-5">
-        <div className="absolute right-3 sm:right-5 lg:hidden">
-          <SidebarTrigger className="border-0 shadow-none" />
-        </div>
-        <div className="text-sm font-bold tracking-tight">SmartDirect</div>
-
-        <div className="absolute left-3 hidden lg:block lg:left-5">
-          <AccountConnectDropdown activeAccount={activeAccount} />
-        </div>
-      </header>
-
-      <div className="fixed left-0 top-1/2 z-50 -translate-y-1/2 lg:hidden">
-        <MobileAccountSheet activeAccount={activeAccount} />
-      </div>
-    </>
-  )
-}
-
-function MobileAccountSheet({ activeAccount }: { activeAccount?: InstagramAccount }) {
-  return (
-    <Sheet>
-      <SheetTrigger asChild>
-        <button
-          type="button"
-          aria-label="اتصال پیج جدید"
-          title="اتصال پیج جدید"
-          className="relative flex h-10 w-8 items-center justify-center rounded-r-md border border-l-0 border-border/70 bg-white text-muted-foreground shadow-sm transition-colors hover:bg-muted focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0"
-        >
-          <CircleUserRound className="size-4" />
-          <span className="absolute bottom-1 right-1 flex size-3 items-center justify-center rounded-full bg-white">
-            <Plus className="size-2.5 text-foreground" strokeWidth={2.5} />
-          </span>
-        </button>
-      </SheetTrigger>
-
-      <SheetContent
-        side="left"
-        className="inset-y-auto top-1/2 h-auto max-h-none w-[250px] -translate-y-1/2 rounded-r-xl border-r border-border/60 px-4 py-4 sm:w-[280px]"
+      <AppBar
+        position="sticky"
+        color="inherit"
+        sx={{
+          bgcolor: "rgba(255,255,255,0.96)",
+          color: "#0F172A",
+          borderBottom: "1px solid #E2E8F0",
+          backdropFilter: "blur(12px)",
+          zIndex: (theme) => theme.zIndex.drawer - 1,
+        }}
       >
-        <SheetHeader className="pr-7">
-          <SheetTitle>پیج‌های متصل</SheetTitle>
-          <SheetDescription>پیج فعال را مدیریت کنید یا یک پیج جدید متصل کنید.</SheetDescription>
-        </SheetHeader>
-
-        <div className="space-y-2">
-          {activeAccount ? (
-            <div className="flex items-center gap-3 rounded-lg bg-muted/50 px-3 py-3">
-              <CircleUserRound className="size-4 shrink-0 text-muted-foreground" />
-              <div className="min-w-0 flex-1 text-right">
-                <p className="truncate text-xs font-medium" dir="ltr">
-                  @{activeAccount.igUsername}
-                </p>
-                <p className="mt-0.5 text-[10px] text-muted-foreground">پیج فعال</p>
-              </div>
-            </div>
-          ) : (
-            <p className="px-2 py-2 text-xs text-muted-foreground">هنوز پیجی متصل نشده است.</p>
-          )}
-        </div>
-
-        <Link
-          href="/api/instagram/connect"
-          className="mt-2 flex h-10 items-center justify-center gap-2 rounded-lg border border-border text-xs font-medium transition-colors hover:bg-muted"
+        <Toolbar
+          sx={{
+            minHeight: { xs: 56, sm: 64 },
+            px: { xs: 1.5, sm: 2.5, lg: 3.5 },
+          }}
         >
-          <Plus className="size-3.5" />
-          اتصال پیج جدید
-        </Link>
-      </SheetContent>
-    </Sheet>
-  )
-}
+          <IconButton
+            onClick={onMenuOpen}
+            aria-label="باز کردن منو"
+            sx={{
+              display: { xs: "inline-flex", lg: "none" },
+              color: "#0F172A",
+              width: 40,
+              height: 40,
+            }}
+          >
+            <MenuIcon />
+          </IconButton>
 
-function AccountConnectDropdown({ activeAccount }: { activeAccount?: InstagramAccount }) {
-  return (
-    <DropdownMenu dir="rtl">
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-9 gap-1.5 px-2 text-xs font-medium text-foreground hover:bg-muted/60">
-          <span dir="ltr" className="max-w-32 truncate">
-            {activeAccount ? `@${activeAccount.igUsername}` : "اتصال پیج"}
-          </span>
-          <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" />
+          <Box sx={{ flex: 1 }} />
+
+          <Typography
+            sx={{
+              display: { xs: "block", lg: "none" },
+              fontSize: { xs: 14, sm: 15 },
+              fontWeight: 800,
+              color: "#0F172A",
+            }}
+          >
+            SmartDirect
+          </Typography>
+
+          <Box sx={{ flex: 1 }} />
+
+          <Box sx={{ display: { xs: "none", lg: "block" } }}>
+            <Button
+              onClick={(event) => setAccountMenuAnchor(event.currentTarget)}
+              endIcon={<ChevronDown sx={{ fontSize: 17 }} />}
+              sx={{
+                minWidth: 0,
+                height: 38,
+                px: 1.25,
+                color: "#0F172A",
+                fontSize: 12,
+                fontWeight: 600,
+                "&:hover": { bgcolor: "#F8FAFC" },
+              }}
+            >
+              <Typography
+                component="span"
+                dir="ltr"
+                noWrap
+                sx={{
+                  maxWidth: 160,
+                  fontSize: 12,
+                  fontWeight: 600,
+                }}
+              >
+                {activeAccount ? `@${activeAccount.igUsername}` : "اتصال پیج"}
+              </Typography>
+            </Button>
+
+            <Menu
+              anchorEl={accountMenuAnchor}
+              open={Boolean(accountMenuAnchor)}
+              onClose={() => setAccountMenuAnchor(null)}
+              dir="rtl"
+              PaperProps={{
+                sx: {
+                  mt: 0.75,
+                  minWidth: 190,
+                  border: "1px solid #E2E8F0",
+                  borderRadius: 2,
+                  boxShadow: "0 12px 32px rgba(15,23,42,0.08)",
+                },
+              }}
+            >
+              {activeAccount ? (
+                <MenuItem disabled sx={{ opacity: "1 !important", minHeight: 42 }}>
+                  <ListItemIcon>
+                    <PersonOutline fontSize="small" />
+                  </ListItemIcon>
+                  <Typography component="span" dir="ltr" fontSize={12}>
+                    @{activeAccount.igUsername}
+                  </Typography>
+                </MenuItem>
+              ) : null}
+
+              {activeAccount ? <Divider /> : null}
+
+              <MenuItem
+                component={Link}
+                href="/api/instagram/connect"
+                onClick={() => setAccountMenuAnchor(null)}
+                sx={{ minHeight: 42, fontSize: 12, fontWeight: 600 }}
+              >
+                <ListItemIcon>
+                  <Add fontSize="small" />
+                </ListItemIcon>
+                اتصال پیج جدید
+              </MenuItem>
+            </Menu>
+          </Box>
+        </Toolbar>
+      </AppBar>
+
+      <Box
+        sx={{
+          position: "fixed",
+          left: 0,
+          top: "50%",
+          transform: "translateY(-50%)",
+          zIndex: (theme) => theme.zIndex.drawer + 1,
+          display: { xs: "block", lg: "none" },
+        }}
+      >
+        <Button
+          onClick={() => setAccountSheetOpen(true)}
+          aria-label="اتصال پیج جدید"
+          sx={{
+            minWidth: 34,
+            width: 34,
+            height: 48,
+            p: 0,
+            borderRadius: "0 10px 10px 0",
+            border: "1px solid #E2E8F0",
+            borderLeft: 0,
+            bgcolor: "#FFFFFF",
+            color: "#64748B",
+            boxShadow: "0 4px 16px rgba(15,23,42,0.08)",
+            "&:hover": {
+              bgcolor: "#F8FAFC",
+            },
+          }}
+        >
+          <PersonOutline sx={{ fontSize: 18 }} />
+          <Box
+            sx={{
+              position: "absolute",
+              right: 2,
+              bottom: 3,
+              width: 13,
+              height: 13,
+              display: "grid",
+              placeItems: "center",
+              borderRadius: "50%",
+              bgcolor: "#FFFFFF",
+            }}
+          >
+            <Add sx={{ fontSize: 11, color: "#0F172A" }} />
+          </Box>
         </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" sideOffset={6} className="w-48 border border-border bg-background p-1.5 shadow-md">
-        {activeAccount ? (
-          <>
-            <DropdownMenuItem disabled className="h-9 cursor-default gap-2 rounded-md px-2.5 text-xs font-medium opacity-100">
-              <CircleUserRound className="size-3.5 shrink-0 text-muted-foreground" />
-              <span dir="ltr" className="truncate">@{activeAccount.igUsername}</span>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator className="my-1" />
-          </>
-        ) : null}
-        <DropdownMenuItem asChild className="h-9 cursor-pointer gap-2 rounded-md px-2.5 text-xs font-medium">
-          <Link href="/api/instagram/connect">
-            <Plus className="size-3.5 shrink-0 text-muted-foreground" />
-            <span>اتصال پیج جدید</span>
-          </Link>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
+      </Box>
+
+      <Drawer
+        anchor="left"
+        open={accountSheetOpen}
+        onClose={() => setAccountSheetOpen(false)}
+        PaperProps={{
+          sx: {
+            width: { xs: 270, sm: 300 },
+            height: "auto",
+            maxHeight: "none",
+            top: "50%",
+            transform: "translateY(-50%) !important",
+            borderRadius: "0 14px 14px 0",
+            border: "1px solid #E2E8F0",
+            borderLeft: 0,
+            boxSizing: "border-box",
+          },
+        }}
+      >
+        <Box dir="rtl" sx={{ p: 2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              mb: 1.5,
+            }}
+          >
+            <Box>
+              <Typography fontSize={15} fontWeight={700}>
+                پیج‌های متصل
+              </Typography>
+              <Typography sx={{ mt: 0.5, color: "#64748B", fontSize: 11 }}>
+                پیج فعال را مدیریت کنید یا پیج جدیدی متصل کنید.
+              </Typography>
+            </Box>
+            <IconButton
+              size="small"
+              onClick={() => setAccountSheetOpen(false)}
+              aria-label="بستن"
+              sx={{ color: "#64748B" }}
+            >
+              <Close fontSize="small" />
+            </IconButton>
+          </Box>
+
+          {activeAccount ? (
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1.25,
+                p: 1.25,
+                borderRadius: 2,
+                bgcolor: "#F8FAFC",
+                border: "1px solid #E2E8F0",
+              }}
+            >
+              <PersonOutline sx={{ color: "#64748B", fontSize: 19 }} />
+              <Box sx={{ minWidth: 0, flex: 1, textAlign: "right" }}>
+                <Typography dir="ltr" noWrap fontSize={12} fontWeight={600}>
+                  @{activeAccount.igUsername}
+                </Typography>
+                <Typography sx={{ mt: 0.25, color: "#64748B", fontSize: 10 }}>
+                  پیج فعال
+                </Typography>
+              </Box>
+            </Box>
+          ) : (
+            <Typography sx={{ px: 1, py: 1, color: "#64748B", fontSize: 12 }}>
+              هنوز پیجی متصل نشده است.
+            </Typography>
+          )}
+
+          <Button
+            component={Link}
+            href="/api/instagram/connect"
+            fullWidth
+            variant="outlined"
+            startIcon={<Add />}
+            sx={{
+              mt: 1.25,
+              minHeight: 40,
+              borderColor: "#E2E8F0",
+              color: "#0F172A",
+              fontSize: 12,
+              fontWeight: 600,
+              "&:hover": {
+                borderColor: "#94A3B8",
+                bgcolor: "#F8FAFC",
+              },
+            }}
+          >
+            اتصال پیج جدید
+          </Button>
+        </Box>
+      </Drawer>
+    </>
+  );
 }
