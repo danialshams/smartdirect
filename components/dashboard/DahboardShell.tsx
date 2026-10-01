@@ -2,9 +2,11 @@
 
 import type { ReactNode } from "react";
 import { Box } from "@mui/material";
+import { useState } from "react";
 
 import DashboardTheme from "./DashboardTheme";
 import DashboardSidebar from "./DashboardSidebar";
+import DashboardMobileHeader from "./DashboardMobileHeader";
 import DashboardOverview from "./DashboardOverview";
 
 type InstagramAccount = {
@@ -33,6 +35,8 @@ export default function DashboardShell({
   instagramStatus,
   children,
 }: DashboardShellProps) {
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
   return (
     <DashboardTheme>
       <Box
@@ -43,10 +47,12 @@ export default function DashboardShell({
           color: "text.primary",
         }}
       >
+        <DashboardMobileHeader onMenuOpen={() => setMobileSidebarOpen(true)} />
+
         <DashboardSidebar
           instagramAccounts={instagramAccounts}
-          mobileOpen={false}
-          onMobileClose={() => undefined}
+          mobileOpen={mobileSidebarOpen}
+          onMobileClose={() => setMobileSidebarOpen(false)}
         />
 
         <Box
