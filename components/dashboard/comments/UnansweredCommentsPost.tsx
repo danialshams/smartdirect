@@ -194,7 +194,7 @@ export default function UnansweredCommentsPost({
                       <Stack direction="row" spacing={1} sx={{mt:1,p:.75,border:"1px solid #E2E8F0",borderRadius:1.75,bgcolor:"#F8FAFC"}}>
                         <TextField fullWidth size="small" value={drafts[comment.id] ?? ""} onChange={(event) => setDrafts(current => ({...current,[comment.id]:event.target.value}))}
                           onKeyDown={(event) => { if(event.key==="Enter" && !event.shiftKey && !event.nativeEvent.isComposing){event.preventDefault();void reply(comment.id);}}}
-                          maxLength={1000} placeholder="پاسخ به کامنت..." sx={{"& .MuiOutlinedInput-root":{border:0,bgcolor:"transparent","& fieldset":{border:0}},"& input":{fontSize:11.5}}}/>
+                          slotProps={{ htmlInput: { maxLength: 1000 } }} placeholder="پاسخ به کامنت..." sx={{"& .MuiOutlinedInput-root":{border:0,bgcolor:"transparent","& fieldset":{border:0}},"& input":{fontSize:11.5}}}/>
                         <Button type="button" onClick={() => void reply(comment.id)} disabled={replyingId===comment.id || !(drafts[comment.id] ?? "").trim()} sx={{minWidth:70,height:36,alignSelf:"center",borderRadius:1.5,bgcolor:"#2563EB",color:"#FFF",fontSize:10.5,fontWeight:600,"&:hover":{bgcolor:"#1D4ED8"}}}>
                           {replyingId===comment.id ? <CircularProgress size={14} sx={{color:"#FFF"}}/> : <><Send size={13}/><Box component="span" sx={{mr:.5}}>ارسال</Box></>}
                         </Button>
