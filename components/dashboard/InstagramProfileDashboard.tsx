@@ -1,7 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Avatar,
+  Box,
+  CircularProgress,
+  Typography,
+} from "@mui/material";
 
 type Profile = {
   accountId: string;
@@ -28,24 +33,25 @@ function Reveal({
   children,
   delay,
   visible,
-  className = "",
+  sx,
 }: {
   children: React.ReactNode;
   delay: number;
   visible: boolean;
-  className?: string;
+  sx?: Record<string, unknown>;
 }) {
   return (
-    <div
-      className={
-        "transition-all duration-700 ease-out " +
-        (visible ? "translate-y-0 opacity-100" : "translate-y-5 opacity-0 ") +
-        className
-      }
-      style={{ transitionDelay: delay + "ms" }}
+    <Box
+      sx={{
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateY(0)" : "translateY(20px)",
+        transition: "opacity 700ms ease, transform 700ms ease",
+        transitionDelay: `${delay}ms`,
+        ...sx,
+      }}
     >
       {children}
-    </div>
+    </Box>
   );
 }
 
@@ -77,7 +83,7 @@ export default function InstagramProfileDashboard({
 
       const response = await fetch(
         "/api/instagram/profile?accountId=" + encodeURIComponent(accountId),
-        { cache: "no-store" }
+        { cache: "no-store" },
       );
       const result = await response.json();
 
@@ -93,7 +99,7 @@ export default function InstagramProfileDashboard({
       setError(
         requestError instanceof Error
           ? requestError.message
-          : "خطا در دریافت اطلاعات پروفایل."
+          : "خطا در دریافت اطلاعات پروفایل.",
       );
     } finally {
       setLoading(false);
@@ -106,95 +112,252 @@ export default function InstagramProfileDashboard({
 
   if (!accountId) return null;
 
+  if (loading) {
+    return (
+      <Box
+        dir="rtl"
+        sx={{
+          minHeight: "calc(100dvh - 120px)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          px: 2,
+          pt: { xs: 4, sm: 5, md: 6 },
+        }}
+      >
+        <Box sx={{ width: "100%", textAlign: "right" }}>
+          <Box
+            sx={{
+              ml: "auto",
+              width: 145,
+              height: 22,
+              borderRadius: 1.5,
+              bgcolor: "#E2E8F0",
+              animation: "sdPulse 1.6s ease-in-out infinite",
+            }}
+          />
+        </Box>
+
+        <Box
+          sx={{
+            mt: { xs: "12vh", sm: "14vh", md: "15vh" },
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+          }}
+        >
+          <Box
+            sx={{
+              width: { xs: 112, sm: 128, md: 144, lg: 160 },
+              height: { xs: 112, sm: 128, md: 144, lg: 160 },
+              borderRadius: "50%",
+              bgcolor: "#E2E8F0",
+              animation: "sdPulse 1.6s ease-in-out infinite",
+            }}
+          />
+          <Box
+            sx={{
+              mt: 2.5,
+              width: 128,
+              height: 20,
+              borderRadius: 1.5,
+              bgcolor: "#E2E8F0",
+              animation: "sdPulse 1.6s ease-in-out infinite",
+            }}
+          />
+        </Box>
+
+        <Box
+          sx={{
+            mt: { xs: "18vh", md: "20vh" },
+            width: "100%",
+            maxWidth: 600,
+            display: "grid",
+            gridTemplateColumns: "repeat(3, 1fr)",
+          }}
+        >
+          {[0, 1, 2].map((item) => (
+            <Box
+              key={item}
+              sx={{
+                mx: "auto",
+                width: 56,
+                height: 40,
+                borderRadius: 1.5,
+                bgcolor: "#E2E8F0",
+                animation: "sdPulse 1.6s ease-in-out infinite",
+              }}
+            />
+          ))}
+        </Box>
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box
+        dir="rtl"
+        sx={{
+          minHeight: "calc(100dvh - 120px)",
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "center",
+          px: 2,
+          pt: 5,
+        }}
+      >
+        <Box
+          sx={{
+            width: "100%",
+            maxWidth: 560,
+            border: "1px solid #FECACA",
+            bgcolor: "#FEF2F2",
+            color: "#B91C1C",
+            borderRadius: 2,
+            px: 2,
+            py: 1.5,
+            textAlign: "center",
+            fontSize: 12,
+            lineHeight: 2,
+          }}
+        >
+          {error}
+        </Box>
+      </Box>
+    );
+  }
+
+  if (!profile) return null;
+
   return (
-    <main className="relative min-h-[calc(100dvh-5rem)] w-full" dir="rtl">
-      {loading ? (
-        <div className="flex min-h-[calc(100dvh-5rem)] w-full flex-col items-center px-4 pt-8 sm:pt-10 md:pt-12">
-          <div className="w-full text-right">
-            <Skeleton className="ml-auto h-5 w-36 rounded-md" />
-          </div>
+    <Box
+      dir="rtl"
+      sx={{
+        position: "relative",
+        minHeight: "calc(100dvh - 120px)",
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        px: { xs: 2, sm: 3, md: 4, lg: 5 },
+        pt: { xs: 2.5, sm: 3.5, md: 4, lg: 5 },
+      }}
+    >
+      <Reveal
+        visible={visible}
+        delay={0}
+        sx={{ width: "100%", alignSelf: "flex-start" }}
+      >
+        <Typography
+          component="h1"
+          sx={{
+            fontSize: { xs: 20, sm: 24, md: 26 },
+            fontWeight: 500,
+            letterSpacing: "-0.02em",
+            color: "#0F172A",
+          }}
+        >
+          سلام، {greetingName}
+        </Typography>
+      </Reveal>
 
-          <div className="mt-[12vh] flex w-full flex-col items-center md:mt-[14vh] lg:mt-[16vh]">
-            <Skeleton className="h-28 w-28 rounded-full sm:h-32 sm:w-32 md:h-36 md:w-36 lg:h-40 lg:w-40" />
-            <Skeleton className="mt-5 h-5 w-32 rounded-md" />
-          </div>
-
-          <div className="mt-[18vh] grid w-full max-w-xl grid-cols-3 md:mt-[20vh] lg:mt-[22vh]">
-            <Skeleton className="mx-auto h-10 w-14" />
-            <Skeleton className="mx-auto h-10 w-14" />
-            <Skeleton className="mx-auto h-10 w-14" />
-          </div>
-        </div>
-      ) : error ? (
-        <div className="flex min-h-[calc(100dvh-5rem)] w-full items-start justify-center px-4 pt-10">
-          <div className="w-full max-w-lg rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-center text-xs leading-6 text-red-700">
-            {error}
-          </div>
-        </div>
-      ) : profile ? (
-        <div className="relative flex min-h-[calc(100dvh-5rem)] w-full flex-col items-center px-4 pt-7 sm:px-6 sm:pt-9 md:px-8 md:pt-10 lg:px-10 lg:pt-12">
-          <Reveal visible={visible} delay={0} className="w-full self-start text-right">
-            <h1 className="text-xl font-medium tracking-tight text-foreground sm:text-2xl md:text-[26px]">
-              سلام، {greetingName}
-            </h1>
-          </Reveal>
-
-          <div className="flex w-full flex-col items-center">
-            <Reveal visible={visible} delay={180}>
-              <div className="mt-[12vh] h-28 w-28 overflow-hidden rounded-full border border-border bg-muted sm:mt-[14vh] sm:h-32 sm:w-32 md:mt-[15vh] md:h-36 md:w-36 lg:mt-[16vh] lg:h-40 lg:w-40">
-                {profile.profilePictureUrl ? (
-                  <img
-                    src={profile.profilePictureUrl}
-                    alt={profile.username}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-                    <span className="text-3xl font-light">?</span>
-                  </div>
-                )}
-              </div>
-            </Reveal>
-
-            <Reveal visible={visible} delay={340} className="text-center">
-              <p dir="ltr" className="mt-5 text-sm font-medium text-muted-foreground md:text-[15px]">
-                @{profile.username}
-              </p>
-            </Reveal>
-          </div>
-
-          <div
-            dir="ltr"
-            className="mt-[18vh] grid w-full max-w-xl grid-cols-3 sm:mt-[19vh] md:mt-[20vh] lg:mt-[22vh]"
+      <Box sx={{ display: "flex", width: "100%", flexDirection: "column", alignItems: "center" }}>
+        <Reveal visible={visible} delay={180}>
+          <Box
+            sx={{
+              mt: { xs: "12vh", sm: "14vh", md: "15vh", lg: "16vh" },
+              width: { xs: 112, sm: 128, md: 144, lg: 160 },
+              height: { xs: 112, sm: 128, md: 144, lg: 160 },
+              overflow: "hidden",
+              borderRadius: "50%",
+              border: "1px solid #E2E8F0",
+              bgcolor: "#F8FAFC",
+            }}
           >
-            <Reveal visible={visible} delay={520}>
-              <AnimatedProfileStat
-                label="پست"
-                value={profile.mediaCount}
-                visible={visible}
-                countDelay={1220}
+            {profile.profilePictureUrl ? (
+              <Avatar
+                src={profile.profilePictureUrl}
+                alt={profile.username}
+                sx={{ width: "100%", height: "100%" }}
               />
-            </Reveal>
-            <Reveal visible={visible} delay={680}>
-              <AnimatedProfileStat
-                label="فالوور"
-                value={profile.followersCount}
-                visible={visible}
-                countDelay={1380}
-              />
-            </Reveal>
-            <Reveal visible={visible} delay={840}>
-              <AnimatedProfileStat
-                label="فالووینگ"
-                value={profile.followsCount}
-                visible={visible}
-                countDelay={1540}
-              />
-            </Reveal>
-          </div>
-        </div>
-      ) : null}
-    </main>
+            ) : (
+              <Box
+                sx={{
+                  width: "100%",
+                  height: "100%",
+                  display: "grid",
+                  placeItems: "center",
+                  color: "#64748B",
+                  fontSize: 34,
+                  fontWeight: 300,
+                }}
+              >
+                ?
+              </Box>
+            )}
+          </Box>
+        </Reveal>
+
+        <Reveal visible={visible} delay={340}>
+          <Typography
+            dir="ltr"
+            sx={{
+              mt: 2.5,
+              color: "#64748B",
+              fontSize: { xs: 14, md: 15 },
+              fontWeight: 500,
+              textAlign: "center",
+            }}
+          >
+            @{profile.username}
+          </Typography>
+        </Reveal>
+      </Box>
+
+      <Box
+        dir="ltr"
+        sx={{
+          mt: { xs: "18vh", sm: "19vh", md: "20vh", lg: "22vh" },
+          width: "100%",
+          maxWidth: 600,
+          display: "grid",
+          gridTemplateColumns: "repeat(3, 1fr)",
+        }}
+      >
+        <Reveal visible={visible} delay={520}>
+          <AnimatedProfileStat
+            label="پست"
+            value={profile.mediaCount}
+            visible={visible}
+            countDelay={1220}
+          />
+        </Reveal>
+        <Reveal visible={visible} delay={680}>
+          <AnimatedProfileStat
+            label="فالوور"
+            value={profile.followersCount}
+            visible={visible}
+            countDelay={1380}
+          />
+        </Reveal>
+        <Reveal visible={visible} delay={840}>
+          <AnimatedProfileStat
+            label="فالووینگ"
+            value={profile.followsCount}
+            visible={visible}
+            countDelay={1540}
+          />
+        </Reveal>
+      </Box>
+
+      <style jsx global>{`
+        @keyframes sdPulse {
+          0%, 100% { opacity: 0.55; }
+          50% { opacity: 1; }
+        }
+      `}</style>
+    </Box>
   );
 }
 
@@ -241,13 +404,26 @@ function AnimatedProfileStat({
   }, [countDelay, value, visible]);
 
   return (
-    <div className="flex min-w-0 flex-col items-center justify-center text-center">
-      <p className="text-base font-semibold tracking-tight text-foreground sm:text-lg md:text-xl">
+    <Box sx={{ minWidth: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
+      <Typography
+        sx={{
+          color: "#0F172A",
+          fontSize: { xs: 16, sm: 18, md: 20 },
+          fontWeight: 600,
+          letterSpacing: "-0.02em",
+        }}
+      >
         {value == null ? "—" : formatNumber(displayValue)}
-      </p>
-      <p className="mt-1 text-[11px] text-muted-foreground sm:text-xs md:text-sm">
+      </Typography>
+      <Typography
+        sx={{
+          mt: 0.5,
+          color: "#64748B",
+          fontSize: { xs: 11, sm: 12, md: 14 },
+        }}
+      >
         {label}
-      </p>
-    </div>
+      </Typography>
+    </Box>
   );
 }
