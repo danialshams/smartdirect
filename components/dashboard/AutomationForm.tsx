@@ -1,8 +1,8 @@
 "use client";
 
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
+import { Input } from "@/components/dashboard/DashboardUI"
+import { Button } from "@/components/dashboard/DashboardUI"
+import { Textarea } from "@/components/dashboard/DashboardUI"
 
 
 import type { FormEvent } from "react";
