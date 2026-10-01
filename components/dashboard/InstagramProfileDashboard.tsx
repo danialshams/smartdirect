@@ -168,8 +168,9 @@ export default function InstagramProfileDashboard({
         </Box>
 
         <Box
+          dir="ltr"
           sx={{
-            mt: { xs: "18vh", md: "20vh" },
+            mt: { xs: "18vh", sm: "19vh", md: "20vh", lg: "22vh" },
             width: "100%",
             maxWidth: 600,
             display: "grid",
