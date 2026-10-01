@@ -3,17 +3,8 @@
 import { CheckCircle2, Link2, RefreshCw, UserRound, UsersRound } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/dashboard/DashboardUI";
+import { Card, CardContent, CardActions, Chip, Skeleton, Typography } from "@mui/material";
 
 type Account = {
   id: string;
@@ -81,7 +72,7 @@ export default function ConnectedAccounts() {
       {error && (
         <Card className="border-destructive/30 bg-destructive/5">
           <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm text-destructive">{error}</p>
+            <Typography className="text-sm text-destructive">{error}</Typography>
             <Button type="button" variant="outline" size="sm" onClick={() => void load()}>
               <RefreshCw />
               تلاش مجدد
@@ -94,18 +85,18 @@ export default function ConnectedAccounts() {
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 3 }).map((_, index) => (
             <Card key={index}>
-              <CardHeader>
+              <CardContent className="p-5">
                 <div className="flex items-center gap-3">
-                  <Skeleton className="size-14 rounded-full" />
+                  <Skeleton variant="circular" width={56} height={56} />
                   <div className="space-y-2">
-                    <Skeleton className="h-4 w-28" />
-                    <Skeleton className="h-3 w-36" />
+                    <Skeleton width={112} height={16} />
+                    <Skeleton width={144} height={12} />
                   </div>
                 </div>
-              </CardHeader>
-              <CardFooter className="border-t">
-                <Skeleton className="h-4 w-24" />
-              </CardFooter>
+              </CardContent>
+              <CardActions className="border-t px-5 py-3">
+                <Skeleton width={96} height={16} />
+              </CardActions>
             </Card>
           ))}
         </div>
@@ -126,7 +117,7 @@ export default function ConnectedAccounts() {
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {accounts.map((account) => (
             <Card key={account.id} className="overflow-hidden">
-              <CardHeader>
+              <CardContent className="p-5">
                 <div className="flex items-center gap-3">
                   <div className="size-14 shrink-0 overflow-hidden rounded-full border bg-muted">
                     {account.profilePictureUrl ? (
@@ -143,23 +134,22 @@ export default function ConnectedAccounts() {
                   </div>
 
                   <div className="min-w-0">
-                    <CardTitle className="truncate text-sm">
+                    <Typography className="truncate text-sm" component="div" fontWeight={700}>
                       @{account.username}
-                    </CardTitle>
-                    <CardDescription className="mt-1 truncate text-xs">
+                    </Typography>
+                    <Typography className="mt-1 truncate text-xs text-muted-foreground" component="div">
                       {account.igUserId}
-                    </CardDescription>
+                    </Typography>
                   </div>
                 </div>
-              </CardHeader>
+              </CardContent>
 
-              <CardFooter className="justify-between border-t">
+              <CardActions className="justify-between border-t px-5 py-3">
                 <span className="text-xs text-muted-foreground">وضعیت اتصال</span>
-                <Badge variant={account.isConnected ? "secondary" : "outline"} className="gap-1.5">
-                  <CheckCircle2 className="size-3.5" />
-                  {account.isConnected ? "متصل" : "قطع"}
-                </Badge>
-              </CardFooter>
+                <Chip size="small" variant="outlined" label={
+  <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="size-3.5" />{account.isConnected ? "متصل" : "قطع"}</span>
+} />
+              </CardActions>
             </Card>
           ))}
         </div>
