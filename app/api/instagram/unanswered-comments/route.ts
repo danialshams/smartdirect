@@ -21,65 +21,34 @@ export const dynamic = "force-dynamic";
 
 const MEDIA_LIMIT = 20;
 const COMMENTS_LIMIT = 50;
-const COMMENT_BATCH_SIZE = 4;
+const COMMENT_BATCH_SIZE = 8;
 
 async function syncMediaComments(
   userId: string,
   mediaId: string,
   comments: InstagramMediaComment[],
-  accessToken: string,
 ) {
-  for (const comment of comments) {
-    if (!comment.id || !comment.text) continue;
-
-    let username = comment.username;
-
-    // With Instagram Login, the comments edge can omit the username.
-    // Fetch the individual comment as a fallback so the UI does not
-    // display the generic "instagram-user" label when Meta provides
-    // the commenter identity on the comment object.
-    if (!username) {
-      try {
-        const commentDetails = await getInstagramComment(
-          comment.id,
-          accessToken,
-        );
-
-        username =
-          commentDetails.username ??
-          commentDetails.from?.username ??
-          undefined;
-      } catch (error) {
-        console.warn(
-          "[Unanswered Comments] Comment username lookup failed:",
-          {
-            commentId: comment.id,
-            error,
+  await Promise.all(
+    comments
+      .filter((comment) => Boolean(comment.id && comment.text))
+      .map((comment) =>
+        prisma.comment.upsert({
+          where: { igCommentId: comment.id },
+          create: {
+            userId,
+            igMediaId: mediaId,
+            igCommentId: comment.id,
+            text: comment.text,
+            username: comment.username ?? comment.from?.username ?? "instagram-user",
+            createdAt: comment.timestamp ? new Date(comment.timestamp) : undefined,
           },
-        );
-      }
-    }
-
-    await prisma.comment.upsert({
-      where: {
-        igCommentId: comment.id,
-      },
-      create: {
-        userId,
-        igMediaId: mediaId,
-        igCommentId: comment.id,
-        text: comment.text,
-        username: username ?? "instagram-user",
-        createdAt: comment.timestamp
-          ? new Date(comment.timestamp)
-          : undefined,
-      },
-      update: {
-        text: comment.text,
-        ...(username ? { username } : {}),
-      },
-    });
-  }
+          update: {
+            text: comment.text,
+            username: comment.username ?? comment.from?.username ?? undefined,
+          },
+        }),
+      ),
+  );
 }
 
 export async function GET(request: NextRequest) {
@@ -158,7 +127,6 @@ export async function GET(request: NextRequest) {
                   comment.from?.username?.toLowerCase() === account.igUsername.toLowerCase();
                 return !ownById && !ownByUsername;
               }),
-              accessToken,
             );
 
             syncedMediaIds.push(item.id);
@@ -190,33 +158,46 @@ export async function GET(request: NextRequest) {
     const commentProfilePictures = new Map<string, string>();
     const ownCommentIds = new Set<string>();
 
+    // Only inspect a small number of recent comments per media for profile
+    // metadata. The previous implementation fetched Meta comment details and
+    // user profiles for every stored unanswered comment, which made this
+    // page unnecessarily slow as comment volume grew.
+    const profileCandidates = new Map<string, typeof storedComments[number]>();
+    for (const comment of storedComments) {
+      const isOwnByUsername =
+        comment.username.toLowerCase() === account.igUsername.toLowerCase();
+      if (isOwnByUsername) {
+        ownCommentIds.add(comment.id);
+        continue;
+      }
+
+      const key = comment.igMediaId;
+      const existing = [...profileCandidates.values()].filter(
+        (candidate) => candidate.igMediaId === key,
+      );
+      if (existing.length < 3) {
+        profileCandidates.set(comment.id, comment);
+      }
+    }
+
     await Promise.all(
-      storedComments.map(async (comment) => {
+      [...profileCandidates.values()].map(async (comment) => {
         try {
-          const metaComment = await getInstagramComment(
-            comment.igCommentId,
-            accessToken,
-          );
+          const metaComment = await getInstagramComment(comment.igCommentId, accessToken);
           const scopedUserId = metaComment.from?.id;
+          if (!scopedUserId) return;
 
           const ownById = scopedUserId === account.igUserId;
           const ownByUsername =
             metaComment.username?.toLowerCase() === account.igUsername.toLowerCase() ||
-            metaComment.from?.username?.toLowerCase() === account.igUsername.toLowerCase() ||
-            comment.username.toLowerCase() === account.igUsername.toLowerCase();
+            metaComment.from?.username?.toLowerCase() === account.igUsername.toLowerCase();
 
           if (ownById || ownByUsername) {
             ownCommentIds.add(comment.id);
             return;
           }
 
-          if (!scopedUserId) return;
-
-          const profile = await getInstagramUserProfile(
-            scopedUserId,
-            accessToken,
-          );
-
+          const profile = await getInstagramUserProfile(scopedUserId, accessToken);
           if (profile.profile_pic) {
             commentProfilePictures.set(
               comment.id,
@@ -224,12 +205,11 @@ export async function GET(request: NextRequest) {
             );
           }
         } catch {
-          // A commenter profile picture is optional in Meta's API.
+          // Profile metadata is optional and must never block the comments page.
         }
       }),
     );
 
-    // Never expose comments written by the connected Instagram account.
     storedComments = storedComments.filter(
       (comment) => !ownCommentIds.has(comment.id),
     );
