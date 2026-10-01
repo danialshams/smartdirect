@@ -1,7 +1,6 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useState } from "react";
 import { Box } from "@mui/material";
 
 import DashboardTheme from "./DashboardTheme";
