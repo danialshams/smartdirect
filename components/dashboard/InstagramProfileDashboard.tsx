@@ -128,18 +128,6 @@ export default function InstagramProfileDashboard({
           pt: { xs: 4, sm: 5, md: 6 },
         }}
       >
-        <Box sx={{ width: "100%", direction: "rtl", textAlign: "right" }}>
-          <Box
-            sx={{
-              width: 145,
-              height: 22,
-              borderRadius: 1.5,
-              bgcolor: "#E2E8F0",
-              animation: "sdPulse 1.6s ease-in-out infinite",
-            }}
-          />
-        </Box>
-
         <Box
           sx={{
             mt: { xs: "12vh", sm: "14vh", md: "15vh" },
