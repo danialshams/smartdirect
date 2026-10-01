@@ -264,6 +264,7 @@ async function main() {
             options: {
               queueNamespace: namespace,
               maxAttempts: 4,
+              instagramAccountId,
             },
           };
         }),
