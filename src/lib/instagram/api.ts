@@ -129,6 +129,7 @@ export async function getInstagramUserProfile(
       fields:
         "id,name,username,profile_pic,follower_count,is_user_follow_business,is_business_follow_user",
     },
+    rateLimit: { instagramAccountId: instagramScopedUserId, operation: "PROFILE_READ" },
   });
 }
 
@@ -188,6 +189,7 @@ export async function replyToInstagramComment(
       message,
     }),
     maxRetries: 0,
+    rateLimit: { instagramAccountId: commentId, operation: "COMMENT_REPLY" },
   });
 }
 
@@ -203,6 +205,7 @@ export async function getInstagramMediaInsights(
         metric:
           "views,reach,likes,comments,saved,shares,total_interactions",
       },
+      rateLimit: { instagramAccountId: mediaId, operation: "INSIGHTS_READ" },
     },
   );
 }
