@@ -119,14 +119,15 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
                   selected={active}
                   sx={{
                     minHeight: 42,
-                    direction: "ltr",
+                    direction: "rtl",
                     display: "flex",
-                    flexDirection: "row-reverse",
+                    flexDirection: "row",
                     alignItems: "center",
                     borderRadius: 2,
                     px: 1.25,
                     color: active ? "#2563EB" : "#475569",
-                    "& .MuiListItemIcon-root": { color: "inherit", minWidth: 36, justifyContent: "center", flexShrink: 0, margin: 0 },
+                    "& .MuiListItemIcon-root": { color: "inherit", minWidth: 36, justifyContent: "center", flexShrink: 0, margin: 0, order: 2 },
+                    "& .MuiListItemText-root": { order: 1, minWidth: 0, margin: 0 },
                     "&.Mui-selected": { bgcolor: "#EFF6FF", color: "#2563EB" },
                     "&.Mui-selected:hover": { bgcolor: "#EFF6FF" },
                     "&:hover": { bgcolor: "#F8FAFC", color: "#1D4ED8" },
@@ -135,7 +136,7 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
                   <ListItemIcon sx={{ minWidth: 36, justifyContent: "center", flexShrink: 0, m: 0 }}>
                     <Icon size={18} strokeWidth={1.9} />
                   </ListItemIcon>
-                  <ListItemText sx={{ flex: 1, minWidth: 0, textAlign: "right", direction: "rtl", m: 0 }} primary={title} primaryTypographyProps={{ fontSize: 13, fontWeight: active ? 700 : 500 }} />
+                  <ListItemText sx={{ flex: 1, minWidth: 0, textAlign: "right", direction: "rtl", m: 0, order: 1 }} primary={title} primaryTypographyProps={{ fontSize: 13, fontWeight: active ? 700 : 500 }} />
                 </ListItemButton>
               );
             })}
