@@ -34,7 +34,12 @@ class NativeRedisPipeline implements RedisPipelineLike {
 }
 
 export class NativeRedisAdapter implements RedisClientLike {
-  constructor(private readonly client: Redis) {}
+  constructor(private readonly client: Redis) {
+    // ioredis emits command timeout/connection errors on the client as events
+    // in addition to rejecting the command promise. The caller handles the
+    // rejected command; this listener prevents an unhandled EventEmitter error.
+    this.client.on("error", () => undefined);
+  }
 
   async get<T = unknown>(key: string) {
     const raw = await this.client.get(key);
