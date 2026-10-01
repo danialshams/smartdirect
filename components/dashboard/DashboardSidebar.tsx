@@ -32,6 +32,7 @@ import {
   Typography,
 } from "@mui/material";
 import { signOut } from "next-auth/react";
+import { useMediaQuery } from "@mui/material";
 
 type InstagramAccount = {
   id: string;
