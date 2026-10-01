@@ -64,7 +64,7 @@ const menuGroups = [
 
 function Brand({ compact = false }: { compact?: boolean }) {
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0 }}>
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0, direction: "rtl" }}>
       <Box
         sx={{
           width: compact ? 38 : 42,
@@ -120,23 +120,24 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
                   sx={{
                     minHeight: 42,
                     direction: "rtl",
-                    display: "flex",
-                    flexDirection: "row",
+                    display: "grid",
+                    gridTemplateColumns: "minmax(0, 1fr) 36px",
+                    columnGap: 8,
                     alignItems: "center",
                     borderRadius: 2,
                     px: 1.25,
                     color: active ? "#2563EB" : "#475569",
-                    "& .MuiListItemIcon-root": { color: "inherit", minWidth: 36, justifyContent: "center", flexShrink: 0, margin: 0, order: 2 },
-                    "& .MuiListItemText-root": { order: 1, minWidth: 0, margin: 0 },
+                    "& .MuiListItemIcon-root": { color: "inherit", minWidth: 0, width: 36, justifyContent: "center", margin: 0, gridColumn: 2 },
+                    "& .MuiListItemText-root": { minWidth: 0, margin: 0, gridColumn: 1, gridRow: 1 },
                     "&.Mui-selected": { bgcolor: "#EFF6FF", color: "#2563EB" },
                     "&.Mui-selected:hover": { bgcolor: "#EFF6FF" },
                     "&:hover": { bgcolor: "#F8FAFC", color: "#1D4ED8" },
                   }}
                 >
-                  <ListItemIcon sx={{ minWidth: 36, justifyContent: "center", flexShrink: 0, m: 0 }}>
+                  <ListItemIcon sx={{ minWidth: 0, width: 36, justifyContent: "center", m: 0 }}>
                     <Icon size={18} strokeWidth={1.9} />
                   </ListItemIcon>
-                  <ListItemText sx={{ flex: 1, minWidth: 0, textAlign: "right", direction: "rtl", m: 0, order: 1 }} primary={title} primaryTypographyProps={{ fontSize: 13, fontWeight: active ? 700 : 500 }} />
+                  <ListItemText sx={{ minWidth: 0, textAlign: "right", direction: "rtl", m: 0 }} primary={title} primaryTypographyProps={{ fontSize: 13, fontWeight: active ? 700 : 500 }} />
                 </ListItemButton>
               );
             })}
@@ -150,8 +151,8 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
 function SidebarContent({ mobile = false, onClose }: { mobile?: boolean; onClose?: () => void }) {
   return (
     <Box sx={{ height: "100%", display: "flex", flexDirection: "column", bgcolor: "#FFFFFF" }}>
-      <Box sx={{ minHeight: 72, display: "flex", alignItems: "center", justifyContent: "space-between", px: 2, borderBottom: "1px solid #E2E8F0" }}>
-        <Link href="/dashboard" onClick={onClose} style={{ textDecoration: "none", minWidth: 0 }}>
+      <Box sx={{ minHeight: 72, display: "flex", alignItems: "center", justifyContent: "flex-start", gap: 1.5, px: 2, borderBottom: "1px solid #E2E8F0", direction: "rtl" }}>
+        <Link href="/dashboard" onClick={onClose} style={{ textDecoration: "none", minWidth: 0, flex: 1, direction: "rtl" }}>
           <Brand compact={mobile} />
         </Link>
         {mobile ? (
@@ -174,9 +175,11 @@ function SidebarContent({ mobile = false, onClose }: { mobile?: boolean; onClose
           onClick={() => void signOut({ callbackUrl: "/login" })}
           sx={{
             width: "100%",
-            display: "flex",
+            display: "grid",
+            gridTemplateColumns: "minmax(0, 1fr) 28px",
             alignItems: "center",
-            gap: 1.25,
+            columnGap: 8,
+            direction: "rtl",
             border: 0,
             borderRadius: 2,
             bgcolor: "transparent",
@@ -186,6 +189,8 @@ function SidebarContent({ mobile = false, onClose }: { mobile?: boolean; onClose
             cursor: "pointer",
             fontFamily: "inherit",
             textAlign: "right",
+            "& svg": { gridColumn: 2, justifySelf: "center" },
+            "& span": { gridColumn: 1, gridRow: 1 },
             "&:hover": { bgcolor: "#FEF2F2", color: "#DC2626" },
           }}
         >
