@@ -1,5 +1,7 @@
 import "dotenv/config";
 
+import { prisma } from "../src/lib/prisma";
+
 import {
   cancelJob,
   claimNextJob,
@@ -172,6 +174,7 @@ async function main() {
     await redis.del(`smartdirect:queue:${ns}:active`);
     await redis.del(`smartdirect:queue:${ns}:failed`);
     await redis.disconnect().catch(() => undefined);
+    await prisma.$disconnect().catch(() => undefined);
   }
 }
 
