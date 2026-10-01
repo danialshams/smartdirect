@@ -15,7 +15,7 @@ import {
   TextField,
 } from "@mui/material";
 import { DayPicker, faIR } from "@daypicker/persian";
-import { getDefaultClassNames, type DayPickerProps } from "react-day-picker";
+import { getDefaultClassNames, type DayPickerProps, type DropdownProps } from "react-day-picker";
 import { ChevronDown } from "lucide-react";
 
 const COLORS = {
@@ -30,6 +30,77 @@ const COLORS = {
 
 function classNameValue(value?: string) {
   return value || "";
+}
+
+function PersianCalendarDropdown({ options, value, onChange, "aria-label": ariaLabel }: DropdownProps) {
+  const selectedValue = value == null ? "" : String(value);
+
+  return (
+    <MuiSelect
+      value={selectedValue}
+      onChange={(event) => {
+        if (!onChange) return;
+        onChange({
+          target: { value: String(event.target.value) },
+        } as React.ChangeEvent<HTMLSelectElement>);
+      }}
+      displayEmpty
+      aria-label={ariaLabel}
+      variant="outlined"
+      MenuProps={{
+        dir: "rtl",
+        PaperProps: {
+          sx: {
+            fontFamily: '"Vazirmatn", Arial, sans-serif',
+          },
+        },
+      }}
+      sx={{
+        width: "100%",
+        minWidth: 0,
+        height: 32,
+        direction: "rtl",
+        fontFamily: '"Vazirmatn", Arial, sans-serif',
+        fontSize: 11,
+        color: COLORS.text,
+        "& .MuiSelect-select": {
+          py: 0.5,
+          px: 1,
+          textAlign: "right",
+          direction: "rtl",
+          color: COLORS.text,
+          WebkitTextFillColor: COLORS.text,
+        },
+        "& .MuiOutlinedInput-notchedOutline": {
+          border: 0,
+        },
+        "&:hover .MuiOutlinedInput-notchedOutline": {
+          border: 0,
+        },
+        "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+          border: 0,
+        },
+        "& .MuiSelect-icon": {
+          display: "none",
+        },
+      }}
+    >
+      {options?.map((option) => (
+        <MenuItem
+          key={option.value}
+          value={String(option.value)}
+          disabled={option.disabled}
+          sx={{
+            direction: "rtl",
+            fontFamily: '"Vazirmatn", Arial, sans-serif',
+            fontSize: 11,
+          }}
+        >
+          {option.label}
+        </MenuItem>
+      ))}
+    </MuiSelect>
+  );
 }
 
 export function Button({
@@ -508,6 +579,9 @@ export function Calendar({ className, ...props }: DashboardCalendarProps) {
           ...(props.formatters || {}),
         }}
         hideNavigation
+        components={{
+          Dropdown: PersianCalendarDropdown,
+        }}
         classNames={{
           ...defaultClassNames,
           month_grid: "rdp-month_grid",
