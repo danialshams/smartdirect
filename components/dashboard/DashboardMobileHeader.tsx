@@ -17,7 +17,7 @@ export default function DashboardMobileHeader({ instagramAccounts, onMenuOpen }:
     <>
       <AppBar position="sticky" color="inherit" sx={{ bgcolor: "rgba(255,255,255,0.96)", color: "#0F172A", borderBottom: "1px solid #E2E8F0", backdropFilter: "blur(12px)", zIndex: (theme) => theme.zIndex.drawer - 1 }}>
         <Toolbar sx={{ minHeight: { xs: 56, sm: 64 }, px: { xs: 1.5, sm: 2.5, lg: 3.5 }, position: "relative" }}>
-          <IconButton onClick={onMenuOpen} aria-label="باز کردن منو" sx={{ display: { xs: "inline-flex", lg: "none" }, position: { xs: "absolute", lg: "static" }, right: { xs: 12, sm: 20 }, left: "auto", color: "#0F172A", width: 40, height: 40 }}>
+          <IconButton onClick={onMenuOpen} aria-label="باز کردن منو" sx={{ display: { xs: "inline-flex", lg: "none" }, position: { xs: "absolute", lg: "static" }, insetInlineStart: { xs: 12, sm: 20 }, insetInlineEnd: "auto", color: "#0F172A", width: 40, height: 40 }}>
             <MenuIcon size={20} strokeWidth={2} />
           </IconButton>
 
@@ -51,8 +51,8 @@ export default function DashboardMobileHeader({ instagramAccounts, onMenuOpen }:
         </Toolbar>
       </AppBar>
 
-      <Box sx={{ position: "fixed", right: 0, top: "50%", transform: "translateY(-50%)", zIndex: (theme) => theme.zIndex.drawer + 1, display: { xs: "block", lg: "none" } }}>
-        <Button onClick={() => setAccountSheetOpen(true)} aria-label="اتصال پیج جدید" sx={{ minWidth: 34, width: 34, height: 48, p: 0, borderRadius: "0 10px 10px 0", border: "1px solid #E2E8F0", borderRight: 0, bgcolor: "#FFFFFF", color: "#64748B", boxShadow: "0 4px 16px rgba(15,23,42,0.08)", "&:hover": { bgcolor: "#F8FAFC" } }}>
+      <Box sx={{ position: "fixed", insetInlineStart: 0, insetInlineEnd: "auto", top: "50%", transform: "translateY(-50%)", zIndex: (theme) => theme.zIndex.drawer + 1, display: { xs: "block", lg: "none" } }}>
+        <Button onClick={() => setAccountSheetOpen(true)} aria-label="اتصال پیج جدید" sx={{ minWidth: 34, width: 34, height: 48, p: 0, borderRadius: "0 10px 10px 0", border: "1px solid #E2E8F0", borderInlineStart: 0, bgcolor: "#FFFFFF", color: "#64748B", boxShadow: "0 4px 16px rgba(15,23,42,0.08)", "&:hover": { bgcolor: "#F8FAFC" } }}>
           <UserRound size={18} strokeWidth={1.9} />
           <Box sx={{ position: "absolute", right: 2, bottom: 3, width: 13, height: 13, display: "grid", placeItems: "center", borderRadius: "50%", bgcolor: "#FFFFFF" }}>
             <Plus size={11} strokeWidth={2.2} color="#0F172A" />
@@ -61,7 +61,7 @@ export default function DashboardMobileHeader({ instagramAccounts, onMenuOpen }:
       </Box>
 
       <Drawer
-        anchor="right"
+        anchor="left"
         dir="rtl"
         open={accountSheetOpen}
         onClose={() => setAccountSheetOpen(false)}
