@@ -218,7 +218,7 @@ export function Select({
   id,
   required,
   ...props
-}: Omit<React.SelectHTMLAttributes<HTMLSelectElement>, "value" | "defaultValue" | "onChange" | "size"> & {
+}: Omit<React.SelectHTMLAttributes<HTMLSelectElement>, "value" | "defaultValue" | "onChange" | "size" | "color"> & {
   value?: string | number;
   defaultValue?: string | number;
   onChange?: (event: { target: { value: string } }) => void;
