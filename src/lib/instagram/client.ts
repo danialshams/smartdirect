@@ -1,7 +1,10 @@
+import type { InstagramRateLimitContext } from "@/lib/instagram/rate-limit";
 import {
-  consumeInstagramRateLimit,
-  type InstagramRateLimitContext,
-} from "@/lib/instagram/rate-limit";
+  acquireInstagramTrafficSlot,
+  releaseInstagramTrafficSlot,
+  recordInstagramTrafficOutcome,
+  InstagramCircuitOpenError,
+} from "@/lib/instagram/traffic-control";
 import { observabilityLogger } from "@/lib/observability/logger";
 import { recordFailure, recordLatency } from "@/lib/observability/metrics";
 
@@ -277,61 +280,15 @@ export async function instagramApiRequest<T = unknown>(
       : {}),
   });
 
-  if (options.rateLimit) {
-    console.info("[INSTAGRAM_CLIENT_DEBUG] rate-limit-start", {
-      method,
-      path,
-      operation,
-      rateLimit: options.rateLimit,
-    });
-
-    const rateLimit = await consumeInstagramRateLimit(options.rateLimit);
-
-    console.info("[INSTAGRAM_CLIENT_DEBUG] rate-limit-result", {
-      method,
-      path,
-      operation,
-      allowed: rateLimit.allowed,
-      remaining: rateLimit.remaining,
-      retryAfterMs: rateLimit.retryAfterMs,
-      scope: rateLimit.scope,
-    });
-
-    if (!rateLimit.allowed) {
-      if (
-        options.rateLimitWaitMs &&
-        options.rateLimitWaitMs > 0 &&
-        rateLimit.retryAfterMs <= options.rateLimitWaitMs
-      ) {
-        await new Promise((resolve, reject) => {
-          const timer = setTimeout(resolve, rateLimit.retryAfterMs);
-          const onAbort = () => {
-            clearTimeout(timer);
-            reject(new Error("Instagram rate-limit wait aborted"));
-          };
-          options.signal?.addEventListener("abort", onAbort, { once: true });
-        });
-
-        const retriedRateLimit = await consumeInstagramRateLimit(
-          options.rateLimit,
-        );
-
-        if (!retriedRateLimit.allowed) {
-          throw new InstagramRateLimitError(
-            retriedRateLimit.retryAfterMs,
-            retriedRateLimit.scope,
-          );
-        }
-      } else {
-        throw new InstagramRateLimitError(
-          rateLimit.retryAfterMs,
-          rateLimit.scope,
-        );
-      }
-    }
-  }
-
   for (let attempt = 1; attempt <= maxRetries + 1; attempt += 1) {
+    let trafficLease: Awaited<ReturnType<typeof acquireInstagramTrafficSlot>> | undefined;
+    if (options.rateLimit) {
+      trafficLease = await acquireInstagramTrafficSlot(options.rateLimit, {
+        signal: options.signal,
+        maxWaitMs: options.rateLimitWaitMs ?? undefined,
+      });
+    }
+
     const timeout = createTimeoutSignal(
       getTimeoutMs(options.timeoutMs),
       options.signal,
@@ -382,6 +339,13 @@ export async function instagramApiRequest<T = unknown>(
       });
 
       const data = await parseResponse(response);
+
+      if (options.rateLimit) {
+        void recordInstagramTrafficOutcome(
+          options.rateLimit,
+          response.status === 429 ? "429" : response.status >= 500 ? "5xx" : response.ok ? "success" : "network",
+        ).catch(() => undefined);
+      }
 
       console.info("[INSTAGRAM_CLIENT_DEBUG] fetch-response", {
         method,
@@ -542,12 +506,15 @@ export async function instagramApiRequest<T = unknown>(
       }
 
       if (timedOut) {
+        if (options.rateLimit) void recordInstagramTrafficOutcome(options.rateLimit, "timeout").catch(() => undefined);
         throw new InstagramApiTimeoutError(getTimeoutMs(options.timeoutMs));
       }
+      if (options.rateLimit) void recordInstagramTrafficOutcome(options.rateLimit, "network").catch(() => undefined);
 
       throw error instanceof Error ? error : new Error("Instagram API request failed");
     } finally {
       timeout.cleanup();
+      if (trafficLease) await releaseInstagramTrafficSlot(trafficLease).catch(() => undefined);
     }
   }
 
