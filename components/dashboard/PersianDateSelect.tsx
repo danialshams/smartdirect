@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { Box, FormControl, MenuItem, Select, Typography } from "@mui/material";
 
 const monthNames = [
   "فروردین","اردیبهشت","خرداد","تیر","مرداد","شهریور",
@@ -69,21 +70,43 @@ export default function PersianDateSelect({
   const years = Array.from({ length: 7 }, (_, index) => current.year - 3 + index);
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white px-3 py-1.5">
-      <span className="block text-[9px] text-slate-400">{label}</span>
-      <div className="mt-1 flex items-center gap-1.5">
-        <select value={current.day} onChange={(e) => update("day", e.target.value)} className="bg-transparent text-[11px] font-medium text-slate-700 outline-none">
-          {Array.from({ length: days }, (_, i) => i + 1).map((day) => <option key={day} value={day}>{new Intl.NumberFormat("fa-IR").format(day)}</option>)}
-        </select>
-        <span className="text-slate-300">/</span>
-        <select value={current.month} onChange={(e) => update("month", e.target.value)} className="max-w-[78px] bg-transparent text-[11px] font-medium text-slate-700 outline-none">
-          {monthNames.map((name, index) => <option key={name} value={index + 1}>{name}</option>)}
-        </select>
-        <span className="text-slate-300">/</span>
-        <select value={current.year} onChange={(e) => update("year", e.target.value)} className="bg-transparent text-[11px] font-medium text-slate-700 outline-none">
-          {years.map((year) => <option key={year} value={year}>{new Intl.NumberFormat("fa-IR").format(year)}</option>)}
-        </select>
-      </div>
-    </div>
+    <Box dir="rtl" sx={{ border: "1px solid #E2E8F0", bgcolor: "#FFFFFF", borderRadius: 2, px: 1.25, py: 0.75, minWidth: 190 }}>
+      <Typography sx={{ display: "block", color: "#94A3B8", fontSize: 9 }}>{label}</Typography>
+      <Box sx={{ mt: 0.25, display: "flex", alignItems: "center", gap: 0.25 }}>
+        <DatePartSelect value={current.day} onChange={(v) => update("day", v)} minWidth={42}>
+          {Array.from({ length: days }, (_, i) => i + 1).map((day) => <MenuItem key={day} value={day} sx={{ fontSize: 12 }}>{new Intl.NumberFormat("fa-IR").format(day)}</MenuItem>)}
+        </DatePartSelect>
+        <Typography sx={{ color: "#CBD5E1", fontSize: 11 }}>/</Typography>
+        <DatePartSelect value={current.month} onChange={(v) => update("month", v)} minWidth={82}>
+          {monthNames.map((name, index) => <MenuItem key={name} value={index + 1} sx={{ fontSize: 12 }}>{name}</MenuItem>)}
+        </DatePartSelect>
+        <Typography sx={{ color: "#CBD5E1", fontSize: 11 }}>/</Typography>
+        <DatePartSelect value={current.year} onChange={(v) => update("year", v)} minWidth={58}>
+          {years.map((year) => <MenuItem key={year} value={year} sx={{ fontSize: 12 }}>{new Intl.NumberFormat("fa-IR").format(year)}</MenuItem>)}
+        </DatePartSelect>
+      </Box>
+    </Box>
+  );
+}
+
+
+function DatePartSelect({ value, onChange, minWidth, children }: { value: number; onChange: (value: string) => void; minWidth: number; children: React.ReactNode }) {
+  return (
+    <FormControl size="small" sx={{ minWidth }}>
+      <Select
+        value={String(value)}
+        onChange={(event) => onChange(String(event.target.value))}
+        sx={{
+          "& .MuiSelect-select": { py: 0.35, px: 0.75, fontSize: 11, fontWeight: 600, color: "#475569", fontFamily: '"Vazirmatn", Arial, sans-serif' },
+          "& .MuiOutlinedInput-notchedOutline": { border: 0 },
+          "&:hover .MuiOutlinedInput-notchedOutline": { border: 0 },
+          "&.Mui-focused .MuiOutlinedInput-notchedOutline": { border: 0 },
+          "& .MuiSelect-icon": { display: "none" },
+        }}
+        MenuProps={{ dir: "rtl" }}
+      >
+        {children}
+      </Select>
+    </FormControl>
   );
 }
