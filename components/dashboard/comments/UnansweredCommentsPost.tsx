@@ -11,8 +11,8 @@ import {
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/components/dashboard/DashboardUI";
+import { Input } from "@/components/dashboard/DashboardUI";
 
 type Account = { id: string; igUsername: string; profilePictureUrl: string | null };
 type Media = {
