@@ -238,10 +238,13 @@ export async function refreshInstagramToken(
   let data: InstagramTokenResponse;
 
   try {
-    data = await fetchInstagram<InstagramTokenResponse>({
-      grant_type: "ig_refresh_token",
-      access_token: account.accessToken,
-    });
+    data = await fetchInstagram<InstagramTokenResponse>(
+      {
+        grant_type: "ig_refresh_token",
+        access_token: account.accessToken,
+      },
+      { instagramAccountId, operation: "PROFILE_READ" },
+    );
   } catch (error) {
     console.error("[Instagram Token] Refresh request failed:", {
       instagramAccountId,
@@ -426,6 +429,7 @@ export async function validateInstagramAccessToken(
       },
       timeoutMs: REQUEST_TIMEOUT_MS,
       maxRetries: 0,
+      rateLimit: { instagramAccountId, operation: "PROFILE_READ" },
     });
 
     if (!profile?.user_id && !profile?.id) {
