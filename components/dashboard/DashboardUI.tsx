@@ -73,9 +73,10 @@ export function Button({
       "&:hover": { bgcolor: COLORS.primaryDark },
     } : {}),
     ...(variant === "destructive" ? {
-      bgcolor: "#DC2626",
-      color: "#FFFFFF",
-      "&:hover": { bgcolor: "#B91C1C" },
+      bgcolor: "#FFFFFF",
+      color: "#DC2626",
+      border: "1px solid #DC2626",
+      "&:hover": { bgcolor: "#FFFFFF", borderColor: "#B91C1C", color: "#B91C1C" },
     } : {}),
     ...(variant === "outline" ? {
       bgcolor: COLORS.surface,
@@ -409,6 +410,8 @@ export function Calendar({ className, ...props }: DashboardCalendarProps) {
         },
         "& .rdp-dropdowns": { display: "flex", justifyContent: "center", gap: 0.75 },
         "& .rdp-dropdown_root": {
+          width: "auto",
+          maxWidth: "none",
           border: "1px solid " + COLORS.border,
           borderRadius: 1.5,
           overflow: "hidden",
