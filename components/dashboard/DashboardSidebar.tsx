@@ -70,12 +70,6 @@ const menuGroups = [
       { title: "تیکت‌ها", href: "/dashboard/tickets", icon: Ticket },
     ],
   },
-  {
-    label: "حساب",
-    items: [
-      { title: "اشتراک", href: "/dashboard/subscription", icon: CreditCard },
-    ],
-  },
 ];
 
 function Brand() {
@@ -114,7 +108,7 @@ function AccountSection({ instagramAccounts }: { instagramAccounts: InstagramAcc
         <Typography fontSize={10.5} fontWeight={700} color="#64748B">پیج‌های اینستاگرام</Typography>
         <Box component={Link} href="/api/instagram/connect" aria-label="افزودن حساب" sx={{ display: "flex", alignItems: "center", gap: 0.35, color: "#2563EB", textDecoration: "none", fontSize: 10.5, fontWeight: 700, "&:hover": { color: "#1D4ED8" } }}>
           <Plus size={14} strokeWidth={2.2} />
-          <span>افزودن حساب</span>
+          <span>افزودن پیج</span>
         </Box>
       </Box>
       <Box sx={{ display: "flex", alignItems: "center", gap: 0.9, minWidth: 0, px: 0.9, py: 0.85, borderRadius: 1.75, bgcolor: "#F8FAFC", border: "1px solid #E2E8F0" }}>
@@ -133,6 +127,34 @@ function AccountSection({ instagramAccounts }: { instagramAccounts: InstagramAcc
             <Check size={14} strokeWidth={2.4} />
           </Box>
         ) : null}
+      </Box>
+
+      <Box sx={{ mt: 1, pt: 0.9, borderTop: "1px solid #E2E8F0" }}>
+        <Box sx={{ px: 0.35, mb: 0.55 }}>
+          <Typography fontSize={10.5} fontWeight={700} color="#64748B">
+            حساب
+          </Typography>
+        </Box>
+        <Box
+          component={Link}
+          href="/dashboard/subscription"
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+            minHeight: 38,
+            px: 1.1,
+            borderRadius: 1.75,
+            color: "#475569",
+            textDecoration: "none",
+            "&:hover": { bgcolor: "#F8FAFC", color: "#1D4ED8" },
+          }}
+        >
+          <CreditCard size={17} strokeWidth={1.9} />
+          <Typography component="span" fontSize={12.5} fontWeight={500}>
+            اشتراک
+          </Typography>
+        </Box>
       </Box>
     </Box>
   );
