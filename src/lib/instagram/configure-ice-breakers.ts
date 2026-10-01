@@ -31,6 +31,7 @@ export async function syncIceBreakers(instagramAccountId: string) {
     method: "POST",
     accessToken,
     params: { platform: "instagram" },
+    rateLimit: { instagramAccountId, operation: "MESSENGER_PROFILE" },
     body: {
       ice_breakers: iceBreakers.map((item) => ({
         question: item.question,
