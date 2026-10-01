@@ -71,7 +71,7 @@ export default function DashboardMobileHeader({
               height: 40,
             }}
           >
-            <MenuIcon />
+            <MenuIcon size={20} strokeWidth={2} />
           </IconButton>
 
           <Box sx={{ flex: 1 }} />
@@ -135,7 +135,7 @@ export default function DashboardMobileHeader({
               {activeAccount ? (
                 <MenuItem disabled sx={{ opacity: "1 !important", minHeight: 42 }}>
                   <ListItemIcon>
-                    <PersonOutline fontSize="small" />
+                    <UserRound size={18} strokeWidth={1.9} />
                   </ListItemIcon>
                   <Typography component="span" dir="ltr" fontSize={12}>
                     @{activeAccount.igUsername}
@@ -152,7 +152,7 @@ export default function DashboardMobileHeader({
                 sx={{ minHeight: 42, fontSize: 12, fontWeight: 600 }}
               >
                 <ListItemIcon>
-                  <Add fontSize="small" />
+                  <Plus size={18} strokeWidth={1.9} />
                 </ListItemIcon>
                 اتصال پیج جدید
               </MenuItem>
@@ -250,7 +250,7 @@ export default function DashboardMobileHeader({
               aria-label="بستن"
               sx={{ color: "#64748B" }}
             >
-              <Close fontSize="small" />
+              <X size={18} strokeWidth={1.9} />
             </IconButton>
           </Box>
 
@@ -266,7 +266,7 @@ export default function DashboardMobileHeader({
                 border: "1px solid #E2E8F0",
               }}
             >
-              <PersonOutline sx={{ color: "#64748B", fontSize: 19 }} />
+              <UserRound size={19} strokeWidth={1.9} color="#64748B" />
               <Box sx={{ minWidth: 0, flex: 1, textAlign: "right" }}>
                 <Typography dir="ltr" noWrap fontSize={12} fontWeight={600}>
                   @{activeAccount.igUsername}
@@ -287,7 +287,7 @@ export default function DashboardMobileHeader({
             href="/api/instagram/connect"
             fullWidth
             variant="outlined"
-            startIcon={<Add />}
+            startIcon={<Plus size={18} strokeWidth={1.9} />}
             sx={{
               mt: 1.25,
               minHeight: 40,
