@@ -200,10 +200,10 @@ export default function DashboardSidebar({
 }: DashboardSidebarProps) {
   return (
     <>
-      <Drawer variant="permanent" anchor="right" sx={{ display: { xs: "none", lg: "block" }, width: 220, flexShrink: 0, "& .MuiDrawer-paper": { width: 220, boxSizing: "border-box", borderLeft: "1px solid #E2E8F0", borderRight: 0, direction: "rtl" } }}>
+      <Drawer variant="permanent" anchor="left" sx={{ display: { xs: "none", lg: "block" }, width: 220, flexShrink: 0, "& .MuiDrawer-paper": { width: 220, boxSizing: "border-box", borderLeft: "1px solid #E2E8F0", borderRight: 0, direction: "rtl" } }}>
         <SidebarContent instagramAccounts={instagramAccounts} />
       </Drawer>
-      <Drawer variant="temporary" anchor="right" open={mobileOpen} onClose={onMobileClose} ModalProps={{ keepMounted: true }}
+      <Drawer variant="temporary" anchor="left" open={mobileOpen} onClose={onMobileClose} ModalProps={{ keepMounted: true }}
         sx={{ display: { xs: "block", lg: "none" }, "& .MuiDrawer-paper": { width: { xs: "min(84vw, 300px)", sm: 320 }, boxSizing: "border-box", borderLeft: "1px solid #E2E8F0", borderRight: 0, direction: "rtl" } }}>
         <SidebarContent mobile onClose={onMobileClose} instagramAccounts={instagramAccounts} />
       </Drawer>
