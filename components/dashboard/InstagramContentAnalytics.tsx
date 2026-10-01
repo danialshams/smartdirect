@@ -1,10 +1,10 @@
 "use client";
 
-import { Input } from "@/components/ui/input"
+import { Input } from "@/components/dashboard/DashboardUI"
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/dashboard/DashboardUI"
 
-import { Select } from "@/components/ui/select"
+import { Select } from "@/components/dashboard/DashboardUI"
 
 
 import {
