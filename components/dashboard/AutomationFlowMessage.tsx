@@ -1,8 +1,8 @@
 "use client";
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Select } from "@/components/ui/select"
+import { Button } from "@/components/dashboard/DashboardUI"
+import { Input } from "@/components/dashboard/DashboardUI"
+import { Textarea } from "@/components/dashboard/DashboardUI"
+import { Select } from "@/components/dashboard/DashboardUI"
 
 import { ChevronDown, ClipboardList, ImagePlus, MessageSquare, Mic, Plus, Store, Trash2, Upload, Video, X, type LucideIcon } from "lucide-react";
 import { useEffect, useState } from "react";
