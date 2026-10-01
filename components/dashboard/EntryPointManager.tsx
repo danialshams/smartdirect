@@ -49,32 +49,207 @@ type Props = {
 
 const config = {
   "ice-breaker": {
-    title: "5£XœÖäsZ7h×Hºw^~)Þu&¯5£z¾éÝyø§yÐˆ°(€€€Í¡½ÉÑQ¥Ñ±”è€ˆÖb{§uçâçB"À¢FDÆ&VÃ¢.×ŸŠwrCZ5hßÌºw^~)Þw",
-    emptyTitle: "5£Y"éÝyø§yØ˜ÌÖtB.×ŸŠwcZ6Hh×*5£{2éÝyø§yÐ™ÖsZ7È‹ˆ[\U^ˆh× ªéÝyø§y×$5£P€ÖüË§uçâç{²Z7‘hÖ 5£XžéÝyø§yÐ˜ÆéÝyø§yÜ˜ Ös#Z7È.×ŸŠw	Ÿh×."éÝyø§yÖF"éÝyø§y×'"éÝyø§yÞF5£y‹§uçâç}Öòâ"À¢6V&6…Æ6V†öÆFW#¢#Z5ÊhØ 5£D€Ör{§uçâçrdSZ5ˆhÖ'ºw^~)Þt...",
+    title: "Ø³Ø¤Ø§Ù„â€ŒÙ‡Ø§ÛŒ Ø´Ø±ÙˆØ¹ Ú¯ÙØªÚ¯Ùˆ",
+    shortTitle: "Ø³Ø¤Ø§Ù„",
+    addLabel: "Ø³Ø¤Ø§Ù„ Ø¬Ø¯ÛŒØ¯",
+    emptyTitle: "Ù‡Ù†ÙˆØ² Ø³Ø¤Ø§Ù„ Ø´Ø±ÙˆØ¹ Ú¯ÙØªÚ¯ÙˆÛŒÛŒ Ù†Ø¯Ø§Ø±ÛŒØ¯",
+    emptyText: "Ø¨Ø§ Â«Ø³Ø¤Ø§Ù„ Ø¬Ø¯ÛŒØ¯Â» Ø§ÙˆÙ„ÛŒÙ† Ø³Ø¤Ø§Ù„ Ø±Ø§ Ø¨Ø³Ø§Ø²ÛŒØ¯ Ùˆ Ù¾Ø§Ø³Ø® Ø¢Ù† Ø±Ø§ ØªÙ†Ø¸ÛŒÙ… Ú©Ù†ÛŒØ¯.",
+    searchPlaceholder: "Ø¬Ø³ØªØ¬Ùˆ Ø¨Ø± Ø§Ø³Ø§Ø³ Ù…ØªÙ† Ø³Ø¤Ø§Ù„...",
     max: 4,
     maxLength: 80,
-    placeholder: &E5£XžéÝyø§yÜè€ÖóSZ5‰î×ŸŠw‰h× 5£\€ÖìÃZ5H‹ˆ\Nˆ‹Ø\KÚ[œÝYÜ˜[KÚXÙKXœ™XZÙ\œÈ‹ˆØ]™U^ˆhÞÌ5£\€ÖbsZ7‘î×ŸŠwÈ‹ˆKˆœ\œÚ\Ý[[Y[HŽˆÂˆ]Nˆ	‘MhÞÌ"éÝyø§yß'5£^¦éÝyø§yØˆ°(€€€Í¡½ÉÑQ¥Ñ±”è€ˆÖlÃZ5È‹ˆYX™[ˆ	«ÍhÞFºw^~)Þw&,5£x¼ˆ°(€€€•µÁÑåQ¥Ñ±”è€™Öã".×ŸŠwó#Z5‘Íh×Ì"éÝyø§yÞ15£p€Öd‹§uçâçBbóZ7ŒMhÚ 5£|œÖâò"À¢V×G•FW‡C¢.×ŸŠwâr
-úóZ7‘®×ŸŠwÉ‹hÞ/»&'5£[2éÝyø§yØš¼Öäk§uçâçrc§uçâçrbƒZ5Ìhß ºw^~)Þt&~5£\¸‹§uçâçY‹§uçâç\œ‹§uçâçyÖäR.×ŸŠwôcZ7Ëˆ‹ˆÙX\˜ÚXÙZÛ\Žˆh×*5£`€ÖZ5Éî×ŸŠwÉŽMhÞ'ºw^~)Þv&¯5£yéÝyø§yÜ¸¸¸ˆ°(€€€µ…àè€ÈÀ°(€€€µ…á1•¹Ñ è€ÌÀ°(€€€Á±…•¡½±‘•Èè€ˆÖôCZ6Îˆºw^~)ÞuÍh×/ºw^~)Þw&E5£] Ör¢"À¢“¢"ö’ö–ç7Fw&Ò÷W'6—7FVçBÖÖVçR"À¢6fUFW‡C¢.×ŸŠwbãZ5ÑÈºw^~)ÞuÑ®×ŸŠw‹ˆKŸH\ÈÛÛœÝÂ‚™^ÜY˜][[˜Ý[Ûˆ[žTÚ[X[˜YÙ\ŠÈXØÛÝ[ËÚ[™Nˆ›ÜÊHÂˆÛÛœÝÈHÛÛ™šYÖÚÚ[™NÂˆÛÛœÝXØÛÝ[H\ÙSY[[Êˆ
+    placeholder: "Ù…Ø«Ù„Ø§Ù‹: Ù…Ø­ØµÙˆÙ„Ø§Øª Ø´Ù…Ø§ Ø±Ø§ Ø¨Ø¨ÛŒÙ†Ù…",
+    api: "/api/instagram/ice-breakers",
+    saveText: "Ø°Ø®ÛŒØ±Ù‡ Ø³Ø¤Ø§Ù„â€ŒÙ‡Ø§",
+  },
+  "persistent-menu": {
+    title: "Ù…Ù†ÙˆÛŒ Ø¯Ø§ÛŒØ±Ú©Øª",
+    shortTitle: "Ú¯Ø²ÛŒÙ†Ù‡",
+    addLabel: "Ú¯Ø²ÛŒÙ†Ù‡ Ø¬Ø¯ÛŒØ¯",
+    emptyTitle: "Ù‡Ù†ÙˆØ² Ú¯Ø²ÛŒÙ†Ù‡â€ŒØ§ÛŒ Ø¨Ø±Ø§ÛŒ Ù…Ù†ÙˆÛŒ Ø¯Ø§ÛŒØ±Ú©Øª Ù†Ø¯Ø§Ø±ÛŒØ¯",
+    emptyText: "Ø¨Ø§ Â«Ú¯Ø²ÛŒÙ†Ù‡ Ø¬Ø¯ÛŒØ¯Â» Ø§ÙˆÙ„ÛŒÙ† Ú¯Ø²ÛŒÙ†Ù‡ Ø±Ø§ Ø¨Ø³Ø§Ø²ÛŒØ¯ Ùˆ Ù¾Ø§Ø³Ø® Ø¢Ù† Ø±Ø§ ØªÙ†Ø¸ÛŒÙ… Ú©Ù†ÛŒØ¯.",
+    searchPlaceholder: "Ø¬Ø³ØªØ¬Ùˆ Ø¨Ø± Ø§Ø³Ø§Ø³ Ø¹Ù†ÙˆØ§Ù† Ú¯Ø²ÛŒÙ†Ù‡...",
+    max: 20,
+    maxLength: 30,
+    placeholder: "Ù…Ø«Ù„Ø§Ù‹: Ù…Ø´Ø§Ù‡Ø¯Ù‡ Ù…Ø­ØµÙˆÙ„Ø§Øª",
+    api: "/api/instagram/persistent-menu",
+    saveText: "Ø°Ø®ÛŒØ±Ù‡ Ù…Ù†Ùˆ",
+  },
+} as const;
 
-HOˆXØÛÝ[Ë™š[™
+export default function EntryPointManager({ accounts, kind }: Props) {
+  const c = config[kind];
+  const account = useMemo(
+    () => accounts.find((item) => item.isConnected) ?? null,
+    [accounts],
+  );
 
-][JHOˆ][Kš\ÐÛÛ›™XÝY
-HÏÈ[ˆØXØÛÝ[×Kˆ
-NÂ‚ˆÛÛœÝÚ][\ËÙ]][\×HH\ÙTÝ]O][V×OŠ×JNÂˆÛÛœÝÙ[˜X›YÙ][˜X›YHH\ÙTÝ]JYJNÂˆÛÛœÝÛØY[™ËÙ]ØY[™×HH\ÙTÝ]JYJNÂˆÛÛœÝÜØ]š[™ËÙ]Ø]š[™×HH\ÙTÝ]J˜[ÙJNÂˆÛÛœÝÜÙX\˜ÚÙ]ÙX\˜ÚHH\ÙTÝ]JˆŠNÂˆÛÛœÝÜÙ[XÝYYËÙ]Ù[XÝYY×HH\ÙTÝ]OÝš[™Ö×OŠ×JNÂˆÛÛœÝÛÜ[’YÙ]Ü[’YHH\ÙTÝ]OÝš[™È[Š[
-NÂˆÛÛœÝÙ[]U\™Ù]Ù][]U\™Ù]HH\ÙTÝ]O][H[Š[
-NÂˆÛÛœÝØ[Ñ[]SÜ[‹Ù][Ñ[]SÜ[—HH\ÙTÝ]J˜[ÙJNÂˆÛÛœÝÙ\œ›Ü‹Ù]\œ›Ü—HH\ÙTÝ]JˆŠNÂˆÛÛœÝÜÝXØÙ\ÜËÙ]ÝXØÙ\Ü×HH\ÙTÝ]J˜[ÙJNÂ‚ˆ\Þ[˜È[˜Ý[Ûˆ™XY™\Ý[
-™\ÜÛœÙNˆ™\ÜÛœÙJHÂˆÛÛœÝ^H]ØZ]™\ÜÛœÙK^
+  const [items, setItems] = useState<Item[]>([]);
+  const [enabled, setEnabled] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState("");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Item | null>(null);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
 
-NÂˆYˆ
-]^
-H™]\›ˆßNÂˆžHÂˆ™]\›ˆ”ÓÓ‹œ\œÙJ^
-H\È™XÛÜ™Ýš[™Ë[šÛ›ÝÛŽÂˆHØ]ÚÂˆ›ÝÈ™]È\œ›ÜŠh×3ºw^~)Þv&F5£\äÖã.×ŸŠws".×ŸŠwsZ4Hh×Ì5£\¨‹§uçâçX¼¸ˆ¤ì(€€€ô(€ô((€…Íå¹Œ™Õ¹Ñ¥½¸±½… ¤ì(€€€¥˜€ ……½Õ¹Ð¤ì(€€€€€Í•Ñ%Ñ•µÌ¡mt¤ì(€€€€€Í•Ñ1½…‘¥¹œ¡™…±Í”¤ì(€€€€€É•ÑÕÉ¸ì(€€€ô((€€€ÑÉäì(€€€€€Í•Ñ1½…‘¥¹œ¡ÑÉÕ”¤ì(€€€€€Í•ÑÉÉ½È ˆˆ¤ì(€€€€€½¹ÍÐÉ•ÍÁ½¹Í”€ô…Ý…¥Ð™•Ñ  (€€€€€€€€‘íŒ¹…Á¥ôý¥¹ÍÑ…É…µ½Õ¹Ñ%ô‘í•¹½‘•UI%½µÁ½¹•¹Ð¡…½Õ¹Ð¹¥¥õ€°(€€€€€€€ì…¡”è€‰¹¼µÍÑ½É”ˆ°É•‘•¹Ñ¥…±Ìè€‰¥¹±Õ‘”ˆô°(€€€€€€¤ì(€€€€€½¹ÍÐÉ•ÍÕ±Ð€ô…Ý…¥ÐÉ•…‘I•ÍÕ±Ð¡É•ÍÁ½¹Í”¤ì((€€€€€¥˜€ …É•ÍÁ½¹Í”¹½¬ñðÉ•ÍÕ±Ð¹ÍÕ•ÍÌ€„ôôÑÉÕ”¤ì(€€€€€€€Ñ¡É½Ü¹•ÜÉÉ½È (€€€€€€€€€ÑåÁ•½˜É•ÍÕ±Ð¹•ÉÉ½È€ôôô€‰ÍÑÉ¥¹œˆ(€€€€€€€€€€€€üÉ•ÍÕ±Ð¹•ÉÉ½È(€€€€€€€€€€€€è€‹§uçâç|ÄÖt§uçâçbb£Z7³h×*"éÝyø§yÖ'5£yéÝyø§yØ˜ Öòâ"À¢“°¢Ð ¢–b†¶–æBÓÓÒ&–6RÖ'&V¶W""’°¢6öç7BFFÒ'&’æ—4'&’‡&W7VÇBæFF’ò&W7VÇBæFF¢µÓ°¢6WD—FV×2€¢FFæÖ‚†—FVÒ’Óâ°¢6öç7BfÇVRÒ—FVÒ26W'fW$—FVÓ°¢&WGW&â°¢–C¢fÇVRæ–BÀ¢Æ&VÃ¢fÇVRçVW7F–öâóò""À¢WFöÖF–öä–C¢fÇVRæWFöÖF–öä–BóòçVÆÂÀ¢G—S¢'÷7F&6²"À¢W&Ã¢""À¢Ó°¢Ò’À¢“°¢6WDVæ&ÆVB†FFæÆVæwF‚â“°¢ÒVÇ6R°¢6öç7BÖVçRÐ¢&W7VÇBæFFbbG—Vöb&W7VÇBæFFÓÓÒ&ö&¦V7B ¢ò‡&W7VÇBæFF2²Væ&ÆVCó¢&ööÆVã²—FV×3ó¢6W'fW$—FVÕµÒÒ¢¢çVÆÃ°¢6öç7BFFÒ'&’æ—4'&’†ÖVçSòæ—FV×2’òÖVçRæ—FV×2¢µÓ°¢6WDVæ&ÆVB„&ööÆVâ†ÖVçSòæVæ&ÆVB’“°¢6WD—FV×2€¢FFæÖ‚†—FVÒ’Óâ‡°¢–C¢—FVÒæ–BÀ¢Æ&VÃ¢—FVÒçF—FÆRóò""À¢WFöÖF–öä–C¢—FVÒæWFöÖF–öä–BóòçVÆÂÀ¢G—S¢—FVÒçG—Róò†—FVÒç–ÆöCòç7F'G5v—F‚‚%õ÷vV%÷W&Åõó¢"’ò'vV%÷W&Â"¢'÷7F&6²"’À¢W&Ã¢—FVÒçW&Âóò†—FVÒç–ÆöCòç7F'G5v—F‚‚%õ÷vV%÷W&Åõó¢"’ò—FVÒç–ÆöBç6Æ–6R‚%õ÷vV%÷W&Åõó¢"æÆVæwF‚’¢""’À¢Ò’’À¢“°¢Ð ¢6WE6VÆV7FVD–G2…µÒ“°¢6WD÷Vä–B†çVÆÂ“°¢Ò6F6‚‡&WVW7DW'&÷"’°¢6WD—FV×2…µÒ“°¢6WDW'&÷"€¢&WVW7DW'&÷"–ç7Fæ6VöbW'&÷ ¢ò&WVW7DW'&÷"æÖW76vP¢¢bóZ7‰ÍhÚ 5£XàÖr{§uçâçbdcZ5ÒhÒ 5£x¼¸ˆ°(€€€€€€¤ì(€€€ô™¥¹…±±äì(€€€€€Í•Ñ1½…‘¥¹œ¡™…±Í”¤ì(€€€ô(€ô((€ÕÍ•™™•Ð  ¤€ôøì(€€€Ù½¥±½… ¤ì(€ô°m…½Õ¹Ðü¹¥°­¥¹‘t¤ì((€™Õ¹Ñ¥½¸…‘‘%Ñ•´ ¤ì(€€€¥˜€¡¥Ñ•µÌ¹±•¹Ñ €øôŒ¹µ…à¤É•ÑÕÉ¸ì(€€€½¹ÍÐ¥€ô‘É…™Ð´‘í…Ñ”¹¹½Ü ¥ô´‘í5…Ñ ¹É…¹‘½´ ¤¹Ñ½MÑÉ¥¹œ ÌØ¤¹Í±¥” È¥õ€ì(€€€Í•Ñ%Ñ•µÌ ¡ÕÉÉ•¹Ð¤€ôøl(€€€€€€¸¸¹ÕÉÉ•¹Ð°(€€€€€ì¥°±…‰•°è€ˆˆ°…ÕÑ½µ…Ñ¥½¹%è¹Õ±°°ÑåÁ”è€‰Á½ÍÑ‰…¬ˆ°ÕÉ°è€ˆˆô°(€€€t¤ì(€€€Í•Ñ=Á•¹%¡¥¤ì(€€€Í•ÑMÕ•ÍÌ¡™…±Í”¤ì(€ô((€™Õ¹Ñ¥½¸ÕÁ‘…Ñ•%Ñ•´¡¥èÍÑÉ¥¹œ°Á…Ñ èA…ÉÑ¥…°ñ%Ñ•´ø¤ì(€€€Í•Ñ%Ñ•µÌ ¡ÕÉÉ•¹Ð¤€ôø(€€€€€ÕÉÉ•¹Ð¹µ…À ¡¥Ñ•´¤€ôø€¡¥Ñ•´¹¥€ôôô¥€üì€¸¸¹¥Ñ•´°€¸¸¹Á…Ñ ô€è¥Ñ•´¤¤°(€€€€¤ì(€€€Í•ÑMÕ•ÍÌ¡™…±Í”¤ì(€ô((€™Õ¹Ñ¥½¸Ñ½±•M•±•Ñ•¡¥èÍÑÉ¥¹œ¤ì(€€€Í•ÑM•±•Ñ•‘%‘Ì ¡ÕÉÉ•¹Ð¤€ôø(€€€€€ÕÉÉ•¹Ð¹¥¹±Õ‘•Ì¡¥¤(€€€€€€€€üÕÉÉ•¹Ð¹™¥±Ñ•È ¡¥Ñ•µ%¤€ôø¥Ñ•µ%€„ôô¥¤(€€€€€€€€èl¸¸¹ÕÉÉ•¹Ð°¥‘t°(€€€€¤ì(€ô((€½¹ÍÐ™¥±Ñ•É•‘%Ñ•µÌ€ôÕÍ•5•µ¼  ¤€ôøì(€€€½¹ÍÐÅÕ•Éä€ôÍ•…É ¹ÑÉ¥´ ¤¹Ñ½1½Ý•É…Í” ¤ì(€€€¥˜€ …ÅÕ•Éä¤É•ÑÕÉ¸¥Ñ•µÌì(€€€É•ÑÕÉ¸¥Ñ•µÌ¹™¥±Ñ•È ¡¥Ñ•´¤€ôø¥Ñ•´¹±…‰•°¹Ñ½1½Ý•É…Í” ¤¹¥¹±Õ‘•Ì¡ÅÕ•Éä¤¤ì(€ô°m¥Ñ•µÌ°Í•…É¡t¤ì((€½¹ÍÐ…±±M•±•Ñ•€ô(€€€™¥±Ñ•É•‘%Ñ•µÌ¹±•¹Ñ €ø€À€˜˜(€€€™¥±Ñ•É•‘%Ñ•µÌ¹•Ù•Éä ¡¥Ñ•´¤€ôø¥Ñ•´¹¥€˜˜Í•±•Ñ•‘%‘Ì¹¥¹±Õ‘•Ì¡¥Ñ•´¹¥¤¤ì((€™Õ¹Ñ¥½¸Ñ½±•M•±•Ñ±° ¤ì(€€€½¹ÍÐ¥‘Ì€ô™¥±Ñ•É•‘%Ñ•µÌ¹µ…À ¡¥Ñ•´¤€ôø¥Ñ•´¹¥¤¹™¥±Ñ•È¡	½½±•…¸¤…ÌÍÑÉ¥¹mtì(€€€Í•ÑM•±•Ñ•‘%‘Ì ¡ÕÉÉ•¹Ð¤€ôø(€€€€€…±±M•±•Ñ•(€€€€€€€€üÕÉÉ•¹Ð¹™¥±Ñ•È ¡¥¤€ôø€…¥‘Ì¹¥¹±Õ‘•Ì¡¥¤¤(€€€€€€€€èl¸¸¹¹•ÜM•Ð¡l¸¸¹ÕÉÉ•¹Ð°€¸¸¹¥‘Ít¥t°(€€€€¤ì(€ô((€™Õ¹Ñ¥½¸Ù…±¥‘…Ñ•%Ñ•µÌ ¤ì(€€€¥˜€ …¥Ñ•µÌ¹±•¹Ñ ¤É•ÑÕÉ¸ì(€€€™½È€¡±•Ð¥¹‘•à€ô€Àì¥¹‘•à€ð¥Ñ•µÌ¹±•¹Ñ ì¥¹‘•à€¬ô€Ä¤ì(€€€€€½¹ÍÐ¥Ñ•´€ô¥Ñ•µÍm¥¹‘•átì(€€€€€¥˜€ …¥Ñ•´¹±…‰•°¹ÑÉ¥´ ¤¤ì(€€€€€€€Ñ¡É½Ü¹•ÜÉÉ½È¡€‘íŒ¹Í¡½ÉÑQ¥Ñ±•ô€‘í¥¹‘•à€¬€Åô€ÖrZ5Ìn×ŸŠwÉªMhÞ/.`);
+  async function readResult(response: Response) {
+    const text = await response.text();
+    if (!text) return {};
+    try {
+      return JSON.parse(text) as Record<string, unknown>;
+    } catch {
+      throw new Error("Ù¾Ø§Ø³Ø® Ù†Ø§Ù…Ø¹ØªØ¨Ø± Ø§Ø² Ø³Ø±ÙˆØ± Ø¯Ø±ÛŒØ§ÙØª Ø´Ø¯.");
+    }
+  }
+
+  async function load() {
+    if (!account) {
+      setItems([]);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError("");
+      const response = await fetch(
+        `${c.api}?instagramAccountId=${encodeURIComponent(account.id)}`,
+        { cache: "no-store", credentials: "include" },
+      );
+      const result = await readResult(response);
+
+      if (!response.ok || result.success !== true) {
+        throw new Error(
+          typeof result.error === "string"
+            ? result.error
+            : "Ø¯Ø±ÛŒØ§ÙØª ØªÙ†Ø¸ÛŒÙ…Ø§Øª Ù†Ø§Ù…ÙˆÙÙ‚ Ø¨ÙˆØ¯.",
+        );
+      }
+
+      if (kind === "ice-breaker") {
+        const data = Array.isArray(result.data) ? result.data : [];
+        setItems(
+          data.map((item) => {
+            const value = item as ServerItem;
+            return {
+              id: value.id,
+              label: value.question ?? "",
+              automationId: value.automationId ?? null,
+              type: "postback",
+              url: "",
+            };
+          }),
+        );
+        setEnabled(data.length > 0);
+      } else {
+        const menu =
+          result.data && typeof result.data === "object"
+            ? (result.data as { enabled?: boolean; items?: ServerItem[] })
+            : null;
+        const data = Array.isArray(menu?.items) ? menu.items : [];
+        setEnabled(Boolean(menu?.enabled));
+        setItems(
+          data.map((item) => ({
+            id: item.id,
+            label: item.title ?? "",
+            automationId: item.automationId ?? null,
+            type: item.type ?? (item.payload?.startsWith("__web_url__:") ? "web_url" : "postback"),
+            url: item.url ?? (item.payload?.startsWith("__web_url__:") ? item.payload.slice("__web_url__:".length) : ""),
+          })),
+        );
+      }
+
+      setSelectedIds([]);
+      setOpenId(null);
+    } catch (requestError) {
+      setItems([]);
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Ø¯Ø±ÛŒØ§ÙØª ØªÙ†Ø¸ÛŒÙ…Ø§Øª Ù†Ø§Ù…ÙˆÙÙ‚ Ø¨ÙˆØ¯.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void load();
+  }, [account?.id, kind]);
+
+  function addItem() {
+    if (items.length >= c.max) return;
+    const id = `draft-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    setItems((current) => [
+      ...current,
+      { id, label: "", automationId: null, type: "postback", url: "" },
+    ]);
+    setOpenId(id);
+    setSuccess(false);
+  }
+
+  function updateItem(id: string, patch: Partial<Item>) {
+    setItems((current) =>
+      current.map((item) => (item.id === id ? { ...item, ...patch } : item)),
+    );
+    setSuccess(false);
+  }
+
+  function toggleSelected(id: string) {
+    setSelectedIds((current) =>
+      current.includes(id)
+        ? current.filter((itemId) => itemId !== id)
+        : [...current, id],
+    );
+  }
+
+  const filteredItems = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return items;
+    return items.filter((item) => item.label.toLowerCase().includes(query));
+  }, [items, search]);
+
+  const allSelected =
+    filteredItems.length > 0 &&
+    filteredItems.every((item) => item.id && selectedIds.includes(item.id));
+
+  function toggleSelectAll() {
+    const ids = filteredItems.map((item) => item.id).filter(Boolean) as string[];
+    setSelectedIds((current) =>
+      allSelected
+        ? current.filter((id) => !ids.includes(id))
+        : [...new Set([...current, ...ids])],
+    );
+  }
+
+  function validateItems() {
+    if (!items.length) return;
+    for (let index = 0; index < items.length; index += 1) {
+      const item = items[index];
+      if (!item.label.trim()) {
+        throw new Error(`${c.shortTitle} ${index + 1} Ø±Ø§ ÙˆØ§Ø±Ø¯ Ú©Ù†ÛŒØ¯.`);
       }
       if (item.label.trim().length > c.maxLength) {
         throw new Error(
-          `${c.shortTitle} ${index + 1}"éÝyø§yÖ(5£x¼‹§uçâç{0Öã.×ŸŠws"G¶2æÖ„ÆVæwF‡Ò.×ŸŠwòsZ5êMhÑ 5£\ÒéÝyø§yÜ¹€°(€€€€€€€€¤ì(€€€€€ô(€€€€€¥˜€¡­¥¹€ôôô€‰Á•ÉÍ¥ÍÑ•¹Ðµµ•¹Ôˆ€˜˜¥Ñ•´¹ÑåÁ”€ôôô€‰Ý•‰}ÕÉ°ˆ¤ì(€€€€€€€¥˜€ …¥Ñ•´¹ÕÉ°¹ÑÉ¥´ ¤¤ì(€€€€€€€€€Ñ¡É½Ü¹•ÜÉÉ½È¡€Öäk§uçâçRjóZ7‘®×ŸŠwÈ	Ú[™^
-È_Hh× 5£\ÆéÝyø§yÜš¤Öâòæ“°¢Ð¢G'’°¢6öç7BW&ÂÒæWrU$Â†—FVÒçW&ÂçG&–Ò‚’“°¢–b‚²&‡GG¢"Â&‡GG3¢%Òæ–æ6ÇVFW2‡W&Âç&÷Fö6öÂ’’F‡&÷ræWrW'&÷"‚“°¢Ò6F6‚°¢F‡&÷ræWrW'&÷"†dCZ5ªHºw^~)ÞwÌhÖG ${index + 1}&E5£x¢éÝyø§yÔ™Ör¢æ“°¢Ð¢ÒVÇ6R–b‚—FVÒæWFöÖF–öä–B’°¢F‡&÷ræWrW'&÷"€¢Z5Ìî×ŸŠwˆ	ØËœÚÜ]_H	Ú[™^
-È_Hºw^~)ÞuÑhÒ 5£{0ÖrZ5‹î×ŸŠwÉ‰ÍhÚ.`,
+          `${c.shortTitle} ${index + 1} Ù†Ø¨Ø§ÛŒØ¯ Ø¨ÛŒØ´ØªØ± Ø§Ø² ${c.maxLength} Ú©Ø§Ø±Ø§Ú©ØªØ± Ø¨Ø§Ø´Ø¯.`,
+        );
+      }
+      if (kind === "persistent-menu" && item.type === "web_url") {
+        if (!item.url.trim()) {
+          throw new Error(`Ù„ÛŒÙ†Ú© Ú¯Ø²ÛŒÙ†Ù‡ ${index + 1} Ø±Ø§ ÙˆØ§Ø±Ø¯ Ú©Ù†ÛŒØ¯.`);
+        }
+        try {
+          const url = new URL(item.url.trim());
+          if (!["http:", "https:"].includes(url.protocol)) throw new Error();
+        } catch {
+          throw new Error(`Ù„ÛŒÙ†Ú© Ú¯Ø²ÛŒÙ†Ù‡ ${index + 1} Ù…Ø¹ØªØ¨Ø± Ù†ÛŒØ³Øª.`);
+        }
+      } else if (!item.automationId) {
+        throw new Error(
+          `Ù¾Ø§Ø³Ø® ${c.shortTitle} ${index + 1} Ù‡Ù†ÙˆØ² Ø°Ø®ÛŒØ±Ù‡ Ù†Ø´Ø¯Ù‡ Ø§Ø³Øª.`,
         );
       }
     }
@@ -119,34 +294,127 @@ H\È™XÛÜ™Ýš[™Ë[šÛ›ÝÛŽÂˆHØ]ÚÂˆ›ÝÈ™]È\œ›ÜŠh×3ºw^~)Þv&F5
         throw new Error(
           typeof result.error === "string"
             ? result.error
-            : béÝyø§yÖ.5£]€‘íŒ¹Ñ¥Ñ±•ô€ÖtSZ5Ðˆºw^~)Þw’.×ŸŠwË˜ˆ
-NÂˆB‚ˆÙ]ÝXØÙ\ÜÊYJNÂˆ]ØZ]ØY
+            : `Ø°Ø®ÛŒØ±Ù‡ ${c.title} Ù†Ø§Ù…ÙˆÙÙ‚ Ø¨ÙˆØ¯.`,
+        );
+      }
 
-NÂˆHØ]Ú
-Ø]™Q\œ›ÜŠHÂˆÙ]\œ›ÜŠˆØ]™Q\œ›Üˆ[œÝ[˜Ù[Ùˆ\œ›Ü‚ˆÈØ]™Q\œ›Ü‹›Y\ÜØYÙBˆˆhÞÌ5£\€ÖtSZ5Ðˆºw^~)Þw’.×ŸŠwËˆ‹ˆ
-NÂˆHš[˜[HÂˆÙ]Ø]š[™Ê˜[ÙJNÂˆBˆB‚ˆ\Þ[˜È[˜Ý[Ûˆ[]R][J][Nˆ][JHÂˆYˆ
-XXØÛÝ[
-H™]\›ŽÂˆÛÛœÝ™[XZ[š[™ÈH][\Ë™š[\Š
-Ý\œ™[
-HOˆÝ\œ™[šYOOH][KšY
-NÂ‚ˆžHÂˆÙ]Ø]š[™ÊYJNÂˆÙ]\œ›ÜŠˆŠNÂˆÙ][]U\™Ù]
-[
-NÂ‚ˆÛÛœÝ™\ÜÛœÙHH]ØZ]™]Ú
-Ë˜\KÂˆY]Ùˆ”ÔÕ‹ˆXY\œÎˆÈÛÛ[U\HŽˆ˜\XØ][Û‹ÚœÛÛˆˆKˆÜ™Y[X[Îˆš[˜ÛYH‹ˆ›ÙNˆ”ÓÓ‹œÝš[™ÚYžJˆÚ[™OOHšXÙKXœ™XZÙ\ˆ‚ˆÈÂˆ[œÝYÜ˜[PXØÛÝ[YˆXØÛÝ[šYˆ][\Îˆ™[XZ[š[™Ë›X\
+      setSuccess(true);
+      await load();
+    } catch (saveError) {
+      setError(
+        saveError instanceof Error
+          ? saveError.message
+          : "Ø°Ø®ÛŒØ±Ù‡ Ù†Ø§Ù…ÙˆÙÙ‚ Ø¨ÙˆØ¯.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
 
-Ý\œ™[
-HOˆ
-Âˆ]Y\Ý[ÛŽˆÝ\œ™[›X™[š[J
-Kˆ]]ÛX][Û’YˆÝ\œ™[˜]]ÛX][Û’YˆJJKˆBˆˆÂˆ[œÝYÜ˜[PXØÛÝ[YˆXØÛÝ[šYˆ[˜X›Yˆ[˜X›Y	‰ˆ™[XZ[š[™Ë›[™Ýˆˆ][\Îˆ™[XZ[š[™Ë›X\
+  async function deleteItem(item: Item) {
+    if (!account) return;
+    const remaining = items.filter((current) => current.id !== item.id);
 
-Ý\œ™[
-HOˆ
-Âˆ]NˆÝ\œ™[›X™[š[J
-Kˆ\NˆÝ\œ™[\Kˆ]]ÛX][Û’YˆÝ\œ™[\HOOHÙX—Ý\›ˆÈ[ˆÝ\œ™[˜]]ÛX][Û’Yˆ\›ˆÝ\œ™[\HOOHÙX—Ý\›ˆÈÝ\œ™[\›š[J
-Hˆ[ˆJJKˆKˆ
-KˆJNÂ‚ˆÛÛœÝ™\Ý[H]ØZ]™XY™\Ý[
-™\ÜÛœÙJNÂˆYˆ
-\™\ÜÛœÙK›ÚÈ™\Ý[œÝXØÙ\ÜÈOOHYJHÂˆ›ÝÈ™]È\œ›ÜŠˆ\[Ùˆ™\Ý[™\œ›ÜˆOOHœÝš[™È‚ˆÈ™\Ý[™\œ›Ü‚ˆˆ	‹MhÑ 5£]Öt".×ŸŠwä‹§uçâçrâ"À¢“°¢Ð ¢–b†—FVÒæWFöÖF–öä–B’°¢v—BfWF6‚†ö’öWFöÖF–öç2òG¶Væ6öFUU$”6ö×öæVçB†—FVÒæWFöÖF–öä–B—ÖÂ°¢ÖWF†öC¢$DTÄUDR"À¢7&VFVçF–Ç3¢&–æ6ÇVFR"À¢Ò’æ6F6‚‚‚’ÓâVæFVf–æVB“°¢Ð ¢v—BÆöB‚“°¢Ò6F6‚†FVÆWFTW'&÷"’°¢6WDW'&÷"€¢FVÆWFTW'&÷"–ç7Fæ6VöbW'&÷ ¢òFVÆWFTW'&÷"æÖW76vP¢¢.×ŸŠwó§uçâçRdcZ5ÒhÒ 5£x¼¸ˆ°(€€€€€€¤ì(€€€ô™¥¹…±±äì(€€€€€Í•ÑM…Ù¥¹œ¡™…±Í”¤ì(€€€ô(€ô((€…Íå¹Œ™Õ¹Ñ¥½¸‰Õ±­•±•Ñ” ¤ì(€€€½¹ÍÐÑ…É•ÑÌ€ô¥Ñ•µÌ¹™¥±Ñ•È (€€€€€€¡¥Ñ•´¤€ôø¥Ñ•´¹¥€˜˜Í•±•Ñ•‘%‘Ì¹¥¹±Õ‘•Ì¡¥Ñ•´¹¥¤°(€€€€¤ì(€€€¥˜€ …Ñ…É•ÑÌ¹±•¹Ñ ¤É•ÑÕÉ¸ì((€€€Í•ÑM…Ù¥¹œ¡ÑÉÕ”¤ì(€€€Í•ÑÉÉ½È ˆˆ¤ì(€€€ÑÉäì(€€€€€½¹ÍÐÑ…É•Ñ%‘Ì€ô¹•ÜM•Ð¡Ñ…É•ÑÌ¹µ…À ¡¥Ñ•´¤€ôø¥Ñ•´¹¥¤¤ì(€€€€€½¹ÍÐÉ•µ…¥¹¥¹œ€ô¥Ñ•µÌ¹™¥±Ñ•È ¡¥Ñ•´¤€ôø€…Ñ…É•Ñ%‘Ì¹¡…Ì¡¥Ñ•´¹¥¤¤ì((€€€€€½¹ÍÐÉ•ÍÁ½¹Í”€ô…Ý…¥Ð™•Ñ ¡Œ¹…Á¤°ì(€€€€€€€µ•Ñ¡½è€‰A=MPˆ°(€€€€€€€¡•…‘•ÉÌèì€‰½¹Ñ•¹ÐµQåÁ”ˆè€‰…ÁÁ±¥…Ñ¥½¸½©Í½¸ˆô°(€€€€€€€É•‘•¹Ñ¥…±Ìè€‰¥¹±Õ‘”ˆ°(€€€€€€€‰½‘äè)M=8¹ÍÑÉ¥¹¥™ä (€€€€€€€€€­¥¹€ôôô€‰¥”µ‰É•…­•Èˆ(€€€€€€€€€€€€üì(€€€€€€€€€€€€€€€¥¹ÍÑ…É…µ½Õ¹Ñ%è…½Õ¹Ðü¹¥°(€€€€€€€€€€€€€€€¥Ñ•µÌèÉ•µ…¥¹¥¹œ¹µ…À ¡¥Ñ•´¤€ôø€¡ì(€€€€€€€€€€€€€€€€€ÅÕ•ÍÑ¥½¸è¥Ñ•´¹±…‰•°¹ÑÉ¥´ ¤°(€€€€€€€€€€€€€€€€€…ÕÑ½µ…Ñ¥½¹%è¥Ñ•´¹…ÕÑ½µ…Ñ¥½¹%°(€€€€€€€€€€€€€€€ô¤¤°(€€€€€€€€€€€€€ô(€€€€€€€€€€€€èì(€€€€€€€€€€€€€€€¥¹ÍÑ…É…µ½Õ¹Ñ%è…½Õ¹Ðü¹¥°(€€€€€€€€€€€€€€€•¹…‰±•è•¹…‰±•€˜˜É•µ…¥¹¥¹œ¹±•¹Ñ €ø€À°(€€€€€€€€€€€€€€€¥Ñ•µÌèÉ•µ…¥¹¥¹œ¹µ…À ¡¥Ñ•´¤€ôø€¡ì(€€€€€€€€€€€€€€€€€Ñ¥Ñ±”è¥Ñ•´¹±…‰•°¹ÑÉ¥´ ¤°(€€€€€€€€€€€€€€€€€ÑåÁ”è¥Ñ•´¹ÑåÁ”°(€€€€€€€€€€€€€€€€€…ÕÑ½µ…Ñ¥½¹%è¥Ñ•´¹ÑåÁ”€ôôô€‰Ý•‰}ÕÉ°ˆ€ü¹Õ±°€è¥Ñ•´¹…ÕÑ½µ…Ñ¥½¹%°(€€€€€€€€€€€€€€€€€ÕÉ°è¥Ñ•´¹ÑåÁ”€ôôô€‰Ý•‰}ÕÉ°ˆ€ü¥Ñ•´¹ÕÉ°¹ÑÉ¥´ ¤€è¹Õ±°°(€€€€€€€€€€€€€€€ô¤¤°(€€€€€€€€€€€€€ô°(€€€€€€€€¤°(€€€€€ô¤ì(€€€€€½¹ÍÐÉ•ÍÕ±Ð€ô…Ý…¥ÐÉ•…‘I•ÍÕ±Ð¡É•ÍÁ½¹Í”¤ì(€€€€€¥˜€ …É•ÍÁ½¹Í”¹½¬ñðÉ•ÍÕ±Ð¹ÍÕ•ÍÌ€„ôôÑÉÕ”¤ì(€€€€€€€Ñ¡É½Ü¹•ÜÉÉ½È (€€€€€€€€€ÑåÁ•½˜É•ÍÕ±Ð¹•ÉÉ½È€ôôô€‰ÍÑÉ¥¹œˆ€üÉ•ÍÕ±Ð¹•ÉÉ½È€è€‹§uçâç|ÂéÝyø§yÔ™ÖtƒZ4ˆhÞ/.",
+    try {
+      setSaving(true);
+      setError("");
+      setDeleteTarget(null);
+
+      const response = await fetch(c.api, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(
+          kind === "ice-breaker"
+            ? {
+                instagramAccountId: account.id,
+                items: remaining.map((current) => ({
+                  question: current.label.trim(),
+                  automationId: current.automationId,
+                })),
+              }
+            : {
+                instagramAccountId: account.id,
+                enabled: enabled && remaining.length > 0,
+                items: remaining.map((current) => ({
+                  title: current.label.trim(),
+                  type: current.type,
+                  automationId: current.type === "web_url" ? null : current.automationId,
+                  url: current.type === "web_url" ? current.url.trim() : null,
+                })),
+              },
+        ),
+      });
+
+      const result = await readResult(response);
+      if (!response.ok || result.success !== true) {
+        throw new Error(
+          typeof result.error === "string"
+            ? result.error
+            : "Ø­Ø°Ù Ù†Ø§Ù…ÙˆÙÙ‚ Ø¨ÙˆØ¯.",
+        );
+      }
+
+      if (item.automationId) {
+        await fetch(`/api/automations/${encodeURIComponent(item.automationId)}`, {
+          method: "DELETE",
+          credentials: "include",
+        }).catch(() => undefined);
+      }
+
+      await load();
+    } catch (deleteError) {
+      setError(
+        deleteError instanceof Error
+          ? deleteError.message
+          : "Ø­Ø°Ù Ù†Ø§Ù…ÙˆÙÙ‚ Ø¨ÙˆØ¯.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function bulkDelete() {
+    const targets = items.filter(
+      (item) => item.id && selectedIds.includes(item.id),
+    );
+    if (!targets.length) return;
+
+    setSaving(true);
+    setError("");
+    try {
+      const targetIds = new Set(targets.map((item) => item.id));
+      const remaining = items.filter((item) => !targetIds.has(item.id));
+
+      const response = await fetch(c.api, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(
+          kind === "ice-breaker"
+            ? {
+                instagramAccountId: account?.id,
+                items: remaining.map((item) => ({
+                  question: item.label.trim(),
+                  automationId: item.automationId,
+                })),
+              }
+            : {
+                instagramAccountId: account?.id,
+                enabled: enabled && remaining.length > 0,
+                items: remaining.map((item) => ({
+                  title: item.label.trim(),
+                  type: item.type,
+                  automationId: item.type === "web_url" ? null : item.automationId,
+                  url: item.type === "web_url" ? item.url.trim() : null,
+                })),
+              },
+        ),
+      });
+      const result = await readResult(response);
+      if (!response.ok || result.success !== true) {
+        throw new Error(
+          typeof result.error === "string" ? result.error : "Ø­Ø°Ù Ù†Ø§Ù…ÙˆÙÙ‚ Ø¨ÙˆØ¯.",
         );
       }
 
@@ -169,23 +437,131 @@ KˆJNÂ‚ˆÛÛœÝ™\Ý[H]ØZ]™XY™\Ý[
       setError(
         deleteError instanceof Error
           ? deleteError.message
-          : "5£Y‹§uçâçXœÖä§uçâçbbƒZ7Ëˆ‹ˆ
-NÂˆHš[˜[HÂˆÙ]Ø]š[™Ê˜[ÙJNÂˆBˆB‚ˆ\Þ[˜È[˜Ý[Ûˆ\ØX›J
-HÂˆYˆ
-XXØÛÝ[
-H™]\›ŽÂˆžHÂˆÙ]Ø]š[™ÊYJNÂˆÙ]\œ›ÜŠˆŠNÂˆÛÛœÝ™\ÜÛœÙHH]ØZ]™]Ú
-ˆ	ØË˜\_OÚ[œÝYÜ˜[PXØÛÝ[YIÙ[˜ÛÙUT’PÛÛ\Û™[
-XØÛÝ[šY
-_XˆÈY]Ùˆ‘SUH‹Ü™Y[X[Îˆš[˜ÛYHˆKˆ
-NÂˆÛÛœÝ™\Ý[H]ØZ]™XY™\Ý[
-™\ÜÛœÙJNÂˆYˆ
-\™\ÜÛœÙK›ÚÈ™\Ý[œÝXØÙ\ÜÈOOHYJHÂˆ›ÝÈ™]È\œ›ÜŠˆ\[Ùˆ™\Ý[™\œ›ÜˆOOHœÝš[™È‚ˆÈ™\Ý[™\œ›Ü‚ˆˆhÞ15£|œÖã3Z5³ºw^~)Þu‰ÍhÞAºw^~)Þv&(5£|¸ˆ°(€€€€€€€€¤ì(€€€€€ô(€€€€€½¹ÍÐ…ÕÑ½µ…Ñ¥½¹%‘Ì€ô¥Ñ•µÌ(€€€€€€€€¹µ…À ¡¥Ñ•´¤€ôø¥Ñ•´¹…ÕÑ½µ…Ñ¥½¹%¤(€€€€€€€€¹™¥±Ñ•È¡	½½±•…¸¤…ÌÍÑÉ¥¹mtì((€€€€€…Ý…¥ÐAÉ½µ¥Í”¹…±° (€€€€€€€…ÕÑ½µ…Ñ¥½¹%‘Ì¹µ…À ¡…ÕÑ½µ…Ñ¥½¹%¤€ôø(€€€€€€€€€™•Ñ ¡€½…Á¤½…ÕÑ½µ…Ñ¥½¹Ì¼‘í•¹½‘•UI%½µÁ½¹•¹Ð¡…ÕÑ½µ…Ñ¥½¹%¥õ€°ì(€€€€€€€€€€€µ•Ñ¡½è€‰1Qˆ°(€€€€€€€€€€€É•‘•¹Ñ¥…±Ìè€‰¥¹±Õ‘”ˆ°(€€€€€€€€€ô¤¹…Ñ   ¤€ôøÕ¹‘•™¥¹•¤°(€€€€€€€€¤°(€€€€€€¤ì((€€€€€Í•Ñ%Ñ•µÌ¡mt¤ì(€€€€€Í•ÑM•±•Ñ•‘%‘Ì¡mt¤ì(€€€€€Í•Ñ¹…‰±•¡™…±Í”¤ì(€€€€€Í•Ñ=Á•¹%¡¹Õ±°¤ì(€€€€€Í•ÑMÕ•ÍÌ¡ÑÉÕ”¤ì(€€€ô…Ñ €¡‘¥Í…‰±•ÉÉ½È¤ì(€€€€€Í•ÑÉÉ½È (€€€€€€€‘¥Í…‰±•ÉÉ½È¥¹ÍÑ…¹•½˜ÉÉ½È(€€€€€€€€€€ü‘¥Í…‰±•ÉÉ½È¹µ•ÍÍ…”(€€€€€€€€€€è€ˆÖãZ7ÉÍhÞ35£[0‹§uçâçXœÖä§uçâçbbƒZ7Ëˆ‹ˆ
-NÂˆHš[˜[HÂˆÙ]Ø]š[™Ê˜[ÙJNÂˆBˆB‚ˆ™]\›ˆ
-ˆ]ˆ\HœˆÛ\ÜÓ˜[YOHËY[ÜXÙK^KM‚ˆÙXÝ[ÛˆÛ\ÜÓ˜[YOHœ›Ý[™YLÞ›Ü™\ˆ›Ü™\‹X›Ü™\‹Î™ËXØ\™ÚYÝË\ÛH‚ˆ]ˆÛ\ÜÓ˜[YOH™›^›^XÛÛØ\MMÛNœMˆ‚ˆ]ˆÛ\ÜÓ˜[YOH™›^›^XÛÛØ\MÛN™›^\›ÝÈÛNš][\Ë\Ý\ÛNš\ÝYžKX™]ÙY[ˆ‚ˆ]ˆÛ\ÜÓ˜[YOH›Z[‹]ËL‚ˆÛ\ÜÓ˜[YOH^^È›Û\Ù[ZX›Û^[]]YY›Ü™YÜ›Ý[™žØË]_OÜ‚ˆHÛ\ÜÓ˜[YOH›]LH^Lž›ÛX›Û˜XÚÚ[™Ë]YÚ^Y›Ü™YÜ›Ý[™ÛN^LÞ‚ˆØË]_BˆÚO‚ˆÛ\ÜÓ˜[YOH›]LˆX^]ËLž^\ÛHXY[™ËMˆ^[]]YY›Ü™YÜ›Ý[™‚ˆÚÚ[™OOHšXÙKXœ™XZÙ\ˆ‚ˆÈhÖ'5£yÖìÂ.×ŸŠwôr.×ŸŠwòsZ7ŒHºw^~)ÞuÑh×E"éÝyø§yÖ15£d€Ör£Z6hÓhÞ'5£|€Öb£Z5Êºw^~)ÞwÑ®×ŸŠwËˆ‚ˆˆºw^~)ÞwÌhÖG5£\œÖÂZ5Èh×15£D€Ö0ÖâsZ7Èh×Ì5£\€Ö"Z5’.×ŸŠw	‹ÍhÞ15£h€Öb£Z5Êºw^~)ÞwÑ®×ŸŠwËˆŸBˆÜ‚ˆÙ]‚ˆ]Û‚ˆ\OH˜]Ûˆ‚ˆÛÛXÚÏ^ØY][_Bˆ\ØX›Y^ÈXXØÛÝ[][\Ë›[™ÝHË›X^BˆÛ\ÜÓ˜[YOH›Z[‹ZLLHÚš[šËL›Ý[™Y^™Ë\š[X\žHM^\ÛH›Û\Ù[ZX›Û^\š[X\žKY›Ü™YÜ›Ý[™‚ˆ‚ˆ\ÈÚ^™O^ÌMŸHÏ‚ˆØË˜YX™[BˆÐ]Û‚ˆÙ]‚‚ˆ]ˆÛ\ÜÓ˜[YOH™›^›^XÛÛØ\LˆÛN™›^\›ÝÈ‚ˆ]ˆÛ\ÜÓ˜[YOHœ™[]]™HZ[‹]ËL›^LH‚ˆÙX\˜ÚˆÚ^™O^ÌMßBˆÛ\ÜÓ˜[YOHœÚ[\‹Y]™[Ë[›Û™HXœÛÛ]HšYÚLÈÜLKÌˆ]˜[œÛ]K^KLKÌˆ^[]]YY›Ü™YÜ›Ý[™‚ˆÏ‚ˆ[œ]ˆ˜[YO^ÜÙX\˜ÚBˆÛÚ[™ÙO^Ê]™[
-HOˆÙ]ÙX\˜Ú
-]™[\™Ù]˜[YJ_BˆXÙZÛ\^ØËœÙX\˜ÚXÙZÛ\ŸBˆÛ\ÜÓ˜[YOHšLLH›Ý[™Y^‹LL‚ˆÏ‚ˆÙ]‚ˆÜÙ[XÝYYË›[™Ýˆ	‰ˆ
-ˆ]Û‚ˆ\OH˜]Ûˆ‚ˆÛÛXÚÏ^Ê
-HOˆÙ][Ñ[]SÜ[ŠYJ_BˆÛ\ÜÓ˜[YOH›Z[‹ZLLH›Ý[™Y^›Ü™\ˆ›Ü™\‹\™YMŒ™Ë]Ú]HM^\ÛH›Û\Ù[ZX›Û^\™YMŒÝ™\Ž˜™Ë]Ú]HÝ™\Ž^\™YMÌ‚ˆ‚ˆºw^~)Þw‰î×ŸŠwIªMhßF {selectedIds.length}"éÝyø§y×H5£|(€€€€€€€€€€€€€€ð½	ÕÑÑ½¸ø(€€€€€€€€€€€€¥ô(€€€€€€€€€€ð½‘¥Øø((€€€€€€€€€í¥Ñ•µÌ¹±•¹Ñ €ø€À€˜˜€ (€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰™±•à¥Ñ•µÌµ•¹Ñ•È©ÕÍÑ¥™äµ‰•ÑÝ••¸‰½É‘•ÈµÐ‰½É‘•Èµ‰½É‘•È¼ÜÀÁÐ´Ìˆø(€€€€€€€€€€€€€€ñ‰ÕÑÑ½¸(€€€€€€€€€€€€€€€ÑåÁ”ô‰‰ÕÑÑ½¸ˆ(€€€€€€€€€€€€€€€½¹±¥¬õíÑ½±•M•±•Ñ±±ô(€€€€€€€€€€€€€€€±…ÍÍ9…µ”ô‰™±•àµ¥¸µ ´ä¥Ñ•µÌµ•¹Ñ•È…À´ÈÑ•áÐµáÌ™½¹ÐµÍ•µ¥‰½±ˆ(€€€€€€€€€€€€€€ø(€€€€€€€€€€€€€€€€ñÍÁ…¸(€€€€€€€€€€€€€€€€€±…ÍÍ9…µ”õíl(€€€€€€€€€€€€€€€€€€€€‰™±•à ´ÔÜ´Ô¥Ñ•µÌµ•¹Ñ•È©ÕÍÑ¥™äµ•¹Ñ•ÈÉ½Õ¹‘•µµ‰½É‘•ÈÑÉ…¹Í¥Ñ¥½¸ˆ°(€€€€€€€€€€€€€€€€€€€…±±M•±•Ñ•(€€€€€€€€€€€€€€€€€€€€€€ü€‰‰½É‘•ÈµÁÉ¥µ…Éä‰œµÁÉ¥µ…ÉäÑ•áÐµÁÉ¥µ…Éäµ™½É•É½Õ¹ˆ(€€€€€€€€€€€€€€€€€€€€€€è€‰‰½É‘•Èµ‰½É‘•È‰œµ‰…­É½Õ¹ˆ°(€€€€€€€€€€€€€€€€€t¹©½¥¸ ˆ€ˆ¥ô(€€€€€€€€€€€€€€€€ø(€€€€€€€€€€€€€€€€€í…±±M•±•Ñ•€˜˜€ñ¡•¬Í¥é”õìÄÍôÍÑÉ½­•]¥‘Ñ õìÍô€¼ùô(€€€€€€€€€€€€€€€€ð½ÍÁ…¸ø(€€€€€€€€€€€€€€€€Öb£Z5Êºw^~)ÞuÑn×ŸŠwÂˆØ]Û‚ˆÜ[ˆÛ\ÜÓ˜[YOH^^È^[]]YY›Ü™YÜ›Ý[™‚ˆÙš[\™Y][\Ë›[™ÝI‘Mh×/
+          : "Ø­Ø°Ù Ù†Ø§Ù…ÙˆÙÙ‚ Ø¨ÙˆØ¯.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function disable() {
+    if (!account) return;
+    try {
+      setSaving(true);
+      setError("");
+      const response = await fetch(
+        `${c.api}?instagramAccountId=${encodeURIComponent(account.id)}`,
+        { method: "DELETE", credentials: "include" },
+      );
+      const result = await readResult(response);
+      if (!response.ok || result.success !== true) {
+        throw new Error(
+          typeof result.error === "string"
+            ? result.error
+            : "ØºÛŒØ±ÙØ¹Ø§Ù„â€ŒØ³Ø§Ø²ÛŒ Ù†Ø§Ù…ÙˆÙÙ‚ Ø¨ÙˆØ¯.",
+        );
+      }
+      const automationIds = items
+        .map((item) => item.automationId)
+        .filter(Boolean) as string[];
+
+      await Promise.all(
+        automationIds.map((automationId) =>
+          fetch(`/api/automations/${encodeURIComponent(automationId)}`, {
+            method: "DELETE",
+            credentials: "include",
+          }).catch(() => undefined),
+        ),
+      );
+
+      setItems([]);
+      setSelectedIds([]);
+      setEnabled(false);
+      setOpenId(null);
+      setSuccess(true);
+    } catch (disableError) {
+      setError(
+        disableError instanceof Error
+          ? disableError.message
+          : "ØºÛŒØ±ÙØ¹Ø§Ù„â€ŒØ³Ø§Ø²ÛŒ Ù†Ø§Ù…ÙˆÙÙ‚ Ø¨ÙˆØ¯.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div dir="rtl" className="w-full space-y-4">
+      <section className="rounded-3xl border border-border/80 bg-card shadow-sm">
+        <div className="flex flex-col gap-4 p-4 sm:p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-muted-foreground">{c.title}</p>
+              <h1 className="mt-1 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                {c.title}
+              </h1>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+                {kind === "ice-breaker"
+                  ? "Ø³Ø¤Ø§Ù„â€ŒÙ‡Ø§ÛŒÛŒ Ú©Ù‡ Ú©Ø§Ø±Ø¨Ø± Ù‡Ù†Ú¯Ø§Ù… Ø´Ø±ÙˆØ¹ Ú¯ÙØªÚ¯Ùˆ Ù…ÛŒâ€ŒØªÙˆØ§Ù†Ø¯ Ø§Ù†ØªØ®Ø§Ø¨ Ú©Ù†Ø¯."
+                  : "Ú¯Ø²ÛŒÙ†Ù‡â€ŒÙ‡Ø§ÛŒÛŒ Ú©Ù‡ Ú©Ø§Ø±Ø¨Ø± Ù…ÛŒâ€ŒØªÙˆØ§Ù†Ø¯ Ù‡Ù…ÛŒØ´Ù‡ Ø§Ø² Ù…Ù†ÙˆÛŒ Ø¯Ø§ÛŒØ±Ú©Øª Ø§Ù†ØªØ®Ø§Ø¨ Ú©Ù†Ø¯."}
+              </p>
+            </div>
+            <Button
+              type="button"
+              onClick={addItem}
+              disabled={!account || items.length >= c.max}
+              className="min-h-11 shrink-0 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground"
+            >
+              <Plus size={16} />
+              {c.addLabel}
+            </Button>
+          </div>
+
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <div className="relative min-w-0 flex-1">
+              <Search
+                size={17}
+                className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+              />
+              <Input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder={c.searchPlaceholder}
+                className="h-11 rounded-xl pr-10"
+              />
+            </div>
+            {selectedIds.length > 0 && (
+              <Button
+                type="button"
+                onClick={() => setBulkDeleteOpen(true)}
+                className="min-h-11 rounded-xl border border-red-600 bg-white px-4 text-sm font-semibold text-red-600 hover:bg-white hover:text-red-700"
+              >
+                Ù¾Ø§Ú© Ú©Ø±Ø¯Ù† {selectedIds.length} Ù…ÙˆØ±Ø¯
+              </Button>
+            )}
+          </div>
+
+          {items.length > 0 && (
+            <div className="flex items-center justify-between border-t border-border/70 pt-3">
+              <button
+                type="button"
+                onClick={toggleSelectAll}
+                className="flex min-h-9 items-center gap-2 text-xs font-semibold"
+              >
+                <span
+                  className={[
+                    "flex h-5 w-5 items-center justify-center rounded-md border transition",
+                    allSelected
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border bg-background",
+                  ].join(" ")}
+                >
+                  {allSelected && <Check size={13} strokeWidth={3} />}
+                </span>
+                Ø§Ù†ØªØ®Ø§Ø¨ Ù‡Ù…Ù‡
+              </button>
+              <span className="text-xs text-muted-foreground">
+                {filteredItems.length} Ù…ÙˆØ±Ø¯
               </span>
             </div>
           )}
@@ -195,16 +571,99 @@ HOˆÙ][Ñ[]SÜ[ŠYJ_BˆÛ\ÜÓ˜[YOH›Z[‹ZLLH›Ý[™Y^›Ü™
       {!account ? (
         <section className="rounded-3xl border border-dashed border-border bg-card px-6 py-16 text-center">
           <Bot className="mx-auto text-muted-foreground" size={24} />
-          <h2 className="mt-4 text-base font-bold">éÝyø§y×(5£|œ‹§uçâçz¤‹§uçâç{2éÝyø§yÐ˜œÖc3Z5ëÍh×E"éÝyø§y×*5£P€ÖlË§uçâçsÂöƒ#à¢Â÷6V7F–öãà¢’¢ÆöF–ærò€¢Ç6V7F–öâ6Æ74æÖSÒ&÷fW&fÆ÷rÖ†–FFVâ&÷VæFVBÓ7†Â&÷&FW"&÷&FW"Ö&÷&FW"óƒ&rÖ6&B#à¢ÆF—b6Æ74æÖSÒ&F—f–FR×’F—f–FRÖ&÷&FW"ós#à¢´'&’æg&öÒ‡²ÆVæwFƒ¢BÒ’æÖ‚…òÂ–æFW‚’Óâ€¢ÆF—b¶W“×¶–æFW‡Ò6Æ74æÖSÒ&fÆW‚æ–ÖFR×VÇ6R—FV×2Ö6VçFW"vÓ2ÓB#à¢ÆF—b6Æ74æÖSÒ&‚ÓRrÓR&÷VæFVBÖÖB&rÖ×WFVB"óà¢ÆF—b6Æ74æÖSÒ&Ö–â×rÓfÆW‚Ó76R×’Ó"#à¢ÆF—b6Æ74æÖSÒ&‚ÓBrÓC&÷VæFVB&rÖ×WFVB"óà¢ÆF—b6Æ74æÖSÒ&‚Ó2rÓ#B&÷VæFVB&rÖ×WFVB"óà¢ÂöF—cà¢ÆF—b6Æ74æÖSÒ&‚Ó’rÓ#&÷VæFVBÖÆr&rÖ×WFVB"óà¢ÂöF—cà¢’—Ð¢ÂöF—cà¢Â÷6V7F–öãà¢’¢f–ÇFW&VD—FV×2æÆVæwF‚ÓÓÒò€¢Ç6V7F–öâ6Æ74æÖSÒ'&÷VæFVBÓ7†Â&÷&FW"&÷&FW"ÖF6†VB&÷&FW"Ö&÷&FW"&rÖ6&B‚Ób’Ó#FW‡BÖ6VçFW"#à¢ÆF—b6Æ74æÖSÒ&×‚ÖWFòfÆW‚‚Ó"rÓ"—FV×2Ö6VçFW"§W7F–g’Ö6VçFW"&÷VæFVBÓ'†Â&rÖ×WFVBFW‡BÖ×WFVBÖf÷&Vw&÷VæB#à¢Ä&÷B6—¦S×³#Òóà¢ÂöF—cà¢Æƒ"6Æ74æÖSÒ&×BÓBFW‡B×6ÒföçBÖ&öÆB#à¢·6V&6‚ò#Z7ŒMhÜ 5£\€Öäb.×ŸŠwòƒZ5Êˆºw^~)Þw³h× 5£X¼ˆ€èŒ¹•µÁÑåQ¥Ñ±•ô(€€€€€€€€€€ð½ Èø(€€€€€€€€€€ñÀ±…ÍÍ9…µ”ô‰µàµ…ÕÑ¼µÐ´Èµ…àµÜµµÑ•áÐµáÌ±•…‘¥¹œ´ØÑ•áÐµµÕÑ•µ™½É•É½Õ¹ˆø(€€€€€€€€€€€íÍ•…É €ü€‹§uçâç| Ör¢.×ŸŠwüÃZ5óºw^~)ÞuÉÈºw^~)ÞuÑMhß'ºw^~)Þv&©5£x¼¸ˆ€èŒ¹•µÁÑåQ•áÑô(€€€€€€€€€€ð½Àø(€€€€€€€€€ì…Í•…É €˜˜€ (€€€€€€€€€€€€ñ	ÕÑÑ½¸(€€€€€€€€€€€€€ÑåÁ”ô‰‰ÕÑÑ½¸ˆ(€€€€€€€€€€€€€½¹±¥¬õí…‘‘%Ñ•µô(€€€€€€€€€€€€€±…ÍÍ9…µ”ô‰µÐ´ÔÉ½Õ¹‘•µá°ˆ(€€€€€€€€€€€€€‘¥Í…‰±•õí¥Ñ•µÌ¹±•¹Ñ €øôŒ¹µ…áô(€€€€€€€€€€€€ø(€€€€€€€€€€€€€€ñA±ÕÌÍ¥é”õìÄÙô€¼ø(€€€€€€€€€€€€€íŒ¹…‘‘1…‰•±ô(€€€€€€€€€€€€ð½	ÕÑÑ½¸ø(€€€€€€€€€€¥ô(€€€€€€€€ð½Í•Ñ¥½¸ø(€€€€€€¤€è€ (€€€€€€€€ñÍ•Ñ¥½¸±…ÍÍ9…µ”ô‰½Ù•É™±½Üµ¡¥‘‘•¸É½Õ¹‘•´Íá°‰½É‘•È‰½É‘•Èµ‰½É‘•È¼àÀ‰œµ…ÉÍ¡…‘½ÜµÍ´ˆø(€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰‘¥Ù¥‘”µä‘¥Ù¥‘”µ‰½É‘•È¼ÜÀˆø(€€€€€€€€€€€í™¥±Ñ•É•‘%Ñ•µÌ¹µ…À ¡¥Ñ•´°¥¹‘•à¤€ôøì(€€€€€€€€€€€€€½¹ÍÐ¥€ô¥Ñ•´¹¥„ì(€€€€€€€€€€€€€½¹ÍÐÍ•±•Ñ•€ôÍ•±•Ñ•‘%‘Ì¹¥¹±Õ‘•Ì¡¥¤ì(€€€€€€€€€€€€€½¹ÍÐ½Á•¸€ô½Á•¹%€ôôô¥ì(€€€€€€€€€€€€€É•ÑÕÉ¸€ (€€€€€€€€€€€€€€€€ñ‘¥Ø­•äõí¥‘ô±…ÍÍ9…µ”ô‰‰œµ…Éˆø(€€€€€€€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰™±•à¥Ñ•µÌµ•¹Ñ•È…À´ÌÀ´ÌÍ´éÀ´Ðˆø(€€€€€€€€€€€€€€€€€€€€ñ‰ÕÑÑ½¸(€€€€€€€€€€€€€€€€€€€€€ÑåÁ”ô‰‰ÕÑÑ½¸ˆ(€€€€€€€€€€€€€€€€€€€€€…É¥„µ±…‰•°ô˜œÖâãZ6‚ˆÛÛXÚÏ^Ê
-HOˆÙÙÛTÙ[XÝY
-Y
-_BˆÛ\ÜÓ˜[YO^ÖÂˆ™›^MHËMHÚš[šËL][\ËXÙ[\ˆ\ÝYžKXÙ[\ˆ›Ý[™Y[Y›Ü™\ˆ˜[œÚ][Ûˆ‹ˆÙ[XÝYˆÈ˜›Ü™\‹\š[X\žH™Ë\š[X\žH^\š[X\žKY›Ü™YÜ›Ý[™‚ˆˆ˜›Ü™\‹X›Ü™\ˆ™ËX˜XÚÙÜ›Ý[™‹ˆKš›Ú[ŠˆŠ_Bˆ‚ˆÜÙ[XÝY	‰ˆÚXÚÈÚ^™O^ÌLßHÝ›ÚÙUÚY^ÌßHÏŸBˆØ]Û‚‚ˆ]Û‚ˆ\OH˜]Ûˆ‚ˆÛÛXÚÏ^Ê
-HOˆÙ]Ü[’Y
-Ü[ˆÈ[ˆY
-_BˆÛ\ÜÓ˜[YOH™›^Z[‹]ËL›^LH][\ËXÙ[\ˆØ\LÈ^\šYÚ‚ˆ‚ˆ]ˆÛ\ÜÓ˜[YOH™›^LLËLLÚš[šËL][\ËXÙ[\ˆ\ÝYžKXÙ[\ˆ›Ý[™Y^™Ë[]]Y^[]]YY›Ü™YÜ›Ý[™‚ˆÚÚ[™OOHšXÙKXœ™XZÙ\ˆˆÈY\ÜØYÙTÜ]X\™HÚ^™O^ÌNHÏˆˆY[HÚ^™O^ÌNHÏŸBˆÙ]‚ˆ]ˆÛ\ÜÓ˜[YOH›Z[‹]ËL›^LH‚ˆÛ\ÜÓ˜[YOH[˜Ø]H^\ÛH›Û\Ù[ZX›Û^Y›Ü™YÜ›Ý[™‚ˆÚ][K›X™[ŠhÞF ${c.shortTitle}`}
+          <h2 className="mt-4 text-base font-bold">Ø§Ø¨ØªØ¯Ø§ ÛŒÚ© Ù¾ÛŒØ¬ Ø§ÛŒÙ†Ø³ØªØ§Ú¯Ø±Ø§Ù… Ù…ØªØµÙ„ Ú©Ù†ÛŒØ¯</h2>
+        </section>
+      ) : loading ? (
+        <section className="overflow-hidden rounded-3xl border border-border/80 bg-card">
+          <div className="divide-y divide-border/70">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div key={index} className="flex animate-pulse items-center gap-3 p-4">
+                <div className="h-5 w-5 rounded-md bg-muted" />
+                <div className="min-w-0 flex-1 space-y-2">
+                  <div className="h-4 w-40 rounded bg-muted" />
+                  <div className="h-3 w-24 rounded bg-muted" />
+                </div>
+                <div className="h-9 w-20 rounded-lg bg-muted" />
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : filteredItems.length === 0 ? (
+        <section className="rounded-3xl border border-dashed border-border bg-card px-6 py-20 text-center">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
+            <Bot size={21} />
+          </div>
+          <h2 className="mt-4 text-sm font-bold">
+            {search ? "Ù…ÙˆØ±Ø¯ÛŒ Ø¨Ø§ Ø§ÛŒÙ† Ø¹Ø¨Ø§Ø±Øª Ù¾ÛŒØ¯Ø§ Ù†Ø´Ø¯" : c.emptyTitle}
+          </h2>
+          <p className="mx-auto mt-2 max-w-md text-xs leading-6 text-muted-foreground">
+            {search ? "Ø¹Ø¨Ø§Ø±Øª Ø¯ÛŒÚ¯Ø±ÛŒ Ø±Ø§ Ø§Ù…ØªØ­Ø§Ù† Ú©Ù†ÛŒØ¯." : c.emptyText}
+          </p>
+          {!search && (
+            <Button
+              type="button"
+              onClick={addItem}
+              className="mt-5 rounded-xl"
+              disabled={items.length >= c.max}
+            >
+              <Plus size={16} />
+              {c.addLabel}
+            </Button>
+          )}
+        </section>
+      ) : (
+        <section className="overflow-hidden rounded-3xl border border-border/80 bg-card shadow-sm">
+          <div className="divide-y divide-border/70">
+            {filteredItems.map((item, index) => {
+              const id = item.id!;
+              const selected = selectedIds.includes(id);
+              const open = openId === id;
+              return (
+                <div key={id} className="bg-card">
+                  <div className="flex items-center gap-3 p-3 sm:p-4">
+                    <button
+                      type="button"
+                      aria-label="Ø§Ù†ØªØ®Ø§Ø¨"
+                      onClick={() => toggleSelected(id)}
+                      className={[
+                        "flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition",
+                        selected
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-background",
+                      ].join(" ")}
+                    >
+                      {selected && <Check size={13} strokeWidth={3} />}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setOpenId(open ? null : id)}
+                      className="flex min-w-0 flex-1 items-center gap-3 text-right"
+                    >
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+                        {kind === "ice-breaker" ? <MessageSquare size={18} /> : <Menu size={18} />}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-foreground">
+                          {item.label || `Ø¨Ø¯ÙˆÙ† ${c.shortTitle}`}
                         </p>
                         <p className="mt-1 text-xs text-muted-foreground">
-                          {item.type === "web_url" ? "5£yéÝyø§yÔˆ€è¥Ñ•´¹…ÕÑ½µ…Ñ¥½¹%€ü€™øÖrâ.×ŸŠwäcZ7‘Hºw^~)Þu‹î×ŸŠwÈˆˆh×3ºw^~)Þv&*5£{2éÝyø§yÔ™Öôr'Ð¢Â÷à¢ÂöF—cà¢Ä6†Wg&öäF÷và¢6—¦S×³‡Ð¢6Æ74æÖS×¶÷Vâò'&÷FFRÓƒG&ç6—F–öâ×G&ç6f÷&Ò"¢'G&ç6—F–öâ×G&ç6f÷&Ò'Ð¢óà¢Âö'WGFöãà ¢Ä'WGFöà¢G—SÒ&'WGFöâ ¢f&–çCÒ&÷WFÆ–æR ¢öä6Æ–6³×²‚’Óâ6WDFVÆWFUF&vWB†—FVÒ—Ð¢6Æ74æÖSÒ'6‡&–æ²Ó&÷VæFVBÖÆr‚Ó2FW‡B×‡2 ¢à¢gãZ6Hh×/ºw^~)Þv
+                          {item.type === "web_url" ? "Ù„ÛŒÙ†Ú©" : item.automationId ? "Ù¾Ø§Ø³Ø® ØªÙ†Ø¸ÛŒÙ… Ø´Ø¯Ù‡" : "Ù¾Ø§Ø³Ø® ØªÙ†Ø¸ÛŒÙ… Ù†Ø´Ø¯Ù‡"}
+                        </p>
+                      </div>
+                      <ChevronDown
+                        size={18}
+                        className={open ? "rotate-180 transition-transform" : "transition-transform"}
+                      />
+                    </button>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setDeleteTarget(item)}
+                      className="shrink-0 rounded-lg px-3 text-xs"
+                    >
+                      Ù¾Ø§Ú© Ú©Ø±Ø¯Ù†
                     </Button>
                   </div>
 
@@ -232,7 +691,29 @@ _BˆÛ\ÜÓ˜[YOH™›^Z[‹]ËL›^LH][\ËXÙ[\ˆØ\LÈ^\
 
                       {kind === "persistent-menu" && (
                         <div className="mb-5 rounded-2xl border border-border/70 bg-background p-3.5">
-                          <p className="mb-3 text-xs font-semibold text-foreground">5£]‹§uçâç|ÈÖdsÂ÷à¢ÆF—b6Æ74æÖSÒ&w&–Bw&–BÖ6öÇ2Ó"vÓ"#à¢Ä'WGFöà¢G—SÒ&'WGFöâ ¢f&–çC×¶—FVÒçG—RÓÓÒ'÷7F&6²"ò&FVfVÇB"¢&÷WFÆ–æR'Ð¢6Æ74æÖSÒ&‚Ó&÷VæFVB×†ÂFW‡B×‡2 ¢öä6Æ–6³×²‚’ÓâWFFT—FVÒ†–BÂ²G—S¢'÷7F&6²"ÂW&Ã¢""Ò—Ð¢à¢Z5Ìî×ŸŠw‰‹hß©5£D(€€€€€€€€€€€€€€€€€€€€€€€€€€€€ð½	ÕÑÑ½¸ø(€€€€€€€€€€€€€€€€€€€€€€€€€€€€ñ	ÕÑÑ½¸(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€ÑåÁ”ô‰‰ÕÑÑ½¸ˆ(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€Ù…É¥…¹Ðõí¥Ñ•´¹ÑåÁ”€ôôô€‰Ý•‰}ÕÉ°ˆ€ü€‰‘•™…Õ±Ðˆ€è€‰½ÕÑ±¥¹”‰ô(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€±…ÍÍ9…µ”ô‰ ´ÄÀÉ½Õ¹‘•µá°Ñ•áÐµáÌˆ(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€½¹±¥¬õì ¤€ôøÕÁ‘…Ñ•%Ñ•´¡¥°ìÑåÁ”è€‰Ý•‰}ÕÉ°ˆ°…ÕÑ½µ…Ñ¥½¹%è¹Õ±°ô¥ô(€€€€€€€€€€€€€€€€€€€€€€€€€€€€ø(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€™Öj¢Âô'WGFöãà¢ÂöF—cà ¢¶—FVÒçG—RÓÓÒ'vV%÷W&Â"bb€¢ÆF—b6Æ74æÖSÒ&×BÓ276R×’Ó"#à¢ÆÆ&VÂ6Æ74æÖSÒ'FW‡B×‡2föçB×6VÖ–&öÆBFW‡BÖf÷&Vw&÷VæB#î×ŸŠwbóZ4ÈhÞFºw^~)Þu</label>
+                          <p className="mb-3 text-xs font-semibold text-foreground">Ø¹Ù…Ù„ Ú¯Ø²ÛŒÙ†Ù‡</p>
+                          <div className="grid grid-cols-2 gap-2">
+                            <Button
+                              type="button"
+                              variant={item.type === "postback" ? "default" : "outline"}
+                              className="h-10 rounded-xl text-xs"
+                              onClick={() => updateItem(id, { type: "postback", url: "" })}
+                            >
+                              Ù¾Ø§Ø³Ø® Ø®ÙˆØ¯Ú©Ø§Ø±
+                            </Button>
+                            <Button
+                              type="button"
+                              variant={item.type === "web_url" ? "default" : "outline"}
+                              className="h-10 rounded-xl text-xs"
+                              onClick={() => updateItem(id, { type: "web_url", automationId: null })}
+                            >
+                              Ù„ÛŒÙ†Ú©
+                            </Button>
+                          </div>
+
+                          {item.type === "web_url" && (
+                            <div className="mt-3 space-y-2">
+                              <label className="text-xs font-semibold text-foreground">Ø¢Ø¯Ø±Ø³ Ù„ÛŒÙ†Ú©</label>
                               <Input
                                 value={item.url}
                                 onChange={(event) => updateItem(id, { url: event.target.value })}
@@ -269,16 +750,114 @@ _BˆÛ\ÜÓ˜[YOH™›^Z[‹]ËL›^LH][\ËXÙ[\ˆØ\LÈ^\
           {kind === "persistent-menu" && (
             <div className="mb-4 flex items-center justify-between rounded-2xl border border-border bg-muted/50 p-4">
               <div>
-                <p className="text-sm font-semibold">éÝyø§y×95£P€Öâû§uçâçbdSZ6Ü‚ˆÛ\ÜÓ˜[YOH›]LH^^È^[]]YY›Ü™YÜ›Ý[™‚ˆ	‘MhØ 5£D€Ö¢Z7‘hÞ'5£\žéÝyø§yÔ™Ö|Ë§uçâçBbóZ7ÑÈºw^~)Þu’.×ŸŠwË‚ˆÜ‚ˆÙ]‚ˆ]Û‚ˆ\OH˜]Ûˆ‚ˆÛÛXÚÏ^Ê
-HOˆÙ][˜X›Y
+                <p className="text-sm font-semibold">ÙØ¹Ø§Ù„ Ø¨ÙˆØ¯Ù† Ù…Ù†Ùˆ</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Ù…Ù†Ùˆ Ø¯Ø± Ú†Øª Ø§ÛŒÙ†Ø³ØªØ§Ú¯Ø±Ø§Ù… Ù†Ù…Ø§ÛŒØ´ Ø¯Ø§Ø¯Ù‡ Ø´ÙˆØ¯.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEnabled((value) => !value)}
+                className={[
+                  "relative h-6 w-11 rounded-full transition",
+                  enabled ? "bg-primary" : "bg-muted",
+                ].join(" ")}
+              >
+                <span
+                  className={[
+                    "absolute top-1 h-4 w-4 rounded-full bg-background shadow-sm transition-all",
+                    enabled ? "right-1" : "right-6",
+                  ].join(" ")}
+                />
+              </button>
+            </div>
+          )}
 
-˜[YJHOˆ]˜[YJ_BˆÛ\ÜÓ˜[YO^ÖÂˆœ™[]]™HMˆËLLH›Ý[™YY[˜[œÚ][Ûˆ‹ˆ[˜X›YÈ˜™Ë\š[X\žHˆˆ˜™Ë[]]Y‹ˆKš›Ú[ŠˆŠ_Bˆ‚ˆÜ[‚ˆÛ\ÜÓ˜[YO^ÖÂˆ˜XœÛÛ]HÜLHMËM›Ý[™YY[™ËX˜XÚÙÜ›Ý[™ÚYÝË\ÛH˜[œÚ][Û‹X[‹ˆ[˜X›YÈœšYÚLHˆˆœšYÚMˆ‹ˆKš›Ú[ŠˆŠ_BˆÏ‚ˆØ]Û‚ˆÙ]‚ˆ
-_B‚ˆ]ˆÛ\ÜÓ˜[YOH™›^›^XÛÛØ\LÈÛN™›^\›ÝÈ‚ˆ]Û‚ˆ\OH˜]Ûˆ‚ˆÛÛXÚÏ^ØY][_Bˆ\ØX›Y^Ú][\Ë›[™ÝHË›X^Bˆ˜\šX[H›Ý][™H‚ˆÛ\ÜÓ˜[YOH›Z[‹ZLLH›Ý[™Y^‚ˆ‚ˆ\ÈÚ^™O^ÌMŸHÏ‚ˆØË˜YX™[BˆÐ]Û‚‚ˆÚÚ[™OOHœ\œÚ\Ý[[Y[Hˆ	‰ˆ
-ˆ]Û‚ˆ\OH˜]Ûˆ‚ˆÛÛXÚÏ^Ù\ØX›_Bˆ\ØX›Y^ÜØ]š[™ßBˆ˜\šX[H›Ý][™H‚ˆÛ\ÜÓ˜[YOH›Z[‹ZLLH›Ý[™Y^‚ˆ‚ˆºw^~)Þw³h×95£P€Örû§uçâç`¢Âô'WGFöãà¢—Ð ¢Ä'WGFöà¢G—SÒ&'WGFöâ ¢öä6Æ–6³×·6fWÐ¢F—6&ÆVC×·6f–æwÐ¢6Æ74æÖSÒ&Ö–âÖ‚Ó&÷VæFVB×†Â6Ó¦×"ÖWFò ¢à¢·6f–ærbbÄÆöFW#"6—¦S×³gÒ6Æ74æÖSÒ&æ–ÖFR×7–â"óçÐ¢¶2ç6fUFW‡GÐ¢Âô'WGFöãà¢ÂöF—cà¢Â÷6V7F–öãà¢—Ð ¢¶W'&÷"bb€¢ÆF—b6Æ74æÖSÒ'&÷VæFVBÓ'†Â&÷&FW"&÷&FW"×&VBÓ#&r×&VBÓS‚ÓB’Ó2FW‡B×6ÒÆVF–ærÓbFW‡B×&VBÓs#à¢¶W'&÷'Ð¢ÂöF—cà¢—Ð¢·7V66W72bb€¢ÆF—b6Æ74æÖSÒ'&÷VæFVBÓ'†Â&÷&FW"&÷&FW"ÖVÖW&ÆBÓ#&rÖVÖW&ÆBÓS‚ÓB’Ó2FW‡B×6ÒÆVF–ærÓbFW‡BÖVÖW&ÆBÓs#à¢Z7³h×'ºw^~)Þv&(ºw^~)Þw&E5£]Ö¢Z7³h× 5£|¸(€€€€€€€€ð½‘¥Øø(€€€€€€¥ô((€€€€€ì¡‘•±•Ñ•Q…É•Ðñð‰Õ±­•±•Ñ•=Á•¸¤€˜˜€ (€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰™¥á•¥¹Í•Ð´Àè´ÔÀ™±•à¥Ñ•µÌµ•¹Ñ•È©ÕÍÑ¥™äµ•¹Ñ•È‰œµ‰±…¬¼ÌÔÀ´Ðˆø(€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰Üµ™Õ±°µ…àµÜµÍ´É½Õ¹‘•´Íá°‰½É‘•È‰½É‘•Èµ‰½É‘•È‰œµ‰…­É½Õ¹À´ØÍ¡…‘½Ü´Éá°ˆø(€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰µàµ…ÕÑ¼™±•à ´ÄÄÜ´ÄÄ¥Ñ•µÌµ•¹Ñ•È©ÕÍÑ¥™äµ•¹Ñ•ÈÉ½Õ¹‘•´Éá°‰œµÉ•´ÔÀÑ•áÐµÉ•´ØÀÀˆø(€€€€€€€€€€€€€€ñQÉ…Í ÈÍ¥é”õìÈÁô€¼ø(€€€€€€€€€€€€ð½‘¥Øø(€€€€€€€€€€€€ñ Ì±…ÍÍ9…µ”ô‰µÐ´ÐÑ•áÐµ•¹Ñ•ÈÑ•áÐµ‰…Í”™½¹Ðµ‰½±ˆùÖrcZ7‹Èºw^~)ÞuóhÞH5£_2éÝyø§yÜ™øÖ’Z5³hß</h3>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Button
+              type="button"
+              onClick={addItem}
+              disabled={items.length >= c.max}
+              variant="outline"
+              className="min-h-11 rounded-xl"
+            >
+              <Plus size={16} />
+              {c.addLabel}
+            </Button>
+
+            {kind === "persistent-menu" && (
+              <Button
+                type="button"
+                onClick={disable}
+                disabled={saving}
+                variant="outline"
+                className="min-h-11 rounded-xl"
+              >
+                ØºÛŒØ±ÙØ¹Ø§Ù„ Ú©Ø±Ø¯Ù†
+              </Button>
+            )}
+
+            <Button
+              type="button"
+              onClick={save}
+              disabled={saving}
+              className="min-h-11 rounded-xl sm:mr-auto"
+            >
+              {saving && <Loader2 size={16} className="animate-spin" />}
+              {c.saveText}
+            </Button>
+          </div>
+        </section>
+      )}
+
+      {error && (
+        <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-700">
+          {error}
+        </div>
+      )}
+      {success && (
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-700">
+          ØªØºÛŒÛŒØ±Ø§Øª Ø¨Ø§ Ù…ÙˆÙÙ‚ÛŒØª Ø°Ø®ÛŒØ±Ù‡ Ø´Ø¯.
+        </div>
+      )}
+
+      {(deleteTarget || bulkDeleteOpen) && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-4">
+          <div className="w-full max-w-sm rounded-3xl border border-border bg-background p-6 shadow-2xl">
+            <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl bg-red-50 text-red-600">
+              <Trash2 size={20} />
+            </div>
+            <h3 className="mt-4 text-center text-base font-bold">Ù…Ø·Ù…Ø¦Ù†ÛŒØ¯ Ù…ÛŒâ€ŒØ®ÙˆØ§Ù‡ÛŒØ¯ Ù¾Ø§Ú© Ú©Ù†ÛŒØ¯ØŸ</h3>
             <p className="mt-2 text-center text-xs leading-6 text-muted-foreground">
-             &'5£X€ÖìÃZ4HhÒ 5£XàÖr{§uçâçbbsZ5ŒÍh×¯5£]‹§uçâç]‹§uçâç|ÂéÝyø§yÔ™ÖãCZ7Ë‚ˆÜ‚ˆ]ˆÛ\ÜÓ˜[YOH›]Mˆ›^Ø\LÈ‚ˆ]Û‚ˆ\OH˜]Ûˆ‚ˆ˜\šX[H›Ý][™H‚ˆÛÛXÚÏ^Ê
-HOˆÂˆÙ][]U\™Ù]
-[
-NÂˆÙ][Ñ[]SÜ[Š˜[ÙJNÂˆ_BˆÛ\ÜÓ˜[YOH›Z[‹ZLLH›^LH›Ý[™Y^‚ˆ‚ˆ	‰Íh×15£D(€€€€€€€€€€€€€€ð½	ÕÑÑ½¸ø(€€€€€€€€€€€€€€ñ	ÕÑÑ½¸(€€€€€€€€€€€€€€€ÑåÁ”ô‰‰ÕÑÑ½¸ˆ(€€€€€€€€€€€€€€€½¹±¥¬õì ¤€ôø(€€€€€€€€€€€€€€€€€‘•±•Ñ•Q…É•Ð€üÙ½¥‘•±•Ñ•%Ñ•´¡‘•±•Ñ•Q…É•Ð¤€èÙ½¥‰Õ±­•±•Ñ” ¤(€€€€€€€€€€€€€€€ô(€€€€€€€€€€€€€€€‘¥Í…‰±•õíÍ…Ù¥¹ô(€€€€€€€€€€€€€€€Ù…É¥…¹Ðô‰‘•ÍÑÉÕÑ¥Ù”ˆ(€€€€€€€€€€€€€€€€±…ÍÍ9…µ”ô‰µ¥¸µ ´ÄÄ™±•à´ÄÉ½Õ¹‘•µá°ˆ(€€€€€€€€€€€€€€ø(€€€€€€€€€€€€€€€íÍ…Ù¥¹œ€˜˜€ñ1½…‘•ÈÈÍ¥é”õìÄÙô±…ÍÍ9…µ”ô‰…¹¥µ…Ñ”µÍÁ¥¸ˆ€¼ùô(€€€€€€€€€€€€€€€™øÖ’Z5Ëî×ŸŠw‚ˆÐ]Û‚ˆÙ]‚ˆÙ]‚ˆÙ]‚ˆ
-_BˆÙ]‚ˆ
-NÂŸB
+              Ø§ÛŒÙ† ØªØºÛŒÛŒØ± Ø§Ø² ØªÙ†Ø¸ÛŒÙ…Ø§Øª Ø§ÛŒÙ†Ø³ØªØ§Ú¯Ø±Ø§Ù… Ù‡Ù… Ø­Ø°Ù Ù…ÛŒâ€ŒØ´ÙˆØ¯.
+            </p>
+            <div className="mt-6 flex gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setDeleteTarget(null);
+                  setBulkDeleteOpen(false);
+                }}
+                className="min-h-11 flex-1 rounded-xl"
+              >
+                Ø§Ù†ØµØ±Ø§Ù
+              </Button>
+              <Button
+                type="button"
+                onClick={() =>
+                  deleteTarget ? void deleteItem(deleteTarget) : void bulkDelete()
+                }
+                disabled={saving}
+                className="min-h-11 flex-1 rounded-xl border border-red-600 bg-white text-red-600 hover:bg-white hover:text-red-700"
+              >
+                {saving && <Loader2 size={16} className="animate-spin" />}
+                Ù¾Ø§Ú© Ú©Ø±Ø¯Ù†
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
