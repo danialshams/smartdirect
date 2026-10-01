@@ -190,7 +190,7 @@ export default function CommentAutomationCreateConfigure() {
               {keywords.length > 0 && <div className="mt-3 flex flex-wrap gap-2">{keywords.map((keyword) => (
                 <span key={keyword} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/50 px-3 py-1.5 text-xs font-medium">
                   {keyword}
-                  <button type="button" onClick={() => setKeywords((current) => current.filter((item) => item !== keyword))} className="rounded-full p-0.5 text-muted-foreground hover:bg-background hover:text-foreground"><X size={13} /></button>
+                  <button type="button" onClick={() => setKeywords((current) => current.filter((item) => item !== keyword))} className="rounded-full p-0.5 text-red-500 hover:bg-red-50 hover:text-red-600"><X size={13} /></button>
                 </span>
               ))}</div>}
             </div>
