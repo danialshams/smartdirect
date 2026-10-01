@@ -59,10 +59,7 @@ export default function DashboardShell({
             marginInlineStart: { xs: 0, lg: "220px" },
           }}
         >
-          <DashboardMobileHeader
-            instagramAccounts={instagramAccounts}
-            onMenuOpen={() => setMobileSidebarOpen(true)}
-          />
+          <DashboardMobileHeader onMenuOpen={() => setMobileSidebarOpen(true)} />
 
           <Box
             component="main"
