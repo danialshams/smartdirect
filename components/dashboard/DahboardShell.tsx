@@ -55,7 +55,7 @@ export default function DashboardShell({
         <Box
           sx={{
             minWidth: 0,
-            mr: { xs: 0, lg: "248px" },
+            marginInlineStart: { xs: 0, lg: "248px" },
           }}
         >
           <DashboardMobileHeader
