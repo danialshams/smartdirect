@@ -246,6 +246,7 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
     <Box
       dir="rtl"
       sx={{
+        display: { xs: "block", lg: "none" },
         position: "fixed",
         zIndex: (theme) => theme.zIndex.drawer + 2,
         bottom: "calc(env(safe-area-inset-bottom, 0px) + 12px)",
