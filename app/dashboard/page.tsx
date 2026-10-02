@@ -5,20 +5,12 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import DashboardShell from "../../components/dashboard/DahboardShell";
 
-
-type DashboardPageProps = {
-};
-
-export default async function DashboardPage({
-  searchParams,
-}: DashboardPageProps) {
+export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
     redirect("/login");
   }
-
-  const params = await searchParams;
 
   const user = await prisma.user.findUnique({
     where: {
