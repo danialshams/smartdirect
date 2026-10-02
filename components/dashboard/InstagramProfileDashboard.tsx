@@ -130,7 +130,7 @@ export default function InstagramProfileDashboard({
       >
         <Box
           sx={{
-            mt: { xs: "12vh", sm: "14vh", md: "15vh" },
+            mt: { xs: "7vh", sm: "9vh", md: "11vh" },
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
@@ -291,7 +291,7 @@ export default function InstagramProfileDashboard({
       <Box
         dir="ltr"
         sx={{
-          mt: { xs: "18vh", sm: "19vh", md: "20vh", lg: "22vh" },
+          mt: { xs: "12vh", sm: "13vh", md: "15vh", lg: "22vh" },
           width: "100%",
           maxWidth: 600,
           display: "grid",
