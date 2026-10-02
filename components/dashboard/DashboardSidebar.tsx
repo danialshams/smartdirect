@@ -328,7 +328,7 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
 
   const selectedShortcuts = preferredOrder
     .map((key) => shortcuts.find((item) => item.key === key))
-    .filter((item): item is (typeof shortcuts)[number] => Boolean(item) && !item.matches(pathname))
+    .filter((item): item is (typeof shortcuts)[number] => item !== undefined && !item.matches(pathname))
     .slice(0, 3);
 
   const fallbackShortcuts = shortcuts
