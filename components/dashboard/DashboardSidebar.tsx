@@ -408,7 +408,7 @@ export function DashboardInstagramIsland({
             <Box
               component={Link}
               href="/dashboard"
-              onClick={() => setAccountMenuOpen(false)}
+              onClick={() => onAccountMenuOpenChange(false)}
               sx={{
                 width: "66.666667%",
                 minWidth: 0,
@@ -475,7 +475,7 @@ export function DashboardInstagramIsland({
           <Box
             component={Link}
             href="/api/instagram/connect"
-            onClick={() => setAccountMenuOpen(false)}
+            onClick={() => onAccountMenuOpenChange(false)}
             sx={{
               minHeight: 48,
               display: "flex",
