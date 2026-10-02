@@ -40,7 +40,7 @@ function Reveal({
     <Box
       sx={{
         opacity: visible ? 1 : 0,
-        transform: visible ? "translateY(0)" : "translateY(20px)",
+        transform: visible ? "translateX(0)" : "translateX(-28px)",
         transition: "opacity 700ms ease, transform 700ms ease",
         transitionDelay: `${delay}ms`,
         ...sx,
@@ -248,7 +248,7 @@ export default function InstagramProfileDashboard({
       }}
     >
       <Box sx={{ width: "100%" }}>
-        <Reveal visible={visible} delay={180} sx={{ height: "100%" }}>
+        <Reveal visible={visible} delay={320} sx={{ height: "100%" }}>
           <Box
             sx={{
               height: "100%",
@@ -260,7 +260,7 @@ export default function InstagramProfileDashboard({
               boxShadow: "0 8px 24px rgba(15,23,42,0.05)",
               display: "flex",
               alignItems: "center",
-              gap: { xs: 2, sm: 2.5, md: 3 },
+              gap: { xs: 3, sm: 4, md: 5 },
               position: "relative",
               overflow: "hidden",
             }}
@@ -295,7 +295,7 @@ export default function InstagramProfileDashboard({
               )}
             </Box>
 
-            <Box sx={{ minWidth: 0, position: "relative" }}>
+            <Box sx={{ minWidth: 0, position: "relative", textAlign: "right" }}>
               <Typography
                 sx={{
                   color: "#0F172A",
@@ -330,11 +330,10 @@ export default function InstagramProfileDashboard({
         </Reveal>
       </Box>
 
-      <Reveal visible={visible} delay={460}>
+      <Reveal visible={visible} delay={680}>
         <Box sx={{ mt: { xs: 1.5, sm: 2, lg: 2.5 } }}>
           <Typography sx={{ mb: 1.25, color: "#0F172A", fontSize: { xs: 14, sm: 15 }, fontWeight: 700 }}>
-            آمار پیج
-          </Typography>
+            </Typography>
           <Box
             sx={{
               display: "grid",
