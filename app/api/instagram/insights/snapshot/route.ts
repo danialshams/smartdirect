@@ -83,8 +83,6 @@ export async function POST() {
 
             totalInteractions: getMetric(data, "total_interactions"),
 
-            profileViews: getMetric(data, "profile_views"),
-
             followerCount: Number(profile.followers_count ?? 0),
           },
 
@@ -100,8 +98,6 @@ export async function POST() {
             accountsEngaged: getMetric(data, "accounts_engaged"),
 
             totalInteractions: getMetric(data, "total_interactions"),
-
-            profileViews: getMetric(data, "profile_views"),
 
             followerCount: Number(profile.followers_count ?? 0),
           },
