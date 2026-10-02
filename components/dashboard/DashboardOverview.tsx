@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -37,12 +37,21 @@ export default function DashboardOverview({
   );
 
   const [accountId, setAccountId] = useState(connectedAccounts[0]?.id || "");
+  const [profileLoading, setProfileLoading] = useState(Boolean(connectedAccounts[0]?.id));
 
   useEffect(() => {
     if (!connectedAccounts.some((account) => account.id === accountId)) {
       setAccountId(connectedAccounts[0]?.id || "");
     }
   }, [accountId, connectedAccounts]);
+
+  useEffect(() => {
+    setProfileLoading(Boolean(accountId));
+  }, [accountId]);
+
+  const handleProfileLoadingChange = useCallback((loading: boolean) => {
+    setProfileLoading(loading);
+  }, []);
 
   if (!connectedAccounts.length) {
     return (
@@ -74,6 +83,7 @@ export default function DashboardOverview({
 
   return (
     <Box dir="rtl" sx={{ width: "100%" }}>
+      {!profileLoading ? (
       <Box
         dir="rtl"
         sx={{
@@ -116,7 +126,9 @@ export default function DashboardOverview({
             <span>{"سلام " + user.name + "، به پنل خودت خوش اومدی"}</span>
             <Heart aria-hidden="true" size={16} strokeWidth={2.2} fill="currentColor" style={{ flexShrink: 0 }} />
           </Typography>
-        </Box>      </Box>
+        </Box>
+      </Box>
+      ) : null}
 
       <style jsx global>{`
         @keyframes sdGreetingPulse {
@@ -131,6 +143,7 @@ export default function DashboardOverview({
 
       <InstagramProfileDashboard
         accountId={accountId}
+        onProfileLoadingChange={handleProfileLoadingChange}
       />
     </Box>
   );
