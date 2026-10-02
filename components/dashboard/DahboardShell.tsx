@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { Box } from "@mui/material";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 import DashboardTheme from "./DashboardTheme";
@@ -34,6 +35,8 @@ export default function DashboardShell({
   children,
 }: DashboardShellProps) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const pathname = usePathname();
+  const isDashboardOverview = pathname === "/dashboard";
 
   return (
     <DashboardTheme>
@@ -41,8 +44,8 @@ export default function DashboardShell({
         dir="rtl"
         sx={{
           minHeight: { lg: "100vh" },
-          height: { xs: "100dvh", lg: "auto" },
-          overflow: { xs: "hidden", lg: "visible" },
+          height: { xs: isDashboardOverview ? "100dvh" : "auto", lg: "auto" },
+          overflow: { xs: isDashboardOverview ? "hidden" : "visible", lg: "visible" },
           display: "flex",
           flexDirection: "column",
           bgcolor: "background.default",
@@ -70,8 +73,8 @@ export default function DashboardShell({
             component="main"
             sx={{
               minHeight: 0,
-              height: { xs: "calc(100dvh - 92px)", lg: "auto" },
-              overflow: { xs: "hidden", lg: "visible" },
+              height: { xs: isDashboardOverview ? "calc(100dvh - 92px)" : "auto", lg: "auto" },
+              overflow: { xs: isDashboardOverview ? "hidden" : "visible", lg: "visible" },
               px: { xs: 1, sm: 1.75, md: 2.75, lg: 4 },
               py: { xs: 1.25, sm: 2, lg: 4 },
               pb: { xs: 13, sm: 13, lg: 4 },
