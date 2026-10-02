@@ -454,6 +454,109 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
             direction: "rtl",
           }}
         >
+
+
+          <Box
+            component="button"
+            type="button"
+            onClick={() => setAccountMenuOpen((open) => !open)}
+            aria-expanded={accountMenuOpen}
+            aria-label="باز کردن پیج‌های اینستاگرام"
+            sx={{
+              minWidth: 0,
+              minHeight: 68,
+              border: 0,
+              borderRadius: 0,
+              bgcolor: accountMenuOpen || pathname === "/dashboard" ? "#F8FAFC" : "transparent",
+              color: pathname === "/dashboard" ? "#2563EB" : "#475569",
+              display: "grid",
+              placeItems: "center",
+              position: "relative",
+              cursor: "pointer",
+              fontFamily: "inherit",
+              p: 0,
+            }}
+          >
+            <Avatar
+              src={activeAccount?.profilePictureUrl || undefined}
+              alt={activeAccount?.igUsername || "Instagram"}
+              sx={{ width: 34, height: 34, bgcolor: "#E2E8F0", color: "#64748B" }}
+            >
+              {!activeAccount?.profilePictureUrl ? <UserRound size={15} /> : null}
+            </Avatar>
+            <Box
+              sx={{
+                position: "absolute",
+                left: 12,
+                top: "50%",
+                transform: "translateY(-50%)",
+                display: "grid",
+                placeItems: "center",
+                color: "#64748B",
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M7 14l5-5 5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </Box>
+          </Box>
+
+          <Box
+            component={Link}
+            href="/dashboard/comment-automation"
+            sx={{
+              minWidth: 0,
+              minHeight: 68,
+              border: 0,
+              borderRight: "1px solid #CBD5E1",
+              borderRadius: 0,
+              bgcolor: pathname === "/dashboard/comment-automation" || pathname.startsWith("/dashboard/comment-automation/") ? "#EFF6FF" : "transparent",
+              color: pathname === "/dashboard/comment-automation" || pathname.startsWith("/dashboard/comment-automation/") ? "#2563EB" : "#475569",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 0.45,
+              textDecoration: "none",
+              px: 0.5,
+            }}
+          >
+            <MessageCircleReply size={22} strokeWidth={1.9} />
+            <Typography noWrap fontSize={{ xs: 11, sm: 12 }} fontWeight={600} color="inherit">
+              پاسخ خودکار کامنت
+            </Typography>
+          </Box>
+
+          <Box
+            component={Link}
+            href="/dashboard/story-automation"
+            sx={{
+              minWidth: 0,
+              minHeight: 68,
+              border: 0,
+              borderRadius: 0,
+              bgcolor: pathname === "/dashboard/story-automation" || pathname.startsWith("/dashboard/story-automation/") ? "#EFF6FF" : "transparent",
+              color: pathname === "/dashboard/story-automation" || pathname.startsWith("/dashboard/story-automation/") ? "#2563EB" : "#475569",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 0.45,
+              textDecoration: "none",
+              px: 0.5,
+            }}
+          >
+            <Camera size={22} strokeWidth={1.9} />
+            <Typography noWrap fontSize={{ xs: 11, sm: 12 }} fontWeight={600} color="inherit">
+              پاسخ خودکار استوری
+            </Typography>
+          </Box>
+        </Box>
+      </Box>
+    </Box>
+  );
+}
+
           <Box
             component="button"
             type="button"
