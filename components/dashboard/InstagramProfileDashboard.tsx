@@ -1,12 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import {
-  Avatar,
-  Box,
-  CircularProgress,
-  Typography,
-} from "@mui/material";
+import { Avatar, Box, Typography } from "@mui/material";
+import { Image, UserRound, UserRoundPlus } from "lucide-react";
 
 type Profile = {
   accountId: string;
@@ -250,14 +246,7 @@ export default function InstagramProfileDashboard({
         pb: { xs: 12, lg: 5 },
       }}
     >
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: { xs: "1fr", lg: "minmax(0, 1.55fr) minmax(280px, 0.85fr)" },
-          gap: { xs: 1.5, sm: 2, lg: 2.5 },
-          alignItems: "stretch",
-        }}
-      >
+      <Box sx={{ width: "100%" }}>
         <Reveal visible={visible} delay={180} sx={{ height: "100%" }}>
           <Box
             sx={{
@@ -319,24 +308,6 @@ export default function InstagramProfileDashboard({
               <Typography dir="ltr" sx={{ mt: 0.45, color: "#64748B", fontSize: { xs: 12.5, sm: 13.5, md: 14 }, fontWeight: 500 }}>
                 @{profile.username}
               </Typography>
-              {profile.accountType ? (
-                <Box
-                  sx={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    mt: 1.25,
-                    px: 1.1,
-                    py: 0.45,
-                    borderRadius: 99,
-                    bgcolor: "#EFF6FF",
-                    color: "#2563EB",
-                    fontSize: 11,
-                    fontWeight: 700,
-                  }}
-                >
-                  {profile.accountType === "BUSINESS" ? "حساب تجاری" : profile.accountType === "CREATOR" ? "حساب سازنده" : "حساب اینستاگرام"}
-                </Box>
-              ) : null}
               {profile.biography ? (
                 <Typography
                   sx={{
@@ -356,51 +327,6 @@ export default function InstagramProfileDashboard({
             </Box>
           </Box>
         </Reveal>
-
-        <Reveal visible={visible} delay={300} sx={{ height: "100%" }}>
-          <Box
-            sx={{
-              height: "100%",
-              minHeight: { xs: 150, sm: 175, lg: 285 },
-              p: { xs: 2, sm: 2.5 },
-              border: "1px solid #E2E8F0",
-              borderRadius: { xs: 3, md: 3.5 },
-              bgcolor: "#F8FAFC",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-            }}
-          >
-            <Typography sx={{ color: "#0F172A", fontSize: { xs: 14, sm: 15 }, fontWeight: 700 }}>
-              اطلاعات پیج
-            </Typography>
-            <Box sx={{ mt: 1.5, display: "grid", gap: 1 }}>
-              {profile.website ? (
-                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1 }}>
-                  <Typography sx={{ color: "#94A3B8", fontSize: 11.5 }}>وب‌سایت</Typography>
-                  <Typography
-                    component="a"
-                    href={/^https?:\/\//i.test(profile.website) ? profile.website : `https://${profile.website}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    dir="ltr"
-                    noWrap
-                    sx={{ color: "#2563EB", fontSize: 11.5, fontWeight: 600, textDecoration: "none", maxWidth: "70%", overflow: "hidden", textOverflow: "ellipsis" }}
-                  >
-                    {profile.website}
-                  </Typography>
-                </Box>
-              ) : null}
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1 }}>
-                <Typography sx={{ color: "#94A3B8", fontSize: 11.5 }}>وضعیت</Typography>
-                <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.6, color: "#16A34A", fontSize: 11.5, fontWeight: 700 }}>
-                  <Box sx={{ width: 7, height: 7, borderRadius: "50%", bgcolor: "#22C55E" }} />
-                  متصل
-                </Box>
-              </Box>
-            </Box>
-          </Box>
-        </Reveal>
       </Box>
 
       <Reveal visible={visible} delay={460}>
@@ -415,17 +341,23 @@ export default function InstagramProfileDashboard({
               gap: { xs: 1, sm: 1.5, md: 2 },
             }}
           >
-            <Box sx={{ minWidth: 0, p: { xs: 1.25, sm: 1.75 }, borderRadius: 2.5, bgcolor: "#EFF6FF", border: "1px solid #DBEAFE" }}>
-              <Box sx={{ width: 28, height: 28, mb: 1, borderRadius: 1.5, display: "grid", placeItems: "center", bgcolor: "#2563EB", color: "#FFFFFF", fontSize: 12, fontWeight: 800 }}>پ</Box>
-              <AnimatedProfileStat label="پست" value={profile.mediaCount} visible={visible} countDelay={720} />
+            <Box sx={{ minWidth: 0, p: { xs: 1.25, sm: 1.75 }, borderRadius: 2.5, bgcolor: "#F0FDF4", border: "1px solid #DCFCE7" }}>
+              <Box sx={{ width: 28, height: 28, mb: 1, borderRadius: 1.5, display: "grid", placeItems: "center", bgcolor: "#16A34A", color: "#FFFFFF" }}>
+                <UserRoundPlus size={15} strokeWidth={2} />
+              </Box>
+              <AnimatedProfileStat label="فالووینگ" value={profile.followsCount} visible={visible} countDelay={720} />
             </Box>
             <Box sx={{ minWidth: 0, p: { xs: 1.25, sm: 1.75 }, borderRadius: 2.5, bgcolor: "#F5F3FF", border: "1px solid #EDE9FE" }}>
-              <Box sx={{ width: 28, height: 28, mb: 1, borderRadius: 1.5, display: "grid", placeItems: "center", bgcolor: "#7C3AED", color: "#FFFFFF", fontSize: 12, fontWeight: 800 }}>ف</Box>
+              <Box sx={{ width: 28, height: 28, mb: 1, borderRadius: 1.5, display: "grid", placeItems: "center", bgcolor: "#7C3AED", color: "#FFFFFF" }}>
+                <UserRound size={15} strokeWidth={2} />
+              </Box>
               <AnimatedProfileStat label="فالوور" value={profile.followersCount} visible={visible} countDelay={860} />
             </Box>
-            <Box sx={{ minWidth: 0, p: { xs: 1.25, sm: 1.75 }, borderRadius: 2.5, bgcolor: "#F0FDF4", border: "1px solid #DCFCE7" }}>
-              <Box sx={{ width: 28, height: 28, mb: 1, borderRadius: 1.5, display: "grid", placeItems: "center", bgcolor: "#16A34A", color: "#FFFFFF", fontSize: 12, fontWeight: 800 }}>ف</Box>
-              <AnimatedProfileStat label="فالووینگ" value={profile.followsCount} visible={visible} countDelay={1000} />
+            <Box sx={{ minWidth: 0, p: { xs: 1.25, sm: 1.75 }, borderRadius: 2.5, bgcolor: "#EFF6FF", border: "1px solid #DBEAFE" }}>
+              <Box sx={{ width: 28, height: 28, mb: 1, borderRadius: 1.5, display: "grid", placeItems: "center", bgcolor: "#2563EB", color: "#FFFFFF" }}>
+                <Image size={15} strokeWidth={2} />
+              </Box>
+              <AnimatedProfileStat label="پست" value={profile.mediaCount} visible={visible} countDelay={1000} />
             </Box>
           </Box>
         </Box>
