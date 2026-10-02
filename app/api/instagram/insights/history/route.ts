@@ -133,7 +133,7 @@ export async function GET(request: NextRequest) {
             if (from < analyticsStartDate) {
                 return NextResponse.json({ success: false, error: "تاریخ شروع قبل از اولین تاریخ قابل‌دسترسی برای این پیج است." }, { status: 400 });
             }
-            if (to > now) {
+            if (requestedTo > today) {
                 return NextResponse.json({ success: false, error: "تاریخ پایان نمی‌تواند از امروز جلوتر باشد." }, { status: 400 });
             }
         } else {
@@ -160,8 +160,12 @@ export async function GET(request: NextRequest) {
                     to: analyticsStartDate,
                 },
                 summary: {
+                    reach: 0,
                     views: 0,
+                    accountsEngaged: 0,
                     totalInteractions: 0,
+                    profileViews: 0,
+                    engagementRate: null,
                     follows: null,
                     unfollows: null,
                     followerCount: 0,
