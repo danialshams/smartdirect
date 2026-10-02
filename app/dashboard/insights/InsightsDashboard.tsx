@@ -2,6 +2,7 @@
 
 import {
   Activity,
+  Lightbulb,
   BarChart3,
   Calendar as CalendarIcon,
   ChevronDown,
@@ -312,7 +313,7 @@ export default function InsightsDashboard() {
     { id: "reach", label: "دسترسی", icon: Users },
     { id: "views", label: "بازدید", icon: Eye },
     { id: "interactions", label: "تعاملات", icon: HeartHandshake },
-    { id: "accountsEngaged", label: "اکانت‌های درگیر", icon: UserCheck },
+    { id: "accountsEngaged", label: "افراد فعال", icon: UserCheck },
   ];
   const selectedLabel = tabs.find((tab) => tab.id === metric)?.label || "دسترسی";
 
