@@ -58,7 +58,7 @@ export default function DashboardShell({
         <Box
           sx={{
             minWidth: 0,
-            marginInlineEnd: { xs: 0, lg: "196px" },
+            marginInlineStart: { xs: 0, lg: "196px" },
           }}
         >
           <Box
