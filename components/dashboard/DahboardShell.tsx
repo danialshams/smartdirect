@@ -5,7 +5,7 @@ import { Box } from "@mui/material";
 import { useState } from "react";
 
 import DashboardTheme from "./DashboardTheme";
-import DashboardSidebar from "./DashboardSidebar";
+import DashboardSidebar, { DashboardInstagramIsland } from "./DashboardSidebar";
 import DashboardMobileHeader from "./DashboardMobileHeader";
 import DashboardOverview from "./DashboardOverview";
 
@@ -55,6 +55,8 @@ export default function DashboardShell({
           onMobileClose={() => setMobileSidebarOpen(false)}
         />
 
+        <DashboardInstagramIsland instagramAccounts={instagramAccounts} />
+
         <Box
           sx={{
             minWidth: 0,
@@ -67,6 +69,7 @@ export default function DashboardShell({
               minHeight: "100vh",
               px: { xs: 1.5, sm: 2.5, md: 3.5, lg: 4 },
               py: { xs: 2, sm: 3, lg: 4 },
+              pb: { xs: 18, lg: 18 },
             }}
           >
             <Box
