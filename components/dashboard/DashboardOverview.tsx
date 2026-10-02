@@ -97,9 +97,24 @@ export default function DashboardOverview({
             animation: "sdGreetingEnter 700ms ease both",
           }}
         >
-          <Typography component="h1" sx={{ fontSize: { xs: 15.5, sm: 18, md: 20 }, fontWeight: 600, letterSpacing: "-0.02em", color: "#0F172A", whiteSpace: "nowrap" }}>
-            {"سلام " + user.name + "، به پنل خودت خوش اومدی"}{" "}
-            <Heart aria-hidden="true" size={17} strokeWidth={2.2} fill="currentColor" style={{ verticalAlign: "-3px" }} />
+          <Typography
+            component="h1"
+            sx={{
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "flex-start",
+              gap: 0.75,
+              fontSize: { xs: 14, sm: 17, md: 19 },
+              fontWeight: 600,
+              letterSpacing: "-0.025em",
+              color: "#0F172A",
+              whiteSpace: "nowrap",
+              lineHeight: 1.4,
+            }}
+          >
+            <span>{"سلام " + user.name + "، به پنل خودت خوش اومدی"}</span>
+            <Heart aria-hidden="true" size={16} strokeWidth={2.2} fill="currentColor" style={{ flexShrink: 0 }} />
           </Typography>
         </Box>      </Box>
 
