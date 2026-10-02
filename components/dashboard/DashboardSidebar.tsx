@@ -135,16 +135,16 @@ function AccountSection({ instagramAccounts }: { instagramAccounts: InstagramAcc
 function Navigation({ onNavigate, mobile = false }: { onNavigate?: () => void; mobile?: boolean }) {
   const pathname = usePathname();
   return (
-    <Box dir="rtl" sx={{ px: { xs: 1.1, sm: 1.4, lg: 1.25 }, py: { xs: 1.1, sm: 1.4, lg: 1.25 } }}>
+    <Box dir="rtl" sx={{ px: { xs: 1.1, sm: 1.4, lg: 1.25 }, py: { xs: 1.1, sm: 1.4, lg: 0.8 } }}>
       {menuGroups.map((group) => (
-        <Box key={group.label} sx={{ mb: { xs: 1.4, sm: 1.8, lg: 2 } }}>
+        <Box key={group.label} sx={{ mb: { xs: 1.4, sm: 1.8, lg: 1.15 } }}>
           <Box
             component="div"
             dir="ltr"
             sx={{
               width: "100%",
               px: 1.1,
-              mb: 0.65,
+              mb: 0.4,
               display: "flex",
               justifyContent: "flex-end",
               alignItems: "center",
@@ -169,11 +169,11 @@ function Navigation({ onNavigate, mobile = false }: { onNavigate?: () => void; m
               const active = href === "/dashboard" ? pathname === "/dashboard" : pathname === href || pathname.startsWith(`${href}/`);
               return (
                 <ListItemButton key={href} component={Link} href={href} onClick={onNavigate} selected={active} dir="rtl"
-                  sx={{ minHeight: { xs: 58, sm: 62, lg: 40 }, display: "flex", flexDirection: "row", alignItems: "center", columnGap: { xs: 1, lg: 1 }, borderRadius: 2, px: { xs: 1.25, lg: 1.1 }, color: active ? "#2563EB" : "#475569", "&.Mui-selected": { bgcolor: "#EFF6FF", color: "#2563EB" }, "&.Mui-selected:hover": { bgcolor: "#EFF6FF" }, "&:hover": { bgcolor: "#F8FAFC", color: "#1D4ED8" } }}>
-                  <ListItemIcon sx={{ minWidth: 0, width: { xs: 24, lg: 18 }, flex: { xs: "0 0 24px", lg: "0 0 18px" }, color: "inherit", display: "flex", justifyContent: "center", alignItems: "center", m: 0 }}>
-                    <Icon size={23} strokeWidth={1.9} />
+                  sx={{ minHeight: { xs: 58, sm: 62, lg: 34 }, display: "flex", flexDirection: "row", alignItems: "center", columnGap: { xs: 1, lg: 0.75 }, borderRadius: 2, px: { xs: 1.25, lg: 0.85 }, color: active ? "#2563EB" : "#475569", "&.Mui-selected": { bgcolor: "#EFF6FF", color: "#2563EB" }, "&.Mui-selected:hover": { bgcolor: "#EFF6FF" }, "&:hover": { bgcolor: "#F8FAFC", color: "#1D4ED8" } }}>
+                  <ListItemIcon sx={{ minWidth: 0, width: { xs: 24, lg: 17 }, flex: { xs: "0 0 24px", lg: "0 0 17px" }, color: "inherit", display: "flex", justifyContent: "center", alignItems: "center", m: 0 }}>
+                    <Icon size={19} strokeWidth={1.9} />
                   </ListItemIcon>
-                  <ListItemText primary={title} sx={{ minWidth: 0, flex: "0 1 auto", m: 0, textAlign: "right", direction: "rtl" }} primaryTypographyProps={{ fontSize: { xs: 13.5, sm: 14, lg: 12.5 }, fontWeight: active ? 700 : 500, lineHeight: 1.45 }} />
+                  <ListItemText primary={title} sx={{ minWidth: 0, flex: "0 1 auto", m: 0, textAlign: "right", direction: "rtl" }} primaryTypographyProps={{ fontSize: { xs: 13.5, sm: 14, lg: 11.5 }, fontWeight: active ? 700 : 500, lineHeight: 1.45 }} />
                 </ListItemButton>
               );
             })}
@@ -347,8 +347,8 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
         position: "fixed",
         zIndex: 1200,
         bottom: "calc(env(safe-area-inset-bottom, 0px) + 10px)",
-        left: 12,
-        right: 12,
+        left: 0,
+        right: 0,
         maxWidth: 520,
         marginLeft: "auto",
         marginRight: "auto",
@@ -361,9 +361,11 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
           dir="rtl"
           sx={{
             position: "absolute",
-            right: 0,
-            bottom: "calc(100% + 28px)",
-            width: "100%",
+            right: "50%",
+            bottom: "calc(100% + 12px)",
+            transform: accountMenuOpen ? "translate(50%, 0)" : "translate(50%, 8px)",
+            width: 280,
+            maxWidth: "calc(100vw - 24px)",
             boxSizing: "border-box",
             border: "1px solid #E2E8F0",
             borderRadius: 3,
@@ -372,7 +374,6 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
             backdropFilter: "blur(16px)",
             overflow: "hidden",
             opacity: accountMenuOpen ? 1 : 0,
-            transform: accountMenuOpen ? "translateY(0)" : "translateY(8px)",
             transformOrigin: "bottom center",
             visibility: accountMenuOpen ? "visible" : "hidden",
             pointerEvents: accountMenuOpen ? "auto" : "none",
@@ -485,7 +486,8 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
         <Box
           sx={{
             width: "100%",
-            minHeight: 68,
+            width: 62,
+            minHeight: 54,
             border: "1px solid #E2E8F0",
             borderRadius: 3,
             bgcolor: "rgba(255,255,255,0.97)",
@@ -503,9 +505,9 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
             aria-expanded={accountMenuOpen}
             aria-label="باز کردن پیج‌های اینستاگرام"
             sx={{
-              width: "100%",
-              minWidth: 0,
-              minHeight: 68,
+              width: 62,
+              minWidth: 62,
+              minHeight: 54,
               border: 0,
               borderRadius: 0,
               bgcolor: accountMenuOpen || pathname === "/dashboard" ? "#F8FAFC" : "transparent",
@@ -528,7 +530,7 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
             <Box
               sx={{
                 position: "absolute",
-                left: 12,
+                left: 5,
                 top: "50%",
                 transform: "translateY(-50%)",
                 display: "grid",
