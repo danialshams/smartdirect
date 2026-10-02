@@ -15,6 +15,7 @@ import {
   MessageCircle,
   MessageCircleReply,
   MessageCircleQuestion,
+  MessageSquareText,
   Plus,
   Ticket,
   UserRound,
@@ -59,7 +60,7 @@ const menuGroups = [
     label: "مدیریت",
     items: [
       { title: "انتشار محتوا", href: "/dashboard/publishing", icon: ImagePlus },
-      { title: "کامنت‌ها", href: "/dashboard/comments", icon: MessageCircleReply },
+      { title: "کامنت‌ها", href: "/dashboard/comments", icon: MessageSquareText },
       { title: "پیام‌ها", href: "/dashboard/inbox", icon: Inbox },
       { title: "سؤال‌های شروع گفتگو", href: "/dashboard/ice-breaker", icon: MessageCircleQuestion },
       { title: "منوی دایرکت", href: "/dashboard/persistent-menu", icon: MenuIcon },
@@ -207,7 +208,7 @@ function SidebarContent({
           <AccountSection instagramAccounts={instagramAccounts} />
         </Box>
       </Box>
-      <Divider sx={{ borderColor: "#E2E8F0", display: { xs: "none", lg: "block" } }} />
+      <Divider sx={{ borderColor: "#E2E8F0", display: { xs: "block", lg: "block" } }} />
       <Box sx={{ p: 1.25 }}>
         <Box component="button" type="button" onClick={() => void signOut({ callbackUrl: "/login" })}
           sx={{ width: "100%", display: "flex", alignItems: "center", gap: 1.25, border: 0, borderRadius: 1.75, bgcolor: "transparent", color: "#DC2626", px: 1.1, py: 1.1, cursor: "pointer", fontFamily: "inherit", textAlign: "right", "&:hover": { bgcolor: "#FEF2F2", color: "#B91C1C" } }}>
@@ -230,7 +231,20 @@ export default function DashboardSidebar({
         <SidebarContent instagramAccounts={instagramAccounts} />
       </Drawer>
       <Drawer variant="temporary" anchor="left" open={mobileOpen} onClose={onMobileClose} ModalProps={{ keepMounted: true }}
-        sx={{ display: { xs: "block", lg: "none" }, "& .MuiDrawer-paper": { width: { xs: "min(68vw, 220px)", sm: 235 }, boxSizing: "border-box", borderLeft: "1px solid #E2E8F0", borderRight: 0, direction: "rtl" } }}>
+        sx={{
+          display: { xs: "block", lg: "none" },
+          "& .MuiDrawer-paper": {
+            width: { xs: "min(68vw, 220px)", sm: 235 },
+            height: "calc(100vh - 20px)",
+            top: 10,
+            bottom: 10,
+            boxSizing: "border-box",
+            border: "1px solid #E2E8F0",
+            borderRadius: 3,
+            direction: "rtl",
+            overflow: "hidden",
+          },
+        }}>
         <SidebarContent mobile onClose={onMobileClose} instagramAccounts={instagramAccounts} />
       </Drawer>
     </>
@@ -486,7 +500,7 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
               minWidth: 0,
               minHeight: 68,
               border: 0,
-              borderRight: "1px solid #CBD5E1",
+              borderLeft: "1px solid #E2E8F0",
               borderRadius: 0,
               bgcolor: pathname === "/dashboard/comment-automation" || pathname.startsWith("/dashboard/comment-automation/") ? "#EFF6FF" : "transparent",
               color: pathname === "/dashboard/comment-automation" || pathname.startsWith("/dashboard/comment-automation/") ? "#2563EB" : "#475569",
