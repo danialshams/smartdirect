@@ -81,7 +81,8 @@ function PersianCalendarDropdown({
 
     // react-day-picker can expose Persian month values as either 0..11 or 1..12.
     // Normalize to the same 0-based month used by Intl above before comparing.
-    const normalizedMonth = ["فروردین","اردیبهشت","خرداد","تیر","مرداد","شهریور","مهر","آبان","آذر","دی","بهمن","اسفند"].indexOf(String(option.label || "").trim());\n    if (normalizedMonth < 0) return false;
+    const normalizedMonth = ["فروردین","اردیبهشت","خرداد","تیر","مرداد","شهریور","مهر","آبان","آذر","دی","بهمن","اسفند"].indexOf(String(option.label || "").trim());
+    if (normalizedMonth < 0) return false;
 
     if (startPersian && currentPersian.year === startPersian.year && normalizedMonth < startPersian.month) {
       return true;
