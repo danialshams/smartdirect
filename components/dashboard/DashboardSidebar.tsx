@@ -374,11 +374,14 @@ export function DashboardInstagramIsland({
           ref={islandPanelRef}
           dir="rtl"
           sx={{
-            position: "absolute",
-            right: 0,
-            bottom: "calc(100% + 36px)",
+            position: "fixed",
+            top: { xs: 416, sm: 476 },
+            left: 12,
+            right: 12,
+            width: "auto",
+            maxWidth: 520,
+            mx: "auto",
             transform: accountMenuOpen ? "translateY(0)" : "translateY(8px)",
-            width: "100%",
             boxSizing: "border-box",
             border: "1px solid #E2E8F0",
             borderRadius: 3,
