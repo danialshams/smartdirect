@@ -72,10 +72,10 @@ const menuGroups = [
 function Brand() {
   return (
     <Box dir="rtl" sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0 }}>
-      <Box sx={{ width: 44, height: 44, flexShrink: 0, display: "grid", placeItems: "center", borderRadius: 2.5, bgcolor: "#2563EB", color: "#FFFFFF", fontSize: 17, fontWeight: 900, letterSpacing: "-0.04em" }}>S</Box>
+      <Box sx={{ width: 48, height: 48, flexShrink: 0, display: "grid", placeItems: "center", borderRadius: 2.5, bgcolor: "#2563EB", color: "#FFFFFF", fontSize: 18, fontWeight: 900, letterSpacing: "-0.04em" }}>S</Box>
       <Box dir="ltr" sx={{ minWidth: 0, textAlign: "left" }}>
-        <Typography fontSize={16} fontWeight={800} noWrap color="#0F172A">SmartDirect</Typography>
-        <Typography fontSize={10.5} noWrap sx={{ mt: 0.2, color: "#64748B" }}>Automate · Connect · Grow</Typography>
+        <Typography fontSize={17} fontWeight={800} noWrap color="#0F172A">SmartDirect</Typography>
+        <Typography fontSize={11} noWrap sx={{ mt: 0.2, color: "#64748B" }}>Automate · Connect · Grow</Typography>
       </Box>
     </Box>
   );
@@ -103,25 +103,25 @@ function AccountSection({ instagramAccounts }: { instagramAccounts: InstagramAcc
     <Box sx={{ px: 1.25, py: 1 }}>
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: { xs: 0.8, lg: 0.65 }, px: 0.35 }}>
         <Typography fontSize={10.5} fontWeight={700} color="#64748B">پیج‌های اینستاگرام</Typography>
-        <Box component={Link} href="/api/instagram/connect" aria-label="افزودن حساب" sx={{ display: "flex", alignItems: "center", gap: 0.35, color: "#2563EB", textDecoration: "none", fontSize: 10.5, fontWeight: 700, "&:hover": { color: "#1D4ED8" } }}>
-          <Plus size={14} strokeWidth={2.2} />
+        <Box component={Link} href="/api/instagram/connect" aria-label="افزودن حساب" sx={{ display: "flex", alignItems: "center", gap: 0.35, color: "#2563EB", textDecoration: "none", fontSize: 11, fontWeight: 700, "&:hover": { color: "#1D4ED8" } }}>
+          <Plus size={16} strokeWidth={2.2} />
           <span>افزودن پیج</span>
         </Box>
       </Box>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 0.9, minWidth: 0, px: 0.9, py: 0.85, borderRadius: 1.75, bgcolor: "#F8FAFC", border: "1px solid #E2E8F0" }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.05, minWidth: 0, px: 1, py: 1, borderRadius: 1.75, bgcolor: "#F8FAFC", border: "1px solid #E2E8F0" }}>
         <Box sx={{ flexShrink: 0 }}>
-          <Avatar src={activeAccount?.profilePictureUrl || undefined} alt={activeAccount?.igUsername || "Instagram"} sx={{ width: 34, height: 34, bgcolor: "#E2E8F0", color: "#64748B" }}>
+          <Avatar src={activeAccount?.profilePictureUrl || undefined} alt={activeAccount?.igUsername || "Instagram"} sx={{ width: 40, height: 40, bgcolor: "#E2E8F0", color: "#64748B" }}>
             {!activeAccount?.profilePictureUrl ? <UserRound size={16} /> : null}
           </Avatar>
         </Box>
         <Box sx={{ minWidth: 0, flex: 1 }}>
-          <Typography dir="ltr" noWrap fontSize={11.5} fontWeight={600} color="#0F172A" sx={{ textAlign: "right" }}>
+          <Typography dir="ltr" noWrap fontSize={13.5} fontWeight={600} color="#0F172A" sx={{ textAlign: "right" }}>
             {activeAccount ? `@${activeAccount.igUsername}` : "پیجی متصل نیست"}
           </Typography>
         </Box>
         {activeAccount ? (
-          <Box aria-label="پیج فعال" sx={{ width: 22, height: 22, display: "grid", placeItems: "center", color: "#16A34A", flexShrink: 0 }}>
-            <Check size={14} strokeWidth={2.4} />
+          <Box aria-label="پیج فعال" sx={{ width: 24, height: 24, display: "grid", placeItems: "center", color: "#16A34A", flexShrink: 0 }}>
+            <Check size={16} strokeWidth={2.4} />
           </Box>
         ) : null}
       </Box>
@@ -167,11 +167,11 @@ function Navigation({ onNavigate, mobile = false }: { onNavigate?: () => void; m
               const active = href === "/dashboard" ? pathname === "/dashboard" : pathname === href || pathname.startsWith(`${href}/`);
               return (
                 <ListItemButton key={href} component={Link} href={href} onClick={onNavigate} selected={active} dir="rtl"
-                  sx={{ minHeight: { xs: 50, sm: 54, lg: 40 }, display: "flex", flexDirection: "row", alignItems: "center", columnGap: { xs: 0.8, lg: 1 }, borderRadius: 2, px: { xs: 1, lg: 1.1 }, color: active ? "#2563EB" : "#475569", "&.Mui-selected": { bgcolor: "#EFF6FF", color: "#2563EB" }, "&.Mui-selected:hover": { bgcolor: "#EFF6FF" }, "&:hover": { bgcolor: "#F8FAFC", color: "#1D4ED8" } }}>
-                  <ListItemIcon sx={{ minWidth: 0, width: { xs: 21, lg: 18 }, flex: { xs: "0 0 21px", lg: "0 0 18px" }, color: "inherit", display: "flex", justifyContent: "center", alignItems: "center", m: 0 }}>
-                    <Icon size={21} strokeWidth={1.9} />
+                  sx={{ minHeight: { xs: 58, sm: 62, lg: 40 }, display: "flex", flexDirection: "row", alignItems: "center", columnGap: { xs: 1, lg: 1 }, borderRadius: 2, px: { xs: 1.25, lg: 1.1 }, color: active ? "#2563EB" : "#475569", "&.Mui-selected": { bgcolor: "#EFF6FF", color: "#2563EB" }, "&.Mui-selected:hover": { bgcolor: "#EFF6FF" }, "&:hover": { bgcolor: "#F8FAFC", color: "#1D4ED8" } }}>
+                  <ListItemIcon sx={{ minWidth: 0, width: { xs: 24, lg: 18 }, flex: { xs: "0 0 24px", lg: "0 0 18px" }, color: "inherit", display: "flex", justifyContent: "center", alignItems: "center", m: 0 }}>
+                    <Icon size={23} strokeWidth={1.9} />
                   </ListItemIcon>
-                  <ListItemText primary={title} sx={{ minWidth: 0, flex: "0 1 auto", m: 0, textAlign: "right", direction: "rtl" }} primaryTypographyProps={{ fontSize: { xs: 12.5, sm: 13, lg: 12.5 }, fontWeight: active ? 700 : 500, lineHeight: 1.45 }} />
+                  <ListItemText primary={title} sx={{ minWidth: 0, flex: "0 1 auto", m: 0, textAlign: "right", direction: "rtl" }} primaryTypographyProps={{ fontSize: { xs: 13.5, sm: 14, lg: 12.5 }, fontWeight: active ? 700 : 500, lineHeight: 1.45 }} />
                 </ListItemButton>
               );
             })}
@@ -209,10 +209,10 @@ function SidebarContent({
         </Box>
       </Box>
       <Divider sx={{ borderColor: "#E2E8F0", display: { xs: "block", lg: "block" } }} />
-      <Box sx={{ p: 1.25 }}>
+      <Box sx={{ p: { xs: 1.5, lg: 1.25 }}>
         <Box component="button" type="button" onClick={() => void signOut({ callbackUrl: "/login" })}
-          sx={{ width: "100%", display: "flex", alignItems: "center", gap: 1.25, border: 0, borderRadius: 1.75, bgcolor: "transparent", color: "#DC2626", px: 1.1, py: 1.1, cursor: "pointer", fontFamily: "inherit", textAlign: "right", "&:hover": { bgcolor: "#FEF2F2", color: "#B91C1C" } }}>
-          <LogOut size={18} strokeWidth={1.9} />
+          sx={{ width: "100%", display: "flex", alignItems: "center", gap: 1.4, border: 0, borderRadius: 2, bgcolor: "transparent", color: "#DC2626", px: 1.25, py: 1.25, cursor: "pointer", fontFamily: "inherit", textAlign: "right", "&:hover": { bgcolor: "#FEF2F2", color: "#B91C1C" } }}>
+          <LogOut size={20} strokeWidth={1.9} />
           <Typography component="span" fontSize={12.5} fontWeight={600}>خروج از حساب</Typography>
         </Box>
       </Box>
@@ -246,10 +246,10 @@ export default function DashboardSidebar({
             overflow: "hidden",
           },
           "& .MuiBackdrop-root": {
-            backgroundColor: "rgba(15,23,42,0.10)",
-            backdropFilter: "blur(10px)",
-            WebkitBackdropFilter: "blur(10px)",
-            transition: "opacity 320ms ease, backdrop-filter 420ms ease",
+            backgroundColor: "rgba(15,23,42,0.06)",
+            backdropFilter: "blur(5px)",
+            WebkitBackdropFilter: "blur(5px)",
+            transition: "opacity 360ms ease, backdrop-filter 440ms ease",
           },
         }}>
         <SidebarContent mobile onClose={onMobileClose} instagramAccounts={instagramAccounts} />
