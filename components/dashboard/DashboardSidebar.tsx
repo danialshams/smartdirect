@@ -263,20 +263,20 @@ export default function DashboardSidebar({
 export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccounts: InstagramAccount[] }) {
   const pathname = usePathname();
   const [accounts, setAccounts] = useState(instagramAccounts);
-  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [islandOpen, setIslandOpen] = useState(false);
   const islandRef = useRef<HTMLDivElement | null>(null);
   const activeAccount = accounts.find((account) => account.isConnected);
 
   useEffect(() => {
-    if (!accountMenuOpen) return;
+    if (!islandOpen) return;
     const handlePointerDown = (event: PointerEvent) => {
       if (islandRef.current && !islandRef.current.contains(event.target as Node)) {
-        setAccountMenuOpen(false);
+        setIslandOpen(false);
       }
     };
     document.addEventListener("pointerdown", handlePointerDown);
     return () => document.removeEventListener("pointerdown", handlePointerDown);
-  }, [accountMenuOpen]);
+  }, [islandOpen]);
 
   useEffect(() => {
     let cancelled = false;
@@ -294,308 +294,291 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
     };
   }, []);
 
-  const sections = [
-    {
-      key: "instagram",
-      href: "/dashboard",
-      title: "پیج‌های اینستاگرام",
-      icon: null,
-      active: pathname === "/dashboard",
-    },
-    {
-      key: "comment",
-      href: "/dashboard/comment-automation",
-      title: "پاسخ خودکار کامنت",
-      icon: MessageCircleReply,
-      active: pathname === "/dashboard/comment-automation" || pathname.startsWith("/dashboard/comment-automation/"),
-    },
-    {
-      key: "story",
-      href: "/dashboard/story-automation",
-      title: "پاسخ خودکار استوری",
-      icon: Camera,
-      active: pathname === "/dashboard/story-automation" || pathname.startsWith("/dashboard/story-automation/"),
-    },
+  const shortcuts = [
+    { key: "dashboard", href: "/dashboard", title: "داشبورد", icon: LayoutDashboard, matches: (path: string) => path === "/dashboard" },
+    { key: "insights", href: "/dashboard/insights", title: "تحلیل پیج", icon: BarChart3, matches: (path: string) => path === "/dashboard/insights" },
+    { key: "publishing", href: "/dashboard/publishing", title: "انتشار محتوا", icon: ImagePlus, matches: (path: string) => path === "/dashboard/publishing" || path.startsWith("/dashboard/publishing/") },
+    { key: "comments", href: "/dashboard/comments", title: "کامنت‌ها", icon: MessageSquareText, matches: (path: string) => path === "/dashboard/comments" || path.startsWith("/dashboard/comments/") },
+    { key: "inbox", href: "/dashboard/inbox", title: "پیام‌ها", icon: Inbox, matches: (path: string) => path === "/dashboard/inbox" || path.startsWith("/dashboard/inbox/") },
+    { key: "ice-breaker", href: "/dashboard/ice-breaker", title: "شروع گفتگو", icon: MessageCircleQuestion, matches: (path: string) => path === "/dashboard/ice-breaker" || path.startsWith("/dashboard/ice-breaker/") },
+    { key: "persistent-menu", href: "/dashboard/persistent-menu", title: "منوی دایرکت", icon: MenuIcon, matches: (path: string) => path === "/dashboard/persistent-menu" || path.startsWith("/dashboard/persistent-menu/") },
+    { key: "comment-automation", href: "/dashboard/comment-automation", title: "پاسخ خودکار کامنت", icon: MessageCircleReply, matches: (path: string) => path === "/dashboard/comment-automation" || path.startsWith("/dashboard/comment-automation/") },
+    { key: "story-automation", href: "/dashboard/story-automation", title: "پاسخ خودکار استوری", icon: Camera, matches: (path: string) => path === "/dashboard/story-automation" || path.startsWith("/dashboard/story-automation/") },
   ];
+
+  const contextualOrder: Record<string, string[]> = {
+    "/dashboard": ["insights", "publishing", "inbox", "comments", "comment-automation", "story-automation"],
+    "/dashboard/insights": ["publishing", "comments", "inbox", "comment-automation", "story-automation"],
+    "/dashboard/publishing": ["insights", "inbox", "comments", "comment-automation", "story-automation"],
+    "/dashboard/comments": ["comment-automation", "publishing", "inbox", "story-automation", "insights"],
+    "/dashboard/inbox": ["comment-automation", "story-automation", "persistent-menu", "ice-breaker", "publishing"],
+    "/dashboard/ice-breaker": ["persistent-menu", "inbox", "story-automation", "comment-automation", "publishing"],
+    "/dashboard/persistent-menu": ["ice-breaker", "inbox", "comment-automation", "story-automation", "publishing"],
+    "/dashboard/comment-automation": ["story-automation", "publishing", "inbox", "comments", "persistent-menu"],
+    "/dashboard/story-automation": ["comment-automation", "publishing", "inbox", "persistent-menu", "ice-breaker"],
+  };
+
+  const currentShortcut = shortcuts.find((item) => item.matches(pathname));
+  const currentBase = currentShortcut?.href ?? pathname;
+  const preferredOrder =
+    contextualOrder[currentBase] ??
+    ["dashboard", "insights", "publishing", "inbox", "comments", "comment-automation", "story-automation", "ice-breaker", "persistent-menu"];
+
+  const selectedShortcuts = preferredOrder
+    .map((key) => shortcuts.find((item) => item.key === key))
+    .filter((item): item is (typeof shortcuts)[number] => Boolean(item) && !item.matches(pathname))
+    .slice(0, 3);
+
+  const fallbackShortcuts = shortcuts
+    .filter((item) => !item.matches(pathname) && !selectedShortcuts.some((selected) => selected.key === item.key))
+    .slice(0, 3 - selectedShortcuts.length);
+
+  const visibleShortcuts = [...selectedShortcuts, ...fallbackShortcuts];
 
   return (
     <>
       <Box
-        aria-hidden={!accountMenuOpen}
-        onClick={() => setAccountMenuOpen(false)}
+        aria-hidden={!islandOpen}
+        onClick={() => setIslandOpen(false)}
         sx={{
           position: "fixed",
           inset: 0,
           zIndex: 1199,
           display: { xs: "block", lg: "none" },
-          pointerEvents: accountMenuOpen ? "auto" : "none",
-          opacity: accountMenuOpen ? 1 : 0,
-          visibility: accountMenuOpen ? "visible" : "hidden",
-          backgroundColor: "rgba(15,23,42,0.025)",
-          backdropFilter: accountMenuOpen ? "blur(2px)" : "blur(0px)",
-          WebkitBackdropFilter: accountMenuOpen ? "blur(2px)" : "blur(0px)",
-          transition: "opacity 360ms ease, backdrop-filter 440ms ease, visibility 360ms ease",
+          pointerEvents: islandOpen ? "auto" : "none",
+          opacity: islandOpen ? 1 : 0,
+          visibility: islandOpen ? "visible" : "hidden",
+          backgroundColor: "rgba(15,23,42,0.018)",
+          backdropFilter: islandOpen ? "blur(1.5px)" : "blur(0px)",
+          WebkitBackdropFilter: islandOpen ? "blur(1.5px)" : "blur(0px)",
+          transition: "opacity 300ms ease, backdrop-filter 360ms ease, visibility 300ms ease",
         }}
       />
+
       <Box
-      dir="rtl"
-      component="footer"
-      sx={{
-        display: { xs: "block", lg: "none" },
-        position: "fixed",
-        zIndex: 1200,
-        bottom: "calc(env(safe-area-inset-bottom, 0px) + 10px)",
-        left: 12,
-        right: 12,
-        maxWidth: 520,
-        marginLeft: "auto",
-        marginRight: "auto",
-        boxSizing: "border-box",
-        pointerEvents: "none",
-      }}
-    >
-      <Box ref={islandRef} sx={{ position: "relative", pointerEvents: "none" }}>
-        <Box
-          dir="rtl"
-          sx={{
-            position: "absolute",
-            right: 0,
-            bottom: "calc(100% + 28px)",
-            width: "100%",
-            boxSizing: "border-box",
-            border: "1px solid #E2E8F0",
-            borderRadius: 3,
-            bgcolor: "rgba(255,255,255,0.97)",
-            boxShadow: "0 8px 24px rgba(15,23,42,0.08)",
-            backdropFilter: "blur(16px)",
-            overflow: "hidden",
-            opacity: accountMenuOpen ? 1 : 0,
-            transform: accountMenuOpen ? "translateY(0)" : "translateY(8px)",
-            transformOrigin: "bottom center",
-            visibility: accountMenuOpen ? "visible" : "hidden",
-            pointerEvents: accountMenuOpen ? "auto" : "none",
-            transition: "opacity 180ms ease, transform 180ms ease, visibility 180ms ease",
-            zIndex: 1,
-          }}
-        >
+        dir="rtl"
+        component="footer"
+        sx={{
+          display: { xs: "block", lg: "none" },
+          position: "fixed",
+          zIndex: 1200,
+          bottom: "calc(env(safe-area-inset-bottom, 0px) + 10px)",
+          left: 12,
+          right: 12,
+          maxWidth: 520,
+          marginLeft: "auto",
+          marginRight: "auto",
+          boxSizing: "border-box",
+          pointerEvents: "none",
+        }}
+      >
+        <Box ref={islandRef} sx={{ position: "relative", pointerEvents: "none" }}>
           <Box
+            dir="rtl"
             sx={{
-              minHeight: 64,
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "stretch",
-              direction: "ltr",
-              bgcolor: "#F8FAFC",
-              borderBottom: "1px solid #E2E8F0",
+              position: "absolute",
+              right: 0,
+              bottom: "calc(100% + 10px)",
+              width: "100%",
+              boxSizing: "border-box",
+              border: "1px solid #E2E8F0",
+              borderRadius: 3,
+              bgcolor: "rgba(255,255,255,0.985)",
+              boxShadow: "0 8px 24px rgba(15,23,42,0.07)",
+              backdropFilter: "blur(14px)",
+              overflow: "hidden",
+              opacity: islandOpen ? 1 : 0,
+              transform: islandOpen ? "translateY(0) scale(1)" : "translateY(8px) scale(0.985)",
+              transformOrigin: "bottom center",
+              visibility: islandOpen ? "visible" : "hidden",
+              pointerEvents: islandOpen ? "auto" : "none",
+              transition: "opacity 220ms ease, transform 300ms cubic-bezier(0.22, 1, 0.36, 1), visibility 300ms ease",
+              zIndex: 1,
             }}
           >
             <Box
-              component={Link}
-              href="/dashboard"
-              onClick={() => setAccountMenuOpen(false)}
               sx={{
-                width: "66.666667%",
-                minWidth: 0,
-                display: "flex",
-                alignItems: "center",
-                direction: "ltr",
-                textDecoration: "none",
-                color: "#0F172A",
+                display: "grid",
+                gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+                minHeight: 72,
+                direction: "rtl",
+                bgcolor: "#F8FAFC",
+                borderBottom: "1px solid #E2E8F0",
               }}
             >
               <Box
+                component="button"
+                type="button"
+                onClick={() => setIslandOpen(false)}
+                aria-label="بستن دسترسی سریع"
                 sx={{
-                  width: "50%",
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
                   minWidth: 0,
+                  minHeight: 72,
+                  border: 0,
+                  borderLeft: "1px solid #E2E8F0",
+                  bgcolor: "#F8FAFC",
+                  color: "#475569",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 0.45,
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  p: 0.5,
                 }}
               >
                 <Avatar
                   src={activeAccount?.profilePictureUrl || undefined}
                   alt={activeAccount?.igUsername || "Instagram"}
-                  sx={{ width: 34, height: 34, flexShrink: 0, bgcolor: "#E2E8F0", color: "#64748B" }}
+                  sx={{ width: 34, height: 34, bgcolor: "#E2E8F0", color: "#64748B" }}
                 >
                   {!activeAccount?.profilePictureUrl ? <UserRound size={15} /> : null}
                 </Avatar>
-              </Box>
-              <Box
-                sx={{
-                  width: "50%",
-                  minWidth: 0,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  px: 0.75,
-                }}
-              >
-                <Typography
-                  dir="ltr"
-                  noWrap
-                  fontSize={11.5}
-                  fontWeight={700}
-                  sx={{ maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis" }}
+                <Box
+                  sx={{
+                    display: "grid",
+                    placeItems: "center",
+                    color: "#64748B",
+                    transform: islandOpen ? "rotate(180deg)" : "rotate(0deg)",
+                    transition: "transform 260ms cubic-bezier(0.22, 1, 0.36, 1)",
+                    lineHeight: 0,
+                  }}
                 >
-                  {activeAccount ? `@${activeAccount.igUsername}` : "پیجی متصل نیست"}
-                </Typography>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M7 14l5-5 5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </Box>
               </Box>
+
+              {visibleShortcuts.map(({ key, href, title, icon: Icon, matches }) => (
+                <Box
+                  key={key}
+                  component={Link}
+                  href={href}
+                  onClick={() => setIslandOpen(false)}
+                  sx={{
+                    minWidth: 0,
+                    minHeight: 72,
+                    border: 0,
+                    borderLeft: key === visibleShortcuts[visibleShortcuts.length - 1]?.key ? 0 : "1px solid #E2E8F0",
+                    bgcolor: matches(pathname) ? "#EFF6FF" : "transparent",
+                    color: matches(pathname) ? "#2563EB" : "#475569",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 0.5,
+                    textDecoration: "none",
+                    px: 0.45,
+                    transition: "background-color 160ms ease, color 160ms ease",
+                    "&:hover": { bgcolor: "#EFF6FF", color: "#2563EB" },
+                  }}
+                >
+                  <Icon size={21} strokeWidth={1.9} />
+                  <Typography
+                    noWrap
+                    fontSize={{ xs: 10.5, sm: 11 }}
+                    fontWeight={600}
+                    color="inherit"
+                    sx={{ maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis" }}
+                  >
+                    {title}
+                  </Typography>
+                </Box>
+              ))}
             </Box>
 
             <Box
               sx={{
-                width: "33.333333%",
-                minWidth: 0,
+                minHeight: 46,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                borderLeft: "1px solid #E2E8F0",
+                borderTop: "1px solid #E2E8F0",
+                bgcolor: "#FFFFFF",
               }}
             >
-              {activeAccount ? <Check size={17} color="#16A34A" strokeWidth={2.4} /> : null}
+              <Box
+                component={Link}
+                href="/api/instagram/connect"
+                onClick={() => setIslandOpen(false)}
+                sx={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 0.5,
+                  px: 1.25,
+                  color: "#2563EB",
+                  textDecoration: "none",
+                  "&:hover": { color: "#1D4ED8" },
+                }}
+              >
+                <Plus size={15} strokeWidth={2.2} />
+                <Typography fontSize={10.5} fontWeight={700} dir="rtl">
+                  افزودن پیج جدید
+                </Typography>
+              </Box>
             </Box>
-          </Box>
-
-          <Box
-            component={Link}
-            href="/api/instagram/connect"
-            onClick={() => setAccountMenuOpen(false)}
-            sx={{
-              minHeight: 48,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              direction: "ltr",
-              gap: 0.6,
-              px: 1,
-              color: "#2563EB",
-              textDecoration: "none",
-              "&:hover": { bgcolor: "#EFF6FF" },
-            }}
-          >
-            <Plus size={17} strokeWidth={2.3} />
-            <Typography fontSize={11.5} fontWeight={700} dir="rtl">
-              افزودن پیج جدید
-            </Typography>
-          </Box>
-        </Box>
-
-        <Box
-          sx={{
-            width: "100%",
-            minHeight: 68,
-            border: "1px solid #E2E8F0",
-            borderRadius: 3,
-            bgcolor: "rgba(255,255,255,0.97)",
-            boxShadow: "0 12px 36px rgba(15,23,42,0.12)",
-            backdropFilter: "blur(16px)",
-            overflow: "hidden",
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr 1fr",
-            direction: "rtl",
-            opacity: accountMenuOpen ? 0 : 1,
-            pointerEvents: accountMenuOpen ? "none" : "auto",
-            transition: "opacity 180ms ease",
-          }}
-        >
-          <Box
-            component={Link}
-            href="/dashboard/story-automation"
-            sx={{
-              minWidth: 0,
-              minHeight: 68,
-              border: 0,
-              borderRadius: 0,
-              bgcolor: pathname === "/dashboard/story-automation" || pathname.startsWith("/dashboard/story-automation/") ? "#EFF6FF" : "transparent",
-              color: pathname === "/dashboard/story-automation" || pathname.startsWith("/dashboard/story-automation/") ? "#2563EB" : "#475569",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 0.45,
-              textDecoration: "none",
-              px: 0.5,
-            }}
-          >
-            <Camera size={22} strokeWidth={1.9} />
-            <Typography noWrap fontSize={{ xs: 11, sm: 12 }} fontWeight={600} color="inherit">
-              پاسخ خودکار استوری
-            </Typography>
-          </Box>
-
-          <Box
-            component={Link}
-            href="/dashboard/comment-automation"
-            sx={{
-              minWidth: 0,
-              minHeight: 68,
-              border: 0,
-              borderRight: "1px solid #E2E8F0",
-              borderRadius: 0,
-              bgcolor: pathname === "/dashboard/comment-automation" || pathname.startsWith("/dashboard/comment-automation/") ? "#EFF6FF" : "transparent",
-              color: pathname === "/dashboard/comment-automation" || pathname.startsWith("/dashboard/comment-automation/") ? "#2563EB" : "#475569",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 0.45,
-              textDecoration: "none",
-              px: 0.5,
-            }}
-          >
-            <MessageCircleReply size={22} strokeWidth={1.9} />
-            <Typography noWrap fontSize={{ xs: 11, sm: 12 }} fontWeight={600} color="inherit">
-              پاسخ خودکار کامنت
-            </Typography>
           </Box>
 
           <Box
             component="button"
             type="button"
-            onClick={() => setAccountMenuOpen((open) => !open)}
-            aria-expanded={accountMenuOpen}
-            aria-label="باز کردن پیج‌های اینستاگرام"
+            onClick={() => setIslandOpen((open) => !open)}
+            aria-expanded={islandOpen}
+            aria-label={islandOpen ? "بستن دسترسی سریع" : "باز کردن دسترسی سریع"}
             sx={{
-              minWidth: 0,
-              minHeight: 68,
-              border: 0,
-              borderRadius: 0,
-              bgcolor: accountMenuOpen || pathname === "/dashboard" ? "#F8FAFC" : "transparent",
-              color: pathname === "/dashboard" ? "#2563EB" : "#475569",
-              display: "grid",
-              placeItems: "center",
-              position: "relative",
+              minWidth: { xs: 148, sm: 164 },
+              height: 48,
+              mx: "auto",
+              px: 1.5,
+              border: "1px solid #E2E8F0",
+              borderRadius: 999,
+              bgcolor: "rgba(255,255,255,0.985)",
+              color: islandOpen ? "#2563EB" : "#475569",
+              boxShadow: "0 6px 18px rgba(15,23,42,0.07)",
+              backdropFilter: "blur(12px)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 0.65,
               cursor: "pointer",
               fontFamily: "inherit",
-              p: 0,
+              pointerEvents: "auto",
+              transition: "color 180ms ease, background-color 180ms ease, box-shadow 220ms ease, transform 220ms ease",
+              "&:hover": {
+                bgcolor: "#FFFFFF",
+                color: "#2563EB",
+                boxShadow: "0 7px 20px rgba(15,23,42,0.08)",
+              },
+              "&:active": { transform: "scale(0.985)" },
             }}
           >
-            <Avatar
-              src={activeAccount?.profilePictureUrl || undefined}
-              alt={activeAccount?.igUsername || "Instagram"}
-              sx={{ width: 34, height: 34, bgcolor: "#E2E8F0", color: "#64748B" }}
-            >
-              {!activeAccount?.profilePictureUrl ? <UserRound size={15} /> : null}
-            </Avatar>
+            <Typography component="span" fontSize={11.5} fontWeight={700} color="inherit">
+              دسترسی سریع
+            </Typography>
             <Box
+              component="span"
               sx={{
-                position: "absolute",
-                left: 12,
-                top: "50%",
-                transform: "translateY(-50%)",
+                width: 26,
+                height: 26,
+                borderRadius: "50%",
+                bgcolor: islandOpen ? "#EFF6FF" : "#F8FAFC",
+                color: islandOpen ? "#2563EB" : "#64748B",
                 display: "grid",
                 placeItems: "center",
-                color: "#64748B",
+                transition: "background-color 180ms ease, color 180ms ease, transform 260ms cubic-bezier(0.22, 1, 0.36, 1)",
+                transform: islandOpen ? "rotate(180deg)" : "rotate(0deg)",
               }}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M7 14l5-5 5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M7 10l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </Box>
           </Box>
         </Box>
       </Box>
-    </Box>
     </>
   );
 }
