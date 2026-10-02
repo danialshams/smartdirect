@@ -341,7 +341,7 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
           sx={{
             position: "absolute",
             right: 0,
-            bottom: "calc(100% + 14px)",
+            bottom: "calc(100% + 28px)",
             width: "100%",
             boxSizing: "border-box",
             border: "1px solid #E2E8F0",
