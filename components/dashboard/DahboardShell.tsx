@@ -66,10 +66,10 @@ export default function DashboardShell({
           <Box
             component="main"
             sx={{
-              minHeight: "100vh",
+              minHeight: { xs: "calc(100vh - 92px)", lg: "100vh" },
               px: { xs: 1.5, sm: 2.5, md: 3.5, lg: 4 },
               py: { xs: 2, sm: 3, lg: 4 },
-              pb: { xs: 2, sm: 3, lg: 4 },
+              pb: { xs: 3, sm: 4, lg: 4 },
             }}
           >
             <Box
