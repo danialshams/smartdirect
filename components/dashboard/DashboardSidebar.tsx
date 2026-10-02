@@ -351,10 +351,7 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
                 {!activeAccount?.profilePictureUrl ? <UserRound size={15} /> : null}
               </Avatar>
               <Box sx={{ minWidth: 0, flex: 1 }}>
-                <Typography fontSize={9.5} color="#64748B" sx={{ mb: 0.15 }}>
-                  پیج فعال
-                </Typography>
-                <Typography dir="ltr" noWrap fontSize={11} fontWeight={700} sx={{ textAlign: "right" }}>
+                <Typography dir="ltr" noWrap fontSize={11.5} fontWeight={700} sx={{ textAlign: "right" }}>
                   {activeAccount ? `@${activeAccount.igUsername}` : "پیجی متصل نیست"}
                 </Typography>
               </Box>
@@ -442,18 +439,10 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
                   <Avatar
                     src={activeAccount?.profilePictureUrl || undefined}
                     alt={activeAccount?.igUsername || "Instagram"}
-                    sx={{ width: 30, height: 30, flexShrink: 0, bgcolor: "#E2E8F0", color: "#64748B" }}
+                    sx={{ width: 34, height: 34, flexShrink: 0, bgcolor: "#E2E8F0", color: "#64748B" }}
                   >
-                    {!activeAccount?.profilePictureUrl ? <UserRound size={14} /> : null}
+                    {!activeAccount?.profilePictureUrl ? <UserRound size={15} /> : null}
                   </Avatar>
-                  <Box sx={{ minWidth: 0, textAlign: "right" }}>
-                    <Typography noWrap fontSize={{ xs: 9.5, sm: 10 }} fontWeight={section.active ? 700 : 600} color="inherit">
-                      پیج‌های اینستاگرام
-                    </Typography>
-                    <Typography dir="ltr" noWrap fontSize={{ xs: 9, sm: 9.5 }} color="#64748B" sx={{ mt: 0.15 }}>
-                      {activeAccount ? `@${activeAccount.igUsername}` : "پیجی متصل نیست"}
-                    </Typography>
-                  </Box>
                   <Box sx={{ display: "grid", placeItems: "center", flexShrink: 0, color: "#64748B" }}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                       <path d="M7 14l5-5 5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -472,8 +461,18 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
                   flex: 1,
                   minWidth: 0,
                   minHeight: 68,
-                  borderLeft: index < sections.length - 1 ? "1px solid #E2E8F0" : 0,
                   borderRadius: 0,
+                  position: "relative",
+                  "&::after": index < sections.length - 1 ? {
+                    content: '""',
+                    position: "absolute",
+                    left: 0,
+                    top: "50%",
+                    width: "1px",
+                    height: 24,
+                    transform: "translateY(-50%)",
+                    bgcolor: "#CBD5E1",
+                  } : undefined,
                   bgcolor: section.active ? "#EFF6FF" : "transparent",
                   color: section.active ? "#2563EB" : "#475569",
                   px: { xs: 0.75, sm: 1 },
