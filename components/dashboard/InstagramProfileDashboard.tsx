@@ -245,113 +245,220 @@ export default function InstagramProfileDashboard({
     <Box
       dir="rtl"
       sx={{
-        position: "relative",
-        minHeight: "calc(100dvh - 120px)",
         width: "100%",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        px: { xs: 2, sm: 3, md: 4, lg: 5 },
-        pt: { xs: 1.5, sm: 2.5, md: 3.5, lg: 5 },
+        px: { xs: 1, sm: 1.5, md: 2.5, lg: 5 },
+        pb: { xs: 12, lg: 5 },
       }}
     >
-      <Box sx={{ display: "flex", width: "100%", flexDirection: "column", alignItems: "center" }}>
-        <Reveal visible={visible} delay={180}>
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", lg: "minmax(0, 1.55fr) minmax(280px, 0.85fr)" },
+          gap: { xs: 1.5, sm: 2, lg: 2.5 },
+          alignItems: "stretch",
+        }}
+      >
+        <Reveal visible={visible} delay={180} sx={{ height: "100%" }}>
           <Box
             sx={{
-              mt: { xs: "7vh", sm: "9vh", md: "11vh", lg: "16vh" },
-              width: { xs: 112, sm: 128, md: 144, lg: 160 },
-              height: { xs: 112, sm: 128, md: 144, lg: 160 },
-              overflow: "hidden",
-              borderRadius: "50%",
+              height: "100%",
+              minHeight: { xs: 220, sm: 250, lg: 285 },
+              p: { xs: 2, sm: 2.5, md: 3, lg: 3.5 },
               border: "1px solid #E2E8F0",
-              bgcolor: "#F8FAFC",
+              borderRadius: { xs: 3, md: 3.5 },
+              bgcolor: "#FFFFFF",
+              boxShadow: "0 8px 24px rgba(15,23,42,0.05)",
+              display: "flex",
+              alignItems: "center",
+              gap: { xs: 2, sm: 2.5, md: 3 },
+              position: "relative",
+              overflow: "hidden",
             }}
           >
-            {profile.profilePictureUrl ? (
-              <Avatar
-                src={profile.profilePictureUrl}
-                alt={profile.username}
-                sx={{ width: "100%", height: "100%" }}
-              />
-            ) : (
-              <Box
+            <Box
+              sx={{
+                position: "absolute",
+                width: 180,
+                height: 180,
+                borderRadius: "50%",
+                bgcolor: "rgba(37,99,235,0.055)",
+                top: -90,
+                left: -60,
+              }}
+            />
+            <Box
+              sx={{
+                position: "relative",
+                width: { xs: 92, sm: 112, md: 132 },
+                height: { xs: 92, sm: 112, md: 132 },
+                flexShrink: 0,
+                overflow: "hidden",
+                borderRadius: "50%",
+                border: "4px solid #EFF6FF",
+                bgcolor: "#F8FAFC",
+              }}
+            >
+              {profile.profilePictureUrl ? (
+                <Avatar src={profile.profilePictureUrl} alt={profile.username} sx={{ width: "100%", height: "100%" }} />
+              ) : (
+                <Box sx={{ width: "100%", height: "100%", display: "grid", placeItems: "center", color: "#64748B", fontSize: 28, fontWeight: 300 }}>?</Box>
+              )}
+            </Box>
+
+            <Box sx={{ minWidth: 0, position: "relative" }}>
+              <Typography
                 sx={{
-                  width: "100%",
-                  height: "100%",
-                  display: "grid",
-                  placeItems: "center",
-                  color: "#64748B",
-                  fontSize: 34,
-                  fontWeight: 300,
+                  color: "#0F172A",
+                  fontSize: { xs: 18, sm: 21, md: 24 },
+                  fontWeight: 700,
+                  letterSpacing: "-0.025em",
                 }}
               >
-                ?
-              </Box>
-            )}
+                {profile.name || \`@\${profile.username}\`}
+              </Typography>
+              <Typography dir="ltr" sx={{ mt: 0.45, color: "#64748B", fontSize: { xs: 12.5, sm: 13.5, md: 14 }, fontWeight: 500 }}>
+                @{profile.username}
+              </Typography>
+              {profile.accountType ? (
+                <Box
+                  sx={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    mt: 1.25,
+                    px: 1.1,
+                    py: 0.45,
+                    borderRadius: 99,
+                    bgcolor: "#EFF6FF",
+                    color: "#2563EB",
+                    fontSize: 11,
+                    fontWeight: 700,
+                  }}
+                >
+                  {profile.accountType === "BUSINESS" ? "حساب تجاری" : profile.accountType === "CREATOR" ? "حساب سازنده" : "حساب اینستاگرام"}
+                </Box>
+              ) : null}
+              {profile.biography ? (
+                <Typography
+                  sx={{
+                    mt: 1.25,
+                    color: "#475569",
+                    fontSize: { xs: 11.5, sm: 12.5 },
+                    lineHeight: 1.9,
+                    display: "-webkit-box",
+                    WebkitLineClamp: 3,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
+                  }}
+                >
+                  {profile.biography}
+                </Typography>
+              ) : null}
+            </Box>
           </Box>
         </Reveal>
 
-        <Reveal visible={visible} delay={340}>
-          <Typography
-            dir="ltr"
+        <Reveal visible={visible} delay={300} sx={{ height: "100%" }}>
+          <Box
             sx={{
-              mt: 2.5,
-              color: "#64748B",
-              fontSize: { xs: 14, md: 15 },
-              fontWeight: 500,
-              textAlign: "center",
+              height: "100%",
+              minHeight: { xs: 150, sm: 175, lg: 285 },
+              p: { xs: 2, sm: 2.5 },
+              border: "1px solid #E2E8F0",
+              borderRadius: { xs: 3, md: 3.5 },
+              bgcolor: "#F8FAFC",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
             }}
           >
-            @{profile.username}
+            <Typography sx={{ color: "#0F172A", fontSize: { xs: 14, sm: 15 }, fontWeight: 700 }}>
+              اطلاعات پیج
+            </Typography>
+            <Box sx={{ mt: 1.5, display: "grid", gap: 1 }}>
+              {profile.website ? (
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1 }}>
+                  <Typography sx={{ color: "#94A3B8", fontSize: 11.5 }}>وب‌سایت</Typography>
+                  <Typography
+                    component="a"
+                    href={/^https?:\/\//i.test(profile.website) ? profile.website : \`https://\${profile.website}\`}
+                    target="_blank"
+                    rel="noreferrer"
+                    dir="ltr"
+                    noWrap
+                    sx={{ color: "#2563EB", fontSize: 11.5, fontWeight: 600, textDecoration: "none", maxWidth: "70%", overflow: "hidden", textOverflow: "ellipsis" }}
+                  >
+                    {profile.website}
+                  </Typography>
+                </Box>
+              ) : null}
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1 }}>
+                <Typography sx={{ color: "#94A3B8", fontSize: 11.5 }}>وضعیت</Typography>
+                <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.6, color: "#16A34A", fontSize: 11.5, fontWeight: 700 }}>
+                  <Box sx={{ width: 7, height: 7, borderRadius: "50%", bgcolor: "#22C55E" }} />
+                  متصل
+                </Box>
+              </Box>
+            </Box>
+          </Box>
+        </Reveal>
+      </Box>
+
+      <Reveal visible={visible} delay={460}>
+        <Box sx={{ mt: { xs: 1.5, sm: 2, lg: 2.5 } }}>
+          <Typography sx={{ mb: 1.25, color: "#0F172A", fontSize: { xs: 14, sm: 15 }, fontWeight: 700 }}>
+            آمار پیج
           </Typography>
-        </Reveal>
-      </Box>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+              gap: { xs: 1, sm: 1.5, md: 2 },
+            }}
+          >
+            <Box sx={{ minWidth: 0, p: { xs: 1.25, sm: 1.75 }, borderRadius: 2.5, bgcolor: "#EFF6FF", border: "1px solid #DBEAFE" }}>
+              <Box sx={{ width: 28, height: 28, mb: 1, borderRadius: 1.5, display: "grid", placeItems: "center", bgcolor: "#2563EB", color: "#FFFFFF", fontSize: 12, fontWeight: 800 }}>پ</Box>
+              <AnimatedProfileStat label="پست" value={profile.mediaCount} visible={visible} countDelay={720} />
+            </Box>
+            <Box sx={{ minWidth: 0, p: { xs: 1.25, sm: 1.75 }, borderRadius: 2.5, bgcolor: "#F5F3FF", border: "1px solid #EDE9FE" }}>
+              <Box sx={{ width: 28, height: 28, mb: 1, borderRadius: 1.5, display: "grid", placeItems: "center", bgcolor: "#7C3AED", color: "#FFFFFF", fontSize: 12, fontWeight: 800 }}>ف</Box>
+              <AnimatedProfileStat label="فالوور" value={profile.followersCount} visible={visible} countDelay={860} />
+            </Box>
+            <Box sx={{ minWidth: 0, p: { xs: 1.25, sm: 1.75 }, borderRadius: 2.5, bgcolor: "#F0FDF4", border: "1px solid #DCFCE7" }}>
+              <Box sx={{ width: 28, height: 28, mb: 1, borderRadius: 1.5, display: "grid", placeItems: "center", bgcolor: "#16A34A", color: "#FFFFFF", fontSize: 12, fontWeight: 800 }}>ف</Box>
+              <AnimatedProfileStat label="فالووینگ" value={profile.followsCount} visible={visible} countDelay={1000} />
+            </Box>
+          </Box>
+        </Box>
+      </Reveal>
 
-      <Box
-        dir="ltr"
-        sx={{
-          mt: { xs: "12vh", sm: "13vh", md: "15vh", lg: "22vh" },
-          width: "100%",
-          maxWidth: 600,
-          display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)",
-        }}
-      >
-        <Reveal visible={visible} delay={520}>
-          <AnimatedProfileStat
-            label="پست"
-            value={profile.mediaCount}
-            visible={visible}
-            countDelay={1220}
-          />
-        </Reveal>
-        <Reveal visible={visible} delay={680}>
-          <AnimatedProfileStat
-            label="فالوور"
-            value={profile.followersCount}
-            visible={visible}
-            countDelay={1380}
-          />
-        </Reveal>
-        <Reveal visible={visible} delay={840}>
-          <AnimatedProfileStat
-            label="فالووینگ"
-            value={profile.followsCount}
-            visible={visible}
-            countDelay={1540}
-          />
-        </Reveal>
-      </Box>
-
-      <style jsx global>{`
-        @keyframes sdPulse {
-          0%, 100% { opacity: 0.55; }
-          50% { opacity: 1; }
-        }
-      `}</style>
+      <Reveal visible={visible} delay={620}>
+        <Box
+          sx={{
+            mt: { xs: 1.5, sm: 2, lg: 2.5 },
+            p: { xs: 2, sm: 2.5 },
+            border: "1px solid #E2E8F0",
+            borderRadius: { xs: 3, md: 3.5 },
+            bgcolor: "#FFFFFF",
+            boxShadow: "0 6px 20px rgba(15,23,42,0.035)",
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1 }}>
+            <Typography sx={{ color: "#0F172A", fontSize: { xs: 14, sm: 15 }, fontWeight: 700 }}>
+              وضعیت اتصال
+            </Typography>
+            <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.65, px: 1, py: 0.45, borderRadius: 99, bgcolor: "#F0FDF4", color: "#15803D", fontSize: 10.5, fontWeight: 700 }}>
+              <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "#22C55E" }} />
+              فعال
+            </Box>
+          </Box>
+          <Typography sx={{ mt: 0.8, color: "#64748B", fontSize: { xs: 11.5, sm: 12.5 }, lineHeight: 1.9 }}>
+            اطلاعات این پیج با اتصال فعلی اینستاگرام همگام‌سازی می‌شود.
+          </Typography>
+        </Box>
+      </Reveal>
     </Box>
   );
+
 }
 
 function AnimatedProfileStat({
