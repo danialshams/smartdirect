@@ -343,7 +343,7 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
               display: "flex",
               flexDirection: "row",
               alignItems: "stretch",
-              direction: "rtl",
+              direction: "ltr",
               bgcolor: "#F8FAFC",
               borderBottom: "1px solid #E2E8F0",
             }}
@@ -357,7 +357,7 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
                 minWidth: 0,
                 display: "flex",
                 alignItems: "center",
-                direction: "rtl",
+                direction: "ltr",
                 textDecoration: "none",
                 color: "#0F172A",
               }}
@@ -408,7 +408,7 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                borderRight: "1px solid #E2E8F0",
+                borderLeft: "1px solid #E2E8F0",
               }}
             >
               {activeAccount ? <Check size={17} color="#16A34A" strokeWidth={2.4} /> : null}
@@ -506,7 +506,7 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
               minWidth: 0,
               minHeight: 68,
               border: 0,
-              borderLeft: "1px solid #CBD5E1",
+              borderRight: "1px solid #CBD5E1",
               borderRadius: 0,
               bgcolor: pathname === "/dashboard/comment-automation" || pathname.startsWith("/dashboard/comment-automation/") ? "#EFF6FF" : "transparent",
               color: pathname === "/dashboard/comment-automation" || pathname.startsWith("/dashboard/comment-automation/") ? "#2563EB" : "#475569",
