@@ -43,6 +43,8 @@ export default function DashboardShell({
         dir="rtl"
         sx={{
           minHeight: "100vh",
+          display: "flex",
+          flexDirection: "column",
           bgcolor: "background.default",
           color: "text.primary",
         }}
@@ -60,13 +62,14 @@ export default function DashboardShell({
         <Box
           sx={{
             minWidth: 0,
+            flex: 1,
             marginInlineStart: { xs: 0, lg: "196px" },
           }}
         >
           <Box
             component="main"
             sx={{
-              minHeight: { xs: "calc(100vh - 92px)", lg: "100vh" },
+              minHeight: { xs: "calc(100vh - 92px)", lg: "auto" },
               px: { xs: 1.5, sm: 2.5, md: 3.5, lg: 4 },
               py: { xs: 2, sm: 3, lg: 4 },
               pb: { xs: 3, sm: 4, lg: 4 },
