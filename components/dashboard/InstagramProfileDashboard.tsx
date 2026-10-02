@@ -30,17 +30,19 @@ function Reveal({
   delay,
   visible,
   sx,
+  from = "left",
 }: {
   children: React.ReactNode;
   delay: number;
   visible: boolean;
   sx?: Record<string, unknown>;
+  from?: "left" | "right";
 }) {
   return (
     <Box
       sx={{
         opacity: visible ? 1 : 0,
-        transform: visible ? "translateX(0)" : "translateX(-28px)",
+        transform: visible ? "translateX(0)" : `translateX(${from === "right" ? "28px" : "-28px"})`,
         transition: "opacity 700ms ease, transform 700ms ease",
         transitionDelay: `${delay}ms`,
         ...sx,
@@ -112,95 +114,34 @@ export default function InstagramProfileDashboard({
 
   if (loading) {
     return (
-      <Box
-        dir="rtl"
-        sx={{
-          minHeight: "calc(100dvh - 120px)",
-          position: "relative",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          px: 2,
-          pt: { xs: 4, sm: 5, md: 6 },
-        }}
-      >
-        <Box
-          sx={{
-            mt: { xs: "7vh", sm: "9vh", md: "11vh" },
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-          }}
-        >
-          <Box
-            sx={{
-              width: { xs: 112, sm: 128, md: 144, lg: 160 },
-              height: { xs: 112, sm: 128, md: 144, lg: 160 },
-              flexShrink: 0,
-              borderRadius: "50%",
-              bgcolor: "#E2E8F0",
-              animation: "sdPulse 1.6s ease-in-out infinite",
-            }}
-          />
-          <Box
-            sx={{
-              mt: 2.5,
-              width: { xs: 96, sm: 108, md: 120, lg: 128 },
-              height: { xs: 18, sm: 19, md: 20, lg: 20 },
-              flexShrink: 0,
-              borderRadius: 1.5,
-              bgcolor: "#E2E8F0",
-              animation: "sdPulse 1.6s ease-in-out infinite",
-            }}
-          />
+      <Box dir="rtl" sx={{ width: "100%", mt: { xs: 2, sm: 2.5, md: 3, lg: 3.5 }, px: { xs: 1, sm: 1.5, md: 2.5, lg: 5 }, pb: { xs: 12, lg: 5 } }}>
+        <Box sx={{ minHeight: { xs: 78, sm: 88, md: 96 }, px: { xs: 2, sm: 2.5, md: 3 }, py: { xs: 1.75, sm: 2, md: 2.25 }, border: "1px solid #E2E8F0", borderRadius: { xs: 3, md: 3.5 }, bgcolor: "#FFFFFF", boxShadow: "0 8px 24px rgba(15,23,42,0.04)", display: "flex", alignItems: "center", animation: "sdEnterLeft 700ms ease both" }}>
+          <Box sx={{ width: { xs: 150, sm: 190, md: 220 }, height: { xs: 20, sm: 24, md: 26 }, borderRadius: 1.5, bgcolor: "#E2E8F0", animation: "sdPulse 1.6s ease-in-out infinite" }} />
         </Box>
-
-        <Box
-          dir="ltr"
-          sx={{
-            mt: { xs: "12vh", sm: "13vh", md: "15vh", lg: "22vh" },
-            width: "100%",
-            maxWidth: 600,
-            display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
-          }}
-        >
+        <Box sx={{ mt: { xs: 2, sm: 2.5, md: 3, lg: 3.5 }, minHeight: { xs: 220, sm: 250, lg: 285 }, p: { xs: 2, sm: 2.5, md: 3, lg: 3.5 }, border: "1px solid #E2E8F0", borderRadius: { xs: 3, md: 3.5 }, bgcolor: "#FFFFFF", boxShadow: "0 8px 24px rgba(15,23,42,0.05)", display: "flex", alignItems: "center", gap: { xs: 3, sm: 4, md: 5 }, animation: "sdEnterRight 700ms 180ms ease both" }}>
+          <Box sx={{ width: { xs: 92, sm: 112, md: 132 }, height: { xs: 92, sm: 112, md: 132 }, flexShrink: 0, borderRadius: "50%", bgcolor: "#E2E8F0", animation: "sdPulse 1.6s ease-in-out infinite" }} />
+          <Box sx={{ minWidth: 0, flex: 1 }}>
+            <Box sx={{ width: { xs: 110, sm: 150, md: 180 }, height: { xs: 22, sm: 26, md: 30 }, borderRadius: 1.5, bgcolor: "#E2E8F0", animation: "sdPulse 1.6s ease-in-out infinite" }} />
+            <Box sx={{ mt: 1, width: { xs: 80, sm: 105, md: 125 }, height: 14, borderRadius: 1, bgcolor: "#E2E8F0", animation: "sdPulse 1.6s ease-in-out infinite" }} />
+            <Box sx={{ mt: 1.5, width: "80%", maxWidth: 320, height: 38, borderRadius: 1.5, bgcolor: "#E2E8F0", animation: "sdPulse 1.6s ease-in-out infinite" }} />
+          </Box>
+        </Box>
+        <Box dir="ltr" sx={{ mt: { xs: 1.5, sm: 2, lg: 2.5 }, display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: { xs: 1, sm: 1.5, md: 2 }, animation: "sdEnterLeft 700ms 360ms ease both" }}>
           {[0, 1, 2].map((item) => (
-            <Box
-              key={item}
-              sx={{
-                mx: "auto",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 0.5,
-              }}
-            >
-              <Box
-                sx={{
-                  width: { xs: 42, sm: 48, md: 54, lg: 58 },
-                  height: { xs: 18, sm: 20, md: 22, lg: 24 },
-                  borderRadius: 1,
-                  bgcolor: "#E2E8F0",
-                  animation: "sdPulse 1.6s ease-in-out infinite",
-                }}
-              />
-              <Box
-                sx={{
-                  width: { xs: 34, sm: 38, md: 44, lg: 48 },
-                  height: { xs: 12, sm: 13, md: 14, lg: 15 },
-                  borderRadius: 1,
-                  bgcolor: "#E2E8F0",
-                  animation: "sdPulse 1.6s ease-in-out infinite",
-                }}
-              />
+            <Box key={item} sx={{ minWidth: 0, p: { xs: 1.25, sm: 1.75 }, borderRadius: 2.5, bgcolor: "#F8FAFC", border: "1px solid #E2E8F0" }}>
+              <Box sx={{ width: 28, height: 28, mb: 1, borderRadius: 1.5, bgcolor: "#E2E8F0", animation: "sdPulse 1.6s ease-in-out infinite" }} />
+              <Box sx={{ width: { xs: 42, sm: 52 }, height: 12, borderRadius: 1, bgcolor: "#E2E8F0", animation: "sdPulse 1.6s ease-in-out infinite" }} />
             </Box>
           ))}
         </Box>
+        <style jsx global>{`
+          @keyframes sdPulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+          @keyframes sdEnterLeft { from { opacity: 0; transform: translateX(-28px); } to { opacity: 1; transform: translateX(0); } }
+          @keyframes sdEnterRight { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: translateX(0); } }
+        `}</style>
       </Box>
     );
   }
-
   if (error) {
     return (
       <Box
@@ -248,7 +189,7 @@ export default function InstagramProfileDashboard({
       }}
     >
       <Box sx={{ width: "100%" }}>
-        <Reveal visible={visible} delay={320} sx={{ height: "100%" }}>
+        <Reveal visible={visible} delay={320} from="right" sx={{ height: "100%" }}>
           <Box
             sx={{
               height: "100%",
@@ -330,10 +271,8 @@ export default function InstagramProfileDashboard({
         </Reveal>
       </Box>
 
-      <Reveal visible={visible} delay={680}>
+      <Reveal visible={visible} delay={680} from="left">
         <Box sx={{ mt: { xs: 1.5, sm: 2, lg: 2.5 } }}>
-          <Typography sx={{ mb: 1.25, color: "#0F172A", fontSize: { xs: 14, sm: 15 }, fontWeight: 700 }}>
-            </Typography>
           <Box
             sx={{
               display: "grid",
