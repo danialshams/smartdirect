@@ -119,27 +119,34 @@ export default function InstagramProfileDashboard({
 
   if (loading) {
     return (
-      <Box dir="rtl" sx={{ width: "100%", mt: { xs: 2, sm: 2.5, md: 3, lg: 3.5 }, px: { xs: 1, sm: 1.5, md: 2.5, lg: 5 }, pb: { xs: 12, lg: 5 } }}>
-        <Box sx={{ minHeight: { xs: 220, sm: 250, lg: 285 }, p: { xs: 2, sm: 2.5, md: 3, lg: 3.5 }, border: "1px solid #E2E8F0", borderRadius: { xs: 3, md: 3.5 }, bgcolor: "#FFFFFF", boxShadow: "0 8px 24px rgba(15,23,42,0.05)", display: "flex", alignItems: "center", gap: { xs: 3, sm: 4, md: 5 }, animation: "sdEnterRight 700ms 180ms ease both" }}>
-          <Box sx={{ width: { xs: 92, sm: 112, md: 132 }, height: { xs: 92, sm: 112, md: 132 }, flexShrink: 0, borderRadius: "50%", bgcolor: "#E2E8F0", animation: "sdPulse 1.6s ease-in-out infinite" }} />
-          <Box sx={{ minWidth: 0, flex: 1 }}>
-            <Box sx={{ width: { xs: 110, sm: 150, md: 180 }, height: { xs: 22, sm: 26, md: 30 }, borderRadius: 1.5, bgcolor: "#E2E8F0", animation: "sdPulse 1.6s ease-in-out infinite" }} />
-            <Box sx={{ mt: 1, width: { xs: 80, sm: 105, md: 125 }, height: 14, borderRadius: 1, bgcolor: "#E2E8F0", animation: "sdPulse 1.6s ease-in-out infinite" }} />
-            <Box sx={{ mt: 1.5, width: "80%", maxWidth: 320, height: 38, borderRadius: 1.5, bgcolor: "#E2E8F0", animation: "sdPulse 1.6s ease-in-out infinite" }} />
-          </Box>
-        </Box>
-        <Box dir="ltr" sx={{ mt: { xs: 1.5, sm: 2, lg: 2.5 }, display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: { xs: 1, sm: 1.5, md: 2 }, animation: "sdEnterLeft 700ms 360ms ease both" }}>
-          {[0, 1, 2].map((item) => (
-            <Box key={item} sx={{ minWidth: 0, p: { xs: 1.25, sm: 1.75 }, borderRadius: 2.5, bgcolor: "#F8FAFC", border: "1px solid #E2E8F0" }}>
-              <Box sx={{ width: 28, height: 28, mb: 1, borderRadius: 1.5, bgcolor: "#E2E8F0", animation: "sdPulse 1.6s ease-in-out infinite" }} />
-              <Box sx={{ width: { xs: 42, sm: 52 }, height: 12, borderRadius: 1, bgcolor: "#E2E8F0", animation: "sdPulse 1.6s ease-in-out infinite" }} />
-            </Box>
-          ))}
-        </Box>
+      <Box
+        dir="rtl"
+        sx={{
+          width: "100%",
+          mt: { xs: 2, sm: 2.5, md: 3, lg: 3.5 },
+          px: { xs: 1, sm: 1.5, md: 2.5, lg: 5 },
+          minHeight: { xs: 360, sm: 390, md: 420 },
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          pb: { xs: 12, lg: 5 },
+        }}
+      >
+        <Box
+          aria-label="در حال دریافت اطلاعات"
+          sx={{
+            width: 34,
+            height: 34,
+            borderRadius: "50%",
+            border: "3px solid #E2E8F0",
+            borderTopColor: "#2563EB",
+            animation: "sdDashboardSpin 800ms linear infinite",
+          }}
+        />
         <style jsx global>{`
-          @keyframes sdPulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
-          @keyframes sdEnterLeft { from { opacity: 0; transform: translateX(-28px); } to { opacity: 1; transform: translateX(0); } }
-          @keyframes sdEnterRight { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: translateX(0); } }
+          @keyframes sdDashboardSpin {
+            to { transform: rotate(360deg); }
+          }
         `}</style>
       </Box>
     );
