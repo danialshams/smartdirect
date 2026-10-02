@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import {
-  Alert,
   Box,
   Button,
   Typography,
@@ -26,13 +25,11 @@ type DashboardOverviewProps = {
     createdAt: Date;
   };
   instagramAccounts: InstagramAccount[];
-  instagramStatus: string | null;
 };
 
 export default function DashboardOverview({
   user,
   instagramAccounts,
-  instagramStatus,
 }: DashboardOverviewProps) {
   const connectedAccounts = instagramAccounts.filter(
     (account) => account.isConnected,
@@ -79,10 +76,6 @@ export default function DashboardOverview({
     );
   }
 
-  const activeAccount =
-    connectedAccounts.find((account) => account.id === accountId) ??
-    connectedAccounts[0];
-
   return (
     <Box dir="rtl" sx={{ width: "100%" }}>
       <Box
@@ -122,13 +115,13 @@ export default function DashboardOverview({
             <Typography
               component="h1"
               sx={{
-                fontSize: { xs: 20, sm: 24, md: 26 },
-                fontWeight: 500,
+                fontSize: { xs: 19, sm: 23, md: 26 },
+                fontWeight: 600,
                 letterSpacing: "-0.02em",
                 color: "#0F172A",
               }}
             >
-              سلام، {user.name}
+              {`سلام ${user.name}، به پنل خودت خوش اومدی`} <span aria-hidden="true" style={{ fontSize: "0.9em", lineHeight: 1 }}>♥</span>
             </Typography>
           )}
         </Box>
@@ -140,36 +133,6 @@ export default function DashboardOverview({
           50% { opacity: 1; }
         }
       `}</style>
-
-      {instagramStatus === "connected" ? (
-        <Alert
-          severity="success"
-          sx={{
-            mb: 2.5,
-            border: "1px solid #BBF7D0",
-            bgcolor: "#F0FDF4",
-            color: "#166534",
-            "& .MuiAlert-icon": { color: "#16A34A" },
-          }}
-        >
-          پیج با موفقیت متصل شد.
-        </Alert>
-      ) : null}
-
-      {instagramStatus && instagramStatus !== "connected" ? (
-        <Alert
-          severity="error"
-          sx={{
-            mb: 2.5,
-            border: "1px solid #FECACA",
-            bgcolor: "#FEF2F2",
-            color: "#991B1B",
-            "& .MuiAlert-icon": { color: "#DC2626" },
-          }}
-        >
-          اتصال پیج انجام نشد. دوباره تلاش کنید.
-        </Alert>
-      ) : null}
 
       <InstagramProfileDashboard
         accountId={accountId}
