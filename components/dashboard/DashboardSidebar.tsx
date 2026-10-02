@@ -72,10 +72,10 @@ const menuGroups = [
 function Brand() {
   return (
     <Box dir="rtl" sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0 }}>
-      <Box sx={{ width: 40, height: 40, flexShrink: 0, display: "grid", placeItems: "center", borderRadius: 2.5, bgcolor: "#2563EB", color: "#FFFFFF", fontSize: 16, fontWeight: 900, letterSpacing: "-0.04em" }}>S</Box>
+      <Box sx={{ width: 44, height: 44, flexShrink: 0, display: "grid", placeItems: "center", borderRadius: 2.5, bgcolor: "#2563EB", color: "#FFFFFF", fontSize: 17, fontWeight: 900, letterSpacing: "-0.04em" }}>S</Box>
       <Box dir="ltr" sx={{ minWidth: 0, textAlign: "left" }}>
-        <Typography fontSize={14.5} fontWeight={800} noWrap color="#0F172A">SmartDirect</Typography>
-        <Typography fontSize={10} noWrap sx={{ mt: 0.2, color: "#64748B" }}>Automate · Connect · Grow</Typography>
+        <Typography fontSize={16} fontWeight={800} noWrap color="#0F172A">SmartDirect</Typography>
+        <Typography fontSize={10.5} noWrap sx={{ mt: 0.2, color: "#64748B" }}>Automate · Connect · Grow</Typography>
       </Box>
     </Box>
   );
@@ -101,7 +101,7 @@ function AccountSection({ instagramAccounts }: { instagramAccounts: InstagramAcc
 
   return (
     <Box sx={{ px: 1.25, py: 1 }}>
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.65, px: 0.35 }}>
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: { xs: 0.8, lg: 0.65 }, px: 0.35 }}>
         <Typography fontSize={10.5} fontWeight={700} color="#64748B">پیج‌های اینستاگرام</Typography>
         <Box component={Link} href="/api/instagram/connect" aria-label="افزودن حساب" sx={{ display: "flex", alignItems: "center", gap: 0.35, color: "#2563EB", textDecoration: "none", fontSize: 10.5, fontWeight: 700, "&:hover": { color: "#1D4ED8" } }}>
           <Plus size={14} strokeWidth={2.2} />
@@ -130,12 +130,12 @@ function AccountSection({ instagramAccounts }: { instagramAccounts: InstagramAcc
   );
 }
 
-function Navigation({ onNavigate }: { onNavigate?: () => void }) {
+function Navigation({ onNavigate, mobile = false }: { onNavigate?: () => void; mobile?: boolean }) {
   const pathname = usePathname();
   return (
-    <Box dir="rtl" sx={{ px: 1.25, py: 1.25 }}>
+    <Box dir="rtl" sx={{ px: { xs: 1.1, sm: 1.4, lg: 1.25 }, py: { xs: 1.1, sm: 1.4, lg: 1.25 } }}>
       {menuGroups.map((group) => (
-        <Box key={group.label} sx={{ mb: 2 }}>
+        <Box key={group.label} sx={{ mb: { xs: 1.4, sm: 1.8, lg: 2 } }}>
           <Box
             component="div"
             dir="ltr"
@@ -162,16 +162,16 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
               {group.label}
             </Box>
           </Box>
-          <List disablePadding sx={{ display: "grid", gap: 0.35 }}>
+          <List disablePadding sx={{ display: "grid", gridTemplateColumns: mobile ? { xs: "repeat(2, minmax(0, 1fr))", lg: "1fr" } : "1fr", gap: { xs: 0.6, lg: 0.35 } }}>
             {group.items.map(({ href, title, icon: Icon }) => {
               const active = href === "/dashboard" ? pathname === "/dashboard" : pathname === href || pathname.startsWith(`${href}/`);
               return (
                 <ListItemButton key={href} component={Link} href={href} onClick={onNavigate} selected={active} dir="rtl"
-                  sx={{ minHeight: 40, display: "flex", flexDirection: "row", alignItems: "center", columnGap: 1, borderRadius: 1.75, px: 1.1, color: active ? "#2563EB" : "#475569", "&.Mui-selected": { bgcolor: "#EFF6FF", color: "#2563EB" }, "&.Mui-selected:hover": { bgcolor: "#EFF6FF" }, "&:hover": { bgcolor: "#F8FAFC", color: "#1D4ED8" } }}>
-                  <ListItemIcon sx={{ minWidth: 0, width: 18, flex: "0 0 18px", color: "inherit", display: "flex", justifyContent: "center", alignItems: "center", m: 0 }}>
-                    <Icon size={18} strokeWidth={1.9} />
+                  sx={{ minHeight: { xs: 50, sm: 54, lg: 40 }, display: "flex", flexDirection: "row", alignItems: "center", columnGap: { xs: 0.8, lg: 1 }, borderRadius: 2, px: { xs: 1, lg: 1.1 }, color: active ? "#2563EB" : "#475569", "&.Mui-selected": { bgcolor: "#EFF6FF", color: "#2563EB" }, "&.Mui-selected:hover": { bgcolor: "#EFF6FF" }, "&:hover": { bgcolor: "#F8FAFC", color: "#1D4ED8" } }}>
+                  <ListItemIcon sx={{ minWidth: 0, width: { xs: 21, lg: 18 }, flex: { xs: "0 0 21px", lg: "0 0 18px" }, color: "inherit", display: "flex", justifyContent: "center", alignItems: "center", m: 0 }}>
+                    <Icon size={21} strokeWidth={1.9} />
                   </ListItemIcon>
-                  <ListItemText primary={title} sx={{ minWidth: 0, flex: "0 1 auto", m: 0, textAlign: "right", direction: "rtl" }} primaryTypographyProps={{ fontSize: 12.5, fontWeight: active ? 700 : 500 }} />
+                  <ListItemText primary={title} sx={{ minWidth: 0, flex: "0 1 auto", m: 0, textAlign: "right", direction: "rtl" }} primaryTypographyProps={{ fontSize: { xs: 12.5, sm: 13, lg: 12.5 }, fontWeight: active ? 700 : 500, lineHeight: 1.45 }} />
                 </ListItemButton>
               );
             })}
@@ -193,14 +193,14 @@ function SidebarContent({
 }) {
   return (
     <Box dir="rtl" sx={{ height: "100%", display: "flex", flexDirection: "column", bgcolor: "#FFFFFF" }}>
-      <Box sx={{ minHeight: { xs: 68, sm: 72, lg: 76 }, boxSizing: "border-box", flexShrink: 0, display: "flex", alignItems: "center", gap: 1.25, px: 1.75, borderBottom: "1px solid #E2E8F0" }}>
+      <Box sx={{ minHeight: { xs: 72, sm: 76, lg: 76 }, boxSizing: "border-box", flexShrink: 0, display: "flex", alignItems: "center", gap: 1.4, px: { xs: 1.6, sm: 1.9, lg: 1.75 }, borderBottom: "1px solid #E2E8F0" }}>
         <Link href="/dashboard" onClick={onClose} style={{ textDecoration: "none", minWidth: 0, flex: 1 }}>
           <Brand />
         </Link>
         {mobile && <IconButton size="small" onClick={onClose} aria-label="بستن منو" sx={{ color: "#64748B" }}><X size={18} /></IconButton>}
       </Box>
       <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
-        <Navigation onNavigate={onClose} />
+        <Navigation onNavigate={onClose} mobile={mobile} />
       </Box>
       <Box sx={{ display: { xs: "none", lg: "block" } }}>
         <Divider sx={{ mx: 1.25, borderColor: "#E2E8F0" }} />
@@ -234,7 +234,7 @@ export default function DashboardSidebar({
         sx={{
           display: { xs: "block", lg: "none" },
           "& .MuiDrawer-paper": {
-            width: { xs: "min(68vw, 220px)", sm: 235 },
+            width: { xs: "calc(100vw - 24px)", sm: "min(360px, calc(100vw - 24px))" },
             height: "auto",
             top: { xs: 78, sm: 82 },
             bottom: { xs: 88, sm: 92 },
@@ -244,6 +244,12 @@ export default function DashboardSidebar({
             borderRadius: 3,
             direction: "rtl",
             overflow: "hidden",
+          },
+          "& .MuiBackdrop-root": {
+            backgroundColor: "rgba(15,23,42,0.10)",
+            backdropFilter: "blur(10px)",
+            WebkitBackdropFilter: "blur(10px)",
+            transition: "opacity 320ms ease, backdrop-filter 420ms ease",
           },
         }}>
         <SidebarContent mobile onClose={onMobileClose} instagramAccounts={instagramAccounts} />
