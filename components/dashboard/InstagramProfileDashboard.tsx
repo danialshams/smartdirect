@@ -242,6 +242,7 @@ export default function InstagramProfileDashboard({
       dir="rtl"
       sx={{
         width: "100%",
+        mt: { xs: 2, sm: 2.5, md: 3, lg: 3.5 },
         px: { xs: 1, sm: 1.5, md: 2.5, lg: 5 },
         pb: { xs: 12, lg: 5 },
       }}
