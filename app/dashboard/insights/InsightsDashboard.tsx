@@ -13,7 +13,7 @@ import {
   Users,
   UserRoundPlus,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ElementType } from "react";
 import { Calendar } from "@/components/dashboard/DashboardUI";
 
@@ -251,7 +251,7 @@ export default function InsightsDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [data, setData] = useState<Data | null>(null);
-  const calendarRef = React.useRef<HTMLDivElement>(null);
+  const calendarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     void (async () => {
@@ -325,11 +325,11 @@ export default function InsightsDashboard() {
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#FEF3C7] text-[#B45309]"><Lightbulb className="h-5 w-5" /></span>
           <div className="min-w-0">
             <h2 className="text-sm font-bold text-[#92400E]">راهنمای صفحه</h2>
-            <div className="mt-1 text-[11px] leading-6">
-              <p><strong>دسترسی:</strong> چند اکانت مختلف محتوای پیجت رو دیدن.</p>
-              <p><strong>بازدید:</strong> تعداد دفعاتی که محتوای پیجت دیده یا پخش شده.</p>
-              <p><strong>تعاملات:</strong> لایک، کامنت، ذخیره و اشتراک‌گذاری.</p>
-              <p><strong>افراد فعال:</strong> چند اکانت مختلف با محتوای پیجت تعامل داشتن.</p>
+            <div className="mt-1 flex flex-wrap gap-x-5 gap-y-0.5 text-[11px] leading-6">
+              <p className="whitespace-nowrap"><strong>دسترسی:</strong> چند اکانت مختلف محتوای پیجت رو دیدن.</p>
+              <p className="whitespace-nowrap"><strong>بازدید:</strong> تعداد دفعاتی که محتوای پیجت دیده یا پخش شده.</p>
+              <p className="whitespace-nowrap"><strong>تعاملات:</strong> لایک، کامنت، ذخیره و اشتراک‌گذاری.</p>
+              <p className="whitespace-nowrap"><strong>افراد فعال:</strong> چند اکانت مختلف با محتوای پیجت تعامل داشتن.</p>
             </div>
           </div>
         </div>
@@ -338,8 +338,8 @@ export default function InsightsDashboard() {
             <div className="flex items-center gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#2563EB] text-white"><BarChart3 className="h-[18px] w-[18px]" /></div><h1 className="text-[15px] font-bold text-[#0F172A] sm:text-base">تحلیل پیج</h1></div>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
               <div className="flex shrink-0 items-center gap-1 rounded-xl bg-[#F8FAFC] p-1">{[7, 30, 90].map((days) => <button key={days} type="button" onClick={() => {setDateFrom(undefined);setDateTo(undefined);setDraftFrom(undefined);setDraftTo(undefined);setRange(days as Range);}} className={range === days && !dateFrom ? "rounded-lg bg-[#2563EB] px-3 py-2 text-[10px] font-bold text-white shadow-sm" : "rounded-lg px-3 py-2 text-[10px] font-bold text-[#64748B]"}>{days} روز</button>)}</div>
-              <div className="grid flex-1 grid-cols-2 gap-2">
-                <div ref={calendarRef} className="relative"><span className="mb-1 block text-[10px] font-medium text-[#64748B]">از تاریخ</span><button type="button" onClick={() => setCalendarOpen(calendarOpen === "from" ? null : "from")} className="flex h-10 w-full items-center justify-between gap-2 rounded-xl border border-[#E2E8F0] bg-white px-3 text-xs font-semibold text-[#0F172A]"><span>{formatDateField(draftFrom || dateFrom)}</span><CalendarIcon className="h-4 w-4 text-[#2563EB]" /></button><div className="absolute right-0 top-[66px] z-50 rounded-2xl border border-[#E2E8F0] bg-white p-2 shadow-xl transition-all duration-200 ease-out" style={{ opacity: calendarOpen === "from" ? 1 : 0, transform: calendarOpen === "from" ? "translateY(0) scale(1)" : "translateY(-4px) scale(0.98)", pointerEvents: calendarOpen === "from" ? "auto" : "none" }}><Calendar mode="single" selected={draftFrom || dateFrom} onSelect={(value: Date | undefined) => {if(value){setDraftFrom(value);if(draftTo&&value>draftTo)setDraftTo(undefined);setCalendarOpen(null);}}} disabled={(value: Date) => value < minDate || value > today} /></div></div>
+              <div ref={calendarRef} className="grid flex-1 grid-cols-2 gap-2">
+                <div className="relative"><span className="mb-1 block text-[10px] font-medium text-[#64748B]">از تاریخ</span><button type="button" onClick={() => setCalendarOpen(calendarOpen === "from" ? null : "from")} className="flex h-10 w-full items-center justify-between gap-2 rounded-xl border border-[#E2E8F0] bg-white px-3 text-xs font-semibold text-[#0F172A]"><span>{formatDateField(draftFrom || dateFrom)}</span><CalendarIcon className="h-4 w-4 text-[#2563EB]" /></button><div className="absolute right-0 top-[66px] z-50 rounded-2xl border border-[#E2E8F0] bg-white p-2 shadow-xl transition-all duration-200 ease-out" style={{ opacity: calendarOpen === "from" ? 1 : 0, transform: calendarOpen === "from" ? "translateY(0) scale(1)" : "translateY(-4px) scale(0.98)", pointerEvents: calendarOpen === "from" ? "auto" : "none" }}><Calendar mode="single" selected={draftFrom || dateFrom} onSelect={(value: Date | undefined) => {if(value){setDraftFrom(value);if(draftTo&&value>draftTo)setDraftTo(undefined);setCalendarOpen(null);}}} disabled={(value: Date) => value < minDate || value > today} /></div></div>
                 <div className="relative"><span className="mb-1 block text-[10px] font-medium text-[#64748B]">تا تاریخ</span><button type="button" onClick={() => setCalendarOpen(calendarOpen === "to" ? null : "to")} className="flex h-10 w-full items-center justify-between gap-2 rounded-xl border border-[#E2E8F0] bg-white px-3 text-xs font-semibold text-[#0F172A]"><span>{formatDateField(draftTo || dateTo)}</span><CalendarIcon className="h-4 w-4 text-[#2563EB]" /></button><div className="absolute left-0 top-[66px] z-50 rounded-2xl border border-[#E2E8F0] bg-white p-2 shadow-xl transition-all duration-200 ease-out" style={{ opacity: calendarOpen === "to" ? 1 : 0, transform: calendarOpen === "to" ? "translateY(0) scale(1)" : "translateY(-4px) scale(0.98)", pointerEvents: calendarOpen === "to" ? "auto" : "none" }}><Calendar mode="single" selected={draftTo || dateTo} onSelect={(value: Date | undefined) => {if(value){setDraftTo(value);setCalendarOpen(null);}}} disabled={(value: Date) => value > today || value < (draftFrom || dateFrom || minDate)} /></div></div>
               </div>
               <button type="button" disabled={!draftFrom||!draftTo||draftFrom<minDate||draftTo>today||draftTo<draftFrom||(draftTo.getTime()-draftFrom.getTime())/86400000+1>730} onClick={() => {setDateFrom(draftFrom);setDateTo(draftTo);setCalendarOpen(null);}} className="h-10 rounded-xl bg-[#2563EB] px-5 text-xs font-bold text-white disabled:cursor-not-allowed disabled:bg-[#CBD5E1]">اعمال بازه</button>
