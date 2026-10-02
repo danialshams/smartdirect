@@ -248,11 +248,13 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
       component="footer"
       sx={{
         display: { xs: "block", lg: "none" },
-        position: "fixed",
+        position: "sticky",
         zIndex: 1200,
         bottom: "calc(env(safe-area-inset-bottom, 0px) + 10px)",
-        left: 12,
-        right: 12,
+        alignSelf: "center",
+        width: "calc(100% - 24px)",
+        maxWidth: 520,
+        marginTop: 10,
         boxSizing: "border-box",
         border: "1px solid #E2E8F0",
         borderRadius: 3,
