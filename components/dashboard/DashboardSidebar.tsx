@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   BarChart3,
   Camera,
@@ -83,6 +83,17 @@ function Brand() {
 function AccountSection({ instagramAccounts }: { instagramAccounts: InstagramAccount[] }) {
   const [accounts, setAccounts] = useState(instagramAccounts);
   const activeAccount = accounts.find((account) => account.isConnected);
+
+  useEffect(() => {
+    if (!accountMenuOpen) return;
+    const handlePointerDown = (event: PointerEvent) => {
+      if (islandRef.current && !islandRef.current.contains(event.target as Node)) {
+        setAccountMenuOpen(false);
+      }
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [accountMenuOpen]);
 
   useEffect(() => {
     let cancelled = false;
@@ -242,6 +253,7 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
   const pathname = usePathname();
   const [accounts, setAccounts] = useState(instagramAccounts);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const islandRef = useRef<HTMLDivElement | null>(null);
   const activeAccount = accounts.find((account) => account.isConnected);
 
   useEffect(() => {
@@ -301,7 +313,7 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
         boxSizing: "border-box",
       }}
     >
-      <Box sx={{ position: "relative" }}>
+      <Box ref={islandRef} sx={{ position: "relative" }}>
         <Box
             dir="rtl"
             sx={{
@@ -330,12 +342,10 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
               href="/dashboard"
               onClick={() => setAccountMenuOpen(false)}
               sx={{
-                minHeight: 58,
-                display: "flex",
-                alignItems: "center",
-                gap: 0.9,
-                px: 1,
-                py: 0.85,
+                minHeight: 64,
+                display: "grid",
+                gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                alignItems: "stretch",
                 boxSizing: "border-box",
                 color: "#0F172A",
                 textDecoration: "none",
@@ -343,19 +353,37 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
                 borderBottom: "1px solid #E2E8F0",
               }}
             >
-              <Avatar
-                src={activeAccount?.profilePictureUrl || undefined}
-                alt={activeAccount?.igUsername || "Instagram"}
-                sx={{ width: 32, height: 32, flexShrink: 0, bgcolor: "#E2E8F0", color: "#64748B" }}
+              <Box
+                sx={{
+                  display: "grid",
+                  placeItems: "center",
+                  borderLeft: "1px solid #E2E8F0",
+                }}
               >
-                {!activeAccount?.profilePictureUrl ? <UserRound size={15} /> : null}
-              </Avatar>
-              <Box sx={{ minWidth: 0, flex: 1 }}>
-                <Typography dir="ltr" noWrap fontSize={11.5} fontWeight={700} sx={{ textAlign: "right" }}>
+                <Avatar
+                  src={activeAccount?.profilePictureUrl || undefined}
+                  alt={activeAccount?.igUsername || "Instagram"}
+                  sx={{ width: 34, height: 34, bgcolor: "#E2E8F0", color: "#64748B" }}
+                >
+                  {!activeAccount?.profilePictureUrl ? <UserRound size={15} /> : null}
+                </Avatar>
+              </Box>
+              <Box
+                sx={{
+                  minWidth: 0,
+                  display: "grid",
+                  placeItems: "center",
+                  px: 0.75,
+                  borderLeft: "1px solid #E2E8F0",
+                }}
+              >
+                <Typography dir="ltr" noWrap fontSize={11.5} fontWeight={700} sx={{ maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis" }}>
                   {activeAccount ? `@${activeAccount.igUsername}` : "پیجی متصل نیست"}
                 </Typography>
               </Box>
-              {activeAccount ? <Check size={15} color="#16A34A" strokeWidth={2.4} /> : null}
+              <Box sx={{ display: "grid", placeItems: "center" }}>
+                {activeAccount ? <Check size={17} color="#16A34A" strokeWidth={2.4} /> : null}
+              </Box>
             </Box>
 
             <Box
@@ -366,7 +394,8 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
                 minHeight: 48,
                 display: "flex",
                 alignItems: "center",
-                gap: 0.7,
+                justifyContent: "center",
+                gap: 0.6,
                 px: 1,
                 color: "#2563EB",
                 textDecoration: "none",
@@ -411,17 +440,6 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
                     minWidth: 0,
                     minHeight: 68,
                     border: 0,
-                    position: "relative",
-                    "&::after": index < sections.length - 1 ? {
-                      content: '""',
-                      position: "absolute",
-                      left: 0,
-                      top: "50%",
-                      width: "1px",
-                      height: 24,
-                      transform: "translateY(-50%)",
-                      bgcolor: "#CBD5E1",
-                    } : undefined,
                     borderRadius: 0,
                     bgcolor: accountMenuOpen || section.active ? "#F8FAFC" : "transparent",
                     color: section.active ? "#2563EB" : "#475569",
@@ -462,17 +480,7 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
                   minWidth: 0,
                   minHeight: 68,
                   borderRadius: 0,
-                  position: "relative",
-                  "&::after": index < sections.length - 1 ? {
-                    content: '""',
-                    position: "absolute",
-                    left: 0,
-                    top: "50%",
-                    width: "1px",
-                    height: 24,
-                    transform: "translateY(-50%)",
-                    bgcolor: "#CBD5E1",
-                  } : undefined,
+                  borderRight: section.key === "story" ? "1px solid #CBD5E1" : 0,
                   bgcolor: section.active ? "#EFF6FF" : "transparent",
                   color: section.active ? "#2563EB" : "#475569",
                   px: { xs: 0.75, sm: 1 },
