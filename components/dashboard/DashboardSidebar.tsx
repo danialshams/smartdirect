@@ -349,7 +349,7 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
                   پیج فعال
                 </Typography>
                 <Typography dir="ltr" noWrap fontSize={11} fontWeight={700} sx={{ textAlign: "right" }}>
-                  {activeAccount ? \`@\${activeAccount.igUsername}\` : "پیجی متصل نیست"}
+                  {activeAccount ? `@${activeAccount.igUsername}` : "پیجی متصل نیست"}
                 </Typography>
               </Box>
               {activeAccount ? <Check size={15} color="#16A34A" strokeWidth={2.4} /> : null}
@@ -436,7 +436,7 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
                       پیج‌های اینستاگرام
                     </Typography>
                     <Typography dir="ltr" noWrap fontSize={{ xs: 9, sm: 9.5 }} color="#64748B" sx={{ mt: 0.15 }}>
-                      {activeAccount ? \`@\${activeAccount.igUsername}\` : "پیجی متصل نیست"}
+                      {activeAccount ? `@${activeAccount.igUsername}` : "پیجی متصل نیست"}
                     </Typography>
                   </Box>
                   <Box sx={{ display: "grid", placeItems: "center", flexShrink: 0, color: "#64748B" }}>
