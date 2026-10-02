@@ -43,7 +43,7 @@ function Reveal({
       sx={{
         opacity: visible ? 1 : 0,
         transform: visible ? "translateX(0)" : `translateX(${from === "right" ? "28px" : "-28px"})`,
-        transition: "opacity 850ms cubic-bezier(0.22, 1, 0.36, 1), transform 850ms cubic-bezier(0.22, 1, 0.36, 1)",
+        transition: "opacity 600ms cubic-bezier(0.22, 1, 0.36, 1), transform 600ms cubic-bezier(0.22, 1, 0.36, 1)",
         transitionDelay: `${delay}ms`,
         ...sx,
       }}
@@ -197,7 +197,7 @@ export default function InstagramProfileDashboard({
       }}
     >
       <Box sx={{ width: "100%" }}>
-        <Reveal visible={visible} delay={800} from="right" sx={{ height: "100%" }}>
+        <Reveal visible={visible} delay={550} from="right" sx={{ height: "100%" }}>
           <Box
             sx={{
               height: "100%",
@@ -279,7 +279,7 @@ export default function InstagramProfileDashboard({
         </Reveal>
       </Box>
 
-      <Reveal visible={visible} delay={1450} from="left">
+      <Reveal visible={visible} delay={1000} from="left">
         <Box sx={{ mt: { xs: 1.5, sm: 2, lg: 2.5 } }}>
           <Box
             sx={{
@@ -292,19 +292,19 @@ export default function InstagramProfileDashboard({
               <Box sx={{ width: 28, height: 28, mb: 1, borderRadius: 1.5, display: "grid", placeItems: "center", bgcolor: "#16A34A", color: "#FFFFFF" }}>
                 <UserRoundPlus size={15} strokeWidth={2} />
               </Box>
-              <AnimatedProfileStat label="فالووینگ" value={profile.followsCount} visible={visible} countDelay={1650} />
+              <AnimatedProfileStat label="فالووینگ" value={profile.followsCount} visible={visible} countDelay={1150} />
             </Box>
             <Box sx={{ minWidth: 0, p: { xs: 1.25, sm: 1.75 }, borderRadius: 2.5, bgcolor: "#F5F3FF", border: "1px solid #EDE9FE" }}>
               <Box sx={{ width: 28, height: 28, mb: 1, borderRadius: 1.5, display: "grid", placeItems: "center", bgcolor: "#7C3AED", color: "#FFFFFF" }}>
                 <UsersRound size={15} strokeWidth={2} />
               </Box>
-              <AnimatedProfileStat label="فالوور" value={profile.followersCount} visible={visible} countDelay={1790} />
+              <AnimatedProfileStat label="فالوور" value={profile.followersCount} visible={visible} countDelay={1250} />
             </Box>
             <Box sx={{ minWidth: 0, p: { xs: 1.25, sm: 1.75 }, borderRadius: 2.5, bgcolor: "#EFF6FF", border: "1px solid #DBEAFE" }}>
               <Box sx={{ width: 28, height: 28, mb: 1, borderRadius: 1.5, display: "grid", placeItems: "center", bgcolor: "#2563EB", color: "#FFFFFF" }}>
                 <Images size={15} strokeWidth={2} />
               </Box>
-              <AnimatedProfileStat label="پست" value={profile.mediaCount} visible={visible} countDelay={1930} />
+              <AnimatedProfileStat label="پست" value={profile.mediaCount} visible={visible} countDelay={1350} />
             </Box>
           </Box>
         </Box>
