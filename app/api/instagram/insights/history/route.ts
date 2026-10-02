@@ -164,7 +164,6 @@ export async function GET(request: NextRequest) {
                     views: 0,
                     accountsEngaged: 0,
                     totalInteractions: 0,
-                    profileViews: 0,
                     engagementRate: null,
                     follows: null,
                     unfollows: null,
@@ -189,7 +188,6 @@ export async function GET(request: NextRequest) {
                 views: true,
                 accountsEngaged: true,
                 totalInteractions: true,
-                profileViews: true,
                 follows: true,
                 unfollows: true,
                 followerCount: true,
@@ -201,7 +199,6 @@ export async function GET(request: NextRequest) {
                 result.reach += snapshot.reach ?? 0;
                 result.views += snapshot.views ?? 0;
                 result.accountsEngaged += snapshot.accountsEngaged ?? 0;
-                result.profileViews += snapshot.profileViews ?? 0;
                 result.totalInteractions += snapshot.totalInteractions ?? 0;
 
                 if (snapshot.follows != null) result.follows += snapshot.follows;
@@ -216,7 +213,6 @@ export async function GET(request: NextRequest) {
                 reach: 0,
                 views: 0,
                 accountsEngaged: 0,
-                profileViews: 0,
                 totalInteractions: 0,
                 follows: 0,
                 unfollows: 0,
@@ -254,7 +250,6 @@ export async function GET(request: NextRequest) {
                 reach: totals.reach,
                 views: totals.views,
                 accountsEngaged: totals.accountsEngaged,
-                profileViews: totals.profileViews,
                 engagementRate: totals.reach > 0 ? (totals.totalInteractions / totals.reach) * 100 : null,
                 totalInteractions: totals.totalInteractions,
                 follows: totals.followsAvailable ? totals.follows : null,
