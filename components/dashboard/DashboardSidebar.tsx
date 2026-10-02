@@ -290,7 +290,7 @@ export function DashboardInstagramIsland({
     };
     document.addEventListener("pointerdown", handlePointerDown);
     return () => document.removeEventListener("pointerdown", handlePointerDown);
-  }, [accountMenuOpen]);
+  }, [accountMenuOpen, onAccountMenuOpenChange]);
 
   useEffect(() => {
     let cancelled = false;
@@ -337,7 +337,7 @@ export function DashboardInstagramIsland({
       <Portal>
         <Box
         aria-hidden={!accountMenuOpen}
-        onClick={() => setAccountMenuOpen(false)}
+        onClick={() => onAccountMenuOpenChange(false)}
         sx={{
           position: "fixed",
           inset: 0,
