@@ -198,7 +198,7 @@ export default function InstagramProfileDashboard({
       }}
     >
       <Box sx={{ width: "100%" }}>
-        <Reveal visible={visible} delay={500} from="right" sx={{ height: "100%" }}>
+        <Reveal visible={visible} delay={800} from="right" sx={{ height: "100%" }}>
           <Box
             sx={{
               height: "100%",
@@ -280,7 +280,7 @@ export default function InstagramProfileDashboard({
         </Reveal>
       </Box>
 
-      <Reveal visible={visible} delay={1100} from="left">
+      <Reveal visible={visible} delay={1450} from="left">
         <Box sx={{ mt: { xs: 1.5, sm: 2, lg: 2.5 } }}>
           <Box
             sx={{
@@ -293,19 +293,19 @@ export default function InstagramProfileDashboard({
               <Box sx={{ width: 28, height: 28, mb: 1, borderRadius: 1.5, display: "grid", placeItems: "center", bgcolor: "#16A34A", color: "#FFFFFF" }}>
                 <UserRoundPlus size={15} strokeWidth={2} />
               </Box>
-              <AnimatedProfileStat label="فالووینگ" value={profile.followsCount} visible={visible} countDelay={1220} />
+              <AnimatedProfileStat label="فالووینگ" value={profile.followsCount} visible={visible} countDelay={1650} />
             </Box>
             <Box sx={{ minWidth: 0, p: { xs: 1.25, sm: 1.75 }, borderRadius: 2.5, bgcolor: "#F5F3FF", border: "1px solid #EDE9FE" }}>
               <Box sx={{ width: 28, height: 28, mb: 1, borderRadius: 1.5, display: "grid", placeItems: "center", bgcolor: "#7C3AED", color: "#FFFFFF" }}>
                 <UsersRound size={15} strokeWidth={2} />
               </Box>
-              <AnimatedProfileStat label="فالوور" value={profile.followersCount} visible={visible} countDelay={1360} />
+              <AnimatedProfileStat label="فالوور" value={profile.followersCount} visible={visible} countDelay={1790} />
             </Box>
             <Box sx={{ minWidth: 0, p: { xs: 1.25, sm: 1.75 }, borderRadius: 2.5, bgcolor: "#EFF6FF", border: "1px solid #DBEAFE" }}>
               <Box sx={{ width: 28, height: 28, mb: 1, borderRadius: 1.5, display: "grid", placeItems: "center", bgcolor: "#2563EB", color: "#FFFFFF" }}>
                 <Images size={15} strokeWidth={2} />
               </Box>
-              <AnimatedProfileStat label="پست" value={profile.mediaCount} visible={visible} countDelay={1500} />
+              <AnimatedProfileStat label="پست" value={profile.mediaCount} visible={visible} countDelay={1930} />
             </Box>
           </Box>
         </Box>
