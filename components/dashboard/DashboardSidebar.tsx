@@ -347,7 +347,7 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
         position: "fixed",
         zIndex: 1200,
         bottom: "calc(env(safe-area-inset-bottom, 0px) + 10px)",
-        left: 0,
+        left: 12,
         right: 12,
         maxWidth: 520,
         marginLeft: "auto",
@@ -356,7 +356,7 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
         pointerEvents: "none",
       }}
     >
-      <Box ref={islandRef} sx={{ position: "relative", width: 62, mx: "auto", pointerEvents: "auto" }}>
+      <Box ref={islandRef} sx={{ position: "relative", width: "100%", pointerEvents: "auto" }}>
         <Box
           dir="rtl"
           sx={{
@@ -365,7 +365,6 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
             bottom: "calc(100% + 12px)",
             transform: accountMenuOpen ? "translateY(0)" : "translateY(8px)",
             width: "100%",
-            maxWidth: "calc(100vw - 24px)",
             boxSizing: "border-box",
             border: "1px solid #E2E8F0",
             borderRadius: 3,
@@ -383,7 +382,7 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
         >
           <Box
             sx={{
-              minHeight: 68,
+              minHeight: 64,
               display: "flex",
               flexDirection: "row",
               alignItems: "stretch",
