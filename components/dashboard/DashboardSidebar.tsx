@@ -32,6 +32,7 @@ import {
   ListItemIcon,
   ListItemText,
   Typography,
+  Portal,
 } from "@mui/material";
 import { signOut } from "next-auth/react";
 
@@ -326,7 +327,8 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
 
   return (
     <>
-      <Box
+      <Portal>
+        <Box
         aria-hidden={!accountMenuOpen}
         onClick={() => setAccountMenuOpen(false)}
         sx={{
@@ -545,6 +547,7 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
         </Box>
       </Box>
     </Box>
+      </Portal>
     </>
   );
 }
