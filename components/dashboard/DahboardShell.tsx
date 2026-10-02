@@ -70,9 +70,9 @@ export default function DashboardShell({
             component="main"
             sx={{
               minHeight: { xs: "calc(100vh - 92px)", lg: "auto" },
-              px: { xs: 1.5, sm: 2.5, md: 3.5, lg: 4 },
-              py: { xs: 2, sm: 3, lg: 4 },
-              pb: { xs: 14, sm: 14, lg: 4 },
+              px: { xs: 1, sm: 1.75, md: 2.75, lg: 4 },
+              py: { xs: 1.25, sm: 2, lg: 4 },
+              pb: { xs: 13, sm: 13, lg: 4 },
             }}
           >
             <Box
