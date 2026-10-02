@@ -13,6 +13,7 @@ import {
   Users,
   UserRoundPlus,
 } from "lucide-react";
+import { createPortal } from "react-dom";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ElementType } from "react";
 import { Calendar } from "@/components/dashboard/DashboardUI";
@@ -262,6 +263,9 @@ export default function InsightsDashboard() {
   const [error, setError] = useState("");
   const [data, setData] = useState<Data | null>(null);
   const calendarRef = useRef<HTMLDivElement>(null);
+  const fromButtonRef = useRef<HTMLButtonElement>(null);
+  const toButtonRef = useRef<HTMLButtonElement>(null);
+  const [calendarPosition, setCalendarPosition] = useState<{ top: number } | null>(null);
 
   useEffect(() => {
     void (async () => {
@@ -301,13 +305,43 @@ export default function InsightsDashboard() {
   }, [accountId, range, dateFrom, dateTo, load]);
 
   useEffect(() => {
-    if (!calendarOpen) return;
+    if (!calendarOpen) {
+      setCalendarPosition(null);
+      return;
+    }
+
+    const updateCalendarPosition = () => {
+      const button = calendarOpen === "from" ? fromButtonRef.current : toButtonRef.current;
+      if (!button) return;
+
+      const rect = button.getBoundingClientRect();
+      const estimatedHeight = 430;
+      const gap = 8;
+      const maxTop = Math.max(12, window.innerHeight - estimatedHeight - 12);
+      setCalendarPosition({ top: Math.min(rect.bottom + gap, maxTop) });
+    };
+
+    updateCalendarPosition();
+    window.addEventListener("resize", updateCalendarPosition);
+    window.addEventListener("scroll", updateCalendarPosition, true);
+
     const handlePointerDown = (event: PointerEvent) => {
       const target = event.target as Node | null;
-      if (target && !calendarRef.current?.contains(target)) setCalendarOpen(null);
+      if (
+        target &&
+        !calendarRef.current?.contains(target) &&
+        !(target instanceof Element && target.closest("[data-insights-calendar-popup]"))
+      ) {
+        setCalendarOpen(null);
+      }
     };
+
     document.addEventListener("pointerdown", handlePointerDown);
-    return () => document.removeEventListener("pointerdown", handlePointerDown);
+    return () => {
+      window.removeEventListener("resize", updateCalendarPosition);
+      window.removeEventListener("scroll", updateCalendarPosition, true);
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
   }, [calendarOpen]);
 
   const snapshots = data?.snapshots ?? [];
@@ -349,8 +383,61 @@ export default function InsightsDashboard() {
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
               <div className="flex shrink-0 items-center gap-1 rounded-xl bg-[#F8FAFC] p-1">{[7, 30, 90].map((days) => <button key={days} type="button" onClick={() => {setDateFrom(undefined);setDateTo(undefined);setDraftFrom(undefined);setDraftTo(undefined);setRange(days as Range);}} className={range === days && !dateFrom ? "rounded-lg bg-[#2563EB] px-3 py-2 text-[10px] font-bold text-white shadow-sm" : "rounded-lg px-3 py-2 text-[10px] font-bold text-[#64748B]"}>{days} روز</button>)}</div>
               <div ref={calendarRef} className="grid flex-1 grid-cols-2 gap-2">
-                <div className="relative"><span className="mb-1 block text-[10px] font-medium text-[#64748B]">از تاریخ</span><button type="button" onClick={() => setCalendarOpen(calendarOpen === "from" ? null : "from")} className="flex h-10 w-full items-center justify-between gap-2 rounded-xl border border-[#E2E8F0] bg-white px-3 text-xs font-semibold text-[#0F172A]"><span>{formatDateField(draftFrom || dateFrom)}</span><CalendarIcon className="h-4 w-4 text-[#2563EB]" /></button><div className="absolute left-1/2 top-[66px] z-50 rounded-2xl border border-[#E2E8F0] bg-white p-2 shadow-xl transition-all duration-200 ease-out" style={{ opacity: calendarOpen === "from" ? 1 : 0, transform: calendarOpen === "from" ? "translateX(-50%) translateY(0) scale(1)" : "translateX(-50%) translateY(-4px) scale(0.98)", pointerEvents: calendarOpen === "from" ? "auto" : "none" }}><Calendar mode="single" selected={draftFrom || dateFrom} onSelect={(value: Date | undefined) => {if(value){setDraftFrom(value);if(draftTo&&value>draftTo)setDraftTo(undefined);setCalendarOpen(null);}}} disabled={(value: Date) => value < minDate || value > today} /></div></div>
-                <div className="relative"><span className="mb-1 block text-[10px] font-medium text-[#64748B]">تا تاریخ</span><button type="button" onClick={() => setCalendarOpen(calendarOpen === "to" ? null : "to")} className="flex h-10 w-full items-center justify-between gap-2 rounded-xl border border-[#E2E8F0] bg-white px-3 text-xs font-semibold text-[#0F172A]"><span>{formatDateField(draftTo || dateTo)}</span><CalendarIcon className="h-4 w-4 text-[#2563EB]" /></button><div className="absolute left-1/2 top-[66px] z-50 rounded-2xl border border-[#E2E8F0] bg-white p-2 shadow-xl transition-all duration-200 ease-out" style={{ opacity: calendarOpen === "to" ? 1 : 0, transform: calendarOpen === "to" ? "translateX(-50%) translateY(0) scale(1)" : "translateX(-50%) translateY(-4px) scale(0.98)", pointerEvents: calendarOpen === "to" ? "auto" : "none" }}><Calendar mode="single" selected={draftTo || dateTo} onSelect={(value: Date | undefined) => {if(value){setDraftTo(value);setCalendarOpen(null);}}} disabled={(value: Date) => value > today || value < (draftFrom || dateFrom || minDate)} /></div></div>
+                <div>
+                  <span className="mb-1 block text-[10px] font-medium text-[#64748B]">از تاریخ</span>
+                  <button ref={fromButtonRef} type="button" onClick={() => setCalendarOpen(calendarOpen === "from" ? null : "from")} className="flex h-10 w-full items-center justify-between gap-2 rounded-xl border border-[#E2E8F0] bg-white px-3 text-xs font-semibold text-[#0F172A]">
+                    <span>{formatDateField(draftFrom || dateFrom)}</span><CalendarIcon className="h-4 w-4 text-[#2563EB]" />
+                  </button>
+                </div>
+                <div>
+                  <span className="mb-1 block text-[10px] font-medium text-[#64748B]">تا تاریخ</span>
+                  <button ref={toButtonRef} type="button" onClick={() => setCalendarOpen(calendarOpen === "to" ? null : "to")} className="flex h-10 w-full items-center justify-between gap-2 rounded-xl border border-[#E2E8F0] bg-white px-3 text-xs font-semibold text-[#0F172A]">
+                    <span>{formatDateField(draftTo || dateTo)}</span><CalendarIcon className="h-4 w-4 text-[#2563EB]" />
+                  </button>
+                </div>
+                {typeof document !== "undefined" && calendarOpen && calendarPosition
+                  ? createPortal(
+                      <div
+                        data-insights-calendar-popup
+                        className="fixed z-[9999] rounded-2xl border border-[#E2E8F0] bg-white p-2 shadow-2xl transition-all duration-200 ease-out"
+                        style={{
+                          left: "50%",
+                          top: calendarPosition.top,
+                          opacity: 1,
+                          transform: "translateX(-50%)",
+                          pointerEvents: "auto",
+                        }}
+                      >
+                        {calendarOpen === "from" ? (
+                          <Calendar
+                            mode="single"
+                            selected={draftFrom || dateFrom}
+                            onSelect={(value: Date | undefined) => {
+                              if (value) {
+                                setDraftFrom(value);
+                                if (draftTo && value > draftTo) setDraftTo(undefined);
+                                setCalendarOpen(null);
+                              }
+                            }}
+                            disabled={(value: Date) => value < minDate || value > today}
+                          />
+                        ) : (
+                          <Calendar
+                            mode="single"
+                            selected={draftTo || dateTo}
+                            onSelect={(value: Date | undefined) => {
+                              if (value) {
+                                setDraftTo(value);
+                                setCalendarOpen(null);
+                              }
+                            }}
+                            disabled={(value: Date) => value > today || value < (draftFrom || dateFrom || minDate)}
+                          />
+                        )}
+                      </div>,
+                      document.body,
+                    )
+                  : null}
               </div>
               <button type="button" disabled={!draftFrom||!draftTo||draftFrom<minDate||draftTo>today||draftTo<draftFrom||(draftTo.getTime()-draftFrom.getTime())/86400000+1>730} onClick={() => {setDateFrom(draftFrom);setDateTo(draftTo);setCalendarOpen(null);}} className="h-10 rounded-xl bg-[#2563EB] px-5 text-xs font-bold text-white disabled:cursor-not-allowed disabled:bg-[#CBD5E1]">اعمال بازه</button>
             </div>
