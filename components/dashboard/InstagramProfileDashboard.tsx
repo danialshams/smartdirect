@@ -139,7 +139,8 @@ export default function InstagramProfileDashboard({
           <Box
             sx={{
               width: { xs: 112, sm: 128, md: 144, lg: 160 },
-              height: { xs: 104, sm: 120, md: 140, lg: 160 },
+              height: { xs: 112, sm: 128, md: 144, lg: 160 },
+              flexShrink: 0,
               borderRadius: "50%",
               bgcolor: "#E2E8F0",
               animation: "sdPulse 1.6s ease-in-out infinite",
@@ -148,8 +149,9 @@ export default function InstagramProfileDashboard({
           <Box
             sx={{
               mt: 2.5,
-              width: 128,
-              height: 20,
+              width: { xs: 96, sm: 108, md: 120, lg: 128 },
+              height: { xs: 18, sm: 19, md: 20, lg: 20 },
+              flexShrink: 0,
               borderRadius: 1.5,
               bgcolor: "#E2E8F0",
               animation: "sdPulse 1.6s ease-in-out infinite",
@@ -172,13 +174,31 @@ export default function InstagramProfileDashboard({
               key={item}
               sx={{
                 mx: "auto",
-                width: 56,
-                height: 40,
-                borderRadius: 1.5,
-                bgcolor: "#E2E8F0",
-                animation: "sdPulse 1.6s ease-in-out infinite",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 0.5,
               }}
-            />
+            >
+              <Box
+                sx={{
+                  width: { xs: 42, sm: 48, md: 54, lg: 58 },
+                  height: { xs: 18, sm: 20, md: 22, lg: 24 },
+                  borderRadius: 1,
+                  bgcolor: "#E2E8F0",
+                  animation: "sdPulse 1.6s ease-in-out infinite",
+                }}
+              />
+              <Box
+                sx={{
+                  width: { xs: 34, sm: 38, md: 44, lg: 48 },
+                  height: { xs: 12, sm: 13, md: 14, lg: 15 },
+                  borderRadius: 1,
+                  bgcolor: "#E2E8F0",
+                  animation: "sdPulse 1.6s ease-in-out infinite",
+                }}
+              />
+            </Box>
           ))}
         </Box>
       </Box>
