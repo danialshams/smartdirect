@@ -15,7 +15,7 @@ import {
   TextField,
 } from "@mui/material";
 import { DayPicker, faIR } from "@daypicker/persian";
-import { getDefaultClassNames, type DayPickerProps, type DropdownProps } from "react-day-picker";
+import { getDefaultClassNames, type DayPickerProps, type DropdownProps, useDayPicker } from "react-day-picker";
 import { ChevronDown } from "lucide-react";
 
 const COLORS = {
@@ -32,12 +32,61 @@ function classNameValue(value?: string) {
   return value || "";
 }
 
+function getPersianYearMonth(value: Date) {
+  const parts = new Intl.DateTimeFormat("en-US-u-ca-persian", {
+    year: "numeric",
+    month: "numeric",
+  }).formatToParts(value);
+
+  return {
+    year: Number(parts.find((part) => part.type === "year")?.value || 0),
+    month: Number(parts.find((part) => part.type === "month")?.value || 0) - 1,
+  };
+}
+
 function PersianCalendarDropdown({
   options,
   value,
   onChange,
   "aria-label": ariaLabel,
 }: DropdownProps) {
+  const { dayPickerProps, months } = useDayPicker();
+
+  const startMonth = dayPickerProps.startMonth;
+  const endMonth = dayPickerProps.endMonth;
+  const currentMonth = months[0]?.date;
+  const currentPersian = currentMonth ? getPersianYearMonth(currentMonth) : null;
+  const startPersian = startMonth ? getPersianYearMonth(startMonth) : null;
+  const endPersian = endMonth ? getPersianYearMonth(endMonth) : null;
+
+  const values = options?.map((option) => Number(option.value)).filter(Number.isFinite) || [];
+  const isMonthDropdown = values.length > 0 && Math.max(...values) <= 11;
+
+  const isOptionDisabled = (option: NonNullable<DropdownProps["options"]>[number]) => {
+    if (option.disabled) return true;
+
+    const optionValue = Number(option.value);
+    if (!Number.isFinite(optionValue)) return false;
+
+    if (!isMonthDropdown) {
+      if (startPersian && optionValue < startPersian.year) return true;
+      if (endPersian && optionValue > endPersian.year) return true;
+      return false;
+    }
+
+    if (!currentPersian) return false;
+
+    if (startPersian && currentPersian.year === startPersian.year && optionValue < startPersian.month) {
+      return true;
+    }
+
+    if (endPersian && currentPersian.year === endPersian.year && optionValue > endPersian.month) {
+      return true;
+    }
+
+    return false;
+  };
+
   return (
     <Box
       sx={{
@@ -70,11 +119,19 @@ function PersianCalendarDropdown({
           cursor: "pointer",
         }}
       >
-        {options?.map((option) => (
-          <option key={option.value} value={String(option.value)} disabled={option.disabled}>
-            {option.label}
-          </option>
-        ))}
+        {options?.map((option) => {
+          const disabled = isOptionDisabled(option);
+          return (
+            <option
+              key={option.value}
+              value={String(option.value)}
+              disabled={disabled}
+              style={{ color: disabled ? "#94A3B8" : COLORS.text }}
+            >
+              {option.label}
+            </option>
+          );
+        })}
       </select>
       <ChevronDown
         size={15}
