@@ -399,7 +399,7 @@ export default function InsightsDashboard() {
                   ? createPortal(
                       <div
                         data-insights-calendar-popup
-                        className="fixed z-[9999] w-[352px] max-w-[calc(100vw-24px)] box-border rounded-2xl border border-[#E2E8F0] bg-white p-2 shadow-2xl transition-all duration-200 ease-out"
+                        className="fixed z-[9999] w-[352px] max-w-[calc(100vw-24px)] box-border overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white p-0 shadow-2xl transition-all duration-200 ease-out"
                         style={{
                           left: "50%",
                           top: calendarPosition.top,
