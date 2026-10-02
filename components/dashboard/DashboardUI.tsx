@@ -60,7 +60,10 @@ function PersianCalendarDropdown({
   const endPersian = endMonth ? getPersianYearMonth(endMonth) : null;
 
   const values = options?.map((option) => Number(option.value)).filter(Number.isFinite) || [];
-  const isMonthDropdown = values.length > 0 && Math.max(...values) <= 11;
+  const isMonthDropdown =
+    values.length > 0 &&
+    ((Math.min(...values) >= 0 && Math.max(...values) <= 11) ||
+      (Math.min(...values) >= 1 && Math.max(...values) <= 12));
 
   const isOptionDisabled = (option: NonNullable<DropdownProps["options"]>[number]) => {
     if (option.disabled) return true;
@@ -76,11 +79,15 @@ function PersianCalendarDropdown({
 
     if (!currentPersian) return false;
 
-    if (startPersian && currentPersian.year === startPersian.year && optionValue < startPersian.month) {
+    // react-day-picker can expose Persian month values as either 0..11 or 1..12.
+    // Normalize to the same 0-based month used by Intl above before comparing.
+    const normalizedMonth = Math.max(...values) === 12 ? optionValue - 1 : optionValue;
+
+    if (startPersian && currentPersian.year === startPersian.year && normalizedMonth < startPersian.month) {
       return true;
     }
 
-    if (endPersian && currentPersian.year === endPersian.year && optionValue > endPersian.month) {
+    if (endPersian && currentPersian.year === endPersian.year && normalizedMonth > endPersian.month) {
       return true;
     }
 
