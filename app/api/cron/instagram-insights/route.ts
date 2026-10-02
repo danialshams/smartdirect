@@ -13,7 +13,6 @@ const INSIGHT_METRICS = [
   "views",
   "accounts_engaged",
   "total_interactions",
-  "profile_views",
 ] as const;
 
 type InsightMetricName = (typeof INSIGHT_METRICS)[number];
@@ -206,8 +205,6 @@ export async function GET(request: NextRequest) {
           accountsEngaged: getMetricValue(metrics, "accounts_engaged"),
 
           totalInteractions: getMetricValue(metrics, "total_interactions"),
-
-          profileViews: getMetricValue(metrics, "profile_views"),
         };
 
         // ---------------------------------------------
@@ -274,8 +271,6 @@ export async function GET(request: NextRequest) {
 
             totalInteractions: values.totalInteractions,
 
-            profileViews: values.profileViews,
-
             followerCount,
           },
 
@@ -287,8 +282,6 @@ export async function GET(request: NextRequest) {
             accountsEngaged: values.accountsEngaged,
 
             totalInteractions: values.totalInteractions,
-
-            profileViews: values.profileViews,
 
             followerCount,
           },
