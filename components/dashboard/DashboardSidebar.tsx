@@ -356,7 +356,7 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
         pointerEvents: "none",
       }}
     >
-      <Box ref={islandRef} sx={{ position: "relative", pointerEvents: "none" }}>
+      <Box ref={islandRef} sx={{ position: "relative", pointerEvents: "auto" }}>
         <Box
           dir="rtl"
           sx={{
@@ -485,7 +485,6 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
 
         <Box
           sx={{
-            width: "100%",
             width: 62,
             minHeight: 54,
             border: "1px solid #E2E8F0",
