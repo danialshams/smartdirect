@@ -363,7 +363,7 @@ export default function InsightsDashboard() {
   const selectedLabel = tabs.find((tab) => tab.id === metric)?.label || "دسترسی";
 
   return (
-    <main dir="rtl" className="min-h-screen bg-[#F8FAFC] pb-16 pt-1 sm:pb-16 sm:pt-2 lg:pb-6 lg:pt-2">
+    <main dir="rtl" className="min-h-screen overflow-x-clip bg-[#F8FAFC] pb-16 pt-1 sm:pb-16 sm:pt-2 lg:pb-6 lg:pt-2">
       <div className="mx-auto flex max-w-[1400px] flex-col gap-3 px-2 sm:gap-4 sm:px-3 lg:gap-5 lg:px-5">
         <div className="flex items-start gap-3 rounded-2xl border border-[#FDE68A] bg-[#FFFBEB] p-3.5 text-[#78350F]">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#FEF3C7] text-[#B45309]"><Lightbulb className="h-5 w-5" /></span>
@@ -399,7 +399,7 @@ export default function InsightsDashboard() {
                   ? createPortal(
                       <div
                         data-insights-calendar-popup
-                        className="fixed z-[9999] rounded-2xl border border-[#E2E8F0] bg-white p-2 shadow-2xl transition-all duration-200 ease-out"
+                        className="fixed z-[9999] w-[352px] max-w-[calc(100vw-24px)] box-border rounded-2xl border border-[#E2E8F0] bg-white p-2 shadow-2xl transition-all duration-200 ease-out"
                         style={{
                           left: "50%",
                           top: calendarPosition.top,
