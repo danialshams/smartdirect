@@ -80,10 +80,8 @@ function SubscriptionIndicator() {
         <Box sx={{ position: "absolute", inset: 0, display: "grid", placeItems: "center" }}>
           <svg width="100%" height="100%" viewBox="0 0 60 60" aria-hidden="true" style={{ display: "block" }}>
             <circle cx="30" cy="30" r="27" fill="none" stroke="#E2E8F0" strokeWidth="3.5" />
-            <circle
-              cx="30"
-              cy="30"
-              r="27"
+            <path
+              d="M 30 3 A 27 27 0 1 0 30 57 A 27 27 0 1 0 30 3"
               fill="none"
               stroke={ringColor}
               strokeWidth="3.5"
@@ -91,11 +89,7 @@ function SubscriptionIndicator() {
               pathLength="100"
               strokeDasharray="100"
               strokeDashoffset={100 - progress}
-              style={{
-                transformOrigin: "50% 50%",
-                transform: "rotate(-90deg) scaleX(-1)",
-                transition: "stroke-dashoffset 50ms linear, stroke 150ms linear",
-              }}
+              style={{ transition: "stroke-dashoffset 50ms linear, stroke 150ms linear" }}
             />
           </svg>
         </Box>
