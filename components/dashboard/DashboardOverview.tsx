@@ -104,7 +104,7 @@ export default function DashboardOverview({
             boxShadow: "0 8px 24px rgba(15,23,42,0.04)",
             display: "flex",
             alignItems: "center",
-            animation: "sdGreetingEnter 700ms ease both",
+            animation: "sdGreetingEnter 500ms ease both",
           }}
         >
           <Typography
