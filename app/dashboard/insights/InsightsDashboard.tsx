@@ -13,9 +13,8 @@ import {
   Users,
   UserRoundPlus,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ElementType } from "react";
-import type { DateRange } from "react-day-picker";
 import { Calendar } from "@/components/dashboard/DashboardUI";
 
 type Range = 7 | 30 | 90;
@@ -252,7 +251,6 @@ export default function InsightsDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [data, setData] = useState<Data | null>(null);
-  const calendarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     void (async () => {
