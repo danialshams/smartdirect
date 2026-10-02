@@ -209,7 +209,7 @@ function SidebarContent({
         </Box>
       </Box>
       <Divider sx={{ borderColor: "#E2E8F0", display: { xs: "block", lg: "block" } }} />
-      <Box sx={{ p: { xs: 1.5, lg: 1.25 }}>
+      <Box sx={{ p: { xs: 1.5, lg: 1.25 } }}>
         <Box component="button" type="button" onClick={() => void signOut({ callbackUrl: "/login" })}
           sx={{ width: "100%", display: "flex", alignItems: "center", gap: 1.4, border: 0, borderRadius: 2, bgcolor: "transparent", color: "#DC2626", px: 1.25, py: 1.25, cursor: "pointer", fontFamily: "inherit", textAlign: "right", "&:hover": { bgcolor: "#FEF2F2", color: "#B91C1C" } }}>
           <LogOut size={20} strokeWidth={1.9} />
