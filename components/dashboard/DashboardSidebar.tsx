@@ -351,9 +351,10 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
         marginLeft: "auto",
         marginRight: "auto",
         boxSizing: "border-box",
+        pointerEvents: "none",
       }}
     >
-      <Box ref={islandRef} sx={{ position: "relative" }}>
+      <Box ref={islandRef} sx={{ position: "relative", pointerEvents: "none" }}>
         <Box
           dir="rtl"
           sx={{
