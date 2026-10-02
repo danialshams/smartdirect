@@ -115,9 +115,6 @@ export default function InstagramProfileDashboard({
   if (loading) {
     return (
       <Box dir="rtl" sx={{ width: "100%", mt: { xs: 2, sm: 2.5, md: 3, lg: 3.5 }, px: { xs: 1, sm: 1.5, md: 2.5, lg: 5 }, pb: { xs: 12, lg: 5 } }}>
-        <Box sx={{ minHeight: { xs: 78, sm: 88, md: 96 }, px: { xs: 2, sm: 2.5, md: 3 }, py: { xs: 1.75, sm: 2, md: 2.25 }, border: "1px solid #E2E8F0", borderRadius: { xs: 3, md: 3.5 }, bgcolor: "#FFFFFF", boxShadow: "0 8px 24px rgba(15,23,42,0.04)", display: "flex", alignItems: "center", animation: "sdEnterLeft 700ms ease both" }}>
-          <Box sx={{ width: { xs: 150, sm: 190, md: 220 }, height: { xs: 20, sm: 24, md: 26 }, borderRadius: 1.5, bgcolor: "#E2E8F0", animation: "sdPulse 1.6s ease-in-out infinite" }} />
-        </Box>
         <Box sx={{ mt: { xs: 2, sm: 2.5, md: 3, lg: 3.5 }, minHeight: { xs: 220, sm: 250, lg: 285 }, p: { xs: 2, sm: 2.5, md: 3, lg: 3.5 }, border: "1px solid #E2E8F0", borderRadius: { xs: 3, md: 3.5 }, bgcolor: "#FFFFFF", boxShadow: "0 8px 24px rgba(15,23,42,0.05)", display: "flex", alignItems: "center", gap: { xs: 3, sm: 4, md: 5 }, animation: "sdEnterRight 700ms 180ms ease both" }}>
           <Box sx={{ width: { xs: 92, sm: 112, md: 132 }, height: { xs: 92, sm: 112, md: 132 }, flexShrink: 0, borderRadius: "50%", bgcolor: "#E2E8F0", animation: "sdPulse 1.6s ease-in-out infinite" }} />
           <Box sx={{ minWidth: 0, flex: 1 }}>
