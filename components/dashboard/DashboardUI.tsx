@@ -60,10 +60,19 @@ function PersianCalendarDropdown({
   const endPersian = endMonth ? getPersianYearMonth(endMonth) : null;
 
   const values = options?.map((option) => Number(option.value)).filter(Number.isFinite) || [];
+  const minOptionValue = values.length ? Math.min(...values) : null;
+  const maxOptionValue = values.length ? Math.max(...values) : null;
+
+  // DayPicker's Persian month dropdown uses numeric month values. Do not infer
+  // the month from the rendered label: labels are formatter/locale output and
+  // are not a reliable source for boundary calculations.
   const isMonthDropdown =
-    values.length > 0 &&
-    ((Math.min(...values) >= 0 && Math.max(...values) <= 11) ||
-      (Math.min(...values) >= 1 && Math.max(...values) <= 12));
+    ariaLabel?.toLowerCase().includes("month") ||
+    ariaLabel?.includes("ماه") ||
+    (minOptionValue !== null &&
+      maxOptionValue !== null &&
+      minOptionValue >= 0 &&
+      maxOptionValue <= 11);
 
   const isOptionDisabled = (option: NonNullable<DropdownProps["options"]>[number]) => {
     if (option.disabled) return true;
@@ -79,16 +88,29 @@ function PersianCalendarDropdown({
 
     if (!currentPersian) return false;
 
-    // react-day-picker can expose Persian month values as either 0..11 or 1..12.
-    // Normalize to the same 0-based month used by Intl above before comparing.
-    const normalizedMonth = ["فروردین","اردیبهشت","خرداد","تیر","مرداد","شهریور","مهر","آبان","آذر","دی","بهمن","اسفند"].indexOf(String(option.label || "").trim());
-    if (normalizedMonth < 0) return false;
+    // Normalize either 0..11 or 1..12 to a 0-based Persian month.
+    const normalizedMonth =
+      minOptionValue === 1 && maxOptionValue === 12
+        ? optionValue - 1
+        : optionValue;
 
-    if (startPersian && currentPersian.year === startPersian.year && normalizedMonth < startPersian.month) {
+    if (normalizedMonth < 0 || normalizedMonth > 11) return false;
+
+    // The dropdown is for the currently displayed Persian year. Only the
+    // boundary year needs month-level filtering.
+    if (
+      startPersian &&
+      currentPersian.year === startPersian.year &&
+      normalizedMonth < startPersian.month
+    ) {
       return true;
     }
 
-    if (endPersian && currentPersian.year === endPersian.year && normalizedMonth > endPersian.month) {
+    if (
+      endPersian &&
+      currentPersian.year === endPersian.year &&
+      normalizedMonth > endPersian.month
+    ) {
       return true;
     }
 
