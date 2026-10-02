@@ -204,7 +204,13 @@ function SidebarContent({
       <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
         <Navigation onNavigate={onClose} />
       </Box>
-      <Divider sx={{ borderColor: "#E2E8F0" }} />
+      <Box sx={{ display: { xs: "none", lg: "block" } }}>
+        <Divider sx={{ mx: 1.25, borderColor: "#E2E8F0" }} />
+        <Box sx={{ flexShrink: 0 }}>
+          <AccountSection instagramAccounts={instagramAccounts} />
+        </Box>
+      </Box>
+      <Divider sx={{ borderColor: "#E2E8F0", display: { xs: "none", lg: "block" } }} />
       <Box sx={{ p: 1.25 }}>
         <Box component="button" type="button" onClick={() => void signOut({ callbackUrl: "/login" })}
           sx={{ width: "100%", display: "flex", alignItems: "center", gap: 1.25, border: 0, borderRadius: 1.75, bgcolor: "transparent", color: "#DC2626", px: 1.1, py: 1.1, cursor: "pointer", fontFamily: "inherit", textAlign: "right", "&:hover": { bgcolor: "#FEF2F2", color: "#B91C1C" } }}>
