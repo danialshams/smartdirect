@@ -90,15 +90,25 @@ export async function GET(request: NextRequest) {
         const today = new Date(now);
         today.setUTCHours(0, 0, 0, 0);
 
-        const accountCreatedDate = new Date(account.createdAt);
-        accountCreatedDate.setUTCHours(0, 0, 0, 0);
         const twoYearsAgo = new Date(today);
         twoYearsAgo.setUTCDate(twoYearsAgo.getUTCDate() - (MAX_DAYS - 1));
-        const analyticsStartDate =
-            accountCreatedDate > twoYearsAgo ? accountCreatedDate : twoYearsAgo;
+        const firstSnapshot = await prisma.instagramInsightSnapshot.findFirst({
+            where: { instagramAccountId: account.id },
+            orderBy: { snapshotDate: "asc" },
+            select: { snapshotDate: true },
+        });
+        // Instagram's actual creation date is not exposed by this API. Use the first
+        // stored insight as the earliest selectable date, not account.createdAt.
+        const firstAvailableDate = firstSnapshot ? new Date(firstSnapshot.snapshotDate) : twoYearsAgo;
+        firstAvailableDate.setUTCHours(0, 0, 0, 0);
+        const analyticsStartDate = firstAvailableDate > twoYearsAgo ? firstAvailableDate : twoYearsAgo;
 
         let from = new Date(today);
         let to = now;
+
+        if ((searchParams.has("from") || searchParams.has("to")) && (!requestedFrom || !requestedTo || requestedFrom > requestedTo)) {
+            return NextResponse.json({ success: false, error: "تاریخ شروع و پایان را درست انتخاب کن." }, { status: 400 });
+        }
 
         if (requestedFrom && requestedTo && requestedFrom <= requestedTo) {
             const requestedDays =
@@ -120,6 +130,12 @@ export async function GET(request: NextRequest) {
             from = requestedFrom;
             to = new Date(requestedTo);
             to.setUTCHours(23, 59, 59, 999);
+            if (from < analyticsStartDate) {
+                return NextResponse.json({ success: false, error: "تاریخ شروع قبل از اولین تاریخ قابل‌دسترسی برای این پیج است." }, { status: 400 });
+            }
+            if (to > now) {
+                return NextResponse.json({ success: false, error: "تاریخ پایان نمی‌تواند از امروز جلوتر باشد." }, { status: 400 });
+            }
         } else {
             from.setUTCDate(from.getUTCDate() - (days - 1));
         }
