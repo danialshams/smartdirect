@@ -85,17 +85,6 @@ function AccountSection({ instagramAccounts }: { instagramAccounts: InstagramAcc
   const activeAccount = accounts.find((account) => account.isConnected);
 
   useEffect(() => {
-    if (!accountMenuOpen) return;
-    const handlePointerDown = (event: PointerEvent) => {
-      if (islandRef.current && !islandRef.current.contains(event.target as Node)) {
-        setAccountMenuOpen(false);
-      }
-    };
-    document.addEventListener("pointerdown", handlePointerDown);
-    return () => document.removeEventListener("pointerdown", handlePointerDown);
-  }, [accountMenuOpen]);
-
-  useEffect(() => {
     let cancelled = false;
     void (async () => {
       try {
@@ -255,6 +244,17 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const islandRef = useRef<HTMLDivElement | null>(null);
   const activeAccount = accounts.find((account) => account.isConnected);
+
+  useEffect(() => {
+    if (!accountMenuOpen) return;
+    const handlePointerDown = (event: PointerEvent) => {
+      if (islandRef.current && !islandRef.current.contains(event.target as Node)) {
+        setAccountMenuOpen(false);
+      }
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [accountMenuOpen]);
 
   useEffect(() => {
     let cancelled = false;
