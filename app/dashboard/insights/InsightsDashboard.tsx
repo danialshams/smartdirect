@@ -47,8 +47,20 @@ type Data = {
   error?: string;
 };
 
-const n = (value: number | null | undefined) =>
-  value == null ? "—" : new Intl.NumberFormat("fa-IR").format(Math.round(value));
+const n = (value: number | null | undefined) => {
+  if (value == null) return "—";
+  const absolute = Math.abs(value);
+  const sign = value < 0 ? "−" : "";
+  if (absolute >= 1_000_000) {
+    const compact = absolute / 1_000_000;
+    return sign + (compact >= 10 ? Math.round(compact) : Number(compact.toFixed(1))) + "m";
+  }
+  if (absolute >= 1_000) {
+    const compact = absolute / 1_000;
+    return sign + (compact >= 10 ? Math.round(compact) : Number(compact.toFixed(1))) + "k";
+  }
+  return sign + new Intl.NumberFormat("fa-IR").format(Math.round(absolute));
+};
 
 const date = (value: string | Date, options?: Intl.DateTimeFormatOptions) =>
   new Intl.DateTimeFormat("fa-IR", options || { month: "short", day: "numeric" }).format(
@@ -90,7 +102,7 @@ function Section({
 }) {
   return (
     <section className="rounded-[22px] border border-[#E2E8F0] bg-white p-3.5 shadow-[0_8px_24px_rgba(15,23,42,0.035)] sm:p-5 lg:p-6">
-      <div className="mb-4 flex items-start gap-3">
+      <div className="mb-4 flex items-center gap-3">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB]">
           <Icon className="h-[17px] w-[17px]" />
         </div>
@@ -378,7 +390,7 @@ export default function InsightsDashboard() {
 
         <section className="grid gap-3 sm:grid-cols-3 sm:gap-4">
           <Section title="بازدید" icon={Eye}>{loading?<Spinner label="در حال دریافت..." />:<div className="flex min-h-[110px] items-center justify-center"><div className="text-center text-3xl font-bold tracking-tight text-[#0F172A]">{n(summary?.views)}</div></div>}</Section>
-          <Section title="رشد فالوور" icon={UserRoundPlus}>{loading?<Spinner label="در حال دریافت..." />:<div className="flex min-h-[110px] items-center justify-center"><div className="text-center text-3xl font-bold tracking-tight text-[#0F172A]">{summary?.followerGrowth==null?"—":(summary.followerGrowth>0?"+":"")+n(summary.followerGrowth)}</div></div>}</Section>
+          <Section title="رشد فالوور" icon={UserRoundPlus}>{loading?<Spinner label="در حال دریافت..." />:<div className="flex min-h-[110px] items-center justify-center"><div className="text-center text-3xl font-bold tracking-tight text-[#0F172A]">{summary?.followerGrowth==null?"—":(summary.followerGrowth>0?"+":"") + n(summary.followerGrowth)}</div></div>}</Section>
           <Section title="نرخ تعامل" icon={HeartHandshake}>{loading?<Spinner label="در حال دریافت..." />:<div className="flex min-h-[110px] items-center justify-center"><div className="text-center text-3xl font-bold tracking-tight text-[#0F172A]">{summary?.engagementRate==null?"—":new Intl.NumberFormat("fa-IR",{maximumFractionDigits:2}).format(summary.engagementRate)+"٪"}</div></div>}</Section>
         </section>
       </div>
