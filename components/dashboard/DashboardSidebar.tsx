@@ -344,7 +344,7 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
               sx={{
                 minHeight: 64,
                 display: "grid",
-                gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                gridTemplateColumns: "minmax(0, 2fr) minmax(0, 1fr)",
                 alignItems: "stretch",
                 boxSizing: "border-box",
                 color: "#0F172A",
@@ -355,8 +355,10 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
             >
               <Box
                 sx={{
+                  minWidth: 0,
                   display: "grid",
-                  placeItems: "center",
+                  gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)",
+                  alignItems: "center",
                   borderLeft: "1px solid #E2E8F0",
                 }}
               >
@@ -368,20 +370,12 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
                   {!activeAccount?.profilePictureUrl ? <UserRound size={15} /> : null}
                 </Avatar>
               </Box>
-              <Box
-                sx={{
-                  minWidth: 0,
-                  display: "grid",
-                  placeItems: "center",
-                  px: 0.75,
-                  borderLeft: "1px solid #E2E8F0",
-                }}
-              >
+              <Box sx={{ minWidth: 0, display: "grid", placeItems: "center", px: 0.75 }}>
                 <Typography dir="ltr" noWrap fontSize={11.5} fontWeight={700} sx={{ maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis" }}>
                   {activeAccount ? `@${activeAccount.igUsername}` : "پیجی متصل نیست"}
                 </Typography>
               </Box>
-              <Box sx={{ display: "grid", placeItems: "center" }}>
+              <Box sx={{ display: "grid", placeItems: "center", borderRight: "1px solid #E2E8F0" }}>
                 {activeAccount ? <Check size={17} color="#16A34A" strokeWidth={2.4} /> : null}
               </Box>
             </Box>
@@ -445,10 +439,9 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
                     color: section.active ? "#2563EB" : "#475569",
                     px: { xs: 0.75, sm: 1 },
                     py: 0.8,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 0.65,
+                    position: "relative",
+                    display: "grid",
+                    placeItems: "center",
                     cursor: "pointer",
                     fontFamily: "inherit",
                     textAlign: "right",
@@ -457,11 +450,11 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
                   <Avatar
                     src={activeAccount?.profilePictureUrl || undefined}
                     alt={activeAccount?.igUsername || "Instagram"}
-                    sx={{ width: 34, height: 34, flexShrink: 0, bgcolor: "#E2E8F0", color: "#64748B" }}
+                    sx={{ width: 34, height: 34, bgcolor: "#E2E8F0", color: "#64748B" }}
                   >
                     {!activeAccount?.profilePictureUrl ? <UserRound size={15} /> : null}
                   </Avatar>
-                  <Box sx={{ display: "grid", placeItems: "center", flexShrink: 0, color: "#64748B" }}>
+                  <Box sx={{ position: "absolute", left: { xs: 10, sm: 14 }, top: "50%", transform: "translateY(-50%)", display: "grid", placeItems: "center", color: "#64748B" }}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                       <path d="M7 14l5-5 5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
@@ -480,7 +473,7 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
                   minWidth: 0,
                   minHeight: 68,
                   borderRadius: 0,
-                  borderRight: section.key === "story" ? "1px solid #CBD5E1" : 0,
+                  borderLeft: section.key === "comment" ? "1px solid #CBD5E1" : 0,
                   bgcolor: section.active ? "#EFF6FF" : "transparent",
                   color: section.active ? "#2563EB" : "#475569",
                   px: { xs: 0.75, sm: 1 },
