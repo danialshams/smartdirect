@@ -122,14 +122,13 @@ export default function InstagramProfileDashboard({
       <Box
         dir="rtl"
         sx={{
-          width: "100%",
-          mt: { xs: 2, sm: 2.5, md: 3, lg: 3.5 },
-          px: { xs: 1, sm: 1.5, md: 2.5, lg: 5 },
-          minHeight: { xs: 360, sm: 390, md: 420 },
+          position: "fixed",
+          inset: 0,
+          zIndex: 1100,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          pb: { xs: 12, lg: 5 },
+          pointerEvents: "none",
         }}
       >
         <Box
