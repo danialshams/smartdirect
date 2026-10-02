@@ -201,7 +201,7 @@ function SidebarContent({
         </Link>
         {mobile && <IconButton size="small" onClick={onClose} aria-label="بستن منو" sx={{ color: "#64748B" }}><X size={18} /></IconButton>}
       </Box>
-      <Box sx={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
+      <Box sx={{ flex: 1, minHeight: 0, overflow: mobile ? "visible" : "hidden" }}>
         <Navigation onNavigate={onClose} mobile={mobile} />
       </Box>
       <Box sx={{ display: { xs: "none", lg: "block" } }}>
@@ -238,8 +238,8 @@ export default function DashboardSidebar({
           "& .MuiDrawer-paper": {
             width: { xs: "calc(100vw - 24px)", sm: "min(360px, calc(100vw - 24px))" },
             height: "auto",
-            top: { xs: 78, sm: 82 },
-            bottom: { xs: 88, sm: 92 },
+            top: { xs: 72, sm: 76 },
+            bottom: { xs: 12, sm: 16 },
             left: { xs: 12, sm: 12 },
             boxSizing: "border-box",
             border: "1px solid #E2E8F0",
@@ -504,7 +504,7 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
             sx={{
               width: 62,
               minWidth: 62,
-              minHeight: 54,
+              minHeight: 62,
               border: 0,
               borderRadius: 0,
               bgcolor: "transparent",
@@ -521,7 +521,7 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
             <Avatar
               src={activeAccount?.profilePictureUrl || undefined}
               alt={activeAccount?.igUsername || "Instagram"}
-              sx={{ width: 38, height: 38, bgcolor: "transparent", color: "#64748B", border: "2px solid #E2E8F0", boxSizing: "border-box" }}
+              sx={{ width: 44, height: 44, bgcolor: "transparent", color: "#64748B", border: "3px solid #2563EB", boxSizing: "border-box", boxShadow: "0 0 0 1px rgba(37,99,235,0.12)" }}
             >
               {!activeAccount?.profilePictureUrl ? <UserRound size={15} /> : null}
             </Avatar>
@@ -529,12 +529,14 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
               sx={{
                 position: "absolute",
                 left: "50%",
-                top: 1,
+                top: 0,
                 transform: "translateX(-50%)",
                 display: "grid",
                 placeItems: "center",
-                color: "#64748B",
+                color: "#2563EB",
                 zIndex: 2,
+                bgcolor: "#FFFFFF",
+                borderRadius: "50%",
               }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
