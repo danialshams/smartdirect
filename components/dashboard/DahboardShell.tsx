@@ -35,6 +35,7 @@ export default function DashboardShell({
   children,
 }: DashboardShellProps) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const pathname = usePathname();
   const isDashboardOverview = pathname === "/dashboard";
 
@@ -52,7 +53,7 @@ export default function DashboardShell({
           color: "text.primary",
         }}
       >
-        <DashboardMobileHeader onMenuOpen={() => setMobileSidebarOpen(true)} mobileOpen={mobileSidebarOpen} />
+        <DashboardMobileHeader onMenuOpen={() => setMobileSidebarOpen(true)} mobileOpen={mobileSidebarOpen} accountMenuOpen={accountMenuOpen} />
 
         <DashboardSidebar
           instagramAccounts={instagramAccounts}
@@ -60,7 +61,7 @@ export default function DashboardShell({
           onMobileClose={() => setMobileSidebarOpen(false)}
         />
 
-        <DashboardInstagramIsland instagramAccounts={instagramAccounts} />
+        <DashboardInstagramIsland instagramAccounts={instagramAccounts} accountMenuOpen={accountMenuOpen} onAccountMenuOpenChange={setAccountMenuOpen} />
 
         <Box
           sx={{
