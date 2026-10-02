@@ -195,7 +195,7 @@ function SidebarContent({
 }) {
   return (
     <Box dir="rtl" sx={{ height: "100%", display: "flex", flexDirection: "column", bgcolor: "#FFFFFF" }}>
-      <Box sx={{ minHeight: 68, display: "flex", alignItems: "center", gap: 1.25, px: 1.75, borderBottom: "1px solid #E2E8F0" }}>
+      <Box sx={{ minHeight: { xs: 68, sm: 72, lg: 76 }, boxSizing: "border-box", flexShrink: 0, display: "flex", alignItems: "center", gap: 1.25, px: 1.75, borderBottom: "1px solid #E2E8F0" }}>
         <Link href="/dashboard" onClick={onClose} style={{ textDecoration: "none", minWidth: 0, flex: 1 }}>
           <Brand />
         </Link>
