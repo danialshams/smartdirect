@@ -245,26 +245,26 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
   return (
     <Box
       dir="rtl"
+      component="footer"
       sx={{
         display: { xs: "block", lg: "none" },
         position: "fixed",
-        zIndex: (theme) => theme.zIndex.drawer + 2,
-        bottom: "calc(env(safe-area-inset-bottom, 0px) + 12px)",
-        left: { xs: 12, lg: "calc(50% - 98px)" },
-        right: { xs: 12, lg: "auto" },
-        transform: { xs: "none", lg: "translateX(-50%)" },
-        width: { xs: "auto", lg: "calc(100% - 244px)" },
-        maxWidth: 520,
+        zIndex: (theme) => theme.zIndex.modal - 1,
+        bottom: 0,
+        left: 0,
+        right: 0,
         boxSizing: "border-box",
-        border: "1px solid #E2E8F0",
-        borderRadius: 3,
-        bgcolor: "rgba(255,255,255,0.97)",
-        boxShadow: "0 12px 36px rgba(15,23,42,0.12)",
+        borderTop: "1px solid #E2E8F0",
+        bgcolor: "rgba(255,255,255,0.98)",
+        boxShadow: "0 -8px 24px rgba(15,23,42,0.08)",
         backdropFilter: "blur(16px)",
+        pb: "env(safe-area-inset-bottom, 0px)",
         overflow: "hidden",
       }}
     >
-      <AccountSection instagramAccounts={instagramAccounts} />
+      <Box sx={{ width: "100%", maxWidth: 520, mx: "auto" }}>
+        <AccountSection instagramAccounts={instagramAccounts} />
+      </Box>
     </Box>
   );
 }
