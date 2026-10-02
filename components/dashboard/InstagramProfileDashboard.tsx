@@ -363,31 +363,6 @@ export default function InstagramProfileDashboard({
         </Box>
       </Reveal>
 
-      <Reveal visible={visible} delay={620}>
-        <Box
-          sx={{
-            mt: { xs: 1.5, sm: 2, lg: 2.5 },
-            p: { xs: 2, sm: 2.5 },
-            border: "1px solid #E2E8F0",
-            borderRadius: { xs: 3, md: 3.5 },
-            bgcolor: "#FFFFFF",
-            boxShadow: "0 6px 20px rgba(15,23,42,0.035)",
-          }}
-        >
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1 }}>
-            <Typography sx={{ color: "#0F172A", fontSize: { xs: 14, sm: 15 }, fontWeight: 700 }}>
-              وضعیت اتصال
-            </Typography>
-            <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.65, px: 1, py: 0.45, borderRadius: 99, bgcolor: "#F0FDF4", color: "#15803D", fontSize: 10.5, fontWeight: 700 }}>
-              <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "#22C55E" }} />
-              فعال
-            </Box>
-          </Box>
-          <Typography sx={{ mt: 0.8, color: "#64748B", fontSize: { xs: 11.5, sm: 12.5 }, lineHeight: 1.9 }}>
-            اطلاعات این پیج با اتصال فعلی اینستاگرام همگام‌سازی می‌شود.
-          </Typography>
-        </Box>
-      </Reveal>
     </Box>
   );
 
