@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Avatar, Box, Typography } from "@mui/material";
-import { Image, UserRound, UserRoundPlus } from "lucide-react";
+import { Images, UsersRound, UserRoundPlus } from "lucide-react";
 
 type Profile = {
   accountId: string;
@@ -349,13 +349,13 @@ export default function InstagramProfileDashboard({
             </Box>
             <Box sx={{ minWidth: 0, p: { xs: 1.25, sm: 1.75 }, borderRadius: 2.5, bgcolor: "#F5F3FF", border: "1px solid #EDE9FE" }}>
               <Box sx={{ width: 28, height: 28, mb: 1, borderRadius: 1.5, display: "grid", placeItems: "center", bgcolor: "#7C3AED", color: "#FFFFFF" }}>
-                <UserRound size={15} strokeWidth={2} />
+                <UsersRound size={15} strokeWidth={2} />
               </Box>
               <AnimatedProfileStat label="فالوور" value={profile.followersCount} visible={visible} countDelay={860} />
             </Box>
             <Box sx={{ minWidth: 0, p: { xs: 1.25, sm: 1.75 }, borderRadius: 2.5, bgcolor: "#EFF6FF", border: "1px solid #DBEAFE" }}>
               <Box sx={{ width: 28, height: 28, mb: 1, borderRadius: 1.5, display: "grid", placeItems: "center", bgcolor: "#2563EB", color: "#FFFFFF" }}>
-                <Image size={15} strokeWidth={2} />
+                <Images size={15} strokeWidth={2} />
               </Box>
               <AnimatedProfileStat label="پست" value={profile.mediaCount} visible={visible} countDelay={1000} />
             </Box>
