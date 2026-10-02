@@ -248,7 +248,7 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
       component="footer"
       sx={{
         display: { xs: "block", lg: "none" },
-        position: "sticky",
+        position: "fixed",
         zIndex: 1200,
         bottom: "calc(env(safe-area-inset-bottom, 0px) + 10px)",
         alignSelf: "center",
