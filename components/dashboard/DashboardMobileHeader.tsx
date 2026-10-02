@@ -81,7 +81,7 @@ function SubscriptionIndicator() {
           <svg width="100%" height="100%" viewBox="0 0 60 60" aria-hidden="true" style={{ display: "block" }}>
             <circle cx="30" cy="30" r="27" fill="none" stroke="#E2E8F0" strokeWidth="3.5" />
             <path
-              d="M 30 3 A 27 27 0 1 0 30 57 A 27 27 0 1 0 30 3"
+              d="M 30 3 A 27 27 0 1 1 30 57 A 27 27 0 1 1 30 3"
               fill="none"
               stroke={ringColor}
               strokeWidth="3.5"
@@ -132,7 +132,7 @@ export default function DashboardMobileHeader({ onMenuOpen }: DashboardMobileHea
           <MenuIcon size={20} strokeWidth={2} />
         </IconButton>
         <Typography sx={{ display: { xs: "block", lg: "none" }, position: "absolute", left: "50%", transform: "translateX(-50%)", fontSize: { xs: 14, sm: 15 }, fontWeight: 800, color: "#0F172A", whiteSpace: "nowrap", pointerEvents: "none" }}>SmartDirect</Typography>
-        <Box sx={{ display: { xs: "none", lg: "block" }, position: "absolute", right: 28, fontSize: 15, fontWeight: 800 }}>SmartDirect</Box>
+        <Box sx={{ display: { xs: "none", lg: "block" }, position: "absolute", left: "50%", transform: "translateX(-50%)", fontSize: 15, fontWeight: 800, whiteSpace: "nowrap", pointerEvents: "none" }}>SmartDirect</Box>
         <SubscriptionIndicator />
         <Box sx={{ flex: 1 }} />
       </Toolbar>
