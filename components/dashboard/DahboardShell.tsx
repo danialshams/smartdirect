@@ -25,14 +25,12 @@ type DashboardShellProps = {
     createdAt: Date;
   };
   instagramAccounts: InstagramAccount[];
-  instagramStatus: string | null;
   children?: ReactNode;
 };
 
 export default function DashboardShell({
   user,
   instagramAccounts,
-  instagramStatus,
   children,
 }: DashboardShellProps) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -86,7 +84,6 @@ export default function DashboardShell({
                 <DashboardOverview
                   user={user}
                   instagramAccounts={instagramAccounts}
-                  instagramStatus={instagramStatus}
                 />
               )}
             </Box>
