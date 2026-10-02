@@ -7,9 +7,6 @@ import DashboardShell from "../../components/dashboard/DahboardShell";
 
 
 type DashboardPageProps = {
-  searchParams: Promise<{
-    instagram?: string;
-  }>;
 };
 
 export default async function DashboardPage({
@@ -52,8 +49,6 @@ export default async function DashboardPage({
     redirect("/login");
   }
 
-  const instagramStatus = params.instagram ?? null;
-
   return (
     <DashboardShell
       user={{
@@ -63,7 +58,6 @@ export default async function DashboardPage({
         createdAt: user.createdAt,
       }}
       instagramAccounts={user.instagramAccounts}
-      instagramStatus={instagramStatus}
     />
   );
 }
