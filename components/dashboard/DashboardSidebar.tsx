@@ -492,6 +492,9 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
             display: "grid",
             gridTemplateColumns: "1fr 1fr 1fr",
             direction: "rtl",
+            opacity: accountMenuOpen ? 0 : 1,
+            pointerEvents: accountMenuOpen ? "none" : "auto",
+            transition: "opacity 180ms ease",
           }}
         >
           <Box
