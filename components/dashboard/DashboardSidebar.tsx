@@ -490,9 +490,7 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
             border: 0,
             borderRadius: 0,
             bgcolor: "transparent",
-            boxShadow: "0 12px 36px rgba(15,23,42,0.12)",
-            backdropFilter: "blur(16px)",
-            overflow: "hidden",
+            overflow: "visible",
             display: "flex",
             direction: "rtl",
           }}
@@ -509,7 +507,7 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
               minHeight: 54,
               border: 0,
               borderRadius: 0,
-              bgcolor: accountMenuOpen || pathname === "/dashboard" ? "#F8FAFC" : "transparent",
+              bgcolor: "transparent",
               color: pathname === "/dashboard" ? "#2563EB" : "#475569",
               display: "grid",
               placeItems: "center",
@@ -523,7 +521,7 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
             <Avatar
               src={activeAccount?.profilePictureUrl || undefined}
               alt={activeAccount?.igUsername || "Instagram"}
-              sx={{ width: 34, height: 34, bgcolor: "#E2E8F0", color: "#64748B" }}
+              sx={{ width: 38, height: 38, bgcolor: "transparent", color: "#64748B", border: "2px solid #E2E8F0", boxSizing: "border-box" }}
             >
               {!activeAccount?.profilePictureUrl ? <UserRound size={15} /> : null}
             </Avatar>
@@ -536,9 +534,10 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
                 display: "grid",
                 placeItems: "center",
                 color: "#64748B",
+                zIndex: 2,
               }}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path d="M7 14l5-5 5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </Box>
