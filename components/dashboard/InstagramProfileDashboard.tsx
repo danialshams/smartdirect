@@ -139,7 +139,7 @@ export default function InstagramProfileDashboard({
           <Box
             sx={{
               width: { xs: 112, sm: 128, md: 144, lg: 160 },
-              height: { xs: 112, sm: 128, md: 144, lg: 160 },
+              height: { xs: 104, sm: 120, md: 140, lg: 160 },
               borderRadius: "50%",
               bgcolor: "#E2E8F0",
               animation: "sdPulse 1.6s ease-in-out infinite",
@@ -160,7 +160,7 @@ export default function InstagramProfileDashboard({
         <Box
           dir="ltr"
           sx={{
-            mt: { xs: "18vh", sm: "19vh", md: "20vh", lg: "22vh" },
+            mt: { xs: "12vh", sm: "13vh", md: "15vh", lg: "22vh" },
             width: "100%",
             maxWidth: 600,
             display: "grid",
@@ -232,14 +232,14 @@ export default function InstagramProfileDashboard({
         flexDirection: "column",
         alignItems: "center",
         px: { xs: 2, sm: 3, md: 4, lg: 5 },
-        pt: { xs: 2.5, sm: 3.5, md: 4, lg: 5 },
+        pt: { xs: 1.5, sm: 2.5, md: 3.5, lg: 5 },
       }}
     >
       <Box sx={{ display: "flex", width: "100%", flexDirection: "column", alignItems: "center" }}>
         <Reveal visible={visible} delay={180}>
           <Box
             sx={{
-              mt: { xs: "12vh", sm: "14vh", md: "15vh", lg: "16vh" },
+              mt: { xs: "7vh", sm: "9vh", md: "11vh", lg: "16vh" },
               width: { xs: 112, sm: 128, md: 144, lg: 160 },
               height: { xs: 112, sm: 128, md: 144, lg: 160 },
               overflow: "hidden",
