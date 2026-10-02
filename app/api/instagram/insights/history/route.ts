@@ -92,16 +92,14 @@ export async function GET(request: NextRequest) {
 
         const twoYearsAgo = new Date(today);
         twoYearsAgo.setUTCDate(twoYearsAgo.getUTCDate() - (MAX_DAYS - 1));
-        const earliestStoredSnapshot = await prisma.instagramInsightSnapshot.findFirst({
-            where: { instagramAccountId: account.id },
-            orderBy: { snapshotDate: "asc" },
-            select: { snapshotDate: true },
-        });
-        // Instagram's actual creation date is not exposed by this API. Use the first
-        // stored insight as the earliest selectable date, not account.createdAt.
-        const firstAvailableDate = earliestStoredSnapshot ? new Date(earliestStoredSnapshot.snapshotDate) : twoYearsAgo;
+        // Do not derive the selectable start month from stored snapshots.
+        // Snapshots can be backfilled/imported and may predate the account's
+        // actual SmartDirect connection date. The account creation timestamp is
+        // the only reliable lower bound currently stored for this account.
+        const firstAvailableDate = new Date(account.createdAt);
         firstAvailableDate.setUTCHours(0, 0, 0, 0);
-        const analyticsStartDate = firstAvailableDate > twoYearsAgo ? firstAvailableDate : twoYearsAgo;
+        const analyticsStartDate =
+            firstAvailableDate > twoYearsAgo ? firstAvailableDate : twoYearsAgo;
 
         let from = new Date(today);
         let to = now;
