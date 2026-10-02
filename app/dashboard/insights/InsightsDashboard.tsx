@@ -291,7 +291,7 @@ export default function InsightsDashboard() {
   const summary = data?.summary;
   const visibleSnapshots = snapshots;
   const today = useMemo(() => { const value = new Date(); value.setHours(0,0,0,0); return value; }, []);
-  const maxStart = useMemo(() => { const value = new Date(today); value.setFullYear(value.getFullYear()-2); return value; }, [today]);
+  const maxStart = useMemo(() => { const value = new Date(today); value.setDate(value.getDate()-729); return value; }, [today]);
   const earliestAvailable = data?.account?.analyticsStartDate ? new Date(data.account.analyticsStartDate) : maxStart;
   const minDate = earliestAvailable > maxStart ? earliestAvailable : maxStart;
   const formatDateField = (value?: Date) => value ? date(value, { dateStyle: "medium" }) : "انتخاب تاریخ";
