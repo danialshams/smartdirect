@@ -319,7 +319,25 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
   ];
 
   return (
-    <Box
+    <>
+      <Box
+        aria-hidden={!accountMenuOpen}
+        onClick={() => setAccountMenuOpen(false)}
+        sx={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 1199,
+          display: { xs: "block", lg: "none" },
+          pointerEvents: accountMenuOpen ? "auto" : "none",
+          opacity: accountMenuOpen ? 1 : 0,
+          visibility: accountMenuOpen ? "visible" : "hidden",
+          backgroundColor: "rgba(15,23,42,0.025)",
+          backdropFilter: accountMenuOpen ? "blur(2px)" : "blur(0px)",
+          WebkitBackdropFilter: accountMenuOpen ? "blur(2px)" : "blur(0px)",
+          transition: "opacity 360ms ease, backdrop-filter 440ms ease, visibility 360ms ease",
+        }}
+      />
+      <Box
       dir="rtl"
       component="footer"
       sx={{
@@ -574,5 +592,6 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
         </Box>
       </Box>
     </Box>
+    </>
   );
 }
