@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Menu as MenuIcon, CreditCard } from "lucide-react";
 import { AppBar, Box, IconButton, Popover, Toolbar, Typography } from "@mui/material";
 
-type DashboardMobileHeaderProps = { onMenuOpen: () => void; mobileOpen: boolean };
+type DashboardMobileHeaderProps = { onMenuOpen: () => void; mobileOpen: boolean; accountMenuOpen?: boolean };
 
 const TEST_SUBSCRIPTION_MODE = true;
 const TEST_DURATION_MS = 60_000;
@@ -122,13 +122,13 @@ function SubscriptionIndicator() {
   );
 }
 
-export default function DashboardMobileHeader({ onMenuOpen, mobileOpen }: DashboardMobileHeaderProps) {
+export default function DashboardMobileHeader({ onMenuOpen, mobileOpen, accountMenuOpen = false }: DashboardMobileHeaderProps) {
   return (
     <AppBar position="sticky" color="inherit"
       sx={{ bgcolor: "rgba(255,255,255,0.96)", color: "#0F172A", borderBottom: "1px solid #E2E8F0", backdropFilter: "blur(12px)", zIndex: (theme) => theme.zIndex.drawer - 1 }}>
       <Toolbar sx={{ minHeight: { xs: 68, sm: 72, lg: 76 }, px: { xs: 1.5, sm: 2.5, lg: 3.5 }, position: "relative" }}>
         <IconButton onClick={onMenuOpen} aria-label="باز کردن منو"
-          sx={{ display: { xs: "inline-flex", lg: "none" }, position: "absolute", left: { xs: 12, sm: 20 }, color: "#0F172A", width: 40, height: 40, opacity: mobileOpen ? 0 : 1, transform: mobileOpen ? "scale(0.82)" : "scale(1)", pointerEvents: mobileOpen ? "none" : "auto", transition: "opacity 260ms ease, transform 320ms cubic-bezier(0.22, 1, 0.36, 1)" }}>
+          sx={{ display: { xs: "inline-flex", lg: "none" }, position: "absolute", left: { xs: 12, sm: 20 }, color: "#0F172A", width: 40, height: 40, opacity: mobileOpen || accountMenuOpen ? 0 : 1, transform: mobileOpen || accountMenuOpen ? "scale(0.82)" : "scale(1)", pointerEvents: mobileOpen || accountMenuOpen ? "none" : "auto", transition: "opacity 260ms ease, transform 320ms cubic-bezier(0.22, 1, 0.36, 1)" }}>
           <MenuIcon size={20} strokeWidth={2} />
         </IconButton>
         <Typography sx={{ display: { xs: "block", lg: "none" }, position: "absolute", left: "50%", transform: "translateX(-50%)", fontSize: { xs: 14, sm: 15 }, fontWeight: 800, color: "#0F172A", whiteSpace: "nowrap", pointerEvents: "none" }}>SmartDirect</Typography>
