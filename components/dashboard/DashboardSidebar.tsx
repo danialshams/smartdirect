@@ -235,9 +235,9 @@ export default function DashboardSidebar({
           display: { xs: "block", lg: "none" },
           "& .MuiDrawer-paper": {
             width: { xs: "min(68vw, 220px)", sm: 235 },
-            height: "calc(100vh - 20px)",
-            top: 10,
-            bottom: 10,
+            height: { xs: "calc(100vh - 156px)", sm: "calc(100vh - 160px)" },
+            top: { xs: 78, sm: 82 },
+            bottom: { xs: 78, sm: 78 },
             boxSizing: "border-box",
             border: "1px solid #E2E8F0",
             borderRadius: 3,
