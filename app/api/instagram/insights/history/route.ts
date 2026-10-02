@@ -92,14 +92,14 @@ export async function GET(request: NextRequest) {
 
         const twoYearsAgo = new Date(today);
         twoYearsAgo.setUTCDate(twoYearsAgo.getUTCDate() - (MAX_DAYS - 1));
-        const firstSnapshot = await prisma.instagramInsightSnapshot.findFirst({
+        const earliestStoredSnapshot = await prisma.instagramInsightSnapshot.findFirst({
             where: { instagramAccountId: account.id },
             orderBy: { snapshotDate: "asc" },
             select: { snapshotDate: true },
         });
         // Instagram's actual creation date is not exposed by this API. Use the first
         // stored insight as the earliest selectable date, not account.createdAt.
-        const firstAvailableDate = firstSnapshot ? new Date(firstSnapshot.snapshotDate) : twoYearsAgo;
+        const firstAvailableDate = earliestStoredSnapshot ? new Date(earliestStoredSnapshot.snapshotDate) : twoYearsAgo;
         firstAvailableDate.setUTCHours(0, 0, 0, 0);
         const analyticsStartDate = firstAvailableDate > twoYearsAgo ? firstAvailableDate : twoYearsAgo;
 
