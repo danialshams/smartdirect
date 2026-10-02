@@ -74,9 +74,9 @@ function Spinner({ label }: { label: string }) {
         style={{ animation: "sdDashboardSpin 800ms linear infinite" }}
       />
       <span className="text-[11px] text-[#64748B]">{label}</span>
-      <style jsx global>{"
+      <style jsx global>{`
         @keyframes sdDashboardSpin { to { transform: rotate(360deg); } }
-      "}</style>
+      `}</style>
     </div>
   );
 }
