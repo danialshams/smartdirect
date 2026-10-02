@@ -264,19 +264,21 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
   const pathname = usePathname();
   const [accounts, setAccounts] = useState(instagramAccounts);
   const [islandOpen, setIslandOpen] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const islandRef = useRef<HTMLDivElement | null>(null);
   const activeAccount = accounts.find((account) => account.isConnected);
 
   useEffect(() => {
-    if (!islandOpen) return;
+    if (!islandOpen && !accountMenuOpen) return;
     const handlePointerDown = (event: PointerEvent) => {
       if (islandRef.current && !islandRef.current.contains(event.target as Node)) {
         setIslandOpen(false);
+        setAccountMenuOpen(false);
       }
     };
     document.addEventListener("pointerdown", handlePointerDown);
     return () => document.removeEventListener("pointerdown", handlePointerDown);
-  }, [islandOpen]);
+  }, [islandOpen, accountMenuOpen]);
 
   useEffect(() => {
     let cancelled = false;
@@ -339,7 +341,10 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
     <>
       <Box
         aria-hidden={!islandOpen}
-        onClick={() => setIslandOpen(false)}
+        onClick={() => {
+          setIslandOpen(false);
+          setAccountMenuOpen(false);
+        }}
         sx={{
           position: "fixed",
           inset: 0,
@@ -386,7 +391,7 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
               bgcolor: "rgba(255,255,255,0.985)",
               boxShadow: "0 8px 24px rgba(15,23,42,0.07)",
               backdropFilter: "blur(14px)",
-              overflow: "hidden",
+              overflow: "visible",
               opacity: islandOpen ? 1 : 0,
               transform: islandOpen ? "translateY(0) scale(1)" : "translateY(8px) scale(0.985)",
               transformOrigin: "bottom center",
@@ -403,29 +408,32 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
                 minHeight: 72,
                 direction: "rtl",
                 bgcolor: "#F8FAFC",
-                borderBottom: "1px solid #E2E8F0",
+                borderRadius: "inherit",
+                overflow: "hidden",
               }}
             >
               <Box
                 component="button"
                 type="button"
-                onClick={() => setIslandOpen(false)}
-                aria-label="بستن دسترسی سریع"
+                onClick={() => setAccountMenuOpen((open) => !open)}
+                aria-expanded={accountMenuOpen}
+                aria-label="باز کردن انتخاب پیج"
                 sx={{
                   minWidth: 0,
                   minHeight: 72,
                   border: 0,
                   borderLeft: "1px solid #E2E8F0",
-                  bgcolor: "#F8FAFC",
-                  color: "#475569",
+                  bgcolor: accountMenuOpen ? "#EFF6FF" : "#F8FAFC",
+                  color: accountMenuOpen ? "#2563EB" : "#475569",
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
-                  gap: 0.45,
+                  gap: 0.25,
                   cursor: "pointer",
                   fontFamily: "inherit",
                   p: 0.5,
+                  transition: "background-color 160ms ease, color 160ms ease",
                 }}
               >
                 <Avatar
@@ -439,31 +447,34 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
                   sx={{
                     display: "grid",
                     placeItems: "center",
-                    color: "#64748B",
-                    transform: islandOpen ? "rotate(180deg)" : "rotate(0deg)",
+                    color: "inherit",
+                    transform: accountMenuOpen ? "rotate(180deg)" : "rotate(0deg)",
                     transition: "transform 260ms cubic-bezier(0.22, 1, 0.36, 1)",
                     lineHeight: 0,
                   }}
                 >
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M7 14l5-5 5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M7 10l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </Box>
               </Box>
 
-              {visibleShortcuts.map(({ key, href, title, icon: Icon, matches }) => (
+              {visibleShortcuts.map(({ key, href, title, icon: Icon }) => (
                 <Box
                   key={key}
                   component={Link}
                   href={href}
-                  onClick={() => setIslandOpen(false)}
+                  onClick={() => {
+                    setIslandOpen(false);
+                    setAccountMenuOpen(false);
+                  }}
                   sx={{
                     minWidth: 0,
                     minHeight: 72,
                     border: 0,
                     borderLeft: key === visibleShortcuts[visibleShortcuts.length - 1]?.key ? 0 : "1px solid #E2E8F0",
-                    bgcolor: matches(pathname) ? "#EFF6FF" : "transparent",
-                    color: matches(pathname) ? "#2563EB" : "#475569",
+                    bgcolor: "transparent",
+                    color: "#475569",
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
@@ -491,33 +502,85 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
 
             <Box
               sx={{
-                minHeight: 46,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                borderTop: "1px solid #E2E8F0",
-                bgcolor: "#FFFFFF",
+                position: "absolute",
+                right: 0,
+                bottom: "100%",
+                width: "25%",
+                minHeight: 112,
+                boxSizing: "border-box",
+                border: "1px solid #E2E8F0",
+                borderBottom: 0,
+                borderRadius: "14px 14px 0 0",
+                bgcolor: "rgba(255,255,255,0.985)",
+                boxShadow: "0 6px 18px rgba(15,23,42,0.055)",
+                overflow: "hidden",
+                opacity: accountMenuOpen ? 1 : 0,
+                transform: accountMenuOpen ? "translateY(0)" : "translateY(6px)",
+                visibility: accountMenuOpen ? "visible" : "hidden",
+                pointerEvents: accountMenuOpen ? "auto" : "none",
+                transition: "opacity 190ms ease, transform 240ms cubic-bezier(0.22, 1, 0.36, 1), visibility 240ms ease",
+                zIndex: 2,
               }}
             >
               <Box
                 component={Link}
-                href="/api/instagram/connect"
-                onClick={() => setIslandOpen(false)}
+                href="/dashboard"
+                onClick={() => {
+                  setIslandOpen(false);
+                  setAccountMenuOpen(false);
+                }}
                 sx={{
-                  display: "inline-flex",
+                  minHeight: 72,
+                  display: "flex",
+                  flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
-                  gap: 0.5,
-                  px: 1.25,
-                  color: "#2563EB",
+                  gap: 0.45,
+                  color: "#0F172A",
                   textDecoration: "none",
-                  "&:hover": { color: "#1D4ED8" },
+                  bgcolor: "#F8FAFC",
+                  "&:hover": { bgcolor: "#EFF6FF", color: "#2563EB" },
                 }}
               >
-                <Plus size={15} strokeWidth={2.2} />
-                <Typography fontSize={10.5} fontWeight={700} dir="rtl">
-                  افزودن پیج جدید
+                <Avatar
+                  src={activeAccount?.profilePictureUrl || undefined}
+                  alt={activeAccount?.igUsername || "Instagram"}
+                  sx={{ width: 34, height: 34, bgcolor: "#E2E8F0", color: "#64748B" }}
+                >
+                  {!activeAccount?.profilePictureUrl ? <UserRound size={15} /> : null}
+                </Avatar>
+                <Typography
+                  dir="ltr"
+                  noWrap
+                  fontSize={10.5}
+                  fontWeight={700}
+                  sx={{ maxWidth: "calc(100% - 10px)", overflow: "hidden", textOverflow: "ellipsis" }}
+                >
+                  {activeAccount ? `@${activeAccount.igUsername}` : "پیجی متصل نیست"}
                 </Typography>
+              </Box>
+              <Box
+                component={Link}
+                href="/api/instagram/connect"
+                onClick={() => {
+                  setIslandOpen(false);
+                  setAccountMenuOpen(false);
+                }}
+                sx={{
+                  minHeight: 40,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 0.45,
+                  borderTop: "1px solid #E2E8F0",
+                  color: "#2563EB",
+                  textDecoration: "none",
+                  bgcolor: "#FFFFFF",
+                  "&:hover": { bgcolor: "#EFF6FF" },
+                }}
+              >
+                <Plus size={14} strokeWidth={2.2} />
+                <Typography fontSize={10} fontWeight={700}>افزودن پیج</Typography>
               </Box>
             </Box>
           </Box>
@@ -525,7 +588,13 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
           <Box
             component="button"
             type="button"
-            onClick={() => setIslandOpen((open) => !open)}
+            onClick={() => {
+              setIslandOpen((open) => {
+                const nextOpen = !open;
+                if (!nextOpen) setAccountMenuOpen(false);
+                return nextOpen;
+              });
+            }}
             aria-expanded={islandOpen}
             aria-label={islandOpen ? "بستن دسترسی سریع" : "باز کردن دسترسی سریع"}
             sx={{
