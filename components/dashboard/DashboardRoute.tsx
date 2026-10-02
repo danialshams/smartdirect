@@ -55,7 +55,6 @@ export default async function DashboardRoute({
         createdAt: user.createdAt,
       }}
       instagramAccounts={user.instagramAccounts}
-      instagramStatus={null}
     >
       {children}
     </DashboardShell>
