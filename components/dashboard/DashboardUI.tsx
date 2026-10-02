@@ -15,7 +15,7 @@ import {
   TextField,
 } from "@mui/material";
 import { DayPicker, faIR } from "@daypicker/persian";
-import { getDefaultClassNames, type DayPickerProps, type DropdownProps, useDayPicker } from "react-day-picker";
+import { getDefaultClassNames, type DayPickerProps, type DropdownProps, useDayPicker } from "@daypicker/react";
 import { ChevronDown } from "lucide-react";
 
 const COLORS = {
