@@ -199,7 +199,7 @@ function SidebarContent({
         </Link>
         {mobile && <IconButton size="small" onClick={onClose} aria-label="بستن منو" sx={{ color: "#64748B" }}><X size={18} /></IconButton>}
       </Box>
-      <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
+      <Box sx={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
         <Navigation onNavigate={onClose} mobile={mobile} />
       </Box>
       <Box sx={{ display: { xs: "none", lg: "block" } }}>
