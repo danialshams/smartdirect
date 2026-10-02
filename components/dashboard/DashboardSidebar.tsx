@@ -267,14 +267,17 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
   const [accounts, setAccounts] = useState(instagramAccounts);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const islandRef = useRef<HTMLDivElement | null>(null);
+  const islandPanelRef = useRef<HTMLDivElement | null>(null);
+  const islandButtonRef = useRef<HTMLButtonElement | null>(null);
   const activeAccount = accounts.find((account) => account.isConnected);
 
   useEffect(() => {
     if (!accountMenuOpen) return;
     const handlePointerDown = (event: PointerEvent) => {
-      if (islandRef.current && !islandRef.current.contains(event.target as Node)) {
-        setAccountMenuOpen(false);
-      }
+      const target = event.target as Node;
+      const insidePanel = islandPanelRef.current?.contains(target) ?? false;
+      const insideButton = islandButtonRef.current?.contains(target) ?? false;
+      if (!insidePanel && !insideButton) setAccountMenuOpen(false);
     };
     document.addEventListener("pointerdown", handlePointerDown);
     return () => document.removeEventListener("pointerdown", handlePointerDown);
@@ -328,7 +331,7 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
         sx={{
           position: "fixed",
           inset: 0,
-          zIndex: 1199,
+          zIndex: 1300,
           display: { xs: "block", lg: "none" },
           pointerEvents: accountMenuOpen ? "auto" : "none",
           opacity: accountMenuOpen ? 1 : 0,
@@ -345,7 +348,7 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
       sx={{
         display: { xs: "block", lg: "none" },
         position: "fixed",
-        zIndex: 1200,
+        zIndex: 1301,
         bottom: "calc(env(safe-area-inset-bottom, 0px) + 10px)",
         left: 12,
         right: 12,
@@ -358,11 +361,12 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
     >
       <Box ref={islandRef} sx={{ position: "relative", width: "100%", pointerEvents: "auto" }}>
         <Box
+          ref={islandPanelRef}
           dir="rtl"
           sx={{
             position: "absolute",
             right: 0,
-            bottom: "calc(100% + 12px)",
+            bottom: "calc(100% + 20px)",
             transform: accountMenuOpen ? "translateY(0)" : "translateY(8px)",
             width: "100%",
             boxSizing: "border-box",
@@ -483,6 +487,7 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
         </Box>
 
         <Box
+          ref={islandButtonRef}
           component="button"
           type="button"
           onClick={() => setAccountMenuOpen((open) => !open)}
