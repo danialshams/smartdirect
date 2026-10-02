@@ -264,10 +264,17 @@ export default function DashboardSidebar({
 }
 
 
-export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccounts: InstagramAccount[] }) {
+export function DashboardInstagramIsland({
+  instagramAccounts,
+  accountMenuOpen,
+  onAccountMenuOpenChange,
+}: {
+  instagramAccounts: InstagramAccount[];
+  accountMenuOpen: boolean;
+  onAccountMenuOpenChange: (open: boolean) => void;
+}) {
   const pathname = usePathname();
   const [accounts, setAccounts] = useState(instagramAccounts);
-  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const islandRef = useRef<HTMLDivElement | null>(null);
   const islandPanelRef = useRef<HTMLDivElement | null>(null);
   const islandButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -279,7 +286,7 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
       const target = event.target as Node;
       const insidePanel = islandPanelRef.current?.contains(target) ?? false;
       const insideButton = islandButtonRef.current?.contains(target) ?? false;
-      if (!insidePanel && !insideButton) setAccountMenuOpen(false);
+      if (!insidePanel && !insideButton) onAccountMenuOpenChange(false);
     };
     document.addEventListener("pointerdown", handlePointerDown);
     return () => document.removeEventListener("pointerdown", handlePointerDown);
@@ -369,7 +376,7 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
           sx={{
             position: "absolute",
             right: 0,
-            bottom: "calc(100% + 20px)",
+            bottom: "calc(100% + 36px)",
             transform: accountMenuOpen ? "translateY(0)" : "translateY(8px)",
             width: "100%",
             boxSizing: "border-box",
@@ -493,7 +500,7 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
           ref={islandButtonRef}
           component="button"
           type="button"
-          onClick={() => setAccountMenuOpen((open) => !open)}
+          onClick={() => onAccountMenuOpenChange(!accountMenuOpen)}
           aria-expanded={accountMenuOpen}
           aria-label="باز کردن اکانت‌های اینستاگرام"
           sx={{
