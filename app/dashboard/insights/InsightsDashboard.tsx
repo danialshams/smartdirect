@@ -251,6 +251,7 @@ export default function InsightsDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [data, setData] = useState<Data | null>(null);
+  const calendarRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     void (async () => {
@@ -285,7 +286,19 @@ export default function InsightsDashboard() {
     finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { if (accountId) void load(range, accountId, dateFrom, dateTo); }, [accountId, range, dateFrom, dateTo, load]);
+  useEffect(() => {
+    if (accountId) void load(range, accountId, dateFrom, dateTo);
+  }, [accountId, range, dateFrom, dateTo, load]);
+
+  useEffect(() => {
+    if (!calendarOpen) return;
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target as Node | null;
+      if (target && !calendarRef.current?.contains(target)) setCalendarOpen(null);
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [calendarOpen]);
 
   const snapshots = data?.snapshots ?? [];
   const summary = data?.summary;
@@ -308,22 +321,32 @@ export default function InsightsDashboard() {
   return (
     <main dir="rtl" className="min-h-screen bg-[#F8FAFC] pb-16 pt-1 sm:pb-16 sm:pt-2 lg:pb-6 lg:pt-2">
       <div className="mx-auto flex max-w-[1400px] flex-col gap-3 px-2 sm:gap-4 sm:px-3 lg:gap-5 lg:px-5">
+        <div className="flex items-start gap-3 rounded-2xl border border-[#FDE68A] bg-[#FFFBEB] p-3.5 text-[#78350F]">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#FEF3C7] text-[#B45309]"><Lightbulb className="h-5 w-5" /></span>
+          <div className="min-w-0">
+            <h2 className="text-sm font-bold text-[#92400E]">راهنمای صفحه</h2>
+            <div className="mt-1 text-[11px] leading-6">
+              <p><strong>دسترسی:</strong> چند اکانت مختلف محتوای پیجت رو دیدن.</p>
+              <p><strong>بازدید:</strong> تعداد دفعاتی که محتوای پیجت دیده یا پخش شده.</p>
+              <p><strong>تعاملات:</strong> لایک، کامنت، ذخیره و اشتراک‌گذاری.</p>
+              <p><strong>افراد فعال:</strong> چند اکانت مختلف با محتوای پیجت تعامل داشتن.</p>
+            </div>
+          </div>
+        </div>
         <header className="rounded-[22px] border border-[#E2E8F0] bg-white p-3.5 shadow-[0_8px_24px_rgba(15,23,42,0.035)] sm:p-4 lg:p-5">
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#2563EB] text-white"><BarChart3 className="h-[18px] w-[18px]" /></div><h1 className="text-[15px] font-bold text-[#0F172A] sm:text-base">تحلیل پیج</h1></div>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
               <div className="flex shrink-0 items-center gap-1 rounded-xl bg-[#F8FAFC] p-1">{[7, 30, 90].map((days) => <button key={days} type="button" onClick={() => {setDateFrom(undefined);setDateTo(undefined);setDraftFrom(undefined);setDraftTo(undefined);setRange(days as Range);}} className={range === days && !dateFrom ? "rounded-lg bg-[#2563EB] px-3 py-2 text-[10px] font-bold text-white shadow-sm" : "rounded-lg px-3 py-2 text-[10px] font-bold text-[#64748B]"}>{days} روز</button>)}</div>
               <div className="grid flex-1 grid-cols-2 gap-2">
-                <div className="relative"><span className="mb-1 block text-[10px] font-medium text-[#64748B]">از تاریخ</span><button type="button" onClick={() => setCalendarOpen(calendarOpen === "from" ? null : "from")} className="flex h-10 w-full items-center justify-between gap-2 rounded-xl border border-[#E2E8F0] bg-white px-3 text-xs font-semibold text-[#0F172A]"><span>{formatDateField(draftFrom || dateFrom)}</span><CalendarIcon className="h-4 w-4 text-[#2563EB]" /></button>{calendarOpen === "from" && <div className="absolute right-0 top-[66px] z-50 rounded-2xl border border-[#E2E8F0] bg-white p-2 shadow-xl"><Calendar mode="single" selected={draftFrom || dateFrom} onSelect={(value: Date | undefined) => {if(value){setDraftFrom(value);if(draftTo&&value>draftTo)setDraftTo(undefined);setCalendarOpen(null);}}} disabled={(value: Date) => value < minDate || value > today} /></div>}</div>
-                <div className="relative"><span className="mb-1 block text-[10px] font-medium text-[#64748B]">تا تاریخ</span><button type="button" onClick={() => setCalendarOpen(calendarOpen === "to" ? null : "to")} className="flex h-10 w-full items-center justify-between gap-2 rounded-xl border border-[#E2E8F0] bg-white px-3 text-xs font-semibold text-[#0F172A]"><span>{formatDateField(draftTo || dateTo)}</span><CalendarIcon className="h-4 w-4 text-[#2563EB]" /></button>{calendarOpen === "to" && <div className="absolute left-0 top-[66px] z-50 rounded-2xl border border-[#E2E8F0] bg-white p-2 shadow-xl"><Calendar mode="single" selected={draftTo || dateTo} onSelect={(value: Date | undefined) => {if(value){setDraftTo(value);setCalendarOpen(null);}}} disabled={(value: Date) => value > today || value < (draftFrom || dateFrom || minDate)} /></div>}</div>
+                <div ref={calendarRef} className="relative"><span className="mb-1 block text-[10px] font-medium text-[#64748B]">از تاریخ</span><button type="button" onClick={() => setCalendarOpen(calendarOpen === "from" ? null : "from")} className="flex h-10 w-full items-center justify-between gap-2 rounded-xl border border-[#E2E8F0] bg-white px-3 text-xs font-semibold text-[#0F172A]"><span>{formatDateField(draftFrom || dateFrom)}</span><CalendarIcon className="h-4 w-4 text-[#2563EB]" /></button><div className="absolute right-0 top-[66px] z-50 rounded-2xl border border-[#E2E8F0] bg-white p-2 shadow-xl transition-all duration-200 ease-out" style={{ opacity: calendarOpen === "from" ? 1 : 0, transform: calendarOpen === "from" ? "translateY(0) scale(1)" : "translateY(-4px) scale(0.98)", pointerEvents: calendarOpen === "from" ? "auto" : "none" }}><Calendar mode="single" selected={draftFrom || dateFrom} onSelect={(value: Date | undefined) => {if(value){setDraftFrom(value);if(draftTo&&value>draftTo)setDraftTo(undefined);setCalendarOpen(null);}}} disabled={(value: Date) => value < minDate || value > today} /></div></div>
+                <div className="relative"><span className="mb-1 block text-[10px] font-medium text-[#64748B]">تا تاریخ</span><button type="button" onClick={() => setCalendarOpen(calendarOpen === "to" ? null : "to")} className="flex h-10 w-full items-center justify-between gap-2 rounded-xl border border-[#E2E8F0] bg-white px-3 text-xs font-semibold text-[#0F172A]"><span>{formatDateField(draftTo || dateTo)}</span><CalendarIcon className="h-4 w-4 text-[#2563EB]" /></button><div className="absolute left-0 top-[66px] z-50 rounded-2xl border border-[#E2E8F0] bg-white p-2 shadow-xl transition-all duration-200 ease-out" style={{ opacity: calendarOpen === "to" ? 1 : 0, transform: calendarOpen === "to" ? "translateY(0) scale(1)" : "translateY(-4px) scale(0.98)", pointerEvents: calendarOpen === "to" ? "auto" : "none" }}><Calendar mode="single" selected={draftTo || dateTo} onSelect={(value: Date | undefined) => {if(value){setDraftTo(value);setCalendarOpen(null);}}} disabled={(value: Date) => value > today || value < (draftFrom || dateFrom || minDate)} /></div></div>
               </div>
               <button type="button" disabled={!draftFrom||!draftTo||draftFrom<minDate||draftTo>today||draftTo<draftFrom||(draftTo.getTime()-draftFrom.getTime())/86400000+1>730} onClick={() => {setDateFrom(draftFrom);setDateTo(draftTo);setCalendarOpen(null);}} className="h-10 rounded-xl bg-[#2563EB] px-5 text-xs font-bold text-white disabled:cursor-not-allowed disabled:bg-[#CBD5E1]">اعمال بازه</button>
             </div>
             {draftFrom&&draftTo&&(draftTo<draftFrom||(draftTo.getTime()-draftFrom.getTime())/86400000+1>730)&&<p className="text-[10px] text-[#DC2626]">بازه باید حداکثر دو سال باشه و تاریخ پایان بعد از تاریخ شروع قرار بگیره.</p>}
           </div>
         </header>
-        <div className="flex items-start gap-3 rounded-2xl border border-[#FDE68A] bg-[#FFFBEB] p-3.5 text-[#78350F]"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#FEF3C7] text-[#B45309]"><Lightbulb className="h-5 w-5" /></span><div className="min-w-0"><h2 className="text-sm font-bold text-[#92400E]">این عددها چی می‌گن؟</h2><p className="mt-1 text-[11px] leading-6"><strong>دسترسی:</strong> چند اکانت مختلف محتوای پیجت رو دیدن.</p><p className="text-[11px] leading-6"><strong>تعاملات:</strong> مجموع کارهایی مثل لایک، کامنت، ذخیره و اشتراک‌گذاری.</p><p className="text-[11px] leading-6"><strong>افراد فعال:</strong> چند اکانت مختلف با محتوای پیجت تعامل داشتن.</p></div></div>
-
         {error && <div className="rounded-2xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-6 text-[#B91C1C]">{error}</div>}
 
         <Section title="خلاصه عملکرد" description={dateFrom && dateTo ? "آمار بازه انتخاب‌شده" : "آمار " + range + " روز اخیر"} icon={Activity}>
@@ -356,9 +379,9 @@ export default function InsightsDashboard() {
         </Section>
 
         <section className="grid gap-3 sm:grid-cols-3 sm:gap-4">
-          <Section title="بازدید پروفایل" icon={Eye} description={dateFrom&&dateTo?"در بازه انتخاب‌شده":"در بازه "+range+" روز اخیر"}>{loading?<Spinner label="در حال دریافت..." />:<div className="flex min-h-[90px] flex-col justify-between gap-4"><div className="text-2xl font-bold text-[#0F172A]">{n(summary?.profileViews)}</div><div className="text-[10px] text-[#64748B]">مجموع بازدیدهای پروفایل در این بازه</div></div>}</Section>
-          <Section title="رشد فالوور" icon={UserRoundPlus} description={dateFrom&&dateTo?"در بازه انتخاب‌شده":"در بازه "+range+" روز اخیر"}>{loading?<Spinner label="در حال دریافت..." />:<div className="flex min-h-[90px] flex-col justify-between gap-4"><div className="text-2xl font-bold text-[#0F172A]">{summary?.followerGrowth==null?"—":(summary.followerGrowth>0?"+":"")+n(summary.followerGrowth)}</div><div className="text-[10px] text-[#64748B]">تغییر تعداد فالوورها در طول این بازه</div></div>}</Section>
-          <Section title="نرخ تعامل" icon={HeartHandshake} description={dateFrom&&dateTo?"در بازه انتخاب‌شده":"در بازه "+range+" روز اخیر"}>{loading?<Spinner label="در حال دریافت..." />:<div className="flex min-h-[90px] flex-col justify-between gap-4"><div className="text-2xl font-bold text-[#0F172A]">{summary?.engagementRate==null?"—":new Intl.NumberFormat("fa-IR",{maximumFractionDigits:2}).format(summary.engagementRate)+"٪"}</div><div className="text-[10px] text-[#64748B]">تعاملات تقسیم بر دسترسی در این بازه</div></div>}</Section>
+          <Section title="بازدید پروفایل" icon={Eye}>{loading?<Spinner label="در حال دریافت..." />:<div className="flex min-h-[110px] items-center justify-center"><div className="text-center text-3xl font-bold tracking-tight text-[#0F172A]">{n(summary?.profileViews)}</div></div>}</Section>
+          <Section title="رشد فالوور" icon={UserRoundPlus}>{loading?<Spinner label="در حال دریافت..." />:<div className="flex min-h-[110px] items-center justify-center"><div className="text-center text-3xl font-bold tracking-tight text-[#0F172A]">{summary?.followerGrowth==null?"—":(summary.followerGrowth>0?"+":"")+n(summary.followerGrowth)}</div></div>}</Section>
+          <Section title="نرخ تعامل" icon={HeartHandshake}>{loading?<Spinner label="در حال دریافت..." />:<div className="flex min-h-[110px] items-center justify-center"><div className="text-center text-3xl font-bold tracking-tight text-[#0F172A]">{summary?.engagementRate==null?"—":new Intl.NumberFormat("fa-IR",{maximumFractionDigits:2}).format(summary.engagementRate)+"٪"}</div></div>}</Section>
         </section>
       </div>
     </main>
