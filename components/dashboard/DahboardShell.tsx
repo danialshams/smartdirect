@@ -49,7 +49,7 @@ export default function DashboardShell({
           color: "text.primary",
         }}
       >
-        <DashboardMobileHeader onMenuOpen={() => setMobileSidebarOpen(true)} />
+        <DashboardMobileHeader onMenuOpen={() => setMobileSidebarOpen(true)} mobileOpen={mobileSidebarOpen} />
 
         <DashboardSidebar
           instagramAccounts={instagramAccounts}
