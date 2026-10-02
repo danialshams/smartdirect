@@ -93,8 +93,8 @@ export default function DashboardOverview({
         dir="rtl"
         sx={{
           width: "100%",
-          px: { xs: 2, sm: 3, md: 4, lg: 5 },
-          pt: { xs: 2.5, sm: 3.5, md: 4, lg: 5 },
+          px: { xs: 1, sm: 1.5, md: 2.5, lg: 5 },
+          pt: { xs: 1.5, sm: 2.5, md: 3.5, lg: 5 },
           minHeight: 62,
           display: "flex",
           alignItems: "flex-start",
