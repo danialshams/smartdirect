@@ -315,26 +315,37 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
     >
       <Box ref={islandRef} sx={{ position: "relative" }}>
         <Box
-            dir="rtl"
+          dir="rtl"
+          sx={{
+            position: "absolute",
+            right: 0,
+            bottom: "calc(100% + 8px)",
+            width: "100%",
+            boxSizing: "border-box",
+            border: "1px solid #E2E8F0",
+            borderRadius: 3,
+            bgcolor: "rgba(255,255,255,0.97)",
+            boxShadow: "0 12px 36px rgba(15,23,42,0.12)",
+            backdropFilter: "blur(16px)",
+            overflow: "hidden",
+            opacity: accountMenuOpen ? 1 : 0,
+            transform: accountMenuOpen ? "translateY(0)" : "translateY(8px)",
+            transformOrigin: "bottom center",
+            visibility: accountMenuOpen ? "visible" : "hidden",
+            pointerEvents: accountMenuOpen ? "auto" : "none",
+            transition: "opacity 180ms ease, transform 180ms ease, visibility 180ms ease",
+            zIndex: 1,
+          }}
+        >
+          <Box
             sx={{
-              position: "absolute",
-              right: 0,
-              bottom: "calc(100% + 8px)",
-              width: "100%",
-              boxSizing: "border-box",
-              border: "1px solid #E2E8F0",
-              borderRadius: 3,
-              bgcolor: "rgba(255,255,255,0.97)",
-              boxShadow: "0 12px 36px rgba(15,23,42,0.12)",
-              backdropFilter: "blur(16px)",
-              overflow: "hidden",
-              opacity: accountMenuOpen ? 1 : 0,
-              transform: accountMenuOpen ? "translateY(0) scaleY(1)" : "translateY(8px) scaleY(0.96)",
-              transformOrigin: "bottom center",
-              visibility: accountMenuOpen ? "visible" : "hidden",
-              pointerEvents: accountMenuOpen ? "auto" : "none",
-              transition: "opacity 180ms ease, transform 180ms ease, visibility 180ms ease",
-              zIndex: 1,
+              minHeight: 64,
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "stretch",
+              direction: "rtl",
+              bgcolor: "#F8FAFC",
+              borderBottom: "1px solid #E2E8F0",
             }}
           >
             <Box
@@ -342,164 +353,202 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
               href="/dashboard"
               onClick={() => setAccountMenuOpen(false)}
               sx={{
-                minHeight: 64,
-                display: "grid",
-                gridTemplateColumns: "minmax(0, 2fr) minmax(0, 1fr)",
-                alignItems: "stretch",
-                boxSizing: "border-box",
-                color: "#0F172A",
+                width: "66.666667%",
+                minWidth: 0,
+                display: "flex",
+                alignItems: "center",
+                direction: "rtl",
                 textDecoration: "none",
-                bgcolor: "#F8FAFC",
-                borderBottom: "1px solid #E2E8F0",
+                color: "#0F172A",
               }}
             >
               <Box
                 sx={{
-                  minWidth: 0,
-                  display: "grid",
-                  gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)",
+                  width: "50%",
+                  display: "flex",
+                  justifyContent: "center",
                   alignItems: "center",
-                  borderLeft: "1px solid #E2E8F0",
+                  minWidth: 0,
                 }}
               >
                 <Avatar
                   src={activeAccount?.profilePictureUrl || undefined}
                   alt={activeAccount?.igUsername || "Instagram"}
-                  sx={{ width: 34, height: 34, bgcolor: "#E2E8F0", color: "#64748B" }}
+                  sx={{ width: 34, height: 34, flexShrink: 0, bgcolor: "#E2E8F0", color: "#64748B" }}
                 >
                   {!activeAccount?.profilePictureUrl ? <UserRound size={15} /> : null}
                 </Avatar>
               </Box>
-              <Box sx={{ minWidth: 0, display: "grid", placeItems: "center", px: 0.75 }}>
-                <Typography dir="ltr" noWrap fontSize={11.5} fontWeight={700} sx={{ maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis" }}>
+              <Box
+                sx={{
+                  width: "50%",
+                  minWidth: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  px: 0.75,
+                }}
+              >
+                <Typography
+                  dir="ltr"
+                  noWrap
+                  fontSize={11.5}
+                  fontWeight={700}
+                  sx={{ maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis" }}
+                >
                   {activeAccount ? `@${activeAccount.igUsername}` : "پیجی متصل نیست"}
                 </Typography>
-              </Box>
-              <Box sx={{ display: "grid", placeItems: "center", borderRight: "1px solid #E2E8F0" }}>
-                {activeAccount ? <Check size={17} color="#16A34A" strokeWidth={2.4} /> : null}
               </Box>
             </Box>
 
             <Box
-              component={Link}
-              href="/api/instagram/connect"
-              onClick={() => setAccountMenuOpen(false)}
               sx={{
-                minHeight: 48,
+                width: "33.333333%",
+                minWidth: 0,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                gap: 0.6,
-                px: 1,
-                color: "#2563EB",
-                textDecoration: "none",
-                "&:hover": { bgcolor: "#EFF6FF" },
+                borderRight: "1px solid #E2E8F0",
               }}
             >
-              <Typography fontSize={11.5} fontWeight={700}>
-                افزودن پیج جدید
-              </Typography>
-              <Plus size={17} strokeWidth={2.3} />
+              {activeAccount ? <Check size={17} color="#16A34A" strokeWidth={2.4} /> : null}
             </Box>
           </Box>
+
+          <Box
+            component={Link}
+            href="/api/instagram/connect"
+            onClick={() => setAccountMenuOpen(false)}
+            sx={{
+              minHeight: 48,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              direction: "ltr",
+              gap: 0.6,
+              px: 1,
+              color: "#2563EB",
+              textDecoration: "none",
+              "&:hover": { bgcolor: "#EFF6FF" },
+            }}
+          >
+            <Plus size={17} strokeWidth={2.3} />
+            <Typography fontSize={11.5} fontWeight={700} dir="rtl">
+              افزودن پیج جدید
+            </Typography>
+          </Box>
+        </Box>
 
         <Box
           sx={{
             width: "100%",
+            minHeight: 68,
             border: "1px solid #E2E8F0",
             borderRadius: 3,
             bgcolor: "rgba(255,255,255,0.97)",
             boxShadow: "0 12px 36px rgba(15,23,42,0.12)",
             backdropFilter: "blur(16px)",
             overflow: "hidden",
-            display: "flex",
-            flexDirection: "row",
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr 1fr",
+            direction: "rtl",
           }}
         >
-          {sections.map((section, index) => {
-            const isInstagram = section.key === "instagram";
-            const Icon = section.icon;
+          <Box
+            component="button"
+            type="button"
+            onClick={() => setAccountMenuOpen((open) => !open)}
+            aria-expanded={accountMenuOpen}
+            aria-label="باز کردن پیج‌های اینستاگرام"
+            sx={{
+              minWidth: 0,
+              minHeight: 68,
+              border: 0,
+              borderRadius: 0,
+              bgcolor: accountMenuOpen || pathname === "/dashboard" ? "#F8FAFC" : "transparent",
+              color: pathname === "/dashboard" ? "#2563EB" : "#475569",
+              display: "grid",
+              placeItems: "center",
+              position: "relative",
+              cursor: "pointer",
+              fontFamily: "inherit",
+              p: 0,
+            }}
+          >
+            <Avatar
+              src={activeAccount?.profilePictureUrl || undefined}
+              alt={activeAccount?.igUsername || "Instagram"}
+              sx={{ width: 34, height: 34, bgcolor: "#E2E8F0", color: "#64748B" }}
+            >
+              {!activeAccount?.profilePictureUrl ? <UserRound size={15} /> : null}
+            </Avatar>
+            <Box
+              sx={{
+                position: "absolute",
+                left: 12,
+                top: "50%",
+                transform: "translateY(-50%)",
+                display: "grid",
+                placeItems: "center",
+                color: "#64748B",
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M7 14l5-5 5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </Box>
+          </Box>
 
-            if (isInstagram) {
-              return (
-                <Box
-                  key={section.key}
-                  component="button"
-                  type="button"
-                  onClick={() => setAccountMenuOpen((open) => !open)}
-                  aria-expanded={accountMenuOpen}
-                  aria-label="باز کردن پیج‌های اینستاگرام"
-                  sx={{
-                    flex: 1,
-                    minWidth: 0,
-                    minHeight: 68,
-                    border: 0,
-                    borderRadius: 0,
-                    bgcolor: accountMenuOpen || section.active ? "#F8FAFC" : "transparent",
-                    color: section.active ? "#2563EB" : "#475569",
-                    px: { xs: 0.75, sm: 1 },
-                    py: 0.8,
-                    position: "relative",
-                    display: "grid",
-                    placeItems: "center",
-                    cursor: "pointer",
-                    fontFamily: "inherit",
-                    textAlign: "right",
-                  }}
-                >
-                  <Avatar
-                    src={activeAccount?.profilePictureUrl || undefined}
-                    alt={activeAccount?.igUsername || "Instagram"}
-                    sx={{ width: 34, height: 34, bgcolor: "#E2E8F0", color: "#64748B" }}
-                  >
-                    {!activeAccount?.profilePictureUrl ? <UserRound size={15} /> : null}
-                  </Avatar>
-                  <Box sx={{ position: "absolute", left: { xs: 10, sm: 14 }, top: "50%", transform: "translateY(-50%)", display: "grid", placeItems: "center", color: "#64748B" }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                      <path d="M7 14l5-5 5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </Box>
-                </Box>
-              );
-            }
+          <Box
+            component={Link}
+            href="/dashboard/comment-automation"
+            sx={{
+              minWidth: 0,
+              minHeight: 68,
+              border: 0,
+              borderLeft: "1px solid #CBD5E1",
+              borderRadius: 0,
+              bgcolor: pathname === "/dashboard/comment-automation" || pathname.startsWith("/dashboard/comment-automation/") ? "#EFF6FF" : "transparent",
+              color: pathname === "/dashboard/comment-automation" || pathname.startsWith("/dashboard/comment-automation/") ? "#2563EB" : "#475569",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 0.45,
+              textDecoration: "none",
+              px: 0.5,
+            }}
+          >
+            <MessageCircleReply size={22} strokeWidth={1.9} />
+            <Typography noWrap fontSize={{ xs: 11, sm: 12 }} fontWeight={600} color="inherit">
+              پاسخ خودکار کامنت
+            </Typography>
+          </Box>
 
-            return (
-              <Box
-                key={section.key}
-                component={Link}
-                href={section.href}
-                sx={{
-                  flex: 1,
-                  minWidth: 0,
-                  minHeight: 68,
-                  borderRadius: 0,
-                  borderLeft: section.key === "comment" ? "1px solid #CBD5E1" : 0,
-                  bgcolor: section.active ? "#EFF6FF" : "transparent",
-                  color: section.active ? "#2563EB" : "#475569",
-                  px: { xs: 0.75, sm: 1 },
-                  py: 0.8,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 0.45,
-                  textDecoration: "none",
-                  "&:hover": { bgcolor: section.active ? "#EFF6FF" : "#F8FAFC", color: "#1D4ED8" },
-                }}
-              >
-                {Icon ? <Icon size={22} strokeWidth={1.9} /> : null}
-                <Typography
-                  noWrap
-                  fontSize={{ xs: 11, sm: 12 }}
-                  fontWeight={section.active ? 700 : 600}
-                  color="inherit"
-                  sx={{ maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis" }}
-                >
-                  {section.title}
-                </Typography>
-              </Box>
-            );
-          })}
+          <Box
+            component={Link}
+            href="/dashboard/story-automation"
+            sx={{
+              minWidth: 0,
+              minHeight: 68,
+              border: 0,
+              borderRadius: 0,
+              bgcolor: pathname === "/dashboard/story-automation" || pathname.startsWith("/dashboard/story-automation/") ? "#EFF6FF" : "transparent",
+              color: pathname === "/dashboard/story-automation" || pathname.startsWith("/dashboard/story-automation/") ? "#2563EB" : "#475569",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 0.45,
+              textDecoration: "none",
+              px: 0.5,
+            }}
+          >
+            <Camera size={22} strokeWidth={1.9} />
+            <Typography noWrap fontSize={{ xs: 11, sm: 12 }} fontWeight={600} color="inherit">
+              پاسخ خودکار استوری
+            </Typography>
+          </Box>
         </Box>
       </Box>
     </Box>
