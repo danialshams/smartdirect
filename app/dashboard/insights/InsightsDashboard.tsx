@@ -419,7 +419,8 @@ export default function InsightsDashboard() {
                                 setCalendarOpen(null);
                               }
                             }}
-                            startMonth={minDate}\n                            endMonth={today}\n                            disabled={(value: Date) => value < minDate || value > today}
+                            startMonth={minDate}
+                            endMonth={today}\n                            disabled={{ before: minDate, after: today }}
                           />
                         ) : (
                           <Calendar
@@ -431,7 +432,8 @@ export default function InsightsDashboard() {
                                 setCalendarOpen(null);
                               }
                             }}
-                            startMonth={draftFrom || dateFrom || minDate}\n                            endMonth={today}\n                            disabled={(value: Date) => value > today || value < (draftFrom || dateFrom || minDate)}
+                            startMonth={draftFrom || dateFrom || minDate}
+                            endMonth={today}\n                            disabled={{ before: draftFrom || dateFrom || minDate, after: today }}
                           />
                         )}
                       </div>,
