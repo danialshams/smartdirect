@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -37,17 +37,12 @@ export default function DashboardOverview({
   );
 
   const [accountId, setAccountId] = useState(connectedAccounts[0]?.id || "");
-  const [profileLoading, setProfileLoading] = useState(Boolean(connectedAccounts[0]?.id));
 
   useEffect(() => {
     if (!connectedAccounts.some((account) => account.id === accountId)) {
       setAccountId(connectedAccounts[0]?.id || "");
     }
   }, [accountId, connectedAccounts]);
-
-  const handleProfileLoadingChange = useCallback((loading: boolean) => {
-    setProfileLoading(loading);
-  }, []);
 
   if (!connectedAccounts.length) {
     return (
@@ -99,45 +94,28 @@ export default function DashboardOverview({
             boxShadow: "0 8px 24px rgba(15,23,42,0.04)",
             display: "flex",
             alignItems: "center",
+            animation: "sdGreetingEnter 700ms ease both",
           }}
         >
-          {profileLoading ? (
-            <Box
-              aria-hidden="true"
-              sx={{
-                width: { xs: 150, sm: 175, md: 195 },
-                height: { xs: 24, sm: 28, md: 30 },
-                borderRadius: 1.5,
-                bgcolor: "#E2E8F0",
-                animation: "sdGreetingPulse 1.6s ease-in-out infinite",
-              }}
-            />
-          ) : (
-            <Typography
-              component="h1"
-              sx={{
-                fontSize: { xs: 16, sm: 19, md: 21 },
-                fontWeight: 600,
-                letterSpacing: "-0.02em",
-                color: "#0F172A",
-              }}
-            >
-              {`سلام ${user.name}، به پنل خودت خوش اومدی`}{" "}<Heart aria-hidden="true" size={18} strokeWidth={2.2} fill="currentColor" style={{ verticalAlign: "-3px" }} />
-            </Typography>
-          )}
-        </Box>
-      </Box>
+          <Typography component="h1" sx={{ fontSize: { xs: 15.5, sm: 18, md: 20 }, fontWeight: 600, letterSpacing: "-0.02em", color: "#0F172A", whiteSpace: "nowrap" }}>
+            {"سلام " + user.name + "، به پنل خودت خوش اومدی"}{" "}
+            <Heart aria-hidden="true" size={17} strokeWidth={2.2} fill="currentColor" style={{ verticalAlign: "-3px" }} />
+          </Typography>
+        </Box>      </Box>
 
       <style jsx global>{`
         @keyframes sdGreetingPulse {
           0%, 100% { opacity: 0.55; }
           50% { opacity: 1; }
         }
+        @keyframes sdGreetingEnter {
+          from { opacity: 0; transform: translateX(-28px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
       `}</style>
 
       <InstagramProfileDashboard
         accountId={accountId}
-        onProfileLoadingChange={handleProfileLoadingChange}
       />
     </Box>
   );
