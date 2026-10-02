@@ -182,6 +182,8 @@ export async function GET(request: NextRequest) {
 
         insightsUrl.searchParams.set("period", "day");
 
+        insightsUrl.searchParams.set("metric_type", "total_value");
+
         insightsUrl.searchParams.set("access_token", accessToken);
 
         const { response: insightsResponse, data: insightsData } =
