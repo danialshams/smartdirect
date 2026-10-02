@@ -135,9 +135,9 @@ function AccountSection({ instagramAccounts }: { instagramAccounts: InstagramAcc
 function Navigation({ onNavigate, mobile = false }: { onNavigate?: () => void; mobile?: boolean }) {
   const pathname = usePathname();
   return (
-    <Box dir="rtl" sx={{ px: { xs: 1.1, sm: 1.4, lg: 1.25 }, py: { xs: 1.1, sm: 1.4, lg: 0.8 } }}>
+    <Box dir="rtl" sx={{ px: { xs: 1.1, sm: 1.4, lg: 1.25 }, py: { xs: 0.8, sm: 1, lg: 0.8 } }}>
       {menuGroups.map((group) => (
-        <Box key={group.label} sx={{ mb: { xs: 1.4, sm: 1.8, lg: 1.15 } }}>
+        <Box key={group.label} sx={{ mb: { xs: 0.9, sm: 1.1, lg: 1.15 } }}>
           <Box
             component="div"
             dir="ltr"
@@ -164,12 +164,12 @@ function Navigation({ onNavigate, mobile = false }: { onNavigate?: () => void; m
               {group.label}
             </Box>
           </Box>
-          <List disablePadding sx={{ display: "grid", gridTemplateColumns: mobile ? { xs: "repeat(2, minmax(0, 1fr))", lg: "1fr" } : "1fr", gap: { xs: 0.6, lg: 0.35 } }}>
+          <List disablePadding sx={{ display: "grid", gridTemplateColumns: mobile ? { xs: "repeat(2, minmax(0, 1fr))", lg: "1fr" } : "1fr", gap: { xs: 0.4, lg: 0.35 } }}>
             {group.items.map(({ href, title, icon: Icon }) => {
               const active = href === "/dashboard" ? pathname === "/dashboard" : pathname === href || pathname.startsWith(`${href}/`);
               return (
                 <ListItemButton key={href} component={Link} href={href} onClick={onNavigate} selected={active} dir="rtl"
-                  sx={{ minHeight: { xs: 58, sm: 62, lg: 34 }, display: "flex", flexDirection: "row", alignItems: "center", columnGap: { xs: 1, lg: 0.75 }, borderRadius: 2, px: { xs: 1.25, lg: 0.85 }, color: active ? "#2563EB" : "#475569", "&.Mui-selected": { bgcolor: "#EFF6FF", color: "#2563EB" }, "&.Mui-selected:hover": { bgcolor: "#EFF6FF" }, "&:hover": { bgcolor: "#F8FAFC", color: "#1D4ED8" } }}>
+                  sx={{ minHeight: { xs: 46, sm: 50, lg: 34 }, display: "flex", flexDirection: "row", alignItems: "center", columnGap: { xs: 1, lg: 0.75 }, borderRadius: 2, px: { xs: 1.25, lg: 0.85 }, color: active ? "#2563EB" : "#475569", "&.Mui-selected": { bgcolor: "#EFF6FF", color: "#2563EB" }, "&.Mui-selected:hover": { bgcolor: "#EFF6FF" }, "&:hover": { bgcolor: "#F8FAFC", color: "#1D4ED8" } }}>
                   <ListItemIcon sx={{ minWidth: 0, width: { xs: 24, lg: 17 }, flex: { xs: "0 0 24px", lg: "0 0 17px" }, color: "inherit", display: "flex", justifyContent: "center", alignItems: "center", m: 0 }}>
                     <Icon size={19} strokeWidth={1.9} />
                   </ListItemIcon>
@@ -239,7 +239,7 @@ export default function DashboardSidebar({
             width: { xs: "calc(100vw - 24px)", sm: "min(360px, calc(100vw - 24px))" },
             height: "auto",
             top: { xs: 72, sm: 76 },
-            bottom: { xs: 12, sm: 16 },
+            bottom: { xs: 78, sm: 82 },
             left: { xs: 12, sm: 12 },
             boxSizing: "border-box",
             border: "1px solid #E2E8F0",
@@ -484,65 +484,58 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
         </Box>
 
         <Box
+          component="button"
+          type="button"
+          onClick={() => setAccountMenuOpen((open) => !open)}
+          aria-expanded={accountMenuOpen}
+          aria-label="باز کردن اکانت‌های اینستاگرام"
           sx={{
-            width: 62,
-            minHeight: 62,
-            border: 0,
-            borderRadius: 0,
-            bgcolor: "transparent",
-            overflow: "visible",
+            minWidth: { xs: 148, sm: 164 },
+            height: 48,
+            mx: "auto",
+            px: 1.5,
+            border: "1px solid #E2E8F0",
+            borderRadius: 999,
+            bgcolor: "rgba(255,255,255,0.985)",
+            color: accountMenuOpen ? "#2563EB" : "#475569",
+            boxShadow: "0 6px 18px rgba(15,23,42,0.07)",
+            backdropFilter: "blur(12px)",
             display: "flex",
-            direction: "rtl",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 0.65,
+            cursor: "pointer",
+            fontFamily: "inherit",
+            pointerEvents: "auto",
+            transition: "color 180ms ease, background-color 180ms ease, box-shadow 220ms ease, transform 220ms ease",
+            "&:hover": {
+              bgcolor: "#FFFFFF",
+              color: "#2563EB",
+              boxShadow: "0 7px 20px rgba(15,23,42,0.08)",
+            },
+            "&:active": { transform: "scale(0.985)" },
           }}
         >
+          <Typography component="span" fontSize={11.5} fontWeight={700} color="inherit">
+            اکانت‌های اینستاگرام
+          </Typography>
           <Box
-            component="button"
-            type="button"
-            onClick={() => setAccountMenuOpen((open) => !open)}
-            aria-expanded={accountMenuOpen}
-            aria-label="باز کردن پیج‌های اینستاگرام"
+            component="span"
             sx={{
-              width: 62,
-              minWidth: 62,
-              minHeight: 62,
-              border: 0,
-              borderRadius: 0,
-              bgcolor: "transparent",
-              color: pathname === "/dashboard" ? "#2563EB" : "#475569",
+              width: 26,
+              height: 26,
+              borderRadius: "50%",
+              bgcolor: accountMenuOpen ? "#EFF6FF" : "#F8FAFC",
+              color: accountMenuOpen ? "#2563EB" : "#64748B",
               display: "grid",
               placeItems: "center",
-              position: "relative",
-              cursor: "pointer",
-              fontFamily: "inherit",
-              p: 0,
-              gap: 0,
+              transition: "background-color 180ms ease, color 180ms ease, transform 260ms cubic-bezier(0.22, 1, 0.36, 1)",
+              transform: accountMenuOpen ? "rotate(180deg)" : "rotate(0deg)",
             }}
           >
-            <Avatar
-              src={activeAccount?.profilePictureUrl || undefined}
-              alt={activeAccount?.igUsername || "Instagram"}
-              sx={{ width: 44, height: 44, bgcolor: "transparent", color: "#64748B", border: "3px solid #2563EB", boxSizing: "border-box", boxShadow: "0 0 0 1px rgba(37,99,235,0.12)" }}
-            >
-              {!activeAccount?.profilePictureUrl ? <UserRound size={15} /> : null}
-            </Avatar>
-            <Box
-              sx={{
-                position: "absolute",
-                left: "50%",
-                top: 0,
-                transform: "translateX(-50%)",
-                display: "grid",
-                placeItems: "center",
-                color: "#2563EB",
-                zIndex: 2,
-                bgcolor: "#FFFFFF",
-                borderRadius: "50%",
-              }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M7 14l5-5 5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </Box>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M7 10l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </Box>
         </Box>
       </Box>
