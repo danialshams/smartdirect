@@ -302,14 +302,13 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
       }}
     >
       <Box sx={{ position: "relative" }}>
-        {accountMenuOpen ? (
-          <Box
+        <Box
             dir="rtl"
             sx={{
               position: "absolute",
               right: 0,
               bottom: "calc(100% + 8px)",
-              width: "33.333333%",
+              width: "100%",
               boxSizing: "border-box",
               border: "1px solid #E2E8F0",
               borderRadius: 3,
@@ -317,6 +316,13 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
               boxShadow: "0 12px 36px rgba(15,23,42,0.12)",
               backdropFilter: "blur(16px)",
               overflow: "hidden",
+              opacity: accountMenuOpen ? 1 : 0,
+              transform: accountMenuOpen ? "translateY(0) scaleY(1)" : "translateY(8px) scaleY(0.96)",
+              transformOrigin: "bottom center",
+              visibility: accountMenuOpen ? "visible" : "hidden",
+              pointerEvents: accountMenuOpen ? "auto" : "none",
+              transition: "opacity 180ms ease, transform 180ms ease, visibility 180ms ease",
+              zIndex: 1,
             }}
           >
             <Box
@@ -370,13 +376,12 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
                 "&:hover": { bgcolor: "#EFF6FF" },
               }}
             >
-              <Plus size={15} strokeWidth={2.3} />
-              <Typography fontSize={10.5} fontWeight={700}>
+              <Typography fontSize={11.5} fontWeight={700}>
                 افزودن پیج جدید
               </Typography>
+              <Plus size={17} strokeWidth={2.3} />
             </Box>
           </Box>
-        ) : null}
 
         <Box
           sx={{
@@ -409,7 +414,17 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
                     minWidth: 0,
                     minHeight: 68,
                     border: 0,
-                    borderLeft: index < sections.length - 1 ? "1px solid #E2E8F0" : 0,
+                    position: "relative",
+                    "&::after": index < sections.length - 1 ? {
+                      content: '""',
+                      position: "absolute",
+                      left: 0,
+                      top: "50%",
+                      width: "1px",
+                      height: 24,
+                      transform: "translateY(-50%)",
+                      bgcolor: "#CBD5E1",
+                    } : undefined,
                     borderRadius: 0,
                     bgcolor: accountMenuOpen || section.active ? "#F8FAFC" : "transparent",
                     color: section.active ? "#2563EB" : "#475569",
@@ -440,7 +455,7 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
                     </Typography>
                   </Box>
                   <Box sx={{ display: "grid", placeItems: "center", flexShrink: 0, color: "#64748B" }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                       <path d="M7 14l5-5 5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </Box>
@@ -472,10 +487,10 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
                   "&:hover": { bgcolor: section.active ? "#EFF6FF" : "#F8FAFC", color: "#1D4ED8" },
                 }}
               >
-                {Icon ? <Icon size={19} strokeWidth={1.9} /> : null}
+                {Icon ? <Icon size={22} strokeWidth={1.9} /> : null}
                 <Typography
                   noWrap
-                  fontSize={{ xs: 9.5, sm: 10.5 }}
+                  fontSize={{ xs: 11, sm: 12 }}
                   fontWeight={section.active ? 700 : 600}
                   color="inherit"
                   sx={{ maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis" }}
