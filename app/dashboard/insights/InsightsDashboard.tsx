@@ -28,7 +28,6 @@ type Snapshot = {
   views: number | null;
   accountsEngaged: number | null;
   totalInteractions: number | null;
-  profileViews: number | null;
   followerCount: number | null;
 };
 type Data = {
@@ -39,8 +38,7 @@ type Data = {
     views: number;
     accountsEngaged: number;
     totalInteractions: number;
-    profileViews: number;
-    followerCount: number;
+      followerCount: number;
     followerGrowth: number;
     engagementRate: number | null;
   };
@@ -379,7 +377,7 @@ export default function InsightsDashboard() {
         </Section>
 
         <section className="grid gap-3 sm:grid-cols-3 sm:gap-4">
-          <Section title="بازدید پروفایل" icon={Eye}>{loading?<Spinner label="در حال دریافت..." />:<div className="flex min-h-[110px] items-center justify-center"><div className="text-center text-3xl font-bold tracking-tight text-[#0F172A]">{n(summary?.profileViews)}</div></div>}</Section>
+          <Section title="بازدید" icon={Eye}>{loading?<Spinner label="در حال دریافت..." />:<div className="flex min-h-[110px] items-center justify-center"><div className="text-center text-3xl font-bold tracking-tight text-[#0F172A]">{n(summary?.views)}</div></div>}</Section>
           <Section title="رشد فالوور" icon={UserRoundPlus}>{loading?<Spinner label="در حال دریافت..." />:<div className="flex min-h-[110px] items-center justify-center"><div className="text-center text-3xl font-bold tracking-tight text-[#0F172A]">{summary?.followerGrowth==null?"—":(summary.followerGrowth>0?"+":"")+n(summary.followerGrowth)}</div></div>}</Section>
           <Section title="نرخ تعامل" icon={HeartHandshake}>{loading?<Spinner label="در حال دریافت..." />:<div className="flex min-h-[110px] items-center justify-center"><div className="text-center text-3xl font-bold tracking-tight text-[#0F172A]">{summary?.engagementRate==null?"—":new Intl.NumberFormat("fa-IR",{maximumFractionDigits:2}).format(summary.engagementRate)+"٪"}</div></div>}</Section>
         </section>
