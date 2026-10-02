@@ -235,6 +235,7 @@ export default function DashboardSidebar({
       <Drawer variant="temporary" anchor="left" open={mobileOpen} onClose={onMobileClose} ModalProps={{ keepMounted: true }}
         sx={{
           display: { xs: "block", lg: "none" },
+          zIndex: 2100,
           "& .MuiDrawer-paper": {
             width: { xs: "calc(100vw - 24px)", sm: "min(360px, calc(100vw - 24px))" },
             height: "auto",
@@ -331,7 +332,7 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
         sx={{
           position: "fixed",
           inset: 0,
-          zIndex: 1300,
+          zIndex: 2000,
           display: { xs: "block", lg: "none" },
           pointerEvents: accountMenuOpen ? "auto" : "none",
           opacity: accountMenuOpen ? 1 : 0,
@@ -348,7 +349,7 @@ export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccou
       sx={{
         display: { xs: "block", lg: "none" },
         position: "fixed",
-        zIndex: 1301,
+        zIndex: 2001,
         bottom: "calc(env(safe-area-inset-bottom, 0px) + 10px)",
         left: 12,
         right: 12,
