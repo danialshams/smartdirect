@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Avatar, Box, Typography } from "@mui/material";
 import { Images, UsersRound, UserRoundPlus } from "lucide-react";
 
@@ -43,7 +43,7 @@ function Reveal({
       sx={{
         opacity: visible ? 1 : 0,
         transform: visible ? "translateX(0)" : `translateX(${from === "right" ? "28px" : "-28px"})`,
-        transition: "opacity 700ms ease, transform 700ms ease",
+        transition: "opacity 850ms cubic-bezier(0.22, 1, 0.36, 1), transform 850ms cubic-bezier(0.22, 1, 0.36, 1)",
         transitionDelay: `${delay}ms`,
         ...sx,
       }}
@@ -66,12 +66,16 @@ export default function InstagramProfileDashboard({
   const [loading, setLoading] = useState(Boolean(accountId));
   const [error, setError] = useState("");
   const [visible, setVisible] = useState(false);
+  const loadedAccountIdRef = useRef<string | null>(null);
 
   const loadProfile = useCallback(async () => {
     if (!accountId) {
       setLoading(false);
       return;
     }
+
+    if (loadedAccountIdRef.current === accountId) return;
+    loadedAccountIdRef.current = accountId;
 
     try {
       setLoading(true);
@@ -94,6 +98,7 @@ export default function InstagramProfileDashboard({
       onProfileLoaded?.(result.profile.name);
       window.setTimeout(() => setVisible(true), 80);
     } catch (requestError) {
+      loadedAccountIdRef.current = null;
       setProfile(null);
       setError(
         requestError instanceof Error
@@ -186,7 +191,7 @@ export default function InstagramProfileDashboard({
       }}
     >
       <Box sx={{ width: "100%" }}>
-        <Reveal visible={visible} delay={320} from="right" sx={{ height: "100%" }}>
+        <Reveal visible={visible} delay={500} from="right" sx={{ height: "100%" }}>
           <Box
             sx={{
               height: "100%",
@@ -268,7 +273,7 @@ export default function InstagramProfileDashboard({
         </Reveal>
       </Box>
 
-      <Reveal visible={visible} delay={680} from="left">
+      <Reveal visible={visible} delay={1100} from="left">
         <Box sx={{ mt: { xs: 1.5, sm: 2, lg: 2.5 } }}>
           <Box
             sx={{
@@ -281,19 +286,19 @@ export default function InstagramProfileDashboard({
               <Box sx={{ width: 28, height: 28, mb: 1, borderRadius: 1.5, display: "grid", placeItems: "center", bgcolor: "#16A34A", color: "#FFFFFF" }}>
                 <UserRoundPlus size={15} strokeWidth={2} />
               </Box>
-              <AnimatedProfileStat label="فالووینگ" value={profile.followsCount} visible={visible} countDelay={720} />
+              <AnimatedProfileStat label="فالووینگ" value={profile.followsCount} visible={visible} countDelay={1220} />
             </Box>
             <Box sx={{ minWidth: 0, p: { xs: 1.25, sm: 1.75 }, borderRadius: 2.5, bgcolor: "#F5F3FF", border: "1px solid #EDE9FE" }}>
               <Box sx={{ width: 28, height: 28, mb: 1, borderRadius: 1.5, display: "grid", placeItems: "center", bgcolor: "#7C3AED", color: "#FFFFFF" }}>
                 <UsersRound size={15} strokeWidth={2} />
               </Box>
-              <AnimatedProfileStat label="فالوور" value={profile.followersCount} visible={visible} countDelay={860} />
+              <AnimatedProfileStat label="فالوور" value={profile.followersCount} visible={visible} countDelay={1360} />
             </Box>
             <Box sx={{ minWidth: 0, p: { xs: 1.25, sm: 1.75 }, borderRadius: 2.5, bgcolor: "#EFF6FF", border: "1px solid #DBEAFE" }}>
               <Box sx={{ width: 28, height: 28, mb: 1, borderRadius: 1.5, display: "grid", placeItems: "center", bgcolor: "#2563EB", color: "#FFFFFF" }}>
                 <Images size={15} strokeWidth={2} />
               </Box>
-              <AnimatedProfileStat label="پست" value={profile.mediaCount} visible={visible} countDelay={1000} />
+              <AnimatedProfileStat label="پست" value={profile.mediaCount} visible={visible} countDelay={1500} />
             </Box>
           </Box>
         </Box>
