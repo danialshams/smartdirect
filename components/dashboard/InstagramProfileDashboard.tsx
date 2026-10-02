@@ -314,7 +314,7 @@ export default function InstagramProfileDashboard({
                   letterSpacing: "-0.025em",
                 }}
               >
-                {profile.name || \`@\${profile.username}\`}
+                {profile.name || `@${profile.username}`}
               </Typography>
               <Typography dir="ltr" sx={{ mt: 0.45, color: "#64748B", fontSize: { xs: 12.5, sm: 13.5, md: 14 }, fontWeight: 500 }}>
                 @{profile.username}
@@ -380,7 +380,7 @@ export default function InstagramProfileDashboard({
                   <Typography sx={{ color: "#94A3B8", fontSize: 11.5 }}>وب‌سایت</Typography>
                   <Typography
                     component="a"
-                    href={/^https?:\/\//i.test(profile.website) ? profile.website : \`https://\${profile.website}\`}
+                    href={/^https?:\/\//i.test(profile.website) ? profile.website : `https://${profile.website}`}
                     target="_blank"
                     rel="noreferrer"
                     dir="ltr"
