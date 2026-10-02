@@ -456,13 +456,17 @@ export function Calendar({ className, ...props }: DashboardCalendarProps) {
       dir="rtl"
       className={className}
       sx={{
-        p: 1.25,
+        p: 1.5,
+        width: "352px",
+        maxWidth: "calc(100vw - 24px)",
+        boxSizing: "border-box",
         bgcolor: COLORS.surface,
         fontFamily: '"Vazirmatn", Arial, sans-serif',
         direction: "rtl",
-        "& .rdp-root": { "--cell-size": "38px" },
+        "& .rdp-root": { "--cell-size": "42px", width: "100%", maxWidth: "100%" },
         "& .rdp-months": { display: "flex", gap: 2 },
-        "& .rdp-month": { width: "100%" },
+        "& .rdp-month": { width: "100%", minWidth: 0 },
+        "& .rdp-month_grid": { width: "100%", tableLayout: "fixed", borderCollapse: "separate", borderSpacing: 0 },
         "& .rdp-month_caption": {
           height: 42,
           display: "flex",
@@ -505,7 +509,7 @@ export function Calendar({ className, ...props }: DashboardCalendarProps) {
           display: "none",
         },
         "& .rdp-caption_label": { fontSize: 13, fontWeight: 700, color: COLORS.text },
-        "& .rdp-weekdays": { display: "flex" },
+        "& .rdp-weekdays": { display: "flex", width: "100%" },
         "& .rdp-weekday": {
           flex: 1,
           textAlign: "center",
@@ -514,16 +518,17 @@ export function Calendar({ className, ...props }: DashboardCalendarProps) {
           fontWeight: 600,
           py: 0.75,
         },
-        "& .rdp-week": { display: "flex", mt: 0.5 },
+        "& .rdp-week": { display: "flex", width: "100%", mt: 0.5 },
         "& .rdp-day": {
-          flex: 1,
+          flex: "1 1 0",
+          width: "calc(100% / 7)",
           display: "grid",
           placeItems: "center",
           p: 0.25,
         },
         "& .rdp-day_button": {
-          width: 34,
-          height: 34,
+          width: 38,
+          height: 38,
           border: 0,
           borderRadius: "50%",
           background: "transparent",
