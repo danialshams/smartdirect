@@ -67,10 +67,13 @@ export default function DashboardShell({
           <Box
             component="main"
             sx={{
-              minHeight: { xs: "calc(100vh - 92px)", lg: "auto" },
+              minHeight: 0,
+              height: { xs: "calc(100dvh - 92px)", lg: "auto" },
+              overflow: { xs: "hidden", lg: "visible" },
               px: { xs: 1, sm: 1.75, md: 2.75, lg: 4 },
               py: { xs: 1.25, sm: 2, lg: 4 },
               pb: { xs: 13, sm: 13, lg: 4 },
+              boxSizing: "border-box",
             }}
           >
             <Box
