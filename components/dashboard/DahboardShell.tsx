@@ -40,7 +40,9 @@ export default function DashboardShell({
       <Box
         dir="rtl"
         sx={{
-          minHeight: "100vh",
+          minHeight: { lg: "100vh" },
+          height: { xs: "100dvh", lg: "auto" },
+          overflow: { xs: "hidden", lg: "visible" },
           display: "flex",
           flexDirection: "column",
           bgcolor: "background.default",
