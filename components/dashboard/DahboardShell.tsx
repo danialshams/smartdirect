@@ -69,7 +69,7 @@ export default function DashboardShell({
               minHeight: "100vh",
               px: { xs: 1.5, sm: 2.5, md: 3.5, lg: 4 },
               py: { xs: 2, sm: 3, lg: 4 },
-              pb: { xs: 18, lg: 18 },
+              pb: { xs: 2, sm: 3, lg: 4 },
             }}
           >
             <Box
