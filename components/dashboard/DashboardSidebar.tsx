@@ -204,10 +204,6 @@ function SidebarContent({
       <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
         <Navigation onNavigate={onClose} />
       </Box>
-      <Divider sx={{ mx: 1.25, borderColor: "#E2E8F0" }} />
-      <Box sx={{ flexShrink: 0 }}>
-        <AccountSection instagramAccounts={instagramAccounts} />
-      </Box>
       <Divider sx={{ borderColor: "#E2E8F0" }} />
       <Box sx={{ p: 1.25 }}>
         <Box component="button" type="button" onClick={() => void signOut({ callbackUrl: "/login" })}
@@ -235,5 +231,33 @@ export default function DashboardSidebar({
         <SidebarContent mobile onClose={onMobileClose} instagramAccounts={instagramAccounts} />
       </Drawer>
     </>
+  );
+}
+
+
+export function DashboardInstagramIsland({ instagramAccounts }: { instagramAccounts: InstagramAccount[] }) {
+  return (
+    <Box
+      dir="rtl"
+      sx={{
+        position: "fixed",
+        zIndex: (theme) => theme.zIndex.drawer + 2,
+        bottom: "calc(env(safe-area-inset-bottom, 0px) + 12px)",
+        left: { xs: 12, lg: "calc(50% - 98px)" },
+        right: { xs: 12, lg: "auto" },
+        transform: { xs: "none", lg: "translateX(-50%)" },
+        width: { xs: "auto", lg: "calc(100% - 244px)" },
+        maxWidth: 520,
+        boxSizing: "border-box",
+        border: "1px solid #E2E8F0",
+        borderRadius: 3,
+        bgcolor: "rgba(255,255,255,0.97)",
+        boxShadow: "0 12px 36px rgba(15,23,42,0.12)",
+        backdropFilter: "blur(16px)",
+        overflow: "hidden",
+      }}
+    >
+      <AccountSection instagramAccounts={instagramAccounts} />
+    </Box>
   );
 }
