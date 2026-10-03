@@ -85,7 +85,16 @@ function KeywordChipsInput({ value, onChange, placeholder }: { value: string; on
   const [draft, setDraft] = useState("");
   const sync = (next: string[]) => onChange(next.map((item) => item.trim()).filter(Boolean).filter((item, index, list) => list.indexOf(item) === index).join(","));
   const add = () => { const item = draft.trim(); if (!item) return; sync([...keywords, item]); setDraft(""); };
-  return <div className="flex min-h-[52px] flex-wrap items-center gap-2 rounded-lg border bg-background px-3 py-2 focus-within:border-ring">{keywords.map((item) => <span key={item} className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1.5 text-xs font-medium text-foreground">{item}<Button type="button" onClick={() => sync(keywords.filter((keyword) => keyword !== item))} className="text-muted-foreground hover:text-foreground" aria-label={`حذف ${item}`}><X size={13} /></Button></span>)}<Input value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (["Enter", ",", "،"].includes(event.key)) { event.preventDefault(); add(); } }} onBlur={add} placeholder={keywords.length ? "کلمه بعدی..." : placeholder} className="min-w-[140px] flex-1 border-0 bg-transparent px-1 py-1 text-sm outline-none" /><Button type="button" onPointerDown={(event) => event.preventDefault()} onClick={add} className="shrink-0 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted">افزودن کلمه</Button></div>;
+  return (
+    <div className="rounded-2xl border border-[#CBD5E1] bg-white p-3.5 transition focus-within:border-[#93B4E8] focus-within:ring-4 focus-within:ring-[#DBEAFE]/60">
+      {keywords.length > 0 && <div className="mb-3 flex flex-wrap gap-2">{keywords.map((item) => <span key={item} className="inline-flex items-center gap-1.5 rounded-full border border-[#DCE8FA] bg-[#F0F6FF] px-3 py-1.5 text-xs font-semibold text-[#1D4ED8]">{item}<Button type="button" onClick={() => sync(keywords.filter((keyword) => keyword !== item))} className="flex h-4 w-4 items-center justify-center rounded-full p-0 text-[#64748B] hover:bg-[#DBEAFE] hover:text-[#1D4ED8]" aria-label={`حذف ${item}`}><X size={12} /></Button></span>)}</div>}
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Input value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (["Enter", ",", "،"].includes(event.key)) { event.preventDefault(); add(); } }} onBlur={add} placeholder={keywords.length ? "کلمه بعدی را وارد کنید" : placeholder} className="min-h-11 min-w-0 flex-1 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-2.5 text-sm outline-none focus:border-[#93B4E8] focus:ring-2 focus:ring-[#DBEAFE]" />
+        <Button type="button" onPointerDown={(event) => event.preventDefault()} onClick={add} className="flex min-h-11 shrink-0 items-center justify-center rounded-xl border border-[#CBD5E1] bg-white px-4 py-2.5 text-xs font-bold text-[#334155] transition hover:border-[#93B4E8] hover:bg-[#F8FAFC]">افزودن کلمه</Button>
+      </div>
+      <p className="mt-2 text-[10px] leading-5 text-[#94A3B8]">برای ثبت هر کلمه Enter بزنید؛ با انتخاب هر برچسب می‌توانید آن را حذف کنید.</p>
+    </div>
+  );
 }
 
 export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?: (type: PublishType) => void }) {
