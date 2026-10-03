@@ -180,8 +180,9 @@ function UploadArea({ id, accept, multiple, disabled, isDragging, setIsDragging,
         {uploadSuccess ? <><UploadSuccessMark/><span className="sr-only">آپلود کامل شد</span></> : uploading ? "در حال آپلود..." : title}
       </span>
       {!uploading&&!uploadSuccess&&<span className="mt-1.5 whitespace-nowrap text-[11px] leading-5 text-[#64748B]">فایل را بکش و اینجا رها کن یا برای انتخاب از دستگاه کلیک کن.</span>}
-      {uploading&&<><ProgressBar progress={uploadProgress}/><button type="button" onClick={(event)=>{event.preventDefault();event.stopPropagation();onCancelUpload?.();}} className="mt-3 rounded-lg px-3 py-1.5 text-xs font-semibold text-[#DC2626] hover:bg-red-50">حذف فایل در حال آپلود</button></>}
+      {uploading&&<ProgressBar progress={uploadProgress}/>}
     </label>
+    {uploading&&<div className="flex justify-center"><button type="button" onClick={onCancelUpload} className="mt-3 rounded-lg px-3 py-1.5 text-xs font-semibold text-[#DC2626] hover:bg-red-50">حذف فایل در حال آپلود</button></div>}
   </div>;
 }
 function MediaTile({ item, type, onRemove, ready=false, compact=false }: any) {
@@ -190,7 +191,6 @@ function MediaTile({ item, type, onRemove, ready=false, compact=false }: any) {
   return <div className={["group relative overflow-hidden rounded-xl border border-[#E2E8F0] bg-[#F1F5F9]",compact?"shadow-sm":""].join(" ")}>
     {image?<img src={src} alt={ready?item.fileName:item.file.name} className={["w-full object-cover",aspect].join(" ")}/>:<video src={src} controls className={["w-full object-cover",aspect].join(" ")}/>}
     <Button type="button" onClick={onRemove} className={["absolute left-1.5 top-1.5 flex items-center justify-center rounded-full bg-white/95 p-0 text-[#DC2626] shadow-sm ring-1 ring-black/5",compact?"h-7 w-7":"h-9 w-9"].join(" ")} aria-label="حذف فایل"><X size={compact?13:15}/></Button>
-    <div className={["absolute bottom-1.5 right-1.5 rounded-full px-1.5 py-0.5 text-[9px] text-white",ready?"bg-[#16A34A]/90":"bg-[#0F172A]/75"].join(" ")}>{ready?"آماده":"در حال آپلود"}</div>
   </div>;
 }
 
