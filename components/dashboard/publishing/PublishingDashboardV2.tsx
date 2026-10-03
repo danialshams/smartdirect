@@ -361,29 +361,14 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             ))}
           </div>
         </section>
-        ) : uploadedMedia.length === 0 && media.length === 0 ? (
-              <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-5">
-                <SectionHeader n="۲" title="رسانه" text={type==="CAROUSEL"?"۲ تا ۱۰ تصویر برای آلبوم انتخاب کن.":type==="REEL"?"یک ویدیوی مناسب ریلز انتخاب کن.":type==="STORY"?"تصویر یا ویدیوی استوری را انتخاب کن.":"تصویر پست را انتخاب کن."} />
-                {uploadedMedia.length===0 && media.length===0 ? (
-                  <UploadArea id="publishing-media-upload" accept={accept} multiple={type==="CAROUSEL"} disabled={uploading||publishing} isDragging={isDragging} setIsDragging={setIsDragging} uploading={uploading} uploadIndex={uploadIndex} uploadProgress={uploadProgress} onChange={handleFiles} onDrop={handleDrop} />
-                ) : (
-                  <>
-                    <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
-                      {uploadedMedia.map((item)=><MediaTile key={item.storageKey} item={item} type={type} onRemove={() => void removeUploaded(item)} ready />)}
-                      {media.map((item,index)=><MediaTile key={item.file.name+"-"+item.sortOrder} item={item} type={type} onRemove={() => removeLocal(index)} />)}
-                      {type==="CAROUSEL" && uploadedMedia.length<10 && <label htmlFor="publishing-media-upload-more" className="flex min-h-[180px] cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] hover:border-[#93C5FD] hover:bg-[#EFF6FF]/50"><Input id="publishing-media-upload-more" type="file" accept={accept} multiple className="sr-only" onChange={handleFiles} disabled={uploading||publishing}/><Plus size={21} className="text-[#2563EB]"/><span className="mt-2 text-xs font-semibold text-[#334155]">افزودن تصویر</span></label>}
-                    </div>
-                    {uploading && <ProgressBar progress={uploadProgress} label={"در حال آپلود فایل "+toPersianDigits(uploadIndex)} />}
-                  </>
-                )}
-              </section>
-
-
-        ) : (
-          <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
-            <div className="space-y-5">{[1,2,3].map((i) => <div key={i} className="animate-pulse rounded-2xl border border-[#E2E8F0] bg-white p-5"><div className="mb-5 h-5 w-32 rounded bg-[#E2E8F0]" /><div className="h-12 rounded-xl bg-[#F1F5F9]" /><div className="mt-4 h-24 rounded-xl bg-[#F1F5F9]" /></div>)}</div>
-            <div className="h-72 animate-pulse rounded-2xl border border-[#E2E8F0] bg-white p-5"><div className="h-5 w-28 rounded bg-[#E2E8F0]" /><div className="mt-5 h-32 rounded-xl bg-[#F1F5F9]" /></div>
-          </div>
+        ) : uploadedMedia.length === 0 ? (
+          <section className="mx-auto w-full max-w-3xl rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
+            <SectionHeader n="۲" title="رسانه" text={type==="CAROUSEL"?"۲ تا ۱۰ تصویر برای آلبوم انتخاب کن.":type==="REEL"?"یک ویدیوی مناسب ریلز انتخاب کن.":type==="STORY"?"تصویر یا ویدیوی استوری را انتخاب کن.":"تصویر پست را انتخاب کن."} />
+            <UploadArea id="publishing-media-upload" accept={accept} multiple={type==="CAROUSEL"} disabled={uploading||publishing} isDragging={isDragging} setIsDragging={setIsDragging} uploading={uploading} uploadIndex={uploadIndex} uploadProgress={uploadProgress} onChange={handleFiles} onDrop={handleDrop} />
+            {media.length > 0 && <div className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+              {media.map((item,index)=><MediaTile key={item.file.name+"-"+item.sortOrder} item={item} type={type} onRemove={() => removeLocal(index)} />)}
+            </div>}
+          </section>
         ) : (
           <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
             <main className="min-w-0 space-y-5">
