@@ -167,24 +167,20 @@ function ProgressBar({ progress }: { progress: number }) {
   </div>;
 }
 function UploadSuccessMark() {
-  return <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#F0FDF4] text-[#16A34A] ring-1 ring-[#BBF7D0]">
-    <svg viewBox="0 0 32 32" className="h-7 w-7" aria-hidden="true">
-      <path d="M7 16.5 13.2 23 25 9" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" className="upload-check-path"/>
-    </svg>
-  </span>;
+  return <svg viewBox="0 0 24 24" className="inline-block h-5 w-5 shrink-0 text-[#16A34A]" aria-hidden="true">
+    <path d="m4 12.5 5 5L20 6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="upload-check-path"/>
+  </svg>;
 }
-function UploadArea({ id, accept, multiple, disabled, isDragging, setIsDragging, uploading, uploadSuccess, uploadProgress, onChange, onDrop, title }: any) {
-  return <div onDragOver={(e: DragEvent<HTMLDivElement>)=>{e.preventDefault();setIsDragging(true)}} onDragLeave={()=>setIsDragging(false)} onDrop={onDrop} className={["relative overflow-hidden rounded-xl border border-dashed p-4 transition sm:p-6",isDragging?"border-[#2563EB] bg-[#2563EB]/5":"border-[#CBD5E1] bg-[#F8FAFC] hover:border-[#93C5FD] hover:bg-[#EFF6FF]/50",disabled?"pointer-events-none opacity-60":""].join(" ")}>
+function UploadArea({ id, accept, multiple, disabled, isDragging, setIsDragging, uploading, uploadSuccess, uploadProgress, onChange, onDrop, onCancelUpload, title }: any) {
+  return <div onDragOver={(e: DragEvent<HTMLDivElement>)=>{e.preventDefault();setIsDragging(true)}} onDragLeave={()=>setIsDragging(false)} onDrop={onDrop} className={["relative overflow-hidden rounded-xl border border-dashed p-4 transition sm:p-6",isDragging?"border-[#2563EB] bg-[#2563EB]/5":"border-[#CBD5E1] bg-[#F8FAFC] hover:border-[#93C5FD] hover:bg-[#EFF6FF]/50",disabled&&!uploading?"pointer-events-none opacity-60":""].join(" ")}>
     <Input id={id} type="file" accept={accept} multiple={multiple} onChange={onChange} disabled={disabled} className="sr-only"/>
-    <label htmlFor={id} className="flex min-h-[190px] cursor-pointer flex-col items-center justify-center text-center">
-      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-[#2563EB] shadow-sm ring-1 ring-[#E2E8F0]">
-        {uploadSuccess?<UploadSuccessMark/>:<ImagePlus size={22}/>}
-      </div>
-      <span className={["mt-4 text-sm font-bold transition-all duration-300",uploadSuccess?"text-[#16A34A]":"text-[#0F172A]"].join(" ")}>
-        {uploading && uploadProgress >= 97 ? "در حال نهایی‌سازی آپلود..." : uploading ? "در حال آپلود..." : uploadSuccess ? "آپلود شد" : title}
+    <label htmlFor={id} className={["flex min-h-[190px] flex-col items-center justify-center text-center",uploading?"cursor-default":"cursor-pointer"].join(" ")}>
+      {!uploading && <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-[#2563EB] shadow-sm ring-1 ring-[#E2E8F0]"><ImagePlus size={22}/></div>}
+      <span className={["mt-4 inline-flex min-h-6 items-center justify-center gap-2 text-sm font-bold transition-colors duration-300",uploadSuccess?"text-[#16A34A]":"text-[#0F172A]"].join(" ")}>
+        {uploadSuccess ? <><UploadSuccessMark/><span className="sr-only">آپلود کامل شد</span></> : uploading ? "در حال آپلود..." : title}
       </span>
       {!uploading&&!uploadSuccess&&<span className="mt-1.5 whitespace-nowrap text-[11px] leading-5 text-[#64748B]">فایل را بکش و اینجا رها کن یا برای انتخاب از دستگاه کلیک کن.</span>}
-      {uploading&&<ProgressBar progress={uploadProgress}/>}
+      {uploading&&<><ProgressBar progress={uploadProgress}/><button type="button" onClick={(event)=>{event.preventDefault();event.stopPropagation();onCancelUpload?.();}} className="mt-3 rounded-lg px-3 py-1.5 text-xs font-semibold text-[#DC2626] hover:bg-red-50">حذف فایل در حال آپلود</button></>}
     </label>
   </div>;
 }
@@ -229,6 +225,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [uploadIndex, setUploadIndex] = useState(0);
   const uploadRunRef = useRef(0);
+  const carouselInsertAtRef = useRef<number | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -380,7 +377,17 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     URL.revokeObjectURL(item.previewUrl);
     setMedia((current) => current.filter((_, i) => i !== index).map((item, i) => ({ ...item, sortOrder: i + uploadedMedia.length })));
   }
-  async function removeUploaded(item: UploadedMedia) { try { const response = await fetch("/api/instagram/publishing/upload", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ storageKey: item.storageKey }) }); const result = await response.json(); if (!response.ok || !result.success) throw new Error(result.message || "حذف فایل ناموفق بود."); setUploadedMedia((current) => current.filter((m) => m.storageKey !== item.storageKey).map((m, i) => ({ ...m, sortOrder: i }))); } catch (e) { setError(e instanceof Error ? e.message : "حذف فایل ناموفق بود."); } }
+  async function removeUploaded(item: UploadedMedia) {
+    try {
+      const currentIndex = uploadedMedia.findIndex((mediaItem) => mediaItem.storageKey === item.storageKey);
+      const response = await fetch("/api/instagram/publishing/upload", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ storageKey: item.storageKey }) });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.message || "حذف فایل ناموفق بود.");
+      if (type === "CAROUSEL" && currentIndex >= 0) carouselInsertAtRef.current = currentIndex;
+      setUploadedMedia((current) => current.filter((m) => m.storageKey !== item.storageKey).map((m, i) => ({ ...m, sortOrder: i })));
+      setError("");
+    } catch (e) { setError(e instanceof Error ? e.message : "حذف فایل ناموفق بود."); }
+  }
   async function uploadSelectedMedia(items = media) {
     if (!selectedAccountId) { setError("اکانت فعال Instagram پیدا نشد."); return; }
     if (!items.length) return;
@@ -404,7 +411,16 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       }
       revokeLocalMedia(items);
       setMedia(current=>current.filter(item=>!items.includes(item)));
-      setUploadedMedia(current=>[...current,...results].map((item,index)=>({...item,sortOrder:index})));
+      setUploadedMedia(current=>{
+        const next=[...current];
+        if (type === "CAROUSEL" && carouselInsertAtRef.current !== null) {
+          next.splice(Math.min(carouselInsertAtRef.current, next.length), 0, ...results);
+          carouselInsertAtRef.current = null;
+        } else {
+          next.push(...results);
+        }
+        return next.map((item,index)=>({...item,sortOrder:index}));
+      });
       setUploadProgress(100); setUploading(false); setUploadSuccess(true);
       if (type !== "CAROUSEL" && type !== "STORY") {
         window.setTimeout(() => {
@@ -413,12 +429,12 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             setUploadSuccess(false);
             setUploadProgress(0);
           });
-        }, 1000);
+        }, 1100);
       } else {
         window.setTimeout(() => {
           setUploadSuccess(false);
           setUploadProgress(0);
-        }, 1800);
+        }, 1100);
       }
     } catch(e) {
       if (uploadRunRef.current !== runId) return;
@@ -427,8 +443,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   }
 
   function handleCarouselContinue() {
-    if (uploadedMedia.length < 2) {
-      setError("برای آلبوم حداقل ۲ اسلاید انتخاب کن.");
+    if (uploadedMedia.length < 1) {
+      setError("ابتدا حداقل یک اسلاید آپلود کن.");
       return;
     }
     animateStepChange(() => {
@@ -545,7 +561,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     const accountId = selectedAccountId;
     if (!accountId) { setError("اکانت فعال Instagram پیدا نشد."); return; }
     if (!uploadedMedia.length) { setError("ابتدا فایل را آپلود کنید."); return; }
-    if (type === "CAROUSEL" && uploadedMedia.length < 2) { setError("Carousel باید حداقل دو تصویر داشته باشد."); return; }
+    if (type === "CAROUSEL" && uploadedMedia.length < 1) { setError("آلبوم باید حداقل یک فایل داشته باشد."); return; }
     if (type !== "CAROUSEL" && uploadedMedia.length !== 1) { setError(`${typeLabels[type]} باید دقیقاً یک فایل داشته باشد.`); return; }
     const scheduled = jalaliDateTimeToDate(scheduledDate, hour, minute);
     if (!publishNow && scheduled.getTime() <= Date.now()) { setError("زمان‌بندی باید در آینده باشد."); return; }
@@ -578,7 +594,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
   return (
     <>
-      <style>{`@keyframes draw-check { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } .upload-check-path { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw-check 750ms cubic-bezier(.22,.61,.36,1) forwards; }`}</style>
+      <style>{`@keyframes draw-check { from { stroke-dashoffset: 24; } to { stroke-dashoffset: 0; } } .upload-check-path { stroke-dasharray: 24; stroke-dashoffset: 24; animation: draw-check 750ms cubic-bezier(.22,.61,.36,1) forwards; }`}</style>
       <div dir="rtl" className={["bg-[#F8FAFC] px-3 py-4 sm:px-5 sm:py-6 lg:px-8", !selectionConfirmed ? "pb-8" : "min-h-screen pb-28 lg:pb-8"].join(" ")}>
       <div className="mx-auto w-full max-w-6xl">
         <div className={["transition-all duration-300 ease-out", stepVisible ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0"].join(" ")}>
@@ -605,7 +621,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               ))}
             </div>
           </section>
-        ) : (type === "CAROUSEL" && !captionStepConfirmed) || uploadedMedia.length === 0 ? (
+        ) : (type !== "STORY" && !captionStepConfirmed) || uploadedMedia.length === 0 ? (
           <section className="mx-auto w-full max-w-3xl">
             <div className="mb-3 flex items-center">
               <Button
@@ -633,22 +649,23 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                 uploadProgress={uploadProgress}
                 onChange={handleFiles}
                 onDrop={handleDrop}
+                onCancelUpload={() => removeLocal(0)}
               />
 
               {type === "CAROUSEL" && uploadedMedia.length > 0 && (
                 <div className="mt-5">
                   <div className="mb-3 text-center">
                     <p className="text-sm font-bold text-[#334155]">اسلایدهای آلبوم</p>
-                    <p className="mt-1 text-[11px] text-[#64748B]">{toPersianDigits(uploadedMedia.length)} از ۱۰ اسلاید</p>
+                    <p className="mt-1 text-[11px] text-[#64748B]">{toPersianDigits(uploadedMedia.length)} از حداکثر ۱۰ اسلاید</p>
                   </div>
                   <div className="flex flex-wrap justify-center gap-3">
                     {uploadedMedia.map((item,index)=><div key={item.storageKey} className="w-20 sm:w-24"><MediaTile item={item} type="CAROUSEL" onRemove={()=>void removeUploaded(item)} ready compact/><p className="mt-1.5 text-center text-[10px] font-semibold text-[#64748B]">اسلاید شماره {toPersianDigits(index+1)}</p></div>)}
                   </div>
-                  <div className="mt-4 flex justify-center"><Button type="button" disabled={uploadedMedia.length<2||uploading||publishing} onClick={handleCarouselContinue} className="min-h-10 rounded-xl bg-[#2563EB] px-5 text-xs font-semibold text-white hover:bg-[#1D4ED8] disabled:opacity-40">ادامه</Button></div>
+                  <div className="mt-4 flex justify-center"><Button type="button" disabled={uploadedMedia.length<1||uploading||publishing} onClick={handleCarouselContinue} className="min-h-10 rounded-xl bg-[#2563EB] px-5 text-xs font-semibold text-white hover:bg-[#1D4ED8] disabled:opacity-40">ادامه</Button></div>
                 </div>
               )}
 
-              {media.length > 0 && type !== "CAROUSEL" && (
+              {media.length > 0 && type !== "CAROUSEL" && !uploading && (
                 <div className="mt-5">
                   <div className="mb-3 text-center"><p className="text-sm font-bold text-[#334155]">{type==="POST"?"عکس پست":type==="REEL"?"ویدیوی ریلز":"محتوای استوری"}</p></div>
                   <div className="flex justify-center">{media.map((item,index)=><div key={item.file.name+"-"+item.sortOrder} className="w-28 sm:w-32"><MediaTile item={item} type={type} onRemove={()=>removeLocal(index)} compact/></div>)}</div>
@@ -683,8 +700,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             <section className="mx-auto w-full max-w-2xl rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
               <div className="mb-4 flex items-center justify-between gap-3">
                 <div>
-                  <h2 className="text-sm font-bold text-[#0F172A]">کپشن</h2>
-                  <p className="mt-1.5 text-xs leading-5 text-[#64748B]">کپشن ${typeLabels[type]} را بنویس.</p>
+                  <div className="flex items-center gap-2"><span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">۳</span><h2 className="text-sm font-bold text-[#0F172A]">کپشن</h2></div>
+                  <p className="mt-1.5 text-xs leading-5 text-[#64748B]">{`کپشن ${typeLabels[type]} را بنویس.`}</p>
                 </div>
                 <span className="text-[11px] text-[#64748B]">{toPersianDigits(caption.length)} / ۲۲۰۰</span>
               </div>
@@ -787,7 +804,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
         )}
         </div>
         </div>
-      {selectionConfirmed&&captionStepConfirmed&&tagStepConfirmed&&!loading&&uploadedMedia.length>0&&<div className="fixed inset-x-3 bottom-3 z-40 rounded-2xl border border-[#E2E8F0] bg-white/95 p-2.5 shadow-lg backdrop-blur sm:hidden"><div className="grid grid-cols-2 gap-2"><Button type="button" disabled={!canPublish||publishing} onClick={()=>void createJob(true)} className="min-h-11 rounded-xl bg-[#2563EB] px-3 text-xs font-semibold text-white disabled:opacity-50">{publishing?<Loader2 size={16} className="animate-spin"/>:<Send size={16}/>} انتشار الآن</Button><Button type="button" disabled={!canPublish||publishing} onClick={()=>void createJob(false)} className="min-h-11 rounded-xl border border-[#E2E8F0] bg-white px-3 text-xs font-semibold text-[#334155] disabled:opacity-50"><CalendarClock size={16}/> زمان‌بندی</Button></div></div>}
+      {selectionConfirmed&&captionStepConfirmed&&tagStepConfirmed&&type==="STORY"&&!loading&&uploadedMedia.length>0&&<div className="fixed inset-x-3 z-40 rounded-2xl border border-[#E2E8F0] bg-white/95 p-2.5 shadow-lg backdrop-blur sm:hidden"><div className="grid grid-cols-2 gap-2"><Button type="button" disabled={!canPublish||publishing} onClick={()=>void createJob(true)} className="min-h-11 rounded-xl bg-[#2563EB] px-3 text-xs font-semibold text-white disabled:opacity-50">{publishing?<Loader2 size={16} className="animate-spin"/>:<Send size={16}/>} انتشار الآن</Button><Button type="button" disabled={!canPublish||publishing} onClick={()=>void createJob(false)} className="min-h-11 rounded-xl border border-[#E2E8F0] bg-white px-3 text-xs font-semibold text-[#334155] disabled:opacity-50"><CalendarClock size={16}/> زمان‌بندی</Button></div></div>}
       </div>
     </>
   );
