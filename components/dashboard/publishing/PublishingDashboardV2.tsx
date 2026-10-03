@@ -62,8 +62,11 @@ function InlineWheelPicker({ value, onChange, min, max, label }: { value: number
   const values = Array.from({ length: max - min + 1 }, (_, index) => min + index);
 
   useEffect(() => {
-    if (value === null || !scrollRef.current) return;
-    scrollRef.current.scrollTo({ top: (value - min + 1) * itemHeight, behavior: "smooth" });
+    if (!scrollRef.current) return;
+    scrollRef.current.scrollTo({
+      top: value === null ? 0 : (value - min + 1) * itemHeight,
+      behavior: "smooth",
+    });
   }, [value, min]);
 
   useEffect(() => () => {
@@ -73,15 +76,21 @@ function InlineWheelPicker({ value, onChange, min, max, label }: { value: number
   const commitNearest = () => {
     const element = scrollRef.current;
     if (!element) return;
+
     const rawIndex = Math.round(element.scrollTop / itemHeight) - 1;
-    const nextValue = Math.min(max, Math.max(min, min + rawIndex));
+    if (rawIndex < 0) {
+      element.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
+    const nextValue = Math.min(max, min + rawIndex);
     element.scrollTo({ top: (nextValue - min + 1) * itemHeight, behavior: "smooth" });
     if (value !== nextValue) onChange(nextValue);
   };
 
   const handleScroll = () => {
     if (snapTimerRef.current) window.clearTimeout(snapTimerRef.current);
-    snapTimerRef.current = window.setTimeout(commitNearest, 90);
+    snapTimerRef.current = window.setTimeout(commitNearest, 70);
   };
 
   return (
@@ -97,18 +106,17 @@ function InlineWheelPicker({ value, onChange, min, max, label }: { value: number
           <div className="absolute inset-x-0 -top-[22px] h-11 border-y border-[#E2E8F0]" />
         </div>
         <div className="h-[44px]" />
-        {value === null ? (
-          <div className="flex h-[44px] snap-center items-center justify-center text-2xl font-bold text-[#94A3B8]">--</div>
-        ) : (
-          values.map((item) => (
-            <div
-              key={item}
-              className="flex h-[44px] snap-center items-center justify-center text-base font-semibold text-[#94A3B8]"
-            >
-              {toPersianDigits(item)}
-            </div>
-          ))
-        )}
+        <div className="flex h-[44px] snap-center items-center justify-center text-2xl font-bold text-[#94A3B8]">
+          {value === null ? "--" : toPersianDigits(value)}
+        </div>
+        {values.map((item) => (
+          <div
+            key={item}
+            className="flex h-[44px] snap-center items-center justify-center text-base font-semibold text-[#94A3B8]"
+          >
+            {toPersianDigits(item)}
+          </div>
+        ))}
         <div className="h-[44px]" />
       </div>
       <p className="mt-2 text-center text-[10px] font-medium text-[#94A3B8]">--</p>
@@ -1083,12 +1091,11 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                             onClick={() => { setStage6Date(date); setError(""); }}
                             className={["relative min-h-24 overflow-hidden rounded-2xl border p-3.5 text-right transition-all", selected ? "border-[#2563EB] bg-[#EFF6FF] shadow-sm ring-2 ring-[#2563EB]/10" : "border-[#E2E8F0] bg-white hover:border-[#BFDBFE] hover:bg-[#F8FAFC]"].join(" ")}
                           >
-                            <div className="flex items-start justify-between gap-2">
-                              <span className="text-[11px] font-semibold text-[#64748B]">{getJalaliWeekday(date)}</span>
-                              <span className="text-[10px] font-semibold text-[#2563EB]">{label}</span>
-                            </div>
-                            <div className="mt-2 text-center text-base font-bold text-[#0F172A]">{toPersianDigits(date.day)} {jalaliMonths[date.month - 1]}</div>
+                            <span className="absolute right-3.5 top-3.5 text-[11px] font-semibold text-[#64748B]">{getJalaliWeekday(date)}</span>
+                            <span className="absolute left-3.5 top-3.5 text-[10px] font-semibold text-[#2563EB]">{label}</span>
+                            <div className="mt-5 text-center text-base font-bold text-[#0F172A]">{toPersianDigits(date.day)} {jalaliMonths[date.month - 1]}</div>
                             <div className="mt-2 text-center text-[10px] font-medium text-[#64748B]">{toPersianDigits(date.year)}</div>
+                            {selected && <span className="absolute bottom-2.5 left-2.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#2563EB] text-[10px] font-bold text-white">✓</span>}
                           </button>
                         );
                       })}
