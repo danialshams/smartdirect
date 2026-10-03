@@ -130,7 +130,6 @@ function MediaTile({ item, type, onRemove, ready=false, compact=false }: any) {
     <div className={["absolute bottom-1.5 right-1.5 rounded-full px-1.5 py-0.5 text-[9px] text-white",ready?"bg-[#16A34A]/90":"bg-[#0F172A]/75"].join(" ")}>{ready?"آماده":"در حال آپلود"}</div>
   </div>;
 }
-}
 
 export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?: (type: PublishType) => void }) {
   const [accounts, setAccounts] = useState<InstagramAccount[]>([]);
@@ -590,7 +589,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   {uploadedMedia.map((item)=><MediaTile key={item.storageKey} item={item} type={type} onRemove={() => void removeUploaded(item)} ready />)}
                   {media.map((item,index)=><MediaTile key={item.file.name+"-"+item.sortOrder} item={item} type={type} onRemove={() => removeLocal(index)} />)}
                 </div>
-                {uploading && <ProgressBar progress={uploadProgress} label={"در حال آپلود فایل "+toPersianDigits(uploadIndex)} />}
+                {uploading && <ProgressBar progress={uploadProgress} />}
               </section>
 
               {uploadedMedia.length>0 && type!=="STORY" && <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-5">
@@ -638,3 +637,4 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       </div>
     </>
   );
+}
