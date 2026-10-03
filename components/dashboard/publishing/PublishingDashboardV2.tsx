@@ -74,9 +74,7 @@ function InlineWheelPicker({
   max: number;
   label: string;
 }) {
-  const options: WheelPickerOption<number>[] = [
-    { value: -1, label: "--", textValue: "--" },
-    ...Array.from({ length: max - min + 1 }, (_, index) => {
+  const options: WheelPickerOption<number>[] = Array.from({ length: max - min + 1 }, (_, index) => {
       const optionValue = min + index;
       return {
         value: optionValue,
@@ -93,7 +91,7 @@ function InlineWheelPicker({
       </div>
       <WheelPicker
         options={options}
-        value={value ?? -1}
+        value={value ?? min}
         onValueChange={(nextValue) => {
           if (nextValue >= min && nextValue <= max) {
             onChange(nextValue);
@@ -105,7 +103,7 @@ function InlineWheelPicker({
         scrollSensitivity={6}
         classNames={{
           optionItem: "!text-base !font-semibold !text-[#94A3B8]",
-          highlightWrapper: "!rounded-none !border-y !border-[#E2E8F0] !bg-transparent",
+          highlightWrapper: "!rounded-none !border-y !border-[#E2E8F0] !bg-white",
           highlightItem: "!text-2xl !font-bold !text-[#0F172A]",
         }}
       />
