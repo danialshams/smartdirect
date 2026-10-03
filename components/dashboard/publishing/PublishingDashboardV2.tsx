@@ -1115,7 +1115,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
                     <div className="mt-5 border-t border-[#E2E8F0] pt-5">
                       <Button type="button" onClick={() => void createJob(false)} disabled={publishing || !stage6Date || stage6Hour === null || stage6Minute === null} className="min-h-11 w-full rounded-xl bg-[#2563EB] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-50">
-                        <span dir="ltr" className="inline-flex flex-row items-center gap-2"><span dir="rtl">انتشار در زمان انتخاب‌شده</span>{publishing ? <Loader2 size={17} className="animate-spin" /> : <CalendarClock size={17} />}</span>
+                        <span dir="ltr" className="inline-flex flex-row items-center gap-2">{publishing ? <Loader2 size={17} className="animate-spin" /> : <CalendarClock size={17} />}<span dir="rtl">انتشار در زمان انتخاب‌شده</span></span>
                       </Button>
                     </div>
                   </div>
