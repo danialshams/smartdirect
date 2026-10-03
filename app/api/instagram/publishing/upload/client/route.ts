@@ -41,7 +41,59 @@ export async function POST(request: NextRequest) {
     const contentType = request.headers.get("content-type") || "";
 
     if (contentType.includes("application/json")) {
-      const payload = (await request.json()) as {
+      const body = (await request.json()) as Record<string, unknown>;
+
+      if (body.type === "blob.generate-client-token") {
+        const jsonResponse = await handleUpload({
+          body: body as unknown as HandleUploadBody,
+          request,
+          onBeforeGenerateToken: async (pathname, clientPayload, multipart) => {
+            const safePathPrefix = `pending/${session.user.id}/`;
+            if (!pathname.startsWith(safePathPrefix)) {
+              throw new Error("مسیر آپلود معتبر نیست.");
+            }
+
+            let payload: {
+              pathname?: string;
+              fileName?: string;
+              contentType?: string;
+              fileSize?: number;
+            } = {};
+
+            if (clientPayload) {
+              try {
+                payload = JSON.parse(clientPayload);
+              } catch {
+                throw new Error("اطلاعات فایل معتبر نیست.");
+              }
+            }
+
+            if (
+              payload.pathname !== pathname ||
+              !payload.contentType ||
+              !allowedContentTypes.includes(payload.contentType)
+            ) {
+              throw new Error("اطلاعات فایل معتبر نیست.");
+            }
+
+            const maxSize = payload.contentType.startsWith("video/")
+              ? MAX_VIDEO_SIZE
+              : MAX_IMAGE_SIZE;
+
+            return {
+              pathname,
+              multipart,
+              allowedContentTypes,
+              maximumSizeInBytes: maxSize,
+              tokenPayload: JSON.stringify({ userId: session.user.id }),
+            };
+          },
+        });
+
+        return NextResponse.json(jsonResponse);
+      }
+
+      const payload = body as {
         fileName?: string;
         contentType?: string;
         fileSize?: number;
@@ -82,55 +134,10 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const body = (await request.json()) as HandleUploadBody;
-
-    const jsonResponse = await handleUpload({
-      body,
-      request,
-      onBeforeGenerateToken: async (pathname, clientPayload, multipart) => {
-        const safePathPrefix = `pending/${session.user.id}/`;
-        if (!pathname.startsWith(safePathPrefix)) {
-          throw new Error("مسیر آپلود معتبر نیست.");
-        }
-
-        let payload: {
-          pathname?: string;
-          fileName?: string;
-          contentType?: string;
-          fileSize?: number;
-        } = {};
-
-        if (clientPayload) {
-          try {
-            payload = JSON.parse(clientPayload);
-          } catch {
-            throw new Error("اطلاعات فایل معتبر نیست.");
-          }
-        }
-
-        if (
-          payload.pathname !== pathname ||
-          !payload.contentType ||
-          !allowedContentTypes.includes(payload.contentType)
-        ) {
-          throw new Error("اطلاعات فایل معتبر نیست.");
-        }
-
-        const maxSize = payload.contentType.startsWith("video/")
-          ? MAX_VIDEO_SIZE
-          : MAX_IMAGE_SIZE;
-
-        return {
-          pathname,
-          multipart,
-          allowedContentTypes,
-          maximumSizeInBytes: maxSize,
-          tokenPayload: JSON.stringify({ userId: session.user.id }),
-        };
-      },
-    });
-
-    return NextResponse.json(jsonResponse);
+    return NextResponse.json(
+      { success: false, message: "درخواست آپلود معتبر نیست." },
+      { status: 400 },
+    );
   } catch (error) {
     console.error("POST /api/instagram/publishing/upload/client error:", error);
     return NextResponse.json(
