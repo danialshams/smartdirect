@@ -361,13 +361,24 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             ))}
           </div>
         </section>
-        ) : loading ? (
-          <div className="mx-auto w-full max-w-3xl rounded-2xl border border-[#E2E8F0] bg-white p-5">
-            <div className="h-5 w-32 animate-pulse rounded bg-[#E2E8F0]" />
-            <div className="mt-5 grid grid-cols-2 gap-3">
-              {[1,2,3,4].map((item) => <div key={item} className="h-40 animate-pulse rounded-[22px] bg-[#F1F5F9]" />)}
-            </div>
-          </div>
+        ) : uploadedMedia.length === 0 && media.length === 0 ? (
+              <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-5">
+                <SectionHeader n="۲" title="رسانه" text={type==="CAROUSEL"?"۲ تا ۱۰ تصویر برای آلبوم انتخاب کن.":type==="REEL"?"یک ویدیوی مناسب ریلز انتخاب کن.":type==="STORY"?"تصویر یا ویدیوی استوری را انتخاب کن.":"تصویر پست را انتخاب کن."} />
+                {uploadedMedia.length===0 && media.length===0 ? (
+                  <UploadArea id="publishing-media-upload" accept={accept} multiple={type==="CAROUSEL"} disabled={uploading||publishing} isDragging={isDragging} setIsDragging={setIsDragging} uploading={uploading} uploadIndex={uploadIndex} uploadProgress={uploadProgress} onChange={handleFiles} onDrop={handleDrop} />
+                ) : (
+                  <>
+                    <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+                      {uploadedMedia.map((item)=><MediaTile key={item.storageKey} item={item} type={type} onRemove={() => void removeUploaded(item)} ready />)}
+                      {media.map((item,index)=><MediaTile key={item.file.name+"-"+item.sortOrder} item={item} type={type} onRemove={() => removeLocal(index)} />)}
+                      {type==="CAROUSEL" && uploadedMedia.length<10 && <label htmlFor="publishing-media-upload-more" className="flex min-h-[180px] cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] hover:border-[#93C5FD] hover:bg-[#EFF6FF]/50"><Input id="publishing-media-upload-more" type="file" accept={accept} multiple className="sr-only" onChange={handleFiles} disabled={uploading||publishing}/><Plus size={21} className="text-[#2563EB]"/><span className="mt-2 text-xs font-semibold text-[#334155]">افزودن تصویر</span></label>}
+                    </div>
+                    {uploading && <ProgressBar progress={uploadProgress} label={"در حال آپلود فایل "+toPersianDigits(uploadIndex)} />}
+                  </>
+                )}
+              </section>
+
+
         ) : (
           <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
             <div className="space-y-5">{[1,2,3].map((i) => <div key={i} className="animate-pulse rounded-2xl border border-[#E2E8F0] bg-white p-5"><div className="mb-5 h-5 w-32 rounded bg-[#E2E8F0]" /><div className="h-12 rounded-xl bg-[#F1F5F9]" /><div className="mt-4 h-24 rounded-xl bg-[#F1F5F9]" /></div>)}</div>
@@ -376,23 +387,6 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
         ) : (
           <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
             <main className="min-w-0 space-y-5">
-              <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-5">
-                <SectionHeader n="۱" title="نوع محتوا" text="نوع محتوایی را که می‌خواهی در Instagram منتشر کنی انتخاب کن." />
-                <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                  {([["POST","پست",ImagePlus,"#2563EB","#EFF6FF"],["CAROUSEL","آلبوم",Images,"#7C3AED","#F5F3FF"],["REEL","ریلز",Clapperboard,"#D97706","#FFF7ED"],["STORY","استوری",Camera,"#16A34A","#F0FDF4"]] as const).map(([value,label,Icon,accent,soft]) => (
-                    <Button key={value} type="button" onClick={() => handleTypeChange(value)} className={[
-                      "group flex min-h-[156px] sm:min-h-[176px] flex-col items-center justify-center gap-4 rounded-[22px] border-2 bg-white p-4 text-center transition-all duration-300",
-                      type===value
-                        ? "border-[#2563EB] shadow-[0_0_0_3px_rgba(37,99,235,0.08)]"
-                        : "border-[#E2E8F0] hover:-translate-y-0.5 hover:shadow-md"
-                    ].join(" ")}>
-                      <span className="flex h-16 w-16 items-center justify-center rounded-2xl" style={{backgroundColor:soft,color:accent}}><Icon size={28}/></span>
-                      <span className="text-sm font-bold text-[#0F172A]">{label}</span>
-                    </Button>
-                  ))}
-                </div>
-              </section>
-
               <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-5">
                 <SectionHeader n="۲" title="رسانه" text={type==="CAROUSEL"?"۲ تا ۱۰ تصویر برای آلبوم انتخاب کن.":type==="REEL"?"یک ویدیوی مناسب ریلز انتخاب کن.":type==="STORY"?"تصویر یا ویدیوی استوری را انتخاب کن.":"تصویر پست را انتخاب کن."} />
                 {uploadedMedia.length===0 && media.length===0 ? (
