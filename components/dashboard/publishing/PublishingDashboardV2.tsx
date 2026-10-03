@@ -643,8 +643,10 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       ? jalaliDateTimeToDate(selectedScheduleDate, selectedHour, selectedMinute)
       : null;
     if (!publishNow && !scheduled) { setError("زمان انتشار را انتخاب کن."); return; }
-    if (!publishNow && scheduled.getTime() <= Date.now()) { setError("زمان انتخاب‌شده باید در آینده باشد."); return; }
-    if (!publishNow && scheduled.getTime() > Date.now() + 48 * 60 * 60 * 1000) { setError("زمان انتشار باید حداکثر تا ۴۸ ساعت آینده باشد."); return; }
+    if (!publishNow) {
+      if (scheduled.getTime() <= Date.now()) { setError("زمان انتخاب‌شده باید در آینده باشد."); return; }
+      if (scheduled.getTime() > Date.now() + 48 * 60 * 60 * 1000) { setError("زمان انتشار باید حداکثر تا ۴۸ ساعت آینده باشد."); return; }
+    }
     try {
       setPublishing(true); setError("");
       const automationId = automationEnabled ? await createAutomation() : null;
