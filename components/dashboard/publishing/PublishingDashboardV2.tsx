@@ -359,13 +359,13 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
           <section className="w-full">
             <SectionHeader n="۱" title="نوع محتوا" text="نوع محتوایی را که می‌خواهی در Instagram منتشر کنی انتخاب کن." />
             <div className="grid w-full grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
-              {([["POST","پست",ImagePlus,"#2563EB","#EFF6FF"],["CAROUSEL","آلبوم",Images,"#7C3AED","#F5F3FF"],["REEL","ریلز",Clapperboard,"#D97706","#FFF7ED"],["STORY","استوری",Camera,"#16A34A","#F0FDF4"]] as const).map(([value,label,Icon,accent,soft]) => (
+              {([["POST","پست",ImagePlus,"#2563EB","#EFF6FF","#1D4ED8"],["CAROUSEL","آلبوم",Images,"#7C3AED","#F5F3FF","#6D28D9"],["REEL","ریلز",Clapperboard,"#D97706","#FFF7ED","#B45309"],["STORY","استوری",Camera,"#16A34A","#F0FDF4","#15803D"]] as const).map(([value,label,Icon,accent,soft,border]) => (
                 <Button
                   key={value}
                   type="button"
                   onClick={() => handleTypeChange(value)}
                   className="group relative flex aspect-square w-full flex-col items-center justify-center gap-3 rounded-[28px] border-2 p-5 text-center shadow-none transition-all duration-200 hover:-translate-y-1 hover:shadow-lg active:translate-y-0 sm:rounded-[32px] sm:p-7"
-                  style={{ backgroundColor: soft, borderColor: accent, color: accent }}
+                  style={{ backgroundColor: soft, borderColor: border, color: accent }}
                 >
                   <span
                     className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/55 sm:h-14 sm:w-14"
