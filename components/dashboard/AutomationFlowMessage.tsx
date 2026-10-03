@@ -313,14 +313,15 @@ export default function AutomationFlowMessage({
       {message.messageType === "TEXT" && (
         <div className="space-y-2">
           <label className="text-xs font-semibold text-foreground">متن پاسخ</label>
-          <Textarea value={message.text} onChange={(event) => onUpdate({ text: event.target.value })} rows={5} placeholder="متن پاسخ را وارد کنید..." className="w-full resize-none rounded-2xl border border-border/70 bg-background px-4 py-3 text-sm leading-7 outline-none focus:border-ring" />
+          <Textarea value={message.text} onChange={(event) => onUpdate({ text: event.target.value })} rows={5} placeholder="متن پاسخ را وارد کنید..." className="w-full resize-none rounded-2xl border border-[#CBD5E1] bg-white px-4 py-3.5 text-sm leading-7 outline-none transition focus:border-[#2563EB] focus:ring-2 focus:ring-[#DBEAFE]" />
         </div>
       )}
 
       {isForm && (
         <div className="space-y-4 rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5 sm:p-4">
           <div>
-            <p className="text-sm font-bold text-foreground">فرم</p>
+            <p className="text-sm font-bold text-[#0F172A]">فرم پرسش‌وپاسخ</p>
+            <p className="mt-1 text-xs leading-5 text-[#64748B]">سؤال را بنویسید و جواب‌هایی بسازید که مسیر گفت‌وگو را مشخص کنند.</p>
             
           </div>
           <Textarea
@@ -355,9 +356,9 @@ export default function AutomationFlowMessage({
       )}
 
       {message.messageType === "SHOWCASE" && (
-        <div className="space-y-3 rounded-2xl border border-border/70 bg-muted/30 p-3.5">
+        <div className="space-y-3 rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5 sm:p-4">
           <div className="flex items-center justify-between gap-2">
-            <div><p className="text-sm font-bold text-foreground">ویترین</p><p className="mt-1 text-[10px] leading-5 text-muted-foreground">محتوای تصویری پاسخ.</p></div>
+            <div><p className="text-sm font-bold text-[#0F172A]">ویترین تصویری</p><p className="mt-1 text-xs leading-5 text-[#64748B]">هر اسلاید شامل تصویر، عنوان و توضیح است.</p></div>
             <Button type="button" onClick={() => setShowcaseItems((current) => [...current, newShowcaseItem()])} className="inline-flex items-center gap-1.5 rounded-xl border border-[#CBD5E1] bg-white px-3 py-2.5 text-xs font-bold text-[#334155] transition hover:bg-[#F8FAFC]"><Plus size={13} />اسلاید</Button>
           </div>
           {showcaseItems.map((item, itemIndex) => (
@@ -604,7 +605,7 @@ function BranchShowcaseCreator({
         <>
           <div className="flex items-center justify-between gap-2">
             <div>
-              <p className="text-xs font-bold text-foreground">ساخت ویترین</p>
+              <p className="text-sm font-bold text-[#0F172A]">ساخت ویترین تصویری</p>
               <p className="mt-1 text-[10px] leading-5 text-muted-foreground">ویترین همین‌جا ساخته می‌شود و نیازی به انتخاب ویترین قبلی نیست.</p>
             </div>
             <Button
@@ -671,7 +672,7 @@ function BranchShowcaseCreator({
             type="button"
             disabled={saving}
             onClick={() => void createInlineShowcase()}
-            className="w-full rounded-xl bg-primary px-4 py-3 text-xs font-semibold text-white disabled:opacity-50"
+            className="w-full rounded-xl bg-[#2563EB] px-4 py-3.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#1D4ED8] disabled:opacity-50"
           >
             {saving ? "در حال ساخت ویترین..." : "ساخت و اتصال ویترین"}
           </Button>
@@ -732,7 +733,7 @@ function BranchAnswerEditor({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-xs font-bold text-foreground">{depth === 0 ? "جواب‌ها" : "جواب‌های سؤال بعدی"}</p>
+        <p className="text-sm font-bold text-[#0F172A]">{depth === 0 ? "گزینه‌های پاسخ" : "گزینه‌های سؤال بعدی"}</p>
         <Button type="button" onClick={addReply} disabled={replies.length >= 13} className="inline-flex items-center gap-1.5 rounded-xl border border-[#CBD5E1] bg-white px-3 py-2.5 text-xs font-bold text-[#334155] transition hover:bg-[#F8FAFC] disabled:opacity-40">
           <Plus size={13} />افزودن جواب
         </Button>
@@ -740,7 +741,7 @@ function BranchAnswerEditor({
 
       {replies.length === 0 && (
         <div className="rounded-xl border border-dashed border-border/70 bg-background px-3 py-4 text-center text-[11px] text-muted-foreground">
-          حداقل یک جواب اضافه کنید.
+          برای ادامه، حداقل یک گزینه پاسخ اضافه کنید.
         </div>
       )}
 
@@ -756,7 +757,7 @@ function BranchAnswerEditor({
             maxLength={20}
             onChange={(event) => updateReply(reply.id, { title: event.target.value })}
             placeholder="متن جواب"
-            className="rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm"
+            className="rounded-xl border border-[#CBD5E1] bg-white px-3.5 py-3 text-sm outline-none transition focus:border-[#2563EB] focus:ring-2 focus:ring-[#DBEAFE]"
           />
 
           <div className="relative">
@@ -765,7 +766,7 @@ function BranchAnswerEditor({
               onChange={(event) => updateReply(reply.id, {
                 destinationType: (event.target.value || null) as QuickReplyDraft["destinationType"],
               })}
-              className="w-full appearance-none rounded-xl border border-border/70 bg-background px-3 py-2.5 text-xs"
+              className="w-full appearance-none rounded-xl border border-[#CBD5E1] bg-white px-3.5 py-3 text-sm outline-none transition focus:border-[#2563EB] focus:ring-2 focus:ring-[#DBEAFE]"
             >
               <option value="">مقصد این جواب را انتخاب کنید</option>
               {destinationOptions.map(([value, label]) => (
@@ -781,7 +782,7 @@ function BranchAnswerEditor({
               onChange={(event) => updateReply(reply.id, { destinationText: event.target.value })}
               rows={3}
               placeholder="متن پاسخ را وارد کنید..."
-              className="w-full resize-none rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm leading-6"
+              className="w-full resize-none rounded-xl border border-[#CBD5E1] bg-white px-3.5 py-3 text-sm leading-6 outline-none transition focus:border-[#2563EB] focus:ring-2 focus:ring-[#DBEAFE]"
             />
           )}
 
@@ -833,7 +834,7 @@ function BranchAnswerEditor({
           )}
 
           {allowRichDestinations && reply.destinationType === "FORM" && (
-            <div className="space-y-3 rounded-xl border border-border/70 bg-muted/20 p-3">
+            <div className="space-y-3 rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5 sm:p-4">
               <Textarea
                 value={reply.destinationQuestion}
                 onChange={(event) => updateReply(reply.id, { destinationQuestion: event.target.value })}
