@@ -625,7 +625,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               ))}
             </div>
           </section>
-        ) : (type !== "STORY" && !captionStepConfirmed) || uploadedMedia.length === 0 ? (
+        ) : (type !== "STORY" && !captionStepConfirmed) || uploadedMedia.length === 0 || (type === "STORY" && showUploadedMediaPreview) ? (
           <section className="mx-auto w-full max-w-3xl">
             <div className="mb-3 flex items-center justify-between gap-3">
               <Button
@@ -746,6 +746,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                 type="button"
                 onClick={() => animateStepChange(() => {
                   setCaptionStepConfirmed(false);
+                  setShowUploadedMediaPreview(type === "STORY" && uploadedMedia.length > 0);
                   setUploadProgress(0);
                 })}
                 className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]"
@@ -756,6 +757,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             </div>
             <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
             <main className="min-w-0 space-y-5">
+              {type !== "STORY" && (
               <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-5">
                 <SectionHeader n="۲" title={uploadTitle} text={uploadInstruction} />
                 <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
@@ -763,7 +765,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   {media.map((item,index)=><MediaTile key={item.file.name+"-"+item.sortOrder} item={item} type={type} onRemove={() => removeLocal(index)} />)}
                 </div>
                 {uploading && <ProgressBar progress={uploadProgress} />}
-              </section>
+              </section>              )}
+
 
               {uploadedMedia.length>0 && type!=="STORY" && <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-5">
                 <div className="mb-4 flex items-center justify-between gap-3"><SectionHeader n="۳" title="کپشن" text={`کپشن ${typeLabels[type]} را بنویس.`}/><span className="text-[11px] text-[#64748B]">{toPersianDigits(caption.length)} / ۲۲۰۰</span></div>
