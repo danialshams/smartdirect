@@ -56,90 +56,62 @@ function jalaliMonthDays(year: number, month: number) { if (month <= 6) return 3
 function currentJalaliDate() { const now = new Date(); return gregorianToJalali(now.getFullYear(), now.getMonth() + 1, now.getDate()); }
 function getJalaliWeekday(value: JalaliDate) { const [gy, gm, gd] = jalaliToGregorian(value.year, value.month, value.day); return ["یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه", "شنبه"][new Date(gy, gm - 1, gd).getDay()]; }
 function InlineWheelPicker({ value, onChange, min, max, label }: { value: number | null; onChange: (value: number) => void; min: number; max: number; label: string }) {
-  const startYRef = useRef<number | null>(null);
-  const [slide, setSlide] = useState(0);
-  const [animate, setAnimate] = useState(false);
-  const timerRef = useRef<number | null>(null);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const snapTimerRef = useRef<number | null>(null);
+  const itemHeight = 44;
+  const values = Array.from({ length: max - min + 1 }, (_, index) => min + index);
+
+  useEffect(() => {
+    if (value === null || !scrollRef.current) return;
+    scrollRef.current.scrollTo({ top: (value - min + 1) * itemHeight, behavior: "smooth" });
+  }, [value, min]);
 
   useEffect(() => () => {
-    if (timerRef.current) window.clearTimeout(timerRef.current);
+    if (snapTimerRef.current) window.clearTimeout(snapTimerRef.current);
   }, []);
 
-  const normalize = (next: number) => {
-    if (next > max) return min;
-    if (next < min) return max;
-    return next;
+  const commitNearest = () => {
+    const element = scrollRef.current;
+    if (!element) return;
+    const rawIndex = Math.round(element.scrollTop / itemHeight) - 1;
+    const nextValue = Math.min(max, Math.max(min, min + rawIndex));
+    element.scrollTo({ top: (nextValue - min + 1) * itemHeight, behavior: "smooth" });
+    if (value !== nextValue) onChange(nextValue);
   };
 
-  const changeBySwipe = (direction: 1 | -1) => {
-    if (timerRef.current) return;
-
-    const nextValue = value === null
-      ? (direction === 1 ? min : max)
-      : normalize(value + direction);
-
-    setSlide(direction === 1 ? -1 : 1);
-    setAnimate(true);
-
-    timerRef.current = window.setTimeout(() => {
-      onChange(nextValue);
-      setAnimate(false);
-      setSlide(0);
-      timerRef.current = null;
-    }, 180);
+  const handleScroll = () => {
+    if (snapTimerRef.current) window.clearTimeout(snapTimerRef.current);
+    snapTimerRef.current = window.setTimeout(commitNearest, 90);
   };
-
-  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (timerRef.current) return;
-    startYRef.current = event.clientY;
-    event.currentTarget.setPointerCapture(event.pointerId);
-  };
-
-  const handlePointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (startYRef.current === null) return;
-    const delta = event.clientY - startYRef.current;
-    startYRef.current = null;
-    if (Math.abs(delta) < 18) return;
-    changeBySwipe(delta < 0 ? 1 : -1);
-  };
-
-  const handlePointerCancel = () => {
-    startYRef.current = null;
-  };
-
-  const previous = value === null ? null : normalize(value - 1);
-  const next = value === null ? null : normalize(value + 1);
 
   return (
-    <div
-      className="select-none rounded-2xl border border-[#DBEAFE] bg-[#EFF6FF] px-3 py-3.5"
-      style={{ touchAction: "none" }}
-      onPointerDown={handlePointerDown}
-      onPointerUp={handlePointerUp}
-      onPointerCancel={handlePointerCancel}
-    >
-      <div className="mb-2 text-center text-[11px] font-semibold text-[#2563EB]">{label}</div>
-      <div className="relative h-24 overflow-hidden rounded-xl bg-white ring-1 ring-[#BFDBFE]">
-        <div className="pointer-events-none absolute inset-x-0 top-1/2 h-12 -translate-y-1/2 border-y border-[#DBEAFE] bg-[#EFF6FF]/50" />
+    <div className="select-none">
+      <div className="mb-2 text-center text-[11px] font-semibold text-[#64748B]">{label}</div>
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="relative h-[132px] overflow-y-auto overscroll-contain rounded-xl bg-white [scrollbar-width:none] [-ms-overflow-style:none] snap-y snap-mandatory"
+        style={{ touchAction: "pan-y", WebkitOverflowScrolling: "touch" }}
+      >
+        <div className="pointer-events-none sticky top-1/2 z-10 h-0">
+          <div className="absolute inset-x-0 -top-[22px] h-11 border-y border-[#E2E8F0]" />
+        </div>
+        <div className="h-[44px]" />
         {value === null ? (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-base font-bold text-[#64748B]">{label}</span>
-          </div>
+          <div className="flex h-[44px] snap-center items-center justify-center text-2xl font-bold text-[#94A3B8]">--</div>
         ) : (
-          <div
-            className="absolute inset-x-0 top-1/2 h-12 -translate-y-1/2"
-            style={{
-              transform: `translateY(calc(-50% + ${slide * 48}px))`,
-              transition: animate ? "transform 180ms cubic-bezier(.22,.61,.36,1)" : "none",
-            }}
-          >
-            <div className="absolute inset-x-0 -top-12 flex h-12 items-center justify-center text-sm font-semibold text-[#94A3B8]">{toPersianDigits(previous as number)}</div>
-            <div className="absolute inset-x-0 top-0 flex h-12 items-center justify-center text-xl font-bold text-[#0F172A]">{toPersianDigits(value)}</div>
-            <div className="absolute inset-x-0 top-12 flex h-12 items-center justify-center text-sm font-semibold text-[#94A3B8]">{toPersianDigits(next as number)}</div>
-          </div>
+          values.map((item) => (
+            <div
+              key={item}
+              className="flex h-[44px] snap-center items-center justify-center text-base font-semibold text-[#94A3B8]"
+            >
+              {toPersianDigits(item)}
+            </div>
+          ))
         )}
+        <div className="h-[44px]" />
       </div>
-      <p className="mt-2 text-center text-[10px] font-medium text-[#64748B]">برای تغییر، بالا یا پایین بکش</p>
+      <p className="mt-2 text-center text-[10px] font-medium text-[#94A3B8]">--</p>
     </div>
   );
 }
@@ -978,7 +950,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                             )}
                             <div className="flex items-center gap-2">
                               <input value={draft} onChange={(event) => handleTagInputChange(mediaKey, event.target.value)} onKeyDown={(event) => handleTagInputKeyDown(mediaKey, event)} placeholder="نام کاربر بدون @" maxLength={30} inputMode="text" autoCapitalize="none" spellCheck={false} className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-2.5 !text-base leading-5 text-[#0F172A] outline-none placeholder:text-xs placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }}/>
-                              <Button type="button" onClick={() => addTagForMedia(mediaKey)} disabled={!draft.trim()} className="shrink-0 rounded-lg bg-[#2563EB] px-3.5 py-2.5 text-xs font-semibold text-white hover:bg-[#1D4ED8] disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-[#2563EB]/40 disabled:opacity-100 disabled:hover:bg-[#2563EB]/40">افزودن</Button>
+                              <Button type="button" onClick={() => addTagForMedia(mediaKey)} disabled={!draft.trim()} className="shrink-0 rounded-lg !bg-[#2563EB] px-3.5 py-2.5 text-xs font-semibold text-white hover:!bg-[#1D4ED8] disabled:pointer-events-none disabled:cursor-not-allowed disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8] disabled:opacity-100 disabled:hover:!bg-[#E2E8F0]">افزودن</Button>
                             </div>
                           </div>
                         </div>
@@ -1008,7 +980,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                         )}
                         <div className="flex items-center gap-2">
                           <input value={draft} onChange={(event) => handleTagInputChange(mediaKey, event.target.value)} onKeyDown={(event) => handleTagInputKeyDown(mediaKey, event)} placeholder="فقط نام کاربر را بدون @ بنویس" maxLength={30} inputMode="text" autoCapitalize="none" spellCheck={false} className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-2.5 !text-base leading-5 text-[#0F172A] outline-none placeholder:text-xs placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }}/>
-                          <Button type="button" onClick={() => addTagForMedia(mediaKey)} disabled={!draft.trim()} className="shrink-0 rounded-lg bg-[#2563EB] px-3.5 py-2.5 text-xs font-semibold text-white hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-40">افزودن</Button>
+                          <Button type="button" onClick={() => addTagForMedia(mediaKey)} disabled={!draft.trim()} className="shrink-0 rounded-lg !bg-[#2563EB] px-3.5 py-2.5 text-xs font-semibold text-white hover:!bg-[#1D4ED8] disabled:pointer-events-none disabled:cursor-not-allowed disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8] disabled:opacity-100 disabled:hover:!bg-[#E2E8F0]">افزودن</Button>
                         </div>
                       </>
                     );
@@ -1113,10 +1085,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                           >
                             <div className="flex items-start justify-between gap-2">
                               <span className="text-[11px] font-semibold text-[#64748B]">{getJalaliWeekday(date)}</span>
-                              <span className="flex items-center gap-1.5 text-[10px] font-semibold text-[#2563EB]">
-                                {selected && <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#2563EB] text-[10px] font-bold text-white">✓</span>}
-                                {label}
-                              </span>
+                              <span className="text-[10px] font-semibold text-[#2563EB]">{label}</span>
                             </div>
                             <div className="mt-2 text-center text-base font-bold text-[#0F172A]">{toPersianDigits(date.day)} {jalaliMonths[date.month - 1]}</div>
                             <div className="mt-2 text-center text-[10px] font-medium text-[#64748B]">{toPersianDigits(date.year)}</div>
@@ -1128,7 +1097,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                     <div className="mt-6 border-t border-[#E2E8F0] pt-5">
                       <div className="mb-3">
                         <p className="text-sm font-bold text-[#0F172A]">ساعت انتشار</p>
-                        <p className="mt-1 text-[11px] leading-5 text-[#64748B]">ساعت و دقیقه را با کشیدن مستقیم عدد به بالا یا پایین انتخاب کن.</p>
+                        <p className="mt-1 text-[11px] leading-5 text-[#64748B]">--</p>
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         <InlineWheelPicker
