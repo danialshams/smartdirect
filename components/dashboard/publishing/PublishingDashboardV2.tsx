@@ -118,7 +118,7 @@ async function uploadFileWithProgress(file: File, onProgress: (progress: number)
       }
     };
     const formData = new FormData();
-    formData.append("file", fileToUpload);
+    formData.append("file", file);
     xhr.send(formData);
   });
 }
