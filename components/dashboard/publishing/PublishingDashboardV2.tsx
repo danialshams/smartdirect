@@ -720,6 +720,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             <div className={type !== "CAROUSEL" && showUploadedMediaPreview && uploadedMedia.length > 0 ? "p-0" : "rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6"}>
               {type !== "CAROUSEL" && showUploadedMediaPreview && uploadedMedia.length > 0 ? (
                 <div className="flex min-h-[260px] flex-col items-center justify-center py-5">
+                  <span className="mb-3 inline-flex items-center rounded-full border border-[#BBF7D0] bg-[#F0FDF4] px-2.5 py-1 text-[11px] font-semibold text-[#15803D]">{typeLabels[type]} آپلود شده</span>
                   <div className="w-32 sm:w-40">
                     <MediaTile item={uploadedMedia[0]} type={type} onRemove={() => void removeUploaded(uploadedMedia[0])} ready compact/>
                   </div>
