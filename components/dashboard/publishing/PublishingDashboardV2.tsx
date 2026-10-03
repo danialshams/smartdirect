@@ -12,6 +12,7 @@ import { ArrowLeft, ArrowRight, CalendarClock, Camera, Clapperboard, ImagePlus, 
 import { upload as uploadToBlob } from "@vercel/blob/client";
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { WheelPicker, type WheelPickerOption } from "@ncdai/react-wheel-picker";
+import "@ncdai/react-wheel-picker/style.css";
 
 import AutomationFlowMessage from "../AutomationFlowMessage";
 import {
@@ -98,10 +99,10 @@ function InlineWheelPicker({
             onChange(nextValue);
           }
         }}
-        visibleCount={7}
-        optionItemHeight={42}
-        dragSensitivity={3}
-        scrollSensitivity={5}
+        visibleCount={8}
+        optionItemHeight={44}
+        dragSensitivity={4}
+        scrollSensitivity={6}
         classNames={{
           optionItem: "!text-base !font-semibold !text-[#94A3B8]",
           highlightWrapper: "!rounded-none !border-y !border-[#E2E8F0] !bg-transparent",
