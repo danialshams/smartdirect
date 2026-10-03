@@ -225,7 +225,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const [followGateText, setFollowGateText] = useState("برای دریافت پاسخ، ابتدا پیج را Follow کنید.");
   const [scheduledDate, setScheduledDate] = useState<JalaliDate>(currentJalaliDate());
   const [hour, setHour] = useState(new Date().getHours());
-  const [minute, setMinute] = useState(() => { const rounded = Math.ceil(new Date().getMinutes() / 5) * 5; return rounded >= 60 ? 0 : rounded; });
+  const [minute, setMinute] = useState(new Date().getMinutes());
+  const [publishNow, setPublishNow] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadSuccess, setUploadSuccess] = useState(false);
@@ -628,7 +629,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     if (type === "CAROUSEL" && uploadedMedia.length < 2) { setError("آلبوم باید حداقل ۲ اسلاید داشته باشد."); return; }
     if (type !== "CAROUSEL" && uploadedMedia.length !== 1) { setError(`${typeLabels[type]} باید دقیقاً یک فایل داشته باشد.`); return; }
     const scheduled = jalaliDateTimeToDate(scheduledDate, hour, minute);
-    if (!publishNow && scheduled.getTime() <= Date.now()) { setError("زمان‌بندی باید در آینده باشد."); return; }
+    if (!publishNow && scheduled.getTime() <= Date.now()) { setError("زمان انتخاب‌شده باید در آینده باشد."); return; }
+    if (!publishNow && scheduled.getTime() > Date.now() + 48 * 60 * 60 * 1000) { setError("زمان انتشار باید حداکثر تا ۴۸ ساعت آینده باشد."); return; }
     try {
       setPublishing(true); setError("");
       const automationId = automationEnabled ? await createAutomation() : null;
@@ -935,6 +937,64 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                     </div>
                   </div>
                 </button>
+              </div>
+            </section>
+          </div>
+        ) : type !== "STORY" && automationChoiceConfirmed && !automationEnabled ? (
+          <div className="mx-auto w-full max-w-2xl">
+            <div className="mb-5 flex items-center justify-between gap-3">
+              <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
+                <ArrowRight size={15} strokeWidth={2}/>بازگشت
+              </Button>
+            </div>
+            <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
+              <div className="mb-6 flex items-start gap-3">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">۶</span>
+                <div className="min-w-0">
+                  <h2 className="text-sm font-bold text-[#0F172A]">زمان انتشار</h2>
+                  <p className="mt-1.5 text-xs leading-5 text-[#64748B]">زمان انتشار این {typeLabels[type]} را انتخاب کن.</p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5">
+                  <Button type="button" disabled={!publishNow} onClick={() => void createJob(true)} className="min-h-11 flex-1 rounded-xl bg-[#2563EB] px-4 text-sm font-semibold text-white hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-50">
+                    <Send size={17}/>انتشار {typeLabels[type]} هم‌اکنون
+                  </Button>
+                  <label className="flex shrink-0 cursor-pointer items-center gap-2 text-xs font-semibold text-[#334155]">
+                    <input type="checkbox" checked={!publishNow} onChange={(event) => { setPublishNow(!event.target.checked); setError(""); }} className="h-4 w-4 accent-[#2563EB]" />
+                    <span className="whitespace-nowrap">انتشار در زمان دلخواه</span>
+                  </label>
+                </div>
+
+                {!publishNow && (
+                  <div className="rounded-xl border border-[#E2E8F0] bg-white p-4 sm:p-5">
+                    <div className="mb-4">
+                      <p className="text-sm font-bold text-[#0F172A]">انتخاب زمان دقیق</p>
+                      <p className="mt-1 text-[11px] leading-5 text-[#64748B]">زمان را تا حداکثر ۴۸ ساعت آینده انتخاب کن.</p>
+                    </div>
+                    <PersianDatePicker value={scheduledDate} onChange={(next) => { setScheduledDate(next); setError(""); }}/>
+                    <div className="mt-3 grid grid-cols-2 gap-2.5">
+                      <label>
+                        <span className="mb-1.5 block text-[11px] font-medium text-[#64748B]">ساعت</span>
+                        <Select value={hour} onChange={(e) => { setHour(Number(e.target.value)); setError(""); }} className="w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-3 text-sm">
+                          {Array.from({length:24}, (_, value) => <option key={value} value={value}>{toPersianDigits(String(value).padStart(2, "0"))}</option>)}
+                        </Select>
+                      </label>
+                      <label>
+                        <span className="mb-1.5 block text-[11px] font-medium text-[#64748B]">دقیقه</span>
+                        <Select value={minute} onChange={(e) => { setMinute(Number(e.target.value)); setError(""); }} className="w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-3 text-sm">
+                          {Array.from({length:60}, (_, value) => <option key={value} value={value}>{toPersianDigits(String(value).padStart(2, "0"))}</option>)}
+                        </Select>
+                      </label>
+                    </div>
+                    <Button type="button" onClick={() => void createJob(false)} disabled={publishing} className="mt-4 min-h-11 w-full rounded-xl bg-[#2563EB] px-4 text-sm font-semibold text-white hover:bg-[#1D4ED8] disabled:opacity-50">
+                      {publishing ? <Loader2 size={17} className="animate-spin"/> : <CalendarClock size={17}/>} زمان‌بندی انتشار
+                    </Button>
+                  </div>
+                )}
+
+                {error && <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-5 text-[#B91C1C]" role="alert">{error}</div>}
               </div>
             </section>
           </div>
