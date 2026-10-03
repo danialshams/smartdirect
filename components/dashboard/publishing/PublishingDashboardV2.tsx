@@ -90,7 +90,7 @@ function KeywordChipsInput({ value, onChange, placeholder }: { value: string; on
 
 function SectionHeader({ n, title, text }: { n: string; title: string; text: string }) { return <div className="mb-4"><div className="flex items-center gap-2"><span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">{n}</span><h2 className="text-sm font-bold text-[#0F172A]">{title}</h2></div><p className="mt-2 text-xs leading-5 text-[#64748B]">{text}</p></div>; }
 function ProgressBar({ progress, label }: { progress: number; label: string }) { return <div className="mt-4 rounded-xl border border-[#DBEAFE] bg-[#EFF6FF] px-3.5 py-3"><div className="mb-2 flex justify-between text-[11px] text-[#1D4ED8]"><span>{label}</span><span>{toPersianDigits(progress)}٪</span></div><div className="h-1.5 overflow-hidden rounded-full bg-[#DBEAFE]"><div className="h-full bg-[#2563EB] transition-[width]" style={{width: progress+"%"}}/></div></div>; }
-function UploadArea({ id, accept, multiple, disabled, isDragging, setIsDragging, uploading, uploadIndex, uploadProgress, onChange, onDrop }: any) { return <div onDragOver={(e: DragEvent<HTMLDivElement>)=>{e.preventDefault();setIsDragging(true)}} onDragLeave={()=>setIsDragging(false)} onDrop={onDrop} className={["relative overflow-hidden rounded-xl border border-dashed p-4 transition sm:p-6",isDragging?"border-[#2563EB] bg-[#2563EB]/5":"border-[#CBD5E1] bg-[#F8FAFC] hover:border-[#93C5FD] hover:bg-[#EFF6FF]/50",disabled?"pointer-events-none opacity-60":""].join(" ")}><Input id={id} type="file" accept={accept} multiple={multiple} onChange={onChange} disabled={disabled} className="sr-only"/><label htmlFor={id} className="flex min-h-[190px] cursor-pointer flex-col items-center justify-center text-center"><div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-[#2563EB] shadow-sm ring-1 ring-[#E2E8F0]">{uploading?<Loader2 size={22} className="animate-spin"/>:<ImagePlus size={22}/>}</div><span className="mt-4 text-sm font-bold text-[#0F172A]">{uploading?"در حال آپلود...":"افزودن رسانه"}</span><span className="mt-1.5 max-w-sm text-xs leading-5 text-[#64748B]">فایل را بکش و اینجا رها کن یا برای انتخاب از دستگاه کلیک کن.</span>{uploading&&<ProgressBar progress={uploadProgress} label={"فایل "+toPersianDigits(uploadIndex)}/>}</label></div>; }
+function UploadArea({ id, accept, multiple, disabled, isDragging, setIsDragging, uploading, uploadIndex, uploadProgress, onChange, onDrop }: any) { return <div onDragOver={(e: DragEvent<HTMLDivElement>)=>{e.preventDefault();setIsDragging(true)}} onDragLeave={()=>setIsDragging(false)} onDrop={onDrop} className={["relative overflow-hidden rounded-xl border border-dashed p-4 transition sm:p-6",isDragging?"border-[#2563EB] bg-[#2563EB]/5":"border-[#CBD5E1] bg-[#F8FAFC] hover:border-[#93C5FD] hover:bg-[#EFF6FF]/50",disabled?"pointer-events-none opacity-60":""].join(" ")}><Input id={id} type="file" accept={accept} multiple={multiple} onChange={onChange} disabled={disabled} className="sr-only"/><label htmlFor={id} className="flex min-h-[190px] cursor-pointer flex-col items-center justify-center text-center"><div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-[#2563EB] shadow-sm ring-1 ring-[#E2E8F0]">{uploading?<Loader2 size={22} className="animate-spin"/>:<ImagePlus size={22}/>}</div><span className="mt-4 text-sm font-bold text-[#0F172A]">{uploading?"در حال آپلود...":"آپلود محتوا"}</span><span className="mt-1.5 max-w-sm text-xs leading-5 text-[#64748B]">فایل را بکش و اینجا رها کن یا برای انتخاب از دستگاه کلیک کن.</span>{uploading&&<ProgressBar progress={uploadProgress} label={"فایل "+toPersianDigits(uploadIndex)}/>}</label></div>; }
 function MediaTile({ item, type, onRemove, ready=false }: any) { const image=item.type==="IMAGE"; const src=ready?item.publicUrl:item.previewUrl; return <div className="group relative overflow-hidden rounded-xl border border-[#E2E8F0] bg-[#F1F5F9]">{image?<img src={src} alt={ready?item.fileName:item.file.name} className={["w-full object-cover",type==="REEL"||type==="STORY"?"aspect-[9/16]":"aspect-[4/5]"].join(" ")}/>:<video src={src} controls className={["w-full object-cover",type==="REEL"||type==="STORY"?"aspect-[9/16]":"aspect-[4/5]"].join(" ")}/>}<Button type="button" onClick={onRemove} className="absolute left-2 top-2 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 p-0 text-[#DC2626] shadow-sm ring-1 ring-black/5" aria-label="حذف فایل"><X size={15}/></Button><div className={["absolute bottom-2 right-2 rounded-full px-2 py-1 text-[10px] text-white",ready?"bg-[#16A34A]/90":"bg-[#0F172A]/75"].join(" ")}>{ready?"آماده":"در حال آپلود"}</div></div>; }
 
 
@@ -366,7 +366,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   type="button"
                   onClick={() => handleTypeChange(value)}
                   className="group relative flex aspect-square w-full flex-col items-center justify-center gap-3 rounded-[28px] p-5 text-center shadow-none transition-all duration-200 hover:-translate-y-1 hover:shadow-lg active:translate-y-0 sm:rounded-[32px] sm:p-7"
-                  style={{ backgroundColor: soft, border: `2px solid ${border}`, color: accent }}
+                  style={{ backgroundColor: soft, border: `1px solid ${border}`, color: accent }}
                 >
                   <span
                     className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/55 sm:h-14 sm:w-14"
@@ -380,17 +380,19 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             </div>
           </section>
         ) : uploadedMedia.length === 0 ? (
-          <section className="mx-auto w-full max-w-3xl rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <Button type="button" onClick={handleBackToTypeSelection} className="min-h-9 rounded-lg border border-[#E2E8F0] bg-white px-3 text-xs font-semibold text-[#475569] hover:bg-[#F8FAFC]">
-                ← بازگشت
+          <section className="mx-auto w-full max-w-3xl">
+            <div className="mb-3 flex items-center">
+              <Button type="button" onClick={handleBackToTypeSelection} className="min-h-8 rounded-lg border border-[#E2E8F0] bg-transparent px-2.5 text-xs font-medium text-[#94A3B8] shadow-none hover:bg-[#F8FAFC] hover:text-[#64748B]">
+                → بازگشت
               </Button>
             </div>
+            <div className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
             <SectionHeader n="۲" title="رسانه" text={type==="CAROUSEL"?"۲ تا ۱۰ تصویر برای آلبوم انتخاب کن.":type==="REEL"?"یک ویدیوی مناسب ریلز انتخاب کن.":type==="STORY"?"تصویر یا ویدیوی استوری را انتخاب کن.":"تصویر پست را انتخاب کن."} />
             <UploadArea id="publishing-media-upload" accept={accept} multiple={type==="CAROUSEL"} disabled={uploading||publishing} isDragging={isDragging} setIsDragging={setIsDragging} uploading={uploading} uploadIndex={uploadIndex} uploadProgress={uploadProgress} onChange={handleFiles} onDrop={handleDrop} />
             {media.length > 0 && <div className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
               {media.map((item,index)=><MediaTile key={item.file.name+"-"+item.sortOrder} item={item} type={type} onRemove={() => removeLocal(index)} />)}
             </div>}
+            </div>
           </section>
         ) : (
           <div>
