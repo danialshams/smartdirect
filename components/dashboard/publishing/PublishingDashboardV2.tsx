@@ -8,7 +8,7 @@ import { Input } from "@/components/dashboard/DashboardUI"
 import { Select } from "@/components/dashboard/DashboardUI"
 
 import { toast } from "sonner";
-import { CalendarClock, Camera, Clapperboard, ImagePlus, Images, Loader2, Plus, Send, Video, X } from "lucide-react";
+import { CalendarClock, Camera, Clapperboard, ImagePlus, Images, Loader2, MessageSquare, Plus, Send, Video, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent } from "react";
 
 import AutomationFlowMessage from "../AutomationFlowMessage";
