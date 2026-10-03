@@ -54,6 +54,7 @@ function gregorianToJalali(gy: number, gm: number, gd: number): JalaliDate { let
 function isJalaliLeap(year: number) { const epBase = year - (year >= 0 ? 474 : 473); const epYear = 474 + (epBase % 2820); return ((epYear + 38) * 682) % 2816 < 682; }
 function jalaliMonthDays(year: number, month: number) { if (month <= 6) return 31; if (month <= 11) return 30; return isJalaliLeap(year) ? 30 : 29; }
 function currentJalaliDate() { const now = new Date(); return gregorianToJalali(now.getFullYear(), now.getMonth() + 1, now.getDate()); }
+function getJalaliWeekday(value: JalaliDate) { const [gy, gm, gd] = jalaliToGregorian(value.year, value.month, value.day); return ["یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه", "شنبه"][new Date(gy, gm - 1, gd).getDay()]; }
 function addJalaliDays(value: JalaliDate, days: number) { const [gy, gm, gd] = jalaliToGregorian(value.year, value.month, value.day); const date = new Date(gy, gm - 1, gd + days); return gregorianToJalali(date.getFullYear(), date.getMonth() + 1, date.getDate()); }
 function jalaliDateTimeToDate(date: JalaliDate, hour: number, minute: number) { const [gy, gm, gd] = jalaliToGregorian(date.year, date.month, date.day); return new Date(gy, gm - 1, gd, hour, minute, 0, 0); }
 async function uploadFileWithProgress(file: File, onProgress: (progress: number) => void): Promise<{ storageKey: string; publicUrl: string; type: MediaType; fileName: string; mimeType: string; fileSize: number }> {
@@ -1011,7 +1012,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                       <p className="mt-1 text-[11px] leading-5 text-[#64748B]">تاریخ انتشار را انتخاب کن.</p>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2.5">
+                    <div className="grid grid-cols-2 gap-3">
                       {[currentJalaliDate(), addJalaliDays(currentJalaliDate(), 1)].map((date, index) => {
                         const selected = stage6Date?.year === date.year && stage6Date?.month === date.month && stage6Date?.day === date.day;
                         const label = index === 0 ? "امروز" : "فردا";
@@ -1020,40 +1021,50 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                             key={`${date.year}-${date.month}-${date.day}`}
                             type="button"
                             onClick={() => { setStage6Date(date); setError(""); }}
-                            className={["relative min-h-20 rounded-xl border px-3 py-3 text-right transition-all", selected ? "border-[#2563EB] bg-[#EFF6FF] ring-2 ring-[#2563EB]/10" : "border-[#E2E8F0] bg-white hover:border-[#BFDBFE] hover:bg-[#F8FAFC]"].join(" ")}
+                            className={["relative min-h-24 overflow-hidden rounded-2xl border p-3.5 text-right transition-all", selected ? "border-[#2563EB] bg-[#EFF6FF] shadow-sm ring-2 ring-[#2563EB]/10" : "border-[#E2E8F0] bg-white hover:border-[#BFDBFE] hover:bg-[#F8FAFC]"].join(" ")}
                           >
-                            <span className="block text-[11px] font-medium text-[#64748B]">{label}</span>
-                            <span className="mt-1 block text-sm font-bold text-[#0F172A]">{toPersianDigits(date.day)} {jalaliMonths[date.month - 1]}</span>
-                            <span className="mt-0.5 block text-[10px] text-[#64748B]">{toPersianDigits(date.year)}</span>
-                            {selected && <span className="absolute left-2.5 top-2.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#2563EB] text-white text-[11px]">✓</span>}
+                            <div className="flex items-start justify-between gap-2">
+                              <span className="text-[11px] font-semibold text-[#64748B]">{getJalaliWeekday(date)}</span>
+                              {selected && <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#2563EB] text-[10px] font-bold text-white">✓</span>}
+                            </div>
+                            <div className="mt-2 text-center text-base font-bold text-[#0F172A]">{toPersianDigits(date.day)} {jalaliMonths[date.month - 1]}</div>
+                            <div className="mt-2 flex items-end justify-between gap-2">
+                              <span className="text-[10px] font-medium text-[#64748B]">{toPersianDigits(date.year)}</span>
+                              <span className="text-[10px] font-semibold text-[#2563EB]">{label}</span>
+                            </div>
                           </button>
                         );
                       })}
                     </div>
 
-                    <div className="mt-4 border-t border-[#E2E8F0] pt-4">
-                      <p className="mb-3 text-sm font-bold text-[#0F172A]">ساعت انتشار</p>
-                      <div className="grid grid-cols-2 gap-2.5">
-                        <label>
-                          <span className="mb-1.5 block text-[11px] font-medium text-[#64748B]">ساعت</span>
-                          <Select value={stage6Hour === null ? "" : stage6Hour} onChange={(e) => { setStage6Hour(e.target.value === "" ? null : Number(e.target.value)); setError(""); }} className="w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-3 text-sm">
-                            <option value="">انتخاب ساعت</option>
-                            {Array.from({length:24}, (_, value) => <option key={value} value={value}>{toPersianDigits(String(value).padStart(2, "0"))}</option>)}
+                    <div className="mt-6 border-t border-[#E2E8F0] pt-5">
+                      <div className="mb-3">
+                        <p className="text-sm font-bold text-[#0F172A]">ساعت انتشار</p>
+                        <p className="mt-1 text-[11px] leading-5 text-[#64748B]">دقیقه و ساعت را دقیق انتخاب کن.</p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <label className="group rounded-2xl border border-[#DBEAFE] bg-[#EFF6FF] p-3.5 transition focus-within:border-[#2563EB] focus-within:ring-2 focus-within:ring-[#2563EB]/10">
+                          <span className="mb-2 block text-[11px] font-semibold text-[#2563EB]">دقیقه</span>
+                          <Select value={stage6Minute === null ? "" : stage6Minute} onChange={(e) => { setStage6Minute(e.target.value === "" ? null : Number(e.target.value)); setError(""); }} className="w-full rounded-xl border border-[#BFDBFE] bg-white px-3 py-3 text-sm font-bold text-[#0F172A] shadow-none outline-none">
+                            <option value="">انتخاب دقیقه</option>
+                            {Array.from({length:60}, (_, value) => <option key={value} value={value}>{toPersianDigits(value)}</option>)}
                           </Select>
                         </label>
-                        <label>
-                          <span className="mb-1.5 block text-[11px] font-medium text-[#64748B]">دقیقه</span>
-                          <Select value={stage6Minute === null ? "" : stage6Minute} onChange={(e) => { setStage6Minute(e.target.value === "" ? null : Number(e.target.value)); setError(""); }} className="w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-3 text-sm">
-                            <option value="">انتخاب دقیقه</option>
-                            {Array.from({length:60}, (_, value) => <option key={value} value={value}>{toPersianDigits(String(value).padStart(2, "0"))}</option>)}
+                        <label className="group rounded-2xl border border-[#DBEAFE] bg-[#EFF6FF] p-3.5 transition focus-within:border-[#2563EB] focus-within:ring-2 focus-within:ring-[#2563EB]/10">
+                          <span className="mb-2 block text-[11px] font-semibold text-[#2563EB]">ساعت</span>
+                          <Select value={stage6Hour === null ? "" : stage6Hour} onChange={(e) => { setStage6Hour(e.target.value === "" ? null : Number(e.target.value)); setError(""); }} className="w-full rounded-xl border border-[#BFDBFE] bg-white px-3 py-3 text-sm font-bold text-[#0F172A] shadow-none outline-none">
+                            <option value="">انتخاب ساعت</option>
+                            {Array.from({length:24}, (_, value) => <option key={value} value={value}>{toPersianDigits(value)}</option>)}
                           </Select>
                         </label>
                       </div>
                     </div>
 
-                    <Button type="button" onClick={() => void createJob(false)} disabled={publishing || !stage6Date || stage6Hour === null || stage6Minute === null} className="mt-5 min-h-11 w-full rounded-xl bg-[#2563EB] px-4 text-sm font-semibold text-white hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-50">
-                      {publishing ? <Loader2 size={17} className="animate-spin"/> : <CalendarClock size={17}/>} انتشار در زمان انتخاب‌شده
-                    </Button>
+                    <div className="mt-7 border-t border-[#E2E8F0] pt-5">
+                      <Button type="button" onClick={() => void createJob(false)} disabled={publishing || !stage6Date || stage6Hour === null || stage6Minute === null} className="min-h-11 w-full rounded-xl bg-[#2563EB] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-50">
+                        {publishing ? <Loader2 size={17} className="animate-spin"/> : <CalendarClock size={17}/>} انتشار در زمان انتخاب‌شده
+                      </Button>
+                    </div>
                   </div>
                 )}
 
