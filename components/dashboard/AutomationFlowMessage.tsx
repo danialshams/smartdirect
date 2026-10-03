@@ -116,15 +116,14 @@ async function uploadBranchMedia(
 const typeOptions: Array<{
   value: MessageDraft["messageType"];
   label: string;
-  description: string;
   Icon: LucideIcon;
+  color: string;
+  softColor: string;
 }> = [
-  { value: "TEXT", label: "متن", description: "پیام متنی و دکمه‌های پاسخ", Icon: MessageSquareText },
-  { value: "IMAGE", label: "تصویر", description: "یک تصویر همراه پیام", Icon: ImagePlus },
-  { value: "VIDEO", label: "ویدیو", description: "یک ویدیوی قابل ارسال", Icon: Video },
-  { value: "AUDIO", label: "وویس", description: "پیام صوتی", Icon: Mic },
-  { value: "SHOWCASE", label: "ویترین", description: "چند کارت تصویری", Icon: ImagePlus },
-  { value: "FORM", label: "سؤال", description: "سؤال و مسیرهای بعدی", Icon: ClipboardList },
+  { value: "TEXT", label: "متن", Icon: MessageSquareText, color: palette.primary, softColor: "#EFF6FF" },
+  { value: "IMAGE", label: "تصویر", Icon: ImagePlus, color: palette.automation, softColor: "#F5F3FF" },
+  { value: "VIDEO", label: "ویدیو", Icon: Video, color: palette.success, softColor: "#F0FDF4" },
+  { value: "AUDIO", label: "وویس", Icon: Mic, color: palette.warning, softColor: "#FFF7ED" },
 ];
 
 export default function AutomationFlowMessage({
@@ -151,7 +150,7 @@ export default function AutomationFlowMessage({
     [triggerType],
   );
 
-  const [mediaUploading, setMediaUploading] = useState(false);
+  const [mediaUploading, setMediaUploading] = useState(false);\n  const [contentStep, setContentStep] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -186,82 +185,58 @@ export default function AutomationFlowMessage({
   }
 
   return (
-    <article
-      dir="rtl"
-      className="overflow-hidden rounded-[28px] border bg-white shadow-[0_8px_30px_rgba(15,23,42,0.05)]"
-      style={{ borderColor: palette.border }}
-    >
-      <header className="flex flex-wrap items-center justify-between gap-4 border-b px-5 py-4 sm:px-6" style={{ borderColor: palette.border }}>
-        <div className="flex min-w-0 items-center gap-3">
-          <div
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-sm font-bold text-white"
-            style={{ background: palette.automation }}
-          >
-            {index + 1}
-          </div>
-          <div className="min-w-0">
-            <p className="text-[11px] font-medium" style={{ color: palette.secondary }}>
-              مرحله {index + 1} از {total}
-            </p>
-            <h3 className="mt-0.5 truncate text-sm font-bold" style={{ color: palette.text }}>
-              پیام پاسخ
-            </h3>
+    <article dir="rtl" className="relative overflow-hidden rounded-[28px] border bg-white" style={{ borderColor: palette.border }}>
+      <div
+        className={[
+          "transition-all duration-300 ease-out",
+          contentStep ? "pointer-events-none max-h-0 -translate-y-3 overflow-hidden opacity-0" : "max-h-[720px] translate-y-0 opacity-100",
+        ].join(" ")}
+      >
+        <div className="p-5 sm:p-7">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            {availableTypes.map(({ value, label, Icon, color, softColor }) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => {
+                  onUpdate({ messageType: value });
+                  setContentStep(true);
+                }}
+                className="group flex min-h-[170px] flex-col items-center justify-center rounded-[24px] border-2 bg-white p-5 text-center transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(15,23,42,0.08)] active:translate-y-0 sm:min-h-[190px]"
+                style={{ borderColor: color }}
+              >
+                <span
+                  className="flex h-20 w-20 items-center justify-center rounded-[22px] transition-transform duration-200 group-hover:scale-105"
+                  style={{ background: softColor, color }}
+                >
+                  <Icon size={34} strokeWidth={1.9} />
+                </span>
+                <span className="mt-5 text-sm font-bold" style={{ color: palette.text }}>
+                  {label}
+                </span>
+              </button>
+            ))}
           </div>
         </div>
-      <div className="flex items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-semibold" style={{ borderColor: palette.border, color: palette.secondary, background: palette.muted }}>
-        {index === 0 ? "پیام شروع" : "ادامه مسیر"}
       </div>
-      </header>
 
-      <div className="grid lg:grid-cols-[260px_minmax(0,1fr)]">
-        <aside className="border-b p-4 lg:border-b-0 lg:border-l" style={{ borderColor: palette.border, background: palette.muted }}>
-          <div className="mb-3">
-            <p className="text-xs font-bold" style={{ color: palette.text }}>نوع محتوا</p>
-            <p className="mt-1 text-[10px] leading-5" style={{ color: palette.secondary }}>
-              این مرحله چه چیزی برای کاربر ارسال کند؟
-            </p>
-          </div>
+      <div
+        className={[
+          "transition-all duration-300 ease-out",
+          contentStep ? "translate-y-0 opacity-100" : "pointer-events-none max-h-0 translate-y-3 overflow-hidden opacity-0",
+        ].join(" ")}
+      >
+        <button
+          type="button"
+          onClick={() => setContentStep(false)}
+          className="absolute left-4 top-4 z-10 inline-flex h-9 items-center gap-1.5 rounded-xl border bg-white px-3 text-[11px] font-bold transition-colors hover:bg-slate-50"
+          style={{ borderColor: palette.border, color: palette.secondary }}
+        >
+          <ArrowDown className="rotate-90" size={14} />
+          بازگشت
+        </button>
 
-          <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-1">
-            {availableTypes.map(({ value, label, description, Icon }) => {
-              const selected = message.messageType === value;
-              return (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => onUpdate({ messageType: value })}
-                  className="relative flex min-h-[78px] items-center gap-3 rounded-2xl border p-3 text-right transition-all hover:-translate-y-px"
-                  style={{
-                    borderColor: selected ? palette.automation : palette.border,
-                    background: selected ? "#F5F3FF" : palette.surface,
-                    boxShadow: selected ? "0 0 0 2px rgba(124,58,237,.08)" : undefined,
-                  }}
-                >
-                  <span
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
-                    style={{
-                      background: selected ? "#EDE9FE" : palette.muted,
-                      color: selected ? palette.automation : palette.secondary,
-                    }}
-                  >
-                    <Icon size={19} />
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block text-xs font-bold" style={{ color: palette.text }}>{label}</span>
-                    <span className="mt-1 block text-[10px] leading-4" style={{ color: palette.secondary }}>{description}</span>
-                  </span>
-                  {selected && (
-                    <span className="absolute left-2 top-2 flex h-5 w-5 items-center justify-center rounded-full text-white" style={{ background: palette.automation }}>
-                      <Check size={12} strokeWidth={3} />
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </aside>
-
-        <section className="min-w-0 p-5 sm:p-6">
+        <section className="min-w-0 p-5 pt-16 sm:p-7 sm:pt-16">
           {message.messageType === "TEXT" && (
             <TextComposer
               message={message}
@@ -320,7 +295,6 @@ export default function AutomationFlowMessage({
       </div>
     </article>
   );
-}
 
 function TextComposer({
   message,
