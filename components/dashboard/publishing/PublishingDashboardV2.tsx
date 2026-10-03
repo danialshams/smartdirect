@@ -205,6 +205,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const [tagStepConfirmed, setTagStepConfirmed] = useState(false);
   const [showUploadedMediaPreview, setShowUploadedMediaPreview] = useState(false);
   const [taggedUsersByMedia, setTaggedUsersByMedia] = useState<Record<string, string[]>>({});
+  const [tagDraftByMedia, setTagDraftByMedia] = useState<Record<string, string>>({});
+  const [tagInputError, setTagInputError] = useState("");
   const [stepVisible, setStepVisible] = useState(true);
   const [caption, setCaption] = useState("");
   const [media, setMedia] = useState<LocalMedia[]>([]);
@@ -320,8 +322,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     setStepVisible(false);
     window.setTimeout(() => { action(); window.requestAnimationFrame(() => setStepVisible(true)); }, 180);
   }
-  function handleTypeChange(nextType: PublishType) { animateStepChange(() => { clearLocalMedia(); setUploadedMedia([]); setType(nextType); setSelectionConfirmed(true); setCaptionStepConfirmed(false); setTagStepConfirmed(false); setShowUploadedMediaPreview(false); setTaggedUsersByMedia({}); onTypeChange?.(nextType); setUploadProgress(0); setUploadSuccess(false); setCaption(""); resetAutomation(); }); }
-  function handleBackToTypeSelection() { animateStepChange(() => { clearLocalMedia(); setUploadedMedia([]); setSelectionConfirmed(false); setCaptionStepConfirmed(false); setTagStepConfirmed(false); setShowUploadedMediaPreview(false); setTaggedUsersByMedia({}); setUploadProgress(0); setUploadSuccess(false); setCaption(""); resetAutomation(); }); }
+  function handleTypeChange(nextType: PublishType) { animateStepChange(() => { clearLocalMedia(); setUploadedMedia([]); setType(nextType); setSelectionConfirmed(true); setCaptionStepConfirmed(false); setTagStepConfirmed(false); setShowUploadedMediaPreview(false); setTaggedUsersByMedia({}); setTagDraftByMedia({}); setTagInputError(""); onTypeChange?.(nextType); setUploadProgress(0); setUploadSuccess(false); setCaption(""); resetAutomation(); }); }
+  function handleBackToTypeSelection() { animateStepChange(() => { clearLocalMedia(); setUploadedMedia([]); setSelectionConfirmed(false); setCaptionStepConfirmed(false); setTagStepConfirmed(false); setShowUploadedMediaPreview(false); setTaggedUsersByMedia({}); setTagDraftByMedia({}); setTagInputError(""); setUploadProgress(0); setUploadSuccess(false); setCaption(""); resetAutomation(); }); }
   function prepareFiles(files: File[]) {
     if (!files.length || uploading || publishing) return;
     const accepted =
@@ -446,6 +448,44 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     }
   }
 
+  function addTagForMedia(mediaKey: string) {
+    const draft = (tagDraftByMedia[mediaKey] ?? "").trim();
+    if (!draft) return;
+    if (draft.includes("@")) {
+      setTagInputError("نام کاربر را بدون @ وارد کن.");
+      return;
+    }
+    if (!/^[A-Za-z0-9._]{1,30}$/.test(draft)) {
+      setTagInputError("نام کاربر فقط می‌تواند شامل حروف انگلیسی، عدد، نقطه و زیرخط باشد.");
+      return;
+    }
+    const current = taggedUsersByMedia[mediaKey] ?? [];
+    if (current.some((username) => username.toLowerCase() === draft.toLowerCase())) {
+      setTagInputError("این کاربر قبلاً اضافه شده است.");
+      return;
+    }
+    if (current.length >= 10) {
+      setTagInputError("برای هر محتوا حداکثر ۱۰ کاربر می‌توانی تگ کنی.");
+      return;
+    }
+    setTaggedUsersByMedia((state) => ({ ...state, [mediaKey]: [...current, draft] }));
+    setTagDraftByMedia((state) => ({ ...state, [mediaKey]: "" }));
+    setTagInputError("");
+  }
+  function removeTagForMedia(mediaKey: string, username: string) {
+    setTaggedUsersByMedia((state) => ({ ...state, [mediaKey]: (state[mediaKey] ?? []).filter((item) => item !== username) }));
+    setTagInputError("");
+  }
+  function handleTagInputChange(mediaKey: string, value: string) {
+    setTagDraftByMedia((state) => ({ ...state, [mediaKey]: value }));
+    if (tagInputError) setTagInputError("");
+  }
+  function handleTagInputKeyDown(mediaKey: string, event: React.KeyboardEvent<HTMLInputElement>) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      addTagForMedia(mediaKey);
+    }
+  }
   function handleNextStep() {
     if (uploading || publishing || uploadedMedia.length < 1) return;
     if (!captionStepConfirmed) { setCaptionStepConfirmed(true); setError(""); return; }
@@ -573,7 +613,23 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     try {
       setPublishing(true); setError("");
       const automationId = automationEnabled ? await createAutomation() : null;
-      const response = await fetch("/api/instagram/publishing", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ instagramAccountId: accountId, type, caption: type === "STORY" ? null : caption.trim() || null, scheduledAt: publishNow ? null : scheduled.toISOString(), idempotencyKey: crypto.randomUUID(), commentAutomationId: type === "STORY" ? null : automationId, storyReplyAutomationId: type === "STORY" ? automationId : null, media: uploadedMedia }) });
+      const response = await fetch("/api/instagram/publishing", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
+        instagramAccountId: accountId,
+        type,
+        caption: type === "STORY" ? null : caption.trim() || null,
+        userTags: type === "CAROUSEL"
+          ? { media: uploadedMedia.reduce<Record<string, Array<{ username: string }>>>((accumulator, item) => {
+              const usernames = taggedUsersByMedia[item.storageKey] ?? [];
+              if (usernames.length) accumulator[item.storageKey] = usernames.map((username) => ({ username }));
+              return accumulator;
+            }, {}) }
+          : (taggedUsersByMedia[uploadedMedia[0]?.storageKey ?? ""] ?? []).map((username) => ({ username })),
+        scheduledAt: publishNow ? null : scheduled.toISOString(),
+        idempotencyKey: crypto.randomUUID(),
+        commentAutomationId: type === "STORY" ? null : automationId,
+        storyReplyAutomationId: type === "STORY" ? automationId : null,
+        media: uploadedMedia,
+      }) });
       const result = await response.json();
       if (!response.ok) { if (automationId) await fetch(`/api/automations/${automationId}`, { method: "DELETE" }).catch(() => undefined); throw new Error(result.message || "ساخت Publishing Job ناموفق بود."); }
       const job = result.data as Job;
@@ -738,27 +794,51 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
               <div className="mb-5 flex items-start gap-3">
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">۴</span>
-                <div>
+                <div className="min-w-0">
                   <h2 className="text-sm font-bold text-[#0F172A]">تگ کردن</h2>
-                  <p className="mt-1 text-[11px] leading-5 text-[#64748B]">در صورت نیاز، برای هر محتوا اکانت‌های موردنظر را جداگانه تگ کن.</p>
+                  <p className="mt-1 whitespace-nowrap text-[11px] leading-5 text-[#64748B]">در صورت نیاز، کاربرهای موردنظر را اضافه کن.</p>
                 </div>
               </div>
+
+              {tagInputError && (
+                <div className="mb-4 rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-5 text-[#B91C1C]" role="alert">
+                  {tagInputError}
+                </div>
+              )}
+
               {type === "CAROUSEL" ? (
                 <div className="space-y-3">
-                  {uploadedMedia.map((item,index) => {
-                    const tags = taggedUsersByMedia[item.storageKey] || [];
+                  {uploadedMedia.map((item, index) => {
+                    const mediaKey = item.storageKey;
+                    const tags = taggedUsersByMedia[mediaKey] ?? [];
+                    const draft = tagDraftByMedia[mediaKey] ?? "";
                     return (
-                      <div key={item.storageKey} className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3">
-                        <div className="flex items-center gap-3">
+                      <div key={mediaKey} className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5 sm:p-4">
+                        <div className="flex items-start gap-3">
                           <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-[#E2E8F0] bg-white">
                             <MediaTile item={item} type="CAROUSEL" onRemove={() => void removeUploaded(item)} ready compact/>
                           </div>
                           <div className="min-w-0 flex-1">
                             <div className="mb-2 flex items-center justify-between gap-2">
-                              <p className="text-xs font-bold text-[#0F172A]">اسلاید {toPersianDigits(index+1)}</p>
+                              <p className="text-xs font-bold text-[#0F172A]">اسلاید {toPersianDigits(index + 1)}</p>
                               <span className="rounded-full bg-white px-2 py-1 text-[10px] font-medium text-[#64748B] ring-1 ring-[#E2E8F0]">{toPersianDigits(tags.length)} تگ</span>
                             </div>
-                            <input value={tags.join(", ")} onChange={e => setTaggedUsersByMedia(current => ({...current,[item.storageKey]: e.target.value.split(",").map(v=>v.trim()).filter(Boolean)}))} placeholder="نام کاربری را وارد کن؛ چند مورد با ویرگول" className="w-full rounded-lg border border-[#CBD5E1] bg-white px-3 py-2.5 text-xs text-[#0F172A] outline-none placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10"/>
+                            {tags.length > 0 && (
+                              <div className="mb-2.5 flex flex-wrap gap-1.5">
+                                {tags.map((username) => (
+                                  <span key={username} className="inline-flex items-center gap-1 rounded-full bg-[#EFF6FF] px-2.5 py-1.5 text-[11px] font-semibold text-[#2563EB] ring-1 ring-[#DBEAFE]">
+                                    <span dir="ltr">@{username}</span>
+                                    <button type="button" onClick={() => removeTagForMedia(mediaKey, username)} className="flex h-4 w-4 items-center justify-center rounded-full text-[#64748B] hover:bg-white hover:text-[#DC2626]" aria-label={`حذف تگ @${username}`}>
+                                      <X size={11} />
+                                    </button>
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                            <div className="flex items-center gap-2">
+                              <input value={draft} onChange={(event) => handleTagInputChange(mediaKey, event.target.value)} onKeyDown={(event) => handleTagInputKeyDown(mediaKey, event)} placeholder="فقط نام کاربر را بدون @ بنویس" maxLength={30} inputMode="text" autoCapitalize="none" spellCheck={false} className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-2.5 text-xs text-[#0F172A] outline-none placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10"/>
+                              <Button type="button" onClick={() => addTagForMedia(mediaKey)} className="shrink-0 rounded-lg bg-[#2563EB] px-3.5 py-2.5 text-xs font-semibold text-white hover:bg-[#1D4ED8]">افزودن</Button>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -766,6 +846,39 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   })}
                 </div>
               ) : (
+                <div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5 sm:p-4">
+                  {(() => {
+                    const mediaKey = uploadedMedia[0]?.storageKey ?? "";
+                    const tags = taggedUsersByMedia[mediaKey] ?? [];
+                    const draft = tagDraftByMedia[mediaKey] ?? "";
+                    return (
+                      <>
+                        {tags.length > 0 && (
+                          <div className="mb-2.5 flex flex-wrap gap-1.5">
+                            {tags.map((username) => (
+                              <span key={username} className="inline-flex items-center gap-1 rounded-full bg-[#EFF6FF] px-2.5 py-1.5 text-[11px] font-semibold text-[#2563EB] ring-1 ring-[#DBEAFE]">
+                                <span dir="ltr">@{username}</span>
+                                <button type="button" onClick={() => removeTagForMedia(mediaKey, username)} className="flex h-4 w-4 items-center justify-center rounded-full text-[#64748B] hover:bg-white hover:text-[#DC2626]" aria-label={`حذف تگ @${username}`}>
+                                  <X size={11} />
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2">
+                          <input value={draft} onChange={(event) => handleTagInputChange(mediaKey, event.target.value)} onKeyDown={(event) => handleTagInputKeyDown(mediaKey, event)} placeholder="فقط نام کاربر را بدون @ بنویس" maxLength={30} inputMode="text" autoCapitalize="none" spellCheck={false} className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-2.5 text-xs text-[#0F172A] outline-none placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10"/>
+                          <Button type="button" onClick={() => addTagForMedia(mediaKey)} className="shrink-0 rounded-lg bg-[#2563EB] px-3.5 py-2.5 text-xs font-semibold text-white hover:bg-[#1D4ED8]">افزودن</Button>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+              )}
+
+              <div className="mt-4 whitespace-nowrap rounded-xl border border-[#DBEAFE] bg-[#EFF6FF] px-3.5 py-2.5 text-[11px] leading-5 text-[#475569]">این مرحله اختیاری است و می‌توانی بدون اضافه کردن تگ ادامه بدهی.</div>
+            </section>
+          </div>
+        ) : (
                 <div className="flex items-center gap-4 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3">
                   <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-[#E2E8F0] bg-white">
                     {uploadedMedia[0] && <MediaTile item={uploadedMedia[0]} type={type} onRemove={() => void removeUploaded(uploadedMedia[0])} ready compact/>}
