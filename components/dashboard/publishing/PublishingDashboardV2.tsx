@@ -464,8 +464,9 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const accept = type === "REEL" ? "video/mp4,video/quicktime" : type === "STORY" || type === "CAROUSEL" ? "image/jpeg,image/png,image/webp,video/mp4,video/quicktime" : "image/jpeg,image/png,image/webp";
 
   return (
-    <style>{`@keyframes draw-check { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }`}</style>
-    <div dir="rtl" className={["bg-[#F8FAFC] px-3 py-4 sm:px-5 sm:py-6 lg:px-8", !selectionConfirmed ? "pb-8" : "min-h-screen pb-28 lg:pb-8"].join(" ")}>
+    <>
+      <style>{`@keyframes draw-check { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }`}</style>
+      <div dir="rtl" className={["bg-[#F8FAFC] px-3 py-4 sm:px-5 sm:py-6 lg:px-8", !selectionConfirmed ? "pb-8" : "min-h-screen pb-28 lg:pb-8"].join(" ")}>
       <div className="mx-auto w-full max-w-6xl">
         <div className={["transition-all duration-300 ease-out", stepVisible ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0"].join(" ")}>
         {!selectionConfirmed ? (
@@ -547,7 +548,9 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   <div className="flex justify-center">{uploadedMedia.map(item=><div key={item.storageKey} className="w-28 sm:w-32"><MediaTile item={item} type={type} onRemove={()=>void removeUploaded(item)} ready compact/></div>)}</div>
                   <div className="mt-4 flex justify-center"><Button type="button" disabled={uploading||publishing} onClick={()=>animateStepChange(()=>setCaptionStepConfirmed(true))} className="min-h-10 rounded-xl bg-[#2563EB] px-5 text-xs font-semibold text-white hover:bg-[#1D4ED8] disabled:opacity-40">ادامه</Button></div>
                 </div>
-              )}>
+              )}
+            </div>
+          </section>
         ) : (
           <div>
             <div className="mb-4 flex items-center justify-between gap-3">
@@ -619,9 +622,10 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
           </div>
         )}
         </div>
-      </div>
+        </div>
       {selectionConfirmed&&captionStepConfirmed&&!loading&&uploadedMedia.length>0&&<div className="fixed inset-x-3 bottom-3 z-40 rounded-2xl border border-[#E2E8F0] bg-white/95 p-2.5 shadow-lg backdrop-blur sm:hidden"><div className="grid grid-cols-2 gap-2"><Button type="button" disabled={!canPublish||publishing} onClick={()=>void createJob(true)} className="min-h-11 rounded-xl bg-[#2563EB] px-3 text-xs font-semibold text-white disabled:opacity-50">{publishing?<Loader2 size={16} className="animate-spin"/>:<Send size={16}/>} انتشار الآن</Button><Button type="button" disabled={!canPublish||publishing} onClick={()=>void createJob(false)} className="min-h-11 rounded-xl border border-[#E2E8F0] bg-white px-3 text-xs font-semibold text-[#334155] disabled:opacity-50"><CalendarClock size={16}/> زمان‌بندی</Button></div></div>}
-    </div>
+      </div>
+    </>
   );
 function MediaTile({ item, type, onRemove, ready=false, compact=false }: any) {
   const image=item.type==="IMAGE"; const src=ready?item.publicUrl:item.previewUrl;
