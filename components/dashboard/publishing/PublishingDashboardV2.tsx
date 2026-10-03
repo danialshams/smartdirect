@@ -75,14 +75,13 @@ function InlineWheelPicker({
   label: string;
 }) {
   const options: WheelPickerOption<number>[] = Array.from({ length: max - min + 1 }, (_, index) => {
-      const optionValue = min + index;
-      return {
-        value: optionValue,
-        label: formatWheelValue(optionValue),
-        textValue: String(optionValue),
-      };
-    }),
-  ];
+    const optionValue = min + index;
+    return {
+      value: optionValue,
+      label: formatWheelValue(optionValue),
+      textValue: String(optionValue),
+    };
+  });
 
   return (
     <div className="min-w-0 select-none">
