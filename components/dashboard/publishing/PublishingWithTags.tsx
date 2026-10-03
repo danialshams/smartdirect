@@ -66,9 +66,9 @@ export default function PublishingWithTags() {
     };
   }, [tags, type]);
 
-  return <PublishingDashboardV2 onTypeChange={handleTypeChange} />;
-}
+  function handleTypeChange(nextType: PublishType) {
+    setType(nextType);
+  }
 
-function handleTypeChange(nextType: PublishType) {
-  setType(nextType);
+  return <PublishingDashboardV2 onTypeChange={handleTypeChange} />;
 }
