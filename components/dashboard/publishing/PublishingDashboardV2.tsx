@@ -717,7 +717,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               )}
             </div>
 
-            <div className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
+            <div className={type !== "CAROUSEL" && showUploadedMediaPreview && uploadedMedia.length > 0 ? "p-0" : "rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6"}>
               {type !== "CAROUSEL" && showUploadedMediaPreview && uploadedMedia.length > 0 ? (
                 <div className="flex min-h-[260px] flex-col items-center justify-center py-5">
                   <div className="w-32 sm:w-40">
