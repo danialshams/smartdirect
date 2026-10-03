@@ -68,10 +68,11 @@ async function uploadFileWithProgress(file: File, onProgress: (progress: number)
   }
 
   if (providerResult.mode === "vercel-blob") {
+    let lastProgress = 0;
     const blob = await uploadToBlob(providerResult.pathname, file, {
       access: "public",
       handleUploadUrl: "/api/instagram/publishing/upload/client",
-      multipart: true,
+      multipart: file.size > 10 * 1024 * 1024,
       clientPayload: JSON.stringify({
         pathname: providerResult.pathname,
         fileName: file.name,
@@ -79,10 +80,13 @@ async function uploadFileWithProgress(file: File, onProgress: (progress: number)
         fileSize: file.size,
       }),
       onUploadProgress(event) {
-        onProgress(Math.round(event.percentage));
+        const nextProgress = Math.max(lastProgress, Math.min(100, Math.round(event.percentage)));
+        lastProgress = nextProgress;
+        onProgress(nextProgress);
       },
     });
 
+    onProgress(100);
     return {
       storageKey: blob.pathname,
       publicUrl: blob.url,
@@ -173,7 +177,7 @@ function UploadArea({ id, accept, multiple, disabled, isDragging, setIsDragging,
     <Input id={id} type="file" accept={accept} multiple={multiple} onChange={onChange} disabled={disabled} className="sr-only"/>
     <label htmlFor={id} className="flex min-h-[190px] cursor-pointer flex-col items-center justify-center text-center">
       <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-[#2563EB] shadow-sm ring-1 ring-[#E2E8F0]">
-        {uploading?<Loader2 size={22} className="animate-spin"/>:uploadSuccess?<UploadSuccessMark/>:<ImagePlus size={22}/>}
+        {uploadSuccess?<UploadSuccessMark/>:<ImagePlus size={22}/>}
       </div>
       <span className={["mt-4 text-sm font-bold transition-all duration-300",uploadSuccess?"text-[#16A34A]":"text-[#0F172A]"].join(" ")}>
         {uploading?"در حال آپلود...":uploadSuccess?"آپلود شد":title}
