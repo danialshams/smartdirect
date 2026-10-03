@@ -806,7 +806,9 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
                 <ArrowRight size={15} strokeWidth={2}/>بازگشت
               </Button>
-              <span className="text-[11px] font-semibold text-[#2563EB]">مرحله بعد</span>
+              <Button type="button" onClick={() => { setAutomationChoiceStepStarted(true); setError(""); }} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
+                مرحله بعد <ArrowLeft size={15} strokeWidth={2}/>
+              </Button>
             </div>
             <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
               <div className="mb-5 flex items-start gap-3">
@@ -816,8 +818,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   <p className="mt-1 whitespace-nowrap text-[11px] leading-5 text-[#64748B]">در صورت نیاز، کاربرهای موردنظر را اضافه کن.</p>
                 </div>
               </div>
-              <div className="sr-only">این مرحله اختیاری است.</div>
-
+              
               {tagInputError && (
                 <div className="mb-4 rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-5 text-[#B91C1C]" role="alert">
                   {tagInputError}
@@ -893,12 +894,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                 </div>
               )}
 
-              <div className="mt-4 whitespace-nowrap rounded-xl border border-[#DBEAFE] bg-[#EFF6FF] px-3.5 py-2.5 text-[11px] leading-5 text-[#475569]">این مرحله اختیاری است و می‌توانی بدون اضافه کردن تگ ادامه بدهی.</div>
-              <div className="mt-4 flex justify-end">
-                <Button type="button" onClick={() => { setAutomationChoiceStepStarted(true); setError(""); }} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
-                  مرحله بعد <ArrowLeft size={15} strokeWidth={2}/>
-                </Button>
-              </div>
+
             </section>
           </div>
         ) : type !== "STORY" && tagStepConfirmed && automationChoiceStepStarted && !automationChoiceConfirmed ? (
@@ -937,7 +933,6 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   </div>
                 </button>
               </div>
-              <div className="mt-4 whitespace-nowrap rounded-xl border border-[#DBEAFE] bg-[#EFF6FF] px-3.5 py-2.5 text-[11px] leading-5 text-[#475569]">این مرحله اختیاری است و می‌توانی بدون فعال کردن پاسخ خودکار ادامه بدهی.</div>
             </section>
           </div>
         ) : (
