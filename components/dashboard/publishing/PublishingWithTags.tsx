@@ -61,6 +61,14 @@ export default function PublishingWithTags() {
       return originalFetch(input, init);
     };
 
-    return (
-      <PublishingDashboardV2 onTypeChange={handleTypeChange} />
-    );
+    return () => {
+      window.fetch = originalFetch;
+    };
+  }, [tags, type]);
+
+  return <PublishingDashboardV2 onTypeChange={handleTypeChange} />;
+}
+
+function handleTypeChange(nextType: PublishType) {
+  setType(nextType);
+}
