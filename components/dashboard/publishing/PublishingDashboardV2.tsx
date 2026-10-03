@@ -8,7 +8,7 @@ import { Input } from "@/components/dashboard/DashboardUI"
 import { Select } from "@/components/dashboard/DashboardUI"
 
 import { toast } from "sonner";
-import { ArrowRight, CalendarClock, Camera, Clapperboard, ImagePlus, Images, Loader2, Plus, Send, Video, X } from "lucide-react";
+import { ArrowRight, CalendarClock, Camera, Clapperboard, ImagePlus, Images, Plus, Send, Video, X } from "lucide-react";
 import { upload as uploadToBlob } from "@vercel/blob/client";
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent } from "react";
 
