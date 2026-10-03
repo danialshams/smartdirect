@@ -883,20 +883,6 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             </section>
           </div>
         ) : (
-                <div className="flex items-center gap-4 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3">
-                  <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-[#E2E8F0] bg-white">
-                    {uploadedMedia[0] && <MediaTile item={uploadedMedia[0]} type={type} onRemove={() => void removeUploaded(uploadedMedia[0])} ready compact/>}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="mb-2 text-xs font-bold text-[#0F172A]">تگ‌های این محتوا</p>
-                    <input value={taggedUsersByMedia[uploadedMedia[0]?.storageKey || ""]?.join(", ") || ""} onChange={e => uploadedMedia[0] && setTaggedUsersByMedia(current => ({...current,[uploadedMedia[0].storageKey]: e.target.value.split(",").map(v=>v.trim()).filter(Boolean)}))} placeholder="نام کاربری را وارد کن؛ چند مورد با ویرگول" className="w-full rounded-lg border border-[#CBD5E1] bg-white px-3 py-2.5 text-xs text-[#0F172A] outline-none placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10"/>
-                  </div>
-                </div>
-              )}
-              <div className="mt-5 rounded-xl border border-[#DBEAFE] bg-[#EFF6FF] px-3.5 py-3 text-[11px] leading-5 text-[#475569]">این مرحله اختیاری است و می‌توانی بدون اضافه کردن تگ ادامه بدهی.</div>
-            </section>
-          </div>
-        ) : (
           <div>
             <div className="mb-4 flex items-center justify-between gap-3">
               <Button
