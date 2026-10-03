@@ -291,45 +291,42 @@ export default function AutomationFlowMessage({
         <p className="mt-1 text-[11px] leading-5 text-[#64748B]">نوع پیامی را که کاربر دریافت می‌کند انتخاب کن.</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
         {messageTypeOptions.map(({ value, label, Icon }) => (
           <Button
             key={value}
             type="button"
             onClick={() => onUpdate({ messageType: value })}
             className={[
-              "flex min-h-[72px] flex-col items-center justify-center gap-2 rounded-xl border px-2 text-xs font-semibold transition",
+              "group flex min-h-[108px] flex-col items-start justify-between rounded-2xl border bg-white p-4 text-right transition-all",
               message.messageType === value
-                ? "border-[#7C3AED] bg-[#7C3AED]/10 text-[#7C3AED] ring-1 ring-[#7C3AED]/10"
-                : "border-[#E2E8F0] bg-white text-[#64748B] hover:border-[#CBD5E1] hover:bg-[#F8FAFC]",
+                ? "border-[#7C3AED] text-[#0F172A] shadow-[0_0_0_2px_rgba(124,58,237,0.10)]"
+                : "border-[#E2E8F0] text-[#0F172A] hover:-translate-y-0.5 hover:border-[#CBD5E1] hover:shadow-sm",
             ].join(" ")}
           >
-            <Icon size={20} />
-            {label}
+            <span className={["flex h-10 w-10 items-center justify-center rounded-xl",message.messageType === value?"bg-[#F5F3FF] text-[#7C3AED]":"bg-[#F8FAFC] text-[#64748B]"].join(" ")}><Icon size={20} /></span>
+            <span className="text-sm font-bold">{label}</span>
           </Button>
         ))}
       </div>
 
       {message.messageType === "TEXT" && (
-        <div className="space-y-2">
-          <label className="text-xs font-semibold text-foreground">متن پاسخ</label>
-          <Textarea value={message.text} onChange={(event) => onUpdate({ text: event.target.value })} rows={5} placeholder="متن پاسخ را وارد کنید..." className="w-full resize-none rounded-2xl border border-border/70 bg-background px-4 py-3 text-sm leading-7 outline-none focus:border-ring" />
+        <div className="rounded-2xl border border-[#E2E8F0] bg-white p-4 sm:p-5">
+          <label className="mb-2.5 block text-xs font-bold text-[#0F172A]">متن پاسخ</label>
+          <Textarea value={message.text} onChange={(event) => onUpdate({ text: event.target.value })} rows={6} placeholder="متن پاسخ را وارد کنید..." className="w-full resize-none rounded-xl border border-[#E2E8F0] bg-[#FAFAFC] px-3.5 py-3 text-sm leading-7 text-[#0F172A] outline-none transition focus:border-[#7C3AED] focus:bg-white focus:ring-2 focus:ring-[#7C3AED]/10" />
         </div>
       )}
 
       {isForm && (
-        <div className="space-y-4 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5">
-          <div>
-            <p className="text-sm font-bold text-foreground">فرم</p>
-            
+        <div className="rounded-2xl border border-[#E2E8F0] bg-white p-4 sm:p-5">
+          <div className="mb-5 flex items-start justify-between gap-3">
+            <div><p className="text-sm font-bold text-[#0F172A]">فرم و سؤال</p><p className="mt-1 text-[11px] leading-5 text-[#64748B]">سؤال را تعریف کن و برای هر پاسخ، مسیر بعدی را مشخص کن.</p></div>
+            <span className="rounded-full bg-[#F8FAFC] px-2.5 py-1 text-[10px] font-semibold text-[#64748B]">مرحله‌ای</span>
           </div>
-          <Textarea
-            value={message.text}
-            onChange={(event) => onUpdate({ text: event.target.value })}
-            rows={3}
-            placeholder="سؤال را بنویسید..."
-            className="w-full resize-none rounded-xl border border-border/70 bg-background px-3.5 py-3 text-sm leading-7 outline-none focus:border-ring"
-          />
+          <label className="block">
+            <span className="mb-2 block text-xs font-bold text-[#334155]">متن سؤال</span>
+            <Textarea value={message.text} onChange={(event) => onUpdate({ text: event.target.value })} rows={3} placeholder="مثلاً: کدام سرویس برای شما مناسب‌تر است؟" className="w-full resize-none rounded-xl border border-[#E2E8F0] bg-[#FAFAFC] px-3.5 py-3 text-sm leading-7 text-[#0F172A] outline-none transition focus:border-[#7C3AED] focus:bg-white focus:ring-2 focus:ring-[#7C3AED]/10" />
+          </label>
           <BranchAnswerEditor
             replies={message.quickReplies}
             instagramAccountId={instagramAccountId}
@@ -342,29 +339,29 @@ export default function AutomationFlowMessage({
       )}
 
       {(message.messageType === "IMAGE" || message.messageType === "VIDEO" || message.messageType === "AUDIO") && (
-        <div className="space-y-3 rounded-2xl border border-border/70 bg-muted/30 p-3.5">
-          <label className="flex min-h-28 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] px-4 py-5 text-center text-xs font-semibold text-foreground transition hover:bg-muted/40">
+        <div className="rounded-2xl border border-[#E2E8F0] bg-white p-4 sm:p-5">
+          <label className="flex min-h-36 cursor-pointer flex-col items-center justify-center gap-2.5 rounded-xl border border-dashed border-[#CBD5E1] bg-[#FAFAFC] px-4 py-6 text-center text-xs font-semibold text-[#334155] transition hover:border-[#A78BFA] hover:bg-[#F5F3FF]">
             {message.messageType === "IMAGE" ? <ImagePlus size={24} className="text-primary" /> : message.messageType === "VIDEO" ? <Video size={24} className="text-primary" /> : <Mic size={24} className="text-primary" />}
             {mediaUploading ? "در حال آپلود..." : message.mediaUrl ? "انتخاب فایل دیگر" : "انتخاب فایل"}
             <span className="text-[10px] font-normal text-muted-foreground">فایل را از دستگاه انتخاب کنید.</span>
             <Input type="file" accept={message.messageType === "IMAGE" ? "image/jpeg,image/png,image/webp" : message.messageType === "VIDEO" ? "video/mp4,video/quicktime" : "audio/mpeg,audio/mp3,audio/aac,audio/wav,audio/x-wav,audio/m4a,.mp3,.m4a,.aac,.wav"} className="hidden" disabled={mediaUploading} onChange={(event) => void handleMessageMedia(event.target.files?.[0])} />
           </label>
-          {message.mediaUrl && <p className="truncate rounded-lg bg-background px-3 py-2 text-[10px] text-muted-foreground" dir="ltr">{message.mediaUrl}</p>}
+          {message.mediaUrl && <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-[#DCFCE7] bg-[#F0FDF4] px-3.5 py-2.5"><span className="text-xs font-semibold text-[#166534]">فایل آماده ارسال است</span><span className="max-w-[55%] truncate text-[10px] text-[#64748B]" dir="ltr">{message.mediaUrl}</span></div>}
           {showcaseError && <p className="text-xs text-red-600">{showcaseError}</p>}
         </div>
       )}
 
       {message.messageType === "SHOWCASE" && (
-        <div className="space-y-3 rounded-2xl border border-border/70 bg-muted/30 p-3.5">
-          <div className="flex items-center justify-between gap-2">
-            <div><p className="text-sm font-bold text-foreground">ویترین</p><p className="mt-1 text-[10px] leading-5 text-muted-foreground">محتوای تصویری پاسخ.</p></div>
+        <div className="rounded-2xl border border-[#E2E8F0] bg-white p-4 sm:p-5">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div><p className="text-sm font-bold text-[#0F172A]">ویترین</p><p className="mt-1 text-[11px] leading-5 text-[#64748B]">چند اسلاید تصویری را به عنوان پاسخ ارسال کن.</p></div>
             <Button type="button" onClick={() => setShowcaseItems((current) => [...current, newShowcaseItem()])} className="inline-flex items-center gap-1 rounded-lg border border-border/70 bg-background px-2.5 py-2 text-[11px] font-semibold text-foreground"><Plus size={13} />اسلاید</Button>
           </div>
           {showcaseItems.map((item, itemIndex) => (
-            <div key={item.id} className="rounded-xl border border-[#E2E8F0] bg-white p-3">
+            <div key={item.id} className="rounded-2xl border border-[#E2E8F0] bg-[#FAFAFC] p-4">
               <div className="mb-2.5 flex items-center justify-between"><span className="text-[11px] font-bold text-muted-foreground">اسلاید {itemIndex + 1}</span>{showcaseItems.length > 1 && <Button type="button" onClick={() => setShowcaseItems((current) => current.filter((entry) => entry.id !== item.id))} className="flex h-7 w-7 items-center justify-center rounded-lg p-0 text-muted-foreground hover:text-red-600"><X size={14} /></Button>}</div>
-              <div className="grid gap-3 sm:grid-cols-[112px_1fr]">
-                <label className="flex min-h-[112px] cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-dashed border-border bg-muted">
+              <div className="grid gap-4 sm:grid-cols-[128px_1fr]">
+                <label className="flex min-h-[128px] cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-dashed border-[#CBD5E1] bg-white">
                   {item.previewUrl ? <img src={item.previewUrl} alt="" className="h-full w-full object-cover" /> : <span className="flex flex-col items-center gap-1.5 text-[10px] text-muted-foreground"><ImagePlus size={22} />تصویر</span>}
                   <Input type="file" accept="image/*" className="hidden" onChange={(event) => void handleShowcaseImage(item.id, event.target.files?.[0])} />
                 </label>
@@ -577,14 +574,14 @@ function BranchShowcaseCreator({
   }
 
   return (
-    <div className="space-y-3 rounded-xl border border-border/70 bg-muted/20 p-3">
+    <div className="space-y-4 rounded-2xl border border-[#E2E8F0] bg-white p-4">
       {showcaseId ? (
         <div className="space-y-3">
           <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-xs text-emerald-800">
             ویترین متصل است. تصویر، نام و توضیح هر اسلاید قابل ویرایش است.
           </div>
           {items.map((item, itemIndex) => (
-            <div key={item.id} className="rounded-xl border border-border/70 bg-background p-3">
+            <div key={item.id} className="rounded-2xl border border-[#E2E8F0] bg-[#FAFAFC] p-4">
               <div className="mb-2.5 flex items-center justify-between"><span className="text-[11px] font-bold text-muted-foreground">اسلاید {itemIndex + 1}</span>{itemSaving.includes(item.id) && <span className="text-[10px] text-muted-foreground">در حال ذخیره...</span>}</div>
               <div className="grid gap-3 sm:grid-cols-[112px_1fr]">
                 <label className="flex min-h-[112px] cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-dashed border-border bg-muted">
@@ -730,10 +727,10 @@ function BranchAnswerEditor({
     : [["TEXT", "متن"]];
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-xs font-bold text-foreground">{depth === 0 ? "جواب‌ها" : "جواب‌های سؤال بعدی"}</p>
-        <Button type="button" onClick={addReply} disabled={replies.length >= 13} className="inline-flex items-center gap-1 rounded-lg border border-border/70 bg-background px-2.5 py-1.5 text-[11px] font-semibold text-foreground disabled:opacity-40">
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <div><p className="text-xs font-bold text-[#0F172A]">{depth === 0 ? "گزینه‌های پاسخ" : "گزینه‌های سؤال بعدی"}</p><p className="mt-1 text-[10px] text-[#64748B]">هر گزینه می‌تواند متن، رسانه یا سؤال بعدی را باز کند.</p></div>
+        <Button type="button" onClick={addReply} disabled={replies.length >= 13} className="inline-flex items-center gap-1.5 rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 text-[11px] font-semibold text-[#334155] shadow-sm hover:bg-[#F8FAFC] disabled:opacity-40">
           <Plus size={13} />افزودن جواب
         </Button>
       </div>
@@ -745,7 +742,7 @@ function BranchAnswerEditor({
       )}
 
       {replies.map((reply, index) => (
-        <div key={reply.id} className="space-y-3 rounded-xl border border-border/70 bg-background p-3">
+        <div key={reply.id} className="space-y-4 rounded-2xl border border-[#E2E8F0] bg-[#FAFAFC] p-4">
           <div className="flex items-center justify-between gap-2">
             <span className="text-[11px] font-bold text-muted-foreground">جواب {index + 1}</span>
             <Button type="button" onClick={() => removeReply(reply.id)} className="flex h-7 w-7 items-center justify-center rounded-lg p-0 text-muted-foreground hover:text-red-600" aria-label="حذف جواب"><Trash2 size={14} /></Button>
@@ -756,7 +753,7 @@ function BranchAnswerEditor({
             maxLength={20}
             onChange={(event) => updateReply(reply.id, { title: event.target.value })}
             placeholder="متن جواب"
-            className="rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm"
+            className="rounded-xl border border-[#E2E8F0] bg-white px-3.5 py-3 text-sm text-[#0F172A] outline-none transition focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/10"
           />
 
           <div className="relative">
@@ -765,7 +762,7 @@ function BranchAnswerEditor({
               onChange={(event) => updateReply(reply.id, {
                 destinationType: (event.target.value || null) as QuickReplyDraft["destinationType"],
               })}
-              className="w-full appearance-none rounded-xl border border-border/70 bg-background px-3 py-2.5 text-xs"
+              className="w-full appearance-none rounded-xl border border-[#E2E8F0] bg-white px-3.5 py-3 text-sm text-[#334155] outline-none transition focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/10"
             >
               <option value="">مقصد این جواب را انتخاب کنید</option>
               {destinationOptions.map(([value, label]) => (
@@ -781,7 +778,7 @@ function BranchAnswerEditor({
               onChange={(event) => updateReply(reply.id, { destinationText: event.target.value })}
               rows={3}
               placeholder="متن پاسخ را وارد کنید..."
-              className="w-full resize-none rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm leading-6"
+              className="w-full resize-none rounded-xl border border-[#E2E8F0] bg-white px-3.5 py-3 text-sm leading-6 outline-none transition focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/10"
             />
           )}
 
