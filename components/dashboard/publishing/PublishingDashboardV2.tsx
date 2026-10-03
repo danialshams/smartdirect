@@ -167,7 +167,7 @@ function ProgressBar({ progress }: { progress: number }) {
   </div>;
 }
 function UploadSuccessMark() {
-  return <svg viewBox="0 0 24 24" className="inline-block h-7 w-7 shrink-0 text-[#16A34A]" aria-hidden="true">
+  return <svg viewBox="0 0 24 24" className="inline-block h-8 w-8 shrink-0 text-[#16A34A]" aria-hidden="true">
     <path d="m4 12.5 5 5L20 6" pathLength="100" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="upload-check-path"/>
   </svg>;
 }
@@ -855,7 +855,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                               </div>
                             )}
                             <div className="flex items-center gap-2">
-                              <input value={draft} onChange={(event) => handleTagInputChange(mediaKey, event.target.value)} onKeyDown={(event) => handleTagInputKeyDown(mediaKey, event)} placeholder="فقط نام کاربر را بدون @ بنویس" maxLength={30} inputMode="text" autoCapitalize="none" spellCheck={false} className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-2.5 !text-base leading-5 text-[#0F172A] outline-none placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }}/>
+                              <input value={draft} onChange={(event) => handleTagInputChange(mediaKey, event.target.value)} onKeyDown={(event) => handleTagInputKeyDown(mediaKey, event)} placeholder="نام کاربر بدون @" maxLength={30} inputMode="text" autoCapitalize="none" spellCheck={false} className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-2.5 !text-base leading-5 text-[#0F172A] outline-none placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }}/>
                               <Button type="button" onClick={() => addTagForMedia(mediaKey)} className="shrink-0 rounded-lg bg-[#2563EB] px-3.5 py-2.5 text-xs font-semibold text-white hover:bg-[#1D4ED8]">افزودن</Button>
                             </div>
                           </div>
@@ -903,13 +903,13 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
                 <ArrowRight size={15} strokeWidth={2}/>بازگشت
               </Button>
-              <span className="rounded-full bg-[#F8FAFC] px-2.5 py-1 text-[10px] font-semibold text-[#64748B]">اختیاری</span>
+              
             </div>
             <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
               <div className="mb-6 flex items-start gap-3">
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">۵</span>
                 <div className="min-w-0">
-                  <h2 className="text-sm font-bold text-[#0F172A]">پاسخ خودکار</h2>
+                  <h2 className="text-sm font-bold text-[#0F172A]">پاسخ خودکار <span className="text-[#2563EB]">(اختیاری)</span></h2>
                   <p className="mt-1.5 text-xs leading-5 text-[#64748B]">آیا می‌خواهی برای این محتوا پاسخ خودکار تنظیم شود؟</p>
                 </div>
               </div>
