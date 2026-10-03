@@ -673,7 +673,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   return (
     <>
       <style>{`@keyframes draw-check { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } } .upload-check-path { stroke-dasharray: 100; stroke-dashoffset: 100; animation: draw-check 850ms cubic-bezier(.22,.61,.36,1) forwards; }`}</style>
-      <div dir="rtl" className={["bg-[#F8FAFC] px-3 py-4 sm:px-5 sm:py-6 lg:px-8", !selectionConfirmed ? "pb-8" : "min-h-screen pb-28 lg:pb-8"].join(" ")}>
+      <div dir="rtl" className={["bg-[#F8FAFC] px-3 py-4 sm:px-5 sm:py-6 lg:px-8", !selectionConfirmed ? "pb-8" : "pb-8"].join(" ")}>
       <div className="mx-auto w-full max-w-6xl">
         <div className={["transition-all duration-300 ease-out", stepVisible ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0"].join(" ")}>
         {!selectionConfirmed ? (
@@ -856,8 +856,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                               </div>
                             )}
                             <div className="flex items-center gap-2">
-                              <input value={draft} onChange={(event) => handleTagInputChange(mediaKey, event.target.value)} onKeyDown={(event) => handleTagInputKeyDown(mediaKey, event)} placeholder="نام کاربر بدون @" maxLength={30} inputMode="text" autoCapitalize="none" spellCheck={false} className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-2.5 !text-base leading-5 text-[#0F172A] outline-none placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }}/>
-                              <Button type="button" onClick={() => addTagForMedia(mediaKey)} className="shrink-0 rounded-lg bg-[#2563EB] px-3.5 py-2.5 text-xs font-semibold text-white hover:bg-[#1D4ED8]">افزودن</Button>
+                              <input value={draft} onChange={(event) => handleTagInputChange(mediaKey, event.target.value)} onKeyDown={(event) => handleTagInputKeyDown(mediaKey, event)} placeholder="نام کاربر بدون @" maxLength={30} inputMode="text" autoCapitalize="none" spellCheck={false} className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-2.5 !text-base leading-5 text-[#0F172A] outline-none placeholder:text-xs placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }}/>
+                              <Button type="button" onClick={() => addTagForMedia(mediaKey)} disabled={!draft.trim()} className="shrink-0 rounded-lg bg-[#2563EB] px-3.5 py-2.5 text-xs font-semibold text-white hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-40">افزودن</Button>
                             </div>
                           </div>
                         </div>
@@ -886,8 +886,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                           </div>
                         )}
                         <div className="flex items-center gap-2">
-                          <input value={draft} onChange={(event) => handleTagInputChange(mediaKey, event.target.value)} onKeyDown={(event) => handleTagInputKeyDown(mediaKey, event)} placeholder="فقط نام کاربر را بدون @ بنویس" maxLength={30} inputMode="text" autoCapitalize="none" spellCheck={false} className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-2.5 !text-base leading-5 text-[#0F172A] outline-none placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }}/>
-                          <Button type="button" onClick={() => addTagForMedia(mediaKey)} className="shrink-0 rounded-lg bg-[#2563EB] px-3.5 py-2.5 text-xs font-semibold text-white hover:bg-[#1D4ED8]">افزودن</Button>
+                          <input value={draft} onChange={(event) => handleTagInputChange(mediaKey, event.target.value)} onKeyDown={(event) => handleTagInputKeyDown(mediaKey, event)} placeholder="فقط نام کاربر را بدون @ بنویس" maxLength={30} inputMode="text" autoCapitalize="none" spellCheck={false} className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-2.5 !text-base leading-5 text-[#0F172A] outline-none placeholder:text-xs placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }}/>
+                          <Button type="button" onClick={() => addTagForMedia(mediaKey)} disabled={!draft.trim()} className="shrink-0 rounded-lg bg-[#2563EB] px-3.5 py-2.5 text-xs font-semibold text-white hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-40">افزودن</Button>
                         </div>
                       </>
                     );
