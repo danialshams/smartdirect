@@ -48,10 +48,10 @@ async function checkPublishingQuota(igUserId: string, token: string, instagramAc
 }
 
 function normalizeUserTags(value: unknown): UserTag[] {
-  const rawTags = Array.isArray(value)
+  const rawTags: unknown[] = Array.isArray(value)
     ? value
     : value && typeof value === "object" && Array.isArray((value as Record<string, unknown>).tags)
-      ? (value as Record<string, unknown>).tags
+      ? (value as Record<string, unknown>).tags as unknown[]
       : [];
 
   const usernames = rawTags
