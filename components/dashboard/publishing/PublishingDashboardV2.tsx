@@ -41,7 +41,7 @@ type AutomationDraftConfig = {
   messages: MessageDraft[];
 };
 
-const typeLabels: Record<PublishType, string> = { POST: "پست", CAROUSEL: "Carousel", REEL: "Reel", STORY: "Story" };
+const typeLabels: Record<PublishType, string> = { POST: "پست", CAROUSEL: "آلبوم", REEL: "ریلز", STORY: "استوری" };
 const statusLabels: Record<string, string> = { DRAFT: "پیش‌نویس", PROCESSING: "در حال پردازش", PUBLISHING: "در حال انتشار", PUBLISHED: "منتشر شده", FAILED: "ناموفق", SCHEDULED: "زمان‌بندی شده", CANCELLED: "لغو شده" };
 const jalaliMonths = ["فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور", "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"];
 const weekDays = ["ش", "ی", "د", "س", "چ", "پ", "ج"];
@@ -342,7 +342,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   return (
     <div dir="rtl" className="min-h-screen bg-[#F8FAFC] px-3 py-4 sm:px-5 sm:py-6 lg:px-7">
       <div className="mx-auto w-full max-w-4xl">
-        <header className="mb-5 rounded-3xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:mb-6 sm:p-6"><div className="flex items-start gap-3 sm:items-center"><div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#EFF6FF] text-[#2563EB] sm:h-12 sm:w-12"><ImagePlus size={22} /></div><div className="min-w-0 flex-1"><p className="text-lg font-extrabold tracking-tight text-[#0F172A] sm:text-xl">انتشار محتوا</p><p className="mt-1 text-xs leading-6 text-[#64748B] sm:text-sm">محتوا را انتخاب کنید، جزئیات را تکمیل کنید و منتشر یا زمان‌بندی کنید.</p>{activeInstagramAccount?.igUsername && <p className="mt-2 inline-flex max-w-full rounded-full bg-[#F8FAFC] px-2.5 py-1 text-[11px] font-semibold text-[#475569]" dir="ltr">@{activeInstagramAccount.igUsername}</p>}</div></div><div className="mt-4 grid grid-cols-3 gap-2 border-t border-[#F1F5F9] pt-4 text-center sm:gap-3"><div className="rounded-xl bg-[#F8FAFC] px-2 py-2.5"><p className="text-[10px] text-[#64748B] sm:text-xs">۱. نوع محتوا</p></div><div className="rounded-xl bg-[#F8FAFC] px-2 py-2.5"><p className="text-[10px] text-[#64748B] sm:text-xs">۲. فایل و جزئیات</p></div><div className="rounded-xl bg-[#F8FAFC] px-2 py-2.5"><p className="text-[10px] text-[#64748B] sm:text-xs">۳. انتشار یا زمان‌بندی</p></div></div></header>
+        <header className="mb-5 rounded-3xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:mb-6 sm:p-6"><div className="flex items-start gap-3 sm:items-center"><div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#EFF6FF] text-[#2563EB] sm:h-12 sm:w-12"><ImagePlus size={22} /></div><div className="min-w-0 flex-1"><p className="text-lg font-extrabold tracking-tight text-[#0F172A] sm:text-xl">انتشار محتوا</p><p className="mt-1 text-xs leading-6 text-[#64748B] sm:text-sm">محتوا را انتخاب کنید، جزئیات را تکمیل کنید و منتشر یا زمان‌بندی کنید.</p></div></div><div className="mt-4 grid grid-cols-3 gap-2 border-t border-[#F1F5F9] pt-4 text-center sm:gap-3"><div className="rounded-xl bg-[#F8FAFC] px-2 py-2.5"><p className="text-[10px] text-[#64748B] sm:text-xs">۱. نوع محتوا</p></div><div className="rounded-xl bg-[#F8FAFC] px-2 py-2.5"><p className="text-[10px] text-[#64748B] sm:text-xs">۲. فایل و جزئیات</p></div><div className="rounded-xl bg-[#F8FAFC] px-2 py-2.5"><p className="text-[10px] text-[#64748B] sm:text-xs">۳. انتشار یا زمان‌بندی</p></div></div></header>
         {loading && <section aria-label="در حال بارگذاری اطلاعات انتشار" className="mb-4 animate-pulse rounded-3xl border border-[#E2E8F0] bg-white p-4 sm:p-6"><div className="h-4 w-32 rounded-full bg-[#E2E8F0]" /><div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">{[0,1,2,3].map((item) => <div key={item} className="h-14 rounded-xl bg-[#F1F5F9]" />)}</div><div className="mt-4 h-40 rounded-2xl bg-[#F1F5F9] sm:h-48" /><div className="mt-4 h-10 rounded-xl bg-[#F1F5F9]" /></section>}
         {error && <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-700">{error}</div>}
         <div className={["space-y-5 sm:space-y-6", loading ? "hidden" : ""].join(" ")}>
@@ -353,12 +353,12 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                 <div className="grid grid-cols-2 gap-2 rounded-2xl bg-[#F8FAFC] p-2 sm:grid-cols-4 sm:gap-2.5">
                   {([
                     ["POST", "پست", ImagePlus],
-                    ["CAROUSEL", "Carousel", Images],
-                    ["REEL", "Reel", Clapperboard],
-                    ["STORY", "Story", Camera],
+                    ["CAROUSEL", "آلبوم", Images],
+                    ["REEL", "ریلز", Clapperboard],
+                    ["STORY", "استوری", Camera],
                   ] as const).map(([value, label, Icon]) => (
-                    <Button key={value} type="button" onClick={() => handleTypeChange(value)} className={["flex min-h-[76px] flex-col items-center justify-center gap-2 rounded-xl border px-2 text-xs font-semibold transition sm:min-h-[84px] sm:text-sm", type === value ? "border-[#BFDBFE] bg-[#EFF6FF] text-[#1D4ED8] shadow-sm" : "border-transparent bg-white text-[#64748B] hover:border-[#E2E8F0] hover:text-[#0F172A]"].join(" ")}>
-                      <Icon size={17} />{label}
+                    <Button key={value} type="button" onClick={() => handleTypeChange(value)} className={["flex min-h-[92px] flex-col items-center justify-center gap-2.5 rounded-2xl border px-2 text-xs font-bold transition sm:min-h-[104px] sm:text-sm", type === value ? "border-[#2563EB] bg-[#EFF6FF] text-[#1D4ED8] shadow-[0_4px_14px_rgba(37,99,235,0.10)] ring-1 ring-[#BFDBFE]" : "border-[#E2E8F0] bg-white text-[#64748B] hover:border-[#CBD5E1] hover:bg-[#F8FAFC] hover:text-[#0F172A]"].join(" ")}>
+                      <span className={["flex h-11 w-11 items-center justify-center rounded-2xl", value === "POST" ? "bg-[#DBEAFE] text-[#1D4ED8]" : value === "CAROUSEL" ? "bg-[#F3E8FF] text-[#7E22CE]" : value === "REEL" ? "bg-[#FFEDD5] text-[#C2410C]" : "bg-[#FCE7F3] text-[#BE185D]"].join(" ")}><Icon size={21} /></span><span>{label}</span><span className={["h-1 w-7 rounded-full", type === value ? "bg-[#2563EB]" : "bg-transparent"].join(" ")} />
                     </Button>
                   ))}
                 </div>
@@ -374,8 +374,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                 <Input id="publishing-media-upload" type="file" accept={accept} multiple={type === "CAROUSEL"} onChange={handleFiles} disabled={uploading || publishing || (type === "CAROUSEL" && uploadedMedia.length >= 10)} className="sr-only" />
                 <label htmlFor="publishing-media-upload" className="flex min-h-[210px] cursor-pointer flex-col items-center justify-center sm:min-h-[250px]">
                   <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-[#2563EB] shadow-sm ring-1 ring-[#DBEAFE]">{uploading ? <Loader2 size={25} className="animate-spin" /> : <ImagePlus size={25} />}</div>
-                  <span className="mt-4 text-sm font-bold text-foreground">{uploading ? "در حال آپلود..." : "محتوا را انتخاب کنید"}</span>
-                  <span className="mt-1.5 max-w-[280px] text-xs leading-6 text-muted-foreground">{type === "CAROUSEL" ? "۲ تا ۱۰ تصویر را همزمان انتخاب کنید." : type === "REEL" ? "ویدیوی Reel را انتخاب کنید." : type === "STORY" ? "تصویر یا ویدیوی Story را انتخاب کنید." : "تصویر پست را انتخاب کنید."}</span>
+                  <span className="mt-4 text-sm font-bold text-foreground">{uploading ? "در حال بارگذاری فایل..." : "برای انتخاب فایل لمس کنید"}</span>
+                  <span className="mt-1.5 max-w-[280px] text-xs leading-6 text-muted-foreground">{type === "CAROUSEL" ? "۲ تا ۱۰ تصویر را برای ساخت آلبوم انتخاب کنید." : type === "REEL" ? "یک ویدیوی مناسب برای ریلز انتخاب کنید." : type === "STORY" ? "یک تصویر یا ویدیو برای استوری انتخاب کنید." : "یک تصویر برای پست انتخاب کنید."}</span>
                   {uploading && <div className="mt-5 w-full max-w-xs"><div className="mb-2 flex justify-between text-[11px] text-muted-foreground"><span>فایل {toPersianDigits(uploadIndex)}</span><span>{toPersianDigits(uploadProgress)}٪</span></div><div className="h-1.5 overflow-hidden rounded-full bg-muted"><div className="h-full bg-primary transition-[width]" style={{ width: String(uploadProgress) + "%" }} /></div></div>}
                 </label>
               </div>
@@ -398,7 +398,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
               <div className="rounded-2xl border border-[#E2E8F0] bg-white p-4 sm:p-5">
                 <div className="mb-4 flex items-center justify-between gap-3">
-                  <div><p className="text-sm font-bold text-foreground">اتوماسیون این محتوا</p><p className="mt-1 text-xs leading-5 text-muted-foreground">ساخت اتوماسیون اختیاری است و انتشار محتوا بدون آن انجام می‌شود.</p></div>
+                  <div><p className="text-sm font-bold text-[#0F172A]">پاسخ خودکار به مخاطبان</p><p className="mt-1 text-xs leading-5 text-muted-foreground">ساخت اتوماسیون اختیاری است و انتشار محتوا بدون آن انجام می‌شود.</p></div>
                   <Checkbox checked={automationEnabled} onCheckedChange={(checked) => setAutomationEnabled(Boolean(checked))} />
                 </div>
                 {automationEnabled && <div className="space-y-4">
@@ -417,7 +417,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
               {automationEnabled && <div className="border-t border-border/70 pt-5">
                 <div className="mb-4 flex items-center justify-between gap-3">
-                  <div><p className="text-sm font-bold text-foreground">پاسخ</p><p className="mt-1 text-xs leading-5 text-muted-foreground">نوع پیام را انتخاب کنید و مسیر پاسخ را بسازید.</p></div>
+                  <div><p className="text-sm font-bold text-[#0F172A]">طراحی پاسخ خودکار</p><p className="mt-1 text-xs leading-5 text-muted-foreground">نوع پیام را انتخاب کنید و مسیر پاسخ را بسازید.</p></div>
                   <span className="text-[11px] text-muted-foreground">{toPersianDigits(messages.length)} پیام</span>
                 </div>
                 <div className="space-y-3">
@@ -432,9 +432,9 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
               {uploadedMedia.length > 0 && (
                 <div className="space-y-4 border-t border-border/70 pt-5">
-                  {type !== "STORY" && <label className="block"><div className="mb-2 flex items-center justify-between"><span className="text-xs font-semibold text-foreground">Caption</span><span className="text-[10px] text-muted-foreground">{toPersianDigits(caption.length)}/2200</span></div><Textarea value={caption} onChange={(e) => setCaption(e.target.value)} maxLength={2200} rows={4} className="w-full resize-none rounded-2xl border border-border/70 bg-background px-4 py-3 text-sm leading-7 outline-none focus:border-ring" placeholder="کپشن محتوا را بنویسید." /></label>}
+                  {type !== "STORY" && <label className="block"><div className="mb-2 flex items-center justify-between"><span className="text-xs font-semibold text-[#334155]">کپشن پست</span><span className="text-[10px] text-muted-foreground">{toPersianDigits(caption.length)}/2200</span></div><Textarea value={caption} onChange={(e) => setCaption(e.target.value)} maxLength={2200} rows={4} className="w-full resize-none rounded-2xl border border-border/70 bg-background px-4 py-3 text-sm leading-7 outline-none focus:border-ring" placeholder="کپشن محتوا را بنویسید." /></label>}
                   <div className="rounded-2xl border border-border/70 bg-muted/25 p-3.5 sm:p-4">
-                    <div className="mb-3 flex items-center justify-between"><div><p className="text-sm font-bold text-foreground">زمان‌بندی</p><p className="mt-1 text-[11px] text-muted-foreground">تاریخ و ساعت انتشار</p></div><CalendarClock size={18} className="text-muted-foreground" /></div>
+                    <div className="mb-3 flex items-center justify-between"><div><p className="text-sm font-bold text-[#0F172A]">زمان انتشار</p><p className="mt-1 text-[11px] text-muted-foreground">تاریخ و ساعت انتشار</p></div><CalendarClock size={18} className="text-muted-foreground" /></div>
                     <PersianDatePicker value={scheduledDate} onChange={setScheduledDate} />
                     <div className="mt-3 grid grid-cols-2 gap-2.5">
                       <label><span className="mb-1.5 block text-[11px] font-medium text-muted-foreground">ساعت</span><Select value={hour} onChange={(e) => setHour(Number(e.target.value))} className="w-full rounded-xl border border-border/70 bg-background px-3 py-3 text-sm">{Array.from({ length: 24 }, (_, v) => <option key={v} value={v}>{toPersianDigits(String(v).padStart(2, "0"))}</option>)}</Select></label>
@@ -453,7 +453,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
           {jobs.filter((job) => ["PROCESSING", "PUBLISHING", "SCHEDULED"].includes(job.status)).length > 0 && (
             <section className="rounded-3xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-5">
               <div className="mb-3 flex items-center justify-between gap-3">
-                <div><p className="text-sm font-bold text-foreground">محتوای فعال</p><p className="mt-1 text-[11px] text-muted-foreground">آپلود، انتشار یا زمان‌بندی‌های در انتظار</p></div>
+                <div><p className="text-sm font-bold text-[#0F172A]">انتشارهای در جریان</p><p className="mt-1 text-[11px] text-muted-foreground">آپلود، انتشار یا زمان‌بندی‌های در انتظار</p></div>
                 <span className="rounded-full bg-muted px-2.5 py-1 text-[10px] text-muted-foreground">{toPersianDigits(jobs.filter((job) => ["PROCESSING", "PUBLISHING", "SCHEDULED"].includes(job.status)).length)}</span>
               </div>
               <div className="space-y-2">
