@@ -190,7 +190,7 @@ function MediaTile({ item, type, onRemove, ready=false, compact=false }: any) {
   const aspect=type==="REEL"||type==="STORY"?"aspect-[9/16]":"aspect-[4/5]";
   return <div className={["group relative overflow-hidden rounded-xl border border-[#E2E8F0] bg-[#F1F5F9]",compact?"shadow-sm":""].join(" ")}>
     {image?<img src={src} alt={ready?item.fileName:item.file.name} className={["w-full object-cover",aspect].join(" ")}/>:<video src={src} controls className={["w-full object-cover",aspect].join(" ")}/>}
-    <Button type="button" onClick={onRemove} className={["absolute left-1.5 top-1.5 flex items-center justify-center rounded-full bg-white/95 p-0 text-[#DC2626] shadow-sm ring-1 ring-black/5",compact?"h-7 w-7":"h-9 w-9"].join(" ")} aria-label="حذف فایل"><X size={compact?13:15}/></Button>
+    {!compact && <Button type="button" onClick={onRemove} className="absolute left-1.5 top-1.5 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 p-0 text-[#DC2626] shadow-sm ring-1 ring-black/5" aria-label="حذف فایل"><X size={15}/></Button>}
   </div>;
 }
 
@@ -595,7 +595,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
   return (
     <>
-      <style>{`@keyframes draw-check { from { stroke-dashoffset: 24; } to { stroke-dashoffset: 0; } } .upload-check-path { stroke-dasharray: 24; stroke-dashoffset: 24; animation: draw-check 750ms cubic-bezier(.22,.61,.36,1) forwards; }`}</style>
+      <style>{`@keyframes draw-check { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } } .upload-check-path { stroke-dasharray: 100; stroke-dashoffset: 100; animation: draw-check 850ms cubic-bezier(.22,.61,.36,1) forwards; }`}</style>
       <div dir="rtl" className={["bg-[#F8FAFC] px-3 py-4 sm:px-5 sm:py-6 lg:px-8", !selectionConfirmed ? "pb-8" : "min-h-screen pb-28 lg:pb-8"].join(" ")}>
       <div className="mx-auto w-full max-w-6xl">
         <div className={["transition-all duration-300 ease-out", stepVisible ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0"].join(" ")}>
@@ -668,7 +668,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               {media.length > 0 && type !== "CAROUSEL" && !uploading && (
                 <div className="mt-5">
                   <div className="mb-3 text-center"><p className="text-sm font-bold text-[#334155]">{type==="POST"?"عکس پست":type==="REEL"?"ویدیوی ریلز":"محتوای استوری"}</p></div>
-                  <div className="flex justify-center">{media.map((item,index)=><div key={item.file.name+"-"+item.sortOrder} className="w-28 sm:w-32"><MediaTile item={item} type={type} onRemove={()=>removeLocal(index)} compact/></div>)}</div>
+                  <div className="flex justify-center">{media.map((item,index)=><div key={item.file.name+"-"+item.sortOrder} className="w-20 sm:w-24"><MediaTile item={item} type={type} onRemove={()=>removeLocal(index)} compact/><button type="button" onClick={()=>removeLocal(index)} className="mt-1 w-full rounded-md py-1 text-[11px] font-semibold text-[#DC2626] hover:bg-red-50">پاک کردن</button></div>)}</div>
                 </div>
               )}
 
@@ -678,6 +678,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   <div className="flex justify-center">{uploadedMedia.map(item=><div key={item.storageKey} className="w-20 sm:w-24"><MediaTile item={item} type={type} onRemove={()=>void removeUploaded(item)} ready compact/><button type="button" onClick={()=>void removeUploaded(item)} className="mt-1 w-full rounded-md py-1 text-[11px] font-semibold text-[#DC2626] hover:bg-red-50">پاک کردن</button></div>)}</div>
                 </div>
               )}
+              {uploadedMedia.length > 0 && !uploading && <div className="mt-5 flex justify-end"><Button type="button" onClick={handleNextStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">مرحله بعد <ArrowLeft size={15} strokeWidth={2}/></Button></div>}
             </div>
           </section>
         ) : type !== "STORY" && !tagStepConfirmed ? (
