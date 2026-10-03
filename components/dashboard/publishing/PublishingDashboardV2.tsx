@@ -384,7 +384,20 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       setMedia(current=>current.filter(item=>!items.includes(item)));
       setUploadedMedia(current=>[...current,...results].map((item,index)=>({...item,sortOrder:index})));
       setUploadProgress(100); setUploading(false); setUploadSuccess(true);
-      window.setTimeout(()=>{setUploadSuccess(false);setUploadProgress(0)},1200);
+      if (type !== "CAROUSEL" && type !== "STORY") {
+        window.setTimeout(() => {
+          animateStepChange(() => {
+            setCaptionStepConfirmed(true);
+            setUploadSuccess(false);
+            setUploadProgress(0);
+          });
+        }, 700);
+      } else {
+        window.setTimeout(() => {
+          setUploadSuccess(false);
+          setUploadProgress(0);
+        }, 1200);
+      }
     } catch(e) {
       setUploading(false); setUploadSuccess(false); setError(e instanceof Error?e.message:"آپلود فایل ناموفق بود.");
     }
@@ -628,18 +641,57 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               )}
             </div>
           </section>
+        ) : type !== "STORY" ? (
+          <div>
+            <div className="mx-auto mb-5 flex w-full max-w-2xl items-center">
+              <Button
+                type="button"
+                onClick={() => animateStepChange(() => {
+                  setCaptionStepConfirmed(false);
+                  setUploadProgress(0);
+                })}
+                className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]"
+              >
+                <ArrowRight size={15} strokeWidth={2} />
+                بازگشت
+              </Button>
+            </div>
+
+            <section className="mx-auto w-full max-w-2xl rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-sm font-bold text-[#0F172A]">کپشن</h2>
+                  <p className="mt-1.5 text-xs leading-5 text-[#64748B]">کپشن ${typeLabels[type]} را بنویس.</p>
+                </div>
+                <span className="text-[11px] text-[#64748B]">{toPersianDigits(caption.length)} / ۲۲۰۰</span>
+              </div>
+              <Textarea
+                value={caption}
+                onChange={e => setCaption(e.target.value)}
+                maxLength={2200}
+                rows={8}
+                className="w-full resize-none rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 text-sm leading-7 text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10"
+                placeholder={`کپشن ${typeLabels[type]} را بنویس...`}
+              />
+              <div className="mt-4 flex justify-end">
+                <Button
+                  type="button"
+                  disabled={!caption.trim() || publishing}
+                  onClick={() => animateStepChange(() => setCaptionStepConfirmed(false))}
+                  className="min-h-11 rounded-xl bg-[#2563EB] px-6 text-sm font-semibold text-white shadow-none hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  ادامه
+                </Button>
+              </div>
+            </section>
+          </div>
         ) : (
           <div>
             <div className="mb-4 flex items-center justify-between gap-3">
               <Button
                 type="button"
                 onClick={() => animateStepChange(() => {
-                  if (type === "CAROUSEL") {
-                    setCaptionStepConfirmed(false);
-                    setUploadProgress(0);
-                    return;
-                  }
-                  setUploadedMedia([]);
+                  setCaptionStepConfirmed(false);
                   setUploadProgress(0);
                 })}
                 className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]"
