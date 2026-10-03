@@ -277,18 +277,18 @@ export default function AutomationFlowMessage({
       ? [
           { value: "IMAGE" as const, label: "عکس", Icon: ImagePlus },
           { value: "VIDEO" as const, label: "ویدیو", Icon: Video },
-          { value: "AUDIO" as const, label: "وویس", Icon: Mic },
-          { value: "SHOWCASE" as const, label: "ویترین", Icon: Store },
-          { value: "FORM" as const, label: "فرم / سوال", Icon: ClipboardList },
+          { value: "AUDIO" as const, label: "پیام صوتی", Icon: Mic },
+          { value: "SHOWCASE" as const, label: "ویترین تصویری", Icon: Store },
+          { value: "FORM" as const, label: "فرم پرسش‌وپاسخ", Icon: ClipboardList },
         ]
       : []),
   ];
 
   return (
-    <div className="space-y-4">
-      <div>
-        <p className="text-xs font-semibold text-muted-foreground">نوع پیام</p>
-        <p className="mt-1 text-[11px] text-muted-foreground">نوع پاسخی که کاربر دریافت می‌کند را انتخاب کنید.</p>
+    <div className="space-y-4 sm:space-y-5">
+      <div className="rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5 sm:p-4">
+        <p className="text-sm font-bold text-[#0F172A]">نوع پاسخ</p>
+        <p className="mt-1 text-xs leading-6 text-[#64748B]">قالب پیامی را انتخاب کنید که پس از تشخیص کلمه کلیدی برای مخاطب ارسال می‌شود.</p>
       </div>
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -298,14 +298,14 @@ export default function AutomationFlowMessage({
             type="button"
             onClick={() => onUpdate({ messageType: value })}
             className={[
-              "flex min-h-[76px] flex-col items-center justify-center gap-2 rounded-2xl border px-2 text-xs font-semibold transition",
+              "flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-2xl border px-2 text-xs font-bold transition sm:min-h-[96px]",
               message.messageType === value
-                ? "border-primary bg-primary/5 text-primary ring-1 ring-primary/20"
-                : "border-border/70 bg-background text-muted-foreground hover:bg-muted",
+                ? "border-[#2563EB] bg-[#EFF6FF] text-[#1D4ED8] ring-1 ring-[#BFDBFE] shadow-sm"
+                : "border-[#E2E8F0] bg-white text-[#64748B] hover:border-[#CBD5E1] hover:bg-[#F8FAFC]",
             ].join(" ")}
           >
-            <Icon size={20} />
-            {label}
+            <span className={["flex h-10 w-10 items-center justify-center rounded-xl", value === "TEXT" ? "bg-[#DBEAFE] text-[#1D4ED8]" : value === "IMAGE" ? "bg-[#DCFCE7] text-[#15803D]" : value === "VIDEO" ? "bg-[#FFEDD5] text-[#C2410C]" : value === "AUDIO" ? "bg-[#F3E8FF] text-[#7E22CE]" : value === "SHOWCASE" ? "bg-[#FCE7F3] text-[#BE185D]" : "bg-[#FEF3C7] text-[#A16207]"].join(" ")}><Icon size={20} /></span>
+            <span className="text-center leading-5">{label}</span>
           </Button>
         ))}
       </div>
@@ -318,7 +318,7 @@ export default function AutomationFlowMessage({
       )}
 
       {isForm && (
-        <div className="space-y-4 rounded-2xl border border-border/70 bg-muted/30 p-3.5">
+        <div className="space-y-4 rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5 sm:p-4">
           <div>
             <p className="text-sm font-bold text-foreground">فرم</p>
             
@@ -328,7 +328,7 @@ export default function AutomationFlowMessage({
             onChange={(event) => onUpdate({ text: event.target.value })}
             rows={3}
             placeholder="سؤال را بنویسید..."
-            className="w-full resize-none rounded-xl border border-border/70 bg-background px-3.5 py-3 text-sm leading-7 outline-none focus:border-ring"
+            className="w-full resize-none rounded-xl border border-[#CBD5E1] bg-white px-3.5 py-3 text-sm leading-7 outline-none transition focus:border-[#2563EB] focus:ring-2 focus:ring-[#DBEAFE]"
           />
           <BranchAnswerEditor
             replies={message.quickReplies}
@@ -342,8 +342,8 @@ export default function AutomationFlowMessage({
       )}
 
       {(message.messageType === "IMAGE" || message.messageType === "VIDEO" || message.messageType === "AUDIO") && (
-        <div className="space-y-3 rounded-2xl border border-border/70 bg-muted/30 p-3.5">
-          <label className="flex min-h-28 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-background px-4 py-5 text-center text-xs font-semibold text-foreground transition hover:bg-muted/40">
+        <div className="space-y-3 rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5 sm:p-4">
+          <label className="flex min-h-36 cursor-pointer flex-col items-center justify-center gap-2.5 rounded-2xl border border-dashed border-[#CBD5E1] bg-white px-4 py-5 text-center text-xs font-semibold text-[#334155] transition hover:border-[#93C5FD] hover:bg-[#F5F9FF]">
             {message.messageType === "IMAGE" ? <ImagePlus size={24} className="text-primary" /> : message.messageType === "VIDEO" ? <Video size={24} className="text-primary" /> : <Mic size={24} className="text-primary" />}
             {mediaUploading ? "در حال آپلود..." : message.mediaUrl ? "انتخاب فایل دیگر" : "انتخاب فایل"}
             <span className="text-[10px] font-normal text-muted-foreground">فایل را از دستگاه انتخاب کنید.</span>
@@ -358,13 +358,13 @@ export default function AutomationFlowMessage({
         <div className="space-y-3 rounded-2xl border border-border/70 bg-muted/30 p-3.5">
           <div className="flex items-center justify-between gap-2">
             <div><p className="text-sm font-bold text-foreground">ویترین</p><p className="mt-1 text-[10px] leading-5 text-muted-foreground">محتوای تصویری پاسخ.</p></div>
-            <Button type="button" onClick={() => setShowcaseItems((current) => [...current, newShowcaseItem()])} className="inline-flex items-center gap-1 rounded-lg border border-border/70 bg-background px-2.5 py-2 text-[11px] font-semibold text-foreground"><Plus size={13} />اسلاید</Button>
+            <Button type="button" onClick={() => setShowcaseItems((current) => [...current, newShowcaseItem()])} className="inline-flex items-center gap-1.5 rounded-xl border border-[#CBD5E1] bg-white px-3 py-2.5 text-xs font-bold text-[#334155] transition hover:bg-[#F8FAFC]"><Plus size={13} />اسلاید</Button>
           </div>
           {showcaseItems.map((item, itemIndex) => (
-            <div key={item.id} className="rounded-xl border border-border/70 bg-background p-3">
+            <div key={item.id} className="rounded-2xl border border-[#E2E8F0] bg-white p-3.5 sm:p-4">
               <div className="mb-2.5 flex items-center justify-between"><span className="text-[11px] font-bold text-muted-foreground">اسلاید {itemIndex + 1}</span>{showcaseItems.length > 1 && <Button type="button" onClick={() => setShowcaseItems((current) => current.filter((entry) => entry.id !== item.id))} className="flex h-7 w-7 items-center justify-center rounded-lg p-0 text-muted-foreground hover:text-red-600"><X size={14} /></Button>}</div>
               <div className="grid gap-3 sm:grid-cols-[112px_1fr]">
-                <label className="flex min-h-[112px] cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-dashed border-border bg-muted">
+                <label className="flex min-h-[150px] cursor-pointer items-center justify-center overflow-hidden rounded-2xl border border-dashed border-[#CBD5E1] bg-[#F1F5F9] sm:min-h-[170px]">
                   {item.previewUrl ? <img src={item.previewUrl} alt="" className="h-full w-full object-cover" /> : <span className="flex flex-col items-center gap-1.5 text-[10px] text-muted-foreground"><ImagePlus size={22} />تصویر</span>}
                   <Input type="file" accept="image/*" className="hidden" onChange={(event) => void handleShowcaseImage(item.id, event.target.files?.[0])} />
                 </label>
@@ -374,7 +374,7 @@ export default function AutomationFlowMessage({
                     onChange={(event) => updateShowcaseItem(item.id, { title: event.target.value })}
                     onBlur={() => void persistExistingShowcaseItem(item)}
                     placeholder="نام اسلاید"
-                    className="w-full rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm outline-none focus:border-ring"
+                    className="w-full rounded-xl border border-[#CBD5E1] bg-white px-3.5 py-3 text-sm outline-none transition focus:border-[#2563EB] focus:ring-2 focus:ring-[#DBEAFE]"
                     disabled={showcaseItemSaving.includes(item.id)}
                   />
                   <Textarea
@@ -383,7 +383,7 @@ export default function AutomationFlowMessage({
                     onBlur={() => void persistExistingShowcaseItem(item)}
                     rows={3}
                     placeholder="توضیح اسلاید"
-                    className="w-full resize-none rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm leading-6 outline-none focus:border-ring"
+                    className="w-full resize-none rounded-xl border border-[#CBD5E1] bg-white px-3.5 py-3 text-sm leading-6 outline-none transition focus:border-[#2563EB] focus:ring-2 focus:ring-[#DBEAFE]"
                     disabled={showcaseItemSaving.includes(item.id)}
                   />
                   {showcaseItemSaving.includes(item.id) && (
@@ -395,7 +395,7 @@ export default function AutomationFlowMessage({
           ))}
           {showcaseError && <p className="text-xs text-red-600">{showcaseError}</p>}
           {message.showcaseId && <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-xs leading-6 text-emerald-800"><span className="font-bold">ویترین متصل شد:</span> {showcases.find((item) => item.id === message.showcaseId)?.title || "ویترین ساخته‌شده"}</div>}
-          <Button type="button" disabled={showcaseSaving || loadingResources || showcaseUploadingItems.length > 0 || Boolean(message.showcaseId)} onClick={() => void createShowcase()} className="w-full rounded-xl bg-primary px-4 py-3 text-xs font-semibold text-white disabled:opacity-50">{showcaseUploadingItems.length > 0 ? "در حال آپلود تصویر..." : showcaseSaving ? "در حال ساخت ویترین..." : message.showcaseId ? "ویترین متصل است" : "ساخت و اتصال ویترین"}</Button>
+          <Button type="button" disabled={showcaseSaving || loadingResources || showcaseUploadingItems.length > 0 || Boolean(message.showcaseId)} onClick={() => void createShowcase()} className="w-full rounded-xl bg-[#2563EB] px-4 py-3.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#1D4ED8] disabled:opacity-50">{showcaseUploadingItems.length > 0 ? "در حال آپلود تصویر..." : showcaseSaving ? "در حال ساخت ویترین..." : message.showcaseId ? "ویترین متصل است" : "ساخت و اتصال ویترین"}</Button>
         </div>
       )}
 
@@ -577,7 +577,7 @@ function BranchShowcaseCreator({
   }
 
   return (
-    <div className="space-y-3 rounded-xl border border-border/70 bg-muted/20 p-3">
+    <div className="space-y-3 rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5 sm:p-4">
       {showcaseId ? (
         <div className="space-y-3">
           <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-xs text-emerald-800">
@@ -592,7 +592,7 @@ function BranchShowcaseCreator({
                   <Input type="file" accept="image/*" className="hidden" onChange={(event) => void uploadImage(item.id, event.target.files?.[0])} />
                 </label>
                 <div className="space-y-2.5">
-                  <Input value={item.title} onChange={(event) => setItems((current) => current.map((entry) => entry.id === item.id ? { ...entry, title: event.target.value } : entry))} onBlur={() => void saveExistingItem(item)} placeholder="نام اسلاید" className="w-full rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm outline-none focus:border-ring" disabled={itemSaving.includes(item.id)} />
+                  <Input value={item.title} onChange={(event) => setItems((current) => current.map((entry) => entry.id === item.id ? { ...entry, title: event.target.value } : entry))} onBlur={() => void saveExistingItem(item)} placeholder="نام اسلاید" className="w-full rounded-xl border border-[#CBD5E1] bg-white px-3.5 py-3 text-sm outline-none transition focus:border-[#2563EB] focus:ring-2 focus:ring-[#DBEAFE]" disabled={itemSaving.includes(item.id)} />
                   <Textarea value={item.description} onChange={(event) => setItems((current) => current.map((entry) => entry.id === item.id ? { ...entry, description: event.target.value } : entry))} onBlur={() => void saveExistingItem(item)} rows={3} placeholder="توضیح اسلاید" className="w-full resize-none rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm leading-6 outline-none focus:border-ring" disabled={itemSaving.includes(item.id)} />
                 </div>
               </div>
@@ -733,7 +733,7 @@ function BranchAnswerEditor({
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
         <p className="text-xs font-bold text-foreground">{depth === 0 ? "جواب‌ها" : "جواب‌های سؤال بعدی"}</p>
-        <Button type="button" onClick={addReply} disabled={replies.length >= 13} className="inline-flex items-center gap-1 rounded-lg border border-border/70 bg-background px-2.5 py-1.5 text-[11px] font-semibold text-foreground disabled:opacity-40">
+        <Button type="button" onClick={addReply} disabled={replies.length >= 13} className="inline-flex items-center gap-1.5 rounded-xl border border-[#CBD5E1] bg-white px-3 py-2.5 text-xs font-bold text-[#334155] transition hover:bg-[#F8FAFC] disabled:opacity-40">
           <Plus size={13} />افزودن جواب
         </Button>
       </div>
@@ -745,7 +745,7 @@ function BranchAnswerEditor({
       )}
 
       {replies.map((reply, index) => (
-        <div key={reply.id} className="space-y-3 rounded-xl border border-border/70 bg-background p-3">
+        <div key={reply.id} className="space-y-3 rounded-2xl border border-[#E2E8F0] bg-white p-3.5 sm:p-4">
           <div className="flex items-center justify-between gap-2">
             <span className="text-[11px] font-bold text-muted-foreground">جواب {index + 1}</span>
             <Button type="button" onClick={() => removeReply(reply.id)} className="flex h-7 w-7 items-center justify-center rounded-lg p-0 text-muted-foreground hover:text-red-600" aria-label="حذف جواب"><Trash2 size={14} /></Button>
