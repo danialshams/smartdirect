@@ -203,6 +203,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const [selectionConfirmed, setSelectionConfirmed] = useState(false);
   const [captionStepConfirmed, setCaptionStepConfirmed] = useState(false);
   const [tagStepConfirmed, setTagStepConfirmed] = useState(false);
+  const [automationChoiceStepStarted, setAutomationChoiceStepStarted] = useState(false);
+  const [automationChoiceConfirmed, setAutomationChoiceConfirmed] = useState(false);
   const [showUploadedMediaPreview, setShowUploadedMediaPreview] = useState(false);
   const [taggedUsersByMedia, setTaggedUsersByMedia] = useState<Record<string, string[]>>({});
   const [tagDraftByMedia, setTagDraftByMedia] = useState<Record<string, string>>({});
@@ -322,8 +324,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     setStepVisible(false);
     window.setTimeout(() => { action(); window.requestAnimationFrame(() => setStepVisible(true)); }, 180);
   }
-  function handleTypeChange(nextType: PublishType) { animateStepChange(() => { clearLocalMedia(); setUploadedMedia([]); setType(nextType); setSelectionConfirmed(true); setCaptionStepConfirmed(false); setTagStepConfirmed(false); setShowUploadedMediaPreview(false); setTaggedUsersByMedia({}); setTagDraftByMedia({}); setTagInputError(""); onTypeChange?.(nextType); setUploadProgress(0); setUploadSuccess(false); setCaption(""); resetAutomation(); }); }
-  function handleBackToTypeSelection() { animateStepChange(() => { clearLocalMedia(); setUploadedMedia([]); setSelectionConfirmed(false); setCaptionStepConfirmed(false); setTagStepConfirmed(false); setShowUploadedMediaPreview(false); setTaggedUsersByMedia({}); setTagDraftByMedia({}); setTagInputError(""); setUploadProgress(0); setUploadSuccess(false); setCaption(""); resetAutomation(); }); }
+  function handleTypeChange(nextType: PublishType) { animateStepChange(() => { clearLocalMedia(); setUploadedMedia([]); setType(nextType); setSelectionConfirmed(true); setCaptionStepConfirmed(false); setTagStepConfirmed(false); setAutomationChoiceStepStarted(false); setAutomationChoiceConfirmed(false); setShowUploadedMediaPreview(false); setTaggedUsersByMedia({}); setTagDraftByMedia({}); setTagInputError(""); onTypeChange?.(nextType); setUploadProgress(0); setUploadSuccess(false); setCaption(""); resetAutomation(); }); }
+  function handleBackToTypeSelection() { animateStepChange(() => { clearLocalMedia(); setUploadedMedia([]); setSelectionConfirmed(false); setCaptionStepConfirmed(false); setTagStepConfirmed(false); setAutomationChoiceStepStarted(false); setAutomationChoiceConfirmed(false); setShowUploadedMediaPreview(false); setTaggedUsersByMedia({}); setTagDraftByMedia({}); setTagInputError(""); setUploadProgress(0); setUploadSuccess(false); setCaption(""); resetAutomation(); }); }
   function prepareFiles(files: File[]) {
     if (!files.length || uploading || publishing) return;
     const accepted =
@@ -497,9 +499,20 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   }
   function handlePreviousStep() {
     if (publishing || uploading) return;
+    if (automationChoiceConfirmed) { setAutomationChoiceConfirmed(false); return; }
+    if (automationChoiceStepStarted) { setAutomationChoiceStepStarted(false); return; }
     if (tagStepConfirmed) { setTagStepConfirmed(false); return; }
     if (captionStepConfirmed) { setCaptionStepConfirmed(false); setShowUploadedMediaPreview(type !== "CAROUSEL"); setUploadProgress(0); setUploadSuccess(false); setError(""); return; }
     handleBackToTypeSelection();
+  }
+
+  function handleAutomationChoice(enabled: boolean) {
+    if (publishing || uploading) return;
+    animateStepChange(() => {
+      setAutomationEnabled(enabled);
+      setAutomationChoiceConfirmed(true);
+      setError("");
+    });
   }
 
   function updateMessage(index: number, patch: Partial<MessageDraft>) { setMessages((current) => current.map((message, messageIndex) => messageIndex === index ? { ...message, ...patch } : message)); }
@@ -787,7 +800,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               />
             </section>
           </div>
-        ) : type !== "STORY" && tagStepConfirmed ? (
+        ) : type !== "STORY" && tagStepConfirmed && !automationChoiceStepStarted ? (
           <div className="mx-auto w-full max-w-3xl">
             <div className="mb-5 flex items-center justify-between gap-3">
               <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
@@ -840,7 +853,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                               </div>
                             )}
                             <div className="flex items-center gap-2">
-                              <input value={draft} onChange={(event) => handleTagInputChange(mediaKey, event.target.value)} onKeyDown={(event) => handleTagInputKeyDown(mediaKey, event)} placeholder="فقط نام کاربر را بدون @ بنویس" maxLength={30} inputMode="text" autoCapitalize="none" spellCheck={false} className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-2.5 text-xs text-[#0F172A] outline-none placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10"/>
+                              <input value={draft} onChange={(event) => handleTagInputChange(mediaKey, event.target.value)} onKeyDown={(event) => handleTagInputKeyDown(mediaKey, event)} placeholder="فقط نام کاربر را بدون @ بنویس" maxLength={30} inputMode="text" autoCapitalize="none" spellCheck={false} className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-2.5 !text-base leading-5 text-[#0F172A] outline-none placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.25, WebkitTextSizeAdjust: "100%" }}/>
                               <Button type="button" onClick={() => addTagForMedia(mediaKey)} className="shrink-0 rounded-lg bg-[#2563EB] px-3.5 py-2.5 text-xs font-semibold text-white hover:bg-[#1D4ED8]">افزودن</Button>
                             </div>
                           </div>
@@ -870,7 +883,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                           </div>
                         )}
                         <div className="flex items-center gap-2">
-                          <input value={draft} onChange={(event) => handleTagInputChange(mediaKey, event.target.value)} onKeyDown={(event) => handleTagInputKeyDown(mediaKey, event)} placeholder="فقط نام کاربر را بدون @ بنویس" maxLength={30} inputMode="text" autoCapitalize="none" spellCheck={false} className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-2.5 text-xs text-[#0F172A] outline-none placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10"/>
+                          <input value={draft} onChange={(event) => handleTagInputChange(mediaKey, event.target.value)} onKeyDown={(event) => handleTagInputKeyDown(mediaKey, event)} placeholder="فقط نام کاربر را بدون @ بنویس" maxLength={30} inputMode="text" autoCapitalize="none" spellCheck={false} className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-2.5 !text-base leading-5 text-[#0F172A] outline-none placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.25, WebkitTextSizeAdjust: "100%" }}/>
                           <Button type="button" onClick={() => addTagForMedia(mediaKey)} className="shrink-0 rounded-lg bg-[#2563EB] px-3.5 py-2.5 text-xs font-semibold text-white hover:bg-[#1D4ED8]">افزودن</Button>
                         </div>
                       </>
@@ -880,6 +893,50 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               )}
 
               <div className="mt-4 whitespace-nowrap rounded-xl border border-[#DBEAFE] bg-[#EFF6FF] px-3.5 py-2.5 text-[11px] leading-5 text-[#475569]">این مرحله اختیاری است و می‌توانی بدون اضافه کردن تگ ادامه بدهی.</div>
+              <div className="mt-4 flex justify-end">
+                <Button type="button" onClick={() => { setAutomationChoiceStepStarted(true); setError(""); }} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
+                  مرحله بعد <ArrowLeft size={15} strokeWidth={2}/>
+                </Button>
+              </div>
+            </section>
+          </div>
+        ) : type !== "STORY" && tagStepConfirmed && automationChoiceStepStarted && !automationChoiceConfirmed ? (
+          <div className="mx-auto w-full max-w-2xl">
+            <div className="mb-5 flex items-center justify-between gap-3">
+              <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
+                <ArrowRight size={15} strokeWidth={2}/>بازگشت
+              </Button>
+              <span className="rounded-full bg-[#F8FAFC] px-2.5 py-1 text-[10px] font-semibold text-[#64748B]">اختیاری</span>
+            </div>
+            <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
+              <div className="mb-6 flex items-start gap-3">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">۵</span>
+                <div className="min-w-0">
+                  <h2 className="text-sm font-bold text-[#0F172A]">پاسخ خودکار</h2>
+                  <p className="mt-1.5 text-xs leading-5 text-[#64748B]">آیا می‌خواهی برای این محتوا پاسخ خودکار تنظیم شود؟</p>
+                </div>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <button type="button" onClick={() => handleAutomationChoice(true)} className="group rounded-2xl border border-[#E2E8F0] bg-white p-4 text-right shadow-sm transition hover:border-[#BFDBFE] hover:bg-[#F8FBFF] active:scale-[0.99] sm:p-5">
+                  <div className="flex items-start gap-3">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB] transition group-hover:bg-[#DBEAFE]"><Send size={18}/></span>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-[#0F172A]">پاسخ خودکار می‌خواهم</p>
+                      <p className="mt-1.5 text-[11px] leading-5 text-[#64748B]">برای این محتوا پاسخ خودکار تنظیم کن.</p>
+                    </div>
+                  </div>
+                </button>
+                <button type="button" onClick={() => handleAutomationChoice(false)} className="group rounded-2xl border border-[#E2E8F0] bg-white p-4 text-right shadow-sm transition hover:border-[#CBD5E1] hover:bg-[#F8FAFC] active:scale-[0.99] sm:p-5">
+                  <div className="flex items-start gap-3">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F8FAFC] text-[#64748B] transition group-hover:bg-[#F1F5F9]"><ArrowLeft size={18}/></span>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-[#0F172A]">بدون پاسخ خودکار</p>
+                      <p className="mt-1.5 text-[11px] leading-5 text-[#64748B]">مستقیماً به مرحله انتشار برو.</p>
+                    </div>
+                  </div>
+                </button>
+              </div>
+              <div className="mt-4 whitespace-nowrap rounded-xl border border-[#DBEAFE] bg-[#EFF6FF] px-3.5 py-2.5 text-[11px] leading-5 text-[#475569]">این مرحله اختیاری است و می‌توانی بدون فعال کردن پاسخ خودکار ادامه بدهی.</div>
             </section>
           </div>
         ) : (
