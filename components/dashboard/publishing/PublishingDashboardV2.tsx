@@ -340,47 +340,40 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const accept = type === "REEL" ? "video/mp4,video/quicktime" : type === "STORY" ? "image/jpeg,image/png,image/webp,video/mp4,video/quicktime" : "image/jpeg,image/png,image/webp";
 
   return (
-    <div dir="rtl" className="min-h-screen bg-background px-3 py-4 sm:px-5 lg:px-6">
-      <div className="mx-auto w-full max-w-2xl">
+    <div dir="rtl" className="min-h-screen bg-[#F8FAFC] px-3 py-4 sm:px-5 sm:py-6 lg:px-7">
+      <div className="mx-auto w-full max-w-4xl">
+        <header className="mb-5 rounded-3xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:mb-6 sm:p-6"><div className="flex items-start gap-3 sm:items-center"><div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#EFF6FF] text-[#2563EB] sm:h-12 sm:w-12"><ImagePlus size={22} /></div><div className="min-w-0 flex-1"><p className="text-lg font-extrabold tracking-tight text-[#0F172A] sm:text-xl">انتشار محتوا</p><p className="mt-1 text-xs leading-6 text-[#64748B] sm:text-sm">محتوا را انتخاب کنید، جزئیات را تکمیل کنید و منتشر یا زمان‌بندی کنید.</p>{activeInstagramAccount?.igUsername && <p className="mt-2 inline-flex max-w-full rounded-full bg-[#F8FAFC] px-2.5 py-1 text-[11px] font-semibold text-[#475569]" dir="ltr">@{activeInstagramAccount.igUsername}</p>}</div></div><div className="mt-4 grid grid-cols-3 gap-2 border-t border-[#F1F5F9] pt-4 text-center sm:gap-3"><div className="rounded-xl bg-[#F8FAFC] px-2 py-2.5"><p className="text-[10px] text-[#64748B] sm:text-xs">۱. نوع محتوا</p></div><div className="rounded-xl bg-[#F8FAFC] px-2 py-2.5"><p className="text-[10px] text-[#64748B] sm:text-xs">۲. فایل و جزئیات</p></div><div className="rounded-xl bg-[#F8FAFC] px-2 py-2.5"><p className="text-[10px] text-[#64748B] sm:text-xs">۳. انتشار یا زمان‌بندی</p></div></div></header>
+        {loading && <section aria-label="در حال بارگذاری اطلاعات انتشار" className="mb-4 animate-pulse rounded-3xl border border-[#E2E8F0] bg-white p-4 sm:p-6"><div className="h-4 w-32 rounded-full bg-[#E2E8F0]" /><div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">{[0,1,2,3].map((item) => <div key={item} className="h-14 rounded-xl bg-[#F1F5F9]" />)}</div><div className="mt-4 h-40 rounded-2xl bg-[#F1F5F9] sm:h-48" /><div className="mt-4 h-10 rounded-xl bg-[#F1F5F9]" /></section>}
         {error && <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-700">{error}</div>}
-        <div className="space-y-4">
-          <section className="overflow-hidden rounded-3xl border border-border/80 bg-card shadow-sm">
-            <div className="border-b border-border/70 px-4 pb-4 pt-5 sm:px-6">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-base font-bold text-foreground">انتشار محتوا</p>
-                  {activeInstagramAccount?.igUsername && <p className="mt-1 text-xs text-muted-foreground" dir="ltr">@{activeInstagramAccount.igUsername}</p>}
-                </div>
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-muted text-muted-foreground">{type === "REEL" ? <Video size={18} /> : <ImagePlus size={18} />}</div>
-              </div>
-            </div>
-
-            <div className="space-y-5 p-4 sm:p-6">
+        <div className={["space-y-5 sm:space-y-6", loading ? "hidden" : ""].join(" ")}>
+          <section className="overflow-hidden rounded-3xl border border-[#E2E8F0] bg-white shadow-sm">
+            <div className="space-y-5 p-4 sm:space-y-6 sm:p-6">
               <div>
-                <p className="mb-2.5 text-xs font-semibold text-muted-foreground">نوع محتوا</p>
-                <div className="grid grid-cols-4 gap-1.5 rounded-2xl bg-muted/60 p-1.5">
+                <div className="mb-3 flex items-center justify-between gap-3"><div><p className="text-sm font-bold text-[#0F172A] sm:text-base">۱. نوع محتوا</p><p className="mt-1 text-xs leading-5 text-[#64748B]">نوع محتوایی را که می‌خواهید منتشر کنید انتخاب کنید.</p></div><span className="rounded-full bg-[#EFF6FF] px-2.5 py-1 text-[10px] font-bold text-[#2563EB]">مرحله ۱</span></div>
+                <div className="grid grid-cols-2 gap-2 rounded-2xl bg-[#F8FAFC] p-2 sm:grid-cols-4 sm:gap-2.5">
                   {([
                     ["POST", "پست", ImagePlus],
                     ["CAROUSEL", "Carousel", Images],
                     ["REEL", "Reel", Clapperboard],
                     ["STORY", "Story", Camera],
                   ] as const).map(([value, label, Icon]) => (
-                    <Button key={value} type="button" onClick={() => handleTypeChange(value)} className={["flex min-h-14 flex-col items-center justify-center gap-1.5 rounded-xl px-1.5 text-[11px] font-semibold transition sm:min-h-16 sm:text-xs", type === value ? "bg-background text-foreground shadow-sm ring-1 ring-border" : "bg-transparent text-muted-foreground hover:bg-background/70"].join(" ")}>
+                    <Button key={value} type="button" onClick={() => handleTypeChange(value)} className={["flex min-h-[76px] flex-col items-center justify-center gap-2 rounded-xl border px-2 text-xs font-semibold transition sm:min-h-[84px] sm:text-sm", type === value ? "border-[#BFDBFE] bg-[#EFF6FF] text-[#1D4ED8] shadow-sm" : "border-transparent bg-white text-[#64748B] hover:border-[#E2E8F0] hover:text-[#0F172A]"].join(" ")}>
                       <Icon size={17} />{label}
                     </Button>
                   ))}
                 </div>
               </div>
 
+              <div className="mb-3 flex items-center justify-between gap-3"><div><p className="text-sm font-bold text-[#0F172A] sm:text-base">۲. انتخاب فایل</p><p className="mt-1 text-xs leading-5 text-[#64748B]">فایل مناسب نوع محتوای انتخاب‌شده را اضافه کنید.</p></div><span className="rounded-full bg-[#F1F5F9] px-2.5 py-1 text-[10px] font-bold text-[#64748B]">مرحله ۲</span></div>
               <div
                 onDragOver={(event) => { event.preventDefault(); setIsDragging(true); }}
                 onDragLeave={() => setIsDragging(false)}
                 onDrop={(event) => { event.preventDefault(); setIsDragging(false); prepareFiles(Array.from(event.dataTransfer.files ?? [])); }}
-                className={["relative overflow-hidden rounded-2xl border border-dashed p-5 text-center transition sm:p-8", isDragging ? "border-primary bg-primary/5" : "border-border bg-muted/20 hover:bg-muted/30", uploading || publishing ? "pointer-events-none opacity-70" : ""].join(" ")}
+                className={["relative overflow-hidden rounded-2xl border border-dashed p-4 text-center transition sm:p-7", isDragging ? "border-[#2563EB] bg-[#EFF6FF]" : "border-[#CBD5E1] bg-[#F8FAFC] hover:border-[#93C5FD] hover:bg-[#F5F9FF]", uploading || publishing ? "pointer-events-none opacity-70" : ""].join(" ")}
               >
                 <Input id="publishing-media-upload" type="file" accept={accept} multiple={type === "CAROUSEL"} onChange={handleFiles} disabled={uploading || publishing || (type === "CAROUSEL" && uploadedMedia.length >= 10)} className="sr-only" />
                 <label htmlFor="publishing-media-upload" className="flex min-h-[210px] cursor-pointer flex-col items-center justify-center sm:min-h-[250px]">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-background shadow-sm ring-1 ring-border/70">{uploading ? <Loader2 size={25} className="animate-spin text-primary" /> : <ImagePlus size={25} className="text-primary" />}</div>
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-[#2563EB] shadow-sm ring-1 ring-[#DBEAFE]">{uploading ? <Loader2 size={25} className="animate-spin" /> : <ImagePlus size={25} />}</div>
                   <span className="mt-4 text-sm font-bold text-foreground">{uploading ? "در حال آپلود..." : "محتوا را انتخاب کنید"}</span>
                   <span className="mt-1.5 max-w-[280px] text-xs leading-6 text-muted-foreground">{type === "CAROUSEL" ? "۲ تا ۱۰ تصویر را همزمان انتخاب کنید." : type === "REEL" ? "ویدیوی Reel را انتخاب کنید." : type === "STORY" ? "تصویر یا ویدیوی Story را انتخاب کنید." : "تصویر پست را انتخاب کنید."}</span>
                   {uploading && <div className="mt-5 w-full max-w-xs"><div className="mb-2 flex justify-between text-[11px] text-muted-foreground"><span>فایل {toPersianDigits(uploadIndex)}</span><span>{toPersianDigits(uploadProgress)}٪</span></div><div className="h-1.5 overflow-hidden rounded-full bg-muted"><div className="h-full bg-primary transition-[width]" style={{ width: String(uploadProgress) + "%" }} /></div></div>}
@@ -403,7 +396,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                 </div>
               )}
 
-              <div className="border-t border-border/70 pt-5">
+              <div className="rounded-2xl border border-[#E2E8F0] bg-white p-4 sm:p-5">
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <div><p className="text-sm font-bold text-foreground">اتوماسیون این محتوا</p><p className="mt-1 text-xs leading-5 text-muted-foreground">ساخت اتوماسیون اختیاری است و انتشار محتوا بدون آن انجام می‌شود.</p></div>
                   <Checkbox checked={automationEnabled} onCheckedChange={(checked) => setAutomationEnabled(Boolean(checked))} />
@@ -449,8 +442,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                     </div>
                   </div>
                   <div className="grid gap-2.5 sm:grid-cols-2">
-                    <Button type="button" disabled={!canPublish || loading} onClick={() => void createJob(true)} className="min-h-12 rounded-2xl bg-primary px-4 text-sm font-semibold text-white shadow-sm disabled:opacity-50">{publishing ? <Loader2 size={17} className="animate-spin" /> : <Send size={17} />}انتشار الآن</Button>
-                    <Button type="button" disabled={!canPublish || loading} onClick={() => void createJob(false)} className="min-h-12 rounded-2xl border border-border bg-background px-4 text-sm font-semibold text-foreground hover:bg-muted disabled:opacity-50"><CalendarClock size={17} />زمان‌بندی انتشار</Button>
+                    <Button type="button" disabled={!canPublish || loading} onClick={() => void createJob(true)} className="min-h-12 rounded-2xl bg-[#2563EB] px-4 text-sm font-bold text-white shadow-sm transition hover:bg-[#1D4ED8] disabled:opacity-50">{publishing ? <Loader2 size={17} className="animate-spin" /> : <Send size={17} />}انتشار الآن</Button>
+                    <Button type="button" disabled={!canPublish || loading} onClick={() => void createJob(false)} className="min-h-12 rounded-2xl border border-[#CBD5E1] bg-white px-4 text-sm font-bold text-[#334155] transition hover:bg-[#F8FAFC] disabled:opacity-50"><CalendarClock size={17} />زمان‌بندی انتشار</Button>
                   </div>
                 </div>
               )}
@@ -458,7 +451,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
           </section>
 
           {jobs.filter((job) => ["PROCESSING", "PUBLISHING", "SCHEDULED"].includes(job.status)).length > 0 && (
-            <section className="rounded-3xl border border-border/80 bg-card p-4 shadow-sm sm:p-5">
+            <section className="rounded-3xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-5">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div><p className="text-sm font-bold text-foreground">محتوای فعال</p><p className="mt-1 text-[11px] text-muted-foreground">آپلود، انتشار یا زمان‌بندی‌های در انتظار</p></div>
                 <span className="rounded-full bg-muted px-2.5 py-1 text-[10px] text-muted-foreground">{toPersianDigits(jobs.filter((job) => ["PROCESSING", "PUBLISHING", "SCHEDULED"].includes(job.status)).length)}</span>
