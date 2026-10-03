@@ -8,7 +8,7 @@ import { Input } from "@/components/dashboard/DashboardUI"
 import { Select } from "@/components/dashboard/DashboardUI"
 
 import { toast } from "sonner";
-import { ArrowRight, CalendarClock, Camera, Clapperboard, ImagePlus, Images, Loader2, Plus, Send, Video, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarClock, Camera, Clapperboard, ImagePlus, Images, Loader2, Plus, Send, Video, X } from "lucide-react";
 import { upload as uploadToBlob } from "@vercel/blob/client";
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent } from "react";
 
@@ -168,7 +168,7 @@ function ProgressBar({ progress }: { progress: number }) {
 }
 function UploadSuccessMark() {
   return <svg viewBox="0 0 24 24" className="inline-block h-5 w-5 shrink-0 text-[#16A34A]" aria-hidden="true">
-    <path d="m4 12.5 5 5L20 6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="upload-check-path"/>
+    <path d="m4 12.5 5 5L20 6" pathLength="100" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="upload-check-path"/>
   </svg>;
 }
 function UploadArea({ id, accept, multiple, disabled, isDragging, setIsDragging, uploading, uploadSuccess, uploadProgress, onChange, onDrop, onCancelUpload, title }: any) {
@@ -442,15 +442,16 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     }
   }
 
-  function handleCarouselContinue() {
-    if (uploadedMedia.length < 1) {
-      setError("ابتدا حداقل یک اسلاید آپلود کن.");
-      return;
-    }
-    animateStepChange(() => {
-      setCaptionStepConfirmed(true);
-      setError("");
-    });
+  function handleNextStep() {
+    if (uploading || publishing || uploadedMedia.length < 1) return;
+    if (!captionStepConfirmed) { setCaptionStepConfirmed(true); setError(""); return; }
+    if (!tagStepConfirmed && caption.trim()) { setTagStepConfirmed(true); setError(""); }
+  }
+  function handlePreviousStep() {
+    if (publishing || uploading) return;
+    if (tagStepConfirmed) { setTagStepConfirmed(false); return; }
+    if (captionStepConfirmed) { setCaptionStepConfirmed(false); setUploadProgress(0); setUploadSuccess(false); setError(""); return; }
+    handleBackToTypeSelection();
   }
 
   function updateMessage(index: number, patch: Partial<MessageDraft>) { setMessages((current) => current.map((message, messageIndex) => messageIndex === index ? { ...message, ...patch } : message)); }
@@ -659,9 +660,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                     <p className="mt-1 text-[11px] text-[#64748B]">{toPersianDigits(uploadedMedia.length)} از حداکثر ۱۰ اسلاید</p>
                   </div>
                   <div className="flex flex-wrap justify-center gap-3">
-                    {uploadedMedia.map((item,index)=><div key={item.storageKey} className="w-20 sm:w-24"><MediaTile item={item} type="CAROUSEL" onRemove={()=>void removeUploaded(item)} ready compact/><p className="mt-1.5 text-center text-[10px] font-semibold text-[#64748B]">اسلاید شماره {toPersianDigits(index+1)}</p></div>)}
+                    {uploadedMedia.map((item,index)=><div key={item.storageKey} className="w-16 sm:w-20"><MediaTile item={item} type="CAROUSEL" onRemove={()=>void removeUploaded(item)} ready compact/><p className="mt-1 text-center text-[10px] font-semibold text-[#64748B]">اسلاید {toPersianDigits(index+1)}</p><button type="button" onClick={()=>void removeUploaded(item)} className="mt-1 w-full rounded-md py-1 text-[11px] font-semibold text-[#DC2626] hover:bg-red-50">پاک کردن</button></div>)}
                   </div>
-                  <div className="mt-4 flex justify-center"><Button type="button" disabled={uploadedMedia.length<1||uploading||publishing} onClick={handleCarouselContinue} className="min-h-10 rounded-xl bg-[#2563EB] px-5 text-xs font-semibold text-white hover:bg-[#1D4ED8] disabled:opacity-40">ادامه</Button></div>
                 </div>
               )}
 
@@ -675,8 +675,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               {uploadedMedia.length > 0 && type !== "CAROUSEL" && (
                 <div className="mt-5">
                   <div className="mb-3 text-center"><p className="text-sm font-bold text-[#334155]">{type==="POST"?"عکس پست":type==="REEL"?"ویدیوی ریلز":"محتوای استوری"}</p></div>
-                  <div className="flex justify-center">{uploadedMedia.map(item=><div key={item.storageKey} className="w-28 sm:w-32"><MediaTile item={item} type={type} onRemove={()=>void removeUploaded(item)} ready compact/></div>)}</div>
-                  <div className="mt-4 flex justify-center"><Button type="button" disabled={uploading||publishing} onClick={()=>animateStepChange(()=>setCaptionStepConfirmed(true))} className="min-h-10 rounded-xl bg-[#2563EB] px-5 text-xs font-semibold text-white hover:bg-[#1D4ED8] disabled:opacity-40">ادامه</Button></div>
+                  <div className="flex justify-center">{uploadedMedia.map(item=><div key={item.storageKey} className="w-20 sm:w-24"><MediaTile item={item} type={type} onRemove={()=>void removeUploaded(item)} ready compact/><button type="button" onClick={()=>void removeUploaded(item)} className="mt-1 w-full rounded-md py-1 text-[11px] font-semibold text-[#DC2626] hover:bg-red-50">پاک کردن</button></div>)}</div>
                 </div>
               )}
             </div>
@@ -686,10 +685,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             <div className="mx-auto mb-5 flex w-full max-w-2xl items-center">
               <Button
                 type="button"
-                onClick={() => animateStepChange(() => {
-                  setCaptionStepConfirmed(false);
-                  setUploadProgress(0);
-                })}
+                onClick={handlePreviousStep}
                 className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]"
               >
                 <ArrowRight size={15} strokeWidth={2} />
@@ -710,23 +706,18 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                 onChange={e => setCaption(e.target.value)}
                 maxLength={2200}
                 rows={8}
-                className="w-full resize-none rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 text-base leading-7 text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10 sm:text-sm"
+                style={{ fontSize: "16px" }}
+                className="w-full resize-none rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 text-base leading-7 text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10"
                 placeholder={`کپشن ${typeLabels[type]} را بنویس...`}
               />
               <div className="mt-4 flex justify-end">
-                <Button
-                  type="button"
-                  disabled={!caption.trim() || publishing}
-                  onClick={() => animateStepChange(() => setTagStepConfirmed(true))}
-                  className="min-h-11 rounded-xl bg-[#2563EB] px-6 text-sm font-semibold text-white shadow-none hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  ادامه
-                </Button>
+                <Button type="button" disabled={!caption.trim() || publishing} onClick={handleNextStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB] disabled:cursor-not-allowed disabled:opacity-40">مرحله بعد <ArrowLeft size={15} strokeWidth={2}/></Button>
               </div>
             </section>
           </div>
         ) : type !== "STORY" && tagStepConfirmed ? (
           <div className="mx-auto w-full max-w-2xl">
+            <div className="mb-5 flex items-center"><Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]"><ArrowRight size={15} strokeWidth={2}/>بازگشت</Button></div>
             <section className="rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-sm sm:p-6">
               <div className="flex items-center justify-between gap-3">
                 <div>
