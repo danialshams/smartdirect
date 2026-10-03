@@ -58,16 +58,21 @@ function getJalaliWeekday(value: JalaliDate) { const [gy, gm, gd] = jalaliToGreg
 function InlineWheelPicker({ value, onChange, min, max, label }: { value: number | null; onChange: (value: number) => void; min: number; max: number; label: string }) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const snapTimerRef = useRef<number | null>(null);
+  const [scrollTop, setScrollTop] = useState(0);
+  const [interacting, setInteracting] = useState(false);
   const itemHeight = 44;
   const values = Array.from({ length: max - min + 1 }, (_, index) => min + index);
+  const rows: Array<number | null> = [null, ...values];
+  const selectedIndex = value === null ? 0 : value - min + 1;
 
   useEffect(() => {
     if (!scrollRef.current) return;
-    scrollRef.current.scrollTo({
-      top: value === null ? 0 : (value - min + 1) * itemHeight,
-      behavior: "smooth",
-    });
-  }, [value, min]);
+    const target = selectedIndex * itemHeight;
+    if (Math.abs(scrollRef.current.scrollTop - target) > 1) {
+      scrollRef.current.scrollTo({ top: target, behavior: "smooth" });
+    }
+    setScrollTop(target);
+  }, [selectedIndex]);
 
   useEffect(() => () => {
     if (snapTimerRef.current) window.clearTimeout(snapTimerRef.current);
@@ -77,20 +82,24 @@ function InlineWheelPicker({ value, onChange, min, max, label }: { value: number
     const element = scrollRef.current;
     if (!element) return;
 
-    const rawIndex = Math.round(element.scrollTop / itemHeight) - 1;
-    if (rawIndex < 0) {
-      element.scrollTo({ top: 0, behavior: "smooth" });
-      return;
-    }
+    const nearestIndex = Math.max(0, Math.min(rows.length - 1, Math.round(element.scrollTop / itemHeight)));
+    const target = nearestIndex * itemHeight;
+    element.scrollTo({ top: target, behavior: "smooth" });
+    setScrollTop(target);
+    setInteracting(false);
 
-    const nextValue = Math.min(max, min + rawIndex);
-    element.scrollTo({ top: (nextValue - min + 1) * itemHeight, behavior: "smooth" });
+    if (nearestIndex === 0) return;
+    const nextValue = min + nearestIndex - 1;
     if (value !== nextValue) onChange(nextValue);
   };
 
   const handleScroll = () => {
+    const element = scrollRef.current;
+    if (!element) return;
+    setInteracting(true);
+    setScrollTop(element.scrollTop);
     if (snapTimerRef.current) window.clearTimeout(snapTimerRef.current);
-    snapTimerRef.current = window.setTimeout(commitNearest, 70);
+    snapTimerRef.current = window.setTimeout(commitNearest, 90);
   };
 
   return (
@@ -99,6 +108,7 @@ function InlineWheelPicker({ value, onChange, min, max, label }: { value: number
       <div
         ref={scrollRef}
         onScroll={handleScroll}
+        onPointerDown={() => setInteracting(true)}
         className="relative h-[132px] overflow-y-auto overscroll-contain rounded-xl bg-white [scrollbar-width:none] [-ms-overflow-style:none] snap-y snap-mandatory"
         style={{ touchAction: "pan-y", WebkitOverflowScrolling: "touch" }}
       >
@@ -106,20 +116,22 @@ function InlineWheelPicker({ value, onChange, min, max, label }: { value: number
           <div className="absolute inset-x-0 -top-[22px] h-11 border-y border-[#E2E8F0]" />
         </div>
         <div className="h-[44px]" />
-        <div className="flex h-[44px] snap-center items-center justify-center text-2xl font-bold text-[#94A3B8]">
-          {value === null ? "--" : toPersianDigits(value)}
-        </div>
-        {values.map((item) => (
-          <div
-            key={item}
-            className="flex h-[44px] snap-center items-center justify-center text-base font-semibold text-[#94A3B8]"
-          >
-            {toPersianDigits(item)}
-          </div>
-        ))}
+        {rows.map((item, index) => {
+          const distance = Math.abs(scrollTop / itemHeight - index);
+          const opacity = interacting ? Math.max(0, 1 - distance * 0.62) : index === selectedIndex ? 1 : 0;
+          const isSelected = index === selectedIndex;
+          return (
+            <div
+              key={item === null ? "placeholder" : item}
+              className={["flex h-[44px] snap-center items-center justify-center transition-opacity duration-75", isSelected ? "text-2xl font-bold text-[#0F172A]" : "text-base font-semibold text-[#94A3B8]"].join(" ")}
+              style={{ opacity }}
+            >
+              {item === null ? "--" : toPersianDigits(item)}
+            </div>
+          );
+        })}
         <div className="h-[44px]" />
       </div>
-      <p className="mt-2 text-center text-[10px] font-medium text-[#94A3B8]">--</p>
     </div>
   );
 }
@@ -1104,7 +1116,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                     <div className="mt-6 border-t border-[#E2E8F0] pt-5">
                       <div className="mb-3">
                         <p className="text-sm font-bold text-[#0F172A]">ساعت انتشار</p>
-                        <p className="mt-1 text-[11px] leading-5 text-[#64748B]">--</p>
+                        <p className="mt-1 text-[11px] leading-5 text-[#64748B]">برای انتخاب به بالا یا پایین بکشید</p>
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         <InlineWheelPicker
