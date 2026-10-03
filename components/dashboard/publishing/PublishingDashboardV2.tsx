@@ -169,7 +169,7 @@ function ProgressBar({ progress }: { progress: number }) {
 function UploadSuccessMark() {
   return <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#F0FDF4] text-[#16A34A] ring-1 ring-[#BBF7D0]">
     <svg viewBox="0 0 32 32" className="h-7 w-7" aria-hidden="true">
-      <path d="M7 16.5 13.2 23 25 9" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" pathLength="1" style={{strokeDasharray:1,strokeDashoffset:1,animation:"draw-check 600ms ease-out forwards"}}/>
+      <path d="M7 16.5 13.2 23 25 9" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" className="upload-check-path"/>
     </svg>
   </span>;
 }
@@ -228,6 +228,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [uploadIndex, setUploadIndex] = useState(0);
+  const uploadRunRef = useRef(0);
   const [publishing, setPublishing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -367,18 +368,38 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   }
   function handleFiles(event: ChangeEvent<HTMLInputElement>) { const files = Array.from(event.target.files ?? []); event.target.value = ""; prepareFiles(files); }
   function handleDrop(event: DragEvent<HTMLDivElement>) { event.preventDefault(); setIsDragging(false); prepareFiles(Array.from(event.dataTransfer.files ?? [])); }
-  function removeLocal(index: number) { const item = media[index]; if (item) URL.revokeObjectURL(item.previewUrl); setMedia((current) => current.filter((_, i) => i !== index).map((item, i) => ({ ...item, sortOrder: i + uploadedMedia.length }))); }
+  function removeLocal(index: number) {
+    const item = media[index];
+    if (!item) return;
+    if (uploading) {
+      uploadRunRef.current += 1;
+      setUploading(false);
+      setUploadProgress(0);
+      setUploadSuccess(false);
+    }
+    URL.revokeObjectURL(item.previewUrl);
+    setMedia((current) => current.filter((_, i) => i !== index).map((item, i) => ({ ...item, sortOrder: i + uploadedMedia.length })));
+  }
   async function removeUploaded(item: UploadedMedia) { try { const response = await fetch("/api/instagram/publishing/upload", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ storageKey: item.storageKey }) }); const result = await response.json(); if (!response.ok || !result.success) throw new Error(result.message || "حذف فایل ناموفق بود."); setUploadedMedia((current) => current.filter((m) => m.storageKey !== item.storageKey).map((m, i) => ({ ...m, sortOrder: i }))); } catch (e) { setError(e instanceof Error ? e.message : "حذف فایل ناموفق بود."); } }
   async function uploadSelectedMedia(items = media) {
     if (!selectedAccountId) { setError("اکانت فعال Instagram پیدا نشد."); return; }
     if (!items.length) return;
+    const runId = ++uploadRunRef.current;
     try {
       setUploading(true); setUploadSuccess(false); setError(""); setUploadProgress(0);
       const totalBytes = items.reduce((sum,item)=>sum+item.file.size,0);
       let completedBytes=0; const results: UploadedMedia[]=[];
+      // Each carousel file is uploaded serially, preserving slide order.
       for (let index=0; index<items.length; index+=1) {
         const item=items[index];
-        const result=await uploadFileWithProgress(item.file,(progress)=>setUploadProgress(totalBytes?Math.min(100,Math.round(((completedBytes+item.file.size*progress/100)/totalBytes)*100)):progress));
+        const result=await uploadFileWithProgress(item.file,(progress)=>{
+          if (uploadRunRef.current !== runId) return;
+          setUploadProgress(totalBytes?Math.min(100,Math.round(((completedBytes+item.file.size*progress/100)/totalBytes)*100)):progress);
+        });
+        if (uploadRunRef.current !== runId) {
+          void fetch("/api/instagram/publishing/upload", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ storageKey: result.storageKey }) }).catch(()=>undefined);
+          return;
+        }
         results.push({...result,sortOrder:uploadedMedia.length+results.length}); completedBytes+=item.file.size;
       }
       revokeLocalMedia(items);
@@ -392,14 +413,15 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             setUploadSuccess(false);
             setUploadProgress(0);
           });
-        }, 700);
+        }, 1000);
       } else {
         window.setTimeout(() => {
           setUploadSuccess(false);
           setUploadProgress(0);
-        }, 1200);
+        }, 1800);
       }
     } catch(e) {
+      if (uploadRunRef.current !== runId) return;
       setUploading(false); setUploadSuccess(false); setError(e instanceof Error?e.message:"آپلود فایل ناموفق بود.");
     }
   }
@@ -556,7 +578,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
   return (
     <>
-      <style>{`@keyframes draw-check { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }`}</style>
+      <style>{`@keyframes draw-check { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } .upload-check-path { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw-check 750ms cubic-bezier(.22,.61,.36,1) forwards; }`}</style>
       <div dir="rtl" className={["bg-[#F8FAFC] px-3 py-4 sm:px-5 sm:py-6 lg:px-8", !selectionConfirmed ? "pb-8" : "min-h-screen pb-28 lg:pb-8"].join(" ")}>
       <div className="mx-auto w-full max-w-6xl">
         <div className={["transition-all duration-300 ease-out", stepVisible ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0"].join(" ")}>
@@ -671,7 +693,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                 onChange={e => setCaption(e.target.value)}
                 maxLength={2200}
                 rows={8}
-                className="w-full resize-none rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 text-sm leading-7 text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10"
+                className="w-full resize-none rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 text-base leading-7 text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10 sm:text-sm"
                 placeholder={`کپشن ${typeLabels[type]} را بنویس...`}
               />
               <div className="mt-4 flex justify-end">
@@ -765,7 +787,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
         )}
         </div>
         </div>
-      {selectionConfirmed&&captionStepConfirmed&&!loading&&uploadedMedia.length>0&&<div className="fixed inset-x-3 bottom-3 z-40 rounded-2xl border border-[#E2E8F0] bg-white/95 p-2.5 shadow-lg backdrop-blur sm:hidden"><div className="grid grid-cols-2 gap-2"><Button type="button" disabled={!canPublish||publishing} onClick={()=>void createJob(true)} className="min-h-11 rounded-xl bg-[#2563EB] px-3 text-xs font-semibold text-white disabled:opacity-50">{publishing?<Loader2 size={16} className="animate-spin"/>:<Send size={16}/>} انتشار الآن</Button><Button type="button" disabled={!canPublish||publishing} onClick={()=>void createJob(false)} className="min-h-11 rounded-xl border border-[#E2E8F0] bg-white px-3 text-xs font-semibold text-[#334155] disabled:opacity-50"><CalendarClock size={16}/> زمان‌بندی</Button></div></div>}
+      {selectionConfirmed&&captionStepConfirmed&&tagStepConfirmed&&!loading&&uploadedMedia.length>0&&<div className="fixed inset-x-3 bottom-3 z-40 rounded-2xl border border-[#E2E8F0] bg-white/95 p-2.5 shadow-lg backdrop-blur sm:hidden"><div className="grid grid-cols-2 gap-2"><Button type="button" disabled={!canPublish||publishing} onClick={()=>void createJob(true)} className="min-h-11 rounded-xl bg-[#2563EB] px-3 text-xs font-semibold text-white disabled:opacity-50">{publishing?<Loader2 size={16} className="animate-spin"/>:<Send size={16}/>} انتشار الآن</Button><Button type="button" disabled={!canPublish||publishing} onClick={()=>void createJob(false)} className="min-h-11 rounded-xl border border-[#E2E8F0] bg-white px-3 text-xs font-semibold text-[#334155] disabled:opacity-50"><CalendarClock size={16}/> زمان‌بندی</Button></div></div>}
       </div>
     </>
   );
