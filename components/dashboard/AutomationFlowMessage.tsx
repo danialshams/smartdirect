@@ -296,6 +296,7 @@ export default function AutomationFlowMessage({
       </div>
     </article>
   );
+}
 
 function TextComposer({
   message,
