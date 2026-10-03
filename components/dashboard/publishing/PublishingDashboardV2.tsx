@@ -1042,7 +1042,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               <div className="space-y-3">
                 <div className="flex flex-col gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5 sm:flex-row sm:items-center">
                   <Button type="button" disabled={!publishNow} onClick={() => void createJob(true)} className="min-h-11 w-full shrink-0 whitespace-nowrap rounded-xl bg-[#2563EB] px-4 text-sm font-semibold text-white hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-50 sm:flex-1">
-                    <Send size={17}/>انتشار {typeLabels[type]} هم‌اکنون
+                    <span dir="rtl" className="inline-flex items-center gap-2"><Send size={17}/><span>انتشار {typeLabels[type]} هم‌اکنون</span></span>
                   </Button>
                   <label className="flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl px-2 text-xs font-semibold text-[#334155]">
                     <input type="checkbox" checked={!publishNow} onChange={(event) => {
