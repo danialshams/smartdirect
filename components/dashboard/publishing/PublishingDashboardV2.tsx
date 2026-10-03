@@ -206,6 +206,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const [type, setType] = useState<PublishType>("POST");
   const [selectionConfirmed, setSelectionConfirmed] = useState(false);
   const [captionStepConfirmed, setCaptionStepConfirmed] = useState(false);
+  const [tagStepConfirmed, setTagStepConfirmed] = useState(false);
   const [stepVisible, setStepVisible] = useState(true);
   const [caption, setCaption] = useState("");
   const [media, setMedia] = useState<LocalMedia[]>([]);
@@ -319,8 +320,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     setStepVisible(false);
     window.setTimeout(() => { action(); window.requestAnimationFrame(() => setStepVisible(true)); }, 180);
   }
-  function handleTypeChange(nextType: PublishType) { animateStepChange(() => { clearLocalMedia(); setUploadedMedia([]); setType(nextType); setSelectionConfirmed(true); setCaptionStepConfirmed(false); onTypeChange?.(nextType); setUploadProgress(0); setUploadSuccess(false); setCaption(""); resetAutomation(); }); }
-  function handleBackToTypeSelection() { animateStepChange(() => { clearLocalMedia(); setUploadedMedia([]); setSelectionConfirmed(false); setCaptionStepConfirmed(false); setUploadProgress(0); setUploadSuccess(false); setCaption(""); resetAutomation(); }); }
+  function handleTypeChange(nextType: PublishType) { animateStepChange(() => { clearLocalMedia(); setUploadedMedia([]); setType(nextType); setSelectionConfirmed(true); setCaptionStepConfirmed(false); setTagStepConfirmed(false); onTypeChange?.(nextType); setUploadProgress(0); setUploadSuccess(false); setCaption(""); resetAutomation(); }); }
+  function handleBackToTypeSelection() { animateStepChange(() => { clearLocalMedia(); setUploadedMedia([]); setSelectionConfirmed(false); setCaptionStepConfirmed(false); setTagStepConfirmed(false); setUploadProgress(0); setUploadSuccess(false); setCaption(""); resetAutomation(); }); }
   function prepareFiles(files: File[]) {
     if (!files.length || uploading || publishing) return;
     const accepted =
@@ -641,7 +642,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               )}
             </div>
           </section>
-        ) : type !== "STORY" ? (
+        ) : type !== "STORY" && !tagStepConfirmed ? (
           <div>
             <div className="mx-auto mb-5 flex w-full max-w-2xl items-center">
               <Button
@@ -677,11 +678,23 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                 <Button
                   type="button"
                   disabled={!caption.trim() || publishing}
-                  onClick={() => animateStepChange(() => setCaptionStepConfirmed(false))}
+                  onClick={() => animateStepChange(() => setTagStepConfirmed(true))}
                   className="min-h-11 rounded-xl bg-[#2563EB] px-6 text-sm font-semibold text-white shadow-none hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   ادامه
                 </Button>
+              </div>
+            </section>
+          </div>
+        ) : type !== "STORY" && tagStepConfirmed ? (
+          <div className="mx-auto w-full max-w-2xl">
+            <section className="rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-sm sm:p-6">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-sm font-bold text-[#0F172A]">تگ کردن اکانت‌ها</h2>
+                  <p className="mt-1.5 text-xs leading-5 text-[#64748B]">این مرحله اختیاری است.</p>
+                </div>
+                <span className="rounded-full bg-[#F8FAFC] px-2.5 py-1 text-[10px] font-semibold text-[#64748B]">اختیاری</span>
               </div>
             </section>
           </div>
