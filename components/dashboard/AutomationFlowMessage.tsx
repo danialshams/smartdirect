@@ -150,7 +150,8 @@ export default function AutomationFlowMessage({
     [triggerType],
   );
 
-  const [mediaUploading, setMediaUploading] = useState(false);\n  const [contentStep, setContentStep] = useState(false);
+  const [mediaUploading, setMediaUploading] = useState(false);
+  const [contentStep, setContentStep] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
