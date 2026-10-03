@@ -208,21 +208,9 @@ export default function AutomationFlowMessage({
             </h3>
           </div>
         </div>
-
-        <div className="flex items-center gap-1.5">
-          <StepButton
-            label="بالا"
-            disabled={index === 0}
-            onClick={() => window.dispatchEvent(new CustomEvent("smartdirect:flow-move", { detail: { index, direction: "up" } }))}
-            Icon={ArrowUp}
-          />
-          <StepButton
-            label="پایین"
-            disabled={index === total - 1}
-            onClick={() => window.dispatchEvent(new CustomEvent("smartdirect:flow-move", { detail: { index, direction: "down" } }))}
-            Icon={ArrowDown}
-          />
-        </div>
+      <div className="flex items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-semibold" style={{ borderColor: palette.border, color: palette.secondary, background: palette.muted }}>
+        ${index === 0 ? "پیام شروع" : "ادامه مسیر"}
+      </div>
       </header>
 
       <div className="grid lg:grid-cols-[260px_minmax(0,1fr)]">
@@ -331,31 +319,6 @@ export default function AutomationFlowMessage({
         </section>
       </div>
     </article>
-  );
-}
-
-function StepButton({
-  label,
-  disabled,
-  onClick,
-  Icon,
-}: {
-  label: string;
-  disabled: boolean;
-  onClick: () => void;
-  Icon: LucideIcon;
-}) {
-  return (
-    <button
-      type="button"
-      title={label}
-      disabled={disabled}
-      onClick={onClick}
-      className="flex h-8 w-8 items-center justify-center rounded-lg border transition disabled:cursor-not-allowed disabled:opacity-30"
-      style={{ borderColor: palette.border, color: palette.secondary, background: palette.surface }}
-    >
-      <Icon size={14} />
-    </button>
   );
 }
 
