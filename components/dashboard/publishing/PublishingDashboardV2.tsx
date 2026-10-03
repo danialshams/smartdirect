@@ -367,19 +367,16 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             <main className="min-w-0 space-y-5">
               <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-5">
                 <SectionHeader n="۱" title="نوع محتوا" text="نوع محتوایی را که می‌خواهی در Instagram منتشر کنی انتخاب کن." />
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  {([["POST","پست",ImagePlus,"عکس و کپشن"],["CAROUSEL","آلبوم",Images,"چند تصویر"],["REEL","ریلز",Clapperboard,"ویدیوی عمودی"],["STORY","استوری",Camera,"محتوای ۲۴ ساعته"]] as const).map(([value,label,Icon,description]) => (
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                  {([["POST","پست",ImagePlus,"#2563EB","#EFF6FF"],["CAROUSEL","آلبوم",Images,"#7C3AED","#F5F3FF"],["REEL","ریلز",Clapperboard,"#D97706","#FFF7ED"],["STORY","استوری",Camera,"#16A34A","#F0FDF4"]] as const).map(([value,label,Icon,accent,soft]) => (
                     <Button key={value} type="button" onClick={() => handleTypeChange(value)} className={[
-                      "group flex min-h-[132px] flex-col items-start justify-between rounded-2xl border bg-white p-4 text-right transition-all",
+                      "group flex min-h-[156px] sm:min-h-[176px] flex-col items-center justify-center gap-4 rounded-[22px] border-2 bg-white p-4 text-center transition-all duration-300",
                       type===value
-                        ? "border-[#2563EB] bg-white text-[#0F172A] shadow-[0_0_0_2px_rgba(37,99,235,0.10)]"
-                        : "border-[#E2E8F0] text-[#0F172A] hover:border-[#CBD5E1] hover:-translate-y-0.5 hover:shadow-sm"
+                        ? "border-[#2563EB] shadow-[0_0_0_3px_rgba(37,99,235,0.08)]"
+                        : "border-[#E2E8F0] hover:-translate-y-0.5 hover:shadow-md"
                     ].join(" ")}>
-                      <span className={["flex h-11 w-11 items-center justify-center rounded-xl",type===value?"bg-[#EFF6FF] text-[#2563EB]":"bg-[#F8FAFC] text-[#64748B]"].join(" ")}><Icon size={21}/></span>
-                      <span className="block">
-                        <span className="block text-sm font-bold">{label}</span>
-                        <span className="mt-1 block text-[11px] font-normal leading-5 text-[#64748B]">{description}</span>
-                      </span>
+                      <span className="flex h-16 w-16 items-center justify-center rounded-2xl" style={{backgroundColor:soft,color:accent}}><Icon size={28}/></span>
+                      <span className="text-sm font-bold text-[#0F172A]">{label}</span>
                     </Button>
                   ))}
                 </div>
