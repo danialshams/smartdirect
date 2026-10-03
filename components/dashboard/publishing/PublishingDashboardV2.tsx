@@ -350,17 +350,28 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     <div dir="rtl" className="min-h-screen bg-[#F8FAFC] px-3 py-4 pb-28 sm:px-5 sm:py-6 lg:px-8 lg:pb-8">
       <div className="mx-auto w-full max-w-6xl">
         {!selectionConfirmed ? (
-        <section className="mx-auto w-full max-w-3xl rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
-          <SectionHeader n="۱" title="نوع محتوا" text="نوع محتوایی را که می‌خواهی در Instagram منتشر کنی انتخاب کن." />
-          <div className="grid grid-cols-2 gap-3 sm:gap-4">
-            {([["POST","پست",ImagePlus,"#2563EB","#EFF6FF"],["CAROUSEL","آلبوم",Images,"#7C3AED","#F5F3FF"],["REEL","ریلز",Clapperboard,"#D97706","#FFF7ED"],["STORY","استوری",Camera,"#16A34A","#F0FDF4"]] as const).map(([value,label,Icon,accent,soft]) => (
-              <Button key={value} type="button" onClick={() => handleTypeChange(value)} className="group flex min-h-[156px] sm:min-h-[176px] flex-col items-center justify-center gap-4 rounded-[22px] border-2 border-[#E2E8F0] bg-white p-4 text-center transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
-                <span className="flex h-16 w-16 items-center justify-center rounded-2xl" style={{backgroundColor:soft,color:accent}}><Icon size={28}/></span>
-                <span className="text-sm font-bold text-[#0F172A]">{label}</span>
-              </Button>
-            ))}
-          </div>
-        </section>
+          <section className="w-full">
+            <SectionHeader n="۱" title="نوع محتوا" text="نوع محتوایی را که می‌خواهی در Instagram منتشر کنی انتخاب کن." />
+            <div className="grid w-full grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
+              {([["POST","پست",ImagePlus,"#2563EB","#EFF6FF"],["CAROUSEL","آلبوم",Images,"#7C3AED","#F5F3FF"],["REEL","ریلز",Clapperboard,"#D97706","#FFF7ED"],["STORY","استوری",Camera,"#16A34A","#F0FDF4"]] as const).map(([value,label,Icon,accent,soft]) => (
+                <Button
+                  key={value}
+                  type="button"
+                  onClick={() => handleTypeChange(value)}
+                  className="group relative flex aspect-square w-full flex-col items-center justify-center gap-3 rounded-[28px] border-2 p-5 text-center shadow-none transition-all duration-200 hover:-translate-y-1 hover:shadow-lg active:translate-y-0 sm:rounded-[32px] sm:p-7"
+                  style={{ backgroundColor: soft, borderColor: accent, color: accent }}
+                >
+                  <span
+                    className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/55 sm:h-14 sm:w-14"
+                    style={{ color: accent }}
+                  >
+                    <Icon size={22} strokeWidth={1.9} className="sm:h-6 sm:w-6" />
+                  </span>
+                  <span className="text-base font-bold text-[#0F172A] sm:text-lg">{label}</span>
+                </Button>
+              ))}
+            </div>
+          </section>
         ) : uploadedMedia.length === 0 ? (
           <section className="mx-auto w-full max-w-3xl rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
             <SectionHeader n="۲" title="رسانه" text={type==="CAROUSEL"?"۲ تا ۱۰ تصویر برای آلبوم انتخاب کن.":type==="REEL"?"یک ویدیوی مناسب ریلز انتخاب کن.":type==="STORY"?"تصویر یا ویدیوی استوری را انتخاب کن.":"تصویر پست را انتخاب کن."} />
