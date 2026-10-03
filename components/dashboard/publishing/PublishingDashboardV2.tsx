@@ -59,7 +59,7 @@ function InlineWheelPicker({ value, onChange, min, max, label }: { value: number
   const startYRef = useRef<number | null>(null);
   const [slide, setSlide] = useState(0);
   const [animate, setAnimate] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const timerRef = useRef<ReturnType<typeof window.setTimeout> | null>(null);
 
   useEffect(() => () => {
     if (timerRef.current) window.clearTimeout(timerRef.current);
