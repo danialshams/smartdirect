@@ -345,6 +345,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
   const canPublish = uploadedMedia.length > 0 && !uploading && !publishing;
   const accept = type === "REEL" ? "video/mp4,video/quicktime" : type === "STORY" ? "image/jpeg,image/png,image/webp,video/mp4,video/quicktime" : "image/jpeg,image/png,image/webp";
+
   return (
     <div dir="rtl" className="min-h-screen bg-[#F8FAFC] px-3 py-4 pb-28 sm:px-5 sm:py-6 lg:px-8 lg:pb-8">
       <div className="mx-auto w-full max-w-6xl">
@@ -353,22 +354,20 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
           <SectionHeader n="۱" title="نوع محتوا" text="نوع محتوایی را که می‌خواهی در Instagram منتشر کنی انتخاب کن." />
           <div className="grid grid-cols-2 gap-3 sm:gap-4">
             {([["POST","پست",ImagePlus,"#2563EB","#EFF6FF"],["CAROUSEL","آلبوم",Images,"#7C3AED","#F5F3FF"],["REEL","ریلز",Clapperboard,"#D97706","#FFF7ED"],["STORY","استوری",Camera,"#16A34A","#F0FDF4"]] as const).map(([value,label,Icon,accent,soft]) => (
-              <Button key={value} type="button" onClick={() => handleTypeChange(value)} className={[
-                "group flex min-h-[156px] sm:min-h-[176px] flex-col items-center justify-center gap-4 rounded-[22px] border-2 bg-white p-4 text-center transition-all duration-300",
-                "border-[#E2E8F0] hover:-translate-y-0.5 hover:shadow-md"
-              ].join(" ")}>
+              <Button key={value} type="button" onClick={() => handleTypeChange(value)} className="group flex min-h-[156px] sm:min-h-[176px] flex-col items-center justify-center gap-4 rounded-[22px] border-2 border-[#E2E8F0] bg-white p-4 text-center transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
                 <span className="flex h-16 w-16 items-center justify-center rounded-2xl" style={{backgroundColor:soft,color:accent}}><Icon size={28}/></span>
                 <span className="text-sm font-bold text-[#0F172A]">{label}</span>
               </Button>
             ))}
           </div>
         </section>
-        ) : uploadedMedia.length === 0 ? (
-        <section className="mx-auto w-full max-w-3xl rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
-          <SectionHeader n="۲" title="آپلود محتوا" text={type==="CAROUSEL"?"۲ تا ۱۰ تصویر برای آلبوم انتخاب کن.":type==="REEL"?"یک ویدیوی مناسب ریلز انتخاب کن.":type==="STORY"?"تصویر یا ویدیوی استوری را انتخاب کن.":"تصویر پست را انتخاب کن."} />
-          <UploadArea id="publishing-media-upload" accept={accept} multiple={type==="CAROUSEL"} disabled={uploading||publishing} isDragging={isDragging} setIsDragging={setIsDragging} uploading={uploading} uploadIndex={uploadIndex} uploadProgress={uploadProgress} onChange={handleFiles} onDrop={handleDrop} />
-          {error && <p className="mt-3 text-xs leading-5 text-[#B91C1C]">{error}</p>}
-        </section>
+        ) : loading ? (
+          <div className="mx-auto w-full max-w-3xl rounded-2xl border border-[#E2E8F0] bg-white p-5">
+            <div className="h-5 w-32 animate-pulse rounded bg-[#E2E8F0]" />
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              {[1,2,3,4].map((item) => <div key={item} className="h-40 animate-pulse rounded-[22px] bg-[#F1F5F9]" />)}
+            </div>
+          </div>
         ) : (
           <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
             <div className="space-y-5">{[1,2,3].map((i) => <div key={i} className="animate-pulse rounded-2xl border border-[#E2E8F0] bg-white p-5"><div className="mb-5 h-5 w-32 rounded bg-[#E2E8F0]" /><div className="h-12 rounded-xl bg-[#F1F5F9]" /><div className="mt-4 h-24 rounded-xl bg-[#F1F5F9]" /></div>)}</div>
@@ -377,6 +376,23 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
         ) : (
           <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
             <main className="min-w-0 space-y-5">
+              <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-5">
+                <SectionHeader n="۱" title="نوع محتوا" text="نوع محتوایی را که می‌خواهی در Instagram منتشر کنی انتخاب کن." />
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                  {([["POST","پست",ImagePlus,"#2563EB","#EFF6FF"],["CAROUSEL","آلبوم",Images,"#7C3AED","#F5F3FF"],["REEL","ریلز",Clapperboard,"#D97706","#FFF7ED"],["STORY","استوری",Camera,"#16A34A","#F0FDF4"]] as const).map(([value,label,Icon,accent,soft]) => (
+                    <Button key={value} type="button" onClick={() => handleTypeChange(value)} className={[
+                      "group flex min-h-[156px] sm:min-h-[176px] flex-col items-center justify-center gap-4 rounded-[22px] border-2 bg-white p-4 text-center transition-all duration-300",
+                      type===value
+                        ? "border-[#2563EB] shadow-[0_0_0_3px_rgba(37,99,235,0.08)]"
+                        : "border-[#E2E8F0] hover:-translate-y-0.5 hover:shadow-md"
+                    ].join(" ")}>
+                      <span className="flex h-16 w-16 items-center justify-center rounded-2xl" style={{backgroundColor:soft,color:accent}}><Icon size={28}/></span>
+                      <span className="text-sm font-bold text-[#0F172A]">{label}</span>
+                    </Button>
+                  ))}
+                </div>
+              </section>
+
               <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-5">
                 <SectionHeader n="۲" title="رسانه" text={type==="CAROUSEL"?"۲ تا ۱۰ تصویر برای آلبوم انتخاب کن.":type==="REEL"?"یک ویدیوی مناسب ریلز انتخاب کن.":type==="STORY"?"تصویر یا ویدیوی استوری را انتخاب کن.":"تصویر پست را انتخاب کن."} />
                 {uploadedMedia.length===0 && media.length===0 ? (
@@ -430,7 +446,6 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               </section>}
             </aside>
           </div>
-
         )}
       </div>
       {!loading&&uploadedMedia.length>0&&<div className="fixed inset-x-3 bottom-3 z-40 rounded-2xl border border-[#E2E8F0] bg-white/95 p-2.5 shadow-lg backdrop-blur sm:hidden"><div className="grid grid-cols-2 gap-2"><Button type="button" disabled={!canPublish||publishing} onClick={()=>void createJob(true)} className="min-h-11 rounded-xl bg-[#2563EB] px-3 text-xs font-semibold text-white disabled:opacity-50">{publishing?<Loader2 size={16} className="animate-spin"/>:<Send size={16}/>} انتشار الآن</Button><Button type="button" disabled={!canPublish||publishing} onClick={()=>void createJob(false)} className="min-h-11 rounded-xl border border-[#E2E8F0] bg-white px-3 text-xs font-semibold text-[#334155] disabled:opacity-50"><CalendarClock size={16}/> زمان‌بندی</Button></div></div>}
