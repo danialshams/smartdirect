@@ -8,7 +8,7 @@ import { Input } from "@/components/dashboard/DashboardUI"
 import { Select } from "@/components/dashboard/DashboardUI"
 
 import { toast } from "sonner";
-import { CalendarClock, Camera, Clapperboard, ImagePlus, Images, Loader2, Plus, Send, Video, X } from "lucide-react";
+import { ArrowRight, CalendarClock, Camera, Clapperboard, ImagePlus, Images, Loader2, Plus, Send, Video, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent } from "react";
 
 import AutomationFlowMessage from "../AutomationFlowMessage";
@@ -90,7 +90,7 @@ function KeywordChipsInput({ value, onChange, placeholder }: { value: string; on
 
 function SectionHeader({ n, title, text }: { n: string; title: string; text: string }) { return <div className="mb-4"><div className="flex items-center gap-2"><span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">{n}</span><h2 className="text-sm font-bold text-[#0F172A]">{title}</h2></div><p className="mt-2 text-xs leading-5 text-[#64748B]">{text}</p></div>; }
 function ProgressBar({ progress, label }: { progress: number; label: string }) { return <div className="mt-4 rounded-xl border border-[#DBEAFE] bg-[#EFF6FF] px-3.5 py-3"><div className="mb-2 flex justify-between text-[11px] text-[#1D4ED8]"><span>{label}</span><span>{toPersianDigits(progress)}٪</span></div><div className="h-1.5 overflow-hidden rounded-full bg-[#DBEAFE]"><div className="h-full bg-[#2563EB] transition-[width]" style={{width: progress+"%"}}/></div></div>; }
-function UploadArea({ id, accept, multiple, disabled, isDragging, setIsDragging, uploading, uploadIndex, uploadProgress, onChange, onDrop }: any) { return <div onDragOver={(e: DragEvent<HTMLDivElement>)=>{e.preventDefault();setIsDragging(true)}} onDragLeave={()=>setIsDragging(false)} onDrop={onDrop} className={["relative overflow-hidden rounded-xl border border-dashed p-4 transition sm:p-6",isDragging?"border-[#2563EB] bg-[#2563EB]/5":"border-[#CBD5E1] bg-[#F8FAFC] hover:border-[#93C5FD] hover:bg-[#EFF6FF]/50",disabled?"pointer-events-none opacity-60":""].join(" ")}><Input id={id} type="file" accept={accept} multiple={multiple} onChange={onChange} disabled={disabled} className="sr-only"/><label htmlFor={id} className="flex min-h-[190px] cursor-pointer flex-col items-center justify-center text-center"><div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-[#2563EB] shadow-sm ring-1 ring-[#E2E8F0]">{uploading?<Loader2 size={22} className="animate-spin"/>:<ImagePlus size={22}/>}</div><span className="mt-4 text-sm font-bold text-[#0F172A]">{uploading?"در حال آپلود...":"آپلود محتوا"}</span><span className="mt-1.5 max-w-sm text-xs leading-5 text-[#64748B]">فایل را بکش و اینجا رها کن یا برای انتخاب از دستگاه کلیک کن.</span>{uploading&&<ProgressBar progress={uploadProgress} label={"فایل "+toPersianDigits(uploadIndex)}/>}</label></div>; }
+function UploadArea({ id, accept, multiple, disabled, isDragging, setIsDragging, uploading, uploadIndex, uploadProgress, onChange, onDrop, title }: any) { return <div onDragOver={(e: DragEvent<HTMLDivElement>)=>{e.preventDefault();setIsDragging(true)}} onDragLeave={()=>setIsDragging(false)} onDrop={onDrop} className={["relative overflow-hidden rounded-xl border border-dashed p-4 transition sm:p-6",isDragging?"border-[#2563EB] bg-[#2563EB]/5":"border-[#CBD5E1] bg-[#F8FAFC] hover:border-[#93C5FD] hover:bg-[#EFF6FF]/50",disabled?"pointer-events-none opacity-60":""].join(" ")}><Input id={id} type="file" accept={accept} multiple={multiple} onChange={onChange} disabled={disabled} className="sr-only"/><label htmlFor={id} className="flex min-h-[190px] cursor-pointer flex-col items-center justify-center text-center"><div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-[#2563EB] shadow-sm ring-1 ring-[#E2E8F0]">{uploading?<Loader2 size={22} className="animate-spin"/>:<ImagePlus size={22}/>}</div><span className="mt-4 text-sm font-bold text-[#0F172A]">{uploading?"در حال آپلود...":title}</span><span className="mt-1.5 whitespace-nowrap text-[11px] leading-5 text-[#64748B]">فایل را بکش و اینجا رها کن یا برای انتخاب از دستگاه کلیک کن.</span>{uploading&&<ProgressBar progress={uploadProgress} label={"فایل "+toPersianDigits(uploadIndex)}/>}</label></div>; }
 function MediaTile({ item, type, onRemove, ready=false }: any) { const image=item.type==="IMAGE"; const src=ready?item.publicUrl:item.previewUrl; return <div className="group relative overflow-hidden rounded-xl border border-[#E2E8F0] bg-[#F1F5F9]">{image?<img src={src} alt={ready?item.fileName:item.file.name} className={["w-full object-cover",type==="REEL"||type==="STORY"?"aspect-[9/16]":"aspect-[4/5]"].join(" ")}/>:<video src={src} controls className={["w-full object-cover",type==="REEL"||type==="STORY"?"aspect-[9/16]":"aspect-[4/5]"].join(" ")}/>}<Button type="button" onClick={onRemove} className="absolute left-2 top-2 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 p-0 text-[#DC2626] shadow-sm ring-1 ring-black/5" aria-label="حذف فایل"><X size={15}/></Button><div className={["absolute bottom-2 right-2 rounded-full px-2 py-1 text-[10px] text-white",ready?"bg-[#16A34A]/90":"bg-[#0F172A]/75"].join(" ")}>{ready?"آماده":"در حال آپلود"}</div></div>; }
 
 
@@ -101,6 +101,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const [isDragging, setIsDragging] = useState(false);
   const [type, setType] = useState<PublishType>("POST");
   const [selectionConfirmed, setSelectionConfirmed] = useState(false);
+  const [captionStepConfirmed, setCaptionStepConfirmed] = useState(false);
   const [stepVisible, setStepVisible] = useState(true);
   const [caption, setCaption] = useState("");
   const [media, setMedia] = useState<LocalMedia[]>([]);
@@ -126,6 +127,15 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const [error, setError] = useState("");
 
   const triggerType = type === "STORY" ? "STORY_REPLY_KEYWORD" : "COMMENT_KEYWORD";
+  const uploadTitle = `آپلود ${typeLabels[type]}`;
+  const uploadInstruction =
+    type === "CAROUSEL"
+      ? "تصویر یا ویدیوی آلبوم را انتخاب کن."
+      : type === "REEL"
+        ? "ویدیوی ریلز را انتخاب کن."
+        : type === "STORY"
+          ? "تصویر یا ویدیوی استوری را انتخاب کن."
+          : "تصویر پست را انتخاب کن.";
   const activeInstagramAccount = accounts.find((account) => account.isConnected !== false);
   const selectedAccountId = activeInstagramAccount?.id ?? "";
   const automationAccount: AutomationAccount = {
@@ -204,14 +214,67 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     setStepVisible(false);
     window.setTimeout(() => { action(); window.requestAnimationFrame(() => setStepVisible(true)); }, 180);
   }
-  function handleTypeChange(nextType: PublishType) { animateStepChange(() => { clearLocalMedia(); setUploadedMedia([]); setType(nextType); setSelectionConfirmed(true); onTypeChange?.(nextType); setUploadProgress(0); setCaption(""); resetAutomation(); }); }
-  function handleBackToTypeSelection() { animateStepChange(() => { clearLocalMedia(); setUploadedMedia([]); setSelectionConfirmed(false); setUploadProgress(0); setCaption(""); resetAutomation(); }); }
-  function prepareFiles(files: File[]) { if (!files.length || uploading || publishing) return; const accepted = type === "REEL" ? files.filter((file) => file.type.startsWith("video/")) : type === "STORY" ? files.filter((file) => file.type.startsWith("image/") || file.type.startsWith("video/")) : files.filter((file) => file.type.startsWith("image/")); if (!accepted.length) { setError(type === "REEL" ? "برای Reel یک فایل ویدیویی انتخاب کنید." : "فرمت فایل انتخاب‌شده برای این نوع محتوا معتبر نیست."); return; } const remaining = type === "CAROUSEL" ? Math.max(0, 10 - uploadedMedia.length) : 1; const selected = accepted.slice(0, remaining); if (type !== "CAROUSEL") setUploadedMedia([]); if (type === "CAROUSEL" && selected.length < 2 && uploadedMedia.length === 0) { setError("برای Carousel حداقل دو تصویر را همزمان انتخاب کنید."); return; } clearLocalMedia(); const nextMedia = selected.map((file, index): LocalMedia => ({ file, type: file.type.startsWith("video/") ? "VIDEO" : "IMAGE", previewUrl: URL.createObjectURL(file), sortOrder: index })); setMedia(nextMedia); setError(""); window.setTimeout(() => void uploadSelectedMedia(nextMedia), 0); }
+  function handleTypeChange(nextType: PublishType) { animateStepChange(() => { clearLocalMedia(); setUploadedMedia([]); setType(nextType); setSelectionConfirmed(true); setCaptionStepConfirmed(false); onTypeChange?.(nextType); setUploadProgress(0); setCaption(""); resetAutomation(); }); }
+  function handleBackToTypeSelection() { animateStepChange(() => { clearLocalMedia(); setUploadedMedia([]); setSelectionConfirmed(false); setCaptionStepConfirmed(false); setUploadProgress(0); setCaption(""); resetAutomation(); }); }
+  function prepareFiles(files: File[]) {
+    if (!files.length || uploading || publishing) return;
+    const accepted =
+      type === "REEL"
+        ? files.filter((file) => file.type.startsWith("video/"))
+        : type === "STORY" || type === "CAROUSEL"
+          ? files.filter((file) => file.type.startsWith("image/") || file.type.startsWith("video/"))
+          : files.filter((file) => file.type.startsWith("image/"));
+
+    if (!accepted.length) {
+      setError(
+        type === "REEL"
+          ? "برای ریلز یک فایل ویدیویی انتخاب کن."
+          : type === "STORY"
+            ? "برای استوری یک تصویر یا ویدیو انتخاب کن."
+            : type === "CAROUSEL"
+              ? "برای آلبوم یک تصویر یا ویدیو انتخاب کن."
+              : "برای پست یک تصویر انتخاب کن.",
+      );
+      return;
+    }
+
+    const remaining = type === "CAROUSEL" ? Math.max(0, 10 - uploadedMedia.length) : 1;
+    if (remaining <= 0) {
+      setError("آلبوم نمی‌تواند بیشتر از ۱۰ اسلاید داشته باشد.");
+      return;
+    }
+
+    const selected = accepted.slice(0, 1);
+    if (type !== "CAROUSEL") setUploadedMedia([]);
+    clearLocalMedia();
+
+    const nextMedia = selected.map((file, index): LocalMedia => ({
+      file,
+      type: file.type.startsWith("video/") ? "VIDEO" : "IMAGE",
+      previewUrl: URL.createObjectURL(file),
+      sortOrder: uploadedMedia.length + index,
+    }));
+
+    setMedia(nextMedia);
+    setError("");
+    window.setTimeout(() => void uploadSelectedMedia(nextMedia), 0);
+  }
   function handleFiles(event: ChangeEvent<HTMLInputElement>) { const files = Array.from(event.target.files ?? []); event.target.value = ""; prepareFiles(files); }
   function handleDrop(event: DragEvent<HTMLDivElement>) { event.preventDefault(); setIsDragging(false); prepareFiles(Array.from(event.dataTransfer.files ?? [])); }
   function removeLocal(index: number) { const item = media[index]; if (item) URL.revokeObjectURL(item.previewUrl); setMedia((current) => current.filter((_, i) => i !== index).map((item, i) => ({ ...item, sortOrder: i + uploadedMedia.length }))); }
   async function removeUploaded(item: UploadedMedia) { try { const response = await fetch("/api/instagram/publishing/upload", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ storageKey: item.storageKey }) }); const result = await response.json(); if (!response.ok || !result.success) throw new Error(result.message || "حذف فایل ناموفق بود."); setUploadedMedia((current) => current.filter((m) => m.storageKey !== item.storageKey).map((m, i) => ({ ...m, sortOrder: i }))); } catch (e) { setError(e instanceof Error ? e.message : "حذف فایل ناموفق بود."); } }
-  async function uploadSelectedMedia(items = media) { if (!selectedAccountId) { setError("اکانت فعال Instagram پیدا نشد."); return; } if (!items.length) return; if (type === "CAROUSEL" && items.length + uploadedMedia.length < 2) { setError("Carousel باید حداقل دو تصویر داشته باشد."); return; } try { setUploading(true); setError(""); setUploadProgress(0); const totalBytes = items.reduce((sum, item) => sum + item.file.size, 0); let completedBytes = 0; const results: UploadedMedia[] = []; for (let index = 0; index < items.length; index += 1) { const item = items[index]; setUploadIndex(index + 1); const result = await uploadFileWithProgress(item.file, (progress) => setUploadProgress(totalBytes ? Math.min(100, Math.round(((completedBytes + item.file.size * progress / 100) / totalBytes) * 100)) : progress)); results.push({ ...result, sortOrder: uploadedMedia.length + results.length }); completedBytes += item.file.size; } revokeLocalMedia(items); setMedia((current) => current.filter((item) => !items.includes(item))); setUploadedMedia((current) => [...current, ...results].map((item, index) => ({ ...item, sortOrder: index }))); setUploadProgress(100); } catch (e) { setError(e instanceof Error ? e.message : "آپلود فایل ناموفق بود."); } finally { setUploading(false); } }
+  async function uploadSelectedMedia(items = media) { if (!selectedAccountId) { setError("اکانت فعال Instagram پیدا نشد."); return; } if (!items.length) return;  try { setUploading(true); setError(""); setUploadProgress(0); const totalBytes = items.reduce((sum, item) => sum + item.file.size, 0); let completedBytes = 0; const results: UploadedMedia[] = []; for (let index = 0; index < items.length; index += 1) { const item = items[index]; setUploadIndex(index + 1); const result = await uploadFileWithProgress(item.file, (progress) => setUploadProgress(totalBytes ? Math.min(100, Math.round(((completedBytes + item.file.size * progress / 100) / totalBytes) * 100)) : progress)); results.push({ ...result, sortOrder: uploadedMedia.length + results.length }); completedBytes += item.file.size; } revokeLocalMedia(items); setMedia((current) => current.filter((item) => !items.includes(item))); setUploadedMedia((current) => [...current, ...results].map((item, index) => ({ ...item, sortOrder: index }))); setUploadProgress(100); } catch (e) { setError(e instanceof Error ? e.message : "آپلود فایل ناموفق بود."); } finally { setUploading(false); } }
+
+  function handleCarouselContinue() {
+    if (uploadedMedia.length < 2) {
+      setError("برای آلبوم حداقل ۲ اسلاید انتخاب کن.");
+      return;
+    }
+    animateStepChange(() => {
+      setCaptionStepConfirmed(true);
+      setError("");
+    });
+  }
 
   function updateMessage(index: number, patch: Partial<MessageDraft>) { setMessages((current) => current.map((message, messageIndex) => messageIndex === index ? { ...message, ...patch } : message)); }
   function addMessage() { setMessages((current) => [...current, createEmptyMessage()]); }
@@ -350,7 +413,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   async function cancelJob(id: string) { try { setError(""); const response = await fetch(`/api/instagram/publishing/${id}`, { method: "DELETE" }); const result = await response.json(); if (!response.ok) throw new Error(result.message || "لغو ناموفق بود."); await loadJobs(); } catch (e) { setError(e instanceof Error ? e.message : "لغو ناموفق بود."); } }
 
   const canPublish = uploadedMedia.length > 0 && !uploading && !publishing;
-  const accept = type === "REEL" ? "video/mp4,video/quicktime" : type === "STORY" ? "image/jpeg,image/png,image/webp,video/mp4,video/quicktime" : "image/jpeg,image/png,image/webp";
+  const accept = type === "REEL" ? "video/mp4,video/quicktime" : type === "STORY" || type === "CAROUSEL" ? "image/jpeg,image/png,image/webp,video/mp4,video/quicktime" : "image/jpeg,image/png,image/webp";
 
   return (
     <div dir="rtl" className={["bg-[#F8FAFC] px-3 py-4 sm:px-5 sm:py-6 lg:px-8", !selectionConfirmed ? "pb-8" : "min-h-screen pb-28 lg:pb-8"].join(" ")}>
@@ -379,19 +442,83 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               ))}
             </div>
           </section>
-        ) : uploadedMedia.length === 0 ? (
+        ) : (type === "CAROUSEL" && !captionStepConfirmed) || uploadedMedia.length === 0 ? (
           <section className="mx-auto w-full max-w-3xl">
             <div className="mb-3 flex items-center">
-              <Button type="button" onClick={handleBackToTypeSelection} className="min-h-8 rounded-lg border border-[#E2E8F0] bg-transparent px-2.5 text-xs font-medium text-[#94A3B8] shadow-none hover:bg-[#F8FAFC] hover:text-[#64748B]">
-                → بازگشت
+              <Button
+                type="button"
+                onClick={handleBackToTypeSelection}
+                className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]"
+              >
+                <ArrowRight size={15} strokeWidth={2} />
+                بازگشت
               </Button>
             </div>
+
             <div className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
-            <SectionHeader n="۲" title="رسانه" text={type==="CAROUSEL"?"۲ تا ۱۰ تصویر برای آلبوم انتخاب کن.":type==="REEL"?"یک ویدیوی مناسب ریلز انتخاب کن.":type==="STORY"?"تصویر یا ویدیوی استوری را انتخاب کن.":"تصویر پست را انتخاب کن."} />
-            <UploadArea id="publishing-media-upload" accept={accept} multiple={type==="CAROUSEL"} disabled={uploading||publishing} isDragging={isDragging} setIsDragging={setIsDragging} uploading={uploading} uploadIndex={uploadIndex} uploadProgress={uploadProgress} onChange={handleFiles} onDrop={handleDrop} />
-            {media.length > 0 && <div className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
-              {media.map((item,index)=><MediaTile key={item.file.name+"-"+item.sortOrder} item={item} type={type} onRemove={() => removeLocal(index)} />)}
-            </div>}
+              <SectionHeader n="۲" title={uploadTitle} text={uploadInstruction} />
+              <UploadArea
+                id="publishing-media-upload"
+                accept={accept}
+                multiple={false}
+                title={uploadTitle}
+                disabled={uploading || publishing || (type === "CAROUSEL" && uploadedMedia.length >= 10)}
+                isDragging={isDragging}
+                setIsDragging={setIsDragging}
+                uploading={uploading}
+                uploadIndex={uploadIndex}
+                uploadProgress={uploadProgress}
+                onChange={handleFiles}
+                onDrop={handleDrop}
+              />
+
+              {type === "CAROUSEL" && uploadedMedia.length > 0 && (
+                <div className="mt-4">
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <p className="text-xs font-bold text-[#334155]">اسلایدهای آلبوم</p>
+                    <span className="text-[11px] text-[#64748B]">{toPersianDigits(uploadedMedia.length)} از ۱۰</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2.5">
+                    {uploadedMedia.map((item, index) => (
+                      <div key={item.storageKey} className="w-24 sm:w-28">
+                        <MediaTile
+                          item={item}
+                          type="CAROUSEL"
+                          onRemove={() => void removeUploaded(item)}
+                          ready
+                        />
+                        <p className="mt-1.5 text-center text-[10px] font-semibold text-[#64748B]">
+                          اسلاید شماره {toPersianDigits(index + 1)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-4 flex justify-end">
+                    <Button
+                      type="button"
+                      disabled={uploadedMedia.length < 2 || uploading || publishing}
+                      onClick={handleCarouselContinue}
+                      className="min-h-10 rounded-xl bg-[#2563EB] px-5 text-xs font-semibold text-white hover:bg-[#1D4ED8] disabled:opacity-40"
+                    >
+                      ادامه
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {media.length > 0 && type !== "CAROUSEL" && (
+                <div className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+                  {media.map((item, index) => (
+                    <MediaTile
+                      key={item.file.name + "-" + item.sortOrder}
+                      item={item}
+                      type={type}
+                      onRemove={() => removeLocal(index)}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </section>
         ) : (
@@ -400,35 +527,34 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               <Button
                 type="button"
                 onClick={() => animateStepChange(() => {
+                  if (type === "CAROUSEL") {
+                    setCaptionStepConfirmed(false);
+                    setUploadProgress(0);
+                    return;
+                  }
                   setUploadedMedia([]);
                   setUploadProgress(0);
                 })}
-                className="min-h-9 rounded-lg border border-[#E2E8F0] bg-white px-3 text-xs font-semibold text-[#475569] hover:bg-[#F8FAFC]"
+                className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]"
               >
-                ← بازگشت
+                <ArrowRight size={15} strokeWidth={2} />
+                بازگشت
               </Button>
             </div>
             <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
             <main className="min-w-0 space-y-5">
               <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-5">
-                <SectionHeader n="۲" title="رسانه" text={type==="CAROUSEL"?"۲ تا ۱۰ تصویر برای آلبوم انتخاب کن.":type==="REEL"?"یک ویدیوی مناسب ریلز انتخاب کن.":type==="STORY"?"تصویر یا ویدیوی استوری را انتخاب کن.":"تصویر پست را انتخاب کن."} />
-                {uploadedMedia.length===0 && media.length===0 ? (
-                  <UploadArea id="publishing-media-upload" accept={accept} multiple={type==="CAROUSEL"} disabled={uploading||publishing} isDragging={isDragging} setIsDragging={setIsDragging} uploading={uploading} uploadIndex={uploadIndex} uploadProgress={uploadProgress} onChange={handleFiles} onDrop={handleDrop} />
-                ) : (
-                  <>
-                    <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
-                      {uploadedMedia.map((item)=><MediaTile key={item.storageKey} item={item} type={type} onRemove={() => void removeUploaded(item)} ready />)}
-                      {media.map((item,index)=><MediaTile key={item.file.name+"-"+item.sortOrder} item={item} type={type} onRemove={() => removeLocal(index)} />)}
-                      {type==="CAROUSEL" && uploadedMedia.length<10 && <label htmlFor="publishing-media-upload-more" className="flex min-h-[180px] cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] hover:border-[#93C5FD] hover:bg-[#EFF6FF]/50"><Input id="publishing-media-upload-more" type="file" accept={accept} multiple className="sr-only" onChange={handleFiles} disabled={uploading||publishing}/><Plus size={21} className="text-[#2563EB]"/><span className="mt-2 text-xs font-semibold text-[#334155]">افزودن تصویر</span></label>}
-                    </div>
-                    {uploading && <ProgressBar progress={uploadProgress} label={"در حال آپلود فایل "+toPersianDigits(uploadIndex)} />}
-                  </>
-                )}
+                <SectionHeader n="۲" title={uploadTitle} text={uploadInstruction} />
+                <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+                  {uploadedMedia.map((item)=><MediaTile key={item.storageKey} item={item} type={type} onRemove={() => void removeUploaded(item)} ready />)}
+                  {media.map((item,index)=><MediaTile key={item.file.name+"-"+item.sortOrder} item={item} type={type} onRemove={() => removeLocal(index)} />)}
+                </div>
+                {uploading && <ProgressBar progress={uploadProgress} label={"در حال آپلود فایل "+toPersianDigits(uploadIndex)} />}
               </section>
 
               {uploadedMedia.length>0 && type!=="STORY" && <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-5">
-                <div className="mb-4 flex items-center justify-between gap-3"><SectionHeader n="۳" title="کپشن" text="متن کپشن را برای محتوای منتشرشده بنویس."/><span className="text-[11px] text-[#64748B]">{toPersianDigits(caption.length)} / ۲۲۰۰</span></div>
-                <Textarea value={caption} onChange={e=>setCaption(e.target.value)} maxLength={2200} rows={6} className="w-full resize-none rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 text-sm leading-7 text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" placeholder="کپشن محتوا را بنویسید..." />
+                <div className="mb-4 flex items-center justify-between gap-3"><SectionHeader n="۳" title="کپشن" text={`کپشن ${typeLabels[type]} را بنویس.`}/><span className="text-[11px] text-[#64748B]">{toPersianDigits(caption.length)} / ۲۲۰۰</span></div>
+                <Textarea value={caption} onChange={e=>setCaption(e.target.value)} maxLength={2200} rows={6} className="w-full resize-none rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 text-sm leading-7 text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" placeholder={`کپشن ${typeLabels[type]} را بنویس...`} />
               </section>}
 
               <section className="overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-sm">
