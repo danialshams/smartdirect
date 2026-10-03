@@ -54,6 +54,7 @@ function gregorianToJalali(gy: number, gm: number, gd: number): JalaliDate { let
 function isJalaliLeap(year: number) { const epBase = year - (year >= 0 ? 474 : 473); const epYear = 474 + (epBase % 2820); return ((epYear + 38) * 682) % 2816 < 682; }
 function jalaliMonthDays(year: number, month: number) { if (month <= 6) return 31; if (month <= 11) return 30; return isJalaliLeap(year) ? 30 : 29; }
 function currentJalaliDate() { const now = new Date(); return gregorianToJalali(now.getFullYear(), now.getMonth() + 1, now.getDate()); }
+function addJalaliDays(value: JalaliDate, days: number) { const [gy, gm, gd] = jalaliToGregorian(value.year, value.month, value.day); const date = new Date(gy, gm - 1, gd + days); return gregorianToJalali(date.getFullYear(), date.getMonth() + 1, date.getDate()); }
 function jalaliDateTimeToDate(date: JalaliDate, hour: number, minute: number) { const [gy, gm, gd] = jalaliToGregorian(date.year, date.month, date.day); return new Date(gy, gm - 1, gd, hour, minute, 0, 0); }
 async function uploadFileWithProgress(file: File, onProgress: (progress: number) => void): Promise<{ storageKey: string; publicUrl: string; type: MediaType; fileName: string; mimeType: string; fileSize: number }> {
 
@@ -227,6 +228,9 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const [hour, setHour] = useState(new Date().getHours());
   const [minute, setMinute] = useState(new Date().getMinutes());
   const [publishNow, setPublishNow] = useState(true);
+  const [stage6Date, setStage6Date] = useState<JalaliDate | null>(null);
+  const [stage6Hour, setStage6Hour] = useState<number | null>(null);
+  const [stage6Minute, setStage6Minute] = useState<number | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadSuccess, setUploadSuccess] = useState(false);
@@ -628,7 +632,17 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     if (!uploadedMedia.length) { setError("ابتدا فایل را آپلود کنید."); return; }
     if (type === "CAROUSEL" && uploadedMedia.length < 2) { setError("آلبوم باید حداقل ۲ اسلاید داشته باشد."); return; }
     if (type !== "CAROUSEL" && uploadedMedia.length !== 1) { setError(`${typeLabels[type]} باید دقیقاً یک فایل داشته باشد.`); return; }
-    const scheduled = jalaliDateTimeToDate(scheduledDate, hour, minute);
+    const selectedScheduleDate = !publishNow && type !== "STORY" && !automationEnabled ? stage6Date : scheduledDate;
+    const selectedHour = !publishNow && type !== "STORY" && !automationEnabled ? stage6Hour : hour;
+    const selectedMinute = !publishNow && type !== "STORY" && !automationEnabled ? stage6Minute : minute;
+    if (!publishNow && (!selectedScheduleDate || selectedHour === null || selectedMinute === null)) {
+      setError("تاریخ، ساعت و دقیقه انتشار را انتخاب کن.");
+      return;
+    }
+    const scheduled = selectedScheduleDate && selectedHour !== null && selectedMinute !== null
+      ? jalaliDateTimeToDate(selectedScheduleDate, selectedHour, selectedMinute)
+      : null;
+    if (!publishNow && !scheduled) { setError("زمان انتشار را انتخاب کن."); return; }
     if (!publishNow && scheduled.getTime() <= Date.now()) { setError("زمان انتخاب‌شده باید در آینده باشد."); return; }
     if (!publishNow && scheduled.getTime() > Date.now() + 48 * 60 * 60 * 1000) { setError("زمان انتشار باید حداکثر تا ۴۸ ساعت آینده باشد."); return; }
     try {
@@ -645,7 +659,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               return accumulator;
             }, {}) }
           : (taggedUsersByMedia[uploadedMedia[0]?.storageKey ?? ""] ?? []).map((username) => ({ username })),
-        scheduledAt: publishNow ? null : scheduled.toISOString(),
+        scheduledAt: publishNow ? null : scheduled!.toISOString(),
         idempotencyKey: crypto.randomUUID(),
         commentAutomationId: type === "STORY" ? null : automationId,
         storyReplyAutomationId: type === "STORY" ? automationId : null,
@@ -957,39 +971,74 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               </div>
 
               <div className="space-y-3">
-                <div className="flex items-center gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5">
-                  <Button type="button" disabled={!publishNow} onClick={() => void createJob(true)} className="min-h-11 flex-1 rounded-xl bg-[#2563EB] px-4 text-sm font-semibold text-white hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-50">
+                <div className="flex flex-col gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5 sm:flex-row sm:items-center">
+                  <Button type="button" disabled={!publishNow} onClick={() => void createJob(true)} className="min-h-11 w-full shrink-0 whitespace-nowrap rounded-xl bg-[#2563EB] px-4 text-sm font-semibold text-white hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-50 sm:flex-1">
                     <Send size={17}/>انتشار {typeLabels[type]} هم‌اکنون
                   </Button>
-                  <label className="flex shrink-0 cursor-pointer items-center gap-2 text-xs font-semibold text-[#334155]">
-                    <input type="checkbox" checked={!publishNow} onChange={(event) => { setPublishNow(!event.target.checked); setError(""); }} className="h-4 w-4 accent-[#2563EB]" />
+                  <label className="flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl px-2 text-xs font-semibold text-[#334155]">
+                    <input type="checkbox" checked={!publishNow} onChange={(event) => {
+                      const enabled = event.target.checked;
+                      setPublishNow(!enabled);
+                      if (!enabled) {
+                        setStage6Date(null);
+                        setStage6Hour(null);
+                        setStage6Minute(null);
+                      }
+                      setError("");
+                    }} className="h-4 w-4 accent-[#2563EB]" />
                     <span className="whitespace-nowrap">انتشار در زمان دلخواه</span>
                   </label>
                 </div>
 
                 {!publishNow && (
-                  <div className="rounded-xl border border-[#E2E8F0] bg-white p-4 sm:p-5">
+                  <div className="mt-3 rounded-xl border border-[#E2E8F0] bg-white p-4 sm:p-5">
                     <div className="mb-4">
                       <p className="text-sm font-bold text-[#0F172A]">انتخاب زمان دقیق</p>
-                      <p className="mt-1 text-[11px] leading-5 text-[#64748B]">زمان را تا حداکثر ۴۸ ساعت آینده انتخاب کن.</p>
+                      <p className="mt-1 text-[11px] leading-5 text-[#64748B]">تاریخ انتشار را انتخاب کن.</p>
                     </div>
-                    <PersianDatePicker value={scheduledDate} onChange={(next) => { setScheduledDate(next); setError(""); }}/>
-                    <div className="mt-3 grid grid-cols-2 gap-2.5">
-                      <label>
-                        <span className="mb-1.5 block text-[11px] font-medium text-[#64748B]">ساعت</span>
-                        <Select value={hour} onChange={(e) => { setHour(Number(e.target.value)); setError(""); }} className="w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-3 text-sm">
-                          {Array.from({length:24}, (_, value) => <option key={value} value={value}>{toPersianDigits(String(value).padStart(2, "0"))}</option>)}
-                        </Select>
-                      </label>
-                      <label>
-                        <span className="mb-1.5 block text-[11px] font-medium text-[#64748B]">دقیقه</span>
-                        <Select value={minute} onChange={(e) => { setMinute(Number(e.target.value)); setError(""); }} className="w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-3 text-sm">
-                          {Array.from({length:60}, (_, value) => <option key={value} value={value}>{toPersianDigits(String(value).padStart(2, "0"))}</option>)}
-                        </Select>
-                      </label>
+
+                    <div className="grid grid-cols-2 gap-2.5">
+                      {[currentJalaliDate(), addJalaliDays(currentJalaliDate(), 1)].map((date, index) => {
+                        const selected = stage6Date?.year === date.year && stage6Date?.month === date.month && stage6Date?.day === date.day;
+                        const label = index === 0 ? "امروز" : "فردا";
+                        return (
+                          <button
+                            key={`${date.year}-${date.month}-${date.day}`}
+                            type="button"
+                            onClick={() => { setStage6Date(date); setError(""); }}
+                            className={[\"relative min-h-20 rounded-xl border px-3 py-3 text-right transition-all\", selected ? \"border-[#2563EB] bg-[#EFF6FF] ring-2 ring-[#2563EB]/10\" : \"border-[#E2E8F0] bg-white hover:border-[#BFDBFE] hover:bg-[#F8FAFC]\\"].join(" ")}
+                          >
+                            <span className="block text-[11px] font-medium text-[#64748B]">{label}</span>
+                            <span className="mt-1 block text-sm font-bold text-[#0F172A]">{toPersianDigits(date.day)} {jalaliMonths[date.month - 1]}</span>
+                            <span className="mt-0.5 block text-[10px] text-[#64748B]">{toPersianDigits(date.year)}</span>
+                            {selected && <span className="absolute left-2.5 top-2.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#2563EB] text-white text-[11px]">✓</span>}
+                          </button>
+                        );
+                      })}
                     </div>
-                    <Button type="button" onClick={() => void createJob(false)} disabled={publishing} className="mt-4 min-h-11 w-full rounded-xl bg-[#2563EB] px-4 text-sm font-semibold text-white hover:bg-[#1D4ED8] disabled:opacity-50">
-                      {publishing ? <Loader2 size={17} className="animate-spin"/> : <CalendarClock size={17}/>} زمان‌بندی انتشار
+
+                    <div className="mt-4 border-t border-[#E2E8F0] pt-4">
+                      <p className="mb-3 text-sm font-bold text-[#0F172A]">ساعت انتشار</p>
+                      <div className="grid grid-cols-2 gap-2.5">
+                        <label>
+                          <span className="mb-1.5 block text-[11px] font-medium text-[#64748B]">ساعت</span>
+                          <Select value={stage6Hour === null ? "" : stage6Hour} onChange={(e) => { setStage6Hour(e.target.value === "" ? null : Number(e.target.value)); setError(""); }} className="w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-3 text-sm">
+                            <option value="">انتخاب ساعت</option>
+                            {Array.from({length:24}, (_, value) => <option key={value} value={value}>{toPersianDigits(String(value).padStart(2, "0"))}</option>)}
+                          </Select>
+                        </label>
+                        <label>
+                          <span className="mb-1.5 block text-[11px] font-medium text-[#64748B]">دقیقه</span>
+                          <Select value={stage6Minute === null ? "" : stage6Minute} onChange={(e) => { setStage6Minute(e.target.value === "" ? null : Number(e.target.value)); setError(""); }} className="w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-3 text-sm">
+                            <option value="">انتخاب دقیقه</option>
+                            {Array.from({length:60}, (_, value) => <option key={value} value={value}>{toPersianDigits(String(value).padStart(2, "0"))}</option>)}
+                          </Select>
+                        </label>
+                      </div>
+                    </div>
+
+                    <Button type="button" onClick={() => void createJob(false)} disabled={publishing || !stage6Date || stage6Hour === null || stage6Minute === null} className="mt-5 min-h-11 w-full rounded-xl bg-[#2563EB] px-4 text-sm font-semibold text-white hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-50">
+                      {publishing ? <Loader2 size={17} className="animate-spin"/> : <CalendarClock size={17}/>} انتشار در زمان انتخاب‌شده
                     </Button>
                   </div>
                 )}
