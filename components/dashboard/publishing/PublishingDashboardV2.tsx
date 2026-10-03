@@ -642,10 +642,22 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     const scheduled = selectedScheduleDate && selectedHour !== null && selectedMinute !== null
       ? jalaliDateTimeToDate(selectedScheduleDate, selectedHour, selectedMinute)
       : null;
-    if (!publishNow && !scheduled) { setError("زمان انتشار را انتخاب کن."); return; }
-    if (!publishNow) {
-      if (scheduled.getTime() <= Date.now()) { setError("زمان انتخاب‌شده باید در آینده باشد."); return; }
-      if (scheduled.getTime() > Date.now() + 48 * 60 * 60 * 1000) { setError("زمان انتشار باید حداکثر تا ۴۸ ساعت آینده باشد."); return; }
+    const scheduledTimestamp = scheduled?.getTime() ?? null;
+    const scheduledAt = scheduled?.toISOString() ?? null;
+    if (!publishNow && scheduledTimestamp === null) {
+      setError("زمان انتشار را انتخاب کن.");
+      return;
+    }
+    if (!publishNow && scheduledTimestamp !== null) {
+      const now = Date.now();
+      if (scheduledTimestamp <= now) {
+        setError("زمان انتخاب‌شده باید در آینده باشد.");
+        return;
+      }
+      if (scheduledTimestamp > now + 48 * 60 * 60 * 1000) {
+        setError("زمان انتشار باید حداکثر تا ۴۸ ساعت آینده باشد.");
+        return;
+      }
     }
     try {
       setPublishing(true); setError("");
@@ -661,7 +673,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               return accumulator;
             }, {}) }
           : (taggedUsersByMedia[uploadedMedia[0]?.storageKey ?? ""] ?? []).map((username) => ({ username })),
-        scheduledAt: publishNow ? null : scheduled!.toISOString(),
+        scheduledAt: publishNow ? null : scheduledAt,
         idempotencyKey: crypto.randomUUID(),
         commentAutomationId: type === "STORY" ? null : automationId,
         storyReplyAutomationId: type === "STORY" ? automationId : null,
