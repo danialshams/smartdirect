@@ -72,7 +72,7 @@ const palette = {
 };
 
 const newShowcaseItem = (): ShowcaseItemDraft => ({
-  id: \`showcase_item_\${crypto.randomUUID()}\`,
+  id: `showcase_item_${crypto.randomUUID()}`,
   title: "",
   description: "",
   imageUrl: "",
@@ -81,11 +81,11 @@ const newShowcaseItem = (): ShowcaseItemDraft => ({
 
 async function readJsonResponse(response: Response, fallback: string) {
   const raw = await response.text();
-  if (!raw.trim()) throw new Error(\`\${fallback} (پاسخ خالی از سرور)\`);
+  if (!raw.trim()) throw new Error(`${fallback} (پاسخ خالی از سرور)`);
   try {
     return JSON.parse(raw) as Record<string, any>;
   } catch {
-    throw new Error(\`\${fallback} (پاسخ نامعتبر از سرور)\`);
+    throw new Error(`${fallback} (پاسخ نامعتبر از سرور)`);
   }
 }
 
@@ -209,7 +209,7 @@ export default function AutomationFlowMessage({
           </div>
         </div>
       <div className="flex items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-semibold" style={{ borderColor: palette.border, color: palette.secondary, background: palette.muted }}>
-        ${index === 0 ? "پیام شروع" : "ادامه مسیر"}
+        {index === 0 ? "پیام شروع" : "ادامه مسیر"}
       </div>
       </header>
 
@@ -700,7 +700,7 @@ function MediaComposer({
 
   return (
     <div className="space-y-5">
-      <ComposerTitle title={labels[kind]} description={\`فایل \${labels[kind]} را انتخاب کن تا در این مرحله برای کاربر ارسال شود.\`} />
+      <ComposerTitle title={labels[kind]} description={`فایل ${labels[kind]} را انتخاب کن تا در این مرحله برای کاربر ارسال شود.`} />
 
       {url ? (
         <div className="rounded-2xl border p-4" style={{ borderColor: "#BBF7D0", background: "#F0FDF4" }}>
@@ -725,7 +725,7 @@ function MediaComposer({
           accept={accept}
           disabled={uploading}
           onChange={onUpload}
-          label={uploading ? "در حال آپلود..." : \`انتخاب \${labels[kind]}\`}
+          label={uploading ? "در حال آپلود..." : `انتخاب ${labels[kind]}`}
           large
           kind={kind}
         />
@@ -754,7 +754,7 @@ function FilePicker({
   const Icon = kind === "VIDEO" ? Video : kind === "AUDIO" ? Mic : Upload;
   return (
     <label
-      className={\`flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-5 text-center transition hover:bg-[#F5F3FF] \${large ? "min-h-[230px]" : "min-h-11"} \${disabled ? "pointer-events-none opacity-60" : ""}\`}
+      className={`flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-5 text-center transition hover:bg-[#F5F3FF] ${large ? "min-h-[230px]" : "min-h-11"} ${disabled ? "pointer-events-none opacity-60" : ""}`}
       style={{ borderColor: "#CBD5E1", background: large ? palette.muted : palette.surface }}
     >
       <span className="flex h-12 w-12 items-center justify-center rounded-2xl" style={{ background: "#F5F3FF", color: palette.automation }}>
@@ -845,7 +845,7 @@ function BranchMediaDestination({
           <FilePicker accept={accept} disabled={uploading} onChange={choose} label="جایگزین" />
         </div>
       ) : (
-        <FilePicker accept={accept} disabled={uploading} onChange={choose} label={uploading ? \`آپلود \${progress}٪\` : "انتخاب فایل مقصد"} />
+        <FilePicker accept={accept} disabled={uploading} onChange={choose} label={uploading ? `آپلود ${progress}٪` : "انتخاب فایل مقصد"} />
       )}
       {error && <p className="text-[10px]" style={{ color: palette.error }}>{error}</p>}
     </div>
@@ -872,7 +872,7 @@ function ShowcaseComposer({
     const rawItems = Array.isArray(existing?.items) ? existing.items : [];
     if (!rawItems.length) return;
     setItems(rawItems.map((raw: any) => ({
-      id: typeof raw?.id === "string" ? raw.id : \`showcase_item_\${crypto.randomUUID()}\`,
+      id: typeof raw?.id === "string" ? raw.id : `showcase_item_${crypto.randomUUID()}`,
       title: typeof raw?.title === "string" ? raw.title : "",
       description: typeof raw?.description === "string" ? raw.description : "",
       imageUrl: typeof raw?.imageUrl === "string" ? raw.imageUrl : "",
@@ -901,8 +901,8 @@ function ShowcaseComposer({
     if (!instagramAccountId) return setError("اکانت Instagram انتخاب نشده است.");
     if (!items.length) return setError("حداقل یک کارت اضافه کنید.");
     for (let i = 0; i < items.length; i += 1) {
-      if (!items[i]?.title.trim()) return setError(\`عنوان کارت \${i + 1} را وارد کنید.\`);
-      if (!items[i]?.imageUrl.trim()) return setError(\`تصویر کارت \${i + 1} را آپلود کنید.\`);
+      if (!items[i]?.title.trim()) return setError(`عنوان کارت ${i + 1} را وارد کنید.`);
+      if (!items[i]?.imageUrl.trim()) return setError(`تصویر کارت ${i + 1} را آپلود کنید.`);
     }
 
     setSaving(true);
@@ -913,7 +913,7 @@ function ShowcaseComposer({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           instagramAccountId,
-          title: \`ویترین \${new Date().toLocaleDateString("fa-IR")}\`,
+          title: `ویترین ${new Date().toLocaleDateString("fa-IR")}`,
           description: null,
           isActive: true,
         }),
@@ -923,7 +923,7 @@ function ShowcaseComposer({
       const created = result.data ?? result;
 
       for (let i = 0; i < items.length; i += 1) {
-        const responseItem = await fetch(\`/api/showcases/\${created.id}/items\`, {
+        const responseItem = await fetch(`/api/showcases/${created.id}/items`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -934,8 +934,8 @@ function ShowcaseComposer({
             isActive: true,
           }),
         });
-        const itemResult = await readJsonResponse(responseItem, \`ساخت کارت \${i + 1} ناموفق بود.\`);
-        if (!responseItem.ok || itemResult?.error) throw new Error(itemResult?.error || itemResult?.message || \`ساخت کارت \${i + 1} ناموفق بود.\`);
+        const itemResult = await readJsonResponse(responseItem, `ساخت کارت ${i + 1} ناموفق بود.`);
+        if (!responseItem.ok || itemResult?.error) throw new Error(itemResult?.error || itemResult?.message || `ساخت کارت ${i + 1} ناموفق بود.`);
       }
 
       onCreated({ ...created, items });
@@ -1000,9 +1000,9 @@ function ShowcaseComposer({
 
 function createReply(): QuickReplyDraft {
   return {
-    id: \`branch_\${crypto.randomUUID()}\`,
+    id: `branch_${crypto.randomUUID()}`,
     title: "",
-    payload: \`payload_\${crypto.randomUUID()}\`,
+    payload: `payload_${crypto.randomUUID()}`,
     nextMessageId: null,
     destinationType: null,
     destinationText: "",
