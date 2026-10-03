@@ -155,7 +155,7 @@ function KeywordChipsInput({ value, onChange, placeholder }: { value: string; on
   return <div className="flex min-h-[56px] flex-wrap items-center gap-2 rounded-xl border border-[#E2E8F0] bg-white px-3 py-2.5 transition focus-within:border-[#7C3AED] focus-within:ring-2 focus-within:ring-[#7C3AED]/10">{keywords.map((item) => <span key={item} className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1.5 text-xs font-medium text-foreground">{item}<Button type="button" onClick={() => sync(keywords.filter((keyword) => keyword !== item))} className="text-muted-foreground hover:text-foreground" aria-label={`حذف ${item}`}><X size={13} /></Button></span>)}<Input value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (["Enter", ",", "،"].includes(event.key)) { event.preventDefault(); add(); } }} onBlur={add} placeholder={keywords.length ? "کلمه بعدی..." : placeholder} className="min-w-[140px] flex-1 border-0 bg-transparent px-1 py-1 text-sm text-[#0F172A] outline-none ring-0 placeholder:text-[#94A3B8]" /><Button type="button" onPointerDown={(event) => event.preventDefault()} onClick={add} className="shrink-0 rounded-lg border border-[#E2E8F0] bg-white px-2.5 py-1.5 text-xs font-medium text-[#64748B] hover:bg-[#F8FAFC]">افزودن کلمه</Button></div>;
 }
 
-function SectionHeader({ n, title, text }: { n: string; title: string; text: string }) { return <div className="mb-4"><div className="flex items-center gap-2"><span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">{n}</span><h2 className="text-sm font-bold text-[#0F172A]">{title}</h2></div><p className="mt-2 text-xs leading-5 text-[#64748B]">{text}</p></div>; }
+function SectionHeader({ n, title, text }: { n: string; title: string; text: string }) { return <div className="mb-4"><div className="flex items-center gap-2"><span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">{n}</span><h2 className="text-sm font-bold text-[#0F172A]">{title}</h2></div><p className={["mt-2 leading-5 text-[#64748B]", title === "آپلود آلبوم" ? "whitespace-nowrap text-[9px] sm:text-xs" : "text-xs"].join(" ")}>{text}</p></div>; }
 function ProgressBar({ progress }: { progress: number }) {
   return <div className="mt-4 w-full max-w-md rounded-xl border border-[#DBEAFE] bg-white px-4 py-3.5 shadow-sm">
     <div className="mb-2.5 flex items-center justify-between text-xs font-semibold text-[#2563EB]">
@@ -240,7 +240,9 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const uploadTitle = `آپلود ${typeLabels[type]}`;
   const uploadInstruction =
     type === "CAROUSEL"
-      ? "تصویر یا ویدیوی آلبوم را انتخاب کن."
+      ? uploadedMedia.length >= 2
+        ? "برای آپلود اسلایدهای بیشتر (تا ۱۰ اسلاید)، فایل موردنظرت را انتخاب کن."
+        : "تصویر یا ویدیوی آلبوم را انتخاب کن."
       : type === "REEL"
         ? "ویدیوی ریلز را انتخاب کن."
         : type === "STORY"
@@ -493,7 +495,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     }
   }
   function handleNextStep() {
-    if (uploading || publishing || uploadedMedia.length < 1) return;
+    if (uploading || publishing || uploadedMedia.length < (type === "CAROUSEL" ? 2 : 1)) return;
     if (!captionStepConfirmed) { setCaptionStepConfirmed(true); setError(""); return; }
     if (!tagStepConfirmed && caption.trim()) { setTagStepConfirmed(true); setError(""); }
   }
@@ -623,7 +625,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     const accountId = selectedAccountId;
     if (!accountId) { setError("اکانت فعال Instagram پیدا نشد."); return; }
     if (!uploadedMedia.length) { setError("ابتدا فایل را آپلود کنید."); return; }
-    if (type === "CAROUSEL" && uploadedMedia.length < 1) { setError("آلبوم باید حداقل یک فایل داشته باشد."); return; }
+    if (type === "CAROUSEL" && uploadedMedia.length < 2) { setError("آلبوم باید حداقل ۲ اسلاید داشته باشد."); return; }
     if (type !== "CAROUSEL" && uploadedMedia.length !== 1) { setError(`${typeLabels[type]} باید دقیقاً یک فایل داشته باشد.`); return; }
     const scheduled = jalaliDateTimeToDate(scheduledDate, hour, minute);
     if (!publishNow && scheduled.getTime() <= Date.now()) { setError("زمان‌بندی باید در آینده باشد."); return; }
@@ -711,7 +713,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                 بازگشت
               </Button>
               {uploadedMedia.length > 0 && !uploading && (
-                <Button type="button" onClick={handleNextStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
+                <Button type="button" disabled={type === "CAROUSEL" && uploadedMedia.length < 2} onClick={handleNextStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB] disabled:cursor-not-allowed disabled:opacity-40">
                   مرحله بعد <ArrowLeft size={15} strokeWidth={2}/>
                 </Button>
               )}
@@ -751,7 +753,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                     <div className="mt-5">
                       <div className="mb-3 text-center">
                         <p className="text-sm font-bold text-[#334155]">اسلایدهای آلبوم</p>
-                        <p className="mt-1 text-[11px] text-[#64748B]">{toPersianDigits(uploadedMedia.length)} از حداکثر ۱۰ اسلاید</p>
+                        <p className="mt-1 text-[11px] text-[#64748B]">{toPersianDigits(uploadedMedia.length)} از ۱۰ اسلاید</p>
                       </div>
                       <div className="flex flex-wrap justify-center gap-3">
                         {uploadedMedia.map((item,index)=><div key={item.storageKey} className="w-16 sm:w-20"><MediaTile item={item} type="CAROUSEL" onRemove={()=>void removeUploaded(item)} ready compact/><p className="mt-1 text-center text-[10px] font-semibold text-[#64748B]">اسلاید {toPersianDigits(index+1)}</p><button type="button" onClick={()=>void removeUploaded(item)} className="mt-1 w-full rounded-md py-1 text-[11px] font-semibold text-[#DC2626] hover:bg-red-50">پاک کردن</button></div>)}
