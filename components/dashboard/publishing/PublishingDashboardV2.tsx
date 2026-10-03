@@ -1006,7 +1006,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                             key={`${date.year}-${date.month}-${date.day}`}
                             type="button"
                             onClick={() => { setStage6Date(date); setError(""); }}
-                            className={[\"relative min-h-20 rounded-xl border px-3 py-3 text-right transition-all\", selected ? \"border-[#2563EB] bg-[#EFF6FF] ring-2 ring-[#2563EB]/10\" : \"border-[#E2E8F0] bg-white hover:border-[#BFDBFE] hover:bg-[#F8FAFC]\\"].join(" ")}
+                            className={["relative min-h-20 rounded-xl border px-3 py-3 text-right transition-all", selected ? "border-[#2563EB] bg-[#EFF6FF] ring-2 ring-[#2563EB]/10" : "border-[#E2E8F0] bg-white hover:border-[#BFDBFE] hover:bg-[#F8FAFC]"].join(" ")}
                           >
                             <span className="block text-[11px] font-medium text-[#64748B]">{label}</span>
                             <span className="mt-1 block text-sm font-bold text-[#0F172A]">{toPersianDigits(date.day)} {jalaliMonths[date.month - 1]}</span>
