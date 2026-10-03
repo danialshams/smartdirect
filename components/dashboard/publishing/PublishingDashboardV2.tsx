@@ -1094,19 +1094,19 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
                       <div dir="ltr" className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
                         <InlineWheelPicker
-                          value={stage6Minute}
-                          min={0}
-                          max={59}
-                          label="دقیقه"
-                          onChange={(value) => { setStage6Minute(value); setError(""); }}
-                        />
-                        <span className="mt-6 px-0.5 text-xl font-bold text-[#64748B]" aria-hidden="true">:</span>
-                        <InlineWheelPicker
                           value={stage6Hour}
                           min={0}
                           max={23}
                           label="ساعت"
                           onChange={(value) => { setStage6Hour(value); setError(""); }}
+                        />
+                        <span className="mt-6 px-0.5 text-xl font-bold text-[#64748B]" aria-hidden="true">:</span>
+                        <InlineWheelPicker
+                          value={stage6Minute}
+                          min={0}
+                          max={59}
+                          label="دقیقه"
+                          onChange={(value) => { setStage6Minute(value); setError(""); }}
                         />
                       </div>
 
