@@ -167,7 +167,7 @@ function ProgressBar({ progress }: { progress: number }) {
   </div>;
 }
 function UploadSuccessMark() {
-  return <svg viewBox="0 0 24 24" className="inline-block h-5 w-5 shrink-0 text-[#16A34A]" aria-hidden="true">
+  return <svg viewBox="0 0 24 24" className="inline-block h-7 w-7 shrink-0 text-[#16A34A]" aria-hidden="true">
     <path d="m4 12.5 5 5L20 6" pathLength="100" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="upload-check-path"/>
   </svg>;
 }
