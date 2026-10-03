@@ -478,7 +478,11 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   }
   function handleTagInputChange(mediaKey: string, value: string) {
     setTagDraftByMedia((state) => ({ ...state, [mediaKey]: value }));
-    if (tagInputError) setTagInputError("");
+    if (value.includes("@")) {
+      setTagInputError("نام کاربر را بدون @ وارد کن.");
+    } else if (tagInputError) {
+      setTagInputError("");
+    }
   }
   function handleTagInputKeyDown(mediaKey: string, event: React.KeyboardEvent<HTMLInputElement>) {
     if (event.key === "Enter") {
