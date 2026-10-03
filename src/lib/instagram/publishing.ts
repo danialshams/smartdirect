@@ -48,9 +48,13 @@ async function checkPublishingQuota(igUserId: string, token: string, instagramAc
 }
 
 function normalizeUserTags(value: unknown): UserTag[] {
-  if (!Array.isArray(value)) return [];
+  const rawTags = Array.isArray(value)
+    ? value
+    : value && typeof value === "object" && Array.isArray((value as Record<string, unknown>).tags)
+      ? (value as Record<string, unknown>).tags
+      : [];
 
-  const usernames = value
+  const usernames = rawTags
     .filter(
       (item): item is { username: string } =>
         !!item &&
@@ -61,9 +65,6 @@ function normalizeUserTags(value: unknown): UserTag[] {
     .map((item) => item.username.replace(/^@/, "").trim())
     .filter(Boolean);
 
-  // The dashboard intentionally asks the user for usernames only.
-  // Meta requires x/y positions for image user tags, so generate safe
-  // normalized positions on the server instead of exposing coordinates in UI.
   const positions = [
     { x: 0.5, y: 0.5 },
     { x: 0.3, y: 0.5 },
@@ -81,6 +82,16 @@ function normalizeUserTags(value: unknown): UserTag[] {
     username,
     ...(positions[index] ?? positions[positions.length - 1]),
   }));
+}
+
+function normalizeMediaUserTags(value: unknown, mediaKey: string, sortOrder: number): UserTag[] {
+  if (!value || typeof value !== "object") return [];
+  const media = (value as Record<string, unknown>).media;
+  if (!media || typeof media !== "object") return [];
+  const rawTags = (media as Record<string, unknown>)[mediaKey]
+    ?? (media as Record<string, unknown>)[String(sortOrder)]
+    ?? [];
+  return normalizeUserTags(rawTags);
 }
 
 async function createImageContainer(
@@ -573,13 +584,14 @@ async function publishInstagramJobInternal(jobId: string) {
       const children: string[] = [];
 
       for (const item of media) {
+        const mediaRecord = job.media.find((mediaItem) => mediaItem.sortOrder === item.sortOrder);
         const childId = await createImageContainer(
           job.instagramAccount.igUserId,
           token,
           item,
           null,
           true,
-          undefined,
+          normalizeMediaUserTags(job.userTags, mediaRecord?.storageKey ?? "", item.sortOrder),
           tenantId,
           job.instagramAccountId,
           "PUBLISH_CAROUSEL",
