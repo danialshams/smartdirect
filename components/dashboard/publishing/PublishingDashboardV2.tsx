@@ -55,11 +55,61 @@ function isJalaliLeap(year: number) { const epBase = year - (year >= 0 ? 474 : 4
 function jalaliMonthDays(year: number, month: number) { if (month <= 6) return 31; if (month <= 11) return 30; return isJalaliLeap(year) ? 30 : 29; }
 function currentJalaliDate() { const now = new Date(); return gregorianToJalali(now.getFullYear(), now.getMonth() + 1, now.getDate()); }
 function jalaliDateTimeToDate(date: JalaliDate, hour: number, minute: number) { const [gy, gm, gd] = jalaliToGregorian(date.year, date.month, date.day); return new Date(gy, gm - 1, gd, hour, minute, 0, 0); }
+const IMAGE_OPTIMIZE_THRESHOLD = 2.5 * 1024 * 1024;
+const IMAGE_MAX_DIMENSION = 2048;
+const IMAGE_JPEG_QUALITY = 0.82;
+
+async function optimizeImageForUpload(file: File): Promise<File> {
+  if (!file.type.startsWith("image/") || file.size <= IMAGE_OPTIMIZE_THRESHOLD) return file;
+
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const image = new Image();
+    image.decoding = "async";
+    image.src = objectUrl;
+    await image.decode();
+
+    const sourceWidth = image.naturalWidth;
+    const sourceHeight = image.naturalHeight;
+    const longestSide = Math.max(sourceWidth, sourceHeight);
+    if (longestSide <= IMAGE_MAX_DIMENSION) return file;
+
+    const scale = IMAGE_MAX_DIMENSION / longestSide;
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(sourceWidth * scale));
+    canvas.height = Math.max(1, Math.round(sourceHeight * scale));
+
+    const context = canvas.getContext("2d", { alpha: true });
+    if (!context) return file;
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+    const outputType = file.type === "image/png" ? "image/png" : file.type === "image/webp" ? "image/webp" : "image/jpeg";
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, outputType, outputType === "image/jpeg" ? IMAGE_JPEG_QUALITY : undefined),
+    );
+
+    if (!blob || blob.size >= file.size) return file;
+
+    const extension = outputType === "image/png" ? ".png" : outputType === "image/webp" ? ".webp" : ".jpg";
+    const baseName = file.name.replace(/\.[^.]+$/, "") || "image";
+    return new File([blob], baseName + extension, {
+      type: outputType,
+      lastModified: Date.now(),
+    });
+  } catch {
+    return file;
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
 async function uploadFileWithProgress(file: File, onProgress: (progress: number) => void): Promise<{ storageKey: string; publicUrl: string; type: MediaType; fileName: string; mimeType: string; fileSize: number }> {
+  const fileToUpload = await optimizeImageForUpload(file);
+
   const providerResponse = await fetch("/api/instagram/publishing/upload/client", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ fileName: file.name, contentType: file.type, fileSize: file.size }),
+    body: JSON.stringify({ fileName: fileToUpload.name, contentType: fileToUpload.type, fileSize: fileToUpload.size }),
   });
 
   const providerResult = await providerResponse.json().catch(() => null);
@@ -69,15 +119,15 @@ async function uploadFileWithProgress(file: File, onProgress: (progress: number)
 
   if (providerResult.mode === "vercel-blob") {
     let lastProgress = 0;
-    const blob = await uploadToBlob(providerResult.pathname, file, {
+    const blob = await uploadToBlob(providerResult.pathname, fileToUpload, {
       access: "public",
       handleUploadUrl: "/api/instagram/publishing/upload/client",
-      multipart: file.size > 10 * 1024 * 1024,
+      multipart: fileToUpload.size > 10 * 1024 * 1024,
       clientPayload: JSON.stringify({
         pathname: providerResult.pathname,
-        fileName: file.name,
-        contentType: file.type,
-        fileSize: file.size,
+        fileName: fileToUpload.name,
+        contentType: fileToUpload.type,
+        fileSize: fileToUpload.size,
       }),
       onUploadProgress(event) {
         const nextProgress = Math.max(lastProgress, Math.min(100, Math.round(event.percentage)));
@@ -90,10 +140,10 @@ async function uploadFileWithProgress(file: File, onProgress: (progress: number)
     return {
       storageKey: blob.pathname,
       publicUrl: blob.url,
-      type: file.type.startsWith("video/") ? "VIDEO" : "IMAGE",
-      fileName: file.name,
-      mimeType: file.type,
-      fileSize: file.size,
+      type: fileToUpload.type.startsWith("video/") ? "VIDEO" : "IMAGE",
+      fileName: fileToUpload.name,
+      mimeType: fileToUpload.type,
+      fileSize: fileToUpload.size,
     };
   }
 
@@ -117,7 +167,7 @@ async function uploadFileWithProgress(file: File, onProgress: (progress: number)
       }
     };
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append("file", fileToUpload);
     xhr.send(formData);
   });
 }
@@ -180,7 +230,7 @@ function UploadArea({ id, accept, multiple, disabled, isDragging, setIsDragging,
         {uploadSuccess?<UploadSuccessMark/>:<ImagePlus size={22}/>}
       </div>
       <span className={["mt-4 text-sm font-bold transition-all duration-300",uploadSuccess?"text-[#16A34A]":"text-[#0F172A]"].join(" ")}>
-        {uploading?"در حال آپلود...":uploadSuccess?"آپلود شد":title}
+        {uploading && uploadProgress >= 97 ? "در حال نهایی‌سازی آپلود..." : uploading ? "در حال آپلود..." : uploadSuccess ? "آپلود شد" : title}
       </span>
       {!uploading&&!uploadSuccess&&<span className="mt-1.5 whitespace-nowrap text-[11px] leading-5 text-[#64748B]">فایل را بکش و اینجا رها کن یا برای انتخاب از دستگاه کلیک کن.</span>}
       {uploading&&<ProgressBar progress={uploadProgress}/>}
