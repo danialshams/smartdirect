@@ -55,6 +55,94 @@ function isJalaliLeap(year: number) { const epBase = year - (year >= 0 ? 474 : 4
 function jalaliMonthDays(year: number, month: number) { if (month <= 6) return 31; if (month <= 11) return 30; return isJalaliLeap(year) ? 30 : 29; }
 function currentJalaliDate() { const now = new Date(); return gregorianToJalali(now.getFullYear(), now.getMonth() + 1, now.getDate()); }
 function getJalaliWeekday(value: JalaliDate) { const [gy, gm, gd] = jalaliToGregorian(value.year, value.month, value.day); return ["یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه", "شنبه"][new Date(gy, gm - 1, gd).getDay()]; }
+function InlineWheelPicker({ value, onChange, min, max, label }: { value: number | null; onChange: (value: number) => void; min: number; max: number; label: string }) {
+  const startYRef = useRef<number | null>(null);
+  const [slide, setSlide] = useState(0);
+  const [animate, setAnimate] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => {
+    if (timerRef.current) window.clearTimeout(timerRef.current);
+  }, []);
+
+  const normalize = (next: number) => {
+    if (next > max) return min;
+    if (next < min) return max;
+    return next;
+  };
+
+  const changeBySwipe = (direction: 1 | -1) => {
+    if (timerRef.current) return;
+
+    const nextValue = value === null
+      ? (direction === 1 ? min : max)
+      : normalize(value + direction);
+
+    setSlide(direction === 1 ? -1 : 1);
+    setAnimate(true);
+
+    timerRef.current = window.setTimeout(() => {
+      onChange(nextValue);
+      setAnimate(false);
+      setSlide(0);
+      timerRef.current = null;
+    }, 180);
+  };
+
+  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (timerRef.current) return;
+    startYRef.current = event.clientY;
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const handlePointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (startYRef.current === null) return;
+    const delta = event.clientY - startYRef.current;
+    startYRef.current = null;
+    if (Math.abs(delta) < 18) return;
+    changeBySwipe(delta < 0 ? 1 : -1);
+  };
+
+  const handlePointerCancel = () => {
+    startYRef.current = null;
+  };
+
+  const previous = value === null ? null : normalize(value - 1);
+  const next = value === null ? null : normalize(value + 1);
+
+  return (
+    <div
+      className="select-none rounded-2xl border border-[#DBEAFE] bg-[#EFF6FF] px-3 py-3.5"
+      style={{ touchAction: "none" }}
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerCancel}
+    >
+      <div className="mb-2 text-center text-[11px] font-semibold text-[#2563EB]">{label}</div>
+      <div className="relative h-24 overflow-hidden rounded-xl bg-white ring-1 ring-[#BFDBFE]">
+        <div className="pointer-events-none absolute inset-x-0 top-1/2 h-12 -translate-y-1/2 border-y border-[#DBEAFE] bg-[#EFF6FF]/50" />
+        {value === null ? (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-base font-bold text-[#64748B]">{label}</span>
+          </div>
+        ) : (
+          <div
+            className="absolute inset-x-0 top-1/2 h-12 -translate-y-1/2"
+            style={{
+              transform: `translateY(calc(-50% + ${slide * 48}px))`,
+              transition: animate ? "transform 180ms cubic-bezier(.22,.61,.36,1)" : "none",
+            }}
+          >
+            <div className="absolute inset-x-0 -top-12 flex h-12 items-center justify-center text-sm font-semibold text-[#94A3B8]">{toPersianDigits(previous as number)}</div>
+            <div className="absolute inset-x-0 top-0 flex h-12 items-center justify-center text-xl font-bold text-[#0F172A]">{toPersianDigits(value)}</div>
+            <div className="absolute inset-x-0 top-12 flex h-12 items-center justify-center text-sm font-semibold text-[#94A3B8]">{toPersianDigits(next as number)}</div>
+          </div>
+        )}
+      </div>
+      <p className="mt-2 text-center text-[10px] font-medium text-[#64748B]">برای تغییر، بالا یا پایین بکش</p>
+    </div>
+  );
+}
 function addJalaliDays(value: JalaliDate, days: number) { const [gy, gm, gd] = jalaliToGregorian(value.year, value.month, value.day); const date = new Date(gy, gm - 1, gd + days); return gregorianToJalali(date.getFullYear(), date.getMonth() + 1, date.getDate()); }
 function jalaliDateTimeToDate(date: JalaliDate, hour: number, minute: number) { const [gy, gm, gd] = jalaliToGregorian(date.year, date.month, date.day); return new Date(gy, gm - 1, gd, hour, minute, 0, 0); }
 async function uploadFileWithProgress(file: File, onProgress: (progress: number) => void): Promise<{ storageKey: string; publicUrl: string; type: MediaType; fileName: string; mimeType: string; fileSize: number }> {
@@ -890,7 +978,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                             )}
                             <div className="flex items-center gap-2">
                               <input value={draft} onChange={(event) => handleTagInputChange(mediaKey, event.target.value)} onKeyDown={(event) => handleTagInputKeyDown(mediaKey, event)} placeholder="نام کاربر بدون @" maxLength={30} inputMode="text" autoCapitalize="none" spellCheck={false} className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-2.5 !text-base leading-5 text-[#0F172A] outline-none placeholder:text-xs placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }}/>
-                              <Button type="button" onClick={() => addTagForMedia(mediaKey)} disabled={!draft.trim()} className="shrink-0 rounded-lg bg-[#2563EB] px-3.5 py-2.5 text-xs font-semibold text-white hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-40">افزودن</Button>
+                              <Button type="button" onClick={() => addTagForMedia(mediaKey)} disabled={!draft.trim()} className="shrink-0 rounded-lg bg-[#2563EB] px-3.5 py-2.5 text-xs font-semibold text-white hover:bg-[#1D4ED8] disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-[#2563EB]/40 disabled:opacity-100 disabled:hover:bg-[#2563EB]/40">افزودن</Button>
                             </div>
                           </div>
                         </div>
@@ -1025,13 +1113,13 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                           >
                             <div className="flex items-start justify-between gap-2">
                               <span className="text-[11px] font-semibold text-[#64748B]">{getJalaliWeekday(date)}</span>
-                              {selected && <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#2563EB] text-[10px] font-bold text-white">✓</span>}
+                              <span className="flex items-center gap-1.5 text-[10px] font-semibold text-[#2563EB]">
+                                {selected && <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#2563EB] text-[10px] font-bold text-white">✓</span>}
+                                {label}
+                              </span>
                             </div>
                             <div className="mt-2 text-center text-base font-bold text-[#0F172A]">{toPersianDigits(date.day)} {jalaliMonths[date.month - 1]}</div>
-                            <div className="mt-2 flex items-end justify-between gap-2">
-                              <span className="text-[10px] font-medium text-[#64748B]">{toPersianDigits(date.year)}</span>
-                              <span className="text-[10px] font-semibold text-[#2563EB]">{label}</span>
-                            </div>
+                            <div className="mt-2 text-center text-[10px] font-medium text-[#64748B]">{toPersianDigits(date.year)}</div>
                           </button>
                         );
                       })}
@@ -1040,29 +1128,29 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                     <div className="mt-6 border-t border-[#E2E8F0] pt-5">
                       <div className="mb-3">
                         <p className="text-sm font-bold text-[#0F172A]">ساعت انتشار</p>
-                        <p className="mt-1 text-[11px] leading-5 text-[#64748B]">دقیقه و ساعت را دقیق انتخاب کن.</p>
+                        <p className="mt-1 text-[11px] leading-5 text-[#64748B]">ساعت و دقیقه را با کشیدن مستقیم عدد به بالا یا پایین انتخاب کن.</p>
                       </div>
                       <div className="grid grid-cols-2 gap-3">
-                        <label className="group rounded-2xl border border-[#DBEAFE] bg-[#EFF6FF] p-3.5 transition focus-within:border-[#2563EB] focus-within:ring-2 focus-within:ring-[#2563EB]/10">
-                          <span className="mb-2 block text-[11px] font-semibold text-[#2563EB]">دقیقه</span>
-                          <Select value={stage6Minute === null ? "" : stage6Minute} onChange={(e) => { setStage6Minute(e.target.value === "" ? null : Number(e.target.value)); setError(""); }} className="w-full rounded-xl border border-[#BFDBFE] bg-white px-3 py-3 text-sm font-bold text-[#0F172A] shadow-none outline-none">
-                            <option value="">انتخاب دقیقه</option>
-                            {Array.from({length:60}, (_, value) => <option key={value} value={value}>{toPersianDigits(value)}</option>)}
-                          </Select>
-                        </label>
-                        <label className="group rounded-2xl border border-[#DBEAFE] bg-[#EFF6FF] p-3.5 transition focus-within:border-[#2563EB] focus-within:ring-2 focus-within:ring-[#2563EB]/10">
-                          <span className="mb-2 block text-[11px] font-semibold text-[#2563EB]">ساعت</span>
-                          <Select value={stage6Hour === null ? "" : stage6Hour} onChange={(e) => { setStage6Hour(e.target.value === "" ? null : Number(e.target.value)); setError(""); }} className="w-full rounded-xl border border-[#BFDBFE] bg-white px-3 py-3 text-sm font-bold text-[#0F172A] shadow-none outline-none">
-                            <option value="">انتخاب ساعت</option>
-                            {Array.from({length:24}, (_, value) => <option key={value} value={value}>{toPersianDigits(value)}</option>)}
-                          </Select>
-                        </label>
+                        <InlineWheelPicker
+                          value={stage6Hour}
+                          min={0}
+                          max={23}
+                          label="انتخاب ساعت"
+                          onChange={(value) => { setStage6Hour(value); setError(""); }}
+                        />
+                        <InlineWheelPicker
+                          value={stage6Minute}
+                          min={0}
+                          max={59}
+                          label="انتخاب دقیقه"
+                          onChange={(value) => { setStage6Minute(value); setError(""); }}
+                        />
                       </div>
                     </div>
 
                     <div className="mt-7 border-t border-[#E2E8F0] pt-5">
                       <Button type="button" onClick={() => void createJob(false)} disabled={publishing || !stage6Date || stage6Hour === null || stage6Minute === null} className="min-h-11 w-full rounded-xl bg-[#2563EB] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-50">
-                        {publishing ? <Loader2 size={17} className="animate-spin"/> : <CalendarClock size={17}/>} انتشار در زمان انتخاب‌شده
+                        <span dir="rtl" className="inline-flex items-center gap-2">{publishing ? <Loader2 size={17} className="animate-spin"/> : <CalendarClock size={17}/>}<span>انتشار در زمان انتخاب‌شده</span></span>
                       </Button>
                     </div>
                   </div>
@@ -1129,7 +1217,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                 <PersianDatePicker value={scheduledDate} onChange={setScheduledDate}/>
                 <div className="mt-3 grid grid-cols-2 gap-2.5"><label><span className="mb-1.5 block text-[11px] font-medium text-[#64748B]">ساعت</span><Select value={hour} onChange={e=>setHour(Number(e.target.value))} className="w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-3 text-sm">{Array.from({length:24},(_,v)=><option key={v} value={v}>{toPersianDigits(String(v).padStart(2,"0"))}</option>)}</Select></label><label><span className="mb-1.5 block text-[11px] font-medium text-[#64748B]">دقیقه</span><Select value={minute} onChange={e=>setMinute(Number(e.target.value))} className="w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-3 text-sm">{Array.from({length:12},(_,v)=>v*5).map(v=><option key={v} value={v}>{toPersianDigits(String(v).padStart(2,"0"))}</option>)}</Select></label></div>
                 <div className="mt-4 rounded-xl bg-[#F8FAFC] px-3.5 py-3 text-xs leading-5 text-[#64748B]">انتشار فوری یا زمان‌بندی‌شده را از همین‌جا انتخاب کن.</div>
-                <div className="mt-4 grid gap-2.5"><Button type="button" disabled={!canPublish||loading} onClick={()=>void createJob(true)} className="min-h-12 rounded-xl bg-[#2563EB] px-4 text-sm font-semibold text-white hover:bg-[#1D4ED8] disabled:opacity-50">{publishing?<Loader2 size={17} className="animate-spin"/>:<Send size={17}/>} انتشار الآن</Button><Button type="button" disabled={!canPublish||loading} onClick={()=>void createJob(false)} className="min-h-12 rounded-xl border border-[#E2E8F0] bg-white px-4 text-sm font-semibold text-[#334155] hover:bg-[#F8FAFC] disabled:opacity-50"><CalendarClock size={17}/> زمان‌بندی انتشار</Button></div>
+                <div className="mt-4 grid gap-2.5"><Button type="button" disabled={!canPublish||loading} onClick={()=>void createJob(true)} className="min-h-12 rounded-xl bg-[#2563EB] px-4 text-sm font-semibold text-white hover:bg-[#1D4ED8] disabled:opacity-50"><span dir="rtl" className="inline-flex items-center gap-2">{publishing?<Loader2 size={17} className="animate-spin"/>:<Send size={17}/>}<span>انتشار الآن</span></span></Button><Button type="button" disabled={!canPublish||loading} onClick={()=>void createJob(false)} className="min-h-12 rounded-xl border border-[#E2E8F0] bg-white px-4 text-sm font-semibold text-[#334155] hover:bg-[#F8FAFC] disabled:opacity-50"><span dir="rtl" className="inline-flex items-center gap-2"><CalendarClock size={17}/><span>زمان‌بندی انتشار</span></span></Button></div>
               </section>
 
               {jobs.filter(job=>["PROCESSING","PUBLISHING","SCHEDULED"].includes(job.status)).length>0 && <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm">
@@ -1142,7 +1230,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
         )}
         </div>
         </div>
-      {selectionConfirmed&&captionStepConfirmed&&tagStepConfirmed&&type==="STORY"&&!loading&&uploadedMedia.length>0&&<div className="fixed inset-x-3 z-40 rounded-2xl border border-[#E2E8F0] bg-white/95 p-2.5 shadow-lg backdrop-blur sm:hidden"><div className="grid grid-cols-2 gap-2"><Button type="button" disabled={!canPublish||publishing} onClick={()=>void createJob(true)} className="min-h-11 rounded-xl bg-[#2563EB] px-3 text-xs font-semibold text-white disabled:opacity-50">{publishing?<Loader2 size={16} className="animate-spin"/>:<Send size={16}/>} انتشار الآن</Button><Button type="button" disabled={!canPublish||publishing} onClick={()=>void createJob(false)} className="min-h-11 rounded-xl border border-[#E2E8F0] bg-white px-3 text-xs font-semibold text-[#334155] disabled:opacity-50"><CalendarClock size={16}/> زمان‌بندی</Button></div></div>}
+      {selectionConfirmed&&captionStepConfirmed&&tagStepConfirmed&&type==="STORY"&&!loading&&uploadedMedia.length>0&&<div className="fixed inset-x-3 z-40 rounded-2xl border border-[#E2E8F0] bg-white/95 p-2.5 shadow-lg backdrop-blur sm:hidden"><div className="grid grid-cols-2 gap-2"><Button type="button" disabled={!canPublish||publishing} onClick={()=>void createJob(true)} className="min-h-11 rounded-xl bg-[#2563EB] px-3 text-xs font-semibold text-white disabled:opacity-50"><span dir="rtl" className="inline-flex items-center gap-2">{publishing?<Loader2 size={16} className="animate-spin"/>:<Send size={16}/>}<span>انتشار الآن</span></span></Button><Button type="button" disabled={!canPublish||publishing} onClick={()=>void createJob(false)} className="min-h-11 rounded-xl border border-[#E2E8F0] bg-white px-3 text-xs font-semibold text-[#334155] disabled:opacity-50"><span dir="rtl" className="inline-flex items-center gap-2"><CalendarClock size={16}/><span>زمان‌بندی</span></span></Button></div></div>}
       </div>
     </>
   );
