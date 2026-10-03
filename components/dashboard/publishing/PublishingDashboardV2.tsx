@@ -353,7 +353,6 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             <h1 className="text-xl font-bold tracking-tight text-[#0F172A] sm:text-2xl">انتشار محتوا</h1>
             <p className="mt-1.5 text-sm leading-6 text-[#64748B]">محتوای جدیدت را برای Instagram آماده و منتشر کن.</p>
           </div>
-          {activeInstagramAccount?.igUsername && <div className="inline-flex w-fit items-center gap-2 rounded-full border border-[#E2E8F0] bg-white px-3 py-2 text-xs text-[#64748B] shadow-sm"><span className="h-2 w-2 rounded-full bg-[#16A34A]" /><span dir="ltr">@{activeInstagramAccount.igUsername}</span></div>}
         </div>
 
         {error && <div className="mb-5 flex items-start gap-3 rounded-2xl border border-[#FECACA] bg-[#FEF2F2] px-4 py-3 text-sm leading-6 text-[#B91C1C]"><span className="font-bold">!</span><p className="flex-1">{error}</p><Button type="button" onClick={() => setError("")} className="h-7 rounded-lg px-2 text-xs text-[#B91C1C] hover:bg-[#FEE2E2]">بستن</Button></div>}
@@ -368,8 +367,21 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             <main className="min-w-0 space-y-5">
               <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-5">
                 <SectionHeader n="۱" title="نوع محتوا" text="نوع محتوایی را که می‌خواهی در Instagram منتشر کنی انتخاب کن." />
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  {([["POST","پست",ImagePlus],["CAROUSEL","آلبوم",Images],["REEL","ریلز",Clapperboard],["STORY","استوری",Camera]] as const).map(([value,label,Icon]) => <Button key={value} type="button" onClick={() => handleTypeChange(value)} className={["min-h-[68px] rounded-xl border px-2 transition",type===value?"border-[#2563EB] bg-[#2563EB]/10 text-[#2563EB]":"border-[#E2E8F0] bg-white text-[#64748B] hover:border-[#CBD5E1] hover:bg-[#F8FAFC]"].join(" ")}><Icon size={19}/><span className="text-xs font-semibold">{label}</span></Button>)}
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  {([["POST","پست",ImagePlus,"عکس و کپشن"],["CAROUSEL","آلبوم",Images,"چند تصویر"],["REEL","ریلز",Clapperboard,"ویدیوی عمودی"],["STORY","استوری",Camera,"محتوای ۲۴ ساعته"]] as const).map(([value,label,Icon,description]) => (
+                    <Button key={value} type="button" onClick={() => handleTypeChange(value)} className={[
+                      "group flex min-h-[132px] flex-col items-start justify-between rounded-2xl border bg-white p-4 text-right transition-all",
+                      type===value
+                        ? "border-[#2563EB] bg-white text-[#0F172A] shadow-[0_0_0_2px_rgba(37,99,235,0.10)]"
+                        : "border-[#E2E8F0] text-[#0F172A] hover:border-[#CBD5E1] hover:-translate-y-0.5 hover:shadow-sm"
+                    ].join(" ")}>
+                      <span className={["flex h-11 w-11 items-center justify-center rounded-xl",type===value?"bg-[#EFF6FF] text-[#2563EB]":"bg-[#F8FAFC] text-[#64748B]"].join(" ")}><Icon size={21}/></span>
+                      <span className="block">
+                        <span className="block text-sm font-bold">{label}</span>
+                        <span className="mt-1 block text-[11px] font-normal leading-5 text-[#64748B]">{description}</span>
+                      </span>
+                    </Button>
+                  ))}
                 </div>
               </section>
 
@@ -394,17 +406,17 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                 <Textarea value={caption} onChange={e=>setCaption(e.target.value)} maxLength={2200} rows={6} className="w-full resize-none rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 text-sm leading-7 text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" placeholder="کپشن محتوا را بنویسید..." />
               </section>}
 
-              <section className="overflow-hidden rounded-2xl border border-[#DDD6FE] bg-white shadow-sm">
-                <button type="button" onClick={()=>setAutomationEnabled(v=>!v)} className="flex w-full items-center justify-between gap-4 p-4 text-right sm:p-5">
-                  <div className="flex min-w-0 items-start gap-3"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#7C3AED]/10 text-[#7C3AED]">✦</span><div><div className="flex items-center gap-2"><h2 className="text-sm font-bold text-[#0F172A]">اتوماسیون این محتوا</h2><span className="rounded-full bg-[#F5F3FF] px-2 py-0.5 text-[10px] font-semibold text-[#7C3AED]">اختیاری</span></div><p className="mt-1 text-xs leading-5 text-[#64748B]">پاسخ خودکار به کامنت یا Reply استوری را برای این محتوا فعال کن.</p></div></div>
+              <section className="overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-sm">
+                <button type="button" onClick={()=>setAutomationEnabled(v=>!v)} className="flex w-full items-center justify-between gap-4 p-5 text-right sm:p-6">
+                  <div className="flex min-w-0 items-start gap-3.5"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F5F3FF] text-[#7C3AED]">✦</span><div><div className="flex items-center gap-2"><h2 className="text-sm font-bold text-[#0F172A]">اتوماسیون این محتوا</h2><span className="rounded-full bg-[#F8FAFC] px-2 py-1 text-[10px] font-semibold text-[#64748B]">اختیاری</span></div><p className="mt-1.5 text-xs leading-5 text-[#64748B]">پاسخ خودکار به کامنت یا Reply استوری را برای این محتوا فعال کن.</p></div></div>
                   <span className={["relative h-6 w-11 shrink-0 rounded-full transition",automationEnabled?"bg-[#7C3AED]":"bg-[#CBD5E1]"].join(" ")}><span className={["absolute top-1 h-4 w-4 rounded-full bg-white shadow-sm transition",automationEnabled?"right-1":"right-6"].join(" ")}/></span>
                 </button>
-                {automationEnabled && <div className="border-t border-[#E9E5FF] bg-[#FAF9FF] p-4 sm:p-5"><div className="space-y-5">
-                  <div><p className="text-sm font-bold text-[#0F172A]">{type==="STORY"?"کلمات کلیدی Reply استوری":"کلمات کلیدی کامنت"}</p><p className="mt-1 text-[11px] text-[#64748B]">با Enter یا ویرگول، کلمه جدید اضافه کن.</p><div className="mt-2"><KeywordChipsInput value={keywords} onChange={setKeywords} placeholder={type==="STORY"?"مثلاً اطلاعات، قیمت":"مثلاً قیمت، اطلاعات"}/></div></div>
+                {automationEnabled && <div className="border-t border-[#E2E8F0] bg-[#FAFAFC] p-5 sm:p-6"><div className="space-y-7">
+                  <div className="rounded-2xl border border-[#E2E8F0] bg-white p-4 sm:p-5"><p className="text-sm font-bold text-[#0F172A]">{type==="STORY"?"کلمات کلیدی Reply استوری":"کلمات کلیدی کامنت"}</p><p className="mt-1.5 text-[11px] leading-5 text-[#64748B]">کلمات یا عبارت‌هایی را وارد کن که این پاسخ را فعال می‌کنند.</p><div className="mt-3"><KeywordChipsInput value={keywords} onChange={setKeywords} placeholder={type==="STORY"?"مثلاً اطلاعات، قیمت":"مثلاً قیمت، اطلاعات"}/></div></div>
                   {type!=="STORY" && <label className="block"><span className="mb-2 block text-sm font-semibold text-[#0F172A]">پاسخ عمومی کامنت</span><Textarea value={commentReplyText} onChange={e=>setCommentReplyText(e.target.value)} rows={3} className="w-full resize-none rounded-xl border border-[#E2E8F0] bg-white px-3 py-3 text-sm leading-6 outline-none focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/10" placeholder="در صورت نیاز، پاسخ عمومی کامنت را بنویس..."/></label>}
                   {type==="STORY" && <label className="flex min-h-12 cursor-pointer items-center justify-between gap-3 rounded-xl border border-[#E2E8F0] bg-white px-3.5"><span className="text-sm font-medium text-[#334155]">لایک خودکار Reply استوری</span><Checkbox checked={likeStoryReply} onCheckedChange={v=>setLikeStoryReply(Boolean(v))}/></label>}
                   <div><label className="flex min-h-12 cursor-pointer items-center justify-between gap-3 rounded-xl border border-[#E2E8F0] bg-white px-3.5"><span className="text-sm font-medium text-[#334155]">بررسی Follow قبل از پاسخ</span><Checkbox checked={requireFollow} onCheckedChange={v=>setRequireFollow(Boolean(v))}/></label>{requireFollow&&<Textarea value={followGateText} onChange={e=>setFollowGateText(e.target.value)} rows={3} className="mt-2.5 w-full resize-none rounded-xl border border-[#E2E8F0] bg-white px-3 py-3 text-sm leading-6 outline-none focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/10" placeholder="متن درخواست Follow را وارد کنید."/>}</div>
-                  <div className="border-t border-[#E9E5FF] pt-5"><div className="mb-4 flex items-center justify-between"><div><p className="text-sm font-bold text-[#0F172A]">پاسخ خودکار</p><p className="mt-1 text-[11px] text-[#64748B]">نوع پیام و مسیر پاسخ را مشخص کن.</p></div><span className="rounded-full bg-white px-2.5 py-1 text-[10px] text-[#64748B] ring-1 ring-[#E2E8F0]">{toPersianDigits(messages.length)} پیام</span></div>
+                  <div className="border-t border-[#E2E8F0] pt-7"><div className="mb-5 flex items-center justify-between"><div><p className="text-sm font-bold text-[#0F172A]">پاسخ خودکار</p><p className="mt-1 text-[11px] text-[#64748B]">نوع پیام و مسیر پاسخ را مشخص کن.</p></div><span className="rounded-full bg-white px-2.5 py-1 text-[10px] text-[#64748B] ring-1 ring-[#E2E8F0]">{toPersianDigits(messages.length)} پیام</span></div>
                     {messages.slice(0,1).map((message,index)=><div key={message.id} className="rounded-xl border border-[#E2E8F0] bg-white p-3.5 sm:p-4"><div className="mb-3 flex items-center justify-between"><span className="text-sm font-bold text-[#0F172A]">پیام {toPersianDigits(index+1)}</span><span className="rounded-full bg-[#F5F3FF] px-2.5 py-1 text-[10px] font-semibold text-[#7C3AED]">{getMessageTypeLabel(message.messageType)}</span></div><AutomationFlowMessage triggerType={triggerType} message={message} index={index} total={messages.length} showcases={showcases} forms={forms} loadingResources={loadingResources} instagramAccountId={selectedAccountId} onShowcaseCreated={showcase=>setShowcases(current=>[showcase,...current.filter(item=>item.id!==showcase.id)])} onFormCreated={form=>setForms(current=>[form,...current.filter(item=>item.id!==form.id)])} onUpdate={patch=>updateMessage(index,patch)} onAddQuickReply={()=>addQuickReply(index)} onUpdateQuickReply={(id,patch)=>updateQuickReply(index,id,patch)} onUpdateQuickReplyTree={(id,updater)=>updateQuickReplyTree(index,id,updater)} onRemoveQuickReply={id=>removeQuickReply(index,id)}/></div>)}
                   </div>
                 </div></div>}
