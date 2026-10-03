@@ -353,8 +353,9 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const accept = type === "REEL" ? "video/mp4,video/quicktime" : type === "STORY" ? "image/jpeg,image/png,image/webp,video/mp4,video/quicktime" : "image/jpeg,image/png,image/webp";
 
   return (
-    <div dir="rtl" className="min-h-screen bg-[#F8FAFC] px-3 py-4 pb-28 sm:px-5 sm:py-6 lg:px-8 lg:pb-8">
+    <div dir="rtl" className={["bg-[#F8FAFC] px-3 py-4 sm:px-5 sm:py-6 lg:px-8", !selectionConfirmed ? "pb-8" : "min-h-screen pb-28 lg:pb-8"].join(" ")}>
       <div className="mx-auto w-full max-w-6xl">
+        <div className={["transition-all duration-300 ease-out", stepVisible ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0"].join(" ")}>
         {!selectionConfirmed ? (
           <section className="w-full">
             <SectionHeader n="۱" title="نوع محتوا" text="نوع محتوایی را که می‌خواهی در Instagram منتشر کنی انتخاب کن." />
@@ -364,8 +365,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   key={value}
                   type="button"
                   onClick={() => handleTypeChange(value)}
-                  className="group relative flex aspect-square w-full flex-col items-center justify-center gap-3 rounded-[28px] border-2 p-5 text-center shadow-none transition-all duration-200 hover:-translate-y-1 hover:shadow-lg active:translate-y-0 sm:rounded-[32px] sm:p-7"
-                  style={{ backgroundColor: soft, borderColor: border, color: accent }}
+                  className="group relative flex aspect-square w-full flex-col items-center justify-center gap-3 rounded-[28px] p-5 text-center shadow-none transition-all duration-200 hover:-translate-y-1 hover:shadow-lg active:translate-y-0 sm:rounded-[32px] sm:p-7"
+                  style={{ backgroundColor: soft, border: `2px solid ${border}`, color: accent }}
                 >
                   <span
                     className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/55 sm:h-14 sm:w-14"
@@ -380,6 +381,11 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
           </section>
         ) : uploadedMedia.length === 0 ? (
           <section className="mx-auto w-full max-w-3xl rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <Button type="button" onClick={handleBackToTypeSelection} className="min-h-9 rounded-lg border border-[#E2E8F0] bg-white px-3 text-xs font-semibold text-[#475569] hover:bg-[#F8FAFC]">
+                ← بازگشت
+              </Button>
+            </div>
             <SectionHeader n="۲" title="رسانه" text={type==="CAROUSEL"?"۲ تا ۱۰ تصویر برای آلبوم انتخاب کن.":type==="REEL"?"یک ویدیوی مناسب ریلز انتخاب کن.":type==="STORY"?"تصویر یا ویدیوی استوری را انتخاب کن.":"تصویر پست را انتخاب کن."} />
             <UploadArea id="publishing-media-upload" accept={accept} multiple={type==="CAROUSEL"} disabled={uploading||publishing} isDragging={isDragging} setIsDragging={setIsDragging} uploading={uploading} uploadIndex={uploadIndex} uploadProgress={uploadProgress} onChange={handleFiles} onDrop={handleDrop} />
             {media.length > 0 && <div className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
@@ -387,7 +393,20 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             </div>}
           </section>
         ) : (
-          <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div>
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <Button
+                type="button"
+                onClick={() => animateStepChange(() => {
+                  setUploadedMedia([]);
+                  setUploadProgress(0);
+                })}
+                className="min-h-9 rounded-lg border border-[#E2E8F0] bg-white px-3 text-xs font-semibold text-[#475569] hover:bg-[#F8FAFC]"
+              >
+                ← بازگشت
+              </Button>
+            </div>
+            <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
             <main className="min-w-0 space-y-5">
               <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-5">
                 <SectionHeader n="۲" title="رسانه" text={type==="CAROUSEL"?"۲ تا ۱۰ تصویر برای آلبوم انتخاب کن.":type==="REEL"?"یک ویدیوی مناسب ریلز انتخاب کن.":type==="STORY"?"تصویر یا ویدیوی استوری را انتخاب کن.":"تصویر پست را انتخاب کن."} />
@@ -441,8 +460,10 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                 <div className="space-y-2.5">{jobs.filter(job=>["PROCESSING","PUBLISHING","SCHEDULED"].includes(job.status)).map(job=><div key={job.id} className="rounded-xl border border-[#E2E8F0] p-2.5"><div className="flex items-center gap-3">{job.media[0]?(job.media[0].type==="IMAGE"?<img src={job.media[0].publicUrl} alt="" className="h-14 w-14 shrink-0 rounded-lg object-cover"/>:<video src={job.media[0].publicUrl} className="h-14 w-14 shrink-0 rounded-lg object-cover"/>):<div className="h-14 w-14 shrink-0 rounded-lg bg-[#F1F5F9]"/>}<div className="min-w-0 flex-1"><div className="flex items-center justify-between gap-2"><span className="text-xs font-bold text-[#0F172A]">{typeLabels[job.type]}</span><span className={["text-[10px] font-semibold",job.status==="SCHEDULED"?"text-[#D97706]":"text-[#2563EB]"].join(" ")}>{statusLabels[job.status]||job.status}</span></div><p className="mt-1 truncate text-[10px] leading-5 text-[#64748B]">{job.status==="SCHEDULED"?"انتشار در "+formatDate(job.scheduledAt):job.status==="PUBLISHING"?"محتوا در حال انتشار است.":"محتوا در حال پردازش است."}</p></div>{job.status!=="SCHEDULED"&&<Loader2 size={15} className="shrink-0 animate-spin text-[#2563EB]"/>}</div>{job.status==="SCHEDULED"&&<Button type="button" onClick={()=>void cancelJob(job.id)} className="mt-2.5 min-h-9 w-full rounded-lg border border-[#E2E8F0] bg-white px-3 text-xs font-medium text-[#64748B] hover:bg-[#F8FAFC]">لغو زمان‌بندی</Button>}</div>)}</div>
               </section>}
             </aside>
+            </div>
           </div>
         )}
+        </div>
       </div>
       {!loading&&uploadedMedia.length>0&&<div className="fixed inset-x-3 bottom-3 z-40 rounded-2xl border border-[#E2E8F0] bg-white/95 p-2.5 shadow-lg backdrop-blur sm:hidden"><div className="grid grid-cols-2 gap-2"><Button type="button" disabled={!canPublish||publishing} onClick={()=>void createJob(true)} className="min-h-11 rounded-xl bg-[#2563EB] px-3 text-xs font-semibold text-white disabled:opacity-50">{publishing?<Loader2 size={16} className="animate-spin"/>:<Send size={16}/>} انتشار الآن</Button><Button type="button" disabled={!canPublish||publishing} onClick={()=>void createJob(false)} className="min-h-11 rounded-xl border border-[#E2E8F0] bg-white px-3 text-xs font-semibold text-[#334155] disabled:opacity-50"><CalendarClock size={16}/> زمان‌بندی</Button></div></div>}
     </div>
