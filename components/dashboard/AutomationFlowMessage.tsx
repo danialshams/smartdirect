@@ -270,16 +270,17 @@ export default function AutomationFlowMessage({
   const messageTypeOptions: Array<{
     value: MessageDraft["messageType"];
     label: string;
+    description: string;
     Icon: LucideIcon;
   }> = [
-    { value: "TEXT", label: "متن", Icon: MessageSquare },
+    { value: "TEXT", label: "متن", description: "پاسخ نوشتاری", Icon: MessageSquare },
     ...(triggerType === "STORY_REPLY_KEYWORD" || triggerType === "DM"
       ? [
-          { value: "IMAGE" as const, label: "عکس", Icon: ImagePlus },
-          { value: "VIDEO" as const, label: "ویدیو", Icon: Video },
-          { value: "AUDIO" as const, label: "پیام صوتی", Icon: Mic },
-          { value: "SHOWCASE" as const, label: "ویترین تصویری", Icon: Store },
-          { value: "FORM" as const, label: "فرم پرسش‌وپاسخ", Icon: ClipboardList },
+          { value: "IMAGE" as const, label: "عکس", description: "ارسال تصویر", Icon: ImagePlus },
+          { value: "VIDEO" as const, label: "ویدیو", description: "ارسال کلیپ", Icon: Video },
+          { value: "AUDIO" as const, label: "پیام صوتی", description: "ارسال فایل صوتی", Icon: Mic },
+          { value: "SHOWCASE" as const, label: "ویترین تصویری", description: "چند اسلاید تصویری", Icon: Store },
+          { value: "FORM" as const, label: "فرم پرسش‌وپاسخ", description: "سؤال و مسیر پاسخ", Icon: ClipboardList },
         ]
       : []),
   ];
@@ -291,23 +292,28 @@ export default function AutomationFlowMessage({
         <p className="mt-1 text-xs leading-6 text-[#64748B]">قالب پیامی را انتخاب کنید که پس از تشخیص کلمه کلیدی برای مخاطب ارسال می‌شود.</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-        {messageTypeOptions.map(({ value, label, Icon }) => (
-          <Button
-            key={value}
-            type="button"
-            onClick={() => onUpdate({ messageType: value })}
-            className={[
-              "flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-2xl border px-2 text-xs font-bold transition sm:min-h-[96px]",
-              message.messageType === value
-                ? "border-[#2563EB] bg-[#EFF6FF] text-[#1D4ED8] ring-1 ring-[#BFDBFE] shadow-sm"
-                : "border-[#E2E8F0] bg-white text-[#64748B] hover:border-[#CBD5E1] hover:bg-[#F8FAFC]",
-            ].join(" ")}
-          >
-            <span className={["flex h-10 w-10 items-center justify-center rounded-xl", value === "TEXT" ? "bg-[#DBEAFE] text-[#1D4ED8]" : value === "IMAGE" ? "bg-[#DCFCE7] text-[#15803D]" : value === "VIDEO" ? "bg-[#FFEDD5] text-[#C2410C]" : value === "AUDIO" ? "bg-[#F3E8FF] text-[#7E22CE]" : value === "SHOWCASE" ? "bg-[#FCE7F3] text-[#BE185D]" : "bg-[#FEF3C7] text-[#A16207]"].join(" ")}><Icon size={20} /></span>
-            <span className="text-center leading-5">{label}</span>
-          </Button>
-        ))}
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+        {messageTypeOptions.map(({ value, label, description, Icon }) => {
+          const selected = message.messageType === value;
+          return (
+            <Button
+              key={value}
+              type="button"
+              aria-pressed={selected}
+              onClick={() => onUpdate({ messageType: value })}
+              className={[
+                "flex min-h-[104px] flex-col items-start justify-between rounded-2xl border p-3.5 text-right transition sm:min-h-[112px] sm:p-4",
+                selected ? "border-[#2563EB] bg-[#F0F6FF] shadow-[0_0_0_2px_rgba(37,99,235,0.08)]" : "border-[#E2E8F0] bg-white hover:border-[#B8CBE7] hover:bg-[#FAFCFF]",
+              ].join(" ")}
+            >
+              <span className="flex w-full items-center justify-between gap-2">
+                <span className={["flex h-9 w-9 items-center justify-center rounded-xl", value === "TEXT" ? "bg-[#DBEAFE] text-[#1D4ED8]" : value === "IMAGE" ? "bg-[#DCFCE7] text-[#15803D]" : value === "VIDEO" ? "bg-[#FFEDD5] text-[#C2410C]" : value === "AUDIO" ? "bg-[#F3E8FF] text-[#7E22CE]" : value === "SHOWCASE" ? "bg-[#FCE7F3] text-[#BE185D]" : "bg-[#FEF3C7] text-[#A16207]"].join(" ")}><Icon size={18} /></span>
+                {selected && <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#2563EB] text-[10px] font-bold text-white">✓</span>}
+              </span>
+              <span><span className={["block text-xs font-extrabold leading-5", selected ? "text-[#1D4ED8]" : "text-[#1E293B]"].join(" ")}>{label}</span><span className="mt-0.5 block text-[10px] font-normal leading-4 text-[#64748B]">{description}</span></span>
+            </Button>
+          );
+        })}
       </div>
 
       {message.messageType === "TEXT" && (
@@ -350,8 +356,14 @@ export default function AutomationFlowMessage({
             <span className="text-[10px] font-normal text-muted-foreground">فایل را از دستگاه انتخاب کنید.</span>
             <Input type="file" accept={message.messageType === "IMAGE" ? "image/jpeg,image/png,image/webp" : message.messageType === "VIDEO" ? "video/mp4,video/quicktime" : "audio/mpeg,audio/mp3,audio/aac,audio/wav,audio/x-wav,audio/m4a,.mp3,.m4a,.aac,.wav"} className="hidden" disabled={mediaUploading} onChange={(event) => void handleMessageMedia(event.target.files?.[0])} />
           </label>
-          {message.mediaUrl && <p className="truncate rounded-lg bg-background px-3 py-2 text-[10px] text-muted-foreground" dir="ltr">{message.mediaUrl}</p>}
-          {showcaseError && <p className="text-xs text-red-600">{showcaseError}</p>}
+          {message.mediaUrl && (
+            <div className="overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white p-3.5">
+              <div className="mb-3 flex items-center justify-between gap-3"><p className="text-xs font-extrabold text-[#334155]">پیش‌نمایش فایل پاسخ</p><span className="rounded-full bg-[#ECFDF5] px-2.5 py-1 text-[10px] font-bold text-[#047857]">آپلود شد</span></div>
+              {message.messageType === "IMAGE" ? <img src={message.mediaUrl} alt="پیش‌نمایش پاسخ" className="max-h-72 w-full rounded-xl bg-[#F1F5F9] object-contain" /> : message.messageType === "VIDEO" ? <video src={message.mediaUrl} controls className="max-h-72 w-full rounded-xl bg-[#0F172A]" /> : <audio src={message.mediaUrl} controls className="w-full" />}
+              <Button type="button" onClick={() => onUpdate({ mediaUrl: "", mediaId: "" })} className="mt-3 min-h-10 rounded-xl border border-[#E2E8F0] bg-white px-3.5 text-xs font-bold text-[#64748B] hover:bg-[#F8FAFC]">حذف فایل و انتخاب فایل دیگر</Button>
+            </div>
+          )}
+          {showcaseError && <p className="rounded-xl border border-[#FECACA] bg-[#FFF7F7] px-3 py-2.5 text-xs leading-5 text-[#B91C1C]">{showcaseError}</p>}
         </div>
       )}
 
