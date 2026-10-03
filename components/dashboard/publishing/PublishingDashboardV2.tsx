@@ -511,12 +511,12 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                 </div>)}</div>
               </section>}
             </aside>
-          </div>
           <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[#E2E8F0] bg-white/95 px-3 pt-3 shadow-[0_-8px_24px_rgba(15,23,42,0.06)] backdrop-blur lg:hidden" style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}>
             <div className="mx-auto grid max-w-6xl grid-cols-2 gap-2.5">
               <Button type="button" disabled={!canPublish || publishing} onClick={() => void createJob(true)} className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#2563EB] px-3 text-sm font-extrabold text-white disabled:bg-[#CBD5E1]">{publishing ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}انتشار الآن</Button>
               <Button type="button" disabled={!canPublish || publishing} onClick={() => void createJob(false)} className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-[#CBD5E1] bg-white px-3 text-sm font-bold text-[#334155] disabled:opacity-45"><CalendarClock size={16} />زمان‌بندی</Button>
             </div>
+          </div>
           </div>
         )}
       </div>
