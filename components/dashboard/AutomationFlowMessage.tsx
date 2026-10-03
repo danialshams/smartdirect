@@ -565,7 +565,6 @@ function ReplyCard({
               value={reply.destinationType ?? ""}
               onChange={(event) => patch({ destinationType: (event.target.value || null) as QuickReplyDestinationType | null })}
               className="w-full appearance-none rounded-xl border bg-[#FAFAFC] px-3.5 py-3 text-sm outline-none"
-              style={{ borderColor: palette.border }}
             >
               <option value="">انتخاب مقصد</option>
               {destinationOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
@@ -787,7 +786,6 @@ function ShowcaseDestination({
           value={showcaseId}
           onChange={(event) => onChange(event.target.value)}
           className="w-full rounded-xl border bg-[#FAFAFC] px-3.5 py-3 text-sm outline-none"
-          style={{ borderColor: palette.border }}
           disabled={loading}
         >
           <option value="">{loading ? "در حال دریافت ویترین‌ها..." : "انتخاب ویترین"}</option>
