@@ -895,7 +895,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               ))}
             </div>
           </section>
-        ) : (type !== "STORY" && !captionStepConfirmed) || uploadedMedia.length === 0 || (type === "STORY" && showUploadedMediaPreview) ? (
+        ) : (type !== "STORY" && !captionStepConfirmed) || uploadedMedia.length === 0 || uploadSuccess || (type === "STORY" && showUploadedMediaPreview) ? (
           <section className="mx-auto w-full max-w-3xl">
             <div className="mb-3 flex items-center justify-between gap-3">
               <Button
