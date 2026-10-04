@@ -455,6 +455,8 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
   );
 });
 
+export default PublishingStoryAutomationSetup;
+
 type StoryFormBuilderProps = { message: MessageDraft; showcases: Showcase[]; forms: FormItem[]; loadingResources: boolean; onUpdate: (patch: Partial<MessageDraft>) => void; onUploadMedia: (file?: File) => Promise<string>; };
 const FORM_MAX_OPTIONS = 13;
 const FORM_MEDIA_TYPES = ["IMAGE", "VIDEO", "AUDIO"] as const;
