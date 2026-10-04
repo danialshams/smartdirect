@@ -2,9 +2,11 @@
 
 import { Button, Select } from "@/components/dashboard/DashboardUI";
 import { ImagePlus, Mic, Video, Store, ClipboardList, MessageSquareText, Plus } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import type { FormItem, MessageDraft, QuickReplyDraft, Showcase } from "../automation-form-utils";
 import { createEmptyQuickReply } from "../automation-form-utils";
+
+export type PublishingStoryAutomationSetupHandle = { saveAndContinue: () => Promise<boolean> };
 
 type Props = {
   message: MessageDraft;
@@ -35,7 +37,7 @@ function createSlide(): ShowcaseSlide {
   return { id: `slide_${crypto.randomUUID()}`, title: "", description: "", imageUrl: "", previewUrl: "" };
 }
 
-export default function PublishingStoryAutomationSetup({ message, showcases, forms, loadingResources, instagramAccountId, onUpdate, onSavedChange, keywordValid, onContinue }: Props) {
+const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetupHandle, Props>(function PublishingStoryAutomationSetup({ message, showcases, forms, loadingResources, instagramAccountId, onUpdate, onSavedChange, keywordValid, onContinue }: Props, ref) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
@@ -229,6 +231,30 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
       setSavingShowcase(false);
     }
   }
+
+  useImperativeHandle(ref, () => ({
+    async saveAndContinue() {
+      if (!keywordValid || uploading || savingShowcase || formSaving) return false;
+      if (responseType === "TEXT") {
+        if (!message.text.trim()) return false;
+        onUpdate({ text: message.text.trim() });
+      }
+      if (["IMAGE", "VIDEO", "AUDIO"].includes(responseType) && !message.mediaUrl) return false;
+      if (responseType === "SHOWCASE" && !showcaseSaved) {
+        const ok = await saveShowcase();
+        if (!ok) return false;
+      }
+      if (responseType === "FORM") {
+        if (!isValidStoryForm(message.text, message.quickReplies)) return false;
+        setFormSaving(true);
+        onUpdate({ text: message.text.trim(), quickReplies: message.quickReplies });
+        setFormSaved(true);
+        setFormSaving(false);
+      }
+      onContinue();
+      return true;
+    },
+  }), [keywordValid, uploading, savingShowcase, formSaving, responseType, message, showcaseSaved, onUpdate, onContinue]);
 
   const mediaAccept =
     responseType === "IMAGE" ? "image/*" :
@@ -424,16 +450,6 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
         </div>
       )}
 
-      <div className="space-y-2 border-t border-[#E2E8F0] pt-4">
-        <button type="button" disabled={!keywordValid || uploading || savingShowcase || formSaving || (responseType === "TEXT" && !message.text.trim()) || (["IMAGE","VIDEO","AUDIO"].includes(responseType) && !message.mediaUrl) || (responseType === "SHOWCASE" && !showcaseSaved && (!hasValidSlide || Object.values(slideUploading).some(Boolean))) || (responseType === "FORM" && !isValidStoryForm(message.text, message.quickReplies))} onClick={async () => {
-          if (!keywordValid || uploading || savingShowcase || formSaving) return;
-          if (responseType === "TEXT") { if (!message.text.trim()) return; onUpdate({ text: message.text.trim() }); }
-          if (["IMAGE","VIDEO","AUDIO"].includes(responseType) && !message.mediaUrl) return;
-          if (responseType === "SHOWCASE" && !showcaseSaved) { const ok = await saveShowcase(); if (!ok) return; }
-          if (responseType === "FORM") { if (!isValidStoryForm(message.text, message.quickReplies)) return; setFormSaving(true); onUpdate({ text: message.text.trim(), quickReplies: message.quickReplies }); setFormSaved(true); setFormSaving(false); }
-          onContinue();
-        }} className="w-full rounded-xl bg-[#2563EB] py-3 text-sm font-bold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40">{savingShowcase || formSaving ? "در حال ذخیره..." : `ذخیره ${responseType === "FORM" ? "فرم" : responseType === "SHOWCASE" ? "ویترین" : responseType === "TEXT" ? "متن" : responseType === "IMAGE" ? "عکس" : responseType === "VIDEO" ? "فیلم" : "وویس"} و ادامه`}</button>
-      </div>
       {error && <p className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-2.5 text-xs text-[#B91C1C]">{error}</p>}
     </div>
   );
