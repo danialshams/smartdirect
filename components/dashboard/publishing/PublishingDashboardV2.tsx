@@ -506,7 +506,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       });
       if (uploadProgressTimerRef.current !== null) { window.clearInterval(uploadProgressTimerRef.current); uploadProgressTimerRef.current = null; }
       setUploadProgress(100); setUploading(false); setUploadSuccess(true);
-      if (type !== "CAROUSEL" && type !== "STORY") {
+      if (type !== "CAROUSEL") {
         window.setTimeout(() => {
           animateStepChange(() => {
             setCaptionStepConfirmed(true);
@@ -1087,6 +1087,91 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               </div>
             </section>
           </div>
+        ) : type === "STORY" && automationChoiceConfirmed && automationEnabled && !automationSetupConfirmed ? (
+          <div className="mx-auto w-full max-w-2xl">
+            <div className="mb-5 flex items-center justify-between gap-3">
+              <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
+                <ArrowRight size={15} strokeWidth={2}/>بازگشت
+              </Button>
+              <Button
+                type="button"
+                onClick={() => { setAutomationSetupConfirmed(true); setError(""); }}
+                disabled={!keywords.trim()}
+                className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                مرحله بعد <ArrowLeft size={15} strokeWidth={2}/>
+              </Button>
+            </div>
+
+            <section className="space-y-5 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
+              <div className="flex items-start gap-3">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">۴</span>
+                <div className="min-w-0">
+                  <h2 className="text-sm font-bold text-[#0F172A]">تنظیم پاسخ خودکار استوری</h2>
+                  <p className="mt-1.5 text-xs leading-5 text-[#64748B]">کلمات فعال‌کننده و نوع پاسخ Reply استوری را مشخص کن.</p>
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-bold text-[#0F172A]">کلمات کلیدی Reply استوری</label>
+                <p className="mb-3 text-xs leading-5 text-[#64748B]">با وارد شدن این کلمات در Reply استوری، پاسخ خودکار فعال می‌شود.</p>
+                <KeywordChipsInput value={keywords} onChange={setKeywords} placeholder="مثلاً اطلاعات، قیمت"/>
+              </div>
+
+              <div>
+                <label className="flex min-h-12 cursor-pointer items-center justify-between gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5">
+                  <span className="text-sm font-medium text-[#334155]">لایک خودکار Reply استوری</span>
+                  <Checkbox checked={likeStoryReply} onCheckedChange={v=>setLikeStoryReply(Boolean(v))}/>
+                </label>
+              </div>
+
+              <div>
+                <label className="flex min-h-12 cursor-pointer items-center justify-between gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5">
+                  <span className="text-sm font-medium text-[#334155]">اجبار به فالو</span>
+                  <Checkbox checked={requireFollow} onCheckedChange={v=>setRequireFollow(Boolean(v))}/>
+                </label>
+                {requireFollow && (
+                  <Textarea
+                    value={followGateText}
+                    onChange={e=>setFollowGateText(e.target.value)}
+                    rows={3}
+                    className="mt-2.5 w-full resize-none rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-3 text-sm leading-6 outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10"
+                    placeholder="مثلاً برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید."
+                  />
+                )}
+              </div>
+
+              <div className="border-t border-[#E2E8F0] pt-5">
+                <div className="mb-5">
+                  <p className="text-sm font-bold text-[#0F172A]">پاسخ خودکار</p>
+                  <p className="mt-1 text-[11px] leading-5 text-[#64748B]">متن، تصویر، ویدیو، ویس، ویترین یا فرم پاسخ را انتخاب کن.</p>
+                </div>
+                {messages.slice(0,1).map((message,index)=>(
+                  <div key={message.id} className="rounded-xl border border-[#E2E8F0] bg-white p-3.5 sm:p-4">
+                    <AutomationFlowMessage
+                      triggerType="STORY_REPLY_KEYWORD"
+                      message={message}
+                      index={index}
+                      total={messages.length}
+                      showcases={showcases}
+                      forms={forms}
+                      loadingResources={loadingResources}
+                      instagramAccountId={selectedAccountId}
+                      onShowcaseCreated={showcase=>setShowcases(current=>[showcase,...current.filter(item=>item.id!==showcase.id)])}
+                      onFormCreated={form=>setForms(current=>[form,...current.filter(item=>item.id!==form.id)])}
+                      onUpdate={patch=>updateMessage(index,patch)}
+                      onAddQuickReply={()=>addQuickReply(index)}
+                      onUpdateQuickReply={(id,patch)=>updateQuickReply(index,id,patch)}
+                      onUpdateQuickReplyTree={(id,updater)=>updateQuickReplyTree(index,id,updater)}
+                      onRemoveQuickReply={id=>removeQuickReply(index,id)}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {error && <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-5 text-[#B91C1C]" role="alert">{error}</div>}
+            </section>
+          </div>
         ) : type !== "STORY" && automationChoiceConfirmed && automationEnabled && !automationSetupConfirmed ? (
           <div className="mx-auto w-full max-w-2xl">
             <div className="mb-5 flex items-center justify-between gap-3">
@@ -1139,7 +1224,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               {error && <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-5 text-[#B91C1C]" role="alert">{error}</div>}
             </section>
           </div>
-        ) : ((type !== "STORY" && automationChoiceConfirmed && (!automationEnabled || automationSetupConfirmed)) || (type === "STORY" && automationChoiceConfirmed && !automationEnabled)) ? (
+        ) : ((type !== "STORY" && automationChoiceConfirmed && (!automationEnabled || automationSetupConfirmed)) || (type === "STORY" && automationChoiceConfirmed && (!automationEnabled || automationSetupConfirmed))) ? (
           <div className="mx-auto w-full max-w-2xl">
             <div className="mb-5 flex items-center justify-between gap-3">
               <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
@@ -1148,7 +1233,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             </div>
             <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
               <div className="mb-6 flex items-start gap-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">{type === "STORY" ? "۴" : (automationEnabled ? "۷" : "۶")}</span>
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">{type === "STORY" ? (automationEnabled ? "۵" : "۴") : (automationEnabled ? "۷" : "۶")}</span>
                 <div className="min-w-0">
                   <h2 className="text-sm font-bold text-[#0F172A]">زمان انتشار</h2>
                   <p className="mt-1.5 text-xs leading-5 text-[#64748B]">زمان انتشار این {typeLabels[type]} را انتخاب کن.</p>
@@ -1311,7 +1396,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
         )}
         </div>
         </div>
-      {selectionConfirmed&&captionStepConfirmed&&tagStepConfirmed&&type==="STORY"&&!loading&&uploadedMedia.length>0&&<div className="fixed inset-x-3 z-40 rounded-2xl border border-[#E2E8F0] bg-white/95 p-2.5 shadow-lg backdrop-blur sm:hidden"><div className="grid grid-cols-2 gap-2"><Button type="button" disabled={!canPublish||publishing} onClick={()=>void createJob(true)} className="min-h-11 rounded-xl bg-[#2563EB] px-3 text-xs font-semibold text-white disabled:opacity-50"><span dir="rtl" className="inline-flex items-center gap-2">{publishing?<Loader2 size={16} className="animate-spin"/>:<Send size={16}/>}<span>انتشار الآن</span></span></Button><Button type="button" disabled={!canPublish||publishing} onClick={()=>void createJob(false)} className="min-h-11 rounded-xl border border-[#E2E8F0] bg-white px-3 text-xs font-semibold text-[#334155] disabled:opacity-50"><span dir="rtl" className="inline-flex items-center gap-2"><CalendarClock size={16}/><span>زمان‌بندی</span></span></Button></div></div>}
+      {selectionConfirmed&&captionStepConfirmed&&type==="STORY"&&automationChoiceConfirmed&&(!automationEnabled||automationSetupConfirmed)&&!loading&&uploadedMedia.length>0&&<div className="fixed inset-x-3 z-40 rounded-2xl border border-[#E2E8F0] bg-white/95 p-2.5 shadow-lg backdrop-blur sm:hidden"><div className="grid grid-cols-2 gap-2"><Button type="button" disabled={!canPublish||publishing} onClick={()=>void createJob(true)} className="min-h-11 rounded-xl bg-[#2563EB] px-3 text-xs font-semibold text-white disabled:opacity-50"><span dir="rtl" className="inline-flex items-center gap-2">{publishing?<Loader2 size={16} className="animate-spin"/>:<Send size={16}/>}<span>انتشار الآن</span></span></Button><Button type="button" disabled={!canPublish||publishing} onClick={()=>void createJob(false)} className="min-h-11 rounded-xl border border-[#E2E8F0] bg-white px-3 text-xs font-semibold text-[#334155] disabled:opacity-50"><span dir="rtl" className="inline-flex items-center gap-2"><CalendarClock size={16}/><span>زمان‌بندی</span></span></Button></div></div>}
       </div>
     </>
   );
