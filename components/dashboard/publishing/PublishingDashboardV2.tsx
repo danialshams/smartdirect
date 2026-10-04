@@ -288,6 +288,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const [automationChoiceStepStarted, setAutomationChoiceStepStarted] = useState(false);
   const [automationChoiceConfirmed, setAutomationChoiceConfirmed] = useState(false);
   const [automationSetupConfirmed, setAutomationSetupConfirmed] = useState(false);
+  const [storyResponseSaved, setStoryResponseSaved] = useState(false);
   const [automationKeywordDraft, setAutomationKeywordDraft] = useState("");
   const [automationKeywords, setAutomationKeywords] = useState<string[]>([]);
   const [directMessageText, setDirectMessageText] = useState("");
@@ -1169,7 +1170,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               <Button
                 type="button"
                 onClick={() => { setAutomationSetupConfirmed(true); setError(""); }}
-                disabled={!keywords.trim()}
+                disabled={!keywords.trim() || !storyResponseSaved}
                 className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 مرحله بعد <ArrowLeft size={15} strokeWidth={2}/>
@@ -1211,6 +1212,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                 loadingResources={loadingResources}
                 instagramAccountId={selectedAccountId}
                 onUpdate={(patch) => updateMessage(0, patch)}
+                onSavedChange={setStoryResponseSaved}
               />
 
               <div>
