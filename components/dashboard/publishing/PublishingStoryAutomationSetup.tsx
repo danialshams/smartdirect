@@ -289,7 +289,6 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
                   <label className="mb-2 block text-sm font-bold text-[#0F172A]">توضیحات اسلاید {index + 1}</label>
                   <textarea value={slide.description} onChange={(event) => patchSlide(slide.id, { description: event.target.value })} rows={4} maxLength={1000} placeholder="توضیحات اسلاید را وارد کن..." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
                 </div>
-                {slides.length > 1 && <button type="button" onClick={() => setSlides((current) => current.filter((item) => item.id !== slide.id))} className="text-xs font-semibold text-[#DC2626]">حذف اسلاید</button>}
               </div>
             ))}
           </div>
@@ -330,7 +329,7 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
                 </button>
               </div>
             )}
-          </div>}
+          </div>
         </div>
       )}
 
