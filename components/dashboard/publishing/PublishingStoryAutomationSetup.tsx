@@ -2,7 +2,7 @@
 
 import { Button, Select } from "@/components/dashboard/DashboardUI";
 import { ImagePlus, Mic, Video, Store, ClipboardList, MessageSquareText, Plus } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FormItem, MessageDraft, Showcase } from "../automation-form-utils";
 
 type Props = {
@@ -37,6 +37,7 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
   const [error, setError] = useState("");
   const [slides, setSlides] = useState<ShowcaseSlide[]>([createSlide()]);
   const [savingShowcase, setSavingShowcase] = useState(false);
+  const saveShowcaseLockRef = useRef(false);
   const [slideUploadProgress, setSlideUploadProgress] = useState<Record<string, number>>({});
   const [slideUploading, setSlideUploading] = useState<Record<string, boolean>>({});
 
@@ -170,15 +171,18 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
   }
 
   async function saveShowcase() {
+    if (saveShowcaseLockRef.current || savingShowcase) return;
+    saveShowcaseLockRef.current = true;
     if (!hasValidSlide) {
       setError("برای ساخت ویترین، حداقل یک اسلاید کامل با تصویر و تیتر بسازید.");
+      saveShowcaseLockRef.current = false;
       return;
     }
-    if (!instagramAccountId) { setError("اکانت فعال Instagram پیدا نشد."); return; }
+    if (!instagramAccountId) { setError("اکانت فعال Instagram پیدا نشد."); saveShowcaseLockRef.current = false; return; }
     for (let index = 0; index < slides.length; index += 1) {
       const slide = slides[index];
-      if (!slide?.imageUrl.trim()) { setError(`تصویر اسلاید ${index + 1} را آپلود کنید.`); return; }
-      if (!slide.title.trim()) { setError(`تیتر اسلاید ${index + 1} را وارد کنید.`); return; }
+      if (!slide?.imageUrl.trim()) { setError(`تصویر اسلاید ${index + 1} را آپلود کنید.`); saveShowcaseLockRef.current = false; return; }
+      if (!slide.title.trim()) { setError(`تیتر اسلاید ${index + 1} را وارد کنید.`); saveShowcaseLockRef.current = false; return; }
     }
     setSavingShowcase(true);
     setError("");
@@ -206,6 +210,7 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "ساخت ویترین ناموفق بود.");
     } finally {
+      saveShowcaseLockRef.current = false;
       setSavingShowcase(false);
     }
   }
