@@ -14,7 +14,7 @@ import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent 
 import { WheelPicker, type WheelPickerOption } from "@ncdai/react-wheel-picker";
 import "@ncdai/react-wheel-picker/style.css";
 
-import AutomationFlowMessage from "../AutomationFlowMessage";
+import PublishingStoryAutomationSetup from "./PublishingStoryAutomationSetup";
 import {
   createEmptyMessage,
   createEmptyQuickReply,
@@ -1164,7 +1164,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">۴</span>
                 <div className="min-w-0">
                   <h2 className="text-sm font-bold text-[#0F172A]">تنظیم پاسخ خودکار استوری</h2>
-                  <p className="mt-1.5 text-xs leading-5 text-[#64748B]">کلمات فعال‌کننده و نوع پاسخ Reply استوری را مشخص کن.</p>
+                  <p className="mt-1.5 text-xs leading-5 text-[#64748B]">کلمات فعال‌کننده و پاسخ Reply استوری را مشخص کن.</p>
                 </div>
               </div>
 
@@ -1176,7 +1176,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
               <div>
                 <label className="flex min-h-12 cursor-pointer items-center justify-between gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5">
-                  <span className="text-sm font-medium text-[#334155]">لایک خودکار Reply استوری</span>
+                  <span className="text-sm font-medium text-[#334155]">لایک ریپلای <span className="font-normal text-[#2563EB]">(اختیاری)</span></span>
                   <Checkbox checked={likeStoryReply} onCheckedChange={v=>setLikeStoryReply(Boolean(v))}/>
                 </label>
               </div>
@@ -1197,34 +1197,13 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                 )}
               </div>
 
-              <div className="border-t border-[#E2E8F0] pt-5">
-                <div className="mb-5">
-                  <p className="text-sm font-bold text-[#0F172A]">پاسخ خودکار</p>
-                  <p className="mt-1 text-[11px] leading-5 text-[#64748B]">متن، تصویر، ویدیو، ویس، ویترین یا فرم پاسخ را انتخاب کن.</p>
-                </div>
-                {messages.slice(0,1).map((message,index)=>(
-                  <div key={message.id} className="rounded-xl border border-[#E2E8F0] bg-white p-3.5 sm:p-4">
-                    <AutomationFlowMessage
-                      triggerType="STORY_REPLY_KEYWORD"
-                      message={message}
-                      index={index}
-                      total={messages.length}
-                      showcases={showcases}
-                      forms={forms}
-                      loadingResources={loadingResources}
-                      instagramAccountId={selectedAccountId}
-                      onShowcaseCreated={showcase=>setShowcases(current=>[showcase,...current.filter(item=>item.id!==showcase.id)])}
-                      onFormCreated={form=>setForms(current=>[form,...current.filter(item=>item.id!==form.id)])}
-                      onUpdate={patch=>updateMessage(index,patch)}
-                      onAddQuickReply={()=>addQuickReply(index)}
-                      onUpdateQuickReply={(id,patch)=>updateQuickReply(index,id,patch)}
-                      onUpdateQuickReplyTree={(id,updater)=>updateQuickReplyTree(index,id,updater)}
-                      onRemoveQuickReply={id=>removeQuickReply(index,id)}
-                      storyReplyMode
-                    />
-                  </div>
-                ))}
-              </div>
+              <PublishingStoryAutomationSetup
+                message={messages[0] ?? createEmptyMessage()}
+                showcases={showcases}
+                forms={forms}
+                loadingResources={loadingResources}
+                onUpdate={(patch) => updateMessage(0, patch)}
+              />
 
               {error && <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-5 text-[#B91C1C]" role="alert">{error}</div>}
             </section>
