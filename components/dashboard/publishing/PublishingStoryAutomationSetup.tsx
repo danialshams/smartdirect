@@ -475,7 +475,7 @@ function FormBranchEditor({ title, question, replies, showcases, forms, loadingR
   const updateReply = (id: string, patch: Partial<QuickReplyDraft>) => onChange({ replies: replies.map((reply) => reply.id === id ? { ...reply, ...patch } : reply) });
   const removeReply = (id: string) => onChange({ replies: replies.filter((reply) => reply.id !== id) });
   const addReply = () => {
-    if (optionReplies.length < FORM_MAX_OPTIONS) onChange({ replies: [...replies, createEmptyQuickReply()] });
+    if (replies.length < FORM_MAX_OPTIONS) onChange({ replies: [...replies, createEmptyQuickReply()] });
   };
 
   return (
@@ -496,7 +496,7 @@ function FormBranchEditor({ title, question, replies, showcases, forms, loadingR
             <p className="text-right text-lg font-extrabold text-[#0F172A]">گزینه‌ها</p>
             <p className="mt-1 text-right text-[10px] text-[#64748B]">حداکثر ۱۳ گزینه در هر مرحله.</p>
           </div>
-          <span className="shrink-0 rounded-full bg-[#EFF6FF] px-2.5 py-1 text-[10px] font-bold text-[#2563EB]">{optionReplies.length} / {FORM_MAX_OPTIONS}</span>
+          <span className="shrink-0 rounded-full bg-[#EFF6FF] px-2.5 py-1 text-[10px] font-bold text-[#2563EB]">{optionReplies.length} / {FORM_MAX_OPTIONS - (replies.some((reply) => reply.isExit) ? 1 : 0)}</span>
         </div>
 
         <div className="mt-3 space-y-3">
