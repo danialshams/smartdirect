@@ -1205,15 +1205,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                 </div>
               </div>
 
-              <PublishingStoryAutomationSetup
-                message={messages[0] ?? createEmptyMessage()}
-                showcases={showcases}
-                forms={forms}
-                loadingResources={loadingResources}
-                instagramAccountId={selectedAccountId}
-                onUpdate={(patch) => updateMessage(0, patch)}
-                onSavedChange={setStoryResponseSaved}
-              />
+
 
               <div>
                 <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5">
@@ -1232,6 +1224,16 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   <textarea id="publishing-follow-gate-text" value={followGateText} onChange={event => setFollowGateText(event.target.value)} rows={2} maxLength={500} inputMode="text" placeholder="مثلاً برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none placeholder:text-xs focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{fontSize:"16px",lineHeight:1.75,WebkitTextSizeAdjust:"100%"}}/>
                 </div>}
               </div>
+
+              <PublishingStoryAutomationSetup
+                message={messages[0] ?? createEmptyMessage()}
+                showcases={showcases}
+                forms={forms}
+                loadingResources={loadingResources}
+                instagramAccountId={selectedAccountId}
+                onUpdate={(patch) => updateMessage(0, patch)}
+                onSavedChange={setStoryResponseSaved}
+              />
 
               {error && <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-5 text-[#B91C1C]" role="alert">{error}</div>}
             </section>
