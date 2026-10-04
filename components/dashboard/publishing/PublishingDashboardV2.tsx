@@ -1220,6 +1220,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                       onUpdateQuickReply={(id,patch)=>updateQuickReply(index,id,patch)}
                       onUpdateQuickReplyTree={(id,updater)=>updateQuickReplyTree(index,id,updater)}
                       onRemoveQuickReply={id=>removeQuickReply(index,id)}
+                      storyReplyMode
                     />
                   </div>
                 ))}
