@@ -373,9 +373,9 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
                   void saveShowcase();
                 }}
                 className={[
-                  "w-full rounded-xl py-2.5 text-xs font-bold text-white transition-none disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-100",
+                  "w-full rounded-xl py-2.5 text-xs font-bold text-white transition-opacity duration-150 disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-50",
                   savingShowcase
-                    ? "bg-[#2563EB] !text-white !shadow-none !cursor-wait !pointer-events-none"
+                    ? "bg-[#2563EB] !text-white !shadow-none !cursor-wait !pointer-events-none opacity-50"
                     : "bg-[#2563EB] hover:bg-[#1D4ED8]"
                 ].join(" ")}
               >
