@@ -112,9 +112,6 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
     setError("");
     setSlideUploadProgress((current) => ({ ...current, [id]: 0 }));
     setSlideUploading((current) => ({ ...current, [id]: true }));
-    const previewUrl = URL.createObjectURL(file);
-    patchSlide(id, { previewUrl });
-
     await new Promise<void>((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       const data = new FormData();
@@ -256,8 +253,8 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
             inputMode="text"
             autoCapitalize="sentences"
             spellCheck
-            className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10"
-            placeholder="متنی که در پاسخ Reply استوری ارسال می‌شود بنویس..."
+            className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none placeholder:text-[10px] placeholder:whitespace-nowrap placeholder:overflow-hidden placeholder:text-ellipsis focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10"
+            placeholder="متنی که در پاسخ Reply استوری در دایرکت برای کاربر ارسال می‌شود..."
             style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }}
           />
         </div>
@@ -306,20 +303,23 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
               <div key={slide.id} className="space-y-3 rounded-2xl border border-[#E2E8F0] bg-white p-4">
                 <p className="text-center text-sm font-bold text-[#0F172A]">اسلاید {index + 1}</p>
                 <label className="relative flex min-h-44 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-[#CBD5E1] bg-[#F8FAFC] text-center hover:border-[#93C5FD] hover:bg-[#EFF6FF]">
-                  {slide.previewUrl ? <img src={slide.previewUrl} alt="" className="h-44 w-full object-cover" /> : <>
-                    <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB]"><ImagePlus size={21}/></span>
-                    <span className="mt-3 text-xs font-bold text-[#0F172A]">آپلود عکس اسلاید {index + 1}</span>
-                    <span className="mt-1 text-[10px] text-[#64748B]">برای انتخاب تصویر کلیک کن</span>
-                  </>}
-                  {slideUploading[slide.id] && (
-                    <div className="absolute inset-x-3 bottom-3 rounded-xl border border-[#DBEAFE] bg-white/95 p-2.5 shadow-sm">
-                      <div className="mb-1.5 flex items-center justify-between text-[10px] font-semibold text-[#2563EB]">
-                        <span>در حال آپلود تصویر...</span><span>{slideUploadProgress[slide.id] ?? 0}٪</span>
+                  {slideUploading[slide.id] ? (
+                    <div className="flex w-full flex-col items-center justify-center px-6">
+                      <div className="mb-2 text-[10px] font-semibold text-[#2563EB]">
+                        {slideUploadProgress[slide.id] ?? 0}٪
                       </div>
-                      <div className="h-1.5 overflow-hidden rounded-full bg-[#E2E8F0]">
-                        <div className="h-full rounded-full bg-[#2563EB] transition-[width] duration-200" style={{ width: `${slideUploadProgress[slide.id] ?? 0}%` }} />
+                      <div className="h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-[#E2E8F0]">
+                        <div className="h-full rounded-full bg-[#2563EB] transition-[width] duration-150 ease-out" style={{ width: `${slideUploadProgress[slide.id] ?? 0}%` }} />
                       </div>
                     </div>
+                  ) : slide.previewUrl ? (
+                    <img src={slide.previewUrl} alt="" className="h-44 w-full object-cover" />
+                  ) : (
+                    <>
+                      <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB]"><ImagePlus size={21}/></span>
+                      <span className="mt-3 text-xs font-bold text-[#0F172A]">آپلود عکس اسلاید {index + 1}</span>
+                      <span className="mt-1 text-[10px] text-[#64748B]">برای انتخاب تصویر کلیک کن</span>
+                    </>
                   )}
                   <input type="file" accept="image/*" disabled={slideUploading[slide.id] || savingShowcase || Boolean(message.showcaseId)} className="hidden" onChange={(event) => { const file = event.target.files?.[0]; event.currentTarget.value = ""; void uploadSlideImage(slide.id, file); }} />
                 </label>
@@ -342,15 +342,19 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
             ))}
           </div>
           <div className="space-y-3 pt-1">
-            <button
-              type="button"
-              onClick={() => setSlides((current) => [...current, createSlide()])}
-              className="inline-flex items-center gap-1.5 text-sm font-bold text-[#2563EB] transition hover:text-[#1D4ED8]"
-              dir="ltr"
-            >
-              <Plus size={16} strokeWidth={2.5} />
-              <span dir="rtl">افزودن اسلاید</span>
-            </button>
+            {!message.showcaseId && (
+              <div className="flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => setSlides((current) => [...current, createSlide()])}
+                  className="inline-flex items-center justify-center gap-1.5 text-sm font-bold text-[#2563EB] transition hover:text-[#1D4ED8]"
+                  dir="ltr"
+                >
+                  <Plus size={16} strokeWidth={2.5} />
+                  <span dir="rtl">افزودن اسلاید</span>
+                </button>
+              </div>
+            )}
 
             {!message.showcaseId && (
               <Button
