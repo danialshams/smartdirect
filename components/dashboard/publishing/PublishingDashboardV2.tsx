@@ -14,7 +14,7 @@ import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent 
 import { WheelPicker, type WheelPickerOption } from "@ncdai/react-wheel-picker";
 import "@ncdai/react-wheel-picker/style.css";
 
-import PublishingStoryAutomationSetup from "./PublishingStoryAutomationSetup";
+import PublishingStoryAutomationSetup, { type PublishingStoryAutomationSetupHandle } from "./PublishingStoryAutomationSetup";
 import {
   createEmptyMessage,
   createEmptyQuickReply,
@@ -288,7 +288,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const [automationChoiceStepStarted, setAutomationChoiceStepStarted] = useState(false);
   const [automationChoiceConfirmed, setAutomationChoiceConfirmed] = useState(false);
   const [automationSetupConfirmed, setAutomationSetupConfirmed] = useState(false);
-  const [storyResponseSaved, setStoryResponseSaved] = useState(false);
+  const [storyResponseSaved, setStoryResponseSaved] = useState(false);\n  const storyAutomationSetupRef = useRef<PublishingStoryAutomationSetupHandle>(null);
   const [automationKeywordDraft, setAutomationKeywordDraft] = useState("");
   const [automationKeywords, setAutomationKeywords] = useState<string[]>([]);
   const [directMessageText, setDirectMessageText] = useState("");
@@ -1230,6 +1230,17 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                 keywordValid={Boolean(keywords.trim())}
                 onContinue={() => { setAutomationSetupConfirmed(true); setError(""); }}
               />
+
+              <div className="border-t border-[#E2E8F0] pt-4">
+                <Button
+                  type="button"
+                  onClick={() => { void storyAutomationSetupRef.current?.saveAndContinue(); }}
+                  disabled={!keywords.trim()}
+                  className="w-full min-h-11 rounded-xl bg-[#2563EB] px-4 text-sm font-bold text-white hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  ذخیره پاسخ و ادامه
+                </Button>
+              </div>
 
               {error && <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-5 text-[#B91C1C]" role="alert">{error}</div>}
             </section>
