@@ -468,8 +468,6 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     const runId = ++uploadRunRef.current;
     try {
       setUploading(true); setUploadSuccess(false); setError(""); setUploadProgress(0);
-      // The Blob SDK may not emit intermediate progress events for small, non-multipart uploads.
-      // Keep the bar moving as an estimate, while real progress events can advance it faster.
       const totalBytes = items.reduce((sum,item)=>sum+item.file.size,0);
       let completedBytes=0; const results: UploadedMedia[]=[];
       // Each carousel file is uploaded serially, preserving slide order.
@@ -477,7 +475,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
         const item=items[index];
         const result=await uploadFileWithProgress(item.file,(progress)=>{
           if (uploadRunRef.current !== runId) return;
-          const reported = totalBytes ? Math.min(94, Math.round(((completedBytes + item.file.size * progress / 100) / totalBytes) * 100)) : Math.min(94, progress);
+          const reported = totalBytes ? Math.min(99, Math.round(((completedBytes + item.file.size * progress / 100) / totalBytes) * 100)) : Math.min(99, progress);
           setUploadProgress(current => Math.max(current, reported));
         });
         if (uploadRunRef.current !== runId) {
