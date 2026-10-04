@@ -112,6 +112,8 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
     setError("");
     setSlideUploadProgress((current) => ({ ...current, [id]: 0 }));
     setSlideUploading((current) => ({ ...current, [id]: true }));
+    // Never show the previous image while a replacement upload is running.
+    patchSlide(id, { imageUrl: "", previewUrl: "" });
     await new Promise<void>((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       const data = new FormData();
