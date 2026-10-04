@@ -122,7 +122,30 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
     }
   }
 
+  const hasValidSlide = slides.length > 0 && slides.every((slide) => slide.imageUrl.trim() && slide.title.trim());
+
+  async function deleteShowcase() {
+    if (!message.showcaseId) return;
+    setSavingShowcase(true);
+    setError("");
+    try {
+      const response = await fetch(\`/api/showcases/\${message.showcaseId}\`, { method: "DELETE" });
+      const result = await response.json().catch(() => null);
+      if (!response.ok || result?.error) throw new Error(result?.error || result?.message || "حذف ویترین ناموفق بود.");
+      onUpdate({ showcaseId: "" });
+      setSlides([createSlide()]);
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : "حذف ویترین ناموفق بود.");
+    } finally {
+      setSavingShowcase(false);
+    }
+  }
+
   async function saveShowcase() {
+    if (!hasValidSlide) {
+      setError("برای ساخت ویترین، حداقل یک اسلاید کامل با تصویر و تیتر بسازید.");
+      return;
+    }
     if (!instagramAccountId) { setError("اکانت فعال Instagram پیدا نشد."); return; }
     for (let index = 0; index < slides.length; index += 1) {
       const slide = slides[index];
@@ -269,11 +292,44 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
               </div>
             ))}
           </div>
-          <Button type="button" onClick={() => setSlides((current) => [...current, createSlide()])} className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-[#E2E8F0] bg-white px-4 py-3 text-sm font-bold text-[#2563EB] hover:bg-[#EFF6FF]">
-            <Plus size={17} /> افزودن اسلاید
-          </Button>
-          {!message.showcaseId && <Button type="button" disabled={savingShowcase} onClick={() => void saveShowcase()} className="w-full rounded-xl bg-[#2563EB] py-3 text-xs font-bold text-white disabled:opacity-50">{savingShowcase ? "در حال ساخت ویترین..." : "ساخت و اتصال ویترین"}</Button>}
-          {message.showcaseId && <p className="rounded-xl border border-[#BBF7D0] bg-[#F0FDF4] px-3.5 py-3 text-xs font-semibold text-[#166534]">ویترین آماده و متصل شد.</p>}
+          <div className="space-y-3 pt-1">
+            <button
+              type="button"
+              onClick={() => setSlides((current) => [...current, createSlide()])}
+              className="inline-flex items-center gap-1.5 text-sm font-bold text-[#2563EB] transition hover:text-[#1D4ED8]"
+              dir="ltr"
+            >
+              <Plus size={16} strokeWidth={2.5} />
+              <span dir="rtl">افزودن اسلاید</span>
+            </button>
+
+            {!message.showcaseId && (
+              <Button
+                type="button"
+                disabled={savingShowcase || !hasValidSlide}
+                onClick={() => void saveShowcase()}
+                className="w-full rounded-xl bg-[#2563EB] py-2.5 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {savingShowcase ? "در حال ساخت ویترین..." : "ساخت و اتصال ویترین"}
+              </Button>
+            )}
+
+            {message.showcaseId && (
+              <div className="space-y-2">
+                <p className="rounded-xl border border-[#BBF7D0] bg-[#F0FDF4] px-3.5 py-3 text-xs font-semibold text-[#166534]">
+                  ویترین ساخته شد و با پاسخ متصل شد.
+                </p>
+                <button
+                  type="button"
+                  disabled={savingShowcase}
+                  onClick={() => void deleteShowcase()}
+                  className="text-xs font-bold text-[#DC2626] transition hover:text-[#B91C1C] disabled:opacity-50"
+                >
+                  حذف ویترین ساخته‌شده
+                </button>
+              </div>
+            )}
+          </div>}
         </div>
       )}
 
