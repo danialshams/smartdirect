@@ -288,7 +288,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const [automationChoiceStepStarted, setAutomationChoiceStepStarted] = useState(false);
   const [automationChoiceConfirmed, setAutomationChoiceConfirmed] = useState(false);
   const [automationSetupConfirmed, setAutomationSetupConfirmed] = useState(false);
-  const [storyResponseSaved, setStoryResponseSaved] = useState(false);\n  const storyAutomationSetupRef = useRef<PublishingStoryAutomationSetupHandle>(null);
+  const [storyResponseSaved, setStoryResponseSaved] = useState(false);
+  const storyAutomationSetupRef = useRef<PublishingStoryAutomationSetupHandle>(null);
   const [automationKeywordDraft, setAutomationKeywordDraft] = useState("");
   const [automationKeywords, setAutomationKeywords] = useState<string[]>([]);
   const [directMessageText, setDirectMessageText] = useState("");
