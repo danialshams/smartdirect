@@ -223,9 +223,23 @@ function ProgressBar({ progress }: { progress: number }) {
   </div>;
 }
 function UploadSuccessMark() {
-  return <svg viewBox="0 0 24 24" className="inline-block h-8 w-8 shrink-0 text-[#16A34A]" aria-hidden="true">
-    <path d="m4 12.5 5 5L20 6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-  </svg>;
+  return (
+    <svg viewBox="0 0 24 24" className="inline-block h-8 w-8 shrink-0 text-[#16A34A]" aria-hidden="true">
+      <path
+        d="m4 12.5 5 5L20 6"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        pathLength="1"
+        strokeDasharray="1"
+        strokeDashoffset="1"
+      >
+        <animate attributeName="strokeDashoffset" from="1" to="0" dur="0.65s" fill="freeze" />
+      </path>
+    </svg>
+  );
 }
 function UploadArea({ id, accept, multiple, disabled, isDragging, setIsDragging, uploading, uploadSuccess, uploadProgress, onChange, onDrop, onCancelUpload, title }: any) {
   return <div onDragOver={(e: DragEvent<HTMLDivElement>)=>{e.preventDefault();setIsDragging(true)}} onDragLeave={()=>setIsDragging(false)} onDrop={onDrop} className={["relative overflow-hidden rounded-xl border border-dashed p-4 transition sm:p-6",isDragging?"border-[#2563EB] bg-[#2563EB]/5":"border-[#CBD5E1] bg-[#F8FAFC] hover:border-[#93C5FD] hover:bg-[#EFF6FF]/50",disabled&&!uploading?"pointer-events-none opacity-60":""].join(" ")}>
