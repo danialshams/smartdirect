@@ -775,6 +775,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
           const serializeQuickReplyTree = (replies: MessageDraft["quickReplies"]): unknown[] =>
             replies.map((reply) => ({
               id: reply.id,
+              isExit: Boolean(reply.isExit),
               title: reply.title.trim(),
               payload: reply.payload,
               destinationType: reply.destinationType,
@@ -795,6 +796,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               title: quickReply.title.trim(),
               payload: quickReply.payload,
               destinationType: quickReply.destinationType,
+              isExit: Boolean(quickReply.isExit),
               destinationText: quickReply.destinationText.trim() || null,
               destinationFormId: quickReply.destinationFormId || null,
               destinationShowcaseId: quickReply.destinationShowcaseId || null,
