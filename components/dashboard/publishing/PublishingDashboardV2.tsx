@@ -1176,7 +1176,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                     {keywords.split(",").map((keyword) => keyword.trim()).filter(Boolean).map((keyword) => (
                       <span key={keyword} className="inline-flex items-center gap-1.5 rounded-full bg-[#EFF6FF] px-3 py-1.5 text-xs font-semibold text-[#2563EB]">
                         <span>{keyword}</span>
-                        <button type="button" onClick={() => setKeywords(keywords.split(",").map(item => item.trim()).filter(item => item && item !== keyword).join(","))} aria-label={\`حذف \${keyword}\`} className="flex h-4 w-4 items-center justify-center rounded-full hover:bg-white"><X size={12}/></button>
+                        <button type="button" onClick={() => setKeywords(keywords.split(",").map(item => item.trim()).filter(item => item && item !== keyword).join(","))} aria-label={`حذف ${keyword}`} className="flex h-4 w-4 items-center justify-center rounded-full hover:bg-white"><X size={12}/></button>
                       </span>
                     ))}
                   </div>
