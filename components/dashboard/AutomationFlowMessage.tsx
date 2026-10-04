@@ -29,7 +29,6 @@ import type {
 
 type Props = {
   message: MessageDraft;
-  storyReplyMode?: boolean;
   triggerType: AutomationTriggerType;
   index: number;
   total: number;
@@ -90,45 +89,18 @@ async function readJsonResponse(response: Response, fallback: string) {
   }
 }
 
-async function uploadFile(file: File, onProgress?: (progress: number) => void): Promise<string> {
-  if (!onProgress) {
-    const formData = new FormData();
-    formData.append("file", file);
-    const response = await fetch("/api/instagram/publishing/upload", {
-      method: "POST",
-      body: formData,
-    });
-    const result = await readJsonResponse(response, "آپلود فایل ناموفق بود.");
-    if (!response.ok || !result?.success || typeof result?.data?.publicUrl !== "string") {
-      throw new Error(result?.message || "آپلود فایل ناموفق بود.");
-    }
-    return result.data.publicUrl;
-  }
-
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    const formData = new FormData();
-    formData.append("file", file);
-    xhr.open("POST", "/api/instagram/publishing/upload");
-    xhr.upload.onprogress = (event) => {
-      if (event.lengthComputable) onProgress(Math.round((event.loaded / event.total) * 100));
-    };
-    xhr.onerror = () => reject(new Error("آپلود فایل ناموفق بود."));
-    xhr.onload = () => {
-      try {
-        const result = JSON.parse(xhr.responseText);
-        if (xhr.status < 200 || xhr.status >= 300 || !result?.success || typeof result?.data?.publicUrl !== "string") {
-          reject(new Error(result?.message || "آپلود فایل ناموفق بود."));
-          return;
-        }
-        onProgress(100);
-        resolve(result.data.publicUrl);
-      } catch {
-        reject(new Error("پاسخ نامعتبر از سرور دریافت شد."));
-      }
-    };
-    xhr.send(formData);
+async function uploadFile(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const response = await fetch("/api/instagram/publishing/upload", {
+    method: "POST",
+    body: formData,
   });
+  const result = await readJsonResponse(response, "آپلود فایل ناموفق بود.");
+  if (!response.ok || !result?.success || typeof result?.data?.publicUrl !== "string") {
+    throw new Error(result?.message || "آپلود فایل ناموفق بود.");
+  }
+  return result.data.publicUrl;
 }
 
 async function uploadBranchMedia(
@@ -152,8 +124,6 @@ const typeOptions: Array<{
   { value: "IMAGE", label: "تصویر", Icon: ImagePlus, color: palette.automation, softColor: "#F5F3FF" },
   { value: "VIDEO", label: "ویدیو", Icon: Video, color: palette.success, softColor: "#F0FDF4" },
   { value: "AUDIO", label: "وویس", Icon: Mic, color: palette.warning, softColor: "#FFF7ED" },
-  { value: "SHOWCASE", label: "ویترین", Icon: ClipboardList, color: "#DB2777", softColor: "#FDF2F8" },
-  { value: "FORM", label: "فرم", Icon: ClipboardList, color: "#0F766E", softColor: "#F0FDFA" },
 ];
 
 export default function AutomationFlowMessage({
@@ -171,20 +141,16 @@ export default function AutomationFlowMessage({
   onUpdateQuickReplyTree,
   onRemoveQuickReply,
   onShowcaseCreated,
-  storyReplyMode = false,
 }: Props) {
   const availableTypes = useMemo(
     () =>
       triggerType === "COMMENT_KEYWORD"
         ? typeOptions.filter((item) => item.value === "TEXT")
-        : storyReplyMode
-          ? typeOptions
-          : typeOptions.filter((item) => item.value !== "SHOWCASE" && item.value !== "FORM"),
-    [triggerType, storyReplyMode],
+        : typeOptions,
+    [triggerType],
   );
 
   const [mediaUploading, setMediaUploading] = useState(false);
-  const [mediaUploadProgress, setMediaUploadProgress] = useState(0);
   const [contentStep, setContentStep] = useState(false);
   const [error, setError] = useState("");
 
@@ -204,10 +170,9 @@ export default function AutomationFlowMessage({
   async function handleMedia(file?: File) {
     if (!file) return;
     setError("");
-    setMediaUploadProgress(0);
     setMediaUploading(true);
     try {
-      const url = await uploadFile(file, setMediaUploadProgress);
+      const url = await uploadFile(file);
       onUpdate({ mediaUrl: url, mediaId: "" });
     } catch (uploadError) {
       setError(uploadError instanceof Error ? uploadError.message : "آپلود فایل ناموفق بود.");
@@ -229,11 +194,7 @@ export default function AutomationFlowMessage({
         ].join(" ")}
       >
         <div className="p-5 sm:p-7">
-          <div className="mb-5">
-            <p className="text-sm font-bold" style={{ color: palette.text }}>نوع پاسخ ارسالی</p>
-            <p className="mt-1.5 text-xs leading-5" style={{ color: palette.secondary }}>نوع پاسخی را که می‌خواهی برای Reply استوری ارسال شود انتخاب کن.</p>
-          </div>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             {availableTypes.map(({ value, label, Icon, color, softColor }) => (
               <button
                 key={value}
@@ -296,7 +257,6 @@ export default function AutomationFlowMessage({
               kind={message.messageType as MediaKind}
               url={message.mediaUrl}
               uploading={mediaUploading}
-              progress={mediaUploadProgress}
               error={error}
               onUpload={handleMedia}
               onClear={clearMessageMedia}
@@ -702,13 +662,11 @@ function MediaComposer({
   error,
   onUpload,
   onClear,
-  progress,
 }: {
   kind: MediaKind;
   url: string;
   uploading: boolean;
   error: string;
-  progress: number;
   onUpload: (file?: File) => void;
   onClear: () => void;
 }) {
@@ -748,16 +706,6 @@ function MediaComposer({
         />
       )}
 
-      {uploading && (
-        <div className="rounded-2xl border bg-white p-4" style={{ borderColor: "#DBEAFE" }}>
-          <div className="mb-2.5 flex items-center justify-between text-xs font-semibold" style={{ color: palette.primary }}>
-            <span>پیشرفت آپلود</span><span>{progress}٪</span>
-          </div>
-          <div className="h-2.5 w-full overflow-hidden rounded-full bg-[#E2E8F0]">
-            <div className="h-full rounded-full bg-[#2563EB] transition-[width] duration-200" style={{ width: `${Math.max(0, Math.min(100, progress))}%` }} />
-          </div>
-        </div>
-      )}
       {error && <p className="text-xs" style={{ color: palette.error }}>{error}</p>}
     </div>
   );
