@@ -505,12 +505,12 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             setUploadSuccess(false);
             setUploadProgress(0);
           });
-        }, 120);
+        }, 700);
       } else {
         window.setTimeout(() => {
           setUploadSuccess(false);
           setUploadProgress(0);
-        }, 120);
+        }, 700);
       }
     } catch(e) {
       if (uploadRunRef.current !== runId) return;
