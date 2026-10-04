@@ -1171,30 +1171,20 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               <div>
                 <label className="mb-2 block text-sm font-bold text-[#0F172A]">کلمات کلیدی Reply استوری</label>
                 <p className="mb-3 text-xs leading-5 text-[#64748B]">با وارد شدن این کلمات در Reply استوری، پاسخ خودکار فعال می‌شود.</p>
-                <KeywordChipsInput value={keywords} onChange={setKeywords} placeholder="مثلاً اطلاعات، قیمت"/>
-              </div>
-
-              <div>
-                <label className="flex min-h-12 cursor-pointer items-center justify-between gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5">
-                  <span className="text-sm font-medium text-[#334155]">لایک ریپلای <span className="font-normal text-[#2563EB]">(اختیاری)</span></span>
-                  <Checkbox checked={likeStoryReply} onCheckedChange={v=>setLikeStoryReply(Boolean(v))}/>
-                </label>
-              </div>
-
-              <div>
-                <label className="flex min-h-12 cursor-pointer items-center justify-between gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5">
-                  <span className="text-sm font-medium text-[#334155]">اجبار به فالو</span>
-                  <Checkbox checked={requireFollow} onCheckedChange={v=>setRequireFollow(Boolean(v))}/>
-                </label>
-                {requireFollow && (
-                  <Textarea
-                    value={followGateText}
-                    onChange={e=>setFollowGateText(e.target.value)}
-                    rows={3}
-                    className="mt-2.5 w-full resize-none rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-3 text-sm leading-6 outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10"
-                    placeholder="مثلاً برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید."
-                  />
+                {keywords.trim() && (
+                  <div className="mb-3 flex flex-wrap gap-2">
+                    {keywords.split(",").map((keyword) => keyword.trim()).filter(Boolean).map((keyword) => (
+                      <span key={keyword} className="inline-flex items-center gap-1.5 rounded-full bg-[#EFF6FF] px-3 py-1.5 text-xs font-semibold text-[#2563EB]">
+                        <span>{keyword}</span>
+                        <button type="button" onClick={() => setKeywords(keywords.split(",").map(item => item.trim()).filter(item => item && item !== keyword).join(","))} aria-label={\`حذف \${keyword}\`} className="flex h-4 w-4 items-center justify-center rounded-full hover:bg-white"><X size={12}/></button>
+                      </span>
+                    ))}
+                  </div>
                 )}
+                <div className="flex items-center gap-2">
+                  <input id="publishing-story-keyword" value={automationKeywordDraft} onChange={event => setAutomationKeywordDraft(event.target.value)} onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); const value = automationKeywordDraft.trim(); const current = keywords.split(",").map(item => item.trim()).filter(Boolean); if (value && !current.includes(value)) setKeywords(current.concat(value).join(",")); setAutomationKeywordDraft(""); } }} placeholder="مثلاً قیمت، اطلاعات" inputMode="text" className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-3 !text-base leading-5 text-[#0F172A] outline-none placeholder:text-xs placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10" style={{fontSize:"16px",lineHeight:1.75,WebkitTextSizeAdjust:"100%"}}/>
+                  <Button type="button" onClick={() => { const value = automationKeywordDraft.trim(); const current = keywords.split(",").map(item => item.trim()).filter(Boolean); if (value && !current.includes(value)) setKeywords(current.concat(value).join(",")); setAutomationKeywordDraft(""); }} disabled={!automationKeywordDraft.trim() || keywords.split(",").map(item => item.trim()).filter(Boolean).includes(automationKeywordDraft.trim())} className="min-h-11 shrink-0 rounded-lg !bg-[#2563EB] px-3.5 text-xs font-semibold text-white hover:!bg-[#1D4ED8] disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8]">افزودن</Button>
+                </div>
               </div>
 
               <PublishingStoryAutomationSetup
@@ -1204,6 +1194,25 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                 loadingResources={loadingResources}
                 onUpdate={(patch) => updateMessage(0, patch)}
               />
+
+              <div>
+                <label className="mb-2 block text-sm font-bold text-[#0F172A]">لایک ریپلای <span className="font-medium text-[#2563EB]">(اختیاری)</span></label>
+                <label className="flex min-h-12 cursor-pointer items-center justify-between gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5">
+                  <span className="text-sm font-medium text-[#334155]">لایک کردن Reply استوری</span>
+                  <Checkbox checked={likeStoryReply} onCheckedChange={v=>setLikeStoryReply(Boolean(v))}/>
+                </label>
+              </div>
+
+              <div>
+                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5">
+                  <input type="checkbox" checked={requireFollow} onChange={event => setRequireFollow(event.target.checked)} className="mt-0.5 h-4 w-4 accent-[#2563EB]"/>
+                  <span><span className="block text-sm font-bold text-[#0F172A]">اجبار به فالو <span className="font-medium text-[#2563EB]">(اختیاری)</span></span><span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، کاربر باید پیج را فالو کرده باشد تا پاسخ را دریافت کند.</span></span>
+                </label>
+                {requireFollow && <div className="mt-2.5">
+                  <label htmlFor="publishing-follow-gate-text" className="mb-2 block text-sm font-bold text-[#0F172A]">متن درخواست فالو</label>
+                  <textarea id="publishing-follow-gate-text" value={followGateText} onChange={event => setFollowGateText(event.target.value)} rows={2} maxLength={500} inputMode="text" placeholder="مثلاً برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none placeholder:text-xs focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{fontSize:"16px",lineHeight:1.75,WebkitTextSizeAdjust:"100%"}}/>
+                </div>}
+              </div>
 
               {error && <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-5 text-[#B91C1C]" role="alert">{error}</div>}
             </section>
