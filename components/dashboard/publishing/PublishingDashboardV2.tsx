@@ -224,7 +224,7 @@ function ProgressBar({ progress }: { progress: number }) {
 }
 function UploadSuccessMark() {
   return <svg viewBox="0 0 24 24" className="inline-block h-8 w-8 shrink-0 text-[#16A34A]" aria-hidden="true">
-    <path d="m4 12.5 5 5L20 6" pathLength="100" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="upload-check-path"/>
+    <path d="m4 12.5 5 5L20 6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>;
 }
 function UploadArea({ id, accept, multiple, disabled, isDragging, setIsDragging, uploading, uploadSuccess, uploadProgress, onChange, onDrop, onCancelUpload, title }: any) {
@@ -869,7 +869,6 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
   return (
     <>
-      <style>{`@keyframes draw-check { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } } .upload-check-path { stroke-dasharray: 100; stroke-dashoffset: 100; animation: draw-check 850ms cubic-bezier(.22,.61,.36,1) forwards; }`}</style>
       <div dir="rtl" className={["bg-[#F8FAFC] px-3 py-4 sm:px-5 sm:py-6 lg:px-8", !selectionConfirmed ? "pb-8" : "pb-8"].join(" ")}>
       <div className="mx-auto w-full max-w-6xl">
         <div className={["transition-all duration-300 ease-out", stepVisible ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0"].join(" ")}>
