@@ -14,6 +14,7 @@ type Props = {
   instagramAccountId: string;
   onUpdate: (patch: Partial<MessageDraft>) => void;
   onSavedChange?: (saved: boolean) => void;
+  keywordValid: boolean;
 };
 
 type ResponseType = "TEXT" | "AUDIO" | "SHOWCASE" | "IMAGE" | "VIDEO" | "FORM";
@@ -33,7 +34,7 @@ function createSlide(): ShowcaseSlide {
   return { id: `slide_${crypto.randomUUID()}`, title: "", description: "", imageUrl: "", previewUrl: "" };
 }
 
-export default function PublishingStoryAutomationSetup({ message, showcases, forms, loadingResources, instagramAccountId, onUpdate, onSavedChange }: Props) {
+export default function PublishingStoryAutomationSetup({ message, showcases, forms, loadingResources, instagramAccountId, onUpdate, onSavedChange, keywordValid }: Props) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
@@ -380,10 +381,10 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
             {!message.showcaseId && (
               <button
                 type="button"
-                disabled={savingShowcase || !hasValidSlide || Object.values(slideUploading).some(Boolean)}
-                aria-disabled={savingShowcase || !hasValidSlide || Object.values(slideUploading).some(Boolean)}
+                disabled={!keywordValid || savingShowcase || !hasValidSlide || Object.values(slideUploading).some(Boolean)}
+                aria-disabled={!keywordValid || savingShowcase || !hasValidSlide || Object.values(slideUploading).some(Boolean)}
                 onClick={() => {
-                  if (savingShowcase || saveShowcaseLockRef.current || !hasValidSlide || Object.values(slideUploading).some(Boolean)) return;
+                  if (!keywordValid || savingShowcase || saveShowcaseLockRef.current || !hasValidSlide || Object.values(slideUploading).some(Boolean)) return;
                   void saveShowcase();
                 }}
                 className={[
@@ -435,7 +436,7 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
           }}
         />
         <div className="space-y-2 pt-2">
-          {!formSaved ? <button type="button" disabled={formSaving || !isValidStoryForm(message.text, message.quickReplies)} onClick={() => { if (formSaving || !isValidStoryForm(message.text, message.quickReplies)) return; setFormSaving(true); onUpdate({ text: message.text.trim(), quickReplies: message.quickReplies }); setFormSaved(true); setFormSaving(false); }} className="w-full rounded-xl bg-[#2563EB] py-2.5 text-xs font-bold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40">{formSaving ? "در حال ذخیره و اتصال فرم..." : "ذخیره و اتصال فرم"}</button> : <div className="space-y-2"><p className="rounded-xl border border-[#BBF7D0] bg-[#F0FDF4] px-3.5 py-3 text-xs font-semibold text-[#166534]">فرم ذخیره شد و به پاسخ متصل شد.</p><button type="button" onClick={() => { setFormSaved(false); onUpdate({ text: "", quickReplies: [] }); }} className="text-xs font-bold text-[#DC2626] transition hover:text-[#B91C1C]">حذف فرم ساخته‌شده</button></div>}
+          {!formSaved ? <button type="button" disabled={!keywordValid || formSaving || !isValidStoryForm(message.text, message.quickReplies)} onClick={() => { if (!keywordValid || formSaving || !isValidStoryForm(message.text, message.quickReplies)) return; setFormSaving(true); onUpdate({ text: message.text.trim(), quickReplies: message.quickReplies }); setFormSaved(true); setFormSaving(false); }} className="w-full rounded-xl bg-[#2563EB] py-2.5 text-xs font-bold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40">{formSaving ? "در حال ذخیره و اتصال فرم..." : "ذخیره و اتصال فرم"}</button> : <div className="space-y-2"><p className="rounded-xl border border-[#BBF7D0] bg-[#F0FDF4] px-3.5 py-3 text-xs font-semibold text-[#166534]">فرم ذخیره شد و به پاسخ متصل شد.</p><button type="button" onClick={() => { setFormSaved(false); onUpdate({ text: "", quickReplies: [] }); }} className="text-xs font-bold text-[#DC2626] transition hover:text-[#B91C1C]">حذف فرم ساخته‌شده</button></div>}
         </div>
         </div>
       )}
