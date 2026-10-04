@@ -1,7 +1,7 @@
 "use client";
 
 import { Select, Textarea } from "@/components/dashboard/DashboardUI";
-import { ImagePlus, Mic, Video, Store, ClipboardList, MessageSquareText } from "lucide-react";
+import { ImagePlus, Mic, Video, Store, ClipboardList, MessageSquareText, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { FormItem, MessageDraft, Showcase } from "../automation-form-utils";
 
