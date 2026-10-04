@@ -129,7 +129,7 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
     setSavingShowcase(true);
     setError("");
     try {
-      const response = await fetch(\`/api/showcases/\${message.showcaseId}\`, { method: "DELETE" });
+      const response = await fetch(`/api/showcases/${message.showcaseId}`, { method: "DELETE" });
       const result = await response.json().catch(() => null);
       if (!response.ok || result?.error) throw new Error(result?.error || result?.message || "حذف ویترین ناموفق بود.");
       onUpdate({ showcaseId: "" });
@@ -173,6 +173,7 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
         const itemResult = await itemResponse.json().catch(() => null);
         if (!itemResponse.ok || itemResult?.error) throw new Error(itemResult?.error || itemResult?.message || `ساخت اسلاید ${index + 1} ناموفق بود.`);
       }
+      setSlides((current) => current.map((slide) => ({ ...slide })));
       onUpdate({ showcaseId: created.id });
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "ساخت ویترین ناموفق بود.");
