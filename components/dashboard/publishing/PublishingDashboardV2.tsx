@@ -1388,7 +1388,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             </section>
           </div>
         ) : null
-        )}
+        }
         </div>
         </div>
       {selectionConfirmed&&captionStepConfirmed&&type==="STORY"&&automationChoiceConfirmed&&(!automationEnabled||automationSetupConfirmed)&&!loading&&uploadedMedia.length>0&&<div className="fixed inset-x-3 z-40 rounded-2xl border border-[#E2E8F0] bg-white/95 p-2.5 shadow-lg backdrop-blur sm:hidden"><div className="grid grid-cols-2 gap-2"><Button type="button" disabled={!canPublish||publishing} onClick={()=>void createJob(true)} className="min-h-11 rounded-xl bg-[#2563EB] px-3 text-xs font-semibold text-white disabled:opacity-50"><span dir="rtl" className="inline-flex items-center gap-2">{publishing?<Loader2 size={16} className="animate-spin"/>:<Send size={16}/>}<span>انتشار الآن</span></span></Button><Button type="button" disabled={!canPublish||publishing} onClick={()=>void createJob(false)} className="min-h-11 rounded-xl border border-[#E2E8F0] bg-white px-3 text-xs font-semibold text-[#334155] disabled:opacity-50"><span dir="rtl" className="inline-flex items-center gap-2"><CalendarClock size={16}/><span>زمان‌بندی</span></span></Button></div></div>}
