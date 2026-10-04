@@ -198,8 +198,6 @@ async function sendLegacyForm({ instagramAccountId, tenantId, instagramUserId, r
     instagramAccountId,
     tenantId,
     instagramUserId,
-    recipientId,
-    commentId,
     accessToken,
     body: {
       recipient: commentId ? { comment_id: commentId } : { id: recipientId },
@@ -296,7 +294,7 @@ export async function sendAutomationMessage(payload: AutomationMessagePayload): 
     if (!message.mediaUrl && !message.mediaId) throw new Error(`${message.messageType} requires mediaUrl or mediaId`);
     const type = message.messageType.toLowerCase();
     const attachmentPayload = message.mediaId ? { attachment_id: message.mediaId } : { url: message.mediaUrl };
-    const result = await callInstagramMessagesApi({ instagramAccountId, tenantId, instagramUserId, recipientId, commentId: payload.commentId, accessToken, body: {
+    const result = await callInstagramMessagesApi({ instagramAccountId, tenantId, instagramUserId, accessToken, body: {
         recipient: payload.commentId ? { comment_id: payload.commentId } : { id: recipientId },
         ...(payload.commentId ? {} : { messaging_type: "RESPONSE" }),
         message: { attachment: { type, payload: attachmentPayload } },
