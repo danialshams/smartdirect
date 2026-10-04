@@ -201,6 +201,7 @@ export async function POST(
     const destinationMediaId = normalizeString(body.destinationMediaId) || null;
     const destinationQuestion = normalizeString(body.destinationQuestion ?? body.question) || null;
     const destinationQuickReplies = Array.isArray(body.destinationQuickReplies) ? body.destinationQuickReplies : [];
+    const isExit = body.isExit === true;
     const debugClientState = body._debugClientState ?? null;
 
     console.log("[AUTOMATION_FORM_DEBUG] quick-reply-api-received", JSON.stringify({
@@ -214,6 +215,7 @@ export async function POST(
     }));
 
     if (!destinationType) return NextResponse.json({ success: false, error: "نوع مقصد پاسخ الزامی است" }, { status: 400 });
+    if (isExit && destinationType !== "TEXT") return NextResponse.json({ success: false, error: "خروج از فرم فقط می‌تواند یک پیام متنی ارسال کند." }, { status: 400 });
     if (destinationType === "TEXT" && !destinationText) return NextResponse.json({ success: false, error: "متن مقصد الزامی است" }, { status: 400 });
     if (destinationType === "FORM" && !destinationQuestion) {
       console.error("[AUTOMATION_FORM_DEBUG] missing-destination-question", JSON.stringify({
@@ -227,6 +229,36 @@ export async function POST(
       return NextResponse.json({ success: false, error: "سؤال بعدی را وارد کنید." }, { status: 400 });
     }
     if (destinationType === "FORM" && destinationQuickReplies.length === 0) return NextResponse.json({ success: false, error: "برای سؤال بعدی حداقل یک جواب اضافه کنید." }, { status: 400 });
+
+    const validateDestinationTree = (nodes: unknown[], path = "مقصد") => {
+      if (nodes.length > MAX_QUICK_REPLIES) throw new Error(`${path} حداکثر ${MAX_QUICK_REPLIES} گزینه می‌تواند داشته باشد`);
+      const payloads = new Set<string>();
+      for (let index = 0; index < nodes.length; index += 1) {
+        const node = nodes[index];
+        if (!node || typeof node !== "object") throw new Error(`${path} گزینه ${index + 1} نامعتبر است`);
+        const item = node as Record<string, unknown>;
+        const nodeTitle = normalizeString(item.title);
+        const nodePayload = normalizeString(item.payload);
+        const nodeType = ["TEXT", "FORM", "SHOWCASE", "IMAGE", "VIDEO", "AUDIO"].includes(String(item.destinationType ?? item.type)) ? String(item.destinationType ?? item.type) : "";
+        const nodeExit = item.isExit === true;
+        if (!nodeTitle || nodeTitle.length > MAX_TITLE_LENGTH) throw new Error(`${path} عنوان گزینه ${index + 1} باید بین ۱ تا ${MAX_TITLE_LENGTH} کاراکتر باشد`);
+        if (!nodePayload) throw new Error(`${path} گزینه ${index + 1} باید payload داشته باشد`);
+        if (payloads.has(nodePayload)) throw new Error(`${path} دارای payload تکراری است`);
+        payloads.add(nodePayload);
+        if (!nodeType) throw new Error(`${path} مقصد گزینه ${index + 1} نامعتبر است`);
+        if (nodeExit && nodeType !== "TEXT") throw new Error("خروج از فرم فقط می‌تواند مقصد متنی داشته باشد.");
+        const nodeText = normalizeString(item.destinationText ?? item.text);
+        if ((nodeType === "TEXT" || nodeExit) && !nodeText) throw new Error(`${path} متن مقصد گزینه ${index + 1} الزامی است`);
+        if (nodeType === "FORM") {
+          const children = Array.isArray(item.destinationQuickReplies) ? item.destinationQuickReplies : Array.isArray(item.quickReplies) ? item.quickReplies : [];
+          if (!normalizeString(item.destinationQuestion ?? item.question)) throw new Error(`${path} سؤال مقصد گزینه ${index + 1} الزامی است`);
+          if (!children.length) throw new Error(`${path} فرم مقصد گزینه ${index + 1} باید حداقل یک گزینه داشته باشد`);
+          validateDestinationTree(children, `${path} گزینه ${index + 1}`);
+        }
+      }
+    };
+
+    if (destinationType === "FORM") validateDestinationTree(destinationQuickReplies, "فرم مقصد");
     if (destinationType === "SHOWCASE" && !destinationShowcaseId) return NextResponse.json({ success: false, error: "ویترین مقصد الزامی است" }, { status: 400 });
     if (["IMAGE", "VIDEO", "AUDIO"].includes(destinationType) && !destinationMediaUrl && !destinationMediaId) return NextResponse.json({ success: false, error: "فایل مقصد الزامی است" }, { status: 400 });
 
@@ -330,6 +362,7 @@ export async function POST(
 
         replyText: JSON.stringify({
           type: destinationType,
+          isExit,
           text: destinationText,
           formId: destinationFormId,
           showcaseId: destinationShowcaseId,
