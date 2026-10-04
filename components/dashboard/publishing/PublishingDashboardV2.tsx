@@ -1167,14 +1167,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
                 <ArrowRight size={15} strokeWidth={2}/>بازگشت
               </Button>
-              <Button
-                type="button"
-                onClick={() => { setAutomationSetupConfirmed(true); setError(""); }}
-                disabled={!keywords.trim() || !storyResponseSaved}
-                className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB] disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                مرحله بعد <ArrowLeft size={15} strokeWidth={2}/>
-              </Button>
+
             </div>
 
             <section className="space-y-5 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
@@ -1245,9 +1238,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
                 <ArrowRight size={15} strokeWidth={2}/>بازگشت
               </Button>
-              <Button type="button" onClick={() => { setAutomationSetupConfirmed(true); setError(""); }} disabled={automationKeywords.length === 0 || !publishingCommentReplyText.trim()} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB] disabled:cursor-not-allowed disabled:opacity-40">
-                مرحله بعد <ArrowLeft size={15} strokeWidth={2}/>
-              </Button>
+
             </div>
             <section className="space-y-5 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
               <div className="flex items-start gap-3">
@@ -1288,6 +1279,10 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   <textarea id="publishing-follow-gate-text" value={followGateText} onChange={event => setFollowGateText(event.target.value)} rows={2} maxLength={500} inputMode="text" placeholder="مثلاً برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none placeholder:text-xs focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{fontSize:"16px",lineHeight:1.75,WebkitTextSizeAdjust:"100%"}}/>
                 </div>}
               </div>
+              <div className="border-t border-[#E2E8F0] pt-4">
+                <Button type="button" onClick={() => { if (!automationKeywords.length || !publishingCommentReplyText.trim()) return; setAutomationSetupConfirmed(true); setError(""); }} disabled={automationKeywords.length === 0 || !publishingCommentReplyText.trim()} className="w-full min-h-11 rounded-xl bg-[#2563EB] px-4 text-sm font-bold text-white hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-40">ذخیره متن و ادامه</Button>
+              </div>
+
               {error && <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-5 text-[#B91C1C]" role="alert">{error}</div>}
             </section>
           </div>
