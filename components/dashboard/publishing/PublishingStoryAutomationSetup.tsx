@@ -3,7 +3,8 @@
 import { Button, Select } from "@/components/dashboard/DashboardUI";
 import { ImagePlus, Mic, Video, Store, ClipboardList, MessageSquareText, Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import type { FormItem, MessageDraft, Showcase } from "../automation-form-utils";
+import type { FormItem, MessageDraft, QuickReplyDraft, Showcase } from "../automation-form-utils";
+import { createEmptyQuickReply } from "../automation-form-utils";
 
 type Props = {
   message: MessageDraft;
@@ -407,26 +408,78 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
       )}
 
       {responseType === "FORM" && (
-        <div className="space-y-3">
-          <div>
-            <label className="mb-2 block text-sm font-bold text-[#0F172A]">انتخاب فرم</label>
-            <Select
-              value={message.formId}
-              disabled={loadingResources}
-              onChange={(event) => onUpdate({ formId: event.target.value })}
-              className="w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 text-sm outline-none"
-            >
-              <option value="">{loadingResources ? "در حال دریافت فرم‌ها..." : "فرم را انتخاب کن"}</option>
-              {forms.map((form: any) => <option key={form.id} value={form.id}>{form.title || form.name || "فرم بدون عنوان"}</option>)}
-            </Select>
-          </div>
-          <p className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 text-[10px] leading-5 text-[#64748B]">
-            ساختار فرم و شاخه‌های تو‌در‌تو از همان منطق فرم موجود استفاده می‌کند؛ اینجا فقط فرم پاسخ را انتخاب می‌کنیم.
-          </p>
-        </div>
+        <StoryFormBuilder
+          message={message}
+          showcases={showcases}
+          forms={forms}
+          loadingResources={loadingResources}
+          onUpdate={onUpdate}
+          onUploadMedia={async (file) => {
+            if (!file) return "";
+            const data = new FormData();
+            data.append("file", file);
+            const response = await fetch("/api/instagram/publishing/upload", { method: "POST", body: data });
+            const result = await response.json().catch(() => null);
+            if (!response.ok || !result?.success || typeof result?.data?.publicUrl !== "string") throw new Error(result?.message || "آپلود فایل ناموفق بود.");
+            return result.data.publicUrl as string;
+          }}
+        />
       )}
 
       {error && <p className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-2.5 text-xs text-[#B91C1C]">{error}</p>}
     </div>
   );
+}
+
+type StoryFormBuilderProps = { message: MessageDraft; showcases: Showcase[]; forms: FormItem[]; loadingResources: boolean; onUpdate: (patch: Partial<MessageDraft>) => void; onUploadMedia: (file?: File) => Promise<string>; };
+const FORM_MAX_OPTIONS = 13;
+const FORM_MEDIA_TYPES = ["IMAGE", "VIDEO", "AUDIO"] as const;
+
+function StoryFormBuilder({ message, showcases, forms, loadingResources, onUpdate, onUploadMedia }: StoryFormBuilderProps) {
+  return <FormBranchEditor title="فرم" question={message.text} replies={message.quickReplies} showcases={showcases} forms={forms} loadingResources={loadingResources}
+    onChange={(patch) => onUpdate({ ...(patch.question !== undefined ? { text: patch.question } : {}), ...(patch.replies !== undefined ? { quickReplies: patch.replies } : {}) })}
+    onUploadMedia={onUploadMedia} />;
+}
+
+type BranchProps = { title: string; question: string; replies: QuickReplyDraft[]; showcases: Showcase[]; forms: FormItem[]; loadingResources: boolean; onChange: (patch: { question?: string; replies?: QuickReplyDraft[] }) => void; onUploadMedia: (file?: File) => Promise<string>; level?: number; };
+
+function FormBranchEditor({ title, question, replies, showcases, forms, loadingResources, onChange, onUploadMedia, level = 0 }: BranchProps) {
+  const exitReply = replies.find((reply) => reply.isExit);
+  const optionReplies = replies.filter((reply) => !reply.isExit);
+  const updateReply = (id: string, patch: Partial<QuickReplyDraft>) => onChange({ replies: replies.map((reply) => reply.id === id ? { ...reply, ...patch } : reply) });
+  const removeReply = (id: string) => onChange({ replies: replies.filter((reply) => reply.id !== id) });
+  const addReply = () => { if (replies.length < FORM_MAX_OPTIONS) onChange({ replies: [...replies, createEmptyQuickReply()] }); };
+  const enableExit = () => { if (!exitReply && replies.length < FORM_MAX_OPTIONS) { const exit = createEmptyQuickReply(); onChange({ replies: [...replies, { ...exit, isExit: true, title: "خروج از فرم", destinationType: "TEXT", destinationText: "از فرم خارج شدید." }] }); } };
+  const disableExit = () => onChange({ replies: replies.filter((reply) => !reply.isExit) });
+  return (
+    <div className={["space-y-4", level > 0 ? "rounded-2xl border border-[#DBEAFE] bg-[#F8FAFC] p-3.5" : ""].join(" ")}>
+      <div><p className="text-sm font-bold text-[#0F172A]">{level > 0 ? "فرم مقصد" : "فرم"}</p><p className="mt-1 text-[11px] leading-5 text-[#64748B]">متن ورودیه فرم را بنویس و برای هر گزینه مشخص کن کاربر به کدام پاسخ هدایت شود.</p></div>
+      <div><label className="mb-2 block text-sm font-bold text-[#0F172A]">متن ورودیه</label><textarea value={question} onChange={(e) => onChange({ question: e.target.value })} rows={4} maxLength={2000} placeholder="متن اولیه فرم را وارد کن..." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{fontSize:"16px",lineHeight:1.75,WebkitTextSizeAdjust:"100%"}} /></div>
+      <div className="space-y-3">
+        <div className="flex items-center justify-between gap-3"><div><p className="text-sm font-bold text-[#0F172A]">گزینه‌ها</p><p className="mt-1 text-[10px] text-[#64748B]">حداکثر ۱۳ گزینه در هر مرحله.</p></div><span className="rounded-full bg-[#EFF6FF] px-2.5 py-1 text-[10px] font-bold text-[#2563EB]">{optionReplies.length} / {FORM_MAX_OPTIONS - (exitReply ? 1 : 0)}</span></div>
+        {optionReplies.map((reply,index) => <FormOptionEditor key={reply.id} reply={reply} index={index} showcases={showcases} forms={forms} loadingResources={loadingResources} onChange={(patch) => updateReply(reply.id, patch)} onRemove={() => removeReply(reply.id)} onUploadMedia={onUploadMedia} />)}
+        <button type="button" disabled={replies.length >= FORM_MAX_OPTIONS} onClick={addReply} className="inline-flex items-center gap-1.5 text-sm font-bold text-[#2563EB] disabled:cursor-not-allowed disabled:opacity-40"><Plus size={16} strokeWidth={2.5}/> افزودن گزینه</button>
+      </div>
+      <div className="rounded-2xl border border-[#E2E8F0] bg-white p-3.5"><div className="flex items-start justify-between gap-3"><div><p className="text-sm font-bold text-[#0F172A]">خروج از فرم</p><p className="mt-1 text-[10px] leading-5 text-[#64748B]">کاربر با زدن این گزینه از شاخه فرم خارج می‌شود و پیام خروج را دریافت می‌کند.</p></div>{!exitReply && <button type="button" onClick={enableExit} disabled={replies.length >= FORM_MAX_OPTIONS} className="shrink-0 rounded-lg bg-[#F1F5F9] px-3 py-2 text-[11px] font-bold text-[#334155] disabled:opacity-40">افزودن</button>}</div>
+        {exitReply && <div className="mt-3 space-y-3"><div><label className="mb-2 block text-xs font-bold text-[#0F172A]">متن دکمه خروج</label><input value={exitReply.title} maxLength={20} onChange={(e) => updateReply(exitReply.id,{title:e.target.value})} className="w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{fontSize:"16px",WebkitTextSizeAdjust:"100%"}} /></div><div><label className="mb-2 block text-xs font-bold text-[#0F172A]">متن خروج از فرم</label><textarea value={exitReply.destinationText} rows={3} maxLength={2000} onChange={(e) => updateReply(exitReply.id,{destinationText:e.target.value})} className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{fontSize:"16px",lineHeight:1.75,WebkitTextSizeAdjust:"100%"}} /></div><button type="button" onClick={disableExit} className="text-xs font-bold text-[#DC2626]">حذف گزینه خروج</button></div>}
+      </div>
+    </div>
+  );
+}
+
+function FormOptionEditor({ reply, index, showcases, forms, loadingResources, onChange, onRemove, onUploadMedia }: { reply: QuickReplyDraft; index: number; showcases: Showcase[]; forms: FormItem[]; loadingResources: boolean; onChange: (patch: Partial<QuickReplyDraft>) => void; onRemove: () => void; onUploadMedia: (file?: File) => Promise<string>; }) {
+  const [uploading, setUploading] = useState(false);
+  const destinationType = reply.destinationType;
+  async function upload(type: typeof FORM_MEDIA_TYPES[number], file?: File) { if (!file) return; setUploading(true); try { const url = await onUploadMedia(file); onChange({destinationType:type,destinationMediaUrl:url,destinationMediaId:""}); } finally { setUploading(false); } }
+  function selectDestination(value: QuickReplyDraft["destinationType"]) { onChange({destinationType:value,destinationText:value==="TEXT"?reply.destinationText:"",destinationFormId:value==="FORM"?reply.destinationFormId:"",destinationShowcaseId:value==="SHOWCASE"?reply.destinationShowcaseId:"",destinationMediaUrl:FORM_MEDIA_TYPES.includes(value as typeof FORM_MEDIA_TYPES[number])?reply.destinationMediaUrl:"",destinationMediaId:FORM_MEDIA_TYPES.includes(value as typeof FORM_MEDIA_TYPES[number])?reply.destinationMediaId:"",destinationQuestion:value==="FORM"?reply.destinationQuestion:"",destinationQuickReplies:value==="FORM"?(reply.destinationQuickReplies.length?reply.destinationQuickReplies:[createEmptyQuickReply()]):[]}); }
+  return <div className="space-y-3 rounded-2xl border border-[#E2E8F0] bg-white p-3.5">
+    <div className="flex items-center justify-between gap-3"><p className="text-xs font-bold text-[#0F172A]">گزینه {index+1}</p><button type="button" onClick={onRemove} className="text-[11px] font-bold text-[#DC2626]">حذف</button></div>
+    <input value={reply.title} maxLength={20} onChange={(e)=>onChange({title:e.target.value})} placeholder="نام گزینه را وارد کن..." className="w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{fontSize:"16px",WebkitTextSizeAdjust:"100%"}} />
+    <div><label className="mb-2 block text-xs font-bold text-[#0F172A]">کاربر هدایت شود به:</label><Select value={destinationType ?? ""} onChange={(e)=>selectDestination((e.target.value||null) as QuickReplyDraft["destinationType"])} className="w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 text-sm outline-none"><option value="">انتخاب مقصد</option><option value="TEXT">متن</option><option value="AUDIO">وویس</option><option value="IMAGE">عکس</option><option value="VIDEO">فیلم</option><option value="SHOWCASE">ویترین</option><option value="FORM">فرم جدید</option></Select></div>
+    {destinationType==="TEXT" && <textarea value={reply.destinationText} onChange={(e)=>onChange({destinationText:e.target.value})} rows={4} maxLength={2000} placeholder="متن پاسخ این گزینه..." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{fontSize:"16px",lineHeight:1.75,WebkitTextSizeAdjust:"100%"}} />}
+    {destinationType==="SHOWCASE" && <Select value={reply.destinationShowcaseId} disabled={loadingResources} onChange={(e)=>onChange({destinationShowcaseId:e.target.value})} className="w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 text-sm outline-none"><option value="">{loadingResources?"در حال دریافت ویترین‌ها...":"ویترین را انتخاب کن"}</option>{showcases.map((s)=><option key={s.id} value={s.id}>{s.title}</option>)}</Select>}
+    {destinationType==="FORM" && <FormBranchEditor title="فرم مقصد" question={reply.destinationQuestion} replies={reply.destinationQuickReplies} showcases={showcases} forms={forms} loadingResources={loadingResources} onChange={(patch)=>onChange({...(patch.question!==undefined?{destinationQuestion:patch.question}:{}),...(patch.replies!==undefined?{destinationQuickReplies:patch.replies}:{})})} onUploadMedia={onUploadMedia} level={1} />}
+    {FORM_MEDIA_TYPES.includes(destinationType as typeof FORM_MEDIA_TYPES[number]) && <label className={["flex min-h-24 cursor-pointer items-center justify-center rounded-xl border-2 border-dashed bg-[#F8FAFC] text-center",uploading?"pointer-events-none opacity-60":"hover:border-[#93C5FD] hover:bg-[#EFF6FF]"].join(" ")}><span className="text-xs font-bold text-[#2563EB]">{uploading?"در حال آپلود...":reply.destinationMediaUrl?"تعویض فایل":"انتخاب فایل"}</span><input type="file" accept={destinationType==="IMAGE"?"image/*":destinationType==="VIDEO"?"video/*":"audio/*"} disabled={uploading} className="hidden" onChange={(e)=>{const file=e.currentTarget.files?.[0];e.currentTarget.value="";void upload(destinationType as typeof FORM_MEDIA_TYPES[number],file)}} /></label>}
+    {reply.destinationMediaUrl && <p className="truncate rounded-lg bg-[#F0FDF4] px-3 py-2 text-[10px] text-[#166534]" dir="ltr">{reply.destinationMediaUrl}</p>}
+  </div>;
 }
