@@ -167,6 +167,17 @@ export async function POST(
       );
     }
 
+    const existingItemCount = await prisma.showcaseItem.count({
+      where: { showcaseId: id },
+    });
+
+    if (existingItemCount >= 10) {
+      return NextResponse.json(
+        { error: "هر ویترین حداکثر می‌تواند ۱۰ اسلاید داشته باشد." },
+        { status: 400 },
+      );
+    }
+
     const body = await request.json();
 
     const {
