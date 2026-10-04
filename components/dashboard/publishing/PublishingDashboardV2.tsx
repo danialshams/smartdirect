@@ -469,6 +469,12 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     const runId = ++uploadRunRef.current;
     try {
       setUploading(true); setUploadSuccess(false); setError(""); setUploadProgress(0);
+      // The Blob SDK may not emit intermediate progress events for small, non-multipart uploads.
+      // Keep the bar moving as an estimate, while real progress events can advance it faster.
+      if (uploadProgressTimerRef.current !== null) window.clearInterval(uploadProgressTimerRef.current);
+      uploadProgressTimerRef.current = window.setInterval(() => {
+        setUploadProgress((current) => current >= 90 ? current : Math.min(90, current + (current < 30 ? 2 : 1)));
+      }, 250);
       const totalBytes = items.reduce((sum,item)=>sum+item.file.size,0);
       let completedBytes=0; const results: UploadedMedia[]=[];
       // Each carousel file is uploaded serially, preserving slide order.
@@ -611,6 +617,52 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
   async function createAutomation(): Promise<string> {
     if (!selectedAccountId) throw new Error("اکانت فعال Instagram پیدا نشد.");
+
+    // Publishing automations use the compact stage-6 setup for POST/REEL/CAROUSEL.
+    if (type !== "STORY") {
+      const normalizedKeywords = automationKeywords.map((keyword) => keyword.trim()).filter(Boolean);
+      if (!normalizedKeywords.length) throw new Error("حداقل یک کلمه کلیدی اضافه کن.");
+      if (requireFollow && !followGateText.trim()) throw new Error("متن درخواست فالو را وارد کن.");
+
+      const automationResponse = await fetch("/api/automations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          instagramAccountId: selectedAccountId,
+          triggerType: "COMMENT_KEYWORD",
+          keyword: normalizedKeywords.join(","),
+          mediaId: `pending:${crypto.randomUUID()}`,
+          commentReplyText: null,
+          sendDm: Boolean(directMessageText.trim()),
+          requireFollow,
+          followGateText: requireFollow ? followGateText.trim() : null,
+          isActive: true,
+        }),
+      });
+      const automationResult = await automationResponse.json();
+      if (!automationResponse.ok || !automationResult.success) {
+        throw new Error(automationResult.error || "ساخت پاسخ خودکار ناموفق بود.");
+      }
+
+      const automationId = automationResult.data.id as string;
+      if (directMessageText.trim()) {
+        try {
+          const messageResponse = await fetch(`/api/automations/${automationId}/messages`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ messageType: "TEXT", text: directMessageText.trim(), order: 0 }),
+          });
+          const messageResult = await messageResponse.json();
+          if (!messageResponse.ok || !messageResult.success) {
+            throw new Error(messageResult.error || "ذخیره متن دایرکت ناموفق بود.");
+          }
+        } catch (error) {
+          await fetch(`/api/automations/${automationId}`, { method: "DELETE" }).catch(() => undefined);
+          throw error;
+        }
+      }
+      return automationId;
+    }
     if (!keywords.trim()) throw new Error(type === "STORY" ? "حداقل یک کلمه برای Reply استوری وارد کنید." : "حداقل یک کلمه برای کامنت وارد کنید.");
     validateMessages(messages);
     if (requireFollow && !followGateText.trim()) throw new Error("متن Follow Gate را وارد کنید.");
@@ -1077,7 +1129,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               {error && <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-5 text-[#B91C1C]" role="alert">{error}</div>}
             </section>
           </div>
-        ) : type !== "STORY" && automationChoiceConfirmed && !automationEnabled ? (
+        ) : type !== "STORY" && automationChoiceConfirmed && (!automationEnabled || automationSetupConfirmed) ? (
           <div className="mx-auto w-full max-w-2xl">
             <div className="mb-5 flex items-center justify-between gap-3">
               <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
@@ -1086,7 +1138,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             </div>
             <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
               <div className="mb-6 flex items-start gap-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">۶</span>
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">۷</span>
                 <div className="min-w-0">
                   <h2 className="text-sm font-bold text-[#0F172A]">زمان انتشار</h2>
                   <p className="mt-1.5 text-xs leading-5 text-[#64748B]">زمان انتشار این {typeLabels[type]} را انتخاب کن.</p>
