@@ -514,7 +514,6 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       }
     } catch(e) {
       if (uploadRunRef.current !== runId) return;
-      if (uploadProgressTimerRef.current !== null) { window.clearInterval(uploadProgressTimerRef.current); uploadProgressTimerRef.current = null; }
       setUploading(false); setUploadSuccess(false); setError(e instanceof Error?e.message:"آپلود فایل ناموفق بود.");
     }
   }
