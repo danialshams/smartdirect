@@ -1238,7 +1238,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   disabled={!keywords.trim()}
                   className="w-full min-h-11 rounded-xl bg-[#2563EB] px-4 text-sm font-bold text-white hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-40"
                 >
-                  ذخیره پاسخ و ادامه
+                  {`ذخیره ${messages[0]?.messageType === "FORM" ? "فرم" : messages[0]?.messageType === "SHOWCASE" ? "ویترین" : messages[0]?.messageType === "TEXT" ? "متن" : messages[0]?.messageType === "IMAGE" ? "عکس" : messages[0]?.messageType === "VIDEO" ? "فیلم" : "وویس"} و ادامه`}
                 </Button>
               </div>
 
