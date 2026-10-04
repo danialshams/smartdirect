@@ -153,7 +153,7 @@ async function sendShowcase({ instagramAccountId, tenantId, instagramUserId, rec
   if (!showcase.items.length) throw new Error("Showcase has no active items");
   const elements = showcase.items.map((item) => ({
     title: item.title.trim(),
-    ...(item.description?.trim() ? { subtitle: item.description.trim().slice(0, 640) } : {}),
+    ...(item.description?.trim() ? { subtitle: item.description.trim().slice(0, 80) } : {}),
     ...(item.imageUrl?.trim() ? { image_url: item.imageUrl.trim() } : {}),
     ...(item.linkUrl?.trim()
       ? {
@@ -171,6 +171,8 @@ async function sendShowcase({ instagramAccountId, tenantId, instagramUserId, rec
     instagramAccountId,
     tenantId,
     instagramUserId,
+    recipientId,
+    commentId,
     accessToken,
     body: {
       recipient: { id: recipientId },
@@ -198,6 +200,8 @@ async function sendLegacyForm({ instagramAccountId, tenantId, instagramUserId, r
     instagramAccountId,
     tenantId,
     instagramUserId,
+    recipientId,
+    commentId,
     accessToken,
     body: {
       recipient: commentId ? { comment_id: commentId } : { id: recipientId },
@@ -294,7 +298,7 @@ export async function sendAutomationMessage(payload: AutomationMessagePayload): 
     if (!message.mediaUrl && !message.mediaId) throw new Error(`${message.messageType} requires mediaUrl or mediaId`);
     const type = message.messageType.toLowerCase();
     const attachmentPayload = message.mediaId ? { attachment_id: message.mediaId } : { url: message.mediaUrl };
-    const result = await callInstagramMessagesApi({ instagramAccountId, tenantId, instagramUserId, accessToken, body: {
+    const result = await callInstagramMessagesApi({ instagramAccountId, tenantId, instagramUserId, recipientId, commentId: payload.commentId, accessToken, body: {
         recipient: payload.commentId ? { comment_id: payload.commentId } : { id: recipientId },
         ...(payload.commentId ? {} : { messaging_type: "RESPONSE" }),
         message: { attachment: { type, payload: attachmentPayload } },
