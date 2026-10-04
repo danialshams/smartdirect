@@ -1201,12 +1201,28 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
 
 
+              <PublishingStoryAutomationSetup
+                ref={storyAutomationSetupRef}
+                message={messages[0] ?? createEmptyMessage()}
+                showcases={showcases}
+                forms={forms}
+                loadingResources={loadingResources}
+                instagramAccountId={selectedAccountId}
+                onUpdate={(patch) => updateMessage(0, patch)}
+                onSavedChange={setStoryResponseSaved}
+                keywordValid={Boolean(keywords.trim())}
+                onContinue={() => { setAutomationSetupConfirmed(true); setError(""); }}
+              />
+
+
+
               <div>
                 <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5">
                   <input type="checkbox" checked={likeStoryReply} onChange={event => setLikeStoryReply(event.target.checked)} className="mt-0.5 h-4 w-4 accent-[#2563EB]"/>
                   <span><span className="block text-sm font-bold text-[#0F172A]">لایک ریپلای <span className="font-medium text-[#2563EB]">(اختیاری)</span></span><span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، Reply استوری کاربر لایک می‌شود.</span></span>
                 </label>
               </div>
+
 
               <div>
                 <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5">
@@ -1220,17 +1236,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               </div>
 
 
-              <PublishingStoryAutomationSetup
-                message={messages[0] ?? createEmptyMessage()}
-                showcases={showcases}
-                forms={forms}
-                loadingResources={loadingResources}
-                instagramAccountId={selectedAccountId}
-                onUpdate={(patch) => updateMessage(0, patch)}
-                onSavedChange={setStoryResponseSaved}
-                keywordValid={Boolean(keywords.trim())}
-                onContinue={() => { setAutomationSetupConfirmed(true); setError(""); }}
-              />
+
 
               <div className="border-t border-[#E2E8F0] pt-4">
                 <Button
