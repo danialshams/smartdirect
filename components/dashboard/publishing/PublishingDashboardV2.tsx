@@ -261,6 +261,10 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const [tagStepConfirmed, setTagStepConfirmed] = useState(false);
   const [automationChoiceStepStarted, setAutomationChoiceStepStarted] = useState(false);
   const [automationChoiceConfirmed, setAutomationChoiceConfirmed] = useState(false);
+  const [automationSetupConfirmed, setAutomationSetupConfirmed] = useState(false);
+  const [automationKeywordDraft, setAutomationKeywordDraft] = useState("");
+  const [automationKeywords, setAutomationKeywords] = useState<string[]>([]);
+  const [directMessageText, setDirectMessageText] = useState("");
   const [showUploadedMediaPreview, setShowUploadedMediaPreview] = useState(false);
   const [taggedUsersByMedia, setTaggedUsersByMedia] = useState<Record<string, string[]>>({});
   const [tagDraftByMedia, setTagDraftByMedia] = useState<Record<string, string>>({});
@@ -381,12 +385,12 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
   function revokeLocalMedia(items: LocalMedia[]) { items.forEach((item) => URL.revokeObjectURL(item.previewUrl)); }
   function clearLocalMedia() { setMedia((current) => { revokeLocalMedia(current); return []; }); }
-  function resetAutomation() { setAutomationEnabled(false); setKeywords(""); setMessages([createEmptyMessage()]); setCommentReplyText(""); setLikeStoryReply(false); setRequireFollow(false); setFollowGateText("برای دریافت پاسخ، ابتدا پیج را Follow کنید."); }
+  function resetAutomation() { setAutomationEnabled(false); setKeywords(""); setMessages([createEmptyMessage()]); setCommentReplyText(""); setLikeStoryReply(false); setRequireFollow(false); setFollowGateText("برای دریافت پاسخ، ابتدا پیج را Follow کنید."); setAutomationSetupConfirmed(false); setAutomationKeywordDraft(""); setAutomationKeywords([]); setDirectMessageText(""); }
   function animateStepChange(action: () => void) {
     setStepVisible(false);
     window.setTimeout(() => { action(); window.requestAnimationFrame(() => setStepVisible(true)); }, 180);
   }
-  function handleTypeChange(nextType: PublishType) { animateStepChange(() => { clearLocalMedia(); setUploadedMedia([]); setType(nextType); setSelectionConfirmed(true); setCaptionStepConfirmed(false); setTagStepConfirmed(false); setAutomationChoiceStepStarted(false); setAutomationChoiceConfirmed(false); setShowUploadedMediaPreview(false); setTaggedUsersByMedia({}); setTagDraftByMedia({}); setTagInputError(""); onTypeChange?.(nextType); setUploadProgress(0); setUploadSuccess(false); setCaption(""); resetAutomation(); }); }
+  function handleTypeChange(nextType: PublishType) { animateStepChange(() => { clearLocalMedia(); setUploadedMedia([]); setType(nextType); setSelectionConfirmed(true); setCaptionStepConfirmed(false); setTagStepConfirmed(false); setAutomationChoiceStepStarted(false); setAutomationChoiceConfirmed(false); setAutomationSetupConfirmed(false); setAutomationKeywordDraft(""); setAutomationKeywords([]); setDirectMessageText(""); setShowUploadedMediaPreview(false); setTaggedUsersByMedia({}); setTagDraftByMedia({}); setTagInputError(""); onTypeChange?.(nextType); setUploadProgress(0); setUploadSuccess(false); setCaption(""); resetAutomation(); }); }
   function handleBackToTypeSelection() { animateStepChange(() => { clearLocalMedia(); setUploadedMedia([]); setSelectionConfirmed(false); setCaptionStepConfirmed(false); setTagStepConfirmed(false); setAutomationChoiceStepStarted(false); setAutomationChoiceConfirmed(false); setShowUploadedMediaPreview(false); setTaggedUsersByMedia({}); setTagDraftByMedia({}); setTagInputError(""); setUploadProgress(0); setUploadSuccess(false); setCaption(""); resetAutomation(); }); }
   function prepareFiles(files: File[]) {
     if (!files.length || uploading || publishing) return;
@@ -561,6 +565,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   }
   function handlePreviousStep() {
     if (publishing || uploading) return;
+    if (automationSetupConfirmed) { setAutomationSetupConfirmed(false); return; }
     if (automationChoiceConfirmed) { setAutomationChoiceConfirmed(false); return; }
     if (automationChoiceStepStarted) { setAutomationChoiceStepStarted(false); return; }
     if (tagStepConfirmed) { setTagStepConfirmed(false); return; }
@@ -573,6 +578,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     animateStepChange(() => {
       setAutomationEnabled(enabled);
       setAutomationChoiceConfirmed(true);
+      setAutomationSetupConfirmed(false);
       setError("");
     });
   }
@@ -1021,6 +1027,49 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   </div>
                 </button>
               </div>
+            </section>
+          </div>
+        ) : type !== "STORY" && automationChoiceConfirmed && automationEnabled && !automationSetupConfirmed ? (
+          <div className="mx-auto w-full max-w-2xl">
+            <div className="mb-5 flex items-center justify-between gap-3">
+              <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
+                <ArrowRight size={15} strokeWidth={2}/>بازگشت
+              </Button>
+              <Button type="button" onClick={() => { setAutomationSetupConfirmed(true); setError(""); }} disabled={automationKeywords.length === 0} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB] disabled:cursor-not-allowed disabled:opacity-40">
+                مرحله بعد <ArrowLeft size={15} strokeWidth={2}/>
+              </Button>
+            </div>
+            <section className="space-y-5 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
+              <div className="flex items-start gap-3">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">۶</span>
+                <div className="min-w-0">
+                  <h2 className="text-sm font-bold text-[#0F172A]">تنظیم پاسخ خودکار</h2>
+                  <p className="mt-1.5 text-xs leading-5 text-[#64748B]">کلمات فعال‌کننده و متن پیام دایرکت را مشخص کن.</p>
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="publishing-auto-keyword" className="mb-2 block text-sm font-bold text-[#0F172A]">کلمات کلیدی</label>
+                <p className="mb-3 text-xs leading-5 text-[#64748B]">با وارد شدن این کلمات در کامنت، پاسخ خودکار فعال می‌شود.</p>
+                {automationKeywords.length > 0 && <div className="mb-3 flex flex-wrap gap-2">{automationKeywords.map((keyword) => <span key={keyword} className="inline-flex items-center gap-1.5 rounded-full bg-[#EFF6FF] px-3 py-1.5 text-xs font-semibold text-[#2563EB]"><span>{keyword}</span><button type="button" onClick={() => setAutomationKeywords(current => current.filter(item => item !== keyword))} aria-label={`حذف ${keyword}`} className="flex h-4 w-4 items-center justify-center rounded-full hover:bg-white"><X size={12}/></button></span>)}</div>}
+                <div className="flex items-center gap-2">
+                  <input id="publishing-auto-keyword" value={automationKeywordDraft} onChange={event => setAutomationKeywordDraft(event.target.value)} onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); const value = automationKeywordDraft.trim(); if (value && !automationKeywords.includes(value)) setAutomationKeywords(current => [...current, value]); setAutomationKeywordDraft(""); } }} placeholder="مثلاً قیمت، اطلاعات" inputMode="text" className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-3 !text-base leading-5 text-[#0F172A] outline-none placeholder:text-xs placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10" style={{fontSize:"16px",lineHeight:1.75,WebkitTextSizeAdjust:"100%"}}/>
+                  <Button type="button" onClick={() => { const value = automationKeywordDraft.trim(); if (value && !automationKeywords.includes(value)) setAutomationKeywords(current => [...current, value]); setAutomationKeywordDraft(""); }} disabled={!automationKeywordDraft.trim() || automationKeywords.includes(automationKeywordDraft.trim())} className="min-h-11 shrink-0 rounded-lg !bg-[#2563EB] px-3.5 text-xs font-semibold text-white hover:!bg-[#1D4ED8] disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8]">افزودن</Button>
+                </div>
+              </div>
+
+              <div className="border-t border-[#E2E8F0] pt-5">
+                <label htmlFor="publishing-direct-message" className="mb-2 block text-sm font-bold text-[#0F172A]">متن ارسالی در دایرکت <span className="font-medium text-[#2563EB]">(اختیاری)</span></label>
+                <textarea id="publishing-direct-message" value={directMessageText} onChange={event => setDirectMessageText(event.target.value)} rows={4} maxLength={2000} inputMode="text" placeholder="متن پیامی را که می‌خواهی در دایرکت ارسال شود بنویس..." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none placeholder:text-xs focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{fontSize:"16px",lineHeight:1.75,WebkitTextSizeAdjust:"100%"}}/>
+              </div>
+
+              <div className="border-t border-[#E2E8F0] pt-5">
+                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5">
+                  <input type="checkbox" checked={requireFollow} onChange={event => setRequireFollow(event.target.checked)} className="mt-0.5 h-4 w-4 accent-[#2563EB]"/>
+                  <span><span className="block text-sm font-bold text-[#0F172A]">اجبار به فالو <span className="font-medium text-[#2563EB]">(اختیاری)</span></span><span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، کاربر باید پیج را فالو کرده باشد تا پاسخ را دریافت کند.</span></span>
+                </label>
+              </div>
+              {error && <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-5 text-[#B91C1C]" role="alert">{error}</div>}
             </section>
           </div>
         ) : type !== "STORY" && automationChoiceConfirmed && !automationEnabled ? (
