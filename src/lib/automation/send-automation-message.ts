@@ -171,8 +171,6 @@ async function sendShowcase({ instagramAccountId, tenantId, instagramUserId, rec
     instagramAccountId,
     tenantId,
     instagramUserId,
-    recipientId,
-    commentId,
     accessToken,
     body: {
       recipient: { id: recipientId },
