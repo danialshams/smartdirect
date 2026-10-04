@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Select, Textarea } from "@/components/dashboard/DashboardUI";
+import { Button, Select } from "@/components/dashboard/DashboardUI";
 import { ImagePlus, Mic, Video, Store, ClipboardList, MessageSquareText, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { FormItem, MessageDraft, Showcase } from "../automation-form-utils";
@@ -37,6 +37,8 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
   const [error, setError] = useState("");
   const [slides, setSlides] = useState<ShowcaseSlide[]>([createSlide()]);
   const [savingShowcase, setSavingShowcase] = useState(false);
+  const [slideUploadProgress, setSlideUploadProgress] = useState<Record<string, number>>({});
+  const [slideUploading, setSlideUploading] = useState<Record<string, boolean>>({});
 
   const responseType = message.messageType as ResponseType;
 
@@ -108,18 +110,45 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
   async function uploadSlideImage(id: string, file?: File) {
     if (!file) return;
     setError("");
+    setSlideUploadProgress((current) => ({ ...current, [id]: 0 }));
+    setSlideUploading((current) => ({ ...current, [id]: true }));
     const previewUrl = URL.createObjectURL(file);
     patchSlide(id, { previewUrl });
-    try {
+
+    await new Promise<void>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
       const data = new FormData();
       data.append("file", file);
-      const response = await fetch("/api/instagram/publishing/upload", { method: "POST", body: data });
-      const result = await response.json().catch(() => null);
-      if (!response.ok || !result?.success || typeof result?.data?.publicUrl !== "string") throw new Error(result?.message || "آپلود تصویر ناموفق بود.");
-      patchSlide(id, { imageUrl: result.data.publicUrl, previewUrl: result.data.publicUrl });
-    } catch (uploadError) {
+      xhr.open("POST", "/api/instagram/publishing/upload");
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          setSlideUploadProgress((current) => ({
+            ...current,
+            [id]: Math.round((event.loaded / event.total) * 100),
+          }));
+        }
+      };
+      xhr.onerror = () => reject(new Error("آپلود تصویر ناموفق بود."));
+      xhr.onload = () => {
+        try {
+          const result = JSON.parse(xhr.responseText);
+          if (xhr.status < 200 || xhr.status >= 300 || !result?.success || typeof result?.data?.publicUrl !== "string") {
+            reject(new Error(result?.message || "آپلود تصویر ناموفق بود."));
+            return;
+          }
+          setSlideUploadProgress((current) => ({ ...current, [id]: 100 }));
+          patchSlide(id, { imageUrl: result.data.publicUrl, previewUrl: result.data.publicUrl });
+          resolve();
+        } catch {
+          reject(new Error("پاسخ نامعتبر از سرور دریافت شد."));
+        }
+      };
+      xhr.send(data);
+    }).catch((uploadError) => {
       setError(uploadError instanceof Error ? uploadError.message : "آپلود تصویر ناموفق بود.");
-    }
+    }).finally(() => {
+      setSlideUploading((current) => ({ ...current, [id]: false }));
+    });
   }
 
   const hasValidSlide = slides.length > 0 && slides.every((slide) => slide.imageUrl.trim() && slide.title.trim());
@@ -219,11 +248,14 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
       {responseType === "TEXT" && (
         <div>
           <label className="mb-2 block text-sm font-bold text-[#0F172A]">متن پاسخ</label>
-          <Textarea
+          <textarea
             value={message.text}
             onChange={(event) => onUpdate({ text: event.target.value })}
             rows={5}
             maxLength={2000}
+            inputMode="text"
+            autoCapitalize="sentences"
+            spellCheck
             className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10"
             placeholder="متنی که در پاسخ Reply استوری ارسال می‌شود بنویس..."
             style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }}
@@ -272,14 +304,24 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
           <div className="space-y-4">
             {slides.map((slide, index) => (
               <div key={slide.id} className="space-y-3 rounded-2xl border border-[#E2E8F0] bg-white p-4">
-                <p className="text-sm font-bold text-[#0F172A]">اسلاید {index + 1}</p>
-                <label className="flex min-h-44 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-[#CBD5E1] bg-[#F8FAFC] text-center hover:border-[#93C5FD] hover:bg-[#EFF6FF]">
+                <p className="text-center text-sm font-bold text-[#0F172A]">اسلاید {index + 1}</p>
+                <label className="relative flex min-h-44 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-[#CBD5E1] bg-[#F8FAFC] text-center hover:border-[#93C5FD] hover:bg-[#EFF6FF]">
                   {slide.previewUrl ? <img src={slide.previewUrl} alt="" className="h-44 w-full object-cover" /> : <>
                     <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB]"><ImagePlus size={21}/></span>
                     <span className="mt-3 text-xs font-bold text-[#0F172A]">آپلود عکس اسلاید {index + 1}</span>
                     <span className="mt-1 text-[10px] text-[#64748B]">برای انتخاب تصویر کلیک کن</span>
                   </>}
-                  <input type="file" accept="image/*" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; event.currentTarget.value = ""; void uploadSlideImage(slide.id, file); }} />
+                  {slideUploading[slide.id] && (
+                    <div className="absolute inset-x-3 bottom-3 rounded-xl border border-[#DBEAFE] bg-white/95 p-2.5 shadow-sm">
+                      <div className="mb-1.5 flex items-center justify-between text-[10px] font-semibold text-[#2563EB]">
+                        <span>در حال آپلود تصویر...</span><span>{slideUploadProgress[slide.id] ?? 0}٪</span>
+                      </div>
+                      <div className="h-1.5 overflow-hidden rounded-full bg-[#E2E8F0]">
+                        <div className="h-full rounded-full bg-[#2563EB] transition-[width] duration-200" style={{ width: `${slideUploadProgress[slide.id] ?? 0}%` }} />
+                      </div>
+                    </div>
+                  )}
+                  <input type="file" accept="image/*" disabled={slideUploading[slide.id] || savingShowcase || Boolean(message.showcaseId)} className="hidden" onChange={(event) => { const file = event.target.files?.[0]; event.currentTarget.value = ""; void uploadSlideImage(slide.id, file); }} />
                 </label>
                 <div>
                   <label className="mb-2 block text-sm font-bold text-[#0F172A]">تیتر اسلاید {index + 1}</label>
@@ -289,6 +331,13 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
                   <label className="mb-2 block text-sm font-bold text-[#0F172A]">توضیحات اسلاید {index + 1}</label>
                   <textarea value={slide.description} onChange={(event) => patchSlide(slide.id, { description: event.target.value })} rows={4} maxLength={1000} placeholder="توضیحات اسلاید را وارد کن..." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
                 </div>
+                {!message.showcaseId && slides.length > 1 && (
+                  <div className="text-center">
+                    <button type="button" onClick={() => setSlides((current) => current.filter((item) => item.id !== slide.id))} className="text-xs font-semibold text-[#DC2626] transition hover:text-[#B91C1C]">
+                      حذف اسلاید
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -306,7 +355,7 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
             {!message.showcaseId && (
               <Button
                 type="button"
-                disabled={savingShowcase || !hasValidSlide}
+                disabled={savingShowcase || !hasValidSlide || Object.values(slideUploading).some(Boolean)}
                 onClick={() => void saveShowcase()}
                 className="w-full rounded-xl bg-[#2563EB] py-2.5 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
               >
