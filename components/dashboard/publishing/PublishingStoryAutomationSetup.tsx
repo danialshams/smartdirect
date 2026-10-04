@@ -363,9 +363,12 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
                 type="button"
                 disabled={savingShowcase || !hasValidSlide || Object.values(slideUploading).some(Boolean)}
                 onClick={() => void saveShowcase()}
-                className="w-full rounded-xl bg-[#2563EB] py-2.5 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                className={[
+                  "w-full rounded-xl py-2.5 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-100",
+                  savingShowcase ? "!bg-[#2563EB] !text-white !shadow-none !cursor-wait pointer-events-none" : "bg-[#2563EB] hover:bg-[#1D4ED8]"
+                ].join(" ")}
               >
-                {savingShowcase ? "در حال ساخت ویترین..." : "ساخت و اتصال ویترین"}
+                {savingShowcase ? "در حال ساخت و اتصال ویترین..." : "ساخت و اتصال ویترین"}
               </Button>
             )}
 
