@@ -453,7 +453,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
       {error && <p className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-2.5 text-xs text-[#B91C1C]">{error}</p>}
     </div>
   );
-}
+});
 
 type StoryFormBuilderProps = { message: MessageDraft; showcases: Showcase[]; forms: FormItem[]; loadingResources: boolean; onUpdate: (patch: Partial<MessageDraft>) => void; onUploadMedia: (file?: File) => Promise<string>; };
 const FORM_MAX_OPTIONS = 13;
