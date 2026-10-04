@@ -224,21 +224,33 @@ function ProgressBar({ progress }: { progress: number }) {
 }
 function UploadSuccessMark() {
   return (
-    <svg viewBox="0 0 24 24" className="inline-block h-8 w-8 shrink-0 text-[#16A34A]" aria-hidden="true">
-      <path
-        d="m4 12.5 5 5L20 6"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        pathLength="1"
-        strokeDasharray="1"
-        strokeDashoffset="1"
-      >
-        <animate attributeName="strokeDashoffset" from="1" to="0" dur="0.65s" fill="freeze" />
-      </path>
-    </svg>
+    <span
+      className="relative inline-block h-8 w-8 shrink-0"
+      aria-hidden="true"
+      style={{
+        ["--check-draw" as string]: "check-draw 420ms cubic-bezier(0.65, 0, 0.35, 1) forwards",
+        ["--check-draw-long" as string]: "check-draw-long 360ms cubic-bezier(0.65, 0, 0.35, 1) 300ms forwards",
+      }}
+    >
+      <style>{`
+        @keyframes check-draw {
+          from { width: 0; }
+          to { width: 9px; }
+        }
+        @keyframes check-draw-long {
+          from { width: 0; }
+          to { width: 18px; }
+        }
+      `}</style>
+      <span
+        className="absolute left-[7px] top-[19px] block h-[3px] origin-left rounded-full bg-[#16A34A]"
+        style={{ transform: "rotate(45deg)", animation: "var(--check-draw)" }}
+      />
+      <span
+        className="absolute left-[12px] top-[25px] block h-[3px] origin-left rounded-full bg-[#16A34A]"
+        style={{ transform: "rotate(-45deg)", animation: "var(--check-draw-long)" }}
+      />
+    </span>
   );
 }
 function UploadArea({ id, accept, multiple, disabled, isDragging, setIsDragging, uploading, uploadSuccess, uploadProgress, onChange, onDrop, onCancelUpload, title }: any) {
