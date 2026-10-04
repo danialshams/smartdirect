@@ -129,7 +129,7 @@ async function uploadFileWithProgress(file: File, onProgress: (progress: number)
     const blob = await uploadToBlob(providerResult.pathname, file, {
       access: "public",
       handleUploadUrl: "/api/instagram/publishing/upload/client",
-      multipart: file.size > 10 * 1024 * 1024,
+      multipart: true,
       clientPayload: JSON.stringify({
         pathname: providerResult.pathname,
         fileName: file.name,
@@ -137,7 +137,7 @@ async function uploadFileWithProgress(file: File, onProgress: (progress: number)
         fileSize: file.size,
       }),
       onUploadProgress(event) {
-        const nextProgress = Math.max(lastProgress, Math.min(100, Math.round(event.percentage)));
+        const nextProgress = Math.max(lastProgress, Math.min(99, Math.round(event.percentage)));
         lastProgress = nextProgress;
         onProgress(nextProgress);
       },
@@ -158,7 +158,7 @@ async function uploadFileWithProgress(file: File, onProgress: (progress: number)
     const xhr = new XMLHttpRequest();
     xhr.open("POST", "/api/instagram/publishing/upload");
     xhr.upload.onprogress = (event) => {
-      if (event.lengthComputable) onProgress(Math.round((event.loaded / event.total) * 100));
+      if (event.lengthComputable) onProgress(Math.min(99, Math.round((event.loaded / event.total) * 100)));
     };
     xhr.onerror = () => reject(new Error("آپلود فایل ناموفق بود."));
     xhr.onload = () => {
@@ -213,12 +213,12 @@ function KeywordChipsInput({ value, onChange, placeholder }: { value: string; on
 
 function SectionHeader({ n, title, text }: { n: string; title: string; text: string }) { return <div className="mb-4"><div className="flex items-center gap-2"><span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">{n}</span><h2 className="text-sm font-bold text-[#0F172A]">{title}</h2></div><p className={["mt-2 leading-5 text-[#64748B]", title === "آپلود آلبوم" ? "whitespace-nowrap text-[9px] sm:text-xs" : "text-xs"].join(" ")}>{text}</p></div>; }
 function ProgressBar({ progress }: { progress: number }) {
-  return <div className="mt-4 w-full max-w-md rounded-xl border border-[#DBEAFE] bg-white px-4 py-3.5 shadow-sm">
-    <div className="mb-2.5 flex items-center justify-between text-xs font-semibold text-[#2563EB]">
-      <span>پیشرفت آپلود</span><span>{toPersianDigits(progress)}٪</span>
+  return <div className="mt-4 w-full max-w-md">
+    <div className="mb-2 text-center text-[10px] font-semibold text-[#2563EB]">
+      {toPersianDigits(progress)}٪
     </div>
-    <div className="h-2.5 w-full overflow-hidden rounded-full bg-[#E2E8F0]">
-      <div className="h-full rounded-full bg-[#2563EB] transition-[width] duration-200 ease-out" style={{width:`${Math.max(0,Math.min(100,progress))}%`}}/>
+    <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#E2E8F0]">
+      <div className="h-full rounded-full bg-[#2563EB] transition-[width] duration-150 ease-out" style={{width:`${Math.max(0,Math.min(100,progress))}%`}}/>
     </div>
   </div>;
 }
@@ -296,7 +296,6 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [uploadIndex, setUploadIndex] = useState(0);
   const uploadRunRef = useRef(0);
-  const uploadProgressTimerRef = useRef<number | null>(null);
   const carouselInsertAtRef = useRef<number | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -444,7 +443,6 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     if (!item) return;
     if (uploading) {
       uploadRunRef.current += 1;
-      if (uploadProgressTimerRef.current !== null) { window.clearInterval(uploadProgressTimerRef.current); uploadProgressTimerRef.current = null; }
       setUploading(false);
       setUploadProgress(0);
       setUploadSuccess(false);
@@ -472,10 +470,6 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       setUploading(true); setUploadSuccess(false); setError(""); setUploadProgress(0);
       // The Blob SDK may not emit intermediate progress events for small, non-multipart uploads.
       // Keep the bar moving as an estimate, while real progress events can advance it faster.
-      if (uploadProgressTimerRef.current !== null) window.clearInterval(uploadProgressTimerRef.current);
-      uploadProgressTimerRef.current = window.setInterval(() => {
-        setUploadProgress((current) => current >= 90 ? current : Math.min(90, current + (current < 30 ? 2 : 1)));
-      }, 250);
       const totalBytes = items.reduce((sum,item)=>sum+item.file.size,0);
       let completedBytes=0; const results: UploadedMedia[]=[];
       // Each carousel file is uploaded serially, preserving slide order.
@@ -504,7 +498,6 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
         }
         return next.map((item,index)=>({...item,sortOrder:index}));
       });
-      if (uploadProgressTimerRef.current !== null) { window.clearInterval(uploadProgressTimerRef.current); uploadProgressTimerRef.current = null; }
       setUploadProgress(100); setUploading(false); setUploadSuccess(true);
       if (type !== "CAROUSEL") {
         window.setTimeout(() => {
@@ -514,12 +507,12 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             setUploadSuccess(false);
             setUploadProgress(0);
           });
-        }, 1100);
+        }, 120);
       } else {
         window.setTimeout(() => {
           setUploadSuccess(false);
           setUploadProgress(0);
-        }, 1100);
+        }, 120);
       }
     } catch(e) {
       if (uploadRunRef.current !== runId) return;
