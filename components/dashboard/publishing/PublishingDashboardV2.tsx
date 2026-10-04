@@ -1209,6 +1209,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                 onUpdate={(patch) => updateMessage(0, patch)}
                 onSavedChange={setStoryResponseSaved}
                 keywordValid={Boolean(keywords.trim())}
+                onContinue={() => { setAutomationSetupConfirmed(true); setError(""); }}
               />
 
               <div>
