@@ -15,6 +15,7 @@ type Props = {
   onUpdate: (patch: Partial<MessageDraft>) => void;
   onSavedChange?: (saved: boolean) => void;
   keywordValid: boolean;
+  onContinue: () => void;
 };
 
 type ResponseType = "TEXT" | "AUDIO" | "SHOWCASE" | "IMAGE" | "VIDEO" | "FORM";
@@ -34,7 +35,7 @@ function createSlide(): ShowcaseSlide {
   return { id: `slide_${crypto.randomUUID()}`, title: "", description: "", imageUrl: "", previewUrl: "" };
 }
 
-export default function PublishingStoryAutomationSetup({ message, showcases, forms, loadingResources, instagramAccountId, onUpdate, onSavedChange, keywordValid }: Props) {
+export default function PublishingStoryAutomationSetup({ message, showcases, forms, loadingResources, instagramAccountId, onUpdate, onSavedChange, keywordValid, onContinue }: Props) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
@@ -181,19 +182,19 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
     }
   }
 
-  async function saveShowcase() {
-    if (saveShowcaseLockRef.current || savingShowcase) return;
+  async function saveShowcase(): Promise<boolean> {
+    if (saveShowcaseLockRef.current || savingShowcase) return false;
     saveShowcaseLockRef.current = true;
     if (!hasValidSlide) {
       setError("برای ساخت ویترین، حداقل یک اسلاید کامل با تصویر و تیتر بسازید.");
       saveShowcaseLockRef.current = false;
-      return;
+      return false;
     }
-    if (!instagramAccountId) { setError("اکانت فعال Instagram پیدا نشد."); saveShowcaseLockRef.current = false; return; }
+    if (!instagramAccountId) { setError("اکانت فعال Instagram پیدا نشد."); saveShowcaseLockRef.current = false; return false; }
     for (let index = 0; index < slides.length; index += 1) {
       const slide = slides[index];
-      if (!slide?.imageUrl.trim()) { setError(`تصویر اسلاید ${index + 1} را آپلود کنید.`); saveShowcaseLockRef.current = false; return; }
-      if (!slide.title.trim()) { setError(`تیتر اسلاید ${index + 1} را وارد کنید.`); saveShowcaseLockRef.current = false; return; }
+      if (!slide?.imageUrl.trim()) { setError(`تصویر اسلاید ${index + 1} را آپلود کنید.`); saveShowcaseLockRef.current = false; return false; }
+      if (!slide.title.trim()) { setError(`تیتر اسلاید ${index + 1} را وارد کنید.`); saveShowcaseLockRef.current = false; return false; }
     }
     setSavingShowcase(true);
     setError("");
@@ -219,8 +220,10 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
       setSlides((current) => current.map((slide) => ({ ...slide })));
       onUpdate({ showcaseId: created.id });
       setShowcaseSaved(true);
+      return true;
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "ساخت ویترین ناموفق بود.");
+      return false;
     } finally {
       saveShowcaseLockRef.current = false;
       setSavingShowcase(false);
@@ -394,7 +397,7 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
                     : "bg-[#2563EB] hover:bg-[#1D4ED8]"
                 ].join(" ")}
               >
-                {savingShowcase ? "در حال ساخت و اتصال ویترین..." : "ساخت و اتصال ویترین"}
+                {savingShowcase ? "در حال ذخیره ویترین..." : "ذخیره ویترین"}
               </button>
             )}
 
@@ -409,7 +412,7 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
                   onClick={() => void deleteShowcase()}
                   className="text-xs font-bold text-[#DC2626] transition hover:text-[#B91C1C] disabled:opacity-50"
                 >
-                  حذف ویترین ساخته‌شده
+                  حذف ویترین
                 </button>
               </div>
             )}
@@ -436,11 +439,21 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
           }}
         />
         <div className="space-y-2 pt-2">
-          {!formSaved ? <button type="button" disabled={!keywordValid || formSaving || !isValidStoryForm(message.text, message.quickReplies)} onClick={() => { if (!keywordValid || formSaving || !isValidStoryForm(message.text, message.quickReplies)) return; setFormSaving(true); onUpdate({ text: message.text.trim(), quickReplies: message.quickReplies }); setFormSaved(true); setFormSaving(false); }} className="w-full rounded-xl bg-[#2563EB] py-2.5 text-xs font-bold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40">{formSaving ? "در حال ذخیره و اتصال فرم..." : "ذخیره و اتصال فرم"}</button> : <div className="space-y-2"><p className="rounded-xl border border-[#BBF7D0] bg-[#F0FDF4] px-3.5 py-3 text-xs font-semibold text-[#166534]">فرم ذخیره شد و به پاسخ متصل شد.</p><button type="button" onClick={() => { setFormSaved(false); onUpdate({ text: "", quickReplies: [] }); }} className="text-xs font-bold text-[#DC2626] transition hover:text-[#B91C1C]">حذف فرم ساخته‌شده</button></div>}
+          {formSaved && <div className="space-y-2"><p className="rounded-xl border border-[#BBF7D0] bg-[#F0FDF4] px-3.5 py-3 text-xs font-semibold text-[#166534]">فرم ذخیره شده است.</p><button type="button" onClick={() => { setFormSaved(false); onUpdate({ text: "", quickReplies: [] }); }} className="text-xs font-bold text-[#DC2626] transition hover:text-[#B91C1C]">حذف فرم</button></div>}
         </div>
         </div>
       )}
 
+      <div className="space-y-2 border-t border-[#E2E8F0] pt-4">
+        <button type="button" disabled={!keywordValid || uploading || savingShowcase || formSaving || (responseType === "TEXT" && !message.text.trim()) || (["IMAGE","VIDEO","AUDIO"].includes(responseType) && !message.mediaUrl) || (responseType === "SHOWCASE" && !showcaseSaved && (!hasValidSlide || Object.values(slideUploading).some(Boolean))) || (responseType === "FORM" && !isValidStoryForm(message.text, message.quickReplies))} onClick={async () => {
+          if (!keywordValid || uploading || savingShowcase || formSaving) return;
+          if (responseType === "TEXT") { if (!message.text.trim()) return; onUpdate({ text: message.text.trim() }); }
+          if (["IMAGE","VIDEO","AUDIO"].includes(responseType) && !message.mediaUrl) return;
+          if (responseType === "SHOWCASE" && !showcaseSaved) { const ok = await saveShowcase(); if (!ok) return; }
+          if (responseType === "FORM") { if (!isValidStoryForm(message.text, message.quickReplies)) return; setFormSaving(true); onUpdate({ text: message.text.trim(), quickReplies: message.quickReplies }); setFormSaved(true); setFormSaving(false); }
+          onContinue();
+        }} className="w-full rounded-xl bg-[#2563EB] py-3 text-sm font-bold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40">{savingShowcase || formSaving ? "در حال ذخیره..." : `ذخیره ${responseType === "FORM" ? "فرم" : responseType === "SHOWCASE" ? "ویترین" : responseType === "TEXT" ? "متن" : responseType === "IMAGE" ? "عکس" : responseType === "VIDEO" ? "فیلم" : "وویس"} و ادامه`}</button>
+      </div>
       {error && <p className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-2.5 text-xs text-[#B91C1C]">{error}</p>}
     </div>
   );
