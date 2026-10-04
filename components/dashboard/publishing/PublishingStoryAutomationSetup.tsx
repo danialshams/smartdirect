@@ -381,26 +381,6 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
               </div>
             )}
 
-            {!message.showcaseId && (
-              <button
-                type="button"
-                disabled={!keywordValid || savingShowcase || !hasValidSlide || Object.values(slideUploading).some(Boolean)}
-                aria-disabled={!keywordValid || savingShowcase || !hasValidSlide || Object.values(slideUploading).some(Boolean)}
-                onClick={() => {
-                  if (!keywordValid || savingShowcase || saveShowcaseLockRef.current || !hasValidSlide || Object.values(slideUploading).some(Boolean)) return;
-                  void saveShowcase();
-                }}
-                className={[
-                  "w-full rounded-xl py-2.5 text-xs font-bold text-white transition-opacity duration-150 disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-50",
-                  savingShowcase
-                    ? "bg-[#2563EB] !text-white !shadow-none !cursor-wait !pointer-events-none opacity-50"
-                    : "bg-[#2563EB] hover:bg-[#1D4ED8]"
-                ].join(" ")}
-              >
-                {savingShowcase ? "در حال ذخیره ویترین..." : "ذخیره ویترین"}
-              </button>
-            )}
-
             {message.showcaseId && (
               <div className="space-y-2">
                 <p className="rounded-xl border border-[#BBF7D0] bg-[#F0FDF4] px-3.5 py-3 text-xs font-semibold text-[#166534]">
