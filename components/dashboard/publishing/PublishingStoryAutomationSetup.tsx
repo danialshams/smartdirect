@@ -471,18 +471,12 @@ function StoryFormBuilder({ message, showcases, forms, loadingResources, onUpdat
 type BranchProps = { title: string; question: string; replies: QuickReplyDraft[]; showcases: Showcase[]; forms: FormItem[]; loadingResources: boolean; onChange: (patch: { question?: string; replies?: QuickReplyDraft[] }) => void; onUploadMedia: (file?: File) => Promise<string>; level?: number; };
 
 function FormBranchEditor({ title, question, replies, showcases, forms, loadingResources, onChange, onUploadMedia, level = 0 }: BranchProps) {
-  const exitReply = replies.find((reply) => reply.isExit);
   const optionReplies = replies.filter((reply) => !reply.isExit);
   const updateReply = (id: string, patch: Partial<QuickReplyDraft>) => onChange({ replies: replies.map((reply) => reply.id === id ? { ...reply, ...patch } : reply) });
   const removeReply = (id: string) => onChange({ replies: replies.filter((reply) => reply.id !== id) });
-  const addReply = () => { if (replies.length < FORM_MAX_OPTIONS) onChange({ replies: [...replies, createEmptyQuickReply()] }); };
-  const enableExit = () => {
-    if (!exitReply && replies.length < FORM_MAX_OPTIONS) {
-      const exit = createEmptyQuickReply();
-      onChange({ replies: [...replies, { ...exit, isExit: true, title: "خروج از فرم", destinationType: "TEXT", destinationText: "از فرم خارج شدید." }] });
-    }
+  const addReply = () => {
+    if (optionReplies.length < FORM_MAX_OPTIONS) onChange({ replies: [...replies, createEmptyQuickReply()] });
   };
-  const disableExit = () => onChange({ replies: replies.filter((reply) => !reply.isExit) });
 
   return (
     <div className={["space-y-4", level > 0 ? "rounded-2xl border border-[#DBEAFE] bg-[#F8FAFC] p-3.5" : ""].join(" ")}>
@@ -502,45 +496,18 @@ function FormBranchEditor({ title, question, replies, showcases, forms, loadingR
             <p className="text-right text-lg font-extrabold text-[#0F172A]">گزینه‌ها</p>
             <p className="mt-1 text-right text-[10px] text-[#64748B]">حداکثر ۱۳ گزینه در هر مرحله.</p>
           </div>
-          <span className="shrink-0 rounded-full bg-[#EFF6FF] px-2.5 py-1 text-[10px] font-bold text-[#2563EB]">{optionReplies.length} / {FORM_MAX_OPTIONS - (exitReply ? 1 : 0)}</span>
+          <span className="shrink-0 rounded-full bg-[#EFF6FF] px-2.5 py-1 text-[10px] font-bold text-[#2563EB]">{optionReplies.length} / {FORM_MAX_OPTIONS}</span>
         </div>
 
         <div className="mt-3 space-y-3">
           {optionReplies.map((reply, index) => (
             <FormOptionEditor key={reply.id} reply={reply} index={index} showcases={showcases} forms={forms} loadingResources={loadingResources} onChange={(patch) => updateReply(reply.id, patch)} onRemove={() => removeReply(reply.id)} onUploadMedia={onUploadMedia} />
           ))}
-
-          {exitReply && (
-            <div className="space-y-3 rounded-2xl border border-[#E2E8F0] bg-white p-3.5">
-              <div className="relative flex items-center justify-center">
-                <p className="text-center text-lg font-extrabold text-[#0F172A]">
-                  خروج از فرم <span className="font-medium text-[#2563EB]">(اختیاری)</span>
-                </p>
-                <button type="button" onClick={disableExit} className="absolute left-0 text-[11px] font-bold text-[#DC2626] transition hover:text-[#B91C1C]">
-                  حذف
-                </button>
-              </div>
-              <input value={exitReply.title} maxLength={20} onChange={(e) => updateReply(exitReply.id, { title: e.target.value })} placeholder="نام گزینه خروج را وارد کن..." className="w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{fontSize:"16px",WebkitTextSizeAdjust:"100%"}} />
-              <div>
-                <label className="mb-2 block text-xs font-bold text-[#0F172A]">متن خروج از فرم</label>
-                <textarea value={exitReply.destinationText} rows={3} maxLength={2000} onChange={(e) => updateReply(exitReply.id, { destinationText: e.target.value })} className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{fontSize:"16px",lineHeight:1.75,WebkitTextSizeAdjust:"100%"}} />
-              </div>
-            </div>
-          )}
         </div>
 
-        <button type="button" disabled={replies.length >= FORM_MAX_OPTIONS} onClick={addReply} className="mx-auto mt-3 flex items-center justify-center gap-2 text-sm font-bold text-[#2563EB] disabled:cursor-not-allowed disabled:opacity-40">
+        <button type="button" disabled={optionReplies.length >= FORM_MAX_OPTIONS} onClick={addReply} className="mx-auto mt-3 flex items-center justify-center gap-2 text-sm font-bold text-[#2563EB] disabled:cursor-not-allowed disabled:opacity-40">
           <span>افزودن گزینه</span><Plus size={16} strokeWidth={2.5}/>
         </button>
-
-        {!exitReply && (
-          <div className="mt-3 flex items-center justify-center">
-            <label className="flex cursor-pointer items-center gap-2 text-sm font-bold text-[#0F172A]">
-              <input type="checkbox" checked={false} onChange={(event) => { if (event.target.checked) enableExit(); }} disabled={replies.length >= FORM_MAX_OPTIONS} className="h-4 w-4 accent-[#2563EB] disabled:opacity-40"/>
-              <span>خروج از فرم <span className="font-medium text-[#2563EB]">(اختیاری)</span></span>
-            </label>
-          </div>
-        )}
       </div>
     </div>
   );
