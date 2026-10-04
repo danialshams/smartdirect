@@ -295,6 +295,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [uploadIndex, setUploadIndex] = useState(0);
   const uploadRunRef = useRef(0);
+  const uploadProgressTimerRef = useRef<number | null>(null);
   const carouselInsertAtRef = useRef<number | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -442,6 +443,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     if (!item) return;
     if (uploading) {
       uploadRunRef.current += 1;
+      if (uploadProgressTimerRef.current !== null) { window.clearInterval(uploadProgressTimerRef.current); uploadProgressTimerRef.current = null; }
       setUploading(false);
       setUploadProgress(0);
       setUploadSuccess(false);
@@ -474,7 +476,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
         const item=items[index];
         const result=await uploadFileWithProgress(item.file,(progress)=>{
           if (uploadRunRef.current !== runId) return;
-          setUploadProgress(totalBytes?Math.min(100,Math.round(((completedBytes+item.file.size*progress/100)/totalBytes)*100)):progress);
+          const reported = totalBytes ? Math.min(94, Math.round(((completedBytes + item.file.size * progress / 100) / totalBytes) * 100)) : Math.min(94, progress);
+          setUploadProgress(current => Math.max(current, reported));
         });
         if (uploadRunRef.current !== runId) {
           void fetch("/api/instagram/publishing/upload", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ storageKey: result.storageKey }) }).catch(()=>undefined);
@@ -494,6 +497,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
         }
         return next.map((item,index)=>({...item,sortOrder:index}));
       });
+      if (uploadProgressTimerRef.current !== null) { window.clearInterval(uploadProgressTimerRef.current); uploadProgressTimerRef.current = null; }
       setUploadProgress(100); setUploading(false); setUploadSuccess(true);
       if (type !== "CAROUSEL" && type !== "STORY") {
         window.setTimeout(() => {
@@ -512,6 +516,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       }
     } catch(e) {
       if (uploadRunRef.current !== runId) return;
+      if (uploadProgressTimerRef.current !== null) { window.clearInterval(uploadProgressTimerRef.current); uploadProgressTimerRef.current = null; }
       setUploading(false); setUploadSuccess(false); setError(e instanceof Error?e.message:"آپلود فایل ناموفق بود.");
     }
   }
