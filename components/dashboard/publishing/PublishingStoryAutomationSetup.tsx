@@ -364,17 +364,23 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
             )}
 
             {!message.showcaseId && (
-              <Button
+              <button
                 type="button"
                 disabled={savingShowcase || !hasValidSlide || Object.values(slideUploading).some(Boolean)}
-                onClick={() => void saveShowcase()}
+                aria-disabled={savingShowcase || !hasValidSlide || Object.values(slideUploading).some(Boolean)}
+                onClick={() => {
+                  if (savingShowcase || saveShowcaseLockRef.current || !hasValidSlide || Object.values(slideUploading).some(Boolean)) return;
+                  void saveShowcase();
+                }}
                 className={[
-                  "w-full rounded-xl py-2.5 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-100",
-                  savingShowcase ? "!bg-[#2563EB] !text-white !shadow-none !cursor-wait pointer-events-none" : "bg-[#2563EB] hover:bg-[#1D4ED8]"
+                  "w-full rounded-xl py-2.5 text-xs font-bold text-white transition-none disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-100",
+                  savingShowcase
+                    ? "bg-[#2563EB] !text-white !shadow-none !cursor-wait !pointer-events-none"
+                    : "bg-[#2563EB] hover:bg-[#1D4ED8]"
                 ].join(" ")}
               >
                 {savingShowcase ? "در حال ساخت و اتصال ویترین..." : "ساخت و اتصال ویترین"}
-              </Button>
+              </button>
             )}
 
             {message.showcaseId && (
