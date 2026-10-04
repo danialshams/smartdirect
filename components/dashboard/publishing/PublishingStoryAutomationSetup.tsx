@@ -151,6 +151,7 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
     });
   }
 
+  const MAX_SHOWCASE_ITEMS = 10;
   const hasValidSlide = slides.length > 0 && slides.every((slide) => slide.imageUrl.trim() && slide.title.trim());
 
   async function deleteShowcase() {
@@ -349,11 +350,14 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
             ))}
           </div>
           <div className="space-y-3 pt-1">
-            {!message.showcaseId && (
+            {!message.showcaseId && slides.length < MAX_SHOWCASE_ITEMS && (
               <div className="flex justify-center">
                 <button
                   type="button"
-                  onClick={() => setSlides((current) => [...current, createSlide()])}
+                  onClick={() => {
+                    if (slides.length >= MAX_SHOWCASE_ITEMS) return;
+                    setSlides((current) => current.length >= MAX_SHOWCASE_ITEMS ? current : [...current, createSlide()]);
+                  }}
                   className="inline-flex items-center justify-center gap-1.5 text-sm font-bold text-[#2563EB] transition hover:text-[#1D4ED8]"
                   dir="ltr"
                 >
