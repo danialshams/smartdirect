@@ -1216,24 +1216,94 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
 
 
-              <div>
-                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5">
-                  <input type="checkbox" checked={likeStoryReply} onChange={event => setLikeStoryReply(event.target.checked)} className="mt-0.5 h-4 w-4 accent-[#2563EB]"/>
-                  <span><span className="block text-sm font-bold text-[#0F172A]">لایک ریپلای <span className="font-medium text-[#2563EB]">(اختیاری)</span></span><span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، Reply استوری کاربر لایک می‌شود.</span></span>
-                </label>
-              </div>
+              <section className="space-y-3 rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5">
+                <div>
+                  <p className="text-right text-sm font-extrabold text-[#0F172A]">تنظیمات تکمیلی پاسخ <span className="font-medium text-[#2563EB]">(اختیاری)</span></p>
+                  <p className="mt-1 text-right text-[11px] leading-5 text-[#64748B]">این تنظیمات مستقل از نوع پاسخ اصلی هستند.</p>
+                </div>
 
+                {messages[0]?.messageType === "FORM" && (
+                  <div className="rounded-xl border border-[#E2E8F0] bg-white p-3.5">
+                    <label className="flex cursor-pointer items-start gap-3">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(messages[0]?.quickReplies?.some((reply) => reply.isExit))}
+                        onChange={(event) => {
+                          const currentReplies = messages[0]?.quickReplies ?? [];
+                          const existingExit = currentReplies.find((reply) => reply.isExit);
+                          if (event.target.checked) {
+                            if (existingExit || currentReplies.length >= 13) return;
+                            const exit = createEmptyQuickReply();
+                            updateMessage(0, {
+                              quickReplies: [...currentReplies, { ...exit, isExit: true, title: "خروج از فرم", destinationType: "TEXT", destinationText: "از فرم خارج شدید." }],
+                            });
+                          } else {
+                            updateMessage(0, { quickReplies: currentReplies.filter((reply) => !reply.isExit) });
+                          }
+                        }}
+                        disabled={!messages[0]?.quickReplies?.some((reply) => reply.isExit) && (messages[0]?.quickReplies?.length ?? 0) >= 13}
+                        className="mt-0.5 h-4 w-4 accent-[#2563EB]"
+                      />
+                      <span>
+                        <span className="block text-sm font-bold text-[#0F172A]">خروج از فرم <span className="font-medium text-[#2563EB]">(اختیاری)</span></span>
+                        <span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال‌سازی، کاربر با این گزینه از شاخه فرم خارج می‌شود.</span>
+                      </span>
+                    </label>
 
-              <div>
-                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5">
-                  <input type="checkbox" checked={requireFollow} onChange={event => setRequireFollow(event.target.checked)} className="mt-0.5 h-4 w-4 accent-[#2563EB]"/>
-                  <span><span className="block text-sm font-bold text-[#0F172A]">اجبار به فالو <span className="font-medium text-[#2563EB]">(اختیاری)</span></span><span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، کاربر باید پیج را فالو کرده باشد تا پاسخ را دریافت کند.</span></span>
-                </label>
-                {requireFollow && <div className="mt-2.5">
-                  <label htmlFor="publishing-follow-gate-text" className="mb-2 block text-sm font-bold text-[#0F172A]">متن درخواست فالو</label>
-                  <textarea id="publishing-follow-gate-text" value={followGateText} onChange={event => setFollowGateText(event.target.value)} rows={2} maxLength={500} inputMode="text" placeholder="مثلاً برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none placeholder:text-xs focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{fontSize:"16px",lineHeight:1.75,WebkitTextSizeAdjust:"100%"}}/>
-                </div>}
-              </div>
+                    {messages[0]?.quickReplies?.find((reply) => reply.isExit) && (
+                      <div className="mt-3 space-y-3">
+                        <div>
+                          <label className="mb-2 block text-xs font-bold text-[#0F172A]">متن دکمه خروج</label>
+                          <input
+                            value={messages[0]?.quickReplies?.find((reply) => reply.isExit)?.title ?? ""}
+                            maxLength={20}
+                            onChange={(event) => {
+                              const exitId = messages[0]?.quickReplies?.find((reply) => reply.isExit)?.id;
+                              if (!exitId) return;
+                              updateMessage(0, { quickReplies: (messages[0]?.quickReplies ?? []).map((reply) => reply.id === exitId ? { ...reply, title: event.target.value } : reply) });
+                            }}
+                            className="w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10"
+                            style={{fontSize:"16px",WebkitTextSizeAdjust:"100%"}}
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-2 block text-xs font-bold text-[#0F172A]">متن خروج از فرم</label>
+                          <textarea
+                            value={messages[0]?.quickReplies?.find((reply) => reply.isExit)?.destinationText ?? ""}
+                            rows={3}
+                            maxLength={2000}
+                            onChange={(event) => {
+                              const exitId = messages[0]?.quickReplies?.find((reply) => reply.isExit)?.id;
+                              if (!exitId) return;
+                              updateMessage(0, { quickReplies: (messages[0]?.quickReplies ?? []).map((reply) => reply.id === exitId ? { ...reply, destinationText: event.target.value } : reply) });
+                            }}
+                            className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10"
+                            style={{fontSize:"16px",lineHeight:1.75,WebkitTextSizeAdjust:"100%"}}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="rounded-xl border border-[#E2E8F0] bg-white p-3.5">
+                  <label className="flex cursor-pointer items-start gap-3">
+                    <input type="checkbox" checked={likeStoryReply} onChange={event => setLikeStoryReply(event.target.checked)} className="mt-0.5 h-4 w-4 accent-[#2563EB]"/>
+                    <span><span className="block text-sm font-bold text-[#0F172A]">لایک ریپلای <span className="font-medium text-[#2563EB]">(اختیاری)</span></span><span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، Reply استوری کاربر لایک می‌شود.</span></span>
+                  </label>
+                </div>
+
+                <div className="rounded-xl border border-[#E2E8F0] bg-white p-3.5">
+                  <label className="flex cursor-pointer items-start gap-3">
+                    <input type="checkbox" checked={requireFollow} onChange={event => setRequireFollow(event.target.checked)} className="mt-0.5 h-4 w-4 accent-[#2563EB]"/>
+                    <span><span className="block text-sm font-bold text-[#0F172A]">اجبار به فالو <span className="font-medium text-[#2563EB]">(اختیاری)</span></span><span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، کاربر باید پیج را فالو کرده باشد تا پاسخ را دریافت کند.</span></span>
+                  </label>
+                  {requireFollow && <div className="mt-2.5">
+                    <label htmlFor="publishing-follow-gate-text" className="mb-2 block text-sm font-bold text-[#0F172A]">متن درخواست فالو</label>
+                    <textarea id="publishing-follow-gate-text" value={followGateText} onChange={event => setFollowGateText(event.target.value)} rows={2} maxLength={500} inputMode="text" placeholder="مثلاً برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none placeholder:text-xs focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{fontSize:"16px",lineHeight:1.75,WebkitTextSizeAdjust:"100%"}}/>
+                  </div>}
+                </div>
+              </section>
 
 
 
