@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Checkbox, Select, Textarea } from "@/components/dashboard/DashboardUI";
+import { Select, Textarea } from "@/components/dashboard/DashboardUI";
 import { ImagePlus, Mic, Video, Store, ClipboardList, MessageSquareText } from "lucide-react";
 import { useState } from "react";
 import type { FormItem, MessageDraft, Showcase } from "../automation-form-utils";
@@ -84,7 +84,7 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
     "audio/*";
 
   return (
-    <section className="space-y-5 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
+    <div className="space-y-5">
       <div>
         <p className="text-sm font-bold text-[#0F172A]">نوع پاسخ ارسالی</p>
         <p className="mt-1 text-[11px] leading-5 text-[#64748B]">نوع پاسخی را که می‌خواهی برای Reply استوری ارسال شود انتخاب کن.</p>
@@ -194,6 +194,6 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
       )}
 
       {error && <p className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-2.5 text-xs text-[#B91C1C]">{error}</p>}
-    </section>
+    </div>
   );
 }
