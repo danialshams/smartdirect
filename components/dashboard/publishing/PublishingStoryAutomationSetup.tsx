@@ -13,6 +13,7 @@ type Props = {
   loadingResources: boolean;
   instagramAccountId: string;
   onUpdate: (patch: Partial<MessageDraft>) => void;
+  onSavedChange?: (saved: boolean) => void;
 };
 
 type ResponseType = "TEXT" | "AUDIO" | "SHOWCASE" | "IMAGE" | "VIDEO" | "FORM";
@@ -32,17 +33,23 @@ function createSlide(): ShowcaseSlide {
   return { id: `slide_${crypto.randomUUID()}`, title: "", description: "", imageUrl: "", previewUrl: "" };
 }
 
-export default function PublishingStoryAutomationSetup({ message, showcases, forms, loadingResources, instagramAccountId, onUpdate }: Props) {
+export default function PublishingStoryAutomationSetup({ message, showcases, forms, loadingResources, instagramAccountId, onUpdate, onSavedChange }: Props) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
   const [slides, setSlides] = useState<ShowcaseSlide[]>([createSlide()]);
   const [savingShowcase, setSavingShowcase] = useState(false);
+  const [showcaseSaved, setShowcaseSaved] = useState(Boolean(message.showcaseId));
+  const [formSaved, setFormSaved] = useState(false);
+  const [formSaving, setFormSaving] = useState(false);
   const saveShowcaseLockRef = useRef(false);
   const [slideUploadProgress, setSlideUploadProgress] = useState<Record<string, number>>({});
   const [slideUploading, setSlideUploading] = useState<Record<string, boolean>>({});
 
   const responseType = message.messageType as ResponseType;
+
+  useEffect(() => { setShowcaseSaved(Boolean(message.showcaseId)); }, [message.showcaseId]);
+  useEffect(() => { onSavedChange?.(responseType === "SHOWCASE" ? showcaseSaved : responseType === "FORM" ? formSaved : true); }, [responseType, showcaseSaved, formSaved, onSavedChange]);
 
   function selectType(value: ResponseType) {
     setError("");
@@ -164,6 +171,7 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
       const result = await response.json().catch(() => null);
       if (!response.ok || result?.error) throw new Error(result?.error || result?.message || "حذف ویترین ناموفق بود.");
       onUpdate({ showcaseId: "" });
+      setShowcaseSaved(false);
       setSlides([createSlide()]);
     } catch (deleteError) {
       setError(deleteError instanceof Error ? deleteError.message : "حذف ویترین ناموفق بود.");
@@ -209,6 +217,7 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
       }
       setSlides((current) => current.map((slide) => ({ ...slide })));
       onUpdate({ showcaseId: created.id });
+      setShowcaseSaved(true);
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "ساخت ویترین ناموفق بود.");
     } finally {
@@ -302,7 +311,7 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
       )}
 
       {responseType === "SHOWCASE" && (
-        <div className="space-y-5">
+        <div className={["space-y-5 transition-opacity duration-200", showcaseSaved ? "opacity-55" : ""].join(" ")}>
           <div>
             <p className="text-sm font-bold text-[#0F172A]">ویترین</p>
             <p className="mt-1 text-[11px] leading-5 text-[#64748B]">اسلایدهای ویترین را با تصویر، تیتر و توضیحات بساز.</p>
@@ -408,6 +417,7 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
       )}
 
       {responseType === "FORM" && (
+        <div className={["space-y-4 transition-opacity duration-200", formSaved ? "opacity-55" : ""].join(" ")}>
         <StoryFormBuilder
           message={message}
           showcases={showcases}
@@ -424,6 +434,10 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
             return result.data.publicUrl as string;
           }}
         />
+        <div className="space-y-2 pt-2">
+          {!formSaved ? <button type="button" disabled={formSaving || !isValidStoryForm(message.text, message.quickReplies)} onClick={() => { if (formSaving || !isValidStoryForm(message.text, message.quickReplies)) return; setFormSaving(true); onUpdate({ text: message.text.trim(), quickReplies: message.quickReplies }); setFormSaved(true); setFormSaving(false); }} className="w-full rounded-xl bg-[#2563EB] py-2.5 text-xs font-bold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40">{formSaving ? "در حال ذخیره و اتصال فرم..." : "ذخیره و اتصال فرم"}</button> : <div className="space-y-2"><p className="rounded-xl border border-[#BBF7D0] bg-[#F0FDF4] px-3.5 py-3 text-xs font-semibold text-[#166534]">فرم ذخیره شد و به پاسخ متصل شد.</p><button type="button" onClick={() => { setFormSaved(false); onUpdate({ text: "", quickReplies: [] }); }} className="text-xs font-bold text-[#DC2626] transition hover:text-[#B91C1C]">حذف فرم ساخته‌شده</button></div>}
+        </div>
+        </div>
       )}
 
       {error && <p className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-2.5 text-xs text-[#B91C1C]">{error}</p>}
@@ -434,6 +448,7 @@ export default function PublishingStoryAutomationSetup({ message, showcases, for
 type StoryFormBuilderProps = { message: MessageDraft; showcases: Showcase[]; forms: FormItem[]; loadingResources: boolean; onUpdate: (patch: Partial<MessageDraft>) => void; onUploadMedia: (file?: File) => Promise<string>; };
 const FORM_MAX_OPTIONS = 13;
 const FORM_MEDIA_TYPES = ["IMAGE", "VIDEO", "AUDIO"] as const;
+function isValidStoryForm(question: string, replies: QuickReplyDraft[]) { const options = replies.filter((reply) => !reply.isExit); return Boolean(question.trim()) && options.length >= 2 && options.every((reply) => Boolean(reply.title.trim()) && Boolean(reply.destinationType) && (reply.destinationType !== "TEXT" || Boolean(reply.destinationText.trim())) && (reply.destinationType !== "SHOWCASE" || Boolean(reply.destinationShowcaseId)) && (!FORM_MEDIA_TYPES.includes(reply.destinationType as typeof FORM_MEDIA_TYPES[number]) || Boolean(reply.destinationMediaUrl)) && (reply.destinationType !== "FORM" || isValidStoryForm(reply.destinationQuestion, reply.destinationQuickReplies))); }
 
 function StoryFormBuilder({ message, showcases, forms, loadingResources, onUpdate, onUploadMedia }: StoryFormBuilderProps) {
   return <FormBranchEditor title="فرم" question={message.text} replies={message.quickReplies} showcases={showcases} forms={forms} loadingResources={loadingResources}
@@ -460,8 +475,8 @@ function FormBranchEditor({ title, question, replies, showcases, forms, loadingR
         {optionReplies.map((reply,index) => <FormOptionEditor key={reply.id} reply={reply} index={index} showcases={showcases} forms={forms} loadingResources={loadingResources} onChange={(patch) => updateReply(reply.id, patch)} onRemove={() => removeReply(reply.id)} onUploadMedia={onUploadMedia} />)}
         <button type="button" disabled={replies.length >= FORM_MAX_OPTIONS} onClick={addReply} className="inline-flex items-center gap-1.5 text-sm font-bold text-[#2563EB] disabled:cursor-not-allowed disabled:opacity-40"><Plus size={16} strokeWidth={2.5}/> افزودن گزینه</button>
       </div>
-      <div className="rounded-2xl border border-[#E2E8F0] bg-white p-3.5"><div className="flex items-start justify-between gap-3"><div><p className="text-sm font-bold text-[#0F172A]">خروج از فرم</p><p className="mt-1 text-[10px] leading-5 text-[#64748B]">کاربر با زدن این گزینه از شاخه فرم خارج می‌شود و پیام خروج را دریافت می‌کند.</p></div>{!exitReply && <button type="button" onClick={enableExit} disabled={replies.length >= FORM_MAX_OPTIONS} className="shrink-0 rounded-lg bg-[#F1F5F9] px-3 py-2 text-[11px] font-bold text-[#334155] disabled:opacity-40">افزودن</button>}</div>
-        {exitReply && <div className="mt-3 space-y-3"><div><label className="mb-2 block text-xs font-bold text-[#0F172A]">متن دکمه خروج</label><input value={exitReply.title} maxLength={20} onChange={(e) => updateReply(exitReply.id,{title:e.target.value})} className="w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{fontSize:"16px",WebkitTextSizeAdjust:"100%"}} /></div><div><label className="mb-2 block text-xs font-bold text-[#0F172A]">متن خروج از فرم</label><textarea value={exitReply.destinationText} rows={3} maxLength={2000} onChange={(e) => updateReply(exitReply.id,{destinationText:e.target.value})} className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{fontSize:"16px",lineHeight:1.75,WebkitTextSizeAdjust:"100%"}} /></div><button type="button" onClick={disableExit} className="text-xs font-bold text-[#DC2626]">حذف گزینه خروج</button></div>}
+      <div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5"><label className="flex cursor-pointer items-start gap-3"><input type="checkbox" checked={Boolean(exitReply)} onChange={(event) => event.target.checked ? enableExit() : disableExit()} disabled={!exitReply && replies.length >= FORM_MAX_OPTIONS} className="mt-0.5 h-4 w-4 accent-[#2563EB] disabled:opacity-40"/><span><span className="block text-sm font-bold text-[#0F172A]">خروج از فرم <span className="font-medium text-[#2563EB]">(اختیاری)</span></span><span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال‌سازی، کاربر با این گزینه از شاخه فرم خارج می‌شود.</span></span></label>
+        {exitReply && <div className="mt-3 space-y-3"><div><label className="mb-2 block text-xs font-bold text-[#0F172A]">متن دکمه خروج</label><input value={exitReply.title} maxLength={20} onChange={(e) => updateReply(exitReply.id,{title:e.target.value})} className="w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{fontSize:"16px",WebkitTextSizeAdjust:"100%"}} /></div><div><label className="mb-2 block text-xs font-bold text-[#0F172A]">متن خروج از فرم</label><textarea value={exitReply.destinationText} rows={3} maxLength={2000} onChange={(e) => updateReply(exitReply.id,{destinationText:e.target.value})} className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{fontSize:"16px",lineHeight:1.75,WebkitTextSizeAdjust:"100%"}} /></div></div>}
       </div>
     </div>
   );
