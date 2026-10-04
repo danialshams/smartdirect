@@ -1049,7 +1049,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
             </section>
           </div>
-        ) : ((type !== "STORY" && tagStepConfirmed) || (type === "STORY" && captionStepConfirmed)) && automationChoiceStepStarted && !automationChoiceConfirmed ? (
+        ) : ((type !== "STORY" && tagStepConfirmed) || (type === "STORY" && captionStepConfirmed)) && (type === "STORY" || automationChoiceStepStarted) && !automationChoiceConfirmed ? (
           <div className="mx-auto w-full max-w-2xl">
             <div className="mb-5 flex items-center justify-between gap-3">
               <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
