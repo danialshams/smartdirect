@@ -55,7 +55,31 @@ function jalaliToGregorian(jy: number, jm: number, jd: number): [number, number,
 function gregorianToJalali(gy: number, gm: number, gd: number): JalaliDate { let jy = gy - 621; const candidate = jalaliToGregorian(jy, 1, 1); const inputUtc = Date.UTC(gy, gm - 1, gd); if (inputUtc < Date.UTC(candidate[0], candidate[1] - 1, candidate[2])) jy -= 1; const start = jalaliToGregorian(jy, 1, 1); const diff = Math.floor((inputUtc - Date.UTC(start[0], start[1] - 1, start[2])) / 86400000); return diff < 186 ? { year: jy, month: Math.floor(diff / 31) + 1, day: (diff % 31) + 1 } : { year: jy, month: Math.floor((diff - 186) / 30) + 7, day: ((diff - 186) % 30) + 1 }; }
 function isJalaliLeap(year: number) { const epBase = year - (year >= 0 ? 474 : 473); const epYear = 474 + (epBase % 2820); return ((epYear + 38) * 682) % 2816 < 682; }
 function jalaliMonthDays(year: number, month: number) { if (month <= 6) return 31; if (month <= 11) return 30; return isJalaliLeap(year) ? 30 : 29; }
-function currentJalaliDate() { const now = new Date(); return gregorianToJalali(now.getFullYear(), now.getMonth() + 1, now.getDate()); }
+function getOfficialTehranClock() {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Tehran",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(new Date());
+  return {
+    hour: Number(parts.find((part) => part.type === "hour")?.value ?? "0"),
+    minute: Number(parts.find((part) => part.type === "minute")?.value ?? "0"),
+  };
+}
+function currentJalaliDate() {
+  const now = new Date();
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Tehran",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+  const year = Number(parts.find((part) => part.type === "year")?.value ?? now.getFullYear());
+  const month = Number(parts.find((part) => part.type === "month")?.value ?? now.getMonth() + 1);
+  const day = Number(parts.find((part) => part.type === "day")?.value ?? now.getDate());
+  return gregorianToJalali(year, month, day);
+}
 function getJalaliWeekday(value: JalaliDate) { const [gy, gm, gd] = jalaliToGregorian(value.year, value.month, value.day); return ["یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه", "شنبه"][new Date(gy, gm - 1, gd).getDay()]; }
 function formatWheelValue(value: number) {
   return value === 0 ? "۰۰" : toPersianDigits(value);
@@ -321,13 +345,14 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const [likeStoryReply, setLikeStoryReply] = useState(false);
   const [requireFollow, setRequireFollow] = useState(false);
   const [followGateText, setFollowGateText] = useState("برای دریافت پاسخ، ابتدا پیج را Follow کنید.");
+  const officialTehranClock = getOfficialTehranClock();
   const [scheduledDate, setScheduledDate] = useState<JalaliDate>(currentJalaliDate());
-  const [hour, setHour] = useState(new Date().getHours());
-  const [minute, setMinute] = useState(new Date().getMinutes());
+  const [hour, setHour] = useState(officialTehranClock.hour);
+  const [minute, setMinute] = useState(officialTehranClock.minute);
   const [publishNow, setPublishNow] = useState(true);
-  const [stage6Date, setStage6Date] = useState<JalaliDate | null>(null);
-  const [stage6Hour, setStage6Hour] = useState<number | null>(null);
-  const [stage6Minute, setStage6Minute] = useState<number | null>(null);
+  const [stage6Date, setStage6Date] = useState<JalaliDate | null>(currentJalaliDate());
+  const [stage6Hour, setStage6Hour] = useState<number | null>(officialTehranClock.hour);
+  const [stage6Minute, setStage6Minute] = useState<number | null>(officialTehranClock.minute);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadSuccess, setUploadSuccess] = useState(false);
@@ -880,9 +905,9 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     if (!uploadedMedia.length) { setError("ابتدا فایل را آپلود کنید."); return; }
     if (type === "CAROUSEL" && uploadedMedia.length < 2) { setError("آلبوم باید حداقل ۲ اسلاید داشته باشد."); return; }
     if (type !== "CAROUSEL" && uploadedMedia.length !== 1) { setError(`${typeLabels[type]} باید دقیقاً یک فایل داشته باشد.`); return; }
-    const selectedScheduleDate = !publishNow && type !== "STORY" && !automationEnabled ? stage6Date : scheduledDate;
-    const selectedHour = !publishNow && type !== "STORY" && !automationEnabled ? stage6Hour : hour;
-    const selectedMinute = !publishNow && type !== "STORY" && !automationEnabled ? stage6Minute : minute;
+    const selectedScheduleDate = !publishNow && type !== "STORY" ? stage6Date : scheduledDate;
+    const selectedHour = !publishNow && type !== "STORY" ? stage6Hour : hour;
+    const selectedMinute = !publishNow && type !== "STORY" ? stage6Minute : minute;
     if (!publishNow && (!selectedScheduleDate || selectedHour === null || selectedMinute === null)) {
       setError("تاریخ، ساعت و دقیقه انتشار را انتخاب کن.");
       return;
@@ -993,12 +1018,31 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
         {!selectionConfirmed ? (
           <section className="w-full">
             <SectionHeader n="۱" title="نوع محتوا" text="نوع محتوایی را که می‌خواهی در Instagram منتشر کنی انتخاب کن." />
+            <div className="grid w-full grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
+              {([["POST","پست",ImagePlus,"#2563EB","#EFF6FF","#1D4ED8"],["CAROUSEL","آلبوم",Images,"#7C3AED","#F5F3FF","#6D28D9"],["REEL","ریلز",Clapperboard,"#D97706","#FFF7ED","#B45309"],["STORY","استوری",Camera,"#16A34A","#F0FDF4","#15803D"]] as const).map(([value,label,Icon,accent,soft,border]) => (
+                <Button
+                  key={value}
+                  type="button"
+                  onClick={() => handleTypeChange(value)}
+                  className="group relative flex aspect-square w-full flex-col items-center justify-center gap-3 rounded-[28px] p-5 text-center shadow-none transition-all duration-200 hover:-translate-y-1 hover:shadow-lg active:translate-y-0 sm:rounded-[32px] sm:p-7"
+                  style={{ backgroundColor: soft, border: `1px solid ${border}`, color: accent }}
+                >
+                  <span
+                    className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/55 sm:h-14 sm:w-14"
+                    style={{ color: accent }}
+                  >
+                    <Icon size={22} strokeWidth={1.9} className="sm:h-6 sm:w-6" />
+                  </span>
+                  <span className="text-base font-bold text-[#0F172A] sm:text-lg">{label}</span>
+                </Button>
+              ))}
+            </div>
             {(() => {
               const scheduledJobs = jobs.filter((job) => job.status === "SCHEDULED" && job.scheduledAt);
               const publishedJobs = jobs.filter((job) => job.status === "PUBLISHED");
               if (!scheduledJobs.length && !publishedJobs.length) return null;
               return (
-                <div className="mb-5 space-y-4">
+                <div className="mt-6 space-y-4">
                   {scheduledJobs.length > 0 && (
                     <section className="rounded-2xl border border-[#DBEAFE] bg-white p-4 shadow-sm sm:p-5">
                       <div className="mb-3 flex items-center gap-2">
@@ -1039,25 +1083,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                 </div>
               );
             })()}
-            <div className="grid w-full grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
-              {([["POST","پست",ImagePlus,"#2563EB","#EFF6FF","#1D4ED8"],["CAROUSEL","آلبوم",Images,"#7C3AED","#F5F3FF","#6D28D9"],["REEL","ریلز",Clapperboard,"#D97706","#FFF7ED","#B45309"],["STORY","استوری",Camera,"#16A34A","#F0FDF4","#15803D"]] as const).map(([value,label,Icon,accent,soft,border]) => (
-                <Button
-                  key={value}
-                  type="button"
-                  onClick={() => handleTypeChange(value)}
-                  className="group relative flex aspect-square w-full flex-col items-center justify-center gap-3 rounded-[28px] p-5 text-center shadow-none transition-all duration-200 hover:-translate-y-1 hover:shadow-lg active:translate-y-0 sm:rounded-[32px] sm:p-7"
-                  style={{ backgroundColor: soft, border: `1px solid ${border}`, color: accent }}
-                >
-                  <span
-                    className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/55 sm:h-14 sm:w-14"
-                    style={{ color: accent }}
-                  >
-                    <Icon size={22} strokeWidth={1.9} className="sm:h-6 sm:w-6" />
-                  </span>
-                  <span className="text-base font-bold text-[#0F172A] sm:text-lg">{label}</span>
-                </Button>
-              ))}
-            </div>
+
           </section>
         ) : (type !== "STORY" && !captionStepConfirmed) || uploadedMedia.length === 0 || uploadSuccess || (type === "STORY" && showUploadedMediaPreview) ? (
           <section className="mx-auto w-full max-w-3xl">
@@ -1226,7 +1252,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                           </div>
                           <div className="min-w-0 flex-1">
                             <div className="mb-2 flex items-center justify-between gap-2">
-                              <p className="text-xs font-bold text-[#0F172A]">اسلاید {toPersianDigits(index + 1)}</p>
+                              <p className="text-xs font-bold text-[#0F172A]">{type === "CAROUSEL" ? `اسلاید ${toPersianDigits(index + 1)}` : typeLabels[type]}</p>
                               <span className="rounded-full bg-white px-2 py-1 text-[10px] font-medium text-[#64748B] ring-1 ring-[#E2E8F0]">{toPersianDigits(tags.length)} تگ</span>
                             </div>
                             {tags.length > 0 && (
