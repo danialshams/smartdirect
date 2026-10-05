@@ -9,6 +9,7 @@ import { Select } from "@/components/dashboard/DashboardUI"
 
 import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, CalendarClock, Camera, CheckCircle2, Clapperboard, CircleSlash2, Clock3, ImagePlus, Images, Loader2, Pencil, Plus, Send, Trash2, Video, X } from "lucide-react";
+import PersianDatePicker, { type JalaliDate } from "./PersianDatePicker";
 import { upload as uploadToBlob } from "@vercel/blob/client";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent } from "react";
@@ -36,7 +37,7 @@ let publishingJobsCache: Job[] | null = null;
 let publishingAccountsCache: InstagramAccount[] | null = null;
 
 type InstagramAccount = { id: string; igUsername: string | null; username?: string | null; igUserId: string; isConnected?: boolean };
-type JalaliDate = { year: number; month: number; day: number };
+
 
 type AutomationDraftConfig = {
   triggerType: "COMMENT_KEYWORD" | "STORY_REPLY_KEYWORD";
@@ -54,192 +55,6 @@ const jalaliMonths = ["فروردین", "اردیبهشت", "خرداد", "تی�
 const weekDays = ["ش", "ی", "د", "س", "چ", "پ", "ج"];
 
 function toPersianDigits(value: number | string) { return String(value).replace(/[0-9]/g, (digit) => "۰۱۲۳۴۵۶۷۸۹"[Number(digit)]); }
-function formatDate(value: string | null) { return value ? new Date(value).toLocaleString("fa-IR", { dateStyle: "medium", timeStyle: "short" }) : "-"; }
-function jalaliToGregorian(jy: number, jm: number, jd: number): [number, number, number] { const jYear = jy + 1595; let days = -355668 + 365 * jYear + Math.floor(jYear / 33) * 8 + Math.floor(((jYear % 33) + 3) / 4) + jd + (jm < 7 ? (jm - 1) * 31 : (jm - 7) * 30 + 186); let gy = 400 * Math.floor(days / 146097); days %= 146097; if (days > 36524) { gy += 100 * Math.floor(--days / 36524); days %= 36524; if (days >= 365) days += 1; } gy += 4 * Math.floor(days / 1461); days %= 1461; if (days > 365) { gy += Math.floor((days - 1) / 365); days = (days - 1) % 365; } const gd = days + 1; const monthDays = [31, (gy % 4 === 0 && gy % 100 !== 0) || gy % 400 === 0 ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]; let remaining = gd; let gm = 1; while (remaining > monthDays[gm - 1]) { remaining -= monthDays[gm - 1]; gm += 1; } return [gy, gm, remaining]; }
-function gregorianToJalali(gy: number, gm: number, gd: number): JalaliDate { let jy = gy - 621; const candidate = jalaliToGregorian(jy, 1, 1); const inputUtc = Date.UTC(gy, gm - 1, gd); if (inputUtc < Date.UTC(candidate[0], candidate[1] - 1, candidate[2])) jy -= 1; const start = jalaliToGregorian(jy, 1, 1); const diff = Math.floor((inputUtc - Date.UTC(start[0], start[1] - 1, start[2])) / 86400000); return diff < 186 ? { year: jy, month: Math.floor(diff / 31) + 1, day: (diff % 31) + 1 } : { year: jy, month: Math.floor((diff - 186) / 30) + 7, day: ((diff - 186) % 30) + 1 }; }
-function isJalaliLeap(year: number) { const epBase = year - (year >= 0 ? 474 : 473); const epYear = 474 + (epBase % 2820); return ((epYear + 38) * 682) % 2816 < 682; }
-function jalaliMonthDays(year: number, month: number) { if (month <= 6) return 31; if (month <= 11) return 30; return isJalaliLeap(year) ? 30 : 29; }
-function getOfficialTehranClock() {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: "Asia/Tehran",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hourCycle: "h23",
-  }).formatToParts(new Date());
-  return {
-    hour: Number(parts.find((part) => part.type === "hour")?.value ?? "0"),
-    minute: Number(parts.find((part) => part.type === "minute")?.value ?? "0"),
-    second: Number(parts.find((part) => part.type === "second")?.value ?? "0"),
-  };
-}
-function currentJalaliDate() {
-  const now = new Date();
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: "Asia/Tehran",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(now);
-  const year = Number(parts.find((part) => part.type === "year")?.value ?? now.getFullYear());
-  const month = Number(parts.find((part) => part.type === "month")?.value ?? now.getMonth() + 1);
-  const day = Number(parts.find((part) => part.type === "day")?.value ?? now.getDate());
-  return gregorianToJalali(year, month, day);
-}
-function getJalaliWeekday(value: JalaliDate) { const [gy, gm, gd] = jalaliToGregorian(value.year, value.month, value.day); return ["یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه", "شنبه"][new Date(gy, gm - 1, gd).getDay()]; }
-function formatWheelValue(value: number) {
-  return value === 0 ? "۰۰" : toPersianDigits(value);
-}
-function formatScheduledLabel(value: Date) {
-  return value.toLocaleString("fa-IR", { dateStyle: "long", timeStyle: "short" }).replace("،", " -");
-}
-
-function InlineWheelPicker({
-  value,
-  onChange,
-  min,
-  max,
-  label,
-}: {
-  value: number | null;
-  onChange: (value: number) => void;
-  min: number;
-  max: number;
-  label: string;
-}) {
-  const options: WheelPickerOption<number>[] = Array.from({ length: max - min + 1 }, (_, index) => {
-    const optionValue = min + index;
-    return {
-      value: optionValue,
-      label: formatWheelValue(optionValue),
-      textValue: String(optionValue),
-    };
-  });
-
-  return (
-    <div className="min-w-0 select-none">
-      <div className="mb-2 text-center text-[11px] font-semibold text-[#64748B]">
-        {label}
-      </div>
-      <WheelPicker
-        options={options}
-        value={value ?? min}
-        onValueChange={(nextValue) => {
-          if (nextValue >= min && nextValue <= max) {
-            onChange(nextValue);
-          }
-        }}
-        visibleCount={8}
-        optionItemHeight={44}
-        dragSensitivity={4}
-        scrollSensitivity={6}
-        classNames={{
-          optionItem: "!text-base !font-semibold !text-[#94A3B8]",
-          highlightWrapper: "!rounded-none !border-y !border-[#E2E8F0] !bg-white",
-          highlightItem: "!text-2xl !font-bold !text-[#0F172A]",
-        }}
-      />
-    </div>
-  );
-}
-function addJalaliDays(value: JalaliDate, days: number) { const [gy, gm, gd] = jalaliToGregorian(value.year, value.month, value.day); const date = new Date(gy, gm - 1, gd + days); return gregorianToJalali(date.getFullYear(), date.getMonth() + 1, date.getDate()); }
-function jalaliDateTimeToDate(date: JalaliDate, hour: number, minute: number) {
-  const [gy, gm, gd] = jalaliToGregorian(date.year, date.month, date.day);
-  // Iran uses IRST (UTC+03:30) with no DST changes in current years.
-  return new Date(Date.UTC(gy, gm - 1, gd, hour, minute, 0, 0) - 3.5 * 60 * 60 * 1000);
-}
-async function uploadFileWithProgress(file: File, onProgress: (progress: number) => void): Promise<{ storageKey: string; publicUrl: string; type: MediaType; fileName: string; mimeType: string; fileSize: number }> {
-
-  const providerResponse = await fetch("/api/instagram/publishing/upload/client", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ fileName: file.name, contentType: file.type, fileSize: file.size }),
-  });
-
-  const providerResult = await providerResponse.json().catch(() => null);
-  if (!providerResponse.ok || !providerResult?.success) {
-    throw new Error(providerResult?.message || "آماده‌سازی آپلود فایل ناموفق بود.");
-  }
-
-  if (providerResult.mode === "vercel-blob") {
-    let lastProgress = 0;
-    const blob = await uploadToBlob(providerResult.pathname, file, {
-      access: "public",
-      handleUploadUrl: "/api/instagram/publishing/upload/client",
-      multipart: true,
-      clientPayload: JSON.stringify({
-        pathname: providerResult.pathname,
-        fileName: file.name,
-        contentType: file.type,
-        fileSize: file.size,
-      }),
-      onUploadProgress(event) {
-        const nextProgress = Math.max(lastProgress, Math.min(99, Math.round(event.percentage)));
-        lastProgress = nextProgress;
-        onProgress(nextProgress);
-      },
-    });
-
-    onProgress(100);
-    return {
-      storageKey: blob.pathname,
-      publicUrl: blob.url,
-      type: file.type.startsWith("video/") ? "VIDEO" : "IMAGE",
-      fileName: file.name,
-      mimeType: file.type,
-      fileSize: file.size,
-    };
-  }
-
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", "/api/instagram/publishing/upload");
-    xhr.upload.onprogress = (event) => {
-      if (event.lengthComputable) onProgress(Math.min(99, Math.round((event.loaded / event.total) * 100)));
-    };
-    xhr.onerror = () => reject(new Error("آپلود فایل ناموفق بود."));
-    xhr.onload = () => {
-      try {
-        const result = JSON.parse(xhr.responseText);
-        if (xhr.status < 200 || xhr.status >= 300 || !result.success) {
-          reject(new Error(result.message || "آپلود فایل ناموفق بود."));
-          return;
-        }
-        resolve(result.data);
-      } catch {
-        reject(new Error("پاسخ نامعتبر از سرور دریافت شد."));
-      }
-    };
-    const formData = new FormData();
-    formData.append("file", file);
-    xhr.send(formData);
-  });
-}
-
-export function PersianDatePicker({ value, onChange }: { value: JalaliDate; onChange: (value: JalaliDate) => void }) {
-  const selected = new Date(jalaliToGregorian(value.year, value.month, value.day).join("-"));
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button type="button" variant="outline" className="w-full justify-between font-normal">
-          <CalendarClock size={18} />
-          <span>{jalaliMonths[value.month - 1]} {toPersianDigits(value.day)}، {toPersianDigits(value.year)}</span>
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="p-0" align="start">
-        <Calendar
-          mode="single"
-          selected={selected}
-          onSelect={(date: Date | undefined) => {
-            if (!date) return;
-            onChange(gregorianToJalali(date.getFullYear(), date.getMonth() + 1, date.getDate()));
-          }}
-          />
-      </PopoverContent>
-    </Popover>
-  );
-}
-
 function KeywordChipsInput({ value, onChange, placeholder }: { value: string; onChange: (value: string) => void; placeholder: string }) {
   const keywords = value.split(/[\n,،;؛]+/).map((item) => item.trim()).filter(Boolean).filter((item, index, list) => list.indexOf(item) === index);
   const [draft, setDraft] = useState("");
