@@ -319,7 +319,7 @@ export default function IceBreakerManager({
 
               <EntryPointFlowBuilder
                 accountId={account.id}
-                automationId={draftAutomationId}
+                automationId={null}
                 onAutomationReady={(automationId) => {
                   void saveQuestion(draft, null, automationId);
                 }}
