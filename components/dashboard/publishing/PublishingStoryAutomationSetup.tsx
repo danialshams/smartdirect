@@ -512,10 +512,10 @@ function isValidStoryForm(question: string, replies: QuickReplyDraft[]): boolean
 function StoryFormBuilder({ message, showcases, forms, loadingResources, hideVideo = false, hideForm = false, onUpdate, onUploadMedia }: StoryFormBuilderProps) {
   return <FormBranchEditor title="فرم" question={message.text} replies={message.quickReplies} showcases={showcases} forms={forms} loadingResources={loadingResources}
     onChange={(patch) => { onUpdate({ ...(patch.question !== undefined ? { text: patch.question } : {}), ...(patch.replies !== undefined ? { quickReplies: patch.replies } : {}) }); }}
-    onUploadMedia={onUploadMedia} hideVideo={hideVideo} />;
+    onUploadMedia={onUploadMedia} hideVideo={hideVideo} hideForm={hideForm} />;
 }
 
-type BranchProps = { title: string; question: string; replies: QuickReplyDraft[]; showcases: Showcase[]; forms: FormItem[]; loadingResources: boolean; onChange: (patch: { question?: string; replies?: QuickReplyDraft[] }) => void; onUploadMedia: (file?: File) => Promise<string>; level?: number; hideVideo?: boolean; };
+type BranchProps = { title: string; question: string; replies: QuickReplyDraft[]; showcases: Showcase[]; forms: FormItem[]; loadingResources: boolean; onChange: (patch: { question?: string; replies?: QuickReplyDraft[] }) => void; onUploadMedia: (file?: File) => Promise<string>; level?: number; hideVideo?: boolean; hideForm?: boolean; };
 
 function FormBranchEditor({ title, question, replies, showcases, forms, loadingResources, onChange, onUploadMedia, level = 0, hideVideo = false, hideForm = false }: BranchProps) {
   const optionReplies = replies.filter((reply) => !reply.isExit);
@@ -559,7 +559,7 @@ function FormBranchEditor({ title, question, replies, showcases, forms, loadingR
     </div>
   );
 }
-function FormOptionEditor({ reply, index, showcases, forms, loadingResources, hideVideo = false, hideForm = false, onChange, onRemove, onUploadMedia }: { reply: QuickReplyDraft; index: number; showcases: Showcase[]; forms: FormItem[]; loadingResources: boolean; onChange: (patch: Partial<QuickReplyDraft>) => void; onRemove: () => void; onUploadMedia: (file?: File) => Promise<string>; }) {
+function FormOptionEditor({ reply, index, showcases, forms, loadingResources, hideVideo = false, hideForm = false, onChange, onRemove, onUploadMedia }: { reply: QuickReplyDraft; index: number; showcases: Showcase[]; forms: FormItem[]; loadingResources: boolean; hideVideo?: boolean; hideForm?: boolean; onChange: (patch: Partial<QuickReplyDraft>) => void; onRemove: () => void; onUploadMedia: (file?: File) => Promise<string>; }) {
   const [uploading, setUploading] = useState(false);
   const destinationType = reply.destinationType;
   async function upload(type: typeof FORM_MEDIA_TYPES[number], file?: File) { if (!file) return; setUploading(true); try { const url = await onUploadMedia(file); onChange({destinationType:type,destinationMediaUrl:url,destinationMediaId:""}); } finally { setUploading(false); } }
