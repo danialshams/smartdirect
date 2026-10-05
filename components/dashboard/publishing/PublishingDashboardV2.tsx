@@ -1343,7 +1343,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
               {(!storyResponseSaved || storyResponseEditing) && (
                 <div className="border-t border-[#E2E8F0] pt-4">
-                  <Button type="button" onClick={() => { void storyAutomationSetupRef.current?.saveAndContinue(); }} disabled={!keywords.trim() || (storyResponseEditing && !storyResponseDirty)} className="w-full min-h-11 rounded-xl bg-[#2563EB] px-4 text-sm font-bold text-white hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-40">
+                  <Button type="button" onClick={() => { void storyAutomationSetupRef.current?.saveAndContinue(); }} disabled={!keywords.trim() || (messages[0]?.messageType === "TEXT" && !messages[0]?.text.trim()) || (storyResponseEditing && !storyResponseDirty)} className="w-full min-h-11 rounded-xl bg-[#2563EB] px-4 text-sm font-bold text-white hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-40">
                     ذخیره {messages[0]?.messageType === "FORM" ? "فرم" : messages[0]?.messageType === "SHOWCASE" ? "ویترین" : messages[0]?.messageType === "TEXT" ? "متن" : messages[0]?.messageType === "IMAGE" ? "عکس" : messages[0]?.messageType === "VIDEO" ? "فیلم" : "وویس"} و ادامه
                   </Button>
                 </div>
@@ -1351,8 +1351,12 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
               {storyResponseSaved && !storyResponseEditing && (
                 <div className="flex items-center justify-center gap-2 border-t border-[#E2E8F0] pt-4">
-                  <Button type="button" onClick={handleEditStoryResponse} className="min-h-10 flex-1 rounded-xl border border-[#BFDBFE] bg-[#EFF6FF] px-4 text-sm font-bold text-[#2563EB] hover:bg-[#DBEAFE]"><Pencil size={15} />ویرایش</Button>
-                  <Button type="button" onClick={() => void handleDeleteStoryResponse()} className="min-h-10 flex-1 rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-4 text-sm font-bold text-[#DC2626] hover:bg-[#FEE2E2]"><Trash2 size={15} />حذف</Button>
+                  <Button type="button" onClick={handleEditStoryResponse} className="min-h-10 flex-1 rounded-xl border border-[#BFDBFE] bg-[#EFF6FF] px-4 text-sm font-bold text-[#2563EB] hover:bg-[#DBEAFE]">
+                    <span className="inline-flex items-center justify-center gap-1.5"><Pencil size={15} /><span>ویرایش</span></span>
+                  </Button>
+                  <Button type="button" onClick={() => void handleDeleteStoryResponse()} className="min-h-10 flex-1 rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-4 text-sm font-bold text-[#DC2626] hover:bg-[#FEE2E2]">
+                    <span className="inline-flex items-center justify-center gap-1.5"><Trash2 size={15} /><span>حذف</span></span>
+                  </Button>
                 </div>
               )}
 
