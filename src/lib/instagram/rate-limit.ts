@@ -1,10 +1,11 @@
 import { getRedisClient } from "@/lib/redis/client";
+import { observabilityLogger } from "@/lib/observability/logger";
 
 export type InstagramRateLimitOperation =
   | "MESSAGE_TEXT" | "MESSAGE_MEDIA" | "MESSAGE_REACTION" | "CONVERSATION_READ"
   | "COMMENT_REPLY" | "COMMENT_LIKE" | "COMMENT_PRIVATE_REPLY"
   | "PUBLISH_MEDIA" | "PUBLISH_REEL" | "PUBLISH_CAROUSEL" | "PUBLISH_STORY"
-  | "PUBLISH_QUOTA_READ"
+  | "PUBLISH_QUOTA_READ" | "PUBLISH_CONTAINER_STATUS"
   | "AUTOMATION_MEDIA_PREVIEW" | "PROFILE_READ" | "MEDIA_READ" | "INSIGHTS_READ" | "MESSENGER_PROFILE";
 
 export type InstagramRateLimitScope = "GLOBAL" | "TENANT" | "INSTAGRAM_ACCOUNT" | "OPERATION";
@@ -46,6 +47,7 @@ const DEFAULTS: Record<InstagramRateLimitOperation, { limit: number; windowMs: n
   PUBLISH_CAROUSEL: { limit: 100, windowMs: 24 * 60 * 60 * 1_000 },
   PUBLISH_STORY: { limit: 100, windowMs: 24 * 60 * 60 * 1_000 },
   PUBLISH_QUOTA_READ: { limit: 2, windowMs: 1_000 },
+  PUBLISH_CONTAINER_STATUS: { limit: 20, windowMs: 1_000 },
   AUTOMATION_MEDIA_PREVIEW: { limit: 100, windowMs: 60 * 1_000 },
   PROFILE_READ: { limit: 20, windowMs: 1_000 },
   MEDIA_READ: { limit: 20, windowMs: 1_000 },
@@ -229,6 +231,15 @@ export async function consumeInstagramRateLimit(context: InstagramRateLimitConte
       const index = Math.max(0, Math.min(buckets.length - 1, Number(result[1]) - 1));
       const bucket = buckets[index];
       const retryAfterMs = Math.max(1, Number(result[3]));
+      observabilityLogger.warn("instagram_rate_limit_denied", {
+        instagramAccountId: context.instagramAccountId,
+        tenantId: context.tenantId ?? null,
+        operation: context.operation,
+        scope: bucket.scope,
+        limit: bucket.limit,
+        remaining: Math.max(0, Number(result[2])),
+        retryAfterMs,
+      });
       return {
         allowed: false,
         limit: bucket.limit,
