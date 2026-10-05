@@ -1472,7 +1472,8 @@ export default function InstagramInbox({
                   type="button"
                   onClick={stopRecording}
                   disabled={sending}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-0 bg-transparent p-0 text-primary hover:bg-transparent hover:text-primary/80 disabled:bg-transparent disabled:text-slate-300"
+                  variant="icon"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full p-0 text-primary hover:text-primary/80 disabled:text-slate-300"
                   aria-label="ارسال Voice"
                 >
                   <Send size={16} />
@@ -1494,13 +1495,14 @@ export default function InstagramInbox({
                   <Button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border-0 bg-transparent p-0 text-slate-500 hover:bg-transparent hover:text-primary"
+                    variant="icon"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg p-0 text-slate-500 hover:text-primary"
                     aria-label="ارسال عکس، ویدیو یا فایل صوتی"
                   >
                     <Paperclip size={18} />
                   </Button>
 
-                  <Textarea
+                  <textarea
                     value={text}
                     onChange={(event) => {
                       setText(event.target.value);
@@ -1517,7 +1519,8 @@ export default function InstagramInbox({
                     rows={1}
                     maxLength={1000}
                     placeholder="پیام خود را بنویسید..."
-                    className="min-h-10 max-h-40 flex-1 resize-none overflow-y-auto rounded-xl border-border bg-muted/40 px-3 py-2 text-base leading-5 outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    className="min-h-10 max-h-40 flex-1 resize-none appearance-none rounded-xl border border-border bg-muted/40 px-3 py-2 text-base leading-5 outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    style={{ fontSize: "16px", WebkitTextSizeAdjust: "100%" }}
                   />
 
                   <Button
@@ -1537,7 +1540,8 @@ export default function InstagramInbox({
                     !selectedConversation.messagingWindow?.canSend ||
                     (!text.trim() && !selectedFile)
                   }
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border-0 bg-transparent p-0 text-primary hover:bg-transparent hover:text-primary/80 disabled:bg-transparent disabled:text-slate-300"
+                    variant="icon"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg p-0 text-primary hover:text-primary/80 disabled:text-slate-300"
                     aria-label="ارسال"
                   >
                     <Send size={17} />
