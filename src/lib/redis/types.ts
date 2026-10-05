@@ -33,6 +33,7 @@ export interface RedisClientLike {
   ltrim(key: string, start: number, stop: number): Promise<string>;
   lrange(key: string, start: number, stop: number): Promise<string[]>;
   incr(key: string): Promise<number>;
+  decr(key: string): Promise<number>;
   pipeline(): RedisPipelineLike;
   scan(cursor: string | number, options?: { match?: string; count?: number }): Promise<[string, string[]]>;
   eval<T = unknown>(script: string, keys: string[], args: string[]): Promise<T>;
