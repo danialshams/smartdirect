@@ -32,6 +32,9 @@ type MediaType = "IMAGE" | "VIDEO";
 type LocalMedia = { file: File; type: MediaType; previewUrl: string; sortOrder: number };
 type UploadedMedia = { type: MediaType; storageKey: string; publicUrl: string; fileName: string; mimeType: string; fileSize: number; sortOrder: number };
 type Job = { id: string; type: PublishType; status: string; caption: string | null; scheduledAt: string | null; publishedAt: string | null; createdAt: string; errorMessage: string | null; media: UploadedMedia[]; instagramAccount?: { igUsername: string | null } };
+let publishingJobsCache: Job[] | null = null;
+let publishingAccountsCache: InstagramAccount[] | null = null;
+
 type InstagramAccount = { id: string; igUsername: string | null; username?: string | null; igUserId: string; isConnected?: boolean };
 type JalaliDate = { year: number; month: number; day: number };
 
@@ -213,7 +216,7 @@ async function uploadFileWithProgress(file: File, onProgress: (progress: number)
   });
 }
 
-function PersianDatePicker({ value, onChange }: { value: JalaliDate; onChange: (value: JalaliDate) => void }) {
+export function PersianDatePicker({ value, onChange }: { value: JalaliDate; onChange: (value: JalaliDate) => void }) {
   const selected = new Date(jalaliToGregorian(value.year, value.month, value.day).join("-"));
   return (
     <Popover>
@@ -312,8 +315,8 @@ function MediaTile({ item, type, onRemove, ready=false, compact=false }: any) {
 
 export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?: (type: PublishType) => void }) {
   const router = useRouter();
-  const [accounts, setAccounts] = useState<InstagramAccount[]>([]);
-  const [jobs, setJobs] = useState<Job[]>([]);
+  const [accounts, setAccounts] = useState<InstagramAccount[]>(publishingAccountsCache ?? []);
+  const [jobs, setJobs] = useState<Job[]>(publishingJobsCache ?? []);
   const knownJobIdsRef = useRef(new Set<string>());
   const previousJobsRef = useRef<Job[]>([]);
   const [activePublishJobId, setActivePublishJobId] = useState<string | null>(null);
@@ -370,7 +373,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const uploadRunRef = useRef(0);
   const carouselInsertAtRef = useRef<number | null>(null);
   const [publishing, setPublishing] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(publishingJobsCache === null);
   const [error, setError] = useState("");
 
   const triggerType = type === "STORY" ? "STORY_REPLY_KEYWORD" : "COMMENT_KEYWORD";
@@ -410,6 +413,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
           }))
       : [];
 
+    publishingAccountsCache = list;
     setAccounts(list);
     }
   async function loadJobs() {
@@ -462,6 +466,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     }
 
     previousJobsRef.current = nextJobs;
+    publishingJobsCache = nextJobs;
     setJobs(nextJobs);
   }
   async function loadResources(accountId: string) { if (!accountId) return; setLoadingResources(true); try { const [showcaseResponse, formResponse] = await Promise.all([fetch(`/api/showcases?instagramAccountId=${encodeURIComponent(accountId)}`, { cache: "no-store" }), fetch(`/api/forms?instagramAccountId=${encodeURIComponent(accountId)}`, { cache: "no-store" })]); const showcaseResult = await showcaseResponse.json(); const formResult = await formResponse.json(); setShowcases(
@@ -471,7 +476,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             ? showcaseResult.data
             : [],
       ); setForms(Array.isArray(formResult.data) ? formResult.data : []); } finally { setLoadingResources(false); } }
-  async function load() { try { setLoading(true); setError(""); await Promise.all([loadAccounts(), loadJobs()]); } catch (e) { setError(e instanceof Error ? e.message : "خطا در دریافت اطلاعات."); } finally { setLoading(false); } }
+  async function load() { const showBlockingLoading = publishingJobsCache === null; try { if (showBlockingLoading) setLoading(true); setError(""); await Promise.all([loadAccounts(), loadJobs()]); } catch (e) { setError(e instanceof Error ? e.message : "خطا در دریافت اطلاعات."); } finally { if (showBlockingLoading) setLoading(false); } }
   useEffect(() => {
     let previousDate = todayJalali;
     let previousHour = officialTehranClock.hour;
@@ -1182,11 +1187,18 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                       <div className="space-y-2">
                         {scheduledJobs.map((job) => (
                           <div key={job.id} className="flex items-center justify-between gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3">
-                            <div className="min-w-0">
-                              <span className="text-sm font-bold text-[#0F172A]">{typeLabels[job.type]}</span>
-                              <span className="mr-2 text-xs font-semibold text-[#2563EB]">{formatScheduledLabel(new Date(job.scheduledAt!))}</span>
+                            <div className="flex min-w-0 flex-1 items-center gap-3">
+                              {job.media[0]?.publicUrl ? (
+                                <div className="h-14 w-11 shrink-0 overflow-hidden rounded-lg border border-[#E2E8F0] bg-white">
+                                  {job.media[0].type === "IMAGE" ? <img src={job.media[0].publicUrl} alt={typeLabels[job.type]} className="h-full w-full object-cover" /> : <video src={job.media[0].publicUrl} muted playsInline className="h-full w-full object-cover" />}
+                                </div>
+                              ) : null}
+                              <div className="min-w-0">
+                                <span className="text-sm font-bold text-[#0F172A]">{typeLabels[job.type]}</span>
+                                <span className="mr-2 text-xs font-semibold text-[#2563EB]">{formatScheduledLabel(new Date(job.scheduledAt!))}</span>
+                              </div>
                             </div>
-                            <Button type="button" onClick={() => router.push(`/dashboard/publishing/${job.id}`)} className="min-h-9 shrink-0 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-bold text-[#2563EB] hover:bg-[#DBEAFE]">ویرایش</Button>
+                            <Button type="button" variant="outline" onClick={() => router.push(`/dashboard/publishing/${job.id}`)} className="h-9 shrink-0 rounded-lg border-[#BFDBFE] bg-white px-2.5 text-xs font-semibold text-[#2563EB] hover:bg-[#EFF6FF] sm:flex-none" aria-label="ویرایش محتوا"><Pencil size={14} /><span className="hidden sm:inline">ویرایش</span></Button>
                           </div>
                         ))}
                       </div>
@@ -1209,11 +1221,18 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                         <div className="divide-y divide-[#E2E8F0]">
                           {publishedJobs.map((job) => (
                             <div key={job.id} className="flex items-center justify-between gap-3 px-3.5 py-3">
-                              <div className="min-w-0">
-                                <span className="text-sm font-bold text-[#0F172A]">{typeLabels[job.type]}</span>
-                                <span className="mr-2 text-xs font-medium text-[#64748B]">{formatScheduledLabel(new Date(job.publishedAt ?? job.createdAt))}</span>
+                              <div className="flex min-w-0 flex-1 items-center gap-3">
+                                {job.media[0]?.publicUrl ? (
+                                  <div className="h-14 w-11 shrink-0 overflow-hidden rounded-lg border border-[#E2E8F0] bg-white">
+                                    {job.media[0].type === "IMAGE" ? <img src={job.media[0].publicUrl} alt={typeLabels[job.type]} className="h-full w-full object-cover" /> : <video src={job.media[0].publicUrl} muted playsInline className="h-full w-full object-cover" />}
+                                  </div>
+                                ) : null}
+                                <div className="min-w-0">
+                                  <span className="text-sm font-bold text-[#0F172A]">{typeLabels[job.type]}</span>
+                                  <span className="mr-2 text-xs font-medium text-[#64748B]">{formatScheduledLabel(new Date(job.publishedAt ?? job.createdAt))}</span>
+                                </div>
                               </div>
-                              <Button type="button" onClick={() => router.push(`/dashboard/publishing/${job.id}`)} className="min-h-9 shrink-0 rounded-lg border border-[#E2E8F0] bg-white px-3 text-xs font-bold text-[#334155] hover:bg-[#F8FAFC]">ویرایش</Button>
+                              <Button type="button" variant="outline" onClick={() => router.push(`/dashboard/publishing/${job.id}`)} className="h-9 shrink-0 rounded-lg border-[#BFDBFE] bg-white px-2.5 text-xs font-semibold text-[#2563EB] hover:bg-[#EFF6FF] sm:flex-none" aria-label="ویرایش محتوا"><Pencil size={14} /><span className="hidden sm:inline">ویرایش</span></Button>
                             </div>
                           ))}
                         </div>
