@@ -1,9 +1,9 @@
 "use client";
 
-import { Image as ImageIcon, MessageCircle, Video } from "lucide-react";
+import { Image as ImageIcon, Loader2, MessageCircle, Video } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Box, Button, Card, CardContent, Chip, CircularProgress, Stack, Typography } from "@mui/material";
+import { Box, Button, Card, CardContent, Chip, Stack, Typography } from "@mui/material";
 
 type Account = { id: string; igUsername: string; profilePictureUrl: string | null };
 type Media = { id: string; caption: string | null; mediaType: string | null; mediaProductType: string | null; mediaUrl: string | null; thumbnailUrl: string | null; permalink: string | null; timestamp: string | null };
@@ -161,7 +161,7 @@ export default function UnansweredComments({ account }: { account: Account }) {
         sx={{
           mt: 2,
           display: "grid",
-          gridTemplateColumns: { xs: "1fr 1fr", sm: "repeat(3, 1fr)" },
+          gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", sm: "repeat(3, minmax(0, 1fr))", lg: "repeat(4, minmax(0, 1fr))" },
           gap: 1.25,
         }}
       >
@@ -326,7 +326,10 @@ export default function UnansweredComments({ account }: { account: Account }) {
           {loading
             ? (
                 <Box sx={{ gridColumn: "1 / -1", minHeight: 260, display: "grid", placeItems: "center" }}>
-                  <CircularProgress size={28} thickness={3} />
+                  <Stack alignItems="center" spacing={1}>
+                    <Loader2 size={28} strokeWidth={2.2} className="animate-spin" color={COLORS.primary} />
+                    <Typography sx={{ fontSize: 11, color: COLORS.secondary }}>در حال دریافت محتوا...</Typography>
+                  </Stack>
                 </Box>
               )
             : filteredPosts.length === 0
