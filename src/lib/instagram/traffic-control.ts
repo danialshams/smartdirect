@@ -108,6 +108,30 @@ const OUTCOME_SCRIPT = [
 
 export type InstagramTrafficLease = { accountId: string; token: string };
 
+async function getTrafficSlotDiagnostics(redis: Awaited<ReturnType<typeof import("@/lib/redis/client").getRedisClient>>, accountId: string) {
+  const k = keys(accountId);
+  const [limit, inflight, inflightTtl] = await Promise.all([
+    redis.get<number>(k.limit),
+    redis.get<number>(k.inflight),
+    redis.ttl(k.inflight),
+  ]);
+
+  let leaseCount = 0;
+  let cursor: string | number = "0";
+  do {
+    const [nextCursor, members] = await redis.scan(cursor, { match: k.lease + ":*", count: 100 });
+    leaseCount += members.length;
+    cursor = nextCursor;
+  } while (String(cursor) !== "0");
+
+  return {
+    limit: Number(limit ?? 0),
+    inflight: Number(inflight ?? 0),
+    inflightTtlSeconds: Number(inflightTtl ?? -1),
+    leaseCount,
+  };
+}
+
 export class InstagramCircuitOpenError extends Error {
   retryAfterMs: number;
   constructor(retryAfterMs: number) {
@@ -136,7 +160,24 @@ export async function acquireInstagramTrafficSlot(context: InstagramRateLimitCon
 
   while (true) {
     const now = Date.now();
-    if (now > deadline) throw new Error("INSTAGRAM_CONCURRENCY_WAIT_TIMEOUT");
+    if (now > deadline) {
+      try {
+        const diagnostics = await getTrafficSlotDiagnostics(redis, context.instagramAccountId);
+        observabilityLogger.error("instagram_account_slot_acquire_timeout", {
+          instagramAccountId: context.instagramAccountId,
+          operation: context.operation,
+          maxWaitMs: configuredWait,
+          ...diagnostics,
+        });
+      } catch (diagnosticError) {
+        observabilityLogger.error("instagram_account_slot_acquire_timeout_diagnostics_failed", {
+          instagramAccountId: context.instagramAccountId,
+          operation: context.operation,
+          error: diagnosticError instanceof Error ? diagnosticError.message : String(diagnosticError),
+        });
+      }
+      throw new Error("INSTAGRAM_CONCURRENCY_WAIT_TIMEOUT");
+    }
 
     const result = await redis.eval(
       ACQUIRE_SCRIPT,
@@ -146,7 +187,24 @@ export async function acquireInstagramTrafficSlot(context: InstagramRateLimitCon
 
     const status = Number(result[0]);
     if (status === 1) {
-      const rate = await consumeInstagramRateLimit(context);
+      let rate;
+      try {
+        rate = await consumeInstagramRateLimit(context);
+      } catch (error) {
+        try {
+          await releaseInstagramTrafficSlot({
+            accountId: context.instagramAccountId,
+            token,
+          });
+        } catch (releaseError) {
+          observabilityLogger.error("instagram_account_slot_release_after_rate_limit_error_failed", {
+            instagramAccountId: context.instagramAccountId,
+            operation: context.operation,
+            error: releaseError instanceof Error ? releaseError.message : String(releaseError),
+          });
+        }
+        throw error;
+      }
       if (!rate.allowed) {
         await releaseInstagramTrafficSlot({
           accountId: context.instagramAccountId,
