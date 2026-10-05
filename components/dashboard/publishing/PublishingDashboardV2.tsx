@@ -1128,6 +1128,17 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               ))}
             </div>
             {(() => {
+              if (loading) {
+                return (
+                  <section className="mt-6 rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-sm">
+                    <div className="flex min-h-24 items-center justify-center gap-2 text-sm font-medium text-[#64748B]">
+                      <Loader2 size={18} className="animate-spin text-[#2563EB]" />
+                      <span>در حال بارگذاری محتواهای منتشر شده...</span>
+                    </div>
+                  </section>
+                );
+              }
+
               const scheduledJobs = jobs.filter((job) => job.status === "SCHEDULED" && job.scheduledAt);
               const publishedJobs = jobs.filter((job) => job.status === "PUBLISHED");
               if (!activePublishJobId && !scheduledJobs.length && !publishedJobs.length) return null;
