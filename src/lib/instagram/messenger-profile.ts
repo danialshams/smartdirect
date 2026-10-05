@@ -24,7 +24,7 @@ async function callMessengerProfileApi({
   instagramUserId: string;
   method: "GET" | "POST" | "DELETE";
   body?: Record<string, unknown>;
-  fields?: string;
+  fields?: string | string[];
 }) {
   const accessToken = await getValidInstagramAccessToken(instagramAccountId);
 
@@ -86,7 +86,7 @@ export async function deleteInstagramIceBreakers({
     instagramAccountId,
     instagramUserId,
     method: "DELETE",
-    fields: "ice_breakers",
+    fields: ["ice_breakers"],
   });
 }
 
@@ -159,7 +159,7 @@ export async function deleteInstagramPersistentMenu({
     instagramAccountId,
     instagramUserId,
     method: "DELETE",
-    fields: "persistent_menu",
+    fields: ["persistent_menu"],
   });
 }
 
