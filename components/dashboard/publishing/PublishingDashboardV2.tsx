@@ -969,7 +969,13 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             </div>
             {(() => {
               const scheduledJobs = jobs.filter((job) => job.status === "SCHEDULED" && job.scheduledAt);
-              const publishedJobs = jobs.filter((job) => job.status === "PUBLISHED");
+              const publishedJobs = jobs.filter((job) => {
+                if (job.status !== "PUBLISHED") return false;
+                if (job.type === "STORY") {
+                  return Boolean(job.publishedAt && Date.now() - new Date(job.publishedAt).getTime() < 24 * 60 * 60 * 1000);
+                }
+                return true;
+              });
 
               return (
                 <div className="mt-6 space-y-4">
