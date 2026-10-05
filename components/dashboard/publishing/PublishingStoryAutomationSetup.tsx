@@ -176,7 +176,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
   }
 
   const MAX_SHOWCASE_ITEMS = 10;
-  const hasValidSlide = slides.length > 0 && slides.every((slide) => slide.imageUrl.trim() && slide.title.trim());
+  const hasValidSlide = slides.length > 0 && slides.every((slide) => slide.imageUrl.trim() && slide.title.trim() && slide.description.trim());
 
   async function deleteShowcase() {
     if (!message.showcaseId) return;
@@ -200,7 +200,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
     if (saveShowcaseLockRef.current || savingShowcase) return false;
     saveShowcaseLockRef.current = true;
     if (!hasValidSlide) {
-      setError("برای ساخت ویترین، حداقل یک اسلاید کامل با تصویر و تیتر بسازید.");
+      setError("برای ساخت ویترین، حداقل یک اسلاید کامل با تصویر، تیتر و توضیحات بسازید.");
       saveShowcaseLockRef.current = false;
       return false;
     }
