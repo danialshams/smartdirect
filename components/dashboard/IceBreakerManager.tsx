@@ -107,15 +107,6 @@ export default function IceBreakerManager({
     void loadQuestions();
   }, [account?.id]);
 
-  function startNewQuestion() {
-    setEditingId(null);
-    setDraft("");
-    setDraftAutomationId(null);
-    setSuccess(false);
-    setError("");
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
   function startEdit(question: Question) {
     setEditingId(question.id ?? null);
     setDraft(question.label);
