@@ -140,6 +140,13 @@ function formatTime(value: string) {
   return timeFormatter.format(new Date(value));
 }
 
+function messagingWindowLabel(window?: MessagingWindow) {
+  if (!window) return null;
+  if (window.mode === "STANDARD") return "امکان پاسخ‌گویی فعال";
+  if (window.mode === "HUMAN_AGENT") return "پشتیبانی انسانی فعال";
+  return "زمان پاسخ‌گویی تمام شده";
+}
+
 async function readApiResult(response: Response): Promise<ApiResult> {
   const raw = await response.text();
 
@@ -1544,6 +1551,11 @@ export default function InstagramInbox({
             onSubmit={sendMessage}
             className="shrink-0 border-t border-border bg-background p-2.5 sm:p-3"
           >
+            {selectedConversation.messagingWindow && !selectedConversation.messagingWindow.canSend && (
+              <div className="mb-2 rounded-lg bg-muted/60 px-3 py-2 text-[10px] leading-5 text-muted-foreground">
+                زمان مجاز پاسخ‌گویی به این گفتگو تمام شده است. با پیام جدید کاربر، امکان پاسخ دوباره فعال می‌شود.
+              </div>
+            )}
             {selectedFile && (
               <div className="mb-3 max-h-52 overflow-hidden rounded-2xl border border-border bg-muted/30 sm:max-h-60">
                 <div className="flex items-center justify-between gap-3 px-3 py-2.5">
@@ -1681,7 +1693,7 @@ export default function InstagramInbox({
                   <Button
                     type="button"
                     onClick={() => void startRecording()}
-                    disabled={sending}
+                    disabled={sending || !selectedConversation.messagingWindow?.canSend}
                     className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border bg-background p-0 text-muted-foreground hover:bg-muted disabled:opacity-50"
                     aria-label="ضبط Voice"
                   >
@@ -1690,7 +1702,11 @@ export default function InstagramInbox({
 
                   <Button
                     type="submit"
-                    disabled={sending || (!text.trim() && !selectedFile)}
+                    disabled={
+                    sending ||
+                    !selectedConversation.messagingWindow?.canSend ||
+                    (!text.trim() && !selectedFile)
+                  }
                     className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary p-0 text-primary-foreground hover:bg-primary/90 disabled:opacity-40"
                     aria-label="ارسال"
                   >
