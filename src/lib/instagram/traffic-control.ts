@@ -36,6 +36,7 @@ function keys(accountId: string) {
     failures: PREFIX + ":failures:" + a,
     successes: PREFIX + ":successes:" + a,
     failureAt: PREFIX + ":failure-at:" + a,
+    criticalPending: PREFIX + ":critical-pending:" + a,
   };
 }
 
@@ -46,6 +47,7 @@ const ACQUIRE_SCRIPT = [
   'local maxLimit = tonumber(ARGV[4])',
   'local leaseSeconds = tonumber(ARGV[5])',
   'local token = ARGV[6]',
+  'local critical = tonumber(ARGV[7]) or 0',
   'local openUntil = tonumber(redis.call("GET", KEYS[4]) or "0")',
   'if openUntil > now then return {-1, openUntil - now, 0} end',
   'if openUntil > 0 then',
@@ -55,10 +57,17 @@ const ACQUIRE_SCRIPT = [
   'local limit = tonumber(redis.call("GET", KEYS[1]) or "")',
   'if not limit then limit = math.min(maxLimit, math.max(minLimit, initial)); redis.call("SET", KEYS[1], tostring(limit), "EX", "86400") end',
   'local inflight = tonumber(redis.call("GET", KEYS[2]) or "0")',
-  'if inflight >= limit then return {0, 25, limit} end',
+  'local pendingCritical = tonumber(redis.call("GET", KEYS[6]) or "0")',
+  'local effectiveLimit = limit',
+  'if critical == 0 and pendingCritical > 0 then effectiveLimit = math.max(1, limit - 1) end',
+  'if inflight >= effectiveLimit then return {0, 25, limit} end',
   'redis.call("INCR", KEYS[2])',
   'redis.call("EXPIRE", KEYS[2], leaseSeconds)',
   'redis.call("SET", KEYS[3] .. ":" .. token, "1", "EX", leaseSeconds)',
+  'if critical == 1 and pendingCritical > 0 then',
+  '  local remaining = redis.call("DECR", KEYS[6])',
+  '  if remaining <= 0 then redis.call("DEL", KEYS[6]) end',
+  'end',
   'return {1, 0, limit}',
 ].join("\n");
 
@@ -107,6 +116,14 @@ const OUTCOME_SCRIPT = [
 ].join("\n");
 
 export type InstagramTrafficLease = { accountId: string; token: string };
+
+function isCriticalInstagramOperation(operation: string) {
+  return operation === "PUBLISH_MEDIA"
+    || operation === "PUBLISH_REEL"
+    || operation === "PUBLISH_CAROUSEL"
+    || operation === "PUBLISH_STORY"
+    || operation === "PUBLISH_QUOTA_READ";
+}
 
 async function getTrafficSlotDiagnostics(redis: Awaited<ReturnType<typeof import("@/lib/redis/client").getRedisClient>>, accountId: string) {
   const k = keys(accountId);
@@ -157,7 +174,16 @@ export async function acquireInstagramTrafficSlot(context: InstagramRateLimitCon
   const configuredWait = options.maxWaitMs && options.maxWaitMs > 0 ? options.maxWaitMs : maxWaitMs();
   const deadline = Date.now() + configuredWait;
   const token = crypto.randomUUID();
+  const critical = isCriticalInstagramOperation(context.operation);
+  let criticalPendingRegistered = false;
 
+  if (critical) {
+    await redis.incr(k.criticalPending);
+    await redis.expire(k.criticalPending, Math.max(30, Math.ceil((configuredWait + leaseSeconds() * 1000) / 1000)));
+    criticalPendingRegistered = true;
+  }
+
+  try {
   while (true) {
     const now = Date.now();
     if (now > deadline) {
@@ -181,8 +207,8 @@ export async function acquireInstagramTrafficSlot(context: InstagramRateLimitCon
 
     const result = await redis.eval(
       ACQUIRE_SCRIPT,
-      [k.limit, k.inflight, k.lease, k.circuit, k.probe],
-      [String(now), String(initialLimit()), String(minLimit()), String(maxLimit()), String(leaseSeconds()), token],
+      [k.limit, k.inflight, k.lease, k.circuit, k.probe, k.criticalPending],
+      [String(now), String(initialLimit()), String(minLimit()), String(maxLimit()), String(leaseSeconds()), token, critical ? "1" : "0"],
     ) as [number, number, number];
 
     const status = Number(result[0]);
@@ -223,10 +249,25 @@ export async function acquireInstagramTrafficSlot(context: InstagramRateLimitCon
         operation: context.operation,
         concurrencyLimit: Number(result[2]),
       });
+      if (critical) criticalPendingRegistered = false;
       return { accountId: context.instagramAccountId, token };
     }
     if (status === -1) throw new InstagramCircuitOpenError(Math.max(100, Number(result[1])));
     await sleep(Math.min(Math.max(25, Number(result[1] || 50)), Math.max(25, deadline - now)), options.signal);
+  }
+  } finally {
+    if (critical && criticalPendingRegistered) {
+      try {
+        const remaining = Number(await redis.decr(k.criticalPending));
+        if (remaining <= 0) await redis.del(k.criticalPending);
+      } catch (error) {
+        observabilityLogger.warn("instagram_critical_pending_cleanup_failed", {
+          instagramAccountId: context.instagramAccountId,
+          operation: context.operation,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
   }
 }
 
