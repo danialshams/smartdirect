@@ -299,17 +299,34 @@ async function cleanupPublishedMedia(
   for (const item of items) {
     if (item.deletedAt || item.storageKey.startsWith("test:")) continue;
 
-    try {
-      await storage.delete(item.storageKey);
-      await prisma.instagramPublishMedia.update({
-        where: { id: item.id },
-        data: { deletedAt: new Date() },
-      });
-    } catch (error) {
-      console.error("Failed to delete published Instagram media:", {
+    let lastError: unknown = null;
+
+    // Deletion is part of the successful-publish lifecycle. Retry briefly here
+    // so transient storage failures do not leave user media behind.
+    for (const delayMs of [0, 500, 1500, 3000]) {
+      if (delayMs) await new Promise((resolve) => setTimeout(resolve, delayMs));
+
+      try {
+        await storage.delete(item.storageKey);
+        await prisma.instagramPublishMedia.update({
+          where: { id: item.id },
+          data: { deletedAt: new Date() },
+        });
+        lastError = null;
+        break;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+
+    if (lastError) {
+      // Do not fail an already-published Instagram job because storage cleanup
+      // was temporarily unavailable. The cleanup cron retries PUBLISHED media
+      // whose deletedAt is still null.
+      console.error("Failed to delete published Instagram media after retries:", {
         mediaId: item.id,
         storageKey: item.storageKey,
-        error,
+        error: lastError,
       });
     }
   }
