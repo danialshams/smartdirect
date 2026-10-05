@@ -1122,7 +1122,7 @@ export default function InstagramInbox({
 
       <div className="min-h-0 flex-1 overflow-y-auto px-2 py-2 sm:px-3">
         {loading && !conversations.length ? (
-          <div className="flex items-center justify-center py-10">
+          <div className="flex min-h-full items-center justify-center">
             <LoaderCircle size={22} className="animate-spin text-blue-600" aria-label="در حال بارگذاری" />
           </div>
         ) : filteredConversations.length ? (
@@ -1265,10 +1265,10 @@ export default function InstagramInbox({
 
           <div
             ref={messagesScrollRef}
-            className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain bg-muted/20 px-3 py-3 sm:px-4 sm:py-4"
+            className="relative min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain bg-muted/20 px-3 py-3 sm:px-4 sm:py-4"
           >
             {messagesLoading && !messages.length ? (
-              <div className="flex items-center justify-center py-10">
+              <div className="flex min-h-full items-center justify-center">
                 <LoaderCircle size={24} className="animate-spin text-blue-600" aria-label="در حال بارگذاری پیام‌ها" />
               </div>
             ) : messages.length ? (
