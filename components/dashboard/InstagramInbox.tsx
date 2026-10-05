@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/dashboard/DashboardUI";
 import { Input } from "@/components/dashboard/DashboardUI";
-import { Textarea } from "@/components/dashboard/DashboardUI";
 import {
   ArrowRight,
   Check,
@@ -1123,8 +1122,8 @@ export default function InstagramInbox({
 
       <div className="min-h-0 flex-1 overflow-y-auto px-2 py-2 sm:px-3">
         {loading && !conversations.length ? (
-          <div className="flex min-h-48 items-center justify-center">
-            <LoaderCircle size={22} className="animate-spin text-primary" aria-label="در حال بارگذاری" />
+          <div className="flex items-center justify-center py-10">
+            <LoaderCircle size={22} className="animate-spin text-blue-600" aria-label="در حال بارگذاری" />
           </div>
         ) : filteredConversations.length ? (
           filteredConversations.map((conversation) => {
@@ -1185,7 +1184,7 @@ export default function InstagramInbox({
                       {preview(conversation.messages[conversation.messages.length - 1])}
                     </p>
                     {unread && (
-                      <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-primary px-1.5 text-[9px] font-semibold text-primary-foreground">
+                      <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-blue-600 px-1.5 text-[9px] font-semibold text-white">
                         {(conversation.unreadCount || 0).toLocaleString("fa-IR")}
                       </span>
                     )}
@@ -1219,7 +1218,8 @@ export default function InstagramInbox({
             <Button
               type="button"
               onClick={goBackToList}
-              className="flex h-9 w-9 items-center justify-center rounded-lg border-0 bg-transparent p-0 text-muted-foreground hover:bg-transparent hover:text-foreground lg:hidden"
+              variant="icon"
+              className="flex h-9 w-9 items-center justify-center rounded-lg p-0 text-muted-foreground hover:text-foreground lg:hidden"
               aria-label="بازگشت به گفتگوها"
             >
               <ArrowRight size={17} />
@@ -1268,8 +1268,8 @@ export default function InstagramInbox({
             className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain bg-muted/20 px-3 py-3 sm:px-4 sm:py-4"
           >
             {messagesLoading && !messages.length ? (
-              <div className="flex min-h-64 items-center justify-center">
-                <LoaderCircle size={24} className="animate-spin text-primary" aria-label="در حال بارگذاری پیام‌ها" />
+              <div className="flex items-center justify-center py-10">
+                <LoaderCircle size={24} className="animate-spin text-blue-600" aria-label="در حال بارگذاری پیام‌ها" />
               </div>
             ) : messages.length ? (
               <div className="mx-auto flex w-full max-w-2xl flex-col gap-2.5">
@@ -1526,7 +1526,8 @@ export default function InstagramInbox({
                     type="button"
                     onClick={() => void startRecording()}
                     disabled={sending || !selectedConversation.messagingWindow?.canSend}
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border-0 bg-transparent p-0 text-slate-500 hover:bg-transparent hover:text-primary disabled:bg-transparent disabled:text-slate-300"
+                    variant="icon"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg p-0 text-slate-500 hover:text-primary disabled:text-slate-300"
                     aria-label="ضبط Voice"
                   >
                     <Mic size={18} />
