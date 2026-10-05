@@ -301,9 +301,11 @@ export default function UnansweredComments({ account }: { account: Account }) {
           justifyContent="space-between"
           sx={{ mb: 1.25, px: 0.25 }}
         >
-          <Typography sx={{ fontSize: 12, fontWeight: 750, color: COLORS.text }}>
-            {loading ? "در حال دریافت محتوا..." : `${totalPosts.toLocaleString("fa-IR")} محتوا`}
-          </Typography>
+          {!loading ? (
+            <Typography sx={{ fontSize: 12, fontWeight: 750, color: COLORS.text }}>
+              {totalPosts.toLocaleString("fa-IR")} محتوا
+            </Typography>
+          ) : <Box />}
           {!loading ? (
             <Typography sx={{ fontSize: 10, color: COLORS.secondary }}>
               {totalComments.toLocaleString("fa-IR")} کامنت بی‌پاسخ
