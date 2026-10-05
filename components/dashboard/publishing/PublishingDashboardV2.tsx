@@ -1216,12 +1216,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
 
 
-              <section className="space-y-3 rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5">
-                <div>
-                  <p className="text-right text-sm font-extrabold text-[#0F172A]">تنظیمات تکمیلی پاسخ <span className="font-medium text-[#2563EB]">(اختیاری)</span></p>
-                  <p className="mt-1 text-right text-[11px] leading-5 text-[#64748B]">این تنظیمات مستقل از نوع پاسخ اصلی هستند.</p>
-                </div>
-
+              <section className="space-y-3">
                 {messages[0]?.messageType === "FORM" && (
                   <div className="rounded-xl border border-[#E2E8F0] bg-white p-3.5">
                     <label className="flex cursor-pointer items-start gap-3">
