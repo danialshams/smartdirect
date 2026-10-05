@@ -1191,7 +1191,11 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
                 <ArrowRight size={15} strokeWidth={2}/>بازگشت
               </Button>
-
+              {storyResponseSaved && !storyResponseEditing && (
+                <Button type="button" onClick={() => { animateStepChange(() => { setAutomationSetupConfirmed(true); setError(""); }); }} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
+                  مرحله بعد <ArrowLeft size={15} strokeWidth={2}/>
+                </Button>
+              )}
             </div>
 
             <section className="space-y-5 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
