@@ -765,6 +765,7 @@ export default function EntryPointFlowBuilder({
                         loadingResources={loadingResources}
                         instagramAccountId={accountId}
                         hideVideo
+                        hideForm
                         keywordValid
                         disabled={saving}
                         onUpdate={updateEntryMessage}
