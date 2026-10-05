@@ -423,6 +423,7 @@ export default function PublishingJobEditor() {
       toast.success(
         result.message || "محتوای زمان‌بندی‌شده حذف شد.",
       );
+      window.dispatchEvent(new Event("smartdirect:publishing-refresh"));
       router.back();
     } catch (error) {
       toast.error(
