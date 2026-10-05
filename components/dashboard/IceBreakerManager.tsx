@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Input } from "@/components/dashboard/DashboardUI";
-import { ArrowLeft, ArrowRight, CheckCircle2, MessageSquare, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, MessageSquare, Pencil, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import EntryPointFlowBuilder from "./EntryPointFlowBuilder";
 
@@ -277,23 +277,6 @@ export default function IceBreakerManager({
           </section>
         ) : (
           <div className="space-y-5">
-            <div className="mx-auto flex w-full max-w-2xl items-center justify-between gap-3">
-              <span className="text-xs font-medium text-[#64748B]">
-                {isEditing ? "ویرایش سؤال" : "ساخت سؤال جدید"}
-              </span>
-              {isEditing && (
-                <Button
-                  type="button"
-                  onClick={startNewQuestion}
-                  variant="outline"
-                  className="min-h-9 rounded-lg border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#2563EB] shadow-none hover:bg-[#DBEAFE]"
-                >
-                  سؤال جدید
-                  <Plus size={14} />
-                </Button>
-              )}
-            </div>
-
             <section className="mx-auto w-full max-w-2xl rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
               <div className="mb-6 flex items-start gap-3">
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">
@@ -348,34 +331,6 @@ export default function IceBreakerManager({
                 }}
               />
             </section>
-
-            <div className="mx-auto flex w-full max-w-2xl items-center justify-between gap-3">
-              <Button
-                type="button"
-                onClick={isEditing ? () => {
-                  setEditingId(null);
-                  setDraft("");
-                  setDraftAutomationId(null);
-                  setError("");
-                  setSuccess(false);
-                } : startNewQuestion}
-                variant="outline"
-                className="min-h-10 rounded-xl border-[#BFDBFE] bg-[#EFF6FF] px-4 text-xs font-semibold text-[#2563EB] shadow-none hover:bg-[#DBEAFE]"
-              >
-                <ArrowRight size={15} />
-                انصراف
-              </Button>
-
-              <Button
-                type="button"
-                onClick={() => void saveQuestion()}
-                disabled={saving || !draft.trim() || !draftAutomationId}
-                className="min-h-10 rounded-xl bg-[#2563EB] px-5 text-xs font-semibold text-white hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                {saving ? "در حال ذخیره..." : isEditing ? "ذخیره تغییرات" : "ساخت سؤال"}
-                <ArrowLeft size={15} />
-              </Button>
-            </div>
 
             {error && (
               <div className="mx-auto w-full max-w-2xl rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-5 text-[#B91C1C]" role="alert">
