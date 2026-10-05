@@ -1279,7 +1279,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                     );
                   })()}
                 </div>
-              )}
+              ) : null}
 
 
             </section>
