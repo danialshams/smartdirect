@@ -307,7 +307,7 @@ export default function IceBreakerManager({
                 <div className="min-w-0">
                   <h2 className="text-sm font-bold text-[#0F172A]">پاسخ پیام</h2>
                   <p className="mt-1.5 text-xs leading-5 text-[#64748B]">
-                    پاسخ و Flow این پیام را دقیقاً مثل پاسخ‌های دایرکت تنظیم کن.
+                    نوع پاسخ و محتوای پاسخ این پیام را مشخص کن.
                   </p>
                 </div>
               </div>
