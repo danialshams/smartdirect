@@ -87,6 +87,16 @@ export async function GET(request: NextRequest, context: Context) {
       );
     }
 
+    if (job.status === "PUBLISHED" && job.type === "STORY" && (!job.publishedAt || Date.now() - job.publishedAt.getTime() >= 24 * 60 * 60 * 1000)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "این استوری دیگر در Instagram موجود نیست.",
+        },
+        { status: 404 },
+      );
+    }
+
     const includeMedia = request.nextUrl.searchParams.get("includeMedia") === "true";
     const data =
       job.status === "PUBLISHED" && includeMedia
