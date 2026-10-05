@@ -1251,7 +1251,6 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                     );
                   })}
                 </div>
-              )}
               {type === "CAROUSEL" ? (
                 <div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5 sm:p-4">
                   {(() => {
