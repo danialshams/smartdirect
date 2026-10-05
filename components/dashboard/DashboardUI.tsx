@@ -311,7 +311,7 @@ export const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"in
           },
           "& .MuiOutlinedInput-input": {
             fontFamily: '"Vazirmatn", Arial, sans-serif',
-            fontSize: 13,
+            fontSize: { xs: 16, md: 13 },
           },
         }}
       />
@@ -325,7 +325,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, React.ComponentPro
       <TextField
         inputRef={ref}
         multiline
-        minRows={3}
+        minRows={1}
         value={props.value}
         defaultValue={props.defaultValue}
         onChange={props.onChange}
@@ -347,7 +347,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, React.ComponentPro
           },
           "& textarea": {
             fontFamily: '"Vazirmatn", Arial, sans-serif',
-            fontSize: 13,
+            fontSize: { xs: 16, md: 13 },
             lineHeight: 1.9,
           },
         }}
