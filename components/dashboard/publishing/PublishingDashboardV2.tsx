@@ -453,8 +453,21 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
   useEffect(() => {
     void load();
+
+    const refreshFromDetail = () => {
+      void loadJobs();
+    };
+
+    window.addEventListener("smartdirect:publishing-refresh", refreshFromDetail);
     const interval = window.setInterval(() => void loadJobs(), 5000);
-    return () => window.clearInterval(interval);
+
+    return () => {
+      window.removeEventListener(
+        "smartdirect:publishing-refresh",
+        refreshFromDetail,
+      );
+      window.clearInterval(interval);
+    };
   }, []);
   useEffect(() => { if (selectedAccountId) void loadResources(selectedAccountId); }, [selectedAccountId]);
 
