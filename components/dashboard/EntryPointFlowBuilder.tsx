@@ -1,38 +1,18 @@
 "use client";
-import { Button } from "@/components/dashboard/DashboardUI"
-
-import {
-    ChevronDown,
-    ChevronUp,
-    FileText,
-    Image as ImageIcon,
-    Loader2,
-    MessageSquare,
-    Plus,
-    Save,
-    Video,
-    Volume2
-} from "lucide-react";
-import {
-    useEffect,
-    useMemo,
-    useState,
-} from "react";
+import { Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import PublishingStoryAutomationSetup from "./publishing/PublishingStoryAutomationSetup";
-
-import type {
-    FormItem,
-    MessageDraft,
-    QuickReplyDraft,
-    Showcase,
-} from "./automation-form-utils";
 
 import {
     createEmptyMessage,
     createEmptyQuickReply,
     normalizeMessages,
     validateMessages,
+    type FormItem,
+    type MessageDraft,
+    type QuickReplyDraft,
+    type Showcase,
 } from "./automation-form-utils";
 
 type EntryPointFlowBuilderProps = {
@@ -321,23 +301,6 @@ export default function EntryPointFlowBuilder({
             cancelled = true;
         };
     }, [automationId]);
-
-    /*
-     * ---------------------------------------------------------
-     * Message options
-     * ---------------------------------------------------------
-     */
-
-    const messageOptions = useMemo(
-        () =>
-            messages.map(
-                (message, index) => ({
-                    id: message.id,
-                    label: `پیام ${index + 1}`,
-                }),
-            ),
-        [messages],
-    );
 
     /*
      * ---------------------------------------------------------
@@ -1073,6 +1036,7 @@ export default function EntryPointFlowBuilder({
                         instagramAccountId={accountId}
                         hideVideo
                         keywordValid
+                        disabled={saving}
                         onUpdate={updateEntryMessage}
                         onSavedChange={setSuccess}
                         onContinue={() => {
@@ -1086,11 +1050,6 @@ export default function EntryPointFlowBuilder({
                         </div>
                     )}
 
-                    {success && (
-                        <div className="rounded-xl border border-[#BBF7D0] bg-[#F0FDF4] px-3.5 py-3 text-xs font-medium text-[#15803D]">
-                            پاسخ با موفقیت ذخیره شد.
-                        </div>
-                    )}
                 </>
             )}
         </div>
