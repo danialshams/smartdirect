@@ -39,6 +39,8 @@ export default function IceBreakerManager({
   const [draft, setDraft] = useState("");
   const [draftAutomationId, setDraftAutomationId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState("");
+  const [editAutomationId, setEditAutomationId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -108,17 +110,20 @@ export default function IceBreakerManager({
 
   function startEdit(question: Question) {
     setEditingId(question.id ?? null);
-    setDraft(question.label);
-    setDraftAutomationId(question.automationId);
+    setEditDraft(question.label);
+    setEditAutomationId(question.automationId);
     setSuccess(false);
     setError("");
-    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  async function saveQuestion(automationIdOverride?: string) {
+  async function saveQuestion(
+    labelOverride: string,
+    editingIdOverride: string | null,
+    automationIdOverride?: string,
+  ) {
     if (!account) return;
 
-    const label = draft.trim();
+    const label = labelOverride.trim();
     if (!label) {
       setError("متن پیام شروع گفتگو را وارد کنید.");
       return;
@@ -127,15 +132,15 @@ export default function IceBreakerManager({
       setError("متن پیام شروع گفتگو نباید بیشتر از ۸۰ کاراکتر باشد.");
       return;
     }
-    const resolvedAutomationId = automationIdOverride ?? draftAutomationId;
+    const resolvedAutomationId = automationIdOverride;
     if (!resolvedAutomationId) {
       setError("ابتدا پاسخ پیام را تنظیم و ذخیره کنید.");
       return;
     }
 
-    const nextQuestions = editingId
+    const nextQuestions = editingIdOverride
       ? questions.map((question) =>
-          question.id === editingId
+          question.id === editingIdOverride
             ? { ...question, label, automationId: resolvedAutomationId }
             : question,
         )
@@ -177,6 +182,8 @@ export default function IceBreakerManager({
       setEditingId(null);
       setDraft("");
       setDraftAutomationId(null);
+      setEditDraft("");
+      setEditAutomationId(null);
       await loadQuestions();
       window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
     } catch (saveError) {
@@ -317,8 +324,7 @@ export default function IceBreakerManager({
                 accountId={account.id}
                 automationId={draftAutomationId}
                 onAutomationReady={(automationId) => {
-                  setDraftAutomationId(automationId);
-                  void saveQuestion(automationId);
+                  void saveQuestion(draft, null, automationId);
                 }}
               />
             </section>
@@ -334,6 +340,50 @@ export default function IceBreakerManager({
                 <CheckCircle2 size={16} />
                 پیام شروع گفتگو با موفقیت ذخیره شد.
               </div>
+            )}
+
+            {editingId && (
+              <section className="mx-auto w-full max-w-2xl rounded-2xl border border-[#BFDBFE] bg-white p-4 shadow-sm sm:p-6">
+                <div className="mb-6 flex items-start gap-3">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">
+                    ویرایش
+                  </span>
+                  <div className="min-w-0">
+                    <h2 className="text-sm font-bold text-[#0F172A]">ویرایش پیام شروع گفتگو</h2>
+                    <p className="mt-1.5 text-xs leading-5 text-[#64748B]">
+                      متن و پاسخ پیام انتخاب‌شده را در این بخش ویرایش کن.
+                    </p>
+                  </div>
+                </div>
+
+                <Input
+                  value={editDraft}
+                  onChange={(event) => {
+                    setEditDraft(event.target.value);
+                    setSuccess(false);
+                    setError("");
+                  }}
+                  maxLength={80}
+                  placeholder="مثلاً: محصولات شما را ببینم"
+                  className="h-12 rounded-xl border-[#E2E8F0] bg-[#F8FAFC] px-3.5 text-base text-[#0F172A] focus:border-[#2563EB] focus:bg-white"
+                  style={{ fontSize: "16px", WebkitTextSizeAdjust: "100%" }}
+                />
+
+                <div className="mt-2 flex items-center justify-between text-[10px] text-[#64748B]">
+                  <span>حداکثر ۸۰ کاراکتر</span>
+                  <span>{editDraft.length.toLocaleString("fa-IR")} / ۸۰</span>
+                </div>
+
+                <div className="mt-5">
+                  <EntryPointFlowBuilder
+                    accountId={account.id}
+                    automationId={editAutomationId}
+                    onAutomationReady={(automationId) => {
+                      void saveQuestion(editDraft, editingId, automationId);
+                    }}
+                  />
+                </div>
+              </section>
             )}
 
             <section className="mx-auto w-full max-w-2xl rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
