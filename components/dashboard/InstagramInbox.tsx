@@ -14,7 +14,6 @@ import {
   Paperclip,
   Pause,
   Play,
-  RefreshCw,
   LoaderCircle,
   Search,
   Send,
@@ -408,6 +407,7 @@ export default function InstagramInbox({
   const messagesScrollRef = useRef<HTMLDivElement>(null);
   const previousMessageCountRef = useRef(0);
   const initialScrollPendingRef = useRef(false);
+  const shouldStickToBottomRef = useRef(true);
   const failedRetryRef = useRef<Map<string, RetryPayload>>(new Map());
   const optimisticMediaRef = useRef<Map<string, string>>(new Map());
   const lastMarkedInboundRef = useRef<string>("");
@@ -529,6 +529,14 @@ export default function InstagramInbox({
     }
 
     try {
+      const scrollContainer = messagesScrollRef.current;
+      if (scrollContainer) {
+        const distanceFromBottom =
+          scrollContainer.scrollHeight -
+          scrollContainer.scrollTop -
+          scrollContainer.clientHeight;
+        shouldStickToBottomRef.current = distanceFromBottom < 96;
+      }
       setMessagesLoading(true);
 
       const response = await fetch(
@@ -621,7 +629,7 @@ export default function InstagramInbox({
     const interval = window.setInterval(() => {
       void loadConversations();
       if (selectedId) void loadMessages();
-    }, 10000);
+    }, 2000);
 
     return () => window.clearInterval(interval);
   }, [loadConversations, loadMessages, selectedId]);
@@ -629,117 +637,33 @@ export default function InstagramInbox({
   const forceScrollToBottom = useCallback(() => {
     const container = messagesScrollRef.current;
     if (!container) return;
-
     container.scrollTop = Math.max(0, container.scrollHeight - container.clientHeight);
   }, []);
 
-  useLayoutEffect(() => {
-    // Initial positioning must wait until the mobile chat panel is actually
-    // visible and the message-loading phase has finished.
-    if (
-      !selectedId ||
-      !mobileChatOpen ||
-      messagesLoading ||
-      !messages.length ||
-      !initialScrollPendingRef.current
-    ) {
-      return;
-    }
-
-    let cancelled = false;
-    const timers: number[] = [];
-
-    const scrollNow = () => {
-      if (cancelled || !initialScrollPendingRef.current) return;
-      const container = messagesScrollRef.current;
-      if (!container) return;
-
-      container.scrollTop = Math.max(
-        0,
-        container.scrollHeight - container.clientHeight,
-      );
-    };
-
-    // The first pass happens after the visible Chat DOM has painted.
-    requestAnimationFrame(() => {
-      requestAnimationFrame(scrollNow);
-    });
-
-    // Media/layout can change the scrollHeight after the messages render.
-    const container = messagesScrollRef.current;
-    let resizeObserver: ResizeObserver | null = null;
-    let mutationObserver: MutationObserver | null = null;
-
-    if (container) {
-      resizeObserver = new ResizeObserver(scrollNow);
-      resizeObserver.observe(container);
-
-      if (container.firstElementChild) {
-        resizeObserver.observe(container.firstElementChild);
-      }
-
-      mutationObserver = new MutationObserver(scrollNow);
-      mutationObserver.observe(container, {
-        childList: true,
-        subtree: true,
-      });
-    }
-
-    // A few short passes cover browser layout/media settling without
-    // relying on a long arbitrary timeout.
-    for (const delay of [40, 100, 200, 350, 550]) {
-      timers.push(
-        window.setTimeout(() => {
-          if (!cancelled) scrollNow();
-        }, delay),
-      );
-    }
-
-    const settleTimer = window.setTimeout(() => {
-      if (cancelled) return;
-      scrollNow();
-      initialScrollPendingRef.current = false;
-    }, 700);
-
-    return () => {
-      cancelled = true;
-      timers.forEach((timer) => window.clearTimeout(timer));
-      window.clearTimeout(settleTimer);
-      resizeObserver?.disconnect();
-      mutationObserver?.disconnect();
-    };
-  }, [
-    selectedId,
-    mobileChatOpen,
-    messagesLoading,
-    messages.length,
-  ]);
-
-  // If the chat becomes visible after messages have already been loaded,
-  // run the initial positioning again on the next frame.
   useEffect(() => {
     if (
       !selectedId ||
       !mobileChatOpen ||
       messagesLoading ||
-      !messages.length ||
-      !initialScrollPendingRef.current
+      !messages.length
     ) {
       return;
     }
 
+    if (!initialScrollPendingRef.current && !shouldStickToBottomRef.current) {
+      return;
+    }
+
     const frame = window.requestAnimationFrame(() => {
-      forceScrollToBottom();
+      window.requestAnimationFrame(() => {
+        forceScrollToBottom();
+        initialScrollPendingRef.current = false;
+        shouldStickToBottomRef.current = true;
+      });
     });
 
     return () => window.cancelAnimationFrame(frame);
-  }, [
-    selectedId,
-    mobileChatOpen,
-    messagesLoading,
-    messages.length,
-    forceScrollToBottom,
-  ]);
+  }, [selectedId, mobileChatOpen, messagesLoading, messages.length, forceScrollToBottom]);
 
   const scrollToInitialBottom = useCallback(() => {
     if (initialScrollPendingRef.current) forceScrollToBottom();
@@ -1211,24 +1135,6 @@ export default function InstagramInbox({
   const listPanel = (
     <aside className="flex min-h-0 flex-1 flex-col bg-background lg:w-[330px] lg:flex-none lg:border-l lg:border-border">
       <div className="shrink-0 border-b border-border px-3.5 pb-3 pt-3.5 sm:px-4">
-        <div className="flex items-center justify-end gap-3">
-          <Button
-            type="button"
-            onClick={() => {
-              void loadConversations();
-              if (selectedId) void loadMessages();
-            }}
-            disabled={loading || messagesLoading}
-            className="flex h-9 w-9 items-center justify-center rounded-xl border bg-background p-0 text-muted-foreground hover:bg-muted"
-            aria-label="بروزرسانی"
-          >
-            <RefreshCw
-              size={15}
-              className={loading || messagesLoading ? "animate-spin" : ""}
-            />
-          </Button>
-        </div>
-
         <div className="mt-3 flex items-center rounded-xl bg-muted/60 p-1">
           {(
             [
@@ -1333,7 +1239,7 @@ export default function InstagramInbox({
                       {preview(conversation.messages[conversation.messages.length - 1])}
                     </p>
                     {unread && (
-                      <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-foreground px-1.5 text-[9px] font-semibold text-background">
+                      <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-primary px-1.5 text-[9px] font-semibold text-primary-foreground">
                         {(conversation.unreadCount || 0).toLocaleString("fa-IR")}
                       </span>
                     )}
@@ -1693,7 +1599,12 @@ export default function InstagramInbox({
 
                   <Textarea
                     value={text}
-                    onChange={(event) => setText(event.target.value)}
+                    onChange={(event) => {
+                      setText(event.target.value);
+                      const target = event.currentTarget;
+                      target.style.height = "auto";
+                      target.style.height = Math.min(160, Math.max(40, target.scrollHeight)) + "px";
+                    }}
                     onKeyDown={(event) => {
                       if (event.key === "Enter" && !event.shiftKey) {
                         event.preventDefault();
@@ -1703,7 +1614,7 @@ export default function InstagramInbox({
                     rows={1}
                     maxLength={1000}
                     placeholder="پیام خود را بنویسید..."
-                    className="min-h-10 flex-1 resize-none rounded-xl border-border bg-muted/40 px-3 py-2 text-[13px] leading-5 outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    className="min-h-10 max-h-40 flex-1 resize-none overflow-y-auto rounded-xl border-border bg-muted/40 px-3 py-2 text-base leading-5 outline-none focus-visible:ring-1 focus-visible:ring-ring md:text-[13px]"
                   />
 
                   <Button
