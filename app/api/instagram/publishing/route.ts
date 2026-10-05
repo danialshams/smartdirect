@@ -55,65 +55,75 @@ async function validatePublishedJobsInBackground(jobs: Array<{ id: string; type:
 
       for (let offset = 0; offset < accountJobs.length; offset += 10) {
         const batch = accountJobs.slice(offset, offset + 10);
+
         await Promise.allSettled(
           batch.map(async (job) => {
-          const lastChecked = remoteValidationCache.get(job.id) ?? 0;
-          if (Date.now() - lastChecked < REMOTE_VALIDATION_TTL_MS) return;
-          if (!job.instagramMediaId) return;
+            const lastChecked = remoteValidationCache.get(job.id) ?? 0;
+            if (Date.now() - lastChecked < REMOTE_VALIDATION_TTL_MS) return;
+            if (!job.instagramMediaId) return;
 
-          const url = new URL(`https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${job.instagramMediaId}`);
-          url.searchParams.set("fields", "id,media_type,media_url,thumbnail_url");
-          url.searchParams.set("access_token", token);
+            const url = new URL(`https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${job.instagramMediaId}`);
+            url.searchParams.set("fields", "id,media_type,media_url,thumbnail_url");
+            url.searchParams.set("access_token", token);
 
-          try {
-            const response = await fetch(url.toString(), {
-              cache: "no-store",
-              signal: AbortSignal.timeout(3500),
-            });
-            const result = await response.json().catch(() => null);
-
-            if ([400, 404, 410].includes(response.status)) {
-              await prisma.instagramPublishJob.updateMany({
-                where: { id: job.id, status: "PUBLISHED" },
-                data: {
-                  status: "CANCELLED",
-                  errorMessage: "محتوا در Instagram حذف شده است.",
-                },
+            try {
+              const response = await fetch(url.toString(), {
+                cache: "no-store",
+                signal: AbortSignal.timeout(3500),
               });
-              return;
-            }
+              const result = await response.json().catch(() => null);
 
-            if (!response.ok) return;
-
-            remoteValidationCache.set(job.id, Date.now());
-
-            const mediaUrl = typeof result?.media_url === "string"
-              ? proxyInstagramMediaUrl(result.media_url, accountId)
-              : null;
-            const thumbnailUrl = typeof result?.thumbnail_url === "string"
-              ? proxyInstagramMediaUrl(result.thumbnail_url, accountId)
-              : mediaUrl;
-
-            if (mediaUrl || thumbnailUrl) {
-              const media = await prisma.instagramPublishMedia.findFirst({
-                where: { publishJobId: job.id },
-                orderBy: { sortOrder: "asc" },
-              });
-
-              if (media) {
-                await prisma.instagramPublishMedia.update({
-                  where: { id: media.id },
-                  data: { publicUrl: mediaUrl ?? thumbnailUrl },
+              if ([400, 404, 410].includes(response.status)) {
+                await prisma.instagramPublishJob.updateMany({
+                  where: { id: job.id, status: "PUBLISHED" },
+                  data: {
+                    status: "CANCELLED",
+                    errorMessage: "محتوا در Instagram حذف شده است.",
+                  },
                 });
+                return;
               }
+
+              if (!response.ok) return;
+
+              remoteValidationCache.set(job.id, Date.now());
+
+              const mediaUrl =
+                typeof result?.media_url === "string"
+                  ? proxyInstagramMediaUrl(result.media_url, accountId)
+                  : null;
+              const thumbnailUrl =
+                typeof result?.thumbnail_url === "string"
+                  ? proxyInstagramMediaUrl(result.thumbnail_url, accountId)
+                  : mediaUrl;
+
+              if (mediaUrl || thumbnailUrl) {
+                const media = await prisma.instagramPublishMedia.findFirst({
+                  where: { publishJobId: job.id },
+                  orderBy: { sortOrder: "asc" },
+                });
+
+                if (media) {
+                  await prisma.instagramPublishMedia.update({
+                    where: { id: media.id },
+                    data: { publicUrl: mediaUrl ?? thumbnailUrl },
+                  });
+                }
+              }
+            } catch (error) {
+              console.warn("Published media validation failed:", {
+                jobId: job.id,
+                error,
+              });
             }
-          } catch (error) {
-            console.warn("Published media validation failed:", { jobId: job.id, error });
           }),
         );
       }
     } catch (error) {
-      console.warn("Published media account validation failed:", { accountId, error });
+      console.warn("Published media account validation failed:", {
+        accountId,
+        error,
+      });
     }
   }
 }
