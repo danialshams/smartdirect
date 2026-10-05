@@ -6,7 +6,7 @@ import { ArrowRight, CalendarClock, Loader2, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/dashboard/DashboardUI";
-import { PersianDatePicker } from "./PublishingDashboardV2";
+import PersianDatePicker from "./PersianDatePicker";
 import EntryPointFlowBuilder from "@/components/dashboard/EntryPointFlowBuilder";
 
 type Job = {
@@ -447,19 +447,26 @@ export default function PublishingJobEditor() {
       className="min-h-full bg-[#F8FAFC] px-3 py-4 sm:px-5 sm:py-6 lg:px-8"
     >
       <div className="mx-auto w-full max-w-3xl space-y-5">
-        <div className="relative flex min-h-10 items-center justify-center px-16">
-          <Button
-            type="button"
-            onClick={() => router.push("/dashboard/publishing")}
-            className="absolute right-0 min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]"
-          >
-            <ArrowRight size={15} strokeWidth={2} />
-            بازگشت
-          </Button>
+        <div className="mb-5">
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              onClick={() => router.push("/dashboard/publishing")}
+              className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]"
+            >
+              <ArrowRight size={15} strokeWidth={2} />
+              بازگشت
+            </Button>
+          </div>
 
-          <h1 className="text-base font-bold text-[#0F172A] sm:text-lg">
-            ویرایش {labels[job.type]}
-          </h1>
+          <section className="mt-4 rounded-2xl border border-[#E2E8F0] bg-white p-4 text-center shadow-sm sm:p-5">
+            <h1 className="text-base font-bold text-[#0F172A] sm:text-lg">
+              ویرایش {labels[job.type]}
+            </h1>
+            <p className="mt-2 text-xs leading-6 text-[#64748B]">
+              پاسخ خودکار {labels[job.type]} خود را ویرایش کنید.
+            </p>
+          </section>
         </div>
 
         <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
@@ -676,6 +683,18 @@ export default function PublishingJobEditor() {
                     toast.success("پاسخ خودکار با موفقیت ذخیره شد.");
                   }}
                 />
+
+                <div className="mt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => router.push("/dashboard/publishing")}
+                    disabled={deleting || automationLoading}
+                    className="min-h-11 w-full rounded-xl border-[#CBD5E1] bg-[#F8FAFC] px-4 text-sm font-bold text-[#475569] hover:bg-[#F1F5F9]"
+                  >
+                    انصراف
+                  </Button>
+                </div>
 
                 <Button
                   type="button"
