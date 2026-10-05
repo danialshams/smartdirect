@@ -37,7 +37,6 @@ export default function IceBreakerManager({
 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [draft, setDraft] = useState("");
-  const [draftAutomationId, setDraftAutomationId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState("");
   const [editAutomationId, setEditAutomationId] = useState<string | null>(null);
@@ -181,7 +180,6 @@ export default function IceBreakerManager({
       setSuccess(true);
       setEditingId(null);
       setDraft("");
-      setDraftAutomationId(null);
       setEditDraft("");
       setEditAutomationId(null);
       await loadQuestions();
@@ -237,7 +235,6 @@ export default function IceBreakerManager({
       if (editingId === question.id) {
         setEditingId(null);
         setDraft("");
-        setDraftAutomationId(null);
       }
 
       await loadQuestions();
