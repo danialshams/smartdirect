@@ -1377,21 +1377,37 @@ export default function InstagramInbox({
               <img
                 src={selectedConversation.participantProfilePicture}
                 alt=""
-                className="h-10 w-10 rounded-full object-cover ring-1 ring-border"
+                className="h-9 w-9 rounded-full object-cover ring-1 ring-border"
               />
             ) : (
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
-                <UserRound size={17} />
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                <UserRound size={16} />
               </div>
             )}
 
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-bold text-foreground">
+              <p className="truncate text-[13px] font-bold text-foreground">
                 {displayName(selectedConversation)}
               </p>
-              <p className="mt-0.5 truncate text-[10px] text-muted-foreground">
-                {selectedConversation.participantName || "Instagram Direct"}
-              </p>
+              <div className="mt-0.5 flex min-w-0 items-center gap-1.5">
+                <p className="truncate text-[9px] text-muted-foreground">
+                  {selectedConversation.participantName || "Instagram Direct"}
+                </p>
+                {selectedConversation.messagingWindow && (
+                  <span
+                    className={
+                      "shrink-0 rounded-full px-1.5 py-0.5 text-[8px] font-medium " +
+                      (selectedConversation.messagingWindow.canSend
+                        ? selectedConversation.messagingWindow.mode === "HUMAN_AGENT"
+                          ? "bg-amber-50 text-amber-700"
+                          : "bg-emerald-50 text-emerald-700"
+                        : "bg-red-50 text-red-600")
+                    }
+                  >
+                    {messagingWindowLabel(selectedConversation.messagingWindow)}
+                  </span>
+                )}
+              </div>
             </div>
 
             <Button
