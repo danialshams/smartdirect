@@ -445,8 +445,6 @@ export default function IceBreakerManager({
           </div>
         </div>
       )}
-
-    </div>
     </>
   );
 }
