@@ -735,6 +735,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     if (automationSetupConfirmed) {
       animateStepChange(() => {
         setAutomationSetupConfirmed(false);
+        setAutomationChoiceConfirmed(false);
+        setAutomationChoiceStepStarted(true);
         setStoryResponseEditing(false);
         setStoryResponseDirty(false);
         setError("");
@@ -1025,6 +1027,33 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
         setPublishResultVisible(true);
         setPublishResult(null);
         knownJobIdsRef.current.add(job.id);
+
+        // Return to stage 1 immediately. The polling loop keeps watching this job
+        // and loadJobs will show the success/failure toast when the final status arrives.
+        animateStepChange(() => {
+          clearLocalMedia();
+          setSelectionConfirmed(false);
+          setCaptionStepConfirmed(false);
+          setTagStepConfirmed(false);
+          setAutomationChoiceStepStarted(false);
+          setAutomationChoiceConfirmed(false);
+          setAutomationSetupConfirmed(false);
+          setAutomationKeywordDraft("");
+          setAutomationKeywords([]);
+          setDirectMessageText("");
+          setPublishingCommentReplyText("");
+          setTaggedUsersByMedia({});
+          setTagDraftByMedia({});
+          setTagInputError("");
+          setCaption("");
+          setUploadedMedia([]);
+          setShowUploadedMediaPreview(false);
+          resetAutomation();
+          setUploadProgress(0);
+          setUploadSuccess(false);
+          setError("");
+        });
+
         const publishResponse = await fetch(`/api/instagram/publishing/${job.id}/publish`, { method: "POST" });
         const publishResult = await publishResponse.json();
         if (!publishResponse.ok) {
@@ -1032,12 +1061,9 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
           toast.error(publishResult.message || `${typeLabels[type]} در اینستاگرام منتشر نشد.`, { icon: <CircleSlash2 size={18} className="text-[#DC2626]" /> });
           window.setTimeout(() => {
             setPublishResultVisible(false);
-            window.setTimeout(() => {
-              setActivePublishJobId(null);
-              setPublishResult(null);
-              handleBackToTypeSelection();
-            }, 350);
-          }, 500);
+            setActivePublishJobId(null);
+            setPublishResult(null);
+          }, 850);
           throw new Error(publishResult.message || "انتشار ناموفق بود.");
         }
       } else {
@@ -1107,6 +1133,33 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               if (!scheduledJobs.length && !publishedJobs.length) return null;
               return (
                 <div className="mt-6 space-y-4">
+                  {activePublishJobId && publishResultVisible && (
+                    <section className="rounded-2xl border border-[#DBEAFE] bg-white p-4 shadow-sm sm:p-5">
+                      {(() => {
+                        const activeJob = jobs.find((job) => job.id === activePublishJobId);
+                        if (!activeJob) return null;
+                        return (
+                          <div className="flex items-center gap-3">
+                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB]">
+                              {publishResult === "PUBLISHED" ? <CheckCircle2 size={20}/> : publishResult === "FAILED" ? <CircleSlash2 size={20}/> : <Loader2 size={20} className="animate-spin"/>}
+                            </span>
+                            <div className="min-w-0">
+                              <p className="text-sm font-bold text-[#0F172A]">
+                                {publishResult === "PUBLISHED" ? "انتشار با موفقیت انجام شد" : publishResult === "FAILED" ? "انتشار ناموفق بود" : "در حال انتشار..."}
+                              </p>
+                              <p className="mt-1 text-xs text-[#64748B]">
+                                {publishResult === null
+                                  ? `در حال انتشار ${typeLabels[activeJob.type]} در اینستاگرام هستیم.`
+                                  : publishResult === "PUBLISHED"
+                                    ? `${typeLabels[activeJob.type]} با موفقیت منتشر شد.`
+                                    : `${typeLabels[activeJob.type]} در اینستاگرام منتشر نشد.`}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </section>
+                  )}
                   {scheduledJobs.length > 0 && (
                     <section className="rounded-2xl border border-[#DBEAFE] bg-white p-4 shadow-sm sm:p-5">
                       <div className="mb-3 flex items-center gap-2">
@@ -1311,9 +1364,11 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                     return (
                       <div key={mediaKey} className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5 sm:p-4">
                         <div className="flex items-start gap-3">
-                          <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-[#E2E8F0] bg-white">
-                            <MediaTile item={item} type="CAROUSEL" onRemove={() => void removeUploaded(item)} ready compact/>
-                          </div>
+                          {type === "CAROUSEL" && (
+                            <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-[#E2E8F0] bg-white">
+                              <MediaTile item={item} type="CAROUSEL" onRemove={() => void removeUploaded(item)} ready compact/>
+                            </div>
+                          )}
                           <div className="min-w-0 flex-1">
                             <div className="mb-2 flex items-center justify-between gap-2">
                               <p className="text-xs font-bold text-[#0F172A]">{type === "CAROUSEL" ? `اسلاید ${toPersianDigits(index + 1)}` : typeLabels[type]}</p>
@@ -1768,7 +1823,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                     </div>
 
                     <div className="mt-5 border-t border-[#E2E8F0] pt-5">
-                      <Button type="button" onClick={() => void createJob(false)} disabled={publishing || !stage6Date || stage6Hour === null || stage6Minute === null} className="min-h-11 w-full rounded-xl bg-[#2563EB] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-50">
+                      <Button type="button" onClick={() => void createJob(false)} disabled={publishing || !stage6Date || stage6Hour === null || stage6Minute === null} className="min-h-11 w-full rounded-xl bg-[#2563EB] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#1D4ED8] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[#2563EB]">
                         <span dir="ltr" className="inline-flex flex-row items-center gap-2">{publishing ? <Loader2 size={17} className="animate-spin" /> : <CalendarClock size={17} />}<span dir="rtl">انتشار در زمان انتخاب‌شده</span></span>
                       </Button>
                     </div>
