@@ -7,6 +7,8 @@ async function main() {
   process.env.INSTAGRAM_RATE_LIMIT_PUBLISH_MEDIA_WINDOW_MS = "60_000";
   process.env.INSTAGRAM_RATE_LIMIT_PUBLISH_CONTAINER_STATUS_LIMIT = "1";
   process.env.INSTAGRAM_RATE_LIMIT_PUBLISH_CONTAINER_STATUS_WINDOW_MS = "60_000";
+  process.env.INSTAGRAM_RATE_LIMIT_ACCOUNT_LIMIT = "100";
+  process.env.INSTAGRAM_RATE_LIMIT_ACCOUNT_WINDOW_MS = "1_000";
 
   const mediaContext = {
     instagramAccountId: ACCOUNT_ID,
