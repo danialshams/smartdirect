@@ -1,13 +1,24 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowRight, CalendarClock, Loader2, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/dashboard/DashboardUI";
 import PersianDatePicker from "./PersianDatePicker";
-import EntryPointFlowBuilder from "@/components/dashboard/EntryPointFlowBuilder";
+const EntryPointFlowBuilder = dynamic(
+  () => import("@/components/dashboard/EntryPointFlowBuilder"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex min-h-32 items-center justify-center">
+        <Loader2 size={22} className="animate-spin text-[#2563EB]" />
+      </div>
+    ),
+  },
+);
 
 type Job = {
   id: string;
