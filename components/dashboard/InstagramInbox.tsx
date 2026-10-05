@@ -66,6 +66,17 @@ type Handoff = {
   handedBackAt: string | null;
 };
 
+type MessagingWindow = {
+  mode: "STANDARD" | "HUMAN_AGENT" | "CLOSED";
+  canSend: boolean;
+  humanAgentEnabled: boolean;
+  lastInboundAt: string | null;
+  standardExpiresAt: string | null;
+  humanAgentExpiresAt: string | null;
+  expiresAt: string | null;
+  remainingMs: number;
+};
+
 type Conversation = {
   id: string;
   participantId: string;
@@ -75,6 +86,7 @@ type Conversation = {
   isActive: boolean;
   humanMode?: boolean;
   handoff?: Handoff | null;
+  messagingWindow?: MessagingWindow;
   lastMessageAt: string | null;
   updatedAt: string;
   messages: Message[];
