@@ -410,6 +410,7 @@ local rawJob = redis.call("GET", KEYS[1])
 if not rawJob then return "NOT_FOUND" end
 local job = cjson.decode(rawJob)
 if job.status == "completed" or job.status == "failed" or job.status == "cancelled" then return job.status end
+local claimToken = job.claimToken
 job.status = "cancelled"
 job.workerId = nil
 redis.call("SET", KEYS[1], cjson.encode(job))
@@ -419,7 +420,7 @@ redis.call("ZREM", KEYS[4], ARGV[1])
 redis.call("DEL", KEYS[5])
 if job.instagramAccountId then
   local accountLockKey = KEYS[6] .. ":" .. job.instagramAccountId
-  if redis.call("GET", accountLockKey) == job.claimToken then redis.call("DEL", accountLockKey) end
+  if redis.call("GET", accountLockKey) == claimToken then redis.call("DEL", accountLockKey) end
 end
 return "CANCELLED"
 `;
@@ -500,6 +501,7 @@ export async function failJob(jobId: string, error: unknown, options: { force?: 
   }
 
   job.lastError = error instanceof Error ? error.message : String(error);
+  const claimToken = job.claimToken;
   job.workerId = undefined;
   job.claimToken = undefined;
 
@@ -507,7 +509,7 @@ export async function failJob(jobId: string, error: unknown, options: { force?: 
   if (job.instagramAccountId) {
     const accountLockKey = getQueueKeys(job.queueNamespace).accountLocks + ":" + job.instagramAccountId;
     const lockOwner = await redis.get<string>(accountLockKey);
-    if (lockOwner === job.claimToken) await redis.del(accountLockKey);
+    if (lockOwner === claimToken) await redis.del(accountLockKey);
   }
   const keys = getQueueKeys(job.queueNamespace);
 
