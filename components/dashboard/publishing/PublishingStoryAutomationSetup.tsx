@@ -18,6 +18,7 @@ type Props = {
   onSavedChange?: (saved: boolean) => void;
   keywordValid: boolean;
   onContinue: () => void;
+  disabled?: boolean;
 };
 
 type ResponseType = "TEXT" | "AUDIO" | "SHOWCASE" | "IMAGE" | "VIDEO" | "FORM";
@@ -53,7 +54,6 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
   const responseType = message.messageType as ResponseType;
 
   useEffect(() => { setShowcaseSaved(Boolean(message.showcaseId)); }, [message.showcaseId]);
-  useEffect(() => { onSavedChange?.(responseType === "SHOWCASE" ? showcaseSaved : responseType === "FORM" ? formSaved : true); }, [responseType, showcaseSaved, formSaved, onSavedChange]);
 
   function selectType(value: ResponseType) {
     setError("");
@@ -251,6 +251,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
         setFormSaved(true);
         setFormSaving(false);
       }
+      onSavedChange?.(true);
       onContinue();
       return true;
     },
@@ -282,7 +283,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
     "audio/*";
 
   return (
-    <div className="space-y-5">
+    <div className={["space-y-5", disabled ? "pointer-events-none opacity-60" : ""].join(" ")}>
       <div>
         <p className="text-sm font-bold text-[#0F172A]">نوع پاسخ ارسالی در دایرکت</p>
         <p className="mt-1 text-[11px] leading-5 text-[#64748B]">نوع پاسخی را که می‌خواهی برای Reply استوری ارسال شود انتخاب کن.</p>
