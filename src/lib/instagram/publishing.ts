@@ -196,12 +196,12 @@ async function createCarouselContainer(
   return data.id;
 }
 
-async function containerStatus(id: string, token: string, instagramAccountId: string, tenantId?: string, operation: "PUBLISH_MEDIA" | "PUBLISH_REEL" | "PUBLISH_CAROUSEL" | "PUBLISH_STORY" = "PUBLISH_MEDIA") {
+async function containerStatus(id: string, token: string, instagramAccountId: string, tenantId?: string) {
   const data = await instagramApiRequest<ContainerResponse>(`/${id}`, {
     accessToken: token,
     params: { fields: "status_code,status" },
     timeoutMs: 30_000,
-    rateLimit: { instagramAccountId, operation, ...(tenantId ? { tenantId } : {}) },
+    rateLimit: { instagramAccountId, operation: "PUBLISH_CONTAINER_STATUS", ...(tenantId ? { tenantId } : {}) },
   });
 
   return {
@@ -217,10 +217,9 @@ async function waitReady(
   tenantId?: string,
   delayMs = 3000,
   maxAttempts = 20,
-  operation: "PUBLISH_MEDIA" | "PUBLISH_REEL" | "PUBLISH_CAROUSEL" | "PUBLISH_STORY" = "PUBLISH_MEDIA",
 ) {
   for (let i = 0; i < maxAttempts; i += 1) {
-    const status = await containerStatus(id, token, instagramAccountId, tenantId, operation);
+    const status = await containerStatus(id, token, instagramAccountId, tenantId);
     const code = String(status.statusCode ?? "").toUpperCase();
 
     if (code === "FINISHED") {
@@ -496,12 +495,11 @@ async function publishInstagramJobInternal(jobId: string) {
         token,
         job.instagramAccountId,
         tenantId,
-        publishOperation,
       );
       if (existingStatus.statusCode === "FINISHED") {
         reusableContainerId = job.instagramContainerId;
       } else if (existingStatus.statusCode === "IN_PROGRESS") {
-        await waitReady(job.instagramContainerId, token, job.instagramAccountId, tenantId, 3000, 20, publishOperation);
+        await waitReady(job.instagramContainerId, token, job.instagramAccountId, tenantId, 3000, 20);
         reusableContainerId = job.instagramContainerId;
       } else if (existingStatus.statusCode === "PUBLISHED") {
         throw new Error("Instagram container is already published but the final media ID was not persisted. Manual reconciliation is required.");
@@ -597,7 +595,7 @@ async function publishInstagramJobInternal(jobId: string) {
           "PUBLISH_CAROUSEL",
         );
 
-        await waitReady(childId, token, job.instagramAccountId, tenantId, 3000, 20, "PUBLISH_CAROUSEL");
+        await waitReady(childId, token, job.instagramAccountId, tenantId, 3000, 20);
         children.push(childId);
       }
 
@@ -621,7 +619,7 @@ async function publishInstagramJobInternal(jobId: string) {
       },
     });
 
-    await waitReady(containerId, token, job.instagramAccountId, tenantId, 3000, 20, publishOperation);
+    await waitReady(containerId, token, job.instagramAccountId, tenantId, 3000, 20);
 
     const instagramMediaId = await publishContainer(
       job.instagramAccount.igUserId,
