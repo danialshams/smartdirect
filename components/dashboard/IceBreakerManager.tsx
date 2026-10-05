@@ -396,8 +396,8 @@ export default function IceBreakerManager({
                           className="h-9 flex-1 rounded-lg border-[#FECACA] bg-white px-2.5 text-xs font-semibold text-[#DC2626] hover:bg-[#FEF2F2] sm:flex-none"
                           aria-label="حذف پیام"
                         >
-                          <Trash2 size={14} />
-                          <span className="hidden sm:inline">حذف</span>
+                          <Trash2 size={14} className="text-[#DC2626]" />
+                          <span className="hidden sm:inline text-[#DC2626]">حذف</span>
                         </Button>
                       </div>
                     </div>
