@@ -339,50 +339,6 @@ export default function IceBreakerManager({
               </div>
             )}
 
-            {editingId && (
-              <section className="mx-auto w-full max-w-2xl rounded-2xl border border-[#BFDBFE] bg-white p-4 shadow-sm sm:p-6">
-                <div className="mb-6 flex items-start gap-3">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">
-                    ویرایش
-                  </span>
-                  <div className="min-w-0">
-                    <h2 className="text-sm font-bold text-[#0F172A]">ویرایش پیام شروع گفتگو</h2>
-                    <p className="mt-1.5 text-xs leading-5 text-[#64748B]">
-                      متن و پاسخ پیام انتخاب‌شده را در این بخش ویرایش کن.
-                    </p>
-                  </div>
-                </div>
-
-                <Input
-                  value={editDraft}
-                  onChange={(event) => {
-                    setEditDraft(event.target.value);
-                    setSuccess(false);
-                    setError("");
-                  }}
-                  maxLength={80}
-                  placeholder="مثلاً: محصولات شما را ببینم"
-                  className="h-12 rounded-xl border-[#E2E8F0] bg-[#F8FAFC] px-3.5 text-base text-[#0F172A] focus:border-[#2563EB] focus:bg-white"
-                  style={{ fontSize: "16px", WebkitTextSizeAdjust: "100%" }}
-                />
-
-                <div className="mt-2 flex items-center justify-between text-[10px] text-[#64748B]">
-                  <span>حداکثر ۸۰ کاراکتر</span>
-                  <span>{editDraft.length.toLocaleString("fa-IR")} / ۸۰</span>
-                </div>
-
-                <div className="mt-5">
-                  <EntryPointFlowBuilder
-                    accountId={account.id}
-                    automationId={editAutomationId}
-                    onAutomationReady={(automationId) => {
-                      void saveQuestion(editDraft, editingId, automationId);
-                    }}
-                  />
-                </div>
-              </section>
-            )}
-
             <section className="mx-auto w-full max-w-2xl rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
               <div className="mb-4 flex items-start gap-3">
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">
@@ -445,6 +401,49 @@ export default function IceBreakerManager({
                         </Button>
                       </div>
                     </div>
+                    {editingId === question.id && (
+                      <div className="mt-3 rounded-2xl border border-[#BFDBFE] bg-white p-4 shadow-sm sm:p-5">
+                        <div className="mb-5 flex items-start gap-3">
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-[10px] font-bold text-[#2563EB]">
+                            ویرایش
+                          </span>
+                          <div className="min-w-0">
+                            <h3 className="text-sm font-bold text-[#0F172A]">ویرایش پیام شروع گفتگو</h3>
+                            <p className="mt-1 text-xs leading-5 text-[#64748B]">
+                              متن و پاسخ این پیام را در همین بخش ویرایش کن.
+                            </p>
+                          </div>
+                        </div>
+
+                        <Input
+                          value={editDraft}
+                          onChange={(event) => {
+                            setEditDraft(event.target.value);
+                            setSuccess(false);
+                            setError("");
+                          }}
+                          maxLength={80}
+                          placeholder="مثلاً: محصولات شما را ببینم"
+                          className="h-12 rounded-xl border-[#E2E8F0] bg-[#F8FAFC] px-3.5 text-base text-[#0F172A] focus:border-[#2563EB] focus:bg-white"
+                          style={{ fontSize: "16px", WebkitTextSizeAdjust: "100%" }}
+                        />
+
+                        <div className="mt-2 flex items-center justify-between text-[10px] text-[#64748B]">
+                          <span>حداکثر ۸۰ کاراکتر</span>
+                          <span>{editDraft.length.toLocaleString("fa-IR")} / ۸۰</span>
+                        </div>
+
+                        <div className="mt-5">
+                          <EntryPointFlowBuilder
+                            accountId={account.id}
+                            automationId={editAutomationId}
+                            onAutomationReady={(automationId) => {
+                              void saveQuestion(editDraft, editingId, automationId);
+                            }}
+                          />
+                        </div>
+                      </div>
+                    )}
                   ))}
                 </div>
               )}
