@@ -24,6 +24,7 @@ type Props = {
   showFinalSave?: boolean;
   finalSaveLabel?: string;
   finalSaveLoadingLabel?: string;
+  finalSaveDisabled?: boolean;
 };
 
 type ResponseType = "TEXT" | "AUDIO" | "SHOWCASE" | "IMAGE" | "VIDEO" | "FORM";
@@ -43,7 +44,7 @@ function createSlide(): ShowcaseSlide {
   return { id: `slide_${crypto.randomUUID()}`, title: "", description: "", imageUrl: "", previewUrl: "" };
 }
 
-const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetupHandle, Props>(function PublishingStoryAutomationSetup({ message, showcases, forms, loadingResources, instagramAccountId, onUpdate, onSavedChange, keywordValid, onContinue, disabled, hideVideo = false, hideForm = false, showFinalSave = false, finalSaveLabel = "ساخت پیام شروع گفتگو", finalSaveLoadingLabel = "در حال ساخت پیام شروع گفتگو..." }: Props, ref) {
+const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetupHandle, Props>(function PublishingStoryAutomationSetup({ message, showcases, forms, loadingResources, instagramAccountId, onUpdate, onSavedChange, keywordValid, onContinue, disabled, hideVideo = false, hideForm = false, showFinalSave = false, finalSaveLabel = "ساخت پیام شروع گفتگو", finalSaveLoadingLabel = "در حال ساخت پیام شروع گفتگو...", finalSaveDisabled = false }: Props, ref) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
@@ -504,7 +505,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
       {showFinalSave && (
         <button
           type="button"
-          disabled={disabled || finalSaving || !keywordValid || uploading || savingShowcase || formSaving ||
+          disabled={disabled || finalSaveDisabled || finalSaving || !keywordValid || uploading || savingShowcase || formSaving ||
             (responseType === "TEXT" && !message.text.trim()) ||
             (["IMAGE", "VIDEO", "AUDIO"].includes(responseType) && !message.mediaUrl.trim()) ||
             (responseType === "SHOWCASE" && !hasValidSlide) ||
