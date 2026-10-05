@@ -1186,8 +1186,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                 </div>
               )}
 
-              {type === "CAROUSEL" ? (
-                {activePublishJobId && publishResultVisible && (
+              {activePublishJobId && publishResultVisible && (
                 <div className={["mb-4 overflow-hidden rounded-2xl border bg-white p-4 shadow-sm transition-all duration-300", publishResult === null ? "border-[#DBEAFE]" : publishResult === "PUBLISHED" ? "border-[#BBF7D0]" : "border-[#FECACA]", publishResultVisible ? "translate-y-0 opacity-100" : "-translate-y-2 opacity-0"].join(" ")}>
                   {(() => {
                     const activeJob = jobs.find((item) => item.id === activePublishJobId);
@@ -1252,7 +1251,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                     );
                   })}
                 </div>
-              ) : (
+              )}
+              {type === "CAROUSEL" ? (
                 <div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5 sm:p-4">
                   {(() => {
                     const mediaKey = uploadedMedia[0]?.storageKey ?? "";
