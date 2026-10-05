@@ -414,7 +414,6 @@ export default function PublishingJobEditor() {
         <div className="relative flex min-h-10 items-center justify-center">
           <Button
             type="button"
-            variant="outline"
             onClick={() => router.push("/dashboard/publishing")}
             className="absolute right-0 min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]"
           >
