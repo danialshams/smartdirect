@@ -1033,7 +1033,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                                 <span className="mr-2 text-xs font-semibold text-[#2563EB]">{formatScheduledLabel(new Date(job.scheduledAt!))}</span>
                               </div>
                             </div>
-                            <Link href={`/dashboard/publishing/${job.id}`} prefetch className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-[#BFDBFE] bg-white px-2.5 text-xs font-semibold text-[#2563EB] no-underline hover:bg-[#EFF6FF] sm:flex-none" aria-label="ویرایش محتوا"><Pencil size={14} /><span className="hidden sm:inline">ویرایش</span></Link>
+                            <Link href={`/dashboard/publishing/${job.id}`} prefetch={false} onMouseEnter={() => router.prefetch(`/dashboard/publishing/${job.id}`)} onFocus={() => router.prefetch(`/dashboard/publishing/${job.id}`)} className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-[#BFDBFE] bg-white px-2.5 text-xs font-semibold text-[#2563EB] no-underline hover:bg-[#EFF6FF] sm:flex-none" aria-label="ویرایش محتوا"><Pencil size={14} /><span className="hidden sm:inline">ویرایش</span></Link>
                           </div>
                         ))}
                       </div>
