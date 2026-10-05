@@ -20,6 +20,8 @@ type EntryPointFlowBuilderProps = {
     onAutomationReady: (
         automationId: string,
     ) => void;
+    finalSaveLabel?: string;
+    finalSaveLoadingLabel?: string;
 };
 
 type ResourceResponse<T> = {
@@ -59,6 +61,8 @@ export default function EntryPointFlowBuilder({
     accountId,
     automationId,
     onAutomationReady,
+    finalSaveLabel = "ساخت پیام شروع گفتگو",
+    finalSaveLoadingLabel = "در حال ساخت پیام شروع گفتگو...",
 }: EntryPointFlowBuilderProps) {
     const [messages, setMessages] =
         useState<MessageDraft[]>([]);
@@ -775,13 +779,15 @@ export default function EntryPointFlowBuilder({
                         hideVideo
                         hideForm
                         showFinalSave
+                        finalSaveLabel={finalSaveLabel}
+                        finalSaveLoadingLabel={finalSaveLoadingLabel}
                         keywordValid
                         disabled={saving}
                         onUpdate={updateEntryMessage}
                         onSavedChange={setSuccess}
-                        onContinue={(messageOverride) => {
-                            void saveAutomation(messageOverride);
-                        }}
+                        onContinue={(messageOverride) =>
+                            saveAutomation(messageOverride)
+                        }
                     />
                     )}
 
