@@ -672,6 +672,9 @@ export async function claimJobById(
 const REFRESH_CLAIM_SCRIPT = `
 if redis.call("GET", KEYS[1]) == ARGV[1] then
   redis.call("EXPIRE", KEYS[1], ARGV[2])
+  if KEYS[2] and redis.call("GET", KEYS[2]) == ARGV[1] then
+    redis.call("EXPIRE", KEYS[2], ARGV[2])
+  end
   return 1
 end
 return 0
