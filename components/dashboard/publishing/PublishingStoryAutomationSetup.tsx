@@ -198,7 +198,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
   }
 
   async function saveShowcase(): Promise<string | null> {
-    if (saveShowcaseLockRef.current || savingShowcase) return false;
+    if (saveShowcaseLockRef.current || savingShowcase) return null;
     saveShowcaseLockRef.current = true;
     if (!hasValidSlide) {
       setError("برای ساخت ویترین، حداقل یک اسلاید کامل با تصویر، تیتر و توضیحات بسازید.");
@@ -238,7 +238,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
       return created.id as string;
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "ساخت ویترین ناموفق بود.");
-      return false;
+      return null;
     } finally {
       saveShowcaseLockRef.current = false;
       setSavingShowcase(false);
