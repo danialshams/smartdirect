@@ -13,7 +13,7 @@ import {
   startJobClaimHeartbeat,
 } from "../src/lib/queue/core";
 import { recoverStalledJobs } from "../src/lib/queue/recovery";
-import { setRedisCommandTimeoutMs } from "../src/lib/redis/client";
+import { disconnectRedis, setRedisCommandTimeoutMs } from "../src/lib/redis/client";
 
 function assert(condition: unknown, message: string) {
   if (!condition) throw new Error(message);
@@ -136,7 +136,7 @@ async function main() {
     // Do not rely on a 1ms PING failing: local Redis can legitimately answer
     // faster than that. Instead, run a deliberately CPU-bound Lua command
     // against a freshly-created client so commandTimeout is tested deterministically.
-    await redis.disconnect();
+    await disconnectRedis();
     setRedisCommandTimeoutMs(1);
     redis = createQueueRedis();
 
@@ -153,7 +153,7 @@ async function main() {
 
     assert(failed, "Redis failure injection did not produce a timeout");
 
-    await redis.disconnect();
+    await disconnectRedis();
     setRedisCommandTimeoutMs(Number(originalTimeout ?? 5000));
     redis = createQueueRedis();
     assert((await redis.ping()) === "PONG", "Redis did not recover after failure injection");
@@ -173,7 +173,7 @@ async function main() {
     await redis.del(`smartdirect:queue:${ns}:delayed`);
     await redis.del(`smartdirect:queue:${ns}:active`);
     await redis.del(`smartdirect:queue:${ns}:failed`);
-    await redis.disconnect().catch(() => undefined);
+    await disconnectRedis().catch(() => undefined);
     await prisma.$disconnect().catch(() => undefined);
   }
 }
