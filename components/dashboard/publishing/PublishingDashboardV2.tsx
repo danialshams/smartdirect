@@ -12,6 +12,7 @@ import { ArrowLeft, ArrowRight, CalendarClock, Camera, CheckCircle2, Clapperboar
 import PersianDatePicker, { type JalaliDate } from "./PersianDatePicker";
 import { upload as uploadToBlob } from "@vercel/blob/client";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { WheelPicker, type WheelPickerOption } from "@ncdai/react-wheel-picker";
 import "@ncdai/react-wheel-picker/style.css";
@@ -1032,7 +1033,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                                 <span className="mr-2 text-xs font-semibold text-[#2563EB]">{formatScheduledLabel(new Date(job.scheduledAt!))}</span>
                               </div>
                             </div>
-                            <Button type="button" variant="outline" onClick={() => router.push(`/dashboard/publishing/${job.id}`)} className="h-9 shrink-0 rounded-lg border-[#BFDBFE] bg-white px-2.5 text-xs font-semibold text-[#2563EB] hover:bg-[#EFF6FF] sm:flex-none" aria-label="ویرایش محتوا"><Pencil size={14} /><span className="hidden sm:inline">ویرایش</span></Button>
+                            <Link href={`/dashboard/publishing/${job.id}`} prefetch className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-[#BFDBFE] bg-white px-2.5 text-xs font-semibold text-[#2563EB] no-underline hover:bg-[#EFF6FF] sm:flex-none" aria-label="ویرایش محتوا"><Pencil size={14} /><span className="hidden sm:inline">ویرایش</span></Link>
                           </div>
                         ))}
                       </div>
@@ -1066,7 +1067,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                                   <span className="mr-2 text-xs font-medium text-[#64748B]">{formatScheduledLabel(new Date(job.publishedAt ?? job.createdAt))}</span>
                                 </div>
                               </div>
-                              <Button type="button" variant="outline" onClick={() => router.push(`/dashboard/publishing/${job.id}`)} className="h-9 shrink-0 rounded-lg border-[#BFDBFE] bg-white px-2.5 text-xs font-semibold text-[#2563EB] hover:bg-[#EFF6FF] sm:flex-none" aria-label="ویرایش محتوا"><Pencil size={14} /><span className="hidden sm:inline">ویرایش</span></Button>
+                              <Link href={`/dashboard/publishing/${job.id}`} prefetch className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-[#BFDBFE] bg-white px-2.5 text-xs font-semibold text-[#2563EB] no-underline hover:bg-[#EFF6FF] sm:flex-none" aria-label="ویرایش محتوا"><Pencil size={14} /><span className="hidden sm:inline">ویرایش</span></Link>
                             </div>
                           ))}
                         </div>
