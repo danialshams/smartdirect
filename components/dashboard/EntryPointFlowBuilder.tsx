@@ -1047,119 +1047,7 @@ export default function EntryPointFlowBuilder({
      * ---------------------------------------------------------
      */
 
-    return (
-        <div className="mt-5 border-t border-border pt-5">
-            {/* Builder Header */}
-            <Button
-                type="button"
-                onClick={() =>
-                    setOpen(
-                        (current) =>
-                            !current,
-                    )
-                }
-                className="flex w-full items-center justify-between gap-4 rounded-xl border bg-card px-4 py-4 text-right transition hover:bg-muted"
-            >
-                <div className="flex min-w-0 items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-white">
-                        <MessageSquare
-                            size={17}
-                        />
-                    </div>
-
-                    <div className="min-w-0">
-                        <p className="text-sm font-semibold text-foreground">
-                            پاسخ و Flow اختصاصی
-                        </p>
-
-                        <p className="mt-0.5 text-xs text-muted-foreground">
-                            {messages.length > 0
-                                ? `${messages.length} پیام در این Flow`
-                                : "هنوز پاسخی برای این گزینه ساخته نشده است."}
-                        </p>
-                    </div>
-                </div>
-
-                {open ? (
-                    <ChevronUp
-                        size={18}
-                        className="shrink-0 text-muted-foreground"
-                    />
-                ) : (
-                    <ChevronDown
-                        size={18}
-                        className="shrink-0 text-muted-foreground"
-                    />
-                )}
-            </Button>
-
-            {open && (
-                <div className="mt-4 rounded-xl border bg-card p-4 sm:p-5">
-                    {/* Description */}
-                    <div className="mb-5 rounded-xl border border-border/60 bg-muted px-4 py-3">
-                        <p className="text-xs leading-6 text-muted-foreground">
-                            برای این گزینه فقط یک پیام اصلی می‌سازید.
-                            پاسخ‌های بعدی را می‌توانید با Quick Reply
-                            و فرم‌های تو در تو مرحله‌به‌مرحله بسازید.
-                        </p>
-                    </div>
-
-                    {/* Loading existing flow */}
-                    {loadingAutomation ? (
-                        <div className="flex items-center justify-center py-10">
-                            <Loader2
-                                size={20}
-                                className="animate-spin text-muted-foreground"
-                            />
-                        </div>
-                    ) : (
-                        <>
-                            {/* Messages */}
-                            {messages.length ===
-                                0 ? (
-                                <div className="rounded-xl border border-dashed border-border bg-muted/50 px-5 py-10 text-center">
-                                    <MessageSquare
-                                        size={22}
-                                        className="mx-auto text-muted-foreground"
-                                    />
-
-                                    <p className="mt-3 text-sm font-semibold text-foreground">
-                                        Flow خالی است
-                                    </p>
-
-                                    <p className="mt-1 text-xs leading-6 text-muted-foreground">
-                                        اولین پیام پاسخ را
-                                        اضافه کنید.
-                                    </p>
-
-                                    <Button
-                                        type="button"
-                                        onClick={
-                                            addMessage
-                                        }
-                                        className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-primary/90"
-                                    >
-                                        <Plus
-                                            size={
-                                                15
-                                            }
-                                        />
-                                        افزودن پیام
-                                    </Button>
-                                </div>
-                            ) : (
-                                <div className="space-y-4">
-                                    {messages.map(
-                                        (
-                                            message,
-                                            index,
-                                        ) => {
-                                            const Icon =
-                                                getMessageTypeIcon(
-                                                    message.messageType,
-                                                );
-
-                                            const currentMessage = messages[0] ?? createEmptyMessage();
+    const currentMessage = messages[0] ?? createEmptyMessage();
 
     function updateEntryMessage(patch: Partial<MessageDraft>) {
         setMessages((current) => {
@@ -1195,6 +1083,12 @@ export default function EntryPointFlowBuilder({
                     {error && (
                         <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-5 text-[#B91C1C]" role="alert">
                             {error}
+                        </div>
+                    )}
+
+                    {success && (
+                        <div className="rounded-xl border border-[#BBF7D0] bg-[#F0FDF4] px-3.5 py-3 text-xs font-medium text-[#15803D]">
+                            پاسخ با موفقیت ذخیره شد.
                         </div>
                     )}
                 </>
