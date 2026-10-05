@@ -468,9 +468,18 @@ export default function PublishingJobEditor() {
                   <Pencil size={15} />
                 </span>
                 <div className="min-w-0">
-                  <h1 className="text-sm font-bold text-[#0F172A] sm:text-base">
-                    ویرایش {labels[job.type]}
-                  </h1>
+                  <div className="flex items-center gap-2">
+                    <h1 className="text-sm font-bold text-[#0F172A] sm:text-base">
+                      ویرایش {labels[job.type]}
+                    </h1>
+                    {refreshing && (
+                      <Loader2
+                        size={14}
+                        className="animate-spin text-[#2563EB]"
+                        aria-label="در حال به‌روزرسانی"
+                      />
+                    )}
+                  </div>
                   <p className="mt-1.5 text-xs leading-5 text-[#64748B]">
                     پاسخ خودکار {labels[job.type]} خود را ویرایش کنید.
                   </p>
@@ -504,20 +513,44 @@ export default function PublishingJobEditor() {
                   className="overflow-hidden rounded-2xl border border-[#E2E8F0] bg-[#F1F5F9]"
                 >
                   {media.publicUrl ? (
-                    media.type === "IMAGE" ? (
-                      <img
-                        src={media.publicUrl}
-                        alt={labels[job.type]}
-                        className="aspect-[4/5] h-full w-full object-cover"
-                      />
-                    ) : (
-                      <video
-                        src={media.publicUrl}
-                        controls
-                        playsInline
-                        className="aspect-[4/5] h-full w-full object-cover"
-                      />
-                    )
+                    <div className="relative">
+                      {media.type === "IMAGE" ? (
+                        <img
+                          src={media.publicUrl}
+                          alt={labels[job.type]}
+                          onLoad={() =>
+                            setLoadedMediaIds((current) => {
+                              const next = new Set(current);
+                              next.add(media.id);
+                              return next;
+                            })
+                          }
+                          className="aspect-[4/5] h-full w-full object-cover"
+                        />
+                      ) : (
+                        <video
+                          src={media.publicUrl}
+                          controls
+                          playsInline
+                          onLoadedData={() =>
+                            setLoadedMediaIds((current) => {
+                              const next = new Set(current);
+                              next.add(media.id);
+                              return next;
+                            })
+                          }
+                          className="aspect-[4/5] h-full w-full object-cover"
+                        />
+                      )}
+                      {!loadedMediaIds.has(media.id) && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-[#F8FAFC]">
+                          <Loader2
+                            size={20}
+                            className="animate-spin text-[#2563EB]"
+                          />
+                        </div>
+                      )}
+                    </div>
                   ) : (
                     <div className="flex aspect-[4/5] items-center justify-center">
                       <Loader2
@@ -709,7 +742,7 @@ export default function PublishingJobEditor() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => router.push("/dashboard/publishing")}
+                    onClick={() => router.back()}
                     disabled={deleting || automationLoading}
                     className="min-h-11 w-full rounded-xl !border-[#CBD5E1] !bg-[#F8FAFC] px-4 text-sm font-bold !text-[#475569] hover:!bg-[#F1F5F9]"
                   >
