@@ -176,7 +176,21 @@ export async function releaseInstagramTrafficSlot(lease: InstagramTrafficLease) 
   const { getRedisClient } = await import("@/lib/redis/client");
   const redis = getRedisClient();
   const k = keys(lease.accountId);
-  await redis.eval(RELEASE_SCRIPT, [k.lease, k.inflight], [lease.token]);
+  const result = Number(await redis.eval(RELEASE_SCRIPT, [k.lease, k.inflight], [lease.token]));
+  if (result < 0) {
+    observabilityLogger.warn("instagram_account_slot_release_missed", {
+      instagramAccountId: lease.accountId,
+      token: lease.token,
+      reason: "LEASE_NOT_FOUND",
+    });
+    return false;
+  }
+  observabilityLogger.debug("instagram_account_slot_released", {
+    instagramAccountId: lease.accountId,
+    token: lease.token,
+    inflight: result,
+  });
+  return true;
 }
 
 export async function recordInstagramTrafficOutcome(context: InstagramRateLimitContext, outcome: "success" | "429" | "5xx" | "timeout" | "network") {
