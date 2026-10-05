@@ -70,10 +70,12 @@ export default function EntryPointFlowBuilder({
         useState<FormItem[]>([]);
 
     const [loadingResources, setLoadingResources] =
-        useState(false);
+        useState(true);
 
     const [loadingAutomation, setLoadingAutomation] =
         useState(false);
+
+    const flowLoading = loadingResources || loadingAutomation;
 
     const [saving, setSaving] =
         useState(false);
@@ -758,6 +760,11 @@ export default function EntryPointFlowBuilder({
                 </div>
             ) : (
                 <>
+                    {flowLoading ? (
+                        <div className="flex min-h-32 items-center justify-center">
+                            <Loader2 className="h-5 w-5 animate-spin text-[#2563EB]" />
+                        </div>
+                    ) : (
                     <PublishingStoryAutomationSetup
                         message={currentMessage}
                         showcases={showcases}
@@ -774,6 +781,7 @@ export default function EntryPointFlowBuilder({
                             void saveAutomation();
                         }}
                     />
+                    )}
 
                     {error && (
                         <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-5 text-[#B91C1C]" role="alert">
