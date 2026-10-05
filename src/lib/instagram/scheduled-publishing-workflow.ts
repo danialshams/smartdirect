@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { enqueueInstagramPublishing } from "@/lib/instagram/publishing-queue";
 import { processPublishingQueueJobStep } from "@/lib/instagram/publishing-workflow";
 
-async function publishScheduledJobStep(jobId: string) {
+async function publishScheduledJobStep(jobId: string, expectedScheduledAt: string) {
   "use step";
 
   const job = await prisma.instagramPublishJob.findUnique({
@@ -25,6 +25,10 @@ async function publishScheduledJobStep(jobId: string) {
       skipped: true,
       message: `Job در وضعیت ${job.status} است و انتشار زمان‌بندی‌شده لغو شد.`,
     };
+  }
+
+  if (job.scheduledAt?.toISOString() !== expectedScheduledAt) {
+    return { ok: false, skipped: true, message: "زمان‌بندی این Job بعداً ویرایش شده است." };
   }
 
   if (job.scheduledAt && job.scheduledAt.getTime() > Date.now()) {
@@ -67,5 +71,5 @@ export async function scheduleInstagramPublish(
     await sleep(target);
   }
 
-  return publishScheduledJobStep(jobId);
+  return publishScheduledJobStep(jobId, scheduledAt);
 }
