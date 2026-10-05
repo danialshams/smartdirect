@@ -136,6 +136,11 @@ export default function PublishingJobEditor() {
   const [automationKeyword, setAutomationKeyword] = useState("");
   const [automationActive, setAutomationActive] = useState(true);
   const [automationDirty, setAutomationDirty] = useState(false);
+  const [automationLoaded, setAutomationLoaded] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [loadedMediaIds, setLoadedMediaIds] = useState<Set<string>>(
+    () => new Set(),
+  );
 
   const isPublished = job?.status === "PUBLISHED";
   const isScheduled = job?.status === "SCHEDULED";
@@ -166,6 +171,7 @@ export default function PublishingJobEditor() {
     let cancelled = false;
 
     async function load() {
+      setRefreshing(true);
       try {
         const response = await fetch(
           `/api/instagram/publishing/${encodeURIComponent(id)}`,
@@ -181,6 +187,10 @@ export default function PublishingJobEditor() {
 
         const data = result.data as Job;
         setJob(data);
+        setLoadedMediaIds(new Set());
+        const automationId =
+          data.commentAutomationId ?? data.storyReplyAutomationId;
+        setAutomationLoaded(!automationId);
 
         const nextCaption = data.caption ?? "";
         setCaption(nextCaption);
@@ -222,9 +232,6 @@ export default function PublishingJobEditor() {
           })();
         }
 
-        const automationId =
-          data.commentAutomationId ?? data.storyReplyAutomationId;
-
         if (automationId) {
           setAutomationLoading(true);
 
@@ -254,6 +261,7 @@ export default function PublishingJobEditor() {
             } finally {
               if (!cancelled) {
                 setAutomationLoading(false);
+                setAutomationLoaded(true);
               }
             }
           })();
@@ -270,6 +278,7 @@ export default function PublishingJobEditor() {
         if (!cancelled) {
           setAutomationLoading(false);
           setLoading(false);
+          setRefreshing(false);
         }
       }
     }
@@ -414,7 +423,7 @@ export default function PublishingJobEditor() {
       toast.success(
         result.message || "محتوای زمان‌بندی‌شده حذف شد.",
       );
-      router.push("/dashboard/publishing");
+      router.back();
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -441,14 +450,14 @@ export default function PublishingJobEditor() {
     >
       <div className="mx-auto w-full max-w-3xl space-y-5">
         <div className="mb-5 space-y-3">
-          <div dir="ltr" className="flex justify-start">
+          <div className="flex justify-start">
             <Button
               type="button"
-              onClick={() => router.push("/dashboard/publishing")}
+              onClick={() => router.back()}
               className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]"
             >
+              <span>بازگشت</span>
               <ArrowRight size={15} strokeWidth={2} />
-              بازگشت
             </Button>
           </div>
 
@@ -666,7 +675,7 @@ export default function PublishingJobEditor() {
               </h2>
             </div>
 
-            {automationLoading ? (
+            {automationLoading || !automationLoaded ? (
               <div className="flex min-h-32 items-center justify-center">
                 <Loader2
                   size={22}
