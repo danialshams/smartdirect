@@ -188,7 +188,7 @@ export function Button({
   children,
   ...props
 }: Omit<React.ComponentProps<"button">, "color"> & {
-  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
+  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link" | "icon";
   size?: "default" | "xs" | "sm" | "lg" | "icon" | "icon-xs" | "icon-sm" | "icon-lg";
   asChild?: boolean;
 }) {
@@ -247,6 +247,14 @@ export function Button({
       color: COLORS.primary,
       textDecoration: "underline",
       "&:hover": { bgcolor: "transparent", color: COLORS.primaryDark },
+    } : {}),
+    ...(variant === "icon" ? {
+      bgcolor: "transparent",
+      color: COLORS.secondary,
+      minWidth: 0,
+      px: 0,
+      "&:hover": { bgcolor: "transparent", color: COLORS.text },
+      "&.Mui-disabled": { bgcolor: "transparent" },
     } : {}),
   } as const;
 
