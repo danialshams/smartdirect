@@ -401,8 +401,6 @@ export default function EntryPointFlowBuilder({
                                     likeIncomingDm:
                                         false,
                                     isActive,
-                                        sendDm:
-                                        true,
                                 },
                             ),
                         },
