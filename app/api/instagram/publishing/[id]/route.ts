@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { start } from "workflow/api";
+import { z } from "zod";
 
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getStorageProvider } from "@/lib/storage/provider";
+import { scheduleInstagramPublish } from "@/lib/instagram/scheduled-publishing-workflow";
 
 export const dynamic = "force-dynamic";
 
@@ -76,6 +80,52 @@ export async function GET(_request: NextRequest, context: Context) {
   }
 }
 
+const updateSchema = z.object({
+  caption: z.string().max(2200).optional().nullable(),
+  scheduledAt: z.string().datetime().optional().nullable(),
+});
+
+export async function PATCH(request: NextRequest, context: Context) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) return NextResponse.json({ success: false, message: "احراز هویت انجام نشده است." }, { status: 401 });
+
+    const { id } = await context.params;
+    const job = await prisma.instagramPublishJob.findFirst({ where: { id, userId: session.user.id } });
+    if (!job) return NextResponse.json({ success: false, message: "Publishing Job پیدا نشد." }, { status: 404 });
+    if (job.status !== "SCHEDULED") return NextResponse.json({ success: false, message: "فقط محتوای زمان‌بندی‌شده قابل ویرایش است." }, { status: 409 });
+
+    const parsed = updateSchema.safeParse(await request.json());
+    if (!parsed.success) return NextResponse.json({ success: false, message: "اطلاعات ویرایش معتبر نیست." }, { status: 400 });
+
+    const nextScheduledAt = parsed.data.scheduledAt ? new Date(parsed.data.scheduledAt) : null;
+    if (!nextScheduledAt || Number.isNaN(nextScheduledAt.getTime()) || nextScheduledAt.getTime() <= Date.now()) {
+      return NextResponse.json({ success: false, message: "زمان انتشار باید در آینده باشد." }, { status: 400 });
+    }
+    if (nextScheduledAt.getTime() > Date.now() + 48 * 60 * 60 * 1000) {
+      return NextResponse.json({ success: false, message: "زمان انتشار باید حداکثر تا ۴۸ ساعت آینده باشد." }, { status: 400 });
+    }
+
+    const conflict = await prisma.instagramPublishJob.findFirst({
+      where: { instagramAccountId: job.instagramAccountId, scheduledAt: nextScheduledAt, status: { not: "CANCELLED" }, id: { not: job.id } },
+      select: { id: true },
+    });
+    if (conflict) return NextResponse.json({ success: false, message: "برای این اکانت در همین تاریخ و ساعت یک محتوای زمان‌بندی‌شده وجود دارد." }, { status: 409 });
+
+    const updated = await prisma.instagramPublishJob.update({
+      where: { id: job.id },
+      data: { caption: parsed.data.caption?.trim() || null, scheduledAt: nextScheduledAt, errorMessage: null },
+      include: { media: { orderBy: { sortOrder: "asc" } } },
+    });
+
+    await start(scheduleInstagramPublish, [updated.id, nextScheduledAt.toISOString()]);
+    return NextResponse.json({ success: true, data: updated });
+  } catch (error) {
+    console.error("PATCH /api/instagram/publishing/[id] error:", error);
+    return NextResponse.json({ success: false, message: error instanceof Error ? error.message : "ویرایش Publishing Job ناموفق بود." }, { status: 500 });
+  }
+}
+
 export async function DELETE(_request: NextRequest, context: Context) {
   try {
     const session = await getServerSession(authOptions);
@@ -110,26 +160,38 @@ export async function DELETE(_request: NextRequest, context: Context) {
     }
 
     if (job.status === "PUBLISHED") {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Job منتشرشده قابل حذف نیست.",
-        },
-        { status: 409 },
-      );
+      return NextResponse.json({ success: false, message: "محتوای منتشرشده از داخل SmartDirect حذف نمی‌شود." }, { status: 409 });
     }
 
-    await prisma.instagramPublishJob.update({
-      where: {
-        id,
-      },
-      data: {
-        status: "CANCELLED",
-      },
+    if (job.status !== "SCHEDULED" && job.status !== "DRAFT" && job.status !== "FAILED") {
+      return NextResponse.json({ success: false, message: "این محتوا در وضعیت فعلی قابل لغو نیست." }, { status: 409 });
+    }
+
+    const media = await prisma.instagramPublishMedia.findMany({
+      where: { publishJobId: job.id, deletedAt: null },
+      select: { id: true, storageKey: true },
     });
+
+    await prisma.instagramPublishJob.update({ where: { id }, data: { status: "CANCELLED" } });
+
+    const storage = getStorageProvider();
+    let cleanupPending = false;
+    for (const item of media) {
+      try {
+        if (!item.storageKey.startsWith("test:")) await storage.delete(item.storageKey);
+        await prisma.instagramPublishMedia.update({ where: { id: item.id }, data: { deletedAt: new Date() } });
+      } catch (error) {
+        cleanupPending = true;
+        console.error("Scheduled publishing media cleanup failed:", { mediaId: item.id, error });
+      }
+    }
 
     return NextResponse.json({
       success: true,
+      cleanupPending,
+      message: cleanupPending
+        ? "محتوا لغو شد؛ حذف یک یا چند فایل نیاز به تلاش مجدد دارد."
+        : "محتوای زمان‌بندی‌شده لغو و فایل‌های آن حذف شد.",
     });
   } catch (error) {
     console.error("DELETE /api/instagram/publishing/[id] error:", error);
