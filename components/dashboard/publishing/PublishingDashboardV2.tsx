@@ -69,6 +69,85 @@ function formatScheduledLabel(value: Date) { return value.toLocaleString("fa-IR"
 function addJalaliDays(value: JalaliDate, days: number) { const [gy, gm, gd] = jalaliToGregorian(value.year, value.month, value.day); const date = new Date(gy, gm - 1, gd + days); return gregorianToJalali(date.getFullYear(), date.getMonth() + 1, date.getDate()); }
 function jalaliDateTimeToDate(date: JalaliDate, hour: number, minute: number) { const [gy, gm, gd] = jalaliToGregorian(date.year, date.month, date.day); return new Date(Date.UTC(gy, gm - 1, gd, hour, minute, 0, 0) - 3.5 * 60 * 60 * 1000); }
 
+
+type UploadProgressCallback = (progress: number) => void;
+
+async function uploadFileWithProgress(file: File, onProgress: UploadProgressCallback) {
+  return await new Promise<UploadedMedia>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/api/instagram/publishing/upload");
+    xhr.withCredentials = true;
+    xhr.responseType = "json";
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        onProgress(Math.round((event.loaded / event.total) * 100));
+      }
+    };
+
+    xhr.onerror = () => reject(new Error("آپلود فایل ناموفق بود."));
+    xhr.onabort = () => reject(new Error("آپلود فایل لغو شد."));
+    xhr.onload = () => {
+      const result = xhr.response;
+      if (xhr.status < 200 || xhr.status >= 300 || !result?.success || !result?.data) {
+        reject(new Error(result?.message || "آپلود فایل ناموفق بود."));
+        return;
+      }
+      onProgress(100);
+      resolve(result.data as UploadedMedia);
+    };
+
+    const formData = new FormData();
+    formData.append("file", file);
+    xhr.send(formData);
+  });
+}
+
+function InlineWheelPicker({
+  value,
+  min,
+  max,
+  label,
+  onChange,
+}: {
+  value: number | null;
+  min: number;
+  max: number;
+  label: string;
+  onChange: (value: number) => void;
+}) {
+  const options: WheelPickerOption<number>[] = Array.from(
+    { length: max - min + 1 },
+    (_, index) => {
+      const optionValue = min + index;
+      return {
+        value: optionValue,
+        label: formatWheelValue(optionValue),
+        textValue: String(optionValue),
+      };
+    },
+  );
+
+  const safeValue = value !== null && value >= min && value <= max ? value : min;
+
+  return (
+    <div className="min-w-0 flex-1">
+      <WheelPicker
+        options={options}
+        value={safeValue}
+        onValueChange={onChange}
+        visibleCount={8}
+        optionItemHeight={34}
+        classNames={{
+          optionItem: "text-base font-bold text-[#64748B]",
+          highlightWrapper: "rounded-xl border border-[#BFDBFE] bg-[#EFF6FF]",
+        }}
+      />
+      <p className="mt-1 text-center text-[10px] font-semibold text-[#64748B]">{label}</p>
+    </div>
+  );
+}
+
 function KeywordChipsInput({ value, onChange, placeholder }: { value: string; onChange: (value: string) => void; placeholder: string }) {
   const keywords = value.split(/[\n,،;؛]+/).map((item) => item.trim()).filter(Boolean).filter((item, index, list) => list.indexOf(item) === index);
   const [draft, setDraft] = useState("");
