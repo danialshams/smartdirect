@@ -187,11 +187,11 @@ export default function UnansweredComments({ account }: { account: Account }) {
           gap: 1.25,
         }}
       >
-        {[
-          ["کامنت‌های بی‌پاسخ", totalComments, MessageCircle],
-          ["پست‌ها", regularPosts, ImageIcon],
-          ["ریلزها", reelPosts, Video],
-        ].map(([label, value, Icon]) => (
+        {([
+          { label: "کامنت‌های بی‌پاسخ", value: totalComments, Icon: MessageCircle },
+          { label: "پست‌ها", value: regularPosts, Icon: ImageIcon },
+          { label: "ریلزها", value: reelPosts, Icon: Video },
+        ] as const).map(({ label, value, Icon }) => (
           <Box
             key={String(label)}
             sx={{
