@@ -246,6 +246,7 @@ export default function IceBreakerManager({
   }
 
   return (
+    <>
     <div dir="rtl" className="bg-[#F8FAFC] px-3 py-4 sm:px-5 sm:py-6 lg:px-8">
       <div className="mx-auto w-full max-w-6xl">
         <div className="mb-6">
@@ -410,5 +411,42 @@ export default function IceBreakerManager({
         )}
       </div>
     </div>
+      {deleteTarget && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/30 px-4 backdrop-blur-[2px]"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.currentTarget === event.target) setDeleteTarget(null);
+          }}
+        >
+          <div
+            dir="rtl"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-message-title"
+            className="w-full max-w-sm rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-2xl"
+          >
+            <h3 id="delete-message-title" className="text-base font-bold text-[#0F172A]">
+              مطمئنی می‌خوای این مورد رو پاک کنی؟
+            </h3>
+            <p className="mt-2 break-words text-sm leading-6 text-[#64748B]">
+              پیام «{deleteTarget.label}» حذف می‌شود و تنظیم پاسخ آن هم دیگر به این پیام متصل نخواهد بود.
+            </p>
+            <div className="mt-5 flex gap-2">
+              <Button type="button" variant="outline" onClick={() => setDeleteTarget(null)} disabled={saving}
+                className="h-10 flex-1 rounded-xl border-[#E2E8F0] bg-white text-xs font-semibold text-[#475569] hover:bg-[#F8FAFC]">
+                انصراف
+              </Button>
+              <Button type="button" variant="outline" onClick={() => void deleteQuestion(deleteTarget)} disabled={saving}
+                className="h-10 flex-1 rounded-xl border-[#FECACA] bg-[#FEF2F2] text-xs font-semibold text-[#DC2626] hover:bg-[#FEE2E2]">
+                {saving ? "در حال حذف..." : "بله، حذف شود"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div>
+    </>
   );
 }
