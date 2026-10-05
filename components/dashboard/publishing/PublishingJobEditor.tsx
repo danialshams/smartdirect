@@ -283,7 +283,7 @@ export default function PublishingJobEditor() {
 
     if (
       !window.confirm(
-        "این Automation حذف شود؟ پاسخ خودکار این محتوا دیگر اجرا نخواهد شد.",
+        "آیا از حذف پاسخ خودکار این محتوا مطمئن هستید؟ پاسخ خودکار این محتوا دیگر اجرا نخواهد شد.",
       )
     ) {
       return;
@@ -377,7 +377,7 @@ export default function PublishingJobEditor() {
     return (
       <div
         dir="rtl"
-        className="flex min-h-[60vh] items-center justify-center"
+        className="flex min-h-screen items-center justify-center"
       >
         <Loader2
           size={28}
@@ -391,7 +391,7 @@ export default function PublishingJobEditor() {
     return (
       <div
         dir="rtl"
-        className="flex min-h-[60vh] items-center justify-center text-sm text-[#64748B]"
+        className="flex min-h-screen items-center justify-center text-sm text-[#64748B]"
       >
         محتوا پیدا نشد.
       </div>
@@ -411,7 +411,7 @@ export default function PublishingJobEditor() {
       className="min-h-full bg-[#F8FAFC] px-3 py-4 sm:px-5 sm:py-6 lg:px-8"
     >
       <div className="mx-auto w-full max-w-3xl space-y-5">
-        <div className="relative flex min-h-10 items-center justify-center">
+        <div className="relative flex min-h-10 items-center justify-center px-16">
           <Button
             type="button"
             onClick={() => router.push("/dashboard/publishing")}
