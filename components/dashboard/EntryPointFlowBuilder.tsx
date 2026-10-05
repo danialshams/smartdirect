@@ -285,9 +285,10 @@ export default function EntryPointFlowBuilder({
      * ---------------------------------------------------------
      */
 
-    async function saveAutomation() {
+    async function saveAutomation(messageOverride?: MessageDraft) {
+        const messagesToSave = messageOverride ? [messageOverride] : messages;
         try {
-            validateMessages(messages);
+            validateMessages(messagesToSave);
             setSaving(true);
             setError(null);
             setSuccess(false);
@@ -509,11 +510,11 @@ export default function EntryPointFlowBuilder({
 
             for (
                 let index = 0;
-                index < messages.length;
+                index < messagesToSave.length;
                 index++
             ) {
                 const message =
-                    messages[index];
+                    messagesToSave[index];
 
                 if (!message) {
                     continue;
@@ -580,7 +581,7 @@ export default function EntryPointFlowBuilder({
             /*
              * 4. Create Quick Replies.
              */
-            for (const message of messages) {
+            for (const message of messagesToSave) {
                 const serverMessageId =
                     serverMessageIds.get(
                         message.id,
@@ -778,8 +779,8 @@ export default function EntryPointFlowBuilder({
                         disabled={saving}
                         onUpdate={updateEntryMessage}
                         onSavedChange={setSuccess}
-                        onContinue={() => {
-                            void saveAutomation();
+                        onContinue={(messageOverride) => {
+                            void saveAutomation(messageOverride);
                         }}
                     />
                     )}
