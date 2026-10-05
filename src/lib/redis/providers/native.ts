@@ -102,6 +102,10 @@ export class NativeRedisAdapter implements RedisClientLike {
     return this.client.incr(key);
   }
 
+  decr(key: string) {
+    return this.client.decr(key);
+  }
+
   pipeline() {
     return new NativeRedisPipeline(this.client.pipeline());
   }
