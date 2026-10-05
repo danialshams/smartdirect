@@ -43,6 +43,7 @@ export default function IceBreakerManager({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Question | null>(null);
 
   async function readResult(response: Response) {
     const text = await response.text();
@@ -74,7 +75,7 @@ export default function IceBreakerManager({
         throw new Error(
           typeof result.error === "string"
             ? result.error
-            : "دریافت سؤال‌ها ناموفق بود.",
+            : "دریافت پیام‌های شروع گفتگو ناموفق بود.",
         );
       }
 
@@ -94,7 +95,7 @@ export default function IceBreakerManager({
       setError(
         requestError instanceof Error
           ? requestError.message
-          : "دریافت سؤال‌ها ناموفق بود.",
+          : "دریافت پیام‌های شروع گفتگو ناموفق بود.",
       );
     } finally {
       setLoading(false);
@@ -119,15 +120,15 @@ export default function IceBreakerManager({
 
     const label = draft.trim();
     if (!label) {
-      setError("متن سؤال را وارد کنید.");
+      setError("متن پیام شروع گفتگو را وارد کنید.");
       return;
     }
     if (label.length > 80) {
-      setError("متن سؤال نباید بیشتر از ۸۰ کاراکتر باشد.");
+      setError("متن پیام شروع گفتگو نباید بیشتر از ۸۰ کاراکتر باشد.");
       return;
     }
     if (!draftAutomationId) {
-      setError("ابتدا پاسخ سؤال را تنظیم و ذخیره کنید.");
+      setError("ابتدا پاسخ پیام را تنظیم و ذخیره کنید.");
       return;
     }
 
@@ -140,7 +141,7 @@ export default function IceBreakerManager({
       : [...questions, { label, automationId: draftAutomationId }];
 
     if (nextQuestions.length > 4) {
-      setError("حداکثر ۴ سؤال می‌توانید بسازید.");
+      setError("حداکثر ۴ پیام شروع گفتگو می‌توانید بسازید.");
       return;
     }
 
@@ -167,7 +168,7 @@ export default function IceBreakerManager({
         throw new Error(
           typeof result.error === "string"
             ? result.error
-            : "ذخیره سؤال ناموفق بود.",
+            : "ذخیره پیام شروع گفتگو ناموفق بود.",
         );
       }
 
@@ -181,7 +182,7 @@ export default function IceBreakerManager({
       setError(
         saveError instanceof Error
           ? saveError.message
-          : "ذخیره سؤال ناموفق بود.",
+          : "ذخیره پیام شروع گفتگو ناموفق بود.",
       );
     } finally {
       setSaving(false);
@@ -190,7 +191,6 @@ export default function IceBreakerManager({
 
   async function deleteQuestion(question: Question) {
     if (!account) return;
-    if (!window.confirm(`سؤال «${question.label}» حذف شود؟`)) return;
 
     try {
       setSaving(true);
@@ -215,7 +215,7 @@ export default function IceBreakerManager({
         throw new Error(
           typeof result.error === "string"
             ? result.error
-            : "حذف سؤال ناموفق بود.",
+            : "حذف پیام شروع گفتگو ناموفق بود.",
         );
       }
 
@@ -237,10 +237,11 @@ export default function IceBreakerManager({
       setError(
         deleteError instanceof Error
           ? deleteError.message
-          : "حذف سؤال ناموفق بود.",
+          : "حذف پیام شروع گفتگو ناموفق بود.",
       );
     } finally {
       setSaving(false);
+      setDeleteTarget(null);
     }
   }
 
@@ -248,9 +249,8 @@ export default function IceBreakerManager({
     <div dir="rtl" className="bg-[#F8FAFC] px-3 py-4 sm:px-5 sm:py-6 lg:px-8">
       <div className="mx-auto w-full max-w-6xl">
         <div className="mb-6">
-          <p className="text-xs font-semibold text-[#64748B]">Instagram Direct</p>
           <h1 className="mt-1 text-2xl font-bold tracking-tight text-[#0F172A] sm:text-3xl">
-            سؤال‌های شروع گفتگو
+            پیام شروع گفتگو
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-[#64748B]">
             متنی بنویس که کاربر هنگام شروع گفتگو بتواند انتخابش کند و برای آن پاسخ اختصاصی تنظیم کن.
@@ -272,9 +272,9 @@ export default function IceBreakerManager({
                   ۱
                 </span>
                 <div className="min-w-0">
-                  <h2 className="text-sm font-bold text-[#0F172A]">متن سؤال</h2>
+                  <h2 className="text-sm font-bold text-[#0F172A]">متن پیام</h2>
                   <p className="mt-1.5 text-xs leading-5 text-[#64748B]">
-                    سؤالی را بنویس که کاربر بتواند با یک لمس انتخابش کند.
+                    متنی بنویس که کاربر بتواند با یک لمس انتخابش کند.
                   </p>
                 </div>
               </div>
@@ -287,7 +287,7 @@ export default function IceBreakerManager({
                   setError("");
                 }}
                 maxLength={80}
-                placeholder="مثلاً: محصولات شما را ببینم؟"
+                placeholder="مثلاً: محصولات شما را ببینم"
                 className="h-12 rounded-xl border-[#E2E8F0] bg-[#F8FAFC] px-3.5 text-base text-[#0F172A] focus:border-[#2563EB] focus:bg-white"
                 style={{ fontSize: "16px", WebkitTextSizeAdjust: "100%" }}
               />
@@ -304,9 +304,9 @@ export default function IceBreakerManager({
                   ۲
                 </span>
                 <div className="min-w-0">
-                  <h2 className="text-sm font-bold text-[#0F172A]">پاسخ سؤال</h2>
+                  <h2 className="text-sm font-bold text-[#0F172A]">پاسخ پیام</h2>
                   <p className="mt-1.5 text-xs leading-5 text-[#64748B]">
-                    پاسخ و Flow این سؤال را دقیقاً مثل پاسخ‌های دایرکت تنظیم کن.
+                    پاسخ و Flow این پیام را دقیقاً مثل پاسخ‌های دایرکت تنظیم کن.
                   </p>
                 </div>
               </div>
@@ -342,7 +342,7 @@ export default function IceBreakerManager({
                 <div className="min-w-0">
                   <h2 className="text-sm font-bold text-[#0F172A]">پیام‌های ساخته‌شده</h2>
                   <p className="mt-1.5 text-xs leading-5 text-[#64748B]">
-                    سؤال‌هایی که قبلاً ساخته‌ای را از اینجا مشاهده، ویرایش یا حذف کن.
+                    پیام‌هایی که قبلاً ساخته‌ای را از اینجا مشاهده، ویرایش یا حذف کن.
                   </p>
                 </div>
               </div>
@@ -353,33 +353,33 @@ export default function IceBreakerManager({
                 </div>
               ) : questions.length === 0 ? (
                 <div className="flex min-h-24 items-center justify-center rounded-xl border border-dashed border-[#E2E8F0] bg-[#F8FAFC] px-4 text-center text-xs font-medium text-[#94A3B8]">
-                  هنوز سؤالی ساخته نشده است.
+                  هنوز پیام شروع گفتگویی ساخته نشده است.
                 </div>
               ) : (
                 <div className="space-y-2.5">
                   {questions.map((question, index) => (
                     <div
                       key={question.id ?? `question-${index}`}
-                      className="flex items-center gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5 transition hover:border-[#BFDBFE] hover:bg-[#F8FBFF]"
+                      className="flex flex-col gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5 transition hover:border-[#BFDBFE] hover:bg-[#F8FBFF] sm:flex-row sm:items-center"
                     >
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#EFF6FF] text-[#2563EB]">
                         <MessageSquare size={16} />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-bold text-[#0F172A]">
+                        <p className="break-words whitespace-pre-wrap text-sm font-bold leading-6 text-[#0F172A]">
                           {question.label}
                         </p>
                         <p className="mt-1 text-[10px] text-[#64748B]">
-                          سؤال {index + 1} از {questions.length}
+                          پیام {index + 1} از {questions.length}
                         </p>
                       </div>
-                      <div className="flex shrink-0 items-center gap-1.5">
+                      <div className="flex w-full shrink-0 items-center gap-2 border-t border-[#E2E8F0] pt-2 sm:w-auto sm:border-0 sm:pt-0">
                         <Button
                           type="button"
                           variant="outline"
                           onClick={() => startEdit(question)}
-                          className="h-9 rounded-lg border-[#BFDBFE] bg-white px-2.5 text-xs font-semibold text-[#2563EB] hover:bg-[#EFF6FF]"
-                          aria-label="ویرایش سؤال"
+                          className="h-9 flex-1 rounded-lg border-[#BFDBFE] bg-white px-2.5 text-xs font-semibold text-[#2563EB] hover:bg-[#EFF6FF] sm:flex-none"
+                          aria-label="ویرایش پیام"
                         >
                           <Pencil size={14} />
                           <span className="hidden sm:inline">ویرایش</span>
@@ -387,10 +387,10 @@ export default function IceBreakerManager({
                         <Button
                           type="button"
                           variant="outline"
-                          onClick={() => void deleteQuestion(question)}
+                          onClick={() => setDeleteTarget(question)}
                           disabled={saving}
-                          className="h-9 rounded-lg border-[#FECACA] bg-white px-2.5 text-xs font-semibold text-[#DC2626] hover:bg-[#FEF2F2]"
-                          aria-label="حذف سؤال"
+                          className="h-9 flex-1 rounded-lg border-[#FECACA] bg-white px-2.5 text-xs font-semibold text-[#DC2626] hover:bg-[#FEF2F2] sm:flex-none"
+                          aria-label="حذف پیام"
                         >
                           <Trash2 size={14} />
                           <span className="hidden sm:inline">حذف</span>
@@ -402,7 +402,7 @@ export default function IceBreakerManager({
               )}
 
               <div className="mt-4 flex items-center justify-between border-t border-[#E2E8F0] pt-4 text-[10px] text-[#64748B]">
-                <span>حداکثر ۴ سؤال</span>
+                <span>حداکثر ۴ پیام</span>
                 <span>{questions.length.toLocaleString("fa-IR")} / ۴</span>
               </div>
             </section>
