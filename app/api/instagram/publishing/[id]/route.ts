@@ -40,7 +40,7 @@ type Context = {
   }>;
 };
 
-export async function GET(_request: NextRequest, context: Context) {
+export async function GET(request: NextRequest, context: Context) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -87,7 +87,11 @@ export async function GET(_request: NextRequest, context: Context) {
       );
     }
 
-    const data = job.status === "PUBLISHED" ? { ...job, media: await enrichPublishedMedia(job) } : job;
+    const includeMedia = request.nextUrl.searchParams.get("includeMedia") === "true";
+    const data =
+      job.status === "PUBLISHED" && includeMedia
+        ? { ...job, media: await enrichPublishedMedia(job) }
+        : job;
 
     return NextResponse.json({
       success: true,
