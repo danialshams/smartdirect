@@ -1130,7 +1130,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             {(() => {
               const scheduledJobs = jobs.filter((job) => job.status === "SCHEDULED" && job.scheduledAt);
               const publishedJobs = jobs.filter((job) => job.status === "PUBLISHED");
-              if (!scheduledJobs.length && !publishedJobs.length) return null;
+              if (!activePublishJobId && !scheduledJobs.length && !publishedJobs.length) return null;
               return (
                 <div className="mt-6 space-y-4">
                   {activePublishJobId && publishResultVisible && (
