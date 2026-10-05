@@ -79,7 +79,7 @@ export default function UnansweredCommentsPost({ account, mediaId }: { account: 
     return (
       <Box dir="rtl" sx={{ width: "100%", minHeight: "60vh", display: "grid", placeItems: "center", bgcolor: COLORS.background }}>
         <Stack alignItems="center" spacing={1.25}>
-          <CircularProgress size={30} thickness={3} />
+          <Loader2 size={30} strokeWidth={2.2} className="animate-spin" color={COLORS.primary} />
           <Typography sx={{ fontSize: 11, color: COLORS.secondary }}>در حال دریافت کامنت‌ها...</Typography>
         </Stack>
       </Box>
@@ -126,14 +126,13 @@ export default function UnansweredCommentsPost({ account, mediaId }: { account: 
               <Typography sx={{ mt: .25, fontSize: 11.5, color: COLORS.secondary }}>پاسخ به کامنت‌های این محتوا</Typography>
             </Box>
           </Stack>
-          <Button onClick={() => router.back()} startIcon={<ArrowRight size={15} />} sx={{ alignSelf: { xs: "stretch", sm: "center" }, minHeight: 36, borderRadius: 1.75, px: 1.75, fontSize: 10.5, fontWeight: 700, color: COLORS.secondary, bgcolor: "#F8FAFC", border: `1px solid ${COLORS.border}`, "&:hover": { bgcolor: "#F1F5F9" } }}>بازگشت</Button>
+          <Button onClick={() => router.back()} startIcon={<ArrowRight size={15} strokeWidth={2} />} sx={{ alignSelf: { xs: "stretch", sm: "center" }, minHeight: 36, borderRadius: "8px", px: 1.5, gap: .35, fontSize: 10.5, fontWeight: 600, color: "#3B82F6", bgcolor: "#EFF6FF", border: "1px solid #BFDBFE", boxShadow: "none", "&:hover": { bgcolor: "#DBEAFE", color: "#2563EB", boxShadow: "none" } }}>بازگشت</Button>
         </Stack>
       </Box>
 
-      <Box component="section" sx={{ mt: 2, display: "grid", gridTemplateColumns: { xs: "1fr 1fr", sm: "repeat(3,1fr)" }, gap: 1.25 }}>
+      <Box component="section" sx={{ mt: 2, display: "grid", gridTemplateColumns: { xs: "1fr 1fr", sm: "repeat(2,1fr)" }, gap: 1.25 }}>
         {[
           { label: "کامنت‌های بی‌پاسخ", value: post.comments.length, Icon: MessageCircle },
-          { label: "نوع محتوا", value: isReel ? "ریلز" : "پست", Icon: isReel ? Video : ImageIcon },
           { label: "تاریخ انتشار", value: publishedDate ?? "—", Icon: ImageIcon },
         ].map(({ label, value, Icon }) => (
           <Paper key={label} sx={{ p: { xs: 1.5, sm: 1.75 }, minWidth: 0, border: `1px solid ${COLORS.border}`, borderRadius: { xs: 2, lg: 2.5 }, boxShadow: "none" }}>
