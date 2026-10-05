@@ -53,35 +53,6 @@ async function enrichPublishedMedia(job: { instagramMediaId: string | null; inst
 const remoteValidationCache = new Map<string, number>();
 const REMOTE_VALIDATION_TTL_MS = 15_000;
 
-async function isInstagramMediaAvailable(job: { id: string; instagramMediaId: string | null; instagramAccountId: string }) {
-  if (!job.instagramMediaId) return true;
-  const lastChecked = remoteValidationCache.get(job.id) ?? 0;
-  if (Date.now() - lastChecked < REMOTE_VALIDATION_TTL_MS) return true;
-
-  try {
-    const token = await getValidInstagramAccessToken(job.instagramAccountId);
-    const url = new URL(`https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${job.instagramMediaId}`);
-    url.searchParams.set("fields", "id");
-    url.searchParams.set("access_token", token);
-    const response = await fetch(url.toString(), {
-      cache: "no-store",
-      signal: AbortSignal.timeout(3500),
-    });
-    if (response.ok) {
-      remoteValidationCache.set(job.id, Date.now());
-      return true;
-    }
-
-    if ([400, 404, 410].includes(response.status)) {
-      return false;
-    }
-
-    return true;
-  } catch {
-    return true;
-  }
-}
-
 async function validatePublishedJobsInBackground(jobs: Array<{ id: string; type: string; publishedAt: Date | null; instagramMediaId: string | null; instagramAccountId: string }>) {
   const now = Date.now();
   const candidates = jobs.filter((job) => {
@@ -91,24 +62,76 @@ async function validatePublishedJobsInBackground(jobs: Array<{ id: string; type:
     return Boolean(job.instagramMediaId);
   });
 
-  const results = await Promise.allSettled(
-    candidates.map(async (job) => {
-      const available = await isInstagramMediaAvailable(job);
-      if (!available) {
-        await prisma.instagramPublishJob.updateMany({
-          where: { id: job.id, status: "PUBLISHED" },
-          data: {
-            status: "CANCELLED",
-            errorMessage: "محتوا در Instagram حذف شده است.",
-          },
-        });
-      }
-    }),
-  );
+  const byAccount = new Map<string, typeof candidates>();
+  for (const job of candidates) {
+    const current = byAccount.get(job.instagramAccountId) ?? [];
+    current.push(job);
+    byAccount.set(job.instagramAccountId, current);
+  }
 
-  for (const result of results) {
-    if (result.status === "rejected") {
-      console.warn("Published media background validation failed:", result.reason);
+  for (const [accountId, accountJobs] of byAccount) {
+    try {
+      const token = await getValidInstagramAccessToken(accountId);
+
+      await Promise.allSettled(
+        accountJobs.map(async (job) => {
+          const lastChecked = remoteValidationCache.get(job.id) ?? 0;
+          if (Date.now() - lastChecked < REMOTE_VALIDATION_TTL_MS) return;
+          if (!job.instagramMediaId) return;
+
+          const url = new URL(`https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${job.instagramMediaId}`);
+          url.searchParams.set("fields", "id,media_type,media_url,thumbnail_url");
+          url.searchParams.set("access_token", token);
+
+          try {
+            const response = await fetch(url.toString(), {
+              cache: "no-store",
+              signal: AbortSignal.timeout(3500),
+            });
+            const result = await response.json().catch(() => null);
+
+            if ([400, 404, 410].includes(response.status)) {
+              await prisma.instagramPublishJob.updateMany({
+                where: { id: job.id, status: "PUBLISHED" },
+                data: {
+                  status: "CANCELLED",
+                  errorMessage: "محتوا در Instagram حذف شده است.",
+                },
+              });
+              return;
+            }
+
+            if (!response.ok) return;
+
+            remoteValidationCache.set(job.id, Date.now());
+
+            const mediaUrl = typeof result?.media_url === "string"
+              ? proxyInstagramMediaUrl(result.media_url, accountId)
+              : null;
+            const thumbnailUrl = typeof result?.thumbnail_url === "string"
+              ? proxyInstagramMediaUrl(result.thumbnail_url, accountId)
+              : mediaUrl;
+
+            if (mediaUrl || thumbnailUrl) {
+              const media = await prisma.instagramPublishMedia.findFirst({
+                where: { publishJobId: job.id },
+                orderBy: { sortOrder: "asc" },
+              });
+
+              if (media) {
+                await prisma.instagramPublishMedia.update({
+                  where: { id: media.id },
+                  data: { publicUrl: mediaUrl ?? thumbnailUrl },
+                });
+              }
+            }
+          } catch (error) {
+            console.warn("Published media validation failed:", { jobId: job.id, error });
+          }
+        }),
+      );
+    } catch (error) {
+      console.warn("Published media account validation failed:", { accountId, error });
     }
   }
 }
