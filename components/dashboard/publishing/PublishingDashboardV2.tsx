@@ -8,7 +8,7 @@ import { Input } from "@/components/dashboard/DashboardUI"
 import { Select } from "@/components/dashboard/DashboardUI"
 
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, CalendarClock, Camera, Clapperboard, ImagePlus, Images, Loader2, Pencil, Plus, Send, Trash2, Video, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarClock, Camera, CheckCircle2, Clapperboard, CircleSlash2, Clock3, ImagePlus, Images, Loader2, Pencil, Plus, Send, Trash2, Video, X } from "lucide-react";
 import { upload as uploadToBlob } from "@vercel/blob/client";
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { WheelPicker, type WheelPickerOption } from "@ncdai/react-wheel-picker";
@@ -59,6 +59,9 @@ function currentJalaliDate() { const now = new Date(); return gregorianToJalali(
 function getJalaliWeekday(value: JalaliDate) { const [gy, gm, gd] = jalaliToGregorian(value.year, value.month, value.day); return ["یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه", "شنبه"][new Date(gy, gm - 1, gd).getDay()]; }
 function formatWheelValue(value: number) {
   return value === 0 ? "۰۰" : toPersianDigits(value);
+}
+function formatScheduledLabel(value: Date) {
+  return value.toLocaleString("fa-IR", { dateStyle: "long", timeStyle: "short" }).replace("،", " -");
 }
 
 function InlineWheelPicker({
@@ -280,6 +283,10 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const [accounts, setAccounts] = useState<InstagramAccount[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
   const knownJobIdsRef = useRef(new Set<string>());
+  const previousJobsRef = useRef<Job[]>([]);
+  const [activePublishJobId, setActivePublishJobId] = useState<string | null>(null);
+  const [publishResultVisible, setPublishResultVisible] = useState(false);
+  const [publishResult, setPublishResult] = useState<"PUBLISHED" | "FAILED" | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [type, setType] = useState<PublishType>("POST");
   const [selectionConfirmed, setSelectionConfirmed] = useState(false);
@@ -375,7 +382,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     if (!response.ok) throw new Error("دریافت Publishing Jobs ناموفق بود.");
     const result = await response.json();
     const nextJobs: Job[] = result.data ?? [];
-    const previousJobs = jobs;
+    const previousJobs = previousJobsRef.current;
     const previousById = new Map(previousJobs.map((job) => [job.id, job]));
     const nextById = new Map(nextJobs.map((job) => [job.id, job]));
 
@@ -385,10 +392,32 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       if (previousStatus === job.status) continue;
 
       if (job.status === "PUBLISHED") {
-        toast.success("محتوا با موفقیت منتشر شد.");
+        toast.success(`${typeLabels[job.type]} با موفقیت در اینستاگرام منتشر شد.`, { icon: <CheckCircle2 size={18} className="text-[#16A34A]" /> });
+        if (activePublishJobId === job.id) {
+          setPublishResult("PUBLISHED");
+          window.setTimeout(() => {
+            setPublishResultVisible(false);
+            window.setTimeout(() => {
+              setActivePublishJobId(null);
+              setPublishResult(null);
+              handleBackToTypeSelection();
+            }, 350);
+          }, 500);
+        }
         knownJobIdsRef.current.delete(job.id);
       } else if (job.status === "FAILED") {
-        toast.error(job.errorMessage || "انتشار محتوا ناموفق بود.");
+        toast.error(job.errorMessage || `${typeLabels[job.type]} در اینستاگرام منتشر نشد.`, { icon: <CircleSlash2 size={18} className="text-[#DC2626]" /> });
+        if (activePublishJobId === job.id) {
+          setPublishResult("FAILED");
+          window.setTimeout(() => {
+            setPublishResultVisible(false);
+            window.setTimeout(() => {
+              setActivePublishJobId(null);
+              setPublishResult(null);
+              handleBackToTypeSelection();
+            }, 350);
+          }, 500);
+        }
         knownJobIdsRef.current.delete(job.id);
       }
     }
@@ -397,6 +426,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       if (!nextById.has(id)) knownJobIdsRef.current.delete(id);
     }
 
+    previousJobsRef.current = nextJobs;
     setJobs(nextJobs);
   }
   async function loadResources(accountId: string) { if (!accountId) return; setLoadingResources(true); try { const [showcaseResponse, formResponse] = await Promise.all([fetch(`/api/showcases?instagramAccountId=${encodeURIComponent(accountId)}`, { cache: "no-store" }), fetch(`/api/forms?instagramAccountId=${encodeURIComponent(accountId)}`, { cache: "no-store" })]); const showcaseResult = await showcaseResponse.json(); const formResult = await formResponse.json(); setShowcases(
@@ -411,7 +441,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     void load();
     const interval = window.setInterval(() => void loadJobs(), 5000);
     return () => window.clearInterval(interval);
-  }, []);
+  }, [activePublishJobId]);
   useEffect(() => { if (selectedAccountId) void loadResources(selectedAccountId); }, [selectedAccountId]);
 
   function revokeLocalMedia(items: LocalMedia[]) { items.forEach((item) => URL.revokeObjectURL(item.previewUrl)); }
@@ -901,6 +931,9 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       if (!response.ok) { if (automationId) await fetch(`/api/automations/${automationId}`, { method: "DELETE" }).catch(() => undefined); throw new Error(result.message || "ساخت Publishing Job ناموفق بود."); }
       const job = result.data as Job;
       if (publishNow) {
+        setActivePublishJobId(job.id);
+        setPublishResultVisible(true);
+        setPublishResult(null);
         const publishResponse = await fetch(`/api/instagram/publishing/${job.id}/publish`, { method: "POST" });
         const publishResult = await publishResponse.json();
         if (!publishResponse.ok) throw new Error(publishResult.message || "انتشار ناموفق بود.");
@@ -908,7 +941,26 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       } else {
         knownJobIdsRef.current.add(job.id);
         setJobs((current) => [job, ...current.filter((item) => item.id !== job.id)]);
-        toast.success("محتوا برای زمان‌بندی ثبت شد.");
+        toast.success(`${typeLabels[type]} برای زمان ${formatScheduledLabel(scheduled!)} تنظیم شد.`, { icon: <Clock3 size={18} className="text-[#2563EB]" /> });
+        setCaption(""); setUploadedMedia([]); setShowUploadedMediaPreview(false); resetAutomation(); setUploadProgress(0); setScheduledDate(currentJalaliDate());
+        animateStepChange(() => {
+          clearLocalMedia();
+          setSelectionConfirmed(false);
+          setCaptionStepConfirmed(false);
+          setTagStepConfirmed(false);
+          setAutomationChoiceStepStarted(false);
+          setAutomationChoiceConfirmed(false);
+          setAutomationSetupConfirmed(false);
+          setAutomationKeywordDraft("");
+          setAutomationKeywords([]);
+          setDirectMessageText("");
+          setTaggedUsersByMedia({});
+          setTagDraftByMedia({});
+          setTagInputError("");
+          setError("");
+        });
+        await loadJobs();
+        return;
       }
       setCaption(""); setUploadedMedia([]); setShowUploadedMediaPreview(false); resetAutomation(); setUploadProgress(0); setScheduledDate(currentJalaliDate()); await loadJobs();
     } catch (e) { setError(e instanceof Error ? e.message : "خطا در انتشار محتوا."); } finally { setPublishing(false); }
@@ -928,6 +980,52 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
         {!selectionConfirmed ? (
           <section className="w-full">
             <SectionHeader n="۱" title="نوع محتوا" text="نوع محتوایی را که می‌خواهی در Instagram منتشر کنی انتخاب کن." />
+            {(() => {
+              const scheduledJobs = jobs.filter((job) => job.status === "SCHEDULED" && job.scheduledAt);
+              const publishedJobs = jobs.filter((job) => job.status === "PUBLISHED");
+              if (!scheduledJobs.length && !publishedJobs.length) return null;
+              return (
+                <div className="mb-5 space-y-4">
+                  {scheduledJobs.length > 0 && (
+                    <section className="rounded-2xl border border-[#DBEAFE] bg-white p-4 shadow-sm sm:p-5">
+                      <div className="mb-3 flex items-center gap-2">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#EFF6FF] text-[#2563EB]">
+                          <Clock3 size={17} className="animate-pulse" />
+                        </span>
+                        <div>
+                          <h2 className="text-sm font-bold text-[#0F172A]">انتشارهای زمان‌بندی‌شده</h2>
+                          <p className="mt-1 text-[11px] text-[#64748B]">محتوا در زمان تعیین‌شده منتشر می‌شود.</p>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        {scheduledJobs.map((job) => (
+                          <div key={job.id} className="flex items-center justify-between gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3">
+                            <span className="text-sm font-bold text-[#0F172A]">{typeLabels[job.type]}</span>
+                            <span className="text-xs font-semibold text-[#2563EB]">{formatScheduledLabel(new Date(job.scheduledAt!))}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+                  )}
+                  {publishedJobs.length > 0 && (
+                    <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-5">
+                      <div className="mb-3">
+                        <h2 className="text-sm font-bold text-[#0F172A]">محتواهای منتشر شده</h2>
+                        <p className="mt-1 text-[11px] text-[#64748B]">فهرست محتوایی که با SmartDirect منتشر شده است.</p>
+                      </div>
+                      <div className="divide-y divide-[#E2E8F0] rounded-xl border border-[#E2E8F0]">
+                        {publishedJobs.map((job) => (
+                          <div key={job.id} className="flex items-center justify-between gap-3 px-3.5 py-3">
+                            <span className="text-sm font-bold text-[#0F172A]">{typeLabels[job.type]}</span>
+                            <span className="text-xs font-medium text-[#64748B]">{formatScheduledLabel(new Date(job.publishedAt ?? job.createdAt))}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+                  )}
+                </div>
+              );
+            })()}
             <div className="grid w-full grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
               {([["POST","پست",ImagePlus,"#2563EB","#EFF6FF","#1D4ED8"],["CAROUSEL","آلبوم",Images,"#7C3AED","#F5F3FF","#6D28D9"],["REEL","ریلز",Clapperboard,"#D97706","#FFF7ED","#B45309"],["STORY","استوری",Camera,"#16A34A","#F0FDF4","#15803D"]] as const).map(([value,label,Icon,accent,soft,border]) => (
                 <Button
@@ -1076,7 +1174,25 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               )}
 
               {type === "CAROUSEL" ? (
-                <div className="space-y-3">
+                {activePublishJobId && publishResultVisible && (
+                <div className={["mb-4 overflow-hidden rounded-2xl border bg-white p-4 shadow-sm transition-all duration-300", publishResult === null ? "border-[#DBEAFE]" : publishResult === "PUBLISHED" ? "border-[#BBF7D0]" : "border-[#FECACA]", publishResultVisible ? "translate-y-0 opacity-100" : "-translate-y-2 opacity-0"].join(" ")}>
+                  {(() => {
+                    const activeJob = jobs.find((item) => item.id === activePublishJobId);
+                    return (
+                      <div className="flex items-center gap-3">
+                        <span className={["flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", publishResult === "PUBLISHED" ? "bg-[#F0FDF4] text-[#16A34A]" : publishResult === "FAILED" ? "bg-[#FEF2F2] text-[#DC2626]" : "bg-[#EFF6FF] text-[#2563EB]"].join(" ")}>
+                          {publishResult === "PUBLISHED" ? <CheckCircle2 size={20}/> : publishResult === "FAILED" ? <CircleSlash2 size={20}/> : <Loader2 size={20} className="animate-spin"/>}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-[#0F172A]">{publishResult === "PUBLISHED" ? "انتشار با موفقیت انجام شد" : publishResult === "FAILED" ? "انتشار ناموفق بود" : "در حال انتشار..."}</p>
+                          <p className="mt-1 text-xs text-[#64748B]">{activeJob ? `در حال انتشار ${typeLabels[activeJob.type]} در اینستاگرام هستیم.` : "در حال پردازش محتوای شما هستیم."}</p>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+              <div className="space-y-3">
                   {uploadedMedia.map((item, index) => {
                     const mediaKey = item.storageKey;
                     const tags = taggedUsersByMedia[mediaKey] ?? [];
