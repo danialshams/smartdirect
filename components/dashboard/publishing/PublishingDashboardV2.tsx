@@ -30,7 +30,7 @@ type PublishType = "POST" | "CAROUSEL" | "REEL" | "STORY";
 type MediaType = "IMAGE" | "VIDEO";
 type LocalMedia = { file: File; type: MediaType; previewUrl: string; sortOrder: number };
 type UploadedMedia = { type: MediaType; storageKey: string; publicUrl: string; fileName: string; mimeType: string; fileSize: number; sortOrder: number };
-type Job = { id: string; type: PublishType; status: string; caption: string | null; scheduledAt: string | null; publishedAt: string | null; errorMessage: string | null; media: UploadedMedia[]; instagramAccount?: { igUsername: string | null } };
+type Job = { id: string; type: PublishType; status: string; caption: string | null; scheduledAt: string | null; publishedAt: string | null; createdAt: string; errorMessage: string | null; media: UploadedMedia[]; instagramAccount?: { igUsername: string | null } };
 type InstagramAccount = { id: string; igUsername: string | null; username?: string | null; igUserId: string; isConnected?: boolean };
 type JalaliDate = { year: number; month: number; day: number };
 
