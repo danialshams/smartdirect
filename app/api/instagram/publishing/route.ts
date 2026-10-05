@@ -30,26 +30,6 @@ const createSchema = z.object({
   media: z.array(z.object({ type: z.enum(["IMAGE", "VIDEO"]), storageKey: z.string().min(1), publicUrl: z.string().url().optional().nullable(), fileName: z.string().max(255).optional().nullable(), mimeType: z.string().max(100).optional().nullable(), fileSize: z.number().int().positive().optional().nullable(), sortOrder: z.number().int().min(0) })).min(1).max(10),
 });
 
-async function enrichPublishedMedia(job: { instagramMediaId: string | null; instagramAccountId: string; media: Array<Record<string, unknown>> }) {
-  if (!job.instagramMediaId) return job.media;
-  try {
-    const token = await getValidInstagramAccessToken(job.instagramAccountId);
-    const url = new URL(`https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${job.instagramMediaId}`);
-    url.searchParams.set("fields", "id,media_type,media_url,thumbnail_url,permalink,timestamp");
-    url.searchParams.set("access_token", token);
-    const response = await fetch(url.toString(), { cache: "no-store", signal: AbortSignal.timeout(3500) });
-    const result = await response.json().catch(() => null);
-    if (!response.ok) return job.media;
-    const mediaUrl = typeof result?.media_url === "string" ? proxyInstagramMediaUrl(result.media_url) : null;
-    const thumbnailUrl = typeof result?.thumbnail_url === "string" ? proxyInstagramMediaUrl(result.thumbnail_url) : mediaUrl;
-    if (!mediaUrl && !thumbnailUrl) return job.media;
-    return [{ ...(job.media[0] ?? {}), publicUrl: mediaUrl ?? thumbnailUrl, instagramMediaUrl: mediaUrl, thumbnailUrl }];
-  } catch (error) {
-    console.warn("Failed to enrich published media:", error);
-    return job.media;
-  }
-}
-
 const remoteValidationCache = new Map<string, number>();
 const REMOTE_VALIDATION_TTL_MS = 15_000;
 
