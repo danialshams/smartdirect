@@ -779,20 +779,6 @@ export default function EntryPointFlowBuilder({
                             <p className="text-[11px] text-[#64748B]">حداقل یک کلمه کلیدی الزامی است.</p>
                         </div>
                     )}
-                    {triggerType !== "DM" && (
-                        <label className="flex items-center gap-2 text-sm font-semibold text-[#334155]">
-                            <input
-                                type="checkbox"
-                                checked={isActive}
-                                onChange={(event) => {
-                                    onActiveChange?.(event.target.checked);
-                                    onDirtyChange?.(true);
-                                }}
-                                className="h-4 w-4 accent-[#2563EB]"
-                            />
-                            فعال باشد
-                        </label>
-                    )}
                     {flowLoading ? (
                         <div className="flex min-h-32 items-center justify-center">
                             <Loader2 className="h-5 w-5 animate-spin text-[#2563EB]" />
