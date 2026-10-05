@@ -76,7 +76,6 @@ type Conversation = {
   participantProfilePicture: string | null;
   isActive: boolean;
   humanMode?: boolean;
-  handoff?: Handoff | null;
   messagingWindow?: MessagingWindow;
   lastMessageAt: string | null;
   updatedAt: string;
