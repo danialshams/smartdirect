@@ -60,11 +60,13 @@ function getOfficialTehranClock() {
     timeZone: "Asia/Tehran",
     hour: "2-digit",
     minute: "2-digit",
+    second: "2-digit",
     hourCycle: "h23",
   }).formatToParts(new Date());
   return {
     hour: Number(parts.find((part) => part.type === "hour")?.value ?? "0"),
     minute: Number(parts.find((part) => part.type === "minute")?.value ?? "0"),
+    second: Number(parts.find((part) => part.type === "second")?.value ?? "0"),
   };
 }
 function currentJalaliDate() {
@@ -137,7 +139,11 @@ function InlineWheelPicker({
   );
 }
 function addJalaliDays(value: JalaliDate, days: number) { const [gy, gm, gd] = jalaliToGregorian(value.year, value.month, value.day); const date = new Date(gy, gm - 1, gd + days); return gregorianToJalali(date.getFullYear(), date.getMonth() + 1, date.getDate()); }
-function jalaliDateTimeToDate(date: JalaliDate, hour: number, minute: number) { const [gy, gm, gd] = jalaliToGregorian(date.year, date.month, date.day); return new Date(gy, gm - 1, gd, hour, minute, 0, 0); }
+function jalaliDateTimeToDate(date: JalaliDate, hour: number, minute: number) {
+  const [gy, gm, gd] = jalaliToGregorian(date.year, date.month, date.day);
+  // Iran uses IRST (UTC+03:30) with no DST changes in current years.
+  return new Date(Date.UTC(gy, gm - 1, gd, hour, minute, 0, 0) - 3.5 * 60 * 60 * 1000);
+}
 async function uploadFileWithProgress(file: File, onProgress: (progress: number) => void): Promise<{ storageKey: string; publicUrl: string; type: MediaType; fileName: string; mimeType: string; fileSize: number }> {
 
   const providerResponse = await fetch("/api/instagram/publishing/upload/client", {
@@ -345,12 +351,13 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const [likeStoryReply, setLikeStoryReply] = useState(false);
   const [requireFollow, setRequireFollow] = useState(false);
   const [followGateText, setFollowGateText] = useState("برای دریافت پاسخ، ابتدا پیج را Follow کنید.");
-  const officialTehranClock = getOfficialTehranClock();
-  const [scheduledDate, setScheduledDate] = useState<JalaliDate>(currentJalaliDate());
+  const [officialTehranClock, setOfficialTehranClock] = useState(() => getOfficialTehranClock());
+  const [todayJalali, setTodayJalali] = useState<JalaliDate>(() => currentJalaliDate());
+  const [scheduledDate, setScheduledDate] = useState<JalaliDate>(todayJalali);
   const [hour, setHour] = useState(officialTehranClock.hour);
   const [minute, setMinute] = useState(officialTehranClock.minute);
   const [publishNow, setPublishNow] = useState(true);
-  const [stage6Date, setStage6Date] = useState<JalaliDate | null>(currentJalaliDate());
+  const [stage6Date, setStage6Date] = useState<JalaliDate | null>(todayJalali);
   const [stage6Hour, setStage6Hour] = useState<number | null>(officialTehranClock.hour);
   const [stage6Minute, setStage6Minute] = useState<number | null>(officialTehranClock.minute);
   const [uploading, setUploading] = useState(false);
@@ -462,6 +469,63 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             : [],
       ); setForms(Array.isArray(formResult.data) ? formResult.data : []); } finally { setLoadingResources(false); } }
   async function load() { try { setLoading(true); setError(""); await Promise.all([loadAccounts(), loadJobs()]); } catch (e) { setError(e instanceof Error ? e.message : "خطا در دریافت اطلاعات."); } finally { setLoading(false); } }
+  useEffect(() => {
+    let previousDate = todayJalali;
+    let previousHour = officialTehranClock.hour;
+    let previousMinute = officialTehranClock.minute;
+
+    const syncOfficialTime = () => {
+      const nextClock = getOfficialTehranClock();
+      const nextDate = currentJalaliDate();
+      const dateChanged =
+        previousDate.year !== nextDate.year ||
+        previousDate.month !== nextDate.month ||
+        previousDate.day !== nextDate.day;
+
+      setOfficialTehranClock(nextClock);
+      if (dateChanged) setTodayJalali(nextDate);
+
+      const stageDateIsPreviousToday =
+        stage6Date &&
+        stage6Date.year === previousDate.year &&
+        stage6Date.month === previousDate.month &&
+        stage6Date.day === previousDate.day;
+
+      if (dateChanged && stageDateIsPreviousToday) {
+        setStage6Date(nextDate);
+        setStage6Hour(nextClock.hour);
+        setStage6Minute(nextClock.minute);
+      } else if (stageDateIsPreviousToday && stage6Hour !== null && stage6Minute !== null) {
+        const selectedWasNoLongerInTheFuture =
+          stage6Hour < previousHour ||
+          (stage6Hour === previousHour && stage6Minute <= previousMinute);
+        if (selectedWasNoLongerInTheFuture) {
+          setStage6Hour(nextClock.hour);
+          setStage6Minute(nextClock.minute);
+        }
+      }
+
+      if (dateChanged) {
+        setScheduledDate((current) =>
+          current.year === previousDate.year &&
+          current.month === previousDate.month &&
+          current.day === previousDate.day
+            ? nextDate
+            : current,
+        );
+        setHour(nextClock.hour);
+        setMinute(nextClock.minute);
+      }
+
+      previousDate = nextDate;
+      previousHour = nextClock.hour;
+      previousMinute = nextClock.minute;
+    };
+
+    const interval = window.setInterval(syncOfficialTime, 1000);
+    return () => window.clearInterval(interval);
+  }, [stage6Date, stage6Hour, stage6Minute, todayJalali, officialTehranClock.hour]);
+
   useEffect(() => {
     void load();
     const interval = window.setInterval(() => void loadJobs(), 5000);
@@ -980,7 +1044,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
         knownJobIdsRef.current.add(job.id);
         setJobs((current) => [job, ...current.filter((item) => item.id !== job.id)]);
         toast.success(`${typeLabels[type]} برای زمان ${formatScheduledLabel(scheduled!)} تنظیم شد.`, { icon: <Clock3 size={18} className="text-[#2563EB]" /> });
-        setCaption(""); setUploadedMedia([]); setShowUploadedMediaPreview(false); resetAutomation(); setUploadProgress(0); setScheduledDate(currentJalaliDate());
+        setCaption(""); setUploadedMedia([]); setShowUploadedMediaPreview(false); resetAutomation(); setUploadProgress(0); setScheduledDate(todayJalali); setHour(officialTehranClock.hour); setMinute(officialTehranClock.minute); setStage6Date(todayJalali); setStage6Hour(officialTehranClock.hour); setStage6Minute(officialTehranClock.minute);
         animateStepChange(() => {
           clearLocalMedia();
           setSelectionConfirmed(false);
@@ -1624,14 +1688,24 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
-                      {[currentJalaliDate(), addJalaliDays(currentJalaliDate(), 1)].map((date, index) => {
+                      {[todayJalali, addJalaliDays(todayJalali, 1)].map((date, index) => {
                         const selected = stage6Date?.year === date.year && stage6Date?.month === date.month && stage6Date?.day === date.day;
                         const label = index === 0 ? "امروز" : "فردا";
                         return (
                           <button
                             key={`${date.year}-${date.month}-${date.day}`}
                             type="button"
-                            onClick={() => { setStage6Date(date); setError(""); }}
+                            onClick={() => {
+                              setStage6Date(date);
+                              if (index === 0) {
+                                setStage6Hour((current) => Math.max(current ?? officialTehranClock.hour, officialTehranClock.hour));
+                                setStage6Minute((current) => {
+                                  if (stage6Hour === officialTehranClock.hour) return Math.max(current ?? officialTehranClock.minute, officialTehranClock.minute);
+                                  return current ?? officialTehranClock.minute;
+                                });
+                              }
+                              setError("");
+                            }}
                             className={["relative min-h-24 overflow-hidden rounded-2xl border p-3.5 text-right transition-all", selected ? "border-[#2563EB] bg-[#EFF6FF] shadow-sm ring-2 ring-[#2563EB]/10" : "border-[#E2E8F0] bg-white hover:border-[#BFDBFE] hover:bg-[#F8FAFC]"].join(" ")}
                           >
                             <span className="absolute right-3.5 top-3.5 text-[11px] font-semibold text-[#64748B]">{getJalaliWeekday(date)}</span>
@@ -1652,18 +1726,41 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                       <div dir="ltr" className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
                         <InlineWheelPicker
                           value={stage6Hour}
-                          min={0}
+                          min={stage6Date && stage6Date.year === todayJalali.year && stage6Date.month === todayJalali.month && stage6Date.day === todayJalali.day ? officialTehranClock.hour : 0}
                           max={23}
                           label="ساعت"
-                          onChange={(value) => { setStage6Hour(value); setError(""); }}
+                          onChange={(value) => {
+                            const isToday = stage6Date && stage6Date.year === todayJalali.year && stage6Date.month === todayJalali.month && stage6Date.day === todayJalali.day;
+                            const nextHour = isToday ? Math.max(value, officialTehranClock.hour) : value;
+                            setStage6Hour(nextHour);
+                            if (isToday && nextHour === officialTehranClock.hour && (stage6Minute ?? 0) < officialTehranClock.minute) {
+                              setStage6Minute(officialTehranClock.minute);
+                            }
+                            setError("");
+                          }}
                         />
                         <span className="mt-6 px-0.5 text-xl font-bold text-[#64748B]" aria-hidden="true">:</span>
                         <InlineWheelPicker
                           value={stage6Minute}
-                          min={0}
+                          min={
+                            stage6Date &&
+                            stage6Date.year === todayJalali.year &&
+                            stage6Date.month === todayJalali.month &&
+                            stage6Date.day === todayJalali.day &&
+                            stage6Hour === officialTehranClock.hour
+                              ? officialTehranClock.minute
+                              : 0
+                          }
                           max={59}
                           label="دقیقه"
-                          onChange={(value) => { setStage6Minute(value); setError(""); }}
+                          onChange={(value) => {
+                            const isToday = stage6Date && stage6Date.year === todayJalali.year && stage6Date.month === todayJalali.month && stage6Date.day === todayJalali.day;
+                            const nextMinute = isToday && stage6Hour === officialTehranClock.hour
+                              ? Math.max(value, officialTehranClock.minute)
+                              : value;
+                            setStage6Minute(nextMinute);
+                            setError("");
+                          }}
                         />
                       </div>
 
