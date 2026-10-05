@@ -82,6 +82,13 @@ function getTenantConfig() {
   };
 }
 
+function getAccountConfig() {
+  return {
+    limit: Math.max(1, Math.floor(envNumber("INSTAGRAM_RATE_LIMIT_ACCOUNT_LIMIT", 200))),
+    windowMs: Math.max(100, Math.floor(envNumber("INSTAGRAM_RATE_LIMIT_ACCOUNT_WINDOW_MS", 1_000))),
+  };
+}
+
 export function getInstagramRateLimitBuckets(context: InstagramRateLimitContext): InstagramRateLimitBucket[] {
   const operation = getOperationConfig(context.operation);
   const buckets: InstagramRateLimitBucket[] = [
@@ -96,8 +103,7 @@ export function getInstagramRateLimitBuckets(context: InstagramRateLimitContext)
     {
       scope: "INSTAGRAM_ACCOUNT",
       key: `account:${context.instagramAccountId}`,
-      limit: Math.floor(envNumber("INSTAGRAM_RATE_LIMIT_ACCOUNT_LIMIT", operation.limit)),
-      windowMs: Math.floor(envNumber("INSTAGRAM_RATE_LIMIT_ACCOUNT_WINDOW_MS", operation.windowMs)),
+      ...getAccountConfig(),
     },
     {
       scope: "OPERATION",
