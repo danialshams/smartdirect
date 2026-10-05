@@ -145,6 +145,18 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     if (!id) return NextResponse.json({ success: false, error: "شناسه Automation الزامی است" }, { status: 400 });
     const automation = await prisma.automation.findFirst({ where: { id, instagramAccount: { userId: session.user.id } } });
     if (!automation) return NextResponse.json({ success: false, error: "Automation پیدا نشد" }, { status: 404 });
+    await prisma.instagramPublishJob.updateMany({
+      where: {
+        OR: [
+          { commentAutomationId: id },
+          { storyReplyAutomationId: id },
+        ],
+      },
+      data: {
+        commentAutomationId: null,
+        storyReplyAutomationId: null,
+      },
+    });
     await prisma.automation.delete({ where: { id } });
     try {
       await invalidateAutomationCache(automation.instagramAccountId);
