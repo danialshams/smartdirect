@@ -86,9 +86,6 @@ export default function DashboardAccountsClient({
           minHeight: 180,
           display: "grid",
           placeItems: "center",
-          border: "1px solid #E2E8F0",
-          borderRadius: 3,
-          bgcolor: "#FFFFFF",
         }}
       >
         <CircularProgress size={24} thickness={4} sx={{ color: "#2563EB" }} />
