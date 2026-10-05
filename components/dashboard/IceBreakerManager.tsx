@@ -437,10 +437,25 @@ export default function IceBreakerManager({
                           <EntryPointFlowBuilder
                             accountId={account.id}
                             automationId={editAutomationId}
+                            finalSaveLabel="ذخیره"
+                            finalSaveLoadingLabel="در حال ذخیره..."
                             onAutomationReady={(automationId) => {
                               void saveQuestion(editDraft, editingId, automationId);
                             }}
                           />
+                          <button
+                            type="button"
+                            disabled={saving}
+                            onClick={() => {
+                              setEditingId(null);
+                              setEditDraft("");
+                              setEditAutomationId(null);
+                              setError("");
+                            }}
+                            className="mt-2 flex h-11 w-full items-center justify-center rounded-xl border border-[#CBD5E1] bg-[#F1F5F9] px-4 text-sm font-bold text-[#475569] transition hover:bg-[#E2E8F0] disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            انصراف
+                          </button>
                         </div>
                       </div>
                     )}
