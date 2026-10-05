@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Select } from "@/components/dashboard/DashboardUI";
-import { ImagePlus, Mic, Video, Store, ClipboardList, MessageSquareText, Plus } from "lucide-react";
+import { ImagePlus, Loader2, Mic, Video, Store, ClipboardList, MessageSquareText, Plus } from "lucide-react";
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import type { FormItem, MessageDraft, QuickReplyDraft, Showcase } from "../automation-form-utils";
 import { createEmptyQuickReply } from "../automation-form-utils";
@@ -17,7 +17,7 @@ type Props = {
   onUpdate: (patch: Partial<MessageDraft>) => void;
   onSavedChange?: (saved: boolean) => void;
   keywordValid: boolean;
-  onContinue: (message?: MessageDraft) => void;
+  onContinue: (message?: MessageDraft) => void | Promise<unknown>;
   disabled?: boolean;
   hideVideo?: boolean;
   hideForm?: boolean;
@@ -50,6 +50,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
   const [showcaseSaved, setShowcaseSaved] = useState(Boolean(message.showcaseId));
   const [formSaved, setFormSaved] = useState(false);
   const [formSaving, setFormSaving] = useState(false);
+  const [finalSaving, setFinalSaving] = useState(false);
   const saveShowcaseLockRef = useRef(false);
   const [slideUploadProgress, setSlideUploadProgress] = useState<Record<string, number>>({});
   const [slideUploading, setSlideUploading] = useState<Record<string, boolean>>({});
@@ -501,30 +502,42 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
       {showFinalSave && (
         <button
           type="button"
-          disabled={disabled || !keywordValid || uploading || savingShowcase || formSaving ||
+          disabled={disabled || finalSaving || !keywordValid || uploading || savingShowcase || formSaving ||
             (responseType === "TEXT" && !message.text.trim()) ||
             (["IMAGE", "VIDEO", "AUDIO"].includes(responseType) && !message.mediaUrl.trim()) ||
             (responseType === "SHOWCASE" && !hasValidSlide) ||
             (responseType === "FORM" && !isValidStoryForm(message.text, message.quickReplies))}
           onClick={async () => {
             setError("");
-            let messageToSave: MessageDraft = {
-              ...message,
-              text: message.text.trim(),
-            };
+            setFinalSaving(true);
+            try {
+              let messageToSave: MessageDraft = {
+                ...message,
+                text: message.text.trim(),
+              };
 
-            if (responseType === "SHOWCASE" && !showcaseSaved) {
-              const showcaseId = await saveShowcase();
-              if (!showcaseId) return;
-              messageToSave = { ...messageToSave, showcaseId };
+              if (responseType === "SHOWCASE" && !showcaseSaved) {
+                const showcaseId = await saveShowcase();
+                if (!showcaseId) return;
+                messageToSave = { ...messageToSave, showcaseId };
+              }
+
+              onUpdate(messageToSave);
+              await onContinue(messageToSave);
+            } finally {
+              setFinalSaving(false);
             }
-
-            onUpdate(messageToSave);
-            onContinue(messageToSave);
           }}
           className="flex h-11 w-full items-center justify-center rounded-xl bg-[#2563EB] px-4 text-sm font-bold text-white transition hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {savingShowcase || formSaving ? "در حال ساخت و ذخیره..." : "ساخت و ذخیره پیام"}
+          {finalSaving ? (
+            <span className="inline-flex items-center gap-2">
+              <Loader2 size={17} className="animate-spin" />
+              در حال ساخت پیام شروع گفتگو...
+            </span>
+          ) : (
+            "ساخت پیام شروع گفتگو"
+          )}
         </button>
       )}
 
