@@ -17,7 +17,7 @@ type Props = {
   onUpdate: (patch: Partial<MessageDraft>) => void;
   onSavedChange?: (saved: boolean) => void;
   keywordValid: boolean;
-  onContinue: () => void;
+  onContinue: (message?: MessageDraft) => void;
   disabled?: boolean;
   hideVideo?: boolean;
   hideForm?: boolean;
@@ -197,19 +197,19 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
     }
   }
 
-  async function saveShowcase(): Promise<boolean> {
+  async function saveShowcase(): Promise<string | null> {
     if (saveShowcaseLockRef.current || savingShowcase) return false;
     saveShowcaseLockRef.current = true;
     if (!hasValidSlide) {
       setError("برای ساخت ویترین، حداقل یک اسلاید کامل با تصویر، تیتر و توضیحات بسازید.");
       saveShowcaseLockRef.current = false;
-      return false;
+      return null;
     }
-    if (!instagramAccountId) { setError("اکانت فعال Instagram پیدا نشد."); saveShowcaseLockRef.current = false; return false; }
+    if (!instagramAccountId) { setError("اکانت فعال Instagram پیدا نشد."); saveShowcaseLockRef.current = false; return null; }
     for (let index = 0; index < slides.length; index += 1) {
       const slide = slides[index];
-      if (!slide?.imageUrl.trim()) { setError(`تصویر اسلاید ${index + 1} را آپلود کنید.`); saveShowcaseLockRef.current = false; return false; }
-      if (!slide.title.trim()) { setError(`تیتر اسلاید ${index + 1} را وارد کنید.`); saveShowcaseLockRef.current = false; return false; }
+      if (!slide?.imageUrl.trim()) { setError(`تصویر اسلاید ${index + 1} را آپلود کنید.`); saveShowcaseLockRef.current = false; return null; }
+      if (!slide.title.trim()) { setError(`تیتر اسلاید ${index + 1} را وارد کنید.`); saveShowcaseLockRef.current = false; return null; }
     }
     setSavingShowcase(true);
     setError("");
@@ -235,7 +235,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
       setSlides((current) => current.map((slide) => ({ ...slide })));
       onUpdate({ showcaseId: created.id });
       setShowcaseSaved(true);
-      return true;
+      return created.id as string;
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "ساخت ویترین ناموفق بود.");
       return false;
@@ -508,14 +508,19 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
             (responseType === "FORM" && !isValidStoryForm(message.text, message.quickReplies))}
           onClick={async () => {
             setError("");
+            let messageToSave: MessageDraft = {
+              ...message,
+              text: message.text.trim(),
+            };
+
             if (responseType === "SHOWCASE" && !showcaseSaved) {
-              const ok = await saveShowcase();
-              if (!ok) return;
+              const showcaseId = await saveShowcase();
+              if (!showcaseId) return;
+              messageToSave = { ...messageToSave, showcaseId };
             }
-            if (responseType === "TEXT") onUpdate({ text: message.text.trim() });
-            if (responseType === "FORM") onUpdate({ text: message.text.trim(), quickReplies: message.quickReplies });
-            onSavedChange?.(true);
-            onContinue();
+
+            onUpdate(messageToSave);
+            onContinue(messageToSave);
           }}
           className="flex h-11 w-full items-center justify-center rounded-xl bg-[#2563EB] px-4 text-sm font-bold text-white transition hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-40"
         >
