@@ -661,6 +661,26 @@ async function publishInstagramJobInternal(jobId: string) {
     const message =
       error instanceof Error ? error.message : "Instagram publishing failed.";
 
+    if (message === "INSTAGRAM_CONCURRENCY_WAIT_TIMEOUT") {
+      // Concurrency pressure is transient. Keep the job/container reusable and
+      // let the queue's normal retry policy schedule the next attempt.
+      await prisma.instagramPublishJob.update({
+        where: { id: job.id },
+        data: {
+          status: job.instagramContainerId ? "PUBLISHING" : "PROCESSING",
+          errorMessage: null,
+        },
+      });
+
+      try {
+        await failPublishingExecution(idempotencyKey, error, idempotencyLeaseToken);
+      } catch (idempotencyError) {
+        console.error("Failed to reset publishing idempotency after concurrency wait:", idempotencyError);
+      }
+
+      throw error;
+    }
+
     await prisma.instagramPublishJob.update({
       where: { id: job.id },
       data: {
