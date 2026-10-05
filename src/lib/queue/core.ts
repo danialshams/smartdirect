@@ -446,6 +446,7 @@ local job = cjson.decode(rawJob)
 local claim = redis.call("GET", KEYS[2])
 if job.status ~= "active" then return nil end
 if not job.claimToken or claim ~= job.claimToken then return nil end
+local claimToken = job.claimToken
 job.status = "completed"
 job.workerId = nil
 job.claimToken = nil
@@ -456,7 +457,7 @@ redis.call("ZREM", KEYS[5], ARGV[1])
 redis.call("DEL", KEYS[2])
 if job.instagramAccountId then
   local accountLockKey = KEYS[6] .. ":" .. job.instagramAccountId
-  if redis.call("GET", accountLockKey) == job.claimToken then redis.call("DEL", accountLockKey) end
+  if redis.call("GET", accountLockKey) == claimToken then redis.call("DEL", accountLockKey) end
 end
 return cjson.encode(job)
 `;
