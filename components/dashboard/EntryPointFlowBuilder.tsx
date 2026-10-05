@@ -22,6 +22,13 @@ type EntryPointFlowBuilderProps = {
     ) => void;
     finalSaveLabel?: string;
     finalSaveLoadingLabel?: string;
+    triggerType?: "DM" | "COMMENT_KEYWORD" | "STORY_REPLY_KEYWORD";
+    keyword?: string;
+    onKeywordChange?: (value: string) => void;
+    isActive?: boolean;
+    onActiveChange?: (value: boolean) => void;
+    dirty?: boolean;
+    onDirtyChange?: (value: boolean) => void;
 };
 
 type ResourceResponse<T> = {
@@ -63,6 +70,13 @@ export default function EntryPointFlowBuilder({
     onAutomationReady,
     finalSaveLabel = "ساخت پیام شروع گفتگو",
     finalSaveLoadingLabel = "در حال ساخت پیام شروع گفتگو...",
+    triggerType = "DM",
+    keyword = "",
+    onKeywordChange,
+    isActive = true,
+    onActiveChange,
+    dirty = true,
+    onDirtyChange,
 }: EntryPointFlowBuilderProps) {
     const [messages, setMessages] =
         useState<MessageDraft[]>([]);
@@ -330,12 +344,11 @@ export default function EntryPointFlowBuilder({
                                 {
                                     instagramAccountId:
                                         accountId,
-                                    triggerType:
-                                        "DM",
+                                    triggerType,
                                     mediaId:
                                         null,
                                     keyword:
-                                        null,
+                                        triggerType === "DM" ? null : keyword.trim(),
                                     commentReplyText:
                                         null,
                                     replyText:
@@ -345,7 +358,8 @@ export default function EntryPointFlowBuilder({
                                     sendDm: true,
                                     likeIncomingDm:
                                         false,
-                                    isActive:
+                                    isActive,
+                                        sendDm:
                                         true,
                                 },
                             ),
@@ -387,12 +401,11 @@ export default function EntryPointFlowBuilder({
                                 {
                                     instagramAccountId:
                                         accountId,
-                                    triggerType:
-                                        "DM",
+                                    triggerType,
                                     mediaId:
                                         null,
                                     keyword:
-                                        null,
+                                        triggerType === "DM" ? null : keyword.trim(),
                                     commentReplyText:
                                         null,
                                     replyText:
@@ -402,7 +415,8 @@ export default function EntryPointFlowBuilder({
                                     sendDm: true,
                                     likeIncomingDm:
                                         false,
-                                    isActive:
+                                    isActive,
+                                        sendDm:
                                         true,
                                 },
                             ),
@@ -711,6 +725,7 @@ export default function EntryPointFlowBuilder({
                         .messages,
                 ),
             );
+            onDirtyChange?.(false);
 
             setLoadedAutomationId(
                 finalResult.data.id,
@@ -765,6 +780,36 @@ export default function EntryPointFlowBuilder({
                 </div>
             ) : (
                 <>
+                    {triggerType !== "DM" && (
+                        <div className="space-y-2">
+                            <label className="block text-sm font-bold text-[#0F172A]">کلمات کلیدی</label>
+                            <input
+                                value={keyword}
+                                onChange={(event) => {
+                                    onKeywordChange?.(event.target.value);
+                                    onDirtyChange?.(true);
+                                }}
+                                placeholder="مثلاً قیمت، خرید، سفارش"
+                                className="w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 text-base text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white"
+                                style={{ fontSize: "16px", WebkitTextSizeAdjust: "100%" }}
+                            />
+                            <p className="text-[11px] text-[#64748B]">حداقل یک کلمه کلیدی الزامی است.</p>
+                        </div>
+                    )}
+                    {triggerType !== "DM" && (
+                        <label className="flex items-center gap-2 text-sm font-semibold text-[#334155]">
+                            <input
+                                type="checkbox"
+                                checked={isActive}
+                                onChange={(event) => {
+                                    onActiveChange?.(event.target.checked);
+                                    onDirtyChange?.(true);
+                                }}
+                                className="h-4 w-4 accent-[#2563EB]"
+                            />
+                            فعال باشد
+                        </label>
+                    )}
                     {flowLoading ? (
                         <div className="flex min-h-32 items-center justify-center">
                             <Loader2 className="h-5 w-5 animate-spin text-[#2563EB]" />
@@ -781,8 +826,8 @@ export default function EntryPointFlowBuilder({
                         showFinalSave
                         finalSaveLabel={finalSaveLabel}
                         finalSaveLoadingLabel={finalSaveLoadingLabel}
-                        keywordValid
-                        disabled={saving}
+                        keywordValid={triggerType === "DM" || Boolean(keyword.trim())}
+                        disabled={saving || !dirty}
                         onUpdate={updateEntryMessage}
                         onSavedChange={setSuccess}
                         onContinue={(messageOverride) =>
