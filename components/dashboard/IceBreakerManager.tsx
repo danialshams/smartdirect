@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Input } from "@/components/dashboard/DashboardUI";
-import { ArrowLeft, CheckCircle2, MessageSquare, Pencil, Trash2 } from "lucide-react";
+import { CheckCircle2, MessageSquare, Pencil, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import EntryPointFlowBuilder from "./EntryPointFlowBuilder";
 
@@ -43,8 +43,6 @@ export default function IceBreakerManager({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
-
-  const isEditing = Boolean(editingId);
 
   async function readResult(response: Response) {
     const text = await response.text();
@@ -255,7 +253,7 @@ export default function IceBreakerManager({
             سؤال‌های شروع گفتگو
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-[#64748B]">
-            سؤال‌هایی را بساز که کاربر هنگام شروع گفتگو بتواند انتخاب کند و برای هر سؤال پاسخ اختصاصی تنظیم کن.
+            متنی بنویس که کاربر هنگام شروع گفتگو بتواند انتخابش کند و برای آن پاسخ اختصاصی تنظیم کن.
           </p>
         </div>
 
@@ -332,7 +330,7 @@ export default function IceBreakerManager({
             {success && (
               <div className="mx-auto flex w-full max-w-2xl items-center gap-2 rounded-xl border border-[#BBF7D0] bg-[#F0FDF4] px-3.5 py-3 text-xs font-medium text-[#15803D]">
                 <CheckCircle2 size={16} />
-                سؤال با موفقیت ذخیره شد.
+                پیام شروع گفتگو با موفقیت ذخیره شد.
               </div>
             )}
 
@@ -342,7 +340,7 @@ export default function IceBreakerManager({
                   ۳
                 </span>
                 <div className="min-w-0">
-                  <h2 className="text-sm font-bold text-[#0F172A]">سؤال‌های ساخته‌شده</h2>
+                  <h2 className="text-sm font-bold text-[#0F172A]">پیام‌های ساخته‌شده</h2>
                   <p className="mt-1.5 text-xs leading-5 text-[#64748B]">
                     سؤال‌هایی که قبلاً ساخته‌ای را از اینجا مشاهده، ویرایش یا حذف کن.
                   </p>
