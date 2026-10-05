@@ -172,31 +172,67 @@ export default function PublishingJobEditor() {
           setOriginalMinute(parts.minute);
         }
 
+        // Render the detail page immediately after the fast Job query.
+        // Published media enrichment and automation details load independently.
+        setLoading(false);
+
+        if (data.status === "PUBLISHED") {
+          void (async () => {
+            try {
+              const mediaResponse = await fetch(
+                `/api/instagram/publishing/${encodeURIComponent(id)}?includeMedia=true`,
+                { cache: "no-store", credentials: "include" },
+              );
+              const mediaResult = await mediaResponse.json();
+
+              if (
+                mediaResponse.ok &&
+                mediaResult.success &&
+                !cancelled
+              ) {
+                setJob(mediaResult.data as Job);
+              }
+            } catch (mediaError) {
+              console.warn("Failed to load published media:", mediaError);
+            }
+          })();
+        }
+
         const automationId =
           data.commentAutomationId ?? data.storyReplyAutomationId;
 
         if (automationId) {
           setAutomationLoading(true);
 
-          const automationResponse = await fetch(
-            `/api/automations/${encodeURIComponent(automationId)}`,
-            { cache: "no-store", credentials: "include" },
-          );
-          const automationResult = await automationResponse.json();
+          void (async () => {
+            try {
+              const automationResponse = await fetch(
+                `/api/automations/${encodeURIComponent(automationId)}`,
+                { cache: "no-store", credentials: "include" },
+              );
+              const automationResult = await automationResponse.json();
 
-          if (
-            automationResponse.ok &&
-            automationResult.success &&
-            !cancelled
-          ) {
-            const nextAutomation =
-              automationResult.data as AutomationMeta;
+              if (
+                automationResponse.ok &&
+                automationResult.success &&
+                !cancelled
+              ) {
+                const nextAutomation =
+                  automationResult.data as AutomationMeta;
 
-            setAutomation(nextAutomation);
-            setAutomationKeyword(nextAutomation.keyword ?? "");
-            setAutomationActive(nextAutomation.isActive);
-            setAutomationDirty(false);
-          }
+                setAutomation(nextAutomation);
+                setAutomationKeyword(nextAutomation.keyword ?? "");
+                setAutomationActive(nextAutomation.isActive);
+                setAutomationDirty(false);
+              }
+            } catch (automationError) {
+              console.warn("Failed to load automation:", automationError);
+            } finally {
+              if (!cancelled) {
+                setAutomationLoading(false);
+              }
+            }
+          })();
         }
       } catch (error) {
         if (!cancelled) {
