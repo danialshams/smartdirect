@@ -51,6 +51,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
   const [slideUploadProgress, setSlideUploadProgress] = useState<Record<string, number>>({});
   const [slideUploading, setSlideUploading] = useState<Record<string, boolean>>({});
   const unsavedDraftsRef = useRef<Partial<Record<ResponseType, Partial<MessageDraft>>>>({});
+  const unsavedSlidesRef = useRef<Partial<Record<ResponseType, ShowcaseSlide[]>>>({});
 
   const responseType = message.messageType as ResponseType;
 
@@ -60,7 +61,11 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
     if (value === responseType) return;
     setError("");
     unsavedDraftsRef.current[responseType] = { text: message.text, mediaUrl: message.mediaUrl, mediaId: message.mediaId, showcaseId: message.showcaseId, formId: message.formId, quickReplies: message.quickReplies };
+    unsavedSlidesRef.current[responseType] = slides;
     const draft = unsavedDraftsRef.current[value];
+    const targetSlides = unsavedSlidesRef.current[value];
+    if (targetSlides) setSlides(targetSlides);
+    else if (value === "SHOWCASE") setSlides([createSlide()]);
     onUpdate({
       messageType: value,
       text: draft?.text ?? "",
@@ -257,6 +262,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
         setFormSaving(false);
       }
       unsavedDraftsRef.current = {};
+      unsavedSlidesRef.current = {};
       onSavedChange?.(true);
       onContinue();
       return true;
