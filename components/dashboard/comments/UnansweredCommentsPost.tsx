@@ -3,8 +3,8 @@
 import { ArrowRight, Image as ImageIcon, Loader2, MessageCircle, Send, Video } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Box, Button, CircularProgress, Paper, Stack, Typography } from "@mui/material";
-import { Button as DashboardButton, Textarea as DashboardTextarea } from "@/components/dashboard/DashboardUI";
+import { Box, Button, CircularProgress, Paper, Stack, TextField, Typography } from "@mui/material";
+import { Button as DashboardButton } from "@/components/dashboard/DashboardUI";
 
 type Account = { id: string; igUsername: string; profilePictureUrl: string | null };
 type Media = { id: string; caption: string | null; mediaType: string | null; mediaProductType: string | null; mediaUrl: string | null; thumbnailUrl: string | null; permalink: string | null; timestamp: string | null };
@@ -116,21 +116,22 @@ export default function UnansweredCommentsPost({ account, mediaId }: { account: 
 
   return (
     <Box dir="rtl" sx={{ width: "100%", pb: { xs: 4, lg: 6 } }}>
+      <Box sx={{ display: "flex", justifyContent: "flex-start", mb: 1.25 }}>
+        <DashboardButton type="button" onClick={() => router.back()} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
+          <ArrowRight size={15} strokeWidth={2} />
+          بازگشت
+        </DashboardButton>
+      </Box>
+
       <Box component="section" sx={{ p: { xs: 2, sm: 2.5, lg: 3 }, border: `1px solid ${COLORS.border}`, borderRadius: { xs: 2.5, lg: 3 }, bgcolor: COLORS.surface, boxShadow: "0 1px 2px rgba(15,23,42,.03)" }}>
-        <Stack direction="row" spacing={1.5} alignItems="center" justifyContent="space-between">
-          <Stack direction="row" spacing={1} alignItems="center">
-            <Box sx={{ width: 38, height: 38, flexShrink: 0, display: "grid", placeItems: "center", borderRadius: 1.75, bgcolor: "#EFF6FF", color: COLORS.primary }}>
-              <MessageCircle size={19} strokeWidth={1.9} />
-            </Box>
-            <Box>
-              <Typography component="h1" sx={{ fontSize: { xs: 18, sm: 20 }, fontWeight: 800, color: COLORS.text }}>کامنت‌های بی‌پاسخ</Typography>
-              <Typography sx={{ mt: .25, fontSize: 11.5, color: COLORS.secondary }}>پاسخ به کامنت‌های این محتوا</Typography>
-            </Box>
-          </Stack>
-          <DashboardButton type="button" onClick={() => router.back()} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
-            <ArrowRight size={15} strokeWidth={2} />
-            بازگشت
-          </DashboardButton>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Box sx={{ width: 38, height: 38, flexShrink: 0, display: "grid", placeItems: "center", borderRadius: 1.75, bgcolor: "#EFF6FF", color: COLORS.primary }}>
+            <MessageCircle size={19} strokeWidth={1.9} />
+          </Box>
+          <Box>
+            <Typography component="h1" sx={{ fontSize: { xs: 18, sm: 20 }, fontWeight: 800, color: COLORS.text }}>کامنت‌های بی‌پاسخ</Typography>
+            <Typography sx={{ mt: .25, fontSize: 11.5, color: COLORS.secondary }}>پاسخ به کامنت‌های این محتوا</Typography>
+          </Box>
         </Stack>
       </Box>
 
@@ -187,16 +188,20 @@ export default function UnansweredCommentsPost({ account, mediaId }: { account: 
                   </Stack>
                   <Typography sx={{ mt: .65, fontSize: 12.5, lineHeight: 1.8, color: COLORS.text, whiteSpace: "pre-wrap" }}>{comment.text}</Typography>
                   <Stack direction="row" spacing={1} sx={{ mt: 1, p: .75, border: `1px solid ${COLORS.border}`, borderRadius: 1.75, bgcolor: "#F8FAFC" }}>
-                    <DashboardTextarea
+                    <TextField
+                      fullWidth
+                      size="small"
                       value={drafts[comment.id] ?? ""}
-                      onChange={(event) => setDrafts((current) => ({ ...current, [event.target.name]: event.target.value }))}
+                      onChange={(event) => setDrafts((current) => ({ ...current, [comment.id]: event.target.value }))}
                       onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); void reply(comment.id); } }}
-                      name={comment.id}
-                      maxLength={1000}
                       placeholder="پاسخ به کامنت..."
-                      className="!min-h-9 [&_textarea]:!text-[16px] sm:[&_textarea]:!text-[13px] [&_.MuiOutlinedInput-root]:!border-0 [&_.MuiOutlinedInput-root]:!bg-transparent [&_.MuiOutlinedInput-root]:!p-0 [&_.MuiOutlinedInput-root_fieldset]:!border-0"
+                      slotProps={{ htmlInput: { maxLength: 1000, inputMode: "text" } }}
+                      sx={{
+                        "& .MuiOutlinedInput-root": { border: 0, bgcolor: "transparent", minHeight: 36, "& fieldset": { border: 0 } },
+                        "& .MuiOutlinedInput-input": { fontSize: { xs: 16, sm: 11.5 }, py: .75, px: .5 },
+                      }}
                     />
-                    <Button type="button" onClick={() => void reply(comment.id)} disabled={replyingId === comment.id || !(drafts[comment.id] ?? "").trim()} sx={{ minWidth: { xs: 42, sm: 70 }, height: 36, alignSelf: "center", borderRadius: 1.5, bgcolor: COLORS.primary, color: "#FFF", fontSize: 10.5, fontWeight: 600, "&:hover": { bgcolor: COLORS.primaryDark } }}>
+                    <Button type="button" onClick={() => void reply(comment.id)} disabled={replyingId === comment.id || !(drafts[comment.id] ?? "").trim()} sx={{ minWidth: { xs: 42, sm: 70 }, height: 36, alignSelf: "center", borderRadius: 1.5, bgcolor: COLORS.primary, color: "#FFF", fontSize: 10.5, fontWeight: 600, "&:hover": { bgcolor: COLORS.primaryDark }, "&:disabled": { bgcolor: "#E2E8F0", color: "#94A3B8", cursor: "not-allowed" } }}>
                       {replyingId === comment.id ? <CircularProgress size={14} sx={{ color: "#FFF" }} /> : <><Send size={13} /><Box component="span" sx={{ mr: .5, display: { xs: "none", sm: "inline" } }}>ارسال</Box></>}
                     </Button>
                   </Stack>
