@@ -741,7 +741,7 @@ export default function PublishingJobEditor() {
         )}
       </div>
     </div>
-      {showDeleteAutomationConfirm && automation && (
+      {showDeleteAutomationConfirm && automation && job && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/30 px-4 backdrop-blur-[2px]"
           role="presentation"
