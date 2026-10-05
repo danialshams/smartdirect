@@ -6,9 +6,33 @@ import { z } from "zod";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getStorageProvider } from "@/lib/storage/provider";
+import { proxyInstagramMediaUrl } from "@/lib/instagram/media-proxy";
+import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 import { scheduleInstagramPublish } from "@/lib/instagram/scheduled-publishing-workflow";
 
 export const dynamic = "force-dynamic";
+const INSTAGRAM_API_VERSION = "v26.0";
+
+async function enrichPublishedMedia(job: { instagramMediaId: string | null; instagramAccountId: string; media: Array<Record<string, unknown>> }) {
+  if (!job.instagramMediaId) return job.media;
+  try {
+    const token = await getValidInstagramAccessToken(job.instagramAccountId);
+    const url = new URL(`https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${job.instagramMediaId}`);
+    url.searchParams.set("fields", "id,media_type,media_url,thumbnail_url,permalink,timestamp");
+    url.searchParams.set("access_token", token);
+    const response = await fetch(url.toString(), { cache: "no-store" });
+    const result = await response.json();
+    if (!response.ok) return job.media;
+    const mediaUrl = typeof result.media_url === "string" ? proxyInstagramMediaUrl(result.media_url, job.instagramAccountId) : null;
+    const thumbnailUrl = typeof result.thumbnail_url === "string" ? proxyInstagramMediaUrl(result.thumbnail_url, job.instagramAccountId) : mediaUrl;
+    if (!mediaUrl && !thumbnailUrl) return job.media;
+    return [{ ...(job.media[0] ?? {}), publicUrl: mediaUrl ?? thumbnailUrl }];
+  } catch (error) {
+    console.warn("Failed to enrich publishing job media:", error);
+    return job.media;
+  }
+}
+
 
 type Context = {
   params: Promise<{
@@ -63,9 +87,11 @@ export async function GET(_request: NextRequest, context: Context) {
       );
     }
 
+    const data = job.status === "PUBLISHED" ? { ...job, media: await enrichPublishedMedia(job) } : job;
+
     return NextResponse.json({
       success: true,
-      data: job,
+      data,
     });
   } catch (error) {
     console.error("GET /api/instagram/publishing/[id] error:", error);
