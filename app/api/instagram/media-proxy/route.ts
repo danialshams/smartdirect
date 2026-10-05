@@ -23,6 +23,48 @@ function isAllowedInstagramHost(hostname: string) {
   );
 }
 
+async function fetchInstagramMessageMediaUrl(
+  accountId: string,
+  messageId: string,
+) {
+  const account = await prisma.instagramAccount.findFirst({
+    where: { id: accountId, isConnected: true },
+    select: { id: true, userId: true },
+  });
+  if (!account) return null;
+
+  const accessToken = await getValidInstagramAccessToken(account.id);
+  const response = await fetch(
+    `${GRAPH_BASE}/${encodeURIComponent(messageId)}?fields=attachments`,
+    {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      cache: "no-store",
+    },
+  );
+  const data = (await response.json().catch(() => ({}))) as {
+    attachments?: { data?: Array<{
+      file_url?: string;
+      url?: string;
+      image_data?: { url?: string; medial_url?: string };
+      video_data?: { url?: string };
+      audio_data?: { url?: string };
+      payload?: { url?: string };
+    }> };
+  };
+  if (!response.ok) return null;
+  const attachment = data.attachments?.data?.[0];
+  return (
+    attachment?.file_url ??
+    attachment?.url ??
+    attachment?.payload?.url ??
+    attachment?.image_data?.url ??
+    attachment?.image_data?.medial_url ??
+    attachment?.video_data?.url ??
+    attachment?.audio_data?.url ??
+    null
+  );
+}
+
 async function fetchInstagramImageUrl(
   accountId: string,
   participantId: string | null,
@@ -103,6 +145,7 @@ export async function GET(request: NextRequest) {
 
     const accountId = request.nextUrl.searchParams.get("accountId");
     const participantId = request.nextUrl.searchParams.get("participantId");
+    const messageId = request.nextUrl.searchParams.get("messageId");
     const rawUrl = request.nextUrl.searchParams.get("url");
 
     console.info("[MEDIA_PROXY_DEBUG] request-start", {
@@ -216,6 +259,48 @@ export async function GET(request: NextRequest) {
 
       if (!response.ok || !response.body) {
         const responseBody = await response.text().catch(() => "");
+
+        if (
+          accountId &&
+          messageId &&
+          [401, 403, 404, 410].includes(response.status)
+        ) {
+          const freshUrl = await fetchInstagramMessageMediaUrl(accountId, messageId);
+          if (freshUrl && freshUrl !== targetUrl.toString()) {
+            const freshTarget = new URL(freshUrl);
+            if (
+              freshTarget.protocol === "https:" &&
+              isAllowedInstagramHost(freshTarget.hostname)
+            ) {
+              const retryHeaders = { ...upstreamHeaders };
+              const retryResponse = await fetch(freshTarget.toString(), {
+                method: "GET",
+                cache: "no-store",
+                signal: controller.signal,
+                headers: retryHeaders,
+              });
+
+              if (retryResponse.ok && retryResponse.body) {
+                const retryHeadersOut = new Headers();
+                const retryContentType = retryResponse.headers.get("content-type");
+                const retryContentLength = retryResponse.headers.get("content-length");
+                const retryContentRange = retryResponse.headers.get("content-range");
+                const retryAcceptRanges = retryResponse.headers.get("accept-ranges");
+                if (retryContentType) retryHeadersOut.set("content-type", retryContentType);
+                if (retryContentLength) retryHeadersOut.set("content-length", retryContentLength);
+                if (retryContentRange) retryHeadersOut.set("content-range", retryContentRange);
+                if (retryAcceptRanges) retryHeadersOut.set("accept-ranges", retryAcceptRanges);
+                retryHeadersOut.set("accept-ranges", "bytes");
+                retryHeadersOut.set("cache-control", "private, max-age=300, stale-while-revalidate=60");
+                retryHeadersOut.set("x-content-type-options", "nosniff");
+                return new NextResponse(retryResponse.body, {
+                  status: retryResponse.status === 206 ? 206 : 200,
+                  headers: retryHeadersOut,
+                });
+              }
+            }
+          }
+        }
 
         console.error("Instagram media proxy upstream failed:", {
           status: response.status,
