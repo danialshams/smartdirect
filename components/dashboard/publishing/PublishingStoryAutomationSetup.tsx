@@ -360,7 +360,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
             <label className={["flex min-h-36 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed bg-[#F8FAFC] px-4 text-center transition", uploading ? "pointer-events-none opacity-60" : "hover:border-[#93C5FD] hover:bg-[#EFF6FF]"].join(" ")}>
               {uploading ? (
                 <div className="flex w-full flex-col items-center justify-center px-6">
-                  <div className="mb-2 text-[10px] font-semibold text-[#2563EB]">{${progress}}٪</div>
+                  <div className="mb-2 text-[10px] font-semibold text-[#2563EB]">{progress}٪</div>
                   <div className="h-2 w-full max-w-xs overflow-hidden rounded-full bg-[#E2E8F0]"><div className="h-full rounded-full bg-[#2563EB] transition-[width] duration-200" style={{ width: `${progress}%` }} /></div>
                 </div>
               ) : (
