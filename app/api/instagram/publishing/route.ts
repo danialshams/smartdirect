@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { start } from "workflow/api";
 import { z } from "zod";
@@ -37,16 +37,79 @@ async function enrichPublishedMedia(job: { instagramMediaId: string | null; inst
     const url = new URL(`https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${job.instagramMediaId}`);
     url.searchParams.set("fields", "id,media_type,media_url,thumbnail_url,permalink,timestamp");
     url.searchParams.set("access_token", token);
-    const response = await fetch(url.toString(), { cache: "no-store" });
-    const result = await response.json();
+    const response = await fetch(url.toString(), { cache: "no-store", signal: AbortSignal.timeout(3500) });
+    const result = await response.json().catch(() => null);
     if (!response.ok) return job.media;
-    const mediaUrl = typeof result.media_url === "string" ? proxyInstagramMediaUrl(result.media_url) : null;
-    const thumbnailUrl = typeof result.thumbnail_url === "string" ? proxyInstagramMediaUrl(result.thumbnail_url) : mediaUrl;
+    const mediaUrl = typeof result?.media_url === "string" ? proxyInstagramMediaUrl(result.media_url) : null;
+    const thumbnailUrl = typeof result?.thumbnail_url === "string" ? proxyInstagramMediaUrl(result.thumbnail_url) : mediaUrl;
     if (!mediaUrl && !thumbnailUrl) return job.media;
     return [{ ...(job.media[0] ?? {}), publicUrl: mediaUrl ?? thumbnailUrl, instagramMediaUrl: mediaUrl, thumbnailUrl }];
   } catch (error) {
     console.warn("Failed to enrich published media:", error);
     return job.media;
+  }
+}
+
+const remoteValidationCache = new Map<string, number>();
+const REMOTE_VALIDATION_TTL_MS = 60_000;
+
+async function isInstagramMediaAvailable(job: { id: string; instagramMediaId: string | null; instagramAccountId: string }) {
+  if (!job.instagramMediaId) return true;
+  const lastChecked = remoteValidationCache.get(job.id) ?? 0;
+  if (Date.now() - lastChecked < REMOTE_VALIDATION_TTL_MS) return true;
+
+  try {
+    const token = await getValidInstagramAccessToken(job.instagramAccountId);
+    const url = new URL(`https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${job.instagramMediaId}`);
+    url.searchParams.set("fields", "id");
+    url.searchParams.set("access_token", token);
+    const response = await fetch(url.toString(), {
+      cache: "no-store",
+      signal: AbortSignal.timeout(3500),
+    });
+    if (response.ok) {
+      remoteValidationCache.set(job.id, Date.now());
+      return true;
+    }
+
+    if ([400, 404, 410].includes(response.status)) {
+      return false;
+    }
+
+    return true;
+  } catch {
+    return true;
+  }
+}
+
+async function validatePublishedJobsInBackground(jobs: Array<{ id: string; type: string; publishedAt: Date | null; instagramMediaId: string | null; instagramAccountId: string }>) {
+  const now = Date.now();
+  const candidates = jobs.filter((job) => {
+    if (job.type === "STORY") {
+      return Boolean(job.publishedAt && now - job.publishedAt.getTime() <= 24 * 60 * 60 * 1000);
+    }
+    return Boolean(job.instagramMediaId);
+  });
+
+  const results = await Promise.allSettled(
+    candidates.map(async (job) => {
+      const available = await isInstagramMediaAvailable(job);
+      if (!available) {
+        await prisma.instagramPublishJob.updateMany({
+          where: { id: job.id, status: "PUBLISHED" },
+          data: {
+            status: "CANCELLED",
+            errorMessage: "محتوا در Instagram حذف شده است.",
+          },
+        });
+      }
+    }),
+  );
+
+  for (const result of results) {
+    if (result.status === "rejected") {
+      console.warn("Published media background validation failed:", result.reason);
+    }
   }
 }
 
@@ -62,7 +125,28 @@ export async function GET(request: NextRequest) {
       include: { media: { orderBy: { sortOrder: "asc" } }, instagramAccount: { select: { id: true, igUsername: true, igUserId: true } } },
       orderBy: { createdAt: "desc" }, take: 100,
     });
-    const data = await Promise.all(jobs.map(async (job) => ({ ...job, media: job.status === "PUBLISHED" ? await enrichPublishedMedia(job) : job.media })));
+    const now = Date.now();
+    const visibleJobs = jobs.filter((job) => {
+      if (job.status !== "PUBLISHED") return true;
+      if (job.type === "STORY") {
+        return Boolean(job.publishedAt && now - job.publishedAt.getTime() < 24 * 60 * 60 * 1000);
+      }
+      return true;
+    });
+
+    const data = visibleJobs;
+    after(() => validatePublishedJobsInBackground(
+      jobs
+        .filter((job) => job.status === "PUBLISHED")
+        .map((job) => ({
+          id: job.id,
+          type: job.type,
+          publishedAt: job.publishedAt,
+          instagramMediaId: job.instagramMediaId,
+          instagramAccountId: job.instagramAccountId,
+        })),
+    ));
+
     return NextResponse.json({ success: true, data });
   } catch (error) {
     console.error("GET /api/instagram/publishing error:", error);
