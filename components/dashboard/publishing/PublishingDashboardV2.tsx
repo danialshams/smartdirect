@@ -931,13 +931,26 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       if (!response.ok) { if (automationId) await fetch(`/api/automations/${automationId}`, { method: "DELETE" }).catch(() => undefined); throw new Error(result.message || "ساخت Publishing Job ناموفق بود."); }
       const job = result.data as Job;
       if (publishNow) {
+        setJobs((current) => [job, ...current.filter((item) => item.id !== job.id)]);
         setActivePublishJobId(job.id);
         setPublishResultVisible(true);
         setPublishResult(null);
+        knownJobIdsRef.current.add(job.id);
         const publishResponse = await fetch(`/api/instagram/publishing/${job.id}/publish`, { method: "POST" });
         const publishResult = await publishResponse.json();
-        if (!publishResponse.ok) throw new Error(publishResult.message || "انتشار ناموفق بود.");
-        knownJobIdsRef.current.add(job.id);
+        if (!publishResponse.ok) {
+          setPublishResult("FAILED");
+          toast.error(publishResult.message || `${typeLabels[type]} در اینستاگرام منتشر نشد.`, { icon: <CircleSlash2 size={18} className="text-[#DC2626]" /> });
+          window.setTimeout(() => {
+            setPublishResultVisible(false);
+            window.setTimeout(() => {
+              setActivePublishJobId(null);
+              setPublishResult(null);
+              handleBackToTypeSelection();
+            }, 350);
+          }, 500);
+          throw new Error(publishResult.message || "انتشار ناموفق بود.");
+        }
       } else {
         knownJobIdsRef.current.add(job.id);
         setJobs((current) => [job, ...current.filter((item) => item.id !== job.id)]);
@@ -1180,6 +1193,15 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                     const activeJob = jobs.find((item) => item.id === activePublishJobId);
                     return (
                       <div className="flex items-center gap-3">
+                        {activeJob?.media?.[0]?.publicUrl ? (
+                          <div className="h-14 w-11 shrink-0 overflow-hidden rounded-lg border border-[#E2E8F0] bg-[#F1F5F9]">
+                            {activeJob.media[0].type === "IMAGE" ? (
+                              <img src={activeJob.media[0].publicUrl} alt={typeLabels[activeJob.type]} className="h-full w-full object-cover" />
+                            ) : (
+                              <video src={activeJob.media[0].publicUrl} muted playsInline className="h-full w-full object-cover" />
+                            )}
+                          </div>
+                        ) : null}
                         <span className={["flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", publishResult === "PUBLISHED" ? "bg-[#F0FDF4] text-[#16A34A]" : publishResult === "FAILED" ? "bg-[#FEF2F2] text-[#DC2626]" : "bg-[#EFF6FF] text-[#2563EB]"].join(" ")}>
                           {publishResult === "PUBLISHED" ? <CheckCircle2 size={20}/> : publishResult === "FAILED" ? <CircleSlash2 size={20}/> : <Loader2 size={20} className="animate-spin"/>}
                         </span>
