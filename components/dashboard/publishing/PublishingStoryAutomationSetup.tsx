@@ -22,6 +22,8 @@ type Props = {
   hideVideo?: boolean;
   hideForm?: boolean;
   showFinalSave?: boolean;
+  finalSaveLabel?: string;
+  finalSaveLoadingLabel?: string;
 };
 
 type ResponseType = "TEXT" | "AUDIO" | "SHOWCASE" | "IMAGE" | "VIDEO" | "FORM";
@@ -533,10 +535,10 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
           {finalSaving ? (
             <span className="inline-flex items-center gap-2">
               <Loader2 size={17} className="animate-spin" />
-              در حال ساخت پیام شروع گفتگو...
+              {finalSaveLoadingLabel}
             </span>
           ) : (
-            "ساخت پیام شروع گفتگو"
+            finalSaveLabel
           )}
         </button>
       )}
