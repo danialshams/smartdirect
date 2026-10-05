@@ -254,6 +254,11 @@ async function main() {
     );
     jobs.push(oldLow.id);
 
+    // Make the age difference deterministic. The queue intentionally gives
+    // older waiting work precedence over a newer priority burst, but multiple
+    // enqueue calls can legitimately share the same millisecond timestamp.
+    await sleep(5);
+
     const burst = [];
     for (let i = 0; i < 8; i++) {
       burst.push(
