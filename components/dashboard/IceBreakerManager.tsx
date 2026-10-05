@@ -115,7 +115,7 @@ export default function IceBreakerManager({
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  async function saveQuestion() {
+  async function saveQuestion(automationIdOverride?: string) {
     if (!account) return;
 
     const label = draft.trim();
@@ -127,7 +127,8 @@ export default function IceBreakerManager({
       setError("متن پیام شروع گفتگو نباید بیشتر از ۸۰ کاراکتر باشد.");
       return;
     }
-    if (!draftAutomationId) {
+    const resolvedAutomationId = automationIdOverride ?? draftAutomationId;
+    if (!resolvedAutomationId) {
       setError("ابتدا پاسخ پیام را تنظیم و ذخیره کنید.");
       return;
     }
@@ -135,10 +136,10 @@ export default function IceBreakerManager({
     const nextQuestions = editingId
       ? questions.map((question) =>
           question.id === editingId
-            ? { ...question, label, automationId: draftAutomationId }
+            ? { ...question, label, automationId: resolvedAutomationId }
             : question,
         )
-      : [...questions, { label, automationId: draftAutomationId }];
+      : [...questions, { label, automationId: resolvedAutomationId }];
 
     if (nextQuestions.length > 4) {
       setError("حداکثر ۴ پیام شروع گفتگو می‌توانید بسازید.");
@@ -317,7 +318,7 @@ export default function IceBreakerManager({
                 automationId={draftAutomationId}
                 onAutomationReady={(automationId) => {
                   setDraftAutomationId(automationId);
-                  setSuccess(false);
+                  void saveQuestion(automationId);
                 }}
               />
             </section>
