@@ -18,7 +18,6 @@ import {
   Search,
   Send,
   UserRound,
-  UserRoundCheck,
   Video,
   X,
   CircleHelp,
@@ -57,14 +56,6 @@ type Message = {
 type RetryPayload =
   | { kind: "TEXT"; text: string }
   | { kind: "FILE"; file: File };
-
-type Handoff = {
-  conversationId: string;
-  active: boolean;
-  assignedToUserId: string | null;
-  handedOffAt: string;
-  handedBackAt: string | null;
-};
 
 type MessagingWindow = {
   mode: "STANDARD" | "HUMAN_AGENT" | "CLOSED";
@@ -374,7 +365,6 @@ export default function InstagramInbox({
   const [loading, setLoading] = useState(false);
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [sending, setSending] = useState(false);
-  const [handoffLoading, setHandoffLoading] = useState(false);
   const [text, setText] = useState("");
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<InboxFilter>("ALL");
@@ -682,50 +672,6 @@ export default function InstagramInbox({
       void recordingAudioContextRef.current?.close().catch(() => undefined);
     };
   }, []);
-
-  async function setHumanMode(action: "transfer" | "resume") {
-    if (!accountId || !selectedId || handoffLoading) return;
-
-    try {
-      setHandoffLoading(true);
-      setError("");
-
-      const response = await fetch("/api/instagram/inbox/handoff", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          accountId,
-          conversationId: selectedId,
-          action,
-        }),
-      });
-
-      const result = await readApiResult(response);
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.error || "تغییر وضعیت گفتگو ناموفق بود");
-      }
-
-      setConversations((current) =>
-        current.map((item) =>
-          item.id === selectedId
-            ? { ...item, humanMode: Boolean(result.humanMode) }
-            : item,
-        ),
-      );
-
-      await loadMessages();
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "تغییر وضعیت گفتگو ناموفق بود",
-      );
-    } finally {
-      setHandoffLoading(false);
-    }
-  }
 
   async function sendFile(file: File) {
     if (!accountId || !selectedId || sending) return;
@@ -1274,7 +1220,7 @@ export default function InstagramInbox({
             <Button
               type="button"
               onClick={goBackToList}
-              className="flex h-9 w-9 items-center justify-center rounded-xl border bg-background p-0 text-muted-foreground hover:bg-muted lg:hidden"
+              className="flex h-9 w-9 items-center justify-center rounded-lg border-0 bg-transparent p-0 text-muted-foreground hover:bg-transparent hover:text-foreground lg:hidden"
               aria-label="بازگشت به گفتگوها"
             >
               <ArrowRight size={17} />
@@ -1316,51 +1262,7 @@ export default function InstagramInbox({
                 )}
               </div>
             </div>
-
-            <Button
-              type="button"
-              onClick={() =>
-                void setHumanMode(
-                  selectedConversation.humanMode ? "resume" : "transfer",
-                )
-              }
-              disabled={handoffLoading}
-              className={`hidden h-9 items-center gap-2 rounded-xl border px-3 text-[11px] font-medium sm:flex ${
-                selectedConversation.humanMode
-                  ? "border-border bg-background text-foreground hover:bg-muted"
-                  : "bg-muted/50 text-muted-foreground hover:bg-muted"
-              }`}
-            >
-              {selectedConversation.humanMode ? (
-                <UserRoundCheck size={14} />
-              ) : (
-                <UserRound size={14} />
-              )}
-              {selectedConversation.humanMode
-                ? "بازگشت به ربات"
-                : "انتقال به اپراتور"}
-            </Button>
-
-            <Button
-              type="button"
-              onClick={() =>
-                void setHumanMode(
-                  selectedConversation.humanMode ? "resume" : "transfer",
-                )
-              }
-              disabled={handoffLoading}
-              className="flex h-9 w-9 items-center justify-center rounded-xl border bg-background p-0 text-muted-foreground hover:bg-muted sm:hidden"
-              aria-label="تغییر حالت اپراتور"
-            >
-              <UserRoundCheck size={15} />
-            </Button>
           </header>
-
-          {selectedConversation.humanMode && (
-            <div className="shrink-0 border-b border-amber-100 bg-amber-50 px-4 py-2 text-[10px] leading-5 text-amber-800">
-              این گفتگو در حالت اپراتور است؛ پاسخ‌ها دستی ارسال می‌شوند.
-            </div>
-          )}
 
           <div
             ref={messagesScrollRef}
@@ -1570,7 +1472,7 @@ export default function InstagramInbox({
                   type="button"
                   onClick={stopRecording}
                   disabled={sending}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-foreground p-0 text-background hover:bg-foreground/90 disabled:opacity-50"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-0 bg-transparent p-0 text-primary hover:bg-transparent hover:text-primary/80 disabled:bg-transparent disabled:text-slate-300"
                   aria-label="ارسال Voice"
                 >
                   <Send size={16} />
@@ -1588,11 +1490,11 @@ export default function InstagramInbox({
                   }}
                 />
 
-                <div className="flex items-end gap-2">
+                <div className="flex items-end gap-1.5">
                   <Button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border bg-background p-0 text-muted-foreground hover:bg-muted"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border-0 bg-transparent p-0 text-slate-500 hover:bg-transparent hover:text-primary"
                     aria-label="ارسال عکس، ویدیو یا فایل صوتی"
                   >
                     <Paperclip size={18} />
@@ -1615,14 +1517,14 @@ export default function InstagramInbox({
                     rows={1}
                     maxLength={1000}
                     placeholder="پیام خود را بنویسید..."
-                    className="min-h-10 max-h-40 flex-1 resize-none overflow-y-auto rounded-xl border-border bg-muted/40 px-3 py-2 text-base leading-5 outline-none focus-visible:ring-1 focus-visible:ring-ring md:text-[13px]"
+                    className="min-h-10 max-h-40 flex-1 resize-none overflow-y-auto rounded-xl border-border bg-muted/40 px-3 py-2 text-base leading-5 outline-none focus-visible:ring-1 focus-visible:ring-ring"
                   />
 
                   <Button
                     type="button"
                     onClick={() => void startRecording()}
                     disabled={sending || !selectedConversation.messagingWindow?.canSend}
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border bg-background p-0 text-muted-foreground hover:bg-muted disabled:opacity-50"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border-0 bg-transparent p-0 text-slate-500 hover:bg-transparent hover:text-primary disabled:bg-transparent disabled:text-slate-300"
                     aria-label="ضبط Voice"
                   >
                     <Mic size={18} />
@@ -1635,7 +1537,7 @@ export default function InstagramInbox({
                     !selectedConversation.messagingWindow?.canSend ||
                     (!text.trim() && !selectedFile)
                   }
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary p-0 text-primary-foreground hover:bg-primary/90 disabled:opacity-40"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border-0 bg-transparent p-0 text-primary hover:bg-transparent hover:text-primary/80 disabled:bg-transparent disabled:text-slate-300"
                     aria-label="ارسال"
                   >
                     <Send size={17} />
