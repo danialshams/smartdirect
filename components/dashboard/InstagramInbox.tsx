@@ -474,8 +474,9 @@ export default function InstagramInbox({
           ? current
           : (savedIdIsValid ? savedId : next[0]?.id) || "";
 
-        if (nextId) {
+        if (nextId && nextId !== current) {
           initialScrollPendingRef.current = true;
+          shouldStickToBottomRef.current = true;
         }
 
         return nextId;
