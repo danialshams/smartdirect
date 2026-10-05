@@ -315,6 +315,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const knownJobIdsRef = useRef(new Set<string>());
   const previousJobsRef = useRef<Job[]>([]);
   const [activePublishJobId, setActivePublishJobId] = useState<string | null>(null);
+  const activePublishJobIdRef = useRef<string | null>(null);
   const [publishResultVisible, setPublishResultVisible] = useState(false);
   const [publishResult, setPublishResult] = useState<"PUBLISHED" | "FAILED" | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -425,7 +426,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
       if (job.status === "PUBLISHED") {
         toast.success(`${typeLabels[job.type]} با موفقیت در اینستاگرام منتشر شد.`, { icon: <CheckCircle2 size={18} className="text-[#16A34A]" /> });
-        if (activePublishJobId === job.id) {
+        if (activePublishJobIdRef.current === job.id) {
           setPublishResult("PUBLISHED");
           window.setTimeout(() => {
             setPublishResultVisible(false);
@@ -439,7 +440,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
         knownJobIdsRef.current.delete(job.id);
       } else if (job.status === "FAILED") {
         toast.error(job.errorMessage || `${typeLabels[job.type]} در اینستاگرام منتشر نشد.`, { icon: <CircleSlash2 size={18} className="text-[#DC2626]" /> });
-        if (activePublishJobId === job.id) {
+        if (activePublishJobIdRef.current === job.id) {
           setPublishResult("FAILED");
           window.setTimeout(() => {
             setPublishResultVisible(false);
@@ -527,10 +528,14 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   }, [stage6Date, stage6Hour, stage6Minute, todayJalali, officialTehranClock.hour]);
 
   useEffect(() => {
+    activePublishJobIdRef.current = activePublishJobId;
+  }, [activePublishJobId]);
+
+  useEffect(() => {
     void load();
     const interval = window.setInterval(() => void loadJobs(), 5000);
     return () => window.clearInterval(interval);
-  }, [activePublishJobId]);
+  }, []);
   useEffect(() => { if (selectedAccountId) void loadResources(selectedAccountId); }, [selectedAccountId]);
 
   function revokeLocalMedia(items: LocalMedia[]) { items.forEach((item) => URL.revokeObjectURL(item.previewUrl)); }
@@ -1128,20 +1133,9 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               ))}
             </div>
             {(() => {
-              if (loading) {
-                return (
-                  <section className="mt-6 rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-sm">
-                    <div className="flex min-h-24 items-center justify-center gap-2 text-sm font-medium text-[#64748B]">
-                      <Loader2 size={18} className="animate-spin text-[#2563EB]" />
-                      <span>در حال بارگذاری محتواهای منتشر شده...</span>
-                    </div>
-                  </section>
-                );
-              }
-
               const scheduledJobs = jobs.filter((job) => job.status === "SCHEDULED" && job.scheduledAt);
               const publishedJobs = jobs.filter((job) => job.status === "PUBLISHED");
-              if (!activePublishJobId && !scheduledJobs.length && !publishedJobs.length) return null;
+
               return (
                 <div className="mt-6 space-y-4">
                   {activePublishJobId && publishResultVisible && (
@@ -1171,6 +1165,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                       })()}
                     </section>
                   )}
+
                   {scheduledJobs.length > 0 && (
                     <section className="rounded-2xl border border-[#DBEAFE] bg-white p-4 shadow-sm sm:p-5">
                       <div className="mb-3 flex items-center gap-2">
@@ -1192,22 +1187,35 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                       </div>
                     </section>
                   )}
-                  {publishedJobs.length > 0 && (
-                    <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-5">
-                      <div className="mb-3">
-                        <h2 className="text-sm font-bold text-[#0F172A]">محتواهای منتشر شده</h2>
-                        <p className="mt-1 text-[11px] text-[#64748B]">فهرست محتوایی که با SmartDirect منتشر شده است.</p>
-                      </div>
-                      <div className="divide-y divide-[#E2E8F0] rounded-xl border border-[#E2E8F0]">
-                        {publishedJobs.map((job) => (
-                          <div key={job.id} className="flex items-center justify-between gap-3 px-3.5 py-3">
-                            <span className="text-sm font-bold text-[#0F172A]">{typeLabels[job.type]}</span>
-                            <span className="text-xs font-medium text-[#64748B]">{formatScheduledLabel(new Date(job.publishedAt ?? job.createdAt))}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </section>
-                  )}
+
+                  <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-5">
+                    <div className="mb-3">
+                      <h2 className="text-sm font-bold text-[#0F172A]">محتواهای منتشر شده</h2>
+                      <p className="mt-1 text-[11px] text-[#64748B]">فهرست محتوایی که با SmartDirect منتشر شده است.</p>
+                    </div>
+
+                    <div className="rounded-xl border border-[#E2E8F0]">
+                      {loading ? (
+                        <div className="flex min-h-24 items-center justify-center gap-2 text-sm font-medium text-[#64748B]">
+                          <Loader2 size={18} className="animate-spin text-[#2563EB]" />
+                          <span>در حال بارگذاری...</span>
+                        </div>
+                      ) : publishedJobs.length > 0 ? (
+                        <div className="divide-y divide-[#E2E8F0]">
+                          {publishedJobs.map((job) => (
+                            <div key={job.id} className="flex items-center justify-between gap-3 px-3.5 py-3">
+                              <span className="text-sm font-bold text-[#0F172A]">{typeLabels[job.type]}</span>
+                              <span className="text-xs font-medium text-[#64748B]">{formatScheduledLabel(new Date(job.publishedAt ?? job.createdAt))}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="flex min-h-20 items-center justify-center px-4 text-center text-xs font-medium text-[#94A3B8]">
+                          هنوز محتوای منتشرشده‌ای وجود ندارد.
+                        </div>
+                      )}
+                    </div>
+                  </section>
                 </div>
               );
             })()}
