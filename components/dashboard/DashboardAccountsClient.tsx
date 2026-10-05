@@ -80,10 +80,6 @@ export default function DashboardAccountsClient({
   }, []);
 
   if (loading) {
-    if (mode === "inbox" || mode === "comments" || mode === "stories") {
-      return null;
-    }
-
     return (
       <Box
         sx={{
