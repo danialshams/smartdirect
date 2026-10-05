@@ -342,22 +342,9 @@ export default function EntryPointFlowBuilder({
                                 "include",
                             body: JSON.stringify(
                                 {
-                                    instagramAccountId:
-                                        accountId,
                                     triggerType,
-                                    mediaId:
-                                        null,
                                     keyword:
                                         triggerType === "DM" ? null : keyword.trim(),
-                                    commentReplyText:
-                                        null,
-                                    replyText:
-                                        null,
-                                    likeComment:
-                                        false,
-                                    sendDm: true,
-                                    likeIncomingDm:
-                                        false,
                                     isActive,
                                 },
                             ),
