@@ -363,8 +363,8 @@ export default function IceBreakerManager({
               ) : (
                 <div className="space-y-2.5">
                   {questions.map((question, index) => (
+                    <div key={question.id ?? `question-${index}`}>
                     <div
-                      key={question.id ?? `question-${index}`}
                       className="flex flex-col gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5 transition hover:border-[#BFDBFE] hover:bg-[#F8FBFF] sm:flex-row sm:items-center"
                     >
                       <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -444,6 +444,7 @@ export default function IceBreakerManager({
                         </div>
                       </div>
                     )}
+                    </div>
                   ))}
                 </div>
               )}
