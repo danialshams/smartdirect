@@ -375,6 +375,11 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
     previousJobsRef.current = nextJobs;
     publishingJobsCache = nextJobs;
+    try {
+      sessionStorage.setItem("smartdirect:publishing-jobs", JSON.stringify(nextJobs));
+    } catch {
+      // Session storage is only a navigation-speed cache; ignore quota/privacy failures.
+    }
     setJobs(nextJobs);
   }
   async function loadResources(accountId: string) { if (!accountId) return; setLoadingResources(true); try { const [showcaseResponse, formResponse] = await Promise.all([fetch(`/api/showcases?instagramAccountId=${encodeURIComponent(accountId)}`, { cache: "no-store" }), fetch(`/api/forms?instagramAccountId=${encodeURIComponent(accountId)}`, { cache: "no-store" })]); const showcaseResult = await showcaseResponse.json(); const formResult = await formResponse.json(); setShowcases(
