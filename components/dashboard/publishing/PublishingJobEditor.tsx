@@ -427,7 +427,7 @@ export default function PublishingJobEditor() {
   }
 
   const automationId =
-    job.commentAutomationId ?? job.storyReplyAutomationId;
+    job?.commentAutomationId ?? job?.storyReplyAutomationId;
   const triggerType =
     job?.type === "STORY"
       ? "STORY_REPLY_KEYWORD"
@@ -656,7 +656,7 @@ export default function PublishingJobEditor() {
         </section>
         )}
 
-        {automationId ? (
+        {job && automationId ? (
           <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
             <div className="mb-5">
               <h2 className="text-sm font-bold text-[#0F172A]">
