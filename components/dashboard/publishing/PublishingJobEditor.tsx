@@ -108,6 +108,7 @@ export default function PublishingJobEditor() {
   const [automationLoading, setAutomationLoading] = useState(false);
   const [contentSaving, setContentSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showDeleteAutomationConfirm, setShowDeleteAutomationConfirm] = useState(false);
 
   const [caption, setCaption] = useState("");
   const [originalCaption, setOriginalCaption] = useState("");
@@ -328,14 +329,6 @@ export default function PublishingJobEditor() {
   async function deleteAutomation() {
     if (!automation) return;
 
-    if (
-      !window.confirm(
-        "آیا از حذف پاسخ خودکار این محتوا مطمئن هستید؟ پاسخ خودکار این محتوا دیگر اجرا نخواهد شد.",
-      )
-    ) {
-      return;
-    }
-
     setDeleting(true);
 
     try {
@@ -373,6 +366,7 @@ export default function PublishingJobEditor() {
       );
     } finally {
       setDeleting(false);
+      setShowDeleteAutomationConfirm(false);
     }
   }
 
@@ -710,7 +704,7 @@ export default function PublishingJobEditor() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => void deleteAutomation()}
+                  onClick={() => setShowDeleteAutomationConfirm(true)}
                   disabled={deleting || automationLoading}
                   className="mt-4 min-h-11 w-full rounded-xl border-[#FECACA] bg-[#FEF2F2] px-4 text-sm font-bold text-[#DC2626] hover:bg-[#FEE2E2]"
                 >
@@ -738,5 +732,51 @@ export default function PublishingJobEditor() {
         )}
       </div>
     </div>
+      {showDeleteAutomationConfirm && automation && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/30 px-4 backdrop-blur-[2px]"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.currentTarget === event.target && !deleting) {
+              setShowDeleteAutomationConfirm(false);
+            }
+          }}
+        >
+          <div
+            dir="rtl"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-automation-title"
+            className="w-full max-w-sm rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-2xl"
+          >
+            <h3 id="delete-automation-title" className="text-base font-bold text-[#0F172A]">
+              مطمئنی می‌خوای این مورد رو پاک کنی؟
+            </h3>
+            <p className="mt-2 text-sm leading-6 text-[#64748B]">
+              پاسخ خودکار «{labels[job.type]}» حذف می‌شود و دیگر برای این محتوا اجرا نخواهد شد.
+            </p>
+            <div className="mt-5 flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowDeleteAutomationConfirm(false)}
+                disabled={deleting}
+                className="h-10 flex-1 rounded-xl border-[#E2E8F0] bg-white text-xs font-semibold text-[#475569] hover:bg-[#F8FAFC]"
+              >
+                انصراف
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => void deleteAutomation()}
+                disabled={deleting}
+                className="h-10 flex-1 rounded-xl border-[#FECACA] bg-[#FEF2F2] text-xs font-semibold text-[#DC2626] hover:bg-[#FEE2E2]"
+              >
+                {deleting ? "در حال حذف..." : "بله، حذف شود"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
   );
 }
