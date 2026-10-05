@@ -373,13 +373,6 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
               <input type="file" accept={mediaAccept} disabled={uploading} className="hidden" onChange={(event) => { const file = event.target.files?.[0]; event.currentTarget.value = ""; void uploadMedia(file); }} />
             </label>
           )}
-              <div className="flex justify-center border-t border-[#DCFCE7] bg-[#F0FDF4] px-3 py-2.5">
-                <button type="button" onClick={() => onUpdate({ mediaUrl: "", mediaId: "" })} className="text-xs font-bold text-[#DC2626] transition hover:text-[#B91C1C]">
-                  حذف {responseType === "IMAGE" ? "عکس" : responseType === "VIDEO" ? "ویدیو" : "وویس"}
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       )}
 
