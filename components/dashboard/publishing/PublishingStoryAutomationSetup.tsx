@@ -21,6 +21,7 @@ type Props = {
   disabled?: boolean;
   hideVideo?: boolean;
   hideForm?: boolean;
+  showFinalSave?: boolean;
 };
 
 type ResponseType = "TEXT" | "AUDIO" | "SHOWCASE" | "IMAGE" | "VIDEO" | "FORM";
@@ -495,6 +496,31 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
           {formSaved && <div className="space-y-2"><p className="rounded-xl border border-[#BBF7D0] bg-[#F0FDF4] px-3.5 py-3 text-xs font-semibold text-[#166534]">فرم ذخیره شده است.</p><button type="button" onClick={() => { setFormSaved(false); onUpdate({ text: "", quickReplies: [] }); }} className="text-xs font-bold text-[#DC2626] transition hover:text-[#B91C1C]">حذف فرم</button></div>}
         </div>
         </div>
+      )}
+
+      {showFinalSave && (
+        <button
+          type="button"
+          disabled={disabled || !keywordValid || uploading || savingShowcase || formSaving ||
+            (responseType === "TEXT" && !message.text.trim()) ||
+            (["IMAGE", "VIDEO", "AUDIO"].includes(responseType) && !message.mediaUrl.trim()) ||
+            (responseType === "SHOWCASE" && !hasValidSlide) ||
+            (responseType === "FORM" && !isValidStoryForm(message.text, message.quickReplies))}
+          onClick={async () => {
+            setError("");
+            if (responseType === "SHOWCASE" && !showcaseSaved) {
+              const ok = await saveShowcase();
+              if (!ok) return;
+            }
+            if (responseType === "TEXT") onUpdate({ text: message.text.trim() });
+            if (responseType === "FORM") onUpdate({ text: message.text.trim(), quickReplies: message.quickReplies });
+            onSavedChange?.(true);
+            onContinue();
+          }}
+          className="flex h-11 w-full items-center justify-center rounded-xl bg-[#2563EB] px-4 text-sm font-bold text-white transition hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {savingShowcase || formSaving ? "در حال ساخت و ذخیره..." : "ساخت و ذخیره پیام"}
+        </button>
       )}
 
       {error && <p className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-2.5 text-xs text-[#B91C1C]">{error}</p>}
