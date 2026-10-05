@@ -51,7 +51,7 @@ async function enrichPublishedMedia(job: { instagramMediaId: string | null; inst
 }
 
 const remoteValidationCache = new Map<string, number>();
-const REMOTE_VALIDATION_TTL_MS = 60_000;
+const REMOTE_VALIDATION_TTL_MS = 15_000;
 
 async function isInstagramMediaAvailable(job: { id: string; instagramMediaId: string | null; instagramAccountId: string }) {
   if (!job.instagramMediaId) return true;
