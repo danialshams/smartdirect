@@ -810,7 +810,8 @@ export default function EntryPointFlowBuilder({
                         finalSaveLabel={finalSaveLabel}
                         finalSaveLoadingLabel={finalSaveLoadingLabel}
                         keywordValid={triggerType === "DM" || Boolean(keyword.trim())}
-                        disabled={saving || !dirty}
+                        disabled={saving}
+                        finalSaveDisabled={!dirty}
                         onUpdate={updateEntryMessage}
                         onSavedChange={setSuccess}
                         onContinue={(messageOverride) =>
