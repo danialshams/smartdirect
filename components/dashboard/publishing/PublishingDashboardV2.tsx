@@ -8,7 +8,7 @@ import { Input } from "@/components/dashboard/DashboardUI"
 import { Select } from "@/components/dashboard/DashboardUI"
 
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, CalendarClock, Camera, Clapperboard, ImagePlus, Images, Loader2, Plus, Send, Video, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarClock, Camera, Clapperboard, ImagePlus, Images, Loader2, Pencil, Plus, Send, Trash2, Video, X } from "lucide-react";
 import { upload as uploadToBlob } from "@vercel/blob/client";
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { WheelPicker, type WheelPickerOption } from "@ncdai/react-wheel-picker";
@@ -289,6 +289,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const [automationChoiceConfirmed, setAutomationChoiceConfirmed] = useState(false);
   const [automationSetupConfirmed, setAutomationSetupConfirmed] = useState(false);
   const [storyResponseSaved, setStoryResponseSaved] = useState(false);
+  const [storyResponseEditing, setStoryResponseEditing] = useState(false);
+  const [storyResponseDirty, setStoryResponseDirty] = useState(false);
   const storyAutomationSetupRef = useRef<PublishingStoryAutomationSetupHandle>(null);
   const [automationKeywordDraft, setAutomationKeywordDraft] = useState("");
   const [automationKeywords, setAutomationKeywords] = useState<string[]>([]);
@@ -614,6 +616,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     if (automationSetupConfirmed) {
       animateStepChange(() => {
         setAutomationSetupConfirmed(false);
+        setStoryResponseEditing(false);
+        setStoryResponseDirty(false);
         setError("");
       });
       return;
@@ -659,6 +663,25 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     handleBackToTypeSelection();
   }
 
+  function handleEditStoryResponse() {
+    setStoryResponseEditing(true);
+    setStoryResponseDirty(false);
+    setError("");
+  }
+
+  async function handleDeleteStoryResponse() {
+    const deleted = await storyAutomationSetupRef.current?.deleteAndReset();
+    if (!deleted) return;
+    setKeywords("");
+    setAutomationKeywordDraft("");
+    setLikeStoryReply(false);
+    setRequireFollow(false);
+    setFollowGateText("برای دریافت پاسخ، ابتدا پیج را Follow کنید.");
+    setStoryResponseSaved(false);
+    setStoryResponseEditing(false);
+    setStoryResponseDirty(false);
+    setError("");
+  }
   function handleAutomationChoice(enabled: boolean) {
     if (publishing || uploading) return;
     animateStepChange(() => {
@@ -1180,6 +1203,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                 </div>
               </div>
 
+              <fieldset disabled={storyResponseSaved && !storyResponseEditing}>
               <div>
                 <label className="mb-2 block text-sm font-bold text-[#0F172A]">کلمات کلیدی Reply استوری</label>
                 <p className="mb-3 text-xs leading-5 text-[#64748B]">با وارد شدن این کلمات در Reply استوری، پاسخ خودکار فعال می‌شود.</p>
@@ -1188,18 +1212,17 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                     {keywords.split(",").map((keyword) => keyword.trim()).filter(Boolean).map((keyword) => (
                       <span key={keyword} className="inline-flex items-center gap-1.5 rounded-full bg-[#EFF6FF] px-3 py-1.5 text-xs font-semibold text-[#2563EB]">
                         <span>{keyword}</span>
-                        <button type="button" onClick={() => setKeywords(keywords.split(",").map(item => item.trim()).filter(item => item && item !== keyword).join(","))} aria-label={`حذف ${keyword}`} className="flex h-4 w-4 items-center justify-center rounded-full hover:bg-white"><X size={12}/></button>
+                        <button type="button" onClick={() => { setKeywords(keywords.split(",").map(item => item.trim()).filter(item => item && item !== keyword).join(",")); if (storyResponseEditing) setStoryResponseDirty(true); }} aria-label={`حذف ${keyword}`} className="flex h-4 w-4 items-center justify-center rounded-full hover:bg-white"><X size={12}/></button>
                       </span>
                     ))}
                   </div>
                 )}
                 <div className="flex items-center gap-2">
-                  <input id="publishing-story-keyword" value={automationKeywordDraft} onChange={event => setAutomationKeywordDraft(event.target.value)} onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); const value = automationKeywordDraft.trim(); const current = keywords.split(",").map(item => item.trim()).filter(Boolean); if (value && !current.includes(value)) setKeywords(current.concat(value).join(",")); setAutomationKeywordDraft(""); } }} placeholder="مثلاً قیمت، اطلاعات" inputMode="text" className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-3 !text-base leading-5 text-[#0F172A] outline-none placeholder:text-xs placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10" style={{fontSize:"16px",lineHeight:1.75,WebkitTextSizeAdjust:"100%"}}/>
+                  <input id="publishing-story-keyword" value={automationKeywordDraft} onChange={event => setAutomationKeywordDraft(event.target.value)} onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); const value = automationKeywordDraft.trim(); const current = keywords.split(",").map(item => item.trim()).filter(Boolean); if (value && !current.includes(value)) setKeywords(current.concat(value).join(",")); if (storyResponseEditing) setStoryResponseDirty(true); setAutomationKeywordDraft(""); } }} placeholder="مثلاً قیمت، اطلاعات" inputMode="text" className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-3 !text-base leading-5 text-[#0F172A] outline-none placeholder:text-xs placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10" style={{fontSize:"16px",lineHeight:1.75,WebkitTextSizeAdjust:"100%"}}/>
                   <Button type="button" onClick={() => { const value = automationKeywordDraft.trim(); const current = keywords.split(",").map(item => item.trim()).filter(Boolean); if (value && !current.includes(value)) setKeywords(current.concat(value).join(",")); setAutomationKeywordDraft(""); }} disabled={!automationKeywordDraft.trim() || keywords.split(",").map(item => item.trim()).filter(Boolean).includes(automationKeywordDraft.trim())} className="min-h-11 shrink-0 rounded-lg !bg-[#2563EB] px-3.5 text-xs font-semibold text-white hover:!bg-[#1D4ED8] disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8]">افزودن</Button>
                 </div>
               </div>
-
-
+              </fieldset>
 
               <PublishingStoryAutomationSetup
                 ref={storyAutomationSetupRef}
@@ -1208,14 +1231,25 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                 forms={forms}
                 loadingResources={loadingResources}
                 instagramAccountId={selectedAccountId}
-                onUpdate={(patch) => updateMessage(0, patch)}
+                disabled={storyResponseSaved && !storyResponseEditing}
+                onUpdate={(patch) => {
+                  updateMessage(0, patch);
+                  if (storyResponseEditing) setStoryResponseDirty(true);
+                }}
                 onSavedChange={setStoryResponseSaved}
                 keywordValid={Boolean(keywords.trim())}
-                onContinue={() => { setAutomationSetupConfirmed(true); setError(""); }}
+                onContinue={() => {
+                  setStoryResponseSaved(true);
+                  setStoryResponseEditing(false);
+                  setStoryResponseDirty(false);
+                  setAutomationSetupConfirmed(true);
+                  setError("");
+                }}
               />
 
 
 
+              <fieldset disabled={storyResponseSaved && !storyResponseEditing}>
               <section className="space-y-3">
                 {messages[0]?.messageType === "FORM" && (
                   <div className="rounded-xl border border-[#E2E8F0] bg-white p-3.5">
@@ -1283,36 +1317,40 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
                 <div className="rounded-xl border border-[#E2E8F0] bg-white p-3.5">
                   <label className="flex cursor-pointer items-start gap-3">
-                    <input type="checkbox" checked={likeStoryReply} onChange={event => setLikeStoryReply(event.target.checked)} className="mt-0.5 h-4 w-4 accent-[#2563EB]"/>
+                    <input type="checkbox" checked={likeStoryReply} onChange={event => { setLikeStoryReply(event.target.checked); if (storyResponseEditing) setStoryResponseDirty(true); }} className="mt-0.5 h-4 w-4 accent-[#2563EB]"/>
                     <span><span className="block text-sm font-bold text-[#0F172A]">لایک ریپلای <span className="font-medium text-[#2563EB]">(اختیاری)</span></span><span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، Reply استوری کاربر لایک می‌شود.</span></span>
                   </label>
                 </div>
 
                 <div className="rounded-xl border border-[#E2E8F0] bg-white p-3.5">
                   <label className="flex cursor-pointer items-start gap-3">
-                    <input type="checkbox" checked={requireFollow} onChange={event => setRequireFollow(event.target.checked)} className="mt-0.5 h-4 w-4 accent-[#2563EB]"/>
+                    <input type="checkbox" checked={requireFollow} onChange={event => { setRequireFollow(event.target.checked); if (storyResponseEditing) setStoryResponseDirty(true); }} className="mt-0.5 h-4 w-4 accent-[#2563EB]"/>
                     <span><span className="block text-sm font-bold text-[#0F172A]">اجبار به فالو <span className="font-medium text-[#2563EB]">(اختیاری)</span></span><span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، کاربر باید پیج را فالو کرده باشد تا پاسخ را دریافت کند.</span></span>
                   </label>
                   {requireFollow && <div className="mt-2.5">
                     <label htmlFor="publishing-follow-gate-text" className="mb-2 block text-sm font-bold text-[#0F172A]">متن درخواست فالو</label>
-                    <textarea id="publishing-follow-gate-text" value={followGateText} onChange={event => setFollowGateText(event.target.value)} rows={2} maxLength={500} inputMode="text" placeholder="مثلاً برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none placeholder:text-xs focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{fontSize:"16px",lineHeight:1.75,WebkitTextSizeAdjust:"100%"}}/>
+                    <textarea id="publishing-follow-gate-text" value={followGateText} onChange={event => { setFollowGateText(event.target.value); if (storyResponseEditing) setStoryResponseDirty(true); }} rows={2} maxLength={500} inputMode="text" placeholder="مثلاً برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none placeholder:text-xs focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{fontSize:"16px",lineHeight:1.75,WebkitTextSizeAdjust:"100%"}}/>
                   </div>}
                 </div>
               </section>
+              </fieldset>
 
 
 
+              {(!storyResponseSaved || storyResponseEditing) && (
+                <div className="border-t border-[#E2E8F0] pt-4">
+                  <Button type="button" onClick={() => { void storyAutomationSetupRef.current?.saveAndContinue(); }} disabled={!keywords.trim() || (storyResponseEditing && !storyResponseDirty)} className="w-full min-h-11 rounded-xl bg-[#2563EB] px-4 text-sm font-bold text-white hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-40">
+                    ذخیره {messages[0]?.messageType === "FORM" ? "فرم" : messages[0]?.messageType === "SHOWCASE" ? "ویترین" : messages[0]?.messageType === "TEXT" ? "متن" : messages[0]?.messageType === "IMAGE" ? "عکس" : messages[0]?.messageType === "VIDEO" ? "فیلم" : "وویس"} و ادامه
+                  </Button>
+                </div>
+              )}
 
-              <div className="border-t border-[#E2E8F0] pt-4">
-                <Button
-                  type="button"
-                  onClick={() => { void storyAutomationSetupRef.current?.saveAndContinue(); }}
-                  disabled={!keywords.trim()}
-                  className="w-full min-h-11 rounded-xl bg-[#2563EB] px-4 text-sm font-bold text-white hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  {`ذخیره ${messages[0]?.messageType === "FORM" ? "فرم" : messages[0]?.messageType === "SHOWCASE" ? "ویترین" : messages[0]?.messageType === "TEXT" ? "متن" : messages[0]?.messageType === "IMAGE" ? "عکس" : messages[0]?.messageType === "VIDEO" ? "فیلم" : "وویس"} و ادامه`}
-                </Button>
-              </div>
+              {storyResponseSaved && !storyResponseEditing && (
+                <div className="flex items-center justify-center gap-2 border-t border-[#E2E8F0] pt-4">
+                  <Button type="button" onClick={handleEditStoryResponse} className="min-h-10 flex-1 rounded-xl border border-[#BFDBFE] bg-[#EFF6FF] px-4 text-sm font-bold text-[#2563EB] hover:bg-[#DBEAFE]"><Pencil size={15} />ویرایش</Button>
+                  <Button type="button" onClick={() => void handleDeleteStoryResponse()} className="min-h-10 flex-1 rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-4 text-sm font-bold text-[#DC2626] hover:bg-[#FEE2E2]"><Trash2 size={15} />حذف</Button>
+                </div>
+              )}
 
               {error && <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-5 text-[#B91C1C]" role="alert">{error}</div>}
             </section>
