@@ -1243,6 +1243,114 @@ async function processMessagingEventLocked(
               messageType: existingOutbound.messageType,
             });
           }
+        } else if (messageId && recipientId) {
+          // Messages sent manually from the Instagram app can arrive as an
+          // outgoing echo even though SmartDirect did not send them. In that
+          // case there is no existing OUTBOUND row to match, so persist the
+          // echo instead of dropping it.
+          const participantId = String(recipientId);
+
+          let conversation = await prisma.conversation.findUnique({
+            where: {
+              instagramAccountId_participantId: {
+                instagramAccountId: instagramAccount.id,
+                participantId,
+              },
+            },
+          });
+
+          if (!conversation) {
+            conversation = await prisma.conversation.create({
+              data: {
+                userId: instagramAccount.userId,
+                instagramAccountId: instagramAccount.id,
+                igUserId: participantId,
+                participantId,
+                isActive: true,
+                lastMessageAt: new Date(),
+              },
+            });
+          } else {
+            await prisma.conversation.update({
+              where: { id: conversation.id },
+              data: {
+                lastMessageAt: new Date(),
+                isActive: true,
+              },
+            });
+          }
+
+          const echoAttachment = attachments[0];
+          const echoAttachmentType = String(
+            echoAttachment?.type ?? "",
+          ).toLowerCase();
+
+          let outboundMessageType:
+            | "TEXT"
+            | "IMAGE"
+            | "VIDEO"
+            | "AUDIO"
+            | "STICKER" = "TEXT";
+
+          let outboundMediaUrl: string | null =
+            echoAttachment?.file_url ??
+            echoAttachment?.url ??
+            echoAttachment?.payload?.url ??
+            echoAttachment?.image_data?.url ??
+            echoAttachment?.image_data?.medial_url ??
+            echoAttachment?.video_data?.url ??
+            echoAttachment?.audio_data?.url ??
+            null;
+
+          if (echoAttachmentType === "image") {
+            outboundMessageType = "IMAGE";
+          } else if (echoAttachmentType === "video") {
+            outboundMessageType = "VIDEO";
+          } else if (
+            echoAttachmentType === "audio" ||
+            echoAttachmentType === "voice"
+          ) {
+            outboundMessageType = "AUDIO";
+          } else if (echoAttachmentType === "sticker") {
+            outboundMessageType = "STICKER";
+          }
+
+          if (
+            !outboundMediaUrl &&
+            ["IMAGE", "VIDEO", "AUDIO"].includes(outboundMessageType)
+          ) {
+            outboundMediaUrl = await resolveInstagramMessageMediaUrl(
+              messageId,
+              instagramAccount,
+            );
+          }
+
+          const createdAt =
+            typeof messagingEvent?.timestamp === "number" &&
+            Number.isFinite(messagingEvent.timestamp)
+              ? new Date(messagingEvent.timestamp)
+              : new Date();
+
+          const savedEcho = await prisma.conversationMessage.create({
+            data: {
+              conversationId: conversation.id,
+              direction: "OUTBOUND",
+              messageType: outboundMessageType,
+              text: messageText,
+              mediaUrl: outboundMediaUrl,
+              mediaId: null,
+              igMessageId: messageId,
+              quickReplyId: null,
+              createdAt,
+            },
+          });
+
+          console.log("[INBOX_DEBUG] manual-instagram-message-saved", {
+            messageId,
+            conversationId: conversation.id,
+            messageType: outboundMessageType,
+            savedMessageId: savedEcho.id,
+          });
         }
       }
 
