@@ -10,6 +10,7 @@ import { Select } from "@/components/dashboard/DashboardUI"
 import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, CalendarClock, Camera, CheckCircle2, Clapperboard, CircleSlash2, Clock3, ImagePlus, Images, Loader2, Pencil, Plus, Send, Trash2, Video, X } from "lucide-react";
 import { upload as uploadToBlob } from "@vercel/blob/client";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { WheelPicker, type WheelPickerOption } from "@ncdai/react-wheel-picker";
 import "@ncdai/react-wheel-picker/style.css";
@@ -310,6 +311,7 @@ function MediaTile({ item, type, onRemove, ready=false, compact=false }: any) {
 }
 
 export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?: (type: PublishType) => void }) {
+  const router = useRouter();
   const [accounts, setAccounts] = useState<InstagramAccount[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
   const knownJobIdsRef = useRef(new Set<string>());
@@ -1180,8 +1182,11 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                       <div className="space-y-2">
                         {scheduledJobs.map((job) => (
                           <div key={job.id} className="flex items-center justify-between gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3">
-                            <span className="text-sm font-bold text-[#0F172A]">{typeLabels[job.type]}</span>
-                            <span className="text-xs font-semibold text-[#2563EB]">{formatScheduledLabel(new Date(job.scheduledAt!))}</span>
+                            <div className="min-w-0">
+                              <span className="text-sm font-bold text-[#0F172A]">{typeLabels[job.type]}</span>
+                              <span className="mr-2 text-xs font-semibold text-[#2563EB]">{formatScheduledLabel(new Date(job.scheduledAt!))}</span>
+                            </div>
+                            <Button type="button" onClick={() => router.push(`/dashboard/publishing/${job.id}`)} className="min-h-9 shrink-0 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-bold text-[#2563EB] hover:bg-[#DBEAFE]">ویرایش</Button>
                           </div>
                         ))}
                       </div>
@@ -1204,8 +1209,11 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                         <div className="divide-y divide-[#E2E8F0]">
                           {publishedJobs.map((job) => (
                             <div key={job.id} className="flex items-center justify-between gap-3 px-3.5 py-3">
-                              <span className="text-sm font-bold text-[#0F172A]">{typeLabels[job.type]}</span>
-                              <span className="text-xs font-medium text-[#64748B]">{formatScheduledLabel(new Date(job.publishedAt ?? job.createdAt))}</span>
+                              <div className="min-w-0">
+                                <span className="text-sm font-bold text-[#0F172A]">{typeLabels[job.type]}</span>
+                                <span className="mr-2 text-xs font-medium text-[#64748B]">{formatScheduledLabel(new Date(job.publishedAt ?? job.createdAt))}</span>
+                              </div>
+                              <Button type="button" onClick={() => router.push(`/dashboard/publishing/${job.id}`)} className="min-h-9 shrink-0 rounded-lg border border-[#E2E8F0] bg-white px-3 text-xs font-bold text-[#334155] hover:bg-[#F8FAFC]">ویرایش</Button>
                             </div>
                           ))}
                         </div>
