@@ -19,6 +19,7 @@ import {
   proxyInstagramMediaUrl,
   proxyInstagramParticipantProfileUrl,
 } from "@/lib/instagram/media-proxy";
+import { getInstagramMessagingWindow } from "@/lib/instagram/messaging-window";
 
 export const dynamic = "force-dynamic";
 
@@ -554,6 +555,23 @@ export async function GET(request: NextRequest) {
         messages: refreshedMessages,
       };
 
+      const lastInbound = await prisma.conversationMessage.findFirst({
+        where: {
+          conversationId: conversation.id,
+          direction: "INBOUND",
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        select: {
+          createdAt: true,
+        },
+      });
+
+      const messagingWindow = getInstagramMessagingWindow(
+        lastInbound?.createdAt ?? null,
+      );
+
       const handoff = await getHandoffState(conversation.id);
 
       return NextResponse.json({
@@ -567,6 +585,7 @@ export async function GET(request: NextRequest) {
           ...proxyConversationMedia(conversationWithFreshMedia),
           humanMode: handoff?.active ?? false,
           handoff,
+          messagingWindow,
         },
       });
     }
@@ -611,11 +630,13 @@ export async function GET(request: NextRequest) {
         },
       },
     });
+    const conversationIds = conversations.map((item) => item.id);
+
     const unread = await prisma.conversationMessage.groupBy({
       by: ["conversationId"],
       where: {
         conversationId: {
-          in: conversations.map((item) => item.id),
+          in: conversationIds,
         },
         direction: "INBOUND",
         readAt: null,
@@ -627,6 +648,29 @@ export async function GET(request: NextRequest) {
 
     const unreadMap = new Map(
       unread.map((item) => [item.conversationId, item._count._all]),
+    );
+
+    const lastInboundRows = conversationIds.length
+      ? await prisma.conversationMessage.findMany({
+          where: {
+            conversationId: {
+              in: conversationIds,
+            },
+            direction: "INBOUND",
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+          distinct: ["conversationId"],
+          select: {
+            conversationId: true,
+            createdAt: true,
+          },
+        })
+      : [];
+
+    const lastInboundMap = new Map(
+      lastInboundRows.map((item) => [item.conversationId, item.createdAt]),
     );
 
     const handoffMap = await getHandoffStates(
@@ -689,6 +733,9 @@ export async function GET(request: NextRequest) {
           unreadCount: unreadMap.get(item.id) || 0,
           humanMode: handoff?.active ?? false,
           handoff,
+          messagingWindow: getInstagramMessagingWindow(
+            lastInboundMap.get(item.id) ?? null,
+          ),
         };
       }),
     });
@@ -807,6 +854,30 @@ export async function POST(request: NextRequest) {
       return jsonError("گفتگو پیدا نشد.", 404);
     }
 
+    const lastInbound = await prisma.conversationMessage.findFirst({
+      where: {
+        conversationId: conversation.id,
+        direction: "INBOUND",
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      select: {
+        createdAt: true,
+      },
+    });
+
+    const messagingWindow = getInstagramMessagingWindow(
+      lastInbound?.createdAt ?? null,
+    );
+
+    if (action !== "mark_seen" && !messagingWindow.canSend) {
+      return jsonError(
+        "مهلت ارسال پیام به پایان رسیده است. کاربر باید دوباره پیام بدهد.",
+        403,
+      );
+    }
+
     console.info("[INBOX_SEND_DEBUG] conversation-resolved", {
       debugId,
       accountId: account.id,
@@ -888,6 +959,14 @@ export async function POST(request: NextRequest) {
       recipient: {
         id: conversation.participantId,
       },
+      ...(messagingWindow.mode === "HUMAN_AGENT"
+        ? {
+            messaging_type: "MESSAGE_TAG",
+            tag: "HUMAN_AGENT",
+          }
+        : {
+            messaging_type: "RESPONSE",
+          }),
     };
 
     if (file) {
