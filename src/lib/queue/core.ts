@@ -33,6 +33,7 @@ export function getQueueKeys(queueNamespace = DEFAULT_QUEUE_NAMESPACE) {
     active: `${prefix}:active`,
     failed: `${prefix}:failed`,
     cursor: `${prefix}:fair-cursor`,
+    accountLocks: `${prefix}:account-lock`,
   };
 }
 const DEFAULT_CLAIM_TTL_SECONDS = 30;
@@ -314,7 +315,8 @@ for pass = 1, 2 do
         else
           local account = job.instagramAccountId or ""
           local eligible = (pass == 2) or (not lastAccount) or account == "" or account ~= lastAccount
-          if eligible then
+          local accountLockKey = KEYS[4] .. ":" .. account
+          if eligible and (account == "" or not redis.call("GET", accountLockKey)) then
             fallback = {id, rawJob, account}
             break
           end
@@ -339,6 +341,10 @@ job.workerId = ARGV[3]
 job.claimToken = ARGV[4]
 
 redis.call("SET", claimKey, ARGV[4], "EX", ARGV[5])
+if account ~= "" then
+  local accountLockKey = KEYS[4] .. ":" .. account
+  redis.call("SET", accountLockKey, ARGV[4], "EX", ARGV[5])
+end
 redis.call("SET", ARGV[2] .. id, cjson.encode(job))
 redis.call("ZADD", KEYS[2], ARGV[5], id)
 redis.call("ZREM", KEYS[1], id)
@@ -356,7 +362,7 @@ export async function claimNextJob(
 
   const result = await redis.eval(
     CLAIM_NEXT_JOB_SCRIPT,
-    [keys.ready, keys.active, keys.cursor],
+    [keys.ready, keys.active, keys.cursor, keys.accountLocks],
     [
       CLAIM_PREFIX,
       JOB_PREFIX,
@@ -411,6 +417,10 @@ redis.call("ZREM", KEYS[2], ARGV[1])
 redis.call("ZREM", KEYS[3], ARGV[1])
 redis.call("ZREM", KEYS[4], ARGV[1])
 redis.call("DEL", KEYS[5])
+if job.instagramAccountId then
+  local accountLockKey = KEYS[6] .. ":" .. job.instagramAccountId
+  if redis.call("GET", accountLockKey) == job.claimToken then redis.call("DEL", accountLockKey) end
+end
 return "CANCELLED"
 `;
 
@@ -421,7 +431,7 @@ export async function cancelJob(jobId: string) {
   const keys = getQueueKeys(job.queueNamespace);
   const result = await redis.eval(
     CANCEL_JOB_SCRIPT,
-    [jobKey(jobId), keys.ready, keys.delayed, keys.active, claimKey(jobId)],
+    [jobKey(jobId), keys.ready, keys.delayed, keys.active, claimKey(jobId), keys.accountLocks],
     [jobId],
   );
   if (result === "CANCELLED") return await redis.get<QueueJob>(jobKey(jobId));
@@ -443,6 +453,10 @@ redis.call("ZREM", KEYS[3], ARGV[1])
 redis.call("ZREM", KEYS[4], ARGV[1])
 redis.call("ZREM", KEYS[5], ARGV[1])
 redis.call("DEL", KEYS[2])
+if job.instagramAccountId then
+  local accountLockKey = KEYS[6] .. ":" .. job.instagramAccountId
+  if redis.call("GET", accountLockKey) == job.claimToken then redis.call("DEL", accountLockKey) end
+end
 return cjson.encode(job)
 `;
 
@@ -453,7 +467,7 @@ export async function completeJob(jobId: string) {
   const keys = getQueueKeys(current.queueNamespace);
   const result = await redis.eval(
     COMPLETE_JOB_SCRIPT,
-    [jobKey(jobId), claimKey(jobId), keys.active, keys.ready, keys.delayed],
+    [jobKey(jobId), claimKey(jobId), keys.active, keys.ready, keys.delayed, keys.accountLocks],
     [jobId],
   );
 
@@ -490,6 +504,11 @@ export async function failJob(jobId: string, error: unknown, options: { force?: 
   job.claimToken = undefined;
 
   await redis.del(claimKey(jobId));
+  if (job.instagramAccountId) {
+    const accountLockKey = getQueueKeys(job.queueNamespace).accountLocks + ":" + job.instagramAccountId;
+    const lockOwner = await redis.get<string>(accountLockKey);
+    if (lockOwner === job.claimToken) await redis.del(accountLockKey);
+  }
   const keys = getQueueKeys(job.queueNamespace);
 
   await redis.zrem(keys.active, jobId);
@@ -658,17 +677,18 @@ end
 return 0
 `
 
-export async function refreshJobClaim(jobId: string, claimToken: string) {
+export async function refreshJobClaim(jobId: string, claimToken: string, instagramAccountId?: string, queueNamespace = DEFAULT_QUEUE_NAMESPACE) {
   const redis = createQueueRedis();
+  const keys = getQueueKeys(queueNamespace);
   const result = await redis.eval(
     REFRESH_CLAIM_SCRIPT,
-    [claimKey(jobId)],
+    [claimKey(jobId), ...(instagramAccountId ? [keys.accountLocks + ":" + instagramAccountId] : [])],
     [claimToken, String(getQueueClaimTtlSeconds())],
   );
   return Number(result) === 1;
 }
 
-export function startJobClaimHeartbeat(jobId: string, claimToken: string, maxDurationMs?: number) {
+export function startJobClaimHeartbeat(jobId: string, claimToken: string, maxDurationMs?: number, instagramAccountId?: string, queueNamespace = DEFAULT_QUEUE_NAMESPACE) {
   const intervalMs = Math.max(1_000, Math.floor((getQueueClaimTtlSeconds() * 1000) / 3));
   let stopped = false;
   let inFlight = false;
@@ -682,7 +702,7 @@ export function startJobClaimHeartbeat(jobId: string, claimToken: string, maxDur
     }
     if (stopped || inFlight) return;
     inFlight = true;
-    void refreshJobClaim(jobId, claimToken).catch(() => undefined).finally(() => {
+    void refreshJobClaim(jobId, claimToken, instagramAccountId, queueNamespace).catch(() => undefined).finally(() => {
       inFlight = false;
     });
   }, intervalMs);
