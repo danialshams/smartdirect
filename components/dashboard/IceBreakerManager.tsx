@@ -363,17 +363,15 @@ export default function IceBreakerManager({
                       key={question.id ?? `question-${index}`}
                       className="flex flex-col gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5 transition hover:border-[#BFDBFE] hover:bg-[#F8FBFF] sm:flex-row sm:items-center"
                     >
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#EFF6FF] text-[#2563EB]">
-                        <MessageSquare size={16} />
-                      </div>
-                      <div className="min-w-0 flex-1">
+                      <div className="flex min-w-0 flex-1 items-center gap-3">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#EFF6FF] text-[#2563EB]">
+                          <MessageSquare size={16} />
+                        </div>
+                        <div className="min-w-0 flex-1">
                         <p className="break-words whitespace-pre-wrap text-sm font-bold leading-6 text-[#0F172A]">
                           {question.label}
                         </p>
-                        <p className="mt-1 text-[10px] text-[#64748B]">
-                          پیام {index + 1} از {questions.length}
-                        </p>
-                      </div>
+                                              </div>
                       <div className="flex w-full shrink-0 items-center gap-2 border-t border-[#E2E8F0] pt-2 sm:w-auto sm:border-0 sm:pt-0">
                         <Button
                           type="button"
