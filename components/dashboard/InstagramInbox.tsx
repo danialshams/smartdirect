@@ -1548,8 +1548,7 @@ export default function InstagramInbox({
                   </Button>
                 </div>
 
-                <div className="mt-1.5 flex items-center justify-between px-1 text-[9px] text-muted-foreground">
-                  <span>+ برای عکس، ویدیو و فایل صوتی</span>
+                <div className="mt-1.5 flex items-center justify-end px-1 text-[9px] text-muted-foreground">
                   <span>{text.length.toLocaleString("fa-IR")} / ۱۰۰۰</span>
                 </div>
               </>
