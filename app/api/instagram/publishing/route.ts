@@ -53,8 +53,10 @@ async function validatePublishedJobsInBackground(jobs: Array<{ id: string; type:
     try {
       const token = await getValidInstagramAccessToken(accountId);
 
-      await Promise.allSettled(
-        accountJobs.map(async (job) => {
+      for (let offset = 0; offset < accountJobs.length; offset += 10) {
+        const batch = accountJobs.slice(offset, offset + 10);
+        await Promise.allSettled(
+          batch.map(async (job) => {
           const lastChecked = remoteValidationCache.get(job.id) ?? 0;
           if (Date.now() - lastChecked < REMOTE_VALIDATION_TTL_MS) return;
           if (!job.instagramMediaId) return;
@@ -107,9 +109,9 @@ async function validatePublishedJobsInBackground(jobs: Array<{ id: string; type:
             }
           } catch (error) {
             console.warn("Published media validation failed:", { jobId: job.id, error });
-          }
-        }),
-      );
+          }),
+        );
+      }
     } catch (error) {
       console.warn("Published media account validation failed:", { accountId, error });
     }
