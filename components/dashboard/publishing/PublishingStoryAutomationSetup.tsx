@@ -276,6 +276,8 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
           const result = await response.json().catch(() => null);
           if (!response.ok || result?.error) throw new Error(result?.error || result?.message || "حذف ویترین ناموفق بود.");
         }
+        unsavedDraftsRef.current = {};
+        unsavedSlidesRef.current = {};
         onUpdate({ messageType: "TEXT", text: "", mediaUrl: "", mediaId: "", showcaseId: "", formId: "", quickReplies: [] });
         setShowcaseSaved(false);
         setFormSaved(false);
@@ -350,23 +352,26 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
             <div className="space-y-2">
               <label className="relative flex min-h-36 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed bg-white text-center transition hover:border-[#93C5FD] hover:bg-[#EFF6FF]">
                 {responseType === "IMAGE" ? <img src={message.mediaUrl} alt="" className="h-56 w-full object-cover" /> : responseType === "VIDEO" ? <video src={message.mediaUrl} controls className="max-h-64 w-full bg-black object-contain" /> : <div className="w-full px-3 py-4"><audio src={message.mediaUrl} controls className="w-full" /></div>}
-                <input type="file" accept={mediaAccept} disabled={uploading} className="hidden" onChange={(event) => { const file = event.target.files?.[0]; event.currentTarget.value = ""; void uploadMedia(file); }} />
+                <input type="file" accept={mediaAccept} className="hidden" onChange={(event) => { const file = event.target.files?.[0]; event.currentTarget.value = ""; void uploadMedia(file); }} />
               </label>
               <div className="flex justify-center"><button type="button" onClick={() => onUpdate({ mediaUrl: "", mediaId: "" })} className="text-xs font-bold text-[#DC2626] transition hover:text-[#B91C1C]">حذف {responseType === "IMAGE" ? "عکس" : responseType === "VIDEO" ? "ویدیو" : "وویس"}</button></div>
             </div>
           ) : (
             <label className={["flex min-h-36 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed bg-[#F8FAFC] px-4 text-center transition", uploading ? "pointer-events-none opacity-60" : "hover:border-[#93C5FD] hover:bg-[#EFF6FF]"].join(" ")}>
-              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB]">{responseType === "IMAGE" ? <ImagePlus size={21}/> : responseType === "VIDEO" ? <Video size={21}/> : <Mic size={21}/>}</span>
-              <span className="mt-3 text-xs font-bold text-[#0F172A]">{uploading ? "در حال آپلود..." : "انتخاب فایل"}</span>
-              <span className="mt-1 text-[10px] text-[#64748B]">فایل را از دستگاه انتخاب کن</span>
+              {uploading ? (
+                <div className="flex w-full flex-col items-center justify-center px-6">
+                  <div className="mb-2 text-[10px] font-semibold text-[#2563EB]">{${progress}}٪</div>
+                  <div className="h-2 w-full max-w-xs overflow-hidden rounded-full bg-[#E2E8F0]"><div className="h-full rounded-full bg-[#2563EB] transition-[width] duration-200" style={{ width: `${progress}%` }} /></div>
+                </div>
+              ) : (
+                <>
+                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB]">{responseType === "IMAGE" ? <ImagePlus size={21}/> : responseType === "VIDEO" ? <Video size={21}/> : <Mic size={21}/>}</span>
+                  <span className="mt-3 text-xs font-bold text-[#0F172A]">انتخاب فایل</span>
+                  <span className="mt-1 text-[10px] text-[#64748B]">فایل را از دستگاه انتخاب کن</span>
+                </>
+              )}
               <input type="file" accept={mediaAccept} disabled={uploading} className="hidden" onChange={(event) => { const file = event.target.files?.[0]; event.currentTarget.value = ""; void uploadMedia(file); }} />
             </label>
-          )}
-          {uploading && (
-            <div className="rounded-xl border border-[#DBEAFE] bg-[#F8FAFC] p-3">
-              <div className="mb-2 flex items-center justify-between text-[11px] font-semibold text-[#2563EB]"><span>پیشرفت آپلود</span><span>${progress}٪</span></div>
-              <div className="h-2 overflow-hidden rounded-full bg-[#E2E8F0]"><div className="h-full rounded-full bg-[#2563EB] transition-[width] duration-200" style={{ width: `${progress}%` }} /></div>
-            </div>
           )}
               <div className="flex justify-center border-t border-[#DCFCE7] bg-[#F0FDF4] px-3 py-2.5">
                 <button type="button" onClick={() => onUpdate({ mediaUrl: "", mediaId: "" })} className="text-xs font-bold text-[#DC2626] transition hover:text-[#B91C1C]">
