@@ -19,6 +19,7 @@ type Props = {
   keywordValid: boolean;
   onContinue: () => void;
   disabled?: boolean;
+  hideVideo?: boolean;
 };
 
 type ResponseType = "TEXT" | "AUDIO" | "SHOWCASE" | "IMAGE" | "VIDEO" | "FORM";
@@ -38,7 +39,7 @@ function createSlide(): ShowcaseSlide {
   return { id: `slide_${crypto.randomUUID()}`, title: "", description: "", imageUrl: "", previewUrl: "" };
 }
 
-const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetupHandle, Props>(function PublishingStoryAutomationSetup({ message, showcases, forms, loadingResources, instagramAccountId, onUpdate, onSavedChange, keywordValid, onContinue, disabled }: Props, ref) {
+const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetupHandle, Props>(function PublishingStoryAutomationSetup({ message, showcases, forms, loadingResources, instagramAccountId, onUpdate, onSavedChange, keywordValid, onContinue, disabled, hideVideo = false }: Props, ref) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
@@ -53,7 +54,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
   const unsavedDraftsRef = useRef<Partial<Record<ResponseType, Partial<MessageDraft>>>>({});
   const unsavedSlidesRef = useRef<Partial<Record<ResponseType, ShowcaseSlide[]>>>({});
 
-  const responseType = message.messageType as ResponseType;
+  const responseType = (hideVideo && message.messageType === "VIDEO" ? "TEXT" : message.messageType) as ResponseType;
 
   useEffect(() => { setShowcaseSaved(Boolean(message.showcaseId)); }, [message.showcaseId]);
 
@@ -304,7 +305,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
       </div>
 
       <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
-        {options.map(({ value, label, Icon }) => {
+        {options.filter(({ value }) => !(hideVideo && value === "VIDEO")).map(({ value, label, Icon }) => {
           const active = responseType === value;
           return (
             <button
@@ -476,6 +477,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
           showcases={showcases}
           forms={forms}
           loadingResources={loadingResources}
+          hideVideo={hideVideo}
           onUpdate={onUpdate}
           onUploadMedia={async (file) => {
             if (!file) return "";
@@ -500,20 +502,20 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
 
 export default PublishingStoryAutomationSetup;
 
-type StoryFormBuilderProps = { message: MessageDraft; showcases: Showcase[]; forms: FormItem[]; loadingResources: boolean; onUpdate: (patch: Partial<MessageDraft>) => void; onUploadMedia: (file?: File) => Promise<string>; };
+type StoryFormBuilderProps = { message: MessageDraft; showcases: Showcase[]; forms: FormItem[]; loadingResources: boolean; hideVideo?: boolean; onUpdate: (patch: Partial<MessageDraft>) => void; onUploadMedia: (file?: File) => Promise<string>; };
 const FORM_MAX_OPTIONS = 13;
 const FORM_MEDIA_TYPES = ["IMAGE", "VIDEO", "AUDIO"] as const;
 function isValidStoryForm(question: string, replies: QuickReplyDraft[]): boolean { const options = replies.filter((reply) => !reply.isExit); return Boolean(question.trim()) && options.length >= 2 && options.every((reply) => Boolean(reply.title.trim()) && Boolean(reply.destinationType) && (reply.destinationType !== "TEXT" || Boolean(reply.destinationText.trim())) && (reply.destinationType !== "SHOWCASE" || Boolean(reply.destinationShowcaseId)) && (!FORM_MEDIA_TYPES.includes(reply.destinationType as typeof FORM_MEDIA_TYPES[number]) || Boolean(reply.destinationMediaUrl)) && (reply.destinationType !== "FORM" || isValidStoryForm(reply.destinationQuestion, reply.destinationQuickReplies))); }
 
-function StoryFormBuilder({ message, showcases, forms, loadingResources, onUpdate, onUploadMedia }: StoryFormBuilderProps) {
+function StoryFormBuilder({ message, showcases, forms, loadingResources, hideVideo = false, onUpdate, onUploadMedia }: StoryFormBuilderProps) {
   return <FormBranchEditor title="فرم" question={message.text} replies={message.quickReplies} showcases={showcases} forms={forms} loadingResources={loadingResources}
     onChange={(patch) => { onUpdate({ ...(patch.question !== undefined ? { text: patch.question } : {}), ...(patch.replies !== undefined ? { quickReplies: patch.replies } : {}) }); }}
-    onUploadMedia={onUploadMedia} />;
+    onUploadMedia={onUploadMedia} hideVideo={hideVideo} />;
 }
 
-type BranchProps = { title: string; question: string; replies: QuickReplyDraft[]; showcases: Showcase[]; forms: FormItem[]; loadingResources: boolean; onChange: (patch: { question?: string; replies?: QuickReplyDraft[] }) => void; onUploadMedia: (file?: File) => Promise<string>; level?: number; };
+type BranchProps = { title: string; question: string; replies: QuickReplyDraft[]; showcases: Showcase[]; forms: FormItem[]; loadingResources: boolean; onChange: (patch: { question?: string; replies?: QuickReplyDraft[] }) => void; onUploadMedia: (file?: File) => Promise<string>; level?: number; hideVideo?: boolean; };
 
-function FormBranchEditor({ title, question, replies, showcases, forms, loadingResources, onChange, onUploadMedia, level = 0 }: BranchProps) {
+function FormBranchEditor({ title, question, replies, showcases, forms, loadingResources, onChange, onUploadMedia, level = 0, hideVideo = false }: BranchProps) {
   const optionReplies = replies.filter((reply) => !reply.isExit);
   const updateReply = (id: string, patch: Partial<QuickReplyDraft>) => onChange({ replies: replies.map((reply) => reply.id === id ? { ...reply, ...patch } : reply) });
   const removeReply = (id: string) => onChange({ replies: replies.filter((reply) => reply.id !== id) });
@@ -544,7 +546,7 @@ function FormBranchEditor({ title, question, replies, showcases, forms, loadingR
 
         <div className="mt-3 space-y-3">
           {optionReplies.map((reply, index) => (
-            <FormOptionEditor key={reply.id} reply={reply} index={index} showcases={showcases} forms={forms} loadingResources={loadingResources} onChange={(patch) => updateReply(reply.id, patch)} onRemove={() => removeReply(reply.id)} onUploadMedia={onUploadMedia} />
+            <FormOptionEditor key={reply.id} reply={reply} index={index} showcases={showcases} forms={forms} loadingResources={loadingResources} hideVideo={hideVideo} onChange={(patch) => updateReply(reply.id, patch)} onRemove={() => removeReply(reply.id)} onUploadMedia={onUploadMedia} />
           ))}
         </div>
 
@@ -555,7 +557,7 @@ function FormBranchEditor({ title, question, replies, showcases, forms, loadingR
     </div>
   );
 }
-function FormOptionEditor({ reply, index, showcases, forms, loadingResources, onChange, onRemove, onUploadMedia }: { reply: QuickReplyDraft; index: number; showcases: Showcase[]; forms: FormItem[]; loadingResources: boolean; onChange: (patch: Partial<QuickReplyDraft>) => void; onRemove: () => void; onUploadMedia: (file?: File) => Promise<string>; }) {
+function FormOptionEditor({ reply, index, showcases, forms, loadingResources, hideVideo = false, onChange, onRemove, onUploadMedia }: { reply: QuickReplyDraft; index: number; showcases: Showcase[]; forms: FormItem[]; loadingResources: boolean; onChange: (patch: Partial<QuickReplyDraft>) => void; onRemove: () => void; onUploadMedia: (file?: File) => Promise<string>; }) {
   const [uploading, setUploading] = useState(false);
   const destinationType = reply.destinationType;
   async function upload(type: typeof FORM_MEDIA_TYPES[number], file?: File) { if (!file) return; setUploading(true); try { const url = await onUploadMedia(file); onChange({destinationType:type,destinationMediaUrl:url,destinationMediaId:""}); } finally { setUploading(false); } }
@@ -563,10 +565,10 @@ function FormOptionEditor({ reply, index, showcases, forms, loadingResources, on
   return <div className="space-y-3 rounded-2xl border border-[#E2E8F0] bg-white p-3.5">
     <div className="relative flex items-center justify-center"><p className="text-center text-lg font-extrabold text-[#0F172A]">گزینه {index+1}</p><button type="button" onClick={onRemove} className="absolute left-0 text-[11px] font-bold text-[#DC2626]">حذف</button></div>
     <input value={reply.title} maxLength={20} onChange={(e)=>onChange({title:e.target.value})} placeholder="نام گزینه را وارد کن..." className="w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{fontSize:"16px",WebkitTextSizeAdjust:"100%"}} />
-    <div><label className="mb-2 block text-xs font-bold text-[#0F172A]">کاربر هدایت شود به:</label><Select value={destinationType ?? ""} onChange={(e)=>selectDestination((e.target.value||null) as QuickReplyDraft["destinationType"])} className="!w-full [&_.MuiSelect-select]:!py-3.5 [&_.MuiSelect-select]:!text-base [&_.MuiNativeSelect-icon]:!top-1/2 [&_.MuiNativeSelect-icon]:!-translate-y-1/2"><option value="">انتخاب مقصد</option><option value="TEXT">متن</option><option value="AUDIO">وویس</option><option value="IMAGE">عکس</option><option value="VIDEO">فیلم</option><option value="SHOWCASE">ویترین</option><option value="FORM">فرم جدید</option></Select></div>
+    <div><label className="mb-2 block text-xs font-bold text-[#0F172A]">کاربر هدایت شود به:</label><Select value={destinationType ?? ""} onChange={(e)=>selectDestination((e.target.value||null) as QuickReplyDraft["destinationType"])} className="!w-full [&_.MuiSelect-select]:!py-3.5 [&_.MuiSelect-select]:!text-base [&_.MuiNativeSelect-icon]:!top-1/2 [&_.MuiNativeSelect-icon]:!-translate-y-1/2"><option value="">انتخاب مقصد</option><option value="TEXT">متن</option><option value="AUDIO">وویس</option><option value="IMAGE">عکس</option>{!hideVideo && <option value="VIDEO">فیلم</option>}<option value="SHOWCASE">ویترین</option><option value="FORM">فرم جدید</option></Select></div>
     {destinationType==="TEXT" && <textarea value={reply.destinationText} onChange={(e)=>onChange({destinationText:e.target.value})} rows={4} maxLength={2000} placeholder="متن پاسخ این گزینه..." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{fontSize:"16px",lineHeight:1.75,WebkitTextSizeAdjust:"100%"}} />}
     {destinationType==="SHOWCASE" && <Select value={reply.destinationShowcaseId} disabled={loadingResources} onChange={(e)=>onChange({destinationShowcaseId:e.target.value})} className="w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 text-sm outline-none"><option value="">{loadingResources?"در حال دریافت ویترین‌ها...":"ویترین را انتخاب کن"}</option>{showcases.map((s)=><option key={s.id} value={s.id}>{s.title}</option>)}</Select>}
-    {destinationType==="FORM" && <FormBranchEditor title="فرم مقصد" question={reply.destinationQuestion} replies={reply.destinationQuickReplies} showcases={showcases} forms={forms} loadingResources={loadingResources} onChange={(patch)=>onChange({...(patch.question!==undefined?{destinationQuestion:patch.question}:{}),...(patch.replies!==undefined?{destinationQuickReplies:patch.replies}:{})})} onUploadMedia={onUploadMedia} level={1} />}
+    {destinationType==="FORM" && <FormBranchEditor title="فرم مقصد" question={reply.destinationQuestion} replies={reply.destinationQuickReplies} showcases={showcases} forms={forms} loadingResources={loadingResources} onChange={(patch)=>onChange({...(patch.question!==undefined?{destinationQuestion:patch.question}:{}),...(patch.replies!==undefined?{destinationQuickReplies:patch.replies}:{})})} onUploadMedia={onUploadMedia} level={1} hideVideo={hideVideo} />}
     {FORM_MEDIA_TYPES.includes(destinationType as typeof FORM_MEDIA_TYPES[number]) && (
       <>
         <label className={["flex min-h-24 cursor-pointer items-center justify-center rounded-xl border-2 border-dashed bg-[#F8FAFC] text-center",uploading?"pointer-events-none opacity-60":"hover:border-[#93C5FD] hover:bg-[#EFF6FF]"].join(" ")}>
