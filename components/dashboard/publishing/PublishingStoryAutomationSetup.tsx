@@ -6,7 +6,7 @@ import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "re
 import type { FormItem, MessageDraft, QuickReplyDraft, Showcase } from "../automation-form-utils";
 import { createEmptyQuickReply } from "../automation-form-utils";
 
-export type PublishingStoryAutomationSetupHandle = { saveAndContinue: () => Promise<boolean> };
+export type PublishingStoryAutomationSetupHandle = { saveAndContinue: () => Promise<boolean>; deleteAndReset: () => Promise<boolean> };
 
 type Props = {
   message: MessageDraft;
@@ -254,7 +254,27 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
       onContinue();
       return true;
     },
-  }), [keywordValid, uploading, savingShowcase, formSaving, responseType, message, showcaseSaved, onUpdate, onContinue]);
+    async deleteAndReset() {
+      if (savingShowcase || formSaving || uploading) return false;
+      setError("");
+      try {
+        if (message.showcaseId) {
+          const response = await fetch(`/api/showcases/${message.showcaseId}`, { method: "DELETE" });
+          const result = await response.json().catch(() => null);
+          if (!response.ok || result?.error) throw new Error(result?.error || result?.message || "حذف ویترین ناموفق بود.");
+        }
+        onUpdate({ messageType: "TEXT", text: "", mediaUrl: "", mediaId: "", showcaseId: "", formId: "", quickReplies: [] });
+        setShowcaseSaved(false);
+        setFormSaved(false);
+        setSlides([createSlide()]);
+        onSavedChange?.(false);
+        return true;
+      } catch (deleteError) {
+        setError(deleteError instanceof Error ? deleteError.message : "حذف پاسخ ناموفق بود.");
+        return false;
+      }
+    },
+  }), [keywordValid, uploading, savingShowcase, formSaving, responseType, message, showcaseSaved, onUpdate, onContinue, onSavedChange]);
 
   const mediaAccept =
     responseType === "IMAGE" ? "image/*" :
