@@ -1352,10 +1352,10 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               {storyResponseSaved && !storyResponseEditing && (
                 <div className="flex items-center justify-center gap-2 border-t border-[#E2E8F0] pt-4">
                   <Button type="button" onClick={handleEditStoryResponse} className="min-h-10 flex-1 rounded-xl border border-[#BFDBFE] bg-[#EFF6FF] px-4 text-sm font-bold text-[#2563EB] hover:bg-[#DBEAFE]">
-                    <span className="inline-flex items-center justify-center gap-1.5"><Pencil size={15} /><span>ویرایش</span></span>
+                    <span dir="ltr" className="inline-flex items-center justify-center gap-1.5"><Pencil size={15} /><span dir="rtl">ویرایش</span></span>
                   </Button>
-                  <Button type="button" onClick={() => void handleDeleteStoryResponse()} className="min-h-10 flex-1 rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-4 text-sm font-bold text-[#DC2626] hover:bg-[#FEE2E2]">
-                    <span className="inline-flex items-center justify-center gap-1.5"><Trash2 size={15} /><span>حذف</span></span>
+                  <Button type="button" variant="destructive" onClick={() => void handleDeleteStoryResponse()} className="min-h-10 flex-1 !rounded-xl !border !border-[#FECACA] !bg-[#FEF2F2] !px-4 !text-sm !font-bold !text-[#DC2626] hover:!bg-[#FEE2E2]">
+                    <span dir="ltr" className="inline-flex items-center justify-center gap-1.5"><Trash2 size={15} /><span dir="rtl">حذف</span></span>
                   </Button>
                 </div>
               )}
