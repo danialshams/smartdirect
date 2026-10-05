@@ -19,7 +19,7 @@ import {
     useState,
 } from "react";
 
-import AutomationFlowMessage from "./AutomationFlowMessage";
+import PublishingStoryAutomationSetup from "./publishing/PublishingStoryAutomationSetup";
 
 import type {
     FormItem,
@@ -1159,167 +1159,45 @@ export default function EntryPointFlowBuilder({
                                                     message.messageType,
                                                 );
 
-                                            return (
-                                                <div
-                                                    key={
-                                                        message.id
-                                                    }
-                                                    className="rounded-2xl border border-border bg-muted/50 p-3 sm:p-4"
-                                                >
-                                                    <div className="mb-3 flex items-center justify-between gap-3">
-                                                        <div className="flex min-w-0 items-center gap-2">
-                                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white border border-border">
-                                                                <Icon
-                                                                    size={
-                                                                        15
-                                                                    }
-                                                                    className="text-muted-foreground"
-                                                                />
-                                                            </div>
+                                            const currentMessage = messages[0] ?? createEmptyMessage();
 
-                                                            <div>
-                                                                <p className="text-xs font-semibold text-foreground">
-                                                                    پیام{" "}
-                                                                    {
-                                                                        index +
-                                                                        1
-                                                                    }
-                                                                </p>
+    function updateEntryMessage(patch: Partial<MessageDraft>) {
+        setMessages((current) => {
+            const base = current[0] ?? createEmptyMessage();
+            return [{ ...base, ...patch }];
+        });
+        setSuccess(false);
+    }
 
-                                                                <p className="text-[10px] text-muted-foreground">
-                                                                    {message.messageType}
-                                                                </p>
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="text-[10px] text-muted-foreground">
-                                                            {index +
-                                                                1}
-                                                            /
-                                                            {
-                                                                messages.length
-                                                            }
-                                                        </div>
-                                                    </div>
-
-                                                    <AutomationFlowMessage
-                                                        triggerType="DM"
-                                                        message={
-                                                            message
-                                                        }
-                                                        index={
-                                                            index
-                                                        }
-                                                        total={
-                                                            messages.length
-                                                        }
-                                                        showcases={
-                                                            showcases
-                                                        }
-                                                        forms={
-                                                            forms
-                                                        }
-                                                        loadingResources={
-                                                            loadingResources
-                                                        }
-                                                        onUpdate={(
-                                                            patch,
-                                                        ) =>
-                                                            updateMessage(
-                                                                message.id,
-                                                                patch,
-                                                            )
-                                                        }
-                                                        onAddQuickReply={() =>
-                                                            addQuickReply(
-                                                                message.id,
-                                                            )
-                                                        }
-                                                        onUpdateQuickReply={(
-                                                            quickReplyId,
-                                                            patch,
-                                                        ) =>
-                                                            updateQuickReply(
-                                                                message.id,
-                                                                quickReplyId,
-                                                                patch,
-                                                            )
-                                                        }
-                                                        onUpdateQuickReplyTree={(
-                                                            quickReplyId,
-                                                            updater,
-                                                        ) =>
-                                                            updateQuickReplyTree(
-                                                                message.id,
-                                                                quickReplyId,
-                                                                updater,
-                                                            )
-                                                        }
-                                                        onRemoveQuickReply={(
-                                                            quickReplyId,
-                                                        ) =>
-                                                            removeQuickReply(
-                                                                message.id,
-                                                                quickReplyId,
-                                                            )
-                                                        }
-                                                    />
-                                                </div>
-                                            );
-                                        },
-                                    )}
-                                </div>
-                            )}
-
-                            {/* Save */}
-                            <div className="mt-5 border-t border-border pt-5">
-                                <Button
-                                    type="button"
-                                    onClick={
-                                        saveAutomation
-                                    }
-                                    disabled={
-                                        saving ||
-                                        loadingAutomation
-                                    }
-                                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
-                                >
-                                    {saving ? (
-                                        <Loader2
-                                            size={
-                                                16
-                                            }
-                                            className="animate-spin"
-                                        />
-                                    ) : (
-                                        <Save
-                                            size={
-                                                16
-                                            }
-                                        />
-                                    )}
-
-                                    {automationId
-                                        ? "ذخیره تغییرات Flow"
-                                        : "ساخت و ذخیره پاسخ"}
-                                </Button>
-                            </div>
-
-                            {error && (
-                                <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs leading-6 text-red-700">
-                                    {error}
-                                </div>
-                            )}
-
-                            {success && (
-                                <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs leading-6 text-emerald-700">
-                                    Flow با موفقیت ذخیره
-                                    شد.
-                                </div>
-                            )}
-                        </>
-                    )}
+    return (
+        <div className="space-y-5">
+            {loadingAutomation ? (
+                <div className="flex min-h-32 items-center justify-center">
+                    <Loader2 size={20} className="animate-spin text-[#2563EB]" />
                 </div>
+            ) : (
+                <>
+                    <PublishingStoryAutomationSetup
+                        message={currentMessage}
+                        showcases={showcases}
+                        forms={forms}
+                        loadingResources={loadingResources}
+                        instagramAccountId={accountId}
+                        hideVideo
+                        keywordValid
+                        onUpdate={updateEntryMessage}
+                        onSavedChange={setSuccess}
+                        onContinue={() => {
+                            void saveAutomation();
+                        }}
+                    />
+
+                    {error && (
+                        <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-5 text-[#B91C1C]" role="alert">
+                            {error}
+                        </div>
+                    )}
+                </>
             )}
         </div>
     );
