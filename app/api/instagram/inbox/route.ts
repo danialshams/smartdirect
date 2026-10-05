@@ -83,7 +83,7 @@ function proxyConversationMedia<
     instagramAccountId: string;
     participantId: string;
     participantProfilePicture?: string | null;
-    messages?: Array<{ mediaUrl?: string | null }>;
+    messages?: Array<{ id: string; mediaUrl?: string | null }>;
   },
 >(conversation: T): T {
   return {
@@ -96,7 +96,11 @@ function proxyConversationMedia<
       : proxyInstagramMediaUrl(conversation.participantProfilePicture),
     messages: conversation.messages?.map((message) => ({
       ...message,
-      mediaUrl: proxyInstagramMediaUrl(message.mediaUrl, conversation.instagramAccountId),
+      mediaUrl: proxyInstagramMediaUrl(
+        message.mediaUrl,
+        conversation.instagramAccountId,
+        message.id,
+      ),
     })),
   };
 }
