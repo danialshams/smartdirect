@@ -353,9 +353,19 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
             </div>
           )}
           {message.mediaUrl && !uploading && (
-            <div className="flex items-center justify-between gap-3 rounded-xl border border-[#BBF7D0] bg-[#F0FDF4] px-3.5 py-3">
-              <span className="truncate text-[10px] text-[#166534]" dir="ltr">{message.mediaUrl}</span>
-              <span className="shrink-0 text-[11px] font-bold text-[#16A34A]">آماده ارسال</span>
+            <div className="overflow-hidden rounded-xl border border-[#BBF7D0] bg-white">
+              {responseType === "IMAGE" ? (
+                <img src={message.mediaUrl} alt="" className="h-52 w-full object-cover" />
+              ) : responseType === "VIDEO" ? (
+                <video src={message.mediaUrl} controls className="max-h-64 w-full bg-black object-contain" />
+              ) : (
+                <audio src={message.mediaUrl} controls className="w-full px-3 py-3" />
+              )}
+              <div className="flex justify-center border-t border-[#DCFCE7] bg-[#F0FDF4] px-3 py-2.5">
+                <button type="button" onClick={() => onUpdate({ mediaUrl: "", mediaId: "" })} className="text-xs font-bold text-[#DC2626] transition hover:text-[#B91C1C]">
+                  حذف {responseType === "IMAGE" ? "عکس" : responseType === "VIDEO" ? "ویدیو" : "وویس"}
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -392,6 +402,13 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                   )}
                   <input type="file" accept="image/*" disabled={slideUploading[slide.id] || savingShowcase || Boolean(message.showcaseId)} className="hidden" onChange={(event) => { const file = event.target.files?.[0]; event.currentTarget.value = ""; void uploadSlideImage(slide.id, file); }} />
                 </label>
+                {slide.previewUrl && !slideUploading[slide.id] && (
+                  <div className="flex justify-center">
+                    <button type="button" onClick={() => patchSlide(slide.id, { imageUrl: "", previewUrl: "" })} className="text-xs font-bold text-[#DC2626] transition hover:text-[#B91C1C]">
+                      حذف عکس
+                    </button>
+                  </div>
+                )}
                 <div>
                   <label className="mb-2 block text-sm font-bold text-[#0F172A]">تیتر اسلاید {index + 1}</label>
                   <input value={slide.title} onChange={(event) => patchSlide(slide.id, { title: event.target.value })} placeholder="تیتر اسلاید را وارد کن..." className="w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
@@ -545,7 +562,29 @@ function FormOptionEditor({ reply, index, showcases, forms, loadingResources, on
     {destinationType==="TEXT" && <textarea value={reply.destinationText} onChange={(e)=>onChange({destinationText:e.target.value})} rows={4} maxLength={2000} placeholder="متن پاسخ این گزینه..." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{fontSize:"16px",lineHeight:1.75,WebkitTextSizeAdjust:"100%"}} />}
     {destinationType==="SHOWCASE" && <Select value={reply.destinationShowcaseId} disabled={loadingResources} onChange={(e)=>onChange({destinationShowcaseId:e.target.value})} className="w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 text-sm outline-none"><option value="">{loadingResources?"در حال دریافت ویترین‌ها...":"ویترین را انتخاب کن"}</option>{showcases.map((s)=><option key={s.id} value={s.id}>{s.title}</option>)}</Select>}
     {destinationType==="FORM" && <FormBranchEditor title="فرم مقصد" question={reply.destinationQuestion} replies={reply.destinationQuickReplies} showcases={showcases} forms={forms} loadingResources={loadingResources} onChange={(patch)=>onChange({...(patch.question!==undefined?{destinationQuestion:patch.question}:{}),...(patch.replies!==undefined?{destinationQuickReplies:patch.replies}:{})})} onUploadMedia={onUploadMedia} level={1} />}
-    {FORM_MEDIA_TYPES.includes(destinationType as typeof FORM_MEDIA_TYPES[number]) && <label className={["flex min-h-24 cursor-pointer items-center justify-center rounded-xl border-2 border-dashed bg-[#F8FAFC] text-center",uploading?"pointer-events-none opacity-60":"hover:border-[#93C5FD] hover:bg-[#EFF6FF]"].join(" ")}><span className="text-xs font-bold text-[#2563EB]">{uploading?"در حال آپلود...":reply.destinationMediaUrl?"تعویض فایل":"انتخاب فایل"}</span><input type="file" accept={destinationType==="IMAGE"?"image/*":destinationType==="VIDEO"?"video/*":"audio/*"} disabled={uploading} className="hidden" onChange={(e)=>{const file=e.currentTarget.files?.[0];e.currentTarget.value="";void upload(destinationType as typeof FORM_MEDIA_TYPES[number],file)}} /></label>}
-    {reply.destinationMediaUrl && <p className="truncate rounded-lg bg-[#F0FDF4] px-3 py-2 text-[10px] text-[#166534]" dir="ltr">{reply.destinationMediaUrl}</p>}
+    {FORM_MEDIA_TYPES.includes(destinationType as typeof FORM_MEDIA_TYPES[number]) && (
+      <>
+        <label className={["flex min-h-24 cursor-pointer items-center justify-center rounded-xl border-2 border-dashed bg-[#F8FAFC] text-center",uploading?"pointer-events-none opacity-60":"hover:border-[#93C5FD] hover:bg-[#EFF6FF]"].join(" ")}>
+          <span className="text-xs font-bold text-[#2563EB]">{uploading?"در حال آپلود...":reply.destinationMediaUrl?"تعویض فایل":"انتخاب فایل"}</span>
+          <input type="file" accept={destinationType==="IMAGE"?"image/*":destinationType==="VIDEO"?"video/*":"audio/*"} disabled={uploading} className="hidden" onChange={(e)=>{const file=e.currentTarget.files?.[0];e.currentTarget.value="";void upload(destinationType as typeof FORM_MEDIA_TYPES[number],file)}} />
+        </label>
+        {reply.destinationMediaUrl && (
+          <div className="overflow-hidden rounded-xl border border-[#BBF7D0] bg-white">
+            {destinationType === "IMAGE" ? (
+              <img src={reply.destinationMediaUrl} alt="" className="h-44 w-full object-cover" />
+            ) : destinationType === "VIDEO" ? (
+              <video src={reply.destinationMediaUrl} controls className="max-h-56 w-full bg-black object-contain" />
+            ) : (
+              <audio src={reply.destinationMediaUrl} controls className="w-full px-3 py-3" />
+            )}
+            <div className="flex justify-center border-t border-[#DCFCE7] bg-[#F0FDF4] px-3 py-2.5">
+              <button type="button" onClick={() => onChange({destinationMediaUrl:"",destinationMediaId:""})} className="text-xs font-bold text-[#DC2626] transition hover:text-[#B91C1C]">
+                حذف {destinationType === "IMAGE" ? "عکس" : destinationType === "VIDEO" ? "ویدیو" : "وویس"}
+              </button>
+            </div>
+          </div>
+        )}
+      </>
+    )}
   </div>;
 }
