@@ -15,6 +15,7 @@ import {
   Pause,
   Play,
   RefreshCw,
+  LoaderCircle,
   Search,
   Send,
   UserRound,
@@ -1201,8 +1202,8 @@ export default function InstagramInbox({
   }
 
   const listPanel = (
-    <aside className="flex min-h-0 flex-1 flex-col bg-background lg:w-[360px] lg:flex-none lg:border-l lg:border-border">
-      <div className="shrink-0 border-b border-border px-4 pb-3 pt-4 sm:px-5">
+    <aside className="flex min-h-0 flex-1 flex-col bg-background lg:w-[330px] lg:flex-none lg:border-l lg:border-border">
+      <div className="shrink-0 border-b border-border px-3.5 pb-3 pt-3.5 sm:px-4">
         <div className="flex items-center justify-end gap-3">
           <Button
             type="button"
@@ -1221,7 +1222,7 @@ export default function InstagramInbox({
           </Button>
         </div>
 
-        <div className="mt-4 flex items-center rounded-xl bg-muted/60 p-1">
+        <div className="mt-3 flex items-center rounded-xl bg-muted/60 p-1">
           {(
             [
               ["ALL", "همه", conversations.length],
@@ -1247,7 +1248,7 @@ export default function InstagramInbox({
           ))}
         </div>
 
-        <div className="relative mt-3">
+        <div className="relative mt-2.5">
           <Search
             size={15}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
@@ -1256,26 +1257,15 @@ export default function InstagramInbox({
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="جستجوی گفتگو..."
-            className="h-10 rounded-xl border-border bg-muted/30 pr-9 text-xs"
+            className="h-9 rounded-lg border-border bg-muted/30 pr-9 text-[11px]"
           />
         </div>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-2 py-2 sm:px-3">
         {loading && !conversations.length ? (
-          <div className="space-y-1">
-            {Array.from({ length: 7 }).map((_, index) => (
-              <div
-                key={index}
-                className="flex items-center gap-3 rounded-xl px-3 py-3"
-              >
-                <div className="h-11 w-11 shrink-0 animate-pulse rounded-full bg-muted" />
-                <div className="min-w-0 flex-1 space-y-2">
-                  <div className="h-3 w-28 animate-pulse rounded bg-muted" />
-                  <div className="h-2.5 w-40 animate-pulse rounded bg-muted" />
-                </div>
-              </div>
-            ))}
+          <div className="flex min-h-48 items-center justify-center">
+            <LoaderCircle size={22} className="animate-spin text-primary" aria-label="در حال بارگذاری" />
           </div>
         ) : filteredConversations.length ? (
           filteredConversations.map((conversation) => {
@@ -1287,7 +1277,7 @@ export default function InstagramInbox({
                 key={conversation.id}
                 type="button"
                 onClick={() => selectConversation(conversation.id)}
-                className={`group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-right transition ${
+                className={`group flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-right transition ${
                   active
                     ? "bg-muted"
                     : "hover:bg-muted/60"
@@ -1298,10 +1288,10 @@ export default function InstagramInbox({
                     <img
                       src={conversation.participantProfilePicture}
                       alt=""
-                      className="h-11 w-11 rounded-full object-cover ring-1 ring-border"
+                      className="h-9 w-9 rounded-full object-cover ring-1 ring-border"
                     />
                   ) : (
-                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-muted-foreground">
                       <UserRound size={18} />
                     </div>
                   )}
@@ -1366,7 +1356,7 @@ export default function InstagramInbox({
     <div className="flex min-h-0 flex-1 flex-col bg-background">
       {selectedConversation ? (
         <>
-          <header className="flex shrink-0 items-center gap-3 border-b border-border px-4 py-3 sm:px-5">
+          <header className="flex shrink-0 items-center gap-2.5 border-b border-border px-3.5 py-2.5 sm:px-4">
             <Button
               type="button"
               onClick={goBackToList}
@@ -1444,21 +1434,14 @@ export default function InstagramInbox({
 
           <div
             ref={messagesScrollRef}
-            className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain bg-muted/20 px-3 py-4 sm:px-5 sm:py-5"
+            className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain bg-muted/20 px-3 py-3 sm:px-4 sm:py-4"
           >
             {messagesLoading && !messages.length ? (
-              <div className="space-y-4">
-                {Array.from({ length: 6 }).map((_, index) => (
-                  <div
-                    key={index}
-                    className={`flex ${index % 2 ? "justify-start" : "justify-end"}`}
-                  >
-                    <div className="h-12 w-48 animate-pulse rounded-2xl bg-muted" />
-                  </div>
-                ))}
+              <div className="flex min-h-64 items-center justify-center">
+                <LoaderCircle size={24} className="animate-spin text-primary" aria-label="در حال بارگذاری پیام‌ها" />
               </div>
             ) : messages.length ? (
-              <div className="mx-auto flex max-w-3xl flex-col gap-3">
+              <div className="mx-auto flex w-full max-w-2xl flex-col gap-2.5">
                 {messages.map((message) => {
                   const outbound = message.direction === "OUTBOUND";
                   const hasMedia = Boolean(message.mediaUrl);
@@ -1468,7 +1451,7 @@ export default function InstagramInbox({
                       key={message.id}
                       className={`flex ${outbound ? "justify-start" : "justify-end"}`}
                     >
-                      <div className="max-w-[88%] sm:max-w-[70%]">
+                      <div className="max-w-[82%] sm:max-w-[62%]">
                         <div
                           className={`overflow-hidden shadow-sm ${
                             message.messageType === "AUDIO"
@@ -1494,7 +1477,7 @@ export default function InstagramInbox({
 
                           {message.text && (
                             <div className="px-3.5 py-2.5">
-                              <p className="whitespace-pre-wrap text-[13px] leading-6">
+                              <p className="whitespace-pre-wrap text-[12px] leading-5.5">
                                 {message.text}
                               </p>
                             </div>
@@ -1559,7 +1542,7 @@ export default function InstagramInbox({
 
           <form
             onSubmit={sendMessage}
-            className="shrink-0 border-t border-border bg-background p-3 sm:p-4"
+            className="shrink-0 border-t border-border bg-background p-2.5 sm:p-3"
           >
             {selectedFile && (
               <div className="mb-3 max-h-52 overflow-hidden rounded-2xl border border-border bg-muted/30 sm:max-h-60">
@@ -1674,7 +1657,7 @@ export default function InstagramInbox({
                   <Button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border bg-background p-0 text-muted-foreground hover:bg-muted"
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border bg-background p-0 text-muted-foreground hover:bg-muted"
                     aria-label="ارسال عکس، ویدیو یا فایل صوتی"
                   >
                     <Paperclip size={18} />
@@ -1692,14 +1675,14 @@ export default function InstagramInbox({
                     rows={1}
                     maxLength={1000}
                     placeholder="پیام خود را بنویسید..."
-                    className="min-h-11 flex-1 resize-none rounded-2xl border-border bg-muted/40 px-4 py-2.5 text-base leading-6 outline-none focus-visible:ring-1 focus-visible:ring-ring sm:text-sm"
+                    className="min-h-10 flex-1 resize-none rounded-xl border-border bg-muted/40 px-3 py-2 text-[13px] leading-5 outline-none focus-visible:ring-1 focus-visible:ring-ring"
                   />
 
                   <Button
                     type="button"
                     onClick={() => void startRecording()}
                     disabled={sending}
-                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border bg-background p-0 text-muted-foreground hover:bg-muted disabled:opacity-50"
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border bg-background p-0 text-muted-foreground hover:bg-muted disabled:opacity-50"
                     aria-label="ضبط Voice"
                   >
                     <Mic size={18} />
@@ -1708,7 +1691,7 @@ export default function InstagramInbox({
                   <Button
                     type="submit"
                     disabled={sending || (!text.trim() && !selectedFile)}
-                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary p-0 text-primary-foreground hover:bg-primary/90 disabled:opacity-40"
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary p-0 text-primary-foreground hover:bg-primary/90 disabled:opacity-40"
                     aria-label="ارسال"
                   >
                     <Send size={17} />
@@ -1756,7 +1739,7 @@ export default function InstagramInbox({
         </div>
       )}
 
-      <div className="h-[calc(100dvh-8.5rem)] min-h-[560px] overflow-hidden rounded-2xl border border-border bg-card shadow-[0_12px_40px_rgba(15,23,42,0.04)]">
+      <div className="h-[calc(100dvh-7.5rem)] min-h-[500px] overflow-hidden rounded-2xl border border-border bg-card shadow-[0_12px_40px_rgba(15,23,42,0.04)]">
         <div className="flex h-full min-h-0">
           <div
             className={`flex min-h-0 flex-1 flex-col lg:flex-none ${
