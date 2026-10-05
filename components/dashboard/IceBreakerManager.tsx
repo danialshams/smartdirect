@@ -368,10 +368,11 @@ export default function IceBreakerManager({
                           <MessageSquare size={16} />
                         </div>
                         <div className="min-w-0 flex-1">
-                        <p className="break-words whitespace-pre-wrap text-sm font-bold leading-6 text-[#0F172A]">
-                          {question.label}
-                        </p>
-                                              </div>
+                          <p className="break-words whitespace-pre-wrap text-sm font-bold leading-6 text-[#0F172A]">
+                            {question.label}
+                          </p>
+                        </div>
+                      </div>
                       <div className="flex w-full shrink-0 items-center gap-2 border-t border-[#E2E8F0] pt-2 sm:w-auto sm:border-0 sm:pt-0">
                         <Button
                           type="button"
