@@ -806,8 +806,6 @@ export default function EntryPointFlowBuilder({
                         forms={forms}
                         loadingResources={loadingResources}
                         instagramAccountId={accountId}
-                        hideVideo
-                        hideForm
                         showFinalSave
                         finalSaveLabel={finalSaveLabel}
                         finalSaveLoadingLabel={finalSaveLoadingLabel}
