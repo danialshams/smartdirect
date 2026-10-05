@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowRight, CalendarClock, Loader2, Pencil, Save, Trash2 } from "lucide-react";
+import { ArrowRight, CalendarClock, Loader2, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/dashboard/DashboardUI";
@@ -603,31 +603,12 @@ export default function PublishingJobEditor() {
 
         {automationId ? (
           <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
-            <div className="mb-5 flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <h2 className="text-sm font-bold text-[#0F172A]">
-                  {job.type === "STORY"
-                    ? "پاسخ خودکار استوری"
-                    : "پاسخ خودکار کامنت"}
-                </h2>
-                <p className="mt-1 text-xs leading-5 text-[#64748B]">
-                  کل پاسخ خودکار را می‌توانی مثل صفحه پیام شروع گفتگو ویرایش کنی.
-                </p>
-              </div>
-
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => void deleteAutomation()}
-                disabled={deleting || automationLoading}
-                className="h-9 shrink-0 rounded-lg border-[#FECACA] bg-white px-2.5 text-xs font-semibold text-[#DC2626] hover:bg-[#FEF2F2]"
-                aria-label="حذف اتوماسیون"
-              >
-                <Trash2 size={14} className="text-[#DC2626]" />
-                <span className="hidden sm:inline text-[#DC2626]">
-                  حذف
-                </span>
-              </Button>
+            <div className="mb-5">
+              <h2 className="text-sm font-bold text-[#0F172A]">
+                {job.type === "STORY"
+                  ? "پاسخ خودکار استوری"
+                  : "پاسخ خودکار کامنت"}
+              </h2>
             </div>
 
             {automationLoading ? (
@@ -638,33 +619,44 @@ export default function PublishingJobEditor() {
                 />
               </div>
             ) : automation ? (
-              <EntryPointFlowBuilder
-                accountId={job.instagramAccount.id}
-                automationId={automation.id}
-                triggerType={triggerType}
-                keyword={automationKeyword}
-                onKeywordChange={setAutomationKeyword}
-                isActive={automationActive}
-                onActiveChange={setAutomationActive}
-                dirty={automationDirty}
-                onDirtyChange={setAutomationDirty}
-                finalSaveLabel="ذخیره"
-                finalSaveLoadingLabel="در حال ذخیره..."
-                onAutomationReady={(automationId) => {
-                  setAutomation((current) =>
-                    current ? { ...current, id: automationId } : current,
-                  );
-                  setAutomationDirty(false);
-                  toast.success("Automation با موفقیت ذخیره شد.");
-                }}
-              />
+              <>
+                <EntryPointFlowBuilder
+                  accountId={job.instagramAccount.id}
+                  automationId={automation.id}
+                  triggerType={triggerType}
+                  keyword={automationKeyword}
+                  onKeywordChange={setAutomationKeyword}
+                  isActive={automationActive}
+                  onActiveChange={setAutomationActive}
+                  dirty={automationDirty}
+                  onDirtyChange={setAutomationDirty}
+                  finalSaveLabel="ذخیره"
+                  finalSaveLoadingLabel="در حال ذخیره..."
+                  onAutomationReady={(automationId) => {
+                    setAutomation((current) =>
+                      current ? { ...current, id: automationId } : current,
+                    );
+                    setAutomationDirty(false);
+                    toast.success("پاسخ خودکار با موفقیت ذخیره شد.");
+                  }}
+                />
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => void deleteAutomation()}
+                  disabled={deleting || automationLoading}
+                  className="mt-4 min-h-11 w-full rounded-xl border-[#FECACA] bg-[#FEF2F2] px-4 text-sm font-bold text-[#DC2626] hover:bg-[#FEE2E2]"
+                >
+                  <Trash2 size={17} />
+                  {deleting
+                    ? "در حال حذف..."
+                    : `حذف پاسخ خودکار ${labels[job.type]}`}
+                </Button>
+              </>
             ) : null}
           </section>
-        ) : (
-          <section className="rounded-2xl border border-dashed border-[#CBD5E1] bg-white p-5 text-center text-xs font-medium text-[#64748B]">
-            برای این محتوا Automation فعالی ثبت نشده است.
-          </section>
-        )}
+        ) : null}
 
         {isScheduled && (
           <Button
