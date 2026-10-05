@@ -67,7 +67,7 @@ export class InstagramApiError extends Error {
 export type InstagramApiRequestOptions = {
   method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
   accessToken?: string;
-  params?: Record<string, string | number | boolean | null | undefined>;
+  params?: Record<string, string | number | boolean | string[] | null | undefined>;
   body?: unknown;
   timeoutMs?: number;
   signal?: AbortSignal;
@@ -142,7 +142,7 @@ function buildUrl(
 
   for (const [key, value] of Object.entries(params ?? {})) {
     if (value !== undefined && value !== null) {
-      url.searchParams.set(key, String(value));
+      url.searchParams.set(key, Array.isArray(value) ? JSON.stringify(value) : String(value));
     }
   }
 
