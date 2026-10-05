@@ -511,7 +511,18 @@ export async function instagramApiRequest<T = unknown>(
       throw error instanceof Error ? error : new Error("Instagram API request failed");
     } finally {
       timeout.cleanup();
-      if (trafficLease) await releaseInstagramTrafficSlot(trafficLease).catch(() => undefined);
+      if (trafficLease) {
+        try {
+          await releaseInstagramTrafficSlot(trafficLease);
+        } catch (releaseError) {
+          observabilityLogger.error("instagram_account_slot_release_failed", {
+            instagramAccountId: trafficLease.accountId,
+            token: trafficLease.token,
+            operation,
+            error: releaseError instanceof Error ? releaseError.message : String(releaseError),
+          });
+        }
+      }
     }
   }
 
