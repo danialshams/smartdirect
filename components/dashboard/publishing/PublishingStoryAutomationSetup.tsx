@@ -302,7 +302,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
     <div className={["space-y-5", disabled ? "pointer-events-none opacity-60" : ""].join(" ")}>
       <div>
         <p className="text-sm font-bold text-[#0F172A]">نوع پاسخ ارسالی در دایرکت</p>
-        <p className="mt-1 text-[11px] leading-5 text-[#64748B]">نوع پاسخی را که می‌خواهی برای Reply استوری ارسال شود انتخاب کن.</p>
+        <p className="mt-1 text-[11px] leading-5 text-[#64748B]">نوع پاسخی را که می‌خواهی برای این پیام شروع گفتگو ارسال شود انتخاب کن.</p>
       </div>
 
       <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
@@ -339,7 +339,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
             autoCapitalize="sentences"
             spellCheck
             className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none placeholder:text-[10px] placeholder:whitespace-nowrap placeholder:overflow-hidden placeholder:text-ellipsis focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10"
-            placeholder="متنی که در پاسخ Reply استوری در دایرکت برای کاربر ارسال می‌شود..."
+            placeholder="متنی که به‌عنوان پاسخ پیام شروع گفتگو برای کاربر ارسال می‌شود..."
             style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }}
           />
         </div>
