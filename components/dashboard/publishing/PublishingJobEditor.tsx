@@ -447,6 +447,7 @@ export default function PublishingJobEditor() {
       : "COMMENT_KEYWORD";
 
   return (
+    <>
     <div
       dir="rtl"
       className="min-h-full bg-[#F8FAFC] px-3 py-4 sm:px-5 sm:py-6 lg:px-8"
@@ -778,5 +779,6 @@ export default function PublishingJobEditor() {
           </div>
         </div>
       )}
+    </>
   );
 }
