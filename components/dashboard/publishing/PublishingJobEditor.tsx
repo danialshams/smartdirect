@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowRight, CalendarClock, Loader2, Save, Trash2 } from "lucide-react";
+import { ArrowRight, CalendarClock, Loader2, Pencil, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/dashboard/DashboardUI";
@@ -97,14 +97,28 @@ function toTehranIso(date: string, hour: number, minute: number) {
   ).toISOString();
 }
 
+function readCachedJob(id: string | undefined): Job | null {
+  if (!id || typeof window === "undefined") return null;
+  try {
+    const raw = sessionStorage.getItem("smartdirect:publishing-jobs");
+    if (!raw) return null;
+    const jobs = JSON.parse(raw);
+    if (!Array.isArray(jobs)) return null;
+    const cached = jobs.find((item) => item && typeof item === "object" && item.id === id);
+    return cached && typeof cached.id === "string" ? (cached as Job) : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function PublishingJobEditor() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const id = params?.id;
 
-  const [job, setJob] = useState<Job | null>(null);
+  const [job, setJob] = useState<Job | null>(() => readCachedJob(id));
   const [automation, setAutomation] = useState<AutomationMeta | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => readCachedJob(id) === null);
   const [automationLoading, setAutomationLoading] = useState(false);
   const [contentSaving, setContentSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -153,8 +167,6 @@ export default function PublishingJobEditor() {
 
     async function load() {
       try {
-        setLoading(true);
-
         const response = await fetch(
           `/api/instagram/publishing/${encodeURIComponent(id)}`,
           { cache: "no-store", credentials: "include" },
@@ -414,35 +426,10 @@ export default function PublishingJobEditor() {
     }
   }
 
-  if (loading) {
-    return (
-      <div
-        dir="rtl"
-        className="flex min-h-screen items-center justify-center"
-      >
-        <Loader2
-          size={28}
-          className="animate-spin text-[#2563EB]"
-        />
-      </div>
-    );
-  }
-
-  if (!job) {
-    return (
-      <div
-        dir="rtl"
-        className="flex min-h-screen items-center justify-center text-sm text-[#64748B]"
-      >
-        محتوا پیدا نشد.
-      </div>
-    );
-  }
-
   const automationId =
     job.commentAutomationId ?? job.storyReplyAutomationId;
   const triggerType =
-    job.type === "STORY"
+    job?.type === "STORY"
       ? "STORY_REPLY_KEYWORD"
       : "COMMENT_KEYWORD";
 
@@ -453,8 +440,8 @@ export default function PublishingJobEditor() {
       className="min-h-full bg-[#F8FAFC] px-3 py-4 sm:px-5 sm:py-6 lg:px-8"
     >
       <div className="mx-auto w-full max-w-3xl space-y-5">
-        <div className="mb-5">
-          <div className="flex justify-end">
+        <div className="mb-5 space-y-3">
+          <div dir="ltr" className="flex justify-start">
             <Button
               type="button"
               onClick={() => router.push("/dashboard/publishing")}
@@ -465,16 +452,34 @@ export default function PublishingJobEditor() {
             </Button>
           </div>
 
-          <section className="mt-4 rounded-2xl border border-[#E2E8F0] bg-white p-4 text-center shadow-sm sm:p-5">
-            <h1 className="text-base font-bold text-[#0F172A] sm:text-lg">
-              ویرایش {labels[job.type]}
-            </h1>
-            <p className="mt-2 text-xs leading-6 text-[#64748B]">
-              پاسخ خودکار {labels[job.type]} خود را ویرایش کنید.
-            </p>
-          </section>
+          {job && (
+            <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
+              <div className="flex items-start gap-3">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">
+                  <Pencil size={15} />
+                </span>
+                <div className="min-w-0">
+                  <h1 className="text-sm font-bold text-[#0F172A] sm:text-base">
+                    ویرایش {labels[job.type]}
+                  </h1>
+                  <p className="mt-1.5 text-xs leading-5 text-[#64748B]">
+                    پاسخ خودکار {labels[job.type]} خود را ویرایش کنید.
+                  </p>
+                </div>
+              </div>
+            </section>
+          )}
         </div>
 
+        {!job ? (
+          <section className="flex min-h-[50vh] items-center justify-center rounded-2xl border border-[#E2E8F0] bg-white shadow-sm">
+            {loading ? (
+              <Loader2 size={28} className="animate-spin text-[#2563EB]" />
+            ) : (
+              <span className="text-sm text-[#64748B]">محتوا پیدا نشد.</span>
+            )}
+          </section>
+        ) : (
         <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
           {job.media.length > 0 && (
             <div
@@ -649,6 +654,7 @@ export default function PublishingJobEditor() {
             </>
           )}
         </section>
+        )}
 
         {automationId ? (
           <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
@@ -690,30 +696,32 @@ export default function PublishingJobEditor() {
                   }}
                 />
 
-                <div className="mt-4">
+                <div className="mt-5 border-t border-[#E2E8F0] pt-5">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => router.push("/dashboard/publishing")}
                     disabled={deleting || automationLoading}
-                    className="min-h-11 w-full rounded-xl border-[#CBD5E1] bg-[#F8FAFC] px-4 text-sm font-bold text-[#475569] hover:bg-[#F1F5F9]"
+                    className="min-h-11 w-full rounded-xl !border-[#CBD5E1] !bg-[#F8FAFC] px-4 text-sm font-bold !text-[#475569] hover:!bg-[#F1F5F9]"
                   >
                     انصراف
                   </Button>
                 </div>
 
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowDeleteAutomationConfirm(true)}
-                  disabled={deleting || automationLoading}
-                  className="mt-4 min-h-11 w-full rounded-xl border-[#FECACA] bg-[#FEF2F2] px-4 text-sm font-bold text-[#DC2626] hover:bg-[#FEE2E2]"
-                >
-                  <Trash2 size={17} />
-                  {deleting
-                    ? "در حال حذف..."
-                    : `حذف پاسخ خودکار ${labels[job.type]}`}
-                </Button>
+                <div className="mt-6 border-t border-[#F1F5F9] pt-6">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowDeleteAutomationConfirm(true)}
+                    disabled={deleting || automationLoading}
+                    className="min-h-11 w-full rounded-xl !border-[#FECACA] !bg-[#FEF2F2] px-4 text-sm font-bold !text-[#DC2626] hover:!bg-[#FEE2E2]"
+                  >
+                    <span dir="rtl" className="inline-flex items-center justify-center gap-2">
+                      {deleting ? "در حال حذف..." : `حذف پاسخ خودکار ${labels[job.type]}`}
+                      <Trash2 size={17} className="shrink-0 !text-[#DC2626]" />
+                    </span>
+                  </Button>
+                </div>
               </>
             ) : null}
           </section>
