@@ -342,14 +342,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
         toast.success(`${typeLabels[job.type]} با موفقیت در اینستاگرام منتشر شد.`, { icon: <CheckCircle2 size={18} className="text-[#16A34A]" /> });
         if (activePublishJobIdRef.current === job.id) {
           setPublishResult("PUBLISHED");
-          window.setTimeout(() => {
-            setPublishResultVisible(false);
-            window.setTimeout(() => {
-              setActivePublishJobId(null);
-              setPublishResult(null);
-              handleBackToTypeSelection();
-            }, 350);
-          }, 500);
+          setPublishResultVisible(true);
         }
         knownJobIdsRef.current.delete(job.id);
       } else if (job.status === "FAILED") {
@@ -1049,6 +1042,9 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
           setError("");
         });
         await loadJobs();
+        window.setTimeout(() => {
+          document.getElementById("publishing-active")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 250);
         return;
       }
       setCaption(""); setUploadedMedia([]); setShowUploadedMediaPreview(false); resetAutomation(); setUploadProgress(0); setScheduledDate(currentJalaliDate()); await loadJobs();
@@ -1090,13 +1086,6 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             </div>
             {(() => {
               const scheduledJobs = jobs.filter((job) => job.status === "SCHEDULED" && job.scheduledAt);
-              const publishedJobs = jobs.filter((job) => {
-                if (job.status !== "PUBLISHED") return false;
-                if (job.type === "STORY") {
-                  return Boolean(job.publishedAt && Date.now() - new Date(job.publishedAt).getTime() < 24 * 60 * 60 * 1000);
-                }
-                return true;
-              });
 
               return (
                 <div className="mt-6 space-y-4">
@@ -1118,7 +1107,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                                 {publishResult === null
                                   ? `در حال انتشار ${typeLabels[activeJob.type]} در اینستاگرام هستیم.`
                                   : publishResult === "PUBLISHED"
-                                    ? `${typeLabels[activeJob.type]} با موفقیت منتشر شد.`
+                                    ? `${typeLabels[activeJob.type]} با موفقیت منتشر شد. می‌توانید در منو → مدیریت پاسخ‌های خودکار آن را مشاهده و ویرایش کنید.`
                                     : `${typeLabels[activeJob.type]} در اینستاگرام منتشر نشد.`}
                               </p>
                             </div>
@@ -1135,8 +1124,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                           <Clock3 size={17} className="animate-pulse" />
                         </span>
                         <div>
-                          <h2 className="text-sm font-bold text-[#0F172A]">انتشارهای زمان‌بندی‌شده</h2>
-                          <p className="mt-1 text-[11px] text-[#64748B]">محتوا در زمان تعیین‌شده منتشر می‌شود.</p>
+                          <h2 className="text-sm font-bold text-[#0F172A]">محتواهای در حال انتشار</h2>
+                          <p className="mt-1 text-[11px] text-[#64748B]">محتواهای زمان‌دار در این بخش منتظر انتشار هستند و از همینجا قابل ویرایش‌اند.</p>
                         </div>
                       </div>
                       <div className="space-y-2">
@@ -1168,44 +1157,6 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                     </section>
                   )}
 
-                  <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-5">
-                    <div className="mb-3">
-                      <h2 className="text-sm font-bold text-[#0F172A]">محتواهای منتشر شده</h2>
-                      <p className="mt-1 text-[11px] text-[#64748B]">فهرست محتوایی که با SmartDirect منتشر شده است.</p>
-                    </div>
-
-                    <div className="rounded-xl border border-[#E2E8F0]">
-                      {loading ? (
-                        <div className="flex min-h-24 items-center justify-center gap-2 text-sm font-medium text-[#64748B]">
-                          <Loader2 size={18} className="animate-spin text-[#2563EB]" />
-                          <span>در حال بارگذاری...</span>
-                        </div>
-                      ) : publishedJobs.length > 0 ? (
-                        <div className="divide-y divide-[#E2E8F0]">
-                          {publishedJobs.map((job) => (
-                            <div key={job.id} className="flex items-center justify-between gap-3 px-3.5 py-3">
-                              <div className="flex min-w-0 flex-1 items-center gap-3">
-                                {job.media[0]?.publicUrl ? (
-                                  <div className="h-14 w-11 shrink-0 overflow-hidden rounded-lg border border-[#E2E8F0] bg-white">
-                                    {job.media[0].type === "IMAGE" ? <img src={job.media[0].publicUrl} alt={typeLabels[job.type]} className="h-full w-full object-cover" /> : <video src={job.media[0].publicUrl} muted playsInline className="h-full w-full object-cover" />}
-                                  </div>
-                                ) : null}
-                                <div className="min-w-0">
-                                  <span className="text-sm font-bold text-[#0F172A]">{typeLabels[job.type]}</span>
-                                  <span className="mr-2 text-xs font-medium text-[#64748B]">{formatScheduledLabel(new Date(job.publishedAt ?? job.createdAt))}</span>
-                                </div>
-                              </div>
-                              <Link href={`/dashboard/publishing/${job.id}`} prefetch className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-[#BFDBFE] bg-white px-2.5 text-xs font-semibold text-[#2563EB] no-underline hover:bg-[#EFF6FF] sm:flex-none" aria-label="ویرایش محتوا"><Pencil size={14} /><span className="hidden sm:inline">ویرایش</span></Link>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="flex min-h-20 items-center justify-center px-4 text-center text-xs font-medium text-[#94A3B8]">
-                          هنوز محتوای منتشرشده‌ای وجود ندارد.
-                        </div>
-                      )}
-                    </div>
-                  </section>
                 </div>
               );
             })()}
