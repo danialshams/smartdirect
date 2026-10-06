@@ -104,7 +104,7 @@ export default function AutoRepliesManager() {
               <MessageCircleReply size={19} />
             </span>
             <div>
-              <h1 className="text-base font-bold text-[#0F172A]">مدیریت پاسخ‌های خودکار</h1>
+              <h1 className="text-base font-bold text-[#0F172A]">مشاهده و ویرایش پاسخ‌های خودکار</h1>
               <p className="mt-1.5 text-xs leading-5 text-[#64748B]">
                 پاسخ‌های خودکار محتواهای منتشرشده را از اینجا مشاهده و ویرایش کنید.
               </p>
