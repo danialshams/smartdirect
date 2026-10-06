@@ -20,7 +20,7 @@ const EntryPointFlowBuilder = dynamic(
   },
 );
 
-type Job = {
+export type PublishingJobInitialData = {
   id: string;
   type: "POST" | "CAROUSEL" | "REEL" | "STORY";
   status: string;
@@ -40,6 +40,8 @@ type Job = {
     igUsername: string | null;
   };
 };
+
+type Job = PublishingJobInitialData;
 
 type AutomationMeta = {
   id: string;
@@ -111,14 +113,18 @@ function readCachedJob(id: string | undefined): Job | null {
   }
 }
 
-export default function PublishingJobEditor() {
+export default function PublishingJobEditor({
+  initialJob = null,
+}: {
+  initialJob?: PublishingJobInitialData | null;
+}) {
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const id = params?.id;
 
-  const [job, setJob] = useState<Job | null>(() => readCachedJob(id));
+  const [job, setJob] = useState<Job | null>(() => initialJob ?? readCachedJob(id));
   const [automation, setAutomation] = useState<AutomationMeta | null>(null);
-  const [loading, setLoading] = useState(() => readCachedJob(id) === null);
+  const [loading, setLoading] = useState(false);
   const [automationLoading, setAutomationLoading] = useState(false);
   const [contentSaving, setContentSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -137,7 +143,6 @@ export default function PublishingJobEditor() {
   const [automationActive, setAutomationActive] = useState(true);
   const [automationDirty, setAutomationDirty] = useState(false);
   const [automationLoaded, setAutomationLoaded] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
   const [loadedMediaIds, setLoadedMediaIds] = useState<Set<string>>(
     () => new Set(),
   );
@@ -171,7 +176,6 @@ export default function PublishingJobEditor() {
     let cancelled = false;
 
     async function load() {
-      setRefreshing(true);
       try {
         const response = await fetch(
           `/api/instagram/publishing/${encodeURIComponent(id)}`,
@@ -187,7 +191,6 @@ export default function PublishingJobEditor() {
 
         const data = result.data as Job;
         setJob(data);
-        setLoadedMediaIds(new Set());
         const automationId =
           data.commentAutomationId ?? data.storyReplyAutomationId;
         setAutomationLoaded(!automationId);
@@ -278,7 +281,6 @@ export default function PublishingJobEditor() {
         if (!cancelled) {
           setAutomationLoading(false);
           setLoading(false);
-          setRefreshing(false);
         }
       }
     }
@@ -457,8 +459,8 @@ export default function PublishingJobEditor() {
               onClick={() => router.back()}
               className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]"
             >
-              <span>بازگشت</span>
               <ArrowRight size={15} strokeWidth={2} />
+              بازگشت
             </Button>
           </div>
 
@@ -473,13 +475,7 @@ export default function PublishingJobEditor() {
                     <h1 className="text-sm font-bold text-[#0F172A] sm:text-base">
                       ویرایش {labels[job.type]}
                     </h1>
-                    {refreshing && (
-                      <Loader2
-                        size={14}
-                        className="animate-spin text-[#2563EB]"
-                        aria-label="در حال به‌روزرسانی"
-                      />
-                    )}
+
                   </div>
                   <p className="mt-1.5 text-xs leading-5 text-[#64748B]">
                     پاسخ خودکار {labels[job.type]} خود را ویرایش کنید.
