@@ -5,6 +5,7 @@ import { publishInstagramJob } from "@/lib/instagram/publishing";
 import type { QueueJob } from "@/lib/queue/types";
 import { enterObservabilityContext } from "@/lib/observability/context";
 import { observabilityLogger } from "@/lib/observability/logger";
+import { cleanupInstagramPublishStorage } from "@/lib/instagram/publishing-media-cleanup";
 
 export async function processPublishingQueueJobStep(jobId: string) {
   "use step";
@@ -69,7 +70,16 @@ export async function processPublishingQueueJobStep(jobId: string) {
     // Keep the Redis queue state in sync as well. Throwing here would make the
     // workflow engine retry the whole publishing step even for permanent
     // Instagram API errors such as invalid parameters.
-    await failJob(job.id, error);
+    const failedQueueJob = await failJob(job.id, error);
+
+    if (
+      failedQueueJob?.status === "failed" &&
+      job.type === "PUBLISH"
+    ) {
+      await cleanupInstagramPublishStorage().catch((cleanupError) => {
+        console.error("Final publishing media cleanup failed:", cleanupError);
+      });
+    }
 
     return {
       ok: false,
