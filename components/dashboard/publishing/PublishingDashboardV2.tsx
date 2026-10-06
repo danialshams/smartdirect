@@ -488,8 +488,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       return () => window.cancelIdleCallback(handle);
     }
 
-    const handle = window.setTimeout(prefetch, 250);
-    return () => window.clearTimeout(handle);
+    const handle = setTimeout(prefetch, 250);
+    return () => clearTimeout(handle);
   }, [jobs, router]);
 
   useEffect(() => { if (selectedAccountId) void loadResources(selectedAccountId); }, [selectedAccountId]);
