@@ -225,7 +225,7 @@ export async function DELETE(_request: NextRequest, context: Context) {
 
     const media = await prisma.instagramPublishMedia.findMany({
       where: { publishJobId: job.id, deletedAt: null },
-      select: { id: true, storageKey: true },
+      select: { id: true, storageKey: true, deletedAt: true },
     });
 
     await prisma.instagramPublishJob.update({ where: { id }, data: { status: "CANCELLED" } });
