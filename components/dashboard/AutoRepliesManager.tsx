@@ -76,20 +76,24 @@ export default function AutoRepliesManager() {
     }
 
     void load();
-    const filteredJobs = useMemo(() => filter === "ALL" ? jobs : jobs.filter((job) => job.type === filter), [filter, jobs]);
 
-  const filters: Array<{ key: "ALL" | PublishType; label: string; icon: typeof MessageCircleReply }> = [
-    { key: "ALL", label: "همه", icon: MessageCircleReply },
-    { key: "POST", label: "پست", icon: Image },
-    { key: "CAROUSEL", label: "آلبوم", icon: Images },
-    { key: "REEL", label: "ریلز", icon: Video },
-    { key: "STORY", label: "استوری", icon: Camera },
-  ];
-
-  return () => {
+    return () => {
       cancelled = true;
     };
   }, []);
+
+  const filteredJobs = useMemo(
+    () => (filter === "ALL" ? jobs : jobs.filter((job) => job.type === filter)),
+    [filter, jobs],
+  );
+
+  const filters = [
+    { key: "ALL" as const, label: "همه", icon: MessageCircleReply },
+    { key: "POST" as const, label: "پست", icon: Image },
+    { key: "CAROUSEL" as const, label: "آلبوم", icon: Images },
+    { key: "REEL" as const, label: "ریلز", icon: Video },
+    { key: "STORY" as const, label: "استوری", icon: Camera },
+  ];
 
   return (
     <div dir="rtl" className="min-h-full bg-[#F8FAFC] px-3 py-4 sm:px-5 sm:py-6 lg:px-8">
