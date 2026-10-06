@@ -42,6 +42,8 @@ export default function PersistentMenuManager({
 
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [draft, setDraft] = useState("");
+  const [draftType, setDraftType] = useState<"postback" | "web_url">("postback");
+  const [draftUrl, setDraftUrl] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState("");
   const [editAutomationId, setEditAutomationId] = useState<string | null>(null);
@@ -133,6 +135,8 @@ export default function PersistentMenuManager({
     labelOverride: string,
     editingIdOverride: string | null,
     automationIdOverride?: string,
+    typeOverride: "postback" | "web_url" = "postback",
+    urlOverride = "",
   ) {
     if (!account) return;
 
@@ -149,8 +153,8 @@ export default function PersistentMenuManager({
     const editingItem = editingIdOverride
       ? menuItems.find((menuItem) => menuItem.id === editingIdOverride)
       : null;
-    const itemType = editingItem?.type ?? "postback";
-    const itemUrl = editingItem?.url ?? "";
+    const itemType = editingItem?.type ?? typeOverride;
+    const itemUrl = editingItem?.url ?? urlOverride;
 
     if (itemType === "web_url") {
       if (!itemUrl.trim()) {
@@ -175,7 +179,15 @@ export default function PersistentMenuManager({
             ? { ...menuItem, label, automationId: resolvedAutomationId ?? null }
             : menuItem,
         )
-      : [...menuItems, { label, automationId: resolvedAutomationId ?? null, type: "postback", url: "" }];
+: [
+          ...menuItems,
+          {
+            label,
+            automationId: resolvedAutomationId ?? null,
+            type: itemType,
+            url: itemUrl.trim(),
+          },
+        ];
 
     if (nextMenuItems.length > 20) {
       setError("حداکثر ۲۰ گزینه برای منوی دایرکت می‌توانید بسازید.");
@@ -216,6 +228,8 @@ export default function PersistentMenuManager({
       setSuccess(true);
       setEditingId(null);
       setDraft("");
+      setDraftType("postback");
+      setDraftUrl("");
       setEditDraft("");
       setEditAutomationId(null);
       await loadMenuItems();
@@ -362,11 +376,18 @@ export default function PersistentMenuManager({
                     type="button"
                     variant="outline"
                     onClick={() => {
+                      setDraftType("postback");
+                      setDraftUrl("");
                       setSuccess(false);
                       setError("");
                       setEditAutomationId(null);
                     }}
-                    className="h-11 rounded-xl border-[#BFDBFE] bg-[#EFF6FF] text-xs font-semibold text-[#2563EB]"
+                    className={[
+                      "h-11 rounded-xl text-xs font-semibold",
+                      draftType === "postback"
+                        ? "border-[#BFDBFE] bg-[#EFF6FF] text-[#2563EB]"
+                        : "border-[#E2E8F0] bg-white text-[#475569]",
+                    ].join(" ")}
                   >
                     پاسخ خودکار
                   </Button>
@@ -374,10 +395,16 @@ export default function PersistentMenuManager({
                     type="button"
                     variant="outline"
                     onClick={() => {
+                      setDraftType("web_url");
                       setSuccess(false);
                       setError("");
                     }}
-                    className="h-11 rounded-xl border-[#E2E8F0] bg-white text-xs font-semibold text-[#475569]"
+                    className={[
+                      "h-11 rounded-xl text-xs font-semibold",
+                      draftType === "web_url"
+                        ? "border-[#BFDBFE] bg-[#EFF6FF] text-[#2563EB]"
+                        : "border-[#E2E8F0] bg-white text-[#475569]",
+                    ].join(" ")}
                   >
                     لینک
                   </Button>
@@ -387,6 +414,31 @@ export default function PersistentMenuManager({
                   برای این گزینه می‌توانی پاسخ خودکار یا لینک مستقیم تنظیم کنی.
                 </div>
 
+                {draftType === "web_url" ? (
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-[#0F172A]">آدرس لینک</label>
+                    <Input
+                      value={draftUrl}
+                      onChange={(event) => {
+                        setDraftUrl(event.target.value);
+                        setSuccess(false);
+                        setError("");
+                      }}
+                      placeholder="https://example.com"
+                      type="url"
+                      dir="ltr"
+                      className="h-12 rounded-xl border-[#E2E8F0] bg-[#F8FAFC]"
+                    />
+                    <Button
+                      type="button"
+                      onClick={() => void saveMenuItem(draft, null, undefined, "web_url", draftUrl)}
+                      disabled={saving}
+                      className="h-11 w-full rounded-xl text-sm font-semibold"
+                    >
+                      {saving ? "در حال ساخت گزینه..." : "ساخت گزینه لینک"}
+                    </Button>
+                  </div>
+                ) : (
                 <EntryPointFlowBuilder
                   accountId={account.id}
                   automationId={null}
@@ -575,6 +627,22 @@ export default function PersistentMenuManager({
                                   dir="ltr"
                                   className="h-12 rounded-xl border-[#E2E8F0] bg-[#F8FAFC]"
                                 />
+                                <Button
+                                  type="button"
+                                  onClick={() =>
+                                    void saveMenuItem(
+                                      editDraft,
+                                      editingId,
+                                      undefined,
+                                      "web_url",
+                                      menuItems.find((item) => item.id === editingId)?.url ?? "",
+                                    )
+                                  }
+                                  disabled={saving}
+                                  className="h-11 w-full rounded-xl text-sm font-semibold"
+                                >
+                                  {saving ? "در حال ذخیره..." : "ذخیره گزینه لینک"}
+                                </Button>
                               </div>
                             ) : (
                               <EntryPointFlowBuilder
