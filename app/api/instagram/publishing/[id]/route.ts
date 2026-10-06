@@ -5,7 +5,7 @@ import { z } from "zod";
 
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getStorageProvider } from "@/lib/storage/provider";
+import { deletePublishMediaStorage } from "@/lib/instagram/publishing-media-cleanup";
 import { proxyInstagramMediaUrl } from "@/lib/instagram/media-proxy";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 import { scheduleInstagramPublish } from "@/lib/instagram/scheduled-publishing-workflow";
@@ -214,17 +214,8 @@ export async function DELETE(_request: NextRequest, context: Context) {
 
     await prisma.instagramPublishJob.update({ where: { id }, data: { status: "CANCELLED" } });
 
-    const storage = getStorageProvider();
-    let cleanupPending = false;
-    for (const item of media) {
-      try {
-        if (!item.storageKey.startsWith("test:")) await storage.delete(item.storageKey);
-        await prisma.instagramPublishMedia.update({ where: { id: item.id }, data: { deletedAt: new Date() } });
-      } catch (error) {
-        cleanupPending = true;
-        console.error("Scheduled publishing media cleanup failed:", { mediaId: item.id, error });
-      }
-    }
+    const cleanupResult = await deletePublishMediaStorage(media);
+    const cleanupPending = cleanupResult.failed > 0;
 
     return NextResponse.json({
       success: true,
