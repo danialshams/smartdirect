@@ -21,7 +21,7 @@ type MenuItem = {
 
 type ServerMenuItem = {
   id: string;
-  menuItem?: string;
+  title?: string;
   automationId?: string | null;
 };
 
@@ -80,7 +80,8 @@ export default function PersistentMenuManager({
         );
       }
 
-      const data = Array.isArray(result.data) ? result.data : [];
+      const menu = result.data && typeof result.data === "object" ? (result.data as { items?: ServerMenuItem[] }) : null;
+      const data = Array.isArray(menu?.items) ? menu.items : [];
       setMenuItems(
         data.map((item) => {
           const value = item as ServerMenuItem;
@@ -127,7 +128,7 @@ export default function PersistentMenuManager({
       setError("عنوان گزینه را وارد کنید.");
       return;
     }
-    if (label.length > 80) {
+    if (label.length > 30) {
       setError("عنوان گزینه نباید بیشتر از ۳۰ کاراکتر باشد.");
       return;
     }
@@ -161,9 +162,12 @@ export default function PersistentMenuManager({
         credentials: "include",
         body: JSON.stringify({
           instagramAccountId: account.id,
+          enabled: nextMenuItems.length > 0,
           items: nextMenuItems.map((menuItem) => ({
-            menuItem: menuItem.label.trim(),
+            title: menuItem.label.trim(),
+            type: "postback",
             automationId: menuItem.automationId,
+            url: null,
           })),
         }),
       });
@@ -209,9 +213,12 @@ export default function PersistentMenuManager({
         credentials: "include",
         body: JSON.stringify({
           instagramAccountId: account.id,
+          enabled: remaining.length > 0,
           items: remaining.map((item) => ({
-            menuItem: item.label.trim(),
+            title: item.label.trim(),
+            type: "postback",
             automationId: item.automationId,
+            url: null,
           })),
         }),
       });
