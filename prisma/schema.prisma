@@ -28,6 +28,7 @@ model User {
   ticketMessages TicketMessage[] @relation("TicketMessageSender")
   auditLogs AuditLog[] @relation("AuditLogActor")
   couponRedemptions CouponRedemption[]
+  storageObjects InstagramStorageObject[]
 }
 
 model InstagramAccount {
