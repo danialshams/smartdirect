@@ -171,11 +171,11 @@ function Navigation({ onNavigate, mobile = false }: { onNavigate?: () => void; m
               const active = href === "/dashboard" ? pathname === "/dashboard" : pathname === href || pathname.startsWith(`${href}/`);
               return (
                 <ListItemButton key={href} component={Link} href={href} onClick={onNavigate} selected={active} dir="rtl"
-                  sx={{ minHeight: { xs: 46, sm: 50, lg: 34 }, display: "flex", flexDirection: "row", alignItems: "center", columnGap: { xs: 1, lg: 0.75 }, borderRadius: 2, px: { xs: 1.25, lg: 0.85 }, color: active ? "#2563EB" : "#475569", "&.Mui-selected": { bgcolor: "#EFF6FF", color: "#2563EB" }, "&.Mui-selected:hover": { bgcolor: "#EFF6FF" }, "&:hover": { bgcolor: "#F8FAFC", color: "#1D4ED8" } }}>
+                  sx={{ minHeight: { xs: 46, sm: 50, lg: 34 }, display: "flex", flexDirection: "row", alignItems: "center", columnGap: { xs: 0.6, lg: 0.75 }, borderRadius: 2, px: { xs: 1.25, lg: 0.85 }, color: active ? "#2563EB" : "#475569", "&.Mui-selected": { bgcolor: "#EFF6FF", color: "#2563EB" }, "&.Mui-selected:hover": { bgcolor: "#EFF6FF" }, "&:hover": { bgcolor: "#F8FAFC", color: "#1D4ED8" } }}>
                   <ListItemIcon sx={{ minWidth: 0, width: { xs: 24, lg: 17 }, flex: { xs: "0 0 24px", lg: "0 0 17px" }, color: "inherit", display: "flex", justifyContent: "center", alignItems: "center", m: 0 }}>
                     <Icon size={19} strokeWidth={1.9} />
                   </ListItemIcon>
-                  <ListItemText primary={title} sx={{ minWidth: 0, flex: "0 1 auto", m: 0, textAlign: "right", direction: "rtl" }} primaryTypographyProps={{ fontSize: { xs: 13.5, sm: 14, lg: 11.5 }, fontWeight: active ? 700 : 500, lineHeight: 1.45 }} />
+                  <ListItemText primary={title} sx={{ minWidth: 0, flex: "0 1 auto", m: 0, textAlign: "right", direction: "rtl" }} primaryTypographyProps={{ fontSize: { xs: 12.5, sm: 13.5, lg: 11.5 }, fontWeight: active ? 700 : 500, lineHeight: 1.45, noWrap: true }} />
                 </ListItemButton>
               );
             })}
