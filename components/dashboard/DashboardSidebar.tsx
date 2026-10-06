@@ -63,7 +63,7 @@ const menuGroups = [
       { title: "انتشار محتوا", href: "/dashboard/publishing", icon: ImagePlus },
       { title: "کامنت‌های بی‌پاسخ", href: "/dashboard/comments", icon: MessageSquareText },
       { title: "صندوق دایرکت", href: "/dashboard/inbox", icon: Inbox },
-      { title: "سؤال‌های شروع گفتگو", href: "/dashboard/ice-breaker", icon: MessageCircleQuestion },
+      { title: "پیام‌های شروع گفتگو", href: "/dashboard/ice-breaker", icon: MessageCircleQuestion },
       { title: "منوی دایرکت", href: "/dashboard/persistent-menu", icon: MenuIcon },
       { title: "پاسخ خودکار کامنت", href: "/dashboard/comment-automation", icon: MessageCircleReply },
       { title: "پاسخ خودکار استوری", href: "/dashboard/story-automation", icon: Camera },
