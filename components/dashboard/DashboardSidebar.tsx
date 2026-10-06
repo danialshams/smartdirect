@@ -65,6 +65,8 @@ const menuGroups = [
       { title: "صندوق دایرکت", href: "/dashboard/inbox", icon: Inbox },
       { title: "پیام‌های شروع گفتگو", href: "/dashboard/ice-breaker", icon: MessageCircleQuestion },
       { title: "منوی دایرکت", href: "/dashboard/persistent-menu", icon: MenuIcon },
+      { title: "پاسخ خودکار کامنت", href: "/dashboard/comment-automation", icon: MessageCircleReply },
+      { title: "پاسخ خودکار استوری", href: "/dashboard/story-automation", icon: Camera },
       { title: "مدیریت پاسخ‌های خودکار", href: "/dashboard/auto-replies", icon: MessageCircleReply },
       { title: "تیکت‌ها", href: "/dashboard/tickets", icon: Ticket },
     ],
