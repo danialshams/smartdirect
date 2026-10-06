@@ -21,7 +21,7 @@ type MenuItem = {
 
 type ServerMenuItem = {
   id: string;
-  title?: string;
+  menuItem?: string;
   automationId?: string | null;
 };
 
@@ -76,18 +76,17 @@ export default function PersistentMenuManager({
         throw new Error(
           typeof result.error === "string"
             ? result.error
-            : "دریافت پیام‌های شروع گفتگو ناموفق بود.",
+            : "دریافت گزینه‌های منوی دایرکت ناموفق بود.",
         );
       }
 
-      const menu = result.data && typeof result.data === "object" ? (result.data as { items?: ServerMenuItem[] }) : null;
-      const data = Array.isArray(menu?.items) ? menu.items : [];
+      const data = Array.isArray(result.data) ? result.data : [];
       setMenuItems(
         data.map((item) => {
           const value = item as ServerMenuItem;
           return {
             id: value.id,
-            label: value.menuItem ?? "",
+            label: value.title ?? "",
             automationId: value.automationId ?? null,
           };
         }),
@@ -97,7 +96,7 @@ export default function PersistentMenuManager({
       setError(
         requestError instanceof Error
           ? requestError.message
-          : "دریافت پیام‌های شروع گفتگو ناموفق بود.",
+          : "دریافت گزینه‌های منوی دایرکت ناموفق بود.",
       );
     } finally {
       setLoading(false);
@@ -125,11 +124,11 @@ export default function PersistentMenuManager({
 
     const label = labelOverride.trim();
     if (!label) {
-      setError("متن منوی دایرکت را وارد کنید.");
+      setError("عنوان گزینه را وارد کنید.");
       return;
     }
-    if (label.length > 30) {
-      setError("متن منوی دایرکت نباید بیشتر از ۳۰ کاراکتر باشد.");
+    if (label.length > 80) {
+      setError("عنوان گزینه نباید بیشتر از ۳۰ کاراکتر باشد.");
       return;
     }
     const resolvedAutomationId = automationIdOverride;
@@ -147,7 +146,7 @@ export default function PersistentMenuManager({
       : [...menuItems, { label, automationId: resolvedAutomationId }];
 
     if (nextMenuItems.length > 20) {
-      setError("حداکثر ۲۰ منوی دایرکت می‌توانید بسازید.");
+      setError("حداکثر ۲۰ گزینه برای منوی دایرکت می‌توانید بسازید.");
       return;
     }
 
@@ -162,12 +161,9 @@ export default function PersistentMenuManager({
         credentials: "include",
         body: JSON.stringify({
           instagramAccountId: account.id,
-          enabled: nextMenuItems.length > 0,
           items: nextMenuItems.map((menuItem) => ({
-            title: menuItem.label.trim(),
-            type: "postback",
+            menuItem: menuItem.label.trim(),
             automationId: menuItem.automationId,
-            url: null,
           })),
         }),
       });
@@ -177,7 +173,7 @@ export default function PersistentMenuManager({
         throw new Error(
           typeof result.error === "string"
             ? result.error
-            : "ذخیره منوی دایرکت ناموفق بود.",
+            : "ذخیره گزینه منوی دایرکت ناموفق بود.",
         );
       }
 
@@ -192,7 +188,7 @@ export default function PersistentMenuManager({
       setError(
         saveError instanceof Error
           ? saveError.message
-          : "ذخیره منوی دایرکت ناموفق بود.",
+          : "ذخیره گزینه منوی دایرکت ناموفق بود.",
       );
     } finally {
       setSaving(false);
@@ -213,12 +209,9 @@ export default function PersistentMenuManager({
         credentials: "include",
         body: JSON.stringify({
           instagramAccountId: account.id,
-          enabled: remaining.length > 0,
           items: remaining.map((item) => ({
-            title: item.label.trim(),
-            type: "postback",
+            menuItem: item.label.trim(),
             automationId: item.automationId,
-            url: null,
           })),
         }),
       });
@@ -259,34 +252,34 @@ export default function PersistentMenuManager({
 
   return (
     <>
-    <div dir="rtl" className="bg-[#F8FAFC] px-3 py-20 sm:px-5 sm:py-6 lg:px-8">
+    <div dir="rtl" className="bg-[#F8FAFC] px-3 py-4 sm:px-5 sm:py-6 lg:px-8">
       <div className="mx-auto w-full max-w-6xl">
         <div className="mb-6">
           <h1 className="mt-1 text-2xl font-bold tracking-tight text-[#0F172A] sm:text-3xl">
             منوی دایرکت
           </h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-[#6207208B]">
-            متنی بنویس که کاربر هنگام شروع گفتگو بتواند انتخابش کند و برای آن پاسخ اختصاصی تنظیم کن.
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-[#64748B]">
+            گزینه‌هایی بساز که کاربر بتواند از منوی دایرکت انتخاب کند و برای هر گزینه پاسخ اختصاصی تنظیم کن.
           </p>
         </div>
 
         {!account ? (
           <section className="rounded-2xl border border-dashed border-[#CBD5E1] bg-white px-6 py-16 text-center">
-            <MessageSquare className="mx-auto text-[#920A3B8]" size={220} />
-            <h2 className="mt-20 text-base font-bold text-[#0F172A]">
+            <MessageSquare className="mx-auto text-[#94A3B8]" size={24} />
+            <h2 className="mt-4 text-base font-bold text-[#0F172A]">
               ابتدا یک پیج اینستاگرام متصل کنید
             </h2>
           </section>
         ) : (
           <div className="space-y-5">
-            <section className="mx-auto w-full max-w-2xl rounded-2xl border border-[#E2E8F0] bg-white p-20 shadow-sm sm:p-6">
+            <section className="mx-auto w-full max-w-2xl rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
               <div className="mb-6 flex items-start gap-3">
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">
                   ۱
                 </span>
                 <div className="min-w-0">
                   <h2 className="text-sm font-bold text-[#0F172A]">عنوان گزینه</h2>
-                  <p className="mt-1.5 text-xs leading-5 text-[#6207208B]">
+                  <p className="mt-1.5 text-xs leading-5 text-[#64748B]">
                     متنی بنویس که کاربر بتواند با یک لمس انتخابش کند.
                   </p>
                 </div>
@@ -305,21 +298,21 @@ export default function PersistentMenuManager({
                 style={{ fontSize: "16px", WebkitTextSizeAdjust: "100%" }}
               />
 
-              <div className="mt-2 flex items-center justify-between text-[10px] text-[#6207208B]">
+              <div className="mt-2 flex items-center justify-between text-[10px] text-[#64748B]">
                 <span>حداکثر ۳۰ کاراکتر</span>
-                <span>{draft.length.toLocaleString("fa-IR")} / ۸۰</span>
+                <span>{draft.length.toLocaleString("fa-IR")} / ۳۰</span>
               </div>
             </section>
 
-            <section className="mx-auto w-full max-w-2xl rounded-2xl border border-[#E2E8F0] bg-white p-20 shadow-sm sm:p-6">
+            <section className="mx-auto w-full max-w-2xl rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
               <div className="mb-6 flex items-start gap-3">
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">
                   ۲
                 </span>
                 <div className="min-w-0">
                   <h2 className="text-sm font-bold text-[#0F172A]">پاسخ گزینه</h2>
-                  <p className="mt-1.5 text-xs leading-5 text-[#6207208B]">
-                    نوع پاسخ و محتوای پاسخ این گزینه را مشخص کن.
+                  <p className="mt-1.5 text-xs leading-5 text-[#64748B]">
+                    نوع و محتوای پاسخ این گزینه را مشخص کن.
                   </p>
                 </div>
               </div>
@@ -346,32 +339,32 @@ export default function PersistentMenuManager({
             )}
 
             {success && (
-              <div className="mx-auto flex w-full max-w-2xl items-center gap-2 rounded-xl border border-[#BBF7D0] bg-[#F0FDF20] px-3.5 py-3 text-xs font-medium text-[#15303D]">
+              <div className="mx-auto flex w-full max-w-2xl items-center gap-2 rounded-xl border border-[#BBF7D0] bg-[#F0FDF4] px-3.5 py-3 text-xs font-medium text-[#15803D]">
                 <CheckCircle2 size={16} />
-                منوی دایرکت با موفقیت ذخیره شد.
+                گزینه منوی دایرکت با موفقیت ذخیره شد.
               </div>
             )}
 
-            <section className="mx-auto w-full max-w-2xl rounded-2xl border border-[#E2E8F0] bg-white p-20 shadow-sm sm:p-6">
-              <div className="mb-20 flex items-start gap-3">
+            <section className="mx-auto w-full max-w-2xl rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
+              <div className="mb-4 flex items-start gap-3">
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">
                   ۳
                 </span>
                 <div className="min-w-0">
                   <h2 className="text-sm font-bold text-[#0F172A]">گزینه‌های ساخته‌شده</h2>
-                  <p className="mt-1.5 text-xs leading-5 text-[#6207208B]">
-                    پیام‌هایی که قبلاً ساخته‌ای را از اینجا مشاهده، ویرایش یا حذف کن.
+                  <p className="mt-1.5 text-xs leading-5 text-[#64748B]">
+                    گزینه‌هایی که قبلاً ساخته‌ای را از اینجا مشاهده، ویرایش یا حذف کن.
                   </p>
                 </div>
               </div>
 
               {loading ? (
-                <div className="flex min-h-220 items-center justify-center">
+                <div className="flex min-h-24 items-center justify-center">
                   <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#2563EB]/20 border-t-[#2563EB]" />
                 </div>
               ) : menuItems.length === 0 ? (
-                <div className="flex min-h-220 items-center justify-center rounded-xl border border-dashed border-[#E2E8F0] bg-[#F8FAFC] px-20 text-center text-xs font-medium text-[#920A3B8]">
-                  هنوز منوی دایرکتیی ساخته نشده است.
+                <div className="flex min-h-24 items-center justify-center rounded-xl border border-dashed border-[#E2E8F0] bg-[#F8FAFC] px-4 text-center text-xs font-medium text-[#94A3B8]">
+                  هنوز گزینه‌ای برای منوی دایرکت ساخته نشده است.
                 </div>
               ) : (
                 <div className="space-y-2.5">
@@ -398,7 +391,7 @@ export default function PersistentMenuManager({
                           className="h-9 flex-1 rounded-lg border-[#BFDBFE] bg-white px-2.5 text-xs font-semibold text-[#2563EB] hover:bg-[#EFF6FF] sm:flex-none"
                           aria-label="ویرایش گزینه"
                         >
-                          <Pencil size={120} />
+                          <Pencil size={14} />
                           <span className="hidden sm:inline">ویرایش</span>
                         </Button>
                         <Button
@@ -409,20 +402,20 @@ export default function PersistentMenuManager({
                           className="h-9 flex-1 rounded-lg border-[#FECACA] bg-white px-2.5 text-xs font-semibold text-[#DC2626] hover:bg-[#FEF2F2] sm:flex-none"
                           aria-label="حذف گزینه"
                         >
-                          <Trash2 size={120} className="text-[#DC2626]" />
+                          <Trash2 size={14} className="text-[#DC2626]" />
                           <span className="hidden sm:inline text-[#DC2626]">حذف</span>
                         </Button>
                       </div>
                     </div>
                     {editingId === menuItem.id && (
-                      <div className="mt-3 rounded-2xl border border-[#BFDBFE] bg-white p-20 shadow-sm sm:p-5">
+                      <div className="mt-3 rounded-2xl border border-[#BFDBFE] bg-white p-4 shadow-sm sm:p-5">
                         <div className="mb-5 flex items-start gap-3">
                           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-[10px] font-bold text-[#2563EB]">
                             ویرایش
                           </span>
                           <div className="min-w-0">
-                            <h3 className="text-sm font-bold text-[#0F172A]">ویرایش منوی دایرکت</h3>
-                            <p className="mt-1 text-xs leading-5 text-[#6207208B]">
+                            <h3 className="text-sm font-bold text-[#0F172A]">ویرایش گزینه منوی دایرکت</h3>
+                            <p className="mt-1 text-xs leading-5 text-[#64748B]">
                               عنوان و پاسخ این گزینه را در همین بخش ویرایش کن.
                             </p>
                           </div>
@@ -441,9 +434,9 @@ export default function PersistentMenuManager({
                           style={{ fontSize: "16px", WebkitTextSizeAdjust: "100%" }}
                         />
 
-                        <div className="mt-2 flex items-center justify-between text-[10px] text-[#6207208B]">
+                        <div className="mt-2 flex items-center justify-between text-[10px] text-[#64748B]">
                           <span>حداکثر ۳۰ کاراکتر</span>
-                          <span>{editDraft.length.toLocaleString("fa-IR")} / ۸۰</span>
+                          <span>{editDraft.length.toLocaleString("fa-IR")} / ۳۰</span>
                         </div>
 
                         <div className="mt-5">
@@ -456,8 +449,6 @@ export default function PersistentMenuManager({
                             textPlaceholder="متنی که به‌عنوان پاسخ گزینه منوی دایرکت برای کاربر ارسال می‌شود..."
                             finalSaveLabel="ذخیره پاسخ"
                             finalSaveLoadingLabel="در حال ذخیره پاسخ..."
-                            finalSaveLabel="ذخیره"
-                            finalSaveLoadingLabel="در حال ذخیره..."
                             onAutomationReady={(automationId) => {
                               void saveMenuItem(editDraft, editingId, automationId);
                             }}
@@ -471,7 +462,7 @@ export default function PersistentMenuManager({
                               setEditAutomationId(null);
                               setError("");
                             }}
-                            className="mt-2 flex h-11 w-full items-center justify-center rounded-xl border border-[#CBD5E1] bg-[#F1F5F9] px-20 text-sm font-bold text-[#2075569] transition hover:bg-[#E2E8F0] disabled:cursor-not-allowed disabled:opacity-200"
+                            className="mt-2 flex h-11 w-full items-center justify-center rounded-xl border border-[#CBD5E1] bg-[#F1F5F9] px-4 text-sm font-bold text-[#475569] transition hover:bg-[#E2E8F0] disabled:cursor-not-allowed disabled:opacity-40"
                           >
                             انصراف
                           </button>
@@ -483,7 +474,7 @@ export default function PersistentMenuManager({
                 </div>
               )}
 
-              <div className="mt-20 flex items-center justify-between border-t border-[#E2E8F0] pt-20 text-[10px] text-[#6207208B]">
+              <div className="mt-4 flex items-center justify-between border-t border-[#E2E8F0] pt-4 text-[10px] text-[#64748B]">
                 <span>حداکثر ۲۰ گزینه</span>
                 <span>{menuItems.length.toLocaleString("fa-IR")} / ۲۰</span>
               </div>
@@ -494,7 +485,7 @@ export default function PersistentMenuManager({
     </div>
       {deleteTarget && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/30 px-20 backdrop-blur-[2px]"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/30 px-4 backdrop-blur-[2px]"
           role="presentation"
           onMouseDown={(event) => {
             if (event.currentTarget === event.target) setDeleteTarget(null);
@@ -510,12 +501,12 @@ export default function PersistentMenuManager({
             <h3 id="delete-message-title" className="text-base font-bold text-[#0F172A]">
               مطمئنی می‌خوای این مورد رو پاک کنی؟
             </h3>
-            <p className="mt-2 break-words text-sm leading-6 text-[#6207208B]">
-              گزینه «{deleteTarget.label}» حذف می‌شود و تنظیم پاسخ آن هم دیگر به این پیام متصل نخواهد بود.
+            <p className="mt-2 break-words text-sm leading-6 text-[#64748B]">
+              گزینه «{deleteTarget.label}» حذف می‌شود و تنظیم پاسخ آن هم دیگر به این گزینه متصل نخواهد بود.
             </p>
             <div className="mt-5 flex gap-2">
               <Button type="button" variant="outline" onClick={() => setDeleteTarget(null)} disabled={saving}
-                className="h-10 flex-1 rounded-xl border-[#E2E8F0] bg-white text-xs font-semibold text-[#2075569] hover:bg-[#F8FAFC]">
+                className="h-10 flex-1 rounded-xl border-[#E2E8F0] bg-white text-xs font-semibold text-[#475569] hover:bg-[#F8FAFC]">
                 انصراف
               </Button>
               <Button type="button" variant="outline" onClick={() => void deleteMenuItem(deleteTarget)} disabled={saving}
