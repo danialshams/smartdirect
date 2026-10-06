@@ -452,6 +452,7 @@ export default function PersistentMenuManager({
                     void saveMenuItem(draft, null, automationId);
                   }}
                 />
+                )}
               </div>
             </section>
 
