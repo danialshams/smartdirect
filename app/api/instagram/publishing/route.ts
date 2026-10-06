@@ -9,6 +9,7 @@ import { enqueueInstagramPublishing } from "@/lib/instagram/publishing-queue";
 import { processPublishingQueueJob } from "@/lib/instagram/publishing-workflow";
 import { proxyInstagramMediaUrl } from "@/lib/instagram/media-proxy";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
+import { getStorageObjectExpiry } from "@/lib/instagram/publishing-media-cleanup";
 
 export const dynamic = "force-dynamic";
 const INSTAGRAM_API_VERSION = "v26.0";
@@ -222,6 +223,24 @@ export async function POST(request: NextRequest) {
     }
 
     const isScheduled = !!scheduledAt && scheduledAt.getTime() > Date.now();
+    const mediaExpiry = getStorageObjectExpiry(scheduledAt);
+
+    const uploadedStorageKeys = data.media.map((item) => item.storageKey);
+    if (uploadedStorageKeys.some((key) => key.startsWith("pending/"))) {
+      const tracked = await prisma.instagramStorageObject.findMany({
+        where: {
+          userId: session.user.id,
+          storageKey: { in: uploadedStorageKeys },
+          deletedAt: null,
+          expiresAt: { gt: new Date() },
+        },
+        select: { storageKey: true },
+      });
+      const trackedKeys = new Set(tracked.map((item) => item.storageKey));
+      if (trackedKeys.size !== uploadedStorageKeys.filter((key) => key.startsWith("pending/")).length) {
+        return NextResponse.json({ success: false, message: "یک یا چند فایل آپلودشده معتبر نیست یا منقضی شده است. دوباره آپلود کنید." }, { status: 400 });
+      }
+    }
     let job;
     try {
       job = await prisma.instagramPublishJob.create({
@@ -240,7 +259,7 @@ export async function POST(request: NextRequest) {
           storyReplyTriggerResponse: data.storyReplyTriggerResponse?.trim() || null,
           scheduledAt,
           idempotencyKey: data.idempotencyKey ?? null,
-          media: { create: data.media.map((item) => ({ type: item.type, storageKey: item.storageKey, publicUrl: item.publicUrl ?? null, fileName: item.fileName ?? null, mimeType: item.mimeType ?? null, fileSize: item.fileSize ?? null, sortOrder: item.sortOrder })) },
+          media: { create: data.media.map((item) => ({ type: item.type, storageKey: item.storageKey, publicUrl: item.publicUrl ?? null, fileName: item.fileName ?? null, mimeType: item.mimeType ?? null, fileSize: item.fileSize ?? null, expiresAt: mediaExpiry, sortOrder: item.sortOrder })) },
         },
         include: { media: { orderBy: { sortOrder: "asc" } } },
       });
