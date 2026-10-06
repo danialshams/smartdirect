@@ -25,6 +25,7 @@ type EntryPointFlowBuilderProps = {
     responseTypeTitle?: string;
     responseTypeDescription?: string;
     textPlaceholder?: string;
+    hideVideo?: boolean;
     triggerType?: "DM" | "COMMENT_KEYWORD" | "STORY_REPLY_KEYWORD";
     keyword?: string;
     onKeywordChange?: (value: string) => void;
@@ -76,6 +77,7 @@ export default function EntryPointFlowBuilder({
     responseTypeTitle = "نوع پاسخ خودکار",
     responseTypeDescription = "نوع پاسخی را که می‌خواهید برای این محتوا ارسال شود انتخاب کنید.",
     textPlaceholder = "متنی که به‌عنوان پاسخ پیام شروع گفتگو برای کاربر ارسال می‌شود...",
+    hideVideo = false,
     triggerType = "DM",
     keyword = "",
     onKeywordChange,
