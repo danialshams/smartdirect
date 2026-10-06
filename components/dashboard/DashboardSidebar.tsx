@@ -67,8 +67,8 @@ const menuGroups = [
       { title: "پیام‌های شروع گفتگو", href: "/dashboard/ice-breaker", icon: MessageCircleQuestion },
       { title: "منوی دایرکت", href: "/dashboard/persistent-menu", icon: MenuIcon },
       { title: "پاسخ خودکار کامنت", href: "/dashboard/comment-automation", icon: MessageCircleReply },
-      { title: "پاسخ خودکار استوری", href: "/dashboard/story-automation", icon: Camera },
       { title: "مشاهده و ویرایش پاسخ‌های خودکار", href: "/dashboard/auto-replies", icon: Settings2 },
+      { title: "پاسخ خودکار استوری", href: "/dashboard/story-automation", icon: Camera },
       { title: "تیکت‌ها", href: "/dashboard/tickets", icon: Ticket },
     ],
   },
@@ -172,7 +172,7 @@ function Navigation({ onNavigate, mobile = false }: { onNavigate?: () => void; m
               const active = href === "/dashboard" ? pathname === "/dashboard" : pathname === href || pathname.startsWith(`${href}/`);
               return (
                 <ListItemButton key={href} component={Link} href={href} onClick={onNavigate} selected={active} dir="rtl"
-                  sx={{ order: href === "/dashboard/auto-replies" ? { xs: 7, lg: 8 } : href === "/dashboard/story-automation" ? { xs: 8, lg: 7 } : undefined, minHeight: { xs: 46, sm: 50, lg: 34 }, display: "flex", flexDirection: "row", alignItems: "center", columnGap: { xs: 0.6, lg: 0.75 }, borderRadius: 2, px: { xs: 1.25, lg: 0.85 }, color: active ? "#2563EB" : "#475569", "&.Mui-selected": { bgcolor: "#EFF6FF", color: "#2563EB" }, "&.Mui-selected:hover": { bgcolor: "#EFF6FF" }, "&:hover": { bgcolor: "#F8FAFC", color: "#1D4ED8" } }}>
+                  sx={{ minHeight: { xs: 46, sm: 50, lg: 34 }, display: "flex", flexDirection: "row", alignItems: "center", columnGap: { xs: 0.6, lg: 0.75 }, borderRadius: 2, px: { xs: 1.25, lg: 0.85 }, color: active ? "#2563EB" : "#475569", "&.Mui-selected": { bgcolor: "#EFF6FF", color: "#2563EB" }, "&.Mui-selected:hover": { bgcolor: "#EFF6FF" }, "&:hover": { bgcolor: "#F8FAFC", color: "#1D4ED8" } }}>
                   <ListItemIcon sx={{ minWidth: 0, width: { xs: 24, lg: 17 }, flex: { xs: "0 0 24px", lg: "0 0 17px" }, color: "inherit", display: "flex", justifyContent: "center", alignItems: "center", m: 0 }}>
                     <Icon size={19} strokeWidth={1.9} />
                   </ListItemIcon>
