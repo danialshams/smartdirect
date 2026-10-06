@@ -124,7 +124,9 @@ export default function PublishingJobEditor({
 
   const [job, setJob] = useState<Job | null>(() => initialJob ?? readCachedJob(id));
   const [automation, setAutomation] = useState<AutomationMeta | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(
+    () => initialJob === null && readCachedJob(id) === null,
+  );
   const [automationLoading, setAutomationLoading] = useState(false);
   const [contentSaving, setContentSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
