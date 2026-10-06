@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Loader2, MessageCircleReply, Pencil } from "lucide-react";
+import { Camera, Image, Images, Loader2, MessageCircleReply, Pencil, Video } from "lucide-react";
 
 type PublishType = "POST" | "CAROUSEL" | "REEL" | "STORY";
 
@@ -42,6 +42,7 @@ export default function AutoRepliesManager() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [filter, setFilter] = useState<"ALL" | PublishType>("ALL");
 
   useEffect(() => {
     let cancelled = false;
@@ -61,7 +62,7 @@ export default function AutoRepliesManager() {
         if (!cancelled) {
           setJobs(
             (Array.isArray(result.data) ? result.data : []).filter(
-              (job: Job) => job.status === "PUBLISHED",
+              (job: Job) => job.status === "PUBLISHED" && (Boolean(job.commentAutomationId) || Boolean(job.storyReplyAutomationId)),
             ),
           );
         }
@@ -75,7 +76,17 @@ export default function AutoRepliesManager() {
     }
 
     void load();
-    return () => {
+    const filteredJobs = useMemo(() => filter === "ALL" ? jobs : jobs.filter((job) => job.type === filter), [filter, jobs]);
+
+  const filters: Array<{ key: "ALL" | PublishType; label: string; icon: typeof MessageCircleReply }> = [
+    { key: "ALL", label: "همه", icon: MessageCircleReply },
+    { key: "POST", label: "پست", icon: Image },
+    { key: "CAROUSEL", label: "آلبوم", icon: Images },
+    { key: "REEL", label: "ریلز", icon: Video },
+    { key: "STORY", label: "استوری", icon: Camera },
+  ];
+
+  return () => {
       cancelled = true;
     };
   }, []);
@@ -96,6 +107,16 @@ export default function AutoRepliesManager() {
             </div>
           </div>
 
+          {!loading && !error && jobs.length > 0 ? (
+            <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
+              {filters.map(({ key, label, icon: Icon }) => (
+                <button key={key} type="button" onClick={() => setFilter(key)} className={`inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border px-3 text-xs font-semibold transition ${filter === key ? "border-[#2563EB] bg-[#EFF6FF] text-[#2563EB]" : "border-[#E2E8F0] bg-white text-[#64748B] hover:bg-[#F8FAFC]"}`}>
+                  <Icon size={14} />{label}
+                </button>
+              ))}
+            </div>
+          ) : null}
+
           {loading ? (
             <div className="flex min-h-40 items-center justify-center">
               <Loader2 size={24} className="animate-spin text-[#2563EB]" />
@@ -104,13 +125,13 @@ export default function AutoRepliesManager() {
             <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium text-[#B91C1C]">
               {error}
             </div>
-          ) : jobs.length === 0 ? (
+          ) : filteredJobs.length === 0 ? (
             <div className="flex min-h-28 items-center justify-center rounded-xl border border-[#E2E8F0] px-4 text-center text-xs font-medium text-[#94A3B8]">
               هنوز محتوای منتشرشده‌ای وجود ندارد.
             </div>
           ) : (
             <div className="divide-y divide-[#E2E8F0] rounded-xl border border-[#E2E8F0]">
-              {jobs.map((job) => {
+              {filteredJobs.map((job) => {
                 const hasAutomation =
                   Boolean(job.commentAutomationId) || Boolean(job.storyReplyAutomationId);
 
@@ -145,9 +166,6 @@ export default function AutoRepliesManager() {
                             {formatDate(job.publishedAt ?? job.createdAt)}
                           </span>
                         </div>
-                        <p className="mt-1 text-xs font-medium text-[#64748B]">
-                          {hasAutomation ? "پاسخ خودکار فعال است." : "بدون پاسخ خودکار"}
-                        </p>
                       </div>
                     </div>
 
