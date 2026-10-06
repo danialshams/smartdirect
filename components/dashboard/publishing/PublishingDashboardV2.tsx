@@ -469,6 +469,29 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       window.clearInterval(interval);
     };
   }, []);
+  useEffect(() => {
+    if (!jobs.length) return;
+
+    const ids = jobs
+      .filter((job) => job.status === "SCHEDULED" || job.status === "PUBLISHED")
+      .slice(0, 3)
+      .map((job) => job.id);
+
+    const prefetch = () => {
+      for (const jobId of ids) {
+        router.prefetch(`/dashboard/publishing/${jobId}`);
+      }
+    };
+
+    if ("requestIdleCallback" in window) {
+      const handle = window.requestIdleCallback(prefetch, { timeout: 1200 });
+      return () => window.cancelIdleCallback(handle);
+    }
+
+    const handle = window.setTimeout(prefetch, 250);
+    return () => window.clearTimeout(handle);
+  }, [jobs, router]);
+
   useEffect(() => { if (selectedAccountId) void loadResources(selectedAccountId); }, [selectedAccountId]);
 
   function revokeLocalMedia(items: LocalMedia[]) { items.forEach((item) => URL.revokeObjectURL(item.previewUrl)); }
@@ -1130,7 +1153,15 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                                 <span className="mr-2 text-xs font-semibold text-[#2563EB]">{formatScheduledLabel(new Date(job.scheduledAt!))}</span>
                               </div>
                             </div>
-                            <Link href={`/dashboard/publishing/${job.id}`} prefetch className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-[#BFDBFE] bg-white px-2.5 text-xs font-semibold text-[#2563EB] no-underline hover:bg-[#EFF6FF] sm:flex-none" aria-label="ویرایش محتوا"><Pencil size={14} /><span className="hidden sm:inline">ویرایش</span></Link>
+                            <Link
+  href={`/dashboard/publishing/${job.id}`}
+  prefetch
+  onPointerEnter={() => router.prefetch(`/dashboard/publishing/${job.id}`)}
+  onFocus={() => router.prefetch(`/dashboard/publishing/${job.id}`)}
+  onTouchStart={() => router.prefetch(`/dashboard/publishing/${job.id}`)}
+  className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-[#BFDBFE] bg-white px-2.5 text-xs font-semibold text-[#2563EB] no-underline hover:bg-[#EFF6FF] sm:flex-none"
+  aria-label="ویرایش محتوا"
+><Pencil size={14} /><span className="hidden sm:inline">ویرایش</span></Link>
                           </div>
                         ))}
                       </div>
