@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Button } from "@/components/dashboard/DashboardUI";
+import { toast } from "sonner";
 import AutomationForm from "./AutomationForm";
 import type { Automation } from "./AutomationManager";
 
@@ -62,7 +62,7 @@ export default function StoryAutomationConfigure() {
     updatedAt: "",
   };
 
-  if (loading) return <div dir="rtl" className="mx-auto w-full max-w-[1200px] animate-pulse"><div className="mb-5 h-8 w-44 rounded-lg bg-muted" /><div className="h-[650px] rounded-3xl bg-muted" /></div>;
+  if (loading) return <div dir="rtl" className="flex min-h-[50vh] items-center justify-center"><div className="h-7 w-7 animate-spin rounded-full border-2 border-primary border-t-transparent" aria-label="در حال بارگذاری" /></div>;
 
   if (!account) return <div dir="rtl" className="mx-auto max-w-xl rounded-3xl border border-red-200 bg-red-50 p-6 text-sm leading-7 text-red-700">{error || "استوری پیدا نشد."}<div><Button type="button" onClick={() => router.back()} className="mt-5 rounded-xl">بازگشت</Button></div></div>;
 
@@ -71,8 +71,20 @@ export default function StoryAutomationConfigure() {
         account={account as never}
         automation={emptyAutomation}
         onClose={() => router.back()}
-        onCreated={() => router.push("/dashboard/story-automation")}
-        onUpdated={() => router.push("/dashboard/story-automation")}
+        onCreated={() => {
+          toast.success("پاسخ خودکار با موفقیت ایجاد شد.", {
+            description: "می‌توانید در بخش «مشاهده و ویرایش پاسخ‌های خودکار» آن را مشاهده و ویرایش کنید.",
+            duration: 5000,
+          });
+          router.push("/dashboard/auto-replies");
+        }}
+        onUpdated={() => {
+          toast.success("پاسخ خودکار با موفقیت ایجاد شد.", {
+            description: "می‌توانید در بخش «مشاهده و ویرایش پاسخ‌های خودکار» آن را مشاهده و ویرایش کنید.",
+            duration: 5000,
+          });
+          router.push("/dashboard/auto-replies");
+        }}
         pageMode
       />
   );
