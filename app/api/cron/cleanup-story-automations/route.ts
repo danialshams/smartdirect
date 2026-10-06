@@ -47,9 +47,6 @@ export async function GET(request: NextRequest) {
   });
 
   const results: Array<{ accountId: string; username: string; deleted: number; success: boolean; error?: string }> = [];
-  let publishedMediaDeleted = 0;
-  let publishedMediaFailed = 0;
-
   const storageCleanup = await cleanupInstagramPublishStorage();
   const publishedMediaDeleted = storageCleanup.mediaDeleted;
   const publishedMediaFailed = storageCleanup.mediaFailed;
