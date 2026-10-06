@@ -17,12 +17,17 @@ type MenuItem = {
   id?: string;
   label: string;
   automationId: string | null;
+  type: "postback" | "web_url";
+  url: string;
 };
 
 type ServerMenuItem = {
   id: string;
   title?: string;
   automationId?: string | null;
+  payload?: string;
+  type?: "postback" | "web_url";
+  url?: string | null;
 };
 
 export default function PersistentMenuManager({
@@ -89,6 +94,14 @@ export default function PersistentMenuManager({
             id: value.id,
             label: value.title ?? "",
             automationId: value.automationId ?? null,
+            type:
+              value.type ??
+              (value.payload?.startsWith("__web_url__:") ? "web_url" : "postback"),
+            url:
+              value.url ??
+              (value.payload?.startsWith("__web_url__:")
+                ? value.payload.slice("__web_url__:".length)
+                : ""),
           };
         }),
       );
@@ -133,7 +146,25 @@ export default function PersistentMenuManager({
       return;
     }
     const resolvedAutomationId = automationIdOverride;
-    if (!resolvedAutomationId) {
+    const editingItem = editingIdOverride
+      ? menuItems.find((menuItem) => menuItem.id === editingIdOverride)
+      : null;
+    const itemType = editingItem?.type ?? "postback";
+    const itemUrl = editingItem?.url ?? "";
+
+    if (itemType === "web_url") {
+      if (!itemUrl.trim()) {
+        setError("لینک گزینه را وارد کنید.");
+        return;
+      }
+      try {
+        const parsed = new URL(itemUrl.trim());
+        if (!["http:", "https:"].includes(parsed.protocol)) throw new Error();
+      } catch {
+        setError("لینک گزینه معتبر نیست.");
+        return;
+      }
+    } else if (!resolvedAutomationId) {
       setError("ابتدا پاسخ گزینه را تنظیم و ذخیره کنید.");
       return;
     }
@@ -141,10 +172,10 @@ export default function PersistentMenuManager({
     const nextMenuItems = editingIdOverride
       ? menuItems.map((menuItem) =>
           menuItem.id === editingIdOverride
-            ? { ...menuItem, label, automationId: resolvedAutomationId }
+            ? { ...menuItem, label, automationId: resolvedAutomationId ?? null }
             : menuItem,
         )
-      : [...menuItems, { label, automationId: resolvedAutomationId }];
+      : [...menuItems, { label, automationId: resolvedAutomationId ?? null, type: "postback", url: "" }];
 
     if (nextMenuItems.length > 20) {
       setError("حداکثر ۲۰ گزینه برای منوی دایرکت می‌توانید بسازید.");
@@ -165,9 +196,10 @@ export default function PersistentMenuManager({
           enabled: nextMenuItems.length > 0,
           items: nextMenuItems.map((menuItem) => ({
             title: menuItem.label.trim(),
-            type: "postback",
-            automationId: menuItem.automationId,
-            url: null,
+            type: menuItem.type,
+            automationId:
+              menuItem.type === "web_url" ? null : menuItem.automationId,
+            url: menuItem.type === "web_url" ? menuItem.url.trim() : null,
           })),
         }),
       });
@@ -216,9 +248,9 @@ export default function PersistentMenuManager({
           enabled: remaining.length > 0,
           items: remaining.map((item) => ({
             title: item.label.trim(),
-            type: "postback",
-            automationId: item.automationId,
-            url: null,
+            type: item.type,
+            automationId: item.type === "web_url" ? null : item.automationId,
+            url: item.type === "web_url" ? item.url.trim() : null,
           })),
         }),
       });
@@ -324,19 +356,51 @@ export default function PersistentMenuManager({
                 </div>
               </div>
 
-              <EntryPointFlowBuilder
-                accountId={account.id}
-                automationId={null}
-                hideVideo
-                responseTypeTitle="نوع پاسخ گزینه"
-                responseTypeDescription="نوع و محتوای پاسخی را که بعد از انتخاب این گزینه ارسال می‌شود مشخص کن."
-                textPlaceholder="متنی که به‌عنوان پاسخ گزینه منوی دایرکت برای کاربر ارسال می‌شود..."
-                finalSaveLabel="ساخت پاسخ گزینه"
-                finalSaveLoadingLabel="در حال ساخت پاسخ گزینه..."
-                onAutomationReady={(automationId) => {
-                  void saveMenuItem(draft, null, automationId);
-                }}
-              />
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-2.5">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setSuccess(false);
+                      setError("");
+                      setEditAutomationId(null);
+                    }}
+                    className="h-11 rounded-xl border-[#BFDBFE] bg-[#EFF6FF] text-xs font-semibold text-[#2563EB]"
+                  >
+                    پاسخ خودکار
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setSuccess(false);
+                      setError("");
+                    }}
+                    className="h-11 rounded-xl border-[#E2E8F0] bg-white text-xs font-semibold text-[#475569]"
+                  >
+                    لینک
+                  </Button>
+                </div>
+
+                <div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3 text-xs text-[#64748B]">
+                  برای این گزینه می‌توانی پاسخ خودکار یا لینک مستقیم تنظیم کنی.
+                </div>
+
+                <EntryPointFlowBuilder
+                  accountId={account.id}
+                  automationId={null}
+                  hideVideo
+                  responseTypeTitle="نوع پاسخ گزینه"
+                  responseTypeDescription="نوع و محتوای پاسخی را که بعد از انتخاب این گزینه ارسال می‌شود مشخص کن."
+                  textPlaceholder="متنی که به‌عنوان پاسخ گزینه منوی دایرکت برای کاربر ارسال می‌شود..."
+                  finalSaveLabel="ساخت پاسخ گزینه"
+                  finalSaveLoadingLabel="در حال ساخت پاسخ گزینه..."
+                  onAutomationReady={(automationId) => {
+                    void saveMenuItem(draft, null, automationId);
+                  }}
+                />
+              </div>
             </section>
 
             {error && (
@@ -447,19 +511,87 @@ export default function PersistentMenuManager({
                         </div>
 
                         <div className="mt-5">
-                          <EntryPointFlowBuilder
-                            accountId={account.id}
-                            automationId={editAutomationId}
-                            hideVideo
-                            responseTypeTitle="نوع پاسخ گزینه"
-                            responseTypeDescription="نوع و محتوای پاسخی را که بعد از انتخاب این گزینه ارسال می‌شود مشخص کن."
-                            textPlaceholder="متنی که به‌عنوان پاسخ گزینه منوی دایرکت برای کاربر ارسال می‌شود..."
-                            finalSaveLabel="ذخیره پاسخ"
-                            finalSaveLoadingLabel="در حال ذخیره پاسخ..."
-                            onAutomationReady={(automationId) => {
-                              void saveMenuItem(editDraft, editingId, automationId);
-                            }}
-                          />
+                          <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-2.5">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                  if (editingId) {
+                                    setMenuItems((current) =>
+                                      current.map((item) =>
+                                        item.id === editingId
+                                          ? { ...item, type: "postback", url: "" }
+                                          : item,
+                                      ),
+                                    );
+                                  }
+                                  setSuccess(false);
+                                  setError("");
+                                }}
+                                className="h-11 rounded-xl border-[#BFDBFE] bg-[#EFF6FF] text-xs font-semibold text-[#2563EB]"
+                              >
+                                پاسخ خودکار
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                  if (editingId) {
+                                    setMenuItems((current) =>
+                                      current.map((item) =>
+                                        item.id === editingId
+                                          ? { ...item, type: "web_url", automationId: null }
+                                          : item,
+                                      ),
+                                    );
+                                  }
+                                  setSuccess(false);
+                                  setError("");
+                                }}
+                                className="h-11 rounded-xl border-[#E2E8F0] bg-white text-xs font-semibold text-[#475569]"
+                              >
+                                لینک
+                              </Button>
+                            </div>
+
+                            {menuItems.find((item) => item.id === editingId)?.type === "web_url" ? (
+                              <div className="space-y-2">
+                                <label className="text-xs font-semibold text-[#0F172A]">آدرس لینک</label>
+                                <Input
+                                  value={menuItems.find((item) => item.id === editingId)?.url ?? ""}
+                                  onChange={(event) => {
+                                    const url = event.target.value;
+                                    setMenuItems((current) =>
+                                      current.map((item) =>
+                                        item.id === editingId ? { ...item, url } : item,
+                                      ),
+                                    );
+                                    setSuccess(false);
+                                    setError("");
+                                  }}
+                                  placeholder="https://example.com"
+                                  type="url"
+                                  dir="ltr"
+                                  className="h-12 rounded-xl border-[#E2E8F0] bg-[#F8FAFC]"
+                                />
+                              </div>
+                            ) : (
+                              <EntryPointFlowBuilder
+                                accountId={account.id}
+                                automationId={editAutomationId}
+                                hideVideo
+                                responseTypeTitle="نوع پاسخ گزینه"
+                                responseTypeDescription="نوع و محتوای پاسخی را که بعد از انتخاب این گزینه ارسال می‌شود مشخص کن."
+                                textPlaceholder="متنی که به‌عنوان پاسخ گزینه منوی دایرکت برای کاربر ارسال می‌شود..."
+                                finalSaveLabel="ذخیره پاسخ"
+                                finalSaveLoadingLabel="در حال ذخیره پاسخ..."
+                                onAutomationReady={(automationId) => {
+                                  void saveMenuItem(editDraft, editingId, automationId);
+                                }}
+                              />
+                            )}
+                          </div>
                           <button
                             type="button"
                             disabled={saving}
