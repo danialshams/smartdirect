@@ -1,3 +1,4 @@
+import { prisma } from "@/lib/prisma";
 import { getJob, completeJob, failJob } from "@/lib/queue/core";
 import { acquireLock, releaseLock } from "@/lib/lock/redis-lock";
 import type { DistributedLockHandle } from "@/lib/lock/types";
