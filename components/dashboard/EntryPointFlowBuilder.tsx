@@ -22,6 +22,9 @@ type EntryPointFlowBuilderProps = {
     ) => void;
     finalSaveLabel?: string;
     finalSaveLoadingLabel?: string;
+    responseTypeTitle?: string;
+    responseTypeDescription?: string;
+    textPlaceholder?: string;
     triggerType?: "DM" | "COMMENT_KEYWORD" | "STORY_REPLY_KEYWORD";
     keyword?: string;
     onKeywordChange?: (value: string) => void;
@@ -70,6 +73,9 @@ export default function EntryPointFlowBuilder({
     onAutomationReady,
     finalSaveLabel = "ساخت پیام شروع گفتگو",
     finalSaveLoadingLabel = "در حال ساخت پیام شروع گفتگو...",
+    responseTypeTitle = "نوع پاسخ خودکار",
+    responseTypeDescription = "نوع پاسخی را که می‌خواهید برای این محتوا ارسال شود انتخاب کنید.",
+    textPlaceholder = "متنی که به‌عنوان پاسخ پیام شروع گفتگو برای کاربر ارسال می‌شود...",
     triggerType = "DM",
     keyword = "",
     onKeywordChange,
