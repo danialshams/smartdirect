@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
-import { getStorageProvider } from "@/lib/storage/provider";
+import { cleanupInstagramPublishStorage } from "@/lib/instagram/publishing-media-cleanup";
 
 export const dynamic = "force-dynamic";
 
@@ -50,39 +50,9 @@ export async function GET(request: NextRequest) {
   let publishedMediaDeleted = 0;
   let publishedMediaFailed = 0;
 
-  // Published Instagram media must not remain on our storage after Meta has
-  // accepted the publish. Any cleanup that failed during the publish request
-  // is retried here. This is a safety net, not the primary cleanup path.
-  const storage = getStorageProvider();
-  const pendingMedia = await prisma.instagramPublishMedia.findMany({
-    where: {
-      deletedAt: null,
-      publishJob: { status: "PUBLISHED" },
-    },
-    select: { id: true, storageKey: true },
-    orderBy: { createdAt: "asc" },
-    take: 200,
-  });
-
-  for (const item of pendingMedia) {
-    if (item.storageKey.startsWith("test:")) continue;
-
-    try {
-      await storage.delete(item.storageKey);
-      await prisma.instagramPublishMedia.update({
-        where: { id: item.id },
-        data: { deletedAt: new Date() },
-      });
-      publishedMediaDeleted += 1;
-    } catch (error) {
-      publishedMediaFailed += 1;
-      console.error("Published Instagram media cleanup retry failed:", {
-        mediaId: item.id,
-        storageKey: item.storageKey,
-        error,
-      });
-    }
-  }
+  const storageCleanup = await cleanupInstagramPublishStorage();
+  const publishedMediaDeleted = storageCleanup.mediaDeleted;
+  const publishedMediaFailed = storageCleanup.mediaFailed;
 
   for (const account of accounts) {
     try {
@@ -129,6 +99,8 @@ export async function GET(request: NextRequest) {
     deleted: results.reduce((sum, item) => sum + item.deleted, 0),
     publishedMediaDeleted,
     publishedMediaFailed,
+    orphanedStorageDeleted: storageCleanup.orphanedDeleted,
+    orphanedStorageFailed: storageCleanup.orphanedFailed,
     results,
   });
 }
