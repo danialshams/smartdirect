@@ -797,6 +797,7 @@ export default function EntryPointFlowBuilder({
                         loadingResources={loadingResources}
                         instagramAccountId={accountId}
                         showFinalSave
+                        hideVideo={hideVideo}
                         finalSaveLabel={finalSaveLabel}
                         finalSaveLoadingLabel={finalSaveLoadingLabel}
                         keywordValid={triggerType === "DM" || Boolean(keyword.trim())}
