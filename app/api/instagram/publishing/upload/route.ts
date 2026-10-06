@@ -152,6 +152,15 @@ export async function DELETE(request: NextRequest) {
     const provider = getStorageProvider();
     await provider.delete(storageKey);
 
+    await prisma.instagramStorageObject.updateMany({
+      where: {
+        userId: session.user.id,
+        storageKey,
+        deletedAt: null,
+      },
+      data: { deletedAt: new Date() },
+    });
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("DELETE /api/instagram/publishing/upload error:", error);
