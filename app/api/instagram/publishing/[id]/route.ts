@@ -9,6 +9,7 @@ import { deletePublishMediaStorage } from "@/lib/instagram/publishing-media-clea
 import { proxyInstagramMediaUrl } from "@/lib/instagram/media-proxy";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 import { scheduleInstagramPublish } from "@/lib/instagram/scheduled-publishing-workflow";
+import { getStorageObjectExpiry } from "@/lib/instagram/publishing-media-cleanup";
 
 export const dynamic = "force-dynamic";
 const INSTAGRAM_API_VERSION = "v26.0";
@@ -152,10 +153,25 @@ export async function PATCH(request: NextRequest, context: Context) {
     });
     if (conflict) return NextResponse.json({ success: false, message: "برای این اکانت در همین تاریخ و ساعت یک محتوای زمان‌بندی‌شده وجود دارد." }, { status: 409 });
 
+    const mediaExpiry = getStorageObjectExpiry(nextScheduledAt);
+
     const updated = await prisma.instagramPublishJob.update({
       where: { id: job.id },
       data: { caption: parsed.data.caption?.trim() || null, scheduledAt: nextScheduledAt, errorMessage: null },
       include: { media: { orderBy: { sortOrder: "asc" } } },
+    });
+
+    await prisma.instagramPublishMedia.updateMany({
+      where: { publishJobId: job.id, deletedAt: null },
+      data: { expiresAt: mediaExpiry },
+    });
+
+    await prisma.instagramStorageObject.updateMany({
+      where: {
+        storageKey: { in: updated.media.map((item) => item.storageKey) },
+        deletedAt: null,
+      },
+      data: { expiresAt: mediaExpiry },
     });
 
     await start(scheduleInstagramPublish, [updated.id, nextScheduledAt.toISOString()]);
