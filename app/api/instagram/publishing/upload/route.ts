@@ -9,6 +9,8 @@ import ffmpegPath from "ffmpeg-static";
 
 import { authOptions } from "@/lib/auth";
 import { getStorageProvider } from "@/lib/storage/provider";
+import { prisma } from "@/lib/prisma";
+import { getUnlinkedUploadExpiry } from "@/lib/instagram/publishing-media-cleanup";
 
 export const dynamic = "force-dynamic";
 
@@ -92,6 +94,19 @@ export async function POST(request: NextRequest) {
       body: uploadBuffer,
       contentType: uploadContentType,
     });
+
+    try {
+      await prisma.instagramStorageObject.create({
+        data: {
+          userId: session.user.id,
+          storageKey: result.storageKey,
+          expiresAt: getUnlinkedUploadExpiry(),
+        },
+      });
+    } catch (error) {
+      await provider.delete(result.storageKey).catch(() => undefined);
+      throw error;
+    }
 
     return NextResponse.json({
       success: true,
