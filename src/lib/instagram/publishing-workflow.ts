@@ -5,7 +5,7 @@ import { publishInstagramJob } from "@/lib/instagram/publishing";
 import type { QueueJob } from "@/lib/queue/types";
 import { enterObservabilityContext } from "@/lib/observability/context";
 import { observabilityLogger } from "@/lib/observability/logger";
-import { cleanupInstagramPublishStorage } from "@/lib/instagram/publishing-media-cleanup";
+import { cleanupInstagramPublishStorage, deletePublishMediaStorage } from "@/lib/instagram/publishing-media-cleanup";
 
 export async function processPublishingQueueJobStep(jobId: string) {
   "use step";
@@ -76,9 +76,18 @@ export async function processPublishingQueueJobStep(jobId: string) {
       failedQueueJob?.status === "failed" &&
       job.type === "PUBLISH"
     ) {
-      await cleanupInstagramPublishStorage().catch((cleanupError) => {
+      try {
+        const publishingJob = await prisma.instagramPublishJob.findUnique({
+          where: { id: (job as QueueJob<"PUBLISH">).payload.publishingJobId },
+          select: { media: { where: { deletedAt: null }, select: { id: true, storageKey: true, deletedAt: true } } },
+        });
+
+        if (publishingJob?.media.length) {
+          await deletePublishMediaStorage(publishingJob.media);
+        }
+      } catch (cleanupError) {
         console.error("Final publishing media cleanup failed:", cleanupError);
-      });
+      }
     }
 
     return {
