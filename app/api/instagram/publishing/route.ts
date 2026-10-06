@@ -268,6 +268,15 @@ export async function POST(request: NextRequest) {
       throw error;
     }
 
+    await prisma.instagramStorageObject.updateMany({
+      where: {
+        userId: session.user.id,
+        storageKey: { in: uploadedStorageKeys },
+        deletedAt: null,
+      },
+      data: { expiresAt: mediaExpiry },
+    });
+
     let workflowRunId: string | null = null;
     let queueJobId: string | null = null;
     if (isScheduled && scheduledAt) {
