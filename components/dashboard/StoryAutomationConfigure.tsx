@@ -3,12 +3,10 @@
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Button } from "@/components/dashboard/DashboardUI";
 import { toast } from "sonner";
-import AutomationForm from "./AutomationForm";
-import type { Automation } from "./AutomationManager";
+import AutomationCreationFlow from "./AutomationCreationFlow";
 
-type Account = { id: string; igUsername: string; igUserId: string; isConnected: boolean; createdAt?: string };
+type Account = { id: string; igUsername: string; igUserId: string; isConnected: boolean };
 
 export default function StoryAutomationConfigure() {
   const router = useRouter();
@@ -20,7 +18,7 @@ export default function StoryAutomationConfigure() {
 
   useEffect(() => {
     let cancelled = false;
-    async function load() {
+    void (async () => {
       try {
         if (!mediaId) throw new Error("استوری انتخاب نشده است.");
         const response = await fetch("/api/instagram/accounts", { cache: "no-store", credentials: "include" });
@@ -40,54 +38,27 @@ export default function StoryAutomationConfigure() {
       } finally {
         if (!cancelled) setLoading(false);
       }
-    }
-    void load();
+    })();
     return () => { cancelled = true; };
   }, [mediaId]);
 
-  const emptyAutomation: Automation = {
-    id: "",
-    instagramAccountId: account?.id || "",
-    triggerType: "STORY_REPLY_KEYWORD",
-    mediaId,
-    keyword: null,
-    commentReplyText: null,
-    replyText: null,
-    likeComment: false,
-    sendDm: false,
-    likeIncomingDm: false,
-    likeStoryReply: false,
-    requireFollow: false,
-    followGateText: null,
-    isActive: true,
-    createdAt: "",
-    updatedAt: "",
-  };
-
   if (loading) return <div dir="rtl" className="flex min-h-[50vh] items-center justify-center"><Loader2 size={24} className="animate-spin text-[#2563EB]" aria-label="در حال بارگذاری" /></div>;
-
-  if (!account) return <div dir="rtl" className="mx-auto max-w-xl rounded-3xl border border-red-200 bg-red-50 p-6 text-sm leading-7 text-red-700">{error || "استوری پیدا نشد."}<div><Button type="button" onClick={() => router.back()} className="mt-5 min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">بازگشت</Button></div></div>;
+  if (!account) return <div dir="rtl" className="mx-auto max-w-xl rounded-2xl border border-red-200 bg-red-50 p-6 text-sm leading-7 text-red-700">{error || "استوری پیدا نشد."}</div>;
 
   return (
-    <AutomationForm
-        account={account as never}
-        automation={emptyAutomation}
-        onClose={() => router.back()}
-        onCreated={() => {
-          toast.success("پاسخ خودکار با موفقیت ایجاد شد.", {
-            description: "می‌توانید در بخش «مشاهده و ویرایش پاسخ‌های خودکار» آن را مشاهده و ویرایش کنید.",
-            duration: 5000,
-          });
-          router.push("/dashboard/auto-replies");
-        }}
-        onUpdated={() => {
-          toast.success("پاسخ خودکار با موفقیت ایجاد شد.", {
-            description: "می‌توانید در بخش «مشاهده و ویرایش پاسخ‌های خودکار» آن را مشاهده و ویرایش کنید.",
-            duration: 5000,
-          });
-          router.push("/dashboard/auto-replies");
-        }}
-        pageMode
-      />
+    <AutomationCreationFlow
+      account={account}
+      mediaId={mediaId as string}
+      triggerType="STORY_REPLY_KEYWORD"
+      title="تنظیم پاسخ خودکار استوری"
+      description="کلمات فعال‌کننده و نوع پاسخ را برای این استوری مشخص کن."
+      onSaved={() => {
+        toast.success("پاسخ خودکار با موفقیت ایجاد شد.", {
+          description: "می‌توانید در بخش «مشاهده و ویرایش پاسخ‌های خودکار» آن را مشاهده و ویرایش کنید.",
+          duration: 5000,
+        });
+        router.push("/dashboard/auto-replies");
+      }}
+    />
   );
 }
