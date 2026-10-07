@@ -72,6 +72,8 @@ function jalaliDateTimeToDate(date: JalaliDate, hour: number, minute: number) { 
 
 type UploadProgressCallback = (progress: number) => void;
 
+const activeUploadAbortControllerRef: { current: AbortController | null } = { current: null };
+
 async function uploadFileWithProgress(file: File, onProgress: UploadProgressCallback) {
   const prepareResponse = await fetch("/api/instagram/publishing/upload/client", {
     method: "POST",
@@ -120,9 +122,15 @@ async function uploadFileWithProgress(file: File, onProgress: UploadProgressCall
     });
   }
 
-  const blob = await uploadToBlob(prepareResult.pathname, file, {
+  const abortController = new AbortController();
+  activeUploadAbortControllerRef.current = abortController;
+
+  try {
+    const blob = await uploadToBlob(prepareResult.pathname, file, {
     access: "public",
     handleUploadUrl: "/api/instagram/publishing/upload/client",
+    multipart: true,
+    abortSignal: abortController.signal,
     clientPayload: JSON.stringify({
       pathname: prepareResult.pathname,
       fileName: file.name,
@@ -130,9 +138,9 @@ async function uploadFileWithProgress(file: File, onProgress: UploadProgressCall
       fileSize: file.size,
     }),
     onUploadProgress: (progress) => onProgress(Math.min(99, Math.round(progress.percentage))),
-  });
+    });
 
-  const finalizeResponse = await fetch("/api/instagram/publishing/upload/client", {
+    const finalizeResponse = await fetch("/api/instagram/publishing/upload/client", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
@@ -151,8 +159,13 @@ async function uploadFileWithProgress(file: File, onProgress: UploadProgressCall
     throw new Error(finalizeResult?.message || "ثبت فایل آپلودشده ناموفق بود.");
   }
 
-  onProgress(100);
-  return finalizeResult.data as UploadedMedia;
+    onProgress(100);
+    return finalizeResult.data as UploadedMedia;
+  } finally {
+    if (activeUploadAbortControllerRef.current === abortController) {
+      activeUploadAbortControllerRef.current = null;
+    }
+  }
 }
 
 function InlineWheelPicker({
@@ -598,6 +611,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     if (!item) return;
     if (uploading) {
       uploadRunRef.current += 1;
+      activeUploadAbortControllerRef.current?.abort();
+      activeUploadAbortControllerRef.current = null;
       setUploading(false);
       setUploadProgress(0);
       setUploadSuccess(false);
