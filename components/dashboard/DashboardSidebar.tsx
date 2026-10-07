@@ -230,9 +230,9 @@ export default function DashboardSidebar({
           display: { xs: "block", lg: "none" },
           zIndex: 2100,
           "& .MuiDrawer-paper": {
-            width: { xs: "min(320px, calc(100vw - 24px))", sm: "min(360px, calc(100vw - 24px))" },
+            width: { xs: "calc(100vw - 24px)", sm: "min(360px, calc(100vw - 24px))" },
             height: "auto",
-            top: { xs: 58, sm: 62 },
+            top: { xs: 72, sm: 76 },
             bottom: { xs: 78, sm: 82 },
             left: { xs: 12, sm: 12 },
             boxSizing: "border-box",
