@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Image as ImageIcon, Loader2, Play, Video } from "lucide-react";
+import { ArrowRight, Image as ImageIcon, Images, Loader2, Play, Video } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/dashboard/DashboardUI";
@@ -107,19 +107,19 @@ export default function CommentAutomationCreate() {
   return (
     <div dir="rtl" className="min-h-[calc(100dvh-2rem)]">
       <div className="mx-auto w-full max-w-2xl">
-        <Button type="button" onClick={() => router.back()} className="mb-5 min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]"><ArrowRight size={15} strokeWidth={2} />بازگشت</Button>
+        <Button type="button" onClick={() => router.back()} className="mb-7 min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]"><ArrowRight size={15} strokeWidth={2} />بازگشت</Button>
         <h1 className="text-xl font-bold tracking-tight text-[#0F172A] sm:text-2xl">انتخاب محتوا</h1>
         <p className="mt-2 text-xs leading-5 text-[#64748B] sm:text-sm">یک پست، ریلز یا آلبوم را برای پاسخ خودکار کامنت انتخاب کنید.</p>
 
-        <div className="mt-5 flex flex-wrap gap-2">
+        <div className="mt-5 flex gap-2 overflow-x-auto pb-1">
           {([
-            ["ALL", "همه"],
-            ["POST", "پست"],
-            ["REEL", "ریلز"],
-            ["ALBUM", "آلبوم"],
-          ] as const).map(([value, label]) => (
-            <button key={value} type="button" onClick={() => setFilter(value)} className={`rounded-xl px-4 py-2 text-xs font-semibold transition ${filter === value ? "bg-[#2563EB] text-white" : "border border border-[#E2E8F0] bg-white text-[#64748B] hover:bg-[#F8FAFC]"}`}>
-              {label}
+            ["ALL", "همه", ImageIcon],
+            ["POST", "پست", ImageIcon],
+            ["ALBUM", "آلبوم", Images],
+            ["REEL", "ریلز", Video],
+          ] as const).map(([value, label, Icon]) => (
+            <button key={value} type="button" onClick={() => setFilter(value)} className={"inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border px-3 text-xs font-semibold transition " + (filter === value ? "border-[#2563EB] bg-[#EFF6FF] text-[#2563EB]" : "border-[#E2E8F0] bg-white text-[#64748B] hover:bg-[#F8FAFC]")}>
+              <Icon size={14} />{label}
             </button>
           ))}
         </div>
