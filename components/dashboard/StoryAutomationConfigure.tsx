@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/dashboard/DashboardUI";
 import { toast } from "sonner";
@@ -63,9 +64,9 @@ export default function StoryAutomationConfigure() {
     updatedAt: "",
   };
 
-  if (loading) return <div dir="rtl" className="flex min-h-[50vh] items-center justify-center"><div className="h-7 w-7 animate-spin rounded-full border-2 border-primary border-t-transparent" aria-label="در حال بارگذاری" /></div>;
+  if (loading) return <div dir="rtl" className="flex min-h-[50vh] items-center justify-center"><Loader2 size={24} className="animate-spin text-[#2563EB]" aria-label="در حال بارگذاری" /></div>;
 
-  if (!account) return <div dir="rtl" className="mx-auto max-w-xl rounded-3xl border border-red-200 bg-red-50 p-6 text-sm leading-7 text-red-700">{error || "استوری پیدا نشد."}<div><Button type="button" onClick={() => router.back()} className="mt-5 rounded-xl">بازگشت</Button></div></div>;
+  if (!account) return <div dir="rtl" className="mx-auto max-w-xl rounded-3xl border border-red-200 bg-red-50 p-6 text-sm leading-7 text-red-700">{error || "استوری پیدا نشد."}<div><Button type="button" onClick={() => router.back()} className="mt-5 min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">بازگشت</Button></div></div>;
 
   return (
     <AutomationForm
