@@ -194,7 +194,7 @@ function SidebarContent({
           </IconButton>
         </Box>
       ) : null}
-      <Box sx={{ flex: 1, minHeight: 0, overflow: mobile ? "auto" : "hidden" }}>
+      <Box sx={{ flex: 1, minHeight: 0, overflow: mobile ? "auto" : "hidden", mt: mobile ? { xs: -1.25, sm: -1.5 } : 0 }}>
         <Navigation onNavigate={onClose} mobile={mobile} />
       </Box>
       <Box sx={{ display: { xs: "none", lg: "block" } }}>
