@@ -99,34 +99,64 @@ async function uploadFileWithProgress(file: File, onProgress: UploadProgressCall
   }
 
   if (prepareResult.mode !== "vercel-blob") {
-    return await new Promise<UploadedMedia>((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhr.open("POST", "/api/instagram/publishing/upload");
-      xhr.withCredentials = true;
-      xhr.responseType = "json";
+    const abortController = new AbortController();
+    activeUploadAbortControllerRef.current = abortController;
+    const uploadStartedAt = performance.now();
+    const uploadTimeoutMs = 60 * 1000;
+    let uploadTimeoutId: number | null = null;
 
-      xhr.upload.onprogress = (event) => {
-        if (event.lengthComputable) {
-          onProgress(Math.round((event.loaded / event.total) * 100));
-        }
-      };
+    try {
+      uploadTimeoutId = window.setTimeout(() => {
+        abortController.abort();
+      }, uploadTimeoutMs);
 
-      xhr.onerror = () => reject(new Error("آپلود فایل ناموفق بود."));
-      xhr.onabort = () => reject(new Error("آپلود فایل لغو شد."));
-      xhr.onload = () => {
-        const result = xhr.response;
-        if (xhr.status < 200 || xhr.status >= 300 || !result?.success || !result?.data) {
-          reject(new Error(result?.message || "آپلود فایل ناموفق بود."));
-          return;
-        }
-        onProgress(100);
-        resolve(result.data as UploadedMedia);
-      };
+      console.info("[publishing-upload] server upload started", {
+        fileName: file.name,
+        fileSize: file.size,
+        mode: prepareResult.mode,
+      });
 
+      // Do not use XMLHttpRequest here. The same multipart request is
+      // substantially faster through fetch in browsers.
       const formData = new FormData();
       formData.append("file", file);
-      xhr.send(formData);
-    });
+
+      const response = await fetch("/api/instagram/publishing/upload", {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+        signal: abortController.signal,
+      });
+
+      const result = await response.json().catch(() => null);
+
+      if (!response.ok || !result?.success || !result?.data) {
+        throw new Error(result?.message || "آپلود فایل ناموفق بود.");
+      }
+
+      console.info("[publishing-upload] server upload completed", {
+        fileName: file.name,
+        fileSize: file.size,
+        durationMs: Math.round(performance.now() - uploadStartedAt),
+      });
+
+      onProgress(100);
+      return result.data as UploadedMedia;
+    } catch (error) {
+      if (abortController.signal.aborted) {
+        throw new Error(
+          `آپلود فایل بیش از زمان مجاز طول کشید یا لغو شد. لطفاً دوباره تلاش کنید. (${Math.round(uploadTimeoutMs / 1000)}s)`,
+        );
+      }
+      throw error;
+    } finally {
+      if (uploadTimeoutId !== null) {
+        window.clearTimeout(uploadTimeoutId);
+      }
+      if (activeUploadAbortControllerRef.current === abortController) {
+        activeUploadAbortControllerRef.current = null;
+      }
+    }
   }
 
   const abortController = new AbortController();
