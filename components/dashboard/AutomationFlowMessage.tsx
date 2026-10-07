@@ -11,6 +11,7 @@ import {
   MessageSquareText,
   Mic,
   Plus,
+  RotateCcw,
   Trash2,
   Upload,
   Video,
@@ -152,6 +153,8 @@ export default function AutomationFlowMessage({
   );
 
   const [mediaUploading, setMediaUploading] = useState(false);
+  const [mediaProgress, setMediaProgress] = useState(0);
+  const [mediaRetryFile, setMediaRetryFile] = useState<File | null>(null);
   const [contentStep, setContentStep] = useState(false);
   const [error, setError] = useState("");
 
@@ -172,9 +175,13 @@ export default function AutomationFlowMessage({
     if (!file) return false;
     setError("");
     setMediaUploading(true);
+    setMediaRetryFile(file);
+    setMediaProgress(15);
     try {
       const url = await uploadFile(file);
+      setMediaProgress(100);
       onUpdate({ mediaUrl: url, mediaId: "" });
+      setMediaRetryFile(null);
       return true;
     } catch (uploadError) {
       setError(uploadError instanceof Error ? uploadError.message : "آپلود فایل ناموفق بود.");
@@ -186,6 +193,9 @@ export default function AutomationFlowMessage({
 
   function clearMessageMedia() {
     onUpdate({ mediaUrl: "", mediaId: "" });
+    setMediaRetryFile(null);
+    setMediaProgress(0);
+    setError("");
   }
 
   return (
@@ -263,6 +273,8 @@ export default function AutomationFlowMessage({
               error={error}
               onUpload={handleMedia}
               onClear={clearMessageMedia}
+              progress={mediaProgress}
+              retryFile={mediaRetryFile}
             />
           )}
 
@@ -665,13 +677,17 @@ function MediaComposer({
   error,
   onUpload,
   onClear,
+  progress,
+  retryFile,
 }: {
   kind: MediaKind;
   url: string;
   uploading: boolean;
   error: string;
-  onUpload: (file?: File) => void;
+  onUpload: (file?: File) => void | Promise<boolean>;
   onClear: () => void;
+  progress: number;
+  retryFile: File | null;
 }) {
   const accept = kind === "IMAGE" ? "image/jpeg,image/png,image/webp" : kind === "VIDEO" ? "video/mp4,video/quicktime" : "audio/mpeg,audio/mp3,audio/aac,audio/wav,audio/x-wav,audio/m4a,.mp3,.m4a,.aac,.wav,.webm,.ogg";
   const labels = { IMAGE: "تصویر", VIDEO: "ویدیو", AUDIO: "وویس" } as const;
@@ -687,9 +703,13 @@ function MediaComposer({
               <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: "#DCFCE7", color: palette.success }}>
                 <Check size={18} />
               </div>
-              <div>
+              <div className="min-w-0 flex-1">
                 <p className="text-xs font-bold" style={{ color: "#166534" }}>فایل آماده ارسال است</p>
-                <p className="mt-1 max-w-[360px] truncate text-[10px]" dir="ltr" style={{ color: palette.secondary }}>{url}</p>
+                {kind === "AUDIO" ? (
+                  <audio src={url} controls className="mt-2 w-full max-w-md" />
+                ) : (
+                  <p className="mt-1 max-w-[360px] truncate text-[10px]" dir="ltr" style={{ color: palette.secondary }}>{url}</p>
+                )}
               </div>
             </div>
             <div className="flex gap-2">
@@ -700,14 +720,34 @@ function MediaComposer({
         </div>
       ) : (
         <div className="space-y-3">
-          <FilePicker
-            accept={accept}
-            disabled={uploading}
-            onChange={onUpload}
-            label={uploading ? "در حال آپلود..." : `انتخاب ${labels[kind]} از دستگاه`}
-            large
-            kind={kind}
-          />
+          {uploading || retryFile ? (
+            <div className={["rounded-2xl border p-4", error && retryFile && !uploading ? "border-[#FECACA] bg-[#FEF2F2]" : "border-[#BFDBFE] bg-[#EFF6FF]"].join(" ")}>
+              <div className="mb-2 flex items-center justify-between gap-2 text-xs font-bold">
+                <span className={error && retryFile && !uploading ? "text-[#B91C1C]" : "text-[#2563EB]"}>
+                  {error && retryFile && !uploading ? "آپلود ناموفق بود" : "در حال آپلود..."}
+                </span>
+                <span className={error && retryFile && !uploading ? "text-[#B91C1C]" : "text-[#2563EB]"}>{progress}٪</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-[#E2E8F0]">
+                <div className={["h-full rounded-full transition-[width] duration-300", error && retryFile && !uploading ? "bg-[#DC2626]" : "bg-[#2563EB]"].join(" ")} style={{ width: `${Math.max(3, Math.min(100, progress))}%` }} />
+              </div>
+              {error && retryFile && !uploading && (
+                <button type="button" onClick={() => void onUpload(retryFile)} className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-[#DC2626] px-3 py-2 text-[11px] font-bold text-white">
+                  <RotateCcw size={14} />
+                  تلاش دوباره
+                </button>
+              )}
+            </div>
+          ) : (
+            <FilePicker
+              accept={accept}
+              disabled={uploading}
+              onChange={onUpload}
+              label={`انتخاب ${labels[kind]} از دستگاه`}
+              large
+              kind={kind}
+            />
+          )}
           {kind === "AUDIO" && (
             <>
               <div className="text-center text-[10px] font-semibold text-[#94A3B8]">یا</div>
@@ -801,6 +841,7 @@ function BranchMediaDestination({
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
+  const [retryFile, setRetryFile] = useState<File | null>(null);
 
   const accept = kind === "IMAGE" ? "image/*" : kind === "VIDEO" ? "video/*" : "audio/*";
 
@@ -809,9 +850,11 @@ function BranchMediaDestination({
     setUploading(true);
     setProgress(15);
     setError("");
+    setRetryFile(file);
     try {
       const uploaded = await uploadBranchMedia(file, setProgress);
       onChange(uploaded);
+      setRetryFile(null);
       return true;
     } catch (uploadError) {
       setError(uploadError instanceof Error ? uploadError.message : "آپلود فایل ناموفق بود.");
