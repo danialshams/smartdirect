@@ -18,6 +18,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import VoiceRecorder from "./VoiceRecorder";
 import type { AutomationTriggerType } from "./AutomationManager";
 import type {
   FormItem,
