@@ -93,7 +93,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
     setUploading(true);
     setProgress(0);
 
-    await new Promise<void>((resolve, reject) => {
+    const uploadSucceeded = await new Promise<boolean>((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       const formData = new FormData();
       formData.append("file", file);
@@ -111,7 +111,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
           }
           setProgress(100);
           onUpdate({ mediaUrl: result.data.publicUrl, mediaId: "" });
-          resolve();
+          resolve(true);
         } catch {
           reject(new Error("پاسخ نامعتبر از سرور دریافت شد."));
         }
@@ -121,7 +121,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
       setError(uploadError instanceof Error ? uploadError.message : "آپلود فایل ناموفق بود.");
       return false;
     }).finally(() => setUploading(false));
-    return true;
+    return uploadSucceeded;
   }
 
   useEffect(() => {
