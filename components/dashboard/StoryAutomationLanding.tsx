@@ -27,10 +27,11 @@ export default function StoryAutomationLanding() {
             <button
               type="button"
               onClick={() => router.push("/dashboard/story-automation/new")}
+              dir="ltr"
               className="mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#2563EB] px-5 text-sm font-bold text-white shadow-sm transition hover:bg-[#1D4ED8]"
             >
               <Plus size={17} />
-              ایجاد پاسخ جدید
+              <span dir="rtl">ایجاد پاسخ جدید</span>
             </button>
           </div>
         </section>
