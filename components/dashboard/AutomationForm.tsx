@@ -1609,18 +1609,18 @@ export default function AutomationForm({
 
         return (
             <div dir="rtl" className="min-h-[calc(100dvh-2rem)]">
-                <div className="mx-auto w-full max-w-[1200px]">
+                <div className="mx-auto w-full max-w-2xl">
                     <div className="mb-5">
                         <button
                             type="button"
                             onClick={onClose}
                             disabled={saving}
-                            className="inline-flex min-h-10 items-center gap-2 rounded-xl px-2 text-sm font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:opacity-50"
+                            className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none transition hover:bg-[#DBEAFE] hover:text-[#2563EB] disabled:opacity-50"
                         >
                             <ArrowRight size={18} />
                             بازگشت
                         </button>
-                        <h1 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">
+                        <h1 className="mt-4 text-xl font-bold tracking-tight text-[#0F172A] sm:text-2xl">
                             {isEditing ? "ویرایش پاسخ استوری" : "پاسخ جدید"}
                         </h1>
                     </div>
@@ -1636,7 +1636,7 @@ export default function AutomationForm({
                                     <div className="overflow-hidden rounded-2xl bg-muted">
                                         <div className="mx-auto aspect-[9/14] w-full max-w-[430px]">
                                             {loadingStories ? (
-                                                <div className="h-full w-full animate-pulse bg-muted" />
+                                                <div className="flex h-full w-full items-center justify-center"><Loader2 size={24} className="animate-spin text-[#2563EB]" /></div>
                                             ) : selectedStory?.mediaUrl || selectedStory?.thumbnailUrl ? (
                                                 selectedStory.mediaType === "VIDEO" && selectedStory.mediaUrl ? (
                                                     <video
