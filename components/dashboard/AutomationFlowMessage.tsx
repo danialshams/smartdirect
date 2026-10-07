@@ -841,6 +841,7 @@ function BranchMediaDestination({
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
+  const [retryFile, setRetryFile] = useState<File | null>(null);
 
   const accept = kind === "IMAGE" ? "image/*" : kind === "VIDEO" ? "video/*" : "audio/*";
 
@@ -849,9 +850,11 @@ function BranchMediaDestination({
     setUploading(true);
     setProgress(15);
     setError("");
+    setRetryFile(file);
     try {
       const uploaded = await uploadBranchMedia(file, setProgress);
       onChange(uploaded);
+      setRetryFile(null);
       return true;
     } catch (uploadError) {
       setError(uploadError instanceof Error ? uploadError.message : "آپلود فایل ناموفق بود.");
