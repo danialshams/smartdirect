@@ -4,6 +4,7 @@ import { Button, Select } from "@/components/dashboard/DashboardUI";
 import { ImagePlus, Loader2, Mic, Video, Store, ClipboardList, MessageSquareText, Plus } from "lucide-react";
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import type { FormItem, MessageDraft, QuickReplyDraft, Showcase } from "../automation-form-utils";
+import VoiceRecorder from "../VoiceRecorder";
 import { createEmptyQuickReply } from "../automation-form-utils";
 
 export type PublishingStoryAutomationSetupHandle = { saveAndContinue: () => Promise<boolean>; deleteAndReset: () => Promise<boolean> };
@@ -87,13 +88,13 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
     });
   }
 
-  async function uploadMedia(file?: File) {
-    if (!file) return;
+  async function uploadMedia(file?: File): Promise<boolean> {
+    if (!file) return false;
     setError("");
     setUploading(true);
     setProgress(0);
 
-    await new Promise<void>((resolve, reject) => {
+    const uploadSucceeded = await new Promise<boolean>((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       const formData = new FormData();
       formData.append("file", file);
@@ -111,7 +112,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
           }
           setProgress(100);
           onUpdate({ mediaUrl: result.data.publicUrl, mediaId: "" });
-          resolve();
+          resolve(true);
         } catch {
           reject(new Error("پاسخ نامعتبر از سرور دریافت شد."));
         }
@@ -119,7 +120,9 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
       xhr.send(formData);
     }).catch((uploadError) => {
       setError(uploadError instanceof Error ? uploadError.message : "آپلود فایل ناموفق بود.");
+      return false;
     }).finally(() => setUploading(false));
+    return uploadSucceeded;
   }
 
   useEffect(() => {
@@ -367,21 +370,29 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
               <div className="flex justify-center"><button type="button" onClick={() => onUpdate({ mediaUrl: "", mediaId: "" })} className="text-xs font-bold text-[#DC2626] transition hover:text-[#B91C1C]">حذف {responseType === "IMAGE" ? "عکس" : responseType === "VIDEO" ? "ویدیو" : "وویس"}</button></div>
             </div>
           ) : (
-            <label className={["flex min-h-36 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed bg-[#F8FAFC] px-4 text-center transition", uploading ? "pointer-events-none opacity-60" : "hover:border-[#93C5FD] hover:bg-[#EFF6FF]"].join(" ")}>
-              {uploading ? (
-                <div className="flex w-full flex-col items-center justify-center px-6">
-                  <div className="mb-2 text-[10px] font-semibold text-[#2563EB]">{progress}٪</div>
-                  <div className="h-2 w-full max-w-xs overflow-hidden rounded-full bg-[#E2E8F0]"><div className="h-full rounded-full bg-[#2563EB] transition-[width] duration-200" style={{ width: `${progress}%` }} /></div>
-                </div>
-              ) : (
+            <div className="space-y-3">
+              <label className={["flex min-h-36 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed bg-[#F8FAFC] px-4 text-center transition", uploading ? "pointer-events-none opacity-60" : "hover:border-[#93C5FD] hover:bg-[#EFF6FF]"].join(" ")}>
+                {uploading ? (
+                  <div className="flex w-full flex-col items-center justify-center px-6">
+                    <div className="mb-2 text-[10px] font-semibold text-[#2563EB]">{progress}٪</div>
+                    <div className="h-2 w-full max-w-xs overflow-hidden rounded-full bg-[#E2E8F0]"><div className="h-full rounded-full bg-[#2563EB] transition-[width] duration-200" style={{ width: `${progress}%` }} /></div>
+                  </div>
+                ) : (
+                  <>
+                    <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB]">{responseType === "IMAGE" ? <ImagePlus size={21}/> : responseType === "VIDEO" ? <Video size={21}/> : <Mic size={21}/>}</span>
+                    <span className="mt-3 text-xs font-bold text-[#0F172A]">انتخاب فایل از دستگاه</span>
+                    <span className="mt-1 text-[10px] text-[#64748B]">فایل را از دستگاه انتخاب کن</span>
+                  </>
+                )}
+                <input type="file" accept={mediaAccept} disabled={uploading} className="hidden" onChange={(event) => { const file = event.target.files?.[0]; event.currentTarget.value = ""; void uploadMedia(file); }} />
+              </label>
+              {responseType === "AUDIO" && (
                 <>
-                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB]">{responseType === "IMAGE" ? <ImagePlus size={21}/> : responseType === "VIDEO" ? <Video size={21}/> : <Mic size={21}/>}</span>
-                  <span className="mt-3 text-xs font-bold text-[#0F172A]">انتخاب فایل</span>
-                  <span className="mt-1 text-[10px] text-[#64748B]">فایل را از دستگاه انتخاب کن</span>
+                  <div className="text-center text-[10px] font-semibold text-[#94A3B8]">یا</div>
+                  <VoiceRecorder disabled={uploading} onRecorded={uploadMedia} />
                 </>
               )}
-              <input type="file" accept={mediaAccept} disabled={uploading} className="hidden" onChange={(event) => { const file = event.target.files?.[0]; event.currentTarget.value = ""; void uploadMedia(file); }} />
-            </label>
+            </div>
           )}
         </div>
       )}
@@ -624,9 +635,15 @@ function FormOptionEditor({ reply, index, showcases, forms, loadingResources, hi
     {FORM_MEDIA_TYPES.includes(destinationType as typeof FORM_MEDIA_TYPES[number]) && (
       <>
         <label className={["flex min-h-24 cursor-pointer items-center justify-center rounded-xl border-2 border-dashed bg-[#F8FAFC] text-center",uploading?"pointer-events-none opacity-60":"hover:border-[#93C5FD] hover:bg-[#EFF6FF]"].join(" ")}>
-          <span className="text-xs font-bold text-[#2563EB]">{uploading?"در حال آپلود...":reply.destinationMediaUrl?"تعویض فایل":"انتخاب فایل"}</span>
+          <span className="text-xs font-bold text-[#2563EB]">{uploading?"در حال آپلود...":reply.destinationMediaUrl?"تعویض فایل":"انتخاب فایل از دستگاه"}</span>
           <input type="file" accept={destinationType==="IMAGE"?"image/*":destinationType==="VIDEO"?"video/*":"audio/*"} disabled={uploading} className="hidden" onChange={(e)=>{const file=e.currentTarget.files?.[0];e.currentTarget.value="";void upload(destinationType as typeof FORM_MEDIA_TYPES[number],file)}} />
         </label>
+        {destinationType === "AUDIO" && (
+          <>
+            <div className="text-center text-[10px] font-semibold text-[#94A3B8]">یا</div>
+            <VoiceRecorder disabled={uploading} onRecorded={(file) => upload("AUDIO", file)} />
+          </>
+        )}
         {reply.destinationMediaUrl && (
           <div className="overflow-hidden rounded-xl border border-[#BBF7D0] bg-white">
             {destinationType === "IMAGE" ? (
