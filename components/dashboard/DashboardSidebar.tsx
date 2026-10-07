@@ -20,6 +20,7 @@ import {
   Settings2,
   Ticket,
   UserRound,
+  X,
 } from "lucide-react";
 import {
   Avatar,
@@ -31,6 +32,7 @@ import {
   ListItemIcon,
   ListItemText,
   Typography,
+  IconButton,
   Portal,
 } from "@mui/material";
 import { signOut } from "next-auth/react";
@@ -124,7 +126,7 @@ function AccountSection({ instagramAccounts }: { instagramAccounts: InstagramAcc
 function Navigation({ onNavigate, mobile = false }: { onNavigate?: () => void; mobile?: boolean }) {
   const pathname = usePathname();
   return (
-    <Box dir="rtl" sx={{ px: { xs: 1.1, sm: 1.4, lg: 1.25 }, py: { xs: 0.8, sm: 1, lg: 0.8 } }}>
+    <Box dir="rtl" sx={{ px: { xs: 1.1, sm: 1.4, lg: 1.25 }, py: { xs: 1.35, sm: 1.45, lg: 0.8 } }}>
       {menuGroups.map((group) => (
         <Box key={group.label} sx={{ mb: { xs: 0.9, sm: 1.1, lg: 1.15 } }}>
           <Box
@@ -184,7 +186,14 @@ function SidebarContent({
   instagramAccounts: InstagramAccount[];
 }) {
   return (
-    <Box dir="rtl" sx={{ height: "100%", display: "flex", flexDirection: "column", bgcolor: "#FFFFFF" }}>
+    <Box dir="rtl" sx={{ height: "100%", display: "flex", flexDirection: "column", bgcolor: "#FFFFFF", position: "relative" }}>
+      {mobile ? (
+        <Box sx={{ display: "flex", justifyContent: "flex-start", px: 0.8, pt: 0.7, pb: 0, flexShrink: 0 }}>
+          <IconButton size="small" onClick={onClose} aria-label="بستن منو" sx={{ color: "#64748B", width: 32, height: 32 }}>
+            <X size={18} strokeWidth={2} />
+          </IconButton>
+        </Box>
+      ) : null}
       <Box sx={{ flex: 1, minHeight: 0, overflow: mobile ? "auto" : "hidden" }}>
         <Navigation onNavigate={onClose} mobile={mobile} />
       </Box>
