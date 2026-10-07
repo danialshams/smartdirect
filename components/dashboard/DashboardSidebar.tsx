@@ -126,7 +126,7 @@ function AccountSection({ instagramAccounts }: { instagramAccounts: InstagramAcc
 function Navigation({ onNavigate, mobile = false }: { onNavigate?: () => void; mobile?: boolean }) {
   const pathname = usePathname();
   return (
-    <Box dir="rtl" sx={{ px: { xs: 1.1, sm: 1.4, lg: 1.25 }, py: { xs: 1.35, sm: 1.45, lg: 0.8 } }}>
+    <Box dir="rtl" sx={{ px: { xs: 1.1, sm: 1.4, lg: 1.25 }, py: { xs: 0.8, sm: 0.9, lg: 0.8 } }}>
       {menuGroups.map((group) => (
         <Box key={group.label} sx={{ mb: { xs: 0.9, sm: 1.1, lg: 1.15 } }}>
           <Box
@@ -230,9 +230,9 @@ export default function DashboardSidebar({
           display: { xs: "block", lg: "none" },
           zIndex: 2100,
           "& .MuiDrawer-paper": {
-            width: { xs: "calc(100vw - 24px)", sm: "min(360px, calc(100vw - 24px))" },
+            width: { xs: "min(320px, calc(100vw - 24px))", sm: "min(360px, calc(100vw - 24px))" },
             height: "auto",
-            top: { xs: 72, sm: 76 },
+            top: { xs: 58, sm: 62 },
             bottom: { xs: 78, sm: 82 },
             left: { xs: 12, sm: 12 },
             boxSizing: "border-box",
