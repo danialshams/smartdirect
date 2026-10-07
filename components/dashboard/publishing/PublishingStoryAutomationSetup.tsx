@@ -4,7 +4,8 @@ import { Button, Select } from "@/components/dashboard/DashboardUI";
 import { ImagePlus, Loader2, Mic, Video, Store, ClipboardList, MessageSquareText, Plus } from "lucide-react";
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import type { FormItem, MessageDraft, QuickReplyDraft, Showcase } from "../automation-form-utils";
-import VoiceRecorder from "../VoiceRecorder";\nimport { createEmptyQuickReply } from "../automation-form-utils";
+import VoiceRecorder from "../VoiceRecorder";
+import { createEmptyQuickReply } from "../automation-form-utils";
 
 export type PublishingStoryAutomationSetupHandle = { saveAndContinue: () => Promise<boolean>; deleteAndReset: () => Promise<boolean> };
 
