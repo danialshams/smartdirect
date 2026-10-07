@@ -3,11 +3,14 @@ import { getServerSession } from "next-auth";
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 
 import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { getUnlinkedUploadExpiry } from "@/lib/instagram/publishing-media-cleanup";
 
 export const dynamic = "force-dynamic";
 
 const MAX_IMAGE_SIZE = 20 * 1024 * 1024;
 const MAX_VIDEO_SIZE = 200 * 1024 * 1024;
+const MAX_AUDIO_SIZE = 25 * 1024 * 1024;
 const allowedContentTypes = [
   "image/jpeg",
   "image/png",
@@ -91,6 +94,75 @@ export async function POST(request: NextRequest) {
         });
 
         return NextResponse.json(jsonResponse);
+      }
+
+      if (body.action === "finalize") {
+        const pathname = typeof body.pathname === "string" ? body.pathname : "";
+        const url = typeof body.url === "string" ? body.url : "";
+        const contentType = typeof body.contentType === "string" ? body.contentType : "";
+        const fileName = typeof body.fileName === "string" ? body.fileName : "media";
+        const fileSize = typeof body.fileSize === "number" ? body.fileSize : 0;
+        const expectedPrefix = `pending/${session.user.id}/`;
+
+        if (!pathname.startsWith(expectedPrefix) || !url || !allowedContentTypes.includes(contentType) || fileSize <= 0) {
+          return NextResponse.json(
+            { success: false, message: "اطلاعات فایل آپلودشده معتبر نیست." },
+            { status: 400 },
+          );
+        }
+
+        const maxSize = contentType.startsWith("video/") ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE;
+        if (fileSize > maxSize) {
+          return NextResponse.json(
+            { success: false, message: "حجم فایل بیش از حد مجاز است." },
+            { status: 400 },
+          );
+        }
+
+        const existing = await prisma.instagramStorageObject.findUnique({
+          where: { storageKey: pathname },
+        });
+
+        if (existing) {
+          if (existing.userId !== session.user.id || existing.deletedAt) {
+            return NextResponse.json(
+              { success: false, message: "دسترسی به این فایل مجاز نیست." },
+              { status: 403 },
+            );
+          }
+
+          return NextResponse.json({
+            success: true,
+            data: {
+              storageKey: existing.storageKey,
+              publicUrl: url,
+              type: contentType.startsWith("video/") ? "VIDEO" : "IMAGE",
+              fileName,
+              mimeType: contentType,
+              fileSize,
+            },
+          });
+        }
+
+        await prisma.instagramStorageObject.create({
+          data: {
+            userId: session.user.id,
+            storageKey: pathname,
+            expiresAt: getUnlinkedUploadExpiry(),
+          },
+        });
+
+        return NextResponse.json({
+          success: true,
+          data: {
+            storageKey: pathname,
+            publicUrl: url,
+            type: contentType.startsWith("video/") ? "VIDEO" : "IMAGE",
+            fileName,
+            mimeType: contentType,
+            fileSize,
+          },
+        });
       }
 
       const payload = body as {
