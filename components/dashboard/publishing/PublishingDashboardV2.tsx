@@ -192,9 +192,21 @@ async function uploadFileWithProgress(file: File, onProgress: UploadProgressCall
 
     const blob = await uploadToBlob(prepareResult.pathname, file, {
       access: "public",
+      contentType: file.type,
       handleUploadUrl: "/api/instagram/publishing/upload/client",
       ...(useMultipart ? { multipart: true } : {}),
       abortSignal: abortController.signal,
+      ...(file.type.startsWith("video/")
+        ? {
+            onUploadProgress: (progress) => {
+              // Video uploads use the SDK's XHR transport. This avoids the
+              // browser fetch/CORS path that can complete the preflight but
+              // never start the actual PUT on some networks.
+              const uploadProgress = Math.min(94, Math.max(10, 10 + progress.percentage * 0.84));
+              onProgress(Math.round(uploadProgress));
+            },
+          }
+        : {}),
       clientPayload: JSON.stringify({
         pathname: prepareResult.pathname,
         fileName: file.name,
