@@ -75,6 +75,7 @@ type UploadProgressCallback = (progress: number) => void;
 const activeUploadAbortControllerRef: { current: AbortController | null } = { current: null };
 
 async function uploadFileWithProgress(file: File, onProgress: UploadProgressCallback) {
+  const prepareStartedAt = performance.now();
   const prepareResponse = await fetch("/api/instagram/publishing/upload/client", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -84,6 +85,12 @@ async function uploadFileWithProgress(file: File, onProgress: UploadProgressCall
       contentType: file.type,
       fileSize: file.size,
     }),
+  });
+
+  console.info("[publishing-upload] prepare completed", {
+    fileName: file.name,
+    fileSize: file.size,
+    durationMs: Math.round(performance.now() - prepareStartedAt),
   });
 
   const prepareResult = await prepareResponse.json().catch(() => null);
@@ -125,43 +132,77 @@ async function uploadFileWithProgress(file: File, onProgress: UploadProgressCall
   const abortController = new AbortController();
   activeUploadAbortControllerRef.current = abortController;
 
+  // Multipart is useful for large media. For small files it adds unnecessary
+  // request overhead and can make a stalled part look like a frozen upload.
+  const useMultipart = file.size >= 20 * 1024 * 1024;
+  const uploadTimeoutMs = useMultipart ? 15 * 60 * 1000 : 60 * 1000;
+  const uploadStartedAt = performance.now();
+  let uploadTimeoutId: number | null = null;
+
   try {
-    const blob = await uploadToBlob(prepareResult.pathname, file, {
-    access: "public",
-    handleUploadUrl: "/api/instagram/publishing/upload/client",
-    multipart: true,
-    abortSignal: abortController.signal,
-    clientPayload: JSON.stringify({
-      pathname: prepareResult.pathname,
+    uploadTimeoutId = window.setTimeout(() => {
+      abortController.abort();
+    }, uploadTimeoutMs);
+
+    console.info("[publishing-upload] direct upload started", {
       fileName: file.name,
-      contentType: file.type,
       fileSize: file.size,
-    }),
-    onUploadProgress: (progress) => onProgress(Math.min(99, Math.round(progress.percentage))),
+      multipart: useMultipart,
+    });
+
+    const blob = await uploadToBlob(prepareResult.pathname, file, {
+      access: "public",
+      handleUploadUrl: "/api/instagram/publishing/upload/client",
+      ...(useMultipart ? { multipart: true } : {}),
+      abortSignal: abortController.signal,
+      clientPayload: JSON.stringify({
+        pathname: prepareResult.pathname,
+        fileName: file.name,
+        contentType: file.type,
+        fileSize: file.size,
+      }),
+      onUploadProgress: (progress) => onProgress(Math.min(99, Math.round(progress.percentage))),
+    });
+
+    console.info("[publishing-upload] direct upload completed", {
+      fileName: file.name,
+      fileSize: file.size,
+      multipart: useMultipart,
+      durationMs: Math.round(performance.now() - uploadStartedAt),
     });
 
     const finalizeResponse = await fetch("/api/instagram/publishing/upload/client", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-    body: JSON.stringify({
-      action: "finalize",
-      pathname: blob.pathname,
-      url: blob.url,
-      fileName: file.name,
-      contentType: file.type,
-      fileSize: file.size,
-    }),
-  });
-  const finalizeResult = await finalizeResponse.json().catch(() => null);
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        action: "finalize",
+        pathname: blob.pathname,
+        url: blob.url,
+        fileName: file.name,
+        contentType: file.type,
+        fileSize: file.size,
+      }),
+    });
+    const finalizeResult = await finalizeResponse.json().catch(() => null);
 
-  if (!finalizeResponse.ok || !finalizeResult?.success || !finalizeResult?.data) {
-    throw new Error(finalizeResult?.message || "ثبت فایل آپلودشده ناموفق بود.");
-  }
+    if (!finalizeResponse.ok || !finalizeResult?.success || !finalizeResult?.data) {
+      throw new Error(finalizeResult?.message || "ثبت فایل آپلودشده ناموفق بود.");
+    }
 
     onProgress(100);
     return finalizeResult.data as UploadedMedia;
+  } catch (error) {
+    if (abortController.signal.aborted) {
+      throw new Error(
+        `آپلود فایل بیش از زمان مجاز طول کشید یا لغو شد. لطفاً دوباره تلاش کنید. (${Math.round(uploadTimeoutMs / 1000)}s)`,
+      );
+    }
+    throw error;
   } finally {
+    if (uploadTimeoutId !== null) {
+      window.clearTimeout(uploadTimeoutId);
+    }
     if (activeUploadAbortControllerRef.current === abortController) {
       activeUploadAbortControllerRef.current = null;
     }
