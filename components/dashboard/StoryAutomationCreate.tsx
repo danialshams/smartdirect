@@ -1,8 +1,9 @@
 "use client";
 
-import { ArrowRight, Image as ImageIcon, Video } from "lucide-react";
+import { ArrowRight, Image as ImageIcon, Loader2, Video } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/dashboard/DashboardUI";
 
 type Account = { id: string; igUsername: string; igUserId: string; isConnected: boolean };
 type Story = { id: string; mediaType: string | null; mediaUrl: string | null; thumbnailUrl: string | null; };
@@ -58,7 +59,7 @@ export default function StoryAutomationCreate() {
   }, []);
 
   if (loading) {
-    return <div dir="rtl" className="flex min-h-[50vh] items-center justify-center"><div className="h-7 w-7 animate-spin rounded-full border-2 border-primary border-t-transparent" aria-label="در حال بارگذاری" /></div>;
+    return <div dir="rtl" className="flex min-h-[50vh] items-center justify-center"><Loader2 size={24} className="animate-spin text-[#2563EB]" aria-label="در حال بارگذاری" /></div>;
   }
 
   if (!account) {
@@ -67,28 +68,25 @@ export default function StoryAutomationCreate() {
 
   return (
     <div dir="rtl" className="min-h-[calc(100dvh-2rem)]">
-      <div className="mx-auto w-full max-w-[1200px]">
-        <button type="button" onClick={() => router.back()} className="mb-5 inline-flex min-h-10 items-center gap-2 rounded-xl px-2 text-sm font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground">
-          <ArrowRight size={18} />
-          بازگشت
-        </button>
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">انتخاب استوری</h1>
-        <p className="mt-2 text-sm text-muted-foreground">یک استوری فعال را برای پاسخ خودکار انتخاب کنید.</p>
+      <div className="mx-auto w-full max-w-2xl">
+        <Button type="button" onClick={() => router.back()} className="mb-5 min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]"><ArrowRight size={15} strokeWidth={2} />بازگشت</Button>
+        <h1 className="text-xl font-bold tracking-tight text-[#0F172A] sm:text-2xl">انتخاب استوری</h1>
+        <p className="mt-2 text-xs leading-5 text-[#64748B] sm:text-sm">یک استوری فعال را برای پاسخ خودکار انتخاب کنید.</p>
 
         {error && <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
 
         {stories.length === 0 ? (
-          <div className="mt-5 rounded-3xl border border-dashed bg-card px-6 py-20 text-center">
+          <div className="mt-5 rounded-2xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] px-6 py-16 text-center">
             <ImageIcon className="mx-auto text-muted-foreground" size={25} />
             <h2 className="mt-4 text-sm font-bold">استوری قابل انتخابی وجود ندارد</h2>
             <p className="mt-2 text-xs leading-6 text-muted-foreground">استوری‌هایی که قبلاً پاسخ خودکار دارند در این لیست نمایش داده نمی‌شوند.</p>
           </div>
         ) : (
-          <div className="mt-5 grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5">
+          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {stories.map((story) => {
               const image = story.thumbnailUrl || story.mediaUrl;
               return (
-                <button key={story.id} type="button" onClick={() => router.push("/dashboard/story-automation/new/configure?mediaId=" + encodeURIComponent(story.id))} className="group relative aspect-[9/14] overflow-hidden rounded-2xl bg-muted text-right transition hover:scale-[1.01] focus:outline-none focus:ring-2 focus:ring-primary">
+                <button key={story.id} type="button" onClick={() => router.push("/dashboard/story-automation/new/configure?mediaId=" + encodeURIComponent(story.id))} className="group relative aspect-[9/14] overflow-hidden rounded-xl border border-[#E2E8F0] bg-[#F1F5F9] text-right transition hover:border-[#BFDBFE] focus:outline-none focus:ring-2 focus:ring-[#2563EB]">
                   {image ? (
                     story.mediaType === "VIDEO" && story.mediaUrl ? (
                       <video src={story.mediaUrl} poster={story.thumbnailUrl || undefined} className="h-full w-full object-cover" muted playsInline preload="metadata" />
