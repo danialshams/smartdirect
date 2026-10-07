@@ -1,12 +1,11 @@
 "use client";
 
-import { ArrowRight, Camera, Image, Images, Loader2, MessageCircleReply, Video } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { ArrowRight, Camera, MessageCircleReply } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/dashboard/DashboardUI";
 import PublishingStoryAutomationSetup from "./publishing/PublishingStoryAutomationSetup";
 import { createEmptyMessage, type MessageDraft, type QuickReplyDraft, type Showcase, type FormItem } from "./automation-form-utils";
-import type { Automation } from "./AutomationManager";
 
 type Account = { id: string; igUsername: string; igUserId: string; isConnected: boolean };
 type TriggerType = "COMMENT_KEYWORD" | "STORY_REPLY_KEYWORD";
@@ -40,7 +39,6 @@ function serializeQuickReplies(replies: QuickReplyDraft[]): unknown[] {
 
 export default function AutomationCreationFlow({ account, mediaId, triggerType, title, description, onSaved }: Props) {
   const router = useRouter();
-  const setupRef = useRef<{ saveAndContinue: () => Promise<boolean> } | null>(null);
   const [keyword, setKeyword] = useState("");
   const [keywordDraft, setKeywordDraft] = useState("");
   const [commentReply, setCommentReply] = useState("");
@@ -236,7 +234,6 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
             <div className="border-t border-[#E2E8F0] pt-5">
               <PublishingStoryAutomationSetup
-                ref={setupRef}
                 message={message}
                 showcases={showcases}
                 forms={forms}
