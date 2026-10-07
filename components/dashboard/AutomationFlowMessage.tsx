@@ -703,9 +703,13 @@ function MediaComposer({
               <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: "#DCFCE7", color: palette.success }}>
                 <Check size={18} />
               </div>
-              <div>
+              <div className="min-w-0 flex-1">
                 <p className="text-xs font-bold" style={{ color: "#166534" }}>فایل آماده ارسال است</p>
-                <p className="mt-1 max-w-[360px] truncate text-[10px]" dir="ltr" style={{ color: palette.secondary }}>{url}</p>
+                {kind === "AUDIO" ? (
+                  <audio src={url} controls className="mt-2 w-full max-w-md" />
+                ) : (
+                  <p className="mt-1 max-w-[360px] truncate text-[10px]" dir="ltr" style={{ color: palette.secondary }}>{url}</p>
+                )}
               </div>
             </div>
             <div className="flex gap-2">
