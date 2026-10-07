@@ -163,8 +163,8 @@ async function uploadFileWithProgress(file: File, onProgress: UploadProgressCall
   activeUploadAbortControllerRef.current = abortController;
 
   // Vercel Blob multipart uploads split large files into parts that can upload
-  // in parallel and retry independently. Use it for videos above 5 MiB so
-  // medium-sized videos do not depend on one long-lived single PUT request.
+  // in parallel and retry independently. Keep multipart limited to very large
+  // videos; medium videos use a single XHR-backed PUT for transport stability.
   // The server-side client-token handler receives the same multipart flag.
   const multipartThresholdBytes = 20 * 1024 * 1024;
   const useMultipart =
@@ -184,17 +184,28 @@ async function uploadFileWithProgress(file: File, onProgress: UploadProgressCall
       multipart: useMultipart,
     });
 
-    // Do not pass onUploadProgress to @vercel/blob/client here.
-    // In the browser, that option forces the SDK onto its XHR transport.
-    // The same browser XHR path was proven to be unreliable/very slow for
-    // our production uploads. Without the callback, the SDK can use fetch.
+    // Images intentionally keep the fetch transport because it was measured
+    // substantially faster in production. Videos use XHR progress below so
+    // the browser actually sends the PUT reliably on the affected path.
     onProgress(10);
 
     const blob = await uploadToBlob(prepareResult.pathname, file, {
       access: "public",
+      contentType: file.type,
       handleUploadUrl: "/api/instagram/publishing/upload/client",
       ...(useMultipart ? { multipart: true } : {}),
       abortSignal: abortController.signal,
+      ...(file.type.startsWith("video/")
+        ? {
+            onUploadProgress: (progress) => {
+              // Video uploads use the SDK's XHR transport. This avoids the
+              // browser fetch/CORS path that can complete the preflight but
+              // never start the actual PUT on some networks.
+              const uploadProgress = Math.min(94, Math.max(10, 10 + progress.percentage * 0.84));
+              onProgress(Math.round(uploadProgress));
+            },
+          }
+        : {}),
       clientPayload: JSON.stringify({
         pathname: prepareResult.pathname,
         fileName: file.name,
