@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 export default function StoryAutomationLanding() {
   const router = useRouter();
-  const isComment = "Story" === "Comment";
+  const isComment = false;
 
   return (
     <div dir="rtl" className="min-h-[calc(100dvh-2rem)]">
