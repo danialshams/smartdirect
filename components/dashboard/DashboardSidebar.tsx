@@ -126,7 +126,7 @@ function AccountSection({ instagramAccounts }: { instagramAccounts: InstagramAcc
 function Navigation({ onNavigate, mobile = false }: { onNavigate?: () => void; mobile?: boolean }) {
   const pathname = usePathname();
   return (
-    <Box dir="rtl" sx={{ px: { xs: 1.1, sm: 1.4, lg: 1.25 }, py: { xs: 0.45, sm: 0.55, lg: 0.8 } }}>
+    <Box dir="rtl" sx={{ px: { xs: 1.1, sm: 1.4, lg: 1.25 }, py: { xs: 0.2, sm: 0.3, lg: 0.8 } }}>
       {menuGroups.map((group) => (
         <Box key={group.label} sx={{ mb: { xs: 0.9, sm: 1.1, lg: 1.15 } }}>
           <Box
@@ -161,7 +161,7 @@ function Navigation({ onNavigate, mobile = false }: { onNavigate?: () => void; m
               const fullRowOnMobile = href === "/dashboard/auto-replies";
               return (
                 <ListItemButton key={href} component={Link} href={href} onClick={onNavigate} selected={active} dir="rtl"
-                  sx={{ gridColumn: mobile && fullRowOnMobile ? "1 / -1" : "auto", minHeight: { xs: 46, sm: 50, lg: 34 }, display: "flex", flexDirection: "row", alignItems: "center", columnGap: { xs: 0.15, sm: 0.25, lg: 0.75 }, borderRadius: 2, px: { xs: 1.25, lg: 0.85 }, color: active ? "#2563EB" : "#475569", "&.Mui-selected": { bgcolor: "#EFF6FF", color: "#2563EB" }, "&.Mui-selected:hover": { bgcolor: "#EFF6FF" }, "&:hover": { bgcolor: "#F8FAFC", color: "#1D4ED8" } }}>
+                  sx={{ gridColumn: mobile && fullRowOnMobile ? "1 / -1" : "auto", minHeight: { xs: 46, sm: 50, lg: 34 }, display: "flex", flexDirection: "row", alignItems: "center", columnGap: { xs: 0.45, sm: 0.55, lg: 0.75 }, borderRadius: 2, px: { xs: 1.25, lg: 0.85 }, color: active ? "#2563EB" : "#475569", "&.Mui-selected": { bgcolor: "#EFF6FF", color: "#2563EB" }, "&.Mui-selected:hover": { bgcolor: "#EFF6FF" }, "&:hover": { bgcolor: "#F8FAFC", color: "#1D4ED8" } }}>
                   <ListItemIcon sx={{ minWidth: 0, width: { xs: 24, lg: 17 }, flex: { xs: "0 0 24px", lg: "0 0 17px" }, color: "inherit", display: "flex", justifyContent: "center", alignItems: "center", m: 0 }}>
                     <Icon size={19} strokeWidth={1.9} />
                   </ListItemIcon>
