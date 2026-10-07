@@ -184,6 +184,12 @@ async function uploadFileWithProgress(file: File, onProgress: UploadProgressCall
       multipart: useMultipart,
     });
 
+    // Do not pass onUploadProgress to @vercel/blob/client here.
+    // In the browser, that option forces the SDK onto its XHR transport.
+    // The same browser XHR path was proven to be unreliable/very slow for
+    // our production uploads. Without the callback, the SDK can use fetch.
+    onProgress(10);
+
     const blob = await uploadToBlob(prepareResult.pathname, file, {
       access: "public",
       handleUploadUrl: "/api/instagram/publishing/upload/client",
@@ -195,8 +201,10 @@ async function uploadFileWithProgress(file: File, onProgress: UploadProgressCall
         contentType: file.type,
         fileSize: file.size,
       }),
-      onUploadProgress: (progress) => onProgress(Math.min(99, Math.round(progress.percentage))),
     });
+
+    // Blob upload is complete at this point; finalize is the remaining stage.
+    onProgress(95);
 
     console.info("[publishing-upload] direct upload completed", {
       fileName: file.name,
