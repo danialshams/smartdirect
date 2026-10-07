@@ -62,6 +62,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
   const saveShowcaseLockRef = useRef(false);
   const [slideUploadProgress, setSlideUploadProgress] = useState<Record<string, number>>({});
   const [slideUploading, setSlideUploading] = useState<Record<string, boolean>>({});
+  const [slideRetryFiles, setSlideRetryFiles] = useState<Record<string, File | null>>({});
   const unsavedDraftsRef = useRef<Partial<Record<ResponseType, Partial<MessageDraft>>>>({});
   const unsavedSlidesRef = useRef<Partial<Record<ResponseType, ShowcaseSlide[]>>>({});
 
@@ -149,9 +150,9 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
   async function uploadSlideImage(id: string, file?: File) {
     if (!file) return;
     setError("");
+    setSlideRetryFiles((current) => ({ ...current, [id]: file }));
     setSlideUploadProgress((current) => ({ ...current, [id]: 0 }));
     setSlideUploading((current) => ({ ...current, [id]: true }));
-    // Never show the previous image while a replacement upload is running.
     patchSlide(id, { imageUrl: "", previewUrl: "" });
     await new Promise<void>((resolve, reject) => {
       const xhr = new XMLHttpRequest();
@@ -160,10 +161,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
       xhr.open("POST", "/api/instagram/publishing/upload");
       xhr.upload.onprogress = (event) => {
         if (event.lengthComputable) {
-          setSlideUploadProgress((current) => ({
-            ...current,
-            [id]: Math.round((event.loaded / event.total) * 100),
-          }));
+          setSlideUploadProgress((current) => ({ ...current, [id]: Math.round((event.loaded / event.total) * 100) }));
         }
       };
       xhr.onerror = () => reject(new Error("آپلود تصویر ناموفق بود."));
@@ -176,6 +174,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
           }
           setSlideUploadProgress((current) => ({ ...current, [id]: 100 }));
           patchSlide(id, { imageUrl: result.data.publicUrl, previewUrl: result.data.publicUrl });
+          setSlideRetryFiles((current) => ({ ...current, [id]: null }));
           resolve();
         } catch {
           reject(new Error("پاسخ نامعتبر از سرور دریافت شد."));
@@ -423,6 +422,14 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                     </div>
                   ) : slide.previewUrl ? (
                     <img src={slide.previewUrl} alt="" className="h-44 w-full object-cover" />
+                  ) : slideRetryFiles[slide.id] ? (
+                    <div className="flex w-full flex-col items-center justify-center px-6">
+                      <span className="mb-2 text-[10px] font-bold text-[#B91C1C]">آپلود ناموفق بود — {slideUploadProgress[slide.id] ?? 0}٪</span>
+                      <div className="h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-[#FEE2E2]"><div className="h-full rounded-full bg-[#DC2626]" style={{ width: `${Math.max(3, Math.min(100, slideUploadProgress[slide.id] ?? 0))}%` }} /></div>
+                      <button type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); void uploadSlideImage(slide.id, slideRetryFiles[slide.id] ?? undefined); }} className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#DC2626] px-3 py-2 text-[11px] font-bold text-white">
+                        <RotateCcw size={14}/>تلاش دوباره
+                      </button>
+                    </div>
                   ) : (
                     <>
                       <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB]"><ImagePlus size={21}/></span>
