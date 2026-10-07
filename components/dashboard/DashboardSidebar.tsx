@@ -20,14 +20,12 @@ import {
   Settings2,
   Ticket,
   UserRound,
-  X,
 } from "lucide-react";
 import {
   Avatar,
   Box,
   Divider,
   Drawer,
-  IconButton,
   List,
   ListItemButton,
   ListItemIcon,
@@ -73,18 +71,6 @@ const menuGroups = [
     ],
   },
 ];
-
-function Brand() {
-  return (
-    <Box dir="rtl" sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0 }}>
-      <Box sx={{ width: 48, height: 48, flexShrink: 0, display: "grid", placeItems: "center", borderRadius: 2.5, bgcolor: "#2563EB", color: "#FFFFFF", fontSize: 18, fontWeight: 900, letterSpacing: "-0.04em" }}>S</Box>
-      <Box dir="ltr" sx={{ minWidth: 0, textAlign: "left" }}>
-        <Typography fontSize={17} fontWeight={800} noWrap color="#0F172A">SmartDirect</Typography>
-        <Typography fontSize={11} noWrap sx={{ mt: 0.2, color: "#64748B" }}>Automate · Connect · Grow</Typography>
-      </Box>
-    </Box>
-  );
-}
 
 function AccountSection({ instagramAccounts }: { instagramAccounts: InstagramAccount[] }) {
   const [accounts, setAccounts] = useState(instagramAccounts);
@@ -177,7 +163,7 @@ function Navigation({ onNavigate, mobile = false }: { onNavigate?: () => void; m
                   <ListItemIcon sx={{ minWidth: 0, width: { xs: 24, lg: 17 }, flex: { xs: "0 0 24px", lg: "0 0 17px" }, color: "inherit", display: "flex", justifyContent: "center", alignItems: "center", m: 0 }}>
                     <Icon size={19} strokeWidth={1.9} />
                   </ListItemIcon>
-                  <ListItemText primary={title} sx={{ minWidth: 0, flex: fullRowOnMobile ? "1 1 auto" : "0 1 auto", m: 0, textAlign: "right", direction: "rtl" }} primaryTypographyProps={{ fontSize: { xs: 12.5, sm: 13.5, lg: 11.5 }, fontWeight: active ? 700 : 500, lineHeight: 1.45, noWrap: !fullRowOnMobile, sx: { overflow: "hidden", textOverflow: "ellipsis", ...(fullRowOnMobile ? { whiteSpace: "normal" } : {}) } }} />
+                  <ListItemText primary={title} sx={{ minWidth: 0, flex: "0 1 auto", m: 0, textAlign: "right", direction: "rtl" }} primaryTypographyProps={{ fontSize: { xs: 12.5, sm: 13.5, lg: 11.5 }, fontWeight: active ? 700 : 500, lineHeight: 1.45, noWrap: !fullRowOnMobile, sx: { overflow: "hidden", textOverflow: "ellipsis", ...(fullRowOnMobile ? { whiteSpace: "normal" } : {}) } }} />
                 </ListItemButton>
               );
             })}
@@ -199,13 +185,7 @@ function SidebarContent({
 }) {
   return (
     <Box dir="rtl" sx={{ height: "100%", display: "flex", flexDirection: "column", bgcolor: "#FFFFFF" }}>
-      <Box sx={{ minHeight: { xs: 72, sm: 76, lg: 76 }, boxSizing: "border-box", flexShrink: 0, display: "flex", alignItems: "center", gap: 1.4, px: { xs: 1.6, sm: 1.9, lg: 1.75 }, borderBottom: "1px solid #E2E8F0" }}>
-        <Link href="/dashboard" onClick={onClose} style={{ textDecoration: "none", minWidth: 0, flex: 1 }}>
-          <Brand />
-        </Link>
-        {mobile && <IconButton size="small" onClick={onClose} aria-label="بستن منو" sx={{ color: "#64748B" }}><X size={18} /></IconButton>}
-      </Box>
-      <Box sx={{ flex: 1, minHeight: 0, overflow: mobile ? "visible" : "hidden" }}>
+      <Box sx={{ flex: 1, minHeight: 0, overflow: mobile ? "auto" : "hidden" }}>
         <Navigation onNavigate={onClose} mobile={mobile} />
       </Box>
       <Box sx={{ display: { xs: "none", lg: "block" } }}>
