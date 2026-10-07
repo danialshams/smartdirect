@@ -188,9 +188,11 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   return (
     <div dir="rtl" className="min-h-[calc(100dvh-2rem)]">
       <div className="mx-auto w-full max-w-2xl">
-        <Button type="button" onClick={() => router.back()} className="mb-7 min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
-          <ArrowRight size={15} strokeWidth={2} />بازگشت
-        </Button>
+        <div className="mb-9">
+          <Button type="button" onClick={() => router.back()} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
+            <ArrowRight size={15} strokeWidth={2} />بازگشت
+          </Button>
+        </div>
 
         <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
           <div className="mb-6 flex items-start gap-3">
@@ -221,14 +223,14 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
               )}
               <div className="flex items-center gap-2">
                 <input value={keywordDraft} onChange={(e) => setKeywordDraft(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addKeyword(); } }} placeholder="مثلاً قیمت، اطلاعات" className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-3 !text-base text-[#0F172A] outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px" }} />
-                <Button type="button" onClick={addKeyword} disabled={!keywordDraft.trim()} className="min-h-11 shrink-0 rounded-lg !bg-[#2563EB] px-3.5 text-xs font-semibold text-white hover:!bg-[#1D4ED8]">افزودن</Button>
+                <Button type="button" onClick={addKeyword} disabled={!keywordDraft.trim()} className="min-h-11 shrink-0 rounded-lg !bg-[#2563EB] px-3.5 text-xs font-semibold text-white hover:!bg-[#1D4ED8] disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8]">افزودن</Button>
               </div>
             </div>
 
             {triggerType === "COMMENT_KEYWORD" && (
               <div className="border-t border-[#E2E8F0] pt-5">
                 <label className="mb-2 block text-sm font-bold text-[#0F172A]">متن ارسالی در کامنت</label>
-                <textarea value={commentReply} onChange={(e) => setCommentReply(e.target.value)} rows={3} maxLength={2000} placeholder="پاسخی که زیر کامنت کاربر منتشر می‌شود بنویس..." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75 }} />
+                <textarea value={commentReply} onChange={(e) => setCommentReply(e.target.value)} rows={3} maxLength={2000} placeholder="پاسخی که زیر کامنت کاربر منتشر می‌شود بنویس..." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none placeholder:text-[11px] placeholder:whitespace-nowrap placeholder:overflow-hidden placeholder:text-ellipsis focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75 }} />
               </div>
             )}
 
@@ -252,7 +254,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                 finalSaveLoadingLabel="در حال ساخت پاسخ خودکار..."
                 finalSaveDisabled={saving}
                 responseTypeTitle="نوع پاسخ خودکار"
-                responseTypeDescription="نوع پاسخی را که می‌خواهید برای این محتوا ارسال شود انتخاب کنید."
+                responseTypeDescription="نوع پاسخی که می‌خواهید در دایرکت برای کاربر ارسال شود."
                 textPlaceholder={triggerType === "COMMENT_KEYWORD" ? "متن دایرکتی که بعد از کامنت برای کاربر ارسال می‌شود..." : "متنی که در پاسخ خودکار برای کاربر ارسال می‌شود..."}
               />
             </div>
