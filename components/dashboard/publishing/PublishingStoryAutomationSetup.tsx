@@ -87,8 +87,8 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
     });
   }
 
-  async function uploadMedia(file?: File) {
-    if (!file) return;
+  async function uploadMedia(file?: File): Promise<boolean> {
+    if (!file) return false;
     setError("");
     setUploading(true);
     setProgress(0);
@@ -119,7 +119,9 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
       xhr.send(formData);
     }).catch((uploadError) => {
       setError(uploadError instanceof Error ? uploadError.message : "آپلود فایل ناموفق بود.");
+      return false;
     }).finally(() => setUploading(false));
+    return true;
   }
 
   useEffect(() => {
