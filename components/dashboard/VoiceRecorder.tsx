@@ -4,7 +4,7 @@ import { Mic, Pause, Play, RotateCcw, Square, Upload, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 type Props = {
-  onRecorded: (file: File) => void | Promise<void>;
+  onRecorded: (file: File) => boolean | void | Promise<boolean | void>;
   disabled?: boolean;
 };
 
@@ -180,7 +180,11 @@ export default function VoiceRecorder({ onRecorded, disabled = false }: Props) {
     setError("");
     setProcessing(true);
     try {
-      await onRecorded(recordedFile);
+      const result = await onRecorded(recordedFile);
+      if (result === false) {
+        setProcessing(false);
+        return;
+      }
       resetRecording();
     } catch (uploadError) {
       setError(uploadError instanceof Error ? uploadError.message : "آپلود وویس ناموفق بود.");
