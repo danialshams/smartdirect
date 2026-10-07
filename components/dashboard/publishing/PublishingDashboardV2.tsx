@@ -162,9 +162,13 @@ async function uploadFileWithProgress(file: File, onProgress: UploadProgressCall
   const abortController = new AbortController();
   activeUploadAbortControllerRef.current = abortController;
 
-  // Multipart is useful for large media. For small files it adds unnecessary
-  // request overhead and can make a stalled part look like a frozen upload.
-  const useMultipart = file.size >= 20 * 1024 * 1024;
+  // Vercel Blob multipart uploads split large files into parts that can upload
+  // in parallel and retry independently. Use it for videos above 5 MiB so
+  // medium-sized videos do not depend on one long-lived single PUT request.
+  // The server-side client-token handler receives the same multipart flag.
+  const multipartThresholdBytes = 5 * 1024 * 1024;
+  const useMultipart =
+    file.type.startsWith("video/") && file.size >= multipartThresholdBytes;
   const uploadTimeoutMs = useMultipart ? 15 * 60 * 1000 : 60 * 1000;
   const uploadStartedAt = performance.now();
   let uploadTimeoutId: number | null = null;
