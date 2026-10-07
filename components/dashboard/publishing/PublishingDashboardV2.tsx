@@ -166,7 +166,7 @@ async function uploadFileWithProgress(file: File, onProgress: UploadProgressCall
   // in parallel and retry independently. Use it for videos above 5 MiB so
   // medium-sized videos do not depend on one long-lived single PUT request.
   // The server-side client-token handler receives the same multipart flag.
-  const multipartThresholdBytes = 5 * 1024 * 1024;
+  const multipartThresholdBytes = 20 * 1024 * 1024;
   const useMultipart =
     file.type.startsWith("video/") && file.size >= multipartThresholdBytes;
   const uploadTimeoutMs = useMultipart ? 15 * 60 * 1000 : 60 * 1000;
