@@ -709,7 +709,7 @@ function MediaComposer({
           {kind === "AUDIO" && (
             <>
               <div className="text-center text-[10px] font-semibold text-[#94A3B8]">یا</div>
-              <VoiceRecorder disabled={uploading} onRecorded={async (file) => onUpload(file)} />
+              <VoiceRecorder disabled={uploading} onRecorded={onUpload} />
             </>
           )}
         </div>
