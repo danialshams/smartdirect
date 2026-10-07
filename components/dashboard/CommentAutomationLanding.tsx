@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { MessageCircleReply, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function CommentAutomationLanding() {
