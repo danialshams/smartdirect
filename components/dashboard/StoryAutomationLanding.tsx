@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { Camera, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function StoryAutomationLanding() {
