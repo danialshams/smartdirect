@@ -199,6 +199,25 @@ export async function POST(request: NextRequest) {
         `${crypto.randomUUID()}-${sanitizeFileName(payload.fileName || "media")}`,
       ].join("/");
 
+      // Keep small uploads on the normal authenticated server path.
+      // This avoids an unnecessary browser -> Blob network hop and stays
+      // portable: on a VPS the same server route can handle larger files
+      // simply by increasing STORAGE_SERVER_UPLOAD_MAX_BYTES.
+      const serverUploadMaxBytes = Number(
+        process.env.STORAGE_SERVER_UPLOAD_MAX_BYTES || 4 * 1024 * 1024,
+      );
+
+      if (
+        Number.isFinite(serverUploadMaxBytes) &&
+        serverUploadMaxBytes > 0 &&
+        payload.fileSize <= serverUploadMaxBytes
+      ) {
+        return NextResponse.json({
+          success: true,
+          mode: "server-upload",
+        });
+      }
+
       return NextResponse.json({
         success: true,
         mode: "vercel-blob",
