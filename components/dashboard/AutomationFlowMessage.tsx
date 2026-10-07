@@ -842,7 +842,6 @@ function BranchMediaDestination({
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
   const [retryFile, setRetryFile] = useState<File | null>(null);
-
   const accept = kind === "IMAGE" ? "image/*" : kind === "VIDEO" ? "video/*" : "audio/*";
 
   async function choose(file?: File): Promise<boolean> {
@@ -868,21 +867,28 @@ function BranchMediaDestination({
     <div className="space-y-3">
       {url ? (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3" style={{ borderColor: "#BBF7D0", background: "#F0FDF4" }}>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="text-xs font-bold" style={{ color: "#166534" }}>فایل مقصد آماده است</p>
-            <p className="mt-1 max-w-[420px] truncate text-[10px]" dir="ltr" style={{ color: palette.secondary }}>{url}</p>
+            {kind === "AUDIO" ? <audio src={url} controls className="mt-2 w-full max-w-md" /> : <p className="mt-1 max-w-[420px] truncate text-[10px]" dir="ltr" style={{ color: palette.secondary }}>{url}</p>}
           </div>
-          <FilePicker accept={accept} disabled={uploading} onChange={choose} label="جایگزین" />
+          <div className="flex gap-2">
+            <FilePicker accept={accept} disabled={uploading} onChange={choose} label="جایگزین" />
+            <button type="button" onClick={() => onChange("")} className="rounded-xl border bg-white px-3 py-2 text-[11px] font-bold" style={{ borderColor: palette.border, color: palette.error }}>حذف</button>
+          </div>
+        </div>
+      ) : uploading || retryFile ? (
+        <div className={["rounded-xl border p-3", error && retryFile && !uploading ? "border-[#FECACA] bg-[#FEF2F2]" : "border-[#BFDBFE] bg-[#EFF6FF]"].join(" ")}>
+          <div className="flex items-center justify-between text-[11px] font-bold">
+            <span className={error && retryFile && !uploading ? "text-[#B91C1C]" : "text-[#2563EB]"}>{error && retryFile && !uploading ? "آپلود ناموفق بود" : "در حال آپلود..."}</span>
+            <span className={error && retryFile && !uploading ? "text-[#B91C1C]" : "text-[#2563EB]"}>{progress}٪</span>
+          </div>
+          <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#E2E8F0]"><div className={["h-full rounded-full transition-[width] duration-300", error && retryFile && !uploading ? "bg-[#DC2626]" : "bg-[#2563EB]"].join(" ")} style={{ width: `${Math.max(3, Math.min(100, progress))}%` }} /></div>
+          {error && retryFile && !uploading && <button type="button" onClick={() => void choose(retryFile)} className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#DC2626] px-3 py-2 text-[11px] font-bold text-white"><RotateCcw size={14} /> تلاش دوباره</button>}
         </div>
       ) : (
         <div className="space-y-3">
-          <FilePicker accept={accept} disabled={uploading} onChange={choose} label={uploading ? `آپلود ${progress}٪` : "انتخاب فایل مقصد"} />
-          {kind === "AUDIO" && (
-            <>
-              <div className="text-center text-[10px] font-semibold text-[#94A3B8]">یا</div>
-              <VoiceRecorder disabled={uploading} onRecorded={choose} />
-            </>
-          )}
+          <FilePicker accept={accept} disabled={uploading} onChange={choose} label="انتخاب فایل مقصد" />
+          {kind === "AUDIO" && <><div className="text-center text-[10px] font-semibold text-[#94A3B8]">یا</div><VoiceRecorder disabled={uploading} onRecorded={choose} /></>}
         </div>
       )}
       {error && <p className="text-[10px]" style={{ color: palette.error }}>{error}</p>}
@@ -922,16 +928,27 @@ function ShowcaseComposer({
     setItems((current) => current.map((item) => item.id === id ? { ...item, ...patch } : item));
   }
 
+  const [uploadingItems, setUploadingItems] = useState<Record<string, boolean>>({});
+  const [uploadProgressItems, setUploadProgressItems] = useState<Record<string, number>>({});
+  const [retryFiles, setRetryFiles] = useState<Record<string, File | null>>({});
+
   async function chooseImage(id: string, file?: File) {
     if (!file) return;
     setError("");
+    setRetryFiles((current) => ({ ...current, [id]: file }));
+    setUploadProgressItems((current) => ({ ...current, [id]: 10 }));
+    setUploadingItems((current) => ({ ...current, [id]: true }));
     try {
       const previewUrl = URL.createObjectURL(file);
       patchItem(id, { previewUrl });
       const publicUrl = await uploadFile(file);
+      setUploadProgressItems((current) => ({ ...current, [id]: 100 }));
       patchItem(id, { imageUrl: publicUrl, previewUrl: publicUrl });
+      setRetryFiles((current) => ({ ...current, [id]: null }));
     } catch (uploadError) {
       setError(uploadError instanceof Error ? uploadError.message : "آپلود تصویر ناموفق بود.");
+    } finally {
+      setUploadingItems((current) => ({ ...current, [id]: false }));
     }
   }
 
@@ -1013,8 +1030,13 @@ function ShowcaseComposer({
             {items.map((item, itemIndex) => (
               <div key={item.id} className="grid gap-4 rounded-2xl border bg-white p-4 sm:grid-cols-[132px_minmax(0,1fr)_32px]" style={{ borderColor: palette.border }}>
                 <label className="flex min-h-[132px] cursor-pointer items-center justify-center overflow-hidden rounded-xl border-2 border-dashed" style={{ borderColor: "#CBD5E1", background: palette.muted }}>
-                  {item.previewUrl ? <img src={item.previewUrl} alt="" className="h-full w-full object-cover" /> : <span className="flex flex-col items-center gap-2 text-[10px]" style={{ color: palette.secondary }}><ImagePlus size={22} />تصویر کارت {itemIndex + 1}</span>}
-                  <Input type="file" accept="image/*" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; event.currentTarget.value = ""; void chooseImage(item.id, file); }} />
+                  {uploadingItems[item.id] ? (
+  <div className="flex w-full flex-col items-center justify-center px-4">
+    <span className="mb-2 text-[10px] font-bold text-[#2563EB]">{uploadProgressItems[item.id] ?? 0}٪</span>
+    <div className="h-1.5 w-full max-w-[180px] overflow-hidden rounded-full bg-[#E2E8F0]"><div className="h-full rounded-full bg-[#2563EB] transition-[width] duration-150" style={{ width: `${uploadProgressItems[item.id] ?? 0}%` }} /></div>
+  </div>
+) : item.previewUrl ? <img src={item.previewUrl} alt="" className="h-full w-full object-cover" /> : <span className="flex flex-col items-center gap-2 text-[10px]" style={{ color: palette.secondary }}><ImagePlus size={22} />تصویر کارت {itemIndex + 1}</span>}
+                  <Input type="file" accept="image/*" disabled={uploadingItems[item.id]} className="hidden" onChange={(event) => { const file = event.target.files?.[0]; event.currentTarget.value = ""; void chooseImage(item.id, file); }} />
                 </label>
                 <div className="space-y-3">
                   <Input value={item.title} onChange={(event) => patchItem(item.id, { title: event.target.value })} placeholder="عنوان کارت" className="w-full rounded-xl border bg-[#FAFAFC] px-3.5 py-3 text-sm outline-none" style={{ borderColor: palette.border }} />
