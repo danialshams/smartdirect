@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Select } from "@/components/dashboard/DashboardUI";
-import { ImagePlus, Loader2, Mic, Video, Store, ClipboardList, MessageSquareText, Plus } from "lucide-react";
+import { ImagePlus, Loader2, Mic, RotateCcw, Video, Store, ClipboardList, MessageSquareText, Plus } from "lucide-react";
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import type { FormItem, MessageDraft, QuickReplyDraft, Showcase } from "../automation-form-utils";
 import VoiceRecorder from "../VoiceRecorder";
@@ -51,6 +51,7 @@ function createSlide(): ShowcaseSlide {
 const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetupHandle, Props>(function PublishingStoryAutomationSetup({ message, showcases, forms, loadingResources, instagramAccountId, onUpdate, onSavedChange, keywordValid, onContinue, disabled, hideVideo = false, hideForm = false, responseTypeTitle = "نوع پاسخ خودکار", responseTypeDescription = "نوع پاسخی را که می‌خواهید برای این محتوا ارسال شود انتخاب کنید.", textPlaceholder = "متنی که به‌عنوان پاسخ پیام شروع گفتگو برای کاربر ارسال می‌شود...", showFinalSave = false, finalSaveLabel = "ساخت پیام شروع گفتگو", finalSaveLoadingLabel = "در حال ساخت پیام شروع گفتگو...", finalSaveDisabled = false }: Props, ref) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [retryFile, setRetryFile] = useState<File | null>(null);
   const [error, setError] = useState("");
   const [slides, setSlides] = useState<ShowcaseSlide[]>([createSlide()]);
   const [savingShowcase, setSavingShowcase] = useState(false);
@@ -93,6 +94,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
     setError("");
     setUploading(true);
     setProgress(0);
+    setRetryFile(file);
 
     const uploadSucceeded = await new Promise<boolean>((resolve, reject) => {
       const xhr = new XMLHttpRequest();
@@ -112,6 +114,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
           }
           setProgress(100);
           onUpdate({ mediaUrl: result.data.publicUrl, mediaId: "" });
+          setRetryFile(null);
           resolve(true);
         } catch {
           reject(new Error("پاسخ نامعتبر از سرور دریافت شد."));
@@ -386,7 +389,8 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                 )}
                 <input type="file" accept={mediaAccept} disabled={uploading} className="hidden" onChange={(event) => { const file = event.target.files?.[0]; event.currentTarget.value = ""; void uploadMedia(file); }} />
               </label>
-              {responseType === "AUDIO" && (
+              {retryFile && !uploading && error && <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] p-3"><div className="flex items-center justify-between text-[11px] font-bold text-[#B91C1C]"><span>آپلود ناموفق بود</span><span>{progress}٪</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-[#FEE2E2]"><div className="h-full rounded-full bg-[#DC2626]" style={{ width: `${Math.max(3, progress)}%` }} /></div><button type="button" onClick={() => void uploadMedia(retryFile)} className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-[#DC2626] px-3 py-2 text-[11px] font-bold text-white"><RotateCcw size={14}/>تلاش دوباره</button></div>}
+{responseType === "AUDIO" && (
                 <>
                   <div className="text-center text-[10px] font-semibold text-[#94A3B8]">یا</div>
                   <VoiceRecorder disabled={uploading} onRecorded={uploadMedia} />
