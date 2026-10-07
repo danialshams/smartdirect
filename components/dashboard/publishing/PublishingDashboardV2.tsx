@@ -73,34 +73,86 @@ function jalaliDateTimeToDate(date: JalaliDate, hour: number, minute: number) { 
 type UploadProgressCallback = (progress: number) => void;
 
 async function uploadFileWithProgress(file: File, onProgress: UploadProgressCallback) {
-  return await new Promise<UploadedMedia>((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", "/api/instagram/publishing/upload");
-    xhr.withCredentials = true;
-    xhr.responseType = "json";
-
-    xhr.upload.onprogress = (event) => {
-      if (event.lengthComputable) {
-        onProgress(Math.round((event.loaded / event.total) * 100));
-      }
-    };
-
-    xhr.onerror = () => reject(new Error("آپلود فایل ناموفق بود."));
-    xhr.onabort = () => reject(new Error("آپلود فایل لغو شد."));
-    xhr.onload = () => {
-      const result = xhr.response;
-      if (xhr.status < 200 || xhr.status >= 300 || !result?.success || !result?.data) {
-        reject(new Error(result?.message || "آپلود فایل ناموفق بود."));
-        return;
-      }
-      onProgress(100);
-      resolve(result.data as UploadedMedia);
-    };
-
-    const formData = new FormData();
-    formData.append("file", file);
-    xhr.send(formData);
+  const prepareResponse = await fetch("/api/instagram/publishing/upload/client", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({
+      fileName: file.name,
+      contentType: file.type,
+      fileSize: file.size,
+    }),
   });
+
+  const prepareResult = await prepareResponse.json().catch(() => null);
+  if (!prepareResponse.ok || !prepareResult?.success) {
+    throw new Error(prepareResult?.message || "آماده‌سازی آپلود ناموفق بود.");
+  }
+
+  if (prepareResult.mode !== "vercel-blob") {
+    return await new Promise<UploadedMedia>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", "/api/instagram/publishing/upload");
+      xhr.withCredentials = true;
+      xhr.responseType = "json";
+
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          onProgress(Math.round((event.loaded / event.total) * 100));
+        }
+      };
+
+      xhr.onerror = () => reject(new Error("آپلود فایل ناموفق بود."));
+      xhr.onabort = () => reject(new Error("آپلود فایل لغو شد."));
+      xhr.onload = () => {
+        const result = xhr.response;
+        if (xhr.status < 200 || xhr.status >= 300 || !result?.success || !result?.data) {
+          reject(new Error(result?.message || "آپلود فایل ناموفق بود."));
+          return;
+        }
+        onProgress(100);
+        resolve(result.data as UploadedMedia);
+      };
+
+      const formData = new FormData();
+      formData.append("file", file);
+      xhr.send(formData);
+    });
+  }
+
+  const blob = await uploadToBlob(prepareResult.pathname, file, {
+    access: "public",
+    handleUploadUrl: "/api/instagram/publishing/upload/client",
+    clientPayload: JSON.stringify({
+      pathname: prepareResult.pathname,
+      fileName: file.name,
+      contentType: file.type,
+      fileSize: file.size,
+    }),
+    onUploadProgress: (progress) => onProgress(Math.min(99, Math.round(progress.percentage))),
+  });
+
+  const finalizeResponse = await fetch("/api/instagram/publishing/upload/client", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({
+      action: "finalize",
+      pathname: blob.pathname,
+      url: blob.url,
+      fileName: file.name,
+      contentType: file.type,
+      fileSize: file.size,
+    }),
+  });
+  const finalizeResult = await finalizeResponse.json().catch(() => null);
+
+  if (!finalizeResponse.ok || !finalizeResult?.success || !finalizeResult?.data) {
+    throw new Error(finalizeResult?.message || "ثبت فایل آپلودشده ناموفق بود.");
+  }
+
+  onProgress(100);
+  return finalizeResult.data as UploadedMedia;
 }
 
 function InlineWheelPicker({
