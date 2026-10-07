@@ -168,15 +168,17 @@ export default function AutomationFlowMessage({
     }
   }, [triggerType, message.messageType, onUpdate]);
 
-  async function handleMedia(file?: File) {
-    if (!file) return;
+  async function handleMedia(file?: File): Promise<boolean> {
+    if (!file) return false;
     setError("");
     setMediaUploading(true);
     try {
       const url = await uploadFile(file);
       onUpdate({ mediaUrl: url, mediaId: "" });
+      return true;
     } catch (uploadError) {
       setError(uploadError instanceof Error ? uploadError.message : "آپلود فایل ناموفق بود.");
+      return false;
     } finally {
       setMediaUploading(false);
     }
@@ -802,16 +804,18 @@ function BranchMediaDestination({
 
   const accept = kind === "IMAGE" ? "image/*" : kind === "VIDEO" ? "video/*" : "audio/*";
 
-  async function choose(file?: File) {
-    if (!file) return;
+  async function choose(file?: File): Promise<boolean> {
+    if (!file) return false;
     setUploading(true);
     setProgress(15);
     setError("");
     try {
       const uploaded = await uploadBranchMedia(file, setProgress);
       onChange(uploaded);
+      return true;
     } catch (uploadError) {
       setError(uploadError instanceof Error ? uploadError.message : "آپلود فایل ناموفق بود.");
+      return false;
     } finally {
       setUploading(false);
     }
