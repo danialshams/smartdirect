@@ -21,10 +21,6 @@ export default function CommentAutomationLanding() {
 
         <section className="rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-sm sm:p-6">
           <div className="flex min-h-[280px] flex-col items-center justify-center text-center">
-            <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB]">
-              <Plus size={22} strokeWidth={2.1} />
-            </div>
-            <h2 className="text-sm font-bold text-[#0F172A]">ایجاد پاسخ جدید</h2>
             <p className="mt-2 max-w-sm text-xs leading-6 text-[#64748B]">
               {isComment ? "یک پست، ریلز یا آلبوم را انتخاب کنید و پاسخ خودکار آن را تنظیم کنید." : "یک استوری فعال را انتخاب کنید و پاسخ خودکار آن را تنظیم کنید."}
             </p>
