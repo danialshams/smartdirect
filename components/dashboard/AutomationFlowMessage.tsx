@@ -670,12 +670,12 @@ function MediaComposer({
   onUpload: (file?: File) => void;
   onClear: () => void;
 }) {
-  const accept = kind === "IMAGE" ? "image/jpeg,image/png,image/webp" : kind === "VIDEO" ? "video/mp4,video/quicktime" : "audio/mpeg,audio/mp3,audio/aac,audio/wav,audio/x-wav,audio/m4a,.mp3,.m4a,.aac,.wav";
+  const accept = kind === "IMAGE" ? "image/jpeg,image/png,image/webp" : kind === "VIDEO" ? "video/mp4,video/quicktime" : "audio/mpeg,audio/mp3,audio/aac,audio/wav,audio/x-wav,audio/m4a,.mp3,.m4a,.aac,.wav,.webm,.ogg";
   const labels = { IMAGE: "تصویر", VIDEO: "ویدیو", AUDIO: "وویس" } as const;
 
   return (
     <div className="space-y-5">
-      <ComposerTitle title={labels[kind]} description={`فایل ${labels[kind]} را انتخاب کن تا در این مرحله برای کاربر ارسال شود.`} />
+      <ComposerTitle title={labels[kind]} description={kind === "AUDIO" ? "وویس را از دستگاه انتخاب کن یا با میکروفون همین‌جا ضبط و آپلود کن." : `فایل ${labels[kind]} را انتخاب کن تا در این مرحله برای کاربر ارسال شود.`} />
 
       {url ? (
         <div className="rounded-2xl border p-4" style={{ borderColor: "#BBF7D0", background: "#F0FDF4" }}>
@@ -696,14 +696,22 @@ function MediaComposer({
           </div>
         </div>
       ) : (
-        <FilePicker
-          accept={accept}
-          disabled={uploading}
-          onChange={onUpload}
-          label={uploading ? "در حال آپلود..." : `انتخاب ${labels[kind]}`}
-          large
-          kind={kind}
-        />
+        <div className="space-y-3">
+          <FilePicker
+            accept={accept}
+            disabled={uploading}
+            onChange={onUpload}
+            label={uploading ? "در حال آپلود..." : `انتخاب ${labels[kind]} از دستگاه`}
+            large
+            kind={kind}
+          />
+          {kind === "AUDIO" && (
+            <>
+              <div className="text-center text-[10px] font-semibold text-[#94A3B8]">یا</div>
+              <VoiceRecorder disabled={uploading} onRecorded={async (file) => onUpload(file)} />
+            </>
+          )}
+        </div>
       )}
 
       {error && <p className="text-xs" style={{ color: palette.error }}>{error}</p>}
@@ -819,7 +827,15 @@ function BranchMediaDestination({
           <FilePicker accept={accept} disabled={uploading} onChange={choose} label="جایگزین" />
         </div>
       ) : (
-        <FilePicker accept={accept} disabled={uploading} onChange={choose} label={uploading ? `آپلود ${progress}٪` : "انتخاب فایل مقصد"} />
+        <div className="space-y-3">
+          <FilePicker accept={accept} disabled={uploading} onChange={choose} label={uploading ? `آپلود ${progress}٪` : "انتخاب فایل مقصد"} />
+          {kind === "AUDIO" && (
+            <>
+              <div className="text-center text-[10px] font-semibold text-[#94A3B8]">یا</div>
+              <VoiceRecorder disabled={uploading} onRecorded={choose} />
+            </>
+          )}
+        </div>
       )}
       {error && <p className="text-[10px]" style={{ color: palette.error }}>{error}</p>}
     </div>
