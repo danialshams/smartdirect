@@ -346,7 +346,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
             inputMode="text"
             autoCapitalize="sentences"
             spellCheck
-            className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none placeholder:text-[10px] placeholder:whitespace-nowrap placeholder:overflow-hidden placeholder:text-ellipsis focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10"
+            className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none placeholder:text-[11px] placeholder:whitespace-nowrap placeholder:overflow-hidden placeholder:text-ellipsis focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10"
             placeholder={textPlaceholder}
             style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }}
           />
