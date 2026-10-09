@@ -106,6 +106,15 @@ async function main() {
     },
   });
 
+  const legacyStorageKey = "test:" + suffix + "/legacy-without-url";
+  await prisma.instagramStorageObject.create({
+    data: {
+      userId: user.id,
+      storageKey: legacyStorageKey,
+      expiresAt: past,
+    },
+  });
+
   const activeAutomation = await prisma.automation.create({
     data: {
       instagramAccountId: account.id,
@@ -137,6 +146,7 @@ async function main() {
   assert(cleanup.mediaFailed === 0, "Test storage media cleanup should not fail");
   assert(cleanup.orphanedDeleted >= 1, `Expected at least one expired orphaned object to be cleaned, got ${cleanup.orphanedDeleted}`);
   assert(cleanup.orphanedFailed === 0, "Test orphan cleanup should not fail");
+  assert(cleanup.legacySkipped >= 1, "Legacy objects without URL mappings must be preserved");
 
   const deletedMedia = await prisma.instagramPublishMedia.findMany({
     where: { id: { in: [cancelled.media.id, published.media.id, finalFailed.media.id, expired.media.id] } },
@@ -162,6 +172,12 @@ async function main() {
   });
   assert(retainedObject?.deletedAt === null, "Retryable failed storage object was deleted too early");
 
+  const legacyObject = await prisma.instagramStorageObject.findUnique({
+    where: { storageKey: legacyStorageKey },
+    select: { deletedAt: true },
+  });
+  assert(legacyObject?.deletedAt === null, "Legacy storage without a URL mapping was deleted unsafely");
+
   const activeObject = await prisma.instagramStorageObject.findUnique({
     where: { storageKey: activeStorageKey },
     select: { deletedAt: true },
@@ -181,6 +197,7 @@ async function main() {
     tests: {
       ttlRules: true,
       activeAutomationMediaRetention: true,
+      legacyObjectSafety: true,
       cancelledImmediateCleanup: true,
       publishedImmediateCleanup: true,
       finalFailedCleanup: true,
