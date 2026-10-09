@@ -178,6 +178,14 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ success: true, alreadyDeleted: true });
     }
 
+    if (storageObject && !storageObject.publicUrl) {
+      return NextResponse.json({
+        success: true,
+        deferred: true,
+        message: "این فایل از نسخه قدیمی ثبت شده و تا زمان تطبیق امن آدرس آن حذف فیزیکی نمی‌شود.",
+      });
+    }
+
     if (storageObject?.publicUrl && requestedUrl && storageObject.publicUrl !== requestedUrl) {
       return NextResponse.json({ success: false, message: "آدرس فایل با کلید ذخیره‌شده مطابقت ندارد." }, { status: 400 });
     }
