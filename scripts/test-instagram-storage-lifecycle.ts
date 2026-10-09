@@ -36,6 +36,7 @@ async function main() {
     },
   });
 
+  try {
   const account = await prisma.instagramAccount.create({
     data: {
       userId: user.id,
@@ -187,11 +188,6 @@ async function main() {
   const secondCleanup = await cleanupInstagramPublishStorage(now, user.id);
   assert(secondCleanup.mediaDeleted === 0 && secondCleanup.orphanedDeleted === 0, "Cleanup is not idempotent");
 
-  await prisma.instagramStorageObject.deleteMany({ where: { userId: user.id } });
-  await prisma.instagramPublishJob.deleteMany({ where: { userId: user.id } });
-  await prisma.instagramAccount.delete({ where: { id: account.id } });
-  await prisma.user.delete({ where: { id: user.id } });
-
   console.log(JSON.stringify({
     success: true,
     tests: {
@@ -208,6 +204,13 @@ async function main() {
       databaseCleanup: true,
     },
   }, null, 2));
+  } finally {
+    // Always remove only this test user's records, even if an assertion fails.
+    await prisma.instagramStorageObject.deleteMany({ where: { userId: user.id } });
+    await prisma.instagramPublishJob.deleteMany({ where: { userId: user.id } });
+    await prisma.instagramAccount.deleteMany({ where: { userId: user.id } });
+    await prisma.user.deleteMany({ where: { id: user.id } });
+  }
 }
 
 main().catch(async (error) => {
