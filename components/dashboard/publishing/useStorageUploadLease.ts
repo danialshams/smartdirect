@@ -31,3 +31,19 @@ export function useStorageUploadLease(publicUrls: Array<string | null | undefine
     return () => window.clearInterval(interval);
   }, [signature]);
 }
+
+export async function requestStorageCleanupByPublicUrl(publicUrl: string | null | undefined) {
+  if (!publicUrl) return;
+
+  const response = await fetch("/api/instagram/publishing/upload", {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ publicUrl }),
+  });
+
+  if (!response.ok) {
+    const result = await response.json().catch(() => null);
+    throw new Error(result?.message || "حذف فایل ناموفق بود.");
+  }
+}
