@@ -136,8 +136,6 @@ async function main() {
   assert(cleanup.mediaDeleted >= 4, `Expected at least four publish media records to be cleaned, got ${cleanup.mediaDeleted}`);
   assert(cleanup.mediaFailed === 0, "Test storage media cleanup should not fail");
   assert(cleanup.orphanedDeleted >= 1, `Expected at least one expired orphaned object to be cleaned, got ${cleanup.orphanedDeleted}`);
-  assert(cleanup.orphanedDeleted >= 1, "Expired unreferenced uploads should be removed");
-  assert(cleanup.orphanedDeleted >= 1, "Orphan cleanup should include the test orphan");
   assert(cleanup.orphanedFailed === 0, "Test orphan cleanup should not fail");
 
   const deletedMedia = await prisma.instagramPublishMedia.findMany({
