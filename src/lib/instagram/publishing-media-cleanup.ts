@@ -18,14 +18,42 @@ export function getUnlinkedUploadExpiry(now = Date.now()) {
 }
 
 export async function deletePublishMediaStorage(
-  items: Array<{ id: string; storageKey: string; deletedAt: Date | null }>,
+  items: Array<{ id: string; storageKey: string; publicUrl: string | null; deletedAt: Date | null }>,
 ) {
   const storage = getStorageProvider();
   let deleted = 0;
   let failed = 0;
+  let skippedReferenced = 0;
+  let legacySkipped = 0;
 
   for (const item of items) {
     if (item.deletedAt) continue;
+
+    const storageObject = item.publicUrl
+      ? null
+      : await prisma.instagramStorageObject.findUnique({
+          where: { storageKey: item.storageKey },
+          select: { publicUrl: true },
+        });
+    const publicUrl = item.publicUrl || storageObject?.publicUrl || null;
+
+    // Without a URL we cannot prove that this object is not also used by an
+    // automation/showcase. Keep it rather than risk breaking saved content.
+    if (!publicUrl) {
+      legacySkipped++;
+      continue;
+    }
+
+    const isReferenced = await isStorageObjectReferenced({
+      storageKey: item.storageKey,
+      publicUrl,
+      ignorePublishMediaId: item.id,
+    });
+    if (isReferenced) {
+      skippedReferenced++;
+      continue;
+    }
+
     try {
       if (!item.storageKey.startsWith("test:")) {
         await storage.delete(item.storageKey);
@@ -52,7 +80,7 @@ export async function deletePublishMediaStorage(
     }
   }
 
-  return { deleted, failed };
+  return { deleted, failed, skippedReferenced, legacySkipped };
 }
 
 export async function cleanupInstagramPublishStorage(now = new Date()) {
@@ -71,7 +99,7 @@ export async function cleanupInstagramPublishStorage(now = new Date()) {
         },
       ],
     },
-    select: { id: true, storageKey: true, deletedAt: true },
+    select: { id: true, storageKey: true, publicUrl: true, deletedAt: true },
     orderBy: { expiresAt: "asc" },
     take: CLEANUP_BATCH_SIZE,
   });
@@ -129,6 +157,8 @@ export async function cleanupInstagramPublishStorage(now = new Date()) {
   return {
     mediaDeleted: mediaResult.deleted,
     mediaFailed: mediaResult.failed,
+    mediaSkippedReferenced: mediaResult.skippedReferenced,
+    mediaLegacySkipped: mediaResult.legacySkipped,
     orphanedDeleted: orphanDeleted,
     orphanedFailed: orphanFailed,
     legacySkipped,
