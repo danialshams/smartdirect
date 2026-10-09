@@ -83,10 +83,11 @@ export async function deletePublishMediaStorage(
   return { deleted, failed, skippedReferenced, legacySkipped };
 }
 
-export async function cleanupInstagramPublishStorage(now = new Date()) {
+export async function cleanupInstagramPublishStorage(now = new Date(), userId?: string) {
   const media = await prisma.instagramPublishMedia.findMany({
     where: {
       deletedAt: null,
+      ...(userId ? { publishJob: { userId } } : {}),
       OR: [
         { expiresAt: { lte: now } },
         { publishJob: { status: "CANCELLED" } },
@@ -109,6 +110,7 @@ export async function cleanupInstagramPublishStorage(now = new Date()) {
   const orphaned = await prisma.instagramStorageObject.findMany({
     where: {
       deletedAt: null,
+      ...(userId ? { userId } : {}),
       expiresAt: { lte: now },
     },
     select: { id: true, storageKey: true, publicUrl: true },
