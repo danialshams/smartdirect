@@ -141,7 +141,7 @@ async function main() {
     },
   });
 
-  const cleanup = await cleanupInstagramPublishStorage(now);
+  const cleanup = await cleanupInstagramPublishStorage(now, user.id);
   assert(cleanup.mediaDeleted >= 4, `Expected at least four publish media records to be cleaned, got ${cleanup.mediaDeleted}`);
   assert(cleanup.mediaFailed === 0, "Test storage media cleanup should not fail");
   assert(cleanup.orphanedDeleted >= 1, `Expected at least one expired orphaned object to be cleaned, got ${cleanup.orphanedDeleted}`);
@@ -184,7 +184,7 @@ async function main() {
   });
   assert(activeObject?.deletedAt === null, "Storage referenced by an active automation was deleted");
 
-  const secondCleanup = await cleanupInstagramPublishStorage(now);
+  const secondCleanup = await cleanupInstagramPublishStorage(now, user.id);
   assert(secondCleanup.mediaDeleted === 0 && secondCleanup.orphanedDeleted === 0, "Cleanup is not idempotent");
 
   await prisma.instagramStorageObject.deleteMany({ where: { userId: user.id } });
