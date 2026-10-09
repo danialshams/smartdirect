@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import VoiceRecorder from "./VoiceRecorder";
+import { requestStorageCleanupByPublicUrl, useStorageUploadLease } from "./publishing/useStorageUploadLease";
 import type { AutomationTriggerType } from "./AutomationManager";
 import type {
   FormItem,
@@ -180,6 +181,9 @@ export default function AutomationFlowMessage({
     try {
       const url = await uploadFile(file);
       setMediaProgress(100);
+      if (message.mediaUrl && message.mediaUrl !== url) {
+        void requestStorageCleanupByPublicUrl(message.mediaUrl).catch(() => undefined);
+      }
       onUpdate({ mediaUrl: url, mediaId: "" });
       setMediaRetryFile(null);
       return true;
@@ -192,6 +196,7 @@ export default function AutomationFlowMessage({
   }
 
   function clearMessageMedia() {
+    void requestStorageCleanupByPublicUrl(message.mediaUrl).catch(() => undefined);
     onUpdate({ mediaUrl: "", mediaId: "" });
     setMediaRetryFile(null);
     setMediaProgress(0);
@@ -691,6 +696,7 @@ function MediaComposer({
 }) {
   const accept = kind === "IMAGE" ? "image/jpeg,image/png,image/webp" : kind === "VIDEO" ? "video/mp4,video/quicktime" : "audio/mpeg,audio/mp3,audio/aac,audio/wav,audio/x-wav,audio/m4a,.mp3,.m4a,.aac,.wav,.webm,.ogg";
   const labels = { IMAGE: "تصویر", VIDEO: "ویدیو", AUDIO: "وویس" } as const;
+  useStorageUploadLease([url]);
 
   return (
     <div className="space-y-5">
@@ -843,6 +849,7 @@ function BranchMediaDestination({
   const [error, setError] = useState("");
   const [retryFile, setRetryFile] = useState<File | null>(null);
   const accept = kind === "IMAGE" ? "image/*" : kind === "VIDEO" ? "video/*" : "audio/*";
+  useStorageUploadLease([url]);
 
   async function choose(file?: File): Promise<boolean> {
     if (!file) return false;
@@ -852,6 +859,7 @@ function BranchMediaDestination({
     setRetryFile(file);
     try {
       const uploaded = await uploadBranchMedia(file, setProgress);
+      if (url && url !== uploaded) void requestStorageCleanupByPublicUrl(url).catch(() => undefined);
       onChange(uploaded);
       setRetryFile(null);
       return true;
@@ -873,7 +881,7 @@ function BranchMediaDestination({
           </div>
           <div className="flex gap-2">
             <FilePicker accept={accept} disabled={uploading} onChange={choose} label="جایگزین" />
-            <button type="button" onClick={() => onChange("")} className="rounded-xl border bg-white px-3 py-2 text-[11px] font-bold" style={{ borderColor: palette.border, color: palette.error }}>حذف</button>
+            <button type="button" onClick={() => { void requestStorageCleanupByPublicUrl(url).catch(() => undefined); onChange(""); }} className="rounded-xl border bg-white px-3 py-2 text-[11px] font-bold" style={{ borderColor: palette.border, color: palette.error }}>حذف</button>
           </div>
         </div>
       ) : uploading || retryFile ? (
@@ -909,6 +917,7 @@ function ShowcaseComposer({
 }) {
   const existing = showcases.find((item) => item.id === showcaseId) ?? null;
   const [items, setItems] = useState<ShowcaseItemDraft[]>([newShowcaseItem()]);
+  useStorageUploadLease(items.map((item) => item.imageUrl));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -928,6 +937,12 @@ function ShowcaseComposer({
     setItems((current) => current.map((item) => item.id === id ? { ...item, ...patch } : item));
   }
 
+  function removeItem(id: string) {
+    const item = items.find((entry) => entry.id === id);
+    if (item?.imageUrl) void requestStorageCleanupByPublicUrl(item.imageUrl).catch(() => undefined);
+    setItems((current) => current.filter((entry) => entry.id !== id));
+  }
+
   const [uploadingItems, setUploadingItems] = useState<Record<string, boolean>>({});
   const [uploadProgressItems, setUploadProgressItems] = useState<Record<string, number>>({});
   const [retryFiles, setRetryFiles] = useState<Record<string, File | null>>({});
@@ -941,7 +956,9 @@ function ShowcaseComposer({
     try {
       const previewUrl = URL.createObjectURL(file);
       patchItem(id, { previewUrl });
+      const previousUrl = items.find((item) => item.id === id)?.imageUrl;
       const publicUrl = await uploadFile(file);
+      if (previousUrl && previousUrl !== publicUrl) void requestStorageCleanupByPublicUrl(previousUrl).catch(() => undefined);
       setUploadProgressItems((current) => ({ ...current, [id]: 100 }));
       patchItem(id, { imageUrl: publicUrl, previewUrl: publicUrl });
       setRetryFiles((current) => ({ ...current, [id]: null }));
@@ -1042,7 +1059,7 @@ function ShowcaseComposer({
                   <Input value={item.title} onChange={(event) => patchItem(item.id, { title: event.target.value })} placeholder="عنوان کارت" className="w-full rounded-xl border bg-[#FAFAFC] px-3.5 py-3 text-sm outline-none" style={{ borderColor: palette.border }} />
                   <Textarea value={item.description} onChange={(event) => patchItem(item.id, { description: event.target.value })} rows={3} placeholder="توضیح کوتاه کارت" className="w-full resize-none rounded-xl border bg-[#FAFAFC] px-3.5 py-3 text-sm leading-6 outline-none" style={{ borderColor: palette.border }} />
                 </div>
-                <button type="button" disabled={items.length === 1} onClick={() => setItems((current) => current.filter((entry) => entry.id !== item.id))} className="flex h-8 w-8 items-center justify-center rounded-lg disabled:opacity-25" style={{ color: palette.secondary }}><X size={15} /></button>
+                <button type="button" disabled={items.length === 1} onClick={() => removeItem(item.id)} className="flex h-8 w-8 items-center justify-center rounded-lg disabled:opacity-25" style={{ color: palette.secondary }}><X size={15} /></button>
               </div>
             ))}
           </div>

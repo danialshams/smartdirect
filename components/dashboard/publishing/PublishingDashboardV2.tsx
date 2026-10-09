@@ -18,6 +18,7 @@ import { WheelPicker, type WheelPickerOption } from "@ncdai/react-wheel-picker";
 import "@ncdai/react-wheel-picker/style.css";
 
 import PublishingStoryAutomationSetup, { type PublishingStoryAutomationSetupHandle } from "./PublishingStoryAutomationSetup";
+import { useStorageUploadLease } from "./useStorageUploadLease";
 import {
   createEmptyMessage,
   createEmptyQuickReply,
@@ -414,6 +415,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const [caption, setCaption] = useState("");
   const [media, setMedia] = useState<LocalMedia[]>([]);
   const [uploadedMedia, setUploadedMedia] = useState<UploadedMedia[]>([]);
+  useStorageUploadLease(uploadedMedia.map((item) => item.publicUrl));
   const [automationEnabled, setAutomationEnabled] = useState(false);
   const [keywords, setKeywords] = useState("");
   const [messages, setMessages] = useState<MessageDraft[]>([createEmptyMessage()]);

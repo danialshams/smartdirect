@@ -292,7 +292,7 @@ async function publishContainer(
 }
 
 async function cleanupPublishedMedia(
-  items: Array<{ id: string; storageKey: string; deletedAt: Date | null }>,
+  items: Array<{ id: string; storageKey: string; publicUrl: string | null; deletedAt: Date | null }>,
 ) {
   await deletePublishMediaStorage(items);
 }

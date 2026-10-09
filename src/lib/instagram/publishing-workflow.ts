@@ -80,7 +80,7 @@ export async function processPublishingQueueJobStep(jobId: string) {
       try {
         const publishingJob = await prisma.instagramPublishJob.findUnique({
           where: { id: (job as QueueJob<"PUBLISH">).payload.publishingJobId },
-          select: { media: { where: { deletedAt: null }, select: { id: true, storageKey: true, deletedAt: true } } },
+          select: { media: { where: { deletedAt: null }, select: { id: true, storageKey: true, publicUrl: true, deletedAt: true } } },
         });
 
         if (publishingJob?.media.length) {

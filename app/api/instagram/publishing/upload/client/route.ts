@@ -33,6 +33,31 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Lease renewals work with every storage provider, not only Vercel Blob.
+  if (request.headers.get("content-type")?.includes("application/json")) {
+    const body = await request.clone().json().catch(() => null) as Record<string, unknown> | null;
+    if (body?.action === "keepalive") {
+      const publicUrls = Array.isArray(body.publicUrls)
+        ? body.publicUrls.filter((value): value is string => typeof value === "string" && value.length <= 2048).slice(0, 100)
+        : [];
+
+      if (publicUrls.length === 0) {
+        return NextResponse.json({ success: true, renewed: 0 });
+      }
+
+      const renewed = await prisma.instagramStorageObject.updateMany({
+        where: {
+          userId: session.user.id,
+          publicUrl: { in: publicUrls },
+          deletedAt: null,
+        },
+        data: { expiresAt: getUnlinkedUploadExpiry() },
+      });
+
+      return NextResponse.json({ success: true, renewed: renewed.count });
+    }
+  }
+
   if (process.env.STORAGE_PROVIDER !== "vercel-blob") {
     return NextResponse.json({
       success: true,
@@ -131,11 +156,19 @@ export async function POST(request: NextRequest) {
             );
           }
 
+          await prisma.instagramStorageObject.update({
+            where: { id: existing.id },
+            data: {
+              publicUrl: existing.publicUrl || url,
+              expiresAt: getUnlinkedUploadExpiry(),
+            },
+          });
+
           return NextResponse.json({
             success: true,
             data: {
               storageKey: existing.storageKey,
-              publicUrl: url,
+              publicUrl: existing.publicUrl || url,
               type: contentType.startsWith("video/") ? "VIDEO" : "IMAGE",
               fileName,
               mimeType: contentType,
@@ -148,6 +181,7 @@ export async function POST(request: NextRequest) {
           data: {
             userId: session.user.id,
             storageKey: pathname,
+            publicUrl: url,
             expiresAt: getUnlinkedUploadExpiry(),
           },
         });
