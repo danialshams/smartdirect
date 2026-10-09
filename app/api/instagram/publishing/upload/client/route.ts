@@ -121,27 +121,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(jsonResponse);
       }
 
-      if (body.action === "keepalive") {
-        const publicUrls = Array.isArray(body.publicUrls)
-          ? body.publicUrls.filter((value): value is string => typeof value === "string" && value.length <= 2048).slice(0, 100)
-          : [];
-
-        if (publicUrls.length === 0) {
-          return NextResponse.json({ success: true, renewed: 0 });
-        }
-
-        const renewed = await prisma.instagramStorageObject.updateMany({
-          where: {
-            userId: session.user.id,
-            publicUrl: { in: publicUrls },
-            deletedAt: null,
-          },
-          data: { expiresAt: getUnlinkedUploadExpiry() },
-        });
-
-        return NextResponse.json({ success: true, renewed: renewed.count });
-      }
-
       if (body.action === "finalize") {
         const pathname = typeof body.pathname === "string" ? body.pathname : "";
         const url = typeof body.url === "string" ? body.url : "";
