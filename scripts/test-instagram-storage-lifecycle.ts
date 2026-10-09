@@ -19,7 +19,7 @@ async function main() {
   const past = new Date(now.getTime() - 60 * 60 * 1000);
 
   const unlinkedExpiry = getUnlinkedUploadExpiry(now.getTime());
-  assert(unlinkedExpiry.getTime() === now.getTime() + 72 * 60 * 60 * 1000, "Unlinked upload TTL must be 72 hours");
+  assert(unlinkedExpiry.getTime() === now.getTime() + 60 * 60 * 1000, "Unlinked upload TTL must be one hour");
 
   const scheduledAt = new Date(now.getTime() + 60 * 60 * 1000);
   const scheduledExpiry = getStorageObjectExpiry(scheduledAt);
@@ -53,6 +53,7 @@ async function main() {
     expiresAt: Date,
   ) => {
     const storageKey = "test:" + suffix + "/" + name;
+    const publicUrl = "https://storage.test/" + suffix + "/" + name;
     const job = await prisma.instagramPublishJob.create({
       data: {
         userId: user.id,
@@ -68,6 +69,7 @@ async function main() {
         publishJobId: job.id,
         type: "IMAGE",
         storageKey,
+        publicUrl,
         fileName: name + ".jpg",
         mimeType: "image/jpeg",
         fileSize: 10,
@@ -79,11 +81,12 @@ async function main() {
       data: {
         userId: user.id,
         storageKey,
+        publicUrl,
         expiresAt,
       },
     });
 
-    return { job, media, storageKey };
+    return { job, media, storageKey, publicUrl };
   };
 
   const cancelled = await createCase("cancelled", "CANCELLED", 0, future);
@@ -93,11 +96,39 @@ async function main() {
   const expired = await createCase("expired", "DRAFT", 0, past);
 
   const orphanKey = "test:" + suffix + "/orphan";
-  const orphan = await prisma.instagramStorageObject.create({
+  const orphanUrl = "https://storage.test/" + suffix + "/orphan";
+  await prisma.instagramStorageObject.create({
     data: {
       userId: user.id,
       storageKey: orphanKey,
+      publicUrl: orphanUrl,
       expiresAt: past,
+    },
+  });
+
+  const activeAutomation = await prisma.automation.create({
+    data: {
+      instagramAccountId: account.id,
+      keyword: "active-storage-" + suffix,
+      triggerType: "COMMENT_KEYWORD",
+    },
+  });
+  const activeStorageKey = "test:" + suffix + "/active-automation";
+  const activeStorageUrl = "https://storage.test/" + suffix + "/active-automation";
+  await prisma.instagramStorageObject.create({
+    data: {
+      userId: user.id,
+      storageKey: activeStorageKey,
+      publicUrl: activeStorageUrl,
+      expiresAt: past,
+    },
+  });
+  await prisma.automationMessage.create({
+    data: {
+      automationId: activeAutomation.id,
+      order: 0,
+      messageType: "IMAGE",
+      mediaUrl: activeStorageUrl,
     },
   });
 
@@ -105,6 +136,8 @@ async function main() {
   assert(cleanup.mediaDeleted >= 4, `Expected at least four publish media records to be cleaned, got ${cleanup.mediaDeleted}`);
   assert(cleanup.mediaFailed === 0, "Test storage media cleanup should not fail");
   assert(cleanup.orphanedDeleted >= 1, `Expected at least one expired orphaned object to be cleaned, got ${cleanup.orphanedDeleted}`);
+  assert(cleanup.orphanedDeleted >= 1, "Expired unreferenced uploads should be removed");
+  assert(cleanup.orphanedDeleted >= 1, "Orphan cleanup should include the test orphan");
   assert(cleanup.orphanedFailed === 0, "Test orphan cleanup should not fail");
 
   const deletedMedia = await prisma.instagramPublishMedia.findMany({
@@ -131,6 +164,12 @@ async function main() {
   });
   assert(retainedObject?.deletedAt === null, "Retryable failed storage object was deleted too early");
 
+  const activeObject = await prisma.instagramStorageObject.findUnique({
+    where: { storageKey: activeStorageKey },
+    select: { deletedAt: true },
+  });
+  assert(activeObject?.deletedAt === null, "Storage referenced by an active automation was deleted");
+
   const secondCleanup = await cleanupInstagramPublishStorage(now);
   assert(secondCleanup.mediaDeleted === 0 && secondCleanup.orphanedDeleted === 0, "Cleanup is not idempotent");
 
@@ -143,6 +182,7 @@ async function main() {
     success: true,
     tests: {
       ttlRules: true,
+      activeAutomationMediaRetention: true,
       cancelledImmediateCleanup: true,
       publishedImmediateCleanup: true,
       finalFailedCleanup: true,
