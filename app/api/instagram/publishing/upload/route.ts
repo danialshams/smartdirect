@@ -11,6 +11,7 @@ import { authOptions } from "@/lib/auth";
 import { getStorageProvider } from "@/lib/storage/provider";
 import { prisma } from "@/lib/prisma";
 import { getUnlinkedUploadExpiry } from "@/lib/instagram/publishing-media-cleanup";
+import { isStorageObjectReferenced } from "@/lib/instagram/storage-references";
 
 export const dynamic = "force-dynamic";
 
@@ -100,6 +101,7 @@ export async function POST(request: NextRequest) {
         data: {
           userId: session.user.id,
           storageKey: result.storageKey,
+          publicUrl: result.publicUrl,
           expiresAt: getUnlinkedUploadExpiry(),
         },
       });
@@ -136,17 +138,51 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ success: false, message: "احراز هویت انجام نشده است." }, { status: 401 });
     }
 
-    const body = await request.json().catch(() => null) as { storageKey?: unknown } | null;
-    const storageKey = typeof body?.storageKey === "string" ? body.storageKey : "";
+    const body = await request.json().catch(() => null) as {
+      storageKey?: unknown;
+      publicUrl?: unknown;
+    } | null;
+    const requestedKey = typeof body?.storageKey === "string" ? body.storageKey : "";
+    const requestedUrl = typeof body?.publicUrl === "string" ? body.publicUrl : "";
 
-    if (!storageKey) {
-      return NextResponse.json({ success: false, message: "storageKey ارسال نشده است." }, { status: 400 });
+    if (!requestedKey && !requestedUrl) {
+      return NextResponse.json({ success: false, message: "storageKey یا publicUrl ارسال نشده است." }, { status: 400 });
     }
 
-    const expectedPrefix = `pending/${session.user.id}/`;
+    let storageObject = requestedKey
+      ? await prisma.instagramStorageObject.findUnique({ where: { storageKey: requestedKey } })
+      : null;
 
-    if (!storageKey.startsWith(expectedPrefix)) {
+    if (!storageObject && requestedUrl) {
+      storageObject = await prisma.instagramStorageObject.findFirst({
+        where: { userId: session.user.id, publicUrl: requestedUrl },
+      });
+    }
+
+    if (storageObject && storageObject.userId !== session.user.id) {
       return NextResponse.json({ success: false, message: "دسترسی به این فایل مجاز نیست." }, { status: 403 });
+    }
+
+    const storageKey = storageObject?.storageKey || requestedKey;
+    if (!storageKey) {
+      // Older records have no publicUrl mapping. Leave their physical object
+      // for the conservative legacy cleanup path instead of guessing a key.
+      return NextResponse.json({ success: true, deferred: true });
+    }
+
+    if (!storageObject && !storageKey.startsWith(`pending/${session.user.id}/`)) {
+      return NextResponse.json({ success: false, message: "دسترسی به این فایل مجاز نیست." }, { status: 403 });
+    }
+
+    const publicUrl = requestedUrl || storageObject?.publicUrl || null;
+    const isReferenced = await isStorageObjectReferenced({ storageKey, publicUrl });
+
+    if (isReferenced) {
+      return NextResponse.json({
+        success: true,
+        deferred: true,
+        message: "این فایل هنوز در محتوای ذخیره‌شده استفاده می‌شود و حذف آن به تعویق افتاد.",
+      });
     }
 
     const provider = getStorageProvider();
@@ -161,7 +197,7 @@ export async function DELETE(request: NextRequest) {
       data: { deletedAt: new Date() },
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, deferred: false });
   } catch (error) {
     console.error("DELETE /api/instagram/publishing/upload error:", error);
     return NextResponse.json({
