@@ -174,7 +174,15 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ success: false, message: "دسترسی به این فایل مجاز نیست." }, { status: 403 });
     }
 
-    const publicUrl = requestedUrl || storageObject?.publicUrl || null;
+    if (storageObject?.deletedAt) {
+      return NextResponse.json({ success: true, alreadyDeleted: true });
+    }
+
+    if (storageObject?.publicUrl && requestedUrl && storageObject.publicUrl !== requestedUrl) {
+      return NextResponse.json({ success: false, message: "آدرس فایل با کلید ذخیره‌شده مطابقت ندارد." }, { status: 400 });
+    }
+
+    const publicUrl = storageObject?.publicUrl || requestedUrl || null;
     const isReferenced = await isStorageObjectReferenced({ storageKey, publicUrl });
 
     if (isReferenced) {
