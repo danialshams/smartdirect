@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { getStorageProvider } from "@/lib/storage/provider";
+import { isStorageObjectReferenced } from "@/lib/instagram/storage-references";
 
-const DEFAULT_UPLOAD_TTL_MS = 72 * 60 * 60 * 1000;
+const DEFAULT_UPLOAD_TTL_MS = 60 * 60 * 1000;
 const CLEANUP_BATCH_SIZE = 200;
 
 export const PUBLISH_MEDIA_MAX_RETRIES = 4;
@@ -11,6 +12,7 @@ export function getStorageObjectExpiry(scheduledAt: Date | null, now = Date.now(
   return new Date(now + 24 * 60 * 60 * 1000);
 }
 
+/** Unlinked uploads expire one hour after their last successful upload/lease renewal. */
 export function getUnlinkedUploadExpiry(now = Date.now()) {
   return new Date(now + DEFAULT_UPLOAD_TTL_MS);
 }
@@ -81,7 +83,7 @@ export async function cleanupInstagramPublishStorage(now = new Date()) {
       deletedAt: null,
       expiresAt: { lte: now },
     },
-    select: { id: true, storageKey: true },
+    select: { id: true, storageKey: true, publicUrl: true },
     orderBy: { expiresAt: "asc" },
     take: CLEANUP_BATCH_SIZE,
   });
@@ -89,14 +91,21 @@ export async function cleanupInstagramPublishStorage(now = new Date()) {
   const storage = getStorageProvider();
   let orphanDeleted = 0;
   let orphanFailed = 0;
+  let legacySkipped = 0;
 
   for (const item of orphaned) {
-    const linkedMedia = await prisma.instagramPublishMedia.findFirst({
-      where: { storageKey: item.storageKey },
-      select: { id: true, deletedAt: true },
-    });
+    // Older rows predate publicUrl tracking. Their URL references cannot be
+    // verified safely, so leave them intact rather than risk deleting live media.
+    if (!item.publicUrl) {
+      legacySkipped++;
+      continue;
+    }
 
-    if (linkedMedia && !linkedMedia.deletedAt) continue;
+    const isReferenced = await isStorageObjectReferenced({
+      storageKey: item.storageKey,
+      publicUrl: item.publicUrl,
+    });
+    if (isReferenced) continue;
 
     try {
       if (!item.storageKey.startsWith("test:")) {
@@ -122,5 +131,6 @@ export async function cleanupInstagramPublishStorage(now = new Date()) {
     mediaFailed: mediaResult.failed,
     orphanedDeleted: orphanDeleted,
     orphanedFailed: orphanFailed,
+    legacySkipped,
   };
 }
