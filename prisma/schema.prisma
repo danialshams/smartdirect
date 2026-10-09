@@ -471,6 +471,7 @@ model InstagramStorageObject {
   id           String   @id @default(cuid())
   userId       String
   storageKey   String   @unique
+  publicUrl    String?
   expiresAt    DateTime
   deletedAt    DateTime?
   createdAt    DateTime @default(now())
@@ -478,6 +479,7 @@ model InstagramStorageObject {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, expiresAt])
+  @@index([userId, publicUrl])
   @@index([expiresAt, deletedAt])
 }
 
