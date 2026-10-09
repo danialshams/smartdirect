@@ -7,10 +7,15 @@ import { prisma } from "@/lib/prisma";
 export async function isStorageObjectReferenced(input: {
   storageKey: string;
   publicUrl: string | null;
+  ignorePublishMediaId?: string;
 }) {
   const [publishMedia, automationMessage, showcaseItem] = await Promise.all([
     prisma.instagramPublishMedia.findFirst({
-      where: { storageKey: input.storageKey, deletedAt: null },
+      where: {
+        storageKey: input.storageKey,
+        deletedAt: null,
+        ...(input.ignorePublishMediaId ? { id: { not: input.ignorePublishMediaId } } : {}),
+      },
       select: { id: true },
     }),
     input.publicUrl
