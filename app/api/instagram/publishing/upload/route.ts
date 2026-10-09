@@ -166,7 +166,7 @@ export async function DELETE(request: NextRequest) {
     const storageKey = storageObject?.storageKey || requestedKey;
     if (!storageKey) {
       // Older records have no publicUrl mapping. Leave their physical object
-      // for the conservative legacy cleanup path instead of guessing a key.
+      // for provider-aware reconciliation instead of guessing a storage key.
       return NextResponse.json({ success: true, deferred: true });
     }
 
