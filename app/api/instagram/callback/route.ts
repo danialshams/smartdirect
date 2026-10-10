@@ -5,7 +5,6 @@ import { verifyInstagramOAuthState } from "@/lib/instagram/oauth-state";
 
 const INSTAGRAM_API_VERSION = "v26.0";
 const REQUEST_TIMEOUT_MS = 15000;
-const STATE_MAX_AGE_MS = 10 * 60 * 1000;
 
 type InstagramOAuthTokenResponse = {
   access_token?: string;
