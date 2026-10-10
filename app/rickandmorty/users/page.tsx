@@ -98,7 +98,7 @@ export default function AdminUsersPage() {
       const response = await fetch("/api/admin/users/bulk", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       const json = await response.json();
       if (!response.ok) throw new Error(json.message ?? "اجرای عملیات ناموفق بود");
-      setResult(json as BulkResult); clearSelection(); setDialogOpen(false); await load();
+      setResult(json as BulkResult); setSelectedIds([]); setExcludedIds([]); setAllFiltered(false); setDialogOpen(false); await load();
     } catch (e) { setError(e instanceof Error ? e.message : "اجرای عملیات ناموفق بود"); }
     finally { setSubmitting(false); }
   };
@@ -111,8 +111,8 @@ export default function AdminUsersPage() {
       <Stack spacing={1.5}>
         <TextField fullWidth size="small" value={q} placeholder="جستجو بر اساس نام یا ایمیل..." onChange={(e) => changeFilter(setQ, e.target.value)} sx={{ maxWidth: 520 }} InputProps={{ startAdornment: <InputAdornment position="start"><Search size={18} /></InputAdornment> }} />
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
-          <FormControl size="small" fullWidth><InputLabel id="plan-filter">نوع اشتراک</InputLabel><Select labelId="plan-filter" label="نوع اشتراک" value={planKey} onChange={(e) => changeFilter(setPlanKey, e.target.value)}><MenuItem value="">همه پلن‌ها</MenuItem><MenuItem value="free">رایگان</MenuItem><MenuItem value="monthly">ماهانه</MenuItem><MenuItem value="yearly">سالانه</MenuItem></Select></FormControl>
-          <FormControl size="small" fullWidth><InputLabel id="status-filter">وضعیت اشتراک</InputLabel><Select labelId="status-filter" label="وضعیت اشتراک" value={status} onChange={(e) => changeFilter(setStatus, e.target.value)}><MenuItem value="">همه وضعیت‌ها</MenuItem>{Object.entries(statusLabels).map(([value, label]) => <MenuItem key={value} value={value}>{label}</MenuItem>)}</Select></FormControl>
+          <FormControl size="small" fullWidth><InputLabel id="plan-filter">نوع اشتراک</InputLabel><Select labelId="plan-filter" label="نوع اشتراک" value={planKey} onChange={(e) => changeFilter(setPlanKey, String(e.target.value))}><MenuItem value="">همه پلن‌ها</MenuItem><MenuItem value="free">رایگان</MenuItem><MenuItem value="monthly">ماهانه</MenuItem><MenuItem value="yearly">سالانه</MenuItem></Select></FormControl>
+          <FormControl size="small" fullWidth><InputLabel id="status-filter">وضعیت اشتراک</InputLabel><Select labelId="status-filter" label="وضعیت اشتراک" value={status} onChange={(e) => changeFilter(setStatus, String(e.target.value))}><MenuItem value="">همه وضعیت‌ها</MenuItem>{Object.entries(statusLabels).map(([value, label]) => <MenuItem key={value} value={value}>{label}</MenuItem>)}</Select></FormControl>
         </Stack>
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems={{ xs: "stretch", sm: "center" }} justifyContent="space-between">
           <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
@@ -125,7 +125,7 @@ export default function AdminUsersPage() {
       </Stack>
       <TableContainer sx={{ mt: 2, overflowX: { xs: "visible", sm: "auto" }, mx: { xs: -1.25, sm: 0 }, width: { xs: "calc(100% + 20px)", sm: "100%" }, minWidth: 0 }}>
         <Table sx={responsiveAdminTableSx}>
-          <TableHead><TableRow><TableCell padding="checkbox"><Checkbox size="small" checked={pageSelected} indeterminate={rows.some((r) => selectedIds.includes(r.id)) && !pageSelected} onChange={(e) => togglePage(e.target.checked)} disabled={loading || !rows.length} /></TableCell><TableCell>کاربر</TableCell><TableCell>پیج‌های متصل</TableCell><TableCell>اشتراک</TableCell><TableCell>انقضا</TableCell><TableCell>نقش</TableCell></TableRow></TableHead>
+          <TableHead><TableRow><TableCell padding="checkbox"><Checkbox size="small" checked={pageSelected} indeterminate={rows.some((r) => (allFiltered ? !excludedIds.includes(r.id) : selectedIds.includes(r.id))) && !pageSelected} onChange={(e) => togglePage(e.target.checked)} disabled={loading || !rows.length} /></TableCell><TableCell>کاربر</TableCell><TableCell>پیج‌های متصل</TableCell><TableCell>اشتراک</TableCell><TableCell>انقضا</TableCell><TableCell>نقش</TableCell></TableRow></TableHead>
           <TableBody>
             {loading ? <TableRow><TableCell colSpan={6} align="center" sx={{ py: 6 }}><CircularProgress size={28} /></TableCell></TableRow> :
             rows.length ? rows.map((r) => <TableRow key={r.id} hover onClick={() => router.push(`/rickandmorty/users/${r.id}`)} sx={{ cursor: "pointer" }}>
@@ -146,7 +146,7 @@ export default function AdminUsersPage() {
         <Alert severity="info">هر عملیات برای هر کاربر جداگانه اجرا می‌شود و نتیجه هر مورد ثبت می‌شود.</Alert>
         <FormControl fullWidth size="small"><InputLabel id="bulk-action-label">نوع عملیات</InputLabel><Select labelId="bulk-action-label" label="نوع عملیات" value={action} onChange={(e) => setAction(e.target.value as BulkAction)}>{Object.entries(actions).map(([value, label]) => <MenuItem key={value} value={value}>{label}</MenuItem>)}</Select></FormControl>
         {action === "subscription-adjust" && <TextField fullWidth size="small" type="number" label="تعداد روز (منفی برای کم‌کردن)" value={days} onChange={(e) => setDays(e.target.value)} inputProps={{ min: -3650, max: 3650, step: 1 }} helperText="برای کاربر بدون اشتراک فقط عدد مثبت مجاز است." />}
-        {action === "subscription-change-plan" && <FormControl fullWidth size="small"><InputLabel id="new-plan-label">پلن جدید</InputLabel><Select labelId="new-plan-label" label="پلن جدید" value={newPlan} onChange={(e) => setNewPlan(e.target.value)}><MenuItem value="monthly">ماهانه</MenuItem><MenuItem value="yearly">سالانه</MenuItem></Select></FormControl>}
+        {action === "subscription-change-plan" && <FormControl fullWidth size="small"><InputLabel id="new-plan-label">پلن جدید</InputLabel><Select labelId="new-plan-label" label="پلن جدید" value={newPlan} onChange={(e) => setNewPlan(String(e.target.value))}><MenuItem value="monthly">ماهانه</MenuItem><MenuItem value="yearly">سالانه</MenuItem></Select></FormControl>}
         {action === "ticket-create" && <><TextField fullWidth size="small" label="عنوان تیکت" value={subject} onChange={(e) => setSubject(e.target.value)} inputProps={{ maxLength: 160 }} /><TextField fullWidth multiline minRows={4} label="متن تیکت" value={message} onChange={(e) => setMessage(e.target.value)} inputProps={{ maxLength: 5000 }} helperText="برای هر کاربر یک تیکت مستقل ایجاد می‌شود." /></>}
         {action === "subscription-suspend" && <Alert severity="warning">اشتراک کاربران انتخاب‌شده تعلیق می‌شود.</Alert>}
         {action === "subscription-activate" && <Alert severity="warning">اشتراک فعال می‌شود؛ اگر کاربر اشتراک نداشته باشد، اشتراک ماهانه ۳۰روزه ایجاد می‌شود.</Alert>}
