@@ -48,8 +48,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
         data: { planKey, expiresAt, status, ...(status === "ACTIVE" ? { suspendedAt: null, cancelledAt: null } : {}) },
       });
     }
-  } else 
-  if (action === "create") {
+  } else if (action === "create") {
     const expiresAt = new Date(now.getTime() + Math.max(1, days || 30) * 86400000);
     current = await prisma.subscription.create({ data: { userId, planKey, source: "MANUAL", status: "ACTIVE", startedAt: now, expiresAt } });
   } else if (!current) {
