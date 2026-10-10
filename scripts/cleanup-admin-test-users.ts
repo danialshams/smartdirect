@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 dotenv.config({ path: ".env.local" });
 dotenv.config({ path: ".env" });
 
-import { prisma } from "../src/lib/prisma";
+let disconnectPrisma: (() => Promise<void>) | undefined;
 
 const emails = Array.from({ length: 5 }, (_, index) =>
   `sd-admin-test-${String(index + 1).padStart(2, "0")}@example.invalid`,
@@ -23,6 +23,8 @@ function inspectTarget() {
 }
 
 async function main() {
+  const { prisma } = await import("../src/lib/prisma");
+  disconnectPrisma = () => prisma.$disconnect();
   const target = inspectTarget();
   const users = await prisma.user.findMany({
     where: { email: { in: emails }, name: { startsWith: marker }, role: "USER" },
@@ -70,4 +72,4 @@ main()
     console.error("خطا:", error instanceof Error ? error.message : error);
     process.exitCode = 1;
   })
-  .finally(async () => prisma.$disconnect());
+  .finally(async () => disconnectPrisma?.());
