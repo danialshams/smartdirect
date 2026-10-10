@@ -27,6 +27,7 @@ export default function AdminUsersPage() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [excludedIds, setExcludedIds] = useState<string[]>([]);
   const [allFiltered, setAllFiltered] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [action, setAction] = useState<BulkAction>("subscription-adjust");
@@ -37,10 +38,10 @@ export default function AdminUsersPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<BulkResult | null>(null);
-  const selectedCount = allFiltered ? total : selectedIds.length;
-  const pageSelected = rows.length > 0 && rows.every((row) => selectedIds.includes(row.id));
+  const selectedCount = allFiltered ? Math.max(0, total - excludedIds.length) : selectedIds.length;
+  const pageSelected = rows.length > 0 && rows.every((row) => allFiltered ? !excludedIds.includes(row.id) : selectedIds.includes(row.id));
 
-  const clearSelection = () => { setSelectedIds([]); setAllFiltered(false); setResult(null); };
+  const clearSelection = () => { setSelectedIds([]); setExcludedIds([]); setAllFiltered(false); setResult(null); };
   const load = async () => {
     setLoading(true);
     try {
@@ -56,7 +57,11 @@ export default function AdminUsersPage() {
   useEffect(() => { load().catch((e) => setError(e instanceof Error ? e.message : "خطا در دریافت کاربران")); }, [q, page, planKey, status]);
   const changeFilter = (setter: (value: string) => void, value: string) => { setter(value); setPage(1); clearSelection(); };
   const togglePage = (checked: boolean) => {
-    setAllFiltered(false); setResult(null);
+    setResult(null);
+    if (allFiltered) {
+      setExcludedIds((current) => checked ? current.filter((id) => !rows.some((r) => r.id === id)) : [...new Set([...current, ...rows.map((r) => r.id)])]);
+      return;
+    }
     setSelectedIds((current) => checked ? [...new Set([...current, ...rows.map((r) => r.id)])] : current.filter((id) => !rows.some((r) => r.id === id)));
   };
   const exportCsv = async () => {
@@ -85,7 +90,7 @@ export default function AdminUsersPage() {
   const runAction = async () => {
     setSubmitting(true); setError(""); setResult(null);
     try {
-      const selection = allFiltered ? { mode: "filtered", filters: { q, planKey, status } } : { mode: "ids", userIds: selectedIds };
+      const selection = allFiltered ? { mode: "filtered", filters: { q, planKey, status }, excludeUserIds: excludedIds } : { mode: "ids", userIds: selectedIds };
       const payload: Record<string, unknown> = { action, selection };
       if (action === "subscription-adjust") payload.days = Number(days);
       if (action === "subscription-change-plan") payload.planKey = newPlan;
@@ -112,7 +117,7 @@ export default function AdminUsersPage() {
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems={{ xs: "stretch", sm: "center" }} justifyContent="space-between">
           <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
             <Button size="small" variant="outlined" onClick={() => togglePage(!pageSelected)} disabled={loading || !rows.length}>{pageSelected ? "لغو انتخاب صفحه" : "انتخاب صفحه فعلی"}</Button>
-            <Button size="small" variant={allFiltered ? "contained" : "outlined"} onClick={() => { setAllFiltered((v) => !v); setSelectedIds([]); setResult(null); }} disabled={loading || total === 0}>{allFiltered ? "لغو انتخاب همه نتایج" : `انتخاب همه نتایج (${total})`}</Button>
+            <Button size="small" variant={allFiltered ? "contained" : "outlined"} onClick={() => { setAllFiltered((v) => !v); setSelectedIds([]); setExcludedIds([]); setResult(null); }} disabled={loading || total === 0}>{allFiltered ? "لغو انتخاب همه نتایج" : `انتخاب همه نتایج (${total})`}</Button>
             {(selectedIds.length > 0 || allFiltered) && <Button size="small" color="inherit" onClick={clearSelection}>پاک‌کردن انتخاب</Button>}
           </Stack>
           <Stack direction="row" spacing={1}><Button variant="outlined" startIcon={<Download size={17} />} onClick={exportCsv} disabled={!selectedIds.length && !allFiltered}>خروجی CSV</Button><Button variant="contained" startIcon={<Zap size={17} />} onClick={() => { setError(""); setDialogOpen(true); }} disabled={selectedCount === 0}>عملیات گروهی ({selectedCount})</Button></Stack>
@@ -124,7 +129,7 @@ export default function AdminUsersPage() {
           <TableBody>
             {loading ? <TableRow><TableCell colSpan={6} align="center" sx={{ py: 6 }}><CircularProgress size={28} /></TableCell></TableRow> :
             rows.length ? rows.map((r) => <TableRow key={r.id} hover onClick={() => router.push(`/rickandmorty/users/${r.id}`)} sx={{ cursor: "pointer" }}>
-              <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}><Checkbox size="small" checked={allFiltered || selectedIds.includes(r.id)} onChange={(e) => { setAllFiltered(false); setSelectedIds((current) => e.target.checked ? [...new Set([...current, r.id])] : current.filter((id) => id !== r.id)); setResult(null); }} /></TableCell>
+              <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}><Checkbox size="small" checked={allFiltered ? !excludedIds.includes(r.id) : selectedIds.includes(r.id)} onChange={(e) => { setResult(null); if (allFiltered) { setExcludedIds((current) => e.target.checked ? current.filter((id) => id !== r.id) : [...new Set([...current, r.id])]); } else { setSelectedIds((current) => e.target.checked ? [...new Set([...current, r.id])] : current.filter((id) => id !== r.id)); } }} /></TableCell>
               <TableCell data-label="کاربر"><Stack direction="row" spacing={1.5} alignItems="center"><Avatar sx={{ bgcolor: "#EFF6FF", color: "#2563EB", width: 38, height: 38 }}>{r.name?.[0] || "U"}</Avatar><Box sx={{ minWidth: 0 }}><Typography variant="body2" fontWeight={600} sx={{ whiteSpace: { xs: "normal", sm: "nowrap" }, overflowWrap: "anywhere" }}>{r.name}</Typography><Typography variant="caption" color="text.secondary" sx={{ whiteSpace: { xs: "normal", sm: "nowrap" }, overflowWrap: "anywhere" }}>{r.email}</Typography></Box></Stack></TableCell>
               <TableCell data-label="پیج‌های متصل">{r.pagesCount}</TableCell>
               <TableCell data-label="اشتراک">{r.subscription ? <><Chip size="small" label={r.subscription.planKey} variant="outlined" /> <Chip size="small" label={r.subscription.effectiveStatus ? statusLabels[r.subscription.effectiveStatus] ?? r.subscription.effectiveStatus : "—"} color={r.subscription.effectiveStatus === "ACTIVE" ? "success" : r.subscription.effectiveStatus === "EXPIRED" ? "error" : "warning"} variant="outlined" /></> : <Chip size="small" label="بدون اشتراک" />}</TableCell>
