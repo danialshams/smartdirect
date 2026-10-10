@@ -76,7 +76,7 @@ export default function BulkTicketPage() {
     {result && <Alert severity={result.failed?"warning":"success"} onClose={()=>setResult(null)}>نتیجه ارسال: {result.succeeded} موفق، {result.failed} ناموفق از {result.processed} کاربر.</Alert>}
     <Card><CardContent sx={{p:{xs:1.5,sm:2.5}}}><Stack spacing={1.5}>
       <Typography fontWeight={700}>۱. انتخاب مخاطبان</Typography>
-      <TextField fullWidth size="small" value={filters.q} onChange={e=>updateFilter("q",e.target.value)} placeholder="جستجو بر اساس نام یا ایمیل" inputProps={{dir:"rtl"}} InputProps={{startAdornment:<Box sx={{display:"flex",pl:1}}><Search size={18}/></Box>}}/>
+      <TextField fullWidth size="small" value={filters.q} onChange={e=>updateFilter("q",e.target.value)} placeholder="جستجو بر اساس نام یا ایمیل" inputProps={{dir:"rtl"}} InputProps={{endAdornment:<Box sx={{display:"flex",pr:1}}><Search size={18}/></Box>}}/>
       <Box sx={{display:"grid",gridTemplateColumns:{xs:"1fr",sm:"1fr 1fr"},gap:1.5}}>
         <FormControl size="small" fullWidth><InputLabel>نوع اشتراک</InputLabel><Select value={filters.planKey} label="نوع اشتراک" onChange={e=>updateFilter("planKey",String(e.target.value))}><MenuItem value="">همه پلن‌ها</MenuItem><MenuItem value="free">رایگان</MenuItem><MenuItem value="monthly">ماهانه</MenuItem><MenuItem value="yearly">سالانه</MenuItem></Select></FormControl>
         <FormControl size="small" fullWidth><InputLabel>وضعیت اشتراک</InputLabel><Select value={filters.status} label="وضعیت اشتراک" onChange={e=>updateFilter("status",String(e.target.value))}><MenuItem value="">همه وضعیت‌ها</MenuItem>{Object.entries(statusLabels).map(([v,l])=><MenuItem key={v} value={v}>{l}</MenuItem>)}</Select></FormControl>
