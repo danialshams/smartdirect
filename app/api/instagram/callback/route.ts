@@ -88,51 +88,64 @@ async function grantFreeTrialIfEligible(
   igUserId: string,
   igUsername: string,
 ): Promise<FreeTrialGrantResult> {
+  // Reuse the same timestamp across retries so the trial duration is consistent.
   const now = new Date();
   const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+  const maxSerializationRetries = 3;
 
-  try {
-    return await prisma.$transaction(async (tx) => {
-      const [userClaim, pageClaim, priorFreeSubscription, anySubscription] =
-        await Promise.all([
-          tx.freeTrialClaim.findUnique({ where: { userId }, select: { id: true } }),
-          tx.freeTrialClaim.findUnique({ where: { igUserId }, select: { id: true } }),
-          tx.subscription.findFirst({
-            where: { userId, planKey: "free" },
-            select: { id: true },
-          }),
-          tx.subscription.findFirst({ where: { userId }, select: { id: true } }),
-        ]);
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      return await prisma.$transaction(async (tx) => {
+        const [userClaim, pageClaim, priorFreeSubscription, anySubscription] =
+          await Promise.all([
+            tx.freeTrialClaim.findUnique({ where: { userId }, select: { id: true } }),
+            tx.freeTrialClaim.findUnique({ where: { igUserId }, select: { id: true } }),
+            tx.subscription.findFirst({
+              where: { userId, planKey: "free" },
+              select: { id: true },
+            }),
+            tx.subscription.findFirst({ where: { userId }, select: { id: true } }),
+          ]);
 
-      if (userClaim || pageClaim || priorFreeSubscription) {
-        return "ALREADY_CLAIMED";
+        if (userClaim || pageClaim || priorFreeSubscription) {
+          return "ALREADY_CLAIMED";
+        }
+        if (anySubscription) return "HAS_SUBSCRIPTION";
+
+        await tx.freeTrialClaim.create({
+          data: { userId, igUserId, igUsername, claimedAt: now },
+        });
+        await tx.subscription.create({
+          data: {
+            userId,
+            planKey: "free",
+            status: "ACTIVE",
+            source: "SYSTEM",
+            startedAt: now,
+            expiresAt,
+            autoRenew: false,
+            note: "FREE_TRIAL_7_DAYS",
+          },
+        });
+        return "GRANTED";
+      }, { isolationLevel: "Serializable" });
+    } catch (error) {
+      const code =
+        typeof error === "object" && error !== null && "code" in error
+          ? String(error.code)
+          : "";
+
+      // A unique-key conflict means another request claimed this user/page first.
+      if (code === "P2002") return "ALREADY_CLAIMED";
+
+      // Serializable conflicts are not proof that the user already claimed a trial.
+      // Retry so an unrelated concurrent transaction does not deny an eligible user.
+      if (code === "P2034" && attempt < maxSerializationRetries) {
+        continue;
       }
-      if (anySubscription) return "HAS_SUBSCRIPTION";
 
-      await tx.freeTrialClaim.create({
-        data: { userId, igUserId, igUsername, claimedAt: now },
-      });
-      await tx.subscription.create({
-        data: {
-          userId,
-          planKey: "free",
-          status: "ACTIVE",
-          source: "SYSTEM",
-          startedAt: now,
-          expiresAt,
-          autoRenew: false,
-          note: "FREE_TRIAL_7_DAYS",
-        },
-      });
-      return "GRANTED";
-    }, { isolationLevel: "Serializable" });
-  } catch (error) {
-    const code =
-      typeof error === "object" && error !== null && "code" in error
-        ? String(error.code)
-        : "";
-    if (code === "P2002" || code === "P2034") return "ALREADY_CLAIMED";
-    throw error;
+      throw error;
+    }
   }
 }
 
