@@ -24,6 +24,8 @@ export default function AdminUsersPage() {
   const [q, setQ] = useState("");
   const [planKey, setPlanKey] = useState("");
   const [status, setStatus] = useState("");
+  const [expiryWithin, setExpiryWithin] = useState("");
+  const [connection, setConnection] = useState("");
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -48,13 +50,15 @@ export default function AdminUsersPage() {
       const params = new URLSearchParams({ q, page: String(page), pageSize: "20" });
       if (planKey) params.set("planKey", planKey);
       if (status) params.set("status", status);
+      if (expiryWithin) params.set("expiryWithin", expiryWithin);
+      if (connection) params.set("connection", connection);
       const response = await fetch(`/api/admin/users?${params.toString()}`, { cache: "no-store" });
       const json = await response.json();
       if (!response.ok) throw new Error(json.message ?? "دریافت کاربران ناموفق بود");
       setRows(json.data); setTotal(json.total);
     } finally { setLoading(false); }
   };
-  useEffect(() => { load().catch((e) => setError(e instanceof Error ? e.message : "خطا در دریافت کاربران")); }, [q, page, planKey, status]);
+  useEffect(() => { load().catch((e) => setError(e instanceof Error ? e.message : "خطا در دریافت کاربران")); }, [q, page, planKey, status, expiryWithin, connection]);
   const changeFilter = (setter: (value: string) => void, value: string) => { setter(value); setPage(1); clearSelection(); };
   const togglePage = (checked: boolean) => {
     setResult(null);
@@ -73,6 +77,8 @@ export default function AdminUsersPage() {
           const params = new URLSearchParams({ q, page: String(p), pageSize: "50" });
           if (planKey) params.set("planKey", planKey);
           if (status) params.set("status", status);
+      if (expiryWithin) params.set("expiryWithin", expiryWithin);
+      if (connection) params.set("connection", connection);
           const response = await fetch(`/api/admin/users?${params.toString()}`, { cache: "no-store" });
           const json = await response.json();
           if (!response.ok) throw new Error(json.message ?? "دریافت خروجی ناموفق بود");
@@ -90,7 +96,7 @@ export default function AdminUsersPage() {
   const runAction = async () => {
     setSubmitting(true); setError(""); setResult(null);
     try {
-      const selection = allFiltered ? { mode: "filtered", filters: { q, planKey, status }, excludeUserIds: excludedIds } : { mode: "ids", userIds: selectedIds };
+      const selection = allFiltered ? { mode: "filtered", filters: { q, planKey, status, expiryWithin, connection }, excludeUserIds: excludedIds } : { mode: "ids", userIds: selectedIds };
       const payload: Record<string, unknown> = { action, selection };
       if (action === "subscription-adjust") payload.days = Number(days);
       if (action === "subscription-change-plan") payload.planKey = newPlan;
@@ -113,6 +119,10 @@ export default function AdminUsersPage() {
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
           <FormControl size="small" fullWidth><InputLabel id="plan-filter">نوع اشتراک</InputLabel><Select labelId="plan-filter" label="نوع اشتراک" value={planKey} onChange={(e) => changeFilter(setPlanKey, String(e.target.value))}><MenuItem value="">همه پلن‌ها</MenuItem><MenuItem value="free">رایگان</MenuItem><MenuItem value="monthly">ماهانه</MenuItem><MenuItem value="yearly">سالانه</MenuItem></Select></FormControl>
           <FormControl size="small" fullWidth><InputLabel id="status-filter">وضعیت اشتراک</InputLabel><Select labelId="status-filter" label="وضعیت اشتراک" value={status} onChange={(e) => changeFilter(setStatus, String(e.target.value))}><MenuItem value="">همه وضعیت‌ها</MenuItem>{Object.entries(statusLabels).map(([value, label]) => <MenuItem key={value} value={value}>{label}</MenuItem>)}</Select></FormControl>
+        </Stack>
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
+          <FormControl size="small" fullWidth><InputLabel id="expiry-filter">زمان تا انقضا</InputLabel><Select labelId="expiry-filter" label="زمان تا انقضا" value={expiryWithin} onChange={(e) => changeFilter(setExpiryWithin, String(e.target.value))}><MenuItem value="">همه زمان‌ها</MenuItem><MenuItem value="3">کمتر از ۳ روز</MenuItem><MenuItem value="7">کمتر از ۷ روز</MenuItem></Select></FormControl>
+          <FormControl size="small" fullWidth><InputLabel id="connection-filter">اتصال اینستاگرام</InputLabel><Select labelId="connection-filter" label="اتصال اینستاگرام" value={connection} onChange={(e) => changeFilter(setConnection, String(e.target.value))}><MenuItem value="">همه وضعیت‌ها</MenuItem><MenuItem value="connected">پیج متصل دارد</MenuItem><MenuItem value="disconnected">پیج متصل ندارد</MenuItem></Select></FormControl>
         </Stack>
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems={{ xs: "stretch", sm: "center" }} justifyContent="space-between">
           <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
