@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma, SubscriptionStatus } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin-auth";
 
 const VALID_STATUSES = ["ACTIVE", "EXPIRED", "SUSPENDED", "CANCELLED", "NONE"] as const;
 
-function buildUserWhere(q: string, planKey: string, status: string, expiryWithin: string, connection: string, now: Date) {
-  const AND = [];
-  const subscriptionConditions = [];
+function buildUserWhere(q: string, planKey: string, status: string, expiryWithin: string, connection: string, now: Date): Prisma.UserWhereInput {
+  const AND: Prisma.UserWhereInput[] = [];
+  const subscriptionConditions: Prisma.SubscriptionWhereInput[] = [];
   if (planKey) subscriptionConditions.push({ planKey });
   if (status === "ACTIVE") subscriptionConditions.push({ status: "ACTIVE", expiresAt: { gt: now } });
   if (status === "EXPIRED") subscriptionConditions.push({ OR: [{ status: "EXPIRED" }, { status: "ACTIVE", expiresAt: { lte: now } }] });
-  if (status === "SUSPENDED" || status === "CANCELLED") subscriptionConditions.push({ status });
+  if (status === "SUSPENDED" || status === "CANCELLED") subscriptionConditions.push({ status: status as SubscriptionStatus });
   if (expiryWithin === "3" || expiryWithin === "7") subscriptionConditions.push({ status: "ACTIVE", expiresAt: { gt: now, lte: new Date(now.getTime() + Number(expiryWithin) * 86400000) } });
 
   if (q) AND.push({ OR: [{ name: { contains: q, mode: "insensitive" as const } }, { email: { contains: q, mode: "insensitive" as const } }] });
@@ -73,8 +74,7 @@ export async function GET(req: NextRequest) {
           : "EXPIRED";
     return {
       ...u,
-      // The query selects instagramAccounts above; this assertion keeps the relation typed even if the generated client return type is widened.
-      pagesCount: (u as typeof u & { instagramAccounts: unknown[] }).instagramAccounts.length,
+      pagesCount: u.instagramAccounts.length,
       subscription: subscription ? { ...subscription, effectiveStatus } : null,
     };
   });
