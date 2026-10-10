@@ -25,6 +25,30 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
 
   let current = await prisma.subscription.findFirst({ where: { userId }, orderBy: { expiresAt: "desc" } });
 
+  if (action === "save") {
+    if (!["monthly", "yearly"].includes(planKey)) {
+      return NextResponse.json({ message: "نوع اشتراک معتبر نیست" }, { status: 400 });
+    }
+    if (!Number.isInteger(days) || days < -3650 || days > 3650) {
+      return NextResponse.json({ message: "تعداد روز معتبر نیست" }, { status: 400 });
+    }
+    if (!current) {
+      if (days < 0) return NextResponse.json({ message: "برای ایجاد اشتراک جدید نمی‌توان روز منفی وارد کرد" }, { status: 400 });
+      const initialDays = days || 30;
+      current = await prisma.subscription.create({
+        data: { userId, planKey, source: "MANUAL", status: "ACTIVE", startedAt: now, expiresAt: new Date(now.getTime() + initialDays * 86400000) },
+      });
+    } else {
+      const base = current.expiresAt > now ? current.expiresAt : now;
+      const expiresAt = days === 0 ? current.expiresAt : new Date(base.getTime() + days * 86400000);
+      if (expiresAt <= now) return NextResponse.json({ message: "تاریخ انقضا نمی‌تواند در گذشته باشد" }, { status: 400 });
+      const status = days !== 0 ? "ACTIVE" : current.status;
+      current = await prisma.subscription.update({
+        where: { id: current.id },
+        data: { planKey, expiresAt, status, ...(status === "ACTIVE" ? { suspendedAt: null, cancelledAt: null } : {}) },
+      });
+    }
+  } else 
   if (action === "create") {
     const expiresAt = new Date(now.getTime() + Math.max(1, days || 30) * 86400000);
     current = await prisma.subscription.create({ data: { userId, planKey, source: "MANUAL", status: "ACTIVE", startedAt: now, expiresAt } });
