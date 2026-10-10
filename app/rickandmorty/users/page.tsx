@@ -78,7 +78,7 @@ export default function AdminUsersPage() {
           if (!response.ok) throw new Error(json.message ?? "دریافت خروجی ناموفق بود");
           collected.push(...json.data);
         }
-        exportRows = collected;
+        exportRows = collected.filter((r) => !excludedIds.includes(r.id));
       }
       if (!exportRows.length) throw new Error("ابتدا کاربران را انتخاب کنید");
       const csvEscape = (v: unknown) => '"' + String(v ?? "").replace(/"/g, '""') + '"';
@@ -144,7 +144,7 @@ export default function AdminUsersPage() {
       <DialogTitle>عملیات گروهی برای {selectedCount} کاربر</DialogTitle>
       <DialogContent><Stack spacing={2} sx={{ pt: 1 }}>
         <Alert severity="info">هر عملیات برای هر کاربر جداگانه اجرا می‌شود و نتیجه هر مورد ثبت می‌شود.</Alert>
-        <FormControl fullWidth size="small"><InputLabel id="bulk-action-label">نوع عملیات</InputLabel><Select labelId="bulk-action-label" label="نوع عملیات" value={action} onChange={(e) => setAction(e.target.value as BulkAction)}>{Object.entries(actions).map(([value, label]) => <MenuItem key={value} value={value}>{label}</MenuItem>)}</Select></FormControl>
+        <FormControl fullWidth size="small"><InputLabel id="bulk-action-label">نوع عملیات</InputLabel><Select labelId="bulk-action-label" label="نوع عملیات" value={action} onChange={(e) => setAction(e.target.value as BulkAction)}>{Object.entries(actions).map(([value, label]) => <MenuItem key={value} value={value}>{label}</MenuItem>)}<MenuItem disabled value="sms-not-configured">ارسال پیامک — پس از اتصال سرویس</MenuItem></Select></FormControl>
         {action === "subscription-adjust" && <TextField fullWidth size="small" type="number" label="تعداد روز (منفی برای کم‌کردن)" value={days} onChange={(e) => setDays(e.target.value)} inputProps={{ min: -3650, max: 3650, step: 1 }} helperText="برای کاربر بدون اشتراک فقط عدد مثبت مجاز است." />}
         {action === "subscription-change-plan" && <FormControl fullWidth size="small"><InputLabel id="new-plan-label">پلن جدید</InputLabel><Select labelId="new-plan-label" label="پلن جدید" value={newPlan} onChange={(e) => setNewPlan(String(e.target.value))}><MenuItem value="monthly">ماهانه</MenuItem><MenuItem value="yearly">سالانه</MenuItem></Select></FormControl>}
         {action === "ticket-create" && <><TextField fullWidth size="small" label="عنوان تیکت" value={subject} onChange={(e) => setSubject(e.target.value)} inputProps={{ maxLength: 160 }} /><TextField fullWidth multiline minRows={4} label="متن تیکت" value={message} onChange={(e) => setMessage(e.target.value)} inputProps={{ maxLength: 5000 }} helperText="برای هر کاربر یک تیکت مستقل ایجاد می‌شود." /></>}
