@@ -73,7 +73,8 @@ export async function GET(req: NextRequest) {
           : "EXPIRED";
     return {
       ...u,
-      pagesCount: u.instagramAccounts.length,
+      // The query selects instagramAccounts above; this assertion keeps the relation typed even if the generated client return type is widened.
+      pagesCount: (u as typeof u & { instagramAccounts: unknown[] }).instagramAccounts.length,
       subscription: subscription ? { ...subscription, effectiveStatus } : null,
     };
   });
