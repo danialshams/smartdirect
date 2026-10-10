@@ -8,7 +8,7 @@ import {
   InputLabel, MenuItem, Pagination, Select, Stack, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, TextField, Typography,
 } from "@mui/material";
-import { Download, Search, Users, Zap } from "lucide-react";
+import { Download, Eye, Pencil, Search, Users, Zap } from "lucide-react";
 import { responsiveAdminTableSx } from "@/components/admin/responsiveTableStyles";
 
 type UserRow = { id: string; name: string; email: string; role: string; pagesCount: number; createdAt: string; subscription?: { planKey: string; effectiveStatus: string | null; expiresAt: string } | null };
@@ -135,7 +135,7 @@ export default function AdminUsersPage() {
       </Stack>
       <TableContainer sx={{ mt: 2, overflowX: { xs: "visible", sm: "auto" }, mx: { xs: -1.25, sm: 0 }, width: { xs: "calc(100% + 20px)", sm: "100%" }, minWidth: 0 }}>
         <Table sx={responsiveAdminTableSx}>
-          <TableHead><TableRow><TableCell padding="checkbox"><Checkbox size="small" checked={pageSelected} indeterminate={rows.some((r) => (allFiltered ? !excludedIds.includes(r.id) : selectedIds.includes(r.id))) && !pageSelected} onChange={(e) => togglePage(e.target.checked)} disabled={loading || !rows.length} /></TableCell><TableCell>کاربر</TableCell><TableCell>پیج‌های متصل</TableCell><TableCell>اشتراک</TableCell><TableCell>انقضا</TableCell><TableCell>نقش</TableCell></TableRow></TableHead>
+          <TableHead><TableRow><TableCell padding="checkbox"><Checkbox size="small" checked={pageSelected} indeterminate={rows.some((r) => (allFiltered ? !excludedIds.includes(r.id) : selectedIds.includes(r.id))) && !pageSelected} onChange={(e) => togglePage(e.target.checked)} disabled={loading || !rows.length} /></TableCell><TableCell>کاربر</TableCell><TableCell>پیج‌های متصل</TableCell><TableCell>اشتراک</TableCell><TableCell>انقضا</TableCell><TableCell>نقش</TableCell><TableCell align="right">عملیات</TableCell></TableRow></TableHead>
           <TableBody>
             {loading ? <TableRow><TableCell colSpan={6} align="center" sx={{ py: 6 }}><CircularProgress size={28} /></TableCell></TableRow> :
             rows.length ? rows.map((r) => <TableRow key={r.id} hover onClick={() => router.push(`/rickandmorty/users/${r.id}`)} sx={{ cursor: "pointer" }}>
@@ -144,7 +144,8 @@ export default function AdminUsersPage() {
               <TableCell data-label="پیج‌های متصل">{r.pagesCount}</TableCell>
               <TableCell data-label="اشتراک">{r.subscription ? <><Chip size="small" label={r.subscription.planKey} variant="outlined" /> <Chip size="small" label={r.subscription.effectiveStatus ? statusLabels[r.subscription.effectiveStatus] ?? r.subscription.effectiveStatus : "—"} color={r.subscription.effectiveStatus === "ACTIVE" ? "success" : r.subscription.effectiveStatus === "EXPIRED" ? "error" : "warning"} variant="outlined" /></> : <Chip size="small" label="بدون اشتراک" />}</TableCell>
               <TableCell data-label="انقضا">{r.subscription ? new Date(r.subscription.expiresAt).toLocaleDateString("fa-IR") : "—"}</TableCell><TableCell data-label="نقش"><Chip size="small" label={r.role === "ADMIN" ? "مدیر" : "کاربر"} color={r.role === "ADMIN" ? "primary" : "default"} variant="outlined" /></TableCell>
-            </TableRow>) : <TableRow><TableCell colSpan={6} align="center"><Stack alignItems="center" spacing={1} sx={{ py: 5 }}><Users size={30} color="#94A3B8" /><Typography variant="body2" color="text.secondary">کاربری پیدا نشد</Typography></Stack></TableCell></TableRow>}
+              <TableCell data-label="عملیات" onClick={(e) => e.stopPropagation()}><Stack direction={{ xs: "column", sm: "row" }} spacing={0.75} justifyContent="flex-end"><Button size="small" variant="outlined" startIcon={<Eye size={15} />} onClick={() => router.push(`/rickandmorty/users/${r.id}`)}>مشاهده</Button><Button size="small" variant="contained" startIcon={<Pencil size={15} />} onClick={() => router.push(`/rickandmorty/users/${r.id}#subscription`)}>ویرایش</Button></Stack></TableCell>
+            </TableRow>) : <TableRow><TableCell colSpan={7} align="center"><Stack alignItems="center" spacing={1} sx={{ py: 5 }}><Users size={30} color="#94A3B8" /><Typography variant="body2" color="text.secondary">کاربری پیدا نشد</Typography></Stack></TableCell></TableRow>}
           </TableBody>
         </Table>
       </TableContainer>
