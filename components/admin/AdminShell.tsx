@@ -117,7 +117,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const currentLabel = items.find((item) => item.href === currentKey)?.label ?? "داشبورد";
 
   return (
-    <Box dir="rtl" sx={{ minHeight: "100vh", bgcolor: "#F8FAFC", direction: "rtl" }}>
+    <Box dir="rtl" sx={{ minHeight: "100dvh", width: "100%", bgcolor: "#F8FAFC", direction: "rtl", textAlign: "right", overflowX: "clip" }}>
       <Drawer
         variant="permanent"
         anchor="right"
@@ -171,7 +171,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
         <Box sx={{ p: 1.5 }}><AdminNav onNavigate={() => setMobileOpen(false)} /></Box>
       </Drawer>
 
-      <Box dir="rtl" sx={{ mr: { lg: "248px" }, minWidth: 0 }}>
+      <Box dir="rtl" sx={{ mr: { lg: "248px" }, minWidth: 0, width: { lg: "calc(100% - 248px)" }, textAlign: "right" }}>
         <AppBar
           position="sticky"
           color="inherit"
@@ -183,7 +183,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
             zIndex: (theme) => theme.zIndex.drawer - 1,
           }}
         >
-          <Toolbar sx={{ minHeight: { xs: 56, sm: 64 }, px: { xs: 1.25, sm: 2.5, lg: 4 }, gap: 1 }}>
+          <Toolbar disableGutters sx={{ height: { xs: 56, sm: 64 }, minHeight: { xs: "56px !important", sm: "64px !important" }, px: { xs: 1.25, sm: 2.5, lg: 4 }, gap: 1, direction: "rtl", display: "flex", flexDirection: "row", justifyContent: "flex-start", boxSizing: "border-box" }}>
             <IconButton
               size="small"
               onClick={() => setMobileOpen(true)}
@@ -203,7 +203,11 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           component="main"
           dir="rtl"
           sx={{
-            minHeight: "calc(100vh - 56px)",
+            minHeight: "calc(100dvh - 56px)",
+            width: "100%",
+            boxSizing: "border-box",
+            direction: "rtl",
+            textAlign: "right",
             px: { xs: 1.25, sm: 2.5, lg: 4 },
             py: { xs: 1.5, sm: 2.5, lg: 3 },
           }}
