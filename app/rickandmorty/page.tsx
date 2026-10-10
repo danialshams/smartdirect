@@ -57,9 +57,7 @@ export default function AdminDashboardPage() {
               </Link>
             </Grid>
           );
-        }) : Array.from({ length: 4 }).map((_, i) => (
-          <Grid key={i} size={{ xs: 12, sm: 6, xl: 3 }}><Card sx={{ p: 2 }}><Skeleton variant="rounded" height={108} /></Card></Grid>
-        ))}
+        }) : null}
       </Grid>
 
       <Grid container spacing={2}>
