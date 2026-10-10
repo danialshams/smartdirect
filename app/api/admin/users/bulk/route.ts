@@ -16,19 +16,14 @@ function buildUserWhere(filters: Filters, now: Date) {
   const q = filters.q?.trim() ?? "";
   const planKey = filters.planKey?.trim() ?? "";
   const status = filters.status ?? "";
-  const subscriptionConditions: Record<string, unknown>[] = [];
-
-  if (planKey) subscriptionConditions.push({ planKey });
-  if (status === "ACTIVE") subscriptionConditions.push({ status: "ACTIVE", expiresAt: { gt: now } });
-  if (status === "EXPIRED") subscriptionConditions.push({ OR: [{ status: "EXPIRED" }, { status: "ACTIVE", expiresAt: { lte: now } }] });
-  if (status === "SUSPENDED") subscriptionConditions.push({ status: "SUSPENDED" });
-  if (status === "CANCELLED") subscriptionConditions.push({ status: "CANCELLED" });
-
-  return {
-    role: "USER" as const,
-    ...(q ? { OR: [{ name: { contains: q, mode: "insensitive" as const } }, { email: { contains: q, mode: "insensitive" as const } }] } : {}),
-    ...(status === "NONE" ? { subscriptions: { none: {} } } : subscriptionConditions.length ? { subscriptions: { some: { AND: subscriptionConditions } } } : {}),
-  };
+  const AND = [];
+  if (q) AND.push({ OR: [{ name: { contains: q, mode: "insensitive" as const } }, { email: { contains: q, mode: "insensitive" as const } }] });
+  if (planKey) AND.push({ subscriptions: { some: { planKey } } });
+  if (status === "NONE") AND.push({ subscriptions: { none: {} } });
+  if (status === "ACTIVE") AND.push({ subscriptions: { some: { status: "ACTIVE", expiresAt: { gt: now } } } });
+  if (status === "EXPIRED") AND.push({ subscriptions: { some: { OR: [{ status: "EXPIRED" }, { status: "ACTIVE", expiresAt: { lte: now } }] } } });
+  if (status === "SUSPENDED" || status === "CANCELLED") AND.push({ subscriptions: { some: { status } } });
+  return { role: "USER" as const, ...(AND.length ? { AND } : {}) };
 }
 
 export async function POST(req: NextRequest) {
@@ -43,7 +38,7 @@ export async function POST(req: NextRequest) {
   const action = String(body.action ?? "");
   const selection = body.selection as
     | { mode: "ids"; userIds: unknown }
-    | { mode: "filtered"; filters?: Filters }
+    | { mode: "filtered"; filters?: Filters; excludeUserIds?: unknown }
     | undefined;
 
   if (!selection || !["ids", "filtered"].includes(selection.mode)) {
@@ -61,7 +56,8 @@ export async function POST(req: NextRequest) {
     if (filters.status && !VALID_STATUSES.includes(filters.status)) {
       return NextResponse.json({ message: "فیلتر وضعیت اشتراک معتبر نیست" }, { status: 400 });
     }
-    const where = buildUserWhere(filters, new Date());
+    const excludeUserIds = Array.isArray(selection.excludeUserIds) ? [...new Set(selection.excludeUserIds.filter((id): id is string => typeof id === "string" && id.length > 0))] : [];
+    const where = { ...buildUserWhere(filters, new Date()), ...(excludeUserIds.length ? { id: { notIn: excludeUserIds } } : {}) };
     const matching = await prisma.user.findMany({ where, select: { id: true }, orderBy: { createdAt: "desc" }, take: MAX_BULK_USERS + 1 });
     if (matching.length > MAX_BULK_USERS) {
       return NextResponse.json({ message: "بیش از ۵۰۰ کاربر با این فیلتر مطابقت دارند؛ فیلتر را محدودتر کنید", matchingAtLeast: matching.length }, { status: 400 });
