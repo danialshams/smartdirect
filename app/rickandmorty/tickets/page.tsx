@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Alert, Avatar, Box, Button, Card, Chip, InputAdornment, MenuItem, Skeleton, Stack, TextField, Typography } from "@mui/material";
+import { Alert, Avatar, Box, Button, Card, Chip, CircularProgress, InputAdornment, MenuItem, Stack, TextField, Typography } from "@mui/material";
 import { ArrowLeft, Clock3, MessageSquareText, Search, Send, Ticket as TicketIcon, UserRound, X } from "lucide-react";
 
 type TicketRow = { id:string; subject:string; status:string; priority:string; createdAt:string; updatedAt:string; user:{name:string|null;email:string}; _count:{messages:number} };
@@ -14,6 +14,7 @@ const date = (value:string) => new Intl.DateTimeFormat("fa-IR",{month:"short",da
 export default function TicketsPage() {
  const router=useRouter(); const [rows,setRows]=useState<TicketRow[]>([]); const [loading,setLoading]=useState(true); const [q,setQ]=useState(""); const [status,setStatus]=useState(""); const [error,setError]=useState(""); const [refreshKey,setRefreshKey]=useState(0);
  useEffect(()=>{let cancelled=false;const timer=window.setTimeout(async()=>{setLoading(true);setError("");try{const r=await fetch(`/api/admin/tickets?q=${encodeURIComponent(q.trim())}&status=${encodeURIComponent(status)}`,{cache:"no-store"});const j=await r.json();if(!r.ok)throw new Error(j.message||"دریافت تیکت‌ها ناموفق بود");if(!cancelled)setRows(Array.isArray(j.data)?j.data:[]);}catch(e){if(!cancelled)setError(e instanceof Error?e.message:"خطا در دریافت اطلاعات");}finally{if(!cancelled)setLoading(false);}},180);return()=>{cancelled=true;window.clearTimeout(timer);};},[q,status,refreshKey]);
+ if(loading && rows.length===0 && !error) return <Box role="status" aria-label="در حال بارگذاری تیکت‌ها" sx={{minHeight:"calc(100dvh - 150px)",width:"100%",display:"flex",alignItems:"center",justifyContent:"center"}}><CircularProgress size={40} thickness={4}/></Box>;
  return <Stack dir="rtl" spacing={{xs:1.75,sm:2.5}} sx={{direction:"rtl",textAlign:"right",minWidth:0}}>
   <Box dir="rtl" sx={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:1,flexWrap:"wrap"}}>
    <Box><Typography sx={{fontSize:{xs:21,sm:25},fontWeight:800,color:"#0F172A"}}>تیکت‌ها</Typography><Typography sx={{mt:.5,fontSize:13,color:"#64748B"}}>درخواست‌های کاربران را یک‌جا ببین و پاسخ بده.</Typography></Box>
@@ -31,7 +32,7 @@ export default function TicketsPage() {
   </Card>
   {error&&<Alert severity="error" action={<Button color="inherit" size="small" onClick={()=>setRefreshKey(v=>v+1)}>تلاش دوباره</Button>}>{error}</Alert>}
   <Stack spacing={1.1}>
-   {loading?Array.from({length:4},(_,i)=><Card key={i} variant="outlined" sx={{p:2,borderRadius:3,borderColor:"#E8EDF4"}}><Stack spacing={1.25}><Skeleton width="62%" height={24}/><Skeleton width="42%" height={18}/><Stack direction="row" spacing={1}><Skeleton width={78} height={25}/><Skeleton width={64} height={25}/></Stack></Stack></Card>):
+   {loading?<Box role="status" aria-label="در حال دریافت تیکت‌ها" sx={{minHeight:220,width:"100%",display:"flex",alignItems:"center",justifyContent:"center"}}><CircularProgress size={36} thickness={4}/></Box>:
     rows.length?rows.map(t=>{const st=statusMeta[t.status]||{label:t.status,color:"default" as const};const pr=priorityMeta[t.priority]||{label:t.priority,color:"default" as const};return <Card key={t.id} variant="outlined" onClick={()=>router.push(`/rickandmorty/tickets/${t.id}`)} sx={{borderRadius:3,borderColor:"#E5EAF1",overflow:"hidden",cursor:"pointer",transition:"border-color .16s ease,box-shadow .16s ease","&:hover":{borderColor:"#B8CCF8",boxShadow:"0 5px 18px rgba(37,99,235,.07)"},"&:active":{transform:"scale(.995)"}}}>
      <Box sx={{p:{xs:1.5,sm:2},display:"flex",alignItems:"stretch",gap:1.5}}>
       <Avatar sx={{width:42,height:42,bgcolor:"#F1F5F9",color:"#475569",fontWeight:700,fontSize:15,flexShrink:0}}>{(t.user.name||t.user.email||"?").trim().slice(0,1).toUpperCase()}</Avatar>
