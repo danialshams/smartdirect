@@ -10,7 +10,7 @@ import {
 import { ArrowRight, Check, Minus, Pause, Plus, RefreshCw } from "lucide-react";
 import { responsiveAdminTableSx } from "@/components/admin/responsiveTableStyles";
 
-type UserDetail={id:string;name:string;email:string;role:string;createdAt:string;instagramAccounts:{id:string;igUsername:string;igUserId:string;isConnected:boolean;createdAt:string}[];subscriptions:{id:string;planKey:string;status:string;source:string;startedAt:string;expiresAt:string;note?:string|null;autoRenew:boolean;createdAt:string}[]};
+type UserDetail={id:strin;tickets:{id:string;subject:string;status:string;priority:string;updatedAt:string}[];name:string;email:string;role:string;createdAt:string;instagramAccounts:{id:string;igUsername:string;igUserId:string;isConnected:boolean;createdAt:string}[];subscriptions:{id:string;planKey:string;status:string;source:string;startedAt:string;expiresAt:string;note?:string|null;autoRenew:boolean;createdAt:string}[]};
 
 export default function UserDetailPage(){
  const params=useParams<{id:string}>(); const router=useRouter(); const [user,setUser]=useState<UserDetail|null>(null); const [loading,setLoading]=useState(true); const [days,setDays]=useState(30); const [planKey,setPlanKey]=useState("monthly"); const [busy,setBusy]=useState(false); const [notice,setNotice]=useState<{text:string;severity:"success"|"error"}|null>(null);
@@ -45,7 +45,7 @@ export default function UserDetailPage(){
     </CardContent></Card></Grid>
   </Grid>
 
-  <Card><CardContent>
+  <Card id="subscription"><CardContent>
     <Typography variant="subtitle1" fontWeight={700} mb={2}>مدیریت اشتراک</Typography>
     {current?<Box sx={{mb:2.5,p:2,border:"1px solid #E2E8F0",borderRadius:2.5,bgcolor:"#F8FAFC"}}><Stack direction={{xs:"column",sm:"row"}} justifyContent="space-between" gap={1}><Box><Typography fontWeight={600}>{current.planKey}</Typography><Typography variant="caption" color="text.secondary">انقضا: {new Date(current.expiresAt).toLocaleString("fa-IR")}</Typography></Box><Chip label={statusLabel} color={active?"success":current.status==="SUSPENDED"?"warning":"error"} variant="outlined"/></Stack></Box>:<Alert severity="warning" sx={{mb:2.5}}>این کاربر اشتراک ندارد</Alert>}
     <Grid container spacing={1.5}>
@@ -69,6 +69,11 @@ export default function UserDetailPage(){
       {user.subscriptions.map(s=><TableRow key={s.id}><TableCell data-label="پلن">{s.planKey}</TableCell><TableCell data-label="وضعیت"><Chip size="small" label={s.status} color={s.status==="ACTIVE"?"success":s.status==="SUSPENDED"?"warning":"error"} variant="outlined"/></TableCell><TableCell data-label="منبع">{s.source}</TableCell><TableCell data-label="شروع">{new Date(s.startedAt).toLocaleDateString("fa-IR")}</TableCell><TableCell data-label="انقضا">{new Date(s.expiresAt).toLocaleDateString("fa-IR")}</TableCell><TableCell data-label="یادداشت">{s.note||"—"}</TableCell></TableRow>)}
     </TableBody></Table></TableContainer>
   </CardContent></Card>
+  <Card><CardContent>
+    <Typography variant="subtitle1" fontWeight={700} mb={2}>تیکت‌های اخیر کاربر</Typography>
+    {user.tickets?.length ? <TableContainer sx={{overflowX:{xs:"visible",sm:"auto"},minWidth:0}}><Table sx={responsiveAdminTableSx}><TableHead><TableRow><TableCell>عنوان</TableCell><TableCell>وضعیت</TableCell><TableCell>اولویت</TableCell><TableCell>آخرین به‌روزرسانی</TableCell></TableRow></TableHead><TableBody>{user.tickets.map(t=><TableRow key={t.id}><TableCell data-label="عنوان">{t.subject}</TableCell><TableCell data-label="وضعیت"><Chip size="small" label={t.status} variant="outlined" color={t.status==="CLOSED"?"default":t.status==="RESOLVED"?"success":"warning"}/></TableCell><TableCell data-label="اولویت"><Chip size="small" label={t.priority} variant="outlined" color={t.priority==="HIGH"||t.priority==="URGENT"?"error":"default"}/></TableCell><TableCell data-label="آخرین به‌روزرسانی">{new Date(t.updatedAt).toLocaleDateString("fa-IR")}</TableCell></TableRow>)}</TableBody></Table></TableContainer> : <Typography variant="body2" color="text.secondary" sx={{py:3,textAlign:"center"}}>تیکتی برای این کاربر ثبت نشده است</Typography>}
+  </CardContent></Card>
+
   <Snackbar open={!!notice} autoHideDuration={3500} onClose={()=>setNotice(null)} anchorOrigin={{vertical:"bottom",horizontal:"left"}}><Alert onClose={()=>setNotice(null)} severity={notice?.severity||"success"} variant="filled">{notice?.text}</Alert></Snackbar>
  </Stack>;
 }
