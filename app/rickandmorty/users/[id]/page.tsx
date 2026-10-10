@@ -8,6 +8,7 @@ import {
   TableCell, TableContainer, TableHead, TableRow, TextField, Typography,
 } from "@mui/material";
 import { ArrowRight, Check, Minus, Pause, Plus, RefreshCw } from "lucide-react";
+import { responsiveAdminTableSx } from "@/components/admin/responsiveTableStyles";
 
 type UserDetail={id:string;name:string;email:string;role:string;createdAt:string;instagramAccounts:{id:string;igUsername:string;igUserId:string;isConnected:boolean;createdAt:string}[];subscriptions:{id:string;planKey:string;status:string;source:string;startedAt:string;expiresAt:string;note?:string|null;autoRenew:boolean;createdAt:string}[]};
 
@@ -64,8 +65,8 @@ export default function UserDetailPage(){
 
   <Card><CardContent>
     <Typography variant="subtitle1" fontWeight={700} mb={2}>تاریخچه اشتراک</Typography>
-    <TableContainer sx={{overflowX:"auto"}}><Table sx={{minWidth:700}}><TableHead><TableRow><TableCell>پلن</TableCell><TableCell>وضعیت</TableCell><TableCell>منبع</TableCell><TableCell>شروع</TableCell><TableCell>انقضا</TableCell><TableCell>یادداشت</TableCell></TableRow></TableHead><TableBody>
-      {user.subscriptions.map(s=><TableRow key={s.id}><TableCell>{s.planKey}</TableCell><TableCell><Chip size="small" label={s.status} color={s.status==="ACTIVE"?"success":s.status==="SUSPENDED"?"warning":"error"} variant="outlined"/></TableCell><TableCell>{s.source}</TableCell><TableCell>{new Date(s.startedAt).toLocaleDateString("fa-IR")}</TableCell><TableCell>{new Date(s.expiresAt).toLocaleDateString("fa-IR")}</TableCell><TableCell>{s.note||"—"}</TableCell></TableRow>)}
+    <TableContainer sx={{overflowX:{xs:"visible",sm:"auto"},minWidth:0}}><Table sx={responsiveAdminTableSx}><TableHead><TableRow><TableCell>پلن</TableCell><TableCell>وضعیت</TableCell><TableCell>منبع</TableCell><TableCell>شروع</TableCell><TableCell>انقضا</TableCell><TableCell>یادداشت</TableCell></TableRow></TableHead><TableBody>
+      {user.subscriptions.map(s=><TableRow key={s.id}><TableCell data-label="پلن">{s.planKey}</TableCell><TableCell data-label="وضعیت"><Chip size="small" label={s.status} color={s.status==="ACTIVE"?"success":s.status==="SUSPENDED"?"warning":"error"} variant="outlined"/></TableCell><TableCell data-label="منبع">{s.source}</TableCell><TableCell data-label="شروع">{new Date(s.startedAt).toLocaleDateString("fa-IR")}</TableCell><TableCell data-label="انقضا">{new Date(s.expiresAt).toLocaleDateString("fa-IR")}</TableCell><TableCell data-label="یادداشت">{s.note||"—"}</TableCell></TableRow>)}
     </TableBody></Table></TableContainer>
   </CardContent></Card>
   <Snackbar open={!!notice} autoHideDuration={3500} onClose={()=>setNotice(null)} anchorOrigin={{vertical:"bottom",horizontal:"left"}}><Alert onClose={()=>setNotice(null)} severity={notice?.severity||"success"} variant="filled">{notice?.text}</Alert></Snackbar>
