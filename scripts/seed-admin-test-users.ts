@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 dotenv.config({ path: ".env.local" });
 dotenv.config({ path: ".env" });
 
-import { prisma } from "../src/lib/prisma";
+let disconnectPrisma: (() => Promise<void>) | undefined;
 
 const prefix = "sd-admin-test-";
 const marker = "[تست پنل]";
@@ -28,6 +28,8 @@ function inspectTarget() {
 }
 
 async function main() {
+  const { prisma } = await import("../src/lib/prisma");
+  disconnectPrisma = () => prisma.$disconnect();
   const target = inspectTarget();
   const emails = cases.map((item) => `${prefix}${String(item.n).padStart(2, "0")}@example.invalid`);
   console.log(JSON.stringify({
@@ -97,4 +99,4 @@ main()
     console.error("خطا:", error instanceof Error ? error.message : error);
     process.exitCode = 1;
   })
-  .finally(async () => prisma.$disconnect());
+  .finally(async () => disconnectPrisma?.());
