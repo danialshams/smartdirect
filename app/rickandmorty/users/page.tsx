@@ -85,6 +85,18 @@ export default function AdminUsersPage() {
 
   const openUser = (id: string) => router.push("/rickandmorty/users/" + id);
 
+  if (loading && rows.length === 0 && !error) {
+    return (
+      <Box role="status" aria-label="در حال بارگذاری کاربران" sx={{
+        minHeight: "calc(100dvh - 100px)", width: "100%", display: "flex",
+        alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 1.5,
+      }}>
+        <CircularProgress size={40} thickness={4} />
+        <Typography variant="body2" color="text.secondary">در حال دریافت فهرست کاربران…</Typography>
+      </Box>
+    );
+  }
+
   return (
     <Stack spacing={{ xs: 2, sm: 2.5 }} sx={{ minWidth: 0, width: "100%" }}>
       <Box>
