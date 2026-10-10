@@ -81,6 +81,61 @@ async function readJsonResponse<T>(response: Response): Promise<T> {
   }
 }
 
+type FreeTrialGrantResult = "GRANTED" | "ALREADY_CLAIMED" | "HAS_SUBSCRIPTION";
+
+async function grantFreeTrialIfEligible(
+  userId: string,
+  igUserId: string,
+  igUsername: string,
+): Promise<FreeTrialGrantResult> {
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const [userClaim, pageClaim, priorFreeSubscription, anySubscription] =
+        await Promise.all([
+          tx.freeTrialClaim.findUnique({ where: { userId }, select: { id: true } }),
+          tx.freeTrialClaim.findUnique({ where: { igUserId }, select: { id: true } }),
+          tx.subscription.findFirst({
+            where: { userId, planKey: "free" },
+            select: { id: true },
+          }),
+          tx.subscription.findFirst({ where: { userId }, select: { id: true } }),
+        ]);
+
+      if (userClaim || pageClaim || priorFreeSubscription) {
+        return "ALREADY_CLAIMED";
+      }
+      if (anySubscription) return "HAS_SUBSCRIPTION";
+
+      await tx.freeTrialClaim.create({
+        data: { userId, igUserId, igUsername, claimedAt: now },
+      });
+      await tx.subscription.create({
+        data: {
+          userId,
+          planKey: "free",
+          status: "ACTIVE",
+          source: "SYSTEM",
+          startedAt: now,
+          expiresAt,
+          autoRenew: false,
+          note: "FREE_TRIAL_7_DAYS",
+        },
+      });
+      return "GRANTED";
+    }, { isolationLevel: "Serializable" });
+  } catch (error) {
+    const code =
+      typeof error === "object" && error !== null && "code" in error
+        ? String(error.code)
+        : "";
+    if (code === "P2002" || code === "P2034") return "ALREADY_CLAIMED";
+    throw error;
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -456,7 +511,24 @@ export async function GET(request: NextRequest) {
     }
 
     // =========================================================
-    // 16. Final Verification
+    // 15a. Grant the one-time 7-day free trial, if eligible.
+// Trial failures must not undo a successful Instagram connection.
+try {
+  const trialResult = await grantFreeTrialIfEligible(
+    stateData.userId,
+    instagramUserId,
+    instagramUsername,
+  );
+  console.log("[Instagram OAuth] Free trial result:", {
+    userId: stateData.userId,
+    instagramUserId,
+    result: trialResult,
+  });
+} catch (trialError) {
+  console.error("[Instagram OAuth] Free trial grant failed:", trialError);
+}
+
+// 16. Final Verification
     // =========================================================
 
     console.log("========================================");
