@@ -101,7 +101,7 @@ export default function BulkTicketPage() {
       <Typography fontWeight={700}>۲. متن تیکت</Typography>
       <TextField fullWidth required label="عنوان تیکت" value={subject} onChange={e=>setSubject(e.target.value)} inputProps={{maxLength:160,dir:"rtl"}} helperText={`${subject.length}/160`}/>
       <TextField fullWidth required multiline minRows={4} maxRows={10} label="متن پیام" value={message} onChange={e=>setMessage(e.target.value)} inputProps={{maxLength:5000,dir:"rtl"}} helperText={`هر مخاطب یک تیکت مستقل دریافت می‌کند. ${message.length}/5000`}/>
-      <Button fullWidth variant="contained" size="large" startIcon={<Send size={18}/>} disabled={submitting||selectedCount===0||!subject.trim()||!message.trim()} onClick={send} sx={{minHeight:48,whiteSpace:"normal",lineHeight:1.7}}>{submitting?<><CircularProgress size={18} color="inherit" sx={{ml:1}}/>در حال ایجاد تیکت‌ها…</>:`ایجاد تیکت برای ${selectedCount.toLocaleString("fa-IR")} کاربر`}</Button>
+      <Button fullWidth variant="contained" size="large" startIcon={submitting?<CircularProgress size={18} color="inherit"/>:<Send size={18}/>} disabled={submitting||selectedCount===0||!subject.trim()||!message.trim()} onClick={send} sx={{minHeight:48,whiteSpace:"normal",lineHeight:1.7}}>{submitting?"در حال ایجاد تیکت‌ها…":`ایجاد تیکت برای ${selectedCount.toLocaleString("fa-IR")} کاربر`}</Button>
       <Typography variant="caption" color="text.secondary">برای جلوگیری از ارسال ناخواسته، در هر بار حداکثر ۵۰۰ کاربر پذیرفته می‌شود.</Typography>
     </Stack></CardContent></Card>
   </Stack>;
