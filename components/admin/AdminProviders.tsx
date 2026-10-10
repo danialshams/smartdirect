@@ -33,6 +33,19 @@ const theme = createTheme({
   },
   shape: { borderRadius: 10 },
   components: {
+    MuiCssBaseline: {
+      styleOverrides: {
+        html: { direction: "rtl" },
+        body: { direction: "rtl", overflowX: "hidden" },
+        ".MuiDialog-root, .MuiPopover-root, .MuiMenu-root": { direction: "rtl" },
+        ".MuiInputBase-root, .MuiSelect-select, .MuiMenuItem-root": { direction: "rtl", textAlign: "right" },
+        ".MuiInputBase-input, .MuiFormLabel-root, .MuiFormHelperText-root": { textAlign: "right" },
+        ".MuiFormHelperText-root": { marginRight: 14, marginLeft: 0 },
+        ".MuiAlert-root": { direction: "rtl", textAlign: "right" },
+        ".MuiAlert-icon": { marginLeft: 12, marginRight: 0 },
+        ".MuiAlert-action": { marginLeft: -8, marginRight: "auto" },
+      },
+    },
     MuiPaper: { defaultProps: { elevation: 0 } },
     MuiCard: { styleOverrides: { root: { border: "1px solid #E2E8F0" } } },
     MuiButton: { defaultProps: { disableElevation: true } },
