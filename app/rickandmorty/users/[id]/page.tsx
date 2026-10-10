@@ -173,7 +173,7 @@ export default function UserDetailPage() {
                   <Typography variant="body2" fontWeight={700} sx={{ mb: 0.75 }}>تغییر مدت اشتراک</Typography>
                   <Grid container spacing={1}>
                     {[{ value: 7, label: "افزودن ۷ روز", icon: <Plus size={15} /> }, { value: 30, label: "افزودن ۳۰ روز", icon: <Plus size={15} /> }, { value: 90, label: "افزودن ۹۰ روز", icon: <Plus size={15} /> }, { value: -7, label: "کاهش ۷ روز", icon: <Minus size={15} /> }].map((item) => (
-                      <Grid key={item.value} size={{ xs: 6, sm: 3 }}><Button fullWidth size="small" variant={daysDelta === item.value ? "contained" : "outlined"} color={item.value < 0 ? "error" : "primary"} startIcon={item.icon} onClick={() => setDaysDelta((v) => v + item.value)} sx={{ minHeight: 42, whiteSpace: "nowrap", px: 1 }}>{item.label}</Button></Grid>
+                      <Grid key={item.value} size={{ xs: 6, sm: 3 }}><Button fullWidth size="small" variant={daysDelta === item.value ? "contained" : "outlined"} color={item.value < 0 ? "error" : "primary"} endIcon={item.icon} onClick={() => setDaysDelta((v) => v + item.value)} sx={{ minHeight: 42, whiteSpace: "nowrap", px: 1 }}>{item.label}</Button></Grid>
                     ))}
                   </Grid>
                   <Box sx={{ mt: 1.25, p: 1.25, borderRadius: 2, bgcolor: daysDelta ? (daysDelta > 0 ? "#F0FDF4" : "#FEF2F2") : "#F8FAFC", border: "1px solid", borderColor: daysDelta ? (daysDelta > 0 ? "#BBF7D0" : "#FECACA") : "#E2E8F0" }}>
@@ -183,7 +183,7 @@ export default function UserDetailPage() {
                     <Typography variant="caption" color="text.secondary">این تغییر تا زمان فشردن دکمه ذخیره اعمال نمی‌شود.</Typography>
                   </Box>
                 </Box>
-                {current?.status !== "SUSPENDED" && current && <Button fullWidth variant="outlined" color="warning" startIcon={<Pause size={16} />} disabled={busy} onClick={suspend} sx={{ minHeight: 42 }}>تعلیق اشتراک</Button>}
+                {current?.status !== "SUSPENDED" && current && <Button fullWidth variant="outlined" color="warning" endIcon={<Pause size={16} />} disabled={busy} onClick={suspend} sx={{ minHeight: 42 }}>تعلیق اشتراک</Button>}
               </Stack>
             </CardContent>
           </Card>
@@ -220,7 +220,7 @@ export default function UserDetailPage() {
             <Typography variant="body2" fontWeight={800}>{dirty ? "تغییرات ذخیره‌نشده" : "همه تغییرات ذخیره شده"}</Typography>
             <Typography variant="caption" color="text.secondary" noWrap>{dirty ? "برای اعمال تغییرات، ذخیره را بزنید." : "برای ویرایش پلن یا مدت اشتراک اقدام کنید."}</Typography>
           </Box>
-          <Button variant="contained" startIcon={busy ? <RefreshCw size={17} /> : <Save size={17} />} disabled={!dirty || busy} onClick={save} sx={{ minWidth: { xs: 112, sm: 140 }, minHeight: 44, fontWeight: 800 }}>{busy ? "در حال ذخیره" : "ذخیره تغییرات"}</Button>
+          <Button variant="contained" endIcon={busy ? <RefreshCw size={17} /> : <Save size={17} />} disabled={!dirty || busy} onClick={save} sx={{ minWidth: { xs: 112, sm: 140 }, minHeight: 44, fontWeight: 800 }}>{busy ? "در حال ذخیره" : "ذخیره تغییرات"}</Button>
         </Stack>
       </Box>
 
