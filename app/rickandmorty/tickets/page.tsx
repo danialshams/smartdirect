@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Alert, Avatar, Box, Button, Card, Chip, InputAdornment, MenuItem, Skeleton, Stack, TextField, Typography } from "@mui/material";
-import { ArrowLeft, Clock3, MessageSquareText, Search, Ticket as TicketIcon, UserRound, X } from "lucide-react";
+import { ArrowLeft, Clock3, MessageSquareText, Search, Send, Ticket as TicketIcon, UserRound, X } from "lucide-react";
 
 type TicketRow = { id:string; subject:string; status:string; priority:string; createdAt:string; updatedAt:string; user:{name:string|null;email:string}; _count:{messages:number} };
 const statuses = [{value:"",label:"همه تیکت‌ها"},{value:"OPEN",label:"باز"},{value:"IN_PROGRESS",label:"در حال بررسی"},{value:"WAITING_USER",label:"منتظر پاسخ کاربر"},{value:"RESOLVED",label:"حل‌شده"},{value:"CLOSED",label:"بسته‌شده"}];
@@ -14,14 +14,14 @@ const date = (value:string) => new Intl.DateTimeFormat("fa-IR",{month:"short",da
 export default function TicketsPage() {
  const router=useRouter(); const [rows,setRows]=useState<TicketRow[]>([]); const [loading,setLoading]=useState(true); const [q,setQ]=useState(""); const [status,setStatus]=useState(""); const [error,setError]=useState(""); const [refreshKey,setRefreshKey]=useState(0);
  useEffect(()=>{let cancelled=false;const timer=window.setTimeout(async()=>{setLoading(true);setError("");try{const r=await fetch(`/api/admin/tickets?q=${encodeURIComponent(q.trim())}&status=${encodeURIComponent(status)}`,{cache:"no-store"});const j=await r.json();if(!r.ok)throw new Error(j.message||"دریافت تیکت‌ها ناموفق بود");if(!cancelled)setRows(Array.isArray(j.data)?j.data:[]);}catch(e){if(!cancelled)setError(e instanceof Error?e.message:"خطا در دریافت اطلاعات");}finally{if(!cancelled)setLoading(false);}},180);return()=>{cancelled=true;window.clearTimeout(timer);};},[q,status,refreshKey]);
- return <Stack spacing={{xs:1.75,sm:2.5}} sx={{direction:"rtl"}}>
-  <Box sx={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:1}}>
+ return <Stack dir="rtl" spacing={{xs:1.75,sm:2.5}} sx={{direction:"rtl",textAlign:"right",minWidth:0}}>
+  <Box dir="rtl" sx={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:1,flexWrap:"wrap"}}>
    <Box><Typography sx={{fontSize:{xs:21,sm:25},fontWeight:800,color:"#0F172A"}}>تیکت‌ها</Typography><Typography sx={{mt:.5,fontSize:13,color:"#64748B"}}>درخواست‌های کاربران را یک‌جا ببین و پاسخ بده.</Typography></Box>
-   <Box sx={{display:"grid",placeItems:"center",width:44,height:44,flexShrink:0,borderRadius:3,bgcolor:"#EAF2FF",color:"#2563EB"}}><TicketIcon size={21}/></Box>
+   <Button variant="contained" onClick={()=>router.push("/rickandmorty/tickets/bulk")} startIcon={<Send size={16}/>} sx={{borderRadius:2.5,minHeight:42,whiteSpace:"nowrap"}}>ارسال گروهی تیکت</Button>
   </Box>
   <Card variant="outlined" sx={{p:{xs:1.25,sm:1.75},borderRadius:3,borderColor:"#E5EAF1",boxShadow:"0 2px 10px rgba(15,23,42,.025)"}}>
    <Stack spacing={1.25}>
-    <TextField fullWidth size="small" value={q} onChange={e=>setQ(e.target.value)} placeholder="جستجو در عنوان، نام یا ایمیل..." inputProps={{"aria-label":"جستجوی تیکت‌ها"}} InputProps={{startAdornment:<InputAdornment position="start"><Search size={18} color="#94A3B8"/></InputAdornment>,endAdornment:q?<InputAdornment position="end"><Button onClick={()=>setQ("")} aria-label="پاک کردن جستجو" size="small" sx={{minWidth:30,p:.5,color:"#64748B"}}><X size={16}/></Button></InputAdornment>:undefined}} sx={{"& .MuiOutlinedInput-root":{borderRadius:2.5,bgcolor:"#FAFBFD",minHeight:44}}}/>
+    <TextField fullWidth size="small" value={q} onChange={e=>setQ(e.target.value)} placeholder="جستجو در عنوان، نام یا ایمیل..." inputProps={{"aria-label":"جستجوی تیکت‌ها",dir:"rtl"}} InputProps={{startAdornment:<InputAdornment position="start"><Search size={18} color="#94A3B8"/></InputAdornment>,endAdornment:q?<InputAdornment position="end"><Button onClick={()=>setQ("")} aria-label="پاک کردن جستجو" size="small" sx={{minWidth:30,p:.5,color:"#64748B"}}><X size={16}/></Button></InputAdornment>:undefined}} sx={{"& .MuiOutlinedInput-root":{borderRadius:2.5,bgcolor:"#FAFBFD",minHeight:44}}}/>
     <TextField select fullWidth size="small" value={status} onChange={e=>setStatus(e.target.value)} inputProps={{"aria-label":"فیلتر وضعیت تیکت"}} sx={{"& .MuiOutlinedInput-root":{borderRadius:2.5,bgcolor:"#FAFBFD",minHeight:44}}}>{statuses.map(x=><MenuItem key={x.value} value={x.value}>{x.label}</MenuItem>)}</TextField>
    </Stack>
    <Box sx={{display:"flex",alignItems:"center",justifyContent:"space-between",mt:1.25,px:.25}}>
