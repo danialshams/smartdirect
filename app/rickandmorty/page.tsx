@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
-  Box, Card, CardContent, Grid, Skeleton, Stack, Typography,
+  Box, Card, CardContent, CircularProgress, Grid, Stack, Typography,
 } from "@mui/material";
 import { BadgePercent, Camera, Headphones, UserRound, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -20,6 +20,8 @@ export default function AdminDashboardPage() {
       .then(setStats)
       .catch(e => setError(e.message || "خطا در دریافت اطلاعات"));
   }, []);
+
+  if (!stats && !error) return <Box role="status" aria-label="در حال بارگذاری داشبورد" sx={{ minHeight: "calc(100dvh - 150px)", display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}><CircularProgress size={40} thickness={4} /></Box>;
 
   const cards: Array<{ title: string; value: number; icon: LucideIcon; href: string; color: string }> = stats ? [
     { title: "کاربران", value: stats.users, icon: UserRound, href: "/rickandmorty/users", color: "#2563EB" },
@@ -77,7 +79,7 @@ export default function AdminDashboardPage() {
                   </Box>
                 </Grid>
               ))}
-            </Grid> : <Skeleton variant="rounded" height={120} />}
+            </Grid> : <Box sx={{ minHeight: 120 }} />}
           </CardContent></Card>
         </Grid>
         <Grid size={{ xs: 12, lg: 5 }}>
