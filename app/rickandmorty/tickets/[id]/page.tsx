@@ -4,7 +4,7 @@ import { type KeyboardEvent, useCallback, useEffect, useRef, useState } from "re
 import { useParams, useRouter } from "next/navigation";
 import {
   Alert, Avatar, Box, Button, Card, Chip, CircularProgress, FormControl, IconButton,
-  InputLabel, MenuItem, Select, Skeleton, Snackbar, Stack, TextField, Typography,
+  InputLabel, MenuItem, Select, Snackbar, Stack, TextField, Typography,
 } from "@mui/material";
 import { ArrowRight, CheckCheck, Clock3, Send, ShieldCheck, UserRound } from "lucide-react";
 
@@ -27,7 +27,7 @@ export default function TicketDetailPage() {
  const patch=async(data:Record<string,unknown>)=>{try{const r=await fetch(`/api/admin/tickets/${id}`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)});const j=await r.json();if(!r.ok)throw new Error(j.message||"ذخیره تغییرات ناموفق بود");setTicket(t=>t?{...t,...j}:t);setNotice({text:"تغییرات ذخیره شد",severity:"success"});}catch(e){setNotice({text:e instanceof Error?e.message:"خطا در ذخیره",severity:"error"});}};
  const send=async()=>{if(!body.trim()||busy)return;setBusy(true);try{const r=await fetch(`/api/admin/tickets/${id}/messages`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({body:body.trim()})});const j=await r.json();if(!r.ok)throw new Error(j.message||"ارسال پاسخ ناموفق بود");setBody("");await load();setNotice({text:"پاسخ ارسال شد",severity:"success"});}catch(e){setNotice({text:e instanceof Error?e.message:"خطا در ارسال پاسخ",severity:"error"});}finally{setBusy(false);}};
  const handleKeyDown=(e:KeyboardEvent<HTMLDivElement>)=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();void send();}};
- if(loading)return <Stack dir="rtl" spacing={2} sx={{direction:"rtl",textAlign:"right"}}><Skeleton variant="rounded" height={74}/><Skeleton variant="rounded" height={42}/><Skeleton variant="rounded" height={460}/></Stack>;
+ if(loading)return <Box role="status" aria-label="در حال بارگذاری تیکت" dir="rtl" sx={{minHeight:"calc(100dvh - 150px)",width:"100%",display:"flex",alignItems:"center",justifyContent:"center"}}><CircularProgress size={40} thickness={4}/></Box>;
  if(!ticket)return <Stack dir="rtl" spacing={2} sx={{direction:"rtl",textAlign:"right"}}><Button startIcon={<ArrowRight size={18}/>} onClick={()=>router.push("/rickandmorty/tickets")} sx={{alignSelf:"flex-start"}}>بازگشت به تیکت‌ها</Button><Alert severity="error">{loadError||"تیکت پیدا نشد"}</Alert><Button onClick={()=>void load(true)}>تلاش دوباره</Button></Stack>;
  return <Stack dir="rtl" spacing={{xs:1.25,sm:1.75}} sx={{direction:"rtl",textAlign:"right",minWidth:0}}>
   <Box sx={{display:"flex",alignItems:"flex-start",gap:1,minWidth:0}}>
@@ -42,12 +42,12 @@ export default function TicketDetailPage() {
     </Stack>
    </Box>
   </Box>
-  <Card variant="outlined" sx={{p:{xs:1,sm:1.25},borderRadius:3,borderColor:"#E5EAF1",display:"grid",gridTemplateColumns:"minmax(0,1fr) minmax(0,1fr)",gap:1}}>
+  <Card variant="outlined" sx={{p:{xs:1,sm:1.25},borderRadius:3,borderColor:"#E5EAF1",display:"grid",gridTemplateColumns:{xs:"minmax(0,1fr)",sm:"minmax(0,1fr) minmax(0,1fr)"},gap:1}}>
    <FormControl size="small" fullWidth><InputLabel id="ticket-status-label">وضعیت</InputLabel><Select labelId="ticket-status-label" value={ticket.status} label="وضعیت" onChange={e=>void patch({status:e.target.value})}>{statuses.map(x=><MenuItem key={x.value} value={x.value}>{x.label}</MenuItem>)}</Select></FormControl>
    <FormControl size="small" fullWidth><InputLabel id="ticket-priority-label">اولویت</InputLabel><Select labelId="ticket-priority-label" value={ticket.priority} label="اولویت" onChange={e=>void patch({priority:e.target.value})}>{priorities.map(x=><MenuItem key={x.value} value={x.value}>{x.label}</MenuItem>)}</Select></FormControl>
   </Card>
 
-  <Card variant="outlined" sx={{borderRadius:3,borderColor:"#E5EAF1",overflow:"hidden",display:"flex",flexDirection:"column",height:{xs:"calc(100dvh - 265px)",sm:"calc(100dvh - 300px)"},minHeight:390,maxHeight:900}}>
+  <Card variant="outlined" sx={{borderRadius:3,borderColor:"#E5EAF1",overflow:"hidden",display:"flex",flexDirection:"column",height:{xs:"calc(100dvh - 300px)",sm:"calc(100dvh - 300px)"},minHeight:{xs:320,sm:390},maxHeight:900}}>
    <Box sx={{px:{xs:1.5,sm:2},py:1.25,borderBottom:"1px solid #E8EDF4",display:"flex",alignItems:"center",justifyContent:"space-between",gap:1,bgcolor:"#fff"}}>
     <Stack direction="row" spacing={1} alignItems="center"><Box sx={{width:34,height:34,display:"grid",placeItems:"center",borderRadius:2,bgcolor:"#F1F5F9",color:"#475569"}}><UserRound size={17}/></Box><Box><Typography sx={{fontSize:13,fontWeight:800,color:"#172033"}}>گفتگو</Typography><Typography sx={{fontSize:11,color:"#64748B"}}>{ticket.messages.length.toLocaleString("fa-IR")} پیام</Typography></Box></Stack>
     <Stack direction="row" spacing={.5} alignItems="center" sx={{color:"#16A34A"}}><ShieldCheck size={14}/><Typography sx={{fontSize:11}}>پشتیبانی</Typography></Stack>
