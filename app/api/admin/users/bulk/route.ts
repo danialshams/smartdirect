@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma, SubscriptionStatus } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin-auth";
 
@@ -14,18 +15,18 @@ type Filters = {
   connection?: "connected" | "disconnected" | "";
 };
 
-function buildUserWhere(filters: Filters, now: Date) {
+function buildUserWhere(filters: Filters, now: Date): Prisma.UserWhereInput {
   const q = filters.q?.trim() ?? "";
   const planKey = filters.planKey?.trim() ?? "";
   const status = filters.status ?? "";
   const expiryWithin = filters.expiryWithin ?? "";
   const connection = filters.connection ?? "";
-  const AND = [];
-  const subscriptionConditions = [];
+  const AND: Prisma.UserWhereInput[] = [];
+  const subscriptionConditions: Prisma.SubscriptionWhereInput[] = [];
   if (planKey) subscriptionConditions.push({ planKey });
   if (status === "ACTIVE") subscriptionConditions.push({ status: "ACTIVE", expiresAt: { gt: now } });
   if (status === "EXPIRED") subscriptionConditions.push({ OR: [{ status: "EXPIRED" }, { status: "ACTIVE", expiresAt: { lte: now } }] });
-  if (status === "SUSPENDED" || status === "CANCELLED") subscriptionConditions.push({ status });
+  if (status === "SUSPENDED" || status === "CANCELLED") subscriptionConditions.push({ status: status as SubscriptionStatus });
   if (expiryWithin === "3" || expiryWithin === "7") subscriptionConditions.push({ status: "ACTIVE", expiresAt: { gt: now, lte: new Date(now.getTime() + Number(expiryWithin) * 86400000) } });
 
   if (q) AND.push({ OR: [{ name: { contains: q, mode: "insensitive" as const } }, { email: { contains: q, mode: "insensitive" as const } }] });
