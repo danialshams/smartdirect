@@ -10,7 +10,7 @@ import {
 import { ArrowRight, Check, Minus, Pause, Plus, RefreshCw } from "lucide-react";
 import { responsiveAdminTableSx } from "@/components/admin/responsiveTableStyles";
 
-type UserDetail={id:strin;tickets:{id:string;subject:string;status:string;priority:string;updatedAt:string}[];name:string;email:string;role:string;createdAt:string;instagramAccounts:{id:string;igUsername:string;igUserId:string;isConnected:boolean;createdAt:string}[];subscriptions:{id:string;planKey:string;status:string;source:string;startedAt:string;expiresAt:string;note?:string|null;autoRenew:boolean;createdAt:string}[]};
+type UserDetail={id:string;name:string;email:string;role:string;createdAt:string;instagramAccounts:{id:string;igUsername:string;igUserId:string;isConnected:boolean;createdAt:string}[];subscriptions:{id:string;planKey:string;status:string;source:string;startedAt:string;expiresAt:string;note?:string|null;autoRenew:boolean;createdAt:string}[];tickets:{id:string;subject:string;status:string;priority:string;updatedAt:string}[]};
 
 export default function UserDetailPage(){
  const params=useParams<{id:string}>(); const router=useRouter(); const [user,setUser]=useState<UserDetail|null>(null); const [loading,setLoading]=useState(true); const [days,setDays]=useState(30); const [planKey,setPlanKey]=useState("monthly"); const [busy,setBusy]=useState(false); const [notice,setNotice]=useState<{text:string;severity:"success"|"error"}|null>(null);
