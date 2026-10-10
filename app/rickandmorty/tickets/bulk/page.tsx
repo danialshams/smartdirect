@@ -67,9 +67,9 @@ export default function BulkTicketPage() {
     } catch(e){setError(e instanceof Error?e.message:"ارسال گروهی ناموفق بود");}
     finally{setSubmitting(false);}
   };
-  return <Stack dir="rtl" spacing={2.5} sx={{direction:"rtl",textAlign:"right",alignItems:"stretch",minWidth:0,width:"100%"}}>
-    <Box dir="rtl" sx={{direction:"rtl",display:"flex",flexDirection:"column",alignItems:"flex-start",gap:1,width:"100%",minWidth:0}}>
-      <Button variant="contained" color="primary" onClick={()=>router.push("/rickandmorty/tickets")} sx={{alignSelf:"flex-start",flexShrink:0,minHeight:40,px:2,direction:"rtl",borderRadius:2,fontWeight:700,boxShadow:"none"}}><Box component="span" sx={{display:"inline-flex",alignItems:"center",gap:1,direction:"ltr",flexDirection:"row-reverse"}}><ArrowRight size={18}/>بازگشت</Box></Button>
+  return <Stack dir="rtl" spacing={2.5} sx={{direction:"rtl",textAlign:"right",alignItems:"stretch",minWidth:0,width:"100%", "& .MuiTypography-root":{textAlign:"right"}, "& .MuiFormControl-root":{direction:"rtl",textAlign:"right"}, "& .MuiInputLabel-root":{right:14,left:"auto",transformOrigin:"top right"}, "& .MuiInputBase-input":{direction:"rtl",textAlign:"right"}, "& .MuiFormHelperText-root":{direction:"rtl",textAlign:"right"}, "& .MuiAlert-message":{direction:"rtl",textAlign:"right",width:"100%"}}}>
+    <Box dir="rtl" sx={{direction:"rtl",display:"flex",flexDirection:"column",alignItems:"stretch",gap:1,width:"100%",minWidth:0,textAlign:"right"}}>
+      <Button variant="contained" color="primary" onClick={()=>router.push("/rickandmorty/tickets")} sx={{alignSelf:"flex-end",flexShrink:0,minHeight:40,px:2,direction:"rtl",borderRadius:2,fontWeight:700,boxShadow:"none"}}><Box component="span" sx={{display:"inline-flex",alignItems:"center",gap:1,direction:"ltr",flexDirection:"row-reverse"}}><ArrowRight size={18}/>بازگشت</Box></Button>
       <Box dir="rtl" sx={{width:"100%",minWidth:0,textAlign:"right",direction:"rtl"}}>
         <Typography variant="h5" fontWeight={800} sx={{fontSize:{xs:20,sm:24},textAlign:"right",direction:"rtl",overflowWrap:"anywhere"}}>ارسال گروهی تیکت</Typography>
         <Typography variant="body2" color="text.secondary" sx={{textAlign:"right",direction:"rtl",overflowWrap:"anywhere"}}>برای هر کاربر، یک تیکت مستقل با همین عنوان و متن ساخته می‌شود.</Typography>
@@ -100,12 +100,12 @@ export default function BulkTicketPage() {
       </Stack>
       {!loading&&total>20&&<Box sx={{display:"flex",justifyContent:"center"}}><Pagination page={page} count={Math.ceil(total/20)} onChange={(_,v)=>setPage(v)} color="primary"/></Box>}
     </Stack></CardContent></Card>
-    <Card><CardContent sx={{p:{xs:1.5,sm:2.5}}}><Stack spacing={1.5}>
+    <Card dir="rtl" sx={{direction:"rtl",textAlign:"right",width:"100%",minWidth:0}}><CardContent sx={{p:{xs:1.5,sm:2.5},direction:"rtl",textAlign:"right"}}><Stack dir="rtl" spacing={1.5} sx={{direction:"rtl",textAlign:"right",alignItems:"stretch",width:"100%",minWidth:0}}>
       <Typography dir="rtl" fontWeight={700} sx={{textAlign:"right",direction:"rtl",width:"100%"}}>۲. متن تیکت</Typography>
       <TextField dir="rtl" fullWidth required label="عنوان تیکت" value={subject} onChange={e=>setSubject(e.target.value)} inputProps={{maxLength:160,dir:"rtl",style:{textAlign:"right"}}} sx={{"& .MuiInputLabel-root":{right:14,left:"auto",transformOrigin:"top right"},"& .MuiOutlinedInput-notchedOutline legend":{textAlign:"right"},"& .MuiFormHelperText-root":{textAlign:"right",direction:"rtl"}}} helperText={`${subject.length}/160`}/>
       <TextField dir="rtl" fullWidth required multiline minRows={4} maxRows={10} label="متن پیام" value={message} onChange={e=>setMessage(e.target.value)} inputProps={{maxLength:5000,dir:"rtl",style:{textAlign:"right"}}} sx={{"& .MuiInputLabel-root":{right:14,left:"auto",transformOrigin:"top right"},"& .MuiOutlinedInput-notchedOutline legend":{textAlign:"right"},"& .MuiFormHelperText-root":{textAlign:"right",direction:"rtl"}}} helperText={`هر مخاطب یک تیکت مستقل دریافت می‌کند. ${message.length}/5000`}/>
       <Button fullWidth variant="contained" size="large" disabled={submitting||selectedCount===0||!subject.trim()||!message.trim()} onClick={send} sx={{minHeight:48,whiteSpace:"normal",lineHeight:1.7}}><Box component="span" sx={{display:"inline-flex",alignItems:"center",justifyContent:"center",gap:1,direction:"ltr",flexDirection:"row-reverse",width:"100%"}}>{submitting?<CircularProgress size={18} color="inherit"/>:<Send size={18}/>}<Box component="span" sx={{direction:"rtl",textAlign:"right"}}>{submitting?"در حال ایجاد تیکت‌ها…":`ایجاد تیکت برای ${selectedCount.toLocaleString("fa-IR")} کاربر`}</Box></Box></Button>
-      <Typography variant="caption" color="text.secondary">برای جلوگیری از ارسال ناخواسته، در هر بار حداکثر ۵۰۰ کاربر پذیرفته می‌شود.</Typography>
+      <Typography dir="rtl" variant="caption" color="text.secondary" sx={{direction:"rtl",textAlign:"right",width:"100%"}}>برای جلوگیری از ارسال ناخواسته، در هر بار حداکثر ۵۰۰ کاربر پذیرفته می‌شود.</Typography>
     </Stack></CardContent></Card>
   </Stack>;
 }
