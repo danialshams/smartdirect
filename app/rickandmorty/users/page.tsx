@@ -132,7 +132,7 @@ export default function AdminUsersPage() {
             <Button size="small" variant={allFiltered ? "contained" : "outlined"} onClick={() => { setAllFiltered((v) => !v); setSelectedIds([]); setExcludedIds([]); setResult(null); }} disabled={loading || total === 0}>{allFiltered ? "لغو انتخاب همه نتایج" : `انتخاب همه نتایج (${total})`}</Button>
             {(selectedIds.length > 0 || allFiltered) && <Button size="small" color="inherit" onClick={clearSelection}>پاک‌کردن انتخاب</Button>}
           </Stack>
-          <Stack direction="row" spacing={1}><Button variant="outlined" startIcon={<Download size={17} />} onClick={exportCsv} disabled={!selectedIds.length && !allFiltered}>خروجی CSV</Button><Button variant="contained" startIcon={<Zap size={17} />} onClick={() => { setError(""); setDialogOpen(true); }} disabled={selectedCount === 0}>عملیات گروهی ({selectedCount})</Button></Stack>
+          <Stack direction="row" spacing={1}><Button variant="outlined" endIcon={<Download size={17} />} onClick={exportCsv} disabled={!selectedIds.length && !allFiltered}>خروجی CSV</Button><Button variant="contained" endIcon={<Zap size={17} />} onClick={() => { setError(""); setDialogOpen(true); }} disabled={selectedCount === 0}>عملیات گروهی ({selectedCount})</Button></Stack>
         </Stack>
       </Stack>
       <Stack spacing={1.5} sx={{ display: { xs: "flex", sm: "none" }, mt: 2, minWidth: 0 }}>
@@ -173,8 +173,8 @@ export default function AdminUsersPage() {
                     </Stack> : <Chip size="small" label="بدون اشتراک" variant="outlined" />}
                   </Box>
                   <Stack direction="row" spacing={1}>
-                    <Button fullWidth size="medium" variant="outlined" startIcon={<Eye size={16} />} onClick={() => router.push(`/rickandmorty/users/${r.id}`)} sx={{ minHeight: 42, borderRadius: 2, fontWeight: 700 }}>مشاهده</Button>
-                    <Button fullWidth size="medium" variant="contained" startIcon={<Pencil size={16} />} onClick={() => router.push(`/rickandmorty/users/${r.id}#subscription`)} sx={{ minHeight: 42, borderRadius: 2, fontWeight: 700 }}>ویرایش</Button>
+                    <Button fullWidth size="medium" variant="outlined" endIcon={<Eye size={16} />} onClick={() => router.push(`/rickandmorty/users/${r.id}`)} sx={{ minHeight: 42, borderRadius: 2, fontWeight: 700 }}>مشاهده</Button>
+                    <Button fullWidth size="medium" variant="contained" endIcon={<Pencil size={16} />} onClick={() => router.push(`/rickandmorty/users/${r.id}#subscription`)} sx={{ minHeight: 42, borderRadius: 2, fontWeight: 700 }}>ویرایش</Button>
                   </Stack>
                 </Stack>
               </CardContent>
@@ -193,7 +193,7 @@ export default function AdminUsersPage() {
               <TableCell data-label="پیج‌های متصل">{r.pagesCount}</TableCell>
               <TableCell data-label="اشتراک">{r.subscription ? <><Chip size="small" label={r.subscription.planKey} variant="outlined" /> <Chip size="small" label={r.subscription.effectiveStatus ? statusLabels[r.subscription.effectiveStatus] ?? r.subscription.effectiveStatus : "—"} color={r.subscription.effectiveStatus === "ACTIVE" ? "success" : r.subscription.effectiveStatus === "EXPIRED" ? "error" : "warning"} variant="outlined" /></> : <Chip size="small" label="بدون اشتراک" />}</TableCell>
               <TableCell data-label="انقضا">{r.subscription ? new Date(r.subscription.expiresAt).toLocaleDateString("fa-IR") : "—"}</TableCell>
-              <TableCell data-label="عملیات" onClick={(e) => e.stopPropagation()}><Stack direction={{ xs: "column", sm: "row" }} spacing={0.75} justifyContent="flex-end"><Button size="small" variant="outlined" startIcon={<Eye size={15} />} onClick={() => router.push(`/rickandmorty/users/${r.id}`)}>مشاهده</Button><Button size="small" variant="contained" startIcon={<Pencil size={15} />} onClick={() => router.push(`/rickandmorty/users/${r.id}#subscription`)}>ویرایش</Button></Stack></TableCell>
+              <TableCell data-label="عملیات" onClick={(e) => e.stopPropagation()}><Stack direction={{ xs: "column", sm: "row" }} spacing={0.75} justifyContent="flex-end"><Button size="small" variant="outlined" endIcon={<Eye size={15} />} onClick={() => router.push(`/rickandmorty/users/${r.id}`)}>مشاهده</Button><Button size="small" variant="contained" endIcon={<Pencil size={15} />} onClick={() => router.push(`/rickandmorty/users/${r.id}#subscription`)}>ویرایش</Button></Stack></TableCell>
             </TableRow>) : <TableRow><TableCell colSpan={5} align="center"><Stack alignItems="center" spacing={1} sx={{ py: 5 }}><Users size={30} color="#94A3B8" /><Typography variant="body2" color="text.secondary">کاربری پیدا نشد</Typography></Stack></TableCell></TableRow>}
           </TableBody>
         </Table>
