@@ -68,9 +68,9 @@ export default function BulkTicketPage() {
     finally{setSubmitting(false);}
   };
   return <Stack dir="rtl" spacing={2.5} sx={{direction:"rtl",textAlign:"right",minWidth:0}}>
-    <Stack direction="row" alignItems="center" spacing={1}>
-      <Button variant="text" color="inherit" onClick={()=>router.push("/rickandmorty/tickets")} startIcon={<ArrowRight size={18}/>}>بازگشت</Button>
-      <Box sx={{minWidth:0}}><Typography variant="h5" fontWeight={800} sx={{fontSize:{xs:20,sm:24}}}>ارسال گروهی تیکت</Typography><Typography variant="body2" color="text.secondary">برای هر کاربر، یک تیکت مستقل با همین عنوان و متن ساخته می‌شود.</Typography></Box>
+    <Stack direction={{xs:"column",sm:"row"}} alignItems={{xs:"stretch",sm:"center"}} spacing={1} sx={{minWidth:0}}>
+      <Button variant="text" color="inherit" onClick={()=>router.push("/rickandmorty/tickets")} startIcon={<ArrowRight size={18}/>} sx={{alignSelf:{xs:"flex-start",sm:"auto"},flexShrink:0}}>بازگشت</Button>
+      <Box sx={{minWidth:0,flex:1}}><Typography variant="h5" fontWeight={800} sx={{fontSize:{xs:20,sm:24},overflowWrap:"anywhere"}}>ارسال گروهی تیکت</Typography><Typography variant="body2" color="text.secondary" sx={{overflowWrap:"anywhere"}}>برای هر کاربر، یک تیکت مستقل با همین عنوان و متن ساخته می‌شود.</Typography></Box>
     </Stack>
     {error && <Alert severity="error" onClose={()=>setError("")}>{error}</Alert>}
     {result && <Alert severity={result.failed?"warning":"success"} onClose={()=>setResult(null)}>نتیجه ارسال: {result.succeeded} موفق، {result.failed} ناموفق از {result.processed} کاربر.</Alert>}
@@ -89,7 +89,7 @@ export default function BulkTicketPage() {
         <Typography variant="body2" color="text.secondary">انتخاب‌شده: {selectedCount}</Typography>
       </Stack>
       <Stack spacing={0.75}>
-        {loading ? <Box sx={{py:3,display:"flex",justifyContent:"center"}}><CircularProgress size={24}/></Box> : rows.length ? rows.map(r=><Box key={r.id} sx={{display:"flex",alignItems:"center",gap:1,border:"1px solid",borderColor:"divider",borderRadius:2,p:1,minWidth:0}}>
+        {loading ? <Box role="status" aria-label="در حال دریافت کاربران" sx={{minHeight:220,width:"100%",display:"flex",alignItems:"center",justifyContent:"center"}}><CircularProgress size={36} thickness={4}/></Box> : rows.length ? rows.map(r=><Box key={r.id} dir="rtl" sx={{display:"flex",alignItems:"center",gap:1,border:"1px solid",borderColor:"divider",borderRadius:2,p:1,minWidth:0}}>
           <Checkbox checked={allFiltered?!excludedIds.includes(r.id):selectedIds.includes(r.id)} onChange={e=>{if(allFiltered)setExcludedIds(cur=>e.target.checked?cur.filter(id=>id!==r.id):[...new Set([...cur,r.id])]);else setSelectedIds(cur=>e.target.checked?[...new Set([...cur,r.id])]:cur.filter(id=>id!==r.id));}}/>
           <Avatar sx={{width:36,height:36,fontSize:14}}>{r.name?.[0]||"ک"}</Avatar>
           <Box sx={{minWidth:0,flex:1}}><Typography variant="body2" fontWeight={700} sx={{overflowWrap:"anywhere"}}>{r.name||"بدون نام"}</Typography><Typography variant="caption" color="text.secondary" sx={{overflowWrap:"anywhere"}}>{r.email}</Typography></Box>
@@ -101,7 +101,7 @@ export default function BulkTicketPage() {
       <Typography fontWeight={700}>۲. متن تیکت</Typography>
       <TextField fullWidth required label="عنوان تیکت" value={subject} onChange={e=>setSubject(e.target.value)} inputProps={{maxLength:160,dir:"rtl"}} helperText={`${subject.length}/160`}/>
       <TextField fullWidth required multiline minRows={4} maxRows={10} label="متن پیام" value={message} onChange={e=>setMessage(e.target.value)} inputProps={{maxLength:5000,dir:"rtl"}} helperText={`هر مخاطب یک تیکت مستقل دریافت می‌کند. ${message.length}/5000`}/>
-      <Button fullWidth variant="contained" size="large" startIcon={<Send size={18}/>} disabled={submitting||selectedCount===0||!subject.trim()||!message.trim()} onClick={send}>{submitting?<CircularProgress size={20} color="inherit"/>:`ایجاد تیکت برای ${selectedCount} کاربر`}</Button>
+      <Button fullWidth variant="contained" size="large" startIcon={<Send size={18}/>} disabled={submitting||selectedCount===0||!subject.trim()||!message.trim()} onClick={send} sx={{minHeight:48,whiteSpace:"normal",lineHeight:1.7}}>{submitting?<><CircularProgress size={18} color="inherit" sx={{ml:1}}/>در حال ایجاد تیکت‌ها…</>:`ایجاد تیکت برای ${selectedCount.toLocaleString("fa-IR")} کاربر`}</Button>
       <Typography variant="caption" color="text.secondary">برای جلوگیری از ارسال ناخواسته، در هر بار حداکثر ۵۰۰ کاربر پذیرفته می‌شود.</Typography>
     </Stack></CardContent></Card>
   </Stack>;
