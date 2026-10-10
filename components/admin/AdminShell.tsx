@@ -196,9 +196,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
               {currentLabel}
             </Typography>
             <Box sx={{ flex: { xs: 1, sm: 0 } }} />
-            <Typography component={Link} href="/dashboard" sx={{ color: "#64748B", textDecoration: "none", fontSize: { xs: 11, sm: 12 }, "&:hover": { color: "#2563EB" } }}>
-              بازگشت به پنل کاربری
-            </Typography>
+
           </Toolbar>
         </AppBar>
 
