@@ -5,7 +5,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 const VALID_STATUSES = ["ACTIVE", "EXPIRED", "SUSPENDED", "CANCELLED", "NONE"] as const;
 
 function buildUserWhere(q: string, planKey: string, status: string, now: Date) {
-  const AND: Record<string, unknown>[] = [];
+  const AND = [];
   if (q) AND.push({ OR: [{ name: { contains: q, mode: "insensitive" as const } }, { email: { contains: q, mode: "insensitive" as const } }] });
   if (planKey) AND.push({ subscriptions: { some: { planKey } } });
   if (status === "NONE") AND.push({ subscriptions: { none: {} } });
