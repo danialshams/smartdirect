@@ -71,7 +71,7 @@ export default function AdminUsersPage() {
   const exportCsv = async () => {
     try {
       let exportRows = rows.filter((r) => selectedIds.includes(r.id));
-      if (allFiltered) {
+      if (allFiltered || selectedIds.length) {
         const collected: UserRow[] = [];
         for (let p = 1; p <= Math.ceil(total / 50); p++) {
           const params = new URLSearchParams({ q, page: String(p), pageSize: "50" });
@@ -84,7 +84,7 @@ export default function AdminUsersPage() {
           if (!response.ok) throw new Error(json.message ?? "دریافت خروجی ناموفق بود");
           collected.push(...json.data);
         }
-        exportRows = collected.filter((r) => !excludedIds.includes(r.id));
+        exportRows = allFiltered ? collected.filter((r) => !excludedIds.includes(r.id)) : collected.filter((r) => selectedIds.includes(r.id));
       }
       if (!exportRows.length) throw new Error("ابتدا کاربران را انتخاب کنید");
       const csvEscape = (v: unknown) => '"' + String(v ?? "").replace(/"/g, '""') + '"';
