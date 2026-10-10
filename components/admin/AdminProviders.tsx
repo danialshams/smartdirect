@@ -35,8 +35,9 @@ const theme = createTheme({
   components: {
     MuiCssBaseline: {
       styleOverrides: {
-        html: { direction: "rtl" },
-        body: { direction: "rtl", overflowX: "hidden" },
+        html: { direction: "rtl", textAlign: "right" },
+        body: { direction: "rtl", textAlign: "right", overflowX: "hidden", margin: 0 },
+        "#__next": { direction: "rtl", textAlign: "right" },
         ".MuiDialog-root, .MuiPopover-root, .MuiMenu-root": { direction: "rtl" },
         ".MuiInputBase-root, .MuiSelect-select, .MuiMenuItem-root": { direction: "rtl", textAlign: "right" },
         ".MuiInputBase-input, .MuiFormLabel-root, .MuiFormHelperText-root": { textAlign: "right" },
