@@ -10,12 +10,16 @@ type Filters = {
   q?: string;
   planKey?: string;
   status?: FilterStatus | "";
+  expiryWithin?: "3" | "7" | "";
+  connection?: "connected" | "disconnected" | "";
 };
 
 function buildUserWhere(filters: Filters, now: Date) {
   const q = filters.q?.trim() ?? "";
   const planKey = filters.planKey?.trim() ?? "";
   const status = filters.status ?? "";
+  const expiryWithin = filters.expiryWithin ?? "";
+  const connection = filters.connection ?? "";
   const AND = [];
   if (q) AND.push({ OR: [{ name: { contains: q, mode: "insensitive" as const } }, { email: { contains: q, mode: "insensitive" as const } }] });
   if (planKey) AND.push({ subscriptions: { some: { planKey } } });
@@ -23,6 +27,9 @@ function buildUserWhere(filters: Filters, now: Date) {
   if (status === "ACTIVE") AND.push({ subscriptions: { some: { status: "ACTIVE", expiresAt: { gt: now } } } });
   if (status === "EXPIRED") AND.push({ subscriptions: { some: { OR: [{ status: "EXPIRED" }, { status: "ACTIVE", expiresAt: { lte: now } }] } } });
   if (status === "SUSPENDED" || status === "CANCELLED") AND.push({ subscriptions: { some: { status } } });
+  if (expiryWithin === "3" || expiryWithin === "7") AND.push({ subscriptions: { some: { status: "ACTIVE", expiresAt: { gt: now, lte: new Date(now.getTime() + Number(expiryWithin) * 86400000) } } } });
+  if (connection === "connected") AND.push({ instagramAccounts: { some: { isConnected: true } } });
+  if (connection === "disconnected") AND.push({ instagramAccounts: { none: { isConnected: true } } });
   return { role: "USER" as const, ...(AND.length ? { AND } : {}) };
 }
 
@@ -53,9 +60,9 @@ export async function POST(req: NextRequest) {
     if (userIds.length > MAX_BULK_USERS) return NextResponse.json({ message: "در هر عملیات حداکثر ۵۰۰ کاربر قابل انتخاب است" }, { status: 400 });
   } else {
     const filters = selection.filters ?? {};
-    if (filters.status && !VALID_STATUSES.includes(filters.status)) {
-      return NextResponse.json({ message: "فیلتر وضعیت اشتراک معتبر نیست" }, { status: 400 });
-    }
+    if (filters.status && !VALID_STATUSES.includes(filters.status)) return NextResponse.json({ message: "فیلتر وضعیت اشتراک معتبر نیست" }, { status: 400 });
+    if (filters.expiryWithin && !["3", "7"].includes(filters.expiryWithin)) return NextResponse.json({ message: "فیلتر زمان انقضا معتبر نیست" }, { status: 400 });
+    if (filters.connection && !["connected", "disconnected"].includes(filters.connection)) return NextResponse.json({ message: "فیلتر اتصال اینستاگرام معتبر نیست" }, { status: 400 });
     const excludeUserIds = Array.isArray(selection.excludeUserIds) ? [...new Set(selection.excludeUserIds.filter((id): id is string => typeof id === "string" && id.length > 0))] : [];
     const where = { ...buildUserWhere(filters, new Date()), ...(excludeUserIds.length ? { id: { notIn: excludeUserIds } } : {}) };
     const matching = await prisma.user.findMany({ where, select: { id: true }, orderBy: { createdAt: "desc" }, take: MAX_BULK_USERS + 1 });
