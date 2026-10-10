@@ -4,7 +4,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 
 const VALID_STATUSES = ["ACTIVE", "EXPIRED", "SUSPENDED", "CANCELLED", "NONE"] as const;
 
-function buildUserWhere(q: string, planKey: string, status: string, now: Date) {
+function buildUserWhere(q: string, planKey: string, status: string, expiryWithin: string, connection: string, now: Date) {
   const AND = [];
   if (q) AND.push({ OR: [{ name: { contains: q, mode: "insensitive" as const } }, { email: { contains: q, mode: "insensitive" as const } }] });
   if (planKey) AND.push({ subscriptions: { some: { planKey } } });
@@ -12,6 +12,9 @@ function buildUserWhere(q: string, planKey: string, status: string, now: Date) {
   if (status === "ACTIVE") AND.push({ subscriptions: { some: { status: "ACTIVE", expiresAt: { gt: now } } } });
   if (status === "EXPIRED") AND.push({ subscriptions: { some: { OR: [{ status: "EXPIRED" }, { status: "ACTIVE", expiresAt: { lte: now } }] } } });
   if (status === "SUSPENDED" || status === "CANCELLED") AND.push({ subscriptions: { some: { status } } });
+  if (expiryWithin === "3" || expiryWithin === "7") AND.push({ subscriptions: { some: { status: "ACTIVE", expiresAt: { gt: now, lte: new Date(now.getTime() + Number(expiryWithin) * 86400000) } } } });
+  if (connection === "connected") AND.push({ instagramAccounts: { some: { isConnected: true } } });
+  if (connection === "disconnected") AND.push({ instagramAccounts: { none: { isConnected: true } } });
   return { role: "USER" as const, ...(AND.length ? { AND } : {}) };
 }
 
@@ -23,6 +26,8 @@ export async function GET(req: NextRequest) {
   const q = params.get("q")?.trim() ?? "";
   const planKey = params.get("planKey")?.trim() ?? "";
   const status = params.get("status")?.trim() ?? "";
+  const expiryWithin = params.get("expiryWithin")?.trim() ?? "";
+  const connection = params.get("connection")?.trim() ?? "";
   const page = Math.max(1, Number(params.get("page") ?? 1));
   const pageSize = Math.min(50, Math.max(10, Number(params.get("pageSize") ?? 20)));
 
@@ -30,7 +35,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ message: "فیلتر وضعیت اشتراک معتبر نیست" }, { status: 400 });
   }
 
-  const where = buildUserWhere(q, planKey, status, new Date());
+  if (expiryWithin && !["3", "7"].includes(expiryWithin)) return NextResponse.json({ message: "فیلتر زمان انقضا معتبر نیست" }, { status: 400 });
+  if (connection && !["connected", "disconnected"].includes(connection)) return NextResponse.json({ message: "فیلتر اتصال اینستاگرام معتبر نیست" }, { status: 400 });
+
+  const where = buildUserWhere(q, planKey, status, expiryWithin, connection, new Date());
   const [items, total] = await Promise.all([
     prisma.user.findMany({
       where,
