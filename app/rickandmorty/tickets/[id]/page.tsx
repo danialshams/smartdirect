@@ -1,10 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { type KeyboardEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   Alert, Avatar, Box, Button, Card, Chip, CircularProgress, FormControl, IconButton,
-  InputAdornment, InputLabel, MenuItem, Select, Skeleton, Snackbar, Stack, TextField, Typography,
+  InputLabel, MenuItem, Select, Skeleton, Snackbar, Stack, TextField, Typography,
 } from "@mui/material";
 import { ArrowRight, CheckCheck, Clock3, Send, ShieldCheck, UserRound } from "lucide-react";
 
@@ -20,13 +20,13 @@ export default function TicketDetailPage() {
  const {id}=useParams<{id:string}>(); const router=useRouter();
  const [ticket,setTicket]=useState<TicketData|null>(null); const [loading,setLoading]=useState(true); const [body,setBody]=useState(""); const [busy,setBusy]=useState(false);
  const [notice,setNotice]=useState<{text:string;severity:"success"|"error"}|null>(null); const [loadError,setLoadError]=useState("");
- const messagesEnd=useRef<HTMLDivElement|null>(null); const composer=useRef<HTMLInputElement|null>(null);
+ const messagesEnd=useRef<HTMLDivElement|null>(null);
  const load=useCallback(async(showLoading=false)=>{if(showLoading)setLoading(true);setLoadError("");try{const r=await fetch(`/api/admin/tickets/${id}`,{cache:"no-store"});const j=await r.json();if(!r.ok)throw new Error(j.message||"دریافت تیکت ناموفق بود");setTicket(j);}catch(e){setLoadError(e instanceof Error?e.message:"خطا در دریافت تیکت");}finally{setLoading(false);}},[id]);
  useEffect(()=>{if(id)void load(true);},[id,load]);
  useEffect(()=>{messagesEnd.current?.scrollIntoView({behavior:"smooth",block:"end"});},[ticket?.messages.length,loading]);
  const patch=async(data:Record<string,unknown>)=>{try{const r=await fetch(`/api/admin/tickets/${id}`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)});const j=await r.json();if(!r.ok)throw new Error(j.message||"ذخیره تغییرات ناموفق بود");setTicket(t=>t?{...t,...j}:t);setNotice({text:"تغییرات ذخیره شد",severity:"success"});}catch(e){setNotice({text:e instanceof Error?e.message:"خطا در ذخیره",severity:"error"});}};
  const send=async()=>{if(!body.trim()||busy)return;setBusy(true);try{const r=await fetch(`/api/admin/tickets/${id}/messages`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({body:body.trim()})});const j=await r.json();if(!r.ok)throw new Error(j.message||"ارسال پاسخ ناموفق بود");setBody("");await load();setNotice({text:"پاسخ ارسال شد",severity:"success"});}catch(e){setNotice({text:e instanceof Error?e.message:"خطا در ارسال پاسخ",severity:"error"});}finally{setBusy(false);}};
- const handleKeyDown=(e:React.KeyboardEvent<HTMLDivElement>)=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();void send();}};
+ const handleKeyDown=(e:KeyboardEvent<HTMLDivElement>)=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();void send();}};
  if(loading)return <Stack spacing={2}><Skeleton variant="rounded" height={74}/><Skeleton variant="rounded" height={42}/><Skeleton variant="rounded" height={460}/></Stack>;
  if(!ticket)return <Stack spacing={2}><Button startIcon={<ArrowRight size={18}/>} onClick={()=>router.push("/rickandmorty/tickets")} sx={{alignSelf:"flex-start"}}>بازگشت به تیکت‌ها</Button><Alert severity="error">{loadError||"تیکت پیدا نشد"}</Alert><Button onClick={()=>void load(true)}>تلاش دوباره</Button></Stack>;
  return <Stack spacing={{xs:1.25,sm:1.75}} sx={{direction:"rtl"}}>
@@ -70,7 +70,7 @@ export default function TicketDetailPage() {
    </Box>
    {loadError&&<Alert severity="error" sx={{m:1}}>{loadError}</Alert>}
    <Box sx={{p:{xs:1,sm:1.5},borderTop:"1px solid #E8EDF4",bgcolor:"#fff"}}>
-    <TextField fullWidth multiline minRows={2} maxRows={4} value={body} onChange={e=>setBody(e.target.value)} onKeyDown={handleKeyDown} placeholder="پاسخ خود را بنویسید… (Enter برای ارسال)" inputRef={composer} inputProps={{"aria-label":"متن پاسخ تیکت"}} sx={{"& .MuiOutlinedInput-root":{borderRadius:2.5,bgcolor:"#FAFBFD",alignItems:"flex-end",fontSize:13,lineHeight:1.8,p:1.25},"& textarea":{padding:0}}}/>
+    <TextField fullWidth multiline minRows={2} maxRows={4} value={body} onChange={e=>setBody(e.target.value)} onKeyDown={handleKeyDown} placeholder="پاسخ خود را بنویسید… (Enter برای ارسال)" inputProps={{"aria-label":"متن پاسخ تیکت"}} sx={{"& .MuiOutlinedInput-root":{borderRadius:2.5,bgcolor:"#FAFBFD",alignItems:"flex-end",fontSize:13,lineHeight:1.8,p:1.25},"& textarea":{padding:0}}}/>
     <Box sx={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:1,mt:1}}>
      <Typography sx={{fontSize:10.5,color:"#94A3B8",display:{xs:"none",sm:"block"}}}>Shift + Enter برای خط جدید</Typography>
      <Button variant="contained" onClick={()=>void send()} disabled={busy||!body.trim()} startIcon={busy?<CircularProgress size={15} color="inherit"/>:<Send size={16}/>} sx={{mr:"auto",minWidth:{xs:108,sm:140},minHeight:42,borderRadius:2.5,textTransform:"none",fontWeight:700,boxShadow:"none",bgcolor:"#2563EB","&:hover":{bgcolor:"#1D4ED8",boxShadow:"none"}}}>{busy?"در حال ارسال…":"ارسال پاسخ"}</Button>
