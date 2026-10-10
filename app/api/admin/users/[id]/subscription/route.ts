@@ -3,11 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { writeAdminAudit } from "@/lib/admin-audit";
 import { requireAdmin } from "@/lib/admin-auth";
 
-function parseDate(value: unknown) {
-  const date = new Date(String(value));
-  return Number.isNaN(date.getTime()) ? null : date;
-}
-
 export async function POST(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   const guard = await requireAdmin();
   if (guard.response) return guard.response;
