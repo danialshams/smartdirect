@@ -21,13 +21,20 @@ function buildUserWhere(filters: Filters, now: Date) {
   const expiryWithin = filters.expiryWithin ?? "";
   const connection = filters.connection ?? "";
   const AND = [];
+  const subscriptionConditions = [];
+  if (planKey) subscriptionConditions.push({ planKey });
+  if (status === "ACTIVE") subscriptionConditions.push({ status: "ACTIVE", expiresAt: { gt: now } });
+  if (status === "EXPIRED") subscriptionConditions.push({ OR: [{ status: "EXPIRED" }, { status: "ACTIVE", expiresAt: { lte: now } }] });
+  if (status === "SUSPENDED" || status === "CANCELLED") subscriptionConditions.push({ status });
+  if (expiryWithin === "3" || expiryWithin === "7") subscriptionConditions.push({ status: "ACTIVE", expiresAt: { gt: now, lte: new Date(now.getTime() + Number(expiryWithin) * 86400000) } });
+
   if (q) AND.push({ OR: [{ name: { contains: q, mode: "insensitive" as const } }, { email: { contains: q, mode: "insensitive" as const } }] });
-  if (planKey) AND.push({ subscriptions: { some: { planKey } } });
-  if (status === "NONE") AND.push({ subscriptions: { none: {} } });
-  if (status === "ACTIVE") AND.push({ subscriptions: { some: { status: "ACTIVE", expiresAt: { gt: now } } } });
-  if (status === "EXPIRED") AND.push({ subscriptions: { some: { OR: [{ status: "EXPIRED" }, { status: "ACTIVE", expiresAt: { lte: now } }] } } });
-  if (status === "SUSPENDED" || status === "CANCELLED") AND.push({ subscriptions: { some: { status } } });
-  if (expiryWithin === "3" || expiryWithin === "7") AND.push({ subscriptions: { some: { status: "ACTIVE", expiresAt: { gt: now, lte: new Date(now.getTime() + Number(expiryWithin) * 86400000) } } } });
+  if (status === "NONE") {
+    AND.push({ subscriptions: { none: {} } });
+    if (planKey || expiryWithin) AND.push({ subscriptions: { some: { AND: subscriptionConditions } } });
+  } else if (subscriptionConditions.length) {
+    AND.push({ subscriptions: { some: { AND: subscriptionConditions } } });
+  }
   if (connection === "connected") AND.push({ instagramAccounts: { some: { isConnected: true } } });
   if (connection === "disconnected") AND.push({ instagramAccounts: { none: { isConnected: true } } });
   return { role: "USER" as const, ...(AND.length ? { AND } : {}) };
