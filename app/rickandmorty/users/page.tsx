@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Alert, Avatar, Box, Button, Card, CardContent, Checkbox, Chip, CircularProgress,
-  Dialog, DialogActions, DialogContent, DialogTitle, FormControl, InputAdornment,
+  Dialog, DialogActions, DialogContent, DialogTitle, Divider, FormControl, InputAdornment,
   InputLabel, MenuItem, Pagination, Select, Stack, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, TextField, Typography,
 } from "@mui/material";
@@ -109,6 +109,8 @@ export default function AdminUsersPage() {
     finally { setSubmitting(false); }
   };
 
+  if (loading && rows.length === 0 && !error) return <Box role="status" aria-label="در حال بارگذاری کاربران" sx={{ minHeight: "calc(100dvh - 100px)", width: "100%", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 1.5 }}><CircularProgress size={40} thickness={4} /><Typography variant="body2" color="text.secondary">در حال دریافت فهرست کاربران…</Typography></Box>;
+
   return <Stack spacing={{ xs: 1.5, sm: 2.5 }}>
     <Box><Typography variant="h5" fontWeight={700} sx={{ fontSize: { xs: 20, sm: 24 } }}>کاربران</Typography><Typography variant="body2" color="text.secondary">مدیریت کاربران، فیلتر اشتراک و عملیات گروهی</Typography></Box>
     {error && <Alert severity="error" onClose={() => setError("")}>{error}</Alert>}
@@ -130,10 +132,58 @@ export default function AdminUsersPage() {
             <Button size="small" variant={allFiltered ? "contained" : "outlined"} onClick={() => { setAllFiltered((v) => !v); setSelectedIds([]); setExcludedIds([]); setResult(null); }} disabled={loading || total === 0}>{allFiltered ? "لغو انتخاب همه نتایج" : `انتخاب همه نتایج (${total})`}</Button>
             {(selectedIds.length > 0 || allFiltered) && <Button size="small" color="inherit" onClick={clearSelection}>پاک‌کردن انتخاب</Button>}
           </Stack>
-          <Stack direction="row" spacing={1}><Button variant="outlined" startIcon={<Download size={17} />} onClick={exportCsv} disabled={!selectedIds.length && !allFiltered}>خروجی CSV</Button><Button variant="contained" startIcon={<Zap size={17} />} onClick={() => { setError(""); setDialogOpen(true); }} disabled={selectedCount === 0}>عملیات گروهی ({selectedCount})</Button></Stack>
+          <Stack direction="row" spacing={1}><Button variant="outlined" endIcon={<Download size={17} />} onClick={exportCsv} disabled={!selectedIds.length && !allFiltered}>خروجی CSV</Button><Button variant="contained" endIcon={<Zap size={17} />} onClick={() => { setError(""); setDialogOpen(true); }} disabled={selectedCount === 0}>عملیات گروهی ({selectedCount})</Button></Stack>
         </Stack>
       </Stack>
-      <TableContainer sx={{ mt: 2, overflowX: { xs: "visible", sm: "auto" }, mx: { xs: -1.25, sm: 0 }, width: { xs: "calc(100% + 20px)", sm: "100%" }, minWidth: 0 }}>
+      <Stack spacing={1.5} sx={{ display: { xs: "flex", sm: "none" }, mt: 2, minWidth: 0 }}>
+        {rows.map((r) => {
+          const selected = allFiltered ? !excludedIds.includes(r.id) : selectedIds.includes(r.id);
+          return (
+            <Card key={r.id} variant="outlined" sx={{ borderRadius: 3, borderColor: "#E2E8F0", boxShadow: "0 2px 8px rgba(15,23,42,.035)", overflow: "hidden" }}>
+              <CardContent sx={{ p: 1.75, "&:last-child": { pb: 1.75 } }}>
+                <Stack spacing={1.5}>
+                  <Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 0 }}>
+                    <Checkbox size="small" checked={selected} onChange={(e) => {
+                      setResult(null);
+                      if (allFiltered) setExcludedIds((current) => e.target.checked ? current.filter((id) => id !== r.id) : [...new Set([...current, r.id])]);
+                      else setSelectedIds((current) => e.target.checked ? [...new Set([...current, r.id])] : current.filter((id) => id !== r.id));
+                    }} inputProps={{ "aria-label": "انتخاب " + r.name }} />
+                    <Avatar sx={{ bgcolor: "#EFF6FF", color: "#2563EB", width: 44, height: 44, flexShrink: 0, fontWeight: 800 }}>{r.name?.trim()?.[0] || "U"}</Avatar>
+                    <Box sx={{ minWidth: 0, flex: 1 }}>
+                      <Typography fontWeight={800} sx={{ fontSize: 14.5, lineHeight: 1.7, overflowWrap: "anywhere" }}>{r.name || "بدون نام"}</Typography>
+                      <Typography variant="caption" color="text.secondary" sx={{ display: "block", lineHeight: 1.6, overflowWrap: "anywhere", wordBreak: "break-word" }}>{r.email}</Typography>
+                    </Box>
+                  </Stack>
+                  <Divider />
+                  <Box sx={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: 1.25 }}>
+                    <Box sx={{ minWidth: 0, p: 1.25, borderRadius: 2, bgcolor: "#F8FAFC" }}>
+                      <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.5 }}>پیج‌های متصل</Typography>
+                      <Typography fontWeight={800} sx={{ fontSize: 16 }}>{r.pagesCount.toLocaleString("fa-IR")}</Typography>
+                    </Box>
+                    <Box sx={{ minWidth: 0, p: 1.25, borderRadius: 2, bgcolor: "#F8FAFC" }}>
+                      <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.5 }}>تاریخ انقضا</Typography>
+                      <Typography fontWeight={700} sx={{ fontSize: 12.5, lineHeight: 1.7, overflowWrap: "anywhere" }}>{r.subscription ? new Date(r.subscription.expiresAt).toLocaleDateString("fa-IR") : "—"}</Typography>
+                    </Box>
+                  </Box>
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.75 }}>وضعیت و پلن اشتراک</Typography>
+                    {r.subscription ? <Stack direction="row" alignItems="center" flexWrap="wrap" useFlexGap gap={0.75}>
+                      <Chip size="small" label={r.subscription.planKey === "monthly" ? "ماهانه" : r.subscription.planKey === "yearly" ? "سالانه" : r.subscription.planKey === "free" ? "رایگان" : r.subscription.planKey} variant="outlined" />
+                      <Chip size="small" label={statusLabels[r.subscription.effectiveStatus ?? ""] ?? r.subscription.effectiveStatus ?? "نامشخص"} color={r.subscription.effectiveStatus === "ACTIVE" ? "success" : r.subscription.effectiveStatus === "EXPIRED" ? "error" : r.subscription.effectiveStatus === "SUSPENDED" ? "warning" : "default"} variant="outlined" />
+                    </Stack> : <Chip size="small" label="بدون اشتراک" variant="outlined" />}
+                  </Box>
+                  <Stack direction="row" spacing={1}>
+                    <Button fullWidth size="medium" variant="outlined" endIcon={<Eye size={16} />} onClick={() => router.push(`/rickandmorty/users/${r.id}`)} sx={{ minHeight: 42, borderRadius: 2, fontWeight: 700 }}>مشاهده</Button>
+                    <Button fullWidth size="medium" variant="contained" endIcon={<Pencil size={16} />} onClick={() => router.push(`/rickandmorty/users/${r.id}#subscription`)} sx={{ minHeight: 42, borderRadius: 2, fontWeight: 700 }}>ویرایش</Button>
+                  </Stack>
+                </Stack>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </Stack>
+
+      <TableContainer sx={{ display: { xs: "none", sm: "block" }, mt: 2, overflowX: "auto", mx: 0, width: "100%", minWidth: 0 }}>
         <Table sx={responsiveAdminTableSx}>
           <TableHead><TableRow><TableCell><Stack direction="row" spacing={1} alignItems="center"><Checkbox size="small" checked={pageSelected} indeterminate={rows.some((r) => (allFiltered ? !excludedIds.includes(r.id) : selectedIds.includes(r.id))) && !pageSelected} onChange={(e) => togglePage(e.target.checked)} disabled={loading || !rows.length} /><span>کاربر</span></Stack></TableCell><TableCell>پیج‌های متصل</TableCell><TableCell>اشتراک</TableCell><TableCell>انقضا</TableCell><TableCell align="right">عملیات</TableCell></TableRow></TableHead>
           <TableBody>
@@ -143,7 +193,7 @@ export default function AdminUsersPage() {
               <TableCell data-label="پیج‌های متصل">{r.pagesCount}</TableCell>
               <TableCell data-label="اشتراک">{r.subscription ? <><Chip size="small" label={r.subscription.planKey} variant="outlined" /> <Chip size="small" label={r.subscription.effectiveStatus ? statusLabels[r.subscription.effectiveStatus] ?? r.subscription.effectiveStatus : "—"} color={r.subscription.effectiveStatus === "ACTIVE" ? "success" : r.subscription.effectiveStatus === "EXPIRED" ? "error" : "warning"} variant="outlined" /></> : <Chip size="small" label="بدون اشتراک" />}</TableCell>
               <TableCell data-label="انقضا">{r.subscription ? new Date(r.subscription.expiresAt).toLocaleDateString("fa-IR") : "—"}</TableCell>
-              <TableCell data-label="عملیات" onClick={(e) => e.stopPropagation()}><Stack direction={{ xs: "column", sm: "row" }} spacing={0.75} justifyContent="flex-end"><Button size="small" variant="outlined" startIcon={<Eye size={15} />} onClick={() => router.push(`/rickandmorty/users/${r.id}`)}>مشاهده</Button><Button size="small" variant="contained" startIcon={<Pencil size={15} />} onClick={() => router.push(`/rickandmorty/users/${r.id}#subscription`)}>ویرایش</Button></Stack></TableCell>
+              <TableCell data-label="عملیات" onClick={(e) => e.stopPropagation()}><Stack direction={{ xs: "column", sm: "row" }} spacing={0.75} justifyContent="flex-end"><Button size="small" variant="outlined" endIcon={<Eye size={15} />} onClick={() => router.push(`/rickandmorty/users/${r.id}`)}>مشاهده</Button><Button size="small" variant="contained" endIcon={<Pencil size={15} />} onClick={() => router.push(`/rickandmorty/users/${r.id}#subscription`)}>ویرایش</Button></Stack></TableCell>
             </TableRow>) : <TableRow><TableCell colSpan={5} align="center"><Stack alignItems="center" spacing={1} sx={{ py: 5 }}><Users size={30} color="#94A3B8" /><Typography variant="body2" color="text.secondary">کاربری پیدا نشد</Typography></Stack></TableCell></TableRow>}
           </TableBody>
         </Table>
