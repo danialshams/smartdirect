@@ -163,6 +163,9 @@ export default function UserDetailPage() {
                     <Select value={planKey} onChange={(event) => setPlanKey(String(event.target.value))} inputProps={{ "aria-label": "نوع اشتراک" }}>
                       <MenuItem value="monthly">ماهانه</MenuItem>
                       <MenuItem value="yearly">سالانه</MenuItem>
+                      {current?.planKey && !["monthly", "yearly"].includes(current.planKey) && (
+                        <MenuItem value={current.planKey}>{current.planKey === "free" ? "دوره رایگان (فعلی)" : current.planKey}</MenuItem>
+                      )}
                     </Select>
                   </FormControl>
                 </Box>
