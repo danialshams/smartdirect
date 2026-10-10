@@ -117,10 +117,10 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const currentLabel = items.find((item) => item.href === currentKey)?.label ?? "داشبورد";
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "#F8FAFC" }}>
+    <Box dir="rtl" sx={{ minHeight: "100vh", bgcolor: "#F8FAFC", direction: "rtl" }}>
       <Drawer
         variant="permanent"
-        anchor="left"
+        anchor="right"
         sx={{
           display: { xs: "none", lg: "block" },
           width: 248,
@@ -128,8 +128,8 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           "& .MuiDrawer-paper": {
             width: 248,
             boxSizing: "border-box",
-            borderLeft: "1px solid #E2E8F0",
-            borderRight: 0,
+            borderRight: "1px solid #E2E8F0",
+            borderLeft: 0,
             bgcolor: "#fff",
           },
         }}
@@ -150,7 +150,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       </Drawer>
 
       <Drawer
-        anchor="left"
+        anchor="right"
         open={mobileOpen}
         onClose={() => setMobileOpen(false)}
         ModalProps={{ keepMounted: true }}
@@ -159,8 +159,8 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           "& .MuiDrawer-paper": {
             width: { xs: "min(82vw, 300px)", sm: 320 },
             boxSizing: "border-box",
-            borderLeft: "1px solid #E2E8F0",
-            borderRight: 0,
+            borderRight: "1px solid #E2E8F0",
+            borderLeft: 0,
           },
         }}
       >
@@ -171,7 +171,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
         <Box sx={{ p: 1.5 }}><AdminNav onNavigate={() => setMobileOpen(false)} /></Box>
       </Drawer>
 
-      <Box sx={{ ml: { lg: "248px" } }}>
+      <Box dir="rtl" sx={{ mr: { lg: "248px" }, minWidth: 0 }}>
         <AppBar
           position="sticky"
           color="inherit"
@@ -202,6 +202,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
         <Box
           component="main"
+          dir="rtl"
           sx={{
             minHeight: "calc(100vh - 56px)",
             px: { xs: 1.25, sm: 2.5, lg: 4 },
