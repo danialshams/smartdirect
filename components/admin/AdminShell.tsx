@@ -117,10 +117,10 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const currentLabel = items.find((item) => item.href === currentKey)?.label ?? "داشبورد";
 
   return (
-    <Box dir="rtl" sx={{ minHeight: "100dvh", width: "100%", bgcolor: "#F8FAFC", direction: "rtl", textAlign: "right", overflowX: "clip" }}>
+    <Box sx={{ minHeight: "100vh", bgcolor: "#F8FAFC" }}>
       <Drawer
         variant="permanent"
-        anchor="right"
+        anchor="left"
         sx={{
           display: { xs: "none", lg: "block" },
           width: 248,
@@ -128,8 +128,8 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           "& .MuiDrawer-paper": {
             width: 248,
             boxSizing: "border-box",
-            borderRight: "1px solid #E2E8F0",
-            borderLeft: 0,
+            borderLeft: "1px solid #E2E8F0",
+            borderRight: 0,
             bgcolor: "#fff",
           },
         }}
@@ -150,7 +150,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       </Drawer>
 
       <Drawer
-        anchor="right"
+        anchor="left"
         open={mobileOpen}
         onClose={() => setMobileOpen(false)}
         ModalProps={{ keepMounted: true }}
@@ -159,8 +159,8 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           "& .MuiDrawer-paper": {
             width: { xs: "min(82vw, 300px)", sm: 320 },
             boxSizing: "border-box",
-            borderRight: "1px solid #E2E8F0",
-            borderLeft: 0,
+            borderLeft: "1px solid #E2E8F0",
+            borderRight: 0,
           },
         }}
       >
@@ -171,7 +171,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
         <Box sx={{ p: 1.5 }}><AdminNav onNavigate={() => setMobileOpen(false)} /></Box>
       </Drawer>
 
-      <Box dir="rtl" sx={{ mr: { lg: "248px" }, minWidth: 0, width: { lg: "calc(100% - 248px)" }, textAlign: "right" }}>
+      <Box sx={{ ml: { lg: "248px" } }}>
         <AppBar
           position="sticky"
           color="inherit"
@@ -183,7 +183,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
             zIndex: (theme) => theme.zIndex.drawer - 1,
           }}
         >
-          <Toolbar disableGutters sx={{ height: { xs: 56, sm: 64 }, minHeight: { xs: "56px !important", sm: "64px !important" }, px: { xs: 1.25, sm: 2.5, lg: 4 }, gap: 1, direction: "rtl", display: "flex", flexDirection: "row", justifyContent: "flex-start", boxSizing: "border-box" }}>
+          <Toolbar sx={{ minHeight: { xs: 56, sm: 64 }, px: { xs: 1.25, sm: 2.5, lg: 4 }, gap: 1 }}>
             <IconButton
               size="small"
               onClick={() => setMobileOpen(true)}
@@ -192,22 +192,18 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
             >
               <MenuIcon size={20} />
             </IconButton>
-            <Typography sx={{ fontSize: { xs: 13, sm: 14 }, fontWeight: 700, flex: 1, minWidth: 0, textAlign: "right" }}>
+            <Typography sx={{ display: { xs: "none", sm: "block" }, fontSize: 14, fontWeight: 700, flex: 1 }}>
               {currentLabel}
             </Typography>
+            <Box sx={{ flex: { xs: 1, sm: 0 } }} />
 
           </Toolbar>
         </AppBar>
 
         <Box
           component="main"
-          dir="rtl"
           sx={{
-            minHeight: "calc(100dvh - 56px)",
-            width: "100%",
-            boxSizing: "border-box",
-            direction: "rtl",
-            textAlign: "right",
+            minHeight: "calc(100vh - 56px)",
             px: { xs: 1.25, sm: 2.5, lg: 4 },
             py: { xs: 1.5, sm: 2.5, lg: 3 },
           }}
