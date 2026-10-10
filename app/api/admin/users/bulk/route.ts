@@ -95,9 +95,7 @@ export async function POST(req: NextRequest) {
 
   const actorUserId = guard.session!.user.id;
   const now = new Date();
-  const results: { userId: string; success: boolean; message?: string }[] = [];
-
-  for (const target of targets) {
+  const processTarget = async (target: { id: string }) => {
     try {
       await prisma.$transaction(async (tx) => {
         if (action.startsWith("subscription-")) {
@@ -153,10 +151,16 @@ export async function POST(req: NextRequest) {
           });
         }
       });
-      results.push({ userId: target.id, success: true });
+      return { userId: target.id, success: true };
     } catch (error) {
-      results.push({ userId: target.id, success: false, message: error instanceof Error ? error.message : "خطای نامشخص" });
+      return { userId: target.id, success: false, message: error instanceof Error ? error.message : "خطای نامشخص" };
     }
+  };
+
+  const results: { userId: string; success: boolean; message?: string }[] = [];
+  for (let index = 0; index < targets.length; index += 10) {
+    const batch = targets.slice(index, index + 10);
+    results.push(...await Promise.all(batch.map(processTarget)));
   }
 
   const succeeded = results.filter((result) => result.success).length;
