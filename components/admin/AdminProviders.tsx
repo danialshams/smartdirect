@@ -53,6 +53,7 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           padding: "12px 16px",
+          textAlign: "right",
           whiteSpace: "nowrap",
           "@media (max-width:600px)": {
             padding: "9px 10px",
@@ -61,6 +62,7 @@ const theme = createTheme({
         },
         head: {
           fontWeight: 700,
+          textAlign: "right",
           backgroundColor: "#F8FAFC",
           "@media (max-width:600px)": {
             fontSize: "0.72rem",
