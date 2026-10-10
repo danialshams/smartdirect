@@ -93,11 +93,6 @@ export async function POST(req: NextRequest) {
     }
   } else if (action === "subscription-activate" || action === "subscription-suspend") {
     // No additional parameters required.
-  } else if (action === "ticket-create") {
-    const subject = String(body.subject ?? "").trim();
-    const message = String(body.message ?? "").trim();
-    if (!subject || subject.length > 160) return NextResponse.json({ message: "عنوان تیکت الزامی است و حداکثر ۱۶۰ نویسه دارد" }, { status: 400 });
-    if (!message || message.length > 5000) return NextResponse.json({ message: "متن تیکت الزامی است و حداکثر ۵۰۰۰ نویسه دارد" }, { status: 400 });
   } else {
     return NextResponse.json({ message: "عملیات گروهی معتبر نیست" }, { status: 400 });
   }
@@ -150,20 +145,6 @@ export async function POST(req: NextRequest) {
               data: { actorUserId, action: action.replaceAll("-", "."), targetType: "Subscription", targetId: current.id, metadata: { userId: target.id, planKey: current.planKey, expiresAt: current.expiresAt.toISOString(), days: body.days ?? null } },
             });
           }
-        } else if (action === "ticket-create") {
-          const ticket = await tx.ticket.create({
-            data: {
-              userId: target.id,
-              subject: String(body.subject).trim(),
-              status: "OPEN",
-              priority: "NORMAL",
-              messages: { create: { senderUserId: actorUserId, body: String(body.message).trim() } },
-            },
-            select: { id: true },
-          });
-          await tx.auditLog.create({
-            data: { actorUserId, action: "ticket.bulk_create", targetType: "Ticket", targetId: ticket.id, metadata: { userId: target.id, bulk: true } },
-          });
         }
       });
       return { userId: target.id, success: true };

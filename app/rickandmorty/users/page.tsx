@@ -12,10 +12,10 @@ import { Download, Eye, Pencil, Search, Users, Zap } from "lucide-react";
 import { responsiveAdminTableSx } from "@/components/admin/responsiveTableStyles";
 
 type UserRow = { id: string; name: string; email: string; role: string; pagesCount: number; createdAt: string; subscription?: { planKey: string; effectiveStatus: string | null; expiresAt: string } | null };
-type BulkAction = "subscription-adjust" | "subscription-change-plan" | "subscription-suspend" | "subscription-activate" | "ticket-create";
+type BulkAction = "subscription-adjust" | "subscription-change-plan" | "subscription-suspend" | "subscription-activate";
 type BulkResult = { processed: number; succeeded: number; failed: number; results: { userId: string; success: boolean; message?: string }[] };
 const statusLabels: Record<string, string> = { ACTIVE: "فعال", EXPIRED: "منقضی", SUSPENDED: "تعلیق‌شده", CANCELLED: "لغوشده", NONE: "بدون اشتراک" };
-const actions: Record<BulkAction, string> = { "subscription-adjust": "افزودن یا کم‌کردن روز اشتراک", "subscription-change-plan": "تغییر نوع اشتراک", "subscription-suspend": "تعلیق اشتراک", "subscription-activate": "فعال‌سازی اشتراک", "ticket-create": "ایجاد تیکت برای کاربران" };
+const actions: Record<BulkAction, string> = { "subscription-adjust": "افزودن یا کم‌کردن روز اشتراک", "subscription-change-plan": "تغییر نوع اشتراک", "subscription-suspend": "تعلیق اشتراک", "subscription-activate": "فعال‌سازی اشتراک" };
 
 export default function AdminUsersPage() {
   const router = useRouter();
@@ -35,8 +35,6 @@ export default function AdminUsersPage() {
   const [action, setAction] = useState<BulkAction>("subscription-adjust");
   const [days, setDays] = useState("7");
   const [newPlan, setNewPlan] = useState("monthly");
-  const [subject, setSubject] = useState("");
-  const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<BulkResult | null>(null);
@@ -100,7 +98,6 @@ export default function AdminUsersPage() {
       const payload: Record<string, unknown> = { action, selection };
       if (action === "subscription-adjust") payload.days = Number(days);
       if (action === "subscription-change-plan") payload.planKey = newPlan;
-      if (action === "ticket-create") { payload.subject = subject; payload.message = message; }
       const response = await fetch("/api/admin/users/bulk", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       const json = await response.json();
       if (!response.ok) throw new Error(json.message ?? "اجرای عملیات ناموفق بود");
@@ -207,11 +204,10 @@ export default function AdminUsersPage() {
         <FormControl fullWidth size="small"><InputLabel id="bulk-action-label">نوع عملیات</InputLabel><Select labelId="bulk-action-label" label="نوع عملیات" value={action} onChange={(e) => setAction(e.target.value as BulkAction)}>{Object.entries(actions).map(([value, label]) => <MenuItem key={value} value={value}>{label}</MenuItem>)}<MenuItem disabled value="sms-not-configured">ارسال پیامک — پس از اتصال سرویس</MenuItem></Select></FormControl>
         {action === "subscription-adjust" && <TextField fullWidth size="small" type="number" label="تعداد روز (منفی برای کم‌کردن)" value={days} onChange={(e) => setDays(e.target.value)} inputProps={{ min: -3650, max: 3650, step: 1 }} helperText="برای کاربر بدون اشتراک فقط عدد مثبت مجاز است." />}
         {action === "subscription-change-plan" && <FormControl fullWidth size="small"><InputLabel id="new-plan-label">پلن جدید</InputLabel><Select labelId="new-plan-label" label="پلن جدید" value={newPlan} onChange={(e) => setNewPlan(String(e.target.value))}><MenuItem value="monthly">ماهانه</MenuItem><MenuItem value="yearly">سالانه</MenuItem></Select></FormControl>}
-        {action === "ticket-create" && <><TextField fullWidth size="small" label="عنوان تیکت" value={subject} onChange={(e) => setSubject(e.target.value)} inputProps={{ maxLength: 160 }} /><TextField fullWidth multiline minRows={4} label="متن تیکت" value={message} onChange={(e) => setMessage(e.target.value)} inputProps={{ maxLength: 5000 }} helperText="برای هر کاربر یک تیکت مستقل ایجاد می‌شود." /></>}
         {action === "subscription-suspend" && <Alert severity="warning">اشتراک کاربران انتخاب‌شده تعلیق می‌شود.</Alert>}
         {action === "subscription-activate" && <Alert severity="warning">اشتراک فعال می‌شود؛ اگر کاربر اشتراک نداشته باشد، اشتراک ماهانه ۳۰روزه ایجاد می‌شود.</Alert>}
       </Stack></DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2 }}><Button onClick={() => setDialogOpen(false)} disabled={submitting} color="inherit">انصراف</Button><Button variant="contained" onClick={runAction} disabled={submitting || (action === "subscription-adjust" && (!Number.isInteger(Number(days)) || Number(days) === 0 || Math.abs(Number(days)) > 3650)) || (action === "ticket-create" && (!subject.trim() || !message.trim()))}>{submitting ? <CircularProgress size={20} /> : "اجرای عملیات"}</Button></DialogActions>
+      <DialogActions sx={{ px: 3, pb: 2 }}><Button onClick={() => setDialogOpen(false)} disabled={submitting} color="inherit">انصراف</Button><Button variant="contained" onClick={runAction} disabled={submitting || (action === "subscription-adjust" && (!Number.isInteger(Number(days)) || Number(days) === 0 || Math.abs(Number(days)) > 3650))}>{submitting ? <CircularProgress size={20} /> : "اجرای عملیات"}</Button></DialogActions>
     </Dialog>
   </Stack>;
 }
