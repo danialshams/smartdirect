@@ -33,20 +33,6 @@ const theme = createTheme({
   },
   shape: { borderRadius: 10 },
   components: {
-    MuiCssBaseline: {
-      styleOverrides: {
-        html: { direction: "rtl", textAlign: "right" },
-        body: { direction: "rtl", textAlign: "right", overflowX: "hidden", margin: 0 },
-        "#__next": { direction: "rtl", textAlign: "right" },
-        ".MuiDialog-root, .MuiPopover-root, .MuiMenu-root": { direction: "rtl" },
-        ".MuiInputBase-root, .MuiSelect-select, .MuiMenuItem-root": { direction: "rtl", textAlign: "right" },
-        ".MuiInputBase-input, .MuiFormLabel-root, .MuiFormHelperText-root": { textAlign: "right" },
-        ".MuiFormHelperText-root": { marginInlineEnd: 14, marginInlineStart: 0 },
-        ".MuiAlert-root": { direction: "rtl", textAlign: "right" },
-        ".MuiAlert-icon": { marginInlineEnd: 12, marginInlineStart: 0 },
-        ".MuiAlert-action": { marginInlineStart: -8, marginInlineEnd: "auto" },
-      },
-    },
     MuiPaper: { defaultProps: { elevation: 0 } },
     MuiCard: { styleOverrides: { root: { border: "1px solid #E2E8F0" } } },
     MuiButton: { defaultProps: { disableElevation: true } },
@@ -54,7 +40,6 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           padding: "12px 16px",
-          textAlign: "right",
           whiteSpace: "nowrap",
           "@media (max-width:600px)": {
             padding: "9px 10px",
@@ -63,7 +48,6 @@ const theme = createTheme({
         },
         head: {
           fontWeight: 700,
-          textAlign: "right",
           backgroundColor: "#F8FAFC",
           "@media (max-width:600px)": {
             fontSize: "0.72rem",
