@@ -47,9 +47,9 @@ export default function UserDetailPage(){
 
   <Card><CardContent>
     <Typography variant="subtitle1" fontWeight={700} mb={2}>مدیریت اشتراک</Typography>
-    {current?<Box sx={{mb:2.5,p:2,border:"1px solid #E2E8F0",borderRadius:2.5,bgcolor:"#F8FAFC"}}><Stack direction={{xs:"column",sm:"row"}} justifyContent="space-between" gap={1}><Box><Typography fontWeight={600}>{current.planKey}</Typography><Typography variant="caption" color="text.secondary">انقضا: {new Date(current.expiresAt).toLocaleString("fa-IR")}</Typography></Box><Chip label={statusLabel} color={active?"success":current.status==="SUSPENDED"?"warning":"error"} variant="outlined"/></Stack></Box>:<Alert severity="warning" sx={{mb:2.5}}>این کاربر اشتراک ندارد</Alert>}
+    {current?<Box sx={{mb:2.5,p:2,border:"1px solid #E2E8F0",borderRadius:2.5,bgcolor:"#F8FAFC"}}><Stack direction={{xs:"column",sm:"row"}} justifyContent="space-between" gap={1}><Box><Typography fontWeight={700}>{current.planKey === "monthly" ? "ماهانه" : current.planKey === "quarterly" ? "سه‌ماهه" : current.planKey === "yearly" ? "سالانه" : current.planKey === "free" ? "دوره رایگان" : current.planKey}</Typography><Typography variant="caption" color="text.secondary">انقضا: {new Date(current.expiresAt).toLocaleString("fa-IR")}</Typography></Box><Chip label={statusLabel} color={active?"success":current.status==="SUSPENDED"?"warning":"error"} variant="outlined"/></Stack></Box>:<Alert severity="warning" sx={{mb:2.5}}>این کاربر اشتراک ندارد</Alert>}
     <Grid container spacing={1.5}>
-      <Grid size={{xs:12,sm:6}}><TextField fullWidth size="small" label="پلن" value={planKey} onChange={e=>setPlanKey(e.target.value)}/></Grid>
+      <Grid size={{xs:12,sm:6}}><TextField fullWidth select size="small" label="نوع اشتراک" value={planKey} onChange={e=>setPlanKey(e.target.value)}><MenuItem value="monthly">ماهانه</MenuItem><MenuItem value="quarterly">سه‌ماهه</MenuItem><MenuItem value="yearly">سالانه</MenuItem>{current?.planKey === "free" && <MenuItem value="free" disabled>دوره رایگان (غیرقابل انتخاب)</MenuItem>}{current?.planKey && !["monthly","quarterly","yearly","free"].includes(current.planKey) && <MenuItem value={current.planKey}>{current.planKey}</MenuItem>}</TextField></Grid>
       <Grid size={{xs:12,sm:6}}><TextField fullWidth size="small" type="number" label="تعداد روز" value={days} onChange={e=>setDays(Math.max(1,Number(e.target.value)||1))}/></Grid>
     </Grid>
     <Stack direction="row" flexWrap="wrap" gap={1.2} sx={{mt:2}}>
@@ -57,6 +57,7 @@ export default function UserDetailPage(){
       <Button variant="outlined" disabled={busy} startIcon={<Plus size={16}/>} onClick={()=>action("extend",7)}>+۷ روز</Button>
       <Button variant="outlined" disabled={busy} startIcon={<Plus size={16}/>} onClick={()=>action("extend",30)}>+۳۰ روز</Button>
       <Button variant="outlined" disabled={busy} startIcon={<Plus size={16}/>} onClick={()=>action("extend",90)}>+۹۰ روز</Button>
+      {current && planKey !== current.planKey && <Button variant="outlined" color="primary" disabled={busy} onClick={()=>action("change-plan")}>ثبت تغییر نوع اشتراک</Button>}
       <Button variant="outlined" color="error" disabled={busy} startIcon={<Minus size={16}/>} onClick={()=>action("adjust",-7)}>−۷ روز</Button>
       {current&&<Button variant="outlined" color="warning" disabled={busy} startIcon={<Pause size={16}/>} onClick={()=>action("suspend")}>تعلیق</Button>}
       <Button variant="text" startIcon={<RefreshCw size={16}/>} onClick={load}>به‌روزرسانی</Button>
