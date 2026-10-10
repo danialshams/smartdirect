@@ -3,27 +3,19 @@ import { prisma } from "@/lib/prisma";
 import { writeAdminAudit } from "@/lib/admin-audit";
 import { requireAdmin } from "@/lib/admin-auth";
 
-function parseDate(value: unknown) {
-  const date = new Date(String(value));
-  return Number.isNaN(date.getTime()) ? null : date;
-}
-
 export async function POST(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   const guard = await requireAdmin();
   if (guard.response) return guard.response;
   const { id: userId } = await context.params;
   const body = await req.json().catch(() => ({}));
-
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
-  if (!user) return NextResponse.json({ message: "کاربر پیدا نشد" }, { status: 404 });
-
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, role: true } });
+  if (!user || user.role !== "USER") return NextResponse.json({ message: "کاربر پیدا نشد" }, { status: 404 });
   const action = String(body.action ?? "");
   const days = Number(body.days ?? 0);
   const planKey = String(body.planKey ?? "monthly").trim() || "monthly";
   const now = new Date();
-
-  let current = await prisma.subscription.findFirst({ where: { userId }, orderBy: { expiresAt: "desc" } });
-
+  // Operate on the same newest-created subscription displayed first in the detail page.
+  let current = await prisma.subscription.findFirst({ where: { userId }, orderBy: { createdAt: "desc" } });
   if (action === "create") {
     const expiresAt = new Date(now.getTime() + Math.max(1, days || 30) * 86400000);
     current = await prisma.subscription.create({ data: { userId, planKey, source: "MANUAL", status: "ACTIVE", startedAt: now, expiresAt } });
@@ -46,10 +38,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
     current = await prisma.subscription.update({ where: { id: current.id }, data: { expiresAt, status, planKey } });
   } else if (action === "change-plan") {
     current = await prisma.subscription.update({ where: { id: current.id }, data: { planKey } });
-  } else {
-    return NextResponse.json({ message: "عملیات نامعتبر است" }, { status: 400 });
-  }
-
-  await writeAdminAudit({ actorUserId: guard.session!.user.id, action: "subscription."+action, targetType: "Subscription", targetId: current.id, metadata: { userId, days, planKey } });
+  } else return NextResponse.json({ message: "عملیات نامعتبر است" }, { status: 400 });
+  await writeAdminAudit({ actorUserId: guard.session!.user.id, action: "subscription." + action, targetType: "Subscription", targetId: current.id, metadata: { userId, days, planKey } });
   return NextResponse.json(current);
 }
