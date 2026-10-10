@@ -18,7 +18,7 @@ export default function TicketsPage() {
  return <Stack dir="rtl" spacing={{xs:1.75,sm:2.5}} sx={{direction:"rtl",textAlign:"right",minWidth:0}}>
   <Box dir="rtl" sx={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:1,flexWrap:"wrap"}}>
    <Box><Typography sx={{fontSize:{xs:21,sm:25},fontWeight:800,color:"#0F172A"}}>تیکت‌ها</Typography><Typography sx={{mt:.5,fontSize:13,color:"#64748B"}}>درخواست‌های کاربران را یک‌جا ببین و پاسخ بده.</Typography></Box>
-   <Button variant="contained" onClick={()=>router.push("/rickandmorty/tickets/bulk")} startIcon={<Send size={16}/>} sx={{borderRadius:2.5,minHeight:42,whiteSpace:"nowrap"}}>ارسال گروهی تیکت</Button>
+   <Button variant="contained" onClick={()=>router.push("/rickandmorty/tickets/bulk")} sx={{borderRadius:2.5,minHeight:42,whiteSpace:"nowrap"}}><Box component="span" sx={{display:"inline-flex",alignItems:"center",justifyContent:"center",gap:1,direction:"ltr",flexDirection:"row-reverse"}}><Send size={16}/>ارسال گروهی تیکت</Box></Button>
   </Box>
   <Card variant="outlined" sx={{p:{xs:1.25,sm:1.75},borderRadius:3,borderColor:"#E5EAF1",boxShadow:"0 2px 10px rgba(15,23,42,.025)"}}>
    <Stack spacing={1.25}>
