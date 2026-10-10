@@ -110,13 +110,13 @@ export default function UserDetailPage() {
             <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
               <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2.25 }}>
                 <Box sx={{ width: 38, height: 38, borderRadius: 2, display: "grid", placeItems: "center", bgcolor: "#EFF6FF", color: "#2563EB" }}><UserRound size={19} /></Box>
-                <Box><Typography fontWeight={800}>اطلاعات کاربر</Typography><Typography variant="caption" color="text.secondary">مشخصات و اتصال‌های اینستاگرام</Typography></Box>
+                <Box><Typography fontWeight={800}>اطلاعات کاربر</Typography><Typography variant="caption" color="text.secondary">نام و نام خانوادگی و پیج‌های متصل</Typography></Box>
               </Stack>
               <Stack direction="row" spacing={1.5} alignItems="center" sx={{ p: 1.5, bgcolor: "#F8FAFC", borderRadius: 2.5, minWidth: 0 }}>
                 <Avatar sx={{ width: 52, height: 52, bgcolor: "#DBEAFE", color: "#1D4ED8", fontWeight: 800 }}>{user.name?.trim()?.[0] ?? "ک"}</Avatar>
                 <Box sx={{ minWidth: 0, flex: 1 }}>
                   <Typography fontWeight={800} sx={{ overflowWrap: "anywhere" }}>{user.name || "نام ثبت نشده"}</Typography>
-                  <Typography variant="caption" color="text.secondary">عضویت از {faDate(user.createdAt)}</Typography>
+                  
                 </Box>
               </Stack>
               <Divider sx={{ my: 2 }} />
@@ -128,10 +128,7 @@ export default function UserDetailPage() {
                 <Stack spacing={1}>
                   {user.instagramAccounts.map((account) => (
                     <Box key={account.id} sx={{ p: 1.5, border: "1px solid #E2E8F0", borderRadius: 2.5, minWidth: 0 }}>
-                      <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
-                        <Typography fontWeight={700} sx={{ overflowWrap: "anywhere", minWidth: 0 }}>@{account.igUsername || "بدون نام کاربری"}</Typography>
-                        <Chip size="small" label={account.isConnected ? "متصل" : "قطع اتصال"} color={account.isConnected ? "success" : "default"} variant="outlined" />
-                      </Stack>
+                      <Typography fontWeight={700} sx={{ overflowWrap: "anywhere", minWidth: 0, textAlign: "right" }}>@{account.igUsername || "بدون نام کاربری"}</Typography>
                     </Box>
                   ))}
                 </Stack>
