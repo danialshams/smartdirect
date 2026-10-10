@@ -67,15 +67,18 @@ export default function BulkTicketPage() {
     } catch(e){setError(e instanceof Error?e.message:"ارسال گروهی ناموفق بود");}
     finally{setSubmitting(false);}
   };
-  return <Stack dir="rtl" spacing={2.5} sx={{direction:"rtl",textAlign:"right",minWidth:0}}>
-    <Stack direction={{xs:"column",sm:"row"}} alignItems={{xs:"stretch",sm:"center"}} spacing={1} sx={{minWidth:0}}>
-      <Button variant="text" color="inherit" onClick={()=>router.push("/rickandmorty/tickets")} startIcon={<ArrowRight size={18}/>} sx={{alignSelf:{xs:"flex-start",sm:"auto"},flexShrink:0}}>بازگشت</Button>
-      <Box sx={{minWidth:0,flex:1}}><Typography variant="h5" fontWeight={800} sx={{fontSize:{xs:20,sm:24},overflowWrap:"anywhere"}}>ارسال گروهی تیکت</Typography><Typography variant="body2" color="text.secondary" sx={{overflowWrap:"anywhere"}}>برای هر کاربر، یک تیکت مستقل با همین عنوان و متن ساخته می‌شود.</Typography></Box>
-    </Stack>
+  return <Stack dir="rtl" spacing={2.5} sx={{direction:"rtl",textAlign:"right",alignItems:"stretch",minWidth:0,width:"100%"}}>
+    <Box dir="rtl" sx={{direction:"rtl",display:"flex",flexDirection:"column",alignItems:"flex-start",gap:1,width:"100%",minWidth:0}}>
+      <Button variant="contained" color="primary" onClick={()=>router.push("/rickandmorty/tickets")} sx={{alignSelf:"flex-start",flexShrink:0,minHeight:40,px:2,direction:"rtl",borderRadius:2,fontWeight:700,boxShadow:"none"}}><Box component="span" sx={{display:"inline-flex",alignItems:"center",gap:0.75,direction:"rtl"}}><ArrowRight size={18}/>بازگشت</Box></Button>
+      <Box dir="rtl" sx={{width:"100%",minWidth:0,textAlign:"right",direction:"rtl"}}>
+        <Typography variant="h5" fontWeight={800} sx={{fontSize:{xs:20,sm:24},textAlign:"right",direction:"rtl",overflowWrap:"anywhere"}}>ارسال گروهی تیکت</Typography>
+        <Typography variant="body2" color="text.secondary" sx={{textAlign:"right",direction:"rtl",overflowWrap:"anywhere"}}>برای هر کاربر، یک تیکت مستقل با همین عنوان و متن ساخته می‌شود.</Typography>
+      </Box>
+    </Box>
     {error && <Alert severity="error" onClose={()=>setError("")}>{error}</Alert>}
     {result && <Alert severity={result.failed?"warning":"success"} onClose={()=>setResult(null)}>نتیجه ارسال: {result.succeeded} موفق، {result.failed} ناموفق از {result.processed} کاربر.</Alert>}
-    <Card><CardContent sx={{p:{xs:1.5,sm:2.5}}}><Stack spacing={1.5}>
-      <Typography fontWeight={700}>۱. انتخاب مخاطبان</Typography>
+    <Card dir="rtl" sx={{direction:"rtl",textAlign:"right",width:"100%",minWidth:0}}><CardContent sx={{p:{xs:1.5,sm:2.5},direction:"rtl",textAlign:"right"}}><Stack dir="rtl" spacing={1.5} sx={{direction:"rtl",alignItems:"stretch",textAlign:"right",width:"100%",minWidth:0}}>
+      <Typography fontWeight={700} sx={{direction:"rtl",textAlign:"right",width:"100%"}}>۱. انتخاب مخاطبان</Typography>
       <TextField dir="rtl" fullWidth size="small" value={filters.q} onChange={e=>updateFilter("q",e.target.value)} placeholder="جستجو بر اساس نام یا ایمیل" inputProps={{dir:"rtl"}} sx={{"& .MuiInputBase-root":{direction:"rtl",position:"relative",paddingRight:"44px !important"},"& .MuiInputBase-input":{textAlign:"right",direction:"rtl",paddingRight:"0 !important",paddingLeft:"12px"},"& .MuiInputAdornment-root":{position:"absolute",right:12,left:"auto",margin:0,pointerEvents:"none"}}} InputProps={{startAdornment:<Box sx={{display:"flex",alignItems:"center"}}><Search size={18}/></Box>}}/>
       <Box sx={{display:"grid",gridTemplateColumns:{xs:"1fr",sm:"1fr 1fr"},gap:1.5}}>
         <FormControl size="small" fullWidth><InputLabel>نوع اشتراک</InputLabel><Select value={filters.planKey} label="نوع اشتراک" onChange={e=>updateFilter("planKey",String(e.target.value))}><MenuItem value="">همه پلن‌ها</MenuItem><MenuItem value="free">رایگان</MenuItem><MenuItem value="monthly">ماهانه</MenuItem><MenuItem value="yearly">سالانه</MenuItem></Select></FormControl>
@@ -83,12 +86,12 @@ export default function BulkTicketPage() {
         <FormControl size="small" fullWidth><InputLabel>زمان تا انقضا</InputLabel><Select value={filters.expiryWithin} label="زمان تا انقضا" onChange={e=>updateFilter("expiryWithin",String(e.target.value))}><MenuItem value="">همه زمان‌ها</MenuItem><MenuItem value="3">کمتر از ۳ روز</MenuItem><MenuItem value="7">کمتر از ۷ روز</MenuItem></Select></FormControl>
         <FormControl size="small" fullWidth><InputLabel>اتصال اینستاگرام</InputLabel><Select value={filters.connection} label="اتصال اینستاگرام" onChange={e=>updateFilter("connection",String(e.target.value))}><MenuItem value="">همه وضعیت‌ها</MenuItem><MenuItem value="connected">پیج متصل دارد</MenuItem><MenuItem value="disconnected">پیج متصل ندارد</MenuItem></Select></FormControl>
       </Box>
-      <Stack direction={{xs:"column",sm:"row"}} spacing={1} alignItems={{xs:"stretch",sm:"center"}}>
+      <Stack dir="rtl" direction={{xs:"column",sm:"row"}} spacing={1} alignItems={{xs:"stretch",sm:"center"}} sx={{direction:"rtl",width:"100%",textAlign:"right"}}>
         <Button fullWidth={false} size="small" variant="outlined" onClick={()=>togglePage(!pageSelected)} disabled={loading||!rows.length}>{pageSelected?"لغو انتخاب این صفحه":"انتخاب این صفحه"}</Button>
         <Button size="small" variant={allFiltered?"contained":"outlined"} onClick={()=>{setAllFiltered(v=>!v);setSelectedIds([]);setExcludedIds([]);}} disabled={loading||total===0}>{allFiltered?"لغو انتخاب نتایج فیلترشده":`انتخاب همه ${total} نتیجه فیلترشده`}</Button>
         <Typography variant="body2" color="text.secondary">انتخاب‌شده: {selectedCount}</Typography>
       </Stack>
-      <Stack spacing={0.75}>
+      <Stack dir="rtl" spacing={0.75} sx={{direction:"rtl",width:"100%",textAlign:"right"}}>
         {loading ? <Box role="status" aria-label="در حال دریافت کاربران" sx={{minHeight:220,width:"100%",display:"flex",alignItems:"center",justifyContent:"center"}}><CircularProgress size={36} thickness={4}/></Box> : rows.length ? rows.map(r=><Box key={r.id} dir="rtl" sx={{display:"flex",alignItems:"center",gap:1,border:"1px solid",borderColor:"divider",borderRadius:2,p:1,minWidth:0}}>
           <Checkbox checked={allFiltered?!excludedIds.includes(r.id):selectedIds.includes(r.id)} onChange={e=>{if(allFiltered)setExcludedIds(cur=>e.target.checked?cur.filter(id=>id!==r.id):[...new Set([...cur,r.id])]);else setSelectedIds(cur=>e.target.checked?[...new Set([...cur,r.id])]:cur.filter(id=>id!==r.id));}}/>
           <Avatar sx={{width:36,height:36,fontSize:14}}>{r.name?.[0]||"ک"}</Avatar>
