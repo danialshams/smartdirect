@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import {
   Alert, Avatar, Box, Button, Card, CardContent, Chip, Divider, FormControl,
-  Grid, MenuItem, Select, Skeleton, Snackbar, Stack, Table, TableBody,
+  CircularProgress, Grid, MenuItem, Select, Snackbar, Stack, Table, TableBody,
   TableCell, TableContainer, TableHead, TableRow, Typography,
 } from "@mui/material";
 import { Check, Clock3, Minus, Pause, Plus, RefreshCw, Save, ShieldCheck, Ticket, UserRound, Users } from "lucide-react";
@@ -90,7 +90,7 @@ export default function UserDetailPage() {
     } finally { setBusy(false); }
   };
 
-  if (loading) return <Stack spacing={2}><Skeleton variant="rounded" height={130} /><Skeleton variant="rounded" height={250} /><Skeleton variant="rounded" height={300} /></Stack>;
+  if (loading) return <Box role="status" aria-label="در حال بارگذاری اطلاعات کاربر" sx={{ minHeight: "calc(100dvh - 150px)", width: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}><CircularProgress size={40} thickness={4} /></Box>;
   if (!user) return <Alert severity="error">اطلاعات کاربر پیدا نشد.</Alert>;
 
   const active = current?.status === "ACTIVE" && new Date(current.expiresAt) > new Date();
