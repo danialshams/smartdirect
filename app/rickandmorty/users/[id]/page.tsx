@@ -110,13 +110,13 @@ export default function UserDetailPage() {
             <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
               <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2.25 }}>
                 <Box sx={{ width: 38, height: 38, borderRadius: 2, display: "grid", placeItems: "center", bgcolor: "#EFF6FF", color: "#2563EB" }}><UserRound size={19} /></Box>
-                <Box><Typography fontWeight={800}>اطلاعات کاربر</Typography><Typography variant="caption" color="text.secondary">مشخصات و اتصال‌های اینستاگرام</Typography></Box>
+                <Box><Typography fontWeight={800}>اطلاعات کاربر</Typography><Typography variant="caption" color="text.secondary">مشخصات و اتصال‌های اینستاگرام</Typography><Typography variant="caption" color="text.secondary">عضویت از {faDate(user.createdAt)}</Typography></Box>
               </Stack>
               <Stack direction="row" spacing={1.5} alignItems="center" sx={{ p: 1.5, bgcolor: "#F8FAFC", borderRadius: 2.5, minWidth: 0 }}>
                 <Avatar sx={{ width: 52, height: 52, bgcolor: "#DBEAFE", color: "#1D4ED8", fontWeight: 800 }}>{user.name?.trim()?.[0] ?? "ک"}</Avatar>
                 <Box sx={{ minWidth: 0, flex: 1 }}>
                   <Typography fontWeight={800} sx={{ overflowWrap: "anywhere" }}>{user.name || "نام ثبت نشده"}</Typography>
-                  <Typography variant="caption" color="text.secondary">عضویت از {faDate(user.createdAt)}</Typography>
+                  
                 </Box>
               </Stack>
               <Divider sx={{ my: 2 }} />
@@ -128,10 +128,7 @@ export default function UserDetailPage() {
                 <Stack spacing={1}>
                   {user.instagramAccounts.map((account) => (
                     <Box key={account.id} sx={{ p: 1.5, border: "1px solid #E2E8F0", borderRadius: 2.5, minWidth: 0 }}>
-                      <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
-                        <Typography fontWeight={700} sx={{ overflowWrap: "anywhere", minWidth: 0 }}>@{account.igUsername || "بدون نام کاربری"}</Typography>
-                        <Chip size="small" label={account.isConnected ? "متصل" : "قطع اتصال"} color={account.isConnected ? "success" : "default"} variant="outlined" />
-                      </Stack>
+                      <Typography fontWeight={700} sx={{ overflowWrap: "anywhere", minWidth: 0, textAlign: "right" }}>@{account.igUsername || "بدون نام کاربری"}</Typography>
                     </Box>
                   ))}
                 </Stack>
@@ -166,6 +163,9 @@ export default function UserDetailPage() {
                     <Select value={planKey} onChange={(event) => setPlanKey(String(event.target.value))} inputProps={{ "aria-label": "نوع اشتراک" }}>
                       <MenuItem value="monthly">ماهانه</MenuItem>
                       <MenuItem value="yearly">سالانه</MenuItem>
+                      {current?.planKey && !["monthly", "yearly"].includes(current.planKey) && (
+                        <MenuItem value={current.planKey}>{current.planKey === "free" ? "دوره رایگان (فعلی)" : current.planKey}</MenuItem>
+                      )}
                     </Select>
                   </FormControl>
                 </Box>
@@ -173,7 +173,7 @@ export default function UserDetailPage() {
                   <Typography variant="body2" fontWeight={700} sx={{ mb: 0.75 }}>تغییر مدت اشتراک</Typography>
                   <Grid container spacing={1}>
                     {[{ value: 7, label: "افزودن ۷ روز", icon: <Plus size={15} /> }, { value: 30, label: "افزودن ۳۰ روز", icon: <Plus size={15} /> }, { value: 90, label: "افزودن ۹۰ روز", icon: <Plus size={15} /> }, { value: -7, label: "کاهش ۷ روز", icon: <Minus size={15} /> }].map((item) => (
-                      <Grid key={item.value} size={{ xs: 6, sm: 3 }}><Button fullWidth size="small" variant={daysDelta === item.value ? "contained" : "outlined"} color={item.value < 0 ? "error" : "primary"} startIcon={item.icon} onClick={() => setDaysDelta((v) => v + item.value)} sx={{ minHeight: 42, whiteSpace: "nowrap", px: 1 }}>{item.label}</Button></Grid>
+                      <Grid key={item.value} size={{ xs: 6, sm: 3 }}><Button fullWidth size="small" variant={daysDelta === item.value ? "contained" : "outlined"} color={item.value < 0 ? "error" : "primary"} endIcon={item.icon} onClick={() => setDaysDelta((v) => v + item.value)} sx={{ minHeight: 42, whiteSpace: "nowrap", px: 1 }}>{item.label}</Button></Grid>
                     ))}
                   </Grid>
                   <Box sx={{ mt: 1.25, p: 1.25, borderRadius: 2, bgcolor: daysDelta ? (daysDelta > 0 ? "#F0FDF4" : "#FEF2F2") : "#F8FAFC", border: "1px solid", borderColor: daysDelta ? (daysDelta > 0 ? "#BBF7D0" : "#FECACA") : "#E2E8F0" }}>
@@ -183,7 +183,7 @@ export default function UserDetailPage() {
                     <Typography variant="caption" color="text.secondary">این تغییر تا زمان فشردن دکمه ذخیره اعمال نمی‌شود.</Typography>
                   </Box>
                 </Box>
-                {current?.status !== "SUSPENDED" && current && <Button fullWidth variant="outlined" color="warning" startIcon={<Pause size={16} />} disabled={busy} onClick={suspend} sx={{ minHeight: 42 }}>تعلیق اشتراک</Button>}
+                {current?.status !== "SUSPENDED" && current && <Button fullWidth variant="outlined" color="warning" endIcon={<Pause size={16} />} disabled={busy} onClick={suspend} sx={{ minHeight: 42 }}>تعلیق اشتراک</Button>}
               </Stack>
             </CardContent>
           </Card>
@@ -220,7 +220,7 @@ export default function UserDetailPage() {
             <Typography variant="body2" fontWeight={800}>{dirty ? "تغییرات ذخیره‌نشده" : "همه تغییرات ذخیره شده"}</Typography>
             <Typography variant="caption" color="text.secondary" noWrap>{dirty ? "برای اعمال تغییرات، ذخیره را بزنید." : "برای ویرایش پلن یا مدت اشتراک اقدام کنید."}</Typography>
           </Box>
-          <Button variant="contained" startIcon={busy ? <RefreshCw size={17} /> : <Save size={17} />} disabled={!dirty || busy} onClick={save} sx={{ minWidth: { xs: 112, sm: 140 }, minHeight: 44, fontWeight: 800 }}>{busy ? "در حال ذخیره" : "ذخیره تغییرات"}</Button>
+          <Button variant="contained" endIcon={busy ? <RefreshCw size={17} /> : <Save size={17} />} disabled={!dirty || busy} onClick={save} sx={{ minWidth: { xs: 112, sm: 140 }, minHeight: 44, fontWeight: 800 }}>{busy ? "در حال ذخیره" : "ذخیره تغییرات"}</Button>
         </Stack>
       </Box>
 
