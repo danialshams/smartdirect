@@ -15,7 +15,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
   const action = String(body.action ?? "");
   const days = Number(body.days ?? 0);
   const planKey = String(body.planKey ?? "monthly").trim() || "monthly";
-  if (planKey.toLowerCase() === "free") {
+  if (planKey.toLowerCase() === "free" && action !== "save") {
     return NextResponse.json(
       { message: "دوره رایگان فقط یک‌بار و به‌صورت خودکار هنگام اتصال پیج اینستاگرام اعطا می‌شود" },
       { status: 400 },
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
   let current = await prisma.subscription.findFirst({ where: { userId }, orderBy: { expiresAt: "desc" } });
 
   if (action === "save") {
-    if (!["monthly", "yearly"].includes(planKey)) {
+    if (!["monthly", "yearly"].includes(planKey) && !(planKey === "free" && current?.planKey === "free")) {
       return NextResponse.json({ message: "نوع اشتراک معتبر نیست" }, { status: 400 });
     }
     if (!Number.isInteger(days) || days < -3650 || days > 3650) {
