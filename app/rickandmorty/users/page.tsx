@@ -106,7 +106,7 @@ export default function AdminUsersPage() {
     finally { setSubmitting(false); }
   };
 
-  if (loading && rows.length === 0 && !error) return <Box role="status" aria-label="در حال بارگذاری کاربران" sx={{ minHeight: "calc(100dvh - 100px)", width: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}><CircularProgress size={40} thickness={4} /></Box>;
+  if (loading && rows.length === 0 && !error) return <Box role="status" aria-label="در حال بارگذاری کاربران" sx={{ minHeight: "calc(100dvh - 100px)", width: "100%", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 1.5 }}><CircularProgress size={40} thickness={4} /><Typography variant="body2" color="text.secondary">در حال دریافت فهرست کاربران…</Typography></Box>;
 
   return <Stack spacing={{ xs: 1.5, sm: 2.5 }}>
     <Box><Typography variant="h5" fontWeight={700} sx={{ fontSize: { xs: 20, sm: 24 } }}>کاربران</Typography><Typography variant="body2" color="text.secondary">مدیریت کاربران، فیلتر اشتراک و عملیات گروهی</Typography></Box>
