@@ -520,6 +520,15 @@ model Subscription {
   @@index([expiresAt])
 }
 
+// Permanent trial history. Deliberately has no relation/FK so user or page deletion cannot reset eligibility.
+model FreeTrialClaim {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  igUserId  String   @unique
+  igUsername String?
+  claimedAt DateTime @default(now())
+}
+
 model Ticket {
   id        String         @id @default(cuid())
   userId    String
