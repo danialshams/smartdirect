@@ -3,11 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { writeAdminAudit } from "@/lib/admin-audit";
 import { requireAdmin } from "@/lib/admin-auth";
 
-function parseDate(value: unknown) {
-  const date = new Date(String(value));
-  return Number.isNaN(date.getTime()) ? null : date;
-}
-
 export async function POST(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   const guard = await requireAdmin();
   if (guard.response) return guard.response;
@@ -20,6 +15,12 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
   const action = String(body.action ?? "");
   const days = Number(body.days ?? 0);
   const planKey = String(body.planKey ?? "monthly").trim() || "monthly";
+  if (planKey.toLowerCase() === "free") {
+    return NextResponse.json(
+      { message: "دوره رایگان فقط یک‌بار و به‌صورت خودکار هنگام اتصال پیج اینستاگرام اعطا می‌شود" },
+      { status: 400 },
+    );
+  }
   const now = new Date();
 
   let current = await prisma.subscription.findFirst({ where: { userId }, orderBy: { expiresAt: "desc" } });
