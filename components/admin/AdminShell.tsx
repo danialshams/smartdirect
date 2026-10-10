@@ -192,10 +192,9 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
             >
               <MenuIcon size={20} />
             </IconButton>
-            <Typography sx={{ display: { xs: "none", sm: "block" }, fontSize: 14, fontWeight: 700, flex: 1 }}>
+            <Typography sx={{ fontSize: { xs: 13, sm: 14 }, fontWeight: 700, flex: 1, minWidth: 0, textAlign: "right" }}>
               {currentLabel}
             </Typography>
-            <Box sx={{ flex: { xs: 1, sm: 0 } }} />
 
           </Toolbar>
         </AppBar>
