@@ -1,75 +1,230 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import {
-  Alert, Avatar, Box, Button, Card, CardContent, Chip, Divider, Grid,
-  InputAdornment, MenuItem, Skeleton, Snackbar, Stack, Table, TableBody,
-  TableCell, TableContainer, TableHead, TableRow, TextField, Typography,
+  Alert, Avatar, Box, Button, Card, CardContent, Chip, Divider, FormControl,
+  Grid, MenuItem, Select, Skeleton, Snackbar, Stack, Table, TableBody,
+  TableCell, TableContainer, TableHead, TableRow, Typography,
 } from "@mui/material";
-import { ArrowRight, Check, Minus, Pause, Plus, RefreshCw } from "lucide-react";
+import { Check, Clock3, Minus, Pause, Plus, RefreshCw, Save, ShieldCheck, Ticket, UserRound, Users } from "lucide-react";
 import { responsiveAdminTableSx } from "@/components/admin/responsiveTableStyles";
 
-type UserDetail={id:string;name:string;email:string;role:string;createdAt:string;instagramAccounts:{id:string;igUsername:string;igUserId:string;isConnected:boolean;createdAt:string}[];subscriptions:{id:string;planKey:string;status:string;source:string;startedAt:string;expiresAt:string;note?:string|null;autoRenew:boolean;createdAt:string}[]};
+type UserDetail = {
+  id: string; name: string; createdAt: string;
+  instagramAccounts: { id: string; igUsername: string; igUserId: string; isConnected: boolean; createdAt: string }[];
+  subscriptions: { id: string; planKey: string; status: string; source: string; startedAt: string; expiresAt: string; note?: string | null; autoRenew: boolean; createdAt: string }[];
+  tickets: { id: string; subject: string; status: string; priority: string; updatedAt: string }[];
+};
+type Notice = { text: string; severity: "success" | "error" | "info" };
 
-export default function UserDetailPage(){
- const params=useParams<{id:string}>(); const router=useRouter(); const [user,setUser]=useState<UserDetail|null>(null); const [loading,setLoading]=useState(true); const [days,setDays]=useState(30); const [planKey,setPlanKey]=useState("monthly"); const [busy,setBusy]=useState(false); const [notice,setNotice]=useState<{text:string;severity:"success"|"error"}|null>(null);
- const load=async()=>{setLoading(true);try{const r=await fetch(`/api/admin/users/${params.id}`,{cache:"no-store"});const j=await r.json();if(!r.ok)throw new Error(j.message);setUser(j);const s=j.subscriptions?.[0];if(s)setPlanKey(s.planKey);}catch(e){setNotice({text:e instanceof Error?e.message:"خطا",severity:"error"});}finally{setLoading(false);}};
- useEffect(()=>{if(params.id)load();},[params.id]);
- const action=async(actionName:string,customDays?:number)=>{setBusy(true);try{const r=await fetch(`/api/admin/users/${params.id}/subscription`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:actionName,days:customDays??days,planKey})});const j=await r.json();if(!r.ok)throw new Error(j.message);setNotice({text:"اشتراک به‌روزرسانی شد",severity:"success"});await load();}catch(e){setNotice({text:e instanceof Error?e.message:"خطا",severity:"error"});}finally{setBusy(false);}};
- if(loading)return <Stack spacing={2}><Skeleton variant="rounded" height={100}/><Skeleton variant="rounded" height={260}/><Skeleton variant="rounded" height={240}/></Stack>;
- if(!user)return <Alert severity="error">کاربر پیدا نشد</Alert>;
- const current=user.subscriptions[0]; const active=current?.status==="ACTIVE"&&new Date(current.expiresAt)>new Date();
- const statusLabel=active?"فعال":current?.status==="SUSPENDED"?"معلق":current?"منقضی":"بدون اشتراک";
- return <Stack spacing={2.5}>
-  <Box sx={{display:"flex",alignItems:"center",gap:1}}>
-    <Button variant="text" startIcon={<ArrowRight size={18}/>} onClick={()=>router.push("/rickandmorty/users")}>بازگشت</Button>
-    <Box sx={{mr:1}}><Typography variant="h5" fontWeight={700}>{user.name}</Typography><Typography variant="body2" color="text.secondary">{user.email}</Typography></Box>
-  </Box>
+const faDate = (value: string, withTime = false) =>
+  new Date(value).toLocaleString("fa-IR", withTime ? { dateStyle: "medium", timeStyle: "short" } : { dateStyle: "medium" });
 
-  <Grid container spacing={2}>
-    <Grid size={{xs:12,lg:4}}><Card><CardContent>
-      <Typography variant="subtitle1" fontWeight={700} mb={2}>اطلاعات کاربر</Typography>
-      <Stack direction="row" spacing={1.5} alignItems="center"><Avatar sx={{width:48,height:48,bgcolor:"#EFF6FF",color:"#2563EB"}}>{user.name[0]}</Avatar><Box><Typography fontWeight={600}>{user.name}</Typography><Typography variant="caption" color="text.secondary">{user.email}</Typography></Box></Stack>
-      <Divider sx={{my:2}}/>
-      <Stack spacing={1.5}>
-        <Stack direction="row" justifyContent="space-between"><Typography variant="body2" color="text.secondary">نقش</Typography><Chip size="small" label={user.role==="ADMIN"?"مدیر":"کاربر"} color={user.role==="ADMIN"?"primary":"default"} variant="outlined"/></Stack>
-        <Stack direction="row" justifyContent="space-between"><Typography variant="body2" color="text.secondary">عضویت</Typography><Typography variant="body2">{new Date(user.createdAt).toLocaleDateString("fa-IR")}</Typography></Stack>
-        <Stack direction="row" justifyContent="space-between"><Typography variant="body2" color="text.secondary">پیج متصل</Typography><Typography variant="body2">{user.instagramAccounts.length}</Typography></Stack>
-      </Stack>
-    </CardContent></Card></Grid>
+export default function UserDetailPage() {
+  const params = useParams<{ id: string }>();
+  const [user, setUser] = useState<UserDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [planKey, setPlanKey] = useState("monthly");
+  const [savedPlanKey, setSavedPlanKey] = useState("monthly");
+  const [daysDelta, setDaysDelta] = useState(0);
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState<Notice | null>(null);
+  const current = user?.subscriptions?.[0];
+  const dirty = planKey !== savedPlanKey || daysDelta !== 0;
 
-    <Grid size={{xs:12,lg:8}}><Card><CardContent>
-      <Typography variant="subtitle1" fontWeight={700} mb={2}>پیج‌های متصل</Typography>
-      {user.instagramAccounts.length?<Grid container spacing={1.5}>{user.instagramAccounts.map(a=><Grid key={a.id} size={{xs:12,sm:6}}><Box sx={{border:"1px solid #E2E8F0",borderRadius:2.5,p:2}}><Stack direction="row" justifyContent="space-between" gap={1}><Typography fontWeight={600}>@{a.igUsername}</Typography><Chip size="small" label={a.isConnected?"متصل":"قطع"} color={a.isConnected?"success":"default"} variant="outlined"/></Stack><Typography variant="caption" color="text.secondary" sx={{display:"block",mt:1,overflow:"hidden",textOverflow:"ellipsis"}}>{a.igUserId}</Typography></Box></Grid>)}</Grid>:<Typography align="center" color="text.secondary" variant="body2" sx={{py:5}}>پیجی متصل نشده است</Typography>}
-    </CardContent></Card></Grid>
-  </Grid>
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/admin/users/${params.id}`, { cache: "no-store" });
+      const json = await response.json();
+      if (!response.ok) throw new Error(json.message ?? "دریافت اطلاعات کاربر ناموفق بود");
+      setUser(json);
+      const nextPlan = json.subscriptions?.[0]?.planKey ?? "monthly";
+      setPlanKey(nextPlan);
+      setSavedPlanKey(nextPlan);
+      setDaysDelta(0);
+    } catch (error) {
+      setNotice({ text: error instanceof Error ? error.message : "خطا در دریافت اطلاعات", severity: "error" });
+    } finally {
+      setLoading(false);
+    }
+  }, [params.id]);
 
-  <Card><CardContent>
-    <Typography variant="subtitle1" fontWeight={700} mb={2}>مدیریت اشتراک</Typography>
-    {current?<Box sx={{mb:2.5,p:2,border:"1px solid #E2E8F0",borderRadius:2.5,bgcolor:"#F8FAFC"}}><Stack direction={{xs:"column",sm:"row"}} justifyContent="space-between" gap={1}><Box><Typography fontWeight={700}>{current.planKey === "monthly" ? "ماهانه" : current.planKey === "quarterly" ? "سه‌ماهه" : current.planKey === "yearly" ? "سالانه" : current.planKey === "free" ? "دوره رایگان" : current.planKey}</Typography><Typography variant="caption" color="text.secondary">انقضا: {new Date(current.expiresAt).toLocaleString("fa-IR")}</Typography></Box><Chip label={statusLabel} color={active?"success":current.status==="SUSPENDED"?"warning":"error"} variant="outlined"/></Stack></Box>:<Alert severity="warning" sx={{mb:2.5}}>این کاربر اشتراک ندارد</Alert>}
-    <Grid container spacing={1.5}>
-      <Grid size={{xs:12,sm:6}}><TextField fullWidth select size="small" label="نوع اشتراک" value={planKey} onChange={e=>setPlanKey(e.target.value)}><MenuItem value="monthly">ماهانه</MenuItem><MenuItem value="quarterly">سه‌ماهه</MenuItem><MenuItem value="yearly">سالانه</MenuItem>{current?.planKey === "free" && <MenuItem value="free" disabled>دوره رایگان (غیرقابل انتخاب)</MenuItem>}{current?.planKey && !["monthly","quarterly","yearly","free"].includes(current.planKey) && <MenuItem value={current.planKey}>{current.planKey}</MenuItem>}</TextField></Grid>
-      <Grid size={{xs:12,sm:6}}><TextField fullWidth size="small" type="number" label="تعداد روز" value={days} onChange={e=>setDays(Math.max(1,Number(e.target.value)||1))}/></Grid>
-    </Grid>
-    <Stack direction="row" flexWrap="wrap" gap={1.2} sx={{mt:2}}>
-      <Button variant="contained" disabled={busy} startIcon={<Check size={16}/>} onClick={()=>action(current?"activate":"create",days)}>{current?"فعال‌سازی":"ایجاد اشتراک"}</Button>
-      <Button variant="outlined" disabled={busy} startIcon={<Plus size={16}/>} onClick={()=>action("extend",7)}>+۷ روز</Button>
-      <Button variant="outlined" disabled={busy} startIcon={<Plus size={16}/>} onClick={()=>action("extend",30)}>+۳۰ روز</Button>
-      <Button variant="outlined" disabled={busy} startIcon={<Plus size={16}/>} onClick={()=>action("extend",90)}>+۹۰ روز</Button>
-      {current && planKey !== current.planKey && <Button variant="outlined" color="primary" disabled={busy} onClick={()=>action("change-plan")}>ثبت تغییر نوع اشتراک</Button>}
-      <Button variant="outlined" color="error" disabled={busy} startIcon={<Minus size={16}/>} onClick={()=>action("adjust",-7)}>−۷ روز</Button>
-      {current&&<Button variant="outlined" color="warning" disabled={busy} startIcon={<Pause size={16}/>} onClick={()=>action("suspend")}>تعلیق</Button>}
-      <Button variant="text" startIcon={<RefreshCw size={16}/>} onClick={load}>به‌روزرسانی</Button>
+  useEffect(() => { if (params.id) void load(); }, [params.id, load]);
+
+  const save = async () => {
+    if (!dirty) return;
+    setBusy(true);
+    try {
+      const response = await fetch(`/api/admin/users/${params.id}/subscription`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "save", days: daysDelta, planKey }),
+      });
+      const json = await response.json();
+      if (!response.ok) throw new Error(json.message ?? "ذخیره تغییرات ناموفق بود");
+      setNotice({ text: "تغییرات با موفقیت ذخیره شد", severity: "success" });
+      await load();
+    } catch (error) {
+      setNotice({ text: error instanceof Error ? error.message : "ذخیره تغییرات ناموفق بود", severity: "error" });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const suspend = async () => {
+    if (!current || busy) return;
+    setBusy(true);
+    try {
+      const response = await fetch(`/api/admin/users/${params.id}/subscription`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "suspend" }),
+      });
+      const json = await response.json();
+      if (!response.ok) throw new Error(json.message ?? "تعلیق اشتراک ناموفق بود");
+      setNotice({ text: "اشتراک کاربر تعلیق شد", severity: "success" });
+      await load();
+    } catch (error) {
+      setNotice({ text: error instanceof Error ? error.message : "عملیات ناموفق بود", severity: "error" });
+    } finally { setBusy(false); }
+  };
+
+  if (loading) return <Stack spacing={2}><Skeleton variant="rounded" height={130} /><Skeleton variant="rounded" height={250} /><Skeleton variant="rounded" height={300} /></Stack>;
+  if (!user) return <Alert severity="error">اطلاعات کاربر پیدا نشد.</Alert>;
+
+  const active = current?.status === "ACTIVE" && new Date(current.expiresAt) > new Date();
+  const status = active ? "فعال" : current?.status === "SUSPENDED" ? "تعلیق‌شده" : current ? "منقضی یا غیرفعال" : "بدون اشتراک";
+  const statusColor = active ? "success" : current?.status === "SUSPENDED" ? "warning" : "default";
+
+  return (
+    <Stack spacing={{ xs: 1.5, sm: 2.5 }} dir="rtl" sx={{ pb: { xs: 11, sm: 3 }, minWidth: 0 }}>
+      <Box>
+        <Typography variant="h5" fontWeight={800} sx={{ fontSize: { xs: 21, sm: 25 } }}>جزئیات کاربر</Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>اطلاعات اتصال، اشتراک و پشتیبانی کاربر را از این صفحه مدیریت کنید.</Typography>
+      </Box>
+
+      <Grid container spacing={{ xs: 1.5, md: 2 }}>
+        <Grid size={{ xs: 12, lg: 5 }}>
+          <Card sx={{ height: "100%", border: "1px solid #E2E8F0", borderRadius: 3, boxShadow: "0 2px 10px rgba(15,23,42,.025)" }}>
+            <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
+              <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2.25 }}>
+                <Box sx={{ width: 38, height: 38, borderRadius: 2, display: "grid", placeItems: "center", bgcolor: "#EFF6FF", color: "#2563EB" }}><UserRound size={19} /></Box>
+                <Box><Typography fontWeight={800}>اطلاعات کاربر</Typography><Typography variant="caption" color="text.secondary">مشخصات و اتصال‌های اینستاگرام</Typography></Box>
+              </Stack>
+              <Stack direction="row" spacing={1.5} alignItems="center" sx={{ p: 1.5, bgcolor: "#F8FAFC", borderRadius: 2.5, minWidth: 0 }}>
+                <Avatar sx={{ width: 52, height: 52, bgcolor: "#DBEAFE", color: "#1D4ED8", fontWeight: 800 }}>{user.name?.trim()?.[0] ?? "ک"}</Avatar>
+                <Box sx={{ minWidth: 0, flex: 1 }}>
+                  <Typography fontWeight={800} sx={{ overflowWrap: "anywhere" }}>{user.name || "نام ثبت نشده"}</Typography>
+                  <Typography variant="caption" color="text.secondary">عضویت از {faDate(user.createdAt)}</Typography>
+                </Box>
+              </Stack>
+              <Divider sx={{ my: 2 }} />
+              <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1.5 }}>
+                <Typography variant="body2" color="text.secondary">تعداد پیج‌های متصل</Typography>
+                <Chip icon={<Users size={15} />} label={user.instagramAccounts.length.toLocaleString("fa-IR")} color="primary" variant="outlined" />
+              </Stack>
+              {user.instagramAccounts.length ? (
+                <Stack spacing={1}>
+                  {user.instagramAccounts.map((account) => (
+                    <Box key={account.id} sx={{ p: 1.5, border: "1px solid #E2E8F0", borderRadius: 2.5, minWidth: 0 }}>
+                      <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
+                        <Typography fontWeight={700} sx={{ overflowWrap: "anywhere", minWidth: 0 }}>@{account.igUsername || "بدون نام کاربری"}</Typography>
+                        <Chip size="small" label={account.isConnected ? "متصل" : "قطع اتصال"} color={account.isConnected ? "success" : "default"} variant="outlined" />
+                      </Stack>
+                    </Box>
+                  ))}
+                </Stack>
+              ) : <Box sx={{ py: 3, px: 1, textAlign: "center", border: "1px dashed #CBD5E1", borderRadius: 2.5 }}><Typography variant="body2" color="text.secondary">هنوز پیجی به حساب متصل نشده است.</Typography></Box>}
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid size={{ xs: 12, lg: 7 }}>
+          <Card sx={{ height: "100%", border: "1px solid #E2E8F0", borderRadius: 3, boxShadow: "0 2px 10px rgba(15,23,42,.025)" }}>
+            <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
+              <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1} sx={{ mb: 2.25 }}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Box sx={{ width: 38, height: 38, borderRadius: 2, display: "grid", placeItems: "center", bgcolor: "#F0FDF4", color: "#15803D" }}><ShieldCheck size={19} /></Box>
+                  <Box><Typography fontWeight={800}>وضعیت اشتراک</Typography><Typography variant="caption" color="text.secondary">وضعیت فعلی و زمان انقضا</Typography></Box>
+                </Stack>
+                <Chip size="small" label={status} color={statusColor as "success" | "warning" | "default"} variant="outlined" />
+              </Stack>
+              {current ? (
+                <Box sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2.5, bgcolor: "#F8FAFC", border: "1px solid #E2E8F0" }}>
+                  <Grid container spacing={1.5}>
+                    <Grid size={{ xs: 6 }}><Typography variant="caption" color="text.secondary">پلن فعلی</Typography><Typography fontWeight={700} sx={{ mt: 0.5 }}>{current.planKey === "yearly" ? "سالانه" : current.planKey === "monthly" ? "ماهانه" : current.planKey}</Typography></Grid>
+                    <Grid size={{ xs: 6 }}><Typography variant="caption" color="text.secondary">تاریخ انقضا</Typography><Typography fontWeight={700} sx={{ mt: 0.5, overflowWrap: "anywhere" }}>{faDate(current.expiresAt, true)}</Typography></Grid>
+                  </Grid>
+                </Box>
+              ) : <Alert severity="info" sx={{ mb: 1 }}>برای این کاربر هنوز اشتراکی ثبت نشده است. با ذخیره پلن و مدت، اشتراک ایجاد می‌شود.</Alert>}
+              <Divider sx={{ my: 2 }} />
+              <Stack spacing={1.5}>
+                <Box>
+                  <Typography variant="body2" fontWeight={700} sx={{ mb: 0.75 }}>نوع اشتراک</Typography>
+                  <FormControl fullWidth size="small">
+                    <Select value={planKey} onChange={(event) => setPlanKey(String(event.target.value))} inputProps={{ "aria-label": "نوع اشتراک" }}>
+                      <MenuItem value="monthly">ماهانه</MenuItem>
+                      <MenuItem value="yearly">سالانه</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Box>
+                <Box>
+                  <Typography variant="body2" fontWeight={700} sx={{ mb: 0.75 }}>تغییر مدت اشتراک</Typography>
+                  <Grid container spacing={1}>
+                    {[{ value: 7, label: "افزودن ۷ روز", icon: <Plus size={15} /> }, { value: 30, label: "افزودن ۳۰ روز", icon: <Plus size={15} /> }, { value: 90, label: "افزودن ۹۰ روز", icon: <Plus size={15} /> }, { value: -7, label: "کاهش ۷ روز", icon: <Minus size={15} /> }].map((item) => (
+                      <Grid key={item.value} size={{ xs: 6, sm: 3 }}><Button fullWidth size="small" variant={daysDelta === item.value ? "contained" : "outlined"} color={item.value < 0 ? "error" : "primary"} startIcon={item.icon} onClick={() => setDaysDelta((v) => v + item.value)} sx={{ minHeight: 42, whiteSpace: "nowrap", px: 1 }}>{item.label}</Button></Grid>
+                    ))}
+                  </Grid>
+                  <Box sx={{ mt: 1.25, p: 1.25, borderRadius: 2, bgcolor: daysDelta ? (daysDelta > 0 ? "#F0FDF4" : "#FEF2F2") : "#F8FAFC", border: "1px solid", borderColor: daysDelta ? (daysDelta > 0 ? "#BBF7D0" : "#FECACA") : "#E2E8F0" }}>
+                    <Typography variant="body2" fontWeight={700}>
+                      {daysDelta === 0 ? "تغییری در مدت اشتراک انتخاب نشده" : daysDelta > 0 ? `افزایش مدت به میزان ${daysDelta.toLocaleString("fa-IR")} روز` : `کاهش مدت به میزان ${Math.abs(daysDelta).toLocaleString("fa-IR")} روز`}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">این تغییر تا زمان فشردن دکمه ذخیره اعمال نمی‌شود.</Typography>
+                  </Box>
+                </Box>
+                {current?.status !== "SUSPENDED" && current && <Button fullWidth variant="outlined" color="warning" startIcon={<Pause size={16} />} disabled={busy} onClick={suspend} sx={{ minHeight: 42 }}>تعلیق اشتراک</Button>}
+              </Stack>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      <Card sx={{ border: "1px solid #E2E8F0", borderRadius: 3, boxShadow: "0 2px 10px rgba(15,23,42,.025)" }}>
+        <CardContent sx={{ p: { xs: 1.5, sm: 2.5 } }}>
+          <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
+            <Box sx={{ width: 38, height: 38, borderRadius: 2, display: "grid", placeItems: "center", bgcolor: "#F5F3FF", color: "#7C3AED" }}><Clock3 size={19} /></Box>
+            <Box><Typography fontWeight={800}>تاریخچه اشتراک</Typography><Typography variant="caption" color="text.secondary">سوابق تغییرات اشتراک کاربر</Typography></Box>
+          </Stack>
+          {user.subscriptions.length ? <TableContainer sx={{ overflowX: { xs: "visible", sm: "auto" }, minWidth: 0 }}><Table sx={responsiveAdminTableSx}><TableHead><TableRow><TableCell>پلن</TableCell><TableCell>وضعیت</TableCell><TableCell>منبع</TableCell><TableCell>شروع</TableCell><TableCell>انقضا</TableCell><TableCell>یادداشت</TableCell></TableRow></TableHead><TableBody>
+            {user.subscriptions.map((sub) => <TableRow key={sub.id}><TableCell data-label="پلن">{sub.planKey === "yearly" ? "سالانه" : sub.planKey === "monthly" ? "ماهانه" : sub.planKey}</TableCell><TableCell data-label="وضعیت"><Chip size="small" label={sub.status === "ACTIVE" ? "فعال" : sub.status === "SUSPENDED" ? "تعلیق‌شده" : sub.status === "CANCELLED" ? "لغوشده" : "منقضی"} color={sub.status === "ACTIVE" ? "success" : sub.status === "SUSPENDED" ? "warning" : "default"} variant="outlined" /></TableCell><TableCell data-label="منبع">{sub.source}</TableCell><TableCell data-label="شروع">{faDate(sub.startedAt)}</TableCell><TableCell data-label="انقضا">{faDate(sub.expiresAt)}</TableCell><TableCell data-label="یادداشت">{sub.note || "—"}</TableCell></TableRow>)}
+          </TableBody></Table></TableContainer> : <Typography variant="body2" color="text.secondary" sx={{ py: 3, textAlign: "center" }}>تاریخچه‌ای برای اشتراک ثبت نشده است.</Typography>}
+        </CardContent>
+      </Card>
+
+      <Card sx={{ border: "1px solid #E2E8F0", borderRadius: 3, boxShadow: "0 2px 10px rgba(15,23,42,.025)" }}>
+        <CardContent sx={{ p: { xs: 1.5, sm: 2.5 } }}>
+          <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
+            <Box sx={{ width: 38, height: 38, borderRadius: 2, display: "grid", placeItems: "center", bgcolor: "#FFF7ED", color: "#C2410C" }}><Ticket size={19} /></Box>
+            <Box><Typography fontWeight={800}>تیکت‌های اخیر</Typography><Typography variant="caption" color="text.secondary">آخرین درخواست‌های پشتیبانی این کاربر</Typography></Box>
+          </Stack>
+          {user.tickets.length ? <TableContainer sx={{ overflowX: { xs: "visible", sm: "auto" }, minWidth: 0 }}><Table sx={responsiveAdminTableSx}><TableHead><TableRow><TableCell>عنوان</TableCell><TableCell>وضعیت</TableCell><TableCell>اولویت</TableCell><TableCell>آخرین به‌روزرسانی</TableCell></TableRow></TableHead><TableBody>
+            {user.tickets.map((ticket) => <TableRow key={ticket.id}><TableCell data-label="عنوان">{ticket.subject}</TableCell><TableCell data-label="وضعیت"><Chip size="small" label={ticket.status} variant="outlined" /></TableCell><TableCell data-label="اولویت">{ticket.priority}</TableCell><TableCell data-label="آخرین به‌روزرسانی">{faDate(ticket.updatedAt)}</TableCell></TableRow>)}
+          </TableBody></Table></TableContainer> : <Typography variant="body2" color="text.secondary" sx={{ py: 3, textAlign: "center" }}>تیکتی برای این کاربر ثبت نشده است.</Typography>}
+        </CardContent>
+      </Card>
+
+      <Box sx={{ position: { xs: "fixed", sm: "sticky" }, bottom: { xs: 0, sm: 12 }, zIndex: 10, mx: { xs: -1.25, sm: 0 }, px: { xs: 1.25, sm: 0 }, py: { xs: 1.25, sm: 0 }, bgcolor: { xs: "rgba(248,250,252,.96)", sm: "transparent" }, backdropFilter: { xs: "blur(12px)", sm: "none" } }}>
+        <Stack direction="row" spacing={1.25} alignItems="center" justifyContent="space-between" sx={{ p: 1.25, border: "1px solid #E2E8F0", borderRadius: 3, bgcolor: "#FFFFFF", boxShadow: "0 8px 28px rgba(15,23,42,.08)" }}>
+          <Box sx={{ minWidth: 0, flex: 1 }}>
+            <Typography variant="body2" fontWeight={800}>{dirty ? "تغییرات ذخیره‌نشده" : "همه تغییرات ذخیره شده"}</Typography>
+            <Typography variant="caption" color="text.secondary" noWrap>{dirty ? "برای اعمال تغییرات، ذخیره را بزنید." : "برای ویرایش پلن یا مدت اشتراک اقدام کنید."}</Typography>
+          </Box>
+          <Button variant="contained" startIcon={busy ? <RefreshCw size={17} /> : <Save size={17} />} disabled={!dirty || busy} onClick={save} sx={{ minWidth: { xs: 112, sm: 140 }, minHeight: 44, fontWeight: 800 }}>{busy ? "در حال ذخیره" : "ذخیره تغییرات"}</Button>
+        </Stack>
+      </Box>
+
+      <Snackbar open={!!notice} autoHideDuration={4000} onClose={() => setNotice(null)} anchorOrigin={{ vertical: "bottom", horizontal: "left" }}><Alert onClose={() => setNotice(null)} severity={notice?.severity ?? "success"} variant="filled">{notice?.text}</Alert></Snackbar>
     </Stack>
-  </CardContent></Card>
-
-  <Card><CardContent>
-    <Typography variant="subtitle1" fontWeight={700} mb={2}>تاریخچه اشتراک</Typography>
-    <TableContainer sx={{overflowX:{xs:"visible",sm:"auto"},minWidth:0}}><Table sx={responsiveAdminTableSx}><TableHead><TableRow><TableCell>پلن</TableCell><TableCell>وضعیت</TableCell><TableCell>منبع</TableCell><TableCell>شروع</TableCell><TableCell>انقضا</TableCell><TableCell>یادداشت</TableCell></TableRow></TableHead><TableBody>
-      {user.subscriptions.map(s=><TableRow key={s.id}><TableCell data-label="پلن">{s.planKey}</TableCell><TableCell data-label="وضعیت"><Chip size="small" label={s.status} color={s.status==="ACTIVE"?"success":s.status==="SUSPENDED"?"warning":"error"} variant="outlined"/></TableCell><TableCell data-label="منبع">{s.source}</TableCell><TableCell data-label="شروع">{new Date(s.startedAt).toLocaleDateString("fa-IR")}</TableCell><TableCell data-label="انقضا">{new Date(s.expiresAt).toLocaleDateString("fa-IR")}</TableCell><TableCell data-label="یادداشت">{s.note||"—"}</TableCell></TableRow>)}
-    </TableBody></Table></TableContainer>
-  </CardContent></Card>
-  <Snackbar open={!!notice} autoHideDuration={3500} onClose={()=>setNotice(null)} anchorOrigin={{vertical:"bottom",horizontal:"left"}}><Alert onClose={()=>setNotice(null)} severity={notice?.severity||"success"} variant="filled">{notice?.text}</Alert></Snackbar>
- </Stack>;
+  );
 }
