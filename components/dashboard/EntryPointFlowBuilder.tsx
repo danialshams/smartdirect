@@ -1,5 +1,5 @@
 "use client";
-import { Loader2 } from "lucide-react";
+import { DashboardLoading } from "@/components/dashboard/DashboardUI";
 import { useEffect, useState } from "react";
 
 import PublishingStoryAutomationSetup from "./publishing/PublishingStoryAutomationSetup";
@@ -785,9 +785,7 @@ export default function EntryPointFlowBuilder({
     return (
         <div className="space-y-5">
             {loadingAutomation ? (
-                <div className="flex min-h-32 items-center justify-center">
-                    <Loader2 size={20} className="animate-spin text-[#2563EB]" />
-                </div>
+                <DashboardLoading label="در حال دریافت تنظیمات..." className="min-h-32" />
             ) : (
                 <>
                     {triggerType !== "DM" && (
@@ -815,9 +813,7 @@ export default function EntryPointFlowBuilder({
                         </div>
                     )}
                     {flowLoading ? (
-                        <div className="flex min-h-32 items-center justify-center">
-                            <Loader2 className="h-5 w-5 animate-spin text-[#2563EB]" />
-                        </div>
+                        <DashboardLoading label="در حال دریافت Flow پاسخ..." className="min-h-32" />
                     ) : (
                     <PublishingStoryAutomationSetup
                         message={currentMessage}

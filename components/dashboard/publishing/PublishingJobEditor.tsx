@@ -6,17 +6,13 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowRight, CalendarClock, Loader2, Pencil, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { Button } from "@/components/dashboard/DashboardUI";
+import { Button, DashboardLoading } from "@/components/dashboard/DashboardUI";
 import PersianDatePicker from "./PersianDatePicker";
 const EntryPointFlowBuilder = dynamic(
   () => import("@/components/dashboard/EntryPointFlowBuilder"),
   {
     ssr: false,
-    loading: () => (
-      <div className="flex min-h-32 items-center justify-center">
-        <Loader2 size={22} className="animate-spin text-[#2563EB]" />
-      </div>
-    ),
+    loading: () => <DashboardLoading label="در حال آماده‌سازی ویرایشگر..." className="min-h-32" />,
   },
 );
 
@@ -521,13 +517,13 @@ export default function PublishingJobEditor({
         </div>
 
         {!job ? (
-          <section className="flex min-h-[50vh] items-center justify-center rounded-2xl border border-[#E2E8F0] bg-white shadow-sm">
-            {loading ? (
-              <Loader2 size={28} className="animate-spin text-[#2563EB]" />
-            ) : (
+          loading ? (
+            <DashboardLoading label="در حال دریافت محتوای زمان‌بندی‌شده..." className="min-h-[50vh]" />
+          ) : (
+            <section className="flex min-h-[50vh] items-center justify-center rounded-2xl border border-[#E2E8F0] bg-white shadow-sm">
               <span className="text-sm text-[#64748B]">محتوا پیدا نشد.</span>
-            )}
-          </section>
+            </section>
+          )
         ) : (
         <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
           {job.media.length > 0 && (
