@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Check, MessageCircle, Plus, Send, UserRoundCheck, X } from "lucide-react";
+import { DashboardLoading } from "@/components/dashboard/DashboardUI";
 import { Box, Button, Card, CardContent, Checkbox, CircularProgress, Divider, IconButton, Paper, Stack, TextField, Typography } from "@mui/material";
 
 type AutomationMessage = { id:string; messageType:string; text:string|null; order:number };
@@ -40,7 +41,7 @@ export default function CommentAutomationEditor({ id }: { id: string }) {
       if(!response.ok||!result.success)throw new Error(result.error||result.message||"ذخیره تغییرات ناموفق بود."); const savedAutomation=result.data as Automation; setAutomation(savedAutomation); setDmReply(getExistingDmText(savedAutomation)); setSendDm(Boolean(savedAutomation.sendDm||getExistingDmText(savedAutomation).trim())); setRequireFollow(Boolean(savedAutomation.requireFollow)); setFollowGateText(savedAutomation.followGateText?.trim()||"برای دریافت این محتوا ابتدا پیج ما را فالو کنید."); setSaved(true); window.setTimeout(()=>router.push("/dashboard/comment-automation"),650);
     }catch(saveError){setError(saveError instanceof Error?saveError.message:"ذخیره تغییرات ناموفق بود.");}finally{setSaving(false)} }
 
-  if(loading)return <Box dir="rtl" sx={{width:"100%",maxWidth:1200,mx:"auto"}}><Stack spacing={1} sx={{mb:2.5}}><Box sx={{width:220,height:30,borderRadius:1.5,bgcolor:"#E2E8F0"}}/><Box sx={{width:340,height:16,borderRadius:1.5,bgcolor:"#E2E8F0"}}/></Stack><Box sx={{display:"grid",gridTemplateColumns:{xs:"1fr",lg:"minmax(0,.9fr) minmax(0,1.1fr)"},gap:2.5}}><Paper sx={{height:520,borderRadius:3,bgcolor:"#E2E8F0",boxShadow:"none"}}/><Stack spacing={1.5}><Paper sx={{height:120,borderRadius:2.5,bgcolor:"#E2E8F0",boxShadow:"none"}}/><Paper sx={{height:170,borderRadius:2.5,bgcolor:"#E2E8F0",boxShadow:"none"}}/><Paper sx={{height:170,borderRadius:2.5,bgcolor:"#E2E8F0",boxShadow:"none"}}/></Stack></Box></Box>;
+  if(loading)return <DashboardLoading label="در حال دریافت پاسخ خودکار..." className="min-h-[50vh]" />;
   if(!automation)return <Box dir="rtl" sx={{maxWidth:560,mx:"auto",p:2.5,border:"1px solid #FECACA",bgcolor:"#FEF2F2",color:"#B91C1C",borderRadius:3,fontSize:13}}>{error||"اتوماسیون پیدا نشد."}</Box>;
   const accountName=automation.instagramAccount?.igUsername||"Instagram";
   return <Box dir="rtl" sx={{width:"100%",maxWidth:1200,mx:"auto",pb:5}}>

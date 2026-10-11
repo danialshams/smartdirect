@@ -1,6 +1,7 @@
 "use client";
 
-import { Image as ImageIcon, Loader2, MessageCircle, Video } from "lucide-react";
+import { Image as ImageIcon, MessageCircle, Video } from "lucide-react";
+import { DashboardLoading } from "@/components/dashboard/DashboardUI";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Box, Button, Card, CardContent, Chip, Stack, Typography } from "@mui/material";
@@ -327,11 +328,8 @@ export default function UnansweredComments({ account }: { account: Account }) {
         >
           {loading
             ? (
-                <Box sx={{ gridColumn: "1 / -1", minHeight: 260, display: "grid", placeItems: "center" }}>
-                  <Stack alignItems="center" spacing={1}>
-                    <Loader2 size={28} strokeWidth={2.2} className="animate-spin" color={COLORS.primary} />
-                    <Typography sx={{ fontSize: 11, color: COLORS.secondary }}>در حال دریافت محتوا...</Typography>
-                  </Stack>
+                <Box sx={{ gridColumn: "1 / -1" }}>
+                  <DashboardLoading label="در حال دریافت محتوا..." className="min-h-[260px]" />
                 </Box>
               )
             : filteredPosts.length === 0

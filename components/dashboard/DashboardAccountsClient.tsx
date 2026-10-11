@@ -1,10 +1,11 @@
 "use client";
 
+import { DashboardLoading } from "@/components/dashboard/DashboardUI";
 import { useEffect, useState } from "react";
 import {
   Alert,
   Box,
-  CircularProgress,
+
 } from "@mui/material";
 
 import AutomationManager from "./AutomationManager";
@@ -81,15 +82,7 @@ export default function DashboardAccountsClient({
 
   if (loading) {
     return (
-      <Box
-        sx={{
-          minHeight: 180,
-          display: "grid",
-          placeItems: "center",
-        }}
-      >
-        <CircularProgress size={24} thickness={4} sx={{ color: "#2563EB" }} />
-      </Box>
+      <DashboardLoading label="در حال دریافت پیج‌های متصل..." className="min-h-[180px]" />
     );
   }
 

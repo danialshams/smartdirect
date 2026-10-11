@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { DashboardLoading } from "@/components/dashboard/DashboardUI";
 
 type FailedJob = {
   id: string;
@@ -99,7 +100,7 @@ export default function AdminQueueDashboard() {
           </div>
 
           {loading ? (
-            <div className="p-6 text-sm text-slate-500">در حال دریافت...</div>
+            <DashboardLoading label="در حال دریافت کارهای ناموفق..." className="min-h-40" />
           ) : !data?.data.length ? (
             <div className="p-6 text-sm text-slate-500">Failed Job فعالی وجود ندارد.</div>
           ) : (

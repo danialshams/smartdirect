@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Avatar, Box, Typography } from "@mui/material";
 import { Images, UsersRound, UserRoundPlus } from "lucide-react";
+import { DashboardLoading } from "@/components/dashboard/DashboardUI";
 
 type Profile = {
   accountId: string;
@@ -119,34 +120,8 @@ export default function InstagramProfileDashboard({
 
   if (loading) {
     return (
-      <Box
-        dir="rtl"
-        sx={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 1100,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          pointerEvents: "none",
-        }}
-      >
-        <Box
-          aria-label="در حال دریافت اطلاعات"
-          sx={{
-            width: 34,
-            height: 34,
-            borderRadius: "50%",
-            border: "3px solid #E2E8F0",
-            borderTopColor: "#2563EB",
-            animation: "sdDashboardSpin 800ms linear infinite",
-          }}
-        />
-        <style jsx global>{`
-          @keyframes sdDashboardSpin {
-            to { transform: rotate(360deg); }
-          }
-        `}</style>
+      <Box dir="rtl" sx={{ position: "fixed", inset: 0, zIndex: 1100, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
+        <DashboardLoading label="در حال دریافت اطلاعات پیج..." />
       </Box>
     );
   }

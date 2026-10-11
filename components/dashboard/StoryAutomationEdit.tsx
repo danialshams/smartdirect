@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import AutomationForm from "./AutomationForm";
+import { DashboardLoading } from "@/components/dashboard/DashboardUI";
 import type { Automation } from "./AutomationManager";
 
 export default function StoryAutomationEdit({ id }: { id: string }) {
@@ -30,7 +31,7 @@ export default function StoryAutomationEdit({ id }: { id: string }) {
     return () => { cancelled = true; };
   }, [id]);
 
-  if (loading) return <div dir="rtl" className="mx-auto w-full max-w-[1200px] animate-pulse"><div className="h-[650px] rounded-3xl bg-muted" /></div>;
+  if (loading) return <DashboardLoading label="در حال دریافت پاسخ خودکار استوری..." className="min-h-[50vh]" />;
   if (!automation) return <div dir="rtl" className="mx-auto max-w-xl rounded-3xl border border-red-200 bg-red-50 p-6 text-sm leading-7 text-red-700">{error || "اتوماسیون پیدا نشد."}</div>;
 
   return (

@@ -1,7 +1,7 @@
 "use client";
 
 import { Input } from "@/components/dashboard/DashboardUI"
-import { Button } from "@/components/dashboard/DashboardUI"
+import { Button, DashboardLoading } from "@/components/dashboard/DashboardUI"
 import { Textarea } from "@/components/dashboard/DashboardUI"
 
 
@@ -1530,9 +1530,8 @@ export default function AutomationForm({
                 </div>
 
                 {loadingMessages ? (
-                    <div className="mt-5 flex items-center justify-center rounded-xl border border-border p-10 text-sm text-muted-foreground">
-                        <Loader2 size={18} className="ml-2 animate-spin" />
-                        در حال دریافت Flow...
+                    <div className="mt-5">
+                        <DashboardLoading label="در حال دریافت Flow..." className="min-h-32" />
                     </div>
                 ) : messages.length === 0 ? (
                     <div className="mt-5 rounded-2xl border border-dashed border-border bg-muted px-5 py-10 text-center">
@@ -1636,7 +1635,7 @@ export default function AutomationForm({
                                     <div className="overflow-hidden rounded-2xl bg-muted">
                                         <div className="mx-auto aspect-[9/14] w-full max-w-[430px]">
                                             {loadingStories ? (
-                                                <div className="flex h-full w-full items-center justify-center"><Loader2 size={24} className="animate-spin text-[#2563EB]" /></div>
+                                                <div className="flex h-full w-full items-center justify-center"><span className="text-xs text-[#64748B]">در حال دریافت استوری...</span></div>
                                             ) : selectedStory?.mediaUrl || selectedStory?.thumbnailUrl ? (
                                                 selectedStory.mediaType === "VIDEO" && selectedStory.mediaUrl ? (
                                                     <video
@@ -1884,16 +1883,7 @@ export default function AutomationForm({
                                 </label>
 
                                 {loadingMedia ? (
-                                    <div className="flex items-center gap-2 rounded-xl border border-border p-4 text-sm text-muted-foreground">
-                                        <Loader2
-                                            size={
-                                                16
-                                            }
-                                            className="animate-spin"
-                                        />
-
-                                        در حال دریافت پست‌ها...
-                                    </div>
+                                    <DashboardLoading label="در حال دریافت پست‌ها..." className="min-h-24" />
                                 ) : media.length ===
                                     0 ? (
                                     <div className="rounded-xl border border-border p-4 text-sm text-muted-foreground">
@@ -2014,16 +2004,7 @@ export default function AutomationForm({
                                 </div>
 
                                 {loadingStories ? (
-                                    <div className="flex items-center gap-2 rounded-xl border border-border p-5 text-sm text-muted-foreground">
-                                        <Loader2
-                                            size={
-                                                17
-                                            }
-                                            className="animate-spin"
-                                        />
-
-                                        در حال دریافت استوری‌های فعال...
-                                    </div>
+                                    <DashboardLoading label="در حال دریافت استوری‌های فعال..." className="min-h-24" />
                                 ) : storiesError ? (
                                     <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-4 text-sm leading-6 text-red-600">
                                         {storiesError}

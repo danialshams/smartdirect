@@ -1,10 +1,10 @@
 "use client";
 
-import { ArrowRight, Image as ImageIcon, Loader2, MessageCircle, Send, Video } from "lucide-react";
+import { ArrowRight, Image as ImageIcon, MessageCircle, Send, Video } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Box, Button, CircularProgress, Paper, Stack, TextField, Typography } from "@mui/material";
-import { Button as DashboardButton } from "@/components/dashboard/DashboardUI";
+import { Button as DashboardButton, DashboardLoading } from "@/components/dashboard/DashboardUI";
 
 type Account = { id: string; igUsername: string; profilePictureUrl: string | null };
 type Media = { id: string; caption: string | null; mediaType: string | null; mediaProductType: string | null; mediaUrl: string | null; thumbnailUrl: string | null; permalink: string | null; timestamp: string | null };
@@ -78,11 +78,8 @@ export default function UnansweredCommentsPost({ account, mediaId }: { account: 
 
   if (loading) {
     return (
-      <Box dir="rtl" sx={{ width: "100%", minHeight: "60vh", display: "grid", placeItems: "center", bgcolor: COLORS.background }}>
-        <Stack alignItems="center" spacing={1.25}>
-          <Loader2 size={30} strokeWidth={2.2} className="animate-spin" color={COLORS.primary} />
-          <Typography sx={{ fontSize: 11, color: COLORS.secondary }}>در حال دریافت کامنت‌ها...</Typography>
-        </Stack>
+      <Box dir="rtl" sx={{ width: "100%", minHeight: "60vh", display: "grid", placeItems: "center", bgcolor: "transparent" }}>
+        <DashboardLoading label="در حال دریافت کامنت‌ها..." className="min-h-[60vh]" />
       </Box>
     );
   }
