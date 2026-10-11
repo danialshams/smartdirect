@@ -64,8 +64,16 @@ export async function POST(request: Request) {
             return loginRedirect(request, "Configuration");
         }
 
+        const secure = new URL(request.url).protocol === "https:";
+        const cookieName = secure
+            ? "__Secure-next-auth.session-token"
+            : "next-auth.session-token";
+
+        // NextAuth v4 uses the session cookie name as the JWT encryption salt.
+        // Omitting this salt creates a token that NextAuth cannot decode.
         const token = await encode({
             secret,
+            salt: cookieName,
             maxAge: SESSION_MAX_AGE,
             token: {
                 sub: user.id,
@@ -75,11 +83,6 @@ export async function POST(request: Request) {
                 role: user.role,
             },
         });
-
-        const secure = new URL(request.url).protocol === "https:";
-        const cookieName = secure
-            ? "__Secure-next-auth.session-token"
-            : "next-auth.session-token";
 
         const response = NextResponse.redirect(new URL(callbackUrl, request.url), { status: 303 });
         response.cookies.set(cookieName, token, {
