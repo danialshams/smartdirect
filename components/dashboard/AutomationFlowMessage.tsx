@@ -248,7 +248,7 @@ export default function AutomationFlowMessage({
         <button
           type="button"
           onClick={() => setContentStep(false)}
-          className="absolute left-4 top-4 z-10 inline-flex h-9 items-center gap-1.5 rounded-xl border bg-white px-3 text-[11px] font-bold transition-colors hover:bg-slate-50"
+          className="absolute left-4 top-4 z-10 inline-flex h-9 items-center gap-1.5 rounded-xl border bg-white px-3 text-xs font-bold transition-colors hover:bg-slate-50"
           style={{ borderColor: palette.border, color: palette.secondary }}
         >
           <ArrowDown className="rotate-90" size={14} />
@@ -445,13 +445,13 @@ function QuickReplySection({
   loadingResources?: boolean;
 }) {
   return (
-    <section className="rounded-2xl border p-4 sm:p-5" style={{ borderColor: palette.border, background: palette.muted }}>
+    <section className="dashboard-card border" style={{ borderColor: palette.border, background: palette.muted }}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-xs font-bold" style={{ color: palette.text }}>
             {depth === 0 ? "مسیرهای پاسخ" : "سؤال بعدی"}
           </p>
-          <p className="mt-1 text-[10px] leading-5" style={{ color: palette.secondary }}>
+          <p className="mt-1 text-xs leading-5" style={{ color: palette.secondary }}>
             {depth === 0 ? "انتخاب کاربر را به یک مقصد مشخص وصل کن." : "برای این شاخه سؤال بعدی تعریف کن."}
           </p>
         </div>
@@ -459,7 +459,7 @@ function QuickReplySection({
           type="button"
           onClick={onAdd}
           disabled={replies.length >= 13}
-          className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-bold text-white disabled:opacity-40"
+          className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold text-white disabled:opacity-40"
           style={{ background: palette.automation }}
         >
           <Plus size={13} />
@@ -470,7 +470,7 @@ function QuickReplySection({
       {replies.length === 0 ? (
         <div className="mt-4 rounded-xl border border-dashed bg-white px-4 py-7 text-center" style={{ borderColor: palette.border }}>
           <p className="text-xs font-semibold" style={{ color: palette.text }}>هنوز گزینه‌ای وجود ندارد</p>
-          <p className="mt-1 text-[10px]" style={{ color: palette.secondary }}>برای شروع یک گزینه پاسخ اضافه کن.</p>
+          <p className="mt-1 text-xs" style={{ color: palette.secondary }}>برای شروع یک گزینه پاسخ اضافه کن.</p>
         </div>
       ) : (
         <div className="mt-4 space-y-3">
@@ -527,7 +527,7 @@ function ReplyCard({
     <div className="rounded-2xl border bg-white p-4 sm:p-5" style={{ borderColor: palette.border }}>
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <span className="flex h-7 w-7 items-center justify-center rounded-lg text-[10px] font-bold" style={{ background: "#F5F3FF", color: palette.automation }}>
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg text-xs font-bold" style={{ background: "#F5F3FF", color: palette.automation }}>
             {index + 1}
           </span>
           <span className="text-xs font-bold" style={{ color: palette.text }}>گزینه پاسخ</span>
@@ -668,7 +668,7 @@ function Field({
         <span className="text-xs font-bold" style={{ color: palette.text }}>
           {label}{required && <span className="mr-1" style={{ color: palette.error }}>*</span>}
         </span>
-        {hint && <span className="text-[10px]" style={{ color: palette.secondary }}>{hint}</span>}
+        {hint && <span className="text-xs" style={{ color: palette.secondary }}>{hint}</span>}
       </span>
       {children}
     </label>
@@ -714,13 +714,13 @@ function MediaComposer({
                 {kind === "AUDIO" ? (
                   <audio src={url} controls className="mt-2 w-full max-w-md" />
                 ) : (
-                  <p className="mt-1 max-w-[360px] truncate text-[10px]" dir="ltr" style={{ color: palette.secondary }}>{url}</p>
+                  <p className="mt-1 max-w-[360px] truncate text-xs" dir="ltr" style={{ color: palette.secondary }}>{url}</p>
                 )}
               </div>
             </div>
             <div className="flex gap-2">
               <FilePicker accept={accept} disabled={uploading} onChange={onUpload} label="جایگزین" />
-              <button type="button" onClick={onClear} className="rounded-xl border bg-white px-3 py-2 text-[11px] font-bold" style={{ borderColor: palette.border, color: palette.error }}>حذف</button>
+              <button type="button" onClick={onClear} className="rounded-xl border bg-white px-3 py-2 text-xs font-bold" style={{ borderColor: palette.border, color: palette.error }}>حذف</button>
             </div>
           </div>
         </div>
@@ -738,7 +738,7 @@ function MediaComposer({
                 <div className={["h-full rounded-full transition-[width] duration-300", error && retryFile && !uploading ? "bg-[#DC2626]" : "bg-[#2563EB]"].join(" ")} style={{ width: `${Math.max(3, Math.min(100, progress))}%` }} />
               </div>
               {error && retryFile && !uploading && (
-                <button type="button" onClick={() => void onUpload(retryFile)} className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-[#DC2626] px-3 py-2 text-[11px] font-bold text-white">
+                <button type="button" onClick={() => void onUpload(retryFile)} className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-[#DC2626] px-3 py-2 text-xs font-bold text-white">
                   <RotateCcw size={14} />
                   تلاش دوباره
                 </button>
@@ -756,7 +756,7 @@ function MediaComposer({
           )}
           {kind === "AUDIO" && (
             <>
-              <div className="text-center text-[10px] font-semibold text-[#94A3B8]">یا</div>
+              <div className="text-center text-xs font-semibold text-[#94A3B8]">یا</div>
               <VoiceRecorder disabled={uploading} onRecorded={onUpload} />
             </>
           )}
@@ -793,7 +793,7 @@ function FilePicker({
         <Icon size={22} />
       </span>
       <span className="mt-3 text-xs font-bold" style={{ color: palette.text }}>{label}</span>
-      {large && <span className="mt-1 text-[10px]" style={{ color: palette.secondary }}>فایل را از دستگاه انتخاب کن</span>}
+      {large && <span className="mt-1 text-xs" style={{ color: palette.secondary }}>فایل را از دستگاه انتخاب کن</span>}
       <Input type="file" accept={accept} className="hidden" disabled={disabled} onChange={(event) => { const file = event.target.files?.[0]; event.currentTarget.value = ""; onChange(file); }} />
     </label>
   );
@@ -826,11 +826,11 @@ function ShowcaseDestination({
         </Select>
       </Field>
       {showcases.length === 0 && !loading && (
-        <p className="rounded-xl border px-3 py-2.5 text-[10px] leading-5" style={{ borderColor: palette.border, background: palette.muted, color: palette.secondary }}>
+        <p className="rounded-xl border px-3 py-2.5 text-xs leading-5" style={{ borderColor: palette.border, background: palette.muted, color: palette.secondary }}>
           ویترینی برای انتخاب وجود ندارد. ساخت ویترین را می‌توان از بخش ویترین‌های حساب انجام داد.
         </p>
       )}
-      {!instagramAccountId && <p className="text-[10px]" style={{ color: palette.warning }}>اکانت Instagram انتخاب نشده است.</p>}
+      {!instagramAccountId && <p className="text-xs" style={{ color: palette.warning }}>اکانت Instagram انتخاب نشده است.</p>}
     </div>
   );
 }
@@ -877,29 +877,29 @@ function BranchMediaDestination({
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3" style={{ borderColor: "#BBF7D0", background: "#F0FDF4" }}>
           <div className="min-w-0 flex-1">
             <p className="text-xs font-bold" style={{ color: "#166534" }}>فایل مقصد آماده است</p>
-            {kind === "AUDIO" ? <audio src={url} controls className="mt-2 w-full max-w-md" /> : <p className="mt-1 max-w-[420px] truncate text-[10px]" dir="ltr" style={{ color: palette.secondary }}>{url}</p>}
+            {kind === "AUDIO" ? <audio src={url} controls className="mt-2 w-full max-w-md" /> : <p className="mt-1 max-w-[420px] truncate text-xs" dir="ltr" style={{ color: palette.secondary }}>{url}</p>}
           </div>
           <div className="flex gap-2">
             <FilePicker accept={accept} disabled={uploading} onChange={choose} label="جایگزین" />
-            <button type="button" onClick={() => { void requestStorageCleanupByPublicUrl(url).catch(() => undefined); onChange(""); }} className="rounded-xl border bg-white px-3 py-2 text-[11px] font-bold" style={{ borderColor: palette.border, color: palette.error }}>حذف</button>
+            <button type="button" onClick={() => { void requestStorageCleanupByPublicUrl(url).catch(() => undefined); onChange(""); }} className="rounded-xl border bg-white px-3 py-2 text-xs font-bold" style={{ borderColor: palette.border, color: palette.error }}>حذف</button>
           </div>
         </div>
       ) : uploading || retryFile ? (
         <div className={["rounded-xl border p-3", error && retryFile && !uploading ? "border-[#FECACA] bg-[#FEF2F2]" : "border-[#BFDBFE] bg-[#EFF6FF]"].join(" ")}>
-          <div className="flex items-center justify-between text-[11px] font-bold">
+          <div className="flex items-center justify-between text-xs font-bold">
             <span className={error && retryFile && !uploading ? "text-[#B91C1C]" : "text-[#2563EB]"}>{error && retryFile && !uploading ? "آپلود ناموفق بود" : "در حال آپلود..."}</span>
             <span className={error && retryFile && !uploading ? "text-[#B91C1C]" : "text-[#2563EB]"}>{progress}٪</span>
           </div>
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#E2E8F0]"><div className={["h-full rounded-full transition-[width] duration-300", error && retryFile && !uploading ? "bg-[#DC2626]" : "bg-[#2563EB]"].join(" ")} style={{ width: `${Math.max(3, Math.min(100, progress))}%` }} /></div>
-          {error && retryFile && !uploading && <button type="button" onClick={() => void choose(retryFile)} className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#DC2626] px-3 py-2 text-[11px] font-bold text-white"><RotateCcw size={14} /> تلاش دوباره</button>}
+          {error && retryFile && !uploading && <button type="button" onClick={() => void choose(retryFile)} className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#DC2626] px-3 py-2 text-xs font-bold text-white"><RotateCcw size={14} /> تلاش دوباره</button>}
         </div>
       ) : (
         <div className="space-y-3">
           <FilePicker accept={accept} disabled={uploading} onChange={choose} label="انتخاب فایل مقصد" />
-          {kind === "AUDIO" && <><div className="text-center text-[10px] font-semibold text-[#94A3B8]">یا</div><VoiceRecorder disabled={uploading} onRecorded={choose} /></>}
+          {kind === "AUDIO" && <><div className="text-center text-xs font-semibold text-[#94A3B8]">یا</div><VoiceRecorder disabled={uploading} onRecorded={choose} /></>}
         </div>
       )}
-      {error && <p className="text-[10px]" style={{ color: palette.error }}>{error}</p>}
+      {error && <p className="text-xs" style={{ color: palette.error }}>{error}</p>}
     </div>
   );
 }
@@ -1025,10 +1025,10 @@ function ShowcaseComposer({
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-xs font-bold" style={{ color: palette.text }}>{showcaseId ? "ویترین انتخاب شده" : "کارت‌های ویترین"}</p>
-          <p className="mt-1 text-[10px]" style={{ color: palette.secondary }}>برای هر کارت تصویر، عنوان و توضیح کوتاه وارد کن.</p>
+          <p className="mt-1 text-xs" style={{ color: palette.secondary }}>برای هر کارت تصویر، عنوان و توضیح کوتاه وارد کن.</p>
         </div>
         {!showcaseId && (
-          <Button type="button" onClick={() => setItems((current) => [...current, newShowcaseItem()])} className="inline-flex items-center gap-1.5 rounded-xl border bg-white px-3 py-2 text-[11px] font-bold" style={{ borderColor: palette.border, color: palette.text }}>
+          <Button type="button" onClick={() => setItems((current) => [...current, newShowcaseItem()])} className="inline-flex items-center gap-1.5 rounded-xl border bg-white px-3 py-2 text-xs font-bold" style={{ borderColor: palette.border, color: palette.text }}>
             <Plus size={13} /> کارت
           </Button>
         )}
@@ -1038,7 +1038,7 @@ function ShowcaseComposer({
         <div className="rounded-2xl border p-4" style={{ borderColor: "#BBF7D0", background: "#F0FDF4" }}>
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: "#DCFCE7", color: palette.success }}><Check size={16} /></div>
-            <div><p className="text-xs font-bold" style={{ color: "#166534" }}>«{existing.title}» به این مرحله متصل است.</p><p className="mt-1 text-[10px]" style={{ color: "#15803D" }}>برای مدیریت محتوای ویترین از بخش ویترین‌ها استفاده کن.</p></div>
+            <div><p className="text-xs font-bold" style={{ color: "#166534" }}>«{existing.title}» به این مرحله متصل است.</p><p className="mt-1 text-xs" style={{ color: "#15803D" }}>برای مدیریت محتوای ویترین از بخش ویترین‌ها استفاده کن.</p></div>
           </div>
         </div>
       ) : (
@@ -1049,10 +1049,10 @@ function ShowcaseComposer({
                 <label className="flex min-h-[132px] cursor-pointer items-center justify-center overflow-hidden rounded-xl border-2 border-dashed" style={{ borderColor: "#CBD5E1", background: palette.muted }}>
                   {uploadingItems[item.id] ? (
   <div className="flex w-full flex-col items-center justify-center px-4">
-    <span className="mb-2 text-[10px] font-bold text-[#2563EB]">{uploadProgressItems[item.id] ?? 0}٪</span>
+    <span className="mb-2 text-xs font-bold text-[#2563EB]">{uploadProgressItems[item.id] ?? 0}٪</span>
     <div className="h-1.5 w-full max-w-[180px] overflow-hidden rounded-full bg-[#E2E8F0]"><div className="h-full rounded-full bg-[#2563EB] transition-[width] duration-150" style={{ width: `${uploadProgressItems[item.id] ?? 0}%` }} /></div>
   </div>
-) : item.previewUrl ? <img src={item.previewUrl} alt="" className="h-full w-full object-cover" /> : <span className="flex flex-col items-center gap-2 text-[10px]" style={{ color: palette.secondary }}><ImagePlus size={22} />تصویر کارت {itemIndex + 1}</span>}
+) : item.previewUrl ? <img src={item.previewUrl} alt="" className="h-full w-full object-cover" /> : <span className="flex flex-col items-center gap-2 text-xs" style={{ color: palette.secondary }}><ImagePlus size={22} />تصویر کارت {itemIndex + 1}</span>}
                   <Input type="file" accept="image/*" disabled={uploadingItems[item.id]} className="hidden" onChange={(event) => { const file = event.target.files?.[0]; event.currentTarget.value = ""; void chooseImage(item.id, file); }} />
                 </label>
                 <div className="space-y-3">

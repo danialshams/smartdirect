@@ -67,8 +67,8 @@ export default function StoryAutomationCreate() {
   }
 
   return (
-    <div dir="rtl" className="min-h-[calc(100dvh-2rem)]">
-      <div className="mx-auto w-full max-w-2xl">
+    <div dir="rtl" className="dashboard-page">
+      <div className="mx-auto w-full max-w-3xl">
         <div className="mb-9">
           <Button type="button" onClick={() => router.back()} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]"><ArrowRight size={15} strokeWidth={2} />بازگشت</Button>
         </div>
@@ -98,7 +98,7 @@ export default function StoryAutomationCreate() {
                   ) : (
                     <div className="flex h-full items-center justify-center">{story.mediaType === "VIDEO" ? <Video size={25} className="text-muted-foreground" /> : <ImageIcon size={25} className="text-muted-foreground" />}</div>
                   )}
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent p-2.5 pt-12 text-right text-[10px] font-semibold text-white">{story.mediaType === "VIDEO" ? "ویدیو" : "استوری"}</div>
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent p-2.5 pt-12 text-right text-xs font-semibold text-white">{story.mediaType === "VIDEO" ? "ویدیو" : "استوری"}</div>
                 </button>
               );
             })}

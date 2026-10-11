@@ -1,5 +1,7 @@
 "use client";
 
+import DashboardModal from "./DashboardModal";
+
 import { Button, DashboardLoading } from "@/components/dashboard/DashboardUI";
 import {
   Bot,
@@ -359,9 +361,9 @@ export default function AutomationManager({
   }
 
   return (
-    <div dir="rtl" className="min-h-screen bg-background">
-      <div className="mx-auto w-full max-w-[1400px] space-y-4">
-        <section className="rounded-3xl border border-border/80 bg-card shadow-sm">
+    <div dir="rtl" className="dashboard-page">
+      <div className="mx-auto w-full max-w-6xl space-y-4">
+        <section className="dashboard-card border border-border/80 bg-card shadow-sm p-0">
           <div className="flex flex-col gap-4 p-4 sm:p-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
@@ -449,7 +451,7 @@ export default function AutomationManager({
         )}
 
         {!selectedAccount ? (
-          <section className="rounded-3xl border border-dashed border-border bg-card px-6 py-16 text-center">
+          <section className="dashboard-card border border-dashed border-border bg-card px-6 py-16 text-center">
             <Bot className="mx-auto text-muted-foreground" size={24} />
             <h2 className="mt-4 text-base font-bold">ابتدا یک پیج اینستاگرام متصل کنید</h2>
             <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">
@@ -459,7 +461,7 @@ export default function AutomationManager({
         ) : loading ? (
           <DashboardLoading label={onlyTab === "stories" ? "در حال دریافت پاسخ‌های استوری..." : "در حال دریافت پاسخ‌های کامنت..."} className="min-h-48" />
         ) : filteredGroups.length === 0 ? (
-          <section className="rounded-3xl border border-dashed border-border bg-card px-6 py-20 text-center">
+          <section className="dashboard-card border border-dashed border-border bg-card px-6 py-20 text-center">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
               <Bot size={21} />
             </div>
@@ -473,7 +475,7 @@ export default function AutomationManager({
             </p>
           </section>
         ) : (
-          <section className="overflow-hidden rounded-3xl border border-border/80 bg-card shadow-sm">
+          <section className="dashboard-card overflow-hidden border border-border/80 bg-card shadow-sm p-0">
             <div className="divide-y divide-border/70">
               {filteredGroups.map((group) => {
                 const automation = group.automations[0];
@@ -611,23 +613,15 @@ export default function AutomationManager({
       )}
 
       {(deleteTarget || bulkDeleteOpen) && (
-        <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/45 p-4 backdrop-blur-[2px]"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget && !deleting) {
-              setDeleteTarget(null);
-              setBulkDeleteOpen(false);
-            }
-          }}
-        >
-          <div className="w-full max-w-[380px] overflow-hidden rounded-[28px] border border-border/80 bg-background shadow-2xl">
+        <DashboardModal labelledBy="delete-response-title" busy={deleting} onClose={() => { setDeleteTarget(null); setBulkDeleteOpen(false); }}>
+          <div className="w-full overflow-y-auto bg-background">
             <div className="px-6 pb-1 pt-6">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-red-50 text-red-600">
                 <span className="text-lg font-bold">!</span>
               </div>
             </div>
             <div className="px-6">
-            <h3 className="text-base font-bold text-foreground">
+            <h3 id="delete-response-title" className="text-base font-bold text-foreground">
               {bulkDeleteOpen
                 ? `پاک کردن ${selectedGroupCount} پاسخ خودکار؟`
                 : "پاک کردن پاسخ خودکار؟"}
@@ -639,6 +633,7 @@ export default function AutomationManager({
             <div className="flex gap-2 px-6 pb-6 pt-6">
               <Button
                 type="button"
+                variant="outline"
                 disabled={deleting}
                 onClick={() => {
                   setDeleteTarget(null);
@@ -668,7 +663,7 @@ export default function AutomationManager({
               </Button>
             </div>
           </div>
-        </div>
+        </DashboardModal>
       )}
     </div>
   );

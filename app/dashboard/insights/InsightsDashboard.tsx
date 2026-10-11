@@ -13,10 +13,10 @@ import {
   Users,
   UserRoundPlus,
 } from "lucide-react";
-import { createPortal } from "react-dom";
+import { Popover } from "@mui/material";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ElementType } from "react";
-import { Calendar } from "@/components/dashboard/DashboardUI";
+import { Calendar, DashboardLoading } from "@/components/dashboard/DashboardUI";
 
 type Range = 7 | 30 | 90;
 type Metric = "reach" | "views" | "interactions" | "accountsEngaged";
@@ -76,18 +76,7 @@ function metricValue(snapshot: Snapshot, metric: Metric) {
 }
 
 function Spinner({ label }: { label: string }) {
-  return (
-    <div className="flex min-h-[150px] flex-col items-center justify-center gap-2">
-      <div
-        className="h-[34px] w-[34px] rounded-full border-[3px] border-[#E2E8F0] border-t-[#2563EB]"
-        style={{ animation: "sdDashboardSpin 800ms linear infinite" }}
-      />
-      <span className="text-[11px] text-[#64748B]">{label}</span>
-      <style jsx global>{`
-        @keyframes sdDashboardSpin { to { transform: rotate(360deg); } }
-      `}</style>
-    </div>
-  );
+  return <DashboardLoading label={label} />;
 }
 
 function Section({
@@ -102,14 +91,14 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-[22px] border border-[#E2E8F0] bg-white p-3.5 shadow-[0_8px_24px_rgba(15,23,42,0.035)] sm:p-5 lg:p-6">
+    <section className="dashboard-card border border-[#E2E8F0] bg-white shadow-[0_8px_24px_rgba(15,23,42,0.035)]">
       <div className="mb-4 flex items-center gap-3">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB]">
           <Icon className="h-[17px] w-[17px]" />
         </div>
         <div>
           <h2 className="text-sm font-bold text-[#0F172A] sm:text-[15px]">{title}</h2>
-          {description && <p className="mt-0.5 text-[10px] leading-5 text-[#64748B] sm:text-[11px]">{description}</p>}
+          {description && <p className="mt-0.5 text-xs leading-5 text-[#64748B] sm:text-xs">{description}</p>}
         </div>
       </div>
       {children}
@@ -147,7 +136,7 @@ function MetricCard({
       style={{ background: active ? palette[0] : "#FFFFFF", borderColor: active ? palette[1] : "#E2E8F0" }}
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="truncate text-[10px] font-medium text-[#64748B] sm:text-[11px]">{label}</span>
+        <span className="truncate text-xs font-medium text-[#64748B] sm:text-xs">{label}</span>
         <span
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl"
           style={{ background: active ? palette[2] : palette[0], color: active ? "#FFFFFF" : palette[2] }}
@@ -173,7 +162,18 @@ function Trend({ value }: { value: number | null }) {
 
 function Chart({ snapshots, metric }: { snapshots: Snapshot[]; metric: Metric }) {
   const [active, setActive] = useState<{ x: number; y: number; value: number; date: string } | null>(null);
-  const width = 820;
+  const chartRef = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(820);
+  const hasPoints = snapshots.length > 0;
+  useEffect(() => {
+    const element = chartRef.current;
+    if (!element) return;
+    const update = () => setWidth(Math.max(240, Math.round(element.getBoundingClientRect().width)));
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [hasPoints]);
   const height = 245;
   const pad = 24;
 
@@ -189,7 +189,7 @@ function Chart({ snapshots, metric }: { snapshots: Snapshot[]; metric: Metric })
       const y = height - 28 - ((value - min) / range) * (height - 56);
       return { x, y, value, date: s.snapshotDate };
     });
-  }, [snapshots, metric]);
+  }, [snapshots, metric, width]);
 
   const path = useMemo(() => {
     if (!points.length) return "";
@@ -207,9 +207,24 @@ function Chart({ snapshots, metric }: { snapshots: Snapshot[]; metric: Metric })
   const labels = points.filter((_, i) => i === 0 || i === Math.floor(points.length / 2) || i === points.length - 1);
 
   return (
-    <div className="relative">
+    <div ref={chartRef} className="relative min-w-0">
       <div className="overflow-x-auto">
-        <svg viewBox={"0 0 " + width + " " + height} className="h-[220px] w-full min-w-[560px] sm:h-[245px] sm:min-w-0" onMouseLeave={() => setActive(null)}>
+        <svg viewBox={"0 0 " + width + " " + height} className="h-[220px] w-full sm:h-[245px]" preserveAspectRatio="none"
+          role="img" aria-label="نمودار آمار؛ برای مشاهده مقدار، لمس کن یا با کلیدهای جهت حرکت کن."
+          tabIndex={0}
+          onPointerDown={(event) => {
+            const bounds = event.currentTarget.getBoundingClientRect();
+            const x = ((event.clientX - bounds.left) / bounds.width) * width;
+            setActive(points.reduce((nearest, point) => Math.abs(point.x - x) < Math.abs(nearest.x - x) ? point : nearest));
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") { setActive(null); return; }
+            if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+            event.preventDefault();
+            const index = points.findIndex(point => point.date === active?.date);
+            const next = event.key === "Home" ? 0 : event.key === "End" ? points.length - 1 : Math.max(0, Math.min(points.length - 1, index + (event.key === "ArrowLeft" ? -1 : 1)));
+            setActive(points[next]);
+          }}>
           <defs>
             <linearGradient id="smartDirectInsightsArea" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#2563EB" stopOpacity="0.18" />
@@ -230,22 +245,19 @@ function Chart({ snapshots, metric }: { snapshots: Snapshot[]; metric: Metric })
               fill={active?.date === point.date ? "#2563EB" : "#FFFFFF"}
               stroke="#2563EB"
               strokeWidth="2"
-              onMouseEnter={() => setActive(point)}
+              onPointerEnter={() => setActive(point)}
             />
           ))}
           {labels.map((point, i) => (
-            <text key={point.date + "-label"} x={point.x} y={height - 6} textAnchor={i === 0 ? "start" : i === labels.length - 1 ? "end" : "middle"} className="fill-[#64748B] text-[11px]">
+            <text key={point.date + "-label"} x={point.x} y={height - 6} textAnchor={i === 0 ? "start" : i === labels.length - 1 ? "end" : "middle"} className="fill-[#64748B] text-xs">
               {date(point.date)}
             </text>
           ))}
         </svg>
       </div>
-      {active && (
-        <div className="pointer-events-none absolute -top-1 z-10 rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 shadow-lg" style={{ left: (active.x / width) * 100 + "%", transform: "translateX(-50%) translateY(-100%)" }}>
-          <div className="text-[10px] text-[#64748B]">{date(active.date, { dateStyle: "long" })}</div>
-          <div className="mt-0.5 text-xs font-bold text-[#0F172A]">{n(active.value)}</div>
-        </div>
-      )}
+      <div className="mt-2 min-h-12 rounded-lg bg-[#F8FAFC] px-3 py-2 text-xs text-[#64748B]" aria-live="polite" aria-atomic="true">
+        {active ? <><span>{date(active.date, { dateStyle: "long" })}</span><strong className="ms-3 text-[#0F172A]">{n(active.value)}</strong></> : "برای مشاهده مقدار هر روز، نمودار را لمس کن یا از کلیدهای جهت استفاده کن."}
+      </div>
     </div>
   );
 }
@@ -262,10 +274,8 @@ export default function InsightsDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [data, setData] = useState<Data | null>(null);
-  const calendarRef = useRef<HTMLDivElement>(null);
   const fromButtonRef = useRef<HTMLButtonElement>(null);
   const toButtonRef = useRef<HTMLButtonElement>(null);
-  const [calendarPosition, setCalendarPosition] = useState<{ top: number } | null>(null);
 
   useEffect(() => {
     void (async () => {
@@ -304,46 +314,6 @@ export default function InsightsDashboard() {
     if (accountId) void load(range, accountId, dateFrom, dateTo);
   }, [accountId, range, dateFrom, dateTo, load]);
 
-  useEffect(() => {
-    if (!calendarOpen) {
-      setCalendarPosition(null);
-      return;
-    }
-
-    const updateCalendarPosition = () => {
-      const button = calendarOpen === "from" ? fromButtonRef.current : toButtonRef.current;
-      if (!button) return;
-
-      const rect = button.getBoundingClientRect();
-      const estimatedHeight = 430;
-      const gap = 8;
-      const maxTop = Math.max(12, window.innerHeight - estimatedHeight - 12);
-      setCalendarPosition({ top: Math.min(rect.bottom + gap, maxTop) });
-    };
-
-    updateCalendarPosition();
-    window.addEventListener("resize", updateCalendarPosition);
-    window.addEventListener("scroll", updateCalendarPosition, true);
-
-    const handlePointerDown = (event: PointerEvent) => {
-      const target = event.target as Node | null;
-      if (
-        target &&
-        !calendarRef.current?.contains(target) &&
-        !(target instanceof Element && target.closest("[data-insights-calendar-popup]"))
-      ) {
-        setCalendarOpen(null);
-      }
-    };
-
-    document.addEventListener("pointerdown", handlePointerDown);
-    return () => {
-      window.removeEventListener("resize", updateCalendarPosition);
-      window.removeEventListener("scroll", updateCalendarPosition, true);
-      document.removeEventListener("pointerdown", handlePointerDown);
-    };
-  }, [calendarOpen]);
-
   const snapshots = data?.snapshots ?? [];
   const summary = data?.summary;
   const visibleSnapshots = snapshots;
@@ -363,17 +333,17 @@ export default function InsightsDashboard() {
   const selectedLabel = tabs.find((tab) => tab.id === metric)?.label || "دسترسی";
 
   return (
-    <main dir="rtl" className="min-h-screen overflow-x-clip bg-[#F8FAFC] pb-16 pt-1 sm:pb-16 sm:pt-2 lg:pb-6 lg:pt-2">
-      <div className="mx-auto flex max-w-[1400px] flex-col gap-3 px-2 sm:gap-4 sm:px-3 lg:gap-5 lg:px-5">
+    <main dir="rtl" className="w-full min-w-0">
+      <div className="dashboard-page flex max-w-6xl flex-col gap-4">
         <div className="flex items-start gap-3 rounded-2xl border border-[#FDE68A] bg-[#FFFBEB] p-3.5 text-[#78350F]">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#FEF3C7] text-[#B45309]"><Lightbulb className="h-5 w-5" /></span>
           <div className="min-w-0">
             <h2 className="text-sm font-bold text-[#92400E]">راهنمای صفحه</h2>
-            <div className="mt-1 flex flex-wrap gap-x-5 gap-y-0.5 text-[11px] leading-6">
-              <p className="whitespace-nowrap"><strong>دسترسی:</strong> چند اکانت مختلف محتوای پیجت رو دیدن.</p>
-              <p className="whitespace-nowrap"><strong>بازدید:</strong> تعداد دفعاتی که محتوای پیجت دیده یا پخش شده.</p>
-              <p className="whitespace-nowrap"><strong>تعاملات:</strong> لایک، کامنت، ذخیره و اشتراک‌گذاری.</p>
-              <p className="whitespace-nowrap"><strong>افراد فعال:</strong> چند اکانت مختلف با محتوای پیجت تعامل داشتن.</p>
+            <div className="mt-1 flex flex-wrap gap-x-5 gap-y-0.5 text-xs leading-6">
+              <p><strong>دسترسی:</strong> چند اکانت مختلف محتوای پیجت رو دیدن.</p>
+              <p><strong>بازدید:</strong> تعداد دفعاتی که محتوای پیجت دیده یا پخش شده.</p>
+              <p><strong>تعاملات:</strong> لایک، کامنت، ذخیره و اشتراک‌گذاری.</p>
+              <p><strong>افراد فعال:</strong> چند اکانت مختلف با محتوای پیجت تعامل داشتن.</p>
             </div>
           </div>
         </div>
@@ -381,33 +351,29 @@ export default function InsightsDashboard() {
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#2563EB] text-white"><BarChart3 className="h-[18px] w-[18px]" /></div><h1 className="text-[15px] font-bold text-[#0F172A] sm:text-base">تحلیل پیج</h1></div>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-              <div className="flex shrink-0 items-center gap-1 rounded-xl bg-[#F8FAFC] p-1">{[7, 30, 90].map((days) => <button key={days} type="button" onClick={() => {setDateFrom(undefined);setDateTo(undefined);setDraftFrom(undefined);setDraftTo(undefined);setRange(days as Range);}} className={range === days && !dateFrom ? "rounded-lg bg-[#2563EB] px-3 py-2 text-[10px] font-bold text-white shadow-sm" : "rounded-lg px-3 py-2 text-[10px] font-bold text-[#64748B]"}>{days} روز</button>)}</div>
-              <div ref={calendarRef} className="grid flex-1 grid-cols-2 gap-2">
+              <div className="flex shrink-0 items-center gap-1 rounded-xl bg-[#F8FAFC] p-1">{[7, 30, 90].map((days) => <button key={days} type="button" onClick={() => {setDateFrom(undefined);setDateTo(undefined);setDraftFrom(undefined);setDraftTo(undefined);setRange(days as Range);}} className={range === days && !dateFrom ? "rounded-lg bg-[#2563EB] px-3 py-2 text-xs font-bold text-white shadow-sm" : "rounded-lg px-3 py-2 text-xs font-bold text-[#64748B]"}>{days} روز</button>)}</div>
+              <div className="grid flex-1 grid-cols-2 gap-2">
                 <div>
-                  <span className="mb-1 block text-[10px] font-medium text-[#64748B]">از تاریخ</span>
+                  <span className="mb-1 block text-xs font-medium text-[#64748B]">از تاریخ</span>
                   <button ref={fromButtonRef} type="button" onClick={() => setCalendarOpen(calendarOpen === "from" ? null : "from")} className="flex h-10 w-full items-center justify-between gap-2 rounded-xl border border-[#E2E8F0] bg-white px-3 text-xs font-semibold text-[#0F172A]">
                     <span>{formatDateField(draftFrom || dateFrom)}</span><CalendarIcon className="h-4 w-4 text-[#2563EB]" />
                   </button>
                 </div>
                 <div>
-                  <span className="mb-1 block text-[10px] font-medium text-[#64748B]">تا تاریخ</span>
+                  <span className="mb-1 block text-xs font-medium text-[#64748B]">تا تاریخ</span>
                   <button ref={toButtonRef} type="button" onClick={() => setCalendarOpen(calendarOpen === "to" ? null : "to")} className="flex h-10 w-full items-center justify-between gap-2 rounded-xl border border-[#E2E8F0] bg-white px-3 text-xs font-semibold text-[#0F172A]">
                     <span>{formatDateField(draftTo || dateTo)}</span><CalendarIcon className="h-4 w-4 text-[#2563EB]" />
                   </button>
                 </div>
-                {typeof document !== "undefined" && calendarOpen && calendarPosition
-                  ? createPortal(
-                      <div
-                        data-insights-calendar-popup
-                        className="fixed z-[9999] w-[352px] max-w-[calc(100vw-24px)] box-border overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white p-0 shadow-2xl transition-all duration-200 ease-out"
-                        style={{
-                          left: "50%",
-                          top: calendarPosition.top,
-                          opacity: 1,
-                          transform: "translateX(-50%)",
-                          pointerEvents: "auto",
-                        }}
-                      >
+                <Popover
+                  open={Boolean(calendarOpen)}
+                  anchorEl={calendarOpen === "from" ? fromButtonRef.current : toButtonRef.current}
+                  onClose={() => setCalendarOpen(null)}
+                  anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                  transformOrigin={{ vertical: "top", horizontal: "right" }}
+                  marginThreshold={12}
+                  slotProps={{ paper: { dir: "rtl", className: "dashboard-theme", sx: { mt: 1, width: 352, maxWidth: "calc(100vw - 24px)", maxHeight: "calc(100dvh - 24px)", overflowY: "auto", borderRadius: 2, border: "1px solid #E2E8F0" } } }}
+                >
                         {calendarOpen === "from" ? (
                           <Calendar
                             mode="single"
@@ -438,14 +404,11 @@ export default function InsightsDashboard() {
                             disabled={{ before: draftFrom || dateFrom || minDate, after: today }}
                           />
                         )}
-                      </div>,
-                      document.body,
-                    )
-                  : null}
+                </Popover>
               </div>
               <button type="button" disabled={!draftFrom||!draftTo||draftFrom<minDate||draftTo>today||draftTo<draftFrom||(draftTo.getTime()-draftFrom.getTime())/86400000+1>730} onClick={() => {setDateFrom(draftFrom);setDateTo(draftTo);setCalendarOpen(null);}} className="h-10 rounded-xl bg-[#2563EB] px-5 text-xs font-bold text-white disabled:cursor-not-allowed disabled:bg-[#CBD5E1]">اعمال بازه</button>
             </div>
-            {draftFrom&&draftTo&&(draftTo<draftFrom||(draftTo.getTime()-draftFrom.getTime())/86400000+1>730)&&<p className="text-[10px] text-[#DC2626]">بازه باید حداکثر دو سال باشه و تاریخ پایان بعد از تاریخ شروع قرار بگیره.</p>}
+            {draftFrom&&draftTo&&(draftTo<draftFrom||(draftTo.getTime()-draftFrom.getTime())/86400000+1>730)&&<p className="text-xs text-[#DC2626]">بازه باید حداکثر دو سال باشه و تاریخ پایان بعد از تاریخ شروع قرار بگیره.</p>}
           </div>
         </header>
         {error && <div className="rounded-2xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-6 text-[#B91C1C]">{error}</div>}
@@ -468,7 +431,7 @@ export default function InsightsDashboard() {
                 {tabs.map((tab) => {
                   const Icon = tab.icon;
                   return (
-                    <button key={tab.id} type="button" onClick={() => setMetric(tab.id)} className={metric === tab.id ? "flex items-center justify-center gap-1.5 rounded-xl bg-white px-2 py-2.5 text-[10px] font-bold text-[#2563EB] shadow-sm ring-1 ring-[#DBEAFE]" : "flex items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-[10px] font-bold text-[#64748B]"}>
+                    <button key={tab.id} type="button" onClick={() => setMetric(tab.id)} className={metric === tab.id ? "flex items-center justify-center gap-1.5 rounded-xl bg-white px-2 py-2.5 text-xs font-bold text-[#2563EB] shadow-sm ring-1 ring-[#DBEAFE]" : "flex items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-xs font-bold text-[#64748B]"}>
                       <Icon className="h-3.5 w-3.5" />{tab.label}
                     </button>
                   );

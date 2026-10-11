@@ -196,24 +196,16 @@ export function Button({
     textTransform: "none",
     fontFamily: '"Vazirmatn", Arial, sans-serif',
     fontWeight: 600,
-    minHeight:
-      size === "xs" ? 24 :
-      size === "sm" ? 32 :
-      size === "lg" ? 40 :
-      size === "icon-xs" ? 24 :
-      size === "icon-sm" ? 32 :
-      size === "icon-lg" ? 40 :
-      size === "icon" ? 36 : 36,
+    minHeight: { xs: 44, lg: size === "lg" || size === "icon-lg" ? 48 : 40 },
     px:
       size === "xs" ? 1 :
       size === "sm" ? 1.5 :
       size === "lg" ? 3 :
       size?.startsWith("icon") ? 0 :
       2,
-    minWidth: size?.startsWith("icon") ? (
-      size === "icon-xs" ? 24 : size === "icon-sm" ? 32 : size === "icon-lg" ? 40 : 36
-    ) : undefined,
-    borderRadius: 2,
+    minWidth: 44,
+    borderRadius: "10px",
+    fontSize: 14,
     boxShadow: "none",
     ...(variant === "default" ? {
       bgcolor: COLORS.primary,
@@ -251,7 +243,7 @@ export function Button({
     ...(variant === "icon" ? {
       bgcolor: "transparent",
       color: COLORS.secondary,
-      minWidth: 0,
+      minWidth: 44,
       px: 0,
       "&:hover": { bgcolor: "transparent", color: COLORS.text },
       "&.Mui-disabled": { bgcolor: "transparent" },
@@ -265,7 +257,7 @@ export function Button({
       onClick?: React.MouseEventHandler;
     }>;
     return React.cloneElement(child, {
-      className: [classNameValue(className), child.props.className].filter(Boolean).join(" "),
+      className: ["dashboard-button-link", `dashboard-button-link--${variant}`, classNameValue(className), child.props.className].filter(Boolean).join(" "),
       onClick: props.onClick
         ? (event) => {
             props.onClick?.(event as React.MouseEvent<HTMLButtonElement, MouseEvent>);
@@ -280,7 +272,7 @@ export function Button({
     <MuiButton
       {...props}
       className={className}
-      variant="contained"
+      variant={variant === "outline" || variant === "destructive" ? "outlined" : variant === "default" || variant === "secondary" ? "contained" : "text"}
       disableElevation
       sx={sx}
     >
@@ -291,6 +283,9 @@ export function Button({
 
 export const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
   function Input({ className, ...props }, ref) {
+    if (props.type === "checkbox" || props.type === "radio") {
+      return <input {...props} ref={ref} className={className} />;
+    }
     return (
       <TextField
         inputRef={ref}
@@ -319,7 +314,7 @@ export const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"in
           },
           "& .MuiOutlinedInput-input": {
             fontFamily: '"Vazirmatn", Arial, sans-serif',
-            fontSize: { xs: 16, md: 13 },
+            fontSize: { xs: 16, lg: 14 },
           },
         }}
       />
@@ -355,7 +350,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, React.ComponentPro
           },
           "& textarea": {
             fontFamily: '"Vazirmatn", Arial, sans-serif',
-            fontSize: { xs: 16, md: 13 },
+            fontSize: { xs: 16, lg: 14 },
             lineHeight: 1.9,
           },
         }}
@@ -554,7 +549,7 @@ export function PopoverContent({
   );
 }
 
-type DashboardCalendarProps = any;
+type DashboardCalendarProps = DayPickerProps;
 
 export function Calendar({ className, ...props }: DashboardCalendarProps) {
   const defaultClassNames = getDefaultClassNames();
@@ -616,24 +611,28 @@ export function Calendar({ className, ...props }: DashboardCalendarProps) {
           display: "none",
         },
         "& .rdp-caption_label": { fontSize: 13, fontWeight: 700, color: COLORS.text },
-        "& .rdp-weekdays": { display: "flex", width: "100%" },
+        "& .rdp-weekdays": { display: "table-row", width: "100%" },
         "& .rdp-weekday": {
-          flex: 1,
+          display: "table-cell",
+          width: "14.2857%",
           textAlign: "center",
           color: COLORS.secondary,
-          fontSize: 11,
+          fontSize: 12,
           fontWeight: 600,
           py: 0.75,
         },
-        "& .rdp-week": { display: "flex", width: "100%", mt: 0.5 },
+        "& .rdp-week": { display: "table-row", width: "100%", mt: 0.5 },
         "& .rdp-day": {
-          flex: "1 1 0",
           width: "calc(100% / 7)",
-          display: "grid",
-          placeItems: "center",
+          display: "table-cell",
+          textAlign: "center",
+          verticalAlign: "middle",
           p: 0.25,
         },
         "& .rdp-day_button": {
+          margin: "0 auto",
+          display: "grid",
+          placeItems: "center",
           width: 38,
           height: 38,
           border: 0,

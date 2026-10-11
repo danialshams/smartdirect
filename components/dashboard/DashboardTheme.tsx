@@ -3,18 +3,12 @@
 import type { ReactNode } from "react";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
 import { CssBaseline, ThemeProvider, createTheme } from "@mui/material";
-import { CacheProvider } from "@emotion/react";
-import createCache from "@emotion/cache";
 import { prefixer } from "stylis";
 import rtlPlugin from "stylis-plugin-rtl";
 
-const rtlCache = createCache({
-  key: "smartdirect-dashboard-rtl",
-  stylisPlugins: [prefixer, rtlPlugin],
-});
-
 const dashboardTheme = createTheme({
   direction: "rtl",
+  breakpoints: { values: { xs: 0, sm: 640, md: 768, lg: 1024, xl: 1280 } },
   palette: {
     mode: "light",
     primary: { main: "#2563EB", dark: "#1D4ED8", light: "#3B82F6", contrastText: "#FFFFFF" },
@@ -32,7 +26,7 @@ const dashboardTheme = createTheme({
     h4: { fontWeight: 700 }, h5: { fontWeight: 700 }, h6: { fontWeight: 700 },
     button: { fontFamily: '"Vazirmatn", Arial, sans-serif', fontWeight: 600 },
   },
-  shape: { borderRadius: 10 },
+  shape: { borderRadius: 8 },
   components: {
     MuiCssBaseline: {
       styleOverrides: {
@@ -115,17 +109,24 @@ const dashboardTheme = createTheme({
       },
     },
     MuiPaper: { defaultProps: { elevation: 0 } },
-    MuiButton: { defaultProps: { disableElevation: true } },
+    MuiButton: {
+      defaultProps: { disableElevation: true },
+      styleOverrides: { root: { minHeight: 40, borderRadius: 10, textTransform: "none", fontSize: 14, "@media (max-width: 639px)": { minHeight: 44 } } },
+    },
+    MuiIconButton: { styleOverrides: { root: { "@media (max-width: 1023px)": { minWidth: 44, minHeight: 44 } } } },
+    MuiDialog: { styleOverrides: { paper: { borderRadius: 16 } } },
     MuiCard: {
       styleOverrides: {
-        root: { border: "1px solid #E2E8F0", borderRadius: 12 },
+        root: { border: "1px solid #E2E8F0", borderRadius: 16 },
       },
     },
-    MuiTextField: { defaultProps: { size: "small" } },
+    MuiTextField: { defaultProps: { size: "small" }, styleOverrides: { root: { minHeight: 44 } } },
     MuiOutlinedInput: {
       styleOverrides: {
         root: {
           borderRadius: 10,
+          minHeight: 44,
+          fontSize: 14,
           "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#94A3B8" },
           "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#2563EB", borderWidth: 1 },
         },
@@ -138,13 +139,11 @@ const dashboardTheme = createTheme({
 
 export default function DashboardTheme({ children }: { children: ReactNode }) {
   return (
-    <AppRouterCacheProvider options={{ enableCssLayer: true }}>
-      <CacheProvider value={rtlCache}>
+    <AppRouterCacheProvider options={{ enableCssLayer: true, key: "smartdirect-dashboard-rtl", stylisPlugins: [prefixer, rtlPlugin] }}>
         <ThemeProvider theme={dashboardTheme}>
           <CssBaseline />
           {children}
         </ThemeProvider>
-      </CacheProvider>
     </AppRouterCacheProvider>
   );
 }

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Avatar, Box, Typography } from "@mui/material";
 import { Images, UsersRound, UserRoundPlus } from "lucide-react";
-import { DashboardLoading } from "@/components/dashboard/DashboardUI";
+import { Button, DashboardLoading } from "@/components/dashboard/DashboardUI";
 
 type Profile = {
   accountId: string;
@@ -116,13 +116,11 @@ export default function InstagramProfileDashboard({
     void loadProfile();
   }, [loadProfile]);
 
-  if (!accountId) return null;
+  if (!accountId) return <div className="dashboard-card dashboard-empty"><p>پیجی برای نمایش پروفایل انتخاب نشده است.</p><a href="/api/instagram/connect" className="inline-flex min-h-11 items-center rounded-lg bg-primary px-4 text-white">اتصال پیج</a></div>;
 
   if (loading) {
     return (
-      <Box dir="rtl" sx={{ position: "fixed", inset: 0, zIndex: 1100, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
-        <DashboardLoading label="در حال دریافت اطلاعات پیج..." />
-      </Box>
+      <DashboardLoading className="dashboard-loading--page" label="در حال دریافت اطلاعات پیج..." />
     );
   }
   if (error) {
@@ -130,7 +128,7 @@ export default function InstagramProfileDashboard({
       <Box
         dir="rtl"
         sx={{
-          minHeight: "calc(100dvh - 120px)",
+          minHeight: 160,
           display: "flex",
           alignItems: "flex-start",
           justifyContent: "center",
@@ -153,22 +151,21 @@ export default function InstagramProfileDashboard({
             lineHeight: 2,
           }}
         >
-          {error}
+          <div role="alert">{error}</div>
+          <Button type="button" variant="outline" onClick={() => void loadProfile()} className="mt-3">تلاش دوباره</Button>
         </Box>
       </Box>
     );
   }
 
-  if (!profile) return null;
+  if (!profile) return <div className="dashboard-card dashboard-empty"><p>اطلاعات پروفایل در دسترس نیست.</p><Button variant="outline" onClick={() => { loadedAccountIdRef.current = null; void loadProfile(); }}>تلاش دوباره</Button></div>;
 
   return (
     <Box
       dir="rtl"
       sx={{
         width: "100%",
-        mt: { xs: 2, sm: 2.5, md: 3, lg: 3.5 },
-        px: { xs: 1, sm: 1.5, md: 2.5, lg: 5 },
-        pb: { xs: 12, lg: 5 },
+        mt: 2,
       }}
     >
       <Box sx={{ width: "100%" }}>
@@ -176,15 +173,16 @@ export default function InstagramProfileDashboard({
           <Box
             sx={{
               height: "100%",
-              minHeight: { xs: 220, sm: 250, lg: 285 },
+              minHeight: { xs: 180, sm: 220 },
               p: { xs: 2, sm: 2.5, md: 3, lg: 3.5 },
               border: "1px solid #E2E8F0",
-              borderRadius: { xs: 3, md: 3.5 },
+              borderRadius: "16px",
               bgcolor: "#FFFFFF",
               boxShadow: "0 8px 24px rgba(15,23,42,0.05)",
               display: "flex",
+              flexDirection: { xs: "column", sm: "row" },
               alignItems: "center",
-              gap: { xs: 3, sm: 4, md: 5 },
+              gap: { xs: 2, sm: 3 },
               position: "relative",
               overflow: "hidden",
             }}
@@ -219,7 +217,7 @@ export default function InstagramProfileDashboard({
               )}
             </Box>
 
-            <Box sx={{ minWidth: 0, position: "relative", textAlign: "right" }}>
+            <Box sx={{ minWidth: 0, position: "relative", textAlign: { xs: "center", sm: "right" }, overflowWrap: "anywhere" }}>
               <Typography
                 sx={{
                   color: "#0F172A",
@@ -238,7 +236,7 @@ export default function InstagramProfileDashboard({
                   sx={{
                     mt: 1.25,
                     color: "#475569",
-                    fontSize: { xs: 11.5, sm: 12.5 },
+                    fontSize: { xs: 12, sm: 12.5 },
                     lineHeight: 1.9,
                     display: "-webkit-box",
                     WebkitLineClamp: 3,
@@ -263,19 +261,19 @@ export default function InstagramProfileDashboard({
               gap: { xs: 1, sm: 1.5, md: 2 },
             }}
           >
-            <Box sx={{ minWidth: 0, p: { xs: 1.25, sm: 1.75 }, borderRadius: 2.5, bgcolor: "#F0FDF4", border: "1px solid #DCFCE7" }}>
+            <Box sx={{ minWidth: 0, p: { xs: 1.25, sm: 1.75 }, borderRadius: "16px", bgcolor: "#F0FDF4", border: "1px solid #DCFCE7" }}>
               <Box sx={{ width: 28, height: 28, mb: 1, borderRadius: 1.5, display: "grid", placeItems: "center", bgcolor: "#16A34A", color: "#FFFFFF" }}>
                 <UserRoundPlus size={15} strokeWidth={2} />
               </Box>
               <AnimatedProfileStat label="فالووینگ" value={profile.followsCount} visible={visible} countDelay={1150} />
             </Box>
-            <Box sx={{ minWidth: 0, p: { xs: 1.25, sm: 1.75 }, borderRadius: 2.5, bgcolor: "#F5F3FF", border: "1px solid #EDE9FE" }}>
+            <Box sx={{ minWidth: 0, p: { xs: 1.25, sm: 1.75 }, borderRadius: "16px", bgcolor: "#F5F3FF", border: "1px solid #EDE9FE" }}>
               <Box sx={{ width: 28, height: 28, mb: 1, borderRadius: 1.5, display: "grid", placeItems: "center", bgcolor: "#7C3AED", color: "#FFFFFF" }}>
                 <UsersRound size={15} strokeWidth={2} />
               </Box>
               <AnimatedProfileStat label="فالوور" value={profile.followersCount} visible={visible} countDelay={1250} />
             </Box>
-            <Box sx={{ minWidth: 0, p: { xs: 1.25, sm: 1.75 }, borderRadius: 2.5, bgcolor: "#EFF6FF", border: "1px solid #DBEAFE" }}>
+            <Box sx={{ minWidth: 0, p: { xs: 1.25, sm: 1.75 }, borderRadius: "16px", bgcolor: "#EFF6FF", border: "1px solid #DBEAFE" }}>
               <Box sx={{ width: 28, height: 28, mb: 1, borderRadius: 1.5, display: "grid", placeItems: "center", bgcolor: "#2563EB", color: "#FFFFFF" }}>
                 <Images size={15} strokeWidth={2} />
               </Box>
@@ -348,7 +346,7 @@ function AnimatedProfileStat({
         sx={{
           mt: 0.5,
           color: "#64748B",
-          fontSize: { xs: 11, sm: 12, md: 14 },
+          fontSize: { xs: 12, sm: 12, md: 14 },
         }}
       >
         {label}

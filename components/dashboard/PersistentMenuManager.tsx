@@ -1,5 +1,7 @@
 "use client";
 
+import DashboardModal from "@/components/dashboard/DashboardModal";
+
 import { Button, DashboardLoading, Input } from "@/components/dashboard/DashboardUI";
 import { CheckCircle2, MessageSquare, Pencil, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -305,7 +307,7 @@ export default function PersistentMenuManager({
 
   return (
     <>
-    <div dir="rtl" className="bg-[#F8FAFC] px-3 py-4 sm:px-5 sm:py-6 lg:px-8">
+    <div dir="rtl" className="dashboard-page">
       <div className="mx-auto w-full max-w-6xl">
         <div className="mb-6">
           <h1 className="mt-1 text-2xl font-bold tracking-tight text-[#0F172A] sm:text-3xl">
@@ -317,7 +319,7 @@ export default function PersistentMenuManager({
         </div>
 
         {!account ? (
-          <section className="rounded-2xl border border-dashed border-[#CBD5E1] bg-white px-6 py-16 text-center">
+          <section className="dashboard-card border border-dashed border-[#CBD5E1] bg-white px-6 py-16 text-center">
             <MessageSquare className="mx-auto text-[#94A3B8]" size={24} />
             <h2 className="mt-4 text-base font-bold text-[#0F172A]">
               ابتدا یک پیج اینستاگرام متصل کنید
@@ -325,7 +327,7 @@ export default function PersistentMenuManager({
           </section>
         ) : (
           <div className="space-y-5">
-            <section className="mx-auto w-full max-w-2xl rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
+            <section className="dashboard-card mx-auto w-full max-w-3xl border border-[#E2E8F0] bg-white shadow-sm">
               <div className="mb-6 flex items-start gap-3">
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">
                   ۱
@@ -351,13 +353,13 @@ export default function PersistentMenuManager({
                 style={{ fontSize: "16px", WebkitTextSizeAdjust: "100%" }}
               />
 
-              <div className="dashboard-character-counter text-[10px] text-[#64748B]">
+              <div className="dashboard-character-counter text-xs text-[#64748B]">
                 <span>حداکثر ۳۰ کاراکتر</span>
                 <span>{draft.length.toLocaleString("fa-IR")} / ۳۰</span>
               </div>
             </section>
 
-            <section className="mx-auto w-full max-w-2xl rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
+            <section className="dashboard-card mx-auto w-full max-w-3xl border border-[#E2E8F0] bg-white shadow-sm">
               <div className="mb-6 flex items-start gap-3">
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">
                   ۲
@@ -457,7 +459,7 @@ export default function PersistentMenuManager({
             </section>
 
             {error && (
-              <div className="mx-auto w-full max-w-2xl rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-5 text-[#B91C1C]" role="alert">
+              <div className="mx-auto w-full max-w-3xl rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-5 text-[#B91C1C]" role="alert">
                 {error}
               </div>
             )}
@@ -469,7 +471,7 @@ export default function PersistentMenuManager({
               </div>
             )}
 
-            <section className="mx-auto w-full max-w-2xl rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
+            <section className="dashboard-card mx-auto w-full max-w-3xl border border-[#E2E8F0] bg-white shadow-sm">
               <div className="mb-4 flex items-start gap-3">
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">
                   ۳
@@ -532,7 +534,7 @@ export default function PersistentMenuManager({
                     {editingId === menuItem.id && (
                       <div className="mt-3 rounded-2xl border border-[#BFDBFE] bg-white p-4 shadow-sm sm:p-5">
                         <div className="mb-5 flex items-start gap-3">
-                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-[10px] font-bold text-[#2563EB]">
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">
                             ویرایش
                           </span>
                           <div className="min-w-0">
@@ -556,7 +558,7 @@ export default function PersistentMenuManager({
                           style={{ fontSize: "16px", WebkitTextSizeAdjust: "100%" }}
                         />
 
-                        <div className="dashboard-character-counter text-[10px] text-[#64748B]">
+                        <div className="dashboard-character-counter text-xs text-[#64748B]">
                           <span>حداکثر ۳۰ کاراکتر</span>
                           <span>{editDraft.length.toLocaleString("fa-IR")} / ۳۰</span>
                         </div>
@@ -680,7 +682,7 @@ export default function PersistentMenuManager({
                 </div>
               )}
 
-              <div className="mt-4 flex items-center justify-between border-t border-[#E2E8F0] pt-4 text-[10px] text-[#64748B]">
+              <div className="mt-4 flex items-center justify-between border-t border-[#E2E8F0] pt-4 text-xs text-[#64748B]">
                 <span>حداکثر ۲۰ گزینه</span>
                 <span>{menuItems.length.toLocaleString("fa-IR")} / ۲۰</span>
               </div>
@@ -690,19 +692,11 @@ export default function PersistentMenuManager({
       </div>
     </div>
       {deleteTarget && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/30 px-4 backdrop-blur-[2px]"
-          role="presentation"
-          onMouseDown={(event) => {
-            if (event.currentTarget === event.target) setDeleteTarget(null);
-          }}
-        >
+        <DashboardModal labelledBy="delete-message-title" onClose={() => setDeleteTarget(null)} busy={saving}>
           <div
             dir="rtl"
-            role="dialog"
-            aria-modal="true"
             aria-labelledby="delete-message-title"
-            className="w-full max-w-sm rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-2xl"
+            className="w-full overflow-y-auto bg-white p-5"
           >
             <h3 id="delete-message-title" className="text-base font-bold text-[#0F172A]">
               مطمئنی می‌خوای این مورد رو پاک کنی؟
@@ -721,7 +715,7 @@ export default function PersistentMenuManager({
               </Button>
             </div>
           </div>
-        </div>
+        </DashboardModal>
       )}
     </>
   );

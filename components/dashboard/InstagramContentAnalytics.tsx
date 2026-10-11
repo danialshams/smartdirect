@@ -269,13 +269,13 @@ function ContentCard({
                     </div>
                 )}
 
-                <div className="absolute right-3 top-3 rounded-full border border-white/20 bg-primary/75 px-3 py-1.5 text-[10px] font-semibold text-white backdrop-blur">
+                <div className="absolute right-3 top-3 rounded-full border border-white/20 bg-primary/75 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur">
                     {mediaLabel(item)}
                 </div>
 
                 {item.insights.engagementRate !==
                     null && (
-                        <div className="absolute left-3 top-3 rounded-full bg-background/90 px-3 py-1.5 text-[10px] font-bold text-foreground shadow-sm backdrop-blur">
+                        <div className="absolute left-3 top-3 rounded-full bg-background/90 px-3 py-1.5 text-xs font-bold text-foreground shadow-sm backdrop-blur">
                             {percent(
                                 item.insights
                                     .engagementRate,
@@ -293,7 +293,7 @@ function ContentCard({
                         )}
                     </p>
 
-                    <p className="mt-2 text-[11px] text-muted-foreground">
+                    <p className="mt-2 text-xs text-muted-foreground">
                         {date(
                             item.timestamp,
                         )}
@@ -358,7 +358,7 @@ function ContentCard({
 
                 <div className="mt-4 flex items-center justify-between border-t border-border/60 pt-4">
                     <div>
-                        <p className="text-[10px] text-muted-foreground">
+                        <p className="text-xs text-muted-foreground">
                             تعاملات
                         </p>
 
@@ -377,7 +377,7 @@ function ContentCard({
                             }
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-[11px] font-medium text-muted-foreground transition hover:border-border hover:bg-muted hover:text-foreground"
+                            className="inline-flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs font-medium text-muted-foreground transition hover:border-border hover:bg-muted hover:text-foreground"
                         >
                             مشاهده محتوا
 
@@ -410,12 +410,12 @@ function Metric({
                     strokeWidth={1.8}
                 />
 
-                <span className="text-[10px]">
+                <span className="text-xs">
                     {label}
                 </span>
             </div>
 
-            <span className="text-[11px] font-semibold text-foreground">
+            <span className="text-xs font-semibold text-foreground">
                 {value}
             </span>
         </div>
@@ -726,7 +726,7 @@ export default function InstagramContentAnalytics() {
         >
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div>
-                    <div className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.18em] text-muted-foreground">
+                    <div className="flex items-center gap-2 text-xs font-semibold tracking-[0.18em] text-muted-foreground">
                         <BarChart3
                             size={14}
                         />
@@ -819,7 +819,7 @@ export default function InstagramContentAnalytics() {
                                             item.key as FilterType,
                                         )
                                     }
-                                    className={`rounded-xl px-3 py-2 text-[11px] font-medium transition ${filter ===
+                                    className={`rounded-xl px-3 py-2 text-xs font-medium transition ${filter ===
                                         item.key
                                         ? "bg-primary text-white"
                                         : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -940,7 +940,7 @@ export default function InstagramContentAnalytics() {
                                                     item.key as SortType,
                                                 )
                                             }
-                                            className={`rounded-xl px-3 py-2 text-[11px] font-medium transition ${sort ===
+                                            className={`rounded-xl px-3 py-2 text-xs font-medium transition ${sort ===
                                                 item.key
                                                 ? "bg-primary text-white"
                                                 : "border border-border text-muted-foreground hover:bg-muted"

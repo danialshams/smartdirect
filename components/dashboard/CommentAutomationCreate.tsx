@@ -105,8 +105,8 @@ export default function CommentAutomationCreate() {
   }
 
   return (
-    <div dir="rtl" className="min-h-[calc(100dvh-2rem)]">
-      <div className="mx-auto w-full max-w-2xl">
+    <div dir="rtl" className="dashboard-page">
+      <div className="mx-auto w-full max-w-3xl">
         <div className="mb-9">
           <Button type="button" onClick={() => router.back()} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]"><ArrowRight size={15} strokeWidth={2} />بازگشت</Button>
         </div>
@@ -147,7 +147,7 @@ export default function CommentAutomationCreate() {
                   )}
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent p-2.5 pt-10">
                     <div className="flex items-center justify-between gap-2 text-white">
-                      <span className="rounded-lg bg-black/35 px-2 py-1 text-[10px] font-semibold backdrop-blur-sm">{mediaLabel(item)}</span>
+                      <span className="rounded-lg bg-black/35 px-2 py-1 text-xs font-semibold backdrop-blur-sm">{mediaLabel(item)}</span>
                       {item.media_type === "VIDEO" && <Play size={13} fill="currentColor" />}
                     </div>
                   </div>

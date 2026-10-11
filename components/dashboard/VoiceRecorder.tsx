@@ -265,7 +265,7 @@ export default function VoiceRecorder({ onRecorded, disabled = false }: Props) {
       )}
 
       {error && (
-        <div className="flex items-start justify-between gap-2 rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3 py-2.5 text-[10px] leading-5 text-[#B91C1C]">
+        <div className="flex items-start justify-between gap-2 rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3 py-2.5 text-xs leading-5 text-[#B91C1C]">
           <span>{error}</span>
           <button type="button" onClick={() => setError("")} aria-label="بستن خطا">
             <X size={13} />

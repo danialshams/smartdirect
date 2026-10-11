@@ -322,7 +322,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
     <div className={["space-y-5", disabled ? "pointer-events-none opacity-60" : ""].join(" ")}>
       <div>
         <p className="text-sm font-bold text-[#0F172A]">{responseTypeTitle}</p>
-        <p className="mt-1 text-[11px] leading-5 text-[#64748B]">{responseTypeDescription}</p>
+        <p className="mt-1 text-xs leading-5 text-[#64748B]">{responseTypeDescription}</p>
       </div>
 
       <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
@@ -358,7 +358,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
             inputMode="text"
             autoCapitalize="sentences"
             spellCheck
-            className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none placeholder:text-[11px] placeholder:whitespace-nowrap placeholder:overflow-hidden placeholder:text-ellipsis focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10"
+            className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none placeholder:text-xs placeholder:whitespace-nowrap placeholder:overflow-hidden placeholder:text-ellipsis focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10"
             placeholder={textPlaceholder}
             style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }}
           />
@@ -383,22 +383,22 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
               <label className={["flex min-h-36 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed bg-[#F8FAFC] px-4 text-center transition", uploading ? "pointer-events-none opacity-60" : "hover:border-[#93C5FD] hover:bg-[#EFF6FF]"].join(" ")}>
                 {uploading ? (
                   <div className="flex w-full flex-col items-center justify-center px-6">
-                    <div className="mb-2 text-[10px] font-semibold text-[#2563EB]">{progress}٪</div>
+                    <div className="mb-2 text-xs font-semibold text-[#2563EB]">{progress}٪</div>
                     <div className="h-2 w-full max-w-xs overflow-hidden rounded-full bg-[#E2E8F0]"><div className="h-full rounded-full bg-[#2563EB] transition-[width] duration-200" style={{ width: `${progress}%` }} /></div>
                   </div>
                 ) : (
                   <>
                     <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB]">{responseType === "IMAGE" ? <ImagePlus size={21}/> : responseType === "VIDEO" ? <Video size={21}/> : <Mic size={21}/>}</span>
                     <span className="mt-3 text-xs font-bold text-[#0F172A]">انتخاب فایل از دستگاه</span>
-                    <span className="mt-1 text-[10px] text-[#64748B]">فایل را از دستگاه انتخاب کن</span>
+                    <span className="mt-1 text-xs text-[#64748B]">فایل را از دستگاه انتخاب کن</span>
                   </>
                 )}
                 <input type="file" accept={mediaAccept} disabled={uploading} className="hidden" onChange={(event) => { const file = event.target.files?.[0]; event.currentTarget.value = ""; void uploadMedia(file); }} />
               </label>
-              {retryFile && !uploading && error && <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] p-3"><div className="flex items-center justify-between text-[11px] font-bold text-[#B91C1C]"><span>آپلود ناموفق بود</span><span>{progress}٪</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-[#FEE2E2]"><div className="h-full rounded-full bg-[#DC2626]" style={{ width: `${Math.max(3, progress)}%` }} /></div><button type="button" onClick={() => void uploadMedia(retryFile)} className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-[#DC2626] px-3 py-2 text-[11px] font-bold text-white"><RotateCcw size={14}/>تلاش دوباره</button></div>}
+              {retryFile && !uploading && error && <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] p-3"><div className="flex items-center justify-between text-xs font-bold text-[#B91C1C]"><span>آپلود ناموفق بود</span><span>{progress}٪</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-[#FEE2E2]"><div className="h-full rounded-full bg-[#DC2626]" style={{ width: `${Math.max(3, progress)}%` }} /></div><button type="button" onClick={() => void uploadMedia(retryFile)} className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-[#DC2626] px-3 py-2 text-xs font-bold text-white"><RotateCcw size={14}/>تلاش دوباره</button></div>}
 {responseType === "AUDIO" && (
                 <>
-                  <div className="text-center text-[10px] font-semibold text-[#94A3B8]">یا</div>
+                  <div className="text-center text-xs font-semibold text-[#94A3B8]">یا</div>
                   <VoiceRecorder disabled={uploading} onRecorded={uploadMedia} />
                 </>
               )}
@@ -411,7 +411,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
         <div className={["space-y-5 transition-opacity duration-200", showcaseSaved ? "opacity-55" : ""].join(" ")}>
           <div>
             <p className="text-sm font-bold text-[#0F172A]">ویترین</p>
-            <p className="mt-1 text-[11px] leading-5 text-[#64748B]">اسلایدهای ویترین را با تصویر، تیتر و توضیحات بساز.</p>
+            <p className="mt-1 text-xs leading-5 text-[#64748B]">اسلایدهای ویترین را با تصویر، تیتر و توضیحات بساز.</p>
           </div>
           <div className="space-y-4">
             {slides.map((slide, index) => (
@@ -420,7 +420,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                 <label className="relative flex min-h-44 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-[#CBD5E1] bg-[#F8FAFC] text-center hover:border-[#93C5FD] hover:bg-[#EFF6FF]">
                   {slideUploading[slide.id] ? (
                     <div className="flex w-full flex-col items-center justify-center px-6">
-                      <div className="mb-2 text-[10px] font-semibold text-[#2563EB]">
+                      <div className="mb-2 text-xs font-semibold text-[#2563EB]">
                         {slideUploadProgress[slide.id] ?? 0}٪
                       </div>
                       <div className="h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-[#E2E8F0]">
@@ -431,9 +431,9 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                     <img src={slide.previewUrl} alt="" className="h-44 w-full object-cover" />
                   ) : slideRetryFiles[slide.id] ? (
                     <div className="flex w-full flex-col items-center justify-center px-6">
-                      <span className="mb-2 text-[10px] font-bold text-[#B91C1C]">آپلود ناموفق بود — {slideUploadProgress[slide.id] ?? 0}٪</span>
+                      <span className="mb-2 text-xs font-bold text-[#B91C1C]">آپلود ناموفق بود — {slideUploadProgress[slide.id] ?? 0}٪</span>
                       <div className="h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-[#FEE2E2]"><div className="h-full rounded-full bg-[#DC2626]" style={{ width: `${Math.max(3, Math.min(100, slideUploadProgress[slide.id] ?? 0))}%` }} /></div>
-                      <button type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); void uploadSlideImage(slide.id, slideRetryFiles[slide.id] ?? undefined); }} className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#DC2626] px-3 py-2 text-[11px] font-bold text-white">
+                      <button type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); void uploadSlideImage(slide.id, slideRetryFiles[slide.id] ?? undefined); }} className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#DC2626] px-3 py-2 text-xs font-bold text-white">
                         <RotateCcw size={14}/>تلاش دوباره
                       </button>
                     </div>
@@ -441,7 +441,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                     <>
                       <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB]"><ImagePlus size={21}/></span>
                       <span className="mt-3 text-xs font-bold text-[#0F172A]">آپلود عکس اسلاید {index + 1}</span>
-                      <span className="mt-1 text-[10px] text-[#64748B]">برای انتخاب تصویر کلیک کن</span>
+                      <span className="mt-1 text-xs text-[#64748B]">برای انتخاب تصویر کلیک کن</span>
                     </>
                   )}
                   <input type="file" accept="image/*" disabled={slideUploading[slide.id] || savingShowcase || Boolean(message.showcaseId)} className="hidden" onChange={(event) => { const file = event.target.files?.[0]; event.currentTarget.value = ""; void uploadSlideImage(slide.id, file); }} />
@@ -608,7 +608,7 @@ function FormBranchEditor({ title, question, replies, showcases, forms, loadingR
     <div className={["space-y-4", level > 0 ? "rounded-2xl border border-[#DBEAFE] bg-[#F8FAFC] p-3.5" : ""].join(" ")}>
       <div>
         <p className="text-right text-lg font-extrabold text-[#0F172A]">{level > 0 ? "فرم مقصد" : "فرم"}</p>
-        <p className="mt-1 text-[11px] leading-5 text-[#64748B]">متن ورودی فرم را بنویس و برای هر گزینه مشخص کن کاربر به کدام پاسخ هدایت شود.</p>
+        <p className="mt-1 text-xs leading-5 text-[#64748B]">متن ورودی فرم را بنویس و برای هر گزینه مشخص کن کاربر به کدام پاسخ هدایت شود.</p>
       </div>
 
       <div>
@@ -620,9 +620,9 @@ function FormBranchEditor({ title, question, replies, showcases, forms, loadingR
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 text-right">
             <p className="text-right text-lg font-extrabold text-[#0F172A]">گزینه‌ها</p>
-            <p className="mt-1 text-right text-[10px] text-[#64748B]">حداکثر ۱۳ گزینه در هر مرحله.</p>
+            <p className="mt-1 text-right text-xs text-[#64748B]">حداکثر ۱۳ گزینه در هر مرحله.</p>
           </div>
-          <span className="shrink-0 rounded-full bg-[#EFF6FF] px-2.5 py-1 text-[10px] font-bold text-[#2563EB]">{optionReplies.length} / {FORM_MAX_OPTIONS - (replies.some((reply) => reply.isExit) ? 1 : 0)}</span>
+          <span className="shrink-0 rounded-full bg-[#EFF6FF] px-2.5 py-1 text-xs font-bold text-[#2563EB]">{optionReplies.length} / {FORM_MAX_OPTIONS - (replies.some((reply) => reply.isExit) ? 1 : 0)}</span>
         </div>
 
         <div className="mt-3 space-y-3">
@@ -645,7 +645,7 @@ function FormOptionEditor({ reply, index, showcases, forms, loadingResources, hi
   async function upload(type: typeof FORM_MEDIA_TYPES[number], file?: File) { if (!file) return; setUploading(true); try { const url = await onUploadMedia(file); if (reply.destinationMediaUrl && reply.destinationMediaUrl !== url) void requestStorageCleanupByPublicUrl(reply.destinationMediaUrl).catch(() => undefined); onChange({destinationType:type,destinationMediaUrl:url,destinationMediaId:""}); } finally { setUploading(false); } }
   function selectDestination(value: QuickReplyDraft["destinationType"]) { if (reply.destinationMediaUrl && !FORM_MEDIA_TYPES.includes(value as typeof FORM_MEDIA_TYPES[number])) void requestStorageCleanupByPublicUrl(reply.destinationMediaUrl).catch(() => undefined); onChange({destinationType:value,destinationText:value==="TEXT"?reply.destinationText:"",destinationFormId:value==="FORM"?reply.destinationFormId:"",destinationShowcaseId:value==="SHOWCASE"?reply.destinationShowcaseId:"",destinationMediaUrl:FORM_MEDIA_TYPES.includes(value as typeof FORM_MEDIA_TYPES[number])?reply.destinationMediaUrl:"",destinationMediaId:FORM_MEDIA_TYPES.includes(value as typeof FORM_MEDIA_TYPES[number])?reply.destinationMediaId:"",destinationQuestion:value==="FORM"?reply.destinationQuestion:"",destinationQuickReplies:value==="FORM"?(reply.destinationQuickReplies.length?reply.destinationQuickReplies:[createEmptyQuickReply()]):[]}); }
   return <div className="space-y-3 rounded-2xl border border-[#E2E8F0] bg-white p-3.5">
-    <div className="relative flex items-center justify-center"><p className="text-center text-lg font-extrabold text-[#0F172A]">گزینه {index+1}</p><button type="button" onClick={onRemove} className="absolute left-0 text-[11px] font-bold text-[#DC2626]">حذف</button></div>
+    <div className="relative flex items-center justify-center"><p className="text-center text-lg font-extrabold text-[#0F172A]">گزینه {index+1}</p><button type="button" onClick={onRemove} className="absolute left-0 text-xs font-bold text-[#DC2626]">حذف</button></div>
     <input value={reply.title} maxLength={20} onChange={(e)=>onChange({title:e.target.value})} placeholder="نام گزینه را وارد کن..." className="w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{fontSize:"16px",WebkitTextSizeAdjust:"100%"}} />
     <div><label className="mb-2 block text-xs font-bold text-[#0F172A]">کاربر هدایت شود به:</label><Select value={destinationType ?? ""} onChange={(e)=>selectDestination((e.target.value||null) as QuickReplyDraft["destinationType"])} className="!w-full [&_.MuiSelect-select]:!py-3.5 [&_.MuiSelect-select]:!text-base [&_.MuiNativeSelect-icon]:!top-1/2 [&_.MuiNativeSelect-icon]:!-translate-y-1/2"><option value="">انتخاب مقصد</option><option value="TEXT">متن</option><option value="AUDIO">وویس</option><option value="IMAGE">عکس</option>{!hideVideo && <option value="VIDEO">فیلم</option>}<option value="SHOWCASE">ویترین</option>{!hideForm && <option value="FORM">فرم جدید</option>}</Select></div>
     {destinationType==="TEXT" && <textarea value={reply.destinationText} onChange={(e)=>onChange({destinationText:e.target.value})} rows={4} maxLength={2000} placeholder="متن پاسخ این گزینه..." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{fontSize:"16px",lineHeight:1.75,WebkitTextSizeAdjust:"100%"}} />}
@@ -659,7 +659,7 @@ function FormOptionEditor({ reply, index, showcases, forms, loadingResources, hi
         </label>
         {destinationType === "AUDIO" && (
           <>
-            <div className="text-center text-[10px] font-semibold text-[#94A3B8]">یا</div>
+            <div className="text-center text-xs font-semibold text-[#94A3B8]">یا</div>
             <VoiceRecorder disabled={uploading} onRecorded={(file) => upload("AUDIO", file)} />
           </>
         )}

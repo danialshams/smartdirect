@@ -97,9 +97,9 @@ export default function AutoRepliesManager() {
   ];
 
   return (
-    <div dir="rtl" className="min-h-full bg-[#F8FAFC] px-3 py-4 sm:px-5 sm:py-6 lg:px-8">
-      <div className="mx-auto w-full max-w-4xl">
-        <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
+    <div dir="rtl" className="dashboard-page">
+      <div className="mx-auto w-full max-w-6xl">
+        <section className="dashboard-card border border-[#E2E8F0] bg-white shadow-sm">
           <div className="mb-5 flex items-start gap-3">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB]">
               <MessageCircleReply size={19} />
@@ -165,7 +165,7 @@ export default function AutoRepliesManager() {
                           <span className="text-sm font-bold text-[#0F172A]">
                             {typeLabels[job.type]}
                           </span>
-                          <span className="text-[11px] font-medium text-[#64748B]">
+                          <span className="text-xs font-medium text-[#64748B]">
                             {formatDate(job.publishedAt ?? job.createdAt)}
                           </span>
                         </div>

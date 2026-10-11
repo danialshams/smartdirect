@@ -1,5 +1,7 @@
 "use client";
 
+import DashboardModal from "./DashboardModal";
+
 import { Input } from "@/components/dashboard/DashboardUI"
 import { Button, DashboardLoading } from "@/components/dashboard/DashboardUI"
 import { Textarea } from "@/components/dashboard/DashboardUI"
@@ -1607,8 +1609,8 @@ export default function AutomationForm({
         const responseMessage = messages[0] ?? null;
 
         return (
-            <div dir="rtl" className="min-h-[calc(100dvh-2rem)]">
-                <div className="mx-auto w-full max-w-2xl">
+            <div dir="rtl" className="dashboard-page">
+                <div className="mx-auto w-full max-w-3xl">
                     <div className="mb-5">
                         <button
                             type="button"
@@ -1626,7 +1628,7 @@ export default function AutomationForm({
 
                     <form onSubmit={handleSubmit}>
                         <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-                            <section className="overflow-hidden rounded-3xl border border-border/80 bg-card shadow-sm lg:sticky lg:top-5">
+                            <section className="dashboard-card overflow-hidden border border-border/80 bg-card shadow-sm lg:sticky lg:top-5 p-0">
                                 <div className="p-4 sm:p-5">
                                     <div className="mb-4">
                                         <p className="text-xs text-muted-foreground">استوری انتخاب‌شده</p>
@@ -1670,7 +1672,7 @@ export default function AutomationForm({
                                     </div>
                                 )}
 
-                                <section className="rounded-3xl border border-border/80 bg-card p-4 shadow-sm sm:p-5">
+                                <section className="dashboard-card border border-border/80 bg-card shadow-sm">
                                     <KeywordInput
                                         keyword={keyword}
                                         setKeyword={setKeyword}
@@ -1678,7 +1680,7 @@ export default function AutomationForm({
                                     />
                                 </section>
 
-                                <section className="rounded-3xl border border-border/80 bg-card p-4 shadow-sm sm:p-5">
+                                <section className="dashboard-card border border-border/80 bg-card shadow-sm">
                                     <div className="flex items-center justify-between gap-3">
                                         <div>
                                             <p className="text-sm font-semibold text-foreground">لایک Reply استوری</p>
@@ -1695,7 +1697,7 @@ export default function AutomationForm({
                                     </div>
                                 </section>
 
-                                <section className="rounded-3xl border border-border/80 bg-card p-4 shadow-sm sm:p-5">
+                                <section className="dashboard-card border border-border/80 bg-card shadow-sm">
                                     <div className="mb-4">
                                         <h2 className="text-base font-bold">پاسخ</h2>
                                     </div>
@@ -1794,13 +1796,13 @@ export default function AutomationForm({
     /* ---------------------------------------------------------------------- */
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 sm:p-4">
-            <div className="flex h-[100dvh] max-h-[100dvh] w-full flex-col overflow-hidden bg-background shadow-2xl sm:h-auto sm:max-h-[92vh] sm:max-w-4xl sm:rounded-2xl">
+        <DashboardModal labelledBy="automation-form-title" onClose={onClose} busy={saving} large>
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-background">
                 {/* Header */}
 
                 <div className="flex shrink-0 items-center justify-between border-b border-border px-5 py-4 sm:px-6 sm:py-5">
                     <div>
-                        <h2 className="text-lg font-semibold text-gray-900">
+                        <h2 id="automation-form-title" className="text-lg font-semibold text-gray-900">
                             {isEditing
                                 ? "ویرایش پاسخ خودکار"
                                 : "ساخت پاسخ خودکار"}
@@ -1824,6 +1826,8 @@ export default function AutomationForm({
                         }
                         className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
                         aria-label="بستن"
+                        variant="ghost"
+                        size="icon"
                     >
                         <X size={19} />
                     </Button>
@@ -1833,7 +1837,7 @@ export default function AutomationForm({
                     onSubmit={
                         handleSubmit
                     }
-                    className="min-h-0 space-y-6 overflow-y-auto px-4 pb-6 pt-4 sm:space-y-7 sm:p-6"
+                    className="min-h-0 flex-1 space-y-6 overflow-y-auto px-4 pb-6 pt-4 sm:space-y-7 sm:p-6"
                 >
                     {/* Trigger */}
 
@@ -1994,7 +1998,7 @@ export default function AutomationForm({
 
                                     {stories.length >
                                         0 && (
-                                            <span className="shrink-0 rounded-full bg-gray-100 px-3 py-1 text-[11px] text-muted-foreground">
+                                            <span className="shrink-0 rounded-full bg-gray-100 px-3 py-1 text-xs text-muted-foreground">
                                                 {
                                                     stories.length
                                                 }{" "}
@@ -2084,12 +2088,12 @@ export default function AutomationForm({
                                                             )}
 
                                                             {selected && (
-                                                                <div className="absolute inset-x-2 top-2 flex items-center justify-center rounded-lg bg-gray-950/85 px-2 py-2 text-[11px] font-medium text-white">
+                                                                <div className="absolute inset-x-2 top-2 flex items-center justify-center rounded-lg bg-gray-950/85 px-2 py-2 text-xs font-medium text-white">
                                                                     استوری انتخاب شد
                                                                 </div>
                                                             )}
 
-                                                            <div className="absolute inset-x-2 bottom-2 rounded-lg bg-black/55 px-2 py-1.5 text-center text-[10px] text-white backdrop-blur-sm">
+                                                            <div className="absolute inset-x-2 bottom-2 rounded-lg bg-black/55 px-2 py-1.5 text-center text-xs text-white backdrop-blur-sm">
                                                                 {story.mediaType ===
                                                                     "VIDEO"
                                                                     ? "ویدیو"
@@ -2098,11 +2102,11 @@ export default function AutomationForm({
                                                         </div>
 
                                                         <div className="p-2.5">
-                                                            <p className="text-[11px] font-medium text-foreground">
+                                                            <p className="text-xs font-medium text-foreground">
                                                                 استوری
                                                             </p>
 
-                                                            <p className="mt-1 truncate text-[10px] text-muted-foreground">
+                                                            <p className="mt-1 truncate text-xs text-muted-foreground">
                                                                 {formatStoryDate(
                                                                     story.timestamp
                                                                 )}
@@ -2122,7 +2126,7 @@ export default function AutomationForm({
                                                 استوری انتخاب‌شده
                                             </p>
 
-                                            <p className="mt-1 truncate text-[11px] text-muted-foreground">
+                                            <p className="mt-1 truncate text-xs text-muted-foreground">
                                                 ID:{" "}
                                                 {
                                                     selectedStory.id
@@ -2366,7 +2370,7 @@ export default function AutomationForm({
                     {/* ---------------------------------------------------------------- */}
 
                     {isStory && (
-                        <section className="rounded-2xl border border-border bg-muted p-5">
+                        <section className="dashboard-card border border-border bg-muted">
                             <div className="flex items-start gap-3">
                                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-foreground shadow-sm">
                                     <MessageSquareText
@@ -2464,7 +2468,7 @@ export default function AutomationForm({
                     </div>
                 </form>
             </div>
-        </div>
+        </DashboardModal>
     );
 }
 

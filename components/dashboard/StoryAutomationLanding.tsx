@@ -7,8 +7,8 @@ export default function StoryAutomationLanding() {
   const router = useRouter();
 
   return (
-    <div dir="rtl" className="min-h-[calc(100dvh-2rem)]">
-      <div className="mx-auto w-full max-w-2xl">
+    <div dir="rtl" className="dashboard-page">
+      <div className="mx-auto w-full max-w-3xl">
         <div className="mb-5 flex items-start gap-3">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB]">
             <Camera size={19} />
@@ -19,7 +19,7 @@ export default function StoryAutomationLanding() {
           </div>
         </div>
 
-        <section className="rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-sm sm:p-6">
+        <section className="dashboard-card border border-[#E2E8F0] bg-white shadow-sm">
           <div className="flex min-h-[280px] flex-col items-center justify-center text-center">
             <p className="mt-2 max-w-sm text-xs leading-6 text-[#64748B]">
               یک استوری فعال را انتخاب کنید و پاسخ خودکار آن را تنظیم کنید.
