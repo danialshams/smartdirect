@@ -1,34 +1,27 @@
 "use client";
-import { Checkbox } from "@/components/dashboard/DashboardUI"
-import { Textarea } from "@/components/dashboard/DashboardUI"
-import { Button } from "@/components/dashboard/DashboardUI"
-import { Calendar } from "@/components/dashboard/DashboardUI"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/dashboard/DashboardUI"
-import { Input } from "@/components/dashboard/DashboardUI"
-import { Select } from "@/components/dashboard/DashboardUI"
+import { Button, Input } from "@/components/dashboard/DashboardUI";
 
-import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, CalendarClock, Camera, CheckCircle2, Clapperboard, CircleSlash2, Clock3, ImagePlus, Images, Loader2, Pencil, Plus, RotateCcw, Send, Trash2, Video, X } from "lucide-react";
-import PersianDatePicker, { type JalaliDate } from "./PersianDatePicker";
-import { upload as uploadToBlob } from "@vercel/blob/client";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { WheelPicker, type WheelPickerOption } from "@ncdai/react-wheel-picker";
 import "@ncdai/react-wheel-picker/style.css";
+import { upload as uploadToBlob } from "@vercel/blob/client";
+import { ArrowLeft, ArrowRight, CalendarClock, Camera, CheckCircle2, CircleSlash2, Clapperboard, Clock3, ImagePlus, Images, Loader2, Pencil, RotateCcw, Send, Trash2, X } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from "react";
+import { toast } from "sonner";
+import { type JalaliDate } from "./PersianDatePicker";
 
+import {
+    createEmptyMessage,
+    createEmptyQuickReply,
+    validateMessages,
+    type InstagramAccount as AutomationAccount,
+    type FormItem,
+    type MessageDraft,
+    type Showcase
+} from "../automation-form-utils";
 import PublishingStoryAutomationSetup, { type PublishingStoryAutomationSetupHandle } from "./PublishingStoryAutomationSetup";
 import { useStorageUploadLease } from "./useStorageUploadLease";
-import {
-  createEmptyMessage,
-  createEmptyQuickReply,
-  getMessageTypeLabel,
-  validateMessages,
-  type FormItem,
-  type InstagramAccount as AutomationAccount,
-  type MessageDraft,
-  type Showcase,
-} from "../automation-form-utils";
 
 type PublishType = "POST" | "CAROUSEL" | "REEL" | "STORY";
 type MediaType = "IMAGE" | "VIDEO";
@@ -40,16 +33,6 @@ let publishingAccountsCache: InstagramAccount[] | null = null;
 
 type InstagramAccount = { id: string; igUsername: string | null; username?: string | null; igUserId: string; isConnected?: boolean };
 
-
-type AutomationDraftConfig = {
-  triggerType: "COMMENT_KEYWORD" | "STORY_REPLY_KEYWORD";
-  keyword: string;
-  commentReplyText: string;
-  likeStoryReply: boolean;
-  requireFollow: boolean;
-  followGateText: string;
-  messages: MessageDraft[];
-};
 
 const typeLabels: Record<PublishType, string> = { POST: "پست", CAROUSEL: "آلبوم", REEL: "ریلز", STORY: "استوری" };
 const statusLabels: Record<string, string> = { DRAFT: "پیش‌نویس", PROCESSING: "در حال پردازش", PUBLISHING: "در حال انتشار", PUBLISHED: "منتشر شده", FAILED: "ناموفق", SCHEDULED: "زمان‌بندی شده", CANCELLED: "لغو شده" };
@@ -198,14 +181,14 @@ async function uploadFileWithProgress(file: File, onProgress: UploadProgressCall
       abortSignal: abortController.signal,
       ...(file.type.startsWith("video/")
         ? {
-            onUploadProgress: (progress) => {
-              // Video uploads use the SDK's XHR transport. This avoids the
-              // browser fetch/CORS path that can complete the preflight but
-              // never start the actual PUT on some networks.
-              const uploadProgress = Math.min(94, Math.max(10, 10 + progress.percentage * 0.84));
-              onProgress(Math.round(uploadProgress));
-            },
-          }
+          onUploadProgress: (progress) => {
+            // Video uploads use the SDK's XHR transport. This avoids the
+            // browser fetch/CORS path that can complete the preflight but
+            // never start the actual PUT on some networks.
+            const uploadProgress = Math.min(94, Math.max(10, 10 + progress.percentage * 0.84));
+            onProgress(Math.round(uploadProgress));
+          },
+        }
         : {}),
       clientPayload: JSON.stringify({
         pathname: prepareResult.pathname,
@@ -323,7 +306,7 @@ function ProgressBar({ progress }: { progress: number }) {
       {toPersianDigits(progress)}٪
     </div>
     <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#E2E8F0]">
-      <div className="h-full rounded-full bg-[#2563EB] transition-[width] duration-150 ease-out" style={{width:`${Math.max(0,Math.min(100,progress))}%`}}/>
+      <div className="h-full rounded-full bg-[#2563EB] transition-[width] duration-150 ease-out" style={{ width: `${Math.max(0, Math.min(100, progress))}%` }} />
     </div>
   </div>;
 }
@@ -359,25 +342,25 @@ function UploadSuccessMark() {
   );
 }
 function UploadArea({ id, accept, multiple, disabled, isDragging, setIsDragging, uploading, uploadSuccess, uploadProgress, onChange, onDrop, onCancelUpload, onRetryUpload, retryAvailable, title }: any) {
-  return <div onDragOver={(e: DragEvent<HTMLDivElement>)=>{e.preventDefault();setIsDragging(true)}} onDragLeave={()=>setIsDragging(false)} onDrop={onDrop} className={["relative overflow-hidden rounded-xl border border-dashed p-4 transition sm:p-6",isDragging?"border-[#2563EB] bg-[#2563EB]/5":"border-[#CBD5E1] bg-[#F8FAFC] hover:border-[#93C5FD] hover:bg-[#EFF6FF]/50",disabled&&!uploading?"pointer-events-none opacity-60":""].join(" ")}>
-    <Input id={id} type="file" accept={accept} multiple={multiple} onChange={onChange} disabled={disabled} className="sr-only"/>
-    <label htmlFor={id} className={["flex min-h-[190px] flex-col items-center justify-center text-center",uploading?"cursor-default":"cursor-pointer"].join(" ")}>
-      {!uploading && !uploadSuccess && <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-[#2563EB] shadow-sm ring-1 ring-[#E2E8F0]"><ImagePlus size={22}/></div>}
-      <span className={["mt-4 inline-flex min-h-6 items-center justify-center gap-2 text-sm font-bold transition-colors duration-300",uploadSuccess?"text-[#16A34A]":"text-[#0F172A]"].join(" ")}>
-        {uploadSuccess ? <><UploadSuccessMark/><span className="sr-only">آپلود کامل شد</span></> : uploading ? "در حال آپلود..." : title}
+  return <div onDragOver={(e: DragEvent<HTMLDivElement>) => { e.preventDefault(); setIsDragging(true) }} onDragLeave={() => setIsDragging(false)} onDrop={onDrop} className={["relative overflow-hidden rounded-xl border border-dashed p-4 transition sm:p-6", isDragging ? "border-[#2563EB] bg-[#2563EB]/5" : "border-[#CBD5E1] bg-[#F8FAFC] hover:border-[#93C5FD] hover:bg-[#EFF6FF]/50", disabled && !uploading ? "pointer-events-none opacity-60" : ""].join(" ")}>
+    <Input id={id} type="file" accept={accept} multiple={multiple} onChange={onChange} disabled={disabled} className="sr-only" />
+    <label htmlFor={id} className={["flex min-h-[190px] flex-col items-center justify-center text-center", uploading ? "cursor-default" : "cursor-pointer"].join(" ")}>
+      {!uploading && !uploadSuccess && <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-[#2563EB] shadow-sm ring-1 ring-[#E2E8F0]"><ImagePlus size={22} /></div>}
+      <span className={["mt-4 inline-flex min-h-6 items-center justify-center gap-2 text-sm font-bold transition-colors duration-300", uploadSuccess ? "text-[#16A34A]" : "text-[#0F172A]"].join(" ")}>
+        {uploadSuccess ? <><UploadSuccessMark /><span className="sr-only">آپلود کامل شد</span></> : uploading ? "در حال آپلود..." : title}
       </span>
-      {!uploading&&!uploadSuccess&&<span className="mt-1.5 whitespace-nowrap text-[11px] leading-5 text-[#64748B]">فایل را بکش و اینجا رها کن یا برای انتخاب از دستگاه کلیک کن.</span>}
-      {uploading&&<ProgressBar progress={uploadProgress}/>}
+      {!uploading && !uploadSuccess && <span className="mt-1.5 whitespace-nowrap text-[11px] leading-5 text-[#64748B]">فایل را بکش و اینجا رها کن یا برای انتخاب از دستگاه کلیک کن.</span>}
+      {uploading && <ProgressBar progress={uploadProgress} />}
     </label>
-    {uploading&&<div className="flex justify-center"><button type="button" onClick={onCancelUpload} className="mt-3 rounded-lg px-3 py-1.5 text-xs font-semibold text-[#DC2626] hover:bg-red-50">حذف فایل در حال آپلود</button></div>}{!uploading&&!uploadSuccess&&retryAvailable&&<div className="mt-3 rounded-xl border border-[#FECACA] bg-[#FEF2F2] p-3"><div className="flex items-center justify-between gap-2 text-xs font-bold text-[#B91C1C]"><span>آپلود ناموفق بود</span><span>{toPersianDigits(uploadProgress)}٪</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-[#FEE2E2]"><div className="h-full rounded-full bg-[#DC2626]" style={{width:`${Math.max(3,Math.min(100,uploadProgress))}%`}} /></div><button type="button" onClick={onRetryUpload} className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#DC2626] px-3 py-2 text-xs font-bold text-white"><RotateCcw size={14}/>تلاش دوباره</button></div>}
+    {uploading && <div className="flex justify-center"><button type="button" onClick={onCancelUpload} className="mt-3 rounded-lg px-3 py-1.5 text-xs font-semibold text-[#DC2626] hover:bg-red-50">حذف فایل در حال آپلود</button></div>}{!uploading && !uploadSuccess && retryAvailable && <div className="mt-3 rounded-xl border border-[#FECACA] bg-[#FEF2F2] p-3"><div className="flex items-center justify-between gap-2 text-xs font-bold text-[#B91C1C]"><span>آپلود ناموفق بود</span><span>{toPersianDigits(uploadProgress)}٪</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-[#FEE2E2]"><div className="h-full rounded-full bg-[#DC2626]" style={{ width: `${Math.max(3, Math.min(100, uploadProgress))}%` }} /></div><button type="button" onClick={onRetryUpload} className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#DC2626] px-3 py-2 text-xs font-bold text-white"><RotateCcw size={14} />تلاش دوباره</button></div>}
   </div>;
 }
-function MediaTile({ item, type, onRemove, ready=false, compact=false }: any) {
-  const image=item.type==="IMAGE"; const src=ready?item.publicUrl:item.previewUrl;
-  const aspect=type==="REEL"||type==="STORY"?"aspect-[9/16]":"aspect-[4/5]";
-  return <div className={["group relative overflow-hidden rounded-xl border border-[#E2E8F0] bg-[#F1F5F9]",compact?"shadow-sm":""].join(" ")}>
-    {image?<img src={src} alt={ready?item.fileName:item.file.name} className={["w-full object-cover",aspect].join(" ")}/>:<video src={src} controls className={["w-full object-cover",aspect].join(" ")}/>}
-    {!compact && <Button type="button" onClick={onRemove} className="absolute left-1.5 top-1.5 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 p-0 text-[#DC2626] shadow-sm ring-1 ring-black/5" aria-label="حذف فایل"><X size={15}/></Button>}
+function MediaTile({ item, type, onRemove, ready = false, compact = false }: any) {
+  const image = item.type === "IMAGE"; const src = ready ? item.publicUrl : item.previewUrl;
+  const aspect = type === "REEL" || type === "STORY" ? "aspect-[9/16]" : "aspect-[4/5]";
+  return <div className={["group relative overflow-hidden rounded-xl border border-[#E2E8F0] bg-[#F1F5F9]", compact ? "shadow-sm" : ""].join(" ")}>
+    {image ? <img src={src} alt={ready ? item.fileName : item.file.name} className={["w-full object-cover", aspect].join(" ")} /> : <video src={src} controls className={["w-full object-cover", aspect].join(" ")} />}
+    {!compact && <Button type="button" onClick={onRemove} className="absolute left-1.5 top-1.5 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 p-0 text-[#DC2626] shadow-sm ring-1 ring-black/5" aria-label="حذف فایل"><X size={15} /></Button>}
   </div>;
 }
 
@@ -472,19 +455,19 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     const rawList = result.data ?? result.accounts ?? [];
     const list = Array.isArray(rawList)
       ? rawList
-          .filter((account) => account?.id)
-          .map((account) => ({
-            id: String(account.id),
-            igUserId: String(account.igUserId ?? ""),
-            igUsername: account.igUsername ?? account.username ?? null,
-            username: account.username ?? account.igUsername ?? null,
-            isConnected: account.isConnected !== false,
-          }))
+        .filter((account) => account?.id)
+        .map((account) => ({
+          id: String(account.id),
+          igUserId: String(account.igUserId ?? ""),
+          igUsername: account.igUsername ?? account.username ?? null,
+          username: account.username ?? account.igUsername ?? null,
+          isConnected: account.isConnected !== false,
+        }))
       : [];
 
     publishingAccountsCache = list;
     setAccounts(list);
-    }
+  }
   async function loadJobs() {
     const response = await fetch("/api/instagram/publishing", { cache: "no-store" });
     if (!response.ok) throw new Error("دریافت Publishing Jobs ناموفق بود.");
@@ -536,13 +519,17 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     }
     setJobs(nextJobs);
   }
-  async function loadResources(accountId: string) { if (!accountId) return; setLoadingResources(true); try { const [showcaseResponse, formResponse] = await Promise.all([fetch(`/api/showcases?instagramAccountId=${encodeURIComponent(accountId)}`, { cache: "no-store" }), fetch(`/api/forms?instagramAccountId=${encodeURIComponent(accountId)}`, { cache: "no-store" })]); const showcaseResult = await showcaseResponse.json(); const formResult = await formResponse.json(); setShowcases(
+  async function loadResources(accountId: string) {
+    if (!accountId) return; setLoadingResources(true); try {
+      const [showcaseResponse, formResponse] = await Promise.all([fetch(`/api/showcases?instagramAccountId=${encodeURIComponent(accountId)}`, { cache: "no-store" }), fetch(`/api/forms?instagramAccountId=${encodeURIComponent(accountId)}`, { cache: "no-store" })]); const showcaseResult = await showcaseResponse.json(); const formResult = await formResponse.json(); setShowcases(
         Array.isArray(showcaseResult)
           ? showcaseResult
           : Array.isArray(showcaseResult?.data)
             ? showcaseResult.data
             : [],
-      ); setForms(Array.isArray(formResult.data) ? formResult.data : []); } finally { setLoadingResources(false); } }
+      ); setForms(Array.isArray(formResult.data) ? formResult.data : []);
+    } finally { setLoadingResources(false); }
+  }
   async function load() { const showBlockingLoading = publishingJobsCache === null; try { if (showBlockingLoading) setLoading(true); setError(""); await Promise.all([loadAccounts(), loadJobs()]); } catch (e) { setError(e instanceof Error ? e.message : "خطا در دریافت اطلاعات."); } finally { if (showBlockingLoading) setLoading(false); } }
   useEffect(() => {
     let previousDate = todayJalali;
@@ -583,8 +570,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       if (dateChanged) {
         setScheduledDate((current) =>
           current.year === previousDate.year &&
-          current.month === previousDate.month &&
-          current.day === previousDate.day
+            current.month === previousDate.month &&
+            current.day === previousDate.day
             ? nextDate
             : current,
         );
@@ -734,33 +721,33 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     const runId = ++uploadRunRef.current;
     try {
       setUploading(true); setUploadSuccess(false); setError(""); setUploadProgress(0);
-      const totalBytes = items.reduce((sum,item)=>sum+item.file.size,0);
-      let completedBytes=0; const results: UploadedMedia[]=[];
+      const totalBytes = items.reduce((sum, item) => sum + item.file.size, 0);
+      let completedBytes = 0; const results: UploadedMedia[] = [];
       // Each carousel file is uploaded serially, preserving slide order.
-      for (let index=0; index<items.length; index+=1) {
-        const item=items[index];
-        const result=await uploadFileWithProgress(item.file,(progress)=>{
+      for (let index = 0; index < items.length; index += 1) {
+        const item = items[index];
+        const result = await uploadFileWithProgress(item.file, (progress) => {
           if (uploadRunRef.current !== runId) return;
           const reported = totalBytes ? Math.min(99, Math.round(((completedBytes + item.file.size * progress / 100) / totalBytes) * 100)) : Math.min(99, progress);
           setUploadProgress(current => Math.max(current, reported));
         });
         if (uploadRunRef.current !== runId) {
-          void fetch("/api/instagram/publishing/upload", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ storageKey: result.storageKey }) }).catch(()=>undefined);
+          void fetch("/api/instagram/publishing/upload", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ storageKey: result.storageKey }) }).catch(() => undefined);
           return;
         }
-        results.push({...result,sortOrder:uploadedMedia.length+results.length}); completedBytes+=item.file.size;
+        results.push({ ...result, sortOrder: uploadedMedia.length + results.length }); completedBytes += item.file.size;
       }
       revokeLocalMedia(items);
-      setMedia(current=>current.filter(item=>!items.includes(item)));
-      setUploadedMedia(current=>{
-        const next=[...current];
+      setMedia(current => current.filter(item => !items.includes(item)));
+      setUploadedMedia(current => {
+        const next = [...current];
         if (type === "CAROUSEL" && carouselInsertAtRef.current !== null) {
           next.splice(Math.min(carouselInsertAtRef.current, next.length), 0, ...results);
           carouselInsertAtRef.current = null;
         } else {
           next.push(...results);
         }
-        return next.map((item,index)=>({...item,sortOrder:index}));
+        return next.map((item, index) => ({ ...item, sortOrder: index }));
       });
       setUploadProgress(100); setUploading(false); setUploadSuccess(true);
       if (type !== "CAROUSEL") {
@@ -778,9 +765,9 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
           setUploadProgress(0);
         }, 700);
       }
-    } catch(e) {
+    } catch (e) {
       if (uploadRunRef.current !== runId) return;
-      setUploading(false); setUploadSuccess(false); setError(e instanceof Error?e.message:"آپلود فایل ناموفق بود.");
+      setUploading(false); setUploadSuccess(false); setError(e instanceof Error ? e.message : "آپلود فایل ناموفق بود.");
     }
   }
 
@@ -1118,23 +1105,27 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     try {
       setPublishing(true); setError("");
       const automationId = automationEnabled ? await createAutomation() : null;
-      const response = await fetch("/api/instagram/publishing", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
-        instagramAccountId: accountId,
-        type,
-        caption: type === "STORY" ? null : caption.trim() || null,
-        userTags: type === "CAROUSEL"
-          ? { media: uploadedMedia.reduce<Record<string, Array<{ username: string }>>>((accumulator, item) => {
-              const usernames = taggedUsersByMedia[item.storageKey] ?? [];
-              if (usernames.length) accumulator[item.storageKey] = usernames.map((username) => ({ username }));
-              return accumulator;
-            }, {}) }
-          : (taggedUsersByMedia[uploadedMedia[0]?.storageKey ?? ""] ?? []).map((username) => ({ username })),
-        scheduledAt: publishNow ? null : scheduledAt,
-        idempotencyKey: crypto.randomUUID(),
-        commentAutomationId: type === "STORY" ? null : automationId,
-        storyReplyAutomationId: type === "STORY" ? automationId : null,
-        media: uploadedMedia,
-      }) });
+      const response = await fetch("/api/instagram/publishing", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
+          instagramAccountId: accountId,
+          type,
+          caption: type === "STORY" ? null : caption.trim() || null,
+          userTags: type === "CAROUSEL"
+            ? {
+              media: uploadedMedia.reduce<Record<string, Array<{ username: string }>>>((accumulator, item) => {
+                const usernames = taggedUsersByMedia[item.storageKey] ?? [];
+                if (usernames.length) accumulator[item.storageKey] = usernames.map((username) => ({ username }));
+                return accumulator;
+              }, {})
+            }
+            : (taggedUsersByMedia[uploadedMedia[0]?.storageKey ?? ""] ?? []).map((username) => ({ username })),
+          scheduledAt: publishNow ? null : scheduledAt,
+          idempotencyKey: crypto.randomUUID(),
+          commentAutomationId: type === "STORY" ? null : automationId,
+          storyReplyAutomationId: type === "STORY" ? automationId : null,
+          media: uploadedMedia,
+        })
+      });
       const result = await response.json();
       if (!response.ok) { if (automationId) await fetch(`/api/automations/${automationId}`, { method: "DELETE" }).catch(() => undefined); throw new Error(result.message || "ساخت Publishing Job ناموفق بود."); }
       const job = result.data as Job;
@@ -1223,282 +1214,312 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   return (
     <>
       <div dir="rtl" className={["bg-[#F8FAFC] px-3 py-4 sm:px-5 sm:py-6 lg:px-8", !selectionConfirmed ? "pb-8" : "pb-8"].join(" ")}>
-      <div className="mx-auto w-full max-w-6xl">
-        <div className={["transition-all duration-300 ease-out", stepVisible ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0"].join(" ")}>
-        {!selectionConfirmed ? (
-          <section className="w-full">
-            <SectionHeader n="۱" title="نوع محتوا" text="نوع محتوایی را که می‌خواهی در Instagram منتشر کنی انتخاب کن." />
-            <div className="grid w-full grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
-              {([["POST","پست",ImagePlus,"#2563EB","#EFF6FF","#1D4ED8"],["CAROUSEL","آلبوم",Images,"#7C3AED","#F5F3FF","#6D28D9"],["REEL","ریلز",Clapperboard,"#D97706","#FFF7ED","#B45309"],["STORY","استوری",Camera,"#16A34A","#F0FDF4","#15803D"]] as const).map(([value,label,Icon,accent,soft,border]) => (
-                <Button
-                  key={value}
-                  type="button"
-                  onClick={() => handleTypeChange(value)}
-                  className="group relative flex aspect-square w-full flex-col items-center justify-center gap-3 rounded-[28px] p-5 text-center shadow-none transition-all duration-200 hover:-translate-y-1 hover:shadow-lg active:translate-y-0 sm:rounded-[32px] sm:p-7"
-                  style={{ backgroundColor: soft, border: `1px solid ${border}`, color: accent }}
-                >
-                  <span
-                    className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/55 sm:h-14 sm:w-14"
-                    style={{ color: accent }}
-                  >
-                    <Icon size={22} strokeWidth={1.9} className="sm:h-6 sm:w-6" />
-                  </span>
-                  <span className="text-base font-bold text-[#0F172A] sm:text-lg">{label}</span>
-                </Button>
-              ))}
-            </div>
-            {(() => {
-              const scheduledJobs = jobs.filter((job) => job.status === "SCHEDULED" && job.scheduledAt);
+        <div className="mx-auto w-full max-w-6xl">
+          <div className={["transition-all duration-300 ease-out", stepVisible ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0"].join(" ")}>
+            {!selectionConfirmed ? (
+              <section className="w-full">
+                <SectionHeader n="۱" title="نوع محتوا" text="نوع محتوایی را که می‌خواهی در Instagram منتشر کنی انتخاب کن." />
+                <div className="grid w-full grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
+                  {([["POST", "پست", ImagePlus, "#2563EB", "#EFF6FF", "#1D4ED8"], ["CAROUSEL", "آلبوم", Images, "#7C3AED", "#F5F3FF", "#6D28D9"], ["REEL", "ریلز", Clapperboard, "#D97706", "#FFF7ED", "#B45309"], ["STORY", "استوری", Camera, "#16A34A", "#F0FDF4", "#15803D"]] as const).map(([value, label, Icon, accent, soft, border]) => (
+                    <Button
+                      key={value}
+                      type="button"
+                      onClick={() => handleTypeChange(value)}
+                      className="group relative flex aspect-square w-full flex-col items-center justify-center gap-3 rounded-[28px] p-5 text-center shadow-none transition-all duration-200 hover:-translate-y-1 hover:shadow-lg active:translate-y-0 sm:rounded-[32px] sm:p-7"
+                      style={{ backgroundColor: soft, border: `1px solid ${border}`, color: accent }}
+                    >
+                      <span
+                        className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/55 sm:h-14 sm:w-14"
+                        style={{ color: accent }}
+                      >
+                        <Icon size={22} strokeWidth={1.9} className="sm:h-6 sm:w-6" />
+                      </span>
+                      <span className="text-base font-bold text-[#0F172A] sm:text-lg">{label}</span>
+                    </Button>
+                  ))}
+                </div>
+                {(() => {
+                  const scheduledJobs = jobs.filter((job) => job.status === "SCHEDULED" && job.scheduledAt);
 
-              return (
-                <div className="mt-6 space-y-4">
+                  return (
+                    <div className="mt-6 space-y-4">
+                      {activePublishJobId && publishResultVisible && (
+                        <section className="rounded-2xl border border-[#DBEAFE] bg-white p-4 shadow-sm sm:p-5">
+                          {(() => {
+                            const activeJob = jobs.find((job) => job.id === activePublishJobId);
+                            if (!activeJob) return null;
+                            return (
+                              <div className="flex items-center gap-3">
+                                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB]">
+                                  {publishResult === "PUBLISHED" ? <CheckCircle2 size={20} /> : publishResult === "FAILED" ? <CircleSlash2 size={20} /> : <Loader2 size={20} className="animate-spin" />}
+                                </span>
+                                <div className="min-w-0">
+                                  <p className="text-sm font-bold text-[#0F172A]">
+                                    {publishResult === "PUBLISHED" ? "انتشار با موفقیت انجام شد" : publishResult === "FAILED" ? "انتشار ناموفق بود" : "در حال انتشار..."}
+                                  </p>
+                                  <p className="mt-1 text-xs text-[#64748B]">
+                                    {publishResult === null
+                                      ? `در حال انتشار ${typeLabels[activeJob.type]} در اینستاگرام هستیم.`
+                                      : publishResult === "PUBLISHED"
+                                        ? `${typeLabels[activeJob.type]} با موفقیت منتشر شد. می‌توانید در منو → مدیریت پاسخ‌های خودکار آن را مشاهده و ویرایش کنید.`
+                                        : `${typeLabels[activeJob.type]} در اینستاگرام منتشر نشد.`}
+                                  </p>
+                                </div>
+                              </div>
+                            );
+                          })()}
+                        </section>
+                      )}
+
+                      {scheduledJobs.length > 0 && (
+                        <section className="rounded-2xl border border-[#DBEAFE] bg-white p-4 shadow-sm sm:p-5">
+                          <div className="mb-3 flex items-center gap-2">
+                            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#EFF6FF] text-[#2563EB]">
+                              <Clock3 size={17} className="animate-pulse" />
+                            </span>
+                            <div>
+                              <h2 className="text-sm font-bold text-[#0F172A]">محتواهای در حال انتشار</h2>
+                              <p className="mt-1 text-[11px] text-[#64748B]">محتواهای زمان‌دار در این بخش منتظر انتشار هستند و از همینجا قابل ویرایش‌اند.</p>
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            {scheduledJobs.map((job) => (
+                              <div key={job.id} className="flex items-center justify-between gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3">
+                                <div className="flex min-w-0 flex-1 items-center gap-3">
+                                  {job.media[0]?.publicUrl ? (
+                                    <div className="h-14 w-11 shrink-0 overflow-hidden rounded-lg border border-[#E2E8F0] bg-white">
+                                      {job.media[0].type === "IMAGE" ? <img src={job.media[0].publicUrl} alt={typeLabels[job.type]} className="h-full w-full object-cover" /> : <video src={job.media[0].publicUrl} muted playsInline className="h-full w-full object-cover" />}
+                                    </div>
+                                  ) : null}
+                                  <div className="min-w-0">
+                                    <span className="text-sm font-bold text-[#0F172A]">{typeLabels[job.type]}</span>
+                                    <span className="mr-2 text-xs font-semibold text-[#2563EB]">{formatScheduledLabel(new Date(job.scheduledAt!))}</span>
+                                  </div>
+                                </div>
+                                <Link
+                                  href={`/dashboard/publishing/${job.id}`}
+                                  prefetch
+                                  onPointerEnter={() => router.prefetch(`/dashboard/publishing/${job.id}`)}
+                                  onFocus={() => router.prefetch(`/dashboard/publishing/${job.id}`)}
+                                  onTouchStart={() => router.prefetch(`/dashboard/publishing/${job.id}`)}
+                                  className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-[#BFDBFE] bg-white px-2.5 text-xs font-semibold text-[#2563EB] no-underline hover:bg-[#EFF6FF] sm:flex-none"
+                                  aria-label="ویرایش محتوا"
+                                ><Pencil size={14} /><span className="hidden sm:inline">ویرایش</span></Link>
+                              </div>
+                            ))}
+                          </div>
+                        </section>
+                      )}
+
+                    </div>
+                  );
+                })()}
+
+              </section>
+            ) : (type !== "STORY" && !captionStepConfirmed) || uploadedMedia.length === 0 || uploadSuccess || (type === "STORY" && showUploadedMediaPreview) ? (
+              <section className="mx-auto w-full max-w-3xl">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <Button
+                    type="button"
+                    onClick={handleBackToTypeSelection}
+                    className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]"
+                  >
+                    <ArrowRight size={15} strokeWidth={2} />
+                    بازگشت
+                  </Button>
+                  {uploadedMedia.length > 0 && !uploading && (
+                    <Button type="button" disabled={type === "CAROUSEL" && uploadedMedia.length < 2} onClick={handleNextStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB] disabled:cursor-not-allowed disabled:opacity-40">
+                      مرحله بعد <ArrowLeft size={15} strokeWidth={2} />
+                    </Button>
+                  )}
+                </div>
+
+                <div className={type !== "CAROUSEL" && showUploadedMediaPreview && uploadedMedia.length > 0 ? "p-0" : "rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6"}>
+                  {type !== "CAROUSEL" && showUploadedMediaPreview && uploadedMedia.length > 0 ? (
+                    <div className="flex min-h-[260px] flex-col items-center justify-center py-5">
+                      <span className="mb-3 inline-flex items-center rounded-full border border-[#BBF7D0] bg-[#F0FDF4] px-2.5 py-1 text-[11px] font-semibold text-[#15803D]">{typeLabels[type]} آپلود شده</span>
+                      <div className="w-32 sm:w-40">
+                        <MediaTile item={uploadedMedia[0]} type={type} onRemove={() => void removeUploaded(uploadedMedia[0])} ready compact />
+                      </div>
+                      <button type="button" onClick={() => void removeUploaded(uploadedMedia[0])} className="mt-3 min-h-9 rounded-lg px-4 py-2 text-xs font-semibold text-[#DC2626] hover:bg-red-50">
+                        پاک کردن
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <SectionHeader n="۲" title={uploadTitle} text={uploadInstruction} />
+                      <UploadArea
+                        id="publishing-media-upload"
+                        accept={accept}
+                        multiple={false}
+                        title={uploadTitle}
+                        disabled={uploading || publishing || (type === "CAROUSEL" && uploadedMedia.length >= 10)}
+                        isDragging={isDragging}
+                        setIsDragging={setIsDragging}
+                        uploading={uploading}
+                        uploadSuccess={uploadSuccess}
+                        uploadProgress={uploadProgress}
+                        onChange={handleFiles}
+                        onDrop={handleDrop}
+                        onCancelUpload={() => removeLocal(0)}
+                        onRetryUpload={() => void uploadSelectedMedia(media)}
+                        retryAvailable={Boolean(error && media.length > 0)}
+                      />
+
+                      {type === "CAROUSEL" && uploadedMedia.length > 0 && (
+                        <div className="mt-5">
+                          <div className="mb-3 text-center">
+                            <p className="text-sm font-bold text-[#334155]">اسلایدهای آلبوم</p>
+                            <p className="mt-1 text-[11px] text-[#64748B]">{toPersianDigits(uploadedMedia.length)} از ۱۰ اسلاید</p>
+                          </div>
+                          <div className="flex flex-wrap justify-center gap-3">
+                            {uploadedMedia.map((item, index) => <div key={item.storageKey} className="w-16 sm:w-20"><MediaTile item={item} type="CAROUSEL" onRemove={() => void removeUploaded(item)} ready compact /><p className="mt-1 text-center text-[10px] font-semibold text-[#64748B]">اسلاید {toPersianDigits(index + 1)}</p><button type="button" onClick={() => void removeUploaded(item)} className="mt-1 w-full rounded-md py-1 text-[11px] font-semibold text-[#DC2626] hover:bg-red-50">پاک کردن</button></div>)}
+                          </div>
+                        </div>
+                      )}
+                      {type === "CAROUSEL" && uploadedMedia.length >= 10 && (
+                        <p className="mt-3 text-center text-xs font-medium text-[#64748B]">حداکثر ۱۰ اسلاید آپلود شده؛ برای افزودن فایل جدید ابتدا یک اسلاید را پاک کن.</p>
+                      )}
+                    </>
+                  )}
+                </div>
+              </section>
+            ) : type !== "STORY" && !tagStepConfirmed ? (
+              <div>
+                <div className="mx-auto mb-5 flex w-full max-w-2xl items-center justify-between gap-3">
+                  <Button
+                    type="button"
+                    onClick={handlePreviousStep}
+                    className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]"
+                  >
+                    <ArrowRight size={15} strokeWidth={2} />
+                    بازگشت
+                  </Button>
+                  <Button type="button" disabled={!caption.trim() || publishing} onClick={handleNextStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB] disabled:cursor-not-allowed disabled:opacity-40">مرحله بعد <ArrowLeft size={15} strokeWidth={2} /></Button>
+                </div>
+
+                <section className="mx-auto w-full max-w-2xl rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-2"><span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">۳</span><h2 className="text-sm font-bold text-[#0F172A]">کپشن</h2></div>
+                      <p className="mt-1.5 text-xs leading-5 text-[#64748B]">{`کپشن ${typeLabels[type]} را بنویس.`}</p>
+                    </div>
+                    <span className="text-[11px] text-[#64748B]">{toPersianDigits(caption.length)} / ۲۲۰۰</span>
+                  </div>
+                  <textarea
+                    value={caption}
+                    onChange={e => setCaption(e.target.value)}
+                    maxLength={2200}
+                    rows={8}
+                    inputMode="text"
+                    autoCapitalize="sentences"
+                    spellCheck
+                    style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }}
+                    className="w-full resize-none rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10"
+                    placeholder={`کپشن ${typeLabels[type]} را بنویس...`}
+                  />
+                </section>
+              </div>
+            ) : type !== "STORY" && tagStepConfirmed && !automationChoiceStepStarted ? (
+              <div className="mx-auto w-full max-w-3xl">
+                <div className="mb-5 flex items-center justify-between gap-3">
+                  <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
+                    <ArrowRight size={15} strokeWidth={2} />بازگشت
+                  </Button>
+                  <Button type="button" onClick={() => { setAutomationChoiceStepStarted(true); setError(""); }} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
+                    مرحله بعد <ArrowLeft size={15} strokeWidth={2} />
+                  </Button>
+                </div>
+                <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
+                  <div className="mb-5 flex items-start gap-3">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">۴</span>
+                    <div className="min-w-0">
+                      <h2 className="text-sm font-bold text-[#0F172A]">تگ کردن <span className="text-[#2563EB]">(اختیاری)</span></h2>
+                      <p className="mt-1 whitespace-nowrap text-[11px] leading-5 text-[#64748B]">در صورت نیاز، کاربرهای موردنظر را اضافه کن.</p>
+                    </div>
+                  </div>
+
+                  {tagInputError && (
+                    <div className="mb-4 rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-5 text-[#B91C1C]" role="alert">
+                      {tagInputError}
+                    </div>
+                  )}
+
                   {activePublishJobId && publishResultVisible && (
-                    <section className="rounded-2xl border border-[#DBEAFE] bg-white p-4 shadow-sm sm:p-5">
+                    <div className={["mb-4 overflow-hidden rounded-2xl border bg-white p-4 shadow-sm transition-all duration-300", publishResult === null ? "border-[#DBEAFE]" : publishResult === "PUBLISHED" ? "border-[#BBF7D0]" : "border-[#FECACA]", publishResultVisible ? "translate-y-0 opacity-100" : "-translate-y-2 opacity-0"].join(" ")}>
                       {(() => {
-                        const activeJob = jobs.find((job) => job.id === activePublishJobId);
-                        if (!activeJob) return null;
+                        const activeJob = jobs.find((item) => item.id === activePublishJobId);
                         return (
                           <div className="flex items-center gap-3">
-                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB]">
-                              {publishResult === "PUBLISHED" ? <CheckCircle2 size={20}/> : publishResult === "FAILED" ? <CircleSlash2 size={20}/> : <Loader2 size={20} className="animate-spin"/>}
+                            {activeJob?.media?.[0]?.publicUrl ? (
+                              <div className="h-14 w-11 shrink-0 overflow-hidden rounded-lg border border-[#E2E8F0] bg-[#F1F5F9]">
+                                {activeJob.media[0].type === "IMAGE" ? (
+                                  <img src={activeJob.media[0].publicUrl} alt={typeLabels[activeJob.type]} className="h-full w-full object-cover" />
+                                ) : (
+                                  <video src={activeJob.media[0].publicUrl} muted playsInline className="h-full w-full object-cover" />
+                                )}
+                              </div>
+                            ) : null}
+                            <span className={["flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", publishResult === "PUBLISHED" ? "bg-[#F0FDF4] text-[#16A34A]" : publishResult === "FAILED" ? "bg-[#FEF2F2] text-[#DC2626]" : "bg-[#EFF6FF] text-[#2563EB]"].join(" ")}>
+                              {publishResult === "PUBLISHED" ? <CheckCircle2 size={20} /> : publishResult === "FAILED" ? <CircleSlash2 size={20} /> : <Loader2 size={20} className="animate-spin" />}
                             </span>
                             <div className="min-w-0">
-                              <p className="text-sm font-bold text-[#0F172A]">
-                                {publishResult === "PUBLISHED" ? "انتشار با موفقیت انجام شد" : publishResult === "FAILED" ? "انتشار ناموفق بود" : "در حال انتشار..."}
-                              </p>
-                              <p className="mt-1 text-xs text-[#64748B]">
-                                {publishResult === null
-                                  ? `در حال انتشار ${typeLabels[activeJob.type]} در اینستاگرام هستیم.`
-                                  : publishResult === "PUBLISHED"
-                                    ? `${typeLabels[activeJob.type]} با موفقیت منتشر شد. می‌توانید در منو → مدیریت پاسخ‌های خودکار آن را مشاهده و ویرایش کنید.`
-                                    : `${typeLabels[activeJob.type]} در اینستاگرام منتشر نشد.`}
-                              </p>
+                              <p className="text-sm font-bold text-[#0F172A]">{publishResult === "PUBLISHED" ? "انتشار با موفقیت انجام شد" : publishResult === "FAILED" ? "انتشار ناموفق بود" : "در حال انتشار..."}</p>
+                              <p className="mt-1 text-xs text-[#64748B]">{activeJob ? `در حال انتشار ${typeLabels[activeJob.type]} در اینستاگرام هستیم.` : "در حال پردازش محتوای شما هستیم."}</p>
                             </div>
                           </div>
                         );
                       })()}
-                    </section>
-                  )}
-
-                  {scheduledJobs.length > 0 && (
-                    <section className="rounded-2xl border border-[#DBEAFE] bg-white p-4 shadow-sm sm:p-5">
-                      <div className="mb-3 flex items-center gap-2">
-                        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#EFF6FF] text-[#2563EB]">
-                          <Clock3 size={17} className="animate-pulse" />
-                        </span>
-                        <div>
-                          <h2 className="text-sm font-bold text-[#0F172A]">محتواهای در حال انتشار</h2>
-                          <p className="mt-1 text-[11px] text-[#64748B]">محتواهای زمان‌دار در این بخش منتظر انتشار هستند و از همینجا قابل ویرایش‌اند.</p>
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        {scheduledJobs.map((job) => (
-                          <div key={job.id} className="flex items-center justify-between gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3">
-                            <div className="flex min-w-0 flex-1 items-center gap-3">
-                              {job.media[0]?.publicUrl ? (
-                                <div className="h-14 w-11 shrink-0 overflow-hidden rounded-lg border border-[#E2E8F0] bg-white">
-                                  {job.media[0].type === "IMAGE" ? <img src={job.media[0].publicUrl} alt={typeLabels[job.type]} className="h-full w-full object-cover" /> : <video src={job.media[0].publicUrl} muted playsInline className="h-full w-full object-cover" />}
-                                </div>
-                              ) : null}
-                              <div className="min-w-0">
-                                <span className="text-sm font-bold text-[#0F172A]">{typeLabels[job.type]}</span>
-                                <span className="mr-2 text-xs font-semibold text-[#2563EB]">{formatScheduledLabel(new Date(job.scheduledAt!))}</span>
-                              </div>
-                            </div>
-                            <Link
-  href={`/dashboard/publishing/${job.id}`}
-  prefetch
-  onPointerEnter={() => router.prefetch(`/dashboard/publishing/${job.id}`)}
-  onFocus={() => router.prefetch(`/dashboard/publishing/${job.id}`)}
-  onTouchStart={() => router.prefetch(`/dashboard/publishing/${job.id}`)}
-  className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-[#BFDBFE] bg-white px-2.5 text-xs font-semibold text-[#2563EB] no-underline hover:bg-[#EFF6FF] sm:flex-none"
-  aria-label="ویرایش محتوا"
-><Pencil size={14} /><span className="hidden sm:inline">ویرایش</span></Link>
-                          </div>
-                        ))}
-                      </div>
-                    </section>
-                  )}
-
-                </div>
-              );
-            })()}
-
-          </section>
-        ) : (type !== "STORY" && !captionStepConfirmed) || uploadedMedia.length === 0 || uploadSuccess || (type === "STORY" && showUploadedMediaPreview) ? (
-          <section className="mx-auto w-full max-w-3xl">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <Button
-                type="button"
-                onClick={handleBackToTypeSelection}
-                className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]"
-              >
-                <ArrowRight size={15} strokeWidth={2} />
-                بازگشت
-              </Button>
-              {uploadedMedia.length > 0 && !uploading && (
-                <Button type="button" disabled={type === "CAROUSEL" && uploadedMedia.length < 2} onClick={handleNextStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB] disabled:cursor-not-allowed disabled:opacity-40">
-                  مرحله بعد <ArrowLeft size={15} strokeWidth={2}/>
-                </Button>
-              )}
-            </div>
-
-            <div className={type !== "CAROUSEL" && showUploadedMediaPreview && uploadedMedia.length > 0 ? "p-0" : "rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6"}>
-              {type !== "CAROUSEL" && showUploadedMediaPreview && uploadedMedia.length > 0 ? (
-                <div className="flex min-h-[260px] flex-col items-center justify-center py-5">
-                  <span className="mb-3 inline-flex items-center rounded-full border border-[#BBF7D0] bg-[#F0FDF4] px-2.5 py-1 text-[11px] font-semibold text-[#15803D]">{typeLabels[type]} آپلود شده</span>
-                  <div className="w-32 sm:w-40">
-                    <MediaTile item={uploadedMedia[0]} type={type} onRemove={() => void removeUploaded(uploadedMedia[0])} ready compact/>
-                  </div>
-                  <button type="button" onClick={() => void removeUploaded(uploadedMedia[0])} className="mt-3 min-h-9 rounded-lg px-4 py-2 text-xs font-semibold text-[#DC2626] hover:bg-red-50">
-                    پاک کردن
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <SectionHeader n="۲" title={uploadTitle} text={uploadInstruction} />
-                  <UploadArea
-                    id="publishing-media-upload"
-                    accept={accept}
-                    multiple={false}
-                    title={uploadTitle}
-                    disabled={uploading || publishing || (type === "CAROUSEL" && uploadedMedia.length >= 10)}
-                    isDragging={isDragging}
-                    setIsDragging={setIsDragging}
-                    uploading={uploading}
-                    uploadSuccess={uploadSuccess}
-                    uploadProgress={uploadProgress}
-                    onChange={handleFiles}
-                    onDrop={handleDrop}
-                    onCancelUpload={() => removeLocal(0)}
-                    onRetryUpload={() => void uploadSelectedMedia(media)}
-                    retryAvailable={Boolean(error && media.length > 0)}
-                  />
-
-                  {type === "CAROUSEL" && uploadedMedia.length > 0 && (
-                    <div className="mt-5">
-                      <div className="mb-3 text-center">
-                        <p className="text-sm font-bold text-[#334155]">اسلایدهای آلبوم</p>
-                        <p className="mt-1 text-[11px] text-[#64748B]">{toPersianDigits(uploadedMedia.length)} از ۱۰ اسلاید</p>
-                      </div>
-                      <div className="flex flex-wrap justify-center gap-3">
-                        {uploadedMedia.map((item,index)=><div key={item.storageKey} className="w-16 sm:w-20"><MediaTile item={item} type="CAROUSEL" onRemove={()=>void removeUploaded(item)} ready compact/><p className="mt-1 text-center text-[10px] font-semibold text-[#64748B]">اسلاید {toPersianDigits(index+1)}</p><button type="button" onClick={()=>void removeUploaded(item)} className="mt-1 w-full rounded-md py-1 text-[11px] font-semibold text-[#DC2626] hover:bg-red-50">پاک کردن</button></div>)}
-                      </div>
                     </div>
                   )}
-                  {type === "CAROUSEL" && uploadedMedia.length >= 10 && (
-                    <p className="mt-3 text-center text-xs font-medium text-[#64748B]">حداکثر ۱۰ اسلاید آپلود شده؛ برای افزودن فایل جدید ابتدا یک اسلاید را پاک کن.</p>
-                  )}
-                </>
-              )}
-            </div>
-          </section>
-        ) : type !== "STORY" && !tagStepConfirmed ? (
-          <div>
-            <div className="mx-auto mb-5 flex w-full max-w-2xl items-center justify-between gap-3">
-              <Button
-                type="button"
-                onClick={handlePreviousStep}
-                className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]"
-              >
-                <ArrowRight size={15} strokeWidth={2} />
-                بازگشت
-              </Button>
-              <Button type="button" disabled={!caption.trim() || publishing} onClick={handleNextStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB] disabled:cursor-not-allowed disabled:opacity-40">مرحله بعد <ArrowLeft size={15} strokeWidth={2}/></Button>
-            </div>
-
-            <section className="mx-auto w-full max-w-2xl rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <div>
-                  <div className="flex items-center gap-2"><span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">۳</span><h2 className="text-sm font-bold text-[#0F172A]">کپشن</h2></div>
-                  <p className="mt-1.5 text-xs leading-5 text-[#64748B]">{`کپشن ${typeLabels[type]} را بنویس.`}</p>
-                </div>
-                <span className="text-[11px] text-[#64748B]">{toPersianDigits(caption.length)} / ۲۲۰۰</span>
-              </div>
-              <textarea
-                value={caption}
-                onChange={e => setCaption(e.target.value)}
-                maxLength={2200}
-                rows={8}
-                inputMode="text"
-                autoCapitalize="sentences"
-                spellCheck
-                style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }}
-                className="w-full resize-none rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10"
-                placeholder={`کپشن ${typeLabels[type]} را بنویس...`}
-              />
-            </section>
-          </div>
-        ) : type !== "STORY" && tagStepConfirmed && !automationChoiceStepStarted ? (
-          <div className="mx-auto w-full max-w-3xl">
-            <div className="mb-5 flex items-center justify-between gap-3">
-              <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
-                <ArrowRight size={15} strokeWidth={2}/>بازگشت
-              </Button>
-              <Button type="button" onClick={() => { setAutomationChoiceStepStarted(true); setError(""); }} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
-                مرحله بعد <ArrowLeft size={15} strokeWidth={2}/>
-              </Button>
-            </div>
-            <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
-              <div className="mb-5 flex items-start gap-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">۴</span>
-                <div className="min-w-0">
-                  <h2 className="text-sm font-bold text-[#0F172A]">تگ کردن <span className="text-[#2563EB]">(اختیاری)</span></h2>
-                  <p className="mt-1 whitespace-nowrap text-[11px] leading-5 text-[#64748B]">در صورت نیاز، کاربرهای موردنظر را اضافه کن.</p>
-                </div>
-              </div>
-              
-              {tagInputError && (
-                <div className="mb-4 rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-5 text-[#B91C1C]" role="alert">
-                  {tagInputError}
-                </div>
-              )}
-
-              {activePublishJobId && publishResultVisible && (
-                <div className={["mb-4 overflow-hidden rounded-2xl border bg-white p-4 shadow-sm transition-all duration-300", publishResult === null ? "border-[#DBEAFE]" : publishResult === "PUBLISHED" ? "border-[#BBF7D0]" : "border-[#FECACA]", publishResultVisible ? "translate-y-0 opacity-100" : "-translate-y-2 opacity-0"].join(" ")}>
-                  {(() => {
-                    const activeJob = jobs.find((item) => item.id === activePublishJobId);
-                    return (
-                      <div className="flex items-center gap-3">
-                        {activeJob?.media?.[0]?.publicUrl ? (
-                          <div className="h-14 w-11 shrink-0 overflow-hidden rounded-lg border border-[#E2E8F0] bg-[#F1F5F9]">
-                            {activeJob.media[0].type === "IMAGE" ? (
-                              <img src={activeJob.media[0].publicUrl} alt={typeLabels[activeJob.type]} className="h-full w-full object-cover" />
-                            ) : (
-                              <video src={activeJob.media[0].publicUrl} muted playsInline className="h-full w-full object-cover" />
+                  <div className="space-y-3">
+                    {uploadedMedia.map((item, index) => {
+                      const mediaKey = item.storageKey;
+                      const tags = taggedUsersByMedia[mediaKey] ?? [];
+                      const draft = tagDraftByMedia[mediaKey] ?? "";
+                      return (
+                        <div key={mediaKey} className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5 sm:p-4">
+                          <div className="flex items-start gap-3">
+                            {type === "CAROUSEL" && (
+                              <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-[#E2E8F0] bg-white">
+                                <MediaTile item={item} type="CAROUSEL" onRemove={() => void removeUploaded(item)} ready compact />
+                              </div>
                             )}
+                            <div className="min-w-0 flex-1">
+                              <div className="mb-2 flex items-center justify-between gap-2">
+                                <p className="text-xs font-bold text-[#0F172A]">{type === "CAROUSEL" ? `اسلاید ${toPersianDigits(index + 1)}` : typeLabels[type]}</p>
+                                <span className="rounded-full bg-white px-2 py-1 text-[10px] font-medium text-[#64748B] ring-1 ring-[#E2E8F0]">{toPersianDigits(tags.length)} تگ</span>
+                              </div>
+                              {tags.length > 0 && (
+                                <div className="mb-2.5 flex flex-wrap gap-1.5">
+                                  {tags.map((username) => (
+                                    <span key={username} className="inline-flex items-center gap-1 rounded-full bg-[#EFF6FF] px-2.5 py-1.5 text-[11px] font-semibold text-[#2563EB] ring-1 ring-[#DBEAFE]">
+                                      <span dir="ltr">@{username}</span>
+                                      <button type="button" onClick={() => removeTagForMedia(mediaKey, username)} className="flex h-4 w-4 items-center justify-center rounded-full text-[#64748B] hover:bg-white hover:text-[#DC2626]" aria-label={`حذف تگ @${username}`}>
+                                        <X size={11} />
+                                      </button>
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                              <div className="flex items-center gap-2">
+                                <input value={draft} onChange={(event) => handleTagInputChange(mediaKey, event.target.value)} onKeyDown={(event) => handleTagInputKeyDown(mediaKey, event)} placeholder="نام کاربر بدون @" maxLength={30} inputMode="text" autoCapitalize="none" spellCheck={false} className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-2.5 !text-base leading-5 text-[#0F172A] outline-none placeholder:text-xs placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
+                                <Button type="button" onClick={() => addTagForMedia(mediaKey)} disabled={!draft.trim()} className="shrink-0 rounded-lg !bg-[#2563EB] px-3.5 py-2.5 text-xs font-semibold text-white hover:!bg-[#1D4ED8] disabled:pointer-events-none disabled:cursor-not-allowed disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8] disabled:opacity-100 disabled:hover:!bg-[#E2E8F0]">افزودن</Button>
+                              </div>
+                            </div>
                           </div>
-                        ) : null}
-                        <span className={["flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", publishResult === "PUBLISHED" ? "bg-[#F0FDF4] text-[#16A34A]" : publishResult === "FAILED" ? "bg-[#FEF2F2] text-[#DC2626]" : "bg-[#EFF6FF] text-[#2563EB]"].join(" ")}>
-                          {publishResult === "PUBLISHED" ? <CheckCircle2 size={20}/> : publishResult === "FAILED" ? <CircleSlash2 size={20}/> : <Loader2 size={20} className="animate-spin"/>}
-                        </span>
-                        <div className="min-w-0">
-                          <p className="text-sm font-bold text-[#0F172A]">{publishResult === "PUBLISHED" ? "انتشار با موفقیت انجام شد" : publishResult === "FAILED" ? "انتشار ناموفق بود" : "در حال انتشار..."}</p>
-                          <p className="mt-1 text-xs text-[#64748B]">{activeJob ? `در حال انتشار ${typeLabels[activeJob.type]} در اینستاگرام هستیم.` : "در حال پردازش محتوای شما هستیم."}</p>
                         </div>
-                      </div>
-                    );
-                  })()}
-                </div>
-              )}
-              <div className="space-y-3">
-                  {uploadedMedia.map((item, index) => {
-                    const mediaKey = item.storageKey;
-                    const tags = taggedUsersByMedia[mediaKey] ?? [];
-                    const draft = tagDraftByMedia[mediaKey] ?? "";
-                    return (
-                      <div key={mediaKey} className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5 sm:p-4">
-                        <div className="flex items-start gap-3">
-                          {type === "CAROUSEL" && (
-                            <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-[#E2E8F0] bg-white">
-                              <MediaTile item={item} type="CAROUSEL" onRemove={() => void removeUploaded(item)} ready compact/>
-                            </div>
-                          )}
-                          <div className="min-w-0 flex-1">
-                            <div className="mb-2 flex items-center justify-between gap-2">
-                              <p className="text-xs font-bold text-[#0F172A]">{type === "CAROUSEL" ? `اسلاید ${toPersianDigits(index + 1)}` : typeLabels[type]}</p>
-                              <span className="rounded-full bg-white px-2 py-1 text-[10px] font-medium text-[#64748B] ring-1 ring-[#E2E8F0]">{toPersianDigits(tags.length)} تگ</span>
-                            </div>
+                      );
+                    })}
+                  </div>
+                  {type === "CAROUSEL" ? (
+                    <div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5 sm:p-4">
+                      {(() => {
+                        const mediaKey = uploadedMedia[0]?.storageKey ?? "";
+                        const tags = taggedUsersByMedia[mediaKey] ?? [];
+                        const draft = tagDraftByMedia[mediaKey] ?? "";
+                        return (
+                          <>
                             {tags.length > 0 && (
                               <div className="mb-2.5 flex flex-wrap gap-1.5">
                                 {tags.map((username) => (
@@ -1512,456 +1533,426 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                               </div>
                             )}
                             <div className="flex items-center gap-2">
-                              <input value={draft} onChange={(event) => handleTagInputChange(mediaKey, event.target.value)} onKeyDown={(event) => handleTagInputKeyDown(mediaKey, event)} placeholder="نام کاربر بدون @" maxLength={30} inputMode="text" autoCapitalize="none" spellCheck={false} className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-2.5 !text-base leading-5 text-[#0F172A] outline-none placeholder:text-xs placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }}/>
+                              <input value={draft} onChange={(event) => handleTagInputChange(mediaKey, event.target.value)} onKeyDown={(event) => handleTagInputKeyDown(mediaKey, event)} placeholder="فقط نام کاربر را بدون @ بنویس" maxLength={30} inputMode="text" autoCapitalize="none" spellCheck={false} className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-2.5 !text-base leading-5 text-[#0F172A] outline-none placeholder:text-xs placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
                               <Button type="button" onClick={() => addTagForMedia(mediaKey)} disabled={!draft.trim()} className="shrink-0 rounded-lg !bg-[#2563EB] px-3.5 py-2.5 text-xs font-semibold text-white hover:!bg-[#1D4ED8] disabled:pointer-events-none disabled:cursor-not-allowed disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8] disabled:opacity-100 disabled:hover:!bg-[#E2E8F0]">افزودن</Button>
                             </div>
-                          </div>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  ) : null}
+
+
+                </section>
+              </div>
+            ) : ((type !== "STORY" && tagStepConfirmed) || (type === "STORY" && captionStepConfirmed)) && (type === "STORY" || automationChoiceStepStarted) && !automationChoiceConfirmed ? (
+              <div className="mx-auto w-full max-w-2xl">
+                <div className="mb-5 flex items-center justify-between gap-3">
+                  <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
+                    <ArrowRight size={15} strokeWidth={2} />بازگشت
+                  </Button>
+
+                </div>
+                <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
+                  <div className="mb-6 flex items-start gap-3">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">{type === "STORY" ? "۳" : "۵"}</span>
+                    <div className="min-w-0">
+                      <h2 className="text-sm font-bold text-[#0F172A]">پاسخ خودکار <span className="text-[#2563EB]">(اختیاری)</span></h2>
+                      <p className="mt-1.5 text-xs leading-5 text-[#64748B]">آیا می‌خواهی برای این محتوا پاسخ خودکار تنظیم شود؟</p>
+                    </div>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <button type="button" onClick={() => handleAutomationChoice(true)} className="group rounded-2xl border border-[#E2E8F0] bg-white p-4 text-right shadow-sm transition hover:border-[#BFDBFE] hover:bg-[#F8FBFF] active:scale-[0.99] sm:p-5">
+                      <div className="flex items-start gap-3">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB] transition group-hover:bg-[#DBEAFE]"><Send size={18} /></span>
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-[#0F172A]">پاسخ خودکار می‌خواهم</p>
+                          <p className="mt-1.5 text-[11px] leading-5 text-[#64748B]">برای این محتوا پاسخ خودکار تنظیم کن.</p>
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              {type === "CAROUSEL" ? (
-                <div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5 sm:p-4">
-                  {(() => {
-                    const mediaKey = uploadedMedia[0]?.storageKey ?? "";
-                    const tags = taggedUsersByMedia[mediaKey] ?? [];
-                    const draft = tagDraftByMedia[mediaKey] ?? "";
-                    return (
-                      <>
-                        {tags.length > 0 && (
-                          <div className="mb-2.5 flex flex-wrap gap-1.5">
-                            {tags.map((username) => (
-                              <span key={username} className="inline-flex items-center gap-1 rounded-full bg-[#EFF6FF] px-2.5 py-1.5 text-[11px] font-semibold text-[#2563EB] ring-1 ring-[#DBEAFE]">
-                                <span dir="ltr">@{username}</span>
-                                <button type="button" onClick={() => removeTagForMedia(mediaKey, username)} className="flex h-4 w-4 items-center justify-center rounded-full text-[#64748B] hover:bg-white hover:text-[#DC2626]" aria-label={`حذف تگ @${username}`}>
-                                  <X size={11} />
-                                </button>
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                        <div className="flex items-center gap-2">
-                          <input value={draft} onChange={(event) => handleTagInputChange(mediaKey, event.target.value)} onKeyDown={(event) => handleTagInputKeyDown(mediaKey, event)} placeholder="فقط نام کاربر را بدون @ بنویس" maxLength={30} inputMode="text" autoCapitalize="none" spellCheck={false} className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-2.5 !text-base leading-5 text-[#0F172A] outline-none placeholder:text-xs placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }}/>
-                          <Button type="button" onClick={() => addTagForMedia(mediaKey)} disabled={!draft.trim()} className="shrink-0 rounded-lg !bg-[#2563EB] px-3.5 py-2.5 text-xs font-semibold text-white hover:!bg-[#1D4ED8] disabled:pointer-events-none disabled:cursor-not-allowed disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8] disabled:opacity-100 disabled:hover:!bg-[#E2E8F0]">افزودن</Button>
+                    </button>
+                    <button type="button" onClick={() => handleAutomationChoice(false)} className="group rounded-2xl border border-[#E2E8F0] bg-white p-4 text-right shadow-sm transition hover:border-[#CBD5E1] hover:bg-[#F8FAFC] active:scale-[0.99] sm:p-5">
+                      <div className="flex items-start gap-3">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F8FAFC] text-[#64748B] transition group-hover:bg-[#F1F5F9]"><ArrowLeft size={18} /></span>
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-[#0F172A]">بدون پاسخ خودکار</p>
+                          <p className="mt-1.5 text-[11px] leading-5 text-[#64748B]">مستقیماً به مرحله انتشار برو.</p>
                         </div>
-                      </>
-                    );
-                  })()}
-                </div>
-              ) : null}
-
-
-            </section>
-          </div>
-        ) : ((type !== "STORY" && tagStepConfirmed) || (type === "STORY" && captionStepConfirmed)) && (type === "STORY" || automationChoiceStepStarted) && !automationChoiceConfirmed ? (
-          <div className="mx-auto w-full max-w-2xl">
-            <div className="mb-5 flex items-center justify-between gap-3">
-              <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
-                <ArrowRight size={15} strokeWidth={2}/>بازگشت
-              </Button>
-              
-            </div>
-            <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
-              <div className="mb-6 flex items-start gap-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">{type === "STORY" ? "۳" : "۵"}</span>
-                <div className="min-w-0">
-                  <h2 className="text-sm font-bold text-[#0F172A]">پاسخ خودکار <span className="text-[#2563EB]">(اختیاری)</span></h2>
-                  <p className="mt-1.5 text-xs leading-5 text-[#64748B]">آیا می‌خواهی برای این محتوا پاسخ خودکار تنظیم شود؟</p>
-                </div>
+                      </div>
+                    </button>
+                  </div>
+                </section>
               </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <button type="button" onClick={() => handleAutomationChoice(true)} className="group rounded-2xl border border-[#E2E8F0] bg-white p-4 text-right shadow-sm transition hover:border-[#BFDBFE] hover:bg-[#F8FBFF] active:scale-[0.99] sm:p-5">
+            ) : type === "STORY" && automationChoiceConfirmed && automationEnabled && !automationSetupConfirmed ? (
+              <div className="mx-auto w-full max-w-2xl">
+                <div className="mb-5 flex items-center justify-between gap-3">
+                  <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
+                    <ArrowRight size={15} strokeWidth={2} />بازگشت
+                  </Button>
+                  {storyResponseSaved && !storyResponseEditing && (
+                    <Button type="button" onClick={() => { animateStepChange(() => { setAutomationSetupConfirmed(true); setError(""); }); }} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
+                      مرحله بعد <ArrowLeft size={15} strokeWidth={2} />
+                    </Button>
+                  )}
+                </div>
+
+                <section className="space-y-5 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
                   <div className="flex items-start gap-3">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB] transition group-hover:bg-[#DBEAFE]"><Send size={18}/></span>
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">۴</span>
                     <div className="min-w-0">
-                      <p className="text-sm font-bold text-[#0F172A]">پاسخ خودکار می‌خواهم</p>
-                      <p className="mt-1.5 text-[11px] leading-5 text-[#64748B]">برای این محتوا پاسخ خودکار تنظیم کن.</p>
+                      <h2 className="text-sm font-bold text-[#0F172A]">تنظیم پاسخ خودکار استوری</h2>
+                      <p className="mt-1.5 text-xs leading-5 text-[#64748B]">کلمات فعال‌کننده و پاسخ Reply استوری را مشخص کن.</p>
                     </div>
                   </div>
-                </button>
-                <button type="button" onClick={() => handleAutomationChoice(false)} className="group rounded-2xl border border-[#E2E8F0] bg-white p-4 text-right shadow-sm transition hover:border-[#CBD5E1] hover:bg-[#F8FAFC] active:scale-[0.99] sm:p-5">
+
+                  <fieldset disabled={storyResponseSaved && !storyResponseEditing}>
+                    <div>
+                      <label className="mb-2 block text-sm font-bold text-[#0F172A]">کلمات کلیدی Reply استوری</label>
+                      <p className="mb-3 text-xs leading-5 text-[#64748B]">با وارد شدن این کلمات در Reply استوری، پاسخ خودکار فعال می‌شود.</p>
+                      {keywords.trim() && (
+                        <div className="mb-3 flex flex-wrap gap-2">
+                          {keywords.split(",").map((keyword) => keyword.trim()).filter(Boolean).map((keyword) => (
+                            <span key={keyword} className="inline-flex items-center gap-1.5 rounded-full bg-[#EFF6FF] px-3 py-1.5 text-xs font-semibold text-[#2563EB]">
+                              <span>{keyword}</span>
+                              <button type="button" onClick={() => { setKeywords(keywords.split(",").map(item => item.trim()).filter(item => item && item !== keyword).join(",")); if (storyResponseEditing) setStoryResponseDirty(true); }} aria-label={`حذف ${keyword}`} className="flex h-4 w-4 items-center justify-center rounded-full hover:bg-white"><X size={12} /></button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <input id="publishing-story-keyword" value={automationKeywordDraft} onChange={event => setAutomationKeywordDraft(event.target.value)} onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); const value = automationKeywordDraft.trim(); const current = keywords.split(",").map(item => item.trim()).filter(Boolean); if (value && !current.includes(value)) setKeywords(current.concat(value).join(",")); if (storyResponseEditing) setStoryResponseDirty(true); setAutomationKeywordDraft(""); } }} placeholder="مثلاً قیمت، اطلاعات" inputMode="text" className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-3 !text-base leading-5 text-[#0F172A] outline-none placeholder:text-xs placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
+                        <Button type="button" onClick={() => { const value = automationKeywordDraft.trim(); const current = keywords.split(",").map(item => item.trim()).filter(Boolean); if (value && !current.includes(value)) setKeywords(current.concat(value).join(",")); setAutomationKeywordDraft(""); }} disabled={!automationKeywordDraft.trim() || keywords.split(",").map(item => item.trim()).filter(Boolean).includes(automationKeywordDraft.trim())} className="min-h-11 shrink-0 rounded-lg !bg-[#2563EB] px-3.5 text-xs font-semibold text-white hover:!bg-[#1D4ED8] disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8]">افزودن</Button>
+                      </div>
+                    </div>
+                  </fieldset>
+
+                  <PublishingStoryAutomationSetup
+                    ref={storyAutomationSetupRef}
+                    message={messages[0] ?? createEmptyMessage()}
+                    showcases={showcases}
+                    forms={forms}
+                    loadingResources={loadingResources}
+                    instagramAccountId={selectedAccountId}
+                    disabled={storyResponseSaved && !storyResponseEditing}
+                    onUpdate={(patch) => {
+                      updateMessage(0, patch);
+                      if (storyResponseEditing) setStoryResponseDirty(true);
+                    }}
+                    onSavedChange={setStoryResponseSaved}
+                    keywordValid={Boolean(keywords.trim())}
+                    onContinue={() => {
+                      setStoryResponseSaved(true);
+                      setStoryResponseEditing(false);
+                      setStoryResponseDirty(false);
+                      setAutomationSetupConfirmed(true);
+                      setError("");
+                    }}
+                  />
+
+
+
+                  <fieldset disabled={storyResponseSaved && !storyResponseEditing}>
+                    <section className="space-y-3">
+                      {messages[0]?.messageType === "FORM" && (
+                        <div className="rounded-xl border border-[#E2E8F0] bg-white p-3.5">
+                          <label className="flex cursor-pointer items-start gap-3">
+                            <input
+                              type="checkbox"
+                              checked={Boolean(messages[0]?.quickReplies?.some((reply) => reply.isExit))}
+                              onChange={(event) => {
+                                const currentReplies = messages[0]?.quickReplies ?? [];
+                                const existingExit = currentReplies.find((reply) => reply.isExit);
+                                if (event.target.checked) {
+                                  if (existingExit || currentReplies.length >= 13) return;
+                                  const exit = createEmptyQuickReply();
+                                  updateMessage(0, {
+                                    quickReplies: [...currentReplies, { ...exit, isExit: true, title: "خروج از فرم", destinationType: "TEXT", destinationText: "از فرم خارج شدید." }],
+                                  });
+                                } else {
+                                  updateMessage(0, { quickReplies: currentReplies.filter((reply) => !reply.isExit) });
+                                }
+                              }}
+                              disabled={!messages[0]?.quickReplies?.some((reply) => reply.isExit) && (messages[0]?.quickReplies?.length ?? 0) >= 13}
+                              className="mt-0.5 h-4 w-4 accent-[#2563EB]"
+                            />
+                            <span>
+                              <span className="block text-sm font-bold text-[#0F172A]">خروج از فرم <span className="font-medium text-[#2563EB]">(اختیاری)</span></span>
+                              <span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال‌سازی، کاربر با این گزینه از شاخه فرم خارج می‌شود.</span>
+                            </span>
+                          </label>
+
+                          {messages[0]?.quickReplies?.find((reply) => reply.isExit) && (
+                            <div className="mt-3 space-y-3">
+                              <div>
+                                <label className="mb-2 block text-xs font-bold text-[#0F172A]">متن دکمه خروج</label>
+                                <input
+                                  value={messages[0]?.quickReplies?.find((reply) => reply.isExit)?.title ?? ""}
+                                  maxLength={20}
+                                  onChange={(event) => {
+                                    const exitId = messages[0]?.quickReplies?.find((reply) => reply.isExit)?.id;
+                                    if (!exitId) return;
+                                    updateMessage(0, { quickReplies: (messages[0]?.quickReplies ?? []).map((reply) => reply.id === exitId ? { ...reply, title: event.target.value } : reply) });
+                                  }}
+                                  className="w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10"
+                                  style={{ fontSize: "16px", WebkitTextSizeAdjust: "100%" }}
+                                />
+                              </div>
+                              <div>
+                                <label className="mb-2 block text-xs font-bold text-[#0F172A]">متن خروج از فرم</label>
+                                <textarea
+                                  value={messages[0]?.quickReplies?.find((reply) => reply.isExit)?.destinationText ?? ""}
+                                  rows={3}
+                                  maxLength={2000}
+                                  onChange={(event) => {
+                                    const exitId = messages[0]?.quickReplies?.find((reply) => reply.isExit)?.id;
+                                    if (!exitId) return;
+                                    updateMessage(0, { quickReplies: (messages[0]?.quickReplies ?? []).map((reply) => reply.id === exitId ? { ...reply, destinationText: event.target.value } : reply) });
+                                  }}
+                                  className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10"
+                                  style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }}
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      <div className="rounded-xl border border-[#E2E8F0] bg-white p-3.5">
+                        <label className="flex cursor-pointer items-start gap-3">
+                          <input type="checkbox" checked={likeStoryReply} onChange={event => { setLikeStoryReply(event.target.checked); if (storyResponseEditing) setStoryResponseDirty(true); }} className="mt-0.5 h-4 w-4 accent-[#2563EB]" />
+                          <span><span className="block text-sm font-bold text-[#0F172A]">لایک ریپلای <span className="font-medium text-[#2563EB]">(اختیاری)</span></span><span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، Reply استوری کاربر لایک می‌شود.</span></span>
+                        </label>
+                      </div>
+
+                      <div className="rounded-xl border border-[#E2E8F0] bg-white p-3.5">
+                        <label className="flex cursor-pointer items-start gap-3">
+                          <input type="checkbox" checked={requireFollow} onChange={event => { setRequireFollow(event.target.checked); if (storyResponseEditing) setStoryResponseDirty(true); }} className="mt-0.5 h-4 w-4 accent-[#2563EB]" />
+                          <span><span className="block text-sm font-bold text-[#0F172A]">اجبار به فالو <span className="font-medium text-[#2563EB]">(اختیاری)</span></span><span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، کاربر باید پیج را فالو کرده باشد تا پاسخ را دریافت کند.</span></span>
+                        </label>
+                        {requireFollow && <div className="mt-2.5">
+                          <label htmlFor="publishing-follow-gate-text" className="mb-2 block text-sm font-bold text-[#0F172A]">متن درخواست فالو</label>
+                          <textarea id="publishing-follow-gate-text" value={followGateText} onChange={event => { setFollowGateText(event.target.value); if (storyResponseEditing) setStoryResponseDirty(true); }} rows={2} maxLength={500} inputMode="text" placeholder="مثلاً برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none placeholder:text-xs focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
+                        </div>}
+                      </div>
+                    </section>
+                  </fieldset>
+
+
+
+                  {(!storyResponseSaved || storyResponseEditing) && (
+                    <div className="border-t border-[#E2E8F0] pt-4">
+                      <Button type="button" onClick={() => { void storyAutomationSetupRef.current?.saveAndContinue(); }} disabled={!keywords.trim() || (messages[0]?.messageType === "TEXT" && !messages[0]?.text.trim()) || (storyResponseEditing && !storyResponseDirty)} className="w-full min-h-11 rounded-xl bg-[#2563EB] px-4 text-sm font-bold text-white hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-40">
+                        ذخیره {messages[0]?.messageType === "FORM" ? "فرم" : messages[0]?.messageType === "SHOWCASE" ? "ویترین" : messages[0]?.messageType === "TEXT" ? "متن" : messages[0]?.messageType === "IMAGE" ? "عکس" : messages[0]?.messageType === "VIDEO" ? "فیلم" : "وویس"} و ادامه
+                      </Button>
+                    </div>
+                  )}
+
+                  {storyResponseSaved && !storyResponseEditing && (
+                    <div className="flex items-center justify-center gap-2 border-t border-[#E2E8F0] pt-4">
+                      <Button type="button" onClick={handleEditStoryResponse} className="min-h-10 flex-1 rounded-xl border border-[#BFDBFE] bg-[#EFF6FF] px-4 text-sm font-bold text-[#2563EB] hover:bg-[#DBEAFE]">
+                        <span dir="ltr" className="inline-flex items-center justify-center gap-1.5"><Pencil size={15} /><span dir="rtl">ویرایش</span></span>
+                      </Button>
+                      <Button type="button" variant="destructive" onClick={() => void handleDeleteStoryResponse()} className="min-h-10 flex-1 !rounded-xl !border !border-[#FECACA] !bg-[#FEF2F2] !px-4 !text-sm !font-bold !text-[#DC2626] hover:!bg-[#FEE2E2]">
+                        <span dir="ltr" className="inline-flex items-center justify-center gap-1.5"><Trash2 size={15} /><span dir="rtl">حذف</span></span>
+                      </Button>
+                    </div>
+                  )}
+
+                  {error && <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-5 text-[#B91C1C]" role="alert">{error}</div>}
+                </section>
+              </div>
+            ) : type !== "STORY" && automationChoiceConfirmed && automationEnabled && !automationSetupConfirmed ? (
+              <div className="mx-auto w-full max-w-2xl">
+                <div className="mb-5 flex items-center justify-between gap-3">
+                  <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
+                    <ArrowRight size={15} strokeWidth={2} />بازگشت
+                  </Button>
+
+                </div>
+                <section className="space-y-5 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
                   <div className="flex items-start gap-3">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F8FAFC] text-[#64748B] transition group-hover:bg-[#F1F5F9]"><ArrowLeft size={18}/></span>
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">۶</span>
                     <div className="min-w-0">
-                      <p className="text-sm font-bold text-[#0F172A]">بدون پاسخ خودکار</p>
-                      <p className="mt-1.5 text-[11px] leading-5 text-[#64748B]">مستقیماً به مرحله انتشار برو.</p>
+                      <h2 className="text-sm font-bold text-[#0F172A]">تنظیم پاسخ خودکار</h2>
+                      <p className="mt-1.5 text-xs leading-5 text-[#64748B]">کلمات فعال‌کننده و متن پیام دایرکت را مشخص کن.</p>
                     </div>
                   </div>
-                </button>
-              </div>
-            </section>
-          </div>
-        ) : type === "STORY" && automationChoiceConfirmed && automationEnabled && !automationSetupConfirmed ? (
-          <div className="mx-auto w-full max-w-2xl">
-            <div className="mb-5 flex items-center justify-between gap-3">
-              <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
-                <ArrowRight size={15} strokeWidth={2}/>بازگشت
-              </Button>
-              {storyResponseSaved && !storyResponseEditing && (
-                <Button type="button" onClick={() => { animateStepChange(() => { setAutomationSetupConfirmed(true); setError(""); }); }} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
-                  مرحله بعد <ArrowLeft size={15} strokeWidth={2}/>
-                </Button>
-              )}
-            </div>
 
-            <section className="space-y-5 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
-              <div className="flex items-start gap-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">۴</span>
-                <div className="min-w-0">
-                  <h2 className="text-sm font-bold text-[#0F172A]">تنظیم پاسخ خودکار استوری</h2>
-                  <p className="mt-1.5 text-xs leading-5 text-[#64748B]">کلمات فعال‌کننده و پاسخ Reply استوری را مشخص کن.</p>
-                </div>
-              </div>
-
-              <fieldset disabled={storyResponseSaved && !storyResponseEditing}>
-              <div>
-                <label className="mb-2 block text-sm font-bold text-[#0F172A]">کلمات کلیدی Reply استوری</label>
-                <p className="mb-3 text-xs leading-5 text-[#64748B]">با وارد شدن این کلمات در Reply استوری، پاسخ خودکار فعال می‌شود.</p>
-                {keywords.trim() && (
-                  <div className="mb-3 flex flex-wrap gap-2">
-                    {keywords.split(",").map((keyword) => keyword.trim()).filter(Boolean).map((keyword) => (
-                      <span key={keyword} className="inline-flex items-center gap-1.5 rounded-full bg-[#EFF6FF] px-3 py-1.5 text-xs font-semibold text-[#2563EB]">
-                        <span>{keyword}</span>
-                        <button type="button" onClick={() => { setKeywords(keywords.split(",").map(item => item.trim()).filter(item => item && item !== keyword).join(",")); if (storyResponseEditing) setStoryResponseDirty(true); }} aria-label={`حذف ${keyword}`} className="flex h-4 w-4 items-center justify-center rounded-full hover:bg-white"><X size={12}/></button>
-                      </span>
-                    ))}
+                  <div>
+                    <label htmlFor="publishing-auto-keyword" className="mb-2 block text-sm font-bold text-[#0F172A]">کلمات کلیدی</label>
+                    <p className="mb-3 text-xs leading-5 text-[#64748B]">با وارد شدن این کلمات در کامنت، پاسخ خودکار فعال می‌شود.</p>
+                    {automationKeywords.length > 0 && <div className="mb-3 flex flex-wrap gap-2">{automationKeywords.map((keyword) => <span key={keyword} className="inline-flex items-center gap-1.5 rounded-full bg-[#EFF6FF] px-3 py-1.5 text-xs font-semibold text-[#2563EB]"><span>{keyword}</span><button type="button" onClick={() => setAutomationKeywords(current => current.filter(item => item !== keyword))} aria-label={`حذف ${keyword}`} className="flex h-4 w-4 items-center justify-center rounded-full hover:bg-white"><X size={12} /></button></span>)}</div>}
+                    <div className="flex items-center gap-2">
+                      <input id="publishing-auto-keyword" value={automationKeywordDraft} onChange={event => setAutomationKeywordDraft(event.target.value)} onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); const value = automationKeywordDraft.trim(); if (value && !automationKeywords.includes(value)) setAutomationKeywords(current => [...current, value]); setAutomationKeywordDraft(""); } }} placeholder="مثلاً قیمت، اطلاعات" inputMode="text" className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-3 !text-base leading-5 text-[#0F172A] outline-none placeholder:text-xs placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
+                      <Button type="button" onClick={() => { const value = automationKeywordDraft.trim(); if (value && !automationKeywords.includes(value)) setAutomationKeywords(current => [...current, value]); setAutomationKeywordDraft(""); }} disabled={!automationKeywordDraft.trim() || automationKeywords.includes(automationKeywordDraft.trim())} className="min-h-11 shrink-0 rounded-lg !bg-[#2563EB] px-3.5 text-xs font-semibold text-white hover:!bg-[#1D4ED8] disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8]">افزودن</Button>
+                    </div>
                   </div>
-                )}
-                <div className="flex items-center gap-2">
-                  <input id="publishing-story-keyword" value={automationKeywordDraft} onChange={event => setAutomationKeywordDraft(event.target.value)} onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); const value = automationKeywordDraft.trim(); const current = keywords.split(",").map(item => item.trim()).filter(Boolean); if (value && !current.includes(value)) setKeywords(current.concat(value).join(",")); if (storyResponseEditing) setStoryResponseDirty(true); setAutomationKeywordDraft(""); } }} placeholder="مثلاً قیمت، اطلاعات" inputMode="text" className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-3 !text-base leading-5 text-[#0F172A] outline-none placeholder:text-xs placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10" style={{fontSize:"16px",lineHeight:1.75,WebkitTextSizeAdjust:"100%"}}/>
-                  <Button type="button" onClick={() => { const value = automationKeywordDraft.trim(); const current = keywords.split(",").map(item => item.trim()).filter(Boolean); if (value && !current.includes(value)) setKeywords(current.concat(value).join(",")); setAutomationKeywordDraft(""); }} disabled={!automationKeywordDraft.trim() || keywords.split(",").map(item => item.trim()).filter(Boolean).includes(automationKeywordDraft.trim())} className="min-h-11 shrink-0 rounded-lg !bg-[#2563EB] px-3.5 text-xs font-semibold text-white hover:!bg-[#1D4ED8] disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8]">افزودن</Button>
-                </div>
-              </div>
-              </fieldset>
 
-              <PublishingStoryAutomationSetup
-                ref={storyAutomationSetupRef}
-                message={messages[0] ?? createEmptyMessage()}
-                showcases={showcases}
-                forms={forms}
-                loadingResources={loadingResources}
-                instagramAccountId={selectedAccountId}
-                disabled={storyResponseSaved && !storyResponseEditing}
-                onUpdate={(patch) => {
-                  updateMessage(0, patch);
-                  if (storyResponseEditing) setStoryResponseDirty(true);
-                }}
-                onSavedChange={setStoryResponseSaved}
-                keywordValid={Boolean(keywords.trim())}
-                onContinue={() => {
-                  setStoryResponseSaved(true);
-                  setStoryResponseEditing(false);
-                  setStoryResponseDirty(false);
-                  setAutomationSetupConfirmed(true);
-                  setError("");
-                }}
-              />
+                  <div className="border-t border-[#E2E8F0] pt-5">
+                    <label htmlFor="publishing-comment-reply" className="mb-2 block text-sm font-bold text-[#0F172A]">متن ارسالی در کامنت</label>
+                    <textarea id="publishing-comment-reply" value={publishingCommentReplyText} onChange={event => setPublishingCommentReplyText(event.target.value)} rows={3} maxLength={2000} inputMode="text" placeholder="پاسخی که زیر کامنت کاربر منتشر می‌شود بنویس..." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none placeholder:text-xs focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
+                  </div>
 
+                  <div className="border-t border-[#E2E8F0] pt-5">
+                    <label htmlFor="publishing-direct-message" className="mb-2 block text-sm font-bold text-[#0F172A]">متن ارسالی در دایرکت <span className="font-medium text-[#2563EB]">(اختیاری)</span></label>
+                    <textarea id="publishing-direct-message" value={directMessageText} onChange={event => setDirectMessageText(event.target.value)} rows={4} maxLength={2000} inputMode="text" placeholder="متن پیامی را که می‌خواهی در دایرکت ارسال شود بنویس..." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none placeholder:text-xs focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
+                  </div>
 
-
-              <fieldset disabled={storyResponseSaved && !storyResponseEditing}>
-              <section className="space-y-3">
-                {messages[0]?.messageType === "FORM" && (
-                  <div className="rounded-xl border border-[#E2E8F0] bg-white p-3.5">
-                    <label className="flex cursor-pointer items-start gap-3">
-                      <input
-                        type="checkbox"
-                        checked={Boolean(messages[0]?.quickReplies?.some((reply) => reply.isExit))}
-                        onChange={(event) => {
-                          const currentReplies = messages[0]?.quickReplies ?? [];
-                          const existingExit = currentReplies.find((reply) => reply.isExit);
-                          if (event.target.checked) {
-                            if (existingExit || currentReplies.length >= 13) return;
-                            const exit = createEmptyQuickReply();
-                            updateMessage(0, {
-                              quickReplies: [...currentReplies, { ...exit, isExit: true, title: "خروج از فرم", destinationType: "TEXT", destinationText: "از فرم خارج شدید." }],
-                            });
-                          } else {
-                            updateMessage(0, { quickReplies: currentReplies.filter((reply) => !reply.isExit) });
-                          }
-                        }}
-                        disabled={!messages[0]?.quickReplies?.some((reply) => reply.isExit) && (messages[0]?.quickReplies?.length ?? 0) >= 13}
-                        className="mt-0.5 h-4 w-4 accent-[#2563EB]"
-                      />
-                      <span>
-                        <span className="block text-sm font-bold text-[#0F172A]">خروج از فرم <span className="font-medium text-[#2563EB]">(اختیاری)</span></span>
-                        <span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال‌سازی، کاربر با این گزینه از شاخه فرم خارج می‌شود.</span>
-                      </span>
+                  <div className="border-t border-[#E2E8F0] pt-5">
+                    <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5">
+                      <input type="checkbox" checked={requireFollow} onChange={event => setRequireFollow(event.target.checked)} className="mt-0.5 h-4 w-4 accent-[#2563EB]" />
+                      <span><span className="block text-sm font-bold text-[#0F172A]">اجبار به فالو <span className="font-medium text-[#2563EB]">(اختیاری)</span></span><span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، کاربر باید پیج را فالو کرده باشد تا پاسخ را دریافت کند.</span></span>
                     </label>
+                    {requireFollow && <div className="mt-2.5">
+                      <label htmlFor="publishing-follow-gate-text" className="mb-2 block text-sm font-bold text-[#0F172A]">متن درخواست فالو</label>
+                      <textarea id="publishing-follow-gate-text" value={followGateText} onChange={event => setFollowGateText(event.target.value)} rows={2} maxLength={500} inputMode="text" placeholder="مثلاً برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none placeholder:text-xs focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
+                    </div>}
+                  </div>
+                  <div className="border-t border-[#E2E8F0] pt-4">
+                    <Button type="button" onClick={() => { if (!automationKeywords.length || !publishingCommentReplyText.trim()) return; setAutomationSetupConfirmed(true); setError(""); }} disabled={automationKeywords.length === 0 || !publishingCommentReplyText.trim()} className="w-full min-h-11 rounded-xl bg-[#2563EB] px-4 text-sm font-bold text-white hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-40">ذخیره متن و ادامه</Button>
+                  </div>
 
-                    {messages[0]?.quickReplies?.find((reply) => reply.isExit) && (
-                      <div className="mt-3 space-y-3">
-                        <div>
-                          <label className="mb-2 block text-xs font-bold text-[#0F172A]">متن دکمه خروج</label>
-                          <input
-                            value={messages[0]?.quickReplies?.find((reply) => reply.isExit)?.title ?? ""}
-                            maxLength={20}
-                            onChange={(event) => {
-                              const exitId = messages[0]?.quickReplies?.find((reply) => reply.isExit)?.id;
-                              if (!exitId) return;
-                              updateMessage(0, { quickReplies: (messages[0]?.quickReplies ?? []).map((reply) => reply.id === exitId ? { ...reply, title: event.target.value } : reply) });
-                            }}
-                            className="w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10"
-                            style={{fontSize:"16px",WebkitTextSizeAdjust:"100%"}}
-                          />
+                  {error && <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-5 text-[#B91C1C]" role="alert">{error}</div>}
+                </section>
+              </div>
+            ) : ((type !== "STORY" && automationChoiceConfirmed && (!automationEnabled || automationSetupConfirmed)) || (type === "STORY" && automationChoiceConfirmed && (!automationEnabled || automationSetupConfirmed))) ? (
+              <div className="mx-auto w-full max-w-2xl">
+                <div className="mb-5 flex items-center justify-between gap-3">
+                  <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
+                    <ArrowRight size={15} strokeWidth={2} />بازگشت
+                  </Button>
+                </div>
+                <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
+                  <div className="mb-6 flex items-start gap-3">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">{type === "STORY" ? (automationEnabled ? "۵" : "۴") : (automationEnabled ? "۷" : "۶")}</span>
+                    <div className="min-w-0">
+                      <h2 className="text-sm font-bold text-[#0F172A]">زمان انتشار</h2>
+                      <p className="mt-1.5 text-xs leading-5 text-[#64748B]">زمان انتشار این {typeLabels[type]} را انتخاب کن.</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex flex-col gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5 sm:flex-row sm:items-center">
+                      <Button type="button" disabled={!publishNow} onClick={() => void createJob(true)} className="min-h-11 w-full shrink-0 whitespace-nowrap rounded-xl bg-[#2563EB] px-4 text-sm font-semibold text-white hover:bg-[#1D4ED8] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[#2563EB] sm:flex-1">
+                        <span dir="ltr" className="inline-flex flex-row items-center gap-2"><Send size={17} /><span dir="rtl">انتشار {typeLabels[type]} هم‌اکنون</span></span>
+                      </Button>
+                      <label className="flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl px-2 text-xs font-semibold text-[#334155]">
+                        <input type="checkbox" checked={!publishNow} onChange={(event) => {
+                          const enabled = event.target.checked;
+                          setPublishNow(!enabled);
+                          if (!enabled) {
+                            setStage6Date(null);
+                            setStage6Hour(null);
+                            setStage6Minute(null);
+                          }
+                          setError("");
+                        }} className="h-4 w-4 accent-[#2563EB]" />
+                        <span className="whitespace-nowrap">انتشار در زمان دلخواه</span>
+                      </label>
+                    </div>
+
+                    {!publishNow && (
+                      <div className="mt-3 rounded-xl border border-[#E2E8F0] bg-white p-4 sm:p-5">
+                        <div className="mb-4">
+                          <p className="text-sm font-bold text-[#0F172A]">انتخاب زمان دقیق</p>
+                          <p className="mt-1 text-[11px] leading-5 text-[#64748B]">تاریخ انتشار را انتخاب کن.</p>
                         </div>
-                        <div>
-                          <label className="mb-2 block text-xs font-bold text-[#0F172A]">متن خروج از فرم</label>
-                          <textarea
-                            value={messages[0]?.quickReplies?.find((reply) => reply.isExit)?.destinationText ?? ""}
-                            rows={3}
-                            maxLength={2000}
-                            onChange={(event) => {
-                              const exitId = messages[0]?.quickReplies?.find((reply) => reply.isExit)?.id;
-                              if (!exitId) return;
-                              updateMessage(0, { quickReplies: (messages[0]?.quickReplies ?? []).map((reply) => reply.id === exitId ? { ...reply, destinationText: event.target.value } : reply) });
-                            }}
-                            className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10"
-                            style={{fontSize:"16px",lineHeight:1.75,WebkitTextSizeAdjust:"100%"}}
-                          />
+
+                        <div className="grid grid-cols-2 gap-3">
+                          {[todayJalali, addJalaliDays(todayJalali, 1)].map((date, index) => {
+                            const selected = stage6Date?.year === date.year && stage6Date?.month === date.month && stage6Date?.day === date.day;
+                            const label = index === 0 ? "امروز" : "فردا";
+                            return (
+                              <button
+                                key={`${date.year}-${date.month}-${date.day}`}
+                                type="button"
+                                onClick={() => {
+                                  setStage6Date(date);
+                                  if (index === 0) {
+                                    setStage6Hour((current) => Math.max(current ?? officialTehranClock.hour, officialTehranClock.hour));
+                                    setStage6Minute((current) => {
+                                      if (stage6Hour === officialTehranClock.hour) return Math.max(current ?? officialTehranClock.minute, officialTehranClock.minute);
+                                      return current ?? officialTehranClock.minute;
+                                    });
+                                  }
+                                  setError("");
+                                }}
+                                className={["relative min-h-24 overflow-hidden rounded-2xl border p-3.5 text-right transition-all", selected ? "border-[#2563EB] bg-[#EFF6FF] shadow-sm ring-2 ring-[#2563EB]/10" : "border-[#E2E8F0] bg-white hover:border-[#BFDBFE] hover:bg-[#F8FAFC]"].join(" ")}
+                              >
+                                <span className="absolute right-3.5 top-3.5 text-[11px] font-semibold text-[#64748B]">{getJalaliWeekday(date)}</span>
+                                <span className="absolute left-3.5 top-3.5 text-[10px] font-semibold text-[#2563EB]">{label}</span>
+                                <div className="mt-5 text-center text-base font-bold text-[#0F172A]">{toPersianDigits(date.day)} {jalaliMonths[date.month - 1]}</div>
+                                <div className="mt-2 text-center text-[10px] font-medium text-[#64748B]">{toPersianDigits(date.year)}</div>
+                                {selected && <span className="absolute bottom-2.5 left-2.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#2563EB] text-[10px] font-bold text-white">✓</span>}
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        <div className="mt-6 border-t border-[#E2E8F0] pt-5">
+                          <div className="mb-3">
+                            <p className="text-sm font-bold text-[#0F172A]">ساعت انتشار</p>
+                          </div>
+
+                          <div dir="ltr" className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
+                            <InlineWheelPicker
+                              value={stage6Hour}
+                              min={stage6Date && stage6Date.year === todayJalali.year && stage6Date.month === todayJalali.month && stage6Date.day === todayJalali.day ? officialTehranClock.hour : 0}
+                              max={23}
+                              label="ساعت"
+                              onChange={(value) => {
+                                const isToday = stage6Date && stage6Date.year === todayJalali.year && stage6Date.month === todayJalali.month && stage6Date.day === todayJalali.day;
+                                const nextHour = isToday ? Math.max(value, officialTehranClock.hour) : value;
+                                setStage6Hour(nextHour);
+                                if (isToday && nextHour === officialTehranClock.hour && (stage6Minute ?? 0) < officialTehranClock.minute) {
+                                  setStage6Minute(officialTehranClock.minute);
+                                }
+                                setError("");
+                              }}
+                            />
+                            <span className="mt-6 px-0.5 text-xl font-bold text-[#64748B]" aria-hidden="true">:</span>
+                            <InlineWheelPicker
+                              value={stage6Minute}
+                              min={
+                                stage6Date &&
+                                  stage6Date.year === todayJalali.year &&
+                                  stage6Date.month === todayJalali.month &&
+                                  stage6Date.day === todayJalali.day &&
+                                  stage6Hour === officialTehranClock.hour
+                                  ? officialTehranClock.minute
+                                  : 0
+                              }
+                              max={59}
+                              label="دقیقه"
+                              onChange={(value) => {
+                                const isToday = stage6Date && stage6Date.year === todayJalali.year && stage6Date.month === todayJalali.month && stage6Date.day === todayJalali.day;
+                                const nextMinute = isToday && stage6Hour === officialTehranClock.hour
+                                  ? Math.max(value, officialTehranClock.minute)
+                                  : value;
+                                setStage6Minute(nextMinute);
+                                setError("");
+                              }}
+                            />
+                          </div>
+
+                          <p className="mt-4 text-center text-[11px] leading-5 text-[#64748B]">برای انتخاب به بالا یا پایین بکشید</p>
+                        </div>
+
+                        <div className="mt-5 border-t border-[#E2E8F0] pt-5">
+                          <Button type="button" onClick={() => void createJob(false)} disabled={publishing || !stage6Date || stage6Hour === null || stage6Minute === null} className="min-h-11 w-full rounded-xl bg-[#2563EB] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#1D4ED8] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[#2563EB]">
+                            <span dir="ltr" className="inline-flex flex-row items-center gap-2">{publishing ? <Loader2 size={17} className="animate-spin" /> : <CalendarClock size={17} />}<span dir="rtl">انتشار در زمان انتخاب‌شده</span></span>
+                          </Button>
                         </div>
                       </div>
                     )}
+
+                    {error && <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-5 text-[#B91C1C]" role="alert">{error}</div>}
                   </div>
-                )}
-
-                <div className="rounded-xl border border-[#E2E8F0] bg-white p-3.5">
-                  <label className="flex cursor-pointer items-start gap-3">
-                    <input type="checkbox" checked={likeStoryReply} onChange={event => { setLikeStoryReply(event.target.checked); if (storyResponseEditing) setStoryResponseDirty(true); }} className="mt-0.5 h-4 w-4 accent-[#2563EB]"/>
-                    <span><span className="block text-sm font-bold text-[#0F172A]">لایک ریپلای <span className="font-medium text-[#2563EB]">(اختیاری)</span></span><span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، Reply استوری کاربر لایک می‌شود.</span></span>
-                  </label>
-                </div>
-
-                <div className="rounded-xl border border-[#E2E8F0] bg-white p-3.5">
-                  <label className="flex cursor-pointer items-start gap-3">
-                    <input type="checkbox" checked={requireFollow} onChange={event => { setRequireFollow(event.target.checked); if (storyResponseEditing) setStoryResponseDirty(true); }} className="mt-0.5 h-4 w-4 accent-[#2563EB]"/>
-                    <span><span className="block text-sm font-bold text-[#0F172A]">اجبار به فالو <span className="font-medium text-[#2563EB]">(اختیاری)</span></span><span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، کاربر باید پیج را فالو کرده باشد تا پاسخ را دریافت کند.</span></span>
-                  </label>
-                  {requireFollow && <div className="mt-2.5">
-                    <label htmlFor="publishing-follow-gate-text" className="mb-2 block text-sm font-bold text-[#0F172A]">متن درخواست فالو</label>
-                    <textarea id="publishing-follow-gate-text" value={followGateText} onChange={event => { setFollowGateText(event.target.value); if (storyResponseEditing) setStoryResponseDirty(true); }} rows={2} maxLength={500} inputMode="text" placeholder="مثلاً برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none placeholder:text-xs focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{fontSize:"16px",lineHeight:1.75,WebkitTextSizeAdjust:"100%"}}/>
-                  </div>}
-                </div>
-              </section>
-              </fieldset>
-
-
-
-              {(!storyResponseSaved || storyResponseEditing) && (
-                <div className="border-t border-[#E2E8F0] pt-4">
-                  <Button type="button" onClick={() => { void storyAutomationSetupRef.current?.saveAndContinue(); }} disabled={!keywords.trim() || (messages[0]?.messageType === "TEXT" && !messages[0]?.text.trim()) || (storyResponseEditing && !storyResponseDirty)} className="w-full min-h-11 rounded-xl bg-[#2563EB] px-4 text-sm font-bold text-white hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-40">
-                    ذخیره {messages[0]?.messageType === "FORM" ? "فرم" : messages[0]?.messageType === "SHOWCASE" ? "ویترین" : messages[0]?.messageType === "TEXT" ? "متن" : messages[0]?.messageType === "IMAGE" ? "عکس" : messages[0]?.messageType === "VIDEO" ? "فیلم" : "وویس"} و ادامه
-                  </Button>
-                </div>
-              )}
-
-              {storyResponseSaved && !storyResponseEditing && (
-                <div className="flex items-center justify-center gap-2 border-t border-[#E2E8F0] pt-4">
-                  <Button type="button" onClick={handleEditStoryResponse} className="min-h-10 flex-1 rounded-xl border border-[#BFDBFE] bg-[#EFF6FF] px-4 text-sm font-bold text-[#2563EB] hover:bg-[#DBEAFE]">
-                    <span dir="ltr" className="inline-flex items-center justify-center gap-1.5"><Pencil size={15} /><span dir="rtl">ویرایش</span></span>
-                  </Button>
-                  <Button type="button" variant="destructive" onClick={() => void handleDeleteStoryResponse()} className="min-h-10 flex-1 !rounded-xl !border !border-[#FECACA] !bg-[#FEF2F2] !px-4 !text-sm !font-bold !text-[#DC2626] hover:!bg-[#FEE2E2]">
-                    <span dir="ltr" className="inline-flex items-center justify-center gap-1.5"><Trash2 size={15} /><span dir="rtl">حذف</span></span>
-                  </Button>
-                </div>
-              )}
-
-              {error && <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-5 text-[#B91C1C]" role="alert">{error}</div>}
-            </section>
+                </section>
+              </div>
+            ) : null
+            }
           </div>
-        ) : type !== "STORY" && automationChoiceConfirmed && automationEnabled && !automationSetupConfirmed ? (
-          <div className="mx-auto w-full max-w-2xl">
-            <div className="mb-5 flex items-center justify-between gap-3">
-              <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
-                <ArrowRight size={15} strokeWidth={2}/>بازگشت
-              </Button>
-
-            </div>
-            <section className="space-y-5 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
-              <div className="flex items-start gap-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">۶</span>
-                <div className="min-w-0">
-                  <h2 className="text-sm font-bold text-[#0F172A]">تنظیم پاسخ خودکار</h2>
-                  <p className="mt-1.5 text-xs leading-5 text-[#64748B]">کلمات فعال‌کننده و متن پیام دایرکت را مشخص کن.</p>
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="publishing-auto-keyword" className="mb-2 block text-sm font-bold text-[#0F172A]">کلمات کلیدی</label>
-                <p className="mb-3 text-xs leading-5 text-[#64748B]">با وارد شدن این کلمات در کامنت، پاسخ خودکار فعال می‌شود.</p>
-                {automationKeywords.length > 0 && <div className="mb-3 flex flex-wrap gap-2">{automationKeywords.map((keyword) => <span key={keyword} className="inline-flex items-center gap-1.5 rounded-full bg-[#EFF6FF] px-3 py-1.5 text-xs font-semibold text-[#2563EB]"><span>{keyword}</span><button type="button" onClick={() => setAutomationKeywords(current => current.filter(item => item !== keyword))} aria-label={`حذف ${keyword}`} className="flex h-4 w-4 items-center justify-center rounded-full hover:bg-white"><X size={12}/></button></span>)}</div>}
-                <div className="flex items-center gap-2">
-                  <input id="publishing-auto-keyword" value={automationKeywordDraft} onChange={event => setAutomationKeywordDraft(event.target.value)} onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); const value = automationKeywordDraft.trim(); if (value && !automationKeywords.includes(value)) setAutomationKeywords(current => [...current, value]); setAutomationKeywordDraft(""); } }} placeholder="مثلاً قیمت، اطلاعات" inputMode="text" className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-3 !text-base leading-5 text-[#0F172A] outline-none placeholder:text-xs placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10" style={{fontSize:"16px",lineHeight:1.75,WebkitTextSizeAdjust:"100%"}}/>
-                  <Button type="button" onClick={() => { const value = automationKeywordDraft.trim(); if (value && !automationKeywords.includes(value)) setAutomationKeywords(current => [...current, value]); setAutomationKeywordDraft(""); }} disabled={!automationKeywordDraft.trim() || automationKeywords.includes(automationKeywordDraft.trim())} className="min-h-11 shrink-0 rounded-lg !bg-[#2563EB] px-3.5 text-xs font-semibold text-white hover:!bg-[#1D4ED8] disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8]">افزودن</Button>
-                </div>
-              </div>
-
-              <div className="border-t border-[#E2E8F0] pt-5">
-                <label htmlFor="publishing-comment-reply" className="mb-2 block text-sm font-bold text-[#0F172A]">متن ارسالی در کامنت</label>
-                <textarea id="publishing-comment-reply" value={publishingCommentReplyText} onChange={event => setPublishingCommentReplyText(event.target.value)} rows={3} maxLength={2000} inputMode="text" placeholder="پاسخی که زیر کامنت کاربر منتشر می‌شود بنویس..." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none placeholder:text-xs focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{fontSize:"16px",lineHeight:1.75,WebkitTextSizeAdjust:"100%"}}/>
-              </div>
-
-              <div className="border-t border-[#E2E8F0] pt-5">
-                <label htmlFor="publishing-direct-message" className="mb-2 block text-sm font-bold text-[#0F172A]">متن ارسالی در دایرکت <span className="font-medium text-[#2563EB]">(اختیاری)</span></label>
-                <textarea id="publishing-direct-message" value={directMessageText} onChange={event => setDirectMessageText(event.target.value)} rows={4} maxLength={2000} inputMode="text" placeholder="متن پیامی را که می‌خواهی در دایرکت ارسال شود بنویس..." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none placeholder:text-xs focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{fontSize:"16px",lineHeight:1.75,WebkitTextSizeAdjust:"100%"}}/>
-              </div>
-
-              <div className="border-t border-[#E2E8F0] pt-5">
-                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5">
-                  <input type="checkbox" checked={requireFollow} onChange={event => setRequireFollow(event.target.checked)} className="mt-0.5 h-4 w-4 accent-[#2563EB]"/>
-                  <span><span className="block text-sm font-bold text-[#0F172A]">اجبار به فالو <span className="font-medium text-[#2563EB]">(اختیاری)</span></span><span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، کاربر باید پیج را فالو کرده باشد تا پاسخ را دریافت کند.</span></span>
-                </label>
-                {requireFollow && <div className="mt-2.5">
-                  <label htmlFor="publishing-follow-gate-text" className="mb-2 block text-sm font-bold text-[#0F172A]">متن درخواست فالو</label>
-                  <textarea id="publishing-follow-gate-text" value={followGateText} onChange={event => setFollowGateText(event.target.value)} rows={2} maxLength={500} inputMode="text" placeholder="مثلاً برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none placeholder:text-xs focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{fontSize:"16px",lineHeight:1.75,WebkitTextSizeAdjust:"100%"}}/>
-                </div>}
-              </div>
-              <div className="border-t border-[#E2E8F0] pt-4">
-                <Button type="button" onClick={() => { if (!automationKeywords.length || !publishingCommentReplyText.trim()) return; setAutomationSetupConfirmed(true); setError(""); }} disabled={automationKeywords.length === 0 || !publishingCommentReplyText.trim()} className="w-full min-h-11 rounded-xl bg-[#2563EB] px-4 text-sm font-bold text-white hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-40">ذخیره متن و ادامه</Button>
-              </div>
-
-              {error && <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-5 text-[#B91C1C]" role="alert">{error}</div>}
-            </section>
-          </div>
-        ) : ((type !== "STORY" && automationChoiceConfirmed && (!automationEnabled || automationSetupConfirmed)) || (type === "STORY" && automationChoiceConfirmed && (!automationEnabled || automationSetupConfirmed))) ? (
-          <div className="mx-auto w-full max-w-2xl">
-            <div className="mb-5 flex items-center justify-between gap-3">
-              <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
-                <ArrowRight size={15} strokeWidth={2}/>بازگشت
-              </Button>
-            </div>
-            <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
-              <div className="mb-6 flex items-start gap-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">{type === "STORY" ? (automationEnabled ? "۵" : "۴") : (automationEnabled ? "۷" : "۶")}</span>
-                <div className="min-w-0">
-                  <h2 className="text-sm font-bold text-[#0F172A]">زمان انتشار</h2>
-                  <p className="mt-1.5 text-xs leading-5 text-[#64748B]">زمان انتشار این {typeLabels[type]} را انتخاب کن.</p>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex flex-col gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5 sm:flex-row sm:items-center">
-                  <Button type="button" disabled={!publishNow} onClick={() => void createJob(true)} className="min-h-11 w-full shrink-0 whitespace-nowrap rounded-xl bg-[#2563EB] px-4 text-sm font-semibold text-white hover:bg-[#1D4ED8] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[#2563EB] sm:flex-1">
-                    <span dir="ltr" className="inline-flex flex-row items-center gap-2"><Send size={17} /><span dir="rtl">انتشار {typeLabels[type]} هم‌اکنون</span></span>
-                  </Button>
-                  <label className="flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl px-2 text-xs font-semibold text-[#334155]">
-                    <input type="checkbox" checked={!publishNow} onChange={(event) => {
-                      const enabled = event.target.checked;
-                      setPublishNow(!enabled);
-                      if (!enabled) {
-                        setStage6Date(null);
-                        setStage6Hour(null);
-                        setStage6Minute(null);
-                      }
-                      setError("");
-                    }} className="h-4 w-4 accent-[#2563EB]" />
-                    <span className="whitespace-nowrap">انتشار در زمان دلخواه</span>
-                  </label>
-                </div>
-
-                {!publishNow && (
-                  <div className="mt-3 rounded-xl border border-[#E2E8F0] bg-white p-4 sm:p-5">
-                    <div className="mb-4">
-                      <p className="text-sm font-bold text-[#0F172A]">انتخاب زمان دقیق</p>
-                      <p className="mt-1 text-[11px] leading-5 text-[#64748B]">تاریخ انتشار را انتخاب کن.</p>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      {[todayJalali, addJalaliDays(todayJalali, 1)].map((date, index) => {
-                        const selected = stage6Date?.year === date.year && stage6Date?.month === date.month && stage6Date?.day === date.day;
-                        const label = index === 0 ? "امروز" : "فردا";
-                        return (
-                          <button
-                            key={`${date.year}-${date.month}-${date.day}`}
-                            type="button"
-                            onClick={() => {
-                              setStage6Date(date);
-                              if (index === 0) {
-                                setStage6Hour((current) => Math.max(current ?? officialTehranClock.hour, officialTehranClock.hour));
-                                setStage6Minute((current) => {
-                                  if (stage6Hour === officialTehranClock.hour) return Math.max(current ?? officialTehranClock.minute, officialTehranClock.minute);
-                                  return current ?? officialTehranClock.minute;
-                                });
-                              }
-                              setError("");
-                            }}
-                            className={["relative min-h-24 overflow-hidden rounded-2xl border p-3.5 text-right transition-all", selected ? "border-[#2563EB] bg-[#EFF6FF] shadow-sm ring-2 ring-[#2563EB]/10" : "border-[#E2E8F0] bg-white hover:border-[#BFDBFE] hover:bg-[#F8FAFC]"].join(" ")}
-                          >
-                            <span className="absolute right-3.5 top-3.5 text-[11px] font-semibold text-[#64748B]">{getJalaliWeekday(date)}</span>
-                            <span className="absolute left-3.5 top-3.5 text-[10px] font-semibold text-[#2563EB]">{label}</span>
-                            <div className="mt-5 text-center text-base font-bold text-[#0F172A]">{toPersianDigits(date.day)} {jalaliMonths[date.month - 1]}</div>
-                            <div className="mt-2 text-center text-[10px] font-medium text-[#64748B]">{toPersianDigits(date.year)}</div>
-                            {selected && <span className="absolute bottom-2.5 left-2.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#2563EB] text-[10px] font-bold text-white">✓</span>}
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    <div className="mt-6 border-t border-[#E2E8F0] pt-5">
-                      <div className="mb-3">
-                        <p className="text-sm font-bold text-[#0F172A]">ساعت انتشار</p>
-                      </div>
-
-                      <div dir="ltr" className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
-                        <InlineWheelPicker
-                          value={stage6Hour}
-                          min={stage6Date && stage6Date.year === todayJalali.year && stage6Date.month === todayJalali.month && stage6Date.day === todayJalali.day ? officialTehranClock.hour : 0}
-                          max={23}
-                          label="ساعت"
-                          onChange={(value) => {
-                            const isToday = stage6Date && stage6Date.year === todayJalali.year && stage6Date.month === todayJalali.month && stage6Date.day === todayJalali.day;
-                            const nextHour = isToday ? Math.max(value, officialTehranClock.hour) : value;
-                            setStage6Hour(nextHour);
-                            if (isToday && nextHour === officialTehranClock.hour && (stage6Minute ?? 0) < officialTehranClock.minute) {
-                              setStage6Minute(officialTehranClock.minute);
-                            }
-                            setError("");
-                          }}
-                        />
-                        <span className="mt-6 px-0.5 text-xl font-bold text-[#64748B]" aria-hidden="true">:</span>
-                        <InlineWheelPicker
-                          value={stage6Minute}
-                          min={
-                            stage6Date &&
-                            stage6Date.year === todayJalali.year &&
-                            stage6Date.month === todayJalali.month &&
-                            stage6Date.day === todayJalali.day &&
-                            stage6Hour === officialTehranClock.hour
-                              ? officialTehranClock.minute
-                              : 0
-                          }
-                          max={59}
-                          label="دقیقه"
-                          onChange={(value) => {
-                            const isToday = stage6Date && stage6Date.year === todayJalali.year && stage6Date.month === todayJalali.month && stage6Date.day === todayJalali.day;
-                            const nextMinute = isToday && stage6Hour === officialTehranClock.hour
-                              ? Math.max(value, officialTehranClock.minute)
-                              : value;
-                            setStage6Minute(nextMinute);
-                            setError("");
-                          }}
-                        />
-                      </div>
-
-                      <p className="mt-4 text-center text-[11px] leading-5 text-[#64748B]">برای انتخاب به بالا یا پایین بکشید</p>
-                    </div>
-
-                    <div className="mt-5 border-t border-[#E2E8F0] pt-5">
-                      <Button type="button" onClick={() => void createJob(false)} disabled={publishing || !stage6Date || stage6Hour === null || stage6Minute === null} className="min-h-11 w-full rounded-xl bg-[#2563EB] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#1D4ED8] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[#2563EB]">
-                        <span dir="ltr" className="inline-flex flex-row items-center gap-2">{publishing ? <Loader2 size={17} className="animate-spin" /> : <CalendarClock size={17} />}<span dir="rtl">انتشار در زمان انتخاب‌شده</span></span>
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {error && <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-5 text-[#B91C1C]" role="alert">{error}</div>}
-              </div>
-            </section>
-          </div>
-        ) : null
-        }
-        </div>
         </div>
       </div>
     </>

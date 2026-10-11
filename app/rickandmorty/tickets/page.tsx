@@ -2,53 +2,377 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Alert, Avatar, Box, Button, Card, Chip, CircularProgress, InputAdornment, MenuItem, Stack, TextField, Typography } from "@mui/material";
-import { ArrowLeft, Clock3, MessageSquareText, Search, Send, Ticket as TicketIcon, UserRound, X } from "lucide-react";
+import {
+  Alert,
+  Box,
+  Button,
+  Card,
+  Chip,
+  CircularProgress,
+  FormControl,
+  IconButton,
+  InputAdornment,
+  MenuItem,
+  Select,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
+import { ArrowLeft, Clock3, MessageSquareText, Search, Send, UserRound, X } from "lucide-react";
 
-type TicketRow = { id:string; subject:string; status:string; priority:string; createdAt:string; updatedAt:string; user:{name:string|null;email:string}; _count:{messages:number} };
-const statuses = [{value:"",label:"همه تیکت‌ها"},{value:"OPEN",label:"باز"},{value:"IN_PROGRESS",label:"در حال بررسی"},{value:"WAITING_USER",label:"منتظر پاسخ کاربر"},{value:"RESOLVED",label:"حل‌شده"},{value:"CLOSED",label:"بسته‌شده"}];
-const statusMeta:Record<string,{label:string;color:"primary"|"info"|"warning"|"success"|"default"}> = {OPEN:{label:"باز",color:"primary"},IN_PROGRESS:{label:"در حال بررسی",color:"info"},WAITING_USER:{label:"منتظر پاسخ کاربر",color:"warning"},RESOLVED:{label:"حل‌شده",color:"success"},CLOSED:{label:"بسته‌شده",color:"default"}};
-const priorityMeta:Record<string,{label:string;color:"error"|"warning"|"default"}> = {LOW:{label:"کم",color:"default"},NORMAL:{label:"عادی",color:"default"},HIGH:{label:"زیاد",color:"warning"},URGENT:{label:"فوری",color:"error"}};
-const date = (value:string) => new Intl.DateTimeFormat("fa-IR",{month:"short",day:"numeric"}).format(new Date(value));
+type TicketRow = {
+  id: string;
+  subject: string;
+  status: string;
+  priority: string;
+  createdAt: string;
+  updatedAt: string;
+  user: { name: string | null; email: string };
+  _count: { messages: number };
+};
+
+const statuses = [
+  { value: "", label: "همه وضعیت‌ها" },
+  { value: "OPEN", label: "باز" },
+  { value: "IN_PROGRESS", label: "در حال بررسی" },
+  { value: "WAITING_USER", label: "منتظر پاسخ کاربر" },
+  { value: "RESOLVED", label: "حل‌شده" },
+  { value: "CLOSED", label: "بسته‌شده" },
+];
+
+const statusMeta: Record<string, { label: string; color: "primary" | "info" | "warning" | "success" | "default" }> = {
+  OPEN: { label: "باز", color: "primary" },
+  IN_PROGRESS: { label: "در حال بررسی", color: "info" },
+  WAITING_USER: { label: "منتظر پاسخ کاربر", color: "warning" },
+  RESOLVED: { label: "حل‌شده", color: "success" },
+  CLOSED: { label: "بسته‌شده", color: "default" },
+};
+
+const priorityMeta: Record<string, { label: string; color: "error" | "warning" | "default" }> = {
+  LOW: { label: "کم", color: "default" },
+  NORMAL: { label: "عادی", color: "default" },
+  HIGH: { label: "زیاد", color: "warning" },
+  URGENT: { label: "فوری", color: "error" },
+};
+
+const formatShortDate = (value: string) => {
+  try {
+    return new Intl.DateTimeFormat("fa-IR", { month: "short", day: "numeric" }).format(new Date(value));
+  } catch {
+    return value;
+  }
+};
 
 export default function TicketsPage() {
- const router=useRouter(); const [rows,setRows]=useState<TicketRow[]>([]); const [loading,setLoading]=useState(true); const [q,setQ]=useState(""); const [status,setStatus]=useState(""); const [error,setError]=useState(""); const [refreshKey,setRefreshKey]=useState(0);
- useEffect(()=>{let cancelled=false;const timer=window.setTimeout(async()=>{setLoading(true);setError("");try{const r=await fetch(`/api/admin/tickets?q=${encodeURIComponent(q.trim())}&status=${encodeURIComponent(status)}`,{cache:"no-store"});const j=await r.json();if(!r.ok)throw new Error(j.message||"دریافت تیکت‌ها ناموفق بود");if(!cancelled)setRows(Array.isArray(j.data)?j.data:[]);}catch(e){if(!cancelled)setError(e instanceof Error?e.message:"خطا در دریافت اطلاعات");}finally{if(!cancelled)setLoading(false);}},180);return()=>{cancelled=true;window.clearTimeout(timer);};},[q,status,refreshKey]);
- if(loading && rows.length===0 && !error) return <Box role="status" aria-label="در حال بارگذاری تیکت‌ها" sx={{minHeight:"calc(100dvh - 150px)",width:"100%",display:"flex",alignItems:"center",justifyContent:"center"}}><CircularProgress size={40} thickness={4}/></Box>;
- return <Stack dir="rtl" spacing={{xs:1.75,sm:2.5}} sx={{direction:"rtl",textAlign:"start",minWidth:0}}>
-  <Box dir="rtl" sx={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:1,flexWrap:"wrap"}}>
-   <Box><Typography sx={{fontSize:{xs:21,sm:25},fontWeight:800,color:"#0F172A"}}>تیکت‌ها</Typography><Typography sx={{mt:.5,fontSize:13,color:"#64748B"}}>درخواست‌های کاربران را یک‌جا ببین و پاسخ بده.</Typography></Box>
-   <Button variant="contained" onClick={()=>router.push("/rickandmorty/tickets/bulk")} sx={{borderRadius:2.5,minHeight:42,whiteSpace:"nowrap"}}><Box component="span" sx={{display:"inline-flex",alignItems:"center",justifyContent:"center",gap:1,direction:"ltr",flexDirection:"row-reverse"}}><Send size={16}/>ارسال گروهی تیکت</Box></Button>
-  </Box>
-  <Card variant="outlined" sx={{p:{xs:1.25,sm:1.75},borderRadius:3,borderColor:"#E5EAF1",boxShadow:"0 2px 10px rgba(15,23,42,.025)"}}>
-   <Stack spacing={1.25}>
-    <TextField fullWidth size="small" value={q} onChange={e=>setQ(e.target.value)} placeholder="جستجو در عنوان، نام یا ایمیل..." inputProps={{"aria-label":"جستجوی تیکت‌ها",dir:"rtl"}} InputProps={{startAdornment:<InputAdornment position="start"><Search size={18} color="#94A3B8"/></InputAdornment>,endAdornment:q?<InputAdornment position="end"><Button onClick={()=>setQ("")} aria-label="پاک کردن جستجو" size="small" sx={{minWidth:30,p:.5,color:"#64748B"}}><X size={16}/></Button></InputAdornment>:undefined}} sx={{"& .MuiOutlinedInput-root":{borderRadius:2.5,bgcolor:"#FAFBFD",minHeight:44}}}/>
-    <TextField select fullWidth size="small" value={status} onChange={e=>setStatus(e.target.value)} SelectProps={{displayEmpty:true,renderValue:(selected)=>statuses.find(x=>x.value===selected)?.label||"همه تیکت‌ها"}} inputProps={{"aria-label":"فیلتر وضعیت تیکت",dir:"rtl"}} sx={{"& .MuiOutlinedInput-root":{borderRadius:2.5,bgcolor:"#FAFBFD",minHeight:44},"& .MuiSelect-select":{direction:"rtl",textAlign:"start"},"& .MuiSelect-icon":{right:"auto",left:10}}}>{statuses.map(x=><MenuItem key={x.value} value={x.value}>{x.label}</MenuItem>)}</TextField>
-   </Stack>
-   <Box sx={{display:"flex",alignItems:"center",justifyContent:"space-between",mt:1.25,px:.25}}>
-    <Typography variant="caption" sx={{color:"#64748B"}}>{loading?"در حال به‌روزرسانی…":`${rows.length.toLocaleString("fa-IR")} تیکت${rows.length===100?" اخیر":""}`}</Typography>
-    {status&&<Button size="small" onClick={()=>setStatus("")} sx={{minWidth:0,fontSize:12}}>حذف فیلتر</Button>}
-   </Box>
-  </Card>
-  {error&&<Alert severity="error" action={<Button color="inherit" size="small" onClick={()=>setRefreshKey(v=>v+1)}>تلاش دوباره</Button>}>{error}</Alert>}
-  <Stack spacing={1.1}>
-   {loading?<Box role="status" aria-label="در حال دریافت تیکت‌ها" sx={{minHeight:220,width:"100%",display:"flex",alignItems:"center",justifyContent:"center"}}><CircularProgress size={36} thickness={4}/></Box>:
-    rows.length?rows.map(t=>{const st=statusMeta[t.status]||{label:t.status,color:"default" as const};const pr=priorityMeta[t.priority]||{label:t.priority,color:"default" as const};return <Card key={t.id} variant="outlined" onClick={()=>router.push(`/rickandmorty/tickets/${t.id}`)} sx={{borderRadius:3,borderColor:"#E5EAF1",overflow:"hidden",cursor:"pointer",transition:"border-color .16s ease,box-shadow .16s ease","&:hover":{borderColor:"#B8CCF8",boxShadow:"0 5px 18px rgba(37,99,235,.07)"},"&:active":{transform:"scale(.995)"}}}>
-     <Box sx={{p:{xs:1.5,sm:2},display:"flex",alignItems:"stretch",gap:1.5}}>
-      <Avatar sx={{width:42,height:42,bgcolor:"#F1F5F9",color:"#475569",fontWeight:700,fontSize:15,flexShrink:0}}>{(t.user.name||t.user.email||"?").trim().slice(0,1).toUpperCase()}</Avatar>
-      <Box sx={{minWidth:0,flex:1}}>
-       <Box sx={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:1}}><Typography sx={{fontSize:14,fontWeight:750,color:"#172033",lineHeight:1.8,overflowWrap:"anywhere"}}>{t.subject}</Typography><ArrowLeft size={17} color="#94A3B8" style={{flexShrink:0,marginTop:3}}/></Box>
-       <Typography sx={{fontSize:12,color:"#64748B",mt:.15,overflowWrap:"anywhere"}}>{t.user.name||"کاربر بدون نام"} <Box component="span" sx={{mx:.5,color:"#CBD5E1"}}>•</Box> {t.user.email}</Typography>
-       <Box sx={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:1,mt:1.25}}>
-        <Stack direction="row" spacing={.75} useFlexGap flexWrap="wrap"><Chip size="small" label={st.label} color={st.color} variant="outlined" sx={{height:25,fontSize:11,borderRadius:1.5}}/><Chip size="small" label={`اولویت ${pr.label}`} color={pr.color} variant={pr.color==="default"?"outlined":"filled"} sx={{height:25,fontSize:11,borderRadius:1.5}}/></Stack>
-        <Stack direction="row" spacing={1.25} sx={{color:"#64748B",alignItems:"center"}}><Stack direction="row" spacing={.5} alignItems="center"><MessageSquareText size={14}/><Typography variant="caption">{t._count.messages.toLocaleString("fa-IR")}</Typography></Stack><Stack direction="row" spacing={.5} alignItems="center"><Clock3 size={13}/><Typography variant="caption">{date(t.updatedAt)}</Typography></Stack></Stack>
-       </Box>
+  const router = useRouter();
+  const [rows, setRows] = useState<TicketRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [q, setQ] = useState("");
+  const [status, setStatus] = useState("");
+  const [error, setError] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    const timer = window.setTimeout(async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const queryParams = new URLSearchParams();
+        if (q.trim()) queryParams.set("q", q.trim());
+        if (status) queryParams.set("status", status);
+
+        const r = await fetch(`/api/admin/tickets?${queryParams.toString()}`, { cache: "no-store" });
+        const j = await r.json();
+        if (!r.ok) throw new Error(j.message || "دریافت فهرست تیکت‌ها ناموفق بود");
+        if (!cancelled) setRows(Array.isArray(j.data) ? j.data : []);
+      } catch (e) {
+        if (!cancelled) setError(e instanceof Error ? e.message : "خطا در دریافت اطلاعات تیکت‌ها");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }, 200);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [q, status, refreshKey]);
+
+  return (
+    <Stack dir="rtl" spacing={{ xs: 2, sm: 2.5 }} sx={{ width: "100%", maxWidth: 1100, mx: "auto", pb: 4 }}>
+      {/* سربرگ و اکشن ارسال گروهی */}
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: { xs: "column", sm: "row" },
+          alignItems: { xs: "stretch", sm: "center" },
+          justifyContent: "space-between",
+          gap: 1.5,
+        }}
+      >
+        <Box>
+          <Typography variant="h5" sx={{ fontSize: { xs: 22, sm: 26 }, fontWeight: 800, color: "#0F172A" }}>
+            تیکت‌های پشتیبانی
+          </Typography>
+          <Typography variant="body2" sx={{ color: "#64748B", mt: 0.5 }}>
+            پیگیری درخواست‌ها و پاسخ‌گویی به کاربران در یک نگاه
+          </Typography>
+        </Box>
+        <Button
+          variant="contained"
+          onClick={() => router.push("/rickandmorty/tickets/bulk")}
+          endIcon={<Send size={16} />}
+          sx={{
+            borderRadius: 2.5,
+            minHeight: 42,
+            fontWeight: 700,
+            bgcolor: "#2563EB",
+            boxShadow: "none",
+            "&:hover": { bgcolor: "#1D4ED8", boxShadow: "none" },
+          }}
+        >
+          ارسال گروهی تیکت
+        </Button>
       </Box>
-     </Box>
-    </Card>}) :
-    <Card variant="outlined" sx={{borderRadius:3,borderStyle:"dashed",borderColor:"#CBD5E1",p:{xs:4,sm:6},textAlign:"center"}}>
-     <Box sx={{width:52,height:52,mx:"auto",mb:1.5,display:"grid",placeItems:"center",borderRadius:3,bgcolor:"#F1F5F9",color:"#64748B"}}><UserRound size={23}/></Box><Typography fontWeight={750} sx={{color:"#334155"}}>تیکتی پیدا نشد</Typography><Typography sx={{color:"#64748B",fontSize:13,mt:.5}}>عبارت جستجو یا فیلتر وضعیت را تغییر بده.</Typography>{(q||status)&&<Button sx={{mt:1.5}} onClick={()=>{setQ("");setStatus("");}}>نمایش همه تیکت‌ها</Button>}
-    </Card>}
-  </Stack>
- </Stack>;
+
+      {/* فیلتر و جستجو */}
+      <Card variant="outlined" sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 3, borderColor: "#E2E8F0", bgcolor: "#FFFFFF" }}>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "2fr 1fr" }, gap: 1.5 }}>
+          <TextField
+            fullWidth
+            size="small"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="جستجو در عنوان یا نام کاربر…"
+            inputProps={{ "aria-label": "جستجوی تیکت‌ها", dir: "rtl" }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search size={18} color="#94A3B8" />
+                </InputAdornment>
+              ),
+              endAdornment: q ? (
+                <InputAdornment position="end">
+                  <IconButton onClick={() => setQ("")} size="small" aria-label="پاک کردن جستجو">
+                    <X size={16} />
+                  </IconButton>
+                </InputAdornment>
+              ) : undefined,
+            }}
+            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, bgcolor: "#FAFBFD" } }}
+          />
+
+          <FormControl size="small" fullWidth>
+            <Select
+              value={status}
+              displayEmpty
+              onChange={(e) => setStatus(e.target.value)}
+              renderValue={(selected) => {
+                const found = statuses.find((x) => x.value === selected);
+                return found ? found.label : "همه وضعیت‌ها";
+              }}
+              inputProps={{ "aria-label": "فیلتر وضعیت تیکت", dir: "rtl" }}
+              sx={{ borderRadius: 2, bgcolor: "#FAFBFD" }}
+            >
+              {statuses.map((x) => (
+                <MenuItem key={x.value} value={x.value}>
+                  {x.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
+
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mt: 1.5, px: 0.5 }}>
+          <Typography variant="caption" sx={{ color: "#64748B", fontWeight: 700 }}>
+            {loading ? "در حال دریافت آمار…" : `${rows.length.toLocaleString("fa-IR")} تیکت`}
+          </Typography>
+          {(status || q) && (
+            <Button
+              size="small"
+              onClick={() => {
+                setStatus("");
+                setQ("");
+              }}
+              sx={{ minWidth: 0, fontSize: 12, p: 0.5 }}
+            >
+              حذف فیلترها
+            </Button>
+          )}
+        </Box>
+      </Card>
+
+      {error && (
+        <Alert
+          severity="error"
+          sx={{ borderRadius: 2 }}
+          action={
+            <Button color="inherit" size="small" onClick={() => setRefreshKey((v) => v + 1)}>
+              تلاش مجدد
+            </Button>
+          }
+        >
+          {error}
+        </Alert>
+      )}
+
+      {/* لیست تیکت‌ها */}
+      <Stack spacing={1.25}>
+        {loading && rows.length === 0 ? (
+          <Box
+            role="status"
+            aria-label="در حال بارگذاری تیکت‌ها"
+            sx={{ minHeight: 220, display: "flex", alignItems: "center", justifyContent: "center" }}
+          >
+            <CircularProgress size={36} thickness={4} />
+          </Box>
+        ) : rows.length > 0 ? (
+          rows.map((t) => {
+            const st = statusMeta[t.status] || { label: t.status, color: "default" as const };
+            const pr = priorityMeta[t.priority] || { label: t.priority, color: "default" as const };
+
+            return (
+              <Card
+                key={t.id}
+                variant="outlined"
+                onClick={() => router.push(`/rickandmorty/tickets/${t.id}`)}
+                sx={{
+                  borderRadius: 2.5,
+                  borderColor: "#E2E8F0",
+                  cursor: "pointer",
+                  transition: "all 0.18s ease-in-out",
+                  bgcolor: "#FFFFFF",
+                  p: { xs: 1.5, sm: 2 },
+                  "&:hover": {
+                    borderColor: "#93C5FD",
+                    boxShadow: "0 4px 14px rgba(37, 99, 235, 0.06)",
+                    transform: "translateY(-1px)",
+                  },
+                }}
+              >
+                <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1 }}>
+                  <Typography
+                    sx={{
+                      fontSize: { xs: 14.5, sm: 16 },
+                      fontWeight: 800,
+                      color: "#0F172A",
+                      lineHeight: 1.6,
+                      overflowWrap: "anywhere",
+                    }}
+                  >
+                    {t.subject}
+                  </Typography>
+                  <ArrowLeft size={18} color="#94A3B8" style={{ flexShrink: 0, marginTop: 4 }} />
+                </Box>
+
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontSize: 12.5,
+                    color: "#64748B",
+                    mt: 0.5,
+                    fontWeight: 600,
+                  }}
+                >
+                  کاربر: {t.user.name || "کاربر ناشناس"}
+                </Typography>
+
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: { xs: "column", sm: "row" },
+                    alignItems: { xs: "flex-start", sm: "center" },
+                    justifyContent: "space-between",
+                    gap: 1,
+                    mt: 1.5,
+                    pt: 1.25,
+                    borderTop: "1px dashed #F1F5F9",
+                  }}
+                >
+                  <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap>
+                    <Chip
+                      size="small"
+                      label={st.label}
+                      color={st.color}
+                      variant="filled"
+                      sx={{ height: 24, fontSize: 11, fontWeight: 700, borderRadius: 1.5 }}
+                    />
+                    <Chip
+                      size="small"
+                      label={`اولویت ${pr.label}`}
+                      color={pr.color}
+                      variant="outlined"
+                      sx={{ height: 24, fontSize: 11, fontWeight: 700, borderRadius: 1.5 }}
+                    />
+                  </Stack>
+
+                  <Stack
+                    direction="row"
+                    spacing={1.5}
+                    alignItems="center"
+                    sx={{ color: "#64748B", fontSize: 11.5, alignSelf: { xs: "flex-end", sm: "center" } }}
+                  >
+                    <Stack direction="row" spacing={0.5} alignItems="center">
+                      <MessageSquareText size={14} />
+                      <Typography variant="caption">{t._count.messages.toLocaleString("fa-IR")}</Typography>
+                    </Stack>
+                    <Stack direction="row" spacing={0.5} alignItems="center">
+                      <Clock3 size={13} />
+                      <Typography variant="caption">{formatShortDate(t.updatedAt)}</Typography>
+                    </Stack>
+                  </Stack>
+                </Box>
+              </Card>
+            );
+          })
+        ) : (
+          <Card
+            variant="outlined"
+            sx={{
+              borderRadius: 3,
+              borderStyle: "dashed",
+              borderColor: "#CBD5E1",
+              p: { xs: 4, sm: 6 },
+              textAlign: "center",
+              bgcolor: "#FFFFFF",
+            }}
+          >
+            <Box
+              sx={{
+                width: 48,
+                height: 48,
+                mx: "auto",
+                mb: 1.5,
+                display: "grid",
+                placeItems: "center",
+                borderRadius: 2.5,
+                bgcolor: "#F1F5F9",
+                color: "#64748B",
+              }}
+            >
+              <UserRound size={22} />
+            </Box>
+            <Typography sx={{ fontWeight: 800, color: "#1E293B", fontSize: 15 }}>تیکتی یافت نشد</Typography>
+            <Typography sx={{ color: "#64748B", fontSize: 13, mt: 0.5 }}>
+              فیلترهای انتخابی را بررسی کرده یا عبارت دیگری را جستجو کنید.
+            </Typography>
+            {(q || status) && (
+              <Button
+                variant="outlined"
+                size="small"
+                sx={{ mt: 2, borderRadius: 2 }}
+                onClick={() => {
+                  setQ("");
+                  setStatus("");
+                }}
+              >
+                نمایش تمام تیکت‌ها
+              </Button>
+            )}
+          </Card>
+        )}
+      </Stack>
+    </Stack>
+  );
 }
