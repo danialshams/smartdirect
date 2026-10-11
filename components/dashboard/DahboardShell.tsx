@@ -38,6 +38,11 @@ export default function DashboardShell({
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const pathname = usePathname();
   const isDashboardOverview = pathname === "/dashboard";
+  const isUnifiedDashboardPage =
+    pathname.startsWith("/dashboard/") &&
+    !pathname.startsWith("/dashboard/inbox") &&
+    !pathname.startsWith("/dashboard/publishing") &&
+    pathname !== "/dashboard/insights";
 
   return (
     <DashboardTheme>
@@ -83,6 +88,7 @@ export default function DashboardShell({
             }}
           >
             <Box
+              className={isUnifiedDashboardPage ? "dashboard-page-unified" : undefined}
               sx={{
                 width: "100%",
                 maxWidth: 1400,
