@@ -87,7 +87,7 @@ export default function UnansweredCommentsPost({ account, mediaId }: { account: 
   if (error) {
     return (
       <Box dir="rtl" sx={{ width: "100%", minHeight: "50vh", display: "grid", placeItems: "center", px: 2 }}>
-        <Paper sx={{ width: "100%", maxWidth: 520, p: 2, borderRadius: "16px", border: "1px solid #FECACA", bgcolor: "#FEF2F2", color: "#B91C1C", boxShadow: "none" }}>
+        <Paper sx={{ width: "100%", maxWidth: 520, p: 2, borderRadius: 2.5, border: "1px solid #FECACA", bgcolor: "#FEF2F2", color: "#B91C1C", boxShadow: "none" }}>
           {error}
         </Paper>
       </Box>
@@ -97,10 +97,10 @@ export default function UnansweredCommentsPost({ account, mediaId }: { account: 
   if (!post) {
     return (
       <Box dir="rtl" sx={{ width: "100%", minHeight: "50vh", display: "grid", placeItems: "center", px: 2 }}>
-        <Paper sx={{ width: "100%", maxWidth: 460, p: 5, textAlign: "center", border: `1px solid ${COLORS.border}`, borderRadius: "16px", boxShadow: "none" }}>
+        <Paper sx={{ width: "100%", maxWidth: 460, p: 5, textAlign: "center", border: `1px solid ${COLORS.border}`, borderRadius: 3, boxShadow: "none" }}>
           <MessageCircle size={24} color={COLORS.secondary} strokeWidth={1.5} />
           <Typography sx={{ mt: 1.5, fontSize: 13, fontWeight: 700, color: COLORS.text }}>کامنت بی‌پاسخی باقی نمانده</Typography>
-          <Button onClick={() => router.back()} sx={{ mt: 2, fontSize: 12 }}>بازگشت</Button>
+          <Button onClick={() => router.back()} sx={{ mt: 2, fontSize: 10.5 }}>بازگشت</Button>
         </Paper>
       </Box>
     );
@@ -120,14 +120,14 @@ export default function UnansweredCommentsPost({ account, mediaId }: { account: 
         </DashboardButton>
       </Box>
 
-      <Box component="section" sx={{ p: { xs: 2, sm: 2.5, lg: 3 }, border: `1px solid ${COLORS.border}`, borderRadius: "16px", bgcolor: COLORS.surface, boxShadow: "0 1px 2px rgba(15,23,42,.03)" }}>
+      <Box component="section" sx={{ p: { xs: 2, sm: 2.5, lg: 3 }, border: `1px solid ${COLORS.border}`, borderRadius: { xs: 2.5, lg: 3 }, bgcolor: COLORS.surface, boxShadow: "0 1px 2px rgba(15,23,42,.03)" }}>
         <Stack direction="row" spacing={1} alignItems="center">
           <Box sx={{ width: 38, height: 38, flexShrink: 0, display: "grid", placeItems: "center", borderRadius: 1.75, bgcolor: "#EFF6FF", color: COLORS.primary }}>
             <MessageCircle size={19} strokeWidth={1.9} />
           </Box>
           <Box>
             <Typography component="h1" sx={{ fontSize: { xs: 18, sm: 20 }, fontWeight: 800, color: COLORS.text }}>کامنت‌های بی‌پاسخ</Typography>
-            <Typography sx={{ mt: .25, fontSize: 12, color: COLORS.secondary }}>پاسخ به کامنت‌های این محتوا</Typography>
+            <Typography sx={{ mt: .25, fontSize: 11.5, color: COLORS.secondary }}>پاسخ به کامنت‌های این محتوا</Typography>
           </Box>
         </Stack>
       </Box>
@@ -137,23 +137,23 @@ export default function UnansweredCommentsPost({ account, mediaId }: { account: 
           { label: "کامنت‌های بی‌پاسخ", value: post.comments.length, Icon: MessageCircle },
           { label: "تاریخ انتشار", value: publishedDate ?? "—", Icon: ImageIcon },
         ].map(({ label, value, Icon }) => (
-          <Paper key={label} sx={{ p: { xs: 1.5, sm: 1.75 }, minWidth: 0, border: `1px solid ${COLORS.border}`, borderRadius: "16px", boxShadow: "none" }}>
+          <Paper key={label} sx={{ p: { xs: 1.5, sm: 1.75 }, minWidth: 0, border: `1px solid ${COLORS.border}`, borderRadius: { xs: 2, lg: 2.5 }, boxShadow: "none" }}>
             <Stack direction="row" spacing={1} alignItems="center">
               <Box sx={{ width: 32, height: 32, flexShrink: 0, display: "grid", placeItems: "center", borderRadius: 1.5, bgcolor: "#F8FAFC", color: COLORS.secondary }}><Icon size={16} strokeWidth={1.8} /></Box>
               <Box sx={{ minWidth: 0 }}>
                 <Typography sx={{ fontSize: { xs: 14, sm: 16 }, fontWeight: 800, color: COLORS.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{value}</Typography>
-                <Typography sx={{ mt: .35, fontSize: 12, color: COLORS.secondary, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{label}</Typography>
+                <Typography sx={{ mt: .35, fontSize: 10, color: COLORS.secondary, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{label}</Typography>
               </Box>
             </Stack>
           </Paper>
         ))}
       </Box>
 
-      <Box component="section" sx={{ mt: 2, p: { xs: 1.5, sm: 2 }, border: `1px solid ${COLORS.border}`, borderRadius: "16px", bgcolor: COLORS.surface }}>
+      <Box component="section" sx={{ mt: 2, p: { xs: 1.5, sm: 2 }, border: `1px solid ${COLORS.border}`, borderRadius: { xs: 2.5, lg: 3 }, bgcolor: COLORS.surface }}>
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} alignItems={{ xs: "stretch", sm: "center" }}>
           <Box sx={{ position: "relative", width: { xs: "100%", sm: 220, md: 270 }, aspectRatio: "1 / 1", flexShrink: 0, overflow: "hidden", borderRadius: 2, bgcolor: "#F1F5F9" }}>
             {mediaSrc ? <Box component="img" src={mediaSrc} alt={post.media.caption ?? ""} sx={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : <Box sx={{ width: "100%", height: "100%", display: "grid", placeItems: "center", color: COLORS.secondary }}><ImageIcon size={28} /></Box>}
-            <Box sx={{ position: "absolute", top: 10, right: 10, px: 1, height: 27, display: "flex", alignItems: "center", gap: .5, borderRadius: 99, bgcolor: "rgba(255,255,255,.94)", color: COLORS.text, fontSize: 12, fontWeight: 700 }}>
+            <Box sx={{ position: "absolute", top: 10, right: 10, px: 1, height: 27, display: "flex", alignItems: "center", gap: .5, borderRadius: 99, bgcolor: "rgba(255,255,255,.94)", color: COLORS.text, fontSize: 10, fontWeight: 700 }}>
               {isReel ? <Video size={12} /> : <ImageIcon size={12} />} {isReel ? "ریلز" : "پست"}
             </Box>
           </Box>
@@ -164,24 +164,24 @@ export default function UnansweredCommentsPost({ account, mediaId }: { account: 
         </Stack>
       </Box>
 
-      <Box component="section" sx={{ mt: 2, p: { xs: 1.5, sm: 2 }, border: `1px solid ${COLORS.border}`, borderRadius: "16px", bgcolor: COLORS.surface }}>
+      <Box component="section" sx={{ mt: 2, p: { xs: 1.5, sm: 2 }, border: `1px solid ${COLORS.border}`, borderRadius: { xs: 2.5, lg: 3 }, bgcolor: COLORS.surface }}>
         <Stack direction="row" alignItems="center" justifyContent="space-between">
           <Box>
             <Typography sx={{ fontSize: 12.5, fontWeight: 750, color: COLORS.text }}>کامنت‌های بی‌پاسخ</Typography>
-            <Typography sx={{ mt: .35, fontSize: 12, color: COLORS.secondary }}>برای هر کامنت، پاسخ را مستقیم ارسال کنید.</Typography>
+            <Typography sx={{ mt: .35, fontSize: 10.5, color: COLORS.secondary }}>برای هر کامنت، پاسخ را مستقیم ارسال کنید.</Typography>
           </Box>
-          <Typography sx={{ fontSize: 12, fontWeight: 700, color: COLORS.secondary }}>{post.comments.length.toLocaleString("fa-IR")}</Typography>
+          <Typography sx={{ fontSize: 11, fontWeight: 700, color: COLORS.secondary }}>{post.comments.length.toLocaleString("fa-IR")}</Typography>
         </Stack>
 
         <Stack spacing={1.25} sx={{ mt: 2 }}>
           {post.comments.map((comment) => (
             <Paper key={comment.id} sx={{ p: { xs: 1.25, sm: 1.5 }, border: `1px solid ${COLORS.border}`, borderRadius: 2, bgcolor: COLORS.surface, boxShadow: "none" }}>
               <Stack direction="row" spacing={1.25} alignItems="flex-start">
-                {comment.profilePictureUrl ? <Box component="img" src={comment.profilePictureUrl} alt={comment.username} sx={{ width: 36, height: 36, flexShrink: 0, borderRadius: "50%", objectFit: "cover" }} /> : <Box sx={{ width: 36, height: 36, flexShrink: 0, borderRadius: "50%", display: "grid", placeItems: "center", bgcolor: "#E2E8F0", color: COLORS.secondary, fontSize: 12, fontWeight: 700 }}>IG</Box>}
+                {comment.profilePictureUrl ? <Box component="img" src={comment.profilePictureUrl} alt={comment.username} sx={{ width: 36, height: 36, flexShrink: 0, borderRadius: "50%", objectFit: "cover" }} /> : <Box sx={{ width: 36, height: 36, flexShrink: 0, borderRadius: "50%", display: "grid", placeItems: "center", bgcolor: "#E2E8F0", color: COLORS.secondary, fontSize: 9, fontWeight: 700 }}>IG</Box>}
                 <Box sx={{ minWidth: 0, flex: 1 }}>
                   <Stack direction={{ xs: "column", sm: "row" }} alignItems={{ xs: "flex-start", sm: "center" }} justifyContent="space-between" spacing={{ xs: .3, sm: 2 }}>
-                    <Typography dir="ltr" noWrap sx={{ maxWidth: "100%", fontSize: 12, fontWeight: 700, color: COLORS.text }}>@{comment.username}</Typography>
-                    <Typography sx={{ fontSize: 12, color: COLORS.secondary, flexShrink: 0 }}>{new Intl.DateTimeFormat("fa-IR-u-ca-persian", { dateStyle: "medium" }).format(new Date(comment.createdAt))}</Typography>
+                    <Typography dir="ltr" noWrap sx={{ maxWidth: "100%", fontSize: 11, fontWeight: 700, color: COLORS.text }}>@{comment.username}</Typography>
+                    <Typography sx={{ fontSize: 9.5, color: COLORS.secondary, flexShrink: 0 }}>{new Intl.DateTimeFormat("fa-IR-u-ca-persian", { dateStyle: "medium" }).format(new Date(comment.createdAt))}</Typography>
                   </Stack>
                   <Typography sx={{ mt: .65, fontSize: 12.5, lineHeight: 1.8, color: COLORS.text, whiteSpace: "pre-wrap" }}>{comment.text}</Typography>
                   <Stack direction="row" spacing={1} sx={{ mt: 1, p: .75, border: `1px solid ${COLORS.border}`, borderRadius: 1.75, bgcolor: "#F8FAFC" }}>
@@ -195,10 +195,10 @@ export default function UnansweredCommentsPost({ account, mediaId }: { account: 
                       slotProps={{ htmlInput: { maxLength: 1000, inputMode: "text" } }}
                       sx={{
                         "& .MuiOutlinedInput-root": { border: 0, bgcolor: "transparent", minHeight: 36, "& fieldset": { border: 0 } },
-                        "& .MuiOutlinedInput-input": { fontSize: { xs: 16, sm: 12 }, py: .75, px: .5 },
+                        "& .MuiOutlinedInput-input": { fontSize: { xs: 16, sm: 11.5 }, py: .75, px: .5 },
                       }}
                     />
-                    <Button type="button" onClick={() => void reply(comment.id)} disabled={replyingId === comment.id || !(drafts[comment.id] ?? "").trim()} sx={{ minWidth: { xs: 42, sm: 70 }, height: 36, alignSelf: "center", borderRadius: 1.5, bgcolor: COLORS.primary, color: "#FFF", fontSize: 12, fontWeight: 600, "&:hover": { bgcolor: COLORS.primaryDark }, "&:disabled": { bgcolor: "#E2E8F0", color: "#94A3B8", cursor: "not-allowed" } }}>
+                    <Button type="button" onClick={() => void reply(comment.id)} disabled={replyingId === comment.id || !(drafts[comment.id] ?? "").trim()} sx={{ minWidth: { xs: 42, sm: 70 }, height: 36, alignSelf: "center", borderRadius: 1.5, bgcolor: COLORS.primary, color: "#FFF", fontSize: 10.5, fontWeight: 600, "&:hover": { bgcolor: COLORS.primaryDark }, "&:disabled": { bgcolor: "#E2E8F0", color: "#94A3B8", cursor: "not-allowed" } }}>
                       {replyingId === comment.id ? <CircularProgress size={14} sx={{ color: "#FFF" }} /> : <><Send size={13} /><Box component="span" sx={{ mr: .5, display: { xs: "none", sm: "inline" } }}>ارسال</Box></>}
                     </Button>
                   </Stack>

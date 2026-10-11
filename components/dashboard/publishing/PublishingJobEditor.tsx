@@ -1,7 +1,5 @@
 "use client";
 
-import DashboardModal from "@/components/dashboard/DashboardModal";
-
 import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
@@ -481,7 +479,7 @@ export default function PublishingJobEditor({
     <>
     <div
       dir="rtl"
-      className="dashboard-page"
+      className="min-h-full bg-[#F8FAFC] px-3 py-4 sm:px-5 sm:py-6 lg:px-8"
     >
       <div className="mx-auto w-full max-w-3xl space-y-5">
         <div className="mb-5 space-y-3">
@@ -497,7 +495,7 @@ export default function PublishingJobEditor({
           </div>
 
           {job && (
-            <section className="dashboard-card border border-[#E2E8F0] bg-white shadow-sm">
+            <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
               <div className="flex items-start gap-3">
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">
                   <Pencil size={15} />
@@ -522,12 +520,12 @@ export default function PublishingJobEditor({
           loading ? (
             <DashboardLoading label="در حال دریافت محتوای زمان‌بندی‌شده..." className="dashboard-loading--page" />
           ) : (
-            <section className="dashboard-card flex min-h-[50vh] items-center justify-center border border-[#E2E8F0] bg-white shadow-sm p-0">
+            <section className="flex min-h-[50vh] items-center justify-center rounded-2xl border border-[#E2E8F0] bg-white shadow-sm">
               <span className="text-sm text-[#64748B]">محتوا پیدا نشد.</span>
             </section>
           )
         ) : (
-        <section className="dashboard-card border border-[#E2E8F0] bg-white shadow-sm">
+        <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
           {job.media.length > 0 && (
             <div
               className={
@@ -728,7 +726,7 @@ export default function PublishingJobEditor({
         )}
 
         {job && automationId ? (
-          <section className="dashboard-card border border-[#E2E8F0] bg-white shadow-sm">
+          <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
             <div className="mb-5">
               <h2 className="text-sm font-bold text-[#0F172A]">
                 {job.type === "STORY"
@@ -836,11 +834,21 @@ export default function PublishingJobEditor({
       </div>
     </div>
       {showDeleteAutomationConfirm && automation && job && (
-        <DashboardModal labelledBy="delete-automation-title" onClose={() => setShowDeleteAutomationConfirm(false)} busy={deleting}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/30 px-4 backdrop-blur-[2px]"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.currentTarget === event.target && !deleting) {
+              setShowDeleteAutomationConfirm(false);
+            }
+          }}
+        >
           <div
             dir="rtl"
+            role="dialog"
+            aria-modal="true"
             aria-labelledby="delete-automation-title"
-            className="w-full overflow-y-auto bg-white p-5"
+            className="w-full max-w-sm rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-2xl"
           >
             <h3 id="delete-automation-title" className="text-base font-bold text-[#0F172A]">
               مطمئنی می‌خوای این مورد رو پاک کنی؟
@@ -869,7 +877,7 @@ export default function PublishingJobEditor({
               </Button>
             </div>
           </div>
-        </DashboardModal>
+        </div>
       )}
     </>
   );

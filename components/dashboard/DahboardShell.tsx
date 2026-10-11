@@ -37,15 +37,21 @@ export default function DashboardShell({
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const pathname = usePathname();
-  const isInbox = pathname.startsWith("/dashboard/inbox");
+  const isDashboardOverview = pathname === "/dashboard";
+  const isUnifiedDashboardPage =
+    (pathname === "/dashboard" || pathname.startsWith("/dashboard/")) &&
+    !pathname.startsWith("/dashboard/inbox") &&
+    !pathname.startsWith("/dashboard/publishing") &&
+    pathname !== "/dashboard/insights";
 
   return (
     <DashboardTheme>
       <Box
         dir="rtl"
-        className="dashboard-theme"
         sx={{
-          minHeight: "100dvh",
+          minHeight: { lg: "100vh" },
+          height: { xs: isDashboardOverview ? "100dvh" : "auto", lg: "auto" },
+          overflow: { xs: isDashboardOverview ? "hidden" : "visible", lg: "visible" },
           display: "flex",
           flexDirection: "column",
           bgcolor: "background.default",
@@ -60,7 +66,7 @@ export default function DashboardShell({
           onMobileClose={() => setMobileSidebarOpen(false)}
         />
 
-        {!isInbox && <DashboardInstagramIsland instagramAccounts={instagramAccounts} accountMenuOpen={accountMenuOpen} onAccountMenuOpenChange={setAccountMenuOpen} />}
+        <DashboardInstagramIsland instagramAccounts={instagramAccounts} accountMenuOpen={accountMenuOpen} onAccountMenuOpenChange={setAccountMenuOpen} />
 
         <Box
           sx={{
@@ -73,17 +79,19 @@ export default function DashboardShell({
             component="main"
             sx={{
               minHeight: 0,
-              px: { xs: 2, md: 3, lg: 4 },
-              py: { xs: 2, md: 3, lg: 4 },
-              pb: { xs: isInbox ? "calc(16px + env(safe-area-inset-bottom, 0px))" : "calc(88px + env(safe-area-inset-bottom, 0px))", lg: 4 },
+              height: { xs: isDashboardOverview ? "calc(100dvh - 92px)" : "auto", lg: "auto" },
+              overflow: { xs: isDashboardOverview ? "hidden" : "visible", lg: "visible" },
+              px: { xs: 1, sm: 1.75, md: 2.75, lg: 4 },
+              py: { xs: 1.25, sm: 2, lg: 4 },
+              pb: { xs: 13, sm: 13, lg: 4 },
               boxSizing: "border-box",
             }}
           >
             <Box
-              className="dashboard-page-unified"
+              className={isUnifiedDashboardPage ? "dashboard-page-unified" : undefined}
               sx={{
                 width: "100%",
-                maxWidth: isInbox ? 1400 : 1152,
+                maxWidth: 1400,
                 mx: "auto",
               }}
             >

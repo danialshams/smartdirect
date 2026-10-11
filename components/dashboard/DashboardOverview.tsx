@@ -58,15 +58,12 @@ export default function DashboardOverview({
       <Box
         dir="rtl"
         sx={{
-          minHeight: "min(60dvh, 480px)",
+          minHeight: "calc(100vh - 120px)",
           display: "grid",
           placeItems: "center",
           px: 2,
         }}
       >
-        <Box className="dashboard-empty dashboard-card">
-        <Typography component="h1">پیج اینستاگرامت را متصل کن</Typography>
-        <Typography>برای دیدن آمار و مدیریت پیام‌ها، ابتدا یک پیج اضافه کن.</Typography>
         <Button
           component="a"
           href="/api/instagram/connect"
@@ -80,7 +77,6 @@ export default function DashboardOverview({
         >
           اتصال پیج
         </Button>
-        </Box>
       </Box>
     );
   }
@@ -92,6 +88,8 @@ export default function DashboardOverview({
         dir="rtl"
         sx={{
           width: "100%",
+          px: { xs: 1, sm: 1.5, md: 2.5, lg: 5 },
+          pt: { xs: 1.5, sm: 2.5, md: 3.5, lg: 5 },
         }}
       >
         <Box
@@ -101,7 +99,7 @@ export default function DashboardOverview({
             px: { xs: 2, sm: 2.5, md: 3 },
             py: { xs: 1.75, sm: 2, md: 2.25 },
             border: "1px solid #E2E8F0",
-            borderRadius: "16px",
+            borderRadius: { xs: 3, md: 3.5 },
             bgcolor: "#FFFFFF",
             boxShadow: "0 8px 24px rgba(15,23,42,0.04)",
             display: "flex",
@@ -117,11 +115,11 @@ export default function DashboardOverview({
               alignItems: "center",
               justifyContent: "flex-start",
               gap: 0.75,
-              fontSize: { xs: 18, sm: 20 },
+              fontSize: { xs: 14, sm: 17, md: 19 },
               fontWeight: 600,
               letterSpacing: "-0.025em",
               color: "#0F172A",
-              whiteSpace: "normal",
+              whiteSpace: "nowrap",
               lineHeight: 1.4,
             }}
           >

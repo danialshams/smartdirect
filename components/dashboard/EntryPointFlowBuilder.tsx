@@ -809,7 +809,7 @@ export default function EntryPointFlowBuilder({
                                 />
                                 <button type="button" onClick={addKeyword} className="shrink-0 rounded-lg border border-[#E2E8F0] bg-white px-3 py-2 text-xs font-semibold text-[#334155] hover:bg-[#F1F5F9]">افزودن</button>
                             </div>
-                            <p className="text-xs text-[#64748B]">هر کلمه به‌صورت جداگانه نمایش داده می‌شود؛ حداقل یک کلمه کلیدی الزامی است.</p>
+                            <p className="text-[11px] text-[#64748B]">هر کلمه به‌صورت جداگانه نمایش داده می‌شود؛ حداقل یک کلمه کلیدی الزامی است.</p>
                         </div>
                     )}
                     {flowLoading ? (

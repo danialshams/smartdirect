@@ -286,7 +286,7 @@ function InlineWheelPicker({
           highlightWrapper: "rounded-xl border border-[#BFDBFE] bg-[#EFF6FF]",
         }}
       />
-      <p className="mt-1 text-center text-xs font-semibold text-[#64748B]">{label}</p>
+      <p className="mt-1 text-center text-[10px] font-semibold text-[#64748B]">{label}</p>
     </div>
   );
 }
@@ -299,10 +299,10 @@ function KeywordChipsInput({ value, onChange, placeholder }: { value: string; on
   return <div className="flex min-h-[56px] flex-wrap items-center gap-2 rounded-xl border border-[#E2E8F0] bg-white px-3 py-2.5 transition focus-within:border-[#7C3AED] focus-within:ring-2 focus-within:ring-[#7C3AED]/10">{keywords.map((item) => <span key={item} className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1.5 text-xs font-medium text-foreground">{item}<Button type="button" onClick={() => sync(keywords.filter((keyword) => keyword !== item))} className="text-muted-foreground hover:text-foreground" aria-label={`حذف ${item}`}><X size={13} /></Button></span>)}<Input value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (["Enter", ",", "،"].includes(event.key)) { event.preventDefault(); add(); } }} onBlur={add} placeholder={keywords.length ? "کلمه بعدی..." : placeholder} className="min-w-[140px] flex-1 border-0 bg-transparent px-1 py-1 text-sm text-[#0F172A] outline-none ring-0 placeholder:text-[#94A3B8]" /><Button type="button" onPointerDown={(event) => event.preventDefault()} onClick={add} className="shrink-0 rounded-lg border border-[#E2E8F0] bg-white px-2.5 py-1.5 text-xs font-medium text-[#64748B] hover:bg-[#F8FAFC]">افزودن کلمه</Button></div>;
 }
 
-function SectionHeader({ n, title, text }: { n: string; title: string; text: string }) { return <div className="mb-4"><div className="flex items-center gap-2"><span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">{n}</span><h2 className="text-sm font-bold text-[#0F172A]">{title}</h2></div><p className={["mt-2 leading-5 text-[#64748B]", title === "آپلود آلبوم" ? "whitespace-normal text-xs sm:text-xs" : "text-xs"].join(" ")}>{text}</p></div>; }
+function SectionHeader({ n, title, text }: { n: string; title: string; text: string }) { return <div className="mb-4"><div className="flex items-center gap-2"><span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">{n}</span><h2 className="text-sm font-bold text-[#0F172A]">{title}</h2></div><p className={["mt-2 leading-5 text-[#64748B]", title === "آپلود آلبوم" ? "whitespace-nowrap text-[9px] sm:text-xs" : "text-xs"].join(" ")}>{text}</p></div>; }
 function ProgressBar({ progress }: { progress: number }) {
   return <div className="mt-4 w-full max-w-md">
-    <div className="mb-2 text-center text-xs font-semibold text-[#2563EB]">
+    <div className="mb-2 text-center text-[10px] font-semibold text-[#2563EB]">
       {toPersianDigits(progress)}٪
     </div>
     <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#E2E8F0]">
@@ -349,7 +349,7 @@ function UploadArea({ id, accept, multiple, disabled, isDragging, setIsDragging,
       <span className={["mt-4 inline-flex min-h-6 items-center justify-center gap-2 text-sm font-bold transition-colors duration-300", uploadSuccess ? "text-[#16A34A]" : "text-[#0F172A]"].join(" ")}>
         {uploadSuccess ? <><UploadSuccessMark /><span className="sr-only">آپلود کامل شد</span></> : uploading ? "در حال آپلود..." : title}
       </span>
-      {!uploading && !uploadSuccess && <span className="mt-1.5 whitespace-normal text-xs leading-5 text-[#64748B]">فایل را بکش و اینجا رها کن یا برای انتخاب از دستگاه کلیک کن.</span>}
+      {!uploading && !uploadSuccess && <span className="mt-1.5 whitespace-nowrap text-[11px] leading-5 text-[#64748B]">فایل را بکش و اینجا رها کن یا برای انتخاب از دستگاه کلیک کن.</span>}
       {uploading && <ProgressBar progress={uploadProgress} />}
     </label>
     {uploading && <div className="flex justify-center"><button type="button" onClick={onCancelUpload} className="mt-3 rounded-lg px-3 py-1.5 text-xs font-semibold text-[#DC2626] hover:bg-red-50">حذف فایل در حال آپلود</button></div>}{!uploading && !uploadSuccess && retryAvailable && <div className="mt-3 rounded-xl border border-[#FECACA] bg-[#FEF2F2] p-3"><div className="flex items-center justify-between gap-2 text-xs font-bold text-[#B91C1C]"><span>آپلود ناموفق بود</span><span>{toPersianDigits(uploadProgress)}٪</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-[#FEE2E2]"><div className="h-full rounded-full bg-[#DC2626]" style={{ width: `${Math.max(3, Math.min(100, uploadProgress))}%` }} /></div><button type="button" onClick={onRetryUpload} className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#DC2626] px-3 py-2 text-xs font-bold text-white"><RotateCcw size={14} />تلاش دوباره</button></div>}
@@ -1213,7 +1213,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
   return (
     <>
-      <div dir="rtl" className={["dashboard-page", !selectionConfirmed ? "pb-8" : "pb-8"].join(" ")}>
+      <div dir="rtl" className={["bg-[#F8FAFC] px-3 py-4 sm:px-5 sm:py-6 lg:px-8", !selectionConfirmed ? "pb-8" : "pb-8"].join(" ")}>
         <div className="mx-auto w-full max-w-6xl">
           <div className={["transition-all duration-300 ease-out", stepVisible ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0"].join(" ")}>
             {!selectionConfirmed ? (
@@ -1244,7 +1244,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   return (
                     <div className="mt-6 space-y-4">
                       {activePublishJobId && publishResultVisible && (
-                        <section className="dashboard-card border border-[#DBEAFE] bg-white shadow-sm">
+                        <section className="rounded-2xl border border-[#DBEAFE] bg-white p-4 shadow-sm sm:p-5">
                           {(() => {
                             const activeJob = jobs.find((job) => job.id === activePublishJobId);
                             if (!activeJob) return null;
@@ -1272,14 +1272,14 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                       )}
 
                       {scheduledJobs.length > 0 && (
-                        <section className="dashboard-card border border-[#DBEAFE] bg-white shadow-sm">
+                        <section className="rounded-2xl border border-[#DBEAFE] bg-white p-4 shadow-sm sm:p-5">
                           <div className="mb-3 flex items-center gap-2">
                             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#EFF6FF] text-[#2563EB]">
                               <Clock3 size={17} className="animate-pulse" />
                             </span>
                             <div>
                               <h2 className="text-sm font-bold text-[#0F172A]">محتواهای در حال انتشار</h2>
-                              <p className="mt-1 text-xs text-[#64748B]">محتواهای زمان‌دار در این بخش منتظر انتشار هستند و از همینجا قابل ویرایش‌اند.</p>
+                              <p className="mt-1 text-[11px] text-[#64748B]">محتواهای زمان‌دار در این بخش منتظر انتشار هستند و از همینجا قابل ویرایش‌اند.</p>
                             </div>
                           </div>
                           <div className="space-y-2">
@@ -1337,7 +1337,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                 <div className={type !== "CAROUSEL" && showUploadedMediaPreview && uploadedMedia.length > 0 ? "p-0" : "rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6"}>
                   {type !== "CAROUSEL" && showUploadedMediaPreview && uploadedMedia.length > 0 ? (
                     <div className="flex min-h-[260px] flex-col items-center justify-center py-5">
-                      <span className="mb-3 inline-flex items-center rounded-full border border-[#BBF7D0] bg-[#F0FDF4] px-2.5 py-1 text-xs font-semibold text-[#15803D]">{typeLabels[type]} آپلود شده</span>
+                      <span className="mb-3 inline-flex items-center rounded-full border border-[#BBF7D0] bg-[#F0FDF4] px-2.5 py-1 text-[11px] font-semibold text-[#15803D]">{typeLabels[type]} آپلود شده</span>
                       <div className="w-32 sm:w-40">
                         <MediaTile item={uploadedMedia[0]} type={type} onRemove={() => void removeUploaded(uploadedMedia[0])} ready compact />
                       </div>
@@ -1370,10 +1370,10 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                         <div className="mt-5">
                           <div className="mb-3 text-center">
                             <p className="text-sm font-bold text-[#334155]">اسلایدهای آلبوم</p>
-                            <p className="mt-1 text-xs text-[#64748B]">{toPersianDigits(uploadedMedia.length)} از ۱۰ اسلاید</p>
+                            <p className="mt-1 text-[11px] text-[#64748B]">{toPersianDigits(uploadedMedia.length)} از ۱۰ اسلاید</p>
                           </div>
                           <div className="flex flex-wrap justify-center gap-3">
-                            {uploadedMedia.map((item, index) => <div key={item.storageKey} className="w-16 sm:w-20"><MediaTile item={item} type="CAROUSEL" onRemove={() => void removeUploaded(item)} ready compact /><p className="mt-1 text-center text-xs font-semibold text-[#64748B]">اسلاید {toPersianDigits(index + 1)}</p><button type="button" onClick={() => void removeUploaded(item)} className="mt-1 w-full rounded-md py-1 text-xs font-semibold text-[#DC2626] hover:bg-red-50">پاک کردن</button></div>)}
+                            {uploadedMedia.map((item, index) => <div key={item.storageKey} className="w-16 sm:w-20"><MediaTile item={item} type="CAROUSEL" onRemove={() => void removeUploaded(item)} ready compact /><p className="mt-1 text-center text-[10px] font-semibold text-[#64748B]">اسلاید {toPersianDigits(index + 1)}</p><button type="button" onClick={() => void removeUploaded(item)} className="mt-1 w-full rounded-md py-1 text-[11px] font-semibold text-[#DC2626] hover:bg-red-50">پاک کردن</button></div>)}
                           </div>
                         </div>
                       )}
@@ -1398,13 +1398,13 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   <Button type="button" disabled={!caption.trim() || publishing} onClick={handleNextStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB] disabled:cursor-not-allowed disabled:opacity-40">مرحله بعد <ArrowLeft size={15} strokeWidth={2} /></Button>
                 </div>
 
-                <section className="dashboard-card mx-auto w-full max-w-3xl border border-[#E2E8F0] bg-white shadow-sm">
+                <section className="mx-auto w-full max-w-2xl rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
                   <div className="mb-4 flex items-center justify-between gap-3">
                     <div>
                       <div className="flex items-center gap-2"><span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">۳</span><h2 className="text-sm font-bold text-[#0F172A]">کپشن</h2></div>
                       <p className="mt-1.5 text-xs leading-5 text-[#64748B]">{`کپشن ${typeLabels[type]} را بنویس.`}</p>
                     </div>
-                    <span className="text-xs text-[#64748B]">{toPersianDigits(caption.length)} / ۲۲۰۰</span>
+                    <span className="text-[11px] text-[#64748B]">{toPersianDigits(caption.length)} / ۲۲۰۰</span>
                   </div>
                   <textarea
                     value={caption}
@@ -1430,12 +1430,12 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                     مرحله بعد <ArrowLeft size={15} strokeWidth={2} />
                   </Button>
                 </div>
-                <section className="dashboard-card border border-[#E2E8F0] bg-white shadow-sm">
+                <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
                   <div className="mb-5 flex items-start gap-3">
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">۴</span>
                     <div className="min-w-0">
                       <h2 className="text-sm font-bold text-[#0F172A]">تگ کردن <span className="text-[#2563EB]">(اختیاری)</span></h2>
-                      <p className="mt-1 whitespace-normal text-xs leading-5 text-[#64748B]">در صورت نیاز، کاربرهای موردنظر را اضافه کن.</p>
+                      <p className="mt-1 whitespace-nowrap text-[11px] leading-5 text-[#64748B]">در صورت نیاز، کاربرهای موردنظر را اضافه کن.</p>
                     </div>
                   </div>
 
@@ -1488,12 +1488,12 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                             <div className="min-w-0 flex-1">
                               <div className="mb-2 flex items-center justify-between gap-2">
                                 <p className="text-xs font-bold text-[#0F172A]">{type === "CAROUSEL" ? `اسلاید ${toPersianDigits(index + 1)}` : typeLabels[type]}</p>
-                                <span className="rounded-full bg-white px-2 py-1 text-xs font-medium text-[#64748B] ring-1 ring-[#E2E8F0]">{toPersianDigits(tags.length)} تگ</span>
+                                <span className="rounded-full bg-white px-2 py-1 text-[10px] font-medium text-[#64748B] ring-1 ring-[#E2E8F0]">{toPersianDigits(tags.length)} تگ</span>
                               </div>
                               {tags.length > 0 && (
                                 <div className="mb-2.5 flex flex-wrap gap-1.5">
                                   {tags.map((username) => (
-                                    <span key={username} className="inline-flex items-center gap-1 rounded-full bg-[#EFF6FF] px-2.5 py-1.5 text-xs font-semibold text-[#2563EB] ring-1 ring-[#DBEAFE]">
+                                    <span key={username} className="inline-flex items-center gap-1 rounded-full bg-[#EFF6FF] px-2.5 py-1.5 text-[11px] font-semibold text-[#2563EB] ring-1 ring-[#DBEAFE]">
                                       <span dir="ltr">@{username}</span>
                                       <button type="button" onClick={() => removeTagForMedia(mediaKey, username)} className="flex h-4 w-4 items-center justify-center rounded-full text-[#64748B] hover:bg-white hover:text-[#DC2626]" aria-label={`حذف تگ @${username}`}>
                                         <X size={11} />
@@ -1523,7 +1523,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                             {tags.length > 0 && (
                               <div className="mb-2.5 flex flex-wrap gap-1.5">
                                 {tags.map((username) => (
-                                  <span key={username} className="inline-flex items-center gap-1 rounded-full bg-[#EFF6FF] px-2.5 py-1.5 text-xs font-semibold text-[#2563EB] ring-1 ring-[#DBEAFE]">
+                                  <span key={username} className="inline-flex items-center gap-1 rounded-full bg-[#EFF6FF] px-2.5 py-1.5 text-[11px] font-semibold text-[#2563EB] ring-1 ring-[#DBEAFE]">
                                     <span dir="ltr">@{username}</span>
                                     <button type="button" onClick={() => removeTagForMedia(mediaKey, username)} className="flex h-4 w-4 items-center justify-center rounded-full text-[#64748B] hover:bg-white hover:text-[#DC2626]" aria-label={`حذف تگ @${username}`}>
                                       <X size={11} />
@@ -1546,14 +1546,14 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                 </section>
               </div>
             ) : ((type !== "STORY" && tagStepConfirmed) || (type === "STORY" && captionStepConfirmed)) && (type === "STORY" || automationChoiceStepStarted) && !automationChoiceConfirmed ? (
-              <div className="mx-auto w-full max-w-3xl">
+              <div className="mx-auto w-full max-w-2xl">
                 <div className="mb-5 flex items-center justify-between gap-3">
                   <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
                     <ArrowRight size={15} strokeWidth={2} />بازگشت
                   </Button>
 
                 </div>
-                <section className="dashboard-card border border-[#E2E8F0] bg-white shadow-sm">
+                <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
                   <div className="mb-6 flex items-start gap-3">
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">{type === "STORY" ? "۳" : "۵"}</span>
                     <div className="min-w-0">
@@ -1567,7 +1567,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB] transition group-hover:bg-[#DBEAFE]"><Send size={18} /></span>
                         <div className="min-w-0">
                           <p className="text-sm font-bold text-[#0F172A]">پاسخ خودکار می‌خواهم</p>
-                          <p className="mt-1.5 text-xs leading-5 text-[#64748B]">برای این محتوا پاسخ خودکار تنظیم کن.</p>
+                          <p className="mt-1.5 text-[11px] leading-5 text-[#64748B]">برای این محتوا پاسخ خودکار تنظیم کن.</p>
                         </div>
                       </div>
                     </button>
@@ -1576,7 +1576,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F8FAFC] text-[#64748B] transition group-hover:bg-[#F1F5F9]"><ArrowLeft size={18} /></span>
                         <div className="min-w-0">
                           <p className="text-sm font-bold text-[#0F172A]">بدون پاسخ خودکار</p>
-                          <p className="mt-1.5 text-xs leading-5 text-[#64748B]">مستقیماً به مرحله انتشار برو.</p>
+                          <p className="mt-1.5 text-[11px] leading-5 text-[#64748B]">مستقیماً به مرحله انتشار برو.</p>
                         </div>
                       </div>
                     </button>
@@ -1584,7 +1584,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                 </section>
               </div>
             ) : type === "STORY" && automationChoiceConfirmed && automationEnabled && !automationSetupConfirmed ? (
-              <div className="mx-auto w-full max-w-3xl">
+              <div className="mx-auto w-full max-w-2xl">
                 <div className="mb-5 flex items-center justify-between gap-3">
                   <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
                     <ArrowRight size={15} strokeWidth={2} />بازگشت
@@ -1596,7 +1596,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   )}
                 </div>
 
-                <section className="dashboard-card space-y-5 border border-[#E2E8F0] bg-white shadow-sm">
+                <section className="space-y-5 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
                   <div className="flex items-start gap-3">
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">۴</span>
                     <div className="min-w-0">
@@ -1762,14 +1762,14 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                 </section>
               </div>
             ) : type !== "STORY" && automationChoiceConfirmed && automationEnabled && !automationSetupConfirmed ? (
-              <div className="mx-auto w-full max-w-3xl">
+              <div className="mx-auto w-full max-w-2xl">
                 <div className="mb-5 flex items-center justify-between gap-3">
                   <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
                     <ArrowRight size={15} strokeWidth={2} />بازگشت
                   </Button>
 
                 </div>
-                <section className="dashboard-card space-y-5 border border-[#E2E8F0] bg-white shadow-sm">
+                <section className="space-y-5 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
                   <div className="flex items-start gap-3">
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">۶</span>
                     <div className="min-w-0">
@@ -1816,13 +1816,13 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                 </section>
               </div>
             ) : ((type !== "STORY" && automationChoiceConfirmed && (!automationEnabled || automationSetupConfirmed)) || (type === "STORY" && automationChoiceConfirmed && (!automationEnabled || automationSetupConfirmed))) ? (
-              <div className="mx-auto w-full max-w-3xl">
+              <div className="mx-auto w-full max-w-2xl">
                 <div className="mb-5 flex items-center justify-between gap-3">
                   <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
                     <ArrowRight size={15} strokeWidth={2} />بازگشت
                   </Button>
                 </div>
-                <section className="dashboard-card border border-[#E2E8F0] bg-white shadow-sm">
+                <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
                   <div className="mb-6 flex items-start gap-3">
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">{type === "STORY" ? (automationEnabled ? "۵" : "۴") : (automationEnabled ? "۷" : "۶")}</span>
                     <div className="min-w-0">
@@ -1833,7 +1833,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
                   <div className="space-y-3">
                     <div className="flex flex-col gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5 sm:flex-row sm:items-center">
-                      <Button type="button" disabled={!publishNow} onClick={() => void createJob(true)} className="min-h-11 w-full shrink-0 whitespace-normal rounded-xl bg-[#2563EB] px-4 text-sm font-semibold text-white hover:bg-[#1D4ED8] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[#2563EB] sm:flex-1">
+                      <Button type="button" disabled={!publishNow} onClick={() => void createJob(true)} className="min-h-11 w-full shrink-0 whitespace-nowrap rounded-xl bg-[#2563EB] px-4 text-sm font-semibold text-white hover:bg-[#1D4ED8] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[#2563EB] sm:flex-1">
                         <span dir="ltr" className="inline-flex flex-row items-center gap-2"><Send size={17} /><span dir="rtl">انتشار {typeLabels[type]} هم‌اکنون</span></span>
                       </Button>
                       <label className="flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl px-2 text-xs font-semibold text-[#334155]">
@@ -1847,7 +1847,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                           }
                           setError("");
                         }} className="h-4 w-4 accent-[#2563EB]" />
-                        <span className="whitespace-normal">انتشار در زمان دلخواه</span>
+                        <span className="whitespace-nowrap">انتشار در زمان دلخواه</span>
                       </label>
                     </div>
 
@@ -1855,7 +1855,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                       <div className="mt-3 rounded-xl border border-[#E2E8F0] bg-white p-4 sm:p-5">
                         <div className="mb-4">
                           <p className="text-sm font-bold text-[#0F172A]">انتخاب زمان دقیق</p>
-                          <p className="mt-1 text-xs leading-5 text-[#64748B]">تاریخ انتشار را انتخاب کن.</p>
+                          <p className="mt-1 text-[11px] leading-5 text-[#64748B]">تاریخ انتشار را انتخاب کن.</p>
                         </div>
 
                         <div className="grid grid-cols-2 gap-3">
@@ -1879,11 +1879,11 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                                 }}
                                 className={["relative min-h-24 overflow-hidden rounded-2xl border p-3.5 text-right transition-all", selected ? "border-[#2563EB] bg-[#EFF6FF] shadow-sm ring-2 ring-[#2563EB]/10" : "border-[#E2E8F0] bg-white hover:border-[#BFDBFE] hover:bg-[#F8FAFC]"].join(" ")}
                               >
-                                <span className="absolute right-3.5 top-3.5 text-xs font-semibold text-[#64748B]">{getJalaliWeekday(date)}</span>
-                                <span className="absolute left-3.5 top-3.5 text-xs font-semibold text-[#2563EB]">{label}</span>
+                                <span className="absolute right-3.5 top-3.5 text-[11px] font-semibold text-[#64748B]">{getJalaliWeekday(date)}</span>
+                                <span className="absolute left-3.5 top-3.5 text-[10px] font-semibold text-[#2563EB]">{label}</span>
                                 <div className="mt-5 text-center text-base font-bold text-[#0F172A]">{toPersianDigits(date.day)} {jalaliMonths[date.month - 1]}</div>
-                                <div className="mt-2 text-center text-xs font-medium text-[#64748B]">{toPersianDigits(date.year)}</div>
-                                {selected && <span className="absolute bottom-2.5 left-2.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#2563EB] text-xs font-bold text-white">✓</span>}
+                                <div className="mt-2 text-center text-[10px] font-medium text-[#64748B]">{toPersianDigits(date.year)}</div>
+                                {selected && <span className="absolute bottom-2.5 left-2.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#2563EB] text-[10px] font-bold text-white">✓</span>}
                               </button>
                             );
                           })}
@@ -1935,7 +1935,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                             />
                           </div>
 
-                          <p className="mt-4 text-center text-xs leading-5 text-[#64748B]">برای انتخاب به بالا یا پایین بکشید</p>
+                          <p className="mt-4 text-center text-[11px] leading-5 text-[#64748B]">برای انتخاب به بالا یا پایین بکشید</p>
                         </div>
 
                         <div className="mt-5 border-t border-[#E2E8F0] pt-5">

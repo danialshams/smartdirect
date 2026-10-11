@@ -94,7 +94,7 @@ export default function AdminQueueDashboard() {
           </div>
         ) : null}
 
-        <section className="dashboard-card overflow-hidden border border-slate-200 p-0">
+        <section className="overflow-hidden border border-slate-200">
           <div className="border-b border-slate-200 p-4 font-medium">
             Failed Jobs
           </div>

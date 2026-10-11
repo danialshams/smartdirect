@@ -18,6 +18,7 @@ import {
   MessageSquareText,
   Plus,
   Settings2,
+  Ticket,
   UserRound,
   X,
 } from "lucide-react";
@@ -33,7 +34,6 @@ import {
   Typography,
   IconButton,
   Portal,
-  Popover,
 } from "@mui/material";
 import { signOut } from "next-auth/react";
 
@@ -69,6 +69,7 @@ const menuGroups = [
       { title: "پاسخ خودکار کامنت", href: "/dashboard/comment-automation", icon: MessageCircleReply },
       { title: "پاسخ خودکار استوری", href: "/dashboard/story-automation", icon: Camera },
       { title: "مشاهده و ویرایش پاسخ‌های خودکار", href: "/dashboard/auto-replies", icon: Settings2 },
+      { title: "تیکت‌ها", href: "/dashboard/tickets", icon: Ticket },
     ],
   },
 ];
@@ -94,8 +95,8 @@ function AccountSection({ instagramAccounts }: { instagramAccounts: InstagramAcc
   return (
     <Box sx={{ px: 1.25, py: 1 }}>
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: { xs: 0.8, lg: 0.65 }, px: 0.35 }}>
-        <Typography fontSize={12} fontWeight={700} color="#64748B">پیج‌های اینستاگرام</Typography>
-        <Box component={Link} href="/api/instagram/connect" aria-label="افزودن حساب" sx={{ display: "flex", alignItems: "center", gap: 0.35, color: "#2563EB", textDecoration: "none", fontSize: 12, fontWeight: 700, "&:hover": { color: "#1D4ED8" } }}>
+        <Typography fontSize={10.5} fontWeight={700} color="#64748B">پیج‌های اینستاگرام</Typography>
+        <Box component={Link} href="/api/instagram/connect" aria-label="افزودن حساب" sx={{ display: "flex", alignItems: "center", gap: 0.35, color: "#2563EB", textDecoration: "none", fontSize: 11, fontWeight: 700, "&:hover": { color: "#1D4ED8" } }}>
           <Plus size={16} strokeWidth={2.2} />
           <span>افزودن پیج</span>
         </Box>
@@ -145,7 +146,7 @@ function Navigation({ onNavigate, mobile = false }: { onNavigate?: () => void; m
               dir="rtl"
               sx={{
                 color: "#94A3B8",
-                fontSize: 12,
+                fontSize: 10,
                 fontWeight: 700,
                 lineHeight: 1.5,
                 whiteSpace: "nowrap",
@@ -164,7 +165,7 @@ function Navigation({ onNavigate, mobile = false }: { onNavigate?: () => void; m
                   <ListItemIcon sx={{ minWidth: 0, width: { xs: 24, lg: 17 }, flex: { xs: "0 0 24px", lg: "0 0 17px" }, color: "inherit", display: "flex", justifyContent: "center", alignItems: "center", m: 0 }}>
                     <Icon size={19} strokeWidth={1.9} />
                   </ListItemIcon>
-                  <ListItemText primary={title} sx={{ minWidth: 0, flex: "0 1 auto", m: 0, textAlign: "right", direction: "rtl" }} primaryTypographyProps={{ fontSize: { xs: 12.5, sm: 13.5, lg: 12 }, fontWeight: active ? 700 : 500, lineHeight: 1.45, noWrap: !mobile && !fullRowOnMobile, sx: { overflow: "hidden", textOverflow: "ellipsis", ...(mobile || fullRowOnMobile ? { whiteSpace: "normal" } : {}) } }} />
+                  <ListItemText primary={title} sx={{ minWidth: 0, flex: "0 1 auto", m: 0, textAlign: "right", direction: "rtl" }} primaryTypographyProps={{ fontSize: { xs: 12.5, sm: 13.5, lg: 11.5 }, fontWeight: active ? 700 : 500, lineHeight: 1.45, noWrap: !fullRowOnMobile, sx: { overflow: "hidden", textOverflow: "ellipsis", ...(fullRowOnMobile ? { whiteSpace: "normal" } : {}) } }} />
                 </ListItemButton>
               );
             })}
@@ -193,7 +194,7 @@ function SidebarContent({
           </IconButton>
         </Box>
       ) : null}
-      <Box sx={{ flex: 1, minHeight: 0, overflow: "auto", mt: mobile ? { xs: -1.25, sm: -1.5 } : 0 }}>
+      <Box sx={{ flex: 1, minHeight: 0, overflow: mobile ? "auto" : "hidden", mt: mobile ? { xs: -1.25, sm: -1.5 } : 0 }}>
         <Navigation onNavigate={onClose} mobile={mobile} />
       </Box>
       <Box sx={{ display: { xs: "none", lg: "block" } }}>
@@ -227,16 +228,16 @@ export default function DashboardSidebar({
       <Drawer variant="temporary" anchor="left" open={mobileOpen} onClose={onMobileClose} ModalProps={{ keepMounted: true }}
         sx={{
           display: { xs: "block", lg: "none" },
-          zIndex: (theme) => theme.zIndex.drawer,
+          zIndex: 2100,
           "& .MuiDrawer-paper": {
             width: { xs: "calc(100vw - 24px)", sm: "min(360px, calc(100vw - 24px))" },
             height: "auto",
-            top: "calc(env(safe-area-inset-top, 0px) + 12px)",
-            bottom: "calc(env(safe-area-inset-bottom, 0px) + 12px)",
+            top: { xs: 72, sm: 76 },
+            bottom: { xs: 78, sm: 82 },
             left: { xs: 12, sm: 12 },
             boxSizing: "border-box",
             border: "1px solid #E2E8F0",
-            borderRadius: "16px",
+            borderRadius: 3,
             direction: "rtl",
             overflow: "hidden",
             boxShadow: "0 8px 24px rgba(15,23,42,0.08)",
@@ -264,10 +265,24 @@ export function DashboardInstagramIsland({
   accountMenuOpen: boolean;
   onAccountMenuOpenChange: (open: boolean) => void;
 }) {
+  const pathname = usePathname();
   const [accounts, setAccounts] = useState(instagramAccounts);
   const islandRef = useRef<HTMLDivElement | null>(null);
+  const islandPanelRef = useRef<HTMLDivElement | null>(null);
   const islandButtonRef = useRef<HTMLButtonElement | null>(null);
   const activeAccount = accounts.find((account) => account.isConnected);
+
+  useEffect(() => {
+    if (!accountMenuOpen) return;
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target as Node;
+      const insidePanel = islandPanelRef.current?.contains(target) ?? false;
+      const insideButton = islandButtonRef.current?.contains(target) ?? false;
+      if (!insidePanel && !insideButton) onAccountMenuOpenChange(false);
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [accountMenuOpen, onAccountMenuOpenChange]);
 
   useEffect(() => {
     let cancelled = false;
@@ -285,16 +300,57 @@ export function DashboardInstagramIsland({
     };
   }, []);
 
+  const sections = [
+    {
+      key: "instagram",
+      href: "/dashboard",
+      title: "پیج‌های اینستاگرام",
+      icon: null,
+      active: pathname === "/dashboard",
+    },
+    {
+      key: "comment",
+      href: "/dashboard/comment-automation",
+      title: "پاسخ خودکار کامنت",
+      icon: MessageCircleReply,
+      active: pathname === "/dashboard/comment-automation" || pathname.startsWith("/dashboard/comment-automation/"),
+    },
+    {
+      key: "story",
+      href: "/dashboard/story-automation",
+      title: "پاسخ خودکار استوری",
+      icon: Camera,
+      active: pathname === "/dashboard/story-automation" || pathname.startsWith("/dashboard/story-automation/"),
+    },
+  ];
+
   return (
     <>
       <Portal>
+        <Box
+        aria-hidden={!accountMenuOpen}
+        onClick={() => onAccountMenuOpenChange(false)}
+        sx={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 2000,
+          display: { xs: "block", lg: "none" },
+          pointerEvents: accountMenuOpen ? "auto" : "none",
+          opacity: accountMenuOpen ? 1 : 0,
+          visibility: accountMenuOpen ? "visible" : "hidden",
+          backgroundColor: "rgba(15,23,42,0.025)",
+          backdropFilter: accountMenuOpen ? "blur(2px)" : "blur(0px)",
+          WebkitBackdropFilter: accountMenuOpen ? "blur(2px)" : "blur(0px)",
+          transition: "opacity 360ms ease, backdrop-filter 440ms ease, visibility 360ms ease",
+        }}
+      />
       <Box
       dir="rtl"
       component="footer"
       sx={{
         display: { xs: "block", lg: "none" },
         position: "fixed",
-        zIndex: (theme) => theme.zIndex.appBar,
+        zIndex: 2001,
         bottom: "calc(env(safe-area-inset-bottom, 0px) + 10px)",
         left: 12,
         right: 12,
@@ -306,14 +362,32 @@ export function DashboardInstagramIsland({
       }}
     >
       <Box ref={islandRef} sx={{ position: "relative", width: "100%", pointerEvents: "auto" }}>
-        <Popover
-          open={accountMenuOpen}
-          anchorEl={islandButtonRef.current}
-          onClose={() => onAccountMenuOpenChange(false)}
-          anchorOrigin={{ vertical: "top", horizontal: "center" }}
-          transformOrigin={{ vertical: "bottom", horizontal: "center" }}
-          marginThreshold={12}
-          slotProps={{ paper: { dir: "rtl", sx: { mb: 1, width: "calc(100vw - 32px)", maxWidth: 520, maxHeight: "calc(100dvh - 96px)", overflowY: "auto", border: "1px solid #E2E8F0", borderRadius: 2, boxShadow: "0 8px 24px rgba(15,23,42,0.08)" } } }}
+        <Box
+          ref={islandPanelRef}
+          dir="rtl"
+          sx={{
+            position: "fixed",
+            top: { xs: 416, sm: 476 },
+            left: 12,
+            right: 12,
+            width: "auto",
+            maxWidth: 520,
+            mx: "auto",
+            transform: accountMenuOpen ? "translateY(0)" : "translateY(8px)",
+            boxSizing: "border-box",
+            border: "1px solid #E2E8F0",
+            borderRadius: 3,
+            bgcolor: "rgba(255,255,255,0.97)",
+            boxShadow: "0 8px 24px rgba(15,23,42,0.08)",
+            backdropFilter: "blur(16px)",
+            overflow: "hidden",
+            opacity: accountMenuOpen ? 1 : 0,
+            transformOrigin: "bottom center",
+            visibility: accountMenuOpen ? "visible" : "hidden",
+            pointerEvents: accountMenuOpen ? "auto" : "none",
+            transition: "opacity 180ms ease, transform 180ms ease, visibility 180ms ease",
+            zIndex: 1,
+          }}
         >
           <Box
             sx={{
@@ -370,7 +444,7 @@ export function DashboardInstagramIsland({
                 <Typography
                   dir="ltr"
                   noWrap
-                  fontSize={12}
+                  fontSize={11.5}
                   fontWeight={700}
                   sx={{ maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis" }}
                 >
@@ -411,11 +485,11 @@ export function DashboardInstagramIsland({
             }}
           >
             <Plus size={17} strokeWidth={2.3} />
-            <Typography fontSize={12} fontWeight={700} dir="rtl">
+            <Typography fontSize={11.5} fontWeight={700} dir="rtl">
               افزودن پیج جدید
             </Typography>
           </Box>
-        </Popover>
+        </Box>
 
         <Box
           ref={islandButtonRef}
@@ -423,7 +497,6 @@ export function DashboardInstagramIsland({
           type="button"
           onClick={() => onAccountMenuOpenChange(!accountMenuOpen)}
           aria-expanded={accountMenuOpen}
-          aria-haspopup="dialog"
           aria-label="باز کردن اکانت‌های اینستاگرام"
           sx={{
             minWidth: { xs: 148, sm: 164 },
@@ -452,7 +525,7 @@ export function DashboardInstagramIsland({
             "&:active": { transform: "scale(0.985)" },
           }}
         >
-          <Typography component="span" fontSize={12} fontWeight={700} color="inherit">
+          <Typography component="span" fontSize={11.5} fontWeight={700} color="inherit">
             اکانت‌های اینستاگرام
           </Typography>
           <Box

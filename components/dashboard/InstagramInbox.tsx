@@ -261,7 +261,7 @@ function AudioBubble({ src }: { src: string }) {
             })}
           </div>
 
-          <div className="mt-0.5 flex items-center justify-between text-xs tabular-nums opacity-65">
+          <div className="mt-0.5 flex items-center justify-between text-[9px] tabular-nums opacity-65">
             <span>{formatAudioTime(currentTime)}</span>
             <span>{formatAudioTime(duration)}</span>
           </div>
@@ -270,7 +270,7 @@ function AudioBubble({ src }: { src: string }) {
         <button
           type="button"
           onClick={cycleSpeed}
-          className="flex h-8 min-w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold tabular-nums transition hover:bg-black/5 active:scale-95"
+          className="flex h-8 min-w-9 shrink-0 items-center justify-center rounded-full text-[10px] font-bold tabular-nums transition hover:bg-black/5 active:scale-95"
           aria-label={`سرعت پخش ${speed} برابر`}
           title="تغییر سرعت پخش"
         >
@@ -355,9 +355,6 @@ export default function InstagramInbox({
     );
     return urlSelection || storedSelection;
   })();
-  const frameRef = useRef<HTMLDivElement>(null);
-  const [frameHeight, setFrameHeight] = useState<number>();
-
   const [accountId, setAccountId] = useState(initialAccountId);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedId, setSelectedId] = useState(initialStoredSelection || "");
@@ -370,27 +367,6 @@ export default function InstagramInbox({
   const [filter, setFilter] = useState<InboxFilter>("ALL");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [error, setError] = useState("");
-  useLayoutEffect(() => {
-    const viewport = window.visualViewport;
-    const update = () => {
-      const frame = frameRef.current;
-      if (!frame) return;
-      const viewportBottom = (viewport?.height ?? window.innerHeight) + (viewport?.offsetTop ?? 0);
-      const main = frame.closest("main");
-      const bottomPadding = main ? parseFloat(window.getComputedStyle(main).paddingBottom) || 16 : 16;
-      setFrameHeight(Math.max(0, viewportBottom - frame.getBoundingClientRect().top - bottomPadding));
-    };
-    update();
-    viewport?.addEventListener("resize", update);
-    viewport?.addEventListener("scroll", update);
-    window.addEventListener("resize", update);
-    return () => {
-      viewport?.removeEventListener("resize", update);
-      viewport?.removeEventListener("scroll", update);
-      window.removeEventListener("resize", update);
-    };
-  }, [error, connectedAccounts.length]);
-
   const [mobileChatOpen, setMobileChatOpen] = useState(() => {
     if (typeof window === "undefined" || !initialAccountId || !initialStoredSelection) {
       return false;
@@ -1086,7 +1062,7 @@ export default function InstagramInbox({
       <section
         id="messages"
         dir="rtl"
-        className="dashboard-card dashboard-empty scroll-mt-24"
+        className="scroll-mt-24 rounded-2xl border bg-card p-6 sm:p-8"
       >
         <div className="flex items-start gap-4">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
@@ -1115,14 +1091,14 @@ export default function InstagramInbox({
               key={value}
               type="button"
               onClick={() => setFilter(value)}
-              className={`flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-xs font-medium transition ${
+              className={`flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-[11px] font-medium transition ${
                 filter === value
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <span>{label}</span>
-              <span className="text-xs tabular-nums opacity-70">
+              <span className="text-[10px] tabular-nums opacity-70">
                 {count.toLocaleString("fa-IR")}
               </span>
             </button>
@@ -1138,7 +1114,7 @@ export default function InstagramInbox({
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="جستجوی گفتگو..."
-            className="h-9 rounded-lg border-border bg-muted/30 pr-9 text-xs"
+            className="h-9 rounded-lg border-border bg-muted/30 pr-9 text-[11px]"
           />
         </div>
       </div>
@@ -1190,13 +1166,13 @@ export default function InstagramInbox({
                     >
                       {displayName(conversation)}
                     </span>
-                    <span className="shrink-0 text-xs text-muted-foreground">
+                    <span className="shrink-0 text-[9px] text-muted-foreground">
                       {formatDate(conversation.lastMessageAt)}
                     </span>
                   </div>
                   <div className="mt-1 flex items-center justify-between gap-2">
                     <p
-                      className={`truncate text-xs leading-5 ${
+                      className={`truncate text-[11px] leading-5 ${
                         unread
                           ? "font-medium text-foreground"
                           : "text-muted-foreground"
@@ -1205,7 +1181,7 @@ export default function InstagramInbox({
                       {preview(conversation.messages[conversation.messages.length - 1])}
                     </p>
                     {unread && (
-                      <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-blue-600 px-1.5 text-xs font-semibold text-white">
+                      <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-blue-600 px-1.5 text-[9px] font-semibold text-white">
                         {(conversation.unreadCount || 0).toLocaleString("fa-IR")}
                       </span>
                     )}
@@ -1262,14 +1238,14 @@ export default function InstagramInbox({
               <p className="truncate text-[13px] font-bold text-foreground">
                 {displayName(selectedConversation)}
               </p>
-              <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-1.5">
-                <p className="truncate text-xs text-muted-foreground">
+              <div className="mt-0.5 flex min-w-0 items-center gap-1.5">
+                <p className="truncate text-[9px] text-muted-foreground">
                   {selectedConversation.participantName || "Instagram Direct"}
                 </p>
                 {selectedConversation.messagingWindow && (
                   <span
                     className={
-                      "max-w-full break-words rounded-full px-1.5 py-0.5 text-xs font-medium " +
+                      "shrink-0 rounded-full px-1.5 py-0.5 text-[8px] font-medium " +
                       (selectedConversation.messagingWindow.canSend
                         ? selectedConversation.messagingWindow.mode === "HUMAN_AGENT"
                           ? "bg-amber-50 text-amber-700"
@@ -1341,7 +1317,7 @@ export default function InstagramInbox({
                         </div>
 
                         <div
-                          className={`mt-1 flex items-center gap-1.5 px-1 text-xs text-muted-foreground ${
+                          className={`mt-1 flex items-center gap-1.5 px-1 text-[9px] text-muted-foreground ${
                             outbound ? "justify-start" : "justify-end"
                           }`}
                         >
@@ -1395,7 +1371,7 @@ export default function InstagramInbox({
             className="shrink-0 border-t border-border bg-background p-2.5 sm:p-3"
           >
             {selectedConversation.messagingWindow && !selectedConversation.messagingWindow.canSend && (
-              <div className="mb-2 rounded-lg bg-muted/60 px-3 py-2 text-xs leading-5 text-muted-foreground">
+              <div className="mb-2 rounded-lg bg-muted/60 px-3 py-2 text-[10px] leading-5 text-muted-foreground">
                 زمان مجاز پاسخ‌گویی به این گفتگو تمام شده است. با پیام جدید کاربر، امکان پاسخ دوباره فعال می‌شود.
               </div>
             )}
@@ -1413,7 +1389,7 @@ export default function InstagramInbox({
                     <span className="truncate text-xs font-medium">
                       {selectedFile.name}
                     </span>
-                    <span className="shrink-0 text-xs text-muted-foreground">
+                    <span className="shrink-0 text-[9px] text-muted-foreground">
                       {Math.max(1, Math.round(selectedFile.size / 1024))} KB
                     </span>
                   </div>
@@ -1480,7 +1456,7 @@ export default function InstagramInbox({
                       />
                     ))}
                   </div>
-                  <span className="w-10 shrink-0 text-center text-xs font-semibold tabular-nums">
+                  <span className="w-10 shrink-0 text-center text-[11px] font-semibold tabular-nums">
                     {String(Math.floor(recordingSeconds / 60)).padStart(2, "0")}:
                     {String(recordingSeconds % 60).padStart(2, "0")}
                   </span>
@@ -1567,7 +1543,7 @@ export default function InstagramInbox({
                   </Button>
                 </div>
 
-                <div className="mt-1.5 flex items-center justify-end px-1 text-xs text-muted-foreground">
+                <div className="mt-1.5 flex items-center justify-end px-1 text-[9px] text-muted-foreground">
                   <span>{text.length.toLocaleString("fa-IR")} / ۱۰۰۰</span>
                 </div>
               </>
@@ -1607,7 +1583,7 @@ export default function InstagramInbox({
         </div>
       )}
 
-      <div ref={frameRef} style={{ height: frameHeight }} className="dashboard-inbox-frame overflow-hidden rounded-2xl border border-border bg-card shadow-[0_12px_40px_rgba(15,23,42,0.04)]">
+      <div className="h-[calc(100dvh-7.5rem)] min-h-[500px] overflow-hidden rounded-2xl border border-border bg-card shadow-[0_12px_40px_rgba(15,23,42,0.04)]">
         <div className="flex h-full min-h-0">
           <div
             className={`flex min-h-0 flex-1 flex-col lg:flex-none ${
