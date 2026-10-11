@@ -21,13 +21,26 @@ function getSafeCallbackUrl(value: string | null) {
             return decoded;
         }
     } catch {
-        // مقدار نامعتبر است؛ مقصد پیش‌فرض استفاده می‌شود.
+        // Use the default destination for malformed values.
     }
 
     return "/dashboard";
 }
 
-export default function LoginForm({ callbackUrl }: { callbackUrl?: string | null }) {
+function getLoginError(error?: string | null) {
+    if (error === "CredentialsSignin") return "ایمیل یا رمز عبور اشتباه است";
+    if (error === "Configuration") return "ورود موقتاً در دسترس نیست. لطفاً بعداً تلاش کنید.";
+    if (error) return "ورود انجام نشد. لطفاً چند لحظه بعد دوباره تلاش کنید.";
+    return null;
+}
+
+export default function LoginForm({
+    callbackUrl,
+    error,
+}: {
+    callbackUrl?: string | null;
+    error?: string | null;
+}) {
     const {
         register,
         handleSubmit,
@@ -48,7 +61,6 @@ export default function LoginForm({ callbackUrl }: { callbackUrl?: string | null
                 password: data.password,
             });
 
-            // Never treat a missing/undefined response as a successful login.
             if (!result || !result.ok || result.error) {
                 setError("root.server", {
                     type: "server",
@@ -68,10 +80,20 @@ export default function LoginForm({ callbackUrl }: { callbackUrl?: string | null
         }
     };
 
+    const visibleError = errors.root?.server?.message ?? getLoginError(error);
+
     return (
-        // POST is a safety net: if client-side hydration fails, credentials must
-        // never be placed in the URL as they would be with the default GET method.
-        <form method="post" onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form
+            method="post"
+            action="/api/auth/legacy-login"
+            onSubmit={handleSubmit(onSubmit)}
+            className="space-y-4"
+        >
+            <input
+                type="hidden"
+                name="callbackUrl"
+                value={getSafeCallbackUrl(callbackUrl ?? null)}
+            />
             <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                     ایمیل
@@ -100,9 +122,9 @@ export default function LoginForm({ callbackUrl }: { callbackUrl?: string | null
                 {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>}
             </div>
 
-            {errors.root?.server && (
+            {visibleError && (
                 <p role="alert" aria-live="polite" className="text-red-600 text-sm">
-                    {errors.root.server.message}
+                    {visibleError}
                 </p>
             )}
 
