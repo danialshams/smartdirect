@@ -88,6 +88,7 @@ export default function EntryPointFlowBuilder({
 }: EntryPointFlowBuilderProps) {
     const [messages, setMessages] =
         useState<MessageDraft[]>([]);
+    const [keywordDraft, setKeywordDraft] = useState("");
 
     const [showcases, setShowcases] =
         useState<Showcase[]>([]);
@@ -246,6 +247,7 @@ export default function EntryPointFlowBuilder({
                         success?: boolean;
                         data?: {
                             messages?: unknown;
+                            replyText?: string | null;
                         };
                         error?: string;
                     };
@@ -261,11 +263,16 @@ export default function EntryPointFlowBuilder({
                     return;
                 }
 
-                setMessages(
-                    normalizeMessages(
-                        result.data?.messages,
-                    ),
-                );
+                const loadedMessages = normalizeMessages(result.data?.messages);
+                if (loadedMessages.length > 0) {
+                    setMessages(loadedMessages);
+                } else if (result.data?.replyText?.trim()) {
+                    // Older automations may store the DM response on Automation.replyText
+                    // instead of an AutomationMessage record. Populate the editor from it.
+                    setMessages([{ ...createEmptyMessage(), text: result.data.replyText }]);
+                } else {
+                    setMessages([]);
+                }
 
                 setLoadedAutomationId(
                     automationId,
@@ -754,6 +761,18 @@ export default function EntryPointFlowBuilder({
      */
 
     const currentMessage = messages[0] ?? createEmptyMessage();
+    const keywordItems = keyword.split(/[\\n,،;؛]+/).map((item) => item.trim()).filter(Boolean).filter((item, index, list) => list.findIndex((value) => value.toLocaleLowerCase() === item.toLocaleLowerCase()) === index);
+
+    function addKeyword() {
+        const value = keywordDraft.trim();
+        if (!value || keywordItems.some((item) => item.toLocaleLowerCase() === value.toLocaleLowerCase())) {
+            setKeywordDraft("");
+            return;
+        }
+        onKeywordChange?.([...keywordItems, value].join(", "));
+        onDirtyChange?.(true);
+        setKeywordDraft("");
+    }
 
     function updateEntryMessage(patch: Partial<MessageDraft>) {
         setMessages((current) => {
@@ -774,17 +793,25 @@ export default function EntryPointFlowBuilder({
                     {triggerType !== "DM" && (
                         <div className="space-y-2">
                             <label className="block text-sm font-bold text-[#0F172A]">کلمات کلیدی</label>
-                            <input
-                                value={keyword}
-                                onChange={(event) => {
-                                    onKeywordChange?.(event.target.value);
-                                    onDirtyChange?.(true);
-                                }}
-                                placeholder="مثلاً قیمت، خرید، سفارش"
-                                className="w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 text-base text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white"
-                                style={{ fontSize: "16px", WebkitTextSizeAdjust: "100%" }}
-                            />
-                            <p className="text-[11px] text-[#64748B]">حداقل یک کلمه کلیدی الزامی است.</p>
+                            <div className="flex min-h-[52px] flex-wrap items-center gap-2 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 focus-within:border-[#2563EB] focus-within:bg-white">
+                                {keywordItems.map((item) => (
+                                    <span key={item} className="inline-flex items-center gap-1.5 rounded-full border border-[#BFDBFE] bg-[#EFF6FF] px-3 py-1.5 text-xs font-semibold text-[#2563EB]">
+                                        {item}
+                                        <button type="button" onClick={() => { onKeywordChange?.(keywordItems.filter((value) => value !== item).join(", ")); onDirtyChange?.(true); }} className="font-bold text-[#64748B] hover:text-[#DC2626]" aria-label={"حذف " + item}>×</button>
+                                    </span>
+                                ))}
+                                <input
+                                    value={keywordDraft}
+                                    onChange={(event) => setKeywordDraft(event.target.value)}
+                                    onKeyDown={(event) => { if (event.key === "Enter" || event.key === "," || event.key === "،" || event.key === ";") { event.preventDefault(); addKeyword(); } }}
+                                    onBlur={addKeyword}
+                                    placeholder={keywordItems.length ? "افزودن کلمه دیگر..." : "مثلاً قیمت، خرید، سفارش"}
+                                    className="min-w-[140px] flex-1 bg-transparent px-1 py-2 text-base text-[#0F172A] outline-none"
+                                    style={{ fontSize: "16px", WebkitTextSizeAdjust: "100%" }}
+                                />
+                                <button type="button" onClick={addKeyword} className="shrink-0 rounded-lg border border-[#E2E8F0] bg-white px-3 py-2 text-xs font-semibold text-[#334155] hover:bg-[#F1F5F9]">افزودن</button>
+                            </div>
+                            <p className="text-[11px] text-[#64748B]">هر کلمه به‌صورت جداگانه نمایش داده می‌شود؛ حداقل یک کلمه کلیدی الزامی است.</p>
                         </div>
                     )}
                     {flowLoading ? (
