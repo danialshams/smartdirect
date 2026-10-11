@@ -1,5 +1,6 @@
 "use client";
 import { Button, Select } from "@/components/dashboard/DashboardUI";
+import { DashboardLoading } from "@/components/dashboard/DashboardUI";
 
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -188,7 +189,7 @@ export default function InstagramBusinessDashboard({ accounts }: { accounts: Acc
             )}
 
             {loading && !data ? (
-                <div className="rounded-xl border bg-card px-6 py-20 text-center text-sm text-muted-foreground">در حال دریافت وضعیت مدیریتی پیج...</div>
+                <DashboardLoading label="در حال دریافت وضعیت مدیریتی پیج..." className="min-h-48" />
             ) : data ? (
                 <>
                     <div className="rounded-xl border bg-card p-5 shadow-[0_8px_30px_rgba(15,23,42,0.03)] sm:p-6">

@@ -266,9 +266,17 @@ body {
 }
 .dashboard-loading--fill { min-height: 100%; height: 100%; padding: 0; }
 /* Single page-level loading states occupy the available viewport area and stay vertically centered. */
-.dashboard-loading--page { min-height: calc(100dvh - 132px) !important; height: auto; }
+.dashboard-loading--page {
+  min-height: calc(100dvh - 132px) !important;
+  height: auto;
+  box-sizing: border-box;
+  padding-block-start: 48px;
+}
 @media (max-width: 639px) {
-  .dashboard-loading--page { min-height: calc(100dvh - 112px) !important; }
+  .dashboard-loading--page {
+    min-height: calc(100dvh - 112px) !important;
+    padding-block-start: 44px;
+  }
 }
 .dashboard-loading__label {
   color: #64748B; font-family: "Vazirmatn", Arial, sans-serif; font-size: 12px; line-height: 1.8;

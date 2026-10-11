@@ -1635,7 +1635,7 @@ export default function AutomationForm({
                                     <div className="overflow-hidden rounded-2xl bg-muted">
                                         <div className="mx-auto aspect-[9/14] w-full max-w-[430px]">
                                             {loadingStories ? (
-                                                <div className="flex h-full w-full items-center justify-center"><span className="text-xs text-[#64748B]">در حال دریافت استوری...</span></div>
+                                                <DashboardLoading label="در حال دریافت پیش‌نمایش استوری..." className="h-full min-h-0" />
                                             ) : selectedStory?.mediaUrl || selectedStory?.thumbnailUrl ? (
                                                 selectedStory.mediaType === "VIDEO" && selectedStory.mediaUrl ? (
                                                     <video

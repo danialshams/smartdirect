@@ -785,7 +785,7 @@ export default function EntryPointFlowBuilder({
     return (
         <div className="space-y-5">
             {loadingAutomation ? (
-                <DashboardLoading label="در حال دریافت تنظیمات..." className="min-h-32" />
+                <DashboardLoading label="در حال دریافت تنظیمات پاسخ خودکار..." className="min-h-32" />
             ) : (
                 <>
                     {triggerType !== "DM" && (
