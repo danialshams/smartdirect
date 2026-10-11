@@ -138,6 +138,8 @@ body {
 
 .dashboard-page-unified > * {
   min-width: 0;
+  padding: 0 !important;
+  background-color: transparent !important;
 }
 
 .dashboard-page-unified > * > div[class*="max-w-"] {
@@ -183,6 +185,25 @@ body {
 .dashboard-page-unified .MuiButton-root {
   border-radius: 10px;
   text-transform: none;
+}
+
+.dashboard-page-unified button[class*="bg-[#2563EB]"],
+.dashboard-page-unified button[class*="bg-primary"],
+.dashboard-page-unified .MuiButton-containedPrimary {
+  min-height: 40px !important;
+  height: auto !important;
+  padding: 10px 16px !important;
+  border-radius: 10px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+}
+
+.dashboard-page-unified input:not([type="checkbox"]):not([type="radio"]),
+.dashboard-page-unified textarea,
+.dashboard-page-unified select {
+  min-height: 42px;
+  padding-inline: 12px;
+  font-size: 13px;
 }
 
 @media (max-width: 600px) {
