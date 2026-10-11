@@ -153,8 +153,14 @@ body {
 }
 .dashboard-page-unified, .dashboard-page-unified * { min-width: 0; }
 .dashboard-page-unified > * {
-  width: 100%; min-width: 0; margin: 0 !important; padding: 0 !important;
+  width: 100%; min-width: 0; margin: 0 !important; padding: 16px 12px !important;
   background-color: #F8FAFC !important;
+}
+@media (min-width: 640px) {
+  .dashboard-page-unified > * { padding: 24px 20px !important; }
+}
+@media (min-width: 1024px) {
+  .dashboard-page-unified > * { padding: 24px 32px !important; }
 }
 .dashboard-page-unified > * > div[class*="max-w-"] {
   width: 100%; max-width: 1152px !important; margin-inline: auto !important;

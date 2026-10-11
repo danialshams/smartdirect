@@ -39,7 +39,7 @@ export default function DashboardShell({
   const pathname = usePathname();
   const isDashboardOverview = pathname === "/dashboard";
   const isUnifiedDashboardPage =
-    pathname.startsWith("/dashboard/") &&
+    (pathname === "/dashboard" || pathname.startsWith("/dashboard/")) &&
     !pathname.startsWith("/dashboard/inbox") &&
     !pathname.startsWith("/dashboard/publishing") &&
     pathname !== "/dashboard/insights";
