@@ -88,7 +88,7 @@
     "ioredis": "^6.0.0",
     "jose": "^6.2.12",
     "lucide-react": "^1.43.0",
-    "next": "16.3.4",
+    "next": "15.5.27",
     "next-auth": "^4.24.15",
     "openai": "^7.10.0",
     "pg": "^8.23.0",
@@ -128,16 +128,16 @@
     "@types/react-dom": "^19",
     "dotenv": "^17.4.2",
     "eslint": "^9",
-    "eslint-config-next": "16.3.4",
+    "eslint-config-next": "15.5.27",
     "tailwindcss": "^4",
     "tsx": "^4.23.13",
     "typescript": "^5"
   },
   "browserslist": [
-    "chrome 111",
-    "edge 111",
-    "firefox 111",
-    "safari 15.8",
-    "ios_saf 15.8"
+    "chrome 64",
+    "edge 79",
+    "firefox 67",
+    "opera 51",
+    "safari 12"
   ]
 }
