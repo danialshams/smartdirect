@@ -194,6 +194,11 @@ body {
   letter-spacing: -0.025em !important;
 }
 
+.dashboard-page-unified section {
+  border-radius: 16px;
+  padding: 20px !important;
+}
+
 .dashboard-page-unified section[class*="border"] {
   border-color: #E2E8F0;
   border-radius: 16px;
@@ -247,6 +252,11 @@ body {
 }
 
 @media (max-width: 600px) {
+  .dashboard-page-unified section {
+    border-radius: 14px;
+    padding: 16px !important;
+  }
+
   .dashboard-page-unified section[class*="border"] {
     border-radius: 14px;
     padding: 16px !important;
