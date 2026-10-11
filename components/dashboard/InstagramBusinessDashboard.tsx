@@ -1,6 +1,5 @@
 "use client";
-import { Button, Select } from "@/components/dashboard/DashboardUI";
-import { DashboardLoading } from "@/components/dashboard/DashboardUI";
+import { Button, DashboardLoading, Select } from "@/components/dashboard/DashboardUI";
 
 import { useCallback, useEffect, useState } from "react";
 import {

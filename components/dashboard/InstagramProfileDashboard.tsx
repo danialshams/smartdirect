@@ -120,10 +120,9 @@ export default function InstagramProfileDashboard({
 
   if (loading) {
     return (
-      <DashboardLoading
-        label="در حال دریافت اطلاعات پیج..."
-        className="dashboard-loading--page"
-      />
+      <Box dir="rtl" sx={{ position: "fixed", inset: 0, zIndex: 1100, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
+        <DashboardLoading label="در حال دریافت اطلاعات پیج..." />
+      </Box>
     );
   }
   if (error) {
