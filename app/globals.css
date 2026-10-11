@@ -128,7 +128,7 @@ body {
 }
 
 
-/* Shared dashboard visual system for all dashboard routes except inbox and the reference pages. */
+/* Shared dashboard visual tokens and opt-in layout primitives. Inbox, publishing and Insights stay excluded. */
 .dashboard-page-unified {
   --background: hsl(210 40% 98%); --foreground: hsl(222 47% 11%);
   --card: hsl(0 0% 100%); --card-foreground: hsl(222 47% 11%);
@@ -152,21 +152,65 @@ body {
   width: 100%; min-width: 0; color: #0F172A; background: #F8FAFC;
 }
 .dashboard-page-unified, .dashboard-page-unified * { min-width: 0; }
-.dashboard-page-unified > * {
-  width: 100%; min-width: 0; margin: 0 !important; padding: 16px 12px !important;
-  background-color: #F8FAFC !important;
+.dashboard-page-unified {
+  width: 100%;
+  max-width: 1152px;
+  margin-inline: auto;
+}
+/* Shared primitives: pages opt in explicitly instead of inheriting layout from arbitrary DOM depth. */
+.dashboard-page-unified .dashboard-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  margin: 0 0 20px;
+}
+.dashboard-page-unified .dashboard-page-header__copy { min-width: 0; flex: 1; }
+.dashboard-page-unified .dashboard-page-description {
+  margin-top: 5px;
+  color: #64748B;
+  font-size: 12px;
+  line-height: 1.8;
+}
+.dashboard-page-unified .dashboard-page-section {
+  width: 100%;
+  min-width: 0;
+  padding: 18px !important;
+  border: 1px solid #E2E8F0;
+  border-radius: 20px;
+  background: #FFFFFF;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.035);
+}
+.dashboard-page-unified .dashboard-page-section + .dashboard-page-section { margin-top: 16px; }
+.dashboard-page-unified .dashboard-page-section__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.dashboard-page-unified .dashboard-page-section__title {
+  margin: 0;
+  color: #0F172A;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.7;
+}
+.dashboard-page-unified .dashboard-page-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
 }
 @media (min-width: 640px) {
-  .dashboard-page-unified > * { padding: 24px 20px !important; }
+  .dashboard-page-unified .dashboard-page-section { padding: 20px !important; }
+  .dashboard-page-unified .dashboard-page-grid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dashboard-page-unified .dashboard-page-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .dashboard-page-unified .dashboard-page-grid--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (min-width: 1024px) {
-  .dashboard-page-unified > * { padding: 24px 32px !important; }
+  .dashboard-page-unified .dashboard-page-grid--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
-.dashboard-page-unified > * > div[class*="max-w-"] {
-  width: 100%; max-width: 1152px !important; margin-inline: auto !important;
-}
-.dashboard-page-unified section[class*="max-w-"],
-.dashboard-page-unified div[class*="max-w-2xl"] { max-width: 100% !important; }
 /* Page titles follow the compact title scale used by the Publishing and Insights reference pages. */
 .dashboard-page-unified h1,
 .dashboard-page-unified .MuiTypography-h4,
