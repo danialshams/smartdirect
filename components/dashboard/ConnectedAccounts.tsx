@@ -4,7 +4,8 @@ import { CheckCircle2, Link2, RefreshCw, UserRound, UsersRound } from "lucide-re
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/dashboard/DashboardUI";
-import { Card, CardContent, CardActions, Chip, Skeleton, Typography } from "@mui/material";
+import { Card, CardContent, CardActions, Chip, Typography } from "@mui/material";
+import { DashboardLoading } from "@/components/dashboard/DashboardUI";
 
 type Account = {
   id: string;
@@ -82,24 +83,7 @@ export default function ConnectedAccounts() {
       )}
 
       {loading ? (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, index) => (
-            <Card key={index}>
-              <CardContent className="p-5">
-                <div className="flex items-center gap-3">
-                  <Skeleton variant="circular" width={56} height={56} />
-                  <div className="space-y-2">
-                    <Skeleton width={112} height={16} />
-                    <Skeleton width={144} height={12} />
-                  </div>
-                </div>
-              </CardContent>
-              <CardActions className="border-t px-5 py-3">
-                <Skeleton width={96} height={16} />
-              </CardActions>
-            </Card>
-          ))}
-        </div>
+        <DashboardLoading label="در حال دریافت پیج‌های متصل..." className="min-h-48" />
       ) : accounts.length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center px-5 py-16 text-center">

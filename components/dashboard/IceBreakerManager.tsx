@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Input } from "@/components/dashboard/DashboardUI";
+import { Button, DashboardLoading, Input } from "@/components/dashboard/DashboardUI";
 import { CheckCircle2, MessageSquare, Pencil, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import EntryPointFlowBuilder from "./EntryPointFlowBuilder";
@@ -298,7 +298,7 @@ export default function IceBreakerManager({
                 style={{ fontSize: "16px", WebkitTextSizeAdjust: "100%" }}
               />
 
-              <div className="mt-2 flex items-center justify-between text-[10px] text-[#64748B]">
+              <div className="dashboard-character-counter text-[10px] text-[#64748B]">
                 <span>حداکثر ۸۰ کاراکتر</span>
                 <span>{draft.length.toLocaleString("fa-IR")} / ۸۰</span>
               </div>
@@ -353,9 +353,7 @@ export default function IceBreakerManager({
               </div>
 
               {loading ? (
-                <div className="flex min-h-24 items-center justify-center">
-                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#2563EB]/20 border-t-[#2563EB]" />
-                </div>
+                <DashboardLoading label="در حال دریافت پیام‌های شروع گفتگو..." className="min-h-24" />
               ) : questions.length === 0 ? (
                 <div className="flex min-h-24 items-center justify-center rounded-xl border border-dashed border-[#E2E8F0] bg-[#F8FAFC] px-4 text-center text-xs font-medium text-[#94A3B8]">
                   هنوز پیام شروع گفتگویی ساخته نشده است.
@@ -428,7 +426,7 @@ export default function IceBreakerManager({
                           style={{ fontSize: "16px", WebkitTextSizeAdjust: "100%" }}
                         />
 
-                        <div className="mt-2 flex items-center justify-between text-[10px] text-[#64748B]">
+                        <div className="dashboard-character-counter text-[10px] text-[#64748B]">
                           <span>حداکثر ۸۰ کاراکتر</span>
                           <span>{editDraft.length.toLocaleString("fa-IR")} / ۸۰</span>
                         </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { DashboardLoading } from "@/components/dashboard/DashboardUI"
 import { Input } from "@/components/dashboard/DashboardUI"
 
 import { Button } from "@/components/dashboard/DashboardUI"
@@ -864,9 +865,7 @@ export default function InstagramContentAnalytics() {
 
             {loading &&
                 !data && (
-                    <div className="rounded-xl border bg-card px-6 py-20 text-center text-sm text-muted-foreground">
-                        در حال دریافت عملکرد محتوا...
-                    </div>
+                    <DashboardLoading label="در حال دریافت عملکرد محتوا..." className="min-h-48" />
                 )}
 
             {!loadingAccounts &&

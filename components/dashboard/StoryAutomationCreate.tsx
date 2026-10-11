@@ -1,9 +1,9 @@
 "use client";
 
-import { ArrowRight, Image as ImageIcon, Loader2, Video } from "lucide-react";
+import { ArrowRight, Image as ImageIcon, Video } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/dashboard/DashboardUI";
+import { Button, DashboardLoading } from "@/components/dashboard/DashboardUI";
 
 type Account = { id: string; igUsername: string; igUserId: string; isConnected: boolean };
 type Story = { id: string; mediaType: string | null; mediaUrl: string | null; thumbnailUrl: string | null; };
@@ -59,7 +59,7 @@ export default function StoryAutomationCreate() {
   }, []);
 
   if (loading) {
-    return <div dir="rtl" className="flex min-h-[50vh] items-center justify-center"><Loader2 size={24} className="animate-spin text-[#2563EB]" aria-label="در حال بارگذاری" /></div>;
+    return <DashboardLoading label="در حال دریافت استوری‌ها..." className="min-h-[50vh]" />;
   }
 
   if (!account) {

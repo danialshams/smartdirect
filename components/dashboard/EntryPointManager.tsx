@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/dashboard/DashboardUI";
+import { Button, DashboardLoading } from "@/components/dashboard/DashboardUI";
 import { Input } from "@/components/dashboard/DashboardUI";
 import {
   Bot,
@@ -574,20 +574,7 @@ export default function EntryPointManager({ accounts, kind }: Props) {
           <h2 className="mt-4 text-base font-bold">ابتدا یک پیج اینستاگرام متصل کنید</h2>
         </section>
       ) : loading ? (
-        <section className="overflow-hidden rounded-3xl border border-border/80 bg-card">
-          <div className="divide-y divide-border/70">
-            {Array.from({ length: 4 }).map((_, index) => (
-              <div key={index} className="flex animate-pulse items-center gap-3 p-4">
-                <div className="h-5 w-5 rounded-md bg-muted" />
-                <div className="min-w-0 flex-1 space-y-2">
-                  <div className="h-4 w-40 rounded bg-muted" />
-                  <div className="h-3 w-24 rounded bg-muted" />
-                </div>
-                <div className="h-9 w-20 rounded-lg bg-muted" />
-              </div>
-            ))}
-          </div>
-        </section>
+        <DashboardLoading label={kind === "ice-breaker" ? "در حال دریافت پیام‌های شروع گفتگو..." : "در حال دریافت منوی دایرکت..."} className="min-h-48" />
       ) : filteredItems.length === 0 ? (
         <section className="rounded-3xl border border-dashed border-border bg-card px-6 py-20 text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-muted text-muted-foreground">

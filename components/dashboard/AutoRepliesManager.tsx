@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { DashboardLoading } from "@/components/dashboard/DashboardUI";
 import Link from "next/link";
-import { Camera, Image, Images, Loader2, MessageCircleReply, Pencil, Video } from "lucide-react";
+import { Camera, Image, Images, MessageCircleReply, Pencil, Video } from "lucide-react";
 
 type PublishType = "POST" | "CAROUSEL" | "REEL" | "STORY";
 
@@ -122,9 +123,7 @@ export default function AutoRepliesManager() {
           ) : null}
 
           {loading ? (
-            <div className="flex min-h-40 items-center justify-center">
-              <Loader2 size={24} className="animate-spin text-[#2563EB]" />
-            </div>
+            <DashboardLoading label="در حال دریافت محتوای منتشرشده..." className="min-h-40" />
           ) : error ? (
             <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium text-[#B91C1C]">
               {error}

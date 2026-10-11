@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/dashboard/DashboardUI";
+import { Button, DashboardLoading } from "@/components/dashboard/DashboardUI";
 import {
   Bot,
   Check,
@@ -457,21 +457,7 @@ export default function AutomationManager({
             </p>
           </section>
         ) : loading ? (
-          <section className="overflow-hidden rounded-3xl border border-border/80 bg-card shadow-sm">
-            <div className="divide-y divide-border/70">
-              {Array.from({ length: 5 }).map((_, index) => (
-                <div key={index} className="flex animate-pulse items-center gap-3 p-3 sm:gap-4 sm:p-4">
-                  <div className="h-5 w-5 shrink-0 rounded-md bg-muted" />
-                  <div className="h-16 w-16 shrink-0 rounded-xl bg-muted sm:h-20 sm:w-20" />
-                  <div className="min-w-0 flex-1 space-y-2">
-                    <div className="h-4 w-32 rounded-md bg-muted sm:w-44" />
-                    <div className="h-3 w-48 max-w-full rounded-md bg-muted" />
-                  </div>
-                  <div className="h-9 w-16 shrink-0 rounded-lg bg-muted sm:w-24" />
-                </div>
-              ))}
-            </div>
-          </section>
+          <DashboardLoading label={onlyTab === "stories" ? "در حال دریافت پاسخ‌های استوری..." : "در حال دریافت پاسخ‌های کامنت..."} className="min-h-48" />
         ) : filteredGroups.length === 0 ? (
           <section className="rounded-3xl border border-dashed border-border bg-card px-6 py-20 text-center">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-muted text-muted-foreground">

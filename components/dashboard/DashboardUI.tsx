@@ -444,6 +444,18 @@ export function Checkbox({
   );
 }
 
+export function DashboardLoading({
+  label = "در حال بارگذاری...",
+  className = "",
+}: { label?: string; className?: string }) {
+  return (
+    <div role="status" aria-live="polite" dir="rtl" className={["dashboard-loading", className].filter(Boolean).join(" ")}>
+      <span className="dashboard-loading__spinner" aria-hidden="true" />
+      <span className="dashboard-loading__label">{label}</span>
+    </div>
+  );
+}
+
 export function Skeleton({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <MuiSkeleton

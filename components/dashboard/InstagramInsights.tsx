@@ -11,7 +11,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Calendar } from "@/components/dashboard/DashboardUI";
 import { Button } from "@/components/dashboard/DashboardUI";
-import { Skeleton } from "@/components/dashboard/DashboardUI";
+import { DashboardLoading } from "@/components/dashboard/DashboardUI";
 import {
   CartesianGrid,
   Line,
@@ -638,19 +638,7 @@ export default function InstagramInsights({
         )}
 
         {(loadingAccounts || (loading && !data)) ? (
-          <div className="space-y-4">
-            <Skeleton className="h-10 w-full rounded-xl sm:w-28" />
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <Skeleton className="h-10 rounded-xl" />
-              <Skeleton className="h-10 rounded-xl" />
-            </div>
-            <Skeleton className="h-[300px] w-full rounded-2xl sm:h-[340px]" />
-            <Skeleton className="h-28 w-full rounded-2xl" />
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <Skeleton className="h-24 rounded-xl" />
-              <Skeleton className="h-24 rounded-xl" />
-            </div>
-          </div>
+          <DashboardLoading label={loadingAccounts ? "در حال دریافت پیج اینستاگرام..." : "در حال دریافت آمار پیج..."} className="min-h-48" />
         ) : data ? (
           <div className="min-w-0">
             <div className="rounded-2xl border border-border bg-white p-3.5 sm:p-5">

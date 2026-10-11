@@ -1,9 +1,9 @@
 "use client";
 
-import { ArrowRight, Image as ImageIcon, Images, Loader2, Play, Video } from "lucide-react";
+import { ArrowRight, Image as ImageIcon, Images, Play, Video } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/dashboard/DashboardUI";
+import { Button, DashboardLoading } from "@/components/dashboard/DashboardUI";
 
 type Account = { id: string; igUsername: string; igUserId: string; isConnected: boolean };
 type MediaItem = {
@@ -96,7 +96,7 @@ export default function CommentAutomationCreate() {
 
   if (loading) {
     return (
-      <div dir="rtl" className="flex min-h-[50vh] items-center justify-center"><Loader2 size={24} className="animate-spin text-[#2563EB]" aria-label="در حال بارگذاری" /></div>
+      <DashboardLoading label="در حال دریافت محتوا..." className="min-h-[50vh]" />
     );
   }
 
