@@ -47,6 +47,8 @@ type AutomationMeta = {
   id: string;
   triggerType: "COMMENT_KEYWORD" | "STORY_REPLY_KEYWORD" | "DM";
   keyword: string | null;
+  commentReplyText?: string | null;
+  replyText?: string | null;
   isActive: boolean;
 };
 
@@ -142,6 +144,9 @@ export default function PublishingJobEditor({
   const [originalMinute, setOriginalMinute] = useState(0);
 
   const [automationKeyword, setAutomationKeyword] = useState("");
+  const [commentReplyText, setCommentReplyText] = useState("");
+  const [originalCommentReplyText, setOriginalCommentReplyText] = useState("");
+  const [commentReplySaving, setCommentReplySaving] = useState(false);
   const [automationActive, setAutomationActive] = useState(true);
   const [automationDirty, setAutomationDirty] = useState(false);
   const [automationLoaded, setAutomationLoaded] = useState(false);
@@ -258,6 +263,9 @@ export default function PublishingJobEditor({
 
                 setAutomation(nextAutomation);
                 setAutomationKeyword(nextAutomation.keyword ?? "");
+                const nextCommentReply = nextAutomation.commentReplyText ?? "";
+                setCommentReplyText(nextCommentReply);
+                setOriginalCommentReplyText(nextCommentReply);
                 setAutomationActive(nextAutomation.isActive);
                 setAutomationDirty(false);
               }
@@ -348,6 +356,30 @@ export default function PublishingJobEditor({
       );
     } finally {
       setContentSaving(false);
+    }
+  }
+
+  async function saveCommentReply() {
+    if (!automation || commentReplySaving || commentReplyText === originalCommentReplyText) return;
+    setCommentReplySaving(true);
+    try {
+      const response = await fetch("/api/automations/" + encodeURIComponent(automation.id), {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ commentReplyText: commentReplyText.trim() || null }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.error || result.message || "ذخیره پاسخ کامنت ناموفق بود.");
+      const savedText = result.data?.commentReplyText ?? "";
+      setCommentReplyText(savedText);
+      setOriginalCommentReplyText(savedText);
+      setAutomation((current) => current ? { ...current, commentReplyText: savedText } : current);
+      toast.success("پاسخ کامنت ذخیره شد.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "ذخیره پاسخ کامنت ناموفق بود.");
+    } finally {
+      setCommentReplySaving(false);
     }
   }
 
@@ -716,6 +748,29 @@ export default function PublishingJobEditor({
               </div>
             ) : automation ? (
               <>
+                {triggerType === "COMMENT_KEYWORD" && (
+                  <div className="mb-6 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4">
+                    <label htmlFor="comment-reply-text" className="mb-2 block text-sm font-bold text-[#0F172A]">پاسخ عمومی کامنت</label>
+                    <p className="mb-3 text-xs leading-5 text-[#64748B]">این متن زیر کامنت کاربر ارسال می‌شود و جدا از پاسخ دایرکت قابل ویرایش است.</p>
+                    <textarea
+                      id="comment-reply-text"
+                      value={commentReplyText}
+                      onChange={(event) => setCommentReplyText(event.target.value)}
+                      rows={4}
+                      placeholder="متن پاسخ کامنت..."
+                      className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-white px-3.5 py-3 text-base leading-7 text-[#0F172A] outline-none focus:border-[#2563EB]"
+                      style={{ fontSize: "16px", WebkitTextSizeAdjust: "100%" }}
+                    />
+                    <Button
+                      type="button"
+                      onClick={() => void saveCommentReply()}
+                      disabled={commentReplySaving || commentReplyText === originalCommentReplyText}
+                      className="mt-3 min-h-10 w-full rounded-xl !bg-[#2563EB] px-4 text-sm font-bold text-white hover:!bg-[#1D4ED8] disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8]"
+                    >
+                      {commentReplySaving ? "در حال ذخیره..." : "ذخیره پاسخ کامنت"}
+                    </Button>
+                  </div>
+                )}
                 <EntryPointFlowBuilder
                   accountId={job.instagramAccount.id}
                   automationId={automation.id}
