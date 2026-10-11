@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/dashboard/DashboardUI";
+import { Button, DashboardLoading } from "@/components/dashboard/DashboardUI";
 import { Input } from "@/components/dashboard/DashboardUI";
 import {
   ArrowRight,
@@ -13,7 +13,6 @@ import {
   Paperclip,
   Pause,
   Play,
-  LoaderCircle,
   Search,
   Send,
   UserRound,
@@ -1122,9 +1121,7 @@ export default function InstagramInbox({
 
       <div className="min-h-0 flex-1 overflow-y-auto px-2 py-2 sm:px-3">
         {loading && !conversations.length ? (
-          <div className="flex min-h-full items-center justify-center">
-            <LoaderCircle size={22} className="animate-spin text-blue-600" aria-label="در حال بارگذاری" />
-          </div>
+          <DashboardLoading label="در حال دریافت گفتگوها..." className="dashboard-loading--fill" />
         ) : filteredConversations.length ? (
           filteredConversations.map((conversation) => {
             const active = conversation.id === selectedId;
@@ -1268,9 +1265,7 @@ export default function InstagramInbox({
             className="relative min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain bg-muted/20 px-3 py-3 sm:px-4 sm:py-4"
           >
             {messagesLoading && !messages.length ? (
-              <div className="flex min-h-full items-center justify-center">
-                <LoaderCircle size={24} className="animate-spin text-blue-600" aria-label="در حال بارگذاری پیام‌ها" />
-              </div>
+              <DashboardLoading label="در حال دریافت پیام‌ها..." className="dashboard-loading--fill" />
             ) : messages.length ? (
               <div className="mx-auto flex w-full max-w-2xl flex-col gap-2.5">
                 {messages.map((message) => {
