@@ -41,7 +41,7 @@ export default function CommentAutomationEditor({ id }: { id: string }) {
       if(!response.ok||!result.success)throw new Error(result.error||result.message||"ذخیره تغییرات ناموفق بود."); const savedAutomation=result.data as Automation; setAutomation(savedAutomation); setDmReply(getExistingDmText(savedAutomation)); setSendDm(Boolean(savedAutomation.sendDm||getExistingDmText(savedAutomation).trim())); setRequireFollow(Boolean(savedAutomation.requireFollow)); setFollowGateText(savedAutomation.followGateText?.trim()||"برای دریافت این محتوا ابتدا پیج ما را فالو کنید."); setSaved(true); window.setTimeout(()=>router.push("/dashboard/comment-automation"),650);
     }catch(saveError){setError(saveError instanceof Error?saveError.message:"ذخیره تغییرات ناموفق بود.");}finally{setSaving(false)} }
 
-  if(loading)return <DashboardLoading label="در حال دریافت پاسخ خودکار..." className="min-h-[50vh]" />;
+  if(loading)return <DashboardLoading label="در حال دریافت پاسخ خودکار..." className="dashboard-loading--page" />;
   if(!automation)return <Box dir="rtl" sx={{maxWidth:560,mx:"auto",p:2.5,border:"1px solid #FECACA",bgcolor:"#FEF2F2",color:"#B91C1C",borderRadius:3,fontSize:13}}>{error||"اتوماسیون پیدا نشد."}</Box>;
   const accountName=automation.instagramAccount?.igUsername||"Instagram";
   return <Box dir="rtl" sx={{width:"100%",maxWidth:1200,mx:"auto",pb:5}}>

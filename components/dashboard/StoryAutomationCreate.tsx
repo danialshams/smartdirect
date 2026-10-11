@@ -59,7 +59,7 @@ export default function StoryAutomationCreate() {
   }, []);
 
   if (loading) {
-    return <DashboardLoading label="در حال دریافت استوری‌ها..." className="min-h-[50vh]" />;
+    return <DashboardLoading label="در حال دریافت استوری‌ها..." className="dashboard-loading--page" />;
   }
 
   if (!account) {

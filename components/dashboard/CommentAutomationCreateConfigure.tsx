@@ -52,7 +52,7 @@ export default function CommentAutomationCreateConfigure() {
     return () => { cancelled = true; };
   }, [mediaId, router]);
 
-  if (loading) return <DashboardLoading label="در حال دریافت تنظیمات پاسخ خودکار..." className="min-h-[50vh]" />;
+  if (loading) return <DashboardLoading label="در حال دریافت تنظیمات پاسخ خودکار..." className="dashboard-loading--page" />;
   if (!account) return <div dir="rtl" className="mx-auto max-w-xl rounded-2xl border border-red-200 bg-red-50 p-6 text-sm leading-7 text-red-700">{error || "محتوا پیدا نشد."}</div>;
 
   return (

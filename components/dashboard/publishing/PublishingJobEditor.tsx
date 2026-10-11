@@ -518,7 +518,7 @@ export default function PublishingJobEditor({
 
         {!job ? (
           loading ? (
-            <DashboardLoading label="در حال دریافت محتوای زمان‌بندی‌شده..." className="min-h-[50vh]" />
+            <DashboardLoading label="در حال دریافت محتوای زمان‌بندی‌شده..." className="dashboard-loading--page" />
           ) : (
             <section className="flex min-h-[50vh] items-center justify-center rounded-2xl border border-[#E2E8F0] bg-white shadow-sm">
               <span className="text-sm text-[#64748B]">محتوا پیدا نشد.</span>

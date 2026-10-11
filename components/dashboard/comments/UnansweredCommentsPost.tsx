@@ -79,7 +79,7 @@ export default function UnansweredCommentsPost({ account, mediaId }: { account: 
   if (loading) {
     return (
       <Box dir="rtl" sx={{ width: "100%", minHeight: "60vh", display: "grid", placeItems: "center", bgcolor: "transparent" }}>
-        <DashboardLoading label="در حال دریافت کامنت‌ها..." className="min-h-[60vh]" />
+        <DashboardLoading label="در حال دریافت کامنت‌ها..." className="dashboard-loading--page" />
       </Box>
     );
   }

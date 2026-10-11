@@ -96,7 +96,7 @@ export default function CommentAutomationCreate() {
 
   if (loading) {
     return (
-      <DashboardLoading label="در حال دریافت محتوا..." className="min-h-[50vh]" />
+      <DashboardLoading label="در حال دریافت محتوا..." className="dashboard-loading--page" />
     );
   }
 

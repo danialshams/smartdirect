@@ -167,9 +167,14 @@ body {
 }
 .dashboard-page-unified section[class*="max-w-"],
 .dashboard-page-unified div[class*="max-w-2xl"] { max-width: 100% !important; }
-.dashboard-page-unified h1 {
-  color: #0F172A !important; font-size: clamp(1.25rem, 1.8vw, 1.5rem) !important;
-  font-weight: 700 !important; line-height: 1.5 !important; letter-spacing: -0.025em !important;
+/* Page titles follow the compact title scale used by the Publishing and Insights reference pages. */
+.dashboard-page-unified h1,
+.dashboard-page-unified .MuiTypography-h4,
+.dashboard-page-unified .MuiTypography-h5 {
+  display: block; max-width: 100%; min-width: 0;
+  color: #0F172A !important; font-size: 16px !important;
+  font-weight: 700 !important; line-height: 1.5 !important; letter-spacing: -0.015em !important;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .dashboard-page-unified h2 { color: #0F172A; font-size: 15px; font-weight: 700; line-height: 1.6; }
 .dashboard-page-unified h3 { font-size: 14px; font-weight: 700; line-height: 1.6; }
@@ -216,12 +221,22 @@ body {
   animation: dashboard-loading-spin 800ms linear infinite;
 }
 .dashboard-loading--fill { min-height: 100%; height: 100%; padding: 0; }
+/* Single page-level loading states occupy the available viewport area and stay vertically centered. */
+.dashboard-loading--page { min-height: calc(100dvh - 132px) !important; height: auto; }
+@media (max-width: 639px) {
+  .dashboard-loading--page { min-height: calc(100dvh - 112px) !important; }
+}
 .dashboard-loading__label {
   color: #64748B; font-family: "Vazirmatn", Arial, sans-serif; font-size: 12px; line-height: 1.8;
 }
 @keyframes dashboard-loading-spin { to { transform: rotate(360deg); } }
 @media (max-width: 639px) {
-  .dashboard-page-unified h1 { font-size: 20px !important; line-height: 1.55 !important; }
+  .dashboard-page-unified h1,
+  .dashboard-page-unified .MuiTypography-h4,
+  .dashboard-page-unified .MuiTypography-h5 {
+    font-size: 15px !important; line-height: 1.5 !important;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
   .dashboard-page-unified section { border-radius: 18px; padding: 14px !important; }
   .dashboard-page-unified section[class*="border"] { border-radius: 18px; padding: 14px !important; }
   .dashboard-page-unified .MuiPaper-root, .dashboard-page-unified article[class*="border"] { border-radius: 14px; }
