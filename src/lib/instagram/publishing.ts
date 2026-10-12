@@ -338,6 +338,110 @@ async function diagnosePublicVideoUrl(
             };
             const codecs = ["avc1", "avc3", "hvc1", "hev1", "mp4a", "ac-3", "ec-3", "Opus"]
               .filter(containsAscii);
+
+            // Parse selected ISO-BMFF metadata rather than relying on codec-name
+            // byte markers alone. This is diagnostic only; Meta remains authoritative.
+            type Mp4Box = { type: string; start: number; end: number; header: number };
+            const boxesIn = (start: number, end: number): Mp4Box[] => {
+              const found: Mp4Box[] = [];
+              let at = start;
+              while (at + 8 <= end) {
+                let size = readU32(at);
+                const type = asciiAt(at + 4, 4);
+                let header = 8;
+                if (size === 1) {
+                  if (at + 16 > end) break;
+                  size = readU32(at + 8) * 0x100000000 + readU32(at + 12);
+                  header = 16;
+                } else if (size === 0) {
+                  size = end - at;
+                }
+                if (!Number.isSafeInteger(size) || size < header || at + size > end) break;
+                found.push({ type, start: at, end: at + size, header });
+                at += size;
+              }
+              return found;
+            };
+            const childrenOf = (box: Mp4Box, skip = 0) =>
+              boxesIn(box.start + box.header + skip, box.end);
+            const findBox = (box: Mp4Box, path: string[]): Mp4Box | null => {
+              let current: Mp4Box | null = box;
+              for (const type of path) {
+                if (!current) return null;
+                current = childrenOf(current).find((child) => child.type === type) ?? null;
+              }
+              return current;
+            };
+            const readU16 = (at: number) =>
+              at + 2 <= bytes.length ? (bytes[at] << 8) | bytes[at + 1] : 0;
+            const readU64 = (at: number) =>
+              at + 8 <= bytes.length ? readU32(at) * 0x100000000 + readU32(at + 4) : 0;
+            const topBoxes = boxesIn(0, bytes.length);
+            const moov = topBoxes.find((box) => box.type === "moov");
+            const movieHeader = moov ? childrenOf(moov).find((box) => box.type === "mvhd") : null;
+            if (movieHeader) {
+              const p = movieHeader.start + movieHeader.header;
+              const version = bytes[p];
+              const timescaleAt = p + (version === 1 ? 20 : 12);
+              const durationAt = p + (version === 1 ? 24 : 16);
+              const timescale = readU32(timescaleAt);
+              const duration = version === 1 ? readU64(durationAt) : readU32(durationAt);
+              result.mp4DurationSeconds = timescale > 0 ? Number((duration / timescale).toFixed(3)) : null;
+              result.mp4MovieTimescale = timescale || null;
+            }
+            const tracks = moov ? childrenOf(moov).filter((box) => box.type === "trak") : [];
+            result.mp4Tracks = tracks.map((trak) => {
+              const hdlr = findBox(trak, ["mdia", "hdlr"]);
+              const handlerAt = hdlr ? hdlr.start + hdlr.header + 8 : -1;
+              const handler = handlerAt >= 0 ? asciiAt(handlerAt, 4) : "unknown";
+              const tkhd = childrenOf(trak).find((box) => box.type === "tkhd");
+              const tkhdPayload = tkhd ? tkhd.start + tkhd.header : -1;
+              const tkhdVersion = tkhdPayload >= 0 ? bytes[tkhdPayload] : 0;
+              const dimensionsAt = tkhdPayload + (tkhdVersion === 1 ? 88 : 76);
+              const width = tkhdPayload >= 0 ? readU32(dimensionsAt) / 65536 : 0;
+              const height = tkhdPayload >= 0 ? readU32(dimensionsAt + 4) / 65536 : 0;
+              const mdhd = findBox(trak, ["mdia", "mdhd"]);
+              let trackDurationSeconds: number | null = null;
+              if (mdhd) {
+                const p = mdhd.start + mdhd.header;
+                const version = bytes[p];
+                const timescale = readU32(p + (version === 1 ? 20 : 12));
+                const duration = version === 1 ? readU64(p + 24) : readU32(p + 16);
+                trackDurationSeconds = timescale > 0 ? Number((duration / timescale).toFixed(3)) : null;
+              }
+              const stsd = findBox(trak, ["mdia", "minf", "stbl", "stsd"]);
+              const entryAt = stsd ? stsd.start + stsd.header + 8 : -1;
+              const sampleEntry = entryAt >= 0 ? boxesIn(entryAt, stsd!.end)[0] : undefined;
+              const sampleEntryType = sampleEntry?.type ?? null;
+              let avcProfile: number | null = null;
+              let avcLevel: number | null = null;
+              let audioSampleRate: number | null = null;
+              if (sampleEntry) {
+                const sampleChildrenStart = sampleEntry.start + sampleEntry.header +
+                  (handler === "vide" ? 78 : handler === "soun" ? 28 : 0);
+                for (const child of boxesIn(sampleChildrenStart, sampleEntry.end)) {
+                  if (child.type === "avcC" && child.start + child.header + 4 <= child.end) {
+                    avcProfile = bytes[child.start + child.header + 1];
+                    avcLevel = bytes[child.start + child.header + 3];
+                  }
+                }
+                if (handler === "soun") {
+                  const fixedPointRateAt = sampleEntry.start + sampleEntry.header + 24;
+                  audioSampleRate = readU32(fixedPointRateAt) >>> 16;
+                }
+              }
+              return {
+                type: handler,
+                sampleEntry: sampleEntryType,
+                width: width > 0 ? width : null,
+                height: height > 0 ? height : null,
+                durationSeconds: trackDurationSeconds,
+                avcProfileIdc: avcProfile,
+                avcLevelIdc: avcLevel,
+                audioSampleRateHz: audioSampleRate,
+              };
+            });
+
             result.mp4Inspection = "COMPLETED";
             result.mp4BytesRead = bytes.length;
             result.mp4DeclaredLengthMatches = !Number.isFinite(declaredLength) || declaredLength === bytes.length;
@@ -387,6 +491,17 @@ async function createImageContainer(
     : { image_url: media.publicUrl, ...(carousel ? { is_carousel_item: true } : {}) };
   if (caption && !carousel) body.caption = caption;
   if (!carousel && tags.length) body.user_tags = JSON.stringify(tags);
+
+  let mediaHost: string | null = null;
+  try { mediaHost = new URL(media.publicUrl).hostname; } catch { /* URL validation is reported by the source probe. */ }
+  console.info("[Instagram Publishing] creating media container", {
+    mediaType: media.type,
+    carousel,
+    requestParameterNames: Object.keys(body).sort(),
+    mediaHost,
+    mediaUrlHasQuery: (() => { try { return new URL(media.publicUrl).search.length > 0; } catch { return null; } })(),
+    fileSizeBytes: null,
+  });
 
   const data = await instagramApiRequest<ContainerResponse>(`/${igUserId}/media`, {
     method: "POST",
