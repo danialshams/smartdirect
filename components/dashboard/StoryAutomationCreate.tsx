@@ -70,7 +70,14 @@ export default function StoryAutomationCreate() {
     <div dir="rtl" className="min-h-[calc(100dvh-2rem)]">
       <div className="mx-auto w-full max-w-2xl">
         <div className="mb-9">
-          <Button type="button" onClick={() => router.back()} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]"><ArrowRight size={15} strokeWidth={2} />بازگشت</Button>
+          <Button
+            type="button"
+            onClick={() => router.back()}
+            className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]"
+          >
+            <ArrowRight size={15} strokeWidth={2} />
+            بازگشت
+          </Button>
         </div>
         <section className="mb-4 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-5">
           <div className="flex items-start gap-3">
