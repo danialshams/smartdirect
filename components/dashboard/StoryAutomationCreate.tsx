@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Image as ImageIcon, Video } from "lucide-react";
+import { ArrowRight, Camera, Image as ImageIcon, Video } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, DashboardLoading } from "@/components/dashboard/DashboardUI";
