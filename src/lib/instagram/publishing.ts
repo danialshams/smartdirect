@@ -236,6 +236,114 @@ async function diagnosePublicVideoUrl(
       clearTimeout(rangeTimeout);
     }
 
+    // A short signature probe cannot reveal truncated MP4s or codec/container metadata.
+    // Inspect the complete file only when it is small enough for a bounded diagnostic.
+    const headLength = Number(result.headContentLength);
+    const maxDiagnosticBytes = 8 * 1024 * 1024;
+    if (Number.isFinite(headLength) && headLength > maxDiagnosticBytes) {
+      result.mp4Inspection = "SKIPPED_FILE_OVER_DIAGNOSTIC_LIMIT";
+      result.mp4InspectionBytesLimit = maxDiagnosticBytes;
+    } else {
+      const fileController = new AbortController();
+      const fileTimeout = setTimeout(() => fileController.abort(), 8000);
+      try {
+        const fileResponse = await fetch(parsed, {
+          method: "GET",
+          redirect: "manual",
+          cache: "no-store",
+          signal: fileController.signal,
+        });
+        result.fullGetStatus = fileResponse.status;
+        result.fullGetContentType = fileResponse.headers.get("content-type");
+        const declaredLength = Number(fileResponse.headers.get("content-length"));
+        if (declaredLength > maxDiagnosticBytes) {
+          result.mp4Inspection = "SKIPPED_FILE_OVER_DIAGNOSTIC_LIMIT";
+          await fileResponse.body?.cancel().catch(() => undefined);
+        } else if (fileResponse.status !== 200 || !fileResponse.body) {
+          result.mp4Inspection = "FULL_GET_NOT_HTTP_200";
+          await fileResponse.body?.cancel().catch(() => undefined);
+        } else {
+          const reader = fileResponse.body.getReader();
+          const chunks: Uint8Array[] = [];
+          let total = 0;
+          let tooLarge = false;
+          try {
+            while (true) {
+              const part = await reader.read();
+              if (part.done) break;
+              total += part.value.byteLength;
+              if (total > maxDiagnosticBytes) {
+                tooLarge = true;
+                break;
+              }
+              chunks.push(part.value);
+            }
+          } finally {
+            if (tooLarge) await reader.cancel().catch(() => undefined);
+          }
+          if (tooLarge) {
+            result.mp4Inspection = "SKIPPED_STREAM_OVER_DIAGNOSTIC_LIMIT";
+          } else {
+            const bytes = new Uint8Array(total);
+            let offset = 0;
+            for (const chunk of chunks) {
+              bytes.set(chunk, offset);
+              offset += chunk.byteLength;
+            }
+            const readU32 = (at: number) =>
+              at + 4 <= bytes.length
+                ? bytes[at] * 0x1000000 + (bytes[at + 1] << 16) + (bytes[at + 2] << 8) + bytes[at + 3]
+                : 0;
+            const asciiAt = (at: number, length: number) =>
+              Array.from(bytes.subarray(at, at + length)).map((byte) => String.fromCharCode(byte)).join("");
+            const topLevelBoxes: string[] = [];
+            let cursor = 0;
+            let malformed = false;
+            while (cursor + 8 <= bytes.length) {
+              let boxSize = readU32(cursor);
+              const boxType = asciiAt(cursor + 4, 4);
+              let headerSize = 8;
+              if (boxSize === 1) {
+                if (cursor + 16 > bytes.length) { malformed = true; break; }
+                const high = readU32(cursor + 8);
+                const low = readU32(cursor + 12);
+                const extendedSize = high * 0x100000000 + low;
+                if (!Number.isSafeInteger(extendedSize)) { malformed = true; break; }
+                boxSize = extendedSize;
+                headerSize = 16;
+              } else if (boxSize === 0) {
+                boxSize = bytes.length - cursor;
+              }
+              if (boxSize < headerSize || boxSize > bytes.length - cursor) {
+                malformed = true;
+                break;
+              }
+              topLevelBoxes.push(boxType);
+              cursor += boxSize;
+            }
+            if (cursor !== bytes.length) malformed = true;
+            const ascii = asciiAt(0, bytes.length);
+            const codecs = ["avc1", "avc3", "hvc1", "hev1", "mp4a", "ac-3", "ec-3", "Opus"]
+              .filter((codec) => ascii.includes(codec));
+            result.mp4Inspection = "COMPLETED";
+            result.mp4BytesRead = bytes.length;
+            result.mp4DeclaredLengthMatches = !Number.isFinite(declaredLength) || declaredLength === bytes.length;
+            result.mp4TopLevelBoxes = topLevelBoxes;
+            result.mp4HasFtyp = topLevelBoxes.includes("ftyp");
+            result.mp4HasMoov = topLevelBoxes.includes("moov");
+            result.mp4HasMdat = topLevelBoxes.includes("mdat");
+            result.mp4MoovBeforeMdat = topLevelBoxes.indexOf("moov") >= 0 &&
+              topLevelBoxes.indexOf("mdat") >= 0 &&
+              topLevelBoxes.indexOf("moov") < topLevelBoxes.indexOf("mdat");
+            result.mp4BoxStructureMalformed = malformed;
+            result.mp4CodecMarkers = codecs;
+          }
+        }
+      } finally {
+        clearTimeout(fileTimeout);
+      }
+    }
+
     console.info("[Instagram Publishing] video source probe", {
       ...result,
       elapsedMs: Date.now() - startedAt,
