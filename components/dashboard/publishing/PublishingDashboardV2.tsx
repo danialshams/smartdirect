@@ -1725,7 +1725,6 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                       {draggedSlide && (() => {
                         const activeSlide = uploadedMedia.find((item) => item.storageKey === draggedSlide.storageKey);
                         if (!activeSlide) return null;
-                        const activeIndex = uploadedMedia.findIndex((item) => item.storageKey === draggedSlide.storageKey);
                         return (
                           <div
                             aria-hidden="true"
@@ -1741,7 +1740,6 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                               {activeSlide.type === "IMAGE" ? <img src={activeSlide.publicUrl} alt="" className="h-full w-full object-cover" /> : <video src={activeSlide.publicUrl} muted preload="metadata" className="h-full w-full object-cover" />}
                             </span>
                             <span className="min-w-0 flex-1 truncate text-xs font-semibold text-[#0F172A]" dir="auto">{activeSlide.fileName}</span>
-                            <span className="shrink-0 text-xs font-bold text-[#64748B]">{toPersianDigits(activeIndex + 1)}</span>
                           </div>
                         );
                       })()}
