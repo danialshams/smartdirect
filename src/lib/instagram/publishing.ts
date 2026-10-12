@@ -106,6 +106,150 @@ function normalizeMediaUserTags(value: unknown, mediaKey: string, sortOrder: num
   return normalizeUserTags(rawTags);
 }
 
+/**
+ * Verify that Meta's source URL is publicly readable and begins with an MP4
+ * container signature. This is diagnostic only: it never logs the full URL,
+ * follows redirects, downloads the whole file, or blocks publishing on failure.
+ */
+async function diagnosePublicVideoUrl(
+  publicUrl: string,
+  context: { publishingJobId: string; slideNumber: number; fileName?: string | null },
+) {
+  const startedAt = Date.now();
+  let parsed: URL;
+  try {
+    parsed = new URL(publicUrl);
+  } catch {
+    console.error("[Instagram Publishing] video source probe rejected invalid URL", {
+      ...context,
+      reason: "INVALID_URL",
+    });
+    return;
+  }
+
+  // Restrict this diagnostic fetch to HTTPS Vercel Blob public URLs to avoid
+  // turning a user-controlled media URL into a server-side request primitive.
+  if (
+    parsed.protocol !== "https:" ||
+    parsed.username ||
+    parsed.password ||
+    !parsed.hostname.endsWith(".public.blob.vercel-storage.com")
+  ) {
+    console.warn("[Instagram Publishing] video source probe skipped", {
+      ...context,
+      reason: "URL_NOT_ON_ALLOWED_PUBLIC_BLOB_HOST",
+      protocol: parsed.protocol,
+      host: parsed.hostname,
+      elapsedMs: Date.now() - startedAt,
+    });
+    return;
+  }
+
+  const result: Record<string, unknown> = {
+    ...context,
+    host: parsed.hostname,
+    urlHasQuery: parsed.search.length > 0,
+  };
+
+  try {
+    const headController = new AbortController();
+    const headTimeout = setTimeout(() => headController.abort(), 5000);
+    try {
+      const response = await fetch(parsed, {
+        method: "HEAD",
+        redirect: "manual",
+        cache: "no-store",
+        signal: headController.signal,
+      });
+      result.headStatus = response.status;
+      result.headOk = response.ok;
+      result.headContentType = response.headers.get("content-type");
+      result.headContentLength = response.headers.get("content-length");
+      result.headAcceptRanges = response.headers.get("accept-ranges");
+      result.headRedirected = response.status >= 300 && response.status < 400;
+      result.headRedirectHost = (() => {
+        const location = response.headers.get("location");
+        if (!location) return null;
+        try { return new URL(location, parsed).hostname; } catch { return "invalid-location"; }
+      })();
+      await response.body?.cancel().catch(() => undefined);
+    } finally {
+      clearTimeout(headTimeout);
+    }
+
+    const rangeController = new AbortController();
+    const rangeTimeout = setTimeout(() => rangeController.abort(), 5000);
+    try {
+      const response = await fetch(parsed, {
+        method: "GET",
+        headers: { Range: "bytes=0-63" },
+        redirect: "manual",
+        cache: "no-store",
+        signal: rangeController.signal,
+      });
+      result.rangeStatus = response.status;
+      result.rangeOk = response.ok;
+      result.rangeContentType = response.headers.get("content-type");
+      result.rangeContentLength = response.headers.get("content-length");
+      result.rangeContentRange = response.headers.get("content-range");
+      result.rangeRedirected = response.status >= 300 && response.status < 400;
+      result.rangeRedirectHost = (() => {
+        const location = response.headers.get("location");
+        if (!location) return null;
+        try { return new URL(location, parsed).hostname; } catch { return "invalid-location"; }
+      })();
+
+      if (response.ok && response.body) {
+        const reader = response.body.getReader();
+        const chunks: Uint8Array[] = [];
+        let total = 0;
+        try {
+          while (total < 64) {
+            const part = await reader.read();
+            if (part.done) break;
+            const remaining = 64 - total;
+            const chunk = part.value.subarray(0, remaining);
+            chunks.push(chunk);
+            total += chunk.byteLength;
+            if (chunk.byteLength === 0) break;
+          }
+        } finally {
+          await reader.cancel().catch(() => undefined);
+        }
+        const bytes = new Uint8Array(total);
+        let offset = 0;
+        for (const chunk of chunks) {
+          bytes.set(chunk, offset);
+          offset += chunk.byteLength;
+        }
+        const ascii = (start: number, end: number) =>
+          Array.from(bytes.subarray(start, end)).map((byte) => String.fromCharCode(byte)).join("");
+        result.rangeBytesRead = total;
+        result.mp4FtypAtOffset4 = total >= 8 && ascii(4, 8) === "ftyp";
+        result.first16BytesHex = Array.from(bytes.subarray(0, 16))
+          .map((byte) => byte.toString(16).padStart(2, "0"))
+          .join("");
+      } else {
+        await response.body?.cancel().catch(() => undefined);
+      }
+    } finally {
+      clearTimeout(rangeTimeout);
+    }
+
+    console.info("[Instagram Publishing] video source probe", {
+      ...result,
+      elapsedMs: Date.now() - startedAt,
+    });
+  } catch (error) {
+    console.error("[Instagram Publishing] video source probe failed", {
+      ...result,
+      elapsedMs: Date.now() - startedAt,
+      errorName: error instanceof Error ? error.name : "UnknownError",
+      errorMessage: error instanceof Error ? error.message.slice(0, 300) : String(error).slice(0, 300),
+    });
+  }
+}
+
 async function createImageContainer(
   igUserId: string,
   token: string,
@@ -704,6 +848,13 @@ async function publishInstagramJobInternal(jobId: string) {
           mediaUrlHasQuery: mediaUrlDiagnostics.hasQuery,
         };
         console.info("[Instagram Publishing] carousel child media diagnostics", childDiagnostics);
+        if (item.type === "VIDEO") {
+          await diagnosePublicVideoUrl(item.publicUrl, {
+            publishingJobId: job.id,
+            slideNumber: item.sortOrder + 1,
+            fileName: mediaRecord?.fileName ?? null,
+          });
+        }
         const childId = await createImageContainer(
           job.instagramAccount.igUserId,
           token,
