@@ -50,12 +50,14 @@ async function publishScheduledJobStep(jobId: string, expectedScheduledAt: strin
       processed: await processPublishingQueueJobStep(queued.job.id),
     };
   } catch (error) {
-    return {
-      ok: false,
-      skipped: false,
-      message:
-        error instanceof Error ? error.message : "Instagram publishing failed.",
-    };
+    const message = error instanceof Error ? error.message : "Instagram publishing failed.";
+    await prisma.instagramPublishJob.updateMany({
+      where: { id: jobId, status: { in: ["SCHEDULED", "PROCESSING", "PUBLISHING"] } },
+      data: { status: "FAILED", errorMessage: message, retryCount: { increment: 1 } },
+    }).catch((updateError) => {
+      console.error("Failed to persist scheduled publishing failure:", { jobId, updateError });
+    });
+    return { ok: false, skipped: false, message, failed: true };
   }
 }
 
