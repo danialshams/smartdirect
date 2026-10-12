@@ -1616,18 +1616,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                 </div>
 
                 <div className={"rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6"}>
-                  {false && type !== "CAROUSEL" && showUploadedMediaPreview && uploadedMedia.length > 0 ? (
-                    <div className="flex min-h-[260px] flex-col items-center justify-center py-5">
-                      <span className="mb-3 inline-flex items-center rounded-full border border-[#BBF7D0] bg-[#F0FDF4] px-2.5 py-1 text-[11px] font-semibold text-[#15803D]">{typeLabels[type]} آپلود شده</span>
-                      <div className="w-32 sm:w-40">
-                        <MediaTile item={uploadedMedia[0]} type={type} onRemove={() => void removeUploaded(uploadedMedia[0])} ready compact />
-                      </div>
-                      <button type="button" onClick={() => void removeUploaded(uploadedMedia[0])} className="mt-3 min-h-9 rounded-lg px-4 py-2 text-xs font-semibold text-[#DC2626] hover:bg-red-50">
-                        پاک کردن
-                      </button>
-                    </div>
-                  ) : (
-                    <>
+                  <>
                       <SectionHeader n="۲" title={uploadTitle} text={uploadInstruction} />
                       <div className="relative">
                         <UploadArea
@@ -1729,7 +1718,6 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                         <p className="mt-3 text-center text-xs font-medium text-[#64748B]">حداکثر ۱۰ اسلاید آپلود شده؛ برای افزودن فایل جدید ابتدا یک اسلاید را پاک کن.</p>
                       )}
                     </>
-                  )}
                 </div>
               </section>
             ) : type !== "STORY" && !tagStepConfirmed ? (
