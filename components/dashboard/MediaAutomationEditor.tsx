@@ -43,6 +43,7 @@ export default function MediaAutomationEditor({ id, expectedTriggerType }: { id:
   const [loading, setLoading] = useState(true);
   const [savingOptions, setSavingOptions] = useState(false);
   const [optionsDirty, setOptionsDirty] = useState(false);
+  const [flowDirty, setFlowDirty] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -138,7 +139,7 @@ export default function MediaAutomationEditor({ id, expectedTriggerType }: { id:
               <p className="mt-1 text-[11px] text-[#64748B]">{isStory ? "استوری انتخاب‌شده" : "محتوای دارای پاسخ خودکار"}</p>
             </div>
             <label className="mr-auto flex shrink-0 items-center gap-2 text-xs font-semibold text-[#334155]">
-              <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} className="h-4 w-4 accent-blue-600" />
+              <input type="checkbox" checked={isActive} onChange={(e) => { setIsActive(e.target.checked); setFlowDirty(true); }} className="h-4 w-4 accent-blue-600" />
               فعال
             </label>
           </div>
@@ -151,14 +152,15 @@ export default function MediaAutomationEditor({ id, expectedTriggerType }: { id:
           keyword={keyword}
           onKeywordChange={setKeyword}
           isActive={isActive}
-          onActiveChange={setIsActive}
-          dirty={true}
-          onDirtyChange={() => undefined}
+          onActiveChange={(value) => { setIsActive(value); setFlowDirty(true); }}
+          dirty={flowDirty}
+          onDirtyChange={setFlowDirty}
           finalSaveLabel="ذخیره پاسخ خودکار"
           finalSaveLoadingLabel="در حال ذخیره..."
           responseTypeTitle="نوع پاسخ"
           responseTypeDescription={isStory ? "نوع پاسخ این استوری را انتخاب کنید؛ می‌توانید مثلاً ویترین را به متن یا هر نوع پشتیبانی‌شده دیگری تغییر دهید." : "نوع پاسخ را دقیقاً مانند تنظیمات پاسخ خودکار هنگام انتشار محتوا تغییر دهید."}
           onAutomationReady={async () => {
+            setFlowDirty(false);
             if (optionsDirty) await saveOptions();
             else toast.success("پاسخ خودکار ذخیره شد.");
           }}
