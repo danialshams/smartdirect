@@ -105,9 +105,10 @@ async function createImageContainer(
   rateLimitAccountId?: string,
   rateLimitOperation: "PUBLISH_MEDIA" | "PUBLISH_REEL" | "PUBLISH_CAROUSEL" | "PUBLISH_STORY" = "PUBLISH_MEDIA",
 ) {
-  const body: Record<string, unknown> = { image_url: media.publicUrl };
+  const body: Record<string, unknown> = carousel && media.type === "VIDEO"
+    ? { media_type: "VIDEO", video_url: media.publicUrl, is_carousel_item: true }
+    : { image_url: media.publicUrl, ...(carousel ? { is_carousel_item: true } : {}) };
   if (caption && !carousel) body.caption = caption;
-  if (carousel) body.is_carousel_item = true;
   if (!carousel && tags.length) body.user_tags = JSON.stringify(tags);
 
   const data = await instagramApiRequest<ContainerResponse>(`/${igUserId}/media`, {
@@ -553,12 +554,8 @@ async function publishInstagramJobInternal(jobId: string) {
         job.instagramAccountId,
       );
     } else {
-      if (
-        media.length < 2 ||
-        media.length > 10 ||
-        media.some((item) => item.type !== "IMAGE")
-      ) {
-        throw new Error("Carousel باید بین ۲ تا ۱۰ تصویر داشته باشد.");
+      if (media.length < 2 || media.length > 10) {
+        throw new Error("Carousel باید بین ۲ تا ۱۰ تصویر یا ویدیو داشته باشد.");
       }
 
       const children: string[] = [];
