@@ -109,7 +109,14 @@ export default function CommentAutomationCreate() {
     <div dir="rtl" className="min-h-[calc(100dvh-2rem)]">
       <div className="mx-auto w-full max-w-2xl">
         <div className="mb-9">
-          <Button type="button" onClick={() => router.back()} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]"><ArrowRight size={15} strokeWidth={2} />بازگشت</Button>
+          <Button
+            type="button"
+            onClick={() => router.back()}
+            className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]"
+          >
+            <ArrowRight size={15} strokeWidth={2} />
+            بازگشت
+          </Button>
         </div>
         <section className="mb-4 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-5">
           <div className="flex items-start gap-3">
@@ -121,18 +128,33 @@ export default function CommentAutomationCreate() {
           </div>
         </section>
 
-        <div className="mt-5 flex gap-2 overflow-x-auto pb-1">
-          {([
-            ["ALL", "همه", ImageIcon],
-            ["POST", "پست", ImageIcon],
-            ["ALBUM", "آلبوم", Images],
-            ["REEL", "ریلز", Video],
-          ] as const).map(([value, label, Icon]) => (
-            <button key={value} type="button" onClick={() => setFilter(value)} className={"inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border px-3 text-xs font-semibold transition " + (filter === value ? "border-[#2563EB] bg-[#EFF6FF] text-[#2563EB]" : "border-[#E2E8F0] bg-white text-[#64748B] hover:bg-[#F8FAFC]")}>
-              <Icon size={14} />{label}
-            </button>
-          ))}
-        </div>
+        <section className="mt-5 rounded-2xl border border-[#E2E8F0] bg-white p-3 sm:p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-bold text-[#0F172A]">محتواهای قابل انتخاب</p>
+              <p className="mt-1 text-[10.5px] text-[#64748B]">نوع محتوایی را که می‌خواهی برای آن پاسخ خودکار بسازی انتخاب کن.</p>
+            </div>
+            <div className="mb-0 flex max-w-full gap-2 overflow-x-auto pb-1" role="tablist" aria-label="فیلتر نوع محتوا">
+              {([
+                ["ALL", "همه", ImageIcon],
+                ["POST", "پست", ImageIcon],
+                ["REEL", "ریلز", Video],
+                ["ALBUM", "آلبوم", Images],
+              ] as const).map(([value, label, Icon]) => (
+                <button
+                  key={value}
+                  type="button"
+                  role="tab"
+                  aria-selected={filter === value}
+                  onClick={() => setFilter(value)}
+                  className={`inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border px-3 text-xs font-semibold transition ${filter === value ? "border-[#2563EB] bg-[#EFF6FF] text-[#2563EB]" : "border-[#E2E8F0] bg-white text-[#64748B] hover:bg-[#F8FAFC]"}`}
+                >
+                  <Icon size={14} />{label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
 
         {error && <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
 
@@ -143,7 +165,7 @@ export default function CommentAutomationCreate() {
             <p className="mt-2 text-xs leading-6 text-muted-foreground">محتواهایی که قبلاً پاسخ خودکار دارند در این لیست نمایش داده نمی‌شوند.</p>
           </div>
         ) : (
-          <div className="mt-5 grid grid-cols-2 gap-[10px] sm:grid-cols-3 sm:gap-3 lg:grid-cols-4 2xl:grid-cols-5">
+          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 2xl:grid-cols-5">
             {visibleMedia.map((item) => {
               const image = item.thumbnail_url || item.media_url;
               const publishedDate = item.timestamp ? new Intl.DateTimeFormat("fa-IR-u-ca-persian", { year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(item.timestamp)) : null;
