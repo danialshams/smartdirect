@@ -55,16 +55,18 @@ function jalaliDateTimeToDate(date: JalaliDate, hour: number, minute: number) { 
 
 function isVideoCandidate(file: File) {
   const extension = file.name.split(".").pop()?.toLowerCase();
-  return file.type.startsWith("video/") || ["mp4", "mov", "m4v"].includes(extension ?? "");
+  return file.type.startsWith("video/") || ["mp4", "mov", "m4v", "webm", "mkv", "avi", "3gp", "mpeg", "mpg", "mts", "m2ts"].includes(extension ?? "");
 }
 
 function normalizeSupportedVideoFile(file: File): File | null {
-  const extension = file.name.split(".").pop()?.toLowerCase();
-  const contentType =
-    extension === "mov" ? "video/quicktime" :
-    ["mp4", "m4v"].includes(extension ?? "") ? "video/mp4" :
-    file.type === "video/quicktime" || file.type === "video/mp4" ? file.type :
-    null;
+  const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
+  const mimeByExtension: Record<string, string> = {
+    mp4: "video/mp4", m4v: "video/mp4", mov: "video/quicktime",
+    webm: "video/webm", mkv: "video/x-matroska", avi: "video/x-msvideo",
+    "3gp": "video/3gpp", mpeg: "video/mpeg", mpg: "video/mpeg",
+    mts: "video/mp2t", m2ts: "video/mp2t",
+  };
+  const contentType = mimeByExtension[extension] ?? (file.type.startsWith("video/") ? file.type : null);
   if (!contentType) return null;
   if (file.type === contentType) return file;
   return new File([file], file.name, { type: contentType, lastModified: file.lastModified });
@@ -1434,7 +1436,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   async function cancelJob(id: string) { try { setError(""); const response = await fetch(`/api/instagram/publishing/${id}`, { method: "DELETE" }); const result = await response.json(); if (!response.ok) throw new Error(result.message || "لغو ناموفق بود."); await loadJobs(); } catch (e) { setError(e instanceof Error ? e.message : "لغو ناموفق بود."); } }
 
   const canPublish = uploadedMedia.length > 0 && !uploading && !publishing;
-  const accept = type === "REEL" ? "video/mp4,video/quicktime,.mp4,.mov,.m4v" : type === "STORY" || type === "CAROUSEL" ? "image/jpeg,image/png,image/webp,video/mp4,video/quicktime,.mp4,.mov,.m4v" : "image/jpeg,image/png,image/webp";
+  const acceptedVideos = "video/mp4,video/quicktime,video/webm,video/x-matroska,video/x-msvideo,video/mpeg,video/3gpp,video/mp2t,.mp4,.mov,.m4v,.webm,.mkv,.avi,.3gp,.mpeg,.mpg,.mts,.m2ts";
+  const accept = type === "REEL" ? acceptedVideos : type === "STORY" || type === "CAROUSEL" ? "image/jpeg,image/png,image/webp," + acceptedVideos : "image/jpeg,image/png,image/webp";
 
   return (
     <>
