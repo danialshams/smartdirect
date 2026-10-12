@@ -270,7 +270,51 @@ export function DashboardInstagramIsland({
   const islandRef = useRef<HTMLDivElement | null>(null);
   const islandPanelRef = useRef<HTMLDivElement | null>(null);
   const islandButtonRef = useRef<HTMLButtonElement | null>(null);
+  const lastScrollPositionRef = useRef(0);
+  const [islandCollapsed, setIslandCollapsed] = useState(false);
   const activeAccount = accounts.find((account) => account.isConnected);
+
+  useEffect(() => {
+    lastScrollPositionRef.current = window.scrollY;
+    const handleScroll = (event: Event) => {
+      const target = event.target;
+      const position =
+        target instanceof HTMLElement && target !== document.documentElement
+          ? target.scrollTop
+          : window.scrollY;
+      const previous = lastScrollPositionRef.current;
+      const difference = position - previous;
+      lastScrollPositionRef.current = position;
+
+      if (window.innerWidth >= 1200) {
+        setIslandCollapsed(false);
+        return;
+      }
+
+      if (difference > 7 && position > 24) {
+        setIslandCollapsed(true);
+        onAccountMenuOpenChange(false);
+      } else if (difference < -5) {
+        setIslandCollapsed(false);
+      }
+    };
+
+    const handleResize = () => {
+      if (window.innerWidth >= 1200) setIslandCollapsed(false);
+    };
+
+    document.addEventListener("scroll", handleScroll, true);
+    window.addEventListener("resize", handleResize);
+    return () => {
+      document.removeEventListener("scroll", handleScroll, true);
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [onAccountMenuOpenChange]);
+
+  useEffect(() => {
+    setIslandCollapsed(false);
+    lastScrollPositionRef.current = window.scrollY;
+  }, [pathname]);
 
   useEffect(() => {
     if (!accountMenuOpen) return;
@@ -367,7 +411,7 @@ export function DashboardInstagramIsland({
           dir="rtl"
           sx={{
             position: "fixed",
-            top: { xs: 416, sm: 476 },
+            bottom: "calc(env(safe-area-inset-bottom, 0px) + 66px)",
             left: 12,
             right: 12,
             width: "auto",
@@ -381,10 +425,10 @@ export function DashboardInstagramIsland({
             boxShadow: "0 8px 24px rgba(15,23,42,0.08)",
             backdropFilter: "blur(16px)",
             overflow: "hidden",
-            opacity: accountMenuOpen ? 1 : 0,
+            opacity: accountMenuOpen && !islandCollapsed ? 1 : 0,
             transformOrigin: "bottom center",
-            visibility: accountMenuOpen ? "visible" : "hidden",
-            pointerEvents: accountMenuOpen ? "auto" : "none",
+            visibility: accountMenuOpen && !islandCollapsed ? "visible" : "hidden",
+            pointerEvents: accountMenuOpen && !islandCollapsed ? "auto" : "none",
             transition: "opacity 180ms ease, transform 180ms ease, visibility 180ms ease",
             zIndex: 1,
           }}
@@ -499,10 +543,11 @@ export function DashboardInstagramIsland({
           aria-expanded={accountMenuOpen}
           aria-label="باز کردن اکانت‌های اینستاگرام"
           sx={{
-            minWidth: { xs: 148, sm: 164 },
+            minWidth: islandCollapsed ? 48 : { xs: 148, sm: 164 },
+            width: islandCollapsed ? 48 : "auto",
             height: 48,
             mx: "auto",
-            px: 1.5,
+            px: islandCollapsed ? 0 : 1.5,
             border: "1px solid #E2E8F0",
             borderRadius: 999,
             bgcolor: "rgba(255,255,255,0.985)",
@@ -525,7 +570,19 @@ export function DashboardInstagramIsland({
             "&:active": { transform: "scale(0.985)" },
           }}
         >
-          <Typography component="span" fontSize={11.5} fontWeight={700} color="inherit">
+          <Typography
+            component="span"
+            fontSize={11.5}
+            fontWeight={700}
+            color="inherit"
+            sx={{
+              maxWidth: islandCollapsed ? 0 : 180,
+              overflow: "hidden",
+              whiteSpace: "nowrap",
+              opacity: islandCollapsed ? 0 : 1,
+              transition: "max-width 260ms ease, opacity 180ms ease",
+            }}
+          >
             اکانت‌های اینستاگرام
           </Typography>
           <Box
@@ -543,7 +600,7 @@ export function DashboardInstagramIsland({
             }}
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M7 10l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d={islandCollapsed ? "M7 14l5-5 5 5" : "M7 10l5 5 5-5"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </Box>
         </Box>
