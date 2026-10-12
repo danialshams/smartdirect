@@ -143,12 +143,12 @@ export default function CommentAutomationCreate() {
             <p className="mt-2 text-xs leading-6 text-muted-foreground">محتواهایی که قبلاً پاسخ خودکار دارند در این لیست نمایش داده نمی‌شوند.</p>
           </div>
         ) : (
-          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 2xl:grid-cols-5">
+          <div className="mt-5 grid grid-cols-2 gap-[10px] sm:grid-cols-3 sm:gap-3 lg:grid-cols-4 2xl:grid-cols-5">
             {visibleMedia.map((item) => {
               const image = item.thumbnail_url || item.media_url;
               const publishedDate = item.timestamp ? new Intl.DateTimeFormat("fa-IR-u-ca-persian", { year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(item.timestamp)) : null;
               return (
-                <button key={item.id} type="button" onClick={() => router.push("/dashboard/comment-automation/new/configure?mediaId=" + encodeURIComponent(item.id))} className="group block w-full min-w-0 overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white text-right shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#2563EB] lg:rounded-xl lg:shadow-none lg:hover:translate-y-0 lg:hover:shadow-none">
+                <button key={item.id} type="button" onClick={() => router.push("/dashboard/comment-automation/new/configure?mediaId=" + encodeURIComponent(item.id))} className="group block w-full min-w-0 overflow-hidden rounded-[10px] border border-[#E2E8F0] bg-white text-right shadow-[0_1px_2px_rgba(15,23,42,.04)] transition hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(15,23,42,.08)] focus:outline-none focus:ring-2 focus:ring-[#2563EB] lg:rounded-md lg:shadow-none lg:hover:translate-y-0 lg:hover:shadow-none">
                   <div className="relative aspect-square overflow-hidden bg-[#F1F5F9] lg:rounded-xl">
                     {image && !mediaFailed[item.id] ? (
                       <img src={image} alt={item.caption || mediaLabel(item)} className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.025]" loading="lazy" onError={() => setMediaFailed((current) => ({ ...current, [item.id]: true }))} />
