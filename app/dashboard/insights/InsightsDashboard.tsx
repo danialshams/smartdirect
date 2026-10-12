@@ -35,12 +35,12 @@ type Data = {
   success: boolean;
   account: Account;
   summary: {
-    reach: number;
-    views: number;
-    accountsEngaged: number;
-    totalInteractions: number;
-      followerCount: number;
-    followerGrowth: number;
+    reach: number | null;
+    views: number | null;
+    accountsEngaged: number | null;
+    totalInteractions: number | null;
+    followerCount: number | null;
+    followerGrowth: number | null;
     engagementRate: number | null;
   };
   latest: Snapshot | null;
@@ -309,12 +309,11 @@ export default function InsightsDashboard() {
       if (!syncResponse.ok) {
         throw new Error(syncResult.error || "همگام‌سازی آمار اینستاگرام ناموفق بود.");
       }
-      if (
+      const syncWarning =
         (syncResult.sync?.syncedDays ?? 0) === 0 &&
         (syncResult.sync?.errors?.length ?? 0) > 0
-      ) {
-        throw new Error("دریافت آمار از Meta ناموفق بود: " + syncResult.sync!.errors![0].error);
-      }
+          ? "دریافت آمار از Meta ناموفق بود: " + syncResult.sync!.errors![0].error
+          : "";
 
       const params = new URLSearchParams({ accountId: id });
       if (from && to) { params.set("from", toIsoDate(from)); params.set("to", toIsoDate(to)); }
@@ -323,6 +322,7 @@ export default function InsightsDashboard() {
       const result = (await response.json()) as Data;
       if (!response.ok || !result.success) throw new Error(result.error || "خطا در دریافت آمار");
       setData(result);
+      if (syncWarning) setError(syncWarning);
     } catch (e) { setData(null); setError(e instanceof Error ? e.message : "خطا در ارتباط با سرور"); }
     finally { setLoading(false); }
   }, []);
