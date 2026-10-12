@@ -381,10 +381,10 @@ function InlineWheelPicker({
         options={options}
         value={safeValue}
         onValueChange={onChange}
-        visibleCount={8}
+        visibleCount={5}
         optionItemHeight={34}
         classNames={{
-          optionItem: "text-base font-bold text-[#64748B]",
+          optionItem: "flex items-center justify-center text-center text-base font-bold text-[#64748B]",
           highlightWrapper: "rounded-xl border border-[#BFDBFE] bg-[#EFF6FF]",
         }}
       />
@@ -521,6 +521,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [uploadIndex, setUploadIndex] = useState(0);
   const [uploadRows, setUploadRows] = useState<UploadRow[]>([]);
+  const draggedSlideKeyRef = useRef<string | null>(null);
   const uploadQueueRef = useRef<LocalMedia[]>([]);
   const pendingValidationCountRef = useRef(0);
   const uploadWorkerRunningRef = useRef(false);
@@ -856,6 +857,38 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     setError("");
     void uploadSelectedMedia();
   }
+  function moveUploadedSlide(sourceStorageKey: string, targetStorageKey: string) {
+    if (!sourceStorageKey || !targetStorageKey || sourceStorageKey === targetStorageKey) return;
+    setUploadedMedia((current) => {
+      const from = current.findIndex((item) => item.storageKey === sourceStorageKey);
+      const to = current.findIndex((item) => item.storageKey === targetStorageKey);
+      if (from < 0 || to < 0 || from === to) return current;
+      const next = [...current];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      return next.map((item, index) => ({ ...item, sortOrder: index }));
+    });
+    setUploadRows((current) => {
+      const order = new Map(uploadedMedia.map((item, index) => [item.storageKey, index]));
+      const from = order.get(sourceStorageKey);
+      const to = order.get(targetStorageKey);
+      if (from === undefined || to === undefined) return current;
+      const nextOrder = [...uploadedMedia];
+      const [moved] = nextOrder.splice(from, 1);
+      nextOrder.splice(to, 0, moved);
+      const rowOrder = new Map(nextOrder.map((item, index) => [item.storageKey, index]));
+      return [...current].sort((a, b) => {
+        const aOrder = a.storageKey ? rowOrder.get(a.storageKey) : undefined;
+        const bOrder = b.storageKey ? rowOrder.get(b.storageKey) : undefined;
+        if (aOrder === undefined && bOrder === undefined) return 0;
+        if (aOrder === undefined) return 1;
+        if (bOrder === undefined) return -1;
+        return aOrder - bOrder;
+      });
+    });
+    setError("");
+  }
+
   async function removeUploaded(item: UploadedMedia) {
     try {
       const currentIndex = uploadedMedia.findIndex((mediaItem) => mediaItem.storageKey === item.storageKey);
@@ -911,12 +944,14 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
           setMedia((current) => current.filter((candidate) => candidate.previewUrl !== item.previewUrl).map((entry, index) => ({ ...entry, sortOrder: index + uploadedMedia.length })));
           URL.revokeObjectURL(item.previewUrl);
           setUploadRows((current) => current.map((row) => row.id === item.previewUrl ? { ...row, status: "success", progress: 100, storageKey: result.storageKey, error: undefined } : row));
-          window.setTimeout(() => {
-            setUploadRows((current) => current.map((row) => row.id === item.previewUrl ? { ...row, removing: true } : row));
+          if (type !== "CAROUSEL") {
             window.setTimeout(() => {
-              setUploadRows((current) => current.filter((row) => row.id !== item.previewUrl));
-            }, 350);
-          }, 1600);
+              setUploadRows((current) => current.map((row) => row.id === item.previewUrl ? { ...row, removing: true } : row));
+              window.setTimeout(() => {
+                setUploadRows((current) => current.filter((row) => row.id !== item.previewUrl));
+              }, 350);
+            }, 1600);
+          }
           setError("");
           completedAny = true;
         } catch (error) {
@@ -1419,7 +1454,20 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   ))}
                 </div>
                 {(() => {
-                  const scheduledJobs = jobs.filter((job) => ["SCHEDULED", "PROCESSING", "PUBLISHING"].includes(job.status) && job.scheduledAt).sort((a, b) => new Date(a.scheduledAt!).getTime() - new Date(b.scheduledAt!).getTime());
+                  const nowMs = Date.now();
+                  const scheduledJobs = jobs
+                    .filter((job) => {
+                      if (!job.scheduledAt) return false;
+                      const scheduledMs = new Date(job.scheduledAt).getTime();
+                      if (!Number.isFinite(scheduledMs)) return false;
+                      if (job.status === "SCHEDULED") return scheduledMs >= nowMs - 5 * 60 * 1000;
+                      if (job.status === "PROCESSING" || job.status === "PUBLISHING") {
+                        // Hide stuck jobs whose scheduled time is long past; the server remains the source of truth.
+                        return scheduledMs >= nowMs - 30 * 60 * 1000;
+                      }
+                      return false;
+                    })
+                    .sort((a, b) => new Date(a.scheduledAt!).getTime() - new Date(b.scheduledAt!).getTime());
 
                   return (
                     <div className="mt-6 space-y-4">
@@ -1543,41 +1591,71 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                       />
                       {uploadRows.length > 0 && (
                         <div className="mt-4 space-y-2" aria-live="polite">
-                          {uploadRows.map((row) => (
-                            <div key={row.id} className={["overflow-hidden rounded-xl border px-3.5 py-3 transition-all duration-300 ease-out", row.removing ? "max-h-0 -translate-y-1 !border-transparent !p-0 opacity-0" : "max-h-28 opacity-100", row.status === "failed" ? "border-[#FECACA] bg-[#FEF2F2]" : row.status === "success" ? "border-[#BBF7D0] bg-[#F0FDF4]" : "border-[#E2E8F0] bg-white"].join(" ")}>
-                              <div className="flex items-center gap-3">
-                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-[#64748B] ring-1 ring-black/5">
-                                  {row.status === "success" ? <CheckCircle2 size={17} className="text-[#16A34A]" /> : row.status === "failed" ? <CircleSlash2 size={17} className="text-[#DC2626]" /> : row.status === "uploading" ? <Loader2 size={17} className="animate-spin text-[#2563EB]" /> : <Images size={17} />}
-                                </span>
-                                <div className="min-w-0 flex-1">
-                                  <p className="truncate text-xs font-semibold text-[#0F172A]" dir="auto">{row.fileName}</p>
-                                  <p className={["mt-1 text-[11px] font-medium", row.status === "failed" ? "text-[#B91C1C]" : row.status === "success" ? "text-[#15803D]" : "text-[#64748B]"].join(" ")}>
-                                    {row.status === "queued" ? "در صف آپلود" : row.status === "uploading" ? `در حال آپلود · ${toPersianDigits(row.progress)}٪` : row.status === "success" ? "آپلود با موفقیت انجام شد" : "آپلود ناموفق بود"}
-                                  </p>
-                                  {(row.status === "queued" || row.status === "uploading" || row.status === "failed") && (
-                                    <div className={["mt-2 h-1.5 overflow-hidden rounded-full", row.status === "failed" ? "bg-[#FEE2E2]" : "bg-[#E2E8F0]"].join(" ")}>
-                                      <div className={["h-full rounded-full transition-[width] duration-150", row.status === "failed" ? "bg-[#DC2626]" : "bg-[#2563EB]"].join(" ")} style={{ width: `${Math.max(row.status === "failed" ? 3 : 0, Math.min(100, row.progress))}%` }} />
-                                    </div>
+                          {uploadRows.map((row) => {
+                            const slideIndex = row.storageKey ? uploadedMedia.findIndex((item) => item.storageKey === row.storageKey) : -1;
+                            const slide = slideIndex >= 0 ? uploadedMedia[slideIndex] : null;
+                            const isCarouselSlide = type === "CAROUSEL" && Boolean(slide);
+                            const handleDropOnRow = () => {
+                              const source = draggedSlideKeyRef.current;
+                              if (source && row.storageKey) moveUploadedSlide(source, row.storageKey);
+                              draggedSlideKeyRef.current = null;
+                            };
+                            return (
+                              <div
+                                key={row.id}
+                                draggable={isCarouselSlide}
+                                onDragStart={(event) => {
+                                  if (!isCarouselSlide || !row.storageKey) return;
+                                  draggedSlideKeyRef.current = row.storageKey;
+                                  event.dataTransfer.effectAllowed = "move";
+                                  event.dataTransfer.setData("text/plain", row.storageKey);
+                                }}
+                                onDragOver={(event) => { if (draggedSlideKeyRef.current && isCarouselSlide) event.preventDefault(); }}
+                                onDrop={(event) => { event.preventDefault(); handleDropOnRow(); }}
+                                onDragEnd={() => { draggedSlideKeyRef.current = null; }}
+                                onTouchStart={() => { if (isCarouselSlide && row.storageKey) draggedSlideKeyRef.current = row.storageKey; }}
+                                onTouchEnd={() => { if (draggedSlideKeyRef.current && isCarouselSlide) handleDropOnRow(); }}
+                                className={["overflow-hidden rounded-xl border px-3.5 py-3 transition-all duration-300 ease-out", row.removing ? "max-h-0 -translate-y-1 !border-transparent !p-0 opacity-0" : "max-h-36 opacity-100", row.status === "failed" ? "border-[#FECACA] bg-[#FEF2F2]" : row.status === "success" ? "border-[#BBF7D0] bg-[#F0FDF4]" : "border-[#E2E8F0] bg-white", isCarouselSlide ? "cursor-grab active:cursor-grabbing touch-pan-y" : ""].join(" ")}
+                              >
+                                <div className="flex items-center gap-3">
+                                  {slide ? (
+                                    <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white ring-1 ring-black/5">
+                                      {slide.type === "IMAGE" ? <img src={slide.publicUrl} alt={slide.fileName} className="h-full w-full object-cover" /> : <video src={slide.publicUrl} muted preload="metadata" className="h-full w-full object-cover" />}
+                                    </span>
+                                  ) : (
+                                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-[#64748B] ring-1 ring-black/5">
+                                      {row.status === "failed" ? <CircleSlash2 size={17} className="text-[#DC2626]" /> : row.status === "uploading" ? <Loader2 size={17} className="animate-spin text-[#2563EB]" /> : <Images size={17} />}
+                                    </span>
                                   )}
-                                  {row.error && <p className="mt-2 text-[11px] leading-5 text-[#B91C1C]">{row.error}</p>}
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <p className="max-w-full truncate text-xs font-semibold text-[#0F172A]" dir="auto">{row.fileName}</p>
+                                      {isCarouselSlide && <span className="shrink-0 rounded-full bg-[#DBEAFE] px-2 py-1 text-[10px] font-bold text-[#1D4ED8]">اسلاید {toPersianDigits(slideIndex + 1)}</span>}
+                                    </div>
+                                    <p className={["mt-1 text-[11px] font-medium", row.status === "failed" ? "text-[#B91C1C]" : row.status === "success" ? "text-[#15803D]" : "text-[#64748B]"].join(" ")}>
+                                      {row.status === "queued" ? "در صف آپلود" : row.status === "uploading" ? `در حال آپلود · ${toPersianDigits(row.progress)}٪` : row.status === "success" ? "آپلود با موفقیت انجام شد · برای جابه‌جایی نگه دار و بکش" : "آپلود ناموفق بود"}
+                                    </p>
+                                    {(row.status === "queued" || row.status === "uploading" || row.status === "failed") && (
+                                      <div className={["mt-2 h-1.5 overflow-hidden rounded-full", row.status === "failed" ? "bg-[#FEE2E2]" : "bg-[#E2E8F0]"].join(" ")}>
+                                        <div className={["h-full rounded-full transition-[width] duration-150", row.status === "failed" ? "bg-[#DC2626]" : "bg-[#2563EB]"].join(" ")} style={{ width: `${Math.max(row.status === "failed" ? 3 : 0, Math.min(100, row.progress))}%` }} />
+                                      </div>
+                                    )}
+                                    {row.error && <p className="mt-2 text-[11px] leading-5 text-[#B91C1C]">{row.error}</p>}
+                                  </div>
+                                  {row.status === "failed" && <button type="button" onClick={() => retryLocalUpload(row.id)} className="inline-flex h-9 shrink-0 items-center gap-1 rounded-lg bg-[#DC2626] px-2.5 text-[11px] font-bold text-white"><RotateCcw size={13} />تلاش دوباره</button>}
+                                  {row.status === "success" && slide && <button type="button" onClick={() => void removeUploaded(slide)} aria-label="حذف اسلاید از آلبوم" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[#64748B] hover:bg-black/5 hover:text-[#DC2626]"><X size={16} /></button>}
+                                  {row.status !== "success" && <button type="button" onClick={() => removeLocalById(row.id)} aria-label="حذف فایل از صف آپلود" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[#64748B] hover:bg-black/5 hover:text-[#DC2626]"><X size={16} /></button>}
                                 </div>
-                                {row.status === "failed" && <button type="button" onClick={() => retryLocalUpload(row.id)} className="inline-flex h-9 shrink-0 items-center gap-1 rounded-lg bg-[#DC2626] px-2.5 text-[11px] font-bold text-white"><RotateCcw size={13} />تلاش دوباره</button>}
-                                {row.status !== "success" && <button type="button" onClick={() => removeLocalById(row.id)} aria-label="حذف فایل از صف آپلود" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[#64748B] hover:bg-black/5 hover:text-[#DC2626]"><X size={16} /></button>}
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       )}
 
                       {type === "CAROUSEL" && uploadedMedia.length > 0 && (
-                        <div className="mt-5">
-                          <div className="mb-3 text-center">
-                            <p className="text-sm font-bold text-[#334155]">اسلایدهای آلبوم</p>
-                            <p className="mt-1 text-[11px] text-[#64748B]">{toPersianDigits(uploadedMedia.length)} از ۱۰ اسلاید</p>
-                          </div>
-                          <div className="flex flex-wrap justify-center gap-3">
-                            {uploadedMedia.map((item, index) => <div key={item.storageKey} className="w-16 sm:w-20"><MediaTile item={item} type="CAROUSEL" onRemove={() => void removeUploaded(item)} ready compact /><p className="mt-1 text-center text-[10px] font-semibold text-[#64748B]">اسلاید {toPersianDigits(index + 1)}</p><button type="button" onClick={() => void removeUploaded(item)} className="mt-1 w-full rounded-md py-1 text-[11px] font-semibold text-[#DC2626] hover:bg-red-50">پاک کردن</button></div>)}
-                          </div>
+                        <div className="mt-5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2.5 text-center">
+                          <p className="text-sm font-bold text-[#334155]">ترتیب اسلایدهای آلبوم</p>
+                          <p className="mt-1 text-[11px] leading-5 text-[#64748B]">{toPersianDigits(uploadedMedia.length)} از ۱۰ اسلاید آماده است. برای تغییر ترتیب، ردیف اسلاید را نگه دار و روی ردیف مقصد رها کن.</p>
                         </div>
                       )}
                       {type === "CAROUSEL" && uploadedMedia.length >= 10 && (
@@ -2004,7 +2082,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
                   <div className="space-y-3">
                     <div className="flex flex-col gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5 sm:flex-row sm:items-center">
-                      <Button type="button" disabled={!publishNow} onClick={() => void createJob(true)} className="min-h-11 w-full shrink-0 whitespace-nowrap rounded-xl bg-[#2563EB] px-4 text-sm font-semibold text-white hover:bg-[#1D4ED8] active:!bg-transparent active:!text-[#2563EB] focus:!bg-transparent focus:!text-[#2563EB] focus-visible:!bg-transparent focus-visible:!text-[#2563EB] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[#2563EB] sm:flex-1">
+                      <Button type="button" disabled={!publishNow} onClick={() => void createJob(true)} className="min-h-11 w-full shrink-0 whitespace-nowrap rounded-xl !bg-[#2563EB] px-4 text-sm font-semibold !text-white hover:!bg-[#1D4ED8] active:!bg-[#1D4ED8] active:!text-white focus:!bg-[#2563EB] focus:!text-white focus-visible:!bg-[#2563EB] focus-visible:!text-white disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-100 disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8] sm:flex-1">
                         <span dir="ltr" className="inline-flex flex-row items-center gap-2"><Send size={17} /><span dir="rtl">انتشار {typeLabels[type]} هم‌اکنون</span></span>
                       </Button>
                       <label className="flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl px-2 text-xs font-semibold text-[#334155]">
@@ -2110,7 +2188,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                         </div>
 
                         <div className="mt-5 border-t border-[#E2E8F0] pt-5">
-                          <Button type="button" onClick={() => void createJob(false)} disabled={publishing || !stage6Date || stage6Hour === null || stage6Minute === null} className="min-h-11 w-full rounded-xl bg-[#2563EB] px-4 text-sm font-semibold text-white shadow-none hover:!bg-transparent hover:!text-[#2563EB] hover:shadow-none active:!bg-transparent active:!text-[#2563EB] active:shadow-none focus:!bg-transparent focus:!text-[#2563EB] focus:shadow-none focus-visible:!bg-transparent focus-visible:!text-[#2563EB] focus-visible:shadow-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:!bg-transparent disabled:hover:!text-[#2563EB]">
+                          <Button type="button" onClick={() => void createJob(false)} disabled={publishing || !stage6Date || stage6Hour === null || stage6Minute === null} className="min-h-11 w-full rounded-xl !bg-[#2563EB] px-4 text-sm font-semibold !text-white shadow-none hover:!bg-[#1D4ED8] hover:!text-white hover:shadow-none active:!bg-[#1D4ED8] active:!text-white active:shadow-none focus:!bg-[#2563EB] focus:!text-white focus:shadow-none focus-visible:!bg-[#2563EB] focus-visible:!text-white focus-visible:shadow-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-100 disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8]">
                             <span dir="ltr" className="inline-flex flex-row items-center gap-2">{publishing ? <Loader2 size={17} className="animate-spin" /> : <CalendarClock size={17} />}<span dir="rtl">انتشار در زمان انتخاب‌شده</span></span>
                           </Button>
                         </div>
