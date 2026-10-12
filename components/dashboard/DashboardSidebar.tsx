@@ -427,10 +427,10 @@ export function DashboardInstagramIsland({
             boxShadow: "0 8px 24px rgba(15,23,42,0.08)",
             backdropFilter: "blur(16px)",
             overflow: "hidden",
-            opacity: accountMenuOpen && !islandCollapsed ? 1 : 0,
+            opacity: accountMenuOpen ? 1 : 0,
             transformOrigin: "bottom center",
-            visibility: accountMenuOpen && !islandCollapsed ? "visible" : "hidden",
-            pointerEvents: accountMenuOpen && !islandCollapsed ? "auto" : "none",
+            visibility: accountMenuOpen ? "visible" : "hidden",
+            pointerEvents: accountMenuOpen ? "auto" : "none",
             transition: "opacity 180ms ease, transform 180ms ease, visibility 180ms ease",
             zIndex: 1,
           }}
@@ -543,7 +543,6 @@ export function DashboardInstagramIsland({
           type="button"
           onClick={() => {
             if (islandCollapsed) {
-              setIslandCollapsed(false);
               onAccountMenuOpenChange(true);
               return;
             }
@@ -571,7 +570,7 @@ export function DashboardInstagramIsland({
             position: "relative",
             fontFamily: "inherit",
             pointerEvents: "auto",
-            transition: "color 180ms ease, background-color 180ms ease, box-shadow 220ms ease, transform 220ms ease",
+            transition: "width 360ms cubic-bezier(0.22, 1, 0.36, 1), min-width 360ms cubic-bezier(0.22, 1, 0.36, 1), padding 320ms cubic-bezier(0.22, 1, 0.36, 1), gap 320ms cubic-bezier(0.22, 1, 0.36, 1), color 180ms ease, background-color 180ms ease, box-shadow 220ms ease, transform 220ms ease",
             "&:hover": {
               bgcolor: "#FFFFFF",
               color: "#2563EB",
@@ -590,7 +589,7 @@ export function DashboardInstagramIsland({
               overflow: "hidden",
               whiteSpace: "nowrap",
               opacity: islandCollapsed ? 0 : 1,
-              transition: "max-width 260ms ease, opacity 180ms ease",
+              transition: "max-width 360ms cubic-bezier(0.22, 1, 0.36, 1), opacity 240ms ease",
             }}
           >
             اکانت‌های اینستاگرام
