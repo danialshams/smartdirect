@@ -396,7 +396,7 @@ export function DashboardInstagramIsland({
       sx={{
         display: { xs: "block", lg: "none" },
         position: "fixed",
-        zIndex: 2001,
+        zIndex: 2101,
         bottom: "calc(env(safe-area-inset-bottom, 0px) + 10px)",
         left: 12,
         right: 12,
@@ -432,7 +432,7 @@ export function DashboardInstagramIsland({
             visibility: accountMenuOpen ? "visible" : "hidden",
             pointerEvents: accountMenuOpen ? "auto" : "none",
             transition: "opacity 180ms ease, transform 180ms ease, visibility 180ms ease",
-            zIndex: 1,
+            zIndex: 2,
           }}
         >
           <Box
@@ -551,11 +551,13 @@ export function DashboardInstagramIsland({
           aria-expanded={accountMenuOpen}
           aria-label="باز کردن اکانت‌های اینستاگرام"
           sx={{
-            minWidth: islandCollapsed ? 48 : { xs: 148, sm: 164 },
-            width: islandCollapsed ? 48 : "auto",
+            boxSizing: "border-box",
+            minWidth: islandCollapsed ? 48 : { xs: 176, sm: 192 },
+            width: islandCollapsed ? 48 : { xs: 176, sm: 192 },
+            flex: "0 0 auto",
             height: 48,
             mx: "auto",
-            px: islandCollapsed ? 0 : 1.5,
+            p: 0,
             border: "1px solid #E2E8F0",
             borderRadius: 999,
             bgcolor: "rgba(255,255,255,0.985)",
@@ -585,11 +587,16 @@ export function DashboardInstagramIsland({
             fontWeight={700}
             color="inherit"
             sx={{
-              maxWidth: islandCollapsed ? 0 : 180,
+              position: islandCollapsed ? "absolute" : "relative",
+              left: islandCollapsed ? "50%" : "auto",
+              top: islandCollapsed ? "50%" : "auto",
+              transform: islandCollapsed ? "translate(-50%, -50%)" : "translate(0, 0)",
+              maxWidth: islandCollapsed ? 0 : 132,
               overflow: "hidden",
               whiteSpace: "nowrap",
               opacity: islandCollapsed ? 0 : 1,
-              transition: "max-width 360ms cubic-bezier(0.22, 1, 0.36, 1), opacity 240ms ease",
+              pointerEvents: "none",
+              transition: "max-width 360ms cubic-bezier(0.22, 1, 0.36, 1), opacity 240ms ease, transform 360ms cubic-bezier(0.22, 1, 0.36, 1)",
             }}
           >
             اکانت‌های اینستاگرام
@@ -599,6 +606,8 @@ export function DashboardInstagramIsland({
             sx={{
               width: 26,
               height: 26,
+              boxSizing: "border-box",
+              flex: "0 0 26px",
               borderRadius: "50%",
               bgcolor: accountMenuOpen ? "#EFF6FF" : "#F8FAFC",
               color: accountMenuOpen ? "#2563EB" : "#64748B",
