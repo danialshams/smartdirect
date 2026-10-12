@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { start } from "workflow/api";
+import { processPublishingQueueJob } from "@/lib/instagram/publishing-workflow";
 
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -36,10 +38,12 @@ export async function POST(_request: NextRequest, context: Context) {
 
     try {
       const queued = await enqueueInstagramPublishing(id, { maxAttempts: 4 });
+      const workflowRun = await start(processPublishingQueueJob, [queued.job.id]);
       return NextResponse.json({
         success: true,
         queued: true,
         queueJobId: queued.job.id,
+        workflowRunId: workflowRun.runId,
       }, { status: 202 });
     } catch (error) {
       await prisma.instagramPublishJob.update({
