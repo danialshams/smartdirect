@@ -336,7 +336,6 @@ export default function AutoRepliesManager() {
                           <span className="rounded-md bg-[#F1F5F9] px-1.5 py-0.5 text-[10px] font-semibold text-[#64748B]">غیرفعال</span>
                         ) : null}
                       </div>
-                      <p className="mt-1 truncate text-xs text-[#64748B]">{item.subtitle}</p>
                     </div>
                   </div>
 
