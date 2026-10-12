@@ -54,6 +54,23 @@ function formatScheduledLabel(value: Date) { return value.toLocaleString("fa-IR"
 function addJalaliDays(value: JalaliDate, days: number) { const [gy, gm, gd] = jalaliToGregorian(value.year, value.month, value.day); const date = new Date(gy, gm - 1, gd + days); return gregorianToJalali(date.getFullYear(), date.getMonth() + 1, date.getDate()); }
 function jalaliDateTimeToDate(date: JalaliDate, hour: number, minute: number) { const [gy, gm, gd] = jalaliToGregorian(date.year, date.month, date.day); return new Date(Date.UTC(gy, gm - 1, gd, hour, minute, 0, 0) - 3.5 * 60 * 60 * 1000); }
 
+function isVideoCandidate(file: File) {
+  const extension = file.name.split(".").pop()?.toLowerCase();
+  return file.type.startsWith("video/") || ["mp4", "mov", "m4v"].includes(extension ?? "");
+}
+
+function normalizeSupportedVideoFile(file: File): File | null {
+  const extension = file.name.split(".").pop()?.toLowerCase();
+  const contentType =
+    extension === "mov" ? "video/quicktime" :
+    ["mp4", "m4v"].includes(extension ?? "") ? "video/mp4" :
+    file.type === "video/quicktime" || file.type === "video/mp4" ? file.type :
+    null;
+  if (!contentType) return null;
+  if (file.type === contentType) return file;
+  return new File([file], file.name, { type: contentType, lastModified: file.lastModified });
+}
+
 async function getImageDimensions(file: File): Promise<{ width: number; height: number }> {
   if (typeof createImageBitmap === "function") {
     const bitmap = await createImageBitmap(file);
@@ -743,9 +760,9 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     if (!files.length || publishing) return;
     const accepted =
       type === "REEL"
-        ? files.filter((file) => file.type.startsWith("video/"))
+        ? files.filter(isVideoCandidate)
         : type === "STORY" || type === "CAROUSEL"
-          ? files.filter((file) => file.type.startsWith("image/") || file.type.startsWith("video/"))
+          ? files.filter((file) => file.type.startsWith("image/") || isVideoCandidate(file))
           : files.filter((file) => file.type.startsWith("image/"));
 
     if (!accepted.length) {
@@ -782,10 +799,19 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     const validated: File[] = [];
     try {
     for (const file of selected) {
-      if (!file.type.startsWith("image/")) { validated.push(file); continue; }
+      if (isVideoCandidate(file)) {
+        const normalizedVideo = normalizeSupportedVideoFile(file);
+        if (normalizedVideo) {
+          validated.push(normalizedVideo);
+        } else {
+          toast.error(`فرمت ویدیوی «${file.name}» پشتیبانی نمی‌شود. لطفاً ویدیو را با فرمت MP4 یا MOV انتخاب کن.`);
+        }
+        continue;
+      }
+      if (!file.type.startsWith("image/")) continue;
       try {
         validated.push(await normalizeImageAspectRatio(file));
-      } catch (error) {
+      } catch {
         toast.error(`اصلاح خودکار تصویر «${file.name}» ممکن نشد؛ لطفاً یک نسخه JPG یا PNG سالم انتخاب کن.`);
       }
     }
@@ -1363,7 +1389,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   async function cancelJob(id: string) { try { setError(""); const response = await fetch(`/api/instagram/publishing/${id}`, { method: "DELETE" }); const result = await response.json(); if (!response.ok) throw new Error(result.message || "لغو ناموفق بود."); await loadJobs(); } catch (e) { setError(e instanceof Error ? e.message : "لغو ناموفق بود."); } }
 
   const canPublish = uploadedMedia.length > 0 && !uploading && !publishing;
-  const accept = type === "REEL" ? "video/mp4,video/quicktime" : type === "STORY" || type === "CAROUSEL" ? "image/jpeg,image/png,image/webp,video/mp4,video/quicktime" : "image/jpeg,image/png,image/webp";
+  const accept = type === "REEL" ? "video/mp4,video/quicktime,.mp4,.mov,.m4v" : type === "STORY" || type === "CAROUSEL" ? "image/jpeg,image/png,image/webp,video/mp4,video/quicktime,.mp4,.mov,.m4v" : "image/jpeg,image/png,image/webp";
 
   return (
     <>
