@@ -155,53 +155,63 @@ async function fetchDailyInsight(
   const start = new Date(dayKey + "T00:00:00.000Z");
   const end = new Date(dayKey + "T23:59:59.999Z");
 
-  // Query metrics separately: Meta can reject a whole multi-metric request
-  // when one metric is unavailable to this app/account. Preserve every metric
-  // that Meta does allow instead of failing the entire day's snapshot.
-  const baseMetricNames = [
-    "reach",
-    "views",
-    "accounts_engaged",
-    "total_interactions",
-  ] as const;
-
-  const metricResults = await Promise.all(
-    baseMetricNames.map(async (metricName) => {
-      const metricUrl = new URL(
-        `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${igUserId}/insights`,
-      );
-      metricUrl.searchParams.set("metric", metricName);
-      metricUrl.searchParams.set("period", "day");
-      metricUrl.searchParams.set("metric_type", "total_value");
-      metricUrl.searchParams.set("since", String(Math.floor(start.getTime() / 1000)));
-      metricUrl.searchParams.set("until", String(Math.floor(end.getTime() / 1000)));
-      metricUrl.searchParams.set("access_token", accessToken);
-
-      const result = await fetchInstagram<InstagramInsightsResponse>(
-        metricUrl.toString(),
-      );
-
-      if (!result.response.ok || !result.data.data) {
-        return {
-          metricName,
-          data: null,
-          error: getErrorMessage(result.data),
-        };
-      }
-
-      return { metricName, data: result.data, error: null };
-    }),
+  const baseUrl = new URL(
+    `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${igUserId}/insights`,
   );
+  baseUrl.searchParams.set(
+    "metric",
+    "reach,views,accounts_engaged,total_interactions",
+  );
+  baseUrl.searchParams.set("period", "day");
+  baseUrl.searchParams.set("metric_type", "total_value");
+  baseUrl.searchParams.set("since", String(Math.floor(start.getTime() / 1000)));
+  baseUrl.searchParams.set("until", String(Math.floor(end.getTime() / 1000)));
+  baseUrl.searchParams.set("access_token", accessToken);
 
-  const availableMetrics = metricResults.flatMap((result) => result.data?.data ?? []);
-  const failedMetrics = metricResults.filter((result) => result.data === null);
+  let baseResult = await fetchInstagram<InstagramInsightsResponse>(baseUrl.toString());
 
-  if (availableMetrics.length === 0) {
-    const firstError = failedMetrics[0]?.error || "Instagram Insights request failed";
-    throw new Error(`Meta daily insights failed for ${dayKey}: ${firstError}`);
+  // Keep the normal one-request path. Only retry metrics individually when
+  // Meta rejects the combined request, so one unavailable metric cannot block
+  // all the other daily insights.
+  if (!baseResult.response.ok || !baseResult.data.data) {
+    const metricNames = [
+      "reach",
+      "views",
+      "accounts_engaged",
+      "total_interactions",
+    ] as const;
+
+    const metricResults = await Promise.all(
+      metricNames.map(async (metricName) => {
+        const metricUrl = new URL(
+          `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${igUserId}/insights`,
+        );
+        metricUrl.searchParams.set("metric", metricName);
+        metricUrl.searchParams.set("period", "day");
+        metricUrl.searchParams.set("metric_type", "total_value");
+        metricUrl.searchParams.set("since", String(Math.floor(start.getTime() / 1000)));
+        metricUrl.searchParams.set("until", String(Math.floor(end.getTime() / 1000)));
+        metricUrl.searchParams.set("access_token", accessToken);
+
+        const result = await fetchInstagram<InstagramInsightsResponse>(
+          metricUrl.toString(),
+        );
+        return result.response.ok && result.data.data ? result.data.data : [];
+      }),
+    );
+
+    const availableMetrics = metricResults.flat();
+    if (availableMetrics.length === 0) {
+      throw new Error(
+        `Meta daily insights failed for ${dayKey}: ${getErrorMessage(baseResult.data)}`,
+      );
+    }
+    baseResult = {
+      response: baseResult.response,
+      data: { data: availableMetrics },
+    };
   }
 
-  const baseData: InstagramInsightsResponse = { data: availableMetrics };
 
   let follows: number | null = null;
   let unfollows: number | null = null;
