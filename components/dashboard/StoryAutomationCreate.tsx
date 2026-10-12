@@ -72,8 +72,15 @@ export default function StoryAutomationCreate() {
         <div className="mb-9">
           <Button type="button" onClick={() => router.back()} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]"><ArrowRight size={15} strokeWidth={2} />بازگشت</Button>
         </div>
-        <h1 className="text-xl font-bold tracking-tight text-[#0F172A] sm:text-2xl">انتخاب استوری</h1>
-        <p className="mt-2 text-xs leading-5 text-[#64748B] sm:text-sm">یک استوری فعال را برای پاسخ خودکار انتخاب کنید.</p>
+        <section className="mb-4 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-5">
+          <div className="flex items-start gap-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB]"><Camera size={19} /></span>
+            <div className="min-w-0">
+              <h1 className="text-base font-bold text-[#0F172A]">انتخاب استوری</h1>
+              <p className="mt-1.5 text-xs leading-5 text-[#64748B] sm:text-sm">یک استوری فعال را برای پاسخ خودکار انتخاب کنید.</p>
+            </div>
+          </div>
+        </section>
 
         {error && <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
 
