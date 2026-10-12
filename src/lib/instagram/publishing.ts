@@ -15,6 +15,12 @@ type ContainerWaitContext = {
   stage?: string;
   slideNumber?: number;
   mediaType?: "IMAGE" | "VIDEO";
+  fileName?: string | null;
+  mimeType?: string | null;
+  fileSizeBytes?: number | null;
+  mediaUrlHost?: string | null;
+  mediaUrlExtension?: string | null;
+  mediaUrlHasQuery?: boolean;
 };
 type PublishResponse = { id?: string };
 type MediaItem = { type: "IMAGE" | "VIDEO"; publicUrl: string; sortOrder: number };
@@ -239,6 +245,12 @@ async function waitReady(
     stage: context.stage ?? "unknown",
     slideNumber: context.slideNumber ?? null,
     mediaType: context.mediaType ?? null,
+    fileName: context.fileName ?? null,
+    mimeType: context.mimeType ?? null,
+    fileSizeBytes: context.fileSizeBytes ?? null,
+    mediaUrlHost: context.mediaUrlHost ?? null,
+    mediaUrlExtension: context.mediaUrlExtension ?? null,
+    mediaUrlHasQuery: context.mediaUrlHasQuery ?? null,
     maxAttempts,
     pollIntervalMs: delayMs,
   });
@@ -257,6 +269,12 @@ async function waitReady(
         stage: context.stage ?? "unknown",
         slideNumber: context.slideNumber ?? null,
         mediaType: context.mediaType ?? null,
+        fileName: context.fileName ?? null,
+        mimeType: context.mimeType ?? null,
+        fileSizeBytes: context.fileSizeBytes ?? null,
+        mediaUrlHost: context.mediaUrlHost ?? null,
+        mediaUrlExtension: context.mediaUrlExtension ?? null,
+        mediaUrlHasQuery: context.mediaUrlHasQuery ?? null,
         statusCode: code || null,
         status: status.status,
         attempt: i + 1,
@@ -288,6 +306,12 @@ async function waitReady(
         stage: context.stage ?? "unknown",
         slideNumber: context.slideNumber ?? null,
         mediaType: context.mediaType ?? null,
+        fileName: context.fileName ?? null,
+        mimeType: context.mimeType ?? null,
+        fileSizeBytes: context.fileSizeBytes ?? null,
+        mediaUrlHost: context.mediaUrlHost ?? null,
+        mediaUrlExtension: context.mediaUrlExtension ?? null,
+        mediaUrlHasQuery: context.mediaUrlHasQuery ?? null,
         statusCode: code,
         status: status.status,
         attempt: i + 1,
@@ -309,6 +333,12 @@ async function waitReady(
     stage: context.stage ?? "unknown",
     slideNumber: context.slideNumber ?? null,
     mediaType: context.mediaType ?? null,
+    fileName: context.fileName ?? null,
+    mimeType: context.mimeType ?? null,
+    fileSizeBytes: context.fileSizeBytes ?? null,
+    mediaUrlHost: context.mediaUrlHost ?? null,
+    mediaUrlExtension: context.mediaUrlExtension ?? null,
+    mediaUrlHasQuery: context.mediaUrlHasQuery ?? null,
     lastStatusCode: lastStatus.statusCode,
     lastStatus: lastStatus.status,
     attempts: maxAttempts,
@@ -648,6 +678,32 @@ async function publishInstagramJobInternal(jobId: string) {
 
       for (const item of media) {
         const mediaRecord = job.media.find((mediaItem) => mediaItem.sortOrder === item.sortOrder);
+        const mediaUrlDiagnostics = (() => {
+          try {
+            const parsed = new URL(item.publicUrl);
+            const lastSegment = parsed.pathname.split("/").pop() ?? "";
+            const extension = lastSegment.includes(".") ? lastSegment.split(".").pop()?.toLowerCase() ?? null : null;
+            return {
+              host: parsed.host,
+              extension,
+              hasQuery: parsed.search.length > 0,
+            };
+          } catch {
+            return { host: null, extension: null, hasQuery: null };
+          }
+        })();
+        const childDiagnostics = {
+          publishingJobId: job.id,
+          slideNumber: item.sortOrder + 1,
+          mediaType: item.type,
+          fileName: mediaRecord?.fileName ?? null,
+          mimeType: mediaRecord?.mimeType ?? null,
+          fileSizeBytes: mediaRecord?.fileSize ?? null,
+          mediaUrlHost: mediaUrlDiagnostics.host,
+          mediaUrlExtension: mediaUrlDiagnostics.extension,
+          mediaUrlHasQuery: mediaUrlDiagnostics.hasQuery,
+        };
+        console.info("[Instagram Publishing] carousel child media diagnostics", childDiagnostics);
         const childId = await createImageContainer(
           job.instagramAccount.igUserId,
           token,
@@ -676,6 +732,12 @@ async function publishInstagramJobInternal(jobId: string) {
           stage: "carousel-child",
           slideNumber: item.sortOrder + 1,
           mediaType: item.type,
+          fileName: mediaRecord?.fileName ?? null,
+          mimeType: mediaRecord?.mimeType ?? null,
+          fileSizeBytes: mediaRecord?.fileSize ?? null,
+          mediaUrlHost: mediaUrlDiagnostics.host,
+          mediaUrlExtension: mediaUrlDiagnostics.extension,
+          mediaUrlHasQuery: mediaUrlDiagnostics.hasQuery,
         });
         children.push(childId);
       }
