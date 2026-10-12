@@ -272,15 +272,15 @@ export async function GET(request: NextRequest) {
           },
 
           update: {
-            reach: values.reach,
-
-            views: values.views,
-
-            accountsEngaged: values.accountsEngaged,
-
-            totalInteractions: values.totalInteractions,
-
-            followerCount,
+            ...(values.reach !== null ? { reach: values.reach } : {}),
+            ...(values.views !== null ? { views: values.views } : {}),
+            ...(values.accountsEngaged !== null
+              ? { accountsEngaged: values.accountsEngaged }
+              : {}),
+            ...(values.totalInteractions !== null
+              ? { totalInteractions: values.totalInteractions }
+              : {}),
+            ...(followerCount !== null ? { followerCount } : {}),
           },
         });
 
