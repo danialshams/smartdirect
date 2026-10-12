@@ -20,10 +20,9 @@ type InsightMetricName = (typeof INSIGHT_METRICS)[number];
 type InstagramInsightMetric = {
   name?: string;
 
-  values?: Array<{
-    value?: number;
-    end_time?: string;
-  }>;
+  total_value?: {
+    value?: number | { [key: string]: unknown };
+  };
 };
 
 type InstagramInsightsResponse = {
@@ -91,11 +90,7 @@ function getMetricValue(
 ) {
   const metric = metrics.find((item) => item.name === name);
 
-  if (!metric?.values?.length) {
-    return null;
-  }
-
-  const value = metric.values[metric.values.length - 1]?.value;
+  const value = metric?.total_value?.value;
 
   return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
