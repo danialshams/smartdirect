@@ -1877,7 +1877,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                                 setError("");
                               }}
                             />
-                            <span className="mt-6 px-0.5 text-xl font-bold text-[#64748B]" aria-hidden="true">:</span>
+                            <span className="self-center px-0.5 text-xl font-bold leading-none text-[#64748B]" aria-hidden="true">:</span>
                             <InlineWheelPicker
                               value={stage6Minute}
                               min={
