@@ -636,7 +636,10 @@ async function publishInstagramJobInternal(jobId: string) {
     return updatedJob;
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "Instagram publishing failed.";
+      error instanceof InstagramApiError &&
+      (error.details?.code === 36003 || error.details?.error_subcode === 2207009)
+        ? "اینستاگرام یکی از تصاویر آلبوم را نپذیرفت؛ نسبت تصویر نامعتبر است یا فایل تصویر قابل خواندن نیست. تصویر را با JPG/PNG سالم و نسبت ۴:۵ تا ۱٫۹۱:۱ دوباره آماده و آپلود کن."
+        : error instanceof Error ? error.message : "Instagram publishing failed.";
 
     if (message === "INSTAGRAM_CONCURRENCY_WAIT_TIMEOUT") {
       // Concurrency pressure is transient. Keep the job/container reusable and
