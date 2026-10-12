@@ -125,7 +125,7 @@ export default function DashboardOverview({
               lineHeight: 1.4,
             }}
           >
-            <span>{"سلام " + user.name + "، به پنل خودت خوش اومدی"}</span>
+            <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>{"سلام " + user.name + "، به پنل خودت خوش اومدی"}</span>
             <Heart aria-hidden="true" size={16} strokeWidth={2.2} fill="currentColor" style={{ flexShrink: 0 }} />
           </Typography>
         </Box>
