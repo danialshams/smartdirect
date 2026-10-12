@@ -6,7 +6,7 @@ import { ArrowLeft, ArrowRight, CalendarClock, Camera, CheckCircle2, CircleSlash
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from "react";
-import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
+import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent, type Modifier } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { WheelPicker, type WheelPickerOption } from "@ncdai/react-wheel-picker";
@@ -558,7 +558,21 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [uploadIndex, setUploadIndex] = useState(0);
   const [uploadRows, setUploadRows] = useState<UploadRow[]>([]);
+  const slideListRef = useRef<HTMLDivElement>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+  const restrictSlideDragToList: Modifier = ({ transform, draggingNodeRect }) => {
+    const bounds = slideListRef.current?.getBoundingClientRect();
+    if (!bounds || !draggingNodeRect) return { ...transform, x: 0 };
+    const minX = bounds.left - draggingNodeRect.left;
+    const maxX = bounds.right - draggingNodeRect.right;
+    const minY = bounds.top - draggingNodeRect.top;
+    const maxY = bounds.bottom - draggingNodeRect.bottom;
+    return {
+      ...transform,
+      x: Math.max(minX, Math.min(maxX, 0)),
+      y: Math.max(minY, Math.min(maxY, transform.y)),
+    };
+  };
   const uploadQueueRef = useRef<LocalMedia[]>([]);
   const pendingValidationCountRef = useRef(0);
   const uploadWorkerRunningRef = useRef(false);
@@ -1636,6 +1650,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                       {type === "CAROUSEL" && uploadRows.length > 0 && (
                         <DndContext
                           sensors={sensors}
+                          modifiers={[restrictSlideDragToList]}
                           collisionDetection={closestCenter}
                           onDragEnd={(event: DragEndEvent) => {
                             if (!event.over || event.active.id === event.over.id) return;
@@ -1643,7 +1658,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                           }}
                         >
                           <SortableContext items={uploadedMedia.map((item) => item.storageKey)} strategy={verticalListSortingStrategy}>
-                            <div className="mt-4 space-y-2" aria-live="polite">
+                            <div ref={slideListRef} className="mt-4 space-y-2" aria-live="polite">
                               {uploadRows.map((row, rowPosition) => {
                             const slideIndex = row.storageKey ? uploadedMedia.findIndex((item) => item.storageKey === row.storageKey) : -1;
                             const slide = slideIndex >= 0 ? uploadedMedia[slideIndex] : null;
