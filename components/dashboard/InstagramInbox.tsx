@@ -338,8 +338,10 @@ function MediaBubble({
 
 export default function InstagramInbox({
   accounts,
+  accountsLoading = false,
 }: {
   accounts: Account[];
+  accountsLoading?: boolean;
 }) {
   const connectedAccounts = useMemo(
     () => accounts.filter((account) => account.isConnected),
@@ -1057,25 +1059,6 @@ export default function InstagramInbox({
     };
   }, [selectedFileUrl]);
 
-  if (!connectedAccounts.length) {
-    return (
-      <section
-        id="messages"
-        dir="rtl"
-        className="scroll-mt-24 rounded-2xl border bg-card p-6 sm:p-8"
-      >
-        <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
-            <MessageCircle size={21} />
-          </div>
-          <p className="text-sm leading-6 text-muted-foreground">
-            برای استفاده از پیام‌ها ابتدا یک اکانت Instagram متصل کنید.
-          </p>
-        </div>
-      </section>
-    );
-  }
-
   const listPanel = (
     <aside className="flex min-h-0 flex-1 flex-col bg-background lg:w-[330px] lg:flex-none lg:border-l lg:border-border">
       <div className="shrink-0 border-b border-border px-3.5 pb-3 pt-3.5 sm:px-4">
@@ -1120,7 +1103,7 @@ export default function InstagramInbox({
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-2 py-2 sm:px-3">
-        {loading && !conversations.length ? (
+        {(accountsLoading || (connectedAccounts.length > 0 && (!accountId || loading))) && !conversations.length ? (
           <DashboardLoading label="در حال دریافت گفتگوها..." className="dashboard-loading--fill" />
         ) : filteredConversations.length ? (
           filteredConversations.map((conversation) => {
