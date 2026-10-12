@@ -272,6 +272,8 @@ export function DashboardInstagramIsland({
   const islandButtonRef = useRef<HTMLButtonElement | null>(null);
   const lastScrollPositionRef = useRef(0);
   const [islandCollapsed, setIslandCollapsed] = useState(false);
+  const onAccountMenuOpenChangeRef = useRef(onAccountMenuOpenChange);
+  onAccountMenuOpenChangeRef.current = onAccountMenuOpenChange;
   const activeAccount = accounts.find((account) => account.isConnected);
 
   useEffect(() => {
@@ -293,7 +295,7 @@ export function DashboardInstagramIsland({
 
       if (difference > 7 && position > 24) {
         setIslandCollapsed(true);
-        onAccountMenuOpenChange(false);
+        onAccountMenuOpenChangeRef.current(false);
       } else if (difference < -5) {
         setIslandCollapsed(false);
       }
@@ -309,7 +311,7 @@ export function DashboardInstagramIsland({
       document.removeEventListener("scroll", handleScroll, true);
       window.removeEventListener("resize", handleResize);
     };
-  }, [onAccountMenuOpenChange]);
+  }, []);
 
   useEffect(() => {
     setIslandCollapsed(false);
