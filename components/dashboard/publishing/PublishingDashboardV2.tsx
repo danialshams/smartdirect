@@ -54,6 +54,28 @@ function formatScheduledLabel(value: Date) { return value.toLocaleString("fa-IR"
 function addJalaliDays(value: JalaliDate, days: number) { const [gy, gm, gd] = jalaliToGregorian(value.year, value.month, value.day); const date = new Date(gy, gm - 1, gd + days); return gregorianToJalali(date.getFullYear(), date.getMonth() + 1, date.getDate()); }
 function jalaliDateTimeToDate(date: JalaliDate, hour: number, minute: number) { const [gy, gm, gd] = jalaliToGregorian(date.year, date.month, date.day); return new Date(Date.UTC(gy, gm - 1, gd, hour, minute, 0, 0) - 3.5 * 60 * 60 * 1000); }
 
+async function getImageDimensions(file: File): Promise<{ width: number; height: number }> {
+  if (typeof createImageBitmap === "function") {
+    const bitmap = await createImageBitmap(file);
+    const dimensions = { width: bitmap.width, height: bitmap.height };
+    bitmap.close();
+    return dimensions;
+  }
+
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const image = new Image();
+    await new Promise<void>((resolve, reject) => {
+      image.onload = () => resolve();
+      image.onerror = () => reject(new Error("تصویر قابل خواندن نیست."));
+      image.src = objectUrl;
+    });
+    return { width: image.naturalWidth, height: image.naturalHeight };
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
 
 type UploadProgressCallback = (progress: number) => void;
 
@@ -717,9 +739,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     for (const file of selected) {
       if (!file.type.startsWith("image/")) { validated.push(file); continue; }
       try {
-        const bitmap = await createImageBitmap(file);
-        const ratio = bitmap.width / bitmap.height;
-        bitmap.close();
+        const dimensions = await getImageDimensions(file);
+        const ratio = dimensions.width / dimensions.height;
         if (!Number.isFinite(ratio) || ratio < 0.8 || ratio > 1.91) {
           toast.error(`نسبت تصویر «${file.name}» برای انتشار در اینستاگرام معتبر نیست. نسبت مجاز حدود ۴:۵ تا ۱٫۹۱:۱ است.`);
           continue;
