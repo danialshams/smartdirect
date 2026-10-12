@@ -727,8 +727,6 @@ export default function EntryPointFlowBuilder({
                         .messages,
                 ),
             );
-            onDirtyChange?.(false);
-
             setLoadedAutomationId(
                 finalResult.data.id,
             );
@@ -736,6 +734,7 @@ export default function EntryPointFlowBuilder({
             await onAutomationReady(
                 finalResult.data.id,
             );
+            onDirtyChange?.(false);
 
             setSuccess(true);
 
@@ -783,6 +782,7 @@ export default function EntryPointFlowBuilder({
             const base = current[0] ?? createEmptyMessage();
             return [{ ...base, ...patch }];
         });
+        onDirtyChange?.(true);
         setSuccess(false);
     }
 
