@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
           "-map_metadata", "-1",
           "-vf", "scale=w='min(1920,iw)':h='min(1920,ih)':force_original_aspect_ratio=decrease:force_divisible_by=2,fps=30",
           "-c:v", "libx264", "-preset", "veryfast", "-crf", "23", "-flags", "+cgop", "-x264-params", "open-gop=0",
-          "-maxrate", "10M", "-bufsize", "20M", "-pix_fmt", "yuv420p",
+          "-maxrate", "5M", "-bufsize", "10M", "-pix_fmt", "yuv420p",
           "-c:a", "aac", "-b:a", "128k", "-ar", "48000", "-ac", "2",
           "-sn", "-dn", "-movflags", "+faststart", "-f", "mp4", outputPath,
         ], { timeout: 600000, maxBuffer: 8 * 1024 * 1024 });
