@@ -463,6 +463,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const [uploadIndex, setUploadIndex] = useState(0);
   const [uploadRows, setUploadRows] = useState<UploadRow[]>([]);
   const uploadQueueRef = useRef<LocalMedia[]>([]);
+  const pendingValidationCountRef = useRef(0);
   const uploadWorkerRunningRef = useRef(false);
   const activeUploadItemIdRef = useRef<string | null>(null);
   const carouselInsertAtRef = useRef<number | null>(null);
@@ -719,8 +720,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     }
 
     const remaining = type === "CAROUSEL"
-      ? Math.max(0, 10 - uploadedMedia.length - media.length)
-      : Math.max(0, 1 - uploadedMedia.length - media.length);
+      ? Math.max(0, 10 - uploadedMedia.length - media.length - pendingValidationCountRef.current)
+      : Math.max(0, 1 - uploadedMedia.length - media.length - pendingValidationCountRef.current);
     if (remaining <= 0) {
       const message = type === "CAROUSEL" ? "آلبوم نمی‌تواند بیشتر از ۱۰ اسلاید داشته باشد." : `برای ${typeLabels[type]} فقط یک فایل مجاز است.`;
       setError(message);
@@ -734,8 +735,10 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
     const selected = accepted.slice(0, remaining);
     if (!selected.length) return;
+    pendingValidationCountRef.current += selected.length;
 
     const validated: File[] = [];
+    try {
     for (const file of selected) {
       if (!file.type.startsWith("image/")) { validated.push(file); continue; }
       try {
@@ -749,6 +752,9 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       } catch {
         toast.error(`فایل تصویر «${file.name}» قابل خواندن نیست؛ آن را با فرمت JPG یا PNG سالم دوباره ذخیره کن.`);
       }
+    }
+    } finally {
+      pendingValidationCountRef.current = Math.max(0, pendingValidationCountRef.current - selected.length);
     }
     if (!validated.length) return;
 
