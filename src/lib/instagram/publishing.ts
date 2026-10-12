@@ -14,6 +14,7 @@ type ContainerWaitContext = {
   publishingJobId?: string;
   stage?: string;
   slideNumber?: number;
+  mediaType?: "IMAGE" | "VIDEO";
 };
 type PublishResponse = { id?: string };
 type MediaItem = { type: "IMAGE" | "VIDEO"; publicUrl: string; sortOrder: number };
@@ -225,14 +226,59 @@ async function waitReady(
   maxAttempts = 20,
   context: ContainerWaitContext = {},
 ) {
+  const startedAt = Date.now();
+  let lastLoggedCode: string | null = null;
+  let lastStatus: { statusCode: string | null; status: string | null } = {
+    statusCode: null,
+    status: null,
+  };
+
+  console.info("[Instagram Publishing] waiting for media container", {
+    publishingJobId: context.publishingJobId ?? null,
+    containerId: id,
+    stage: context.stage ?? "unknown",
+    slideNumber: context.slideNumber ?? null,
+    mediaType: context.mediaType ?? null,
+    maxAttempts,
+    pollIntervalMs: delayMs,
+  });
+
   for (let i = 0; i < maxAttempts; i += 1) {
     const status = await containerStatus(id, token, instagramAccountId, tenantId);
     const code = String(status.statusCode ?? "").toUpperCase();
+    lastStatus = status;
+
+    // Log the first response, state transitions, and periodic checkpoints.
+    // This keeps production logs useful without emitting one line per poll.
+    if (i === 0 || code !== lastLoggedCode || (i + 1) % 10 === 0) {
+      console.info("[Instagram Publishing] media container status", {
+        publishingJobId: context.publishingJobId ?? null,
+        containerId: id,
+        stage: context.stage ?? "unknown",
+        slideNumber: context.slideNumber ?? null,
+        mediaType: context.mediaType ?? null,
+        statusCode: code || null,
+        status: status.status,
+        attempt: i + 1,
+        maxAttempts,
+        elapsedMs: Date.now() - startedAt,
+      });
+      lastLoggedCode = code;
+    }
 
     if (code === "FINISHED") {
       // Meta can report FINISHED a moment before media_publish becomes ready.
       // Keep a short stabilization window before the final publish call.
       await new Promise((resolve) => setTimeout(resolve, 2000));
+      console.info("[Instagram Publishing] media container ready", {
+        publishingJobId: context.publishingJobId ?? null,
+        containerId: id,
+        stage: context.stage ?? "unknown",
+        slideNumber: context.slideNumber ?? null,
+        mediaType: context.mediaType ?? null,
+        elapsedMs: Date.now() - startedAt,
+        attempts: i + 1,
+      });
       return;
     }
     if (code === "ERROR" || code === "EXPIRED") {
@@ -241,19 +287,39 @@ async function waitReady(
         containerId: id,
         stage: context.stage ?? "unknown",
         slideNumber: context.slideNumber ?? null,
+        mediaType: context.mediaType ?? null,
         statusCode: code,
         status: status.status,
         attempt: i + 1,
+        elapsedMs: Date.now() - startedAt,
       };
       console.error("[Instagram Publishing] media container processing failed", diagnostic);
       const location = context.slideNumber ? ` اسلاید ${context.slideNumber}` : "";
       throw new Error(`Instagram container failed with status: ${code}.${location} (containerId=${id}, stage=${context.stage ?? "unknown"})`);
     }
 
-    await new Promise((resolve) => setTimeout(resolve, delayMs));
+    if (i + 1 < maxAttempts) {
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
   }
 
-  throw new Error("Instagram container در زمان مجاز آماده نشد.");
+  const diagnostic = {
+    publishingJobId: context.publishingJobId ?? null,
+    containerId: id,
+    stage: context.stage ?? "unknown",
+    slideNumber: context.slideNumber ?? null,
+    mediaType: context.mediaType ?? null,
+    lastStatusCode: lastStatus.statusCode,
+    lastStatus: lastStatus.status,
+    attempts: maxAttempts,
+    pollIntervalMs: delayMs,
+    elapsedMs: Date.now() - startedAt,
+  };
+  console.error("[Instagram Publishing] media container wait timed out", diagnostic);
+  const location = context.slideNumber ? ` اسلاید ${context.slideNumber}` : "";
+  throw new Error(
+    `Instagram container timeout after ${Math.round(diagnostic.elapsedMs / 1000)}s${location} (containerId=${id}, stage=${context.stage ?? "unknown"}, lastStatus=${lastStatus.statusCode ?? "UNKNOWN"})`,
+  );
 }
 
 async function publishContainer(
@@ -601,10 +667,15 @@ async function publishInstagramJobInternal(jobId: string) {
           containerId: childId,
           mediaHost: (() => { try { return new URL(item.publicUrl).host; } catch { return "invalid-url"; } })(),
         });
-        await waitReady(childId, token, job.instagramAccountId, tenantId, 3000, 20, {
+        // Video children can remain IN_PROGRESS well beyond one minute while
+        // Meta transcodes them. Give videos a bounded three-minute window;
+        // keep image processing on the existing shorter timeout.
+        const childWaitAttempts = item.type === "VIDEO" ? 60 : 20;
+        await waitReady(childId, token, job.instagramAccountId, tenantId, 3000, childWaitAttempts, {
           publishingJobId: job.id,
           stage: "carousel-child",
           slideNumber: item.sortOrder + 1,
+          mediaType: item.type,
         });
         children.push(childId);
       }
