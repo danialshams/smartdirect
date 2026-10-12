@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     // The extension fallback is allowlisted; FFmpeg still has to decode the media.
     const isVideo = allowedVideoTypes.has(normalizedInputMime) ||
       (normalizedInputMime.startsWith("video/") && allowedVideoExtensions.has(fileExtension)) ||
-      (!normalizedInputMime && allowedVideoExtensions.has(fileExtension));
+      ((!normalizedInputMime || normalizedInputMime === "application/octet-stream") && allowedVideoExtensions.has(fileExtension));
     const isAudio = normalizedInputMime.startsWith("audio/");
 
     if (!isImage && !isVideo && !isAudio) {
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
           "-map", "0:v:0", "-map", "0:a:0?",
           "-map_metadata", "-1",
           "-vf", "scale=w='min(1920,iw)':h='min(1920,ih)':force_original_aspect_ratio=decrease:force_divisible_by=2,fps=30",
-          "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
+          "-c:v", "libx264", "-preset", "veryfast", "-crf", "23", "-flags", "+cgop", "-x264-params", "open-gop=0",
           "-maxrate", "10M", "-bufsize", "20M", "-pix_fmt", "yuv420p",
           "-c:a", "aac", "-b:a", "128k", "-ar", "48000", "-ac", "2",
           "-sn", "-dn", "-movflags", "+faststart", "-f", "mp4", outputPath,
