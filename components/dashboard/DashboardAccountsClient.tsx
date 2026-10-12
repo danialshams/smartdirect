@@ -117,7 +117,7 @@ export default function DashboardAccountsClient({
   }
 
   if (mode === "inbox") {
-    return <InstagramInbox accounts={accounts} />;
+    return <InstagramInbox accounts={accounts} accountsLoading={loading} />;
   }
 
   if (mode === "comments") {
