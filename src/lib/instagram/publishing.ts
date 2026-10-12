@@ -10,6 +10,11 @@ import {
 } from "@/lib/idempotency/publishing";
 
 type ContainerResponse = { id?: string; status_code?: string; status?: string };
+type ContainerWaitContext = {
+  publishingJobId?: string;
+  stage?: string;
+  slideNumber?: number;
+};
 type PublishResponse = { id?: string };
 type MediaItem = { type: "IMAGE" | "VIDEO"; publicUrl: string; sortOrder: number };
 type UserTag = { username: string; x?: number; y?: number };
@@ -218,6 +223,7 @@ async function waitReady(
   tenantId?: string,
   delayMs = 3000,
   maxAttempts = 20,
+  context: ContainerWaitContext = {},
 ) {
   for (let i = 0; i < maxAttempts; i += 1) {
     const status = await containerStatus(id, token, instagramAccountId, tenantId);
@@ -230,7 +236,18 @@ async function waitReady(
       return;
     }
     if (code === "ERROR" || code === "EXPIRED") {
-      throw new Error(`Instagram container failed with status: ${code}`);
+      const diagnostic = {
+        publishingJobId: context.publishingJobId ?? null,
+        containerId: id,
+        stage: context.stage ?? "unknown",
+        slideNumber: context.slideNumber ?? null,
+        statusCode: code,
+        status: status.status,
+        attempt: i + 1,
+      };
+      console.error("[Instagram Publishing] media container processing failed", diagnostic);
+      const location = context.slideNumber ? ` اسلاید ${context.slideNumber}` : "";
+      throw new Error(`Instagram container failed with status: ${code}.${location} (containerId=${id}, stage=${context.stage ?? "unknown"})`);
     }
 
     await new Promise((resolve) => setTimeout(resolve, delayMs));
@@ -482,7 +499,10 @@ async function publishInstagramJobInternal(jobId: string) {
       if (existingStatus.statusCode === "FINISHED") {
         reusableContainerId = job.instagramContainerId;
       } else if (existingStatus.statusCode === "IN_PROGRESS") {
-        await waitReady(job.instagramContainerId, token, job.instagramAccountId, tenantId, 3000, 20);
+        await waitReady(job.instagramContainerId, token, job.instagramAccountId, tenantId, 3000, 20, {
+          publishingJobId: job.id,
+          stage: "existing-container",
+        });
         reusableContainerId = job.instagramContainerId;
       } else if (existingStatus.statusCode === "PUBLISHED") {
         throw new Error("Instagram container is already published but the final media ID was not persisted. Manual reconciliation is required.");
@@ -574,7 +594,18 @@ async function publishInstagramJobInternal(jobId: string) {
           "PUBLISH_CAROUSEL",
         );
 
-        await waitReady(childId, token, job.instagramAccountId, tenantId, 3000, 20);
+        console.info("[Instagram Publishing] carousel child container created", {
+          publishingJobId: job.id,
+          slideNumber: item.sortOrder + 1,
+          mediaType: item.type,
+          containerId: childId,
+          mediaHost: (() => { try { return new URL(item.publicUrl).host; } catch { return "invalid-url"; } })(),
+        });
+        await waitReady(childId, token, job.instagramAccountId, tenantId, 3000, 20, {
+          publishingJobId: job.id,
+          stage: "carousel-child",
+          slideNumber: item.sortOrder + 1,
+        });
         children.push(childId);
       }
 
@@ -598,7 +629,10 @@ async function publishInstagramJobInternal(jobId: string) {
       },
     });
 
-    await waitReady(containerId, token, job.instagramAccountId, tenantId, 3000, 20);
+    await waitReady(containerId, token, job.instagramAccountId, tenantId, 3000, 20, {
+      publishingJobId: job.id,
+      stage: job.type === "CAROUSEL" ? "carousel-parent" : `${job.type.toLowerCase()}-container`,
+    });
 
     const instagramMediaId = await publishContainer(
       job.instagramAccount.igUserId,
