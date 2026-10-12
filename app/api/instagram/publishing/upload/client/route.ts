@@ -78,9 +78,8 @@ async function finalizeVideoUpload(input: {
   const normalizedBuffer = await normalizeInstagramVideo(sourceBuffer, fileName, targetType);
   const provider = getStorageProvider();
   const uploaded = await provider.upload({ key: normalizedKey, body: normalizedBuffer, contentType: "video/mp4" });
-  let normalizedObject;
   try {
-    normalizedObject = await prisma.instagramStorageObject.create({
+    await prisma.instagramStorageObject.create({
       data: { userId, storageKey: uploaded.storageKey, publicUrl: uploaded.publicUrl, expiresAt: getUnlinkedUploadExpiry() },
     });
   } catch (error) {
@@ -100,8 +99,8 @@ async function finalizeVideoUpload(input: {
   }
 
   return {
-    storageKey: normalizedObject.storageKey,
-    publicUrl: normalizedObject.publicUrl,
+    storageKey: uploaded.storageKey,
+    publicUrl: uploaded.publicUrl,
     type: "VIDEO" as const,
     fileName: path.basename(fileName, path.extname(fileName)) + ".mp4",
     mimeType: "video/mp4",
