@@ -1619,28 +1619,41 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   <>
                       <SectionHeader n="۲" title={uploadTitle} text={uploadInstruction} />
                       <div className="relative">
-                        <UploadArea
-                          id="publishing-media-upload"
-                          accept={accept}
-                          multiple={type === "CAROUSEL"}
-                          title={uploadTitle}
-                          disabled={publishing || (type === "CAROUSEL" && uploadedMedia.length + media.length >= 10) || (type !== "CAROUSEL" && uploadedMedia.length + media.length >= 1)}
-                          isDragging={isDragging}
-                          setIsDragging={setIsDragging}
-                          onChange={handleFiles}
-                          onDrop={handleDrop}
-                        />
-                        {type !== "CAROUSEL" && uploading && (
-                          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-xl bg-white/90 px-4 text-center" role="status" aria-live="polite">
-                            <p className="text-xs font-semibold text-[#334155]">در حال آپلود محتوا...</p>
-                            <ProgressBar progress={uploadProgress} />
+                        {type !== "CAROUSEL" && !uploading && !uploadSuccess && uploadedMedia.length > 0 ? (
+                          <div className="flex min-h-[260px] flex-col items-center justify-center rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4">
+                            <p className="mb-3 text-xs font-semibold text-[#15803D]">{typeLabels[type]} آپلود شده</p>
+                            <div className="w-32 sm:w-40">
+                              <MediaTile item={uploadedMedia[0]} type={type} onRemove={() => void removeUploaded(uploadedMedia[0])} ready />
+                            </div>
+                            <p className="mt-3 max-w-full truncate text-xs text-[#64748B]" title={uploadedMedia[0].fileName}>{uploadedMedia[0].fileName}</p>
+                            <p className="mt-1 text-[11px] text-[#64748B]">برای حذف فایل، روی علامت × تصویر بزنید.</p>
                           </div>
-                        )}
-                        {type !== "CAROUSEL" && uploadSuccess && (
-                          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 rounded-xl border border-[#BBF7D0] bg-[#F0FDF4]/95 px-4 text-center" role="status" aria-live="polite">
-                            <UploadSuccessMark />
-                            <span className="text-sm font-semibold text-[#15803D]">آپلود با موفقیت انجام شد؛ در حال رفتن به مرحله بعد</span>
-                          </div>
+                        ) : (
+                          <>
+                            <UploadArea
+                              id="publishing-media-upload"
+                              accept={accept}
+                              multiple={type === "CAROUSEL"}
+                              title={uploadTitle}
+                              disabled={publishing || (type === "CAROUSEL" && uploadedMedia.length + media.length >= 10) || (type !== "CAROUSEL" && uploadedMedia.length + media.length >= 1)}
+                              isDragging={isDragging}
+                              setIsDragging={setIsDragging}
+                              onChange={handleFiles}
+                              onDrop={handleDrop}
+                            />
+                            {type !== "CAROUSEL" && uploading && (
+                              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-xl bg-white/90 px-4 text-center" role="status" aria-live="polite">
+                                <p className="text-xs font-semibold text-[#334155]">در حال آپلود محتوا...</p>
+                                <ProgressBar progress={uploadProgress} />
+                              </div>
+                            )}
+                            {type !== "CAROUSEL" && uploadSuccess && (
+                              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 rounded-xl border border-[#BBF7D0] bg-[#F0FDF4]/95 px-4 text-center" role="status" aria-live="polite">
+                                <UploadSuccessMark />
+                                <span className="text-sm font-semibold text-[#15803D]">آپلود با موفقیت انجام شد؛ در حال رفتن به مرحله بعد</span>
+                              </div>
+                            )}
+                          </>
                         )}
                       </div>
                       {type === "CAROUSEL" && uploadRows.length > 0 && (
