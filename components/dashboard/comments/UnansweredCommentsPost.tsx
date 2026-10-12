@@ -115,7 +115,7 @@ export default function UnansweredCommentsPost({ account, mediaId }: { account: 
   return (
     <Box dir="rtl" sx={{ width: "100%", pb: { xs: 4, lg: 6 } }}>
       <Box sx={{ display: "flex", justifyContent: "flex-start", mb: 1.25 }}>
-        <DashboardButton type="button" onClick={() => router.back()} className="!inline-flex !h-9 !min-h-9 !items-center !gap-1.5 !rounded-lg !border !border-[#BFDBFE] !bg-[#EFF6FF] !px-3 !text-xs !font-semibold !text-[#3B82F6] !shadow-none hover:!bg-[#DBEAFE] hover:!text-[#2563EB]">
+        <DashboardButton type="button" onClick={() => router.back()} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
           <ArrowRight size={15} strokeWidth={2} />
           بازگشت
         </DashboardButton>
