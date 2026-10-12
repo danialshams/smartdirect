@@ -41,6 +41,10 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData();
     const file = formData.get("file");
+    const targetTypeValue = formData.get("targetType");
+    const targetType = targetTypeValue === "CAROUSEL" || targetTypeValue === "STORY" || targetTypeValue === "REEL"
+      ? targetTypeValue
+      : "REEL";
 
     if (!(file instanceof File)) {
       return NextResponse.json({ success: false, message: "فایل ارسال نشده است." }, { status: 400 });
@@ -77,23 +81,36 @@ export async function POST(request: NextRequest) {
       const outputPath = path.join(tempDir, "normalized.mp4");
       try {
         await writeFile(inputPath, uploadBuffer);
-        // Normalize videos to an Instagram-compatible baseline:
-        // MP4, H.264/yuv420p, AAC 48 kHz, 30 fps, max 1920 px, faststart.
-        await execFileAsync(ffmpegPath, [
-          "-hide_banner", "-loglevel", "error", "-y",
-          "-i", inputPath,
-          "-map", "0:v:0", "-map", "0:a:0?",
-          "-map_metadata", "-1",
-          "-vf", "scale=w='min(1920,iw)':h='min(1920,ih)':force_original_aspect_ratio=decrease:force_divisible_by=2,fps=30",
-          "-c:v", "libx264", "-preset", "veryfast", "-crf", "23", "-flags", "+cgop", "-x264-params", "open-gop=0",
-          "-maxrate", "5M", "-bufsize", "10M", "-pix_fmt", "yuv420p",
-          "-c:a", "aac", "-b:a", "128k", "-ar", "48000", "-ac", "2",
-          "-sn", "-dn", "-movflags", "+faststart", "-f", "mp4", outputPath,
-        ], { timeout: 600000, maxBuffer: 8 * 1024 * 1024 });
-        const normalized = await readFile(outputPath);
-        if (!normalized.length) throw new Error("تبدیل ویدئو خروجی خالی تولید کرد.");
+        // Carousel video items use a 4:5 portrait canvas; Reels and Stories use 9:16.
+        // Fit the full source inside the canvas instead of cropping away user content.
+        const canvas = targetType === "CAROUSEL" ? { width: 1080, height: 1350 } : { width: 1080, height: 1920 };
+        const videoFilter = [
+          "scale=" + canvas.width + ":" + canvas.height + ":force_original_aspect_ratio=decrease:force_divisible_by=2",
+          "pad=" + canvas.width + ":" + canvas.height + ":(ow-iw)/2:(oh-ih)/2:color=black",
+          "setsar=1",
+          "fps=30",
+        ].join(",");
+        let normalized: Buffer | null = null;
+        // Reduce bitrate progressively to meet the storage/publishing size budget automatically.
+        for (const crf of ["23", "26", "29", "32"]) {
+          await rm(outputPath, { force: true });
+          await execFileAsync(ffmpegPath, [
+            "-hide_banner", "-loglevel", "error", "-y",
+            "-i", inputPath,
+            "-map", "0:v:0", "-map", "0:a:0?",
+            "-map_metadata", "-1",
+            "-vf", videoFilter,
+            "-c:v", "libx264", "-preset", "veryfast", "-crf", crf, "-flags", "+cgop", "-x264-params", "open-gop=0",
+            "-maxrate", "5M", "-bufsize", "10M", "-pix_fmt", "yuv420p",
+            "-c:a", "aac", "-b:a", "128k", "-ar", "48000", "-ac", "2",
+            "-sn", "-dn", "-movflags", "+faststart", "-f", "mp4", outputPath,
+          ], { timeout: 600000, maxBuffer: 8 * 1024 * 1024 });
+          normalized = await readFile(outputPath);
+          if (normalized.length <= SAFE_VIDEO_SIZE) break;
+        }
+        if (!normalized?.length) throw new Error("تبدیل ویدئو خروجی خالی تولید کرد.");
         if (normalized.length > SAFE_VIDEO_SIZE) {
-          throw new Error("حجم ویدئو پس از تبدیل بیش از 200 مگابایت است؛ ویدئوی کوتاه‌تر یا کم‌حجم‌تری انتخاب کنید.");
+          throw new Error("حجم ویدئو پس از بهینه‌سازی هنوز بیش از 100 مگابایت است؛ مدت ویدئو را کوتاه‌تر کنید.");
         }
         uploadBuffer = normalized;
         uploadFileName = path.basename(file.name, path.extname(file.name)) + ".mp4";
