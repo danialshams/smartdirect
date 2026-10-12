@@ -26,7 +26,7 @@ import { useStorageUploadLease } from "./useStorageUploadLease";
 type PublishType = "POST" | "CAROUSEL" | "REEL" | "STORY";
 type MediaType = "IMAGE" | "VIDEO";
 type LocalMedia = { file: File; type: MediaType; previewUrl: string; sortOrder: number };
-type UploadRow = { id: string; fileName: string; status: "queued" | "uploading" | "success" | "failed"; progress: number; error?: string };
+type UploadRow = { id: string; fileName: string; status: "queued" | "uploading" | "success" | "failed"; progress: number; storageKey?: string; error?: string };
 type UploadedMedia = { type: MediaType; storageKey: string; publicUrl: string; fileName: string; mimeType: string; fileSize: number; sortOrder: number };
 type Job = { id: string; type: PublishType; status: string; caption: string | null; scheduledAt: string | null; publishedAt: string | null; createdAt: string; errorMessage: string | null; media: UploadedMedia[]; instagramAccount?: { igUsername: string | null } };
 let publishingJobsCache: Job[] | null = null;
@@ -750,7 +750,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     const item = media[index];
     if (!item) return;
     uploadQueueRef.current = uploadQueueRef.current.filter((queued) => queued.previewUrl !== item.previewUrl);
-    if (activeUploadItemIdRef.current === item.previewUrl) activeUploadAbortControllerRef.current?.abort();
+    if (activeUploadItemIdRef.current === item.previewUrl) { activeUploadItemIdRef.current = null; activeUploadAbortControllerRef.current?.abort(); }
     URL.revokeObjectURL(item.previewUrl);
     setUploadRows((current) => current.filter((row) => row.id !== item.previewUrl));
     setMedia((current) => current.filter((_, i) => i !== index).map((item, i) => ({ ...item, sortOrder: i + uploadedMedia.length })));
@@ -774,6 +774,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error(result.message || "حذف فایل ناموفق بود.");
       if (type === "CAROUSEL" && currentIndex >= 0) carouselInsertAtRef.current = currentIndex;
+      setUploadRows((current) => current.filter((row) => row.storageKey !== item.storageKey));
       if (type !== "CAROUSEL") setShowUploadedMediaPreview(false);
       setUploadedMedia((current) => current.filter((m) => m.storageKey !== item.storageKey).map((m, i) => ({ ...m, sortOrder: i })));
       setError("");
@@ -820,10 +821,11 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
           });
           setMedia((current) => current.filter((candidate) => candidate.previewUrl !== item.previewUrl).map((entry, index) => ({ ...entry, sortOrder: index + uploadedMedia.length })));
           URL.revokeObjectURL(item.previewUrl);
-          setUploadRows((current) => current.map((row) => row.id === item.previewUrl ? { ...row, status: "success", progress: 100, error: undefined } : row));
+          setUploadRows((current) => current.map((row) => row.id === item.previewUrl ? { ...row, status: "success", progress: 100, storageKey: result.storageKey, error: undefined } : row));
           setError("");
           completedAny = true;
         } catch (error) {
+          if (activeUploadItemIdRef.current !== item.previewUrl) continue;
           const message = error instanceof Error ? error.message : "آپلود فایل ناموفق بود.";
           setUploadRows((current) => current.map((row) => row.id === item.previewUrl ? { ...row, status: "failed", error: message } : row));
           setError(message);
