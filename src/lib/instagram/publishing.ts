@@ -238,7 +238,7 @@ async function diagnosePublicVideoUrl(
 
     // A short signature probe cannot reveal truncated MP4s or codec/container metadata.
     // Inspect the complete file only when it is small enough for a bounded diagnostic.
-    const headLength = Number(result.headContentLength);
+    const headLength = typeof result.headContentLength === "string" ? Number(result.headContentLength) : Number.NaN;
     const maxDiagnosticBytes = 8 * 1024 * 1024;
     if (Number.isFinite(headLength) && headLength > maxDiagnosticBytes) {
       result.mp4Inspection = "SKIPPED_FILE_OVER_DIAGNOSTIC_LIMIT";
@@ -255,7 +255,8 @@ async function diagnosePublicVideoUrl(
         });
         result.fullGetStatus = fileResponse.status;
         result.fullGetContentType = fileResponse.headers.get("content-type");
-        const declaredLength = Number(fileResponse.headers.get("content-length"));
+        const declaredLengthHeader = fileResponse.headers.get("content-length");
+        const declaredLength = declaredLengthHeader ? Number(declaredLengthHeader) : Number.NaN;
         if (declaredLength > maxDiagnosticBytes) {
           result.mp4Inspection = "SKIPPED_FILE_OVER_DIAGNOSTIC_LIMIT";
           await fileResponse.body?.cancel().catch(() => undefined);
