@@ -325,9 +325,7 @@ export default function PersistentMenuManager({
 
         {!account ? (
           <section className="rounded-2xl border border-dashed border-[#CBD5E1] bg-white px-6 py-16 text-center">
-            {accountsLoading ? (
-              <DashboardLoading label="در حال دریافت گزینه‌های منوی دایرکت..." className="min-h-24" />
-            ) : (
+            {accountsLoading ? null : (
               <>
                 <Menu className="mx-auto text-[#94A3B8]" size={24} />
                 <h2 className="mt-4 text-base font-bold text-[#0F172A]">ابتدا یک پیج اینستاگرام متصل کنید</h2>
