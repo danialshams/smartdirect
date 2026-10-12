@@ -68,11 +68,11 @@ const date = (value: string | Date, options?: Intl.DateTimeFormatOptions) =>
     typeof value === "string" ? new Date(value) : value,
   );
 
-function metricValue(snapshot: Snapshot, metric: Metric) {
-  if (metric === "reach") return snapshot.reach ?? 0;
-  if (metric === "views") return snapshot.views ?? 0;
-  if (metric === "interactions") return snapshot.totalInteractions ?? 0;
-  return snapshot.accountsEngaged ?? 0;
+function metricValue(snapshot: Snapshot, metric: Metric): number | null {
+  if (metric === "reach") return snapshot.reach;
+  if (metric === "views") return snapshot.views;
+  if (metric === "interactions") return snapshot.totalInteractions;
+  return snapshot.accountsEngaged;
 }
 
 function Spinner({ label }: { label: string }) {
@@ -178,14 +178,15 @@ function Chart({ snapshots, metric }: { snapshots: Snapshot[]; metric: Metric })
   const pad = 24;
 
   const points = useMemo(() => {
-    if (!snapshots.length) return [];
-    const values = snapshots.map((s) => metricValue(s, metric));
+    const usableSnapshots = snapshots.filter((snapshot) => metricValue(snapshot, metric) != null);
+    if (!usableSnapshots.length) return [];
+    const values = usableSnapshots.map((snapshot) => metricValue(snapshot, metric) ?? 0);
     const max = Math.max(...values, 1);
     const min = Math.min(...values, 0);
     const range = Math.max(max - min, 1);
-    return snapshots.map((s, i) => {
-      const value = metricValue(s, metric);
-      const x = snapshots.length === 1 ? width / 2 : pad + (i / (snapshots.length - 1)) * (width - pad * 2);
+    return usableSnapshots.map((s, i) => {
+      const value = metricValue(s, metric) ?? 0;
+      const x = usableSnapshots.length === 1 ? width / 2 : pad + (i / (usableSnapshots.length - 1)) * (width - pad * 2);
       const y = height - 28 - ((value - min) / range) * (height - 56);
       return { x, y, value, date: s.snapshotDate };
     });
