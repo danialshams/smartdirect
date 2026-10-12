@@ -26,7 +26,89 @@ function sanitizeFileName(name: string) {
   return name.replace(/[^a-zA-Z0-9._-]/g, "-").slice(-120) || "media";
 }
 
-async function finalizeVideoUpload(input: {\n  userId: string;\n  pathname: string;\n  url: string;\n  fileName: string;\n  fileSize: number;\n  targetType: InstagramVideoTarget;\n}) {\n  const { userId, pathname, url, fileName, fileSize, targetType } = input;\n  const normalizedKey = pathname + ".normalized.mp4";\n  const existingNormalized = await prisma.instagramStorageObject.findUnique({ where: { storageKey: normalizedKey } });\n  if (existingNormalized) {\n    if (existingNormalized.userId !== userId || existingNormalized.deletedAt) {\n      throw new Error("دسترسی به فایل ویدئوی تبدیل‌شده مجاز نیست.");\n    }\n    return {\n      storageKey: existingNormalized.storageKey,\n      publicUrl: existingNormalized.publicUrl,\n      type: "VIDEO" as const,\n      fileName: path.basename(fileName, path.extname(fileName)) + ".mp4",\n      mimeType: "video/mp4",\n      fileSize,\n    };\n  }\n\n  const sourceObject = await prisma.instagramStorageObject.findUnique({ where: { storageKey: pathname } });\n  if (sourceObject && (sourceObject.userId !== userId || sourceObject.deletedAt)) {\n    throw new Error("دسترسی به فایل آپلودشده مجاز نیست.");\n  }\n  if (sourceObject?.publicUrl && sourceObject.publicUrl !== url) {\n    throw new Error("آدرس فایل آپلودشده با فایل ثبت‌شده مطابقت ندارد.");\n  }\n  if (!sourceObject) {\n    await prisma.instagramStorageObject.create({\n      data: { userId, storageKey: pathname, publicUrl: url, expiresAt: getUnlinkedUploadExpiry() },\n    });\n  }\n\n  const sourceUrl = new URL(url);\n  if (sourceUrl.protocol !== "https:" || !sourceUrl.hostname.endsWith(".public.blob.vercel-storage.com") || sourceUrl.username || sourceUrl.password) {\n    throw new Error("آدرس فایل ویدئو برای پردازش معتبر نیست.");\n  }\n  const response = await fetch(sourceUrl, { cache: "no-store", signal: AbortSignal.timeout(180_000) });\n  if (!response.ok) throw new Error("دریافت فایل ویدئو برای تبدیل ناموفق بود.");\n  const declaredLength = Number(response.headers.get("content-length") || 0);\n  if (declaredLength > MAX_VIDEO_SIZE) throw new Error("حجم فایل ویدئو بیش از حد مجاز است.");\n  const sourceBuffer = Buffer.from(await response.arrayBuffer());\n  if (!sourceBuffer.length || sourceBuffer.length > MAX_VIDEO_SIZE) throw new Error("حجم فایل ویدئو معتبر نیست.");\n\n  const normalizedBuffer = await normalizeInstagramVideo(sourceBuffer, fileName, targetType);\n  const provider = getStorageProvider();\n  const uploaded = await provider.upload({ key: normalizedKey, body: normalizedBuffer, contentType: "video/mp4" });\n  let normalizedObject;\n  try {\n    normalizedObject = await prisma.instagramStorageObject.create({\n      data: { userId, storageKey: uploaded.storageKey, publicUrl: uploaded.publicUrl, expiresAt: getUnlinkedUploadExpiry() },\n    });\n  } catch (error) {\n    await provider.delete(uploaded.storageKey).catch(() => undefined);\n    throw error;\n  }\n\n  try {\n    await provider.delete(pathname);\n    await prisma.instagramStorageObject.updateMany({\n      where: { userId, storageKey: pathname, deletedAt: null },\n      data: { deletedAt: new Date(), expiresAt: new Date() },\n    });\n  } catch (error) {\n    // Keep the original object tracked so the storage cleanup job can retry deletion.\n    console.warn("Original video cleanup deferred after normalization:", { storageKey: pathname, error });\n  }\n\n  return {\n    storageKey: normalizedObject.storageKey,\n    publicUrl: normalizedObject.publicUrl,\n    type: "VIDEO" as const,\n    fileName: path.basename(fileName, path.extname(fileName)) + ".mp4",\n    mimeType: "video/mp4",\n    fileSize: normalizedBuffer.length,\n  };\n}\nexport async function POST(request: NextRequest) {
+async function finalizeVideoUpload(input: {
+  userId: string;
+  pathname: string;
+  url: string;
+  fileName: string;
+  fileSize: number;
+  targetType: InstagramVideoTarget;
+}) {
+  const { userId, pathname, url, fileName, fileSize, targetType } = input;
+  const normalizedKey = pathname + ".normalized.mp4";
+  const existingNormalized = await prisma.instagramStorageObject.findUnique({ where: { storageKey: normalizedKey } });
+  if (existingNormalized) {
+    if (existingNormalized.userId !== userId || existingNormalized.deletedAt) {
+      throw new Error("دسترسی به فایل ویدئوی تبدیل‌شده مجاز نیست.");
+    }
+    return {
+      storageKey: existingNormalized.storageKey,
+      publicUrl: existingNormalized.publicUrl,
+      type: "VIDEO" as const,
+      fileName: path.basename(fileName, path.extname(fileName)) + ".mp4",
+      mimeType: "video/mp4",
+      fileSize,
+    };
+  }
+
+  const sourceObject = await prisma.instagramStorageObject.findUnique({ where: { storageKey: pathname } });
+  if (sourceObject && (sourceObject.userId !== userId || sourceObject.deletedAt)) {
+    throw new Error("دسترسی به فایل آپلودشده مجاز نیست.");
+  }
+  if (sourceObject?.publicUrl && sourceObject.publicUrl !== url) {
+    throw new Error("آدرس فایل آپلودشده با فایل ثبت‌شده مطابقت ندارد.");
+  }
+  if (!sourceObject) {
+    await prisma.instagramStorageObject.create({
+      data: { userId, storageKey: pathname, publicUrl: url, expiresAt: getUnlinkedUploadExpiry() },
+    });
+  }
+
+  const sourceUrl = new URL(url);
+  if (sourceUrl.protocol !== "https:" || !sourceUrl.hostname.endsWith(".public.blob.vercel-storage.com") || sourceUrl.username || sourceUrl.password) {
+    throw new Error("آدرس فایل ویدئو برای پردازش معتبر نیست.");
+  }
+  const response = await fetch(sourceUrl, { cache: "no-store", signal: AbortSignal.timeout(180_000) });
+  if (!response.ok) throw new Error("دریافت فایل ویدئو برای تبدیل ناموفق بود.");
+  const declaredLength = Number(response.headers.get("content-length") || 0);
+  if (declaredLength > MAX_VIDEO_SIZE) throw new Error("حجم فایل ویدئو بیش از حد مجاز است.");
+  const sourceBuffer = Buffer.from(await response.arrayBuffer());
+  if (!sourceBuffer.length || sourceBuffer.length > MAX_VIDEO_SIZE) throw new Error("حجم فایل ویدئو معتبر نیست.");
+
+  const normalizedBuffer = await normalizeInstagramVideo(sourceBuffer, fileName, targetType);
+  const provider = getStorageProvider();
+  const uploaded = await provider.upload({ key: normalizedKey, body: normalizedBuffer, contentType: "video/mp4" });
+  let normalizedObject;
+  try {
+    normalizedObject = await prisma.instagramStorageObject.create({
+      data: { userId, storageKey: uploaded.storageKey, publicUrl: uploaded.publicUrl, expiresAt: getUnlinkedUploadExpiry() },
+    });
+  } catch (error) {
+    await provider.delete(uploaded.storageKey).catch(() => undefined);
+    throw error;
+  }
+
+  try {
+    await provider.delete(pathname);
+    await prisma.instagramStorageObject.updateMany({
+      where: { userId, storageKey: pathname, deletedAt: null },
+      data: { deletedAt: new Date(), expiresAt: new Date() },
+    });
+  } catch (error) {
+    // Keep the original object tracked so the storage cleanup job can retry deletion.
+    console.warn("Original video cleanup deferred after normalization:", { storageKey: pathname, error });
+  }
+
+  return {
+    storageKey: normalizedObject.storageKey,
+    publicUrl: normalizedObject.publicUrl,
+    type: "VIDEO" as const,
+    fileName: path.basename(fileName, path.extname(fileName)) + ".mp4",
+    mimeType: "video/mp4",
+    fileSize: normalizedBuffer.length,
+  };
+}
+export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
@@ -124,7 +206,67 @@ async function finalizeVideoUpload(input: {\n  userId: string;\n  pathname: stri
         return NextResponse.json(jsonResponse);
       }
 
-      if (body.action === "finalize") {\n        const pathname = typeof body.pathname === "string" ? body.pathname : "";\n        const url = typeof body.url === "string" ? body.url : "";\n        const contentType = typeof body.contentType === "string" ? body.contentType : "";\n        const fileName = typeof body.fileName === "string" ? body.fileName : "media";\n        const fileSize = typeof body.fileSize === "number" ? body.fileSize : 0;\n        const targetTypeValue = body.targetType;\n        const targetType: InstagramVideoTarget = targetTypeValue === "CAROUSEL" || targetTypeValue === "STORY"\n          ? targetTypeValue\n          : "REEL";\n        const expectedPrefix = `pending/${session.user.id}/`;\n\n        if (!pathname.startsWith(expectedPrefix) || !url || !allowedContentTypes.includes(contentType) || fileSize <= 0) {\n          return NextResponse.json(\n            { success: false, message: "اطلاعات فایل آپلودشده معتبر نیست." },\n            { status: 400 },\n          );\n        }\n\n        const maxSize = contentType.startsWith("video/") ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE;\n        if (fileSize > maxSize) {\n          return NextResponse.json(\n            { success: false, message: "حجم فایل بیش از حد مجاز است." },\n            { status: 400 },\n          );\n        }\n\n        if (contentType.startsWith("video/")) {\n          const data = await finalizeVideoUpload({\n            userId: session.user.id, pathname, url, fileName, fileSize, targetType,\n          });\n          return NextResponse.json({ success: true, data });\n        }\n\n        const existing = await prisma.instagramStorageObject.findUnique({ where: { storageKey: pathname } });\n        if (existing) {\n          if (existing.userId !== session.user.id || existing.deletedAt) {\n            return NextResponse.json(\n              { success: false, message: "دسترسی به این فایل مجاز نیست." },\n              { status: 403 },\n            );\n          }\n          await prisma.instagramStorageObject.update({\n            where: { id: existing.id },\n            data: { publicUrl: existing.publicUrl || url, expiresAt: getUnlinkedUploadExpiry() },\n          });\n          return NextResponse.json({\n            success: true,\n            data: { storageKey: existing.storageKey, publicUrl: existing.publicUrl || url, type: "IMAGE", fileName, mimeType: contentType, fileSize },\n          });\n        }\n\n        await prisma.instagramStorageObject.create({\n          data: { userId: session.user.id, storageKey: pathname, publicUrl: url, expiresAt: getUnlinkedUploadExpiry() },\n        });\n        return NextResponse.json({\n          success: true,\n          data: { storageKey: pathname, publicUrl: url, type: "IMAGE", fileName, mimeType: contentType, fileSize },\n        });\n      }\n      const payload = body as {
+      if (body.action === "finalize") {
+        const pathname = typeof body.pathname === "string" ? body.pathname : "";
+        const url = typeof body.url === "string" ? body.url : "";
+        const contentType = typeof body.contentType === "string" ? body.contentType : "";
+        const fileName = typeof body.fileName === "string" ? body.fileName : "media";
+        const fileSize = typeof body.fileSize === "number" ? body.fileSize : 0;
+        const targetTypeValue = body.targetType;
+        const targetType: InstagramVideoTarget = targetTypeValue === "CAROUSEL" || targetTypeValue === "STORY"
+          ? targetTypeValue
+          : "REEL";
+        const expectedPrefix = `pending/${session.user.id}/`;
+
+        if (!pathname.startsWith(expectedPrefix) || !url || !allowedContentTypes.includes(contentType) || fileSize <= 0) {
+          return NextResponse.json(
+            { success: false, message: "اطلاعات فایل آپلودشده معتبر نیست." },
+            { status: 400 },
+          );
+        }
+
+        const maxSize = contentType.startsWith("video/") ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE;
+        if (fileSize > maxSize) {
+          return NextResponse.json(
+            { success: false, message: "حجم فایل بیش از حد مجاز است." },
+            { status: 400 },
+          );
+        }
+
+        if (contentType.startsWith("video/")) {
+          const data = await finalizeVideoUpload({
+            userId: session.user.id, pathname, url, fileName, fileSize, targetType,
+          });
+          return NextResponse.json({ success: true, data });
+        }
+
+        const existing = await prisma.instagramStorageObject.findUnique({ where: { storageKey: pathname } });
+        if (existing) {
+          if (existing.userId !== session.user.id || existing.deletedAt) {
+            return NextResponse.json(
+              { success: false, message: "دسترسی به این فایل مجاز نیست." },
+              { status: 403 },
+            );
+          }
+          await prisma.instagramStorageObject.update({
+            where: { id: existing.id },
+            data: { publicUrl: existing.publicUrl || url, expiresAt: getUnlinkedUploadExpiry() },
+          });
+          return NextResponse.json({
+            success: true,
+            data: { storageKey: existing.storageKey, publicUrl: existing.publicUrl || url, type: "IMAGE", fileName, mimeType: contentType, fileSize },
+          });
+        }
+
+        await prisma.instagramStorageObject.create({
+          data: { userId: session.user.id, storageKey: pathname, publicUrl: url, expiresAt: getUnlinkedUploadExpiry() },
+        });
+        return NextResponse.json({
+          success: true,
+          data: { storageKey: pathname, publicUrl: url, type: "IMAGE", fileName, mimeType: contentType, fileSize },
+        });
+      }
+      const payload = body as {
         fileName?: string;
         contentType?: string;
         fileSize?: number;
