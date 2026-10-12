@@ -321,6 +321,7 @@ async function uploadFileWithProgress(file: File, type: string, onProgress: Uplo
         fileName: file.name,
         contentType: file.type,
         fileSize: file.size,
+        targetType: type,
       }),
     });
     const finalizeResult = await finalizeResponse.json().catch(() => null);
