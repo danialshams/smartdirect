@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, DashboardLoading, Input } from "@/components/dashboard/DashboardUI";
-import { CheckCircle2, MessageSquare, Pencil, Trash2 } from "lucide-react";
+import { CheckCircle2, MessageCircleQuestion, MessageSquare, Pencil, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import EntryPointFlowBuilder from "./EntryPointFlowBuilder";
 
@@ -27,8 +27,10 @@ type ServerQuestion = {
 
 export default function IceBreakerManager({
   accounts,
+  accountsLoading = false,
 }: {
   accounts: InstagramAccount[];
+  accountsLoading?: boolean;
 }) {
   const account = useMemo(
     () => accounts.find((item) => item.isConnected) ?? null,
@@ -254,21 +256,30 @@ export default function IceBreakerManager({
     <>
     <div dir="rtl" className="bg-[#F8FAFC] px-3 py-4 sm:px-5 sm:py-6 lg:px-8">
       <div className="mx-auto w-full max-w-6xl">
-        <div className="mb-6">
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-[#0F172A] sm:text-3xl">
-            پیام شروع گفتگو
-          </h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-[#64748B]">
-            متنی بنویس که کاربر هنگام شروع گفتگو بتواند انتخابش کند و برای آن پاسخ اختصاصی تنظیم کن.
-          </p>
-        </div>
+        <section className="mb-6 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-5">
+          <div className="flex items-start gap-3">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#2563EB]/10 text-[#2563EB]">
+              <MessageCircleQuestion size={22} strokeWidth={2} />
+            </span>
+            <div className="min-w-0">
+              <h1 className="text-lg font-bold tracking-tight text-[#0F172A] sm:text-xl">سؤال‌های شروع گفتگو</h1>
+              <p className="mt-1.5 max-w-2xl text-xs leading-6 text-[#64748B] sm:text-sm">
+                متنی بنویس که کاربر هنگام شروع گفتگو بتواند انتخابش کند و برای آن پاسخ اختصاصی تنظیم کن.
+              </p>
+            </div>
+          </div>
+        </section>
 
         {!account ? (
           <section className="rounded-2xl border border-dashed border-[#CBD5E1] bg-white px-6 py-16 text-center">
-            <MessageSquare className="mx-auto text-[#94A3B8]" size={24} />
-            <h2 className="mt-4 text-base font-bold text-[#0F172A]">
-              ابتدا یک پیج اینستاگرام متصل کنید
-            </h2>
+            {accountsLoading ? (
+              <DashboardLoading label="در حال دریافت پیام‌های شروع گفتگو..." className="min-h-24" />
+            ) : (
+              <>
+                <MessageCircleQuestion className="mx-auto text-[#94A3B8]" size={24} />
+                <h2 className="mt-4 text-base font-bold text-[#0F172A]">ابتدا یک پیج اینستاگرام متصل کنید</h2>
+              </>
+            )}
           </section>
         ) : (
           <div className="space-y-5">
