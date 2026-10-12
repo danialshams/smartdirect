@@ -1662,15 +1662,21 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                         onChange={handleFiles}
                         onDrop={handleDrop}
                       />
+                      {type !== "CAROUSEL" && uploadSuccess && (
+                        <div className="mt-4 flex items-center justify-center gap-3 rounded-xl border border-[#BBF7D0] bg-[#F0FDF4] px-4 py-4" role="status" aria-live="polite">
+                          <UploadSuccessMark />
+                          <span className="text-sm font-semibold text-[#15803D]">آپلود با موفقیت انجام شد؛ در حال رفتن به مرحله بعد</span>
+                        </div>
+                      )}
                       {type === "CAROUSEL" && uploadRows.length > 0 && (
                         <div className="mt-4 space-y-2" aria-live="polite">
-                          {uploadRows.map((row) => {
+                          {uploadRows.map((row, rowPosition) => {
                             const slideIndex = row.storageKey ? uploadedMedia.findIndex((item) => item.storageKey === row.storageKey) : -1;
                             const slide = slideIndex >= 0 ? uploadedMedia[slideIndex] : null;
                             const isCarouselSlide = type === "CAROUSEL" && Boolean(slide);
                             return (
                               <div key={row.id} className="flex items-stretch gap-2">
-                                {isCarouselSlide && <span className="flex w-7 shrink-0 items-center justify-center self-stretch text-xs font-bold tabular-nums text-[#64748B]">{toPersianDigits(slideIndex + 1)}</span>}
+                                {type === "CAROUSEL" && <span className="flex w-7 shrink-0 items-center justify-center self-stretch text-xs font-bold tabular-nums text-[#64748B]">{toPersianDigits(slideIndex >= 0 ? slideIndex + 1 : rowPosition + 1)}</span>}
                                 <div
                                 data-slide-key={isCarouselSlide ? row.storageKey : undefined}
                                 onPointerDown={(event) => { if (isCarouselSlide && row.storageKey) beginSlidePointerDrag(event, row.storageKey); }}
