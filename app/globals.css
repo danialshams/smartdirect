@@ -266,6 +266,7 @@ body {
 }
 .dashboard-loading--fill { min-height: 100%; height: 100%; padding: 0; }
 /* Single page-level loading states occupy the available viewport area and stay vertically centered. */
+.dashboard-loading--centered { padding-block: 0 !important; }
 .dashboard-loading--page {
   min-height: calc(100dvh - 132px) !important;
   height: auto;
