@@ -341,7 +341,7 @@ function UploadSuccessMark() {
     </span>
   );
 }
-function UploadArea({ id, accept, multiple, disabled, isDragging, setIsDragging, uploading, uploadSuccess, uploadProgress, onChange, onDrop, onCancelUpload, onRetryUpload, retryAvailable, title }: any) {
+function UploadArea({ id, accept, multiple, disabled, isDragging, setIsDragging, uploading, uploadSuccess, uploadProgress, onChange, onDrop, onCancelUpload, onRetryUpload, onDismissRetry, retryAvailable, title }: any) {
   return <div onDragOver={(e: DragEvent<HTMLDivElement>) => { e.preventDefault(); setIsDragging(true) }} onDragLeave={() => setIsDragging(false)} onDrop={onDrop} className={["relative overflow-hidden rounded-xl border border-dashed p-4 transition sm:p-6", isDragging ? "border-[#2563EB] bg-[#2563EB]/5" : "border-[#CBD5E1] bg-[#F8FAFC] hover:border-[#93C5FD] hover:bg-[#EFF6FF]/50", disabled && !uploading ? "pointer-events-none opacity-60" : ""].join(" ")}>
     <Input id={id} type="file" accept={accept} multiple={multiple} onChange={onChange} disabled={disabled} className="sr-only" />
     <label htmlFor={id} className={["flex min-h-[190px] flex-col items-center justify-center text-center", uploading ? "cursor-default" : "cursor-pointer"].join(" ")}>
@@ -352,7 +352,7 @@ function UploadArea({ id, accept, multiple, disabled, isDragging, setIsDragging,
       {!uploading && !uploadSuccess && <span className="mt-1.5 whitespace-nowrap text-[11px] leading-5 text-[#64748B]">فایل را بکش و اینجا رها کن یا برای انتخاب از دستگاه کلیک کن.</span>}
       {uploading && <ProgressBar progress={uploadProgress} />}
     </label>
-    {uploading && <div className="flex justify-center"><button type="button" onClick={onCancelUpload} className="mt-3 rounded-lg px-3 py-1.5 text-xs font-semibold text-[#DC2626] hover:bg-red-50">حذف فایل در حال آپلود</button></div>}{!uploading && !uploadSuccess && retryAvailable && <div className="mt-3 rounded-xl border border-[#FECACA] bg-[#FEF2F2] p-3"><div className="flex items-center justify-between gap-2 text-xs font-bold text-[#B91C1C]"><span>آپلود ناموفق بود</span><span>{toPersianDigits(uploadProgress)}٪</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-[#FEE2E2]"><div className="h-full rounded-full bg-[#DC2626]" style={{ width: `${Math.max(3, Math.min(100, uploadProgress))}%` }} /></div><button type="button" onClick={onRetryUpload} className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#DC2626] px-3 py-2 text-xs font-bold text-white"><RotateCcw size={14} />تلاش دوباره</button></div>}
+    {uploading && <div className="flex justify-center"><button type="button" onClick={onCancelUpload} className="mt-3 rounded-lg px-3 py-1.5 text-xs font-semibold text-[#DC2626] hover:bg-red-50">حذف فایل در حال آپلود</button></div>}{!uploading && !uploadSuccess && retryAvailable && <div className="mt-3 rounded-xl border border-[#FECACA] bg-[#FEF2F2] p-3"><div className="flex items-center justify-between gap-2 text-xs font-bold text-[#B91C1C]"><span>آپلود ناموفق بود</span><span>{toPersianDigits(uploadProgress)}٪</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-[#FEE2E2]"><div className="h-full rounded-full bg-[#DC2626]" style={{ width: `${Math.max(3, Math.min(100, uploadProgress))}%` }} /></div><div className="mt-3 flex items-center justify-between gap-2"><button type="button" onClick={onRetryUpload} className="inline-flex items-center gap-1.5 rounded-lg bg-[#DC2626] px-3 py-2 text-xs font-bold text-white"><RotateCcw size={14} />تلاش دوباره</button><button type="button" onClick={onDismissRetry} aria-label="حذف فایل ناموفق و بستن تلاش مجدد" title="دیگر آپلود نکن" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#FECACA] bg-white text-[#DC2626] transition hover:bg-[#FEE2E2]"><X size={17} /></button></div></div>}
   </div>;
 }
 function MediaTile({ item, type, onRemove, ready = false, compact = false }: any) {
@@ -1363,6 +1363,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                         onDrop={handleDrop}
                         onCancelUpload={() => removeLocal(0)}
                         onRetryUpload={() => void uploadSelectedMedia(media)}
+                        onDismissRetry={() => { setError(""); removeLocal(0); }}
                         retryAvailable={Boolean(error && media.length > 0)}
                       />
 
