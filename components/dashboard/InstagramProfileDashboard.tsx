@@ -193,6 +193,8 @@ export default function InstagramProfileDashboard({
             }}
           >
             <Box
+              aria-hidden="true"
+              className="sd-profile-bubble"
               sx={{
                 position: "absolute",
                 width: 180,
@@ -207,6 +209,7 @@ export default function InstagramProfileDashboard({
             />
             <Box
               aria-hidden="true"
+              className="sd-profile-bubble"
               sx={{
                 position: "absolute",
                 width: 76,
@@ -221,6 +224,7 @@ export default function InstagramProfileDashboard({
             />
             <Box
               aria-hidden="true"
+              className="sd-profile-bubble"
               sx={{
                 position: "absolute",
                 width: 34,
@@ -344,11 +348,13 @@ function AnimatedProfileStat({
   value,
   visible,
   countDelay,
+  valueColor,
 }: {
   label: string;
   value: number | null;
   visible: boolean;
   countDelay: number;
+  valueColor: string;
 }) {
   const [displayValue, setDisplayValue] = useState(0);
 
