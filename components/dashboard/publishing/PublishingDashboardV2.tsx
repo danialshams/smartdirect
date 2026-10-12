@@ -1649,13 +1649,15 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                             const slide = slideIndex >= 0 ? uploadedMedia[slideIndex] : null;
                             const isCarouselSlide = type === "CAROUSEL" && Boolean(slide);
                             return (
-                              <div key={row.id} className="relative flex items-stretch gap-2">
+                              <SortableSlideShell
+                                key={row.id}
+                                id={row.storageKey ?? row.id}
+                                index={Math.max(0, slideIndex)}
+                                disabled={!isCarouselSlide || row.status !== "success" || Boolean(row.removing)}
+                                className="relative flex items-stretch gap-2"
+                              >
                                 {type === "CAROUSEL" && <span className="flex w-7 shrink-0 items-center justify-center self-stretch text-xs font-bold tabular-nums text-[#64748B]">{"اسلاید " + toPersianDigits(slideIndex >= 0 ? slideIndex + 1 : rowPosition + 1)}</span>}
-                                <SortableSlideShell
-                                  id={row.storageKey ?? row.id}
-                                  index={Math.max(0, slideIndex)}
-                                  disabled={!isCarouselSlide || row.status !== "success" || Boolean(row.removing)}
-                                  className={["relative flex-1 overflow-hidden rounded-xl border px-3.5 py-3 transition-[border-color,background-color,opacity] duration-150 ease-out", row.removing ? "max-h-0 -translate-y-1 !border-transparent !p-0 opacity-0" : "max-h-36 opacity-100", row.status === "failed" ? "border-[#FECACA] bg-[#FEF2F2]" : row.status === "success" ? "border-[#BBF7D0] bg-[#F0FDF4]" : "border-[#E2E8F0] bg-white", isCarouselSlide ? "cursor-grab active:cursor-grabbing" : ""].join(" ")}
+                                <div className={["relative flex-1 overflow-hidden rounded-xl border px-3.5 py-3 transition-[border-color,background-color,opacity] duration-150 ease-out", row.removing ? "max-h-0 -translate-y-1 !border-transparent !p-0 opacity-0" : "max-h-36 opacity-100", row.status === "failed" ? "border-[#FECACA] bg-[#FEF2F2]" : row.status === "success" ? "border-[#BBF7D0] bg-[#F0FDF4]" : "border-[#E2E8F0] bg-white", isCarouselSlide ? "cursor-grab active:cursor-grabbing" : ""].join(" ")}
                                 >
                                 <div className="flex items-center gap-3">
                                   {slide ? (
@@ -1686,8 +1688,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                                   {row.status === "success" && slide && <button type="button" onClick={() => void removeUploaded(slide)} aria-label="حذف اسلاید از آلبوم" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[#64748B] hover:bg-black/5 hover:text-[#DC2626]"><X size={16} /></button>}
                                   {row.status !== "success" && <button type="button" onClick={() => removeLocalById(row.id)} aria-label="حذف فایل از صف آپلود" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[#64748B] hover:bg-black/5 hover:text-[#DC2626]"><X size={16} /></button>}
                                 </div>
-                                </SortableSlideShell>
-                              </div>
+                              </SortableSlideShell>
                             );
                           })}
                             </div>
