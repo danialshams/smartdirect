@@ -58,6 +58,24 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // Video files must pass through the server-side FFmpeg normalizer. Direct-to-Blob
+  // uploads bypass transcoding and previously allowed carousel-incompatible dimensions.
+  if (request.headers.get("content-type")?.includes("application/json")) {
+    const prepareBody = await request.clone().json().catch(() => null) as Record<string, unknown> | null;
+    const fileName = typeof prepareBody?.fileName === "string" ? prepareBody.fileName : "";
+    const contentType = typeof prepareBody?.contentType === "string" ? prepareBody.contentType.toLowerCase() : "";
+    const extension = fileName.slice(fileName.lastIndexOf(".")).toLowerCase();
+    const videoExtensions = new Set([".mp4", ".mov", ".m4v", ".avi", ".mkv", ".webm", ".3gp", ".mpeg", ".mpg", ".mts", ".m2ts"]);
+    const isPrepareRequest = typeof prepareBody?.fileName === "string" &&
+      typeof prepareBody?.fileSize === "number" &&
+      !("action" in prepareBody) &&
+      !("type" in prepareBody);
+    const isVideo = contentType.startsWith("video/") ||
+      (contentType === "application/octet-stream" && videoExtensions.has(extension));
+    if (isPrepareRequest && isVideo) {
+      return NextResponse.json({ success: true, mode: "server-upload" });
+    }
+  }
   if (process.env.STORAGE_PROVIDER !== "vercel-blob") {
     return NextResponse.json({
       success: true,
