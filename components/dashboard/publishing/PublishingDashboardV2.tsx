@@ -1,8 +1,6 @@
 "use client";
 import { Button, Input } from "@/components/dashboard/DashboardUI";
 
-import { WheelPicker, type WheelPickerOption } from "@ncdai/react-wheel-picker";
-import "@ncdai/react-wheel-picker/style.css";
 import { upload as uploadToBlob } from "@vercel/blob/client";
 import { ArrowLeft, ArrowRight, CalendarClock, Camera, CheckCircle2, CircleSlash2, Clapperboard, Clock3, ImagePlus, Images, Loader2, Pencil, RotateCcw, Send, Trash2, X } from "lucide-react";
 import Link from "next/link";
@@ -348,47 +346,69 @@ async function uploadFileWithProgress(file: File, onProgress: UploadProgressCall
   }
 }
 
-function InlineWheelPicker({
-  value,
-  min,
-  max,
-  label,
-  onChange,
-}: {
-  value: number | null;
-  min: number;
-  max: number;
-  label: string;
-  onChange: (value: number) => void;
-}) {
-  const options: WheelPickerOption<number>[] = Array.from(
-    { length: max - min + 1 },
-    (_, index) => {
-      const optionValue = min + index;
-      return {
-        value: optionValue,
-        label: formatWheelValue(optionValue),
-        textValue: String(optionValue),
-      };
-    },
-  );
+function InlineWheelPicker({ value, onChange, min, max, label }: { value: number | null; onChange: (value: number) => void; min: number; max: number; label: string }) {
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const snapTimerRef = useRef<number | null>(null);
+  const [scrollTop, setScrollTop] = useState(0);
+  const [interacting, setInteracting] = useState(false);
+  const itemHeight = 44;
+  const values = Array.from({ length: max - min + 1 }, (_, index) => min + index);
+  const rows: Array<number | null> = [null, ...values];
+  const selectedIndex = value === null || value < min || value > max ? 0 : value - min + 1;
 
-  const safeValue = value !== null && value >= min && value <= max ? value : min;
+  useEffect(() => {
+    if (!scrollRef.current) return;
+    const target = selectedIndex * itemHeight;
+    if (Math.abs(scrollRef.current.scrollTop - target) > 1) scrollRef.current.scrollTo({ top: target, behavior: "smooth" });
+    setScrollTop(target);
+  }, [selectedIndex]);
+
+  useEffect(() => () => {
+    if (snapTimerRef.current) window.clearTimeout(snapTimerRef.current);
+  }, []);
+
+  const commitNearest = () => {
+    const element = scrollRef.current;
+    if (!element) return;
+    const nearestIndex = Math.max(0, Math.min(rows.length - 1, Math.round(element.scrollTop / itemHeight)));
+    const target = nearestIndex * itemHeight;
+    element.scrollTo({ top: target, behavior: "smooth" });
+    setScrollTop(target);
+    setInteracting(false);
+    if (nearestIndex === 0) return;
+    const nextValue = min + nearestIndex - 1;
+    if (value !== nextValue) onChange(nextValue);
+  };
+
+  const handleScroll = () => {
+    const element = scrollRef.current;
+    if (!element) return;
+    setInteracting(true);
+    setScrollTop(element.scrollTop);
+    if (snapTimerRef.current) window.clearTimeout(snapTimerRef.current);
+    snapTimerRef.current = window.setTimeout(commitNearest, 90);
+  };
 
   return (
-    <div className="min-w-0 flex-1">
-      <WheelPicker
-        options={options}
-        value={safeValue}
-        onValueChange={onChange}
-        visibleCount={5}
-        optionItemHeight={34}
-        classNames={{
-          optionItem: "flex items-center justify-center text-center text-base font-bold text-[#64748B]",
-          highlightWrapper: "rounded-xl border border-[#BFDBFE] bg-[#EFF6FF]",
-        }}
-      />
-      <p className="mt-1 text-center text-[10px] font-semibold text-[#64748B]">{label}</p>
+    <div className="min-w-0 select-none">
+      <div className="mb-2 text-center text-[11px] font-semibold text-[#64748B]">{label}</div>
+      <div ref={scrollRef} onScroll={handleScroll} onPointerDown={() => setInteracting(true)}
+        className="relative h-[132px] overflow-y-auto overscroll-contain rounded-xl bg-white [scrollbar-width:none] [-ms-overflow-style:none] snap-y snap-mandatory"
+        style={{ touchAction: "pan-y", WebkitOverflowScrolling: "touch" }}>
+        <div className="pointer-events-none sticky top-1/2 z-10 h-0">
+          <div className="absolute inset-x-0 -top-[22px] h-11 border-y border-[#E2E8F0]" />
+        </div>
+        <div className="h-[44px]" />
+        {rows.map((item, index) => {
+          const distance = Math.abs(scrollTop / itemHeight - index);
+          const opacity = interacting ? Math.max(0, 1 - distance * 0.62) : index === selectedIndex ? 1 : 0;
+          const isSelected = index === selectedIndex;
+          return <div key={item === null ? "placeholder" : item}
+            className={["flex h-[44px] snap-center items-center justify-center transition-opacity duration-75", isSelected ? "text-2xl font-bold text-[#0F172A]" : "text-base font-semibold text-[#94A3B8]"].join(" ")}
+            style={{ opacity }}>{item === null ? "--" : formatWheelValue(item)}</div>;
+        })}
+        <div className="h-[44px]" />
+      </div>
     </div>
   );
 }
@@ -2164,7 +2184,20 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                             <p className="text-sm font-bold text-[#0F172A]">ساعت انتشار</p>
                           </div>
 
-                          <div dir="ltr" className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
+                          <div dir="ltr" className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-2">
+                            <InlineWheelPicker
+                              value={stage6Minute}
+                              min={stage6Date && stage6Date.year === todayJalali.year && stage6Date.month === todayJalali.month && stage6Date.day === todayJalali.day && stage6Hour === officialTehranClock.hour ? officialTehranClock.minute : 0}
+                              max={59}
+                              label="دقیقه"
+                              onChange={(value) => {
+                                const isToday = stage6Date && stage6Date.year === todayJalali.year && stage6Date.month === todayJalali.month && stage6Date.day === todayJalali.day;
+                                const nextMinute = isToday && stage6Hour === officialTehranClock.hour ? Math.max(value, officialTehranClock.minute) : value;
+                                setStage6Minute(nextMinute);
+                                setError("");
+                              }}
+                            />
+                            <span className="mt-5 flex h-[132px] items-center justify-center px-0.5 text-xl font-bold leading-none text-[#64748B]" aria-hidden="true">:</span>
                             <InlineWheelPicker
                               value={stage6Hour}
                               min={stage6Date && stage6Date.year === todayJalali.year && stage6Date.month === todayJalali.month && stage6Date.day === todayJalali.day ? officialTehranClock.hour : 0}
@@ -2174,35 +2207,11 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                                 const isToday = stage6Date && stage6Date.year === todayJalali.year && stage6Date.month === todayJalali.month && stage6Date.day === todayJalali.day;
                                 const nextHour = isToday ? Math.max(value, officialTehranClock.hour) : value;
                                 setStage6Hour(nextHour);
-                                if (isToday && nextHour === officialTehranClock.hour && (stage6Minute ?? 0) < officialTehranClock.minute) {
-                                  setStage6Minute(officialTehranClock.minute);
-                                }
+                                if (isToday && nextHour === officialTehranClock.hour && (stage6Minute ?? 0) < officialTehranClock.minute) setStage6Minute(officialTehranClock.minute);
                                 setError("");
                               }}
                             />
-                            <span className="self-center translate-y-2 px-0.5 text-xl font-bold leading-none text-[#64748B]" aria-hidden="true">:</span>
-                            <InlineWheelPicker
-                              value={stage6Minute}
-                              min={
-                                stage6Date &&
-                                  stage6Date.year === todayJalali.year &&
-                                  stage6Date.month === todayJalali.month &&
-                                  stage6Date.day === todayJalali.day &&
-                                  stage6Hour === officialTehranClock.hour
-                                  ? officialTehranClock.minute
-                                  : 0
-                              }
-                              max={59}
-                              label="دقیقه"
-                              onChange={(value) => {
-                                const isToday = stage6Date && stage6Date.year === todayJalali.year && stage6Date.month === todayJalali.month && stage6Date.day === todayJalali.day;
-                                const nextMinute = isToday && stage6Hour === officialTehranClock.hour
-                                  ? Math.max(value, officialTehranClock.minute)
-                                  : value;
-                                setStage6Minute(nextMinute);
-                                setError("");
-                              }}
-                            />
+
                           </div>
 
                           <p className="mt-4 text-center text-[11px] leading-5 text-[#64748B]">برای انتخاب به بالا یا پایین بکشید</p>
