@@ -239,7 +239,7 @@ export default function AutoRepliesManager() {
   ];
 
   if (loading) {
-    return <DashboardLoading label="در حال دریافت پاسخ‌های خودکار..." className="dashboard-loading--page" />;
+    return <DashboardLoading label="در حال دریافت پاسخ‌های خودکار..." className="dashboard-loading--page dashboard-loading--centered" />;
   }
 
   return (
