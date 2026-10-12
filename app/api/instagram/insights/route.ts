@@ -359,7 +359,9 @@ export async function GET(request: NextRequest) {
       },
       select: {
         snapshotDate: true,
+        reach: true,
         views: true,
+        accountsEngaged: true,
         totalInteractions: true,
         follows: true,
         unfollows: true,
