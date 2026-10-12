@@ -158,15 +158,15 @@ export async function GET(request: NextRequest) {
                     to: analyticsStartDate,
                 },
                 summary: {
-                    reach: 0,
-                    views: 0,
-                    accountsEngaged: 0,
-                    totalInteractions: 0,
+                    reach: null,
+                    views: null,
+                    accountsEngaged: null,
+                    totalInteractions: null,
                     engagementRate: null,
                     follows: null,
                     unfollows: null,
-                    followerCount: 0,
-                    followerGrowth: 0,
+                    followerCount: null,
+                    followerGrowth: null,
                 },
                 latest: null,
                 snapshots: [],
@@ -221,9 +221,12 @@ export async function GET(request: NextRequest) {
 
         const latestSnapshot = snapshots[snapshots.length - 1] ?? null;
         const firstSnapshot = snapshots[0] ?? null;
-        const followerCount = latestSnapshot?.followerCount ?? 0;
-        const firstFollowerCount = firstSnapshot?.followerCount ?? 0;
-        const followerGrowth = followerCount - firstFollowerCount;
+        const followerCount = latestSnapshot?.followerCount ?? null;
+        const firstFollowerCount = firstSnapshot?.followerCount ?? null;
+        const followerGrowth =
+            followerCount != null && firstFollowerCount != null
+                ? followerCount - firstFollowerCount
+                : null;
 
         return NextResponse.json({
             success: true,
@@ -245,11 +248,11 @@ export async function GET(request: NextRequest) {
                 to,
             },
             summary: {
-                reach: totals.reach,
-                views: totals.views,
-                accountsEngaged: totals.accountsEngaged,
+                reach: snapshots.some((snapshot) => snapshot.reach != null) ? totals.reach : null,
+                views: snapshots.some((snapshot) => snapshot.views != null) ? totals.views : null,
+                accountsEngaged: snapshots.some((snapshot) => snapshot.accountsEngaged != null) ? totals.accountsEngaged : null,
                 engagementRate: totals.reach > 0 ? (totals.totalInteractions / totals.reach) * 100 : null,
-                totalInteractions: totals.totalInteractions,
+                totalInteractions: snapshots.some((snapshot) => snapshot.totalInteractions != null) ? totals.totalInteractions : null,
                 follows: totals.followsAvailable ? totals.follows : null,
                 unfollows: totals.unfollowsAvailable ? totals.unfollows : null,
                 followerCount,
