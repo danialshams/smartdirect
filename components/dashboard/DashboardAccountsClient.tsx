@@ -80,7 +80,7 @@ export default function DashboardAccountsClient({
     })();
   }, []);
 
-  if (loading && mode !== "inbox") {
+  if (loading && mode !== "inbox" && mode !== "ice-breaker" && mode !== "persistent-menu") {
     return (
       <DashboardLoading label="در حال دریافت پیج‌های متصل..." className="min-h-[180px]" />
     );
@@ -129,11 +129,11 @@ export default function DashboardAccountsClient({
   }
 
   if (mode === "ice-breaker") {
-    return <IceBreakerManager accounts={accounts} />;
+    return <IceBreakerManager accounts={accounts} accountsLoading={loading} />;
   }
 
   if (mode === "persistent-menu") {
-    return <PersistentMenuManager accounts={accounts} />;
+    return <PersistentMenuManager accounts={accounts} accountsLoading={loading} />;
   }
 
   return null;
