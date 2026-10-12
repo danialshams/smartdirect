@@ -104,8 +104,6 @@ function getFollowValues(data: InstagramInsightsResponse) {
 
   const breakdowns = metric?.total_value?.breakdowns ?? [];
 
-  const baseData = baseResult.data;
-
   let follows: number | null = null;
   let unfollows: number | null = null;
 
@@ -214,7 +212,7 @@ async function fetchDailyInsight(
     };
   }
 
-
+  const baseData = baseResult.data;
   let follows: number | null = null;
   let unfollows: number | null = null;
 
