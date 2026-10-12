@@ -42,6 +42,7 @@ export default function DashboardShell({
     (pathname === "/dashboard" || pathname.startsWith("/dashboard/")) &&
     !pathname.startsWith("/dashboard/inbox") &&
     !pathname.startsWith("/dashboard/publishing") &&
+    !pathname.startsWith("/dashboard/comments") &&
     pathname !== "/dashboard/insights";
 
   return (
