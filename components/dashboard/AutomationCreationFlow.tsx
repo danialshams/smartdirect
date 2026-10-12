@@ -189,8 +189,13 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     <div dir="rtl" className="min-h-[calc(100dvh-2rem)]">
       <div className="mx-auto w-full max-w-2xl">
         <div className="mb-9">
-          <Button type="button" onClick={() => router.back()} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
-            <ArrowRight size={15} strokeWidth={2} />بازگشت
+          <Button
+            type="button"
+            onClick={() => router.back()}
+            className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]"
+          >
+            <ArrowRight size={15} strokeWidth={2} />
+            بازگشت
           </Button>
         </div>
 
