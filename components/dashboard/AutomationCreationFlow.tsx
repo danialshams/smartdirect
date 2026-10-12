@@ -246,7 +246,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                 onContinue={(nextMessage) => {
                   const next = nextMessage ?? message;
                   setMessage(next);
-                  void saveAutomation(next);
+                  return saveAutomation(next);
                 }}
                 disabled={saving}
                 showFinalSave
