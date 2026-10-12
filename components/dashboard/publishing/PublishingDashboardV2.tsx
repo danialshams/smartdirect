@@ -1603,7 +1603,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   <Button
                     type="button"
                     onClick={handleBackToTypeSelection}
-                    className="!min-h-9 !h-9 !rounded-lg !px-3 !text-xs !font-semibold border border-[#BFDBFE] bg-[#EFF6FF] text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]"
+                    className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]"
                   >
                     <ArrowRight size={15} strokeWidth={2} />
                     بازگشت
@@ -1629,30 +1629,31 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   ) : (
                     <>
                       <SectionHeader n="۲" title={uploadTitle} text={uploadInstruction} />
-                      <UploadArea
-                        id="publishing-media-upload"
-                        accept={accept}
-                        multiple={type === "CAROUSEL"}
-                        title={uploadTitle}
-                        disabled={publishing || (type === "CAROUSEL" && uploadedMedia.length + media.length >= 10) || (type !== "CAROUSEL" && uploadedMedia.length + media.length >= 1)}
-                        isDragging={isDragging}
-                        setIsDragging={setIsDragging}
-                        onChange={handleFiles}
-                        onDrop={handleDrop}
-                      />
-                      {type !== "CAROUSEL" && uploading && (
-                        <div className="flex w-full flex-col items-center justify-center py-5" role="status" aria-live="polite">
-                          <Loader2 size={28} className="animate-spin text-[#2563EB]" />
-                          <p className="mt-3 text-xs font-semibold text-[#334155]">در حال آپلود محتوا...</p>
-                          <ProgressBar progress={uploadProgress} />
-                        </div>
-                      )}
-                      {type !== "CAROUSEL" && uploadSuccess && (
-                        <div className="mt-4 flex items-center justify-center gap-3 rounded-xl border border-[#BBF7D0] bg-[#F0FDF4] px-4 py-4" role="status" aria-live="polite">
-                          <UploadSuccessMark />
-                          <span className="text-sm font-semibold text-[#15803D]">آپلود با موفقیت انجام شد؛ در حال رفتن به مرحله بعد</span>
-                        </div>
-                      )}
+                      <div className="relative">
+                        <UploadArea
+                          id="publishing-media-upload"
+                          accept={accept}
+                          multiple={type === "CAROUSEL"}
+                          title={uploadTitle}
+                          disabled={publishing || (type === "CAROUSEL" && uploadedMedia.length + media.length >= 10) || (type !== "CAROUSEL" && uploadedMedia.length + media.length >= 1)}
+                          isDragging={isDragging}
+                          setIsDragging={setIsDragging}
+                          onChange={handleFiles}
+                          onDrop={handleDrop}
+                        />
+                        {type !== "CAROUSEL" && uploading && (
+                          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-xl bg-white/90 px-4 text-center" role="status" aria-live="polite">
+                            <p className="text-xs font-semibold text-[#334155]">در حال آپلود محتوا...</p>
+                            <ProgressBar progress={uploadProgress} />
+                          </div>
+                        )}
+                        {type !== "CAROUSEL" && uploadSuccess && (
+                          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 rounded-xl border border-[#BBF7D0] bg-[#F0FDF4]/95 px-4 text-center" role="status" aria-live="polite">
+                            <UploadSuccessMark />
+                            <span className="text-sm font-semibold text-[#15803D]">آپلود با موفقیت انجام شد؛ در حال رفتن به مرحله بعد</span>
+                          </div>
+                        )}
+                      </div>
                       {type === "CAROUSEL" && uploadRows.length > 0 && (
                         <DndContext
                           sensors={sensors}
