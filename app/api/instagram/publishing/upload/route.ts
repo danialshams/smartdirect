@@ -19,7 +19,7 @@ const MAX_IMAGE_SIZE = 20 * 1024 * 1024;
 const MAX_VIDEO_SIZE = 200 * 1024 * 1024;
 const MAX_AUDIO_SIZE = 25 * 1024 * 1024;
 const SAFE_AUDIO_SIZE = 24 * 1024 * 1024;
-const SAFE_VIDEO_SIZE = 200 * 1024 * 1024;
+const SAFE_VIDEO_SIZE = 100 * 1024 * 1024;
 const execFileAsync = promisify(execFile);
 
 const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
