@@ -20,7 +20,7 @@ type ContainerWaitContext = {
   fileSizeBytes?: number | null;
   mediaUrlHost?: string | null;
   mediaUrlExtension?: string | null;
-  mediaUrlHasQuery?: boolean;
+  mediaUrlHasQuery?: boolean | null;
 };
 type PublishResponse = { id?: string };
 type MediaItem = { type: "IMAGE" | "VIDEO"; publicUrl: string; sortOrder: number };
