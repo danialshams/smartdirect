@@ -1695,7 +1695,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                                     width: draggedSlide.width,
                                     zIndex: 100,
                                     margin: 0,
-                                    pointerEvents: "auto",
+                                    pointerEvents: "none",
                                     boxShadow: "0 18px 40px rgba(15, 23, 42, 0.2)",
                                     borderColor: "#93C5FD",
                                     backgroundColor: "#FFFFFF",
