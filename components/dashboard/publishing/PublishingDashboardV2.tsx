@@ -404,8 +404,8 @@ function InlineWheelPicker({
   );
 }
 
-function SortableSlideShell({ id, index, disabled, className, children }: { id: string; index: number; disabled: boolean; className: string; children: React.ReactNode }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, index, disabled });
+function SortableSlideShell({ id, disabled, className, children }: { id: string; disabled: boolean; className: string; children: React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled });
   return (
     <div
       ref={setNodeRef}
@@ -1667,7 +1667,6 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                               <SortableSlideShell
                                 key={row.id}
                                 id={row.storageKey ?? row.id}
-                                index={Math.max(0, slideIndex)}
                                 disabled={!isCarouselSlide || row.status !== "success" || Boolean(row.removing)}
                                 className="relative flex items-stretch gap-2"
                               >
