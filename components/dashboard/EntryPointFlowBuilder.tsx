@@ -19,7 +19,7 @@ type EntryPointFlowBuilderProps = {
     automationId: string | null;
     onAutomationReady: (
         automationId: string,
-    ) => void;
+    ) => void | Promise<void>;
     finalSaveLabel?: string;
     finalSaveLoadingLabel?: string;
     responseTypeTitle?: string;
@@ -729,7 +729,7 @@ export default function EntryPointFlowBuilder({
                 finalResult.data.id,
             );
 
-            onAutomationReady(
+            await onAutomationReady(
                 finalResult.data.id,
             );
 
