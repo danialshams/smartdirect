@@ -20,6 +20,12 @@ const allowedContentTypes = [
   "image/webp",
   "video/mp4",
   "video/quicktime",
+  "video/webm",
+  "video/x-matroska",
+  "video/x-msvideo",
+  "video/mpeg",
+  "video/3gpp",
+  "video/mp2t",
 ];
 
 function sanitizeFileName(name: string) {
