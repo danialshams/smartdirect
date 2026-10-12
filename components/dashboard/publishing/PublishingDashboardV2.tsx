@@ -26,7 +26,7 @@ import { useStorageUploadLease } from "./useStorageUploadLease";
 type PublishType = "POST" | "CAROUSEL" | "REEL" | "STORY";
 type MediaType = "IMAGE" | "VIDEO";
 type LocalMedia = { file: File; type: MediaType; previewUrl: string; sortOrder: number };
-type UploadRow = { id: string; fileName: string; status: "queued" | "uploading" | "success" | "failed"; progress: number; storageKey?: string; error?: string };
+type UploadRow = { id: string; fileName: string; status: "queued" | "uploading" | "success" | "failed"; progress: number; storageKey?: string; error?: string; removing?: boolean };
 type UploadedMedia = { type: MediaType; storageKey: string; publicUrl: string; fileName: string; mimeType: string; fileSize: number; sortOrder: number };
 type Job = { id: string; type: PublishType; status: string; caption: string | null; scheduledAt: string | null; publishedAt: string | null; createdAt: string; errorMessage: string | null; media: UploadedMedia[]; instagramAccount?: { igUsername: string | null } };
 let publishingJobsCache: Job[] | null = null;
@@ -74,6 +74,48 @@ async function getImageDimensions(file: File): Promise<{ width: number; height: 
   } finally {
     URL.revokeObjectURL(objectUrl);
   }
+}
+
+async function normalizeImageAspectRatio(file: File): Promise<File> {
+  const dimensions = await getImageDimensions(file);
+  const { width, height } = dimensions;
+  if (!width || !height) throw new Error("ابعاد تصویر معتبر نیست.");
+
+  const ratio = width / height;
+  if (ratio >= 0.8 && ratio <= 1.91) return file;
+
+  // Center-crop to the nearest edge of Meta's supported 4:5–1.91:1 range.
+  const targetRatio = ratio < 0.8 ? 0.8 : 1.91;
+  const cropWidth = ratio < 0.8 ? width : Math.round(height * targetRatio);
+  const cropHeight = ratio < 0.8 ? Math.round(width / targetRatio) : height;
+  const canvas = document.createElement("canvas");
+  canvas.width = cropWidth;
+  canvas.height = cropHeight;
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("امکان اصلاح خودکار تصویر وجود ندارد.");
+
+  const sourceUrl = URL.createObjectURL(file);
+  try {
+    const image = new Image();
+    await new Promise<void>((resolve, reject) => {
+      image.onload = () => resolve();
+      image.onerror = () => reject(new Error("تصویر قابل خواندن نیست."));
+      image.src = sourceUrl;
+    });
+    const sourceX = Math.max(0, Math.round((width - cropWidth) / 2));
+    const sourceY = Math.max(0, Math.round((height - cropHeight) / 2));
+    context.drawImage(image, sourceX, sourceY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+  } finally {
+    URL.revokeObjectURL(sourceUrl);
+  }
+
+  const outputType = ["image/jpeg", "image/png", "image/webp"].includes(file.type) ? file.type : "image/jpeg";
+  const blob = await new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob((result) => result ? resolve(result) : reject(new Error("تبدیل خودکار تصویر ناموفق بود.")), outputType, 0.92);
+  });
+  const extension = outputType === "image/png" ? ".png" : outputType === "image/webp" ? ".webp" : ".jpg";
+  const baseName = file.name.replace(/\.[^.]+$/, "") || "image";
+  return new File([blob], baseName + extension, { type: outputType, lastModified: Date.now() });
 }
 
 
@@ -135,7 +177,7 @@ async function uploadFileWithProgress(file: File, onProgress: UploadProgressCall
     const abortController = new AbortController();
     activeUploadAbortControllerRef.current = abortController;
     const uploadStartedAt = performance.now();
-    const uploadTimeoutMs = 60 * 1000;
+    const uploadTimeoutMs = file.type.startsWith("video/") ? 15 * 60 * 1000 : 3 * 60 * 1000;
     let uploadTimeoutId: number | null = null;
 
     try {
@@ -199,10 +241,10 @@ async function uploadFileWithProgress(file: File, onProgress: UploadProgressCall
   // in parallel and retry independently. Keep multipart limited to very large
   // videos; medium videos use a single XHR-backed PUT for transport stability.
   // The server-side client-token handler receives the same multipart flag.
-  const multipartThresholdBytes = 20 * 1024 * 1024;
-  const useMultipart =
-    file.type.startsWith("video/") && file.size >= multipartThresholdBytes;
-  const uploadTimeoutMs = useMultipart ? 15 * 60 * 1000 : 60 * 1000;
+  const multipartThresholdBytes = 8 * 1024 * 1024;
+  const isVideo = file.type.startsWith("video/");
+  const useMultipart = isVideo && file.size >= multipartThresholdBytes;
+  const uploadTimeoutMs = isVideo ? 15 * 60 * 1000 : 3 * 60 * 1000;
   const uploadStartedAt = performance.now();
   let uploadTimeoutId: number | null = null;
 
@@ -742,15 +784,9 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     for (const file of selected) {
       if (!file.type.startsWith("image/")) { validated.push(file); continue; }
       try {
-        const dimensions = await getImageDimensions(file);
-        const ratio = dimensions.width / dimensions.height;
-        if (!Number.isFinite(ratio) || ratio < 0.8 || ratio > 1.91) {
-          toast.error(`نسبت تصویر «${file.name}» برای انتشار در اینستاگرام معتبر نیست. نسبت مجاز حدود ۴:۵ تا ۱٫۹۱:۱ است.`);
-          continue;
-        }
-        validated.push(file);
-      } catch {
-        toast.error(`فایل تصویر «${file.name}» قابل خواندن نیست؛ آن را با فرمت JPG یا PNG سالم دوباره ذخیره کن.`);
+        validated.push(await normalizeImageAspectRatio(file));
+      } catch (error) {
+        toast.error(`اصلاح خودکار تصویر «${file.name}» ممکن نشد؛ لطفاً یک نسخه JPG یا PNG سالم انتخاب کن.`);
       }
     }
     } finally {
@@ -849,6 +885,12 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
           setMedia((current) => current.filter((candidate) => candidate.previewUrl !== item.previewUrl).map((entry, index) => ({ ...entry, sortOrder: index + uploadedMedia.length })));
           URL.revokeObjectURL(item.previewUrl);
           setUploadRows((current) => current.map((row) => row.id === item.previewUrl ? { ...row, status: "success", progress: 100, storageKey: result.storageKey, error: undefined } : row));
+          window.setTimeout(() => {
+            setUploadRows((current) => current.map((row) => row.id === item.previewUrl ? { ...row, removing: true } : row));
+            window.setTimeout(() => {
+              setUploadRows((current) => current.filter((row) => row.id !== item.previewUrl));
+            }, 350);
+          }, 1600);
           setError("");
           completedAny = true;
         } catch (error) {
@@ -1351,7 +1393,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   ))}
                 </div>
                 {(() => {
-                  const scheduledJobs = jobs.filter((job) => ["SCHEDULED", "FAILED", "PROCESSING", "PUBLISHING"].includes(job.status) && job.scheduledAt).sort((a, b) => new Date(a.scheduledAt!).getTime() - new Date(b.scheduledAt!).getTime());
+                  const scheduledJobs = jobs.filter((job) => ["SCHEDULED", "PROCESSING", "PUBLISHING"].includes(job.status) && job.scheduledAt).sort((a, b) => new Date(a.scheduledAt!).getTime() - new Date(b.scheduledAt!).getTime());
 
                   return (
                     <div className="mt-6 space-y-4">
@@ -1476,7 +1518,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                       {uploadRows.length > 0 && (
                         <div className="mt-4 space-y-2" aria-live="polite">
                           {uploadRows.map((row) => (
-                            <div key={row.id} className={["rounded-xl border px-3.5 py-3", row.status === "failed" ? "border-[#FECACA] bg-[#FEF2F2]" : row.status === "success" ? "border-[#BBF7D0] bg-[#F0FDF4]" : "border-[#E2E8F0] bg-white"].join(" ")}>
+                            <div key={row.id} className={["overflow-hidden rounded-xl border px-3.5 py-3 transition-all duration-300 ease-out", row.removing ? "max-h-0 -translate-y-1 !border-transparent !p-0 opacity-0" : "max-h-28 opacity-100", row.status === "failed" ? "border-[#FECACA] bg-[#FEF2F2]" : row.status === "success" ? "border-[#BBF7D0] bg-[#F0FDF4]" : "border-[#E2E8F0] bg-white"].join(" ")}>
                               <div className="flex items-center gap-3">
                                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-[#64748B] ring-1 ring-black/5">
                                   {row.status === "success" ? <CheckCircle2 size={17} className="text-[#16A34A]" /> : row.status === "failed" ? <CircleSlash2 size={17} className="text-[#DC2626]" /> : row.status === "uploading" ? <Loader2 size={17} className="animate-spin text-[#2563EB]" /> : <Images size={17} />}
