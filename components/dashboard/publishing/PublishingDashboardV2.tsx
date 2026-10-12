@@ -198,7 +198,7 @@ async function uploadFileWithProgress(file: File, onProgress: UploadProgressCall
     // Images intentionally keep the fetch transport because it was measured
     // substantially faster in production. Videos use XHR progress below so
     // the browser actually sends the PUT reliably on the affected path.
-    onProgress(10);
+    onProgress(1);
 
     const blob = await uploadToBlob(prepareResult.pathname, file, {
       access: "public",
@@ -208,7 +208,7 @@ async function uploadFileWithProgress(file: File, onProgress: UploadProgressCall
       abortSignal: abortController.signal,
       onUploadProgress: (progress) => {
         // Report actual transfer progress for images and videos.
-        const uploadProgress = Math.min(94, Math.max(1, progress.percentage * 0.94));
+        const uploadProgress = Math.max(1, Math.min(94, progress.percentage));
         onProgress(Math.round(uploadProgress));
       },
       clientPayload: JSON.stringify({
