@@ -70,7 +70,7 @@ export async function processPublishingQueueJobStep(jobId: string) {
     // Keep the Redis queue state in sync as well. Throwing here would make the
     // workflow engine retry the whole publishing step even for permanent
     // Instagram API errors such as invalid parameters.
-    const failedQueueJob = await failJob(job.id, error);
+    await failJob(job.id, error);
 
     return {
       ok: false,
