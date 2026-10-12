@@ -354,12 +354,15 @@ export async function instagramApiRequest<T = unknown>(
         contentType: response.headers.get("content-type"),
         requestId: response.headers.get("x-fb-request-id"),
         traceId: response.headers.get("x-fb-trace-id"),
-        data:
-          data && typeof data === "object"
-            ? data
-            : typeof data === "string"
-              ? data.slice(0, 1000)
-              : data,
+        // Vercel's structured log viewer collapses nested objects to "[Object]".
+        // Keep the exact parsed Meta response visible as a bounded JSON string.
+        responseBodyJson: (() => {
+          try {
+            return JSON.stringify(data).slice(0, 8000);
+          } catch {
+            return String(data).slice(0, 1000);
+          }
+        })(),
       });
 
       const details =
