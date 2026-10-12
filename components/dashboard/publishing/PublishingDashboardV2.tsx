@@ -422,7 +422,6 @@ function SortableSlideShell({ id, disabled, className, children }: { id: string;
         touchAction: disabled ? "auto" : "none",
         zIndex: isDragging ? 20 : undefined,
         position: "relative",
-        boxShadow: isDragging ? "0 14px 32px rgba(15, 23, 42, 0.16)" : undefined,
       }}
     >
       {children}
@@ -1670,7 +1669,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                                 disabled={!isCarouselSlide || row.status !== "success" || Boolean(row.removing)}
                                 className="relative flex items-stretch gap-2"
                               >
-                                {type === "CAROUSEL" && <span className="flex w-7 shrink-0 items-center justify-center self-stretch text-xs font-bold tabular-nums text-[#64748B]">{"اسلاید " + toPersianDigits(slideIndex >= 0 ? slideIndex + 1 : rowPosition + 1)}</span>}
+                                {type === "CAROUSEL" && <span className="flex shrink-0 items-center justify-center self-stretch whitespace-nowrap px-1 text-xs font-bold tabular-nums text-[#64748B]">{"اسلاید " + toPersianDigits(slideIndex >= 0 ? slideIndex + 1 : rowPosition + 1)}</span>}
                                 <div className={["relative flex-1 overflow-hidden rounded-xl border px-3.5 py-3 transition-[border-color,background-color,opacity] duration-150 ease-out", row.removing ? "max-h-0 -translate-y-1 !border-transparent !p-0 opacity-0" : "max-h-36 opacity-100", row.status === "failed" ? "border-[#FECACA] bg-[#FEF2F2]" : row.status === "success" ? "border-[#BBF7D0] bg-[#F0FDF4]" : "border-[#E2E8F0] bg-white", isCarouselSlide ? "cursor-grab active:cursor-grabbing" : ""].join(" ")}
                                 >
                                 <div className="flex items-center gap-3">
