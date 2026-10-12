@@ -26,6 +26,7 @@ import { useStorageUploadLease } from "./useStorageUploadLease";
 type PublishType = "POST" | "CAROUSEL" | "REEL" | "STORY";
 type MediaType = "IMAGE" | "VIDEO";
 type LocalMedia = { file: File; type: MediaType; previewUrl: string; sortOrder: number };
+type UploadRow = { id: string; fileName: string; status: "queued" | "uploading" | "success" | "failed"; progress: number; error?: string };
 type UploadedMedia = { type: MediaType; storageKey: string; publicUrl: string; fileName: string; mimeType: string; fileSize: number; sortOrder: number };
 type Job = { id: string; type: PublishType; status: string; caption: string | null; scheduledAt: string | null; publishedAt: string | null; createdAt: string; errorMessage: string | null; media: UploadedMedia[]; instagramAccount?: { igUsername: string | null } };
 let publishingJobsCache: Job[] | null = null;
@@ -57,6 +58,32 @@ function jalaliDateTimeToDate(date: JalaliDate, hour: number, minute: number) { 
 type UploadProgressCallback = (progress: number) => void;
 
 const activeUploadAbortControllerRef: { current: AbortController | null } = { current: null };
+
+function uploadFormDataWithProgress(url: string, formData: FormData, signal: AbortSignal, onProgress: UploadProgressCallback, timeoutMs: number): Promise<{ ok: boolean; result: any }> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", url);
+    xhr.withCredentials = true;
+    xhr.timeout = timeoutMs;
+    const abort = () => xhr.abort();
+    const cleanup = () => signal.removeEventListener("abort", abort);
+    signal.addEventListener("abort", abort, { once: true });
+    xhr.upload.onprogress = (event) => {
+      if (!event.lengthComputable || event.total <= 0) return;
+      onProgress(Math.max(1, Math.min(99, Math.round((event.loaded / event.total) * 100))));
+    };
+    xhr.onload = () => {
+      cleanup();
+      let result: any = null;
+      try { result = JSON.parse(xhr.responseText); } catch { /* invalid response */ }
+      resolve({ ok: xhr.status >= 200 && xhr.status < 300, result });
+    };
+    xhr.onerror = () => { cleanup(); reject(new Error("ارتباط هنگام آپلود فایل قطع شد.")); };
+    xhr.ontimeout = () => { cleanup(); reject(new Error("زمان مجاز آپلود به پایان رسید.")); };
+    xhr.onabort = () => { cleanup(); reject(new Error("آپلود فایل لغو شد.")); };
+    xhr.send(formData);
+  });
+}
 
 async function uploadFileWithProgress(file: File, onProgress: UploadProgressCallback) {
   const prepareStartedAt = performance.now();
@@ -105,14 +132,14 @@ async function uploadFileWithProgress(file: File, onProgress: UploadProgressCall
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch("/api/instagram/publishing/upload", {
-        method: "POST",
-        credentials: "include",
-        body: formData,
-        signal: abortController.signal,
-      });
-
-      const result = await response.json().catch(() => null);
+      const response = await uploadFormDataWithProgress(
+        "/api/instagram/publishing/upload",
+        formData,
+        abortController.signal,
+        onProgress,
+        uploadTimeoutMs,
+      );
+      const result = response.result;
 
       if (!response.ok || !result?.success || !result?.data) {
         throw new Error(result?.message || "آپلود فایل ناموفق بود.");
@@ -179,17 +206,11 @@ async function uploadFileWithProgress(file: File, onProgress: UploadProgressCall
       handleUploadUrl: "/api/instagram/publishing/upload/client",
       ...(useMultipart ? { multipart: true } : {}),
       abortSignal: abortController.signal,
-      ...(file.type.startsWith("video/")
-        ? {
-          onUploadProgress: (progress) => {
-            // Video uploads use the SDK's XHR transport. This avoids the
-            // browser fetch/CORS path that can complete the preflight but
-            // never start the actual PUT on some networks.
-            const uploadProgress = Math.min(94, Math.max(10, 10 + progress.percentage * 0.84));
-            onProgress(Math.round(uploadProgress));
-          },
-        }
-        : {}),
+      onUploadProgress: (progress) => {
+        // Report actual transfer progress for images and videos.
+        const uploadProgress = Math.min(94, Math.max(1, progress.percentage * 0.94));
+        onProgress(Math.round(uploadProgress));
+      },
       clientPayload: JSON.stringify({
         pathname: prepareResult.pathname,
         fileName: file.name,
@@ -341,18 +362,14 @@ function UploadSuccessMark() {
     </span>
   );
 }
-function UploadArea({ id, accept, multiple, disabled, isDragging, setIsDragging, uploading, uploadSuccess, uploadProgress, onChange, onDrop, onCancelUpload, onRetryUpload, onDismissRetry, retryAvailable, title }: any) {
-  return <div onDragOver={(e: DragEvent<HTMLDivElement>) => { e.preventDefault(); setIsDragging(true) }} onDragLeave={() => setIsDragging(false)} onDrop={onDrop} className={["relative overflow-hidden rounded-xl border border-dashed p-4 transition sm:p-6", isDragging ? "border-[#2563EB] bg-[#2563EB]/5" : "border-[#CBD5E1] bg-[#F8FAFC] hover:border-[#93C5FD] hover:bg-[#EFF6FF]/50", disabled && !uploading ? "pointer-events-none opacity-60" : ""].join(" ")}>
+function UploadArea({ id, accept, multiple, disabled, isDragging, setIsDragging, title, onChange, onDrop }: any) {
+  return <div onDragOver={(event: DragEvent<HTMLDivElement>) => { event.preventDefault(); setIsDragging(true); }} onDragLeave={() => setIsDragging(false)} onDrop={onDrop} className={["relative overflow-hidden rounded-xl border border-dashed p-4 transition sm:p-6", isDragging ? "border-[#2563EB] bg-[#2563EB]/5" : "border-[#CBD5E1] bg-[#F8FAFC] hover:border-[#93C5FD] hover:bg-[#EFF6FF]/50", disabled ? "pointer-events-none opacity-60" : ""].join(" ")}>
     <Input id={id} type="file" accept={accept} multiple={multiple} onChange={onChange} disabled={disabled} className="sr-only" />
-    <label htmlFor={id} className={["flex min-h-[190px] flex-col items-center justify-center text-center", uploading ? "cursor-default" : "cursor-pointer"].join(" ")}>
-      {!uploading && !uploadSuccess && <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-[#2563EB] shadow-sm ring-1 ring-[#E2E8F0]"><ImagePlus size={22} /></div>}
-      <span className={["mt-4 inline-flex min-h-6 items-center justify-center gap-2 text-sm font-bold transition-colors duration-300", uploadSuccess ? "text-[#16A34A]" : "text-[#0F172A]"].join(" ")}>
-        {uploadSuccess ? <><UploadSuccessMark /><span className="sr-only">آپلود کامل شد</span></> : uploading ? "در حال آپلود..." : title}
-      </span>
-      {!uploading && !uploadSuccess && <span className="mt-1.5 whitespace-nowrap text-[11px] leading-5 text-[#64748B]">فایل را بکش و اینجا رها کن یا برای انتخاب از دستگاه کلیک کن.</span>}
-      {uploading && <ProgressBar progress={uploadProgress} />}
+    <label htmlFor={id} className="flex min-h-[190px] cursor-pointer flex-col items-center justify-center text-center">
+      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-[#2563EB] shadow-sm ring-1 ring-[#E2E8F0]"><ImagePlus size={22} /></div>
+      <span className="mt-4 inline-flex min-h-6 items-center justify-center gap-2 text-sm font-bold text-[#0F172A]">{title}</span>
+      <span className="mt-1.5 whitespace-nowrap text-[11px] leading-5 text-[#64748B]">فایل را بکش و اینجا رها کن یا برای انتخاب از دستگاه کلیک کن.</span>
     </label>
-    {uploading && <div className="flex justify-center"><button type="button" onClick={onCancelUpload} className="mt-3 rounded-lg px-3 py-1.5 text-xs font-semibold text-[#DC2626] hover:bg-red-50">حذف فایل در حال آپلود</button></div>}{!uploading && !uploadSuccess && retryAvailable && <div className="mt-3 rounded-xl border border-[#FECACA] bg-[#FEF2F2] p-3"><div className="flex items-center justify-between gap-2 text-xs font-bold text-[#B91C1C]"><span>آپلود ناموفق بود</span><span>{toPersianDigits(uploadProgress)}٪</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-[#FEE2E2]"><div className="h-full rounded-full bg-[#DC2626]" style={{ width: `${Math.max(3, Math.min(100, uploadProgress))}%` }} /></div><div className="mt-3 flex items-center justify-between gap-2"><button type="button" onClick={onRetryUpload} className="inline-flex items-center gap-1.5 rounded-lg bg-[#DC2626] px-3 py-2 text-xs font-bold text-white"><RotateCcw size={14} />تلاش دوباره</button><button type="button" onClick={onDismissRetry} aria-label="حذف فایل ناموفق و بستن تلاش مجدد" title="دیگر آپلود نکن" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#FECACA] bg-white text-[#DC2626] transition hover:bg-[#FEE2E2]"><X size={17} /></button></div></div>}
   </div>;
 }
 function MediaTile({ item, type, onRemove, ready = false, compact = false }: any) {
@@ -368,8 +385,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const router = useRouter();
   const [accounts, setAccounts] = useState<InstagramAccount[]>(publishingAccountsCache ?? []);
   const [jobs, setJobs] = useState<Job[]>(publishingJobsCache ?? []);
-  const knownJobIdsRef = useRef(new Set<string>());
-  const previousJobsRef = useRef<Job[]>([]);
+  const knownJobIdsRef = useRef(new Set<string>((publishingJobsCache ?? []).filter((job) => ["SCHEDULED", "PROCESSING", "PUBLISHING"].includes(job.status)).map((job) => job.id)));
+  const previousJobsRef = useRef<Job[]>(publishingJobsCache ?? []);
   const [activePublishJobId, setActivePublishJobId] = useState<string | null>(null);
   const activePublishJobIdRef = useRef<string | null>(null);
   const [publishResultVisible, setPublishResultVisible] = useState(false);
@@ -422,7 +439,10 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [uploadIndex, setUploadIndex] = useState(0);
-  const uploadRunRef = useRef(0);
+  const [uploadRows, setUploadRows] = useState<UploadRow[]>([]);
+  const uploadQueueRef = useRef<LocalMedia[]>([]);
+  const uploadWorkerRunningRef = useRef(false);
+  const activeUploadItemIdRef = useRef<string | null>(null);
   const carouselInsertAtRef = useRef<number | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [loading, setLoading] = useState(publishingJobsCache === null);
@@ -473,6 +493,16 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     if (!response.ok) throw new Error("دریافت Publishing Jobs ناموفق بود.");
     const result = await response.json();
     const nextJobs: Job[] = result.data ?? [];
+    if (previousJobsRef.current.length === 0) {
+      try {
+        const stored = sessionStorage.getItem("smartdirect:publishing-jobs");
+        const cached = stored ? JSON.parse(stored) as Job[] : [];
+        if (Array.isArray(cached)) {
+          previousJobsRef.current = cached;
+          for (const job of cached) if (["SCHEDULED", "PROCESSING", "PUBLISHING"].includes(job.status)) knownJobIdsRef.current.add(job.id);
+        }
+      } catch { /* Ignore malformed browser cache and trust the server response. */ }
+    }
     const previousJobs = previousJobsRef.current;
     const previousById = new Map(previousJobs.map((job) => [job.id, job]));
     const nextById = new Map(nextJobs.map((job) => [job.id, job]));
@@ -636,7 +666,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   useEffect(() => { if (selectedAccountId) void loadResources(selectedAccountId); }, [selectedAccountId]);
 
   function revokeLocalMedia(items: LocalMedia[]) { items.forEach((item) => URL.revokeObjectURL(item.previewUrl)); }
-  function clearLocalMedia() { setMedia((current) => { revokeLocalMedia(current); return []; }); }
+  function clearLocalMedia() { uploadQueueRef.current = []; setUploadRows([]); setMedia((current) => { revokeLocalMedia(current); return []; }); }
   function resetAutomation() { setAutomationEnabled(false); setKeywords(""); setMessages([createEmptyMessage()]); setCommentReplyText(""); setLikeStoryReply(false); setRequireFollow(false); setFollowGateText("برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید."); setAutomationSetupConfirmed(false); setAutomationKeywordDraft(""); setAutomationKeywords([]); setDirectMessageText(""); setPublishingCommentReplyText(""); }
   function animateStepChange(action: () => void) {
     setStepVisible(false);
@@ -644,8 +674,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   }
   function handleTypeChange(nextType: PublishType) { animateStepChange(() => { clearLocalMedia(); setUploadedMedia([]); setType(nextType); setSelectionConfirmed(true); setCaptionStepConfirmed(false); setTagStepConfirmed(false); setAutomationChoiceStepStarted(false); setAutomationChoiceConfirmed(false); setAutomationSetupConfirmed(false); setAutomationKeywordDraft(""); setAutomationKeywords([]); setDirectMessageText(""); setShowUploadedMediaPreview(false); setTaggedUsersByMedia({}); setTagDraftByMedia({}); setTagInputError(""); onTypeChange?.(nextType); setUploadProgress(0); setUploadSuccess(false); setCaption(""); resetAutomation(); }); }
   function handleBackToTypeSelection() { animateStepChange(() => { clearLocalMedia(); setUploadedMedia([]); setSelectionConfirmed(false); setCaptionStepConfirmed(false); setTagStepConfirmed(false); setAutomationChoiceStepStarted(false); setAutomationChoiceConfirmed(false); setShowUploadedMediaPreview(false); setTaggedUsersByMedia({}); setTagDraftByMedia({}); setTagInputError(""); setUploadProgress(0); setUploadSuccess(false); setCaption(""); resetAutomation(); }); }
-  function prepareFiles(files: File[]) {
-    if (!files.length || uploading || publishing) return;
+  async function prepareFiles(files: File[]) {
+    if (!files.length || publishing) return;
     const accepted =
       type === "REEL"
         ? files.filter((file) => file.type.startsWith("video/"))
@@ -666,9 +696,13 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       return;
     }
 
-    const remaining = type === "CAROUSEL" ? Math.max(0, 10 - uploadedMedia.length) : 1;
+    const remaining = type === "CAROUSEL"
+      ? Math.max(0, 10 - uploadedMedia.length - media.length)
+      : Math.max(0, 1 - uploadedMedia.length - media.length);
     if (remaining <= 0) {
-      setError("آلبوم نمی‌تواند بیشتر از ۱۰ اسلاید داشته باشد.");
+      const message = type === "CAROUSEL" ? "آلبوم نمی‌تواند بیشتر از ۱۰ اسلاید داشته باشد." : `برای ${typeLabels[type]} فقط یک فایل مجاز است.`;
+      setError(message);
+      toast.error(message);
       return;
     }
 
@@ -678,35 +712,60 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
     const selected = accepted.slice(0, remaining);
     if (!selected.length) return;
-    if (type !== "CAROUSEL") setUploadedMedia([]);
-    clearLocalMedia();
 
-    const nextMedia = selected.map((file, index): LocalMedia => ({
+    const validated: File[] = [];
+    for (const file of selected) {
+      if (!file.type.startsWith("image/")) { validated.push(file); continue; }
+      try {
+        const bitmap = await createImageBitmap(file);
+        const ratio = bitmap.width / bitmap.height;
+        bitmap.close();
+        if (!Number.isFinite(ratio) || ratio < 0.8 || ratio > 1.91) {
+          toast.error(`نسبت تصویر «${file.name}» برای انتشار در اینستاگرام معتبر نیست. نسبت مجاز حدود ۴:۵ تا ۱٫۹۱:۱ است.`);
+          continue;
+        }
+        validated.push(file);
+      } catch {
+        toast.error(`فایل تصویر «${file.name}» قابل خواندن نیست؛ آن را با فرمت JPG یا PNG سالم دوباره ذخیره کن.`);
+      }
+    }
+    if (!validated.length) return;
+
+    const nextMedia = validated.map((file, index): LocalMedia => ({
       file,
       type: file.type.startsWith("video/") ? "VIDEO" : "IMAGE",
       previewUrl: URL.createObjectURL(file),
-      sortOrder: uploadedMedia.length + index,
+      sortOrder: uploadedMedia.length + media.length + index,
     }));
 
-    setMedia(nextMedia);
+    setMedia((current) => [...current, ...nextMedia]);
+    setUploadRows((current) => [...current, ...nextMedia.map((item) => ({ id: item.previewUrl, fileName: item.file.name, status: "queued" as const, progress: 0 }))]);
+    uploadQueueRef.current.push(...nextMedia);
     setError("");
-    window.setTimeout(() => void uploadSelectedMedia(nextMedia), 0);
+    void uploadSelectedMedia();
   }
-  function handleFiles(event: ChangeEvent<HTMLInputElement>) { const files = Array.from(event.target.files ?? []); event.target.value = ""; prepareFiles(files); }
-  function handleDrop(event: DragEvent<HTMLDivElement>) { event.preventDefault(); setIsDragging(false); prepareFiles(Array.from(event.dataTransfer.files ?? [])); }
+  function handleFiles(event: ChangeEvent<HTMLInputElement>) { const files = Array.from(event.target.files ?? []); event.target.value = ""; void prepareFiles(files); }
+  function handleDrop(event: DragEvent<HTMLDivElement>) { event.preventDefault(); setIsDragging(false); void prepareFiles(Array.from(event.dataTransfer.files ?? [])); }
   function removeLocal(index: number) {
     const item = media[index];
     if (!item) return;
-    if (uploading) {
-      uploadRunRef.current += 1;
-      activeUploadAbortControllerRef.current?.abort();
-      activeUploadAbortControllerRef.current = null;
-      setUploading(false);
-      setUploadProgress(0);
-      setUploadSuccess(false);
-    }
+    uploadQueueRef.current = uploadQueueRef.current.filter((queued) => queued.previewUrl !== item.previewUrl);
+    if (activeUploadItemIdRef.current === item.previewUrl) activeUploadAbortControllerRef.current?.abort();
     URL.revokeObjectURL(item.previewUrl);
+    setUploadRows((current) => current.filter((row) => row.id !== item.previewUrl));
     setMedia((current) => current.filter((_, i) => i !== index).map((item, i) => ({ ...item, sortOrder: i + uploadedMedia.length })));
+  }
+  function removeLocalById(id: string) {
+    const index = media.findIndex((item) => item.previewUrl === id);
+    if (index >= 0) removeLocal(index);
+  }
+  function retryLocalUpload(id: string) {
+    const item = media.find((candidate) => candidate.previewUrl === id);
+    if (!item || uploadQueueRef.current.some((queued) => queued.previewUrl === id) || activeUploadItemIdRef.current === id) return;
+    uploadQueueRef.current.push(item);
+    setUploadRows((current) => current.map((row) => row.id === id ? { ...row, status: "queued", progress: 0, error: undefined } : row));
+    setError("");
+    void uploadSelectedMedia();
   }
   async function removeUploaded(item: UploadedMedia) {
     try {
@@ -720,59 +779,78 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       setError("");
     } catch (e) { setError(e instanceof Error ? e.message : "حذف فایل ناموفق بود."); }
   }
-  async function uploadSelectedMedia(items = media) {
-    if (!selectedAccountId) { setError("اکانت فعال Instagram پیدا نشد."); return; }
-    if (!items.length) return;
-    const runId = ++uploadRunRef.current;
+  async function uploadSelectedMedia() {
+    if (uploadWorkerRunningRef.current || !uploadQueueRef.current.length) return;
+    if (!selectedAccountId) {
+      setError("اکانت فعال Instagram پیدا نشد.");
+      toast.error("اکانت فعال Instagram پیدا نشد.");
+      return;
+    }
+    uploadWorkerRunningRef.current = true;
+    setUploading(true);
+    let completedAny = false;
     try {
-      setUploading(true); setUploadSuccess(false); setError(""); setUploadProgress(0);
-      const totalBytes = items.reduce((sum, item) => sum + item.file.size, 0);
-      let completedBytes = 0; const results: UploadedMedia[] = [];
-      // Each carousel file is uploaded serially, preserving slide order.
-      for (let index = 0; index < items.length; index += 1) {
-        const item = items[index];
-        const result = await uploadFileWithProgress(item.file, (progress) => {
-          if (uploadRunRef.current !== runId) return;
-          const reported = totalBytes ? Math.min(99, Math.round(((completedBytes + item.file.size * progress / 100) / totalBytes) * 100)) : Math.min(99, progress);
-          setUploadProgress(current => Math.max(current, reported));
-        });
-        if (uploadRunRef.current !== runId) {
-          void fetch("/api/instagram/publishing/upload", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ storageKey: result.storageKey }) }).catch(() => undefined);
-          return;
+      while (uploadQueueRef.current.length) {
+        const item = uploadQueueRef.current.shift();
+        if (!item) continue;
+        activeUploadItemIdRef.current = item.previewUrl;
+        setUploadRows((current) => current.map((row) => row.id === item.previewUrl ? { ...row, status: "uploading", progress: Math.max(1, row.progress), error: undefined } : row));
+        setUploadProgress(0);
+        try {
+          const result = await uploadFileWithProgress(item.file, (progress) => {
+            if (activeUploadItemIdRef.current !== item.previewUrl) return;
+            setUploadProgress(progress);
+            setUploadRows((current) => current.map((row) => row.id === item.previewUrl ? { ...row, status: "uploading", progress: Math.max(row.progress, progress) } : row));
+          });
+          if (activeUploadItemIdRef.current !== item.previewUrl) {
+            void fetch("/api/instagram/publishing/upload", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ storageKey: result.storageKey }) }).catch(() => undefined);
+            continue;
+          }
+          setUploadedMedia((current) => {
+            const next = type !== "CAROUSEL" ? [result] : [...current];
+            if (type === "CAROUSEL") {
+              if (carouselInsertAtRef.current !== null) {
+                next.splice(Math.min(carouselInsertAtRef.current, next.length), 0, result);
+                carouselInsertAtRef.current = null;
+              } else {
+                next.push(result);
+              }
+            }
+            return next.map((entry, index) => ({ ...entry, sortOrder: index }));
+          });
+          setMedia((current) => current.filter((candidate) => candidate.previewUrl !== item.previewUrl).map((entry, index) => ({ ...entry, sortOrder: index + uploadedMedia.length })));
+          URL.revokeObjectURL(item.previewUrl);
+          setUploadRows((current) => current.map((row) => row.id === item.previewUrl ? { ...row, status: "success", progress: 100, error: undefined } : row));
+          setError("");
+          completedAny = true;
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "آپلود فایل ناموفق بود.";
+          setUploadRows((current) => current.map((row) => row.id === item.previewUrl ? { ...row, status: "failed", error: message } : row));
+          setError(message);
+          toast.error(`آپلود «${item.file.name}» ناموفق بود: ${message}`);
+        } finally {
+          if (activeUploadItemIdRef.current === item.previewUrl) activeUploadItemIdRef.current = null;
         }
-        results.push({ ...result, sortOrder: uploadedMedia.length + results.length }); completedBytes += item.file.size;
       }
-      revokeLocalMedia(items);
-      setMedia(current => current.filter(item => !items.includes(item)));
-      setUploadedMedia(current => {
-        const next = [...current];
-        if (type === "CAROUSEL" && carouselInsertAtRef.current !== null) {
-          next.splice(Math.min(carouselInsertAtRef.current, next.length), 0, ...results);
-          carouselInsertAtRef.current = null;
-        } else {
-          next.push(...results);
-        }
-        return next.map((item, index) => ({ ...item, sortOrder: index }));
-      });
-      setUploadProgress(100); setUploading(false); setUploadSuccess(true);
-      if (type !== "CAROUSEL") {
+    } finally {
+      uploadWorkerRunningRef.current = false;
+      setUploading(false);
+      if (completedAny && type !== "CAROUSEL") {
+        setUploadSuccess(true);
+        setUploadProgress(100);
         window.setTimeout(() => {
           animateStepChange(() => {
             setCaptionStepConfirmed(true);
             setShowUploadedMediaPreview(false);
             setUploadSuccess(false);
             setUploadProgress(0);
+            setUploadRows([]);
           });
         }, 700);
       } else {
-        window.setTimeout(() => {
-          setUploadSuccess(false);
-          setUploadProgress(0);
-        }, 700);
+        setUploadSuccess(false);
+        setUploadProgress(0);
       }
-    } catch (e) {
-      if (uploadRunRef.current !== runId) return;
-      setUploading(false); setUploadSuccess(false); setError(e instanceof Error ? e.message : "آپلود فایل ناموفق بود.");
     }
   }
 
@@ -1244,7 +1322,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   ))}
                 </div>
                 {(() => {
-                  const scheduledJobs = jobs.filter((job) => job.status === "SCHEDULED" && job.scheduledAt);
+                  const scheduledJobs = jobs.filter((job) => ["SCHEDULED", "FAILED", "PROCESSING", "PUBLISHING"].includes(job.status) && job.scheduledAt).sort((a, b) => new Date(a.scheduledAt!).getTime() - new Date(b.scheduledAt!).getTime());
 
                   return (
                     <div className="mt-6 space-y-4">
@@ -1283,8 +1361,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                               <Clock3 size={17} className="animate-pulse" />
                             </span>
                             <div>
-                              <h2 className="text-sm font-bold text-[#0F172A]">محتواهای در حال انتشار</h2>
-                              <p className="mt-1 text-[11px] text-[#64748B]">محتواهای زمان‌دار در این بخش منتظر انتشار هستند و از همینجا قابل ویرایش‌اند.</p>
+                              <h2 className="text-sm font-bold text-[#0F172A]">وضعیت محتواهای زمان‌بندی‌شده</h2>
+                              <p className="mt-1 text-[11px] text-[#64748B]">محتوای منتظر انتشار، در حال پردازش و ناموفق در این بخش باقی می‌ماند.</p>
                             </div>
                           </div>
                           <div className="space-y-2">
@@ -1298,10 +1376,12 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                                   ) : null}
                                   <div className="min-w-0">
                                     <span className="text-sm font-bold text-[#0F172A]">{typeLabels[job.type]}</span>
-                                    <span className="mr-2 text-xs font-semibold text-[#2563EB]">{formatScheduledLabel(new Date(job.scheduledAt!))}</span>
+                                    <span className={["mr-2 text-xs font-semibold", job.status === "FAILED" ? "text-[#DC2626]" : job.status === "SCHEDULED" ? "text-[#2563EB]" : "text-[#D97706]"].join(" ")}>{statusLabels[job.status]}</span>
+                                    <p className="mt-1 text-xs text-[#64748B]">{formatScheduledLabel(new Date(job.scheduledAt!))}</p>
+                                    {job.status === "FAILED" && job.errorMessage && <p className="mt-2 text-xs leading-5 text-[#B91C1C]">{job.errorMessage}</p>}
                                   </div>
                                 </div>
-                                <Link
+                                {job.status === "SCHEDULED" ? <Link
                                   href={`/dashboard/publishing/${job.id}`}
                                   prefetch
                                   onPointerEnter={() => router.prefetch(`/dashboard/publishing/${job.id}`)}
@@ -1309,7 +1389,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                                   onTouchStart={() => router.prefetch(`/dashboard/publishing/${job.id}`)}
                                   className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-[#BFDBFE] bg-white px-2.5 text-xs font-semibold text-[#2563EB] no-underline hover:bg-[#EFF6FF] sm:flex-none"
                                   aria-label="ویرایش محتوا"
-                                ><Pencil size={14} /><span className="hidden sm:inline">ویرایش</span></Link>
+                                ><Pencil size={14} /><span className="hidden sm:inline">ویرایش</span></Link> : <Link href={`/dashboard/publishing/${job.id}`} className="inline-flex h-9 shrink-0 items-center justify-center rounded-lg border border-[#E2E8F0] bg-white px-3 text-xs font-semibold text-[#475569] no-underline hover:bg-[#F8FAFC]">جزئیات</Link>}
                               </div>
                             ))}
                           </div>
@@ -1358,19 +1438,39 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                         accept={accept}
                         multiple={type === "CAROUSEL"}
                         title={uploadTitle}
-                        disabled={uploading || publishing || (type === "CAROUSEL" && uploadedMedia.length >= 10)}
+                        disabled={publishing || (type === "CAROUSEL" && uploadedMedia.length + media.length >= 10) || (type !== "CAROUSEL" && uploadedMedia.length + media.length >= 1)}
                         isDragging={isDragging}
                         setIsDragging={setIsDragging}
-                        uploading={uploading}
-                        uploadSuccess={uploadSuccess}
-                        uploadProgress={uploadProgress}
                         onChange={handleFiles}
                         onDrop={handleDrop}
-                        onCancelUpload={() => removeLocal(0)}
-                        onRetryUpload={() => void uploadSelectedMedia(media)}
-                        onDismissRetry={() => { setError(""); removeLocal(0); }}
-                        retryAvailable={Boolean(error && media.length > 0)}
                       />
+                      {uploadRows.length > 0 && (
+                        <div className="mt-4 space-y-2" aria-live="polite">
+                          {uploadRows.map((row) => (
+                            <div key={row.id} className={["rounded-xl border px-3.5 py-3", row.status === "failed" ? "border-[#FECACA] bg-[#FEF2F2]" : row.status === "success" ? "border-[#BBF7D0] bg-[#F0FDF4]" : "border-[#E2E8F0] bg-white"].join(" ")}>
+                              <div className="flex items-center gap-3">
+                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-[#64748B] ring-1 ring-black/5">
+                                  {row.status === "success" ? <CheckCircle2 size={17} className="text-[#16A34A]" /> : row.status === "failed" ? <CircleSlash2 size={17} className="text-[#DC2626]" /> : row.status === "uploading" ? <Loader2 size={17} className="animate-spin text-[#2563EB]" /> : <Images size={17} />}
+                                </span>
+                                <div className="min-w-0 flex-1">
+                                  <p className="truncate text-xs font-semibold text-[#0F172A]" dir="auto">{row.fileName}</p>
+                                  <p className={["mt-1 text-[11px] font-medium", row.status === "failed" ? "text-[#B91C1C]" : row.status === "success" ? "text-[#15803D]" : "text-[#64748B]"].join(" ")}>
+                                    {row.status === "queued" ? "در صف آپلود" : row.status === "uploading" ? `در حال آپلود · ${toPersianDigits(row.progress)}٪` : row.status === "success" ? "آپلود با موفقیت انجام شد" : "آپلود ناموفق بود"}
+                                  </p>
+                                  {(row.status === "queued" || row.status === "uploading" || row.status === "failed") && (
+                                    <div className={["mt-2 h-1.5 overflow-hidden rounded-full", row.status === "failed" ? "bg-[#FEE2E2]" : "bg-[#E2E8F0]"].join(" ")}>
+                                      <div className={["h-full rounded-full transition-[width] duration-150", row.status === "failed" ? "bg-[#DC2626]" : "bg-[#2563EB]"].join(" ")} style={{ width: `${Math.max(row.status === "failed" ? 3 : 0, Math.min(100, row.progress))}%` }} />
+                                    </div>
+                                  )}
+                                  {row.error && <p className="mt-2 text-[11px] leading-5 text-[#B91C1C]">{row.error}</p>}
+                                </div>
+                                {row.status === "failed" && <button type="button" onClick={() => retryLocalUpload(row.id)} className="inline-flex h-9 shrink-0 items-center gap-1 rounded-lg bg-[#DC2626] px-2.5 text-[11px] font-bold text-white"><RotateCcw size={13} />تلاش دوباره</button>}
+                                {row.status !== "success" && <button type="button" onClick={() => removeLocalById(row.id)} aria-label="حذف فایل از صف آپلود" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[#64748B] hover:bg-black/5 hover:text-[#DC2626]"><X size={16} /></button>}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
 
                       {type === "CAROUSEL" && uploadedMedia.length > 0 && (
                         <div className="mt-5">
@@ -1884,7 +1984,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                                 setError("");
                               }}
                             />
-                            <span className="self-center px-0.5 text-xl font-bold leading-none text-[#64748B]" aria-hidden="true">:</span>
+                            <span className="self-center translate-y-2 px-0.5 text-xl font-bold leading-none text-[#64748B]" aria-hidden="true">:</span>
                             <InlineWheelPicker
                               value={stage6Minute}
                               min={
@@ -1913,7 +2013,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                         </div>
 
                         <div className="mt-5 border-t border-[#E2E8F0] pt-5">
-                          <Button type="button" onClick={() => void createJob(false)} disabled={publishing || !stage6Date || stage6Hour === null || stage6Minute === null} className="min-h-11 w-full rounded-xl bg-[#2563EB] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#1D4ED8] active:!bg-transparent active:!text-[#2563EB] focus:!bg-transparent focus:!text-[#2563EB] focus-visible:!bg-transparent focus-visible:!text-[#2563EB] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[#2563EB]">
+                          <Button type="button" onClick={() => void createJob(false)} disabled={publishing || !stage6Date || stage6Hour === null || stage6Minute === null} className="min-h-11 w-full rounded-xl bg-[#2563EB] px-4 text-sm font-semibold text-white shadow-none hover:!bg-transparent hover:!text-[#2563EB] hover:shadow-none active:!bg-transparent active:!text-[#2563EB] active:shadow-none focus:!bg-transparent focus:!text-[#2563EB] focus:shadow-none focus-visible:!bg-transparent focus-visible:!text-[#2563EB] focus-visible:shadow-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:!bg-[#2563EB]">
                             <span dir="ltr" className="inline-flex flex-row items-center gap-2">{publishing ? <Loader2 size={17} className="animate-spin" /> : <CalendarClock size={17} />}<span dir="rtl">انتشار در زمان انتخاب‌شده</span></span>
                           </Button>
                         </div>
