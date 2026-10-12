@@ -23,6 +23,11 @@ export async function normalizeInstagramVideo(
   const outputPath = path.join(tempDir, "normalized.mp4");
 
   try {
+    console.info("[Instagram Video Normalizer] started", {
+      fileName: path.basename(fileName),
+      inputBytes: inputBuffer.length,
+      targetType,
+    });
     await writeFile(inputPath, inputBuffer);
 
     // Feed carousel videos use a 4:5 canvas; Reels and Stories use 9:16.
@@ -62,6 +67,13 @@ export async function normalizeInstagramVideo(
       throw new Error("حجم ویدئو پس از بهینه‌سازی هنوز بیش از 100 مگابایت است؛ مدت ویدئو را کوتاه‌تر کنید.");
     }
 
+    console.info("[Instagram Video Normalizer] completed", {
+      fileName: path.basename(fileName),
+      targetType,
+      outputWidth: canvas.width,
+      outputHeight: canvas.height,
+      outputBytes: normalized.length,
+    });
     return normalized;
   } catch (error) {
     if (error instanceof Error && error.message.includes("100 مگابایت")) throw error;
