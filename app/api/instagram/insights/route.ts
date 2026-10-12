@@ -11,7 +11,9 @@ const INSTAGRAM_API_VERSION = "v26.0";
 const REQUEST_TIMEOUT_MS = 15000;
 
 const INSIGHT_METRICS = [
+  "reach",
   "views",
+  "accounts_engaged",
   "total_interactions",
   "follows_and_unfollows",
 ] as const;
@@ -157,7 +159,10 @@ async function fetchDailyInsight(
     `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${igUserId}/insights`,
   );
 
-  baseUrl.searchParams.set("metric", "views,total_interactions");
+  baseUrl.searchParams.set(
+    "metric",
+    "reach,views,accounts_engaged,total_interactions",
+  );
   baseUrl.searchParams.set("period", "day");
   baseUrl.searchParams.set("metric_type", "total_value");
   baseUrl.searchParams.set("since", String(Math.floor(start.getTime() / 1000)));
@@ -208,7 +213,9 @@ async function fetchDailyInsight(
 
   return {
     snapshotDate: start,
+    reach: getMetricNumber(baseResult.data, "reach"),
     views: getMetricNumber(baseResult.data, "views"),
+    accountsEngaged: getMetricNumber(baseResult.data, "accounts_engaged"),
     totalInteractions: getMetricNumber(
       baseResult.data,
       "total_interactions",
@@ -372,7 +379,9 @@ export async function GET(request: NextRequest) {
       // optional because Meta may omit that metric for smaller accounts.
       return (
         !existing ||
+        existing.reach == null ||
         existing.views == null ||
+        existing.accountsEngaged == null ||
         existing.totalInteractions == null
       );
     });
@@ -459,14 +468,20 @@ export async function GET(request: NextRequest) {
         create: {
           instagramAccountId: instagramAccount.id,
           snapshotDate: item.snapshotDate,
+          reach: item.reach,
           views: item.views,
+          accountsEngaged: item.accountsEngaged,
           totalInteractions: item.totalInteractions,
           follows: item.follows,
           unfollows: item.unfollows,
           followerCount: isToday ? followerCount : null,
         },
         update: {
+          ...(item.reach !== null ? { reach: item.reach } : {}),
           ...(item.views !== null ? { views: item.views } : {}),
+          ...(item.accountsEngaged !== null
+            ? { accountsEngaged: item.accountsEngaged }
+            : {}),
           ...(item.totalInteractions !== null
             ? { totalInteractions: item.totalInteractions }
             : {}),
