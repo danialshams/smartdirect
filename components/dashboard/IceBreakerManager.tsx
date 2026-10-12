@@ -271,16 +271,14 @@ export default function IceBreakerManager({
         </section>
 
         {!account ? (
-          <section className="rounded-2xl border border-dashed border-[#CBD5E1] bg-white px-6 py-16 text-center">
-            {accountsLoading ? (
-              <DashboardLoading label="در حال دریافت پیج‌های متصل..." className="min-h-[50vh] w-full justify-center" />
-            ) : (
-              <>
-                <MessageCircleQuestion className="mx-auto text-[#94A3B8]" size={24} />
-                <h2 className="mt-4 text-base font-bold text-[#0F172A]">ابتدا یک پیج اینستاگرام متصل کنید</h2>
-              </>
-            )}
-          </section>
+          accountsLoading ? (
+            <DashboardLoading label="در حال دریافت پیام‌های شروع گفتگو..." className="dashboard-loading--page mt-6 w-full" />
+          ) : (
+            <section className="rounded-2xl border border-dashed border-[#CBD5E1] bg-white px-6 py-16 text-center">
+              <MessageCircleQuestion className="mx-auto text-[#94A3B8]" size={24} />
+              <h2 className="mt-4 text-base font-bold text-[#0F172A]">ابتدا یک پیج اینستاگرام متصل کنید</h2>
+            </section>
+          )
         ) : (
           <div className="space-y-5">
             <section className="mx-auto w-full max-w-2xl rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
