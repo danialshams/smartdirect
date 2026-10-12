@@ -12,6 +12,7 @@ import { getStorageProvider } from "@/lib/storage/provider";
 import { prisma } from "@/lib/prisma";
 import { getUnlinkedUploadExpiry } from "@/lib/instagram/publishing-media-cleanup";
 import { isStorageObjectReferenced } from "@/lib/instagram/storage-references";
+import { normalizeInstagramVideo } from "@/lib/instagram/video-normalizer";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +20,6 @@ const MAX_IMAGE_SIZE = 20 * 1024 * 1024;
 const MAX_VIDEO_SIZE = 200 * 1024 * 1024;
 const MAX_AUDIO_SIZE = 25 * 1024 * 1024;
 const SAFE_AUDIO_SIZE = 24 * 1024 * 1024;
-const SAFE_VIDEO_SIZE = 100 * 1024 * 1024;
 const execFileAsync = promisify(execFile);
 
 const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -75,44 +75,8 @@ export async function POST(request: NextRequest) {
     let uploadContentType = file.type;
 
     if (isVideo) {
-      if (!ffmpegPath) throw new Error("FFmpeg در سرور در دسترس نیست؛ تبدیل ویدئو انجام نشد.");
-      const tempDir = await mkdtemp(path.join(os.tmpdir(), "smartdirect-video-"));
-      const inputPath = path.join(tempDir, "input" + (fileExtension || ".video"));
-      const outputPath = path.join(tempDir, "normalized.mp4");
       try {
-        await writeFile(inputPath, uploadBuffer);
-        // Carousel video items use a 4:5 portrait canvas; Reels and Stories use 9:16.
-        // Fit the full source inside the canvas instead of cropping away user content.
-        const canvas = targetType === "CAROUSEL" ? { width: 1080, height: 1350 } : { width: 1080, height: 1920 };
-        const videoFilter = [
-          "scale=" + canvas.width + ":" + canvas.height + ":force_original_aspect_ratio=decrease:force_divisible_by=2",
-          "pad=" + canvas.width + ":" + canvas.height + ":(ow-iw)/2:(oh-ih)/2:color=black",
-          "setsar=1",
-          "fps=30",
-        ].join(",");
-        let normalized: Buffer | null = null;
-        // Reduce bitrate progressively to meet the storage/publishing size budget automatically.
-        for (const crf of ["23", "26", "29", "32"]) {
-          await rm(outputPath, { force: true });
-          await execFileAsync(ffmpegPath, [
-            "-hide_banner", "-loglevel", "error", "-y",
-            "-i", inputPath,
-            "-map", "0:v:0", "-map", "0:a:0?",
-            "-map_metadata", "-1",
-            "-vf", videoFilter,
-            "-c:v", "libx264", "-preset", "veryfast", "-crf", crf, "-flags", "+cgop", "-x264-params", "open-gop=0",
-            "-maxrate", "5M", "-bufsize", "10M", "-pix_fmt", "yuv420p",
-            "-c:a", "aac", "-b:a", "128k", "-ar", "48000", "-ac", "2",
-            "-sn", "-dn", "-movflags", "+faststart", "-f", "mp4", outputPath,
-          ], { timeout: 600000, maxBuffer: 8 * 1024 * 1024 });
-          normalized = await readFile(outputPath);
-          if (normalized.length <= SAFE_VIDEO_SIZE) break;
-        }
-        if (!normalized?.length) throw new Error("تبدیل ویدئو خروجی خالی تولید کرد.");
-        if (normalized.length > SAFE_VIDEO_SIZE) {
-          throw new Error("حجم ویدئو پس از بهینه‌سازی هنوز بیش از 100 مگابایت است؛ مدت ویدئو را کوتاه‌تر کنید.");
-        }
-        uploadBuffer = normalized;
+        uploadBuffer = await normalizeInstagramVideo(uploadBuffer, file.name, targetType);
         uploadFileName = path.basename(file.name, path.extname(file.name)) + ".mp4";
         uploadContentType = "video/mp4";
       } catch (error) {
@@ -121,14 +85,9 @@ export async function POST(request: NextRequest) {
           inputSize: file.size,
           error: error instanceof Error ? error.message : String(error),
         });
-        throw new Error(error instanceof Error && (error.message.includes("200 مگابایت") || error.message.includes("100 مگابایت"))
-          ? error.message
-          : "تبدیل ویدئو به فرمت سازگار با Instagram ناموفق بود. فایل ویدئو را بررسی کنید و دوباره تلاش کنید.");
-      } finally {
-        await rm(tempDir, { recursive: true, force: true }).catch(() => undefined);
+        throw error;
       }
     }
-
     if (isAudio) {
       if (!ffmpegPath) throw new Error("FFmpeg در سرور در دسترس نیست.");
       const tempDir = await mkdtemp(path.join(os.tmpdir(), "smartdirect-audio-"));
