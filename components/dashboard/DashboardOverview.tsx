@@ -115,11 +115,13 @@ export default function DashboardOverview({
               alignItems: "center",
               justifyContent: "flex-start",
               gap: 0.75,
-              fontSize: { xs: 14, sm: 17, md: 19 },
+              fontSize: { xs: 12, sm: 15, md: 19 },
               fontWeight: 600,
               letterSpacing: "-0.025em",
-              color: "#0F172A",
+              color: "#2563EB",
               whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
               lineHeight: 1.4,
             }}
           >
