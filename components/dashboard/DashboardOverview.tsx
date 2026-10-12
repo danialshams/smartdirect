@@ -6,8 +6,6 @@ import {
   Button,
   Typography,
 } from "@mui/material";
-import { Heart } from "lucide-react";
-
 import InstagramProfileDashboard from "./InstagramProfileDashboard";
 
 type InstagramAccount = {
@@ -110,23 +108,33 @@ export default function DashboardOverview({
           <Typography
             component="h1"
             sx={{
+              display: "block",
               width: "100%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "flex-start",
-              gap: 0.75,
-              fontSize: { xs: 12, sm: 15, md: 19 },
-              fontWeight: 600,
-              letterSpacing: "-0.025em",
-              color: "#2563EB",
+              minWidth: 0,
+              m: 0,
+              fontSize: { xs: 13, sm: 15, md: 19 },
+              fontWeight: 700,
+              letterSpacing: "-0.02em",
+              color: "#6D28D9",
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
-              lineHeight: 1.4,
+              lineHeight: 1.5,
             }}
           >
-            <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>{"سلام " + user.name + "، به پنل خودت خوش اومدی"}</span>
-            <Heart aria-hidden="true" size={16} strokeWidth={2.2} fill="currentColor" style={{ flexShrink: 0 }} />
+            <Box
+              component="span"
+              sx={{
+                display: "block",
+                width: "100%",
+                minWidth: 0,
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {"سلام " + user.name + "، به پنل خودت خوش اومدی"}
+            </Box>
           </Typography>
         </Box>
       </Box>
