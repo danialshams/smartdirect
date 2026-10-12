@@ -6,7 +6,6 @@ import { publishInstagramJob } from "@/lib/instagram/publishing";
 import type { QueueJob } from "@/lib/queue/types";
 import { enterObservabilityContext } from "@/lib/observability/context";
 import { observabilityLogger } from "@/lib/observability/logger";
-import { cleanupInstagramPublishStorage, deletePublishMediaStorage } from "@/lib/instagram/publishing-media-cleanup";
 
 export async function processPublishingQueueJobStep(jobId: string) {
   "use step";
@@ -72,24 +71,6 @@ export async function processPublishingQueueJobStep(jobId: string) {
     // workflow engine retry the whole publishing step even for permanent
     // Instagram API errors such as invalid parameters.
     const failedQueueJob = await failJob(job.id, error);
-
-    if (
-      failedQueueJob?.status === "failed" &&
-      job.type === "PUBLISH"
-    ) {
-      try {
-        const publishingJob = await prisma.instagramPublishJob.findUnique({
-          where: { id: (job as QueueJob<"PUBLISH">).payload.publishingJobId },
-          select: { media: { where: { deletedAt: null }, select: { id: true, storageKey: true, publicUrl: true, deletedAt: true } } },
-        });
-
-        if (publishingJob?.media.length) {
-          await deletePublishMediaStorage(publishingJob.media);
-        }
-      } catch (cleanupError) {
-        console.error("Final publishing media cleanup failed:", cleanupError);
-      }
-    }
 
     return {
       ok: false,
