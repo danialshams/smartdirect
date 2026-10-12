@@ -323,9 +323,21 @@ async function diagnosePublicVideoUrl(
               cursor += boxSize;
             }
             if (cursor !== bytes.length) malformed = true;
-            const ascii = asciiAt(0, bytes.length);
+            const containsAscii = (needle: string) => {
+              for (let start = 0; start <= bytes.length - needle.length; start++) {
+                let match = true;
+                for (let index = 0; index < needle.length; index++) {
+                  if (bytes[start + index] !== needle.charCodeAt(index)) {
+                    match = false;
+                    break;
+                  }
+                }
+                if (match) return true;
+              }
+              return false;
+            };
             const codecs = ["avc1", "avc3", "hvc1", "hev1", "mp4a", "ac-3", "ec-3", "Opus"]
-              .filter((codec) => ascii.includes(codec));
+              .filter(containsAscii);
             result.mp4Inspection = "COMPLETED";
             result.mp4BytesRead = bytes.length;
             result.mp4DeclaredLengthMatches = !Number.isFinite(declaredLength) || declaredLength === bytes.length;
