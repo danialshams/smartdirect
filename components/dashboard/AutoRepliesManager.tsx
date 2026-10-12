@@ -55,6 +55,7 @@ type ReplyItem = {
   type: PublishType;
   date: string | null;
   previewUrl: string | null;
+  previewKind: "image" | "video" | null;
   title: string;
   subtitle: string;
   href: string;
@@ -116,7 +117,10 @@ export default function AutoRepliesManager() {
         const account = (Array.isArray(accountsResult.accounts) ? accountsResult.accounts : [])
           .find((item: { isConnected: boolean }) => item.isConnected);
         if (!account) {
-          if (!cancelled) setItems([]);
+          if (!cancelled) {
+            setItems([]);
+            setError("پیج اینستاگرام متصل نیست.");
+          }
           return;
         }
 
@@ -137,12 +141,13 @@ export default function AutoRepliesManager() {
         const storiesResult = storiesResponse?.ok ? await storiesResponse.json().catch(() => null) : null;
         const jobsResult = jobsResponse?.ok ? await jobsResponse.json().catch(() => null) : null;
 
-        const mediaById = new Map<string, { type: PublishType; date: string | null; previewUrl: string | null }>();
+        const mediaById = new Map<string, { type: PublishType; date: string | null; previewUrl: string | null; previewKind: "image" | "video" | null }>();
         for (const media of (Array.isArray(mediaResult?.data) ? mediaResult.data : []) as InstagramMedia[]) {
           mediaById.set(media.id, {
             type: getMediaType(media),
             date: media.timestamp ?? null,
             previewUrl: media.thumbnail_url || media.media_url || null,
+            previewKind: media.thumbnail_url || media.media_type !== "VIDEO" ? "image" : "video",
           });
         }
         for (const story of (Array.isArray(storiesResult?.data) ? storiesResult.data : []) as Story[]) {
@@ -150,6 +155,7 @@ export default function AutoRepliesManager() {
             type: "STORY",
             date: story.timestamp ?? null,
             previewUrl: story.thumbnailUrl || story.mediaUrl || null,
+            previewKind: story.thumbnailUrl || story.mediaType !== "VIDEO" ? "image" : "video",
           });
         }
 
@@ -179,6 +185,7 @@ export default function AutoRepliesManager() {
             type: media?.type ?? (isStory ? "STORY" : "UNKNOWN"),
             date: media?.date ?? automation.createdAt,
             previewUrl: media?.previewUrl ?? null,
+            previewKind: media?.previewKind ?? null,
             title: isStory ? "پاسخ خودکار استوری" : "پاسخ خودکار کامنت",
             subtitle: normalizeKeywordList(automation.keyword) || "بدون کلمه کلیدی",
             href: isStory
@@ -196,6 +203,7 @@ export default function AutoRepliesManager() {
             type: job.type,
             date: job.publishedAt ?? job.createdAt,
             previewUrl: job.media[0]?.publicUrl ?? null,
+            previewKind: job.media[0]?.type === "VIDEO" ? "video" : job.media[0]?.type === "IMAGE" ? "image" : null,
             title: isStory ? "پاسخ خودکار استوری" : "پاسخ خودکار کامنت",
             subtitle: normalizeKeywordList(isStory ? job.storyReplyTriggerKeywords : job.commentTriggerKeywords) ||
               (job.caption?.trim() || "پاسخ خودکار محتوای منتشرشده"),
@@ -288,8 +296,8 @@ export default function AutoRepliesManager() {
                   <div className="flex min-w-0 flex-1 items-center gap-3">
                     {item.previewUrl ? (
                       <div className="h-16 w-12 shrink-0 overflow-hidden rounded-lg border border-[#E2E8F0] bg-white">
-                        {item.type === "REEL" || item.type === "STORY" ? (
-                          <video src={item.previewUrl} muted playsInline className="h-full w-full object-cover" />
+                        {item.previewKind === "video" ? (
+                          <video src={item.previewUrl} muted playsInline preload="metadata" className="h-full w-full object-cover" />
                         ) : (
                           <img src={item.previewUrl} alt={typeLabels[item.type]} className="h-full w-full object-cover" loading="lazy" />
                         )}
