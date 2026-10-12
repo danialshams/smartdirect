@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
           inputSize: file.size,
           error: error instanceof Error ? error.message : String(error),
         });
-        throw new Error(error instanceof Error && error.message.includes("200 مگابایت")
+        throw new Error(error instanceof Error && (error.message.includes("200 مگابایت") || error.message.includes("100 مگابایت"))
           ? error.message
           : "تبدیل ویدئو به فرمت سازگار با Instagram ناموفق بود. فایل ویدئو را بررسی کنید و دوباره تلاش کنید.");
       } finally {
