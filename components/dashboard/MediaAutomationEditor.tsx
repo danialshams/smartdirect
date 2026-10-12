@@ -106,7 +106,9 @@ export default function MediaAutomationEditor({ id, expectedTriggerType }: { id:
               if (!response.ok || !result.success) throw new Error(result.error || result.message || "ذخیره تنظیمات پاسخ خودکار ناموفق بود.");
               toast.success("پاسخ خودکار با موفقیت ذخیره شد.");
             } catch (e) {
-              toast.error(e instanceof Error ? e.message : "ذخیره پاسخ خودکار ناموفق بود.");
+              const message = e instanceof Error ? e.message : "ذخیره پاسخ خودکار ناموفق بود.";
+              toast.error(message);
+              throw e instanceof Error ? e : new Error(message);
             }
           }}
         />
