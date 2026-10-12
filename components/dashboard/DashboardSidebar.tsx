@@ -541,7 +541,14 @@ export function DashboardInstagramIsland({
           ref={islandButtonRef}
           component="button"
           type="button"
-          onClick={() => onAccountMenuOpenChange(!accountMenuOpen)}
+          onClick={() => {
+            if (islandCollapsed) {
+              setIslandCollapsed(false);
+              onAccountMenuOpenChange(true);
+              return;
+            }
+            onAccountMenuOpenChange(!accountMenuOpen);
+          }}
           aria-expanded={accountMenuOpen}
           aria-label="باز کردن اکانت‌های اینستاگرام"
           sx={{
@@ -559,8 +566,9 @@ export function DashboardInstagramIsland({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            gap: 0.65,
+            gap: islandCollapsed ? 0 : 0.65,
             cursor: "pointer",
+            position: "relative",
             fontFamily: "inherit",
             pointerEvents: "auto",
             transition: "color 180ms ease, background-color 180ms ease, box-shadow 220ms ease, transform 220ms ease",
@@ -598,7 +606,16 @@ export function DashboardInstagramIsland({
               display: "grid",
               placeItems: "center",
               transition: "background-color 180ms ease, color 180ms ease, transform 260ms cubic-bezier(0.22, 1, 0.36, 1)",
-              transform: accountMenuOpen ? "rotate(180deg)" : "rotate(0deg)",
+              position: islandCollapsed ? "absolute" : "relative",
+              left: islandCollapsed ? "50%" : "auto",
+              top: islandCollapsed ? "50%" : "auto",
+              transform: islandCollapsed
+                ? accountMenuOpen
+                  ? "translate(-50%, -50%) rotate(180deg)"
+                  : "translate(-50%, -50%)"
+                : accountMenuOpen
+                  ? "rotate(180deg)"
+                  : "rotate(0deg)",
             }}
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
