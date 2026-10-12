@@ -171,9 +171,13 @@ export default function AutoRepliesManager() {
           (Boolean(job.commentAutomationId) || Boolean(job.storyReplyAutomationId) ||
             Boolean(job.commentTriggerKeywords?.trim() || job.storyReplyTriggerKeywords?.trim())),
         );
-        const visiblePublishedJobs = publishedJobs.filter((job) =>
-          job.type !== "STORY" || Boolean(job.instagramMediaId && activeStoryIds.has(job.instagramMediaId)),
-        );
+        // Only show content that can be verified as existing on Instagram.
+        // A local publishing job marked PUBLISHED is not sufficient on its own.
+        const visiblePublishedJobs = publishedJobs.filter((job) => {
+          if (!job.instagramMediaId || !mediaById.has(job.instagramMediaId)) return false;
+          if (job.type === "STORY") return activeStoryIds.has(job.instagramMediaId);
+          return true;
+        });
         const linkedAutomationIds = new Set(
           visiblePublishedJobs.flatMap((job) => [job.commentAutomationId, job.storyReplyAutomationId].filter(Boolean) as string[]),
         );
@@ -189,10 +193,12 @@ export default function AutoRepliesManager() {
             !automation.mediaId ||
             linkedAutomationIds.has(automation.id) ||
             publishedMediaIds.has(automation.mediaId) ||
+            !mediaById.has(automation.mediaId) ||
             (automation.triggerType === "STORY_REPLY_KEYWORD" && !activeStoryIds.has(automation.mediaId))
           ) continue;
 
           const media = mediaById.get(automation.mediaId);
+          if (!media) continue;
           const isStory = automation.triggerType === "STORY_REPLY_KEYWORD";
           nextItems.push({
             id: automation.id,
