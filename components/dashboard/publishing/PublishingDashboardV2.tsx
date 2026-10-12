@@ -1807,7 +1807,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
                   <div className="space-y-3">
                     <div className="flex flex-col gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5 sm:flex-row sm:items-center">
-                      <Button type="button" disabled={!publishNow} onClick={() => void createJob(true)} disableRipple className="min-h-11 w-full shrink-0 whitespace-nowrap rounded-xl bg-[#2563EB] px-4 text-sm font-semibold text-white hover:bg-[#1D4ED8] active:!bg-transparent active:!text-[#2563EB] focus:!bg-transparent focus:!text-[#2563EB] focus-visible:!bg-transparent focus-visible:!text-[#2563EB] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[#2563EB] sm:flex-1">
+                      <Button type="button" disabled={!publishNow} onClick={() => void createJob(true)} className="min-h-11 w-full shrink-0 whitespace-nowrap rounded-xl bg-[#2563EB] px-4 text-sm font-semibold text-white hover:bg-[#1D4ED8] active:!bg-transparent active:!text-[#2563EB] focus:!bg-transparent focus:!text-[#2563EB] focus-visible:!bg-transparent focus-visible:!text-[#2563EB] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[#2563EB] sm:flex-1">
                         <span dir="ltr" className="inline-flex flex-row items-center gap-2"><Send size={17} /><span dir="rtl">انتشار {typeLabels[type]} هم‌اکنون</span></span>
                       </Button>
                       <label className="flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl px-2 text-xs font-semibold text-[#334155]">
@@ -1913,7 +1913,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                         </div>
 
                         <div className="mt-5 border-t border-[#E2E8F0] pt-5">
-                          <Button type="button" onClick={() => void createJob(false)} disabled={publishing || !stage6Date || stage6Hour === null || stage6Minute === null} disableRipple className="min-h-11 w-full rounded-xl bg-[#2563EB] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#1D4ED8] active:!bg-transparent active:!text-[#2563EB] focus:!bg-transparent focus:!text-[#2563EB] focus-visible:!bg-transparent focus-visible:!text-[#2563EB] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[#2563EB]">
+                          <Button type="button" onClick={() => void createJob(false)} disabled={publishing || !stage6Date || stage6Hour === null || stage6Minute === null} className="min-h-11 w-full rounded-xl bg-[#2563EB] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#1D4ED8] active:!bg-transparent active:!text-[#2563EB] focus:!bg-transparent focus:!text-[#2563EB] focus-visible:!bg-transparent focus-visible:!text-[#2563EB] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[#2563EB]">
                             <span dir="ltr" className="inline-flex flex-row items-center gap-2">{publishing ? <Loader2 size={17} className="animate-spin" /> : <CalendarClock size={17} />}<span dir="rtl">انتشار در زمان انتخاب‌شده</span></span>
                           </Button>
                         </div>
