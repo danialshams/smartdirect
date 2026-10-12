@@ -80,7 +80,7 @@ export default function DashboardAccountsClient({
     })();
   }, []);
 
-  if (loading) {
+  if (loading && mode !== "inbox") {
     return (
       <DashboardLoading label="در حال دریافت پیج‌های متصل..." className="min-h-[180px]" />
     );
