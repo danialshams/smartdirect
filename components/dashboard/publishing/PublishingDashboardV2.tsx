@@ -165,7 +165,7 @@ function uploadFormDataWithProgress(url: string, formData: FormData, signal: Abo
   });
 }
 
-async function uploadFileWithProgress(file: File, onProgress: UploadProgressCallback) {
+async function uploadFileWithProgress(file: File, type: string, onProgress: UploadProgressCallback) {
   const prepareStartedAt = performance.now();
   const prepareResponse = await fetch("/api/instagram/publishing/upload/client", {
     method: "POST",
@@ -211,6 +211,7 @@ async function uploadFileWithProgress(file: File, onProgress: UploadProgressCall
       // substantially faster through fetch in browsers.
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("targetType", type);
 
       const response = await uploadFormDataWithProgress(
         "/api/instagram/publishing/upload",
@@ -928,7 +929,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
         setUploadRows((current) => current.map((row) => row.id === item.previewUrl ? { ...row, status: "uploading", progress: Math.max(1, row.progress), error: undefined } : row));
         setUploadProgress(0);
         try {
-          const result = await uploadFileWithProgress(item.file, (progress) => {
+          const result = await uploadFileWithProgress(item.file, type, (progress) => {
             if (activeUploadItemIdRef.current !== item.previewUrl) return;
             setUploadProgress(progress);
             setUploadRows((current) => current.map((row) => row.id === item.previewUrl ? { ...row, status: "uploading", progress: Math.max(row.progress, progress) } : row));
