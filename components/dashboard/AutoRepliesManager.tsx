@@ -40,7 +40,9 @@ type PublishJob = {
   type: PublishType;
   status: string;
   createdAt: string;
+  updatedAt?: string;
   publishedAt: string | null;
+  instagramMediaId?: string | null;
   caption: string | null;
   media: Array<{ type: "IMAGE" | "VIDEO"; publicUrl: string | null }>;
   commentAutomationId?: string | null;
@@ -169,8 +171,11 @@ export default function AutoRepliesManager() {
           (Boolean(job.commentAutomationId) || Boolean(job.storyReplyAutomationId) ||
             Boolean(job.commentTriggerKeywords?.trim() || job.storyReplyTriggerKeywords?.trim())),
         );
+        const visiblePublishedJobs = publishedJobs.filter((job) =>
+          job.type !== "STORY" || Boolean(job.instagramMediaId && activeStoryIds.has(job.instagramMediaId)),
+        );
         const linkedAutomationIds = new Set(
-          publishedJobs.flatMap((job) => [job.commentAutomationId, job.storyReplyAutomationId].filter(Boolean) as string[]),
+          visiblePublishedJobs.flatMap((job) => [job.commentAutomationId, job.storyReplyAutomationId].filter(Boolean) as string[]),
         );
 
         const nextItems: ReplyItem[] = [];
@@ -201,9 +206,8 @@ export default function AutoRepliesManager() {
           });
         }
 
-        for (const job of publishedJobs) {
+        for (const job of visiblePublishedJobs) {
           const isStory = Boolean(job.storyReplyAutomationId || job.storyReplyTriggerKeywords?.trim());
-          if (job.type === "STORY" && (!job.instagramMediaId || !activeStoryIds.has(job.instagramMediaId))) continue;
           nextItems.push({
             id: job.id,
             key: `publish:${job.id}`,
