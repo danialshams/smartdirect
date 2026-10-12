@@ -13,6 +13,7 @@ type MediaItem = {
   media_product_type?: string;
   media_url?: string | null;
   thumbnail_url?: string | null;
+  timestamp?: string | null;
 };
 
 type Automation = { mediaId: string | null; triggerType: string };
@@ -110,8 +111,15 @@ export default function CommentAutomationCreate() {
         <div className="mb-9">
           <Button type="button" onClick={() => router.back()} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]"><ArrowRight size={15} strokeWidth={2} />بازگشت</Button>
         </div>
-        <h1 className="text-xl font-bold tracking-tight text-[#0F172A] sm:text-2xl">انتخاب محتوا</h1>
-        <p className="mt-2 text-xs leading-5 text-[#64748B] sm:text-sm">یک پست، ریلز یا آلبوم را برای پاسخ خودکار کامنت انتخاب کنید.</p>
+        <section className="mb-4 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-5">
+          <div className="flex items-start gap-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB]"><ImageIcon size={19} /></span>
+            <div className="min-w-0">
+              <h1 className="text-base font-bold text-[#0F172A]">انتخاب محتوا</h1>
+              <p className="mt-1.5 text-xs leading-5 text-[#64748B] sm:text-sm">یک پست، ریلز یا آلبوم را برای پاسخ خودکار کامنت انتخاب کنید.</p>
+            </div>
+          </div>
+        </section>
 
         <div className="mt-5 flex gap-2 overflow-x-auto pb-1">
           {([
@@ -135,20 +143,29 @@ export default function CommentAutomationCreate() {
             <p className="mt-2 text-xs leading-6 text-muted-foreground">محتواهایی که قبلاً پاسخ خودکار دارند در این لیست نمایش داده نمی‌شوند.</p>
           </div>
         ) : (
-          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 2xl:grid-cols-5">
             {visibleMedia.map((item) => {
               const image = item.thumbnail_url || item.media_url;
+              const publishedDate = item.timestamp ? new Intl.DateTimeFormat("fa-IR-u-ca-persian", { year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(item.timestamp)) : null;
               return (
-                <button key={item.id} type="button" onClick={() => router.push("/dashboard/comment-automation/new/configure?mediaId=" + encodeURIComponent(item.id))} className="group relative aspect-square overflow-hidden rounded-xl border border-[#E2E8F0] bg-[#F1F5F9] text-right transition hover:border-[#BFDBFE] focus:outline-none focus:ring-2 focus:ring-[#2563EB]">
-                  {image && !mediaFailed[item.id] ? (
-                    <img src={image} alt={item.caption || mediaLabel(item)} className="h-full w-full object-cover" loading="lazy" onError={() => setMediaFailed((current) => ({ ...current, [item.id]: true }))} />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center">{item.media_type === "VIDEO" ? <Video size={25} className="text-muted-foreground" /> : <ImageIcon size={25} className="text-muted-foreground" />}</div>
-                  )}
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent p-2.5 pt-10">
-                    <div className="flex items-center justify-between gap-2 text-white">
-                      <span className="rounded-lg bg-black/35 px-2 py-1 text-[10px] font-semibold backdrop-blur-sm">{mediaLabel(item)}</span>
-                      {item.media_type === "VIDEO" && <Play size={13} fill="currentColor" />}
+                <button key={item.id} type="button" onClick={() => router.push("/dashboard/comment-automation/new/configure?mediaId=" + encodeURIComponent(item.id))} className="group block w-full min-w-0 overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white text-right shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#2563EB] lg:rounded-xl lg:shadow-none lg:hover:translate-y-0 lg:hover:shadow-none">
+                  <div className="relative aspect-square overflow-hidden bg-[#F1F5F9] lg:rounded-xl">
+                    {image && !mediaFailed[item.id] ? (
+                      <img src={image} alt={item.caption || mediaLabel(item)} className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.025]" loading="lazy" onError={() => setMediaFailed((current) => ({ ...current, [item.id]: true }))} />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center">{item.media_type === "VIDEO" ? <Video size={25} className="text-[#64748B]" /> : <ImageIcon size={25} className="text-[#64748B]" />}</div>
+                    )}
+                    <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/55 to-transparent" />
+                    <span className="absolute right-2.5 top-2.5 inline-flex h-7 items-center gap-1 rounded-full bg-white/95 px-2 text-[10px] font-bold text-[#0F172A] shadow-sm">
+                      {item.media_type === "VIDEO" ? <Video size={11} /> : item.media_type === "CAROUSEL_ALBUM" ? <Images size={11} /> : <ImageIcon size={11} />}
+                      {mediaLabel(item)}
+                    </span>
+                    {item.media_type === "VIDEO" && <Play size={14} fill="currentColor" className="absolute bottom-3 left-3 text-white drop-shadow" />}
+                  </div>
+                  <div className="p-3 text-right">
+                    <p className="mb-2 min-h-10 overflow-hidden text-left text-[11px] leading-[1.8] text-[#0F172A] [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]">{item.caption?.trim() || "بدون کپشن"}</p>
+                    <div className="flex items-center justify-end">
+                      {publishedDate && <span className="text-[9.5px] font-medium text-[#64748B]">{publishedDate}</span>}
                     </div>
                   </div>
                 </button>
