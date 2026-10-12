@@ -323,7 +323,7 @@ export default function EntryPointFlowBuilder({
      */
 
     async function saveAutomation(messageOverride?: MessageDraft) {
-        const messagesToSave = messageOverride ? [messageOverride] : messages;
+        const messagesToSave = (messageOverride ? [messageOverride] : messages).map((message) => textOnly ? { ...message, messageType: "TEXT" as const, mediaUrl: "", mediaId: "", showcaseId: "", formId: "", quickReplies: [] } : message);
         try {
             validateMessages(messagesToSave);
             setSaving(true);
