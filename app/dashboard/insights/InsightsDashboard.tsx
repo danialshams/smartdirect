@@ -289,6 +289,33 @@ export default function InsightsDashboard() {
     if (!id) return;
     try {
       setLoading(true); setError("");
+      // Refresh a bounded recent window before reading the saved history.
+      // This seeds the default chart without attempting hundreds of Meta API
+      // calls when a user selects a 30/90-day or custom date range.
+      const today = new Date();
+      today.setUTCHours(0, 0, 0, 0);
+      const syncFrom = new Date(today);
+      syncFrom.setUTCDate(syncFrom.getUTCDate() - 6);
+      const syncParams = new URLSearchParams({
+        accountId: id,
+        from: syncFrom.toISOString().slice(0, 10),
+        to: today.toISOString().slice(0, 10),
+      });
+      const syncResponse = await fetch("/api/instagram/insights?" + syncParams.toString(), { cache: "no-store" });
+      const syncResult = await syncResponse.json() as {
+        error?: string;
+        sync?: { syncedDays?: number; errors?: Array<{ error: string }> };
+      };
+      if (!syncResponse.ok) {
+        throw new Error(syncResult.error || "همگام‌سازی آمار اینستاگرام ناموفق بود.");
+      }
+      if (
+        (syncResult.sync?.syncedDays ?? 0) === 0 &&
+        (syncResult.sync?.errors?.length ?? 0) > 0
+      ) {
+        throw new Error("دریافت آمار از Meta ناموفق بود: " + syncResult.sync!.errors![0].error);
+      }
+
       const params = new URLSearchParams({ accountId: id });
       if (from && to) { params.set("from", toIsoDate(from)); params.set("to", toIsoDate(to)); }
       else params.set("days", String(days));
