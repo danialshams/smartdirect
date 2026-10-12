@@ -66,7 +66,8 @@ export async function POST(request: NextRequest) {
     const contentType = typeof prepareBody?.contentType === "string" ? prepareBody.contentType.toLowerCase() : "";
     const extension = fileName.slice(fileName.lastIndexOf(".")).toLowerCase();
     const videoExtensions = new Set([".mp4", ".mov", ".m4v", ".avi", ".mkv", ".webm", ".3gp", ".mpeg", ".mpg", ".mts", ".m2ts"]);
-    const isPrepareRequest = typeof prepareBody?.fileName === "string" &&
+    const isPrepareRequest = prepareBody !== null &&
+      typeof prepareBody.fileName === "string" &&
       typeof prepareBody?.fileSize === "number" &&
       !("action" in prepareBody) &&
       !("type" in prepareBody);
