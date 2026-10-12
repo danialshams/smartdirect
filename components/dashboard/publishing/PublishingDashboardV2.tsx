@@ -1479,68 +1479,35 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                       const draft = tagDraftByMedia[mediaKey] ?? "";
                       return (
                         <div key={mediaKey} className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5 sm:p-4">
-                          <div className="flex items-start gap-3">
+                          <div className="mb-2 flex items-center justify-between gap-2">
+                            <p className="text-xs font-bold text-[#0F172A]">{type === "CAROUSEL" ? `اسلاید ${toPersianDigits(index + 1)}` : typeLabels[type]}</p>
+                            <span className="rounded-full bg-white px-2 py-1 text-[10px] font-medium text-[#64748B] ring-1 ring-[#E2E8F0]">{toPersianDigits(tags.length)} تگ</span>
+                          </div>
+                          {tags.length > 0 && (
+                            <div className="mb-2.5 flex flex-wrap gap-1.5">
+                              {tags.map((username) => (
+                                <span key={username} className="inline-flex items-center gap-1 rounded-full bg-[#EFF6FF] px-2.5 py-1.5 text-[11px] font-semibold text-[#2563EB] ring-1 ring-[#DBEAFE]">
+                                  <span dir="ltr">@{username}</span>
+                                  <button type="button" onClick={() => removeTagForMedia(mediaKey, username)} className="flex h-4 w-4 items-center justify-center rounded-full text-[#64748B] hover:bg-white hover:text-[#DC2626]" aria-label={`حذف تگ @${username}`}>
+                                    <X size={11} />
+                                  </button>
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          <div className="flex items-center gap-2">
                             {type === "CAROUSEL" && (
                               <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-[#E2E8F0] bg-white">
                                 <MediaTile item={item} type="CAROUSEL" onRemove={() => void removeUploaded(item)} ready compact />
                               </div>
                             )}
-                            <div className="min-w-0 flex-1">
-                              <div className="mb-2 flex items-center justify-between gap-2">
-                                <p className="text-xs font-bold text-[#0F172A]">{type === "CAROUSEL" ? `اسلاید ${toPersianDigits(index + 1)}` : typeLabels[type]}</p>
-                                <span className="rounded-full bg-white px-2 py-1 text-[10px] font-medium text-[#64748B] ring-1 ring-[#E2E8F0]">{toPersianDigits(tags.length)} تگ</span>
-                              </div>
-                              {tags.length > 0 && (
-                                <div className="mb-2.5 flex flex-wrap gap-1.5">
-                                  {tags.map((username) => (
-                                    <span key={username} className="inline-flex items-center gap-1 rounded-full bg-[#EFF6FF] px-2.5 py-1.5 text-[11px] font-semibold text-[#2563EB] ring-1 ring-[#DBEAFE]">
-                                      <span dir="ltr">@{username}</span>
-                                      <button type="button" onClick={() => removeTagForMedia(mediaKey, username)} className="flex h-4 w-4 items-center justify-center rounded-full text-[#64748B] hover:bg-white hover:text-[#DC2626]" aria-label={`حذف تگ @${username}`}>
-                                        <X size={11} />
-                                      </button>
-                                    </span>
-                                  ))}
-                                </div>
-                              )}
-                              <div className="flex items-center gap-2">
-                                <input value={draft} onChange={(event) => handleTagInputChange(mediaKey, event.target.value)} onKeyDown={(event) => handleTagInputKeyDown(mediaKey, event)} placeholder="نام کاربر بدون @" maxLength={30} inputMode="text" autoCapitalize="none" spellCheck={false} className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-2.5 !text-base leading-5 text-[#0F172A] outline-none placeholder:text-xs placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
-                                <Button type="button" onClick={() => addTagForMedia(mediaKey)} disabled={!draft.trim()} className="shrink-0 rounded-lg !bg-[#2563EB] px-3.5 py-2.5 text-xs font-semibold text-white hover:!bg-[#1D4ED8] disabled:pointer-events-none disabled:cursor-not-allowed disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8] disabled:opacity-100 disabled:hover:!bg-[#E2E8F0]">افزودن</Button>
-                              </div>
-                            </div>
+                            <input value={draft} onChange={(event) => handleTagInputChange(mediaKey, event.target.value)} onKeyDown={(event) => handleTagInputKeyDown(mediaKey, event)} placeholder="نام کاربر بدون @" maxLength={30} inputMode="text" autoCapitalize="none" spellCheck={false} className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-2.5 !text-base leading-5 text-[#0F172A] outline-none placeholder:text-xs placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
+                            <Button type="button" onClick={() => addTagForMedia(mediaKey)} disabled={!draft.trim()} className="shrink-0 rounded-lg !bg-[#2563EB] px-3.5 py-2.5 text-xs font-semibold text-white hover:!bg-[#1D4ED8] disabled:pointer-events-none disabled:cursor-not-allowed disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8] disabled:opacity-100 disabled:hover:!bg-[#E2E8F0]">افزودن</Button>
                           </div>
                         </div>
-                      );
                     })}
                   </div>
-                  {type === "CAROUSEL" ? (
-                    <div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5 sm:p-4">
-                      {(() => {
-                        const mediaKey = uploadedMedia[0]?.storageKey ?? "";
-                        const tags = taggedUsersByMedia[mediaKey] ?? [];
-                        const draft = tagDraftByMedia[mediaKey] ?? "";
-                        return (
-                          <>
-                            {tags.length > 0 && (
-                              <div className="mb-2.5 flex flex-wrap gap-1.5">
-                                {tags.map((username) => (
-                                  <span key={username} className="inline-flex items-center gap-1 rounded-full bg-[#EFF6FF] px-2.5 py-1.5 text-[11px] font-semibold text-[#2563EB] ring-1 ring-[#DBEAFE]">
-                                    <span dir="ltr">@{username}</span>
-                                    <button type="button" onClick={() => removeTagForMedia(mediaKey, username)} className="flex h-4 w-4 items-center justify-center rounded-full text-[#64748B] hover:bg-white hover:text-[#DC2626]" aria-label={`حذف تگ @${username}`}>
-                                      <X size={11} />
-                                    </button>
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-                            <div className="flex items-center gap-2">
-                              <input value={draft} onChange={(event) => handleTagInputChange(mediaKey, event.target.value)} onKeyDown={(event) => handleTagInputKeyDown(mediaKey, event)} placeholder="فقط نام کاربر را بدون @ بنویس" maxLength={30} inputMode="text" autoCapitalize="none" spellCheck={false} className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-2.5 !text-base leading-5 text-[#0F172A] outline-none placeholder:text-xs placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
-                              <Button type="button" onClick={() => addTagForMedia(mediaKey)} disabled={!draft.trim()} className="shrink-0 rounded-lg !bg-[#2563EB] px-3.5 py-2.5 text-xs font-semibold text-white hover:!bg-[#1D4ED8] disabled:pointer-events-none disabled:cursor-not-allowed disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8] disabled:opacity-100 disabled:hover:!bg-[#E2E8F0]">افزودن</Button>
-                            </div>
-                          </>
-                        );
-                      })()}
-                    </div>
-                  ) : null}
+
 
 
                 </section>
@@ -1833,7 +1800,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
                   <div className="space-y-3">
                     <div className="flex flex-col gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5 sm:flex-row sm:items-center">
-                      <Button type="button" disabled={!publishNow} onClick={() => void createJob(true)} className="min-h-11 w-full shrink-0 whitespace-nowrap rounded-xl bg-[#2563EB] px-4 text-sm font-semibold text-white hover:bg-[#1D4ED8] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[#2563EB] sm:flex-1">
+                      <Button type="button" disabled={!publishNow} onClick={() => void createJob(true)} disableRipple className="min-h-11 w-full shrink-0 whitespace-nowrap rounded-xl bg-[#2563EB] px-4 text-sm font-semibold text-white hover:bg-[#1D4ED8] active:!bg-transparent active:!text-[#2563EB] focus:!bg-transparent focus:!text-[#2563EB] focus-visible:!bg-transparent focus-visible:!text-[#2563EB] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[#2563EB] sm:flex-1">
                         <span dir="ltr" className="inline-flex flex-row items-center gap-2"><Send size={17} /><span dir="rtl">انتشار {typeLabels[type]} هم‌اکنون</span></span>
                       </Button>
                       <label className="flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl px-2 text-xs font-semibold text-[#334155]">
