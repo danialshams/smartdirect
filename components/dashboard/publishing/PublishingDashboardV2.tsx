@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { WheelPicker, type WheelPickerOption } from "@ncdai/react-wheel-picker";
+import "@ncdai/react-wheel-picker/style.css";
 import { toast } from "sonner";
 import { type JalaliDate } from "./PersianDatePicker";
 
@@ -534,6 +535,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const [uploadRows, setUploadRows] = useState<UploadRow[]>([]);
   const draggedSlideKeyRef = useRef<string | null>(null);
   const draggedSlideTargetKeyRef = useRef<string | null>(null);
+  const [draggedSlide, setDraggedSlide] = useState<{ storageKey: string; pointerX: number; pointerY: number; offsetX: number; offsetY: number; width: number; height: number } | null>(null);
+  const dragPointerRef = useRef<{ pointerId: number; storageKey: string; offsetX: number; offsetY: number; width: number; height: number } | null>(null);
   const uploadQueueRef = useRef<LocalMedia[]>([]);
   const pendingValidationCountRef = useRef(0);
   const uploadWorkerRunningRef = useRef(false);
@@ -899,6 +902,63 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       });
     });
     setError("");
+  }
+
+  function beginSlidePointerDrag(event: React.PointerEvent<HTMLDivElement>, storageKey: string) {
+    if (type !== "CAROUSEL" || !storageKey || (event.target as HTMLElement).closest("button, input, a")) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    dragPointerRef.current = {
+      pointerId: event.pointerId,
+      storageKey,
+      offsetX: event.clientX - rect.left,
+      offsetY: event.clientY - rect.top,
+      width: rect.width,
+      height: rect.height,
+    };
+    draggedSlideKeyRef.current = storageKey;
+    setDraggedSlide({
+      storageKey,
+      pointerX: event.clientX,
+      pointerY: event.clientY,
+      offsetX: event.clientX - rect.left,
+      offsetY: event.clientY - rect.top,
+      width: rect.width,
+      height: rect.height,
+    });
+    event.currentTarget.setPointerCapture(event.pointerId);
+    event.preventDefault();
+  }
+
+  function moveSlidePointerDrag(event: React.PointerEvent<HTMLDivElement>) {
+    const active = dragPointerRef.current;
+    if (!active || active.pointerId !== event.pointerId) return;
+    setDraggedSlide({
+      storageKey: active.storageKey,
+      pointerX: event.clientX,
+      pointerY: event.clientY,
+      offsetX: active.offsetX,
+      offsetY: active.offsetY,
+      width: active.width,
+      height: active.height,
+    });
+    const target = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>("[data-slide-key]");
+    const targetKey = target?.dataset.slideKey;
+    if (targetKey && targetKey !== active.storageKey) {
+      moveUploadedSlide(active.storageKey, targetKey);
+      draggedSlideTargetKeyRef.current = targetKey;
+    }
+  }
+
+  function endSlidePointerDrag(event: React.PointerEvent<HTMLDivElement>) {
+    const active = dragPointerRef.current;
+    if (!active || active.pointerId !== event.pointerId) return;
+    dragPointerRef.current = null;
+    draggedSlideKeyRef.current = null;
+    draggedSlideTargetKeyRef.current = null;
+    setDraggedSlide(null);
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
   }
 
   async function removeUploaded(item: UploadedMedia) {
@@ -1602,53 +1662,22 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                         onChange={handleFiles}
                         onDrop={handleDrop}
                       />
-                      {uploadRows.length > 0 && (
+                      {type === "CAROUSEL" && uploadRows.length > 0 && (
                         <div className="mt-4 space-y-2" aria-live="polite">
                           {uploadRows.map((row) => {
                             const slideIndex = row.storageKey ? uploadedMedia.findIndex((item) => item.storageKey === row.storageKey) : -1;
                             const slide = slideIndex >= 0 ? uploadedMedia[slideIndex] : null;
                             const isCarouselSlide = type === "CAROUSEL" && Boolean(slide);
-                            const handleDropOnRow = () => {
-                              const source = draggedSlideKeyRef.current;
-                              if (source && row.storageKey) moveUploadedSlide(source, row.storageKey);
-                              draggedSlideKeyRef.current = null;
-                            };
                             return (
-                              <div
-                                key={row.id}
+                              <div key={row.id} className="flex items-stretch gap-2">
+                                {isCarouselSlide && <span className="flex w-7 shrink-0 items-center justify-center self-stretch text-xs font-bold tabular-nums text-[#64748B]">{toPersianDigits(slideIndex + 1)}</span>}
+                                <div
                                 data-slide-key={isCarouselSlide ? row.storageKey : undefined}
-                                draggable={isCarouselSlide}
-                                onDragStart={(event) => {
-                                  if (!isCarouselSlide || !row.storageKey) return;
-                                  draggedSlideKeyRef.current = row.storageKey;
-                                  event.dataTransfer.effectAllowed = "move";
-                                  event.dataTransfer.setData("text/plain", row.storageKey);
-                                }}
-                                onDragOver={(event) => { if (draggedSlideKeyRef.current && isCarouselSlide) event.preventDefault(); }}
-                                onDrop={(event) => { event.preventDefault(); handleDropOnRow(); }}
-                                onDragEnd={() => { draggedSlideKeyRef.current = null; draggedSlideTargetKeyRef.current = null; }}
-                                onTouchStart={() => {
-                                  if (isCarouselSlide && row.storageKey) {
-                                    draggedSlideKeyRef.current = row.storageKey;
-                                    draggedSlideTargetKeyRef.current = row.storageKey;
-                                  }
-                                }}
-                                onTouchMove={(event) => {
-                                  if (!draggedSlideKeyRef.current) return;
-                                  const touch = event.touches[0];
-                                  if (!touch) return;
-                                  const target = document.elementFromPoint(touch.clientX, touch.clientY)?.closest<HTMLElement>("[data-slide-key]");
-                                  const targetKey = target?.dataset.slideKey;
-                                  if (targetKey) draggedSlideTargetKeyRef.current = targetKey;
-                                }}
-                                onTouchEnd={() => {
-                                  const source = draggedSlideKeyRef.current;
-                                  const target = draggedSlideTargetKeyRef.current;
-                                  if (source && target) moveUploadedSlide(source, target);
-                                  draggedSlideKeyRef.current = null;
-                                  draggedSlideTargetKeyRef.current = null;
-                                }}
-                                className={["overflow-hidden rounded-xl border px-3.5 py-3 transition-all duration-300 ease-out", row.removing ? "max-h-0 -translate-y-1 !border-transparent !p-0 opacity-0" : "max-h-36 opacity-100", row.status === "failed" ? "border-[#FECACA] bg-[#FEF2F2]" : row.status === "success" ? "border-[#BBF7D0] bg-[#F0FDF4]" : "border-[#E2E8F0] bg-white", isCarouselSlide ? "cursor-grab active:cursor-grabbing touch-none" : ""].join(" ")}
+                                onPointerDown={(event) => { if (isCarouselSlide && row.storageKey) beginSlidePointerDrag(event, row.storageKey); }}
+                                onPointerMove={moveSlidePointerDrag}
+                                onPointerUp={endSlidePointerDrag}
+                                onPointerCancel={endSlidePointerDrag}
+                                className={["relative flex-1 overflow-hidden rounded-xl border px-3.5 py-3 transition-[border-color,background-color,opacity] duration-150 ease-out", row.removing ? "max-h-0 -translate-y-1 !border-transparent !p-0 opacity-0" : "max-h-36 opacity-100", row.status === "failed" ? "border-[#FECACA] bg-[#FEF2F2]" : row.status === "success" ? "border-[#BBF7D0] bg-[#F0FDF4]" : "border-[#E2E8F0] bg-white", isCarouselSlide ? "cursor-grab active:cursor-grabbing touch-none" : "", draggedSlide?.storageKey === row.storageKey ? "opacity-35" : ""].join(" ")}
                               >
                                 <div className="flex items-center gap-3">
                                   {slide ? (
@@ -1663,7 +1692,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                                   <div className="min-w-0 flex-1">
                                     <div className="flex flex-wrap items-center gap-2">
                                       <p className="max-w-full truncate text-xs font-semibold text-[#0F172A]" dir="auto">{row.fileName}</p>
-                                      {isCarouselSlide && <span className="shrink-0 rounded-full bg-[#DBEAFE] px-2 py-1 text-[10px] font-bold text-[#1D4ED8]">اسلاید {toPersianDigits(slideIndex + 1)}</span>}
+
                                     </div>
                                     <p className={["mt-1 text-[11px] font-medium", row.status === "failed" ? "text-[#B91C1C]" : row.status === "success" ? "text-[#15803D]" : "text-[#64748B]"].join(" ")}>
                                       {row.status === "queued" ? "در صف آپلود" : row.status === "uploading" ? `در حال آپلود · ${toPersianDigits(row.progress)}٪` : row.status === "success" ? "آپلود با موفقیت انجام شد · برای جابه‌جایی نگه دار و بکش" : "آپلود ناموفق بود"}
@@ -1679,11 +1708,36 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                                   {row.status === "success" && slide && <button type="button" onClick={() => void removeUploaded(slide)} aria-label="حذف اسلاید از آلبوم" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[#64748B] hover:bg-black/5 hover:text-[#DC2626]"><X size={16} /></button>}
                                   {row.status !== "success" && <button type="button" onClick={() => removeLocalById(row.id)} aria-label="حذف فایل از صف آپلود" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[#64748B] hover:bg-black/5 hover:text-[#DC2626]"><X size={16} /></button>}
                                 </div>
+                                </div>
                               </div>
                             );
                           })}
                         </div>
                       )}
+
+                      {draggedSlide && (() => {
+                        const activeSlide = uploadedMedia.find((item) => item.storageKey === draggedSlide.storageKey);
+                        if (!activeSlide) return null;
+                        const activeIndex = uploadedMedia.findIndex((item) => item.storageKey === draggedSlide.storageKey);
+                        return (
+                          <div
+                            aria-hidden="true"
+                            className="pointer-events-none fixed z-[100] flex items-center gap-3 rounded-xl border border-[#93C5FD] bg-white px-3.5 py-3 shadow-2xl ring-2 ring-[#2563EB]/15"
+                            style={{
+                              top: draggedSlide.pointerY - draggedSlide.offsetY,
+                              left: draggedSlide.pointerX - draggedSlide.offsetX,
+                              width: draggedSlide.width,
+                              minHeight: draggedSlide.height,
+                            }}
+                          >
+                            <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white ring-1 ring-black/5">
+                              {activeSlide.type === "IMAGE" ? <img src={activeSlide.publicUrl} alt="" className="h-full w-full object-cover" /> : <video src={activeSlide.publicUrl} muted preload="metadata" className="h-full w-full object-cover" />}
+                            </span>
+                            <span className="min-w-0 flex-1 truncate text-xs font-semibold text-[#0F172A]" dir="auto">{activeSlide.fileName}</span>
+                            <span className="shrink-0 text-xs font-bold text-[#64748B]">{toPersianDigits(activeIndex + 1)}</span>
+                          </div>
+                        );
+                      })()}
 
                       {type === "CAROUSEL" && uploadedMedia.length > 0 && (
                         <div className="mt-5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2.5 text-center">
@@ -2178,19 +2232,6 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
                           <div dir="ltr" className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
                             <InlineWheelPicker
-                              value={stage6Minute}
-                              min={stage6Date && stage6Date.year === todayJalali.year && stage6Date.month === todayJalali.month && stage6Date.day === todayJalali.day && stage6Hour === officialTehranClock.hour ? officialTehranClock.minute : 0}
-                              max={59}
-                              label="دقیقه"
-                              onChange={(value) => {
-                                const isToday = stage6Date && stage6Date.year === todayJalali.year && stage6Date.month === todayJalali.month && stage6Date.day === todayJalali.day;
-                                const nextMinute = isToday && stage6Hour === officialTehranClock.hour ? Math.max(value, officialTehranClock.minute) : value;
-                                setStage6Minute(nextMinute);
-                                setError("");
-                              }}
-                            />
-                            <span className="mt-6 px-0.5 text-xl font-bold text-[#64748B]" aria-hidden="true">:</span>
-                            <InlineWheelPicker
                               value={stage6Hour}
                               min={stage6Date && stage6Date.year === todayJalali.year && stage6Date.month === todayJalali.month && stage6Date.day === todayJalali.day ? officialTehranClock.hour : 0}
                               max={23}
@@ -2199,11 +2240,35 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                                 const isToday = stage6Date && stage6Date.year === todayJalali.year && stage6Date.month === todayJalali.month && stage6Date.day === todayJalali.day;
                                 const nextHour = isToday ? Math.max(value, officialTehranClock.hour) : value;
                                 setStage6Hour(nextHour);
-                                if (isToday && nextHour === officialTehranClock.hour && (stage6Minute ?? 0) < officialTehranClock.minute) setStage6Minute(officialTehranClock.minute);
+                                if (isToday && nextHour === officialTehranClock.hour && (stage6Minute ?? 0) < officialTehranClock.minute) {
+                                  setStage6Minute(officialTehranClock.minute);
+                                }
                                 setError("");
                               }}
                             />
-
+                            <span className="self-center translate-y-2 px-0.5 text-xl font-bold leading-none text-[#64748B]" aria-hidden="true">:</span>
+                            <InlineWheelPicker
+                              value={stage6Minute}
+                              min={
+                                stage6Date &&
+                                  stage6Date.year === todayJalali.year &&
+                                  stage6Date.month === todayJalali.month &&
+                                  stage6Date.day === todayJalali.day &&
+                                  stage6Hour === officialTehranClock.hour
+                                  ? officialTehranClock.minute
+                                  : 0
+                              }
+                              max={59}
+                              label="دقیقه"
+                              onChange={(value) => {
+                                const isToday = stage6Date && stage6Date.year === todayJalali.year && stage6Date.month === todayJalali.month && stage6Date.day === todayJalali.day;
+                                const nextMinute = isToday && stage6Hour === officialTehranClock.hour
+                                  ? Math.max(value, officialTehranClock.minute)
+                                  : value;
+                                setStage6Minute(nextMinute);
+                                setError("");
+                              }}
+                            />
                           </div>
 
                           <p className="mt-4 text-center text-[11px] leading-5 text-[#64748B]">برای انتخاب به بالا یا پایین بکشید</p>
