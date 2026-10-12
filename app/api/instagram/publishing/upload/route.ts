@@ -19,10 +19,12 @@ const MAX_IMAGE_SIZE = 20 * 1024 * 1024;
 const MAX_VIDEO_SIZE = 200 * 1024 * 1024;
 const MAX_AUDIO_SIZE = 25 * 1024 * 1024;
 const SAFE_AUDIO_SIZE = 24 * 1024 * 1024;
+const SAFE_VIDEO_SIZE = 200 * 1024 * 1024;
 const execFileAsync = promisify(execFile);
 
 const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const allowedVideoTypes = new Set(["video/mp4", "video/quicktime"]);
+const allowedVideoExtensions = new Set([".mp4", ".mov", ".m4v", ".avi", ".mkv", ".webm", ".3gp", ".mpeg", ".mpg", ".mts", ".m2ts"]);
 
 
 function sanitizeFileName(name: string) {
@@ -44,9 +46,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: "فایل ارسال نشده است." }, { status: 400 });
     }
 
-    const isImage = allowedImageTypes.has(file.type);
-    const isVideo = allowedVideoTypes.has(file.type);
-    const isAudio = file.type.toLowerCase().startsWith("audio/");
+    const fileExtension = path.extname(file.name).toLowerCase();
+    const normalizedInputMime = file.type.toLowerCase();
+    const isImage = allowedImageTypes.has(normalizedInputMime);
+    // Browsers sometimes send application/octet-stream for valid video files.
+    // The extension fallback is allowlisted; FFmpeg still has to decode the media.
+    const isVideo = allowedVideoTypes.has(normalizedInputMime) ||
+      (normalizedInputMime.startsWith("video/") && allowedVideoExtensions.has(fileExtension)) ||
+      (!normalizedInputMime && allowedVideoExtensions.has(fileExtension));
+    const isAudio = normalizedInputMime.startsWith("audio/");
 
     if (!isImage && !isVideo && !isAudio) {
       return NextResponse.json({ success: false, message: "فرمت فایل پشتیبانی نمی‌شود." }, { status: 400 });
@@ -61,6 +69,48 @@ export async function POST(request: NextRequest) {
     let uploadBuffer: Buffer<ArrayBufferLike> = Buffer.from(await file.arrayBuffer());
     let uploadFileName = file.name;
     let uploadContentType = file.type;
+
+    if (isVideo) {
+      if (!ffmpegPath) throw new Error("FFmpeg در سرور در دسترس نیست؛ تبدیل ویدئو انجام نشد.");
+      const tempDir = await mkdtemp(path.join(os.tmpdir(), "smartdirect-video-"));
+      const inputPath = path.join(tempDir, "input" + (fileExtension || ".video"));
+      const outputPath = path.join(tempDir, "normalized.mp4");
+      try {
+        await writeFile(inputPath, uploadBuffer);
+        // Normalize videos to an Instagram-compatible baseline:
+        // MP4, H.264/yuv420p, AAC 48 kHz, 30 fps, max 1920 px, faststart.
+        await execFileAsync(ffmpegPath, [
+          "-hide_banner", "-loglevel", "error", "-y",
+          "-i", inputPath,
+          "-map", "0:v:0", "-map", "0:a:0?",
+          "-map_metadata", "-1",
+          "-vf", "scale=w='min(1920,iw)':h='min(1920,ih)':force_original_aspect_ratio=decrease:force_divisible_by=2,fps=30",
+          "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
+          "-maxrate", "10M", "-bufsize", "20M", "-pix_fmt", "yuv420p",
+          "-c:a", "aac", "-b:a", "128k", "-ar", "48000", "-ac", "2",
+          "-sn", "-dn", "-movflags", "+faststart", "-f", "mp4", outputPath,
+        ], { timeout: 600000, maxBuffer: 8 * 1024 * 1024 });
+        const normalized = await readFile(outputPath);
+        if (!normalized.length) throw new Error("تبدیل ویدئو خروجی خالی تولید کرد.");
+        if (normalized.length > SAFE_VIDEO_SIZE) {
+          throw new Error("حجم ویدئو پس از تبدیل بیش از 200 مگابایت است؛ ویدئوی کوتاه‌تر یا کم‌حجم‌تری انتخاب کنید.");
+        }
+        uploadBuffer = normalized;
+        uploadFileName = path.basename(file.name, path.extname(file.name)) + ".mp4";
+        uploadContentType = "video/mp4";
+      } catch (error) {
+        console.error("Instagram video normalization failed:", {
+          fileName: sanitizeFileName(file.name),
+          inputSize: file.size,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        throw new Error(error instanceof Error && error.message.includes("200 مگابایت")
+          ? error.message
+          : "تبدیل ویدئو به فرمت سازگار با Instagram ناموفق بود. فایل ویدئو را بررسی کنید و دوباره تلاش کنید.");
+      } finally {
+        await rm(tempDir, { recursive: true, force: true }).catch(() => undefined);
+      }
+    }
 
     if (isAudio) {
       if (!ffmpegPath) throw new Error("FFmpeg در سرور در دسترس نیست.");
