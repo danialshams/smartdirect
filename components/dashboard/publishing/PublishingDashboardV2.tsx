@@ -365,17 +365,14 @@ function InlineWheelPicker({
   max: number;
   label: string;
 }) {
-  const options: WheelPickerOption<number>[] = [
-    { value: -1, label: "--", textValue: "--" },
-    ...Array.from({ length: max - min + 1 }, (_, index) => {
-      const optionValue = min + index;
-      return {
-        value: optionValue,
-        label: formatWheelValue(optionValue),
-        textValue: String(optionValue),
-      };
-    }),
-  ];
+  const options: WheelPickerOption<number>[] = Array.from({ length: max - min + 1 }, (_, index) => {
+    const optionValue = min + index;
+    return {
+      value: optionValue,
+      label: formatWheelValue(optionValue),
+      textValue: String(optionValue),
+    };
+  });
 
   return (
     <div className="min-w-0 select-none">
@@ -384,26 +381,25 @@ function InlineWheelPicker({
       </div>
       <WheelPicker
         options={options}
-        value={value ?? -1}
+        value={value ?? min}
         onValueChange={(nextValue) => {
           if (nextValue >= min && nextValue <= max) {
             onChange(nextValue);
           }
         }}
-        visibleCount={7}
-        optionItemHeight={42}
-        dragSensitivity={3}
-        scrollSensitivity={5}
+        visibleCount={8}
+        optionItemHeight={44}
+        dragSensitivity={4}
+        scrollSensitivity={6}
         classNames={{
           optionItem: "!text-base !font-semibold !text-[#94A3B8]",
-          highlightWrapper: "!rounded-none !border-y !border-[#E2E8F0] !bg-transparent",
+          highlightWrapper: "!rounded-none !border-y !border-[#E2E8F0] !bg-white",
           highlightItem: "!text-2xl !font-bold !text-[#0F172A]",
         }}
       />
     </div>
   );
 }
-
 
 function KeywordChipsInput({ value, onChange, placeholder }: { value: string; onChange: (value: string) => void; placeholder: string }) {
   const keywords = value.split(/[\n,،;؛]+/).map((item) => item.trim()).filter(Boolean).filter((item, index, list) => list.indexOf(item) === index);
@@ -1676,15 +1672,34 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                             const slide = slideIndex >= 0 ? uploadedMedia[slideIndex] : null;
                             const isCarouselSlide = type === "CAROUSEL" && Boolean(slide);
                             return (
-                              <div key={row.id} className="flex items-stretch gap-2">
-                                {type === "CAROUSEL" && <span className="flex w-7 shrink-0 items-center justify-center self-stretch text-xs font-bold tabular-nums text-[#64748B]">{toPersianDigits(slideIndex >= 0 ? slideIndex + 1 : rowPosition + 1)}</span>}
+                              <div
+                                key={row.id}
+                                className="flex items-stretch gap-2"
+                                style={draggedSlide?.storageKey === row.storageKey ? { height: draggedSlide.height } : undefined}
+                              >
+                                {draggedSlide?.storageKey === row.storageKey && (
+                                  <div className="h-full w-full rounded-xl border-2 border-dashed border-[#CBD5E1] bg-[#F8FAFC]" aria-hidden="true" />
+                                )}
+                                {type === "CAROUSEL" && <span className="flex w-7 shrink-0 items-center justify-center self-stretch text-xs font-bold tabular-nums text-[#64748B]">{"اسلاید " + toPersianDigits(slideIndex >= 0 ? slideIndex + 1 : rowPosition + 1)}</span>}
                                 <div
                                 data-slide-key={isCarouselSlide ? row.storageKey : undefined}
                                 onPointerDown={(event) => { if (isCarouselSlide && row.storageKey) beginSlidePointerDrag(event, row.storageKey); }}
                                 onPointerMove={moveSlidePointerDrag}
                                 onPointerUp={endSlidePointerDrag}
                                 onPointerCancel={endSlidePointerDrag}
-                                className={["relative flex-1 overflow-hidden rounded-xl border px-3.5 py-3 transition-[border-color,background-color,opacity] duration-150 ease-out", row.removing ? "max-h-0 -translate-y-1 !border-transparent !p-0 opacity-0" : "max-h-36 opacity-100", row.status === "failed" ? "border-[#FECACA] bg-[#FEF2F2]" : row.status === "success" ? "border-[#BBF7D0] bg-[#F0FDF4]" : "border-[#E2E8F0] bg-white", isCarouselSlide ? "cursor-grab active:cursor-grabbing touch-none" : "", draggedSlide?.storageKey === row.storageKey ? "opacity-35" : ""].join(" ")}
+                                className={["relative flex-1 overflow-hidden rounded-xl border px-3.5 py-3 transition-[border-color,background-color,opacity] duration-150 ease-out", row.removing ? "max-h-0 -translate-y-1 !border-transparent !p-0 opacity-0" : "max-h-36 opacity-100", row.status === "failed" ? "border-[#FECACA] bg-[#FEF2F2]" : row.status === "success" ? "border-[#BBF7D0] bg-[#F0FDF4]" : "border-[#E2E8F0] bg-white", isCarouselSlide ? "cursor-grab active:cursor-grabbing touch-none" : ""].join(" ")}
+                                  style={draggedSlide?.storageKey === row.storageKey && dragPointerRef.current ? {
+                                    position: "fixed",
+                                    top: draggedSlide.pointerY - draggedSlide.offsetY,
+                                    left: draggedSlide.pointerX - draggedSlide.offsetX,
+                                    width: draggedSlide.width,
+                                    zIndex: 100,
+                                    margin: 0,
+                                    pointerEvents: "auto",
+                                    boxShadow: "0 18px 40px rgba(15, 23, 42, 0.2)",
+                                    borderColor: "#93C5FD",
+                                    backgroundColor: "#FFFFFF",
+                                  } : undefined}
                               >
                                 <div className="flex items-center gap-3">
                                   {slide ? (
@@ -1721,28 +1736,6 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                           })}
                         </div>
                       )}
-
-                      {draggedSlide && (() => {
-                        const activeSlide = uploadedMedia.find((item) => item.storageKey === draggedSlide.storageKey);
-                        if (!activeSlide) return null;
-                        return (
-                          <div
-                            aria-hidden="true"
-                            className="pointer-events-none fixed z-[100] flex items-center gap-3 rounded-xl border border-[#93C5FD] bg-white px-3.5 py-3 shadow-2xl ring-2 ring-[#2563EB]/15"
-                            style={{
-                              top: draggedSlide.pointerY - draggedSlide.offsetY,
-                              left: draggedSlide.pointerX - draggedSlide.offsetX,
-                              width: draggedSlide.width,
-                              minHeight: draggedSlide.height,
-                            }}
-                          >
-                            <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white ring-1 ring-black/5">
-                              {activeSlide.type === "IMAGE" ? <img src={activeSlide.publicUrl} alt="" className="h-full w-full object-cover" /> : <video src={activeSlide.publicUrl} muted preload="metadata" className="h-full w-full object-cover" />}
-                            </span>
-                            <span className="min-w-0 flex-1 truncate text-xs font-semibold text-[#0F172A]" dir="auto">{activeSlide.fileName}</span>
-                          </div>
-                        );
-                      })()}
 
                       {type === "CAROUSEL" && uploadedMedia.length > 0 && (
                         <div className="mt-5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2.5 text-center">
@@ -2251,7 +2244,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                                 setError("");
                               }}
                             />
-                            <span className="self-center translate-y-2 px-0.5 text-xl font-bold leading-none text-[#64748B]" aria-hidden="true">:</span>
+                            <span className="mt-6 px-0.5 text-xl font-bold text-[#64748B]" aria-hidden="true">:</span>
                             <InlineWheelPicker
                               value={stage6Minute}
                               min={
