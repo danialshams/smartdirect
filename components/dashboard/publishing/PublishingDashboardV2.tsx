@@ -489,10 +489,10 @@ function UploadArea({ id, accept, multiple, disabled, isDragging, setIsDragging,
     </label>
   </div>;
 }
-function MediaTile({ item, type, onRemove, ready = false, compact = false }: any) {
+function MediaTile({ item, type, onRemove, ready = false, compact = false, bare = false }: any) {
   const image = item.type === "IMAGE"; const src = ready ? item.publicUrl : item.previewUrl;
   const aspect = type === "REEL" || type === "STORY" ? "aspect-[9/16]" : "aspect-[4/5]";
-  return <div className={["group relative overflow-hidden rounded-xl border border-[#E2E8F0] bg-[#F1F5F9]", compact ? "shadow-sm" : ""].join(" ")}>
+  return <div className={[bare ? "relative overflow-hidden" : "group relative overflow-hidden rounded-xl border border-[#E2E8F0] bg-[#F1F5F9]", compact ? "shadow-sm" : ""].join(" ")}>
     {image ? <img src={src} alt={ready ? item.fileName : item.file.name} className={["w-full object-cover", aspect].join(" ")} /> : <video src={src} controls className={["w-full object-cover", aspect].join(" ")} />}
     {!compact && <Button type="button" onClick={onRemove} className="absolute left-1.5 top-1.5 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 p-0 text-[#DC2626] shadow-sm ring-1 ring-black/5" aria-label="حذف فایل"><X size={15} /></Button>}
   </div>;
@@ -1620,13 +1620,13 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                       <SectionHeader n="۲" title={uploadTitle} text={uploadInstruction} />
                       <div className="relative">
                         {type !== "CAROUSEL" && !uploading && !uploadSuccess && uploadedMedia.length > 0 ? (
-                          <div className="flex min-h-[260px] flex-col items-center justify-center rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4">
-                            <p className="mb-3 text-xs font-semibold text-[#15803D]">{typeLabels[type]} آپلود شده</p>
+                          <div className="flex flex-col items-center justify-center gap-3 py-2">
                             <div className="w-32 sm:w-40">
-                              <MediaTile item={uploadedMedia[0]} type={type} onRemove={() => void removeUploaded(uploadedMedia[0])} ready />
+                              <MediaTile item={uploadedMedia[0]} type={type} ready compact bare />
                             </div>
-                            <p className="mt-3 max-w-full truncate text-xs text-[#64748B]" title={uploadedMedia[0].fileName}>{uploadedMedia[0].fileName}</p>
-                            <p className="mt-1 text-[11px] text-[#64748B]">برای حذف فایل، روی علامت × تصویر بزنید.</p>
+                            <Button type="button" onClick={() => void removeUploaded(uploadedMedia[0])} className="min-h-9 rounded-lg border border-[#FECACA] bg-[#FEF2F2] px-4 text-xs font-semibold text-[#DC2626] shadow-none hover:bg-[#FEE2E2] hover:text-[#B91C1C]">
+                              <Trash2 size={14} /> پاک کردن
+                            </Button>
                           </div>
                         ) : (
                           <>
