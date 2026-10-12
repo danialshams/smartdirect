@@ -916,6 +916,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       height: rect.height,
     };
     draggedSlideKeyRef.current = storageKey;
+    draggedSlideTargetKeyRef.current = storageKey;
     setDraggedSlide({
       storageKey,
       pointerX: event.clientX,
@@ -943,7 +944,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     });
     const target = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>("[data-slide-key]");
     const targetKey = target?.dataset.slideKey;
-    if (targetKey && targetKey !== active.storageKey) {
+    if (targetKey && targetKey !== active.storageKey && targetKey !== draggedSlideTargetKeyRef.current) {
       moveUploadedSlide(active.storageKey, targetKey);
       draggedSlideTargetKeyRef.current = targetKey;
     }
@@ -1748,7 +1749,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                       {type === "CAROUSEL" && uploadedMedia.length > 0 && (
                         <div className="mt-5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2.5 text-center">
                           <p className="text-sm font-bold text-[#334155]">ترتیب اسلایدهای آلبوم</p>
-                          <p className="mt-1 text-[11px] leading-5 text-[#64748B]">{toPersianDigits(uploadedMedia.length)} از ۱۰ اسلاید آماده است. برای تغییر ترتیب، ردیف اسلاید را نگه دار و روی ردیف مقصد رها کن.</p>
+                          <p className="mt-1 text-[11px] leading-5 text-[#64748B]">{toPersianDigits(uploadedMedia.length)} از ۱۰ اسلاید آماده است. ردیف را با انگشت بگیر و به بالا یا پایین بکش؛ ترتیب هنگام حرکت تغییر می‌کند.</p>
                         </div>
                       )}
                       {type === "CAROUSEL" && uploadedMedia.length >= 10 && (
