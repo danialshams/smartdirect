@@ -672,7 +672,12 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       return;
     }
 
-    const selected = accepted.slice(0, 1);
+    if (type === "CAROUSEL" && accepted.length > remaining) {
+      toast.error(`حداکثر ${toPersianDigits(remaining)} اسلاید دیگر می‌توانی انتخاب کنی.`);
+    }
+
+    const selected = accepted.slice(0, remaining);
+    if (!selected.length) return;
     if (type !== "CAROUSEL") setUploadedMedia([]);
     clearLocalMedia();
 
@@ -1351,7 +1356,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                       <UploadArea
                         id="publishing-media-upload"
                         accept={accept}
-                        multiple={false}
+                        multiple={type === "CAROUSEL"}
                         title={uploadTitle}
                         disabled={uploading || publishing || (type === "CAROUSEL" && uploadedMedia.length >= 10)}
                         isDragging={isDragging}
