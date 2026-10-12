@@ -1,6 +1,6 @@
 "use client";
 import { DashboardLoading } from "@/components/dashboard/DashboardUI";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import PublishingStoryAutomationSetup from "./publishing/PublishingStoryAutomationSetup";
 
@@ -33,6 +33,8 @@ type EntryPointFlowBuilderProps = {
     onActiveChange?: (value: boolean) => void;
     dirty?: boolean;
     onDirtyChange?: (value: boolean) => void;
+    textOnly?: boolean;
+    optionalSettings?: ReactNode;
 };
 
 type ResourceResponse<T> = {
@@ -85,6 +87,8 @@ export default function EntryPointFlowBuilder({
     onActiveChange,
     dirty = true,
     onDirtyChange,
+    textOnly = false,
+    optionalSettings,
 }: EntryPointFlowBuilderProps) {
     const [messages, setMessages] =
         useState<MessageDraft[]>([]);
@@ -789,29 +793,30 @@ export default function EntryPointFlowBuilder({
             ) : (
                 <>
                     {triggerType !== "DM" && (
-                        <div className="space-y-2">
-                            <label className="block text-sm font-bold text-[#0F172A]">کلمات کلیدی</label>
-                            <div className="flex min-h-[52px] flex-wrap items-center gap-2 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 focus-within:border-[#2563EB] focus-within:bg-white">
-                                {keywordItems.map((item) => (
-                                    <span key={item} className="inline-flex items-center gap-1.5 rounded-full border border-[#BFDBFE] bg-[#EFF6FF] px-3 py-1.5 text-xs font-semibold text-[#2563EB]">
-                                        {item}
-                                        <button type="button" onClick={() => { onKeywordChange?.(keywordItems.filter((value) => value !== item).join(", ")); onDirtyChange?.(true); }} className="font-bold text-[#64748B] hover:text-[#DC2626]" aria-label={"حذف " + item}>×</button>
-                                    </span>
-                                ))}
-                                <input
-                                    value={keywordDraft}
-                                    onChange={(event) => setKeywordDraft(event.target.value)}
-                                    onKeyDown={(event) => { if (event.key === "Enter" || event.key === "," || event.key === "،" || event.key === ";") { event.preventDefault(); addKeyword(); } }}
-                                    onBlur={addKeyword}
-                                    placeholder={keywordItems.length ? "افزودن کلمه دیگر..." : "مثلاً قیمت، خرید، سفارش"}
-                                    className="min-w-[140px] flex-1 bg-transparent px-1 py-2 text-base text-[#0F172A] outline-none"
-                                    style={{ fontSize: "16px", WebkitTextSizeAdjust: "100%" }}
-                                />
-                                <button type="button" onClick={addKeyword} className="shrink-0 rounded-lg border border-[#E2E8F0] bg-white px-3 py-2 text-xs font-semibold text-[#334155] hover:bg-[#F1F5F9]">افزودن</button>
+                        <div className="space-y-3">
+                            <div>
+                                <label className="mb-2 block text-sm font-bold text-[#0F172A]">کلمات کلیدی</label>
+                                <p className="mb-3 text-xs leading-5 text-[#64748B]">
+                                    {triggerType === "COMMENT_KEYWORD" ? "با وارد شدن این کلمات در کامنت، پاسخ خودکار فعال می‌شود." : "با وارد شدن این کلمات در Reply استوری، پاسخ خودکار فعال می‌شود."}
+                                </p>
+                                {keywordItems.length > 0 && (
+                                    <div className="mb-3 flex flex-wrap gap-2">
+                                        {keywordItems.map((item) => (
+                                            <span key={item} className="inline-flex items-center gap-1.5 rounded-full bg-[#EFF6FF] px-3 py-1.5 text-xs font-semibold text-[#2563EB]">
+                                                {item}
+                                                <button type="button" onClick={() => { onKeywordChange?.(keywordItems.filter((value) => value !== item).join(", ")); onDirtyChange?.(true); }} className="text-[#64748B] hover:text-[#DC2626]" aria-label={"حذف " + item}>×</button>
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+                                <div className="flex items-center gap-2">
+                                    <input value={keywordDraft} onChange={(event) => setKeywordDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === "," || event.key === "،" || event.key === ";") { event.preventDefault(); addKeyword(); } }} onBlur={addKeyword} placeholder={keywordItems.length ? "کلمه بعدی..." : "مثلاً قیمت، اطلاعات"} className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-3 !text-base text-[#0F172A] outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", WebkitTextSizeAdjust: "100%" }} />
+                                    <button type="button" onClick={addKeyword} disabled={!keywordDraft.trim()} className="min-h-11 shrink-0 rounded-lg !bg-[#2563EB] px-3.5 text-xs font-semibold text-white hover:!bg-[#1D4ED8] disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8]">افزودن</button>
+                                </div>
                             </div>
-                            <p className="text-[11px] text-[#64748B]">هر کلمه به‌صورت جداگانه نمایش داده می‌شود؛ حداقل یک کلمه کلیدی الزامی است.</p>
                         </div>
                     )}
+                    {optionalSettings}
                     {flowLoading ? (
                         <DashboardLoading label="در حال دریافت Flow پاسخ..." className="min-h-32" />
                     ) : (
@@ -823,6 +828,7 @@ export default function EntryPointFlowBuilder({
                         instagramAccountId={accountId}
                         showFinalSave
                         hideVideo={hideVideo}
+                        textOnly={textOnly}
                         responseTypeTitle={responseTypeTitle}
                         responseTypeDescription={responseTypeDescription}
                         textPlaceholder={textPlaceholder}
