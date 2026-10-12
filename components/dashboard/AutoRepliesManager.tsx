@@ -177,6 +177,10 @@ export default function AutoRepliesManager() {
         const linkedAutomationIds = new Set(
           visiblePublishedJobs.flatMap((job) => [job.commentAutomationId, job.storyReplyAutomationId].filter(Boolean) as string[]),
         );
+        const publishedMediaIds = new Set(
+          visiblePublishedJobs.map((job) => job.instagramMediaId).filter(Boolean) as string[],
+        );
+        const seenPublishedItems = new Set<string>();
 
         const nextItems: ReplyItem[] = [];
         for (const automation of (Array.isArray(automationsResult.data) ? automationsResult.data : []) as Automation[]) {
@@ -184,6 +188,7 @@ export default function AutoRepliesManager() {
             (automation.triggerType !== "COMMENT_KEYWORD" && automation.triggerType !== "STORY_REPLY_KEYWORD") ||
             !automation.mediaId ||
             linkedAutomationIds.has(automation.id) ||
+            publishedMediaIds.has(automation.mediaId) ||
             (automation.triggerType === "STORY_REPLY_KEYWORD" && !activeStoryIds.has(automation.mediaId))
           ) continue;
 
@@ -208,6 +213,9 @@ export default function AutoRepliesManager() {
 
         for (const job of visiblePublishedJobs) {
           const isStory = Boolean(job.storyReplyAutomationId || job.storyReplyTriggerKeywords?.trim());
+          const publishedItemKey = `${job.type}:${job.instagramMediaId || job.commentAutomationId || job.storyReplyAutomationId || job.id}`;
+          if (seenPublishedItems.has(publishedItemKey)) continue;
+          seenPublishedItems.add(publishedItemKey);
           nextItems.push({
             id: job.id,
             key: `publish:${job.id}`,
@@ -328,7 +336,7 @@ export default function AutoRepliesManager() {
                           <span className="rounded-md bg-[#F1F5F9] px-1.5 py-0.5 text-[10px] font-semibold text-[#64748B]">غیرفعال</span>
                         ) : null}
                       </div>
-                      <p className="mt-1 truncate text-xs text-[#64748B]">{typeLabels[item.type]} · {item.subtitle}</p>
+                      <p className="mt-1 truncate text-xs text-[#64748B]">{item.subtitle}</p>
                     </div>
                   </div>
 
