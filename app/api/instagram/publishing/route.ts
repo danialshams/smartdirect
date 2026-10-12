@@ -208,7 +208,7 @@ export async function POST(request: NextRequest) {
     if (data.type === "POST" && (data.media.length !== 1 || data.media[0].type !== "IMAGE")) return NextResponse.json({ success: false, message: "POST باید دقیقاً یک تصویر داشته باشد." }, { status: 400 });
     if (data.type === "REEL" && (data.media.length !== 1 || data.media[0].type !== "VIDEO")) return NextResponse.json({ success: false, message: "REEL باید دقیقاً یک ویدیو داشته باشد." }, { status: 400 });
     if (data.type === "STORY" && (data.media.length !== 1 || !["IMAGE", "VIDEO"].includes(data.media[0].type))) return NextResponse.json({ success: false, message: "Story باید دقیقاً یک تصویر یا ویدیو داشته باشد." }, { status: 400 });
-    if (data.type === "CAROUSEL" && (data.media.length < 2 || data.media.length > 10 || data.media.some((item) => item.type !== "IMAGE"))) return NextResponse.json({ success: false, message: "Carousel باید بین ۲ تا ۱۰ تصویر داشته باشد." }, { status: 400 });
+    if (data.type === "CAROUSEL" && (data.media.length < 2 || data.media.length > 10)) return NextResponse.json({ success: false, message: "آلبوم باید بین ۲ تا ۱۰ اسلاید تصویری یا ویدیویی داشته باشد." }, { status: 400 });
 
     if (data.idempotencyKey) {
       const existing = await prisma.instagramPublishJob.findUnique({ where: { idempotencyKey: data.idempotencyKey }, include: { media: true } });
