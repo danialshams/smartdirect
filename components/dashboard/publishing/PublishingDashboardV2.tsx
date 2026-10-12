@@ -522,6 +522,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const [uploadIndex, setUploadIndex] = useState(0);
   const [uploadRows, setUploadRows] = useState<UploadRow[]>([]);
   const draggedSlideKeyRef = useRef<string | null>(null);
+  const draggedSlideTargetKeyRef = useRef<string | null>(null);
   const uploadQueueRef = useRef<LocalMedia[]>([]);
   const pendingValidationCountRef = useRef(0);
   const uploadWorkerRunningRef = useRef(false);
@@ -1603,6 +1604,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                             return (
                               <div
                                 key={row.id}
+                                data-slide-key={isCarouselSlide ? row.storageKey : undefined}
                                 draggable={isCarouselSlide}
                                 onDragStart={(event) => {
                                   if (!isCarouselSlide || !row.storageKey) return;
@@ -1612,10 +1614,29 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                                 }}
                                 onDragOver={(event) => { if (draggedSlideKeyRef.current && isCarouselSlide) event.preventDefault(); }}
                                 onDrop={(event) => { event.preventDefault(); handleDropOnRow(); }}
-                                onDragEnd={() => { draggedSlideKeyRef.current = null; }}
-                                onTouchStart={() => { if (isCarouselSlide && row.storageKey) draggedSlideKeyRef.current = row.storageKey; }}
-                                onTouchEnd={() => { if (draggedSlideKeyRef.current && isCarouselSlide) handleDropOnRow(); }}
-                                className={["overflow-hidden rounded-xl border px-3.5 py-3 transition-all duration-300 ease-out", row.removing ? "max-h-0 -translate-y-1 !border-transparent !p-0 opacity-0" : "max-h-36 opacity-100", row.status === "failed" ? "border-[#FECACA] bg-[#FEF2F2]" : row.status === "success" ? "border-[#BBF7D0] bg-[#F0FDF4]" : "border-[#E2E8F0] bg-white", isCarouselSlide ? "cursor-grab active:cursor-grabbing touch-pan-y" : ""].join(" ")}
+                                onDragEnd={() => { draggedSlideKeyRef.current = null; draggedSlideTargetKeyRef.current = null; }}
+                                onTouchStart={() => {
+                                  if (isCarouselSlide && row.storageKey) {
+                                    draggedSlideKeyRef.current = row.storageKey;
+                                    draggedSlideTargetKeyRef.current = row.storageKey;
+                                  }
+                                }}
+                                onTouchMove={(event) => {
+                                  if (!draggedSlideKeyRef.current) return;
+                                  const touch = event.touches[0];
+                                  if (!touch) return;
+                                  const target = document.elementFromPoint(touch.clientX, touch.clientY)?.closest<HTMLElement>("[data-slide-key]");
+                                  const targetKey = target?.dataset.slideKey;
+                                  if (targetKey) draggedSlideTargetKeyRef.current = targetKey;
+                                }}
+                                onTouchEnd={() => {
+                                  const source = draggedSlideKeyRef.current;
+                                  const target = draggedSlideTargetKeyRef.current;
+                                  if (source && target) moveUploadedSlide(source, target);
+                                  draggedSlideKeyRef.current = null;
+                                  draggedSlideTargetKeyRef.current = null;
+                                }}
+                                className={["overflow-hidden rounded-xl border px-3.5 py-3 transition-all duration-300 ease-out", row.removing ? "max-h-0 -translate-y-1 !border-transparent !p-0 opacity-0" : "max-h-36 opacity-100", row.status === "failed" ? "border-[#FECACA] bg-[#FEF2F2]" : row.status === "success" ? "border-[#BBF7D0] bg-[#F0FDF4]" : "border-[#E2E8F0] bg-white", isCarouselSlide ? "cursor-grab active:cursor-grabbing touch-none" : ""].join(" ")}
                               >
                                 <div className="flex items-center gap-3">
                                   {slide ? (
