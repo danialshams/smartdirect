@@ -54,6 +54,7 @@ type ReplyItem = {
   key: string;
   type: PublishType;
   date: string | null;
+  sortAt: string | null;
   previewUrl: string | null;
   previewKind: "image" | "video" | null;
   title: string;
@@ -141,6 +142,9 @@ export default function AutoRepliesManager() {
         const storiesResult = storiesResponse?.ok ? await storiesResponse.json().catch(() => null) : null;
         const jobsResult = jobsResponse?.ok ? await jobsResponse.json().catch(() => null) : null;
 
+        const activeStoryIds = new Set<string>(
+          (Array.isArray(storiesResult?.data) ? storiesResult.data : []).map((story: Story) => story.id),
+        );
         const mediaById = new Map<string, { type: PublishType; date: string | null; previewUrl: string | null; previewKind: "image" | "video" | null }>();
         for (const media of (Array.isArray(mediaResult?.data) ? mediaResult.data : []) as InstagramMedia[]) {
           mediaById.set(media.id, {
@@ -174,7 +178,8 @@ export default function AutoRepliesManager() {
           if (
             (automation.triggerType !== "COMMENT_KEYWORD" && automation.triggerType !== "STORY_REPLY_KEYWORD") ||
             !automation.mediaId ||
-            linkedAutomationIds.has(automation.id)
+            linkedAutomationIds.has(automation.id) ||
+            (automation.triggerType === "STORY_REPLY_KEYWORD" && !activeStoryIds.has(automation.mediaId))
           ) continue;
 
           const media = mediaById.get(automation.mediaId);
@@ -184,6 +189,7 @@ export default function AutoRepliesManager() {
             key: `automation:${automation.id}`,
             type: media?.type ?? (isStory ? "STORY" : "UNKNOWN"),
             date: media?.date ?? automation.createdAt,
+            sortAt: automation.createdAt,
             previewUrl: media?.previewUrl ?? null,
             previewKind: media?.previewKind ?? null,
             title: isStory ? "پاسخ خودکار استوری" : "پاسخ خودکار کامنت",
@@ -197,11 +203,13 @@ export default function AutoRepliesManager() {
 
         for (const job of publishedJobs) {
           const isStory = Boolean(job.storyReplyAutomationId || job.storyReplyTriggerKeywords?.trim());
+          if (job.type === "STORY" && (!job.instagramMediaId || !activeStoryIds.has(job.instagramMediaId))) continue;
           nextItems.push({
             id: job.id,
             key: `publish:${job.id}`,
             type: job.type,
             date: job.publishedAt ?? job.createdAt,
+            sortAt: job.updatedAt ?? job.createdAt,
             previewUrl: job.media[0]?.publicUrl ?? null,
             previewKind: job.media[0]?.type === "VIDEO" ? "video" : job.media[0]?.type === "IMAGE" ? "image" : null,
             title: isStory ? "پاسخ خودکار استوری" : "پاسخ خودکار کامنت",
@@ -212,8 +220,8 @@ export default function AutoRepliesManager() {
         }
 
         nextItems.sort((a, b) => {
-          const aDate = a.date ? new Date(a.date).getTime() : 0;
-          const bDate = b.date ? new Date(b.date).getTime() : 0;
+          const aDate = a.sortAt ? new Date(a.sortAt).getTime() : 0;
+          const bDate = b.sortAt ? new Date(b.sortAt).getTime() : 0;
           return bDate - aDate;
         });
 
