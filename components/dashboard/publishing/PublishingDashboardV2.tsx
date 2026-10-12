@@ -1674,13 +1674,13 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                             return (
                               <div
                                 key={row.id}
-                                className="flex items-stretch gap-2"
+                                className="relative flex items-stretch gap-2"
                                 style={draggedSlide?.storageKey === row.storageKey ? { height: draggedSlide.height } : undefined}
                               >
-                                {draggedSlide?.storageKey === row.storageKey && (
-                                  <div className="h-full w-full rounded-xl border-2 border-dashed border-[#CBD5E1] bg-[#F8FAFC]" aria-hidden="true" />
-                                )}
                                 {type === "CAROUSEL" && <span className="flex w-7 shrink-0 items-center justify-center self-stretch text-xs font-bold tabular-nums text-[#64748B]">{"اسلاید " + toPersianDigits(slideIndex >= 0 ? slideIndex + 1 : rowPosition + 1)}</span>}
+                                {draggedSlide?.storageKey === row.storageKey && (
+                                  <div className="min-h-14 flex-1 rounded-xl border-2 border-dashed border-[#CBD5E1] bg-[#F8FAFC]" aria-hidden="true" />
+                                )}
                                 <div
                                 data-slide-key={isCarouselSlide ? row.storageKey : undefined}
                                 onPointerDown={(event) => { if (isCarouselSlide && row.storageKey) beginSlidePointerDrag(event, row.storageKey); }}
