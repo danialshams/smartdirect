@@ -68,7 +68,7 @@ const menuGroups = [
       { title: "منوی دایرکت", href: "/dashboard/persistent-menu", icon: MenuIcon },
       { title: "پاسخ خودکار کامنت", href: "/dashboard/comment-automation", icon: MessageCircleReply },
       { title: "پاسخ خودکار استوری", href: "/dashboard/story-automation", icon: Camera },
-      { title: "مشاهده و ویرایش پاسخ‌های خودکار", href: "/dashboard/auto-replies", icon: Settings2 },
+      { title: "ویرایش پاسخ های خودکار", href: "/dashboard/auto-replies", icon: Settings2 },
       { title: "تیکت‌ها", href: "/dashboard/tickets", icon: Ticket },
     ],
   },
