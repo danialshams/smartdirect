@@ -1511,6 +1511,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                             <Button type="button" onClick={() => addTagForMedia(mediaKey)} disabled={!draft.trim()} className="shrink-0 rounded-lg !bg-[#2563EB] px-3.5 py-2.5 text-xs font-semibold text-white hover:!bg-[#1D4ED8] disabled:pointer-events-none disabled:cursor-not-allowed disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8] disabled:opacity-100 disabled:hover:!bg-[#E2E8F0]">افزودن</Button>
                           </div>
                         </div>
+                      );
                     })}
                   </div>
 
