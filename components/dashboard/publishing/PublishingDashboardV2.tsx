@@ -6,6 +6,9 @@ import { ArrowLeft, ArrowRight, CalendarClock, Camera, CheckCircle2, CircleSlash
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from "react";
+import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { WheelPicker, type WheelPickerOption } from "@ncdai/react-wheel-picker";
 import "@ncdai/react-wheel-picker/style.css";
 import { toast } from "sonner";
@@ -401,6 +404,32 @@ function InlineWheelPicker({
   );
 }
 
+function SortableSlideShell({ id, index, disabled, className, children }: { id: string; index: number; disabled: boolean; className: string; children: React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, index, disabled });
+  return (
+    <div
+      ref={setNodeRef}
+      data-slide-key={id}
+      {...attributes}
+      {...listeners}
+      onPointerDownCapture={(event) => {
+        if ((event.target as HTMLElement).closest("button, input, a")) event.stopPropagation();
+      }}
+      className={className}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+        touchAction: disabled ? "auto" : "none",
+        zIndex: isDragging ? 20 : undefined,
+        position: "relative",
+        boxShadow: isDragging ? "0 14px 32px rgba(15, 23, 42, 0.16)" : undefined,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
 function KeywordChipsInput({ value, onChange, placeholder }: { value: string; onChange: (value: string) => void; placeholder: string }) {
   const keywords = value.split(/[\n,،;؛]+/).map((item) => item.trim()).filter(Boolean).filter((item, index, list) => list.indexOf(item) === index);
   const [draft, setDraft] = useState("");
@@ -529,10 +558,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [uploadIndex, setUploadIndex] = useState(0);
   const [uploadRows, setUploadRows] = useState<UploadRow[]>([]);
-  const draggedSlideKeyRef = useRef<string | null>(null);
-  const draggedSlideTargetKeyRef = useRef<string | null>(null);
-  const [draggedSlide, setDraggedSlide] = useState<{ storageKey: string; pointerX: number; pointerY: number; offsetX: number; offsetY: number; width: number; height: number } | null>(null);
-  const dragPointerRef = useRef<{ pointerId: number; storageKey: string; offsetX: number; offsetY: number; width: number; height: number } | null>(null);
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
   const uploadQueueRef = useRef<LocalMedia[]>([]);
   const pendingValidationCountRef = useRef(0);
   const uploadWorkerRunningRef = useRef(false);
@@ -898,64 +924,6 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       });
     });
     setError("");
-  }
-
-  function beginSlidePointerDrag(event: React.PointerEvent<HTMLDivElement>, storageKey: string) {
-    if (type !== "CAROUSEL" || !storageKey || (event.target as HTMLElement).closest("button, input, a")) return;
-    const rect = event.currentTarget.getBoundingClientRect();
-    dragPointerRef.current = {
-      pointerId: event.pointerId,
-      storageKey,
-      offsetX: event.clientX - rect.left,
-      offsetY: event.clientY - rect.top,
-      width: rect.width,
-      height: rect.height,
-    };
-    draggedSlideKeyRef.current = storageKey;
-    draggedSlideTargetKeyRef.current = storageKey;
-    setDraggedSlide({
-      storageKey,
-      pointerX: event.clientX,
-      pointerY: event.clientY,
-      offsetX: event.clientX - rect.left,
-      offsetY: event.clientY - rect.top,
-      width: rect.width,
-      height: rect.height,
-    });
-    event.currentTarget.setPointerCapture(event.pointerId);
-    event.preventDefault();
-  }
-
-  function moveSlidePointerDrag(event: React.PointerEvent<HTMLDivElement>) {
-    const active = dragPointerRef.current;
-    if (!active || active.pointerId !== event.pointerId) return;
-    setDraggedSlide({
-      storageKey: active.storageKey,
-      pointerX: event.clientX,
-      pointerY: event.clientY,
-      offsetX: active.offsetX,
-      offsetY: active.offsetY,
-      width: active.width,
-      height: active.height,
-    });
-    const target = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>("[data-slide-key]");
-    const targetKey = target?.dataset.slideKey;
-    if (targetKey && targetKey !== active.storageKey && targetKey !== draggedSlideTargetKeyRef.current) {
-      moveUploadedSlide(active.storageKey, targetKey);
-      draggedSlideTargetKeyRef.current = targetKey;
-    }
-  }
-
-  function endSlidePointerDrag(event: React.PointerEvent<HTMLDivElement>) {
-    const active = dragPointerRef.current;
-    if (!active || active.pointerId !== event.pointerId) return;
-    dragPointerRef.current = null;
-    draggedSlideKeyRef.current = null;
-    draggedSlideTargetKeyRef.current = null;
-    setDraggedSlide(null);
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
   }
 
   async function removeUploaded(item: UploadedMedia) {
@@ -1666,41 +1634,29 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                         </div>
                       )}
                       {type === "CAROUSEL" && uploadRows.length > 0 && (
-                        <div className="mt-4 space-y-2" aria-live="polite">
-                          {uploadRows.map((row, rowPosition) => {
+                        <DndContext
+                          sensors={sensors}
+                          collisionDetection={closestCenter}
+                          onDragEnd={(event: DragEndEvent) => {
+                            if (!event.over || event.active.id === event.over.id) return;
+                            moveUploadedSlide(String(event.active.id), String(event.over.id));
+                          }}
+                        >
+                          <SortableContext items={uploadedMedia.map((item) => item.storageKey)} strategy={verticalListSortingStrategy}>
+                            <div className="mt-4 space-y-2" aria-live="polite">
+                              {uploadRows.map((row, rowPosition) => {
                             const slideIndex = row.storageKey ? uploadedMedia.findIndex((item) => item.storageKey === row.storageKey) : -1;
                             const slide = slideIndex >= 0 ? uploadedMedia[slideIndex] : null;
                             const isCarouselSlide = type === "CAROUSEL" && Boolean(slide);
                             return (
-                              <div
-                                key={row.id}
-                                className="relative flex items-stretch gap-2"
-                                style={draggedSlide?.storageKey === row.storageKey ? { height: draggedSlide.height } : undefined}
-                              >
+                              <div key={row.id} className="relative flex items-stretch gap-2">
                                 {type === "CAROUSEL" && <span className="flex w-7 shrink-0 items-center justify-center self-stretch text-xs font-bold tabular-nums text-[#64748B]">{"اسلاید " + toPersianDigits(slideIndex >= 0 ? slideIndex + 1 : rowPosition + 1)}</span>}
-                                {draggedSlide?.storageKey === row.storageKey && (
-                                  <div className="min-h-14 flex-1 rounded-xl border-2 border-dashed border-[#CBD5E1] bg-[#F8FAFC]" aria-hidden="true" />
-                                )}
-                                <div
-                                data-slide-key={isCarouselSlide ? row.storageKey : undefined}
-                                onPointerDown={(event) => { if (isCarouselSlide && row.storageKey) beginSlidePointerDrag(event, row.storageKey); }}
-                                onPointerMove={moveSlidePointerDrag}
-                                onPointerUp={endSlidePointerDrag}
-                                onPointerCancel={endSlidePointerDrag}
-                                className={["relative flex-1 overflow-hidden rounded-xl border px-3.5 py-3 transition-[border-color,background-color,opacity] duration-150 ease-out", row.removing ? "max-h-0 -translate-y-1 !border-transparent !p-0 opacity-0" : "max-h-36 opacity-100", row.status === "failed" ? "border-[#FECACA] bg-[#FEF2F2]" : row.status === "success" ? "border-[#BBF7D0] bg-[#F0FDF4]" : "border-[#E2E8F0] bg-white", isCarouselSlide ? "cursor-grab active:cursor-grabbing touch-none" : ""].join(" ")}
-                                  style={draggedSlide?.storageKey === row.storageKey && dragPointerRef.current ? {
-                                    position: "fixed",
-                                    top: draggedSlide.pointerY - draggedSlide.offsetY,
-                                    left: draggedSlide.pointerX - draggedSlide.offsetX,
-                                    width: draggedSlide.width,
-                                    zIndex: 100,
-                                    margin: 0,
-                                    pointerEvents: "none",
-                                    boxShadow: "0 18px 40px rgba(15, 23, 42, 0.2)",
-                                    borderColor: "#93C5FD",
-                                    backgroundColor: "#FFFFFF",
-                                  } : undefined}
-                              >
+                                <SortableSlideShell
+                                  id={row.storageKey ?? row.id}
+                                  index={Math.max(0, slideIndex)}
+                                  disabled={!isCarouselSlide || row.status !== "success" || Boolean(row.removing)}
+                                  className={["relative flex-1 overflow-hidden rounded-xl border px-3.5 py-3 transition-[border-color,background-color,opacity] duration-150 ease-out", row.removing ? "max-h-0 -translate-y-1 !border-transparent !p-0 opacity-0" : "max-h-36 opacity-100", row.status === "failed" ? "border-[#FECACA] bg-[#FEF2F2]" : row.status === "success" ? "border-[#BBF7D0] bg-[#F0FDF4]" : "border-[#E2E8F0] bg-white", isCarouselSlide ? "cursor-grab active:cursor-grabbing" : ""].join(" ")}
+                                >
                                 <div className="flex items-center gap-3">
                                   {slide ? (
                                     <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white ring-1 ring-black/5">
@@ -1730,11 +1686,13 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                                   {row.status === "success" && slide && <button type="button" onClick={() => void removeUploaded(slide)} aria-label="حذف اسلاید از آلبوم" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[#64748B] hover:bg-black/5 hover:text-[#DC2626]"><X size={16} /></button>}
                                   {row.status !== "success" && <button type="button" onClick={() => removeLocalById(row.id)} aria-label="حذف فایل از صف آپلود" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[#64748B] hover:bg-black/5 hover:text-[#DC2626]"><X size={16} /></button>}
                                 </div>
-                                </div>
+                                </SortableSlideShell>
                               </div>
                             );
                           })}
-                        </div>
+                            </div>
+                          </SortableContext>
+                        </DndContext>
                       )}
 
                       {type === "CAROUSEL" && uploadedMedia.length > 0 && (
