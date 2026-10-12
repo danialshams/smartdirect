@@ -54,7 +54,7 @@ export default function StoryAutomationConfigure() {
       description="کلمات فعال‌کننده و نوع پاسخ را برای این استوری مشخص کن."
       onSaved={() => {
         toast.success("پاسخ خودکار با موفقیت ایجاد شد.", {
-          description: "می‌توانید در بخش «مشاهده و ویرایش پاسخ‌های خودکار» آن را مشاهده و ویرایش کنید.",
+          description: "می‌توانید در بخش «ویرایش پاسخ های خودکار» آن را مشاهده و ویرایش کنید.",
           duration: 5000,
         });
         router.push("/dashboard/auto-replies");
