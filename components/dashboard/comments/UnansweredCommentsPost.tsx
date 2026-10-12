@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Image as ImageIcon, MessageCircle, Send, Video } from "lucide-react";
+import { ArrowRight, Image as ImageIcon, Images, MessageCircle, Send, Video } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Box, Button, CircularProgress, Paper, Stack, TextField, Typography } from "@mui/material";
@@ -107,6 +107,7 @@ export default function UnansweredCommentsPost({ account, mediaId }: { account: 
   }
 
   const isReel = post.media.mediaProductType === "REELS";
+  const isAlbum = post.media.mediaType === "CAROUSEL_ALBUM";
   const publishedDate = post.media.timestamp
     ? new Intl.DateTimeFormat("fa-IR-u-ca-persian", { year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(post.media.timestamp))
     : null;
@@ -114,7 +115,7 @@ export default function UnansweredCommentsPost({ account, mediaId }: { account: 
   return (
     <Box dir="rtl" sx={{ width: "100%", pb: { xs: 4, lg: 6 } }}>
       <Box sx={{ display: "flex", justifyContent: "flex-start", mb: 1.25 }}>
-        <DashboardButton type="button" onClick={() => router.back()} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
+        <DashboardButton type="button" onClick={() => router.back()} className="!min-h-9 !h-9 !rounded-lg !px-3 !text-xs !font-semibold border border-[#BFDBFE] bg-[#EFF6FF] text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
           <ArrowRight size={15} strokeWidth={2} />
           بازگشت
         </DashboardButton>
@@ -154,7 +155,7 @@ export default function UnansweredCommentsPost({ account, mediaId }: { account: 
           <Box sx={{ position: "relative", width: { xs: "100%", sm: 220, md: 270 }, aspectRatio: "1 / 1", flexShrink: 0, overflow: "hidden", borderRadius: 2, bgcolor: "#F1F5F9" }}>
             {mediaSrc ? <Box component="img" src={mediaSrc} alt={post.media.caption ?? ""} sx={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : <Box sx={{ width: "100%", height: "100%", display: "grid", placeItems: "center", color: COLORS.secondary }}><ImageIcon size={28} /></Box>}
             <Box sx={{ position: "absolute", top: 10, right: 10, px: 1, height: 27, display: "flex", alignItems: "center", gap: .5, borderRadius: 99, bgcolor: "rgba(255,255,255,.94)", color: COLORS.text, fontSize: 10, fontWeight: 700 }}>
-              {isReel ? <Video size={12} /> : <ImageIcon size={12} />} {isReel ? "ریلز" : "پست"}
+              {isReel ? <Video size={12} /> : isAlbum ? <Images size={12} /> : <ImageIcon size={12} />} {isAlbum ? "آلبوم" : isReel ? "ریلز" : "پست"}
             </Box>
           </Box>
           <Box sx={{ minWidth: 0, flex: 1 }}>
