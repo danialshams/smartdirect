@@ -35,6 +35,8 @@ type EntryPointFlowBuilderProps = {
     onDirtyChange?: (value: boolean) => void;
     textOnly?: boolean;
     optionalSettings?: ReactNode;
+    keywordLabel?: string;
+    keywordDescription?: string;
 };
 
 type ResourceResponse<T> = {
@@ -89,6 +91,8 @@ export default function EntryPointFlowBuilder({
     onDirtyChange,
     textOnly = false,
     optionalSettings,
+    keywordLabel,
+    keywordDescription,
 }: EntryPointFlowBuilderProps) {
     const [messages, setMessages] =
         useState<MessageDraft[]>([]);
@@ -795,9 +799,9 @@ export default function EntryPointFlowBuilder({
                     {triggerType !== "DM" && (
                         <div className="space-y-3">
                             <div>
-                                <label className="mb-2 block text-sm font-bold text-[#0F172A]">کلمات کلیدی</label>
+                                <label className="mb-2 block text-sm font-bold text-[#0F172A]">{keywordLabel || "کلمات کلیدی"}</label>
                                 <p className="mb-3 text-xs leading-5 text-[#64748B]">
-                                    {triggerType === "COMMENT_KEYWORD" ? "با وارد شدن این کلمات در کامنت، پاسخ خودکار فعال می‌شود." : "با وارد شدن این کلمات در Reply استوری، پاسخ خودکار فعال می‌شود."}
+                                    {keywordDescription || (triggerType === "COMMENT_KEYWORD" ? "با وارد شدن این کلمات در کامنت، پاسخ خودکار فعال می‌شود." : "با وارد شدن این کلمات در Reply استوری، پاسخ خودکار فعال می‌شود.")}
                                 </p>
                                 {keywordItems.length > 0 && (
                                     <div className="mb-3 flex flex-wrap gap-2">
