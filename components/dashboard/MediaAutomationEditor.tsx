@@ -42,7 +42,7 @@ export default function MediaAutomationEditor({ id, expectedTriggerType }: { id:
   const [isActive, setIsActive] = useState(true);
   const [likeStoryReply, setLikeStoryReply] = useState(false);
   const [requireFollow, setRequireFollow] = useState(false);
-  const [followGateText, setFollowGateText] = useState("برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید.");
+  const [followGateText, setFollowGateText] = useState("برای دریافت پاسخ، ابتدا پیج را Follow کنید.");
   const [commentReplyText, setCommentReplyText] = useState("");
   const [dirty, setDirty] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -65,7 +65,7 @@ export default function MediaAutomationEditor({ id, expectedTriggerType }: { id:
           setIsActive(Boolean(item.isActive));
           setLikeStoryReply(Boolean(item.likeStoryReply));
           setRequireFollow(Boolean(item.requireFollow));
-          setFollowGateText(item.followGateText || "برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید.");
+          setFollowGateText(item.followGateText || "برای دریافت پاسخ، ابتدا پیج را Follow کنید.");
           setCommentReplyText(item.commentReplyText || "");
           setDirty(false);
         }
