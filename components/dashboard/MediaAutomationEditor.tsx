@@ -219,7 +219,6 @@ const optionalSettings = (
               }
             }}
           />
-          {optionalSettings}
           {error && <div role="alert" className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-5 text-[#B91C1C]">{error}</div>}
 
           <div className="space-y-3 border-t border-[#E2E8F0] pt-5">
