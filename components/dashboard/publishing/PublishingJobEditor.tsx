@@ -783,6 +783,7 @@ export default function PublishingJobEditor({
                   </div>
                 )}
                 <EntryPointFlowBuilder
+                  fullPageLoading
                   accountId={job.instagramAccount.id}
                   automationId={automation.id}
                   triggerType={triggerType}
