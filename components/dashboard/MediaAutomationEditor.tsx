@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Loader2, Pencil } from "lucide-react";
+import { ArrowRight, Loader2, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/dashboard/DashboardUI";
 import { toast } from "sonner";
 
@@ -175,10 +175,9 @@ const optionalSettings = (
             </div>
           </div>
 
-          {commentReplyField}
-
           <EntryPointFlowBuilder
-            fullPageLoading
+            hideLoadingSpinner
+            keywordExtraContent={commentReplyField}
             accountId={automation.instagramAccountId}
             automationId={automation.id}
             triggerType={expectedTriggerType}
@@ -191,7 +190,7 @@ const optionalSettings = (
             textOnly={!isStory}
             keywordLabel={isStory ? "کلمات کلیدی Reply استوری" : "کلمات کلیدی"}
             keywordDescription={isStory ? "با وارد شدن این کلمات در Reply استوری، پاسخ خودکار فعال می‌شود." : "با وارد شدن این کلمات در کامنت، پاسخ خودکار فعال می‌شود."}
-            finalSaveLabel={isStory ? "ذخیره" : "ذخیره متن و ادامه"}
+            finalSaveLabel="ذخیره"
             finalSaveLoadingLabel="در حال ذخیره..."
             responseTypeTitle="نوع پاسخ خودکار"
             responseTypeDescription="نوع پاسخی را که می‌خواهید برای این محتوا ارسال شود انتخاب کنید."
@@ -224,8 +223,8 @@ const optionalSettings = (
           {error && <div role="alert" className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-5 text-[#B91C1C]">{error}</div>}
 
           <div className="space-y-3 border-t border-[#E2E8F0] pt-5">
+            <button type="button" onClick={() => setShowDeleteConfirm(true)} disabled={deleting} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-4 text-sm font-bold text-[#DC2626] hover:bg-[#FEE2E2] disabled:opacity-60"><span>{deleting ? "در حال حذف..." : "حذف پاسخ خودکار"}</span><Trash2 size={17} className="shrink-0" /></button>
             <button type="button" onClick={() => router.back()} disabled={deleting} className="inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] px-4 text-sm font-bold text-[#475569] hover:bg-[#F1F5F9] disabled:opacity-60">انصراف</button>
-            <button type="button" onClick={() => setShowDeleteConfirm(true)} disabled={deleting} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-4 text-sm font-bold text-[#DC2626] hover:bg-[#FEE2E2] disabled:opacity-60">{deleting ? "در حال حذف..." : "حذف پاسخ خودکار"}</button>
           </div>
         </section>
         {showDeleteConfirm && (
