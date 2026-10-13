@@ -36,6 +36,7 @@ type EntryPointFlowBuilderProps = {
     onDirtyChange?: (value: boolean) => void;
     textOnly?: boolean;
     optionalSettings?: ReactNode;
+    finalActions?: ReactNode;
     fullPageLoading?: boolean;
     keywordLabel?: string;
     keywordDescription?: string;
@@ -95,6 +96,7 @@ export default function EntryPointFlowBuilder({
     onDirtyChange,
     textOnly = false,
     optionalSettings,
+    finalActions,
     fullPageLoading = false,
     keywordLabel,
     keywordDescription,
@@ -859,6 +861,7 @@ export default function EntryPointFlowBuilder({
                         hideVideo={hideVideo}
                         textOnly={textOnly}
                         extraSettings={optionalSettings}
+                        finalActions={finalActions}
                         responseTypeTitle={responseTypeTitle}
                         responseTypeDescription={responseTypeDescription}
                         textPlaceholder={textPlaceholder}
