@@ -167,7 +167,7 @@ export default function MediaAutomationEditor({ id, expectedTriggerType }: { id:
                   headers: { "Content-Type": "application/json" },
                   credentials: "include",
                   body: JSON.stringify({
-                    ...(isStory ? { likeStoryReply } : { commentReplyText: commentReplyText.trim(), likeComment: false }),
+                    ...(isStory ? { likeStoryReply } : { commentReplyText: commentReplyText.trim() }),
                     requireFollow,
                     followGateText: requireFollow ? followGateText.trim() : null,
                   }),
