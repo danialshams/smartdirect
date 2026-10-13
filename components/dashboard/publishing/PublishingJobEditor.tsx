@@ -753,8 +753,8 @@ export default function PublishingJobEditor({
             </div>
 
             {automationLoading || !automationLoaded ? (
-              <div dir="rtl" role="status" aria-live="polite" className="flex min-h-40 flex-col items-center justify-center gap-3 text-center">
-                <Loader2 size={28} strokeWidth={1.8} className="animate-spin text-[#2563EB]" />
+              <div dir="rtl" role="status" aria-live="polite" className="fixed inset-0 z-40 flex min-h-screen flex-col items-center justify-center gap-3 bg-[#F8FAFC] px-4 text-center">
+                <Loader2 size={30} strokeWidth={1.8} className="animate-spin text-[#2563EB]" />
                 <p className="text-sm leading-6 text-[#64748B]">{job.type === "STORY" ? "در حال دریافت تنظیمات پاسخ خودکار استوری..." : "در حال دریافت تنظیمات پاسخ خودکار کامنت..."}</p>
               </div>
             ) : automation ? (
