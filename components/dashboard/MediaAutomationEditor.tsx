@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Loader2, Pencil } from "lucide-react";
+import { Button } from "@/components/dashboard/DashboardUI";
 import { toast } from "sonner";
 
 const LoadingState = ({ label }: { label: string }) => (
@@ -153,10 +154,14 @@ const optionalSettings = (
     <div dir="rtl" className="min-h-full px-3 py-4 sm:px-5 sm:py-6 lg:px-8">
       <div className="mx-auto w-full max-w-2xl">
         <div className="mb-5 flex items-center justify-between gap-3">
-          <button type="button" onClick={() => router.back()} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
+          <Button
+            type="button"
+            onClick={() => router.back()}
+            className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]"
+          >
             <ArrowRight size={15} strokeWidth={2} />
             بازگشت
-          </button>
+          </Button>
         </div>
 
         <section className="space-y-5 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
