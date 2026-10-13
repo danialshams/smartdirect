@@ -837,6 +837,7 @@ export default function EntryPointFlowBuilder({
                         responseTypeDescription={responseTypeDescription}
                         textPlaceholder={textPlaceholder}
                         finalSaveLabel={finalSaveLabel}
+                        usePublishingSaveLabel={triggerType !== "DM"}
                         finalSaveLoadingLabel={finalSaveLoadingLabel}
                         keywordValid={triggerType === "DM" || Boolean(keyword.trim())}
                         disabled={saving}
