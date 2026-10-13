@@ -793,6 +793,36 @@ export default function PublishingJobEditor({
                   onActiveChange={setAutomationActive}
                   dirty={automationDirty}
                   onDirtyChange={setAutomationDirty}
+                  optionalSettings={
+                    <>
+                      {triggerType === "STORY_REPLY_KEYWORD" && (
+                        <div className="rounded-xl border border-[#E2E8F0] bg-white p-3.5">
+                          <label className="flex cursor-pointer items-start gap-3">
+                            <input type="checkbox" checked={likeStoryReply} onChange={(event) => { setLikeStoryReply(event.target.checked); setAutomationDirty(true); }} className="mt-0.5 h-4 w-4 accent-[#2563EB]" />
+                            <span>
+                              <span className="block text-sm font-bold text-[#0F172A]">لایک ریپلای <span className="font-medium text-[#2563EB]">(اختیاری)</span></span>
+                              <span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، Reply استوری کاربر لایک می‌شود.</span>
+                            </span>
+                          </label>
+                        </div>
+                      )}
+                      <div className="rounded-xl border border-[#E2E8F0] bg-white p-3.5">
+                        <label className="flex cursor-pointer items-start gap-3">
+                          <input type="checkbox" checked={requireFollow} onChange={(event) => { setRequireFollow(event.target.checked); setAutomationDirty(true); }} className="mt-0.5 h-4 w-4 accent-[#2563EB]" />
+                          <span>
+                            <span className="block text-sm font-bold text-[#0F172A]">اجبار به فالو <span className="font-medium text-[#2563EB]">(اختیاری)</span></span>
+                            <span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، کاربر باید پیج را فالو کرده باشد تا پاسخ را دریافت کند.</span>
+                          </span>
+                        </label>
+                        {requireFollow && (
+                          <div className="mt-3">
+                            <label htmlFor="publishing-follow-gate-text" className="mb-2 block text-sm font-bold text-[#0F172A]">متن درخواست فالو</label>
+                            <textarea id="publishing-follow-gate-text" value={followGateText} onChange={(event) => { setFollowGateText(event.target.value); setAutomationDirty(true); }} rows={2} maxLength={500} placeholder="مثلاً برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none placeholder:text-xs focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  }
                   finalSaveLabel="ذخیره"
                   finalSaveLoadingLabel="در حال ذخیره..."
                   onAutomationReady={async (savedAutomationId) => {
@@ -827,34 +857,6 @@ export default function PublishingJobEditor({
                     toast.success("پاسخ خودکار با موفقیت ذخیره شد.");
                   }}
                 />
-
-                {triggerType === "STORY_REPLY_KEYWORD" && (
-                  <div className="mb-4 rounded-xl border border-[#E2E8F0] bg-white p-3.5">
-                    <label className="flex cursor-pointer items-start gap-3">
-                      <input type="checkbox" checked={likeStoryReply} onChange={(event) => { setLikeStoryReply(event.target.checked); setAutomationDirty(true); }} className="mt-0.5 h-4 w-4 accent-[#2563EB]" />
-                      <span>
-                        <span className="block text-sm font-bold text-[#0F172A]">لایک ریپلای <span className="font-medium text-[#2563EB]">(اختیاری)</span></span>
-                        <span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، Reply استوری کاربر لایک می‌شود.</span>
-                      </span>
-                    </label>
-                  </div>
-                )}
-
-                <div className="mb-4 rounded-xl border border-[#E2E8F0] bg-white p-3.5">
-                  <label className="flex cursor-pointer items-start gap-3">
-                    <input type="checkbox" checked={requireFollow} onChange={(event) => { setRequireFollow(event.target.checked); setAutomationDirty(true); }} className="mt-0.5 h-4 w-4 accent-[#2563EB]" />
-                    <span>
-                      <span className="block text-sm font-bold text-[#0F172A]">اجبار به فالو <span className="font-medium text-[#2563EB]">(اختیاری)</span></span>
-                      <span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، کاربر باید پیج را فالو کرده باشد تا پاسخ را دریافت کند.</span>
-                    </span>
-                  </label>
-                  {requireFollow && (
-                    <div className="mt-3">
-                      <label htmlFor="publishing-follow-gate-text" className="mb-2 block text-sm font-bold text-[#0F172A]">متن درخواست فالو</label>
-                      <textarea id="publishing-follow-gate-text" value={followGateText} onChange={(event) => { setFollowGateText(event.target.value); setAutomationDirty(true); }} rows={2} maxLength={500} placeholder="مثلاً برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none placeholder:text-xs focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
-                    </div>
-                  )}
-                </div>
 
 
                 <div className="mt-5 border-t border-[#E2E8F0] pt-5">
