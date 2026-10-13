@@ -816,7 +816,6 @@ export default function EntryPointFlowBuilder({
                             </div>
                         </div>
                     )}
-                    {optionalSettings}
                     {flowLoading ? (
                         <DashboardLoading label="در حال دریافت Flow پاسخ..." className="min-h-32" />
                     ) : (
@@ -829,6 +828,7 @@ export default function EntryPointFlowBuilder({
                         showFinalSave
                         hideVideo={hideVideo}
                         textOnly={textOnly}
+                        extraSettings={optionalSettings}
                         responseTypeTitle={responseTypeTitle}
                         responseTypeDescription={responseTypeDescription}
                         textPlaceholder={textPlaceholder}
