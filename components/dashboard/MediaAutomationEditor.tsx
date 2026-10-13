@@ -160,6 +160,7 @@ export default function MediaAutomationEditor({ id, expectedTriggerType }: { id:
             responseTypeDescription="نوع پاسخی را که می‌خواهید برای این محتوا ارسال شود انتخاب کنید."
             onAutomationReady={async () => {
               try {
+                if (requireFollow && !followGateText.trim()) throw new Error("متن درخواست فالو را وارد کنید.");
                 if (!isStory && !commentReplyText.trim()) throw new Error("متن ارسالی در کامنت را وارد کنید.");
                 const response = await fetch(`/api/automations/${encodeURIComponent(automation.id)}`, {
                   method: "PATCH",
