@@ -12,7 +12,12 @@ const EntryPointFlowBuilder = dynamic(
   () => import("@/components/dashboard/EntryPointFlowBuilder"),
   {
     ssr: false,
-    loading: () => <DashboardLoading label="در حال آماده‌سازی ویرایشگر..." className="min-h-32" />,
+    loading: () => (
+      <div dir="rtl" role="status" aria-live="polite" className="flex min-h-[45vh] w-full flex-col items-center justify-center gap-3 px-4 text-center">
+        <Loader2 size={30} strokeWidth={1.8} className="animate-spin text-[#2563EB]" />
+        <p className="text-sm leading-6 text-[#64748B]">در حال آماده‌سازی ویرایشگر پاسخ خودکار...</p>
+      </div>
+    ),
   },
 );
 
@@ -517,7 +522,7 @@ export default function PublishingJobEditor({
 
                   </div>
                   <p className="mt-1.5 text-xs leading-5 text-[#64748B]">
-                    پاسخ خودکار {labels[job.type]} خود را ویرایش کنید.
+                    جزئیات محتوا و پاسخ خودکار را در همین صفحه مدیریت کنید.
                   </p>
                 </div>
               </div>
@@ -527,7 +532,10 @@ export default function PublishingJobEditor({
 
         {!job ? (
           loading ? (
-            <DashboardLoading label="در حال دریافت محتوای زمان‌بندی‌شده..." className="dashboard-loading--page" />
+            <div dir="rtl" role="status" aria-live="polite" className="flex min-h-[55vh] w-full flex-col items-center justify-center gap-3 px-4 text-center">
+              <Loader2 size={30} strokeWidth={1.8} className="animate-spin text-[#2563EB]" />
+              <p className="text-sm leading-6 text-[#64748B]">در حال دریافت اطلاعات محتوا...</p>
+            </div>
           ) : (
             <section className="flex min-h-[50vh] items-center justify-center rounded-2xl border border-[#E2E8F0] bg-white shadow-sm">
               <span className="text-sm text-[#64748B]">محتوا پیدا نشد.</span>
@@ -745,11 +753,9 @@ export default function PublishingJobEditor({
             </div>
 
             {automationLoading || !automationLoaded ? (
-              <div className="flex min-h-32 items-center justify-center">
-                <Loader2
-                  size={22}
-                  className="animate-spin text-[#2563EB]"
-                />
+              <div dir="rtl" role="status" aria-live="polite" className="flex min-h-40 flex-col items-center justify-center gap-3 text-center">
+                <Loader2 size={28} strokeWidth={1.8} className="animate-spin text-[#2563EB]" />
+                <p className="text-sm leading-6 text-[#64748B]">{job.type === "STORY" ? "در حال دریافت تنظیمات پاسخ خودکار استوری..." : "در حال دریافت تنظیمات پاسخ خودکار کامنت..."}</p>
               </div>
             ) : automation ? (
               <>
@@ -776,34 +782,6 @@ export default function PublishingJobEditor({
                     </Button>
                   </div>
                 )}
-                {triggerType === "STORY_REPLY_KEYWORD" && (
-                  <div className="mb-4 rounded-xl border border-[#E2E8F0] bg-white p-3.5">
-                    <label className="flex cursor-pointer items-start gap-3">
-                      <input type="checkbox" checked={likeStoryReply} onChange={(event) => { setLikeStoryReply(event.target.checked); setAutomationDirty(true); }} className="mt-0.5 h-4 w-4 accent-[#2563EB]" />
-                      <span>
-                        <span className="block text-sm font-bold text-[#0F172A]">لایک ریپلای <span className="font-medium text-[#2563EB]">(اختیاری)</span></span>
-                        <span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، Reply استوری کاربر لایک می‌شود.</span>
-                      </span>
-                    </label>
-                  </div>
-                )}
-
-                <div className="mb-4 rounded-xl border border-[#E2E8F0] bg-white p-3.5">
-                  <label className="flex cursor-pointer items-start gap-3">
-                    <input type="checkbox" checked={requireFollow} onChange={(event) => { setRequireFollow(event.target.checked); setAutomationDirty(true); }} className="mt-0.5 h-4 w-4 accent-[#2563EB]" />
-                    <span>
-                      <span className="block text-sm font-bold text-[#0F172A]">اجبار به فالو <span className="font-medium text-[#2563EB]">(اختیاری)</span></span>
-                      <span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، کاربر باید پیج را فالو کرده باشد تا پاسخ را دریافت کند.</span>
-                    </span>
-                  </label>
-                  {requireFollow && (
-                    <div className="mt-3">
-                      <label htmlFor="publishing-follow-gate-text" className="mb-2 block text-sm font-bold text-[#0F172A]">متن درخواست فالو</label>
-                      <textarea id="publishing-follow-gate-text" value={followGateText} onChange={(event) => { setFollowGateText(event.target.value); setAutomationDirty(true); }} rows={2} maxLength={500} placeholder="مثلاً برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none placeholder:text-xs focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
-                    </div>
-                  )}
-                </div>
-
                 <EntryPointFlowBuilder
                   accountId={job.instagramAccount.id}
                   automationId={automation.id}
@@ -848,6 +826,35 @@ export default function PublishingJobEditor({
                     toast.success("پاسخ خودکار با موفقیت ذخیره شد.");
                   }}
                 />
+
+                {triggerType === "STORY_REPLY_KEYWORD" && (
+                  <div className="mb-4 rounded-xl border border-[#E2E8F0] bg-white p-3.5">
+                    <label className="flex cursor-pointer items-start gap-3">
+                      <input type="checkbox" checked={likeStoryReply} onChange={(event) => { setLikeStoryReply(event.target.checked); setAutomationDirty(true); }} className="mt-0.5 h-4 w-4 accent-[#2563EB]" />
+                      <span>
+                        <span className="block text-sm font-bold text-[#0F172A]">لایک ریپلای <span className="font-medium text-[#2563EB]">(اختیاری)</span></span>
+                        <span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، Reply استوری کاربر لایک می‌شود.</span>
+                      </span>
+                    </label>
+                  </div>
+                )}
+
+                <div className="mb-4 rounded-xl border border-[#E2E8F0] bg-white p-3.5">
+                  <label className="flex cursor-pointer items-start gap-3">
+                    <input type="checkbox" checked={requireFollow} onChange={(event) => { setRequireFollow(event.target.checked); setAutomationDirty(true); }} className="mt-0.5 h-4 w-4 accent-[#2563EB]" />
+                    <span>
+                      <span className="block text-sm font-bold text-[#0F172A]">اجبار به فالو <span className="font-medium text-[#2563EB]">(اختیاری)</span></span>
+                      <span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، کاربر باید پیج را فالو کرده باشد تا پاسخ را دریافت کند.</span>
+                    </span>
+                  </label>
+                  {requireFollow && (
+                    <div className="mt-3">
+                      <label htmlFor="publishing-follow-gate-text" className="mb-2 block text-sm font-bold text-[#0F172A]">متن درخواست فالو</label>
+                      <textarea id="publishing-follow-gate-text" value={followGateText} onChange={(event) => { setFollowGateText(event.target.value); setAutomationDirty(true); }} rows={2} maxLength={500} placeholder="مثلاً برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none placeholder:text-xs focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
+                    </div>
+                  )}
+                </div>
+
 
                 <div className="mt-5 border-t border-[#E2E8F0] pt-5">
                   <Button
