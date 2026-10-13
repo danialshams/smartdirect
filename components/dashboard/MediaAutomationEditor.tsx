@@ -108,6 +108,45 @@ export default function MediaAutomationEditor({ id, expectedTriggerType }: { id:
 
   const isStory = expectedTriggerType === "STORY_REPLY_KEYWORD";
 
+const optionalSettings = (
+  <div className={isStory ? "space-y-3" : "space-y-5"}>
+    {isStory && (
+      <div className="rounded-xl border border-[#E2E8F0] bg-white p-3.5">
+        <label className="flex cursor-pointer items-start gap-3">
+          <input type="checkbox" checked={likeStoryReply} onChange={(event) => { setLikeStoryReply(event.target.checked); setDirty(true); }} className="mt-0.5 h-4 w-4 accent-[#2563EB]" />
+          <span>
+            <span className="block text-sm font-bold text-[#0F172A]">لایک ریپلای <span className="font-medium text-[#2563EB]">(اختیاری)</span></span>
+            <span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، Reply استوری کاربر لایک می‌شود.</span>
+          </span>
+        </label>
+      </div>
+    )}
+
+    {!isStory && (
+      <div className="border-t border-[#E2E8F0] pt-5">
+        <label htmlFor="edit-publishing-comment-reply" className="mb-2 block text-sm font-bold text-[#0F172A]">متن ارسالی در کامنت</label>
+        <textarea id="edit-publishing-comment-reply" value={commentReplyText} onChange={(event) => { setCommentReplyText(event.target.value); setDirty(true); }} rows={3} maxLength={2000} inputMode="text" placeholder="پاسخی که زیر کامنت کاربر منتشر می‌شود بنویس..." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none placeholder:text-xs focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
+      </div>
+    )}
+
+    <div className={isStory ? "rounded-xl border border-[#E2E8F0] bg-white p-3.5" : "border-t border-[#E2E8F0] pt-5"}>
+      <label className={isStory ? "flex cursor-pointer items-start gap-3" : "flex cursor-pointer items-start gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5"}>
+        <input type="checkbox" checked={requireFollow} onChange={(event) => { setRequireFollow(event.target.checked); setDirty(true); }} className="mt-0.5 h-4 w-4 accent-[#2563EB]" />
+        <span>
+          <span className="block text-sm font-bold text-[#0F172A]">اجبار به فالو <span className="font-medium text-[#2563EB]">(اختیاری)</span></span>
+          <span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، کاربر باید پیج را فالو کرده باشد تا پاسخ را دریافت کند.</span>
+        </span>
+      </label>
+      {requireFollow && (
+        <div className="mt-2.5">
+          <label htmlFor="edit-publishing-follow-gate-text" className="mb-2 block text-sm font-bold text-[#0F172A]">متن درخواست فالو</label>
+          <textarea id="edit-publishing-follow-gate-text" value={followGateText} onChange={(event) => { setFollowGateText(event.target.value); setDirty(true); }} rows={2} maxLength={500} inputMode="text" placeholder="مثلاً برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none placeholder:text-xs focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
+        </div>
+      )}
+    </div>
+  </div>
+  );
+
 
 
   return (
@@ -171,44 +210,6 @@ export default function MediaAutomationEditor({ id, expectedTriggerType }: { id:
               }
             }}
           />
-            const optionalSettings = (
-            <div className={isStory ? "space-y-3" : "space-y-5"}>
-              {isStory && (
-                <div className="rounded-xl border border-[#E2E8F0] bg-white p-3.5">
-                  <label className="flex cursor-pointer items-start gap-3">
-                    <input type="checkbox" checked={likeStoryReply} onChange={(event) => { setLikeStoryReply(event.target.checked); setDirty(true); }} className="mt-0.5 h-4 w-4 accent-[#2563EB]" />
-                    <span>
-                      <span className="block text-sm font-bold text-[#0F172A]">لایک ریپلای <span className="font-medium text-[#2563EB]">(اختیاری)</span></span>
-                      <span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، Reply استوری کاربر لایک می‌شود.</span>
-                    </span>
-                  </label>
-                </div>
-              )}
-
-              {!isStory && (
-                <div className="border-t border-[#E2E8F0] pt-5">
-                  <label htmlFor="edit-publishing-comment-reply" className="mb-2 block text-sm font-bold text-[#0F172A]">متن ارسالی در کامنت</label>
-                  <textarea id="edit-publishing-comment-reply" value={commentReplyText} onChange={(event) => { setCommentReplyText(event.target.value); setDirty(true); }} rows={3} maxLength={2000} inputMode="text" placeholder="پاسخی که زیر کامنت کاربر منتشر می‌شود بنویس..." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none placeholder:text-xs focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
-                </div>
-              )}
-
-              <div className={isStory ? "rounded-xl border border-[#E2E8F0] bg-white p-3.5" : "border-t border-[#E2E8F0] pt-5"}>
-                <label className={isStory ? "flex cursor-pointer items-start gap-3" : "flex cursor-pointer items-start gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5"}>
-                  <input type="checkbox" checked={requireFollow} onChange={(event) => { setRequireFollow(event.target.checked); setDirty(true); }} className="mt-0.5 h-4 w-4 accent-[#2563EB]" />
-                  <span>
-                    <span className="block text-sm font-bold text-[#0F172A]">اجبار به فالو <span className="font-medium text-[#2563EB]">(اختیاری)</span></span>
-                    <span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، کاربر باید پیج را فالو کرده باشد تا پاسخ را دریافت کند.</span>
-                  </span>
-                </label>
-                {requireFollow && (
-                  <div className="mt-2.5">
-                    <label htmlFor="edit-publishing-follow-gate-text" className="mb-2 block text-sm font-bold text-[#0F172A]">متن درخواست فالو</label>
-                    <textarea id="edit-publishing-follow-gate-text" value={followGateText} onChange={(event) => { setFollowGateText(event.target.value); setDirty(true); }} rows={2} maxLength={500} inputMode="text" placeholder="مثلاً برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none placeholder:text-xs focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
-                  </div>
-                )}
-              </div>
-            </div>
-  );
           {optionalSettings}
           {error && <div role="alert" className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-5 text-[#B91C1C]">{error}</div>}
 
