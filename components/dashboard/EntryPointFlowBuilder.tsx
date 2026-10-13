@@ -1,5 +1,6 @@
 "use client";
 import { DashboardLoading } from "@/components/dashboard/DashboardUI";
+import { X } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 
 import PublishingStoryAutomationSetup from "./publishing/PublishingStoryAutomationSetup";
@@ -807,15 +808,15 @@ export default function EntryPointFlowBuilder({
                                     <div className="mb-3 flex flex-wrap gap-2">
                                         {keywordItems.map((item) => (
                                             <span key={item} className="inline-flex items-center gap-1.5 rounded-full bg-[#EFF6FF] px-3 py-1.5 text-xs font-semibold text-[#2563EB]">
-                                                {item}
-                                                <button type="button" onClick={() => { onKeywordChange?.(keywordItems.filter((value) => value !== item).join(", ")); onDirtyChange?.(true); }} className="text-[#64748B] hover:text-[#DC2626]" aria-label={"حذف " + item}>×</button>
+                                                <span>{item}</span>
+                                                <button type="button" onClick={() => { onKeywordChange?.(keywordItems.filter((value) => value !== item).join(",")); onDirtyChange?.(true); }} aria-label={"حذف " + item} className="flex h-4 w-4 items-center justify-center rounded-full hover:bg-white"><X size={12} /></button>
                                             </span>
                                         ))}
                                     </div>
                                 )}
                                 <div className="flex items-center gap-2">
-                                    <input value={keywordDraft} onChange={(event) => setKeywordDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === "," || event.key === "،" || event.key === ";") { event.preventDefault(); addKeyword(); } }} onBlur={addKeyword} placeholder={keywordItems.length ? "کلمه بعدی..." : "مثلاً قیمت، اطلاعات"} className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-3 !text-base text-[#0F172A] outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", WebkitTextSizeAdjust: "100%" }} />
-                                    <button type="button" onClick={addKeyword} disabled={!keywordDraft.trim()} className="min-h-11 shrink-0 rounded-lg !bg-[#2563EB] px-3.5 text-xs font-semibold text-white hover:!bg-[#1D4ED8] disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8]">افزودن</button>
+                                    <input id="edit-publishing-keyword" value={keywordDraft} onChange={(event) => setKeywordDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); addKeyword(); } }} placeholder="مثلاً قیمت، اطلاعات" inputMode="text" className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-3 !text-base leading-5 text-[#0F172A] outline-none placeholder:text-xs placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
+                                    <button type="button" onClick={addKeyword} disabled={!keywordDraft.trim() || keywordItems.some((item) => item.toLocaleLowerCase() === keywordDraft.trim().toLocaleLowerCase())} className="min-h-11 shrink-0 rounded-lg !bg-[#2563EB] px-3.5 text-xs font-semibold text-white hover:!bg-[#1D4ED8] disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8]">افزودن</button>
                                 </div>
                             </div>
                         </div>
