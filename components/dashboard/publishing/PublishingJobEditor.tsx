@@ -45,6 +45,9 @@ type AutomationMeta = {
   keyword: string | null;
   commentReplyText?: string | null;
   replyText?: string | null;
+  likeStoryReply?: boolean;
+  requireFollow?: boolean;
+  followGateText?: string | null;
   isActive: boolean;
 };
 
@@ -143,6 +146,9 @@ export default function PublishingJobEditor({
   const [commentReplyText, setCommentReplyText] = useState("");
   const [originalCommentReplyText, setOriginalCommentReplyText] = useState("");
   const [commentReplySaving, setCommentReplySaving] = useState(false);
+  const [likeStoryReply, setLikeStoryReply] = useState(false);
+  const [requireFollow, setRequireFollow] = useState(false);
+  const [followGateText, setFollowGateText] = useState("برای دریافت پاسخ، ابتدا پیج را Follow کنید.");
   const [automationActive, setAutomationActive] = useState(true);
   const [automationDirty, setAutomationDirty] = useState(false);
   const [automationLoaded, setAutomationLoaded] = useState(false);
@@ -262,6 +268,9 @@ export default function PublishingJobEditor({
                 const nextCommentReply = nextAutomation.commentReplyText ?? "";
                 setCommentReplyText(nextCommentReply);
                 setOriginalCommentReplyText(nextCommentReply);
+                setLikeStoryReply(Boolean(nextAutomation.likeStoryReply));
+                setRequireFollow(Boolean(nextAutomation.requireFollow));
+                setFollowGateText(nextAutomation.followGateText || "برای دریافت پاسخ، ابتدا پیج را Follow کنید.");
                 setAutomationActive(nextAutomation.isActive);
                 setAutomationDirty(false);
               }
@@ -767,6 +776,34 @@ export default function PublishingJobEditor({
                     </Button>
                   </div>
                 )}
+                {triggerType === "STORY_REPLY_KEYWORD" && (
+                  <div className="mb-4 rounded-xl border border-[#E2E8F0] bg-white p-3.5">
+                    <label className="flex cursor-pointer items-start gap-3">
+                      <input type="checkbox" checked={likeStoryReply} onChange={(event) => { setLikeStoryReply(event.target.checked); setAutomationDirty(true); }} className="mt-0.5 h-4 w-4 accent-[#2563EB]" />
+                      <span>
+                        <span className="block text-sm font-bold text-[#0F172A]">لایک ریپلای <span className="font-medium text-[#2563EB]">(اختیاری)</span></span>
+                        <span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، Reply استوری کاربر لایک می‌شود.</span>
+                      </span>
+                    </label>
+                  </div>
+                )}
+
+                <div className="mb-4 rounded-xl border border-[#E2E8F0] bg-white p-3.5">
+                  <label className="flex cursor-pointer items-start gap-3">
+                    <input type="checkbox" checked={requireFollow} onChange={(event) => { setRequireFollow(event.target.checked); setAutomationDirty(true); }} className="mt-0.5 h-4 w-4 accent-[#2563EB]" />
+                    <span>
+                      <span className="block text-sm font-bold text-[#0F172A]">اجبار به فالو <span className="font-medium text-[#2563EB]">(اختیاری)</span></span>
+                      <span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، کاربر باید پیج را فالو کرده باشد تا پاسخ را دریافت کند.</span>
+                    </span>
+                  </label>
+                  {requireFollow && (
+                    <div className="mt-3">
+                      <label htmlFor="publishing-follow-gate-text" className="mb-2 block text-sm font-bold text-[#0F172A]">متن درخواست فالو</label>
+                      <textarea id="publishing-follow-gate-text" value={followGateText} onChange={(event) => { setFollowGateText(event.target.value); setAutomationDirty(true); }} rows={2} maxLength={500} placeholder="مثلاً برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none placeholder:text-xs focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
+                    </div>
+                  )}
+                </div>
+
                 <EntryPointFlowBuilder
                   accountId={job.instagramAccount.id}
                   automationId={automation.id}
@@ -779,10 +816,34 @@ export default function PublishingJobEditor({
                   onDirtyChange={setAutomationDirty}
                   finalSaveLabel="ذخیره"
                   finalSaveLoadingLabel="در حال ذخیره..."
-                  onAutomationReady={(automationId) => {
-                    setAutomation((current) =>
-                      current ? { ...current, id: automationId } : current,
+                  onAutomationReady={async (savedAutomationId) => {
+                    if (requireFollow && !followGateText.trim()) {
+                      throw new Error("متن درخواست فالو را وارد کنید.");
+                    }
+                    const settingsResponse = await fetch(
+                      `/api/automations/${encodeURIComponent(savedAutomationId)}`,
+                      {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        credentials: "include",
+                        body: JSON.stringify({
+                          ...(triggerType === "STORY_REPLY_KEYWORD" ? { likeStoryReply } : {}),
+                          requireFollow,
+                          followGateText: requireFollow ? followGateText.trim() : null,
+                        }),
+                      },
                     );
+                    const settingsResult = await settingsResponse.json();
+                    if (!settingsResponse.ok || !settingsResult.success) {
+                      throw new Error(settingsResult.error || settingsResult.message || "ذخیره تنظیمات پاسخ خودکار ناموفق بود.");
+                    }
+                    setAutomation((current) => current ? {
+                      ...current,
+                      id: savedAutomationId,
+                      likeStoryReply,
+                      requireFollow,
+                      followGateText: requireFollow ? followGateText.trim() : null,
+                    } : current);
                     setAutomationDirty(false);
                     toast.success("پاسخ خودکار با موفقیت ذخیره شد.");
                   }}
