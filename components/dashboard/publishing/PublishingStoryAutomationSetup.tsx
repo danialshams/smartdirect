@@ -541,6 +541,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
       {extraSettings}
 
       {showFinalSave && (
+        <div className={usePublishingSaveLabel ? "border-t border-[#E2E8F0] pt-4" : ""}>
         <button
           type="button"
           disabled={disabled || finalSaveDisabled || finalSaving || !keywordValid || uploading || savingShowcase || formSaving ||
@@ -580,6 +581,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
             resolvedFinalSaveLabel
           )}
         </button>
+        </div>
       )}
 
       {error && <p className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-2.5 text-xs text-[#B91C1C]">{error}</p>}
