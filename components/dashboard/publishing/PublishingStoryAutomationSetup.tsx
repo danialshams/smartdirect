@@ -577,7 +577,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
               {finalSaveLoadingLabel}
             </span>
           ) : (
-            {resolvedFinalSaveLabel}
+            resolvedFinalSaveLabel
           )}
         </button>
       )}
