@@ -191,7 +191,7 @@ const optionalSettings = (
             keyword={keyword}
             onKeywordChange={(value) => { setKeyword(value); setDirty(true); }}
             isActive={isActive}
-            onActiveChange={setIsActive}
+            onActiveChange={(value) => { setIsActive(value); setDirty(true); }}
             dirty={dirty}
             onDirtyChange={setDirty}
             textOnly={!isStory}
@@ -201,11 +201,11 @@ const optionalSettings = (
             finalSaveLoadingLabel="در حال ذخیره..."
             responseTypeTitle="نوع پاسخ خودکار"
             responseTypeDescription="نوع پاسخی را که می‌خواهید برای این محتوا ارسال شود انتخاب کنید."
-            onAutomationReady={async () => {
+            onAutomationReady={async (savedAutomationId) => {
               try {
                 if (requireFollow && !followGateText.trim()) throw new Error("متن درخواست فالو را وارد کنید.");
                 if (!isStory && !commentReplyText.trim()) throw new Error("متن ارسالی در کامنت را وارد کنید.");
-                const response = await fetch(`/api/automations/${encodeURIComponent(automation.id)}`, {
+                const response = await fetch(`/api/automations/${encodeURIComponent(savedAutomationId || automation.id)}`, {
                   method: "PATCH",
                   headers: { "Content-Type": "application/json" },
                   credentials: "include",
