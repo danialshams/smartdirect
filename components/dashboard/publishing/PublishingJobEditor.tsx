@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowRight, CalendarClock, Loader2, Pencil, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { Button, DashboardLoading } from "@/components/dashboard/DashboardUI";
+import { Button } from "@/components/dashboard/DashboardUI";
 import PersianDatePicker from "./PersianDatePicker";
 const EntryPointFlowBuilder = dynamic(
   () => import("@/components/dashboard/EntryPointFlowBuilder"),
