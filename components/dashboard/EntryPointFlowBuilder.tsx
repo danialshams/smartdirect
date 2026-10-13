@@ -800,7 +800,12 @@ export default function EntryPointFlowBuilder({
     return (
         <div className="space-y-5">
             {loadingAutomation ? (
-                hideLoadingSpinner ? (
+                fullPageLoading ? (
+                    <div dir="rtl" role="status" aria-live="polite" className="fixed inset-0 z-40 flex min-h-screen flex-col items-center justify-center gap-3 bg-[#F8FAFC] px-4 text-center">
+                        <Loader2 size={30} strokeWidth={1.8} className="animate-spin text-[#2563EB]" />
+                        <p className="text-sm leading-6 text-[#64748B]">در حال دریافت تنظیمات پاسخ خودکار...</p>
+                    </div>
+                ) : hideLoadingSpinner ? (
                     <div role="status" aria-live="polite" className="py-8 text-center text-sm leading-6 text-[#64748B]">در حال دریافت تنظیمات پاسخ خودکار...</div>
                 ) : (
                     <DashboardLoading label="در حال دریافت تنظیمات پاسخ خودکار..." className="min-h-32" />
@@ -833,7 +838,12 @@ export default function EntryPointFlowBuilder({
                     )}
                     {keywordExtraContent}
                     {flowLoading ? (
-                        hideLoadingSpinner ? (
+                        fullPageLoading ? (
+                            <div dir="rtl" role="status" aria-live="polite" className="fixed inset-0 z-40 flex min-h-screen flex-col items-center justify-center gap-3 bg-[#F8FAFC] px-4 text-center">
+                                <Loader2 size={30} strokeWidth={1.8} className="animate-spin text-[#2563EB]" />
+                                <p className="text-sm leading-6 text-[#64748B]">در حال دریافت اطلاعات فرم‌ها و ویترین‌ها...</p>
+                            </div>
+                        ) : hideLoadingSpinner ? (
                             <div role="status" aria-live="polite" className="py-8 text-center text-sm leading-6 text-[#64748B]">در حال دریافت اطلاعات فرم‌ها و ویترین‌ها...</div>
                         ) : (
                             <DashboardLoading label="در حال دریافت Flow پاسخ..." className="min-h-32" />
