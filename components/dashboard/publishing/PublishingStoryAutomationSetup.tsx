@@ -324,32 +324,36 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
 
   return (
     <div className={["space-y-5", disabled ? "pointer-events-none opacity-60" : ""].join(" ")}>
-      <div>
-        <p className="text-sm font-bold text-[#0F172A]">{responseTypeTitle}</p>
-        <p className="mt-1 text-[11px] leading-5 text-[#64748B]">{responseTypeDescription}</p>
-      </div>
+      {!textOnly && (
+        <>
+          <div>
+            <p className="text-sm font-bold text-[#0F172A]">{responseTypeTitle}</p>
+            <p className="mt-1 text-[11px] leading-5 text-[#64748B]">{responseTypeDescription}</p>
+          </div>
 
-      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
-        {options.filter(({ value }) => !(textOnly && value !== "TEXT") && !((hideVideo && value === "VIDEO") || (hideForm && value === "FORM")) ).map(({ value, label, Icon }) => {
-          const active = responseType === value;
-          return (
-            <button
-              key={value}
-              type="button"
-              onClick={() => selectType(value)}
-              className={[
-                "flex min-h-20 items-center gap-2.5 rounded-xl border px-3 py-3 text-right transition",
-                active ? "border-[#2563EB] bg-[#EFF6FF] ring-2 ring-[#2563EB]/10" : "border-[#E2E8F0] bg-[#F8FAFC] hover:border-[#BFDBFE] hover:bg-white",
-              ].join(" ")}
-            >
-              <span className={["flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", active ? "bg-[#DBEAFE] text-[#2563EB]" : "bg-white text-[#64748B]"].join(" ")}>
-                <Icon size={17} />
-              </span>
-              <span className="text-xs font-bold text-[#0F172A]">{label}</span>
-            </button>
-          );
-        })}
-      </div>
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+            {options.filter(({ value }) => !((hideVideo && value === "VIDEO") || (hideForm && value === "FORM"))).map(({ value, label, Icon }) => {
+              const active = responseType === value;
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => selectType(value)}
+                  className={[
+                    "flex min-h-20 items-center gap-2.5 rounded-xl border px-3 py-3 text-right transition",
+                    active ? "border-[#2563EB] bg-[#EFF6FF] ring-2 ring-[#2563EB]/10" : "border-[#E2E8F0] bg-[#F8FAFC] hover:border-[#BFDBFE] hover:bg-white",
+                  ].join(" ")}
+                >
+                  <span className={["flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", active ? "bg-[#DBEAFE] text-[#2563EB]" : "bg-white text-[#64748B]"].join(" ")}>
+                    <Icon size={17} />
+                  </span>
+                  <span className="text-xs font-bold text-[#0F172A]">{label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
 
       {responseType === "TEXT" && (
         <div>
