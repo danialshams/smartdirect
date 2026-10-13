@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Loader2 } from "lucide-react";
+import { ArrowRight, Loader2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 const LoadingState = ({ label }: { label: string }) => (
@@ -161,7 +161,7 @@ const optionalSettings = (
 
         <section className="space-y-5 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
           <div className="flex items-start gap-3">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]"><ArrowRight size={15} className="rotate-180" /></span>
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]"><Pencil size={15} /></span>
             <div className="min-w-0">
               <h2 className="text-sm font-bold text-[#0F172A]">{isStory ? "ویرایش پاسخ خودکار استوری" : "ویرایش پاسخ خودکار کامنت"}</h2>
               <p className="mt-1.5 text-xs leading-5 text-[#64748B]">{isStory ? "کلمات کلیدی، نوع پاسخ و تنظیمات اختیاری استوری را ویرایش کن." : "کلمات کلیدی، پاسخ کامنت و تنظیمات اختیاری را ویرایش کن."}</p>
