@@ -117,7 +117,7 @@ export default function MediaAutomationEditor({ id, expectedTriggerType }: { id:
             keywordLabel={isStory ? "کلمات کلیدی Reply استوری" : "کلمات کلیدی"}
             keywordDescription={isStory ? "با وارد شدن این کلمات در Reply استوری، پاسخ خودکار فعال می‌شود." : "با وارد شدن این کلمات در کامنت، پاسخ خودکار فعال می‌شود."}
             optionalSettings={
-              <>
+              <div className={isStory ? "space-y-3" : "space-y-5"}>
                 {isStory && (
                   <div className="rounded-xl border border-[#E2E8F0] bg-white p-3.5">
                     <label className="flex cursor-pointer items-start gap-3">
@@ -152,12 +152,12 @@ export default function MediaAutomationEditor({ id, expectedTriggerType }: { id:
                     </div>
                   )}
                 </div>
-              </>
+              </div>
             }
             finalSaveLabel={isStory ? "ذخیره" : "ذخیره متن و ادامه"}
             finalSaveLoadingLabel="در حال ذخیره..."
             responseTypeTitle="نوع پاسخ خودکار"
-            responseTypeDescription={isStory ? "نوع پاسخی را که می‌خواهید برای این استوری ارسال شود انتخاب کنید." : "متن پیامی را که در دایرکت برای کاربر ارسال می‌شود ویرایش کنید."}
+            responseTypeDescription="نوع پاسخی را که می‌خواهید برای این محتوا ارسال شود انتخاب کنید."
             onAutomationReady={async () => {
               try {
                 if (!isStory && !commentReplyText.trim()) throw new Error("متن ارسالی در کامنت را وارد کنید.");
