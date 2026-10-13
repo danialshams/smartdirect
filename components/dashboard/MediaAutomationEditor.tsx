@@ -178,6 +178,7 @@ const optionalSettings = (
           {commentReplyField}
 
           <EntryPointFlowBuilder
+            fullPageLoading
             accountId={automation.instagramAccountId}
             automationId={automation.id}
             triggerType={expectedTriggerType}
