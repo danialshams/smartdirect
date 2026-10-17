@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Instagram, X } from "lucide-react";
+import { Camera, X } from "lucide-react";
 
 type InstagramAccount = {
   id: string;
@@ -39,7 +39,7 @@ export default function DashboardOverview({ instagramAccounts }: DashboardOvervi
     <main className="daira-home" dir="rtl">
       <header className="daira-home__header">
         <button className="daira-home__instagram" type="button" aria-label="افزودن یا مدیریت اکانت اینستاگرام" onClick={() => setAccountModalOpen(true)}>
-          <Instagram size={27} strokeWidth={2.2} />
+          <Camera size={27} strokeWidth={2.2} />
         </button>
         <Link href="/dashboard" className="daira-home__brand" aria-label="دایرا - خانه">
           <span className="daira-home__brand-mark">D</span>
@@ -74,11 +74,11 @@ export default function DashboardOverview({ instagramAccounts }: DashboardOvervi
         <div className="daira-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setAccountModalOpen(false); }}>
           <section className="daira-account-modal" role="dialog" aria-modal="true" aria-labelledby="daira-account-title">
             <button className="daira-account-modal__close" type="button" aria-label="بستن" onClick={() => setAccountModalOpen(false)}><X size={20} /></button>
-            <div className="daira-account-modal__icon"><Instagram size={25} /></div>
+            <div className="daira-account-modal__icon"><Camera size={25} /></div>
             <h2 id="daira-account-title">اکانت‌های اینستاگرام</h2>
             <p className="daira-account-modal__description">پیج متصل رو مدیریت کن یا یک پیج جدید اضافه کن.</p>
-            {connected.length ? <div className="daira-account-modal__accounts">{connected.map((account) => <div className="daira-account-modal__account" key={account.id}><span className="daira-account-modal__avatar"><Instagram size={18} /></span><span dir="ltr">@{account.igUsername}</span><span className="daira-account-modal__connected">متصل</span></div>)}</div> : <p className="daira-account-modal__empty">هنوز پیجی متصل نکردی.</p>}
-            <Link className="daira-account-modal__add" href="/api/instagram/connect" onClick={() => setAccountModalOpen(false)}><Instagram size={18} /> افزودن اکانت اینستاگرام</Link>
+            {connected.length ? <div className="daira-account-modal__accounts">{connected.map((account) => <div className="daira-account-modal__account" key={account.id}><span className="daira-account-modal__avatar"><Camera size={18} /></span><span dir="ltr">@{account.igUsername}</span><span className="daira-account-modal__connected">متصل</span></div>)}</div> : <p className="daira-account-modal__empty">هنوز پیجی متصل نکردی.</p>}
+            <Link className="daira-account-modal__add" href="/api/instagram/connect" onClick={() => setAccountModalOpen(false)}><Camera size={18} /> افزودن اکانت اینستاگرام</Link>
           </section>
         </div>
       ) : null}
