@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Camera, Image, Pencil, Search, Video } from "lucide-react";
 
@@ -128,7 +128,7 @@ const AUTO_REPLIES_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 function readAutoRepliesCache(accountId: string): ReplyItem[] | null {
   try {
-    const key = \`smartdirect:auto-replies:v\${AUTO_REPLIES_CACHE_VERSION}:\${accountId}\`;
+    const key = `smartdirect:auto-replies:v${AUTO_REPLIES_CACHE_VERSION}:${accountId}`;
     const raw = window.sessionStorage.getItem(key);
     if (!raw) return null;
     const cached = JSON.parse(raw) as { savedAt?: number; items?: ReplyItem[] };
@@ -148,7 +148,7 @@ function readAutoRepliesCache(accountId: string): ReplyItem[] | null {
 
 function writeAutoRepliesCache(accountId: string, items: ReplyItem[]) {
   try {
-    const key = \`smartdirect:auto-replies:v\${AUTO_REPLIES_CACHE_VERSION}:\${accountId}\`;
+    const key = `smartdirect:auto-replies:v${AUTO_REPLIES_CACHE_VERSION}:${accountId}`;
     window.sessionStorage.setItem(key, JSON.stringify({ savedAt: Date.now(), items }));
   } catch {
     // Storage can be unavailable or full; rendering must continue without it.
@@ -157,6 +157,7 @@ function writeAutoRepliesCache(accountId: string, items: ReplyItem[]) {
 
 export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | "comments" | "stories" }) {
   const [items, setItems] = useState<ReplyItem[]>([]);
+  const itemsRef = useRef<ReplyItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -168,7 +169,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
       try {
         // Keep the current page visible during background refreshes. On a hard
         // reload, restore cached items only after the authenticated account is verified.
-        if (items.length === 0) setLoading(true);
+        if (itemsRef.current.length === 0) setLoading(true);
         setError("");
 
         const accountsResponse = await fetch("/api/instagram/accounts", {
@@ -184,6 +185,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
           .find((item: { isConnected: boolean }) => item.isConnected);
         if (!account) {
           if (!cancelled) {
+            itemsRef.current = [];
             setItems([]);
             setError("پیج اینستاگرام متصل نیست.");
           }
@@ -192,9 +194,11 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
 
         const cachedItems = readAutoRepliesCache(account.id);
         if (!cancelled && cachedItems) {
+          itemsRef.current = cachedItems;
           setItems(cachedItems);
           setLoading(false);
         } else if (!cancelled) {
+          itemsRef.current = [];
           setItems([]);
           setLoading(true);
         }
@@ -318,6 +322,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
         });
 
         if (!cancelled) {
+          itemsRef.current = nextItems;
           setItems(nextItems);
           setError("");
           writeAutoRepliesCache(account.id, nextItems);
@@ -325,7 +330,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
       } catch (e) {
         if (!cancelled) {
           // A refresh failure should not hide a previously loaded, usable list.
-          setError(items.length > 0 ? "" : e instanceof Error ? e.message : "خطا در دریافت پاسخ‌های خودکار.");
+          setError(itemsRef.current.length > 0 ? "" : e instanceof Error ? e.message : "خطا در دریافت پاسخ‌های خودکار.");
         }
       } finally {
         if (!cancelled) setLoading(false);
