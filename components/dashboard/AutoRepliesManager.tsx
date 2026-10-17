@@ -445,7 +445,8 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
 
       {deleteTarget ? (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/35 px-4 py-6 backdrop-blur-[3px] animate-in fade-in duration-200"
+          className="fixed inset-0 z-[100] flex items-center justify-center px-4 py-6 backdrop-blur-[3px] animate-in fade-in duration-200"
+          style={{ backgroundColor: "rgba(24, 35, 60, 0.36)" }}
           onMouseDown={(event) => { if (event.target === event.currentTarget && !deleting) setDeleteTarget(null); }}
         >
           <section
