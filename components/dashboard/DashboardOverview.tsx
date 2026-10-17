@@ -48,11 +48,6 @@ export default function DashboardOverview({ user, instagramAccounts }: Dashboard
         <span className="daira-home__header-spacer" aria-hidden="true" />
       </header>
 
-      <section className="daira-home__welcome" aria-label="خوش‌آمدگویی">
-        <p>{user.name ? `سلام ${user.name}، خوش اومدی` : "به دایرا خوش اومدی"}</p>
-        <span>ابزارهای پیجت رو از اینجا مدیریت کن</span>
-      </section>
-
       <section className="daira-home__grid" aria-label="ابزارهای دایرا">
         {features.map((feature) => {
           const content = (
