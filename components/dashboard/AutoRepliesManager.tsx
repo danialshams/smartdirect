@@ -67,13 +67,7 @@ type ReplyItem = {
   isActive?: boolean;
 };
 
-const typeLabels: Record<PublishType, string> = {
-  POST: "پست",
-  CAROUSEL: "آلبوم",
-  REEL: "ریلز",
-  STORY: "استوری",
-  UNKNOWN: "محتوا",
-};
+
 
 function formatDate(value: string | null) {
   return value
