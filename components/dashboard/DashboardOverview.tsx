@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Camera, X } from "lucide-react";
+import { X } from "lucide-react";
 
 type InstagramAccount = {
   id: string;
@@ -39,7 +39,7 @@ export default function DashboardOverview({ instagramAccounts }: DashboardOvervi
     <main className="daira-home" dir="rtl">
       <header className="daira-home__header">
         <button className="daira-home__instagram" type="button" aria-label="افزودن یا مدیریت اکانت اینستاگرام" onClick={() => setAccountModalOpen(true)}>
-          <Camera size={27} strokeWidth={2.2} />
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true"><defs><linearGradient id="instagramGradient" x1="2" y1="22" x2="22" y2="2" gradientUnits="userSpaceOnUse"><stop stopColor="#FEDA75"/><stop offset=".35" stopColor="#FA7E1E"/><stop offset=".65" stopColor="#D62976"/><stop offset="1" stopColor="#4F5BD5"/></linearGradient></defs><rect x="3" y="3" width="18" height="18" rx="5" stroke="url(#instagramGradient)" strokeWidth="2"/><circle cx="12" cy="12" r="4" stroke="url(#instagramGradient)" strokeWidth="2"/><circle cx="17.5" cy="6.8" r="1.2" fill="#D62976"/></svg>
         </button>
         <Link href="/dashboard" className="daira-home__brand" aria-label="دایرا - خانه">
           <span className="daira-home__brand-mark">D</span>
@@ -74,11 +74,11 @@ export default function DashboardOverview({ instagramAccounts }: DashboardOvervi
         <div className="daira-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setAccountModalOpen(false); }}>
           <section className="daira-account-modal" role="dialog" aria-modal="true" aria-labelledby="daira-account-title">
             <button className="daira-account-modal__close" type="button" aria-label="بستن" onClick={() => setAccountModalOpen(false)}><X size={20} /></button>
-            <div className="daira-account-modal__icon"><Camera size={25} /></div>
+            <div className="daira-account-modal__icon"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="2"/><circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="2"/></svg></div>
             <h2 id="daira-account-title">اکانت‌های اینستاگرام</h2>
             <p className="daira-account-modal__description">پیج متصل رو مدیریت کن یا یک پیج جدید اضافه کن.</p>
-            {connected.length ? <div className="daira-account-modal__accounts">{connected.map((account) => <div className="daira-account-modal__account" key={account.id}><span className="daira-account-modal__avatar"><Camera size={18} /></span><span dir="ltr">@{account.igUsername}</span><span className="daira-account-modal__connected">متصل</span></div>)}</div> : <p className="daira-account-modal__empty">هنوز پیجی متصل نکردی.</p>}
-            <Link className="daira-account-modal__add" href="/api/instagram/connect" onClick={() => setAccountModalOpen(false)}><Camera size={18} /> افزودن اکانت اینستاگرام</Link>
+            {connected.length ? <div className="daira-account-modal__accounts">{connected.map((account) => <div className="daira-account-modal__account" key={account.id}><span className="daira-account-modal__avatar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="2"/><circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="2"/></svg></span><span dir="ltr">@{account.igUsername}</span><span className="daira-account-modal__connected">متصل</span></div>)}</div> : <p className="daira-account-modal__empty">هنوز پیجی متصل نکردی.</p>}
+            <Link className="daira-account-modal__add" href="/api/instagram/connect" onClick={() => setAccountModalOpen(false)}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="2"/><circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="2"/></svg> افزودن اکانت اینستاگرام</Link>
           </section>
         </div>
       ) : null}
@@ -86,10 +86,10 @@ export default function DashboardOverview({ instagramAccounts }: DashboardOvervi
       <style jsx global>{`
         :root { --daira-page-bg:#F4F7FC; --daira-section-alt:#EEF3FB; --daira-surface:#FFFFFF; --daira-surface-hover:#F8FAFC; --daira-primary:#2F61FD; --daira-primary-hover:#1E4BD8; --daira-heading:#18233C; --daira-text:#5A6B87; --daira-muted:#94A3B8; --daira-border:#E2E8F0; --daira-accent:#DB4CF2; }
         .daira-home { width:100%; min-height:100%; padding:clamp(12px,2.6vw,28px); padding-bottom:24px; color:var(--daira-heading); font-family:inherit; }
-        .daira-home__header { display:grid; grid-template-columns:48px minmax(0,1fr) 48px; align-items:center; gap:8px; min-height:94px; padding:12px 18px; border-radius:26px; background:linear-gradient(115deg,#E8F0FF 0%,#F8FAFF 55%,#EEF4FF 100%); margin-bottom:18px; }
+        .daira-home__header { direction:ltr;display:grid; grid-template-columns:48px minmax(0,1fr) 48px; align-items:center; gap:8px; min-height:94px; padding:12px 18px; border-radius:26px; background:linear-gradient(115deg,#E8F0FF 0%,#F8FAFF 55%,#EEF4FF 100%); margin-bottom:18px; }
         .daira-home__instagram { width:44px;height:44px;border:0;background:transparent;color:#D946EF;display:grid;place-items:center;cursor:pointer;border-radius:14px;transition:background .2s,transform .2s; }
         .daira-home__instagram:hover { background:#FFFFFFA8;transform:translateY(-1px); }
-        .daira-home__brand { display:flex;justify-content:center;align-items:center;gap:12px;color:inherit;text-decoration:none;min-width:0; }
+        .daira-home__brand { direction:rtl;display:flex;justify-content:center;align-items:center;gap:12px;color:inherit;text-decoration:none;min-width:0; }
         .daira-home__brand-mark { display:grid;place-items:center;width:62px;height:62px;border-radius:20px;background:linear-gradient(145deg,#249BFF,#5261F8 56%,#D946EF);color:white;font-size:40px;font-weight:900;font-style:italic;line-height:1;box-shadow:0 8px 18px #5577F533; }
         .daira-home__brand-copy { display:flex;flex-direction:column;line-height:1.2; }
         .daira-home__brand-copy strong { font-size:clamp(24px,3vw,36px);font-weight:900;letter-spacing:-1px; }
@@ -102,8 +102,8 @@ export default function DashboardOverview({ instagramAccounts }: DashboardOvervi
         .daira-home__card { position:relative;display:flex;align-items:center;gap:clamp(8px,1.8vw,18px);min-width:0;min-height:156px;padding:clamp(12px,2vw,20px);border:1px solid #FFFFFF;border-radius:23px;background:var(--daira-surface);box-shadow:0 4px 20px rgba(22,54,110,.05);color:inherit;text-decoration:none;overflow:hidden;transition:transform .2s,box-shadow .2s,background .2s; }
         .daira-home__card:hover { background:var(--daira-surface-hover);box-shadow:0 12px 30px rgba(22,54,110,.12);transform:translateY(-2px); }
         .daira-home__card:focus-visible,.daira-home__instagram:focus-visible { outline:3px solid #2F61FD55;outline-offset:3px; }
-        .daira-home__card-art { flex:0 0 38%;max-width:144px;display:grid;place-items:center;min-width:0; }
-        .daira-home__card-art :global(img) { display:block;width:100%;height:auto;max-height:136px;object-fit:contain;filter:drop-shadow(0 7px 9px #2F61FD12); }
+        .daira-home__card-art { flex:0 0 42%;max-width:164px;display:grid;place-items:center;min-width:0; }
+        .daira-home__card-art :global(img) { display:block;width:100%;height:auto;max-height:152px;object-fit:contain;filter:drop-shadow(0 7px 9px #2F61FD12); }
         .daira-home__card-copy { min-width:0;flex:1;text-align:right; }
         .daira-home__card-copy h2 { margin:0 0 7px;font-size:clamp(13px,1.45vw,17px);font-weight:800;line-height:1.65;color:var(--daira-heading); }
         .daira-home__card-copy p { margin:0;color:var(--daira-text);font-size:clamp(10px,1.12vw,13px);line-height:1.85;font-weight:500; }
@@ -124,7 +124,8 @@ export default function DashboardOverview({ instagramAccounts }: DashboardOvervi
         .daira-account-modal__add { display:flex;justify-content:center;align-items:center;gap:8px;width:100%;min-height:48px;border-radius:15px;background:var(--daira-primary);color:white;text-decoration:none;font-size:13px;font-weight:800;transition:background .2s; }
         .daira-account-modal__add:hover { background:var(--daira-primary-hover); }
         @media (min-width:900px) { .daira-home { max-width:1120px;margin:0 auto;padding-top:26px; } .daira-home__grid { gap:18px; } .daira-home__card { min-height:180px; } }
-        @media (max-width:520px) { .daira-home { padding:10px 9px 18px; } .daira-home__header { min-height:80px;padding:9px 10px;border-radius:21px;grid-template-columns:38px minmax(0,1fr) 38px;gap:4px; } .daira-home__instagram { width:38px;height:38px; } .daira-home__brand { gap:8px; } .daira-home__brand-mark { width:47px;height:47px;border-radius:15px;font-size:31px; } .daira-home__brand-copy strong { font-size:26px; } .daira-home__brand-copy small { font-size:9px; } .daira-home__header-spacer { width:38px; } .daira-home__grid { gap:9px; } .daira-home__card { min-height:142px;flex-direction:column;justify-content:flex-start;align-items:center;gap:2px;padding:10px 8px 12px;border-radius:19px;text-align:center; } .daira-home__card-art { flex:0 0 auto;width:100%;height:76px;max-width:112px; } .daira-home__card-art :global(img) { width:auto;height:100%;max-width:100%;max-height:76px; } .daira-home__card-copy { flex:none;width:100%;text-align:center; } .daira-home__card-copy h2 { margin-bottom:3px;font-size:12px;line-height:1.5; } .daira-home__card-copy p { font-size:10px;line-height:1.65; } .daira-home__soon { top:6px;left:6px;font-size:8px;padding:2px 5px; } }
+        @media (max-width:900px) { .daira-home { padding:7px 8px 8px; } .daira-home__header { min-height:68px;padding:7px 10px;margin-bottom:8px;border-radius:18px;grid-template-columns:40px minmax(0,1fr) 40px; } .daira-home__brand-mark { width:43px;height:43px;border-radius:14px;font-size:29px; } .daira-home__brand { gap:8px; } .daira-home__brand-copy strong { font-size:23px; } .daira-home__brand-copy small { margin-top:2px;font-size:9px; } .daira-home__instagram { width:38px;height:38px; } .daira-home__header-spacer { width:38px; } .daira-home__grid { gap:7px; } .daira-home__card { min-height:82px;padding:6px 7px;gap:5px;border-radius:14px; } .daira-home__card-art { flex:0 0 34%;max-width:76px; } .daira-home__card-art :global(img) { max-height:70px; } .daira-home__card-copy h2 { margin-bottom:0;font-size:clamp(10px,1.55vw,13px);line-height:1.55; } .daira-home__card-copy p { display:none; } .daira-home__soon { top:3px;left:4px;padding:2px 4px;font-size:8px; }
+        @media (max-width:520px) { .daira-home { padding:7px 6px 8px; } .daira-home__header { min-height:64px;padding:6px 8px;border-radius:21px;grid-template-columns:38px minmax(0,1fr) 38px;gap:4px; } .daira-home__instagram { width:38px;height:38px; } .daira-home__brand { gap:8px; } .daira-home__brand-mark { width:47px;height:47px;border-radius:15px;font-size:31px; } .daira-home__brand-copy strong { font-size:26px; } .daira-home__brand-copy small { font-size:9px; } .daira-home__header-spacer { width:38px; } .daira-home__grid { gap:9px; } .daira-home__card { min-height:142px;flex-direction:column;justify-content:flex-start;align-items:center;gap:2px;padding:10px 8px 12px;border-radius:19px;text-align:center; } .daira-home__card-art { flex:0 0 auto;width:100%;height:76px;max-width:112px; } .daira-home__card-art :global(img) { width:auto;height:100%;max-width:100%;max-height:76px; } .daira-home__card-copy { flex:none;width:100%;text-align:center; } .daira-home__card-copy h2 { margin-bottom:3px;font-size:12px;line-height:1.5; } .daira-home__card-copy p { font-size:10px;line-height:1.65; } .daira-home__soon { top:6px;left:6px;font-size:8px;padding:2px 5px; } }
         @media (max-width:360px) { .daira-home__grid { gap:7px; } .daira-home__card { min-height:137px;padding:8px 6px; } .daira-home__card-art { height:67px; } .daira-home__card-art :global(img) { max-height:67px; } .daira-home__card-copy h2 { font-size:11px; } .daira-home__card-copy p { font-size:9px; } }
         @media (prefers-reduced-motion:reduce) { .daira-home__card,.daira-home__instagram,.daira-home__card:hover { transition:none;transform:none; } }
       `}</style>
