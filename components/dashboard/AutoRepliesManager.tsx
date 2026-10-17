@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import AutoRepliesSkeleton from "@/components/dashboard/AutoRepliesSkeleton";
-import { AlertTriangle, LoaderCircle, Pencil, Search, Trash2, X } from "lucide-react";
+import { AlertTriangle, LoaderCircle, Pencil, Search, Trash2 } from "lucide-react";
 import { dairaPalette } from "../../lib/design-system/palette";
 
 type PublishType = "POST" | "CAROUSEL" | "REEL" | "STORY" | "UNKNOWN";
@@ -131,6 +131,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
   const [deleteTarget, setDeleteTarget] = useState<ReplyItem | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+  const [closingDelete, setClosingDelete] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -331,6 +332,15 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
     return scopedItems.filter((item) => item.keyword.toLocaleLowerCase("fa-IR").includes(query));
   }, [scopedItems, searchQuery]);
 
+  function closeDeleteModal() {
+    if (deleting || closingDelete) return;
+    setClosingDelete(true);
+    window.setTimeout(() => {
+      setDeleteTarget(null);
+      setClosingDelete(false);
+    }, 280);
+  }
+
   async function confirmDelete() {
     if (!deleteTarget || deleting) return;
     setDeleting(true);
@@ -356,7 +366,12 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
       } catch {
         // The list remains updated in memory even if cache refresh fails.
       }
-      setDeleteTarget(null);
+      setDeleting(false);
+      setClosingDelete(true);
+      window.setTimeout(() => {
+        setDeleteTarget(null);
+        setClosingDelete(false);
+      }, 280);
     } catch (error) {
       setDeleteError(error instanceof Error ? error.message : "حذف پاسخ خودکار انجام نشد.");
     } finally {
@@ -445,25 +460,25 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
 
       {deleteTarget ? (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center px-4 py-6 backdrop-blur-[3px] animate-in fade-in duration-200"
-          style={{ backgroundColor: "rgba(24, 35, 60, 0.36)" }}
-          onMouseDown={(event) => { if (event.target === event.currentTarget && !deleting) setDeleteTarget(null); }}
+          className={`fixed inset-0 z-[9998] flex items-center justify-center px-4 py-6 backdrop-blur-md transition-[opacity,background-color] duration-300 ease-out motion-reduce:transition-none ${closingDelete ? "pointer-events-none opacity-0" : "opacity-100"}`}
+          style={{ backgroundColor: closingDelete ? "rgba(24, 35, 60, 0)" : "rgba(24, 35, 60, 0.36)" }}
+          onMouseDown={(event) => { if (event.target === event.currentTarget) closeDeleteModal(); }}
         >
           <section
             role="dialog"
             aria-modal="true"
             aria-labelledby="delete-reply-title"
-            className="w-full max-w-sm rounded-[24px] p-5 shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-2 duration-200"
-            style={{ backgroundColor: dairaPalette.background.surface, border: `1px solid ${dairaPalette.border}` }}
+            className={`w-full max-w-sm rounded-[24px] p-5 shadow-2xl transition-[opacity,transform] duration-300 ease-out motion-reduce:transition-none ${closingDelete ? "translate-y-2 scale-[0.98] opacity-0" : "translate-y-0 scale-100 opacity-100"}`}
+            style={{ backgroundColor: dairaPalette.background.surface, border: `1px solid ${dairaPalette.border}`, zIndex: 9999 }}
           >
             <div className="mb-4 flex items-start gap-3">
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl" style={{ color: dairaPalette.status.error, backgroundColor: `${dairaPalette.status.error}12` }}>
                 <AlertTriangle size={21} />
               </div>
               <div className="min-w-0 flex-1 pt-0.5">
-                <h2 id="delete-reply-title" className="text-base font-bold" style={{ color: dairaPalette.text.heading }}>از حذف پاسخ خودکار مطمئنی؟</h2>
+                <h2 id="delete-reply-title" className="text-base font-bold" style={{ color: dairaPalette.text.heading }}>از حذف این پاسخ خودکار مطمئنی؟</h2>
                 <p className="mt-2 text-sm leading-6" style={{ color: dairaPalette.text.body }}>
-                  قانون پاسخ خودکار برای کلمه کلیدی «{deleteTarget.keyword}» حذف می‌شود. این کار قابل بازگشت نیست.
+                  پاسخ خودکار برای کلمه کلیدی «{deleteTarget.keyword}» حذف می‌شود و دیگر اجرا نخواهد شد.
                 </p>
                 {deleteTarget.key.startsWith("publish:") ? (
                   <p className="mt-2 text-xs leading-5" style={{ color: dairaPalette.text.muted }}>خود پست یا استوری منتشرشده در اینستاگرام حذف نمی‌شود.</p>
@@ -477,22 +492,21 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
               <button
                 type="button"
                 disabled={deleting}
-                onClick={() => void confirmDelete()}
-                className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-xl text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-60"
-                style={{ color: dairaPalette.background.surface, backgroundColor: dairaPalette.status.error }}
+                onClick={closeDeleteModal}
+                className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-xl text-sm font-semibold transition disabled:opacity-60"
+                style={{ color: dairaPalette.text.body, backgroundColor: dairaPalette.background.surfaceHover, border: `1px solid ${dairaPalette.border}` }}
               >
-                {deleting ? <LoaderCircle size={16} className="animate-spin" /> : <Trash2 size={16} />}
-                {deleting ? "در حال حذف..." : "بله، حذف کن"}
+                انصراف
               </button>
               <button
                 type="button"
                 disabled={deleting}
-                onClick={() => setDeleteTarget(null)}
-                className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-xl text-sm font-semibold transition disabled:opacity-60"
-                style={{ color: dairaPalette.text.body, backgroundColor: dairaPalette.background.surfaceHover, border: `1px solid ${dairaPalette.border}` }}
+                onClick={() => void confirmDelete()}
+                className="inline-flex h-10 flex-1 flex-row-reverse items-center justify-center gap-2 rounded-xl text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-60"
+                style={{ color: dairaPalette.background.surface, backgroundColor: dairaPalette.status.error }}
               >
-                <X size={16} />
-                انصراف
+                {deleting ? <LoaderCircle size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                {deleting ? "در حال حذف..." : "بله، حذف کن"}
               </button>
             </div>
           </section>
