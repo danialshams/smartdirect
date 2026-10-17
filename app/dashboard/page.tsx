@@ -1,11 +1,21 @@
+import { Suspense } from "react";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import DashboardShell from "../../components/dashboard/DahboardShell";
+import DairaSkeleton from "@/components/ui/DairaSkeleton";
 
-export default async function DashboardPage() {
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<DairaSkeleton variant="dashboard" />}>
+      <DashboardPageContent />
+    </Suspense>
+  );
+}
+
+async function DashboardPageContent() {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
