@@ -286,7 +286,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
 
           {!error && scopedItems.length > 0 ? (
             <div className="mb-4 px-1">
-              <label className="flex h-11 items-center gap-2.5 rounded-xl border border-[#E2E8F0] bg-white px-3.5 text-[#64748B] transition focus-within:border-[#2563EB] focus-within:ring-2 focus-within:ring-[#2563EB]/10">
+              <label className="flex h-11 items-center gap-2.5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 text-[#64748B] transition focus-within:border-[#2563EB] focus-within:ring-2 focus-within:ring-[#2563EB]/10">
                 <Search size={17} className="shrink-0" aria-hidden="true" />
                 <input
                   type="search"
@@ -294,7 +294,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
                   onChange={(event) => setSearchQuery(event.target.value)}
                   placeholder="جستجو براساس کلمه کلیدی..."
                   aria-label="جستجو براساس کلمه کلیدی"
-                  className="h-full min-w-0 flex-1 bg-transparent text-sm text-[#0F172A] outline-none placeholder:text-[#94A3B8]"
+                  className="h-full min-w-0 flex-1 bg-transparent text-base text-[#0F172A] outline-none placeholder:text-[#94A3B8] sm:text-sm"
                 />
               </label>
             </div>
@@ -340,7 +340,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
 
                   <Link
                     href={item.href}
-                    className="inline-flex h-8 shrink-0 flex-row-reverse items-center justify-center gap-1 rounded-[22px] border border-[#A8C5F8] bg-white px-2 text-[11px] font-semibold text-[#2563EB] no-underline transition hover:bg-[#EFF6FF] sm:px-2.5 sm:text-xs"
+                    className="inline-flex h-8 shrink-0 flex-row-reverse items-center justify-center gap-1 border border-[#A8C5F8] bg-white px-2 text-[11px] font-semibold text-[#2563EB] no-underline transition hover:bg-[#EFF6FF] sm:px-2.5 sm:text-xs" style={{ borderRadius: 22 }}
                   >
                     <Pencil size={14} />
                     <span>ویرایش</span>
