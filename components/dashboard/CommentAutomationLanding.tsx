@@ -29,7 +29,7 @@ export default function CommentAutomationLanding() {
               type="button"
               onClick={() => router.push("/dashboard/comment-automation/new")}
               dir="ltr"
-              className="mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#2563EB] px-5 text-sm font-bold text-white shadow-sm transition hover:bg-[#1D4ED8]"
+              className="mt-0 shrink-0 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#2563EB] px-5 text-sm font-bold text-white shadow-sm transition hover:bg-[#1D4ED8]"
             >
               <Plus size={17} />
               <span dir="rtl">ایجاد پاسخ جدید</span>
