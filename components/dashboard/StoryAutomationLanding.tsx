@@ -2,6 +2,7 @@
 
 import { Camera, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
+import AutoRepliesManager from "@/components/dashboard/AutoRepliesManager";
 
 export default function StoryAutomationLanding() {
   const router = useRouter();
@@ -21,11 +22,9 @@ export default function StoryAutomationLanding() {
           </div>
         </section>
 
-        <section className="rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-sm sm:p-6">
-          <div className="flex min-h-[280px] flex-col items-center justify-center text-center">
-            <p className="mt-2 max-w-sm text-xs leading-6 text-[#64748B]">
-              یک استوری فعال را انتخاب کنید و پاسخ خودکار آن را تنظیم کنید.
-            </p>
+        <section className="mb-4 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-5">
+          <div className="flex items-center justify-between gap-3">
+            <p className="max-w-sm text-xs leading-6 text-[#64748B]">استوری‌های دارای پاسخ خودکار را مدیریت کنید.</p>
             <button
               type="button"
               onClick={() => router.push("/dashboard/story-automation/new")}
@@ -37,6 +36,7 @@ export default function StoryAutomationLanding() {
             </button>
           </div>
         </section>
+        <AutoRepliesManager scope="stories" />
       </div>
     </div>
   );
