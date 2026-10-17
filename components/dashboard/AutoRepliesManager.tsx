@@ -90,7 +90,7 @@ function normalizeKeywordList(value: string | null | undefined) {
   return (value || "").split(/[,،;؛\n]+/).map((item) => item.trim()).filter(Boolean).join("، ");
 }
 
-const AUTO_REPLIES_CACHE_VERSION = 1;
+const AUTO_REPLIES_CACHE_VERSION = 2;
 const AUTO_REPLIES_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 function readAutoRepliesCache(accountId: string): ReplyItem[] | null {
@@ -211,8 +211,10 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
         const jobs = (Array.isArray(jobsResult?.data) ? jobsResult.data : []) as PublishJob[];
         const publishedJobs = jobs.filter((job) =>
           job.status === "PUBLISHED" &&
-          (Boolean(job.commentAutomationId) || Boolean(job.storyReplyAutomationId) ||
-            Boolean(job.commentTriggerKeywords?.trim() || job.storyReplyTriggerKeywords?.trim())),
+          Boolean(
+            normalizeKeywordList(job.commentTriggerKeywords) ||
+            normalizeKeywordList(job.storyReplyTriggerKeywords),
+          ),
         );
         // Only show content that can be verified as existing on Instagram.
         // A local publishing job marked PUBLISHED is not sufficient on its own.
@@ -234,6 +236,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
           if (
             (automation.triggerType !== "COMMENT_KEYWORD" && automation.triggerType !== "STORY_REPLY_KEYWORD") ||
             !automation.mediaId ||
+            !normalizeKeywordList(automation.keyword) ||
             linkedAutomationIds.has(automation.id) ||
             publishedMediaIds.has(automation.mediaId) ||
             !mediaById.has(automation.mediaId) ||
@@ -262,7 +265,11 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
         }
 
         for (const job of visiblePublishedJobs) {
-          const isStory = Boolean(job.storyReplyAutomationId || job.storyReplyTriggerKeywords?.trim());
+          const storyKeywords = normalizeKeywordList(job.storyReplyTriggerKeywords);
+          const commentKeywords = normalizeKeywordList(job.commentTriggerKeywords);
+          const isStory = Boolean(storyKeywords) || (!commentKeywords && Boolean(job.storyReplyAutomationId));
+          const keyword = isStory ? storyKeywords : commentKeywords;
+          if (!keyword) continue;
           const publishedItemKey = `${job.type}:${job.instagramMediaId || job.commentAutomationId || job.storyReplyAutomationId || job.id}`;
           if (seenPublishedItems.has(publishedItemKey)) continue;
           seenPublishedItems.add(publishedItemKey);
@@ -275,9 +282,8 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
             previewUrl: job.media[0]?.publicUrl ?? null,
             previewKind: job.media[0]?.type === "VIDEO" ? "video" : job.media[0]?.type === "IMAGE" ? "image" : null,
             title: isStory ? "پاسخ خودکار استوری" : "پاسخ خودکار کامنت",
-            subtitle: normalizeKeywordList(isStory ? job.storyReplyTriggerKeywords : job.commentTriggerKeywords) ||
-              (job.caption?.trim() || "پاسخ خودکار محتوای منتشرشده"),
-            keyword: normalizeKeywordList(isStory ? job.storyReplyTriggerKeywords : job.commentTriggerKeywords),
+            subtitle: keyword,
+            keyword,
             href: `/dashboard/publishing/${job.id}`,
           });
         }
