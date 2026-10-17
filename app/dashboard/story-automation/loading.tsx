@@ -1,5 +1,5 @@
-import DairaSkeleton from "@/components/ui/DairaSkeleton";
+import AutoRepliesSkeleton from "@/components/dashboard/AutoRepliesSkeleton";
 
 export default function Loading() {
-  return <DairaSkeleton variant="page" label="در حال بارگذاری پاسخ خودکار استوری..." />;
+  return <AutoRepliesSkeleton includeCreateButton />;
 }
