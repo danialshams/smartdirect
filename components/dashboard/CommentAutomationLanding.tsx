@@ -15,7 +15,7 @@ export default function CommentAutomationLanding() {
           <button
             type="button"
             onClick={() => router.push("/dashboard/comment-automation/new")}
-            className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-full px-5 text-base font-bold text-white shadow-sm transition hover:brightness-95"
+            className="flex min-h-[54px] w-full flex-row-reverse items-center justify-center gap-2 rounded-full px-5 text-base font-bold text-white shadow-sm transition hover:brightness-95"
             style={{ background: dairaPalette.primary.main }}
           >
             <Plus size={20} />
