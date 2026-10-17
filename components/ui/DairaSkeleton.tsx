@@ -1,5 +1,3 @@
-"use client";
-
 import type { CSSProperties } from "react";
 
 type DairaSkeletonVariant = "dashboard" | "page" | "section";
