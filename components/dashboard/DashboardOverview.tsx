@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Instagram, X, MessageCircle, Sparkles } from "lucide-react";
+import { Instagram, X } from "lucide-react";
 
 type InstagramAccount = {
   id: string;
@@ -31,7 +31,7 @@ const features = [
   { title: "آنالیز", description: "تحلیل و بررسی دقیق پیج اینستاگرام شما", image: "/photos/تحلیل پیج.png", href: "/dashboard/insights" },
 ];
 
-export default function DashboardOverview({ user, instagramAccounts }: DashboardOverviewProps) {
+export default function DashboardOverview({ instagramAccounts }: DashboardOverviewProps) {
   const [accountModalOpen, setAccountModalOpen] = useState(false);
   const connected = instagramAccounts.filter((account) => account.isConnected);
 
