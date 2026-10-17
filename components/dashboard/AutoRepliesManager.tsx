@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import AutoRepliesSkeleton from "@/components/dashboard/AutoRepliesSkeleton";
-import { Camera, Image, Pencil, Search, Video } from "lucide-react";
+import { Pencil, Search } from "lucide-react";
+import { dairaPalette } from "@/lib/design-system/palette";
 
 type PublishType = "POST" | "CAROUSEL" | "REEL" | "STORY" | "UNKNOWN";
 type TriggerType = "COMMENT_KEYWORD" | "STORY_REPLY_KEYWORD";
@@ -364,31 +365,19 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
           ) : (
             <div className="space-y-2.5">
               {filteredItems.map((item) => (
-                <div key={item.key} className="flex min-h-[100px] items-center justify-between gap-2.5 rounded-[22px] border border-[#E8EDF5] bg-white px-2.5 py-2.5 shadow-[0_3px_12px_rgba(15,23,42,.025)] sm:px-3">
-                  <div className="flex min-w-0 flex-1 items-center gap-3">
-                    {item.previewUrl ? (
-                      <div className="h-[72px] w-[72px] shrink-0 overflow-hidden rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] sm:h-[84px] sm:w-[84px]">
-                        {item.previewKind === "video" ? (
-                          <video src={item.previewUrl} muted playsInline preload="metadata" className="h-full w-full object-cover" />
-                        ) : (
-                          <img src={item.previewUrl} alt={typeLabels[item.type]} className="h-full w-full object-cover" loading="lazy" />
-                        )}
-                      </div>
-                    ) : (
-                      <div className="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] text-[#64748B] sm:h-[84px] sm:w-[84px]">
-                        {item.type === "STORY" ? <Camera size={18} /> : item.type === "REEL" ? <Video size={18} /> : <Image size={18} />}
-                      </div>
-                    )}
-
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-[13px] font-bold leading-5 text-[#0F172A]">{item.title}</span>
-                        <span className="text-[11px] font-medium text-[#64748B]">{formatDate(item.date)}</span>
-                        {item.isActive === false ? (
-                          <span className="rounded-md bg-[#F1F5F9] px-1.5 py-0.5 text-[10px] font-semibold text-[#64748B]">غیرفعال</span>
-                        ) : null}
-                      </div>
+                <div key={item.key} className="flex min-h-[84px] items-center justify-between gap-3 rounded-[22px] border border-[#E8EDF5] bg-white px-3 py-3 shadow-[0_3px_12px_rgba(15,23,42,.025)] sm:px-4">
+                  <div className="flex min-w-0 flex-1 flex-col items-start gap-2">
+                    <div
+                      className="max-w-full rounded-xl px-3 py-2 text-[13px] font-bold leading-6"
+                      style={{
+                        color: dairaPalette.primary.main,
+                        backgroundColor: dairaPalette.secondary.hoverBackground,
+                        border: `1px solid ${dairaPalette.secondary.activeBackground}`,
+                      }}
+                    >
+                      <span className="break-words">{item.keyword || "بدون کلمه کلیدی"}</span>
                     </div>
+                    <span className="text-[11px] font-medium" style={{ color: dairaPalette.text.muted }}>{formatDate(item.date)}</span>
                   </div>
 
                   <Link
