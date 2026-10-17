@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, CircleUserRound, LifeBuoy, Instagram } from "lucide-react";
+import { Home, CircleUserRound, LifeBuoy, Camera } from "lucide-react";
 import DashboardTheme from "./DashboardTheme";
 import DashboardOverview from "./DashboardOverview";
 
@@ -35,7 +35,7 @@ export default function DashboardShell({ user, instagramAccounts, children }: Da
     <DashboardTheme>
       <div dir="rtl" className="daira-app-shell">
         <header className="daira-global-header" aria-label="هدر اصلی دایرا">
-          <span className="daira-global-header__social" aria-label="اینستاگرام"><Instagram size={25} strokeWidth={2} /></span>
+          <span className="daira-global-header__social" aria-label="اینستاگرام"><Camera size={25} strokeWidth={2} /></span>
           <div className="daira-global-header__brand" dir="rtl">
             <span className="daira-global-header__mark" aria-hidden="true">D</span>
             <span className="daira-global-header__wordmark"><strong>دایرا</strong><small>اتوماسیون اینستاگرام</small></span>
