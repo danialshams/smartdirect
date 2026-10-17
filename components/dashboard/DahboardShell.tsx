@@ -1,13 +1,10 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Box } from "@mui/material";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
-
+import { Home, CircleUserRound, LifeBuoy } from "lucide-react";
 import DashboardTheme from "./DashboardTheme";
-import DashboardSidebar, { DashboardInstagramIsland } from "./DashboardSidebar";
-import DashboardMobileHeader from "./DashboardMobileHeader";
 import DashboardOverview from "./DashboardOverview";
 
 type InstagramAccount = {
@@ -19,93 +16,57 @@ type InstagramAccount = {
 };
 
 type DashboardShellProps = {
-  user: {
-    name: string;
-    email: string;
-    role: string;
-    createdAt: Date;
-  };
+  user: { name: string; email: string; role: string; createdAt: Date };
   instagramAccounts: InstagramAccount[];
   children?: ReactNode;
 };
 
-export default function DashboardShell({
-  user,
-  instagramAccounts,
-  children,
-}: DashboardShellProps) {
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+const bottomItems = [
+  { title: "پروفایل / حساب کاربری", href: "/dashboard/profile", icon: CircleUserRound },
+  { title: "خانه", href: "/dashboard", icon: Home },
+  { title: "پشتیبانی", href: "/dashboard/tickets", icon: LifeBuoy },
+];
+
+export default function DashboardShell({ user, instagramAccounts, children }: DashboardShellProps) {
   const pathname = usePathname();
-  const isDashboardOverview = pathname === "/dashboard";
-  const isUnifiedDashboardPage =
-    (pathname === "/dashboard" || pathname.startsWith("/dashboard/")) &&
-    !pathname.startsWith("/dashboard/inbox") &&
-    !pathname.startsWith("/dashboard/publishing") &&
-    !pathname.startsWith("/dashboard/comments") &&
-    pathname !== "/dashboard/insights";
+  const isHome = pathname === "/dashboard";
 
   return (
     <DashboardTheme>
-      <Box
-        dir="rtl"
-        sx={{
-          minHeight: { lg: "100vh" },
-          height: { xs: isDashboardOverview ? "100dvh" : "auto", lg: "auto" },
-          overflow: { xs: isDashboardOverview ? "hidden" : "visible", lg: "visible" },
-          display: "flex",
-          flexDirection: "column",
-          bgcolor: "background.default",
-          color: "text.primary",
-        }}
-      >
-        <DashboardMobileHeader onMenuOpen={() => setMobileSidebarOpen(true)} mobileOpen={mobileSidebarOpen} accountMenuOpen={accountMenuOpen} />
+      <div dir="rtl" className="daira-app-shell">
+        <main className={`daira-app-main${isHome ? " daira-app-main--home" : ""}`}>
+          <div className="daira-app-content">
+            {children ?? <DashboardOverview user={user} instagramAccounts={instagramAccounts} />}
+          </div>
+        </main>
 
-        <DashboardSidebar
-          instagramAccounts={instagramAccounts}
-          mobileOpen={mobileSidebarOpen}
-          onMobileClose={() => setMobileSidebarOpen(false)}
-        />
-
-        <DashboardInstagramIsland instagramAccounts={instagramAccounts} accountMenuOpen={accountMenuOpen} onAccountMenuOpenChange={setAccountMenuOpen} />
-
-        <Box
-          sx={{
-            minWidth: 0,
-            flex: 1,
-            marginInlineStart: { xs: 0, lg: "196px" },
-          }}
-        >
-          <Box
-            component="main"
-            sx={{
-              minHeight: 0,
-              height: { xs: isDashboardOverview ? "calc(100dvh - 92px)" : "auto", lg: "auto" },
-              overflow: { xs: isDashboardOverview ? "hidden" : "visible", lg: "visible" },
-              px: { xs: 1, sm: 1.75, md: 2.75, lg: 4 },
-              py: { xs: 1.25, sm: 2, lg: 4 },
-              pb: { xs: 13, sm: 13, lg: 4 },
-              boxSizing: "border-box",
-            }}
-          >
-            <Box
-              className={isUnifiedDashboardPage ? "dashboard-page-unified" : undefined}
-              sx={{
-                width: "100%",
-                maxWidth: 1400,
-                mx: "auto",
-              }}
-            >
-              {children ?? (
-                <DashboardOverview
-                  user={user}
-                  instagramAccounts={instagramAccounts}
-                />
-              )}
-            </Box>
-          </Box>
-        </Box>
-      </Box>
+        <nav className="daira-bottom-nav" aria-label="ناوبری اصلی">
+          {bottomItems.map(({ title, href, icon: Icon }) => {
+            const active = href === "/dashboard" ? isHome : pathname === href || pathname.startsWith(href + "/");
+            return (
+              <Link key={href} href={href} aria-current={active ? "page" : undefined} className={`daira-bottom-nav__item${active ? " is-active" : ""}`}>
+                <span className="daira-bottom-nav__icon"><Icon size={25} strokeWidth={active ? 2.2 : 1.8} /></span>
+                <span className="daira-bottom-nav__label">{title}</span>
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
+      <style jsx global>{`
+        .daira-app-shell { min-height:100dvh;background:#F4F7FC;color:#18233C; }
+        .daira-app-main { min-height:100dvh;box-sizing:border-box;padding:clamp(12px,2vw,28px) clamp(10px,2vw,24px) calc(108px + env(safe-area-inset-bottom,0px)); }
+        .daira-app-content { width:100%;max-width:1240px;margin:0 auto; }
+        .daira-bottom-nav { position:fixed;z-index:1500;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:center;min-height:84px;padding:8px max(18px,calc((100vw - 520px)/2)) calc(8px + env(safe-area-inset-bottom,0px));border-top:1px solid rgba(226,232,240,.8);background:rgba(255,255,255,.92);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-sizing:border-box; }
+        .daira-bottom-nav__item { display:flex;min-width:0;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#7183A8;text-decoration:none; }
+        .daira-bottom-nav__icon { width:48px;height:43px;display:grid;place-items:center;border-radius:17px;transition:background .18s,color .18s,transform .18s; }
+        .daira-bottom-nav__label { max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:600;line-height:1.4;text-align:center; }
+        .daira-bottom-nav__item.is-active { color:#2F61FD; }
+        .daira-bottom-nav__item.is-active .daira-bottom-nav__icon { background:linear-gradient(145deg,#3B82F6,#2F61FD);color:white;box-shadow:0 7px 18px rgba(47,97,253,.22);transform:translateY(-2px); }
+        .daira-bottom-nav__item:focus-visible { outline:3px solid rgba(47,97,253,.3);outline-offset:2px;border-radius:12px; }
+        @media(min-width:900px) { .daira-app-main { padding-bottom:120px; } .daira-bottom-nav { left:50%;right:auto;transform:translateX(-50%);width:min(520px,calc(100% - 32px));bottom:16px;border:1px solid rgba(226,232,240,.9);border-radius:26px;box-shadow:0 8px 32px rgba(22,54,110,.1);padding-left:24px;padding-right:24px; } }
+        @media(max-width:480px) { .daira-app-main { padding:8px 7px calc(96px + env(safe-area-inset-bottom,0px)); } .daira-bottom-nav { min-height:76px;grid-template-columns:repeat(3,minmax(0,1fr));padding-left:10px;padding-right:10px; } .daira-bottom-nav__icon { width:44px;height:39px;border-radius:15px; } .daira-bottom-nav__label { font-size:10px; } }
+        @media(prefers-reduced-motion:reduce) { .daira-bottom-nav__icon { transition:none; } }
+      `}</style>
     </DashboardTheme>
   );
 }
