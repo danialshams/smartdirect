@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, CircleUserRound, LifeBuoy, Camera } from "lucide-react";
+import { Home, CircleUserRound, LifeBuoy } from "lucide-react";
 import DashboardTheme from "./DashboardTheme";
 import DashboardOverview from "./DashboardOverview";
 
@@ -34,13 +34,6 @@ export default function DashboardShell({ user, instagramAccounts, children }: Da
   return (
     <DashboardTheme>
       <div dir="rtl" className="daira-app-shell">
-        <header className="daira-global-header" aria-label="هدر اصلی دایرا">
-          <span className="daira-global-header__social" aria-label="اینستاگرام"><Camera size={25} strokeWidth={2} /></span>
-          <div className="daira-global-header__brand" dir="rtl">
-            <span className="daira-global-header__mark" aria-hidden="true">D</span>
-            <span className="daira-global-header__wordmark"><strong>دایرا</strong><small>اتوماسیون اینستاگرام</small></span>
-          </div>
-        </header>
         <main className={`daira-app-main${isHome ? " daira-app-main--home" : ""}`}>
           <div className="daira-app-content">
             {children ?? <DashboardOverview user={user} instagramAccounts={instagramAccounts} />}
@@ -61,14 +54,7 @@ export default function DashboardShell({ user, instagramAccounts, children }: Da
         </nav>
       </div>
       <style jsx global>{`
-        .daira-app-shell { display:flex;flex-direction:column;min-height:100dvh;background:#F8FAFC;color:#0F172A; }
-        .daira-global-header { display:flex;align-items:center;justify-content:space-between;gap:16px;width:calc(100% - 24px);max-width:1240px;min-height:82px;margin:12px auto 0;padding:12px 20px;border:1px solid #E2E8F0;border-radius:28px;background:linear-gradient(110deg,#EEF3FB,#E8EEFC); }
-        .daira-global-header__social { display:grid;place-items:center;width:42px;height:42px;color:#2563EB; }
-        .daira-global-header__brand { display:flex;align-items:center;gap:12px; }
-        .daira-global-header__mark { display:grid;place-items:center;width:58px;height:58px;border-radius:22px;background:linear-gradient(145deg,#3B82F6,#6D28D9);color:#fff;font-size:37px;font-weight:900;font-style:italic;box-shadow:0 6px 18px rgba(37,99,235,.16); }
-        .daira-global-header__wordmark { display:flex;flex-direction:column;align-items:flex-start;line-height:1.25;color:#0F172A; }
-        .daira-global-header__wordmark strong { font-size:27px;font-weight:850;letter-spacing:-.5px; }
-        .daira-global-header__wordmark small { margin-top:3px;font-size:11px;color:#64748B; }
+         .daira-app-shell { display:flex;flex-direction:column;min-height:100dvh;background:#F4F7FC;color:#18233C; }
         .daira-app-main { flex:1 0 auto;min-height:0;box-sizing:border-box;padding:clamp(12px,2vw,28px) clamp(10px,2vw,24px) 128px; }
         .daira-app-content { width:100%;max-width:1240px;margin:0 auto; }
         .daira-bottom-nav-backdrop { position:fixed;left:0;right:0;bottom:0;height:100px;z-index:1490;background:#F4F7FC;pointer-events:none; }
@@ -80,7 +66,7 @@ export default function DashboardShell({ user, instagramAccounts, children }: Da
         .daira-bottom-nav__item.is-active .daira-bottom-nav__icon { background:linear-gradient(145deg,#3B82F6,#2F61FD);color:white;box-shadow:0 7px 18px rgba(47,97,253,.22);transform:translateY(-2px); }
         .daira-bottom-nav__item:focus-visible { outline:3px solid rgba(47,97,253,.3);outline-offset:2px;border-radius:12px; }
         @media(min-width:900px) { .daira-app-main { padding-bottom:128px; } .daira-bottom-nav { left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom, 0px));border-radius:23px;padding-left:24px;padding-right:24px; } }
-        @media(max-width:480px) { .daira-global-header { width:calc(100% - 16px);min-height:70px;margin-top:8px;padding:9px 13px;border-radius:22px; } .daira-global-header__mark { width:48px;height:48px;border-radius:18px;font-size:31px; } .daira-global-header__wordmark strong { font-size:23px; } .daira-global-header__wordmark small { font-size:10px; } .daira-bottom-nav-backdrop { height:88px; } .daira-app-main { padding:8px 7px calc(100px + env(safe-area-inset-bottom, 0px)); } .daira-bottom-nav { left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom, 0px));min-height:76px;grid-template-columns:repeat(3,minmax(0,1fr));padding-left:10px;padding-right:10px;border-radius:14px; } .daira-bottom-nav__icon { width:44px;height:39px;border-radius:15px; } .daira-bottom-nav__label { font-size:10px; } }
+        @media(max-width:480px) { .daira-bottom-nav-backdrop { height:88px; } .daira-app-main { padding:8px 7px calc(100px + env(safe-area-inset-bottom, 0px)); } .daira-bottom-nav { left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom, 0px));min-height:76px;grid-template-columns:repeat(3,minmax(0,1fr));padding-left:10px;padding-right:10px;border-radius:14px; } .daira-bottom-nav__icon { width:44px;height:39px;border-radius:15px; } .daira-bottom-nav__label { font-size:10px; } }
         @media(prefers-reduced-motion:reduce) { .daira-bottom-nav__icon { transition:none; } }
       `}</style>
     </DashboardTheme>
