@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { DashboardLoading } from "@/components/dashboard/DashboardUI";
+import DairaSkeleton from "@/components/ui/DairaSkeleton";
 import Link from "next/link";
 import { Camera, Image, Images, MessageCircleReply, Pencil, Video } from "lucide-react";
 
@@ -277,13 +277,13 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
   ];
 
   if (loading) {
-    return <DashboardLoading label="در حال دریافت پاسخ‌های خودکار..." className="dashboard-loading--page dashboard-loading--centered" />;
+    return <DairaSkeleton variant="page" label="در حال دریافت پاسخ‌های خودکار..." />;
   }
 
   return (
-    <div dir="rtl" className="min-h-full bg-[#F8FAFC] px-3 py-4 sm:px-5 sm:py-6 lg:px-8">
+    <div dir="rtl" className="min-h-full px-1 py-2 sm:px-2 sm:py-3">
       <div className="mx-auto w-full max-w-4xl">
-        <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
+        <section className="rounded-[28px] border border-[#E2E8F0] bg-white p-4 shadow-[0_8px_28px_rgba(15,23,42,.035)] sm:p-5">
           <div className="mb-5 flex items-start gap-3">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB]">
               <MessageCircleReply size={19} />
@@ -320,12 +320,12 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
               هنوز پاسخ خودکاری برای نمایش وجود ندارد.
             </div>
           ) : (
-            <div className="divide-y divide-[#E2E8F0] rounded-xl border border-[#E2E8F0]">
+            <div className="space-y-2.5">
               {filteredItems.map((item) => (
-                <div key={item.key} className="flex items-center justify-between gap-3 px-3.5 py-3.5">
+                <div key={item.key} className="flex items-center justify-between gap-3 rounded-2xl border border-[#E2E8F0] bg-white px-3.5 py-3.5 shadow-[0_3px_14px_rgba(15,23,42,.025)]">
                   <div className="flex min-w-0 flex-1 items-center gap-3">
                     {item.previewUrl ? (
-                      <div className="h-16 w-12 shrink-0 overflow-hidden rounded-lg border border-[#E2E8F0] bg-white">
+                      <div className="h-[84px] w-[84px] shrink-0 overflow-hidden rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC]">
                         {item.previewKind === "video" ? (
                           <video src={item.previewUrl} muted playsInline preload="metadata" className="h-full w-full object-cover" />
                         ) : (
@@ -333,7 +333,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
                         )}
                       </div>
                     ) : (
-                      <div className="flex h-16 w-12 shrink-0 items-center justify-center rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] text-[#64748B]">
+                      <div className="flex h-[84px] w-[84px] shrink-0 items-center justify-center rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] text-[#64748B]">
                         {item.type === "STORY" ? <Camera size={18} /> : item.type === "REEL" ? <Video size={18} /> : <Image size={18} />}
                       </div>
                     )}
@@ -351,7 +351,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
 
                   <Link
                     href={item.href}
-                    className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-[#BFDBFE] bg-white px-2.5 text-xs font-semibold text-[#2563EB] no-underline hover:bg-[#EFF6FF]"
+                    className="inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-[#BFDBFE] bg-white px-3 text-xs font-semibold text-[#2563EB] no-underline transition hover:bg-[#EFF6FF]"
                   >
                     <Pencil size={14} />
                     <span>ویرایش</span>
