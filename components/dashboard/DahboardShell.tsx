@@ -22,7 +22,7 @@ type DashboardShellProps = {
 };
 
 const bottomItems = [
-  { title: "پروفایل / حساب کاربری", href: "/dashboard/profile", icon: CircleUserRound },
+  { title: "پروفایل", href: "/dashboard/profile", icon: CircleUserRound },
   { title: "خانه", href: "/dashboard", icon: Home },
   { title: "پشتیبانی", href: "/dashboard/tickets", icon: LifeBuoy },
 ];
