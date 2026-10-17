@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import AutoRepliesSkeleton from "@/components/dashboard/AutoRepliesSkeleton";
-import { Pencil, Search } from "lucide-react";
+import { AlertTriangle, LoaderCircle, Pencil, Search, Trash2, X } from "lucide-react";
 import { dairaPalette } from "../../lib/design-system/palette";
 
 type PublishType = "POST" | "CAROUSEL" | "REEL" | "STORY" | "UNKNOWN";
@@ -128,6 +128,9 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<ReplyItem | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -328,6 +331,39 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
     return scopedItems.filter((item) => item.keyword.toLocaleLowerCase("fa-IR").includes(query));
   }, [scopedItems, searchQuery]);
 
+  async function confirmDelete() {
+    if (!deleteTarget || deleting) return;
+    setDeleting(true);
+    setDeleteError("");
+    try {
+      const isPublishedItem = deleteTarget.key.startsWith("publish:");
+      const endpoint = isPublishedItem
+        ? "/api/instagram/publishing/" + encodeURIComponent(deleteTarget.id) + "/automation"
+        : "/api/automations/" + encodeURIComponent(deleteTarget.id);
+      const response = await fetch(endpoint, { method: "DELETE", cache: "no-store", credentials: "include" });
+      const result = await response.json().catch(() => null);
+      if (!response.ok || !result?.success) {
+        throw new Error(result?.error || result?.message || "حذف پاسخ خودکار انجام نشد.");
+      }
+      const nextItems = itemsRef.current.filter((item) => item.key !== deleteTarget.key);
+      itemsRef.current = nextItems;
+      setItems(nextItems);
+      try {
+        const accountResponse = await fetch("/api/instagram/accounts", { cache: "no-store", credentials: "include" });
+        const accountResult = await accountResponse.json();
+        const account = (Array.isArray(accountResult?.accounts) ? accountResult.accounts : []).find((item: { isConnected: boolean }) => item.isConnected);
+        if (account) writeAutoRepliesCache(account.id, nextItems);
+      } catch {
+        // The list remains updated in memory even if cache refresh fails.
+      }
+      setDeleteTarget(null);
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : "حذف پاسخ خودکار انجام نشد.");
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   if (loading) {
     return <AutoRepliesSkeleton />;
   }
@@ -380,19 +416,87 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
                     <span className="text-[11px] font-medium" style={{ color: dairaPalette.text.muted }}>{formatDate(item.date)}</span>
                   </div>
 
-                  <Link
-                    href={item.href}
-                    className="inline-flex h-8 shrink-0 flex-row-reverse items-center justify-center gap-1 rounded-[8px] border border-[#A8C5F8] bg-white px-2 text-[11px] font-semibold text-[#2563EB] no-underline transition hover:bg-[#EFF6FF] sm:px-2.5 sm:text-xs"
-                  >
-                    <Pencil size={14} />
-                    <span>ویرایش</span>
-                  </Link>
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    <Link
+                      href={item.href}
+                      className="inline-flex h-8 flex-row-reverse items-center justify-center gap-1 rounded-[8px] px-2 text-[11px] font-semibold no-underline transition sm:px-2.5 sm:text-xs"
+                      style={{ color: dairaPalette.primary.main, border: `1px solid ${dairaPalette.secondary.outline}`, backgroundColor: dairaPalette.background.surface }}
+                    >
+                      <Pencil size={14} />
+                      <span>ویرایش</span>
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => { setDeleteError(""); setDeleteTarget(item); }}
+                      aria-label={`حذف پاسخ خودکار ${item.keyword}`}
+                      className="inline-flex h-8 flex-row-reverse items-center justify-center gap-1 rounded-[8px] px-2 text-[11px] font-semibold transition sm:px-2.5 sm:text-xs"
+                      style={{ color: dairaPalette.status.error, border: `1px solid ${dairaPalette.status.error}55`, backgroundColor: dairaPalette.background.surface }}
+                    >
+                      <Trash2 size={14} />
+                      <span>حذف</span>
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
           )}
         </section>
       </div>
+
+      {deleteTarget ? (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/35 px-4 py-6 backdrop-blur-[3px] animate-in fade-in duration-200"
+          onMouseDown={(event) => { if (event.target === event.currentTarget && !deleting) setDeleteTarget(null); }}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-reply-title"
+            className="w-full max-w-sm rounded-[24px] p-5 shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-2 duration-200"
+            style={{ backgroundColor: dairaPalette.background.surface, border: `1px solid ${dairaPalette.border}` }}
+          >
+            <div className="mb-4 flex items-start gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl" style={{ color: dairaPalette.status.error, backgroundColor: `${dairaPalette.status.error}12` }}>
+                <AlertTriangle size={21} />
+              </div>
+              <div className="min-w-0 flex-1 pt-0.5">
+                <h2 id="delete-reply-title" className="text-base font-bold" style={{ color: dairaPalette.text.heading }}>از حذف پاسخ خودکار مطمئنی؟</h2>
+                <p className="mt-2 text-sm leading-6" style={{ color: dairaPalette.text.body }}>
+                  قانون پاسخ خودکار برای کلمه کلیدی «{deleteTarget.keyword}» حذف می‌شود. این کار قابل بازگشت نیست.
+                </p>
+                {deleteTarget.key.startsWith("publish:") ? (
+                  <p className="mt-2 text-xs leading-5" style={{ color: dairaPalette.text.muted }}>خود پست یا استوری منتشرشده در اینستاگرام حذف نمی‌شود.</p>
+                ) : null}
+              </div>
+            </div>
+            {deleteError ? (
+              <p role="alert" className="mb-3 rounded-xl px-3 py-2 text-xs leading-5" style={{ color: dairaPalette.status.error, backgroundColor: `${dairaPalette.status.error}12` }}>{deleteError}</p>
+            ) : null}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={() => void confirmDelete()}
+                className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-xl text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-60"
+                style={{ color: dairaPalette.background.surface, backgroundColor: dairaPalette.status.error }}
+              >
+                {deleting ? <LoaderCircle size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                {deleting ? "در حال حذف..." : "بله، حذف کن"}
+              </button>
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={() => setDeleteTarget(null)}
+                className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-xl text-sm font-semibold transition disabled:opacity-60"
+                style={{ color: dairaPalette.text.body, backgroundColor: dairaPalette.background.surfaceHover, border: `1px solid ${dairaPalette.border}` }}
+              >
+                <X size={16} />
+                انصراف
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </div>
   );
 }
