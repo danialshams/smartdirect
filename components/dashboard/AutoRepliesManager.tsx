@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import DairaSkeleton from "@/components/ui/DairaSkeleton";
 import Link from "next/link";
-import { Camera, Image, Images, MessageCircleReply, Pencil, Video } from "lucide-react";
+import { Camera, Image, Pencil, Search, Video } from "lucide-react";
 
 type PublishType = "POST" | "CAROUSEL" | "REEL" | "STORY" | "UNKNOWN";
 type TriggerType = "COMMENT_KEYWORD" | "STORY_REPLY_KEYWORD";
@@ -61,6 +61,7 @@ type ReplyItem = {
   previewKind: "image" | "video" | null;
   title: string;
   subtitle: string;
+  keyword: string;
   href: string;
   isActive?: boolean;
 };
@@ -98,7 +99,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
   const [items, setItems] = useState<ReplyItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [filter, setFilter] = useState<"ALL" | Exclude<PublishType, "UNKNOWN">>("ALL");
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -210,6 +211,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
             previewKind: media?.previewKind ?? null,
             title: isStory ? "پاسخ خودکار استوری" : "پاسخ خودکار کامنت",
             subtitle: normalizeKeywordList(automation.keyword) || "بدون کلمه کلیدی",
+            keyword: normalizeKeywordList(automation.keyword),
             href: isStory
               ? `/dashboard/story-automation/${automation.id}`
               : `/dashboard/comment-automation/${automation.id}`,
@@ -233,6 +235,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
             title: isStory ? "پاسخ خودکار استوری" : "پاسخ خودکار کامنت",
             subtitle: normalizeKeywordList(isStory ? job.storyReplyTriggerKeywords : job.commentTriggerKeywords) ||
               (job.caption?.trim() || "پاسخ خودکار محتوای منتشرشده"),
+            keyword: normalizeKeywordList(isStory ? job.storyReplyTriggerKeywords : job.commentTriggerKeywords),
             href: `/dashboard/publishing/${job.id}`,
           });
         }
@@ -265,16 +268,11 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
     return true;
   }), [items, scope]);
 
-  const filteredItems = useMemo(
-    () => (filter === "ALL" ? scopedItems : scopedItems.filter((item) => item.type === filter)),
-    [filter, scopedItems],
-  );
-
-  const filters = [
-    { key: "ALL" as const, label: "همه", icon: MessageCircleReply },
-    ...(scope !== "stories" ? [{ key: "POST" as const, label: "پست", icon: Image }, { key: "CAROUSEL" as const, label: "آلبوم", icon: Images }, { key: "REEL" as const, label: "ریلز", icon: Video }] : []),
-    ...(scope !== "comments" ? [{ key: "STORY" as const, label: "استوری", icon: Camera }] : []),
-  ];
+  const filteredItems = useMemo(() => {
+    const query = searchQuery.trim().toLocaleLowerCase("fa-IR");
+    if (!query) return scopedItems;
+    return scopedItems.filter((item) => item.keyword.toLocaleLowerCase("fa-IR").includes(query));
+  }, [scopedItems, searchQuery]);
 
   if (loading) {
     return <DairaSkeleton variant="page" label="در حال دریافت پاسخ‌های خودکار..." />;
@@ -287,17 +285,18 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
 
 
           {!error && scopedItems.length > 0 ? (
-            <div className="mb-4 flex gap-2 overflow-x-auto px-1 pb-1">
-              {filters.map(({ key, label, icon: Icon }) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => setFilter(key)}
-                  className={`inline-flex h-[54px] min-w-[108px] shrink-0 items-center justify-center gap-2 rounded-full border px-5 text-sm font-semibold transition ${filter === key ? "border-[#2F61FD] bg-[#2F61FD] text-white" : "border-transparent bg-[#EEF3FB] text-[#5A6B87] hover:bg-[#E4EBF8]"}`}
-                >
-                  <Icon size={14} />{label}
-                </button>
-              ))}
+            <div className="mb-4 px-1">
+              <label className="flex h-11 items-center gap-2.5 rounded-xl border border-[#E2E8F0] bg-white px-3.5 text-[#64748B] transition focus-within:border-[#2563EB] focus-within:ring-2 focus-within:ring-[#2563EB]/10">
+                <Search size={17} className="shrink-0" aria-hidden="true" />
+                <input
+                  type="search"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="جستجو براساس کلمه کلیدی..."
+                  aria-label="جستجو براساس کلمه کلیدی"
+                  className="h-full min-w-0 flex-1 bg-transparent text-sm text-[#0F172A] outline-none placeholder:text-[#94A3B8]"
+                />
+              </label>
             </div>
           ) : null}
 
@@ -341,7 +340,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
 
                   <Link
                     href={item.href}
-                    className="inline-flex h-8 shrink-0 items-center justify-center gap-1 rounded-xl border border-[#A8C5F8] bg-white px-2 text-[11px] font-semibold text-[#2563EB] no-underline transition hover:bg-[#EFF6FF] sm:px-2.5 sm:text-xs"
+                    className="inline-flex h-8 shrink-0 flex-row-reverse items-center justify-center gap-1 rounded-[22px] border border-[#A8C5F8] bg-white px-2 text-[11px] font-semibold text-[#2563EB] no-underline transition hover:bg-[#EFF6FF] sm:px-2.5 sm:text-xs"
                   >
                     <Pencil size={14} />
                     <span>ویرایش</span>
