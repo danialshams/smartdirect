@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import AutoRepliesSkeleton from "@/components/dashboard/AutoRepliesSkeleton";
 import { Pencil, Search } from "lucide-react";
-import { dairaPalette } from "@/lib/design-system/palette";
+import { dairaPalette } from "../../lib/design-system/palette";
 
 type PublishType = "POST" | "CAROUSEL" | "REEL" | "STORY" | "UNKNOWN";
 type TriggerType = "COMMENT_KEYWORD" | "STORY_REPLY_KEYWORD";
