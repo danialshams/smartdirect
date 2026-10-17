@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { Home, CircleUserRound, LifeBuoy } from "lucide-react";
 import DashboardTheme from "./DashboardTheme";
 import DashboardOverview from "./DashboardOverview";
+import DashboardHeader from "./DashboardHeader";
 
 type InstagramAccount = {
   id: string;
@@ -34,6 +35,7 @@ export default function DashboardShell({ user, instagramAccounts, children }: Da
   return (
     <DashboardTheme>
       <div dir="rtl" className="daira-app-shell">
+        <DashboardHeader instagramAccounts={instagramAccounts} />
         <main className={`daira-app-main${isHome ? " daira-app-main--home" : ""}`}>
           <div className="daira-app-content">
             {children ?? <DashboardOverview user={user} instagramAccounts={instagramAccounts} />}
