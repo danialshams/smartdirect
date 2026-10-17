@@ -3,38 +3,25 @@
 import { Camera, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import AutoRepliesManager from "@/components/dashboard/AutoRepliesManager";
+import { dairaPalette } from "@/lib/design-system/palette";
 
 export default function StoryAutomationLanding() {
   const router = useRouter();
 
   return (
     <div dir="rtl" className="min-h-[calc(100dvh-2rem)]">
-      <div className="mx-auto w-full max-w-2xl">
-        <section className="mb-4 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-5">
-          <div className="flex items-start gap-3">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB]">
-              <Camera size={19} />
-            </span>
-            <div className="min-w-0">
-              <h1 className="text-base font-bold text-[#0F172A]">پاسخ خودکار استوری</h1>
-              <p className="mt-1.5 text-xs leading-5 text-[#64748B]">برای ایجاد پاسخ خودکار، یک استوری فعال انتخاب کنید.</p>
-            </div>
-          </div>
-        </section>
-
-        <section className="mb-4 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-5">
-          <div className="flex items-center justify-between gap-3">
-            <p className="max-w-sm text-xs leading-6 text-[#64748B]">استوری‌های دارای پاسخ خودکار را مدیریت کنید.</p>
-            <button
-              type="button"
-              onClick={() => router.push("/dashboard/story-automation/new")}
-              dir="ltr"
-              className="mt-0 shrink-0 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#2563EB] px-5 text-sm font-bold text-white shadow-sm transition hover:bg-[#1D4ED8]"
-            >
-              <Plus size={17} />
-              <span dir="rtl">ایجاد پاسخ جدید</span>
-            </button>
-          </div>
+      <div className="mx-auto w-full max-w-4xl">
+        <section className="mb-4 rounded-[28px] border p-4 sm:p-5" style={{ background: dairaPalette.background.surface, borderColor: dairaPalette.border, boxShadow: "0 8px 28px rgba(15,23,42,.035)" }}>
+          <button
+            type="button"
+            onClick={() => router.push("/dashboard/story-automation/new")}
+            className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-full px-5 text-base font-bold text-white transition hover:brightness-95"
+            style={{ background: dairaPalette.primary.main }}
+          >
+            <Plus size={20} />
+            <span>ایجاد پاسخ جدید</span>
+          </button>
+          <p className="mt-3 text-center text-xs leading-6" style={{ color: dairaPalette.text.body }}>استوری‌های دارای پاسخ خودکار را مدیریت کنید.</p>
         </section>
         <AutoRepliesManager scope="stories" />
       </div>
