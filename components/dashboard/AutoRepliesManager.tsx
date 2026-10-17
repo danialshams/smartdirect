@@ -94,7 +94,7 @@ function normalizeKeywordList(value: string | null | undefined) {
   return (value || "").split(/[,،;؛\n]+/).map((item) => item.trim()).filter(Boolean).join("، ");
 }
 
-export default function AutoRepliesManager() {
+export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | "comments" | "stories" }) {
   const [items, setItems] = useState<ReplyItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -259,17 +259,21 @@ export default function AutoRepliesManager() {
     };
   }, []);
 
+  const scopedItems = useMemo(() => items.filter((item) => {
+    if (scope === "comments") return item.title === "پاسخ خودکار کامنت" && ["POST", "CAROUSEL", "REEL"].includes(item.type);
+    if (scope === "stories") return item.title === "پاسخ خودکار استوری" && item.type === "STORY";
+    return true;
+  }), [items, scope]);
+
   const filteredItems = useMemo(
-    () => (filter === "ALL" ? items : items.filter((item) => item.type === filter)),
-    [filter, items],
+    () => (filter === "ALL" ? scopedItems : scopedItems.filter((item) => item.type === filter)),
+    [filter, scopedItems],
   );
 
   const filters = [
     { key: "ALL" as const, label: "همه", icon: MessageCircleReply },
-    { key: "POST" as const, label: "پست", icon: Image },
-    { key: "CAROUSEL" as const, label: "آلبوم", icon: Images },
-    { key: "REEL" as const, label: "ریلز", icon: Video },
-    { key: "STORY" as const, label: "استوری", icon: Camera },
+    ...(scope !== "stories" ? [{ key: "POST" as const, label: "پست", icon: Image }, { key: "CAROUSEL" as const, label: "آلبوم", icon: Images }, { key: "REEL" as const, label: "ریلز", icon: Video }] : []),
+    ...(scope !== "comments" ? [{ key: "STORY" as const, label: "استوری", icon: Camera }] : []),
   ];
 
   if (loading) {
@@ -285,14 +289,14 @@ export default function AutoRepliesManager() {
               <MessageCircleReply size={19} />
             </span>
             <div>
-              <h1 className="text-base font-bold text-[#0F172A]">ویرایش پاسخ های خودکار</h1>
+              <h1 className="text-base font-bold text-[#0F172A]">{scope === "comments" ? "پاسخ خودکار کامنت" : scope === "stories" ? "پاسخ خودکار استوری" : "ویرایش پاسخ‌های خودکار"}</h1>
               <p className="mt-1.5 text-xs leading-5 text-[#64748B]">
-                پاسخ‌های خودکار کامنت و استوری را از اینجا مدیریت و ویرایش کنید.
+                {scope === "comments" ? "پست، آلبوم و ریلز دارای پاسخ خودکار را مشاهده و ویرایش کنید." : scope === "stories" ? "استوری‌های دارای پاسخ خودکار را مشاهده و ویرایش کنید." : "پاسخ‌های خودکار کامنت و استوری را از اینجا مدیریت و ویرایش کنید."}
               </p>
             </div>
           </div>
 
-          {!error && items.length > 0 ? (
+          {!error && scopedItems.length > 0 ? (
             <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
               {filters.map(({ key, label, icon: Icon }) => (
                 <button
