@@ -30,10 +30,14 @@ const features = [
 ];
 
 export default function DashboardOverview({}: DashboardOverviewProps) {
-
   return (
     <main className="daira-home" dir="rtl">
-feature.image} alt="" width={144} height={144} sizes="(max-width: 480px) 34vw, 144px" />
+      <section className="daira-home__grid" aria-label="ابزارهای دایرا">
+        {features.map((feature) => {
+          const content = (
+            <>
+              <div className="daira-home__card-art">
+                <Image src={feature.image} alt="" width={144} height={144} sizes="(max-width: 480px) 34vw, 144px" />
               </div>
               <div className="daira-home__card-copy">
                 <h2>{feature.title}</h2>
