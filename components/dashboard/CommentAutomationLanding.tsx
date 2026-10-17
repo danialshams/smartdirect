@@ -3,7 +3,7 @@
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import AutoRepliesManager from "@/components/dashboard/AutoRepliesManager";
-import { dairaPalette } from "@/lib/design-system/palette";
+import { dairaPalette } from "../../lib/design-system/palette";
 
 export default function CommentAutomationLanding() {
   const router = useRouter();
