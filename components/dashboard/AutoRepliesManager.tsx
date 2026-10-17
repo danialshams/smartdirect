@@ -340,7 +340,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
 
                   <Link
                     href={item.href}
-                    className="inline-flex h-8 shrink-0 flex-row-reverse items-center justify-center gap-1 border border-[#A8C5F8] bg-white px-2 text-[11px] font-semibold text-[#2563EB] no-underline transition hover:bg-[#EFF6FF] sm:px-2.5 sm:text-xs" style={{ borderRadius: 22 }}
+                    className="inline-flex h-8 shrink-0 flex-row-reverse items-center justify-center gap-1 rounded-[8px] border border-[#A8C5F8] bg-white px-2 text-[11px] font-semibold text-[#2563EB] no-underline transition hover:bg-[#EFF6FF] sm:px-2.5 sm:text-xs"
                   >
                     <Pencil size={14} />
                     <span>ویرایش</span>
