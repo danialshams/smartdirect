@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import DairaSkeleton from "@/components/ui/DairaSkeleton";
 import Link from "next/link";
 import { Camera, Image, Pencil, Search, Video } from "lucide-react";
 
@@ -95,6 +94,67 @@ function normalizeKeywordList(value: string | null | undefined) {
   return (value || "").split(/[,،;؛\n]+/).map((item) => item.trim()).filter(Boolean).join("، ");
 }
 
+function AutoRepliesSkeleton() {
+  return (
+    <div dir="rtl" className="min-h-full px-1 py-2 sm:px-2 sm:py-3" role="status" aria-label="در حال دریافت پاسخ‌های خودکار">
+      <span className="sr-only">در حال دریافت پاسخ‌های خودکار...</span>
+      <div className="mx-auto w-full max-w-4xl">
+        <section className="rounded-[28px] bg-transparent">
+          <div className="mb-4 px-1">
+            <div className="h-11 animate-pulse rounded-xl border border-[#E2E8F0] bg-[#F8FAFC]" />
+          </div>
+          <div className="space-y-2.5" aria-hidden="true">
+            {Array.from({ length: 3 }, (_, index) => (
+              <div key={index} className="flex min-h-[100px] items-center justify-between gap-2.5 rounded-[22px] border border-[#E8EDF5] bg-white px-2.5 py-2.5 shadow-[0_3px_12px_rgba(15,23,42,.025)] sm:px-3">
+                <div className="flex min-w-0 flex-1 items-center gap-3">
+                  <div className="h-[72px] w-[72px] shrink-0 animate-pulse rounded-2xl border border-[#E2E8F0] bg-[#EEF3FB] sm:h-[84px] sm:w-[84px]" />
+                  <div className="min-w-0 flex-1 space-y-2.5">
+                    <div className="h-3.5 w-32 max-w-[80%] animate-pulse rounded-md bg-[#E8EDF5]" />
+                    <div className="h-2.5 w-20 max-w-[55%] animate-pulse rounded-md bg-[#F1F5F9]" />
+                  </div>
+                </div>
+                <div className="h-8 w-[62px] shrink-0 animate-pulse rounded-[8px] border border-[#E8EDF5] bg-[#F8FAFC]" />
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
+
+const AUTO_REPLIES_CACHE_VERSION = 1;
+const AUTO_REPLIES_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+
+function readAutoRepliesCache(accountId: string): ReplyItem[] | null {
+  try {
+    const key = \`smartdirect:auto-replies:v\${AUTO_REPLIES_CACHE_VERSION}:\${accountId}\`;
+    const raw = window.sessionStorage.getItem(key);
+    if (!raw) return null;
+    const cached = JSON.parse(raw) as { savedAt?: number; items?: ReplyItem[] };
+    if (
+      typeof cached.savedAt !== "number" ||
+      Date.now() - cached.savedAt > AUTO_REPLIES_CACHE_TTL_MS ||
+      !Array.isArray(cached.items)
+    ) {
+      window.sessionStorage.removeItem(key);
+      return null;
+    }
+    return cached.items;
+  } catch {
+    return null;
+  }
+}
+
+function writeAutoRepliesCache(accountId: string, items: ReplyItem[]) {
+  try {
+    const key = \`smartdirect:auto-replies:v\${AUTO_REPLIES_CACHE_VERSION}:\${accountId}\`;
+    window.sessionStorage.setItem(key, JSON.stringify({ savedAt: Date.now(), items }));
+  } catch {
+    // Storage can be unavailable or full; rendering must continue without it.
+  }
+}
+
 export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | "comments" | "stories" }) {
   const [items, setItems] = useState<ReplyItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -106,7 +166,9 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
 
     async function load() {
       try {
-        setLoading(true);
+        // Keep the current page visible during background refreshes. On a hard
+        // reload, restore cached items only after the authenticated account is verified.
+        if (items.length === 0) setLoading(true);
         setError("");
 
         const accountsResponse = await fetch("/api/instagram/accounts", {
@@ -126,6 +188,15 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
             setError("پیج اینستاگرام متصل نیست.");
           }
           return;
+        }
+
+        const cachedItems = readAutoRepliesCache(account.id);
+        if (!cancelled && cachedItems) {
+          setItems(cachedItems);
+          setLoading(false);
+        } else if (!cancelled) {
+          setItems([]);
+          setLoading(true);
         }
 
         const accountQuery = `?instagramAccountId=${encodeURIComponent(account.id)}`;
@@ -246,10 +317,15 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
           return bDate - aDate;
         });
 
-        if (!cancelled) setItems(nextItems);
+        if (!cancelled) {
+          setItems(nextItems);
+          setError("");
+          writeAutoRepliesCache(account.id, nextItems);
+        }
       } catch (e) {
         if (!cancelled) {
-          setError(e instanceof Error ? e.message : "خطا در دریافت پاسخ‌های خودکار.");
+          // A refresh failure should not hide a previously loaded, usable list.
+          setError(items.length > 0 ? "" : e instanceof Error ? e.message : "خطا در دریافت پاسخ‌های خودکار.");
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -275,7 +351,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
   }, [scopedItems, searchQuery]);
 
   if (loading) {
-    return <DairaSkeleton variant="page" label="در حال دریافت پاسخ‌های خودکار..." />;
+    return <AutoRepliesSkeleton />;
   }
 
   return (
