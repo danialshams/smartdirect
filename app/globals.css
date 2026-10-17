@@ -350,7 +350,6 @@ body {
 .daira-skeleton--section { padding:18px; border:1px solid var(--daira-border); border-radius:18px; background:var(--daira-surface); }
 .daira-skeleton__section-title { width:42%; height:15px; margin-bottom:22px; }
 .daira-skeleton--dashboard { display:flex;flex-direction:column;min-height:100dvh;box-sizing:border-box;padding:8px 8px 128px; }
-.daira-skeleton__bottom-nav-backdrop { position:fixed;left:0;right:0;bottom:0;height:calc(100px + env(safe-area-inset-bottom, 0px));background:#F4F7FC;z-index:1499;pointer-events:none; }
 .daira-skeleton__dashboard-header { min-height:68px; display:grid; grid-template-columns:40px minmax(0,1fr) 40px; align-items:center; gap:8px; padding:8px 12px; margin-bottom:12px; border-radius:20px; background:linear-gradient(115deg,#DCE7FF 0%,#E5EDFF 55%,#EAF0FF 100%); }
 .daira-skeleton__icon { width:36px; height:36px; border-radius:13px; }
 .daira-skeleton__brand { display:flex; align-items:center; justify-content:center; gap:9px; }
@@ -378,7 +377,6 @@ body {
   .daira-skeleton__page-grid { gap:9px; }
   .daira-skeleton__page-card { min-height:112px; padding:12px; border-radius:14px; }
   .daira-skeleton--dashboard { padding:7px 6px calc(100px + env(safe-area-inset-bottom, 0px)); }
-  .daira-skeleton__bottom-nav-backdrop { height:calc(88px + env(safe-area-inset-bottom, 0px)); }
   .daira-skeleton__dashboard-header { min-height:64px; margin-bottom:8px; border-radius:21px; }
   .daira-skeleton__dashboard-grid { gap:7px; }
   .daira-skeleton__dashboard-card { min-height:112px; gap:5px; padding:7px 6px; border-radius:14px; }
