@@ -132,6 +132,23 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const [closingDelete, setClosingDelete] = useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+
+  useEffect(() => {
+    if (!deleteTarget) {
+      setDeleteModalVisible(false);
+      return;
+    }
+
+    // Mount the modal in its hidden state first, then animate it into view.
+    // Two animation frames ensure the browser paints the initial styles before
+    // switching to the visible styles.
+    setDeleteModalVisible(false);
+    const firstFrame = window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => setDeleteModalVisible(true));
+    });
+    return () => window.cancelAnimationFrame(firstFrame);
+  }, [deleteTarget]);
 
   useEffect(() => {
     let cancelled = false;
@@ -460,15 +477,15 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
 
       {deleteTarget ? (
         <div
-          className={`fixed inset-0 z-[9998] flex items-center justify-center px-4 py-6 backdrop-blur-md transition-[opacity,background-color] duration-300 ease-out motion-reduce:transition-none ${closingDelete ? "pointer-events-none opacity-0" : "opacity-100"}`}
-          style={{ backgroundColor: closingDelete ? "rgba(24, 35, 60, 0)" : "rgba(24, 35, 60, 0.36)" }}
+          className={`fixed inset-0 z-[9998] flex items-center justify-center px-4 py-6 backdrop-blur-md transition-[opacity,background-color] duration-300 ease-out motion-reduce:transition-none ${closingDelete || !deleteModalVisible ? "pointer-events-none opacity-0" : "opacity-100"}`}
+          style={{ backgroundColor: closingDelete || !deleteModalVisible ? "rgba(24, 35, 60, 0)" : "rgba(24, 35, 60, 0.36)" }}
           onMouseDown={(event) => { if (event.target === event.currentTarget) closeDeleteModal(); }}
         >
           <section
             role="dialog"
             aria-modal="true"
             aria-labelledby="delete-reply-title"
-            className={`w-full max-w-sm rounded-[24px] p-5 shadow-2xl transition-[opacity,transform] duration-300 ease-out motion-reduce:transition-none ${closingDelete ? "translate-y-2 scale-[0.98] opacity-0" : "translate-y-0 scale-100 opacity-100"}`}
+            className={`w-full max-w-sm rounded-[24px] p-5 shadow-2xl transition-[opacity,transform] duration-300 ease-out motion-reduce:transition-none ${closingDelete || !deleteModalVisible ? "translate-y-2 scale-[0.98] opacity-0" : "translate-y-0 scale-100 opacity-100"}`}
             style={{ backgroundColor: dairaPalette.background.surface, border: `1px solid ${dairaPalette.border}`, zIndex: 9999 }}
           >
             <div className="mb-4 flex items-start gap-3">
