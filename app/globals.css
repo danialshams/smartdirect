@@ -24,7 +24,7 @@
   --daira-muted: #94A3B8;
   --daira-link: #2F61FD;
   --daira-link-hover: #1E4BD8;
-  --daira-input-bg: #FFFFFF;
+  --daira-input-bg: #FFFFFF;\n  --daira-search-bg: #F8FAFC; /* خاکستری مایل به آبی بسیار روشن؛ پس‌زمینه فیلد جستجو */
   --daira-input-border: #E2E8F0;
   --daira-input-border-hover: #CBD5E1;
   --daira-input-focus: #2F61FD;
