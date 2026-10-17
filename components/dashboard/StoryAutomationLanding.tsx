@@ -11,17 +11,17 @@ export default function StoryAutomationLanding() {
   return (
     <div dir="rtl" className="min-h-[calc(100dvh-2rem)]">
       <div className="mx-auto w-full max-w-4xl">
-        <section className="mb-4 rounded-[28px] border p-4 sm:p-5" style={{ background: dairaPalette.background.surface, borderColor: dairaPalette.border, boxShadow: "0 8px 28px rgba(15,23,42,.035)" }}>
+        <section className="mb-6 px-0 pt-1">
           <button
             type="button"
             onClick={() => router.push("/dashboard/story-automation/new")}
-            className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-full px-5 text-base font-bold text-white transition hover:brightness-95"
-            style={{ background: dairaPalette.primary.main }}
+            className="flex min-h-[82px] w-full items-center justify-center gap-2 rounded-full px-5 text-lg font-bold text-white shadow-[0_8px_20px_rgba(47,97,253,.14)] transition hover:brightness-95"
+            style={{ background: `linear-gradient(100deg, ${dairaPalette.primary.main}, #4385F4)` }}
           >
             <Plus size={20} />
             <span>ایجاد پاسخ جدید</span>
           </button>
-          <p className="mt-3 text-center text-xs leading-6" style={{ color: dairaPalette.text.body }}>استوری‌های دارای پاسخ خودکار را مدیریت کنید.</p>
+          <p className="sr-only" style={{ color: dairaPalette.text.body }}>استوری‌های دارای پاسخ خودکار را مدیریت کنید.</p>
         </section>
         <AutoRepliesManager scope="stories" />
       </div>
