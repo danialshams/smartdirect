@@ -56,15 +56,15 @@ export default function DashboardShell({ user, instagramAccounts, children }: Da
         .daira-app-shell { min-height:100dvh;background:#F4F7FC;color:#18233C; }
         .daira-app-main { min-height:100dvh;box-sizing:border-box;padding:clamp(12px,2vw,28px) clamp(10px,2vw,24px) calc(108px + env(safe-area-inset-bottom,0px)); }
         .daira-app-content { width:100%;max-width:1240px;margin:0 auto; }
-        .daira-bottom-nav { position:fixed;z-index:1500;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:center;min-height:84px;padding:8px max(18px,calc((100vw - 520px)/2)) calc(8px + env(safe-area-inset-bottom,0px));border-top:1px solid rgba(226,232,240,.8);background:rgba(255,255,255,.92);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-sizing:border-box; }
+        .daira-bottom-nav { position:fixed;z-index:1500;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:center;min-height:84px;padding:8px 18px;border:1px solid rgba(226,232,240,.9);border-radius:23px;background:rgba(255,255,255,.94);box-shadow:0 8px 32px rgba(22,54,110,.12);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-sizing:border-box; }
         .daira-bottom-nav__item { display:flex;min-width:0;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#7183A8;text-decoration:none; }
         .daira-bottom-nav__icon { width:48px;height:43px;display:grid;place-items:center;border-radius:17px;transition:background .18s,color .18s,transform .18s; }
         .daira-bottom-nav__label { max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:600;line-height:1.4;text-align:center; }
         .daira-bottom-nav__item.is-active { color:#2F61FD; }
         .daira-bottom-nav__item.is-active .daira-bottom-nav__icon { background:linear-gradient(145deg,#3B82F6,#2F61FD);color:white;box-shadow:0 7px 18px rgba(47,97,253,.22);transform:translateY(-2px); }
         .daira-bottom-nav__item:focus-visible { outline:3px solid rgba(47,97,253,.3);outline-offset:2px;border-radius:12px; }
-        @media(min-width:900px) { .daira-app-main { padding-bottom:120px; } .daira-bottom-nav { left:50%;right:auto;transform:translateX(-50%);width:min(520px,calc(100% - 32px));bottom:16px;border:1px solid rgba(226,232,240,.9);border-radius:26px;box-shadow:0 8px 32px rgba(22,54,110,.1);padding-left:24px;padding-right:24px; } }
-        @media(max-width:480px) { .daira-app-main { padding:8px 7px calc(96px + env(safe-area-inset-bottom,0px)); } .daira-bottom-nav { min-height:76px;grid-template-columns:repeat(3,minmax(0,1fr));padding-left:10px;padding-right:10px; } .daira-bottom-nav__icon { width:44px;height:39px;border-radius:15px; } .daira-bottom-nav__label { font-size:10px; } }
+        @media(min-width:900px) { .daira-app-main { padding-bottom:120px; } .daira-bottom-nav { left:50%;right:auto;transform:translateX(-50%);width:min(520px,calc(100% - 32px));bottom:16px;border-radius:23px;padding-left:24px;padding-right:24px; } }
+        @media(max-width:480px) { .daira-app-main { padding:8px 7px calc(104px + env(safe-area-inset-bottom,0px)); } .daira-bottom-nav { left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom,0px));min-height:76px;grid-template-columns:repeat(3,minmax(0,1fr));padding-left:10px;padding-right:10px;border-radius:14px; } .daira-bottom-nav__icon { width:44px;height:39px;border-radius:15px; } .daira-bottom-nav__label { font-size:10px; } }
         @media(prefers-reduced-motion:reduce) { .daira-bottom-nav__icon { transition:none; } }
       `}</style>
     </DashboardTheme>
