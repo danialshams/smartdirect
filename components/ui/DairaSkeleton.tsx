@@ -39,7 +39,6 @@ export default function DairaSkeleton({
             </article>
           ))}
         </section>
-        <div className="daira-skeleton__bottom-nav-backdrop" aria-hidden="true" />
         <nav className="daira-skeleton__bottom-nav" aria-hidden="true">
           <SkeletonBar className="daira-skeleton__nav-item" />
           <SkeletonBar className="daira-skeleton__nav-item daira-skeleton__nav-item--active" />
