@@ -1,9 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { X } from "lucide-react";
 
 type InstagramAccount = {
   id: string;
@@ -31,29 +29,11 @@ const features = [
   { title: "آنالیز", description: "تحلیل و بررسی دقیق پیج اینستاگرام شما", image: "/photos/تحلیل پیج.png", href: "/dashboard/insights" },
 ];
 
-export default function DashboardOverview({ instagramAccounts }: DashboardOverviewProps) {
-  const [accountModalOpen, setAccountModalOpen] = useState(false);
-  const connected = instagramAccounts.filter((account) => account.isConnected);
+export default function DashboardOverview({}: DashboardOverviewProps) {
 
   return (
     <main className="daira-home" dir="rtl">
-      <header className="daira-home__header">
-        <button className="daira-home__instagram" type="button" aria-label="افزودن یا مدیریت اکانت اینستاگرام" onClick={() => setAccountModalOpen(true)}>
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true"><defs><linearGradient id="instagramGradient" x1="2" y1="22" x2="22" y2="2" gradientUnits="userSpaceOnUse"><stop stopColor="#FEDA75"/><stop offset=".35" stopColor="#FA7E1E"/><stop offset=".65" stopColor="#D62976"/><stop offset="1" stopColor="#4F5BD5"/></linearGradient></defs><rect x="3" y="3" width="18" height="18" rx="5" stroke="url(#instagramGradient)" strokeWidth="2"/><circle cx="12" cy="12" r="4" stroke="url(#instagramGradient)" strokeWidth="2"/><circle cx="17.5" cy="6.8" r="1.2" fill="#D62976"/></svg>
-        </button>
-        <Link href="/dashboard" className="daira-home__brand" aria-label="دایرا - خانه">
-          <span className="daira-home__brand-mark">D</span>
-          <span className="daira-home__brand-copy"><strong>دایرا</strong><small>اتوماسیون اینستاگرام</small></span>
-        </Link>
-        <span className="daira-home__header-spacer" aria-hidden="true" />
-      </header>
-
-      <section className="daira-home__grid" aria-label="ابزارهای دایرا">
-        {features.map((feature) => {
-          const content = (
-            <>
-              <div className="daira-home__card-art">
-                <Image src={feature.image} alt="" width={144} height={144} sizes="(max-width: 480px) 34vw, 144px" />
+feature.image} alt="" width={144} height={144} sizes="(max-width: 480px) 34vw, 144px" />
               </div>
               <div className="daira-home__card-copy">
                 <h2>{feature.title}</h2>
@@ -69,19 +49,6 @@ export default function DashboardOverview({ instagramAccounts }: DashboardOvervi
           );
         })}
       </section>
-
-      {accountModalOpen ? (
-        <div className="daira-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setAccountModalOpen(false); }}>
-          <section className="daira-account-modal" role="dialog" aria-modal="true" aria-labelledby="daira-account-title">
-            <button className="daira-account-modal__close" type="button" aria-label="بستن" onClick={() => setAccountModalOpen(false)}><X size={20} /></button>
-            <div className="daira-account-modal__icon"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="2"/><circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="2"/></svg></div>
-            <h2 id="daira-account-title">اکانت‌های اینستاگرام</h2>
-            <p className="daira-account-modal__description">پیج متصل رو مدیریت کن یا یک پیج جدید اضافه کن.</p>
-            {connected.length ? <div className="daira-account-modal__accounts">{connected.map((account) => <div className="daira-account-modal__account" key={account.id}><span className="daira-account-modal__avatar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="2"/><circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="2"/></svg></span><span dir="ltr">@{account.igUsername}</span><span className="daira-account-modal__connected">متصل</span></div>)}</div> : <p className="daira-account-modal__empty">هنوز پیجی متصل نکردی.</p>}
-            <Link className="daira-account-modal__add" href="/api/instagram/connect" onClick={() => setAccountModalOpen(false)}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="2"/><circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="2"/></svg> افزودن اکانت اینستاگرام</Link>
-          </section>
-        </div>
-      ) : null}
 
       <style jsx global>{`
         .daira-home { width:100%; min-height:100%; padding:clamp(12px,2.6vw,28px); padding-bottom:24px; color:var(--daira-heading); font-family:inherit; }
