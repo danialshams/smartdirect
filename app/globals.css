@@ -358,7 +358,7 @@ body {
 .daira-skeleton__brand-caption { width:104px; height:8px; }
 .daira-skeleton__dashboard-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
 .daira-skeleton__dashboard-card { display:flex; align-items:center; gap:12px; min-width:0; min-height:156px; padding:14px; overflow:hidden; border:1px solid #FFFFFF; border-radius:23px; background:var(--daira-surface); box-shadow:0 4px 20px rgba(22,54,110,.05); }
-.daira-skeleton__illustration { width:38%; height:88px; border-radius:16px; }
+.daira-skeleton__illustration { width:44%; height:104px; border-radius:16px; }
 .daira-skeleton__card-copy { flex:1; min-width:0; }
 .daira-skeleton__card-title { width:78%; height:13px; margin-bottom:13px; }
 .daira-skeleton__card-description { width:100%; height:9px; margin-top:8px; }
@@ -367,7 +367,7 @@ body {
 .daira-skeleton__nav-item { width:44px; height:44px; justify-self:center; border-radius:15px; }
 .daira-skeleton__nav-item--active { background:linear-gradient(100deg,#C9D8FF 20%,#AFC5FF 38%,#C9D8FF 56%); background-size:220% 100%; }
 @media(min-width:900px) {
-  .daira-skeleton--dashboard { max-width:1120px; min-height:100dvh; margin:0 auto; padding:26px 24px 0; }
+  .daira-skeleton--dashboard { min-height:100dvh; margin:0; padding:26px 12px 0; }
   .daira-skeleton__dashboard-grid { gap:18px; }
   .daira-skeleton__dashboard-card { min-height:180px; }
   .daira-skeleton__bottom-nav { margin:18px 12px 12px; width:auto; min-height:84px; border-radius:23px; }
@@ -380,7 +380,7 @@ body {
   .daira-skeleton__dashboard-header { min-height:64px; margin-bottom:8px; border-radius:21px; }
   .daira-skeleton__dashboard-grid { gap:7px; }
   .daira-skeleton__dashboard-card { min-height:112px; gap:5px; padding:7px 6px; border-radius:14px; }
-  .daira-skeleton__illustration { height:88px; }
+  .daira-skeleton__illustration { width:44%;height:96px; }
 }
 @keyframes daira-skeleton-shimmer { 0% { background-position:100% 0; } 100% { background-position:-120% 0; } }
 @media(prefers-reduced-motion:reduce) { .daira-skeleton__bar { animation:none; } }
