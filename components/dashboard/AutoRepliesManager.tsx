@@ -312,10 +312,10 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
           ) : (
             <div className="space-y-2.5">
               {filteredItems.map((item) => (
-                <div key={item.key} className="flex min-h-[112px] items-center justify-between gap-3 rounded-[24px] border border-[#E8EDF5] bg-white px-3 py-3 shadow-[0_3px_14px_rgba(15,23,42,.03)] sm:px-4">
+                <div key={item.key} className="flex min-h-[100px] items-center justify-between gap-2.5 rounded-[22px] border border-[#E8EDF5] bg-white px-2.5 py-2.5 shadow-[0_3px_12px_rgba(15,23,42,.025)] sm:px-3">
                   <div className="flex min-w-0 flex-1 items-center gap-3">
                     {item.previewUrl ? (
-                      <div className="h-[84px] w-[84px] shrink-0 overflow-hidden rounded-[18px] border border-[#E2E8F0] bg-[#F8FAFC] sm:h-[96px] sm:w-[96px]">
+                      <div className="h-[72px] w-[72px] shrink-0 overflow-hidden rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] sm:h-[84px] sm:w-[84px]">
                         {item.previewKind === "video" ? (
                           <video src={item.previewUrl} muted playsInline preload="metadata" className="h-full w-full object-cover" />
                         ) : (
@@ -323,14 +323,14 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
                         )}
                       </div>
                     ) : (
-                      <div className="flex h-[84px] w-[84px] shrink-0 items-center justify-center rounded-[18px] border border-[#E2E8F0] bg-[#F8FAFC] text-[#64748B] sm:h-[96px] sm:w-[96px]">
+                      <div className="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] text-[#64748B] sm:h-[84px] sm:w-[84px]">
                         {item.type === "STORY" ? <Camera size={18} /> : item.type === "REEL" ? <Video size={18} /> : <Image size={18} />}
                       </div>
                     )}
 
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-sm font-bold leading-6 text-[#0F172A]">{item.title}</span>
+                        <span className="text-[13px] font-bold leading-5 text-[#0F172A]">{item.title}</span>
                         <span className="text-[11px] font-medium text-[#64748B]">{formatDate(item.date)}</span>
                         {item.isActive === false ? (
                           <span className="rounded-md bg-[#F1F5F9] px-1.5 py-0.5 text-[10px] font-semibold text-[#64748B]">غیرفعال</span>
@@ -341,7 +341,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
 
                   <Link
                     href={item.href}
-                    className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-[#A8C5F8] bg-white px-2.5 text-xs font-semibold text-[#2563EB] no-underline transition hover:bg-[#EFF6FF] sm:px-3"
+                    className="inline-flex h-8 shrink-0 items-center justify-center gap-1 rounded-xl border border-[#A8C5F8] bg-white px-2 text-[11px] font-semibold text-[#2563EB] no-underline transition hover:bg-[#EFF6FF] sm:px-2.5 sm:text-xs"
                   >
                     <Pencil size={14} />
                     <span>ویرایش</span>
