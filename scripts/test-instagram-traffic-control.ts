@@ -46,7 +46,7 @@ async function main() {
 
   const loadAccounts: string[] = [];
   const active = new Map<string, number>();
-  let maxActive = new Map<string, number>();
+  const maxActive = new Map<string, number>();
   let mode: "success" | "429" = "success";
 
   const originalFetch = globalThis.fetch;
