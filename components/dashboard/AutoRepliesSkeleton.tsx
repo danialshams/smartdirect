@@ -4,7 +4,7 @@ type AutoRepliesSkeletonProps = {
 
 export default function AutoRepliesSkeleton({ includeCreateButton = false }: AutoRepliesSkeletonProps) {
   return (
-    <div dir="rtl" className="min-h-full px-1 py-2 sm:px-2 sm:py-3" role="status" aria-label="در حال دریافت پاسخ‌های خودکار">
+    <div dir="rtl" className={includeCreateButton ? "min-h-[calc(100dvh-2rem)]" : "min-h-full px-1 py-2 sm:px-2 sm:py-3"} role="status" aria-label="در حال دریافت پاسخ‌های خودکار">
       <span className="sr-only">در حال دریافت پاسخ‌های خودکار...</span>
       <div className="mx-auto w-full max-w-4xl">
         {includeCreateButton ? (
