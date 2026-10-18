@@ -19,10 +19,10 @@ export const dynamic = "force-dynamic";
 const MAX_IMAGE_SIZE = 20 * 1024 * 1024;
 const MAX_VIDEO_SIZE = 200 * 1024 * 1024;
 const MAX_AUDIO_SIZE = 25 * 1024 * 1024;
-const SAFE_AUDIO_SIZE = 24 * 1024 * 1024;
-const META_DM_IMAGE_MAX_SIZE = 8 * 1024 * 1024 - 1;
-const META_DM_VIDEO_MAX_SIZE = 25 * 1024 * 1024 - 1;
-const META_DM_AUDIO_MAX_SIZE = 25 * 1024 * 1024 - 1;
+const SAFE_AUDIO_SIZE = 24_000_000;
+const META_DM_IMAGE_MAX_SIZE = 8_000_000 - 1;
+const META_DM_VIDEO_MAX_SIZE = 25_000_000 - 1;
+const META_DM_AUDIO_MAX_SIZE = 25_000_000 - 1;
 const execFileAsync = promisify(execFile);
 
 const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
