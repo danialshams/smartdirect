@@ -107,7 +107,7 @@ export default function CommentAutomationCreate() {
   }
 
   return (
-    <div dir="rtl" className="min-h-[calc(100dvh-2rem)] rounded-[28px] bg-[#F4F7FC] p-2 sm:p-4">
+    <div dir="rtl" style={{ backgroundColor: dairaPalette.background.page }} className="min-h-[calc(100dvh-2rem)] rounded-[28px] p-2 sm:p-4">
       <div className="mx-auto w-full max-w-5xl space-y-4">
         <div className="mb-1">
           <Button
