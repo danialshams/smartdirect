@@ -5,12 +5,13 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 const PublishingStoryAutomationSetup = dynamic(() => import("./publishing/PublishingStoryAutomationSetup"), { ssr: false });
-import { createEmptyMessage, type MessageDraft, type QuickReplyDraft, type Showcase, type FormItem } from "./automation-form-utils";
+import { createEmptyMessage, normalizeMessages, type MessageDraft, type QuickReplyDraft, type Showcase, type FormItem } from "./automation-form-utils";
 import { dairaPalette } from "../../lib/design-system/palette";
 import AutomationPicker from "./AutomationPicker";
 
 type Account = { id: string; igUsername: string; igUserId: string; isConnected: boolean };
 type TriggerType = "COMMENT_KEYWORD" | "STORY_REPLY_KEYWORD";
+type AutomationTemplate = { id: string; triggerType: string; keyword?: string | null; keywordMatchMode?: string | null; commentReplyText?: string | null; requireFollow?: boolean; followGateText?: string | null; isActive?: boolean; mediaId?: string | null; messages?: unknown; };
 
 type Props = {
   account: Account;
@@ -57,6 +58,8 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   const [message, setMessage] = useState<MessageDraft>(() => createEmptyMessage());
   const [showcases, setShowcases] = useState<Showcase[]>([]);
   const [forms, setForms] = useState<FormItem[]>([]);
+  const [automationTemplates, setAutomationTemplates] = useState<AutomationTemplate[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState("");
   const [loadingResources, setLoadingResources] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -65,15 +68,22 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     let cancelled = false;
     void (async () => {
       try {
-        const [showcaseResponse, formResponse] = await Promise.all([
+        const [showcaseResponse, formResponse, automationResponse] = await Promise.all([
           fetch("/api/showcases?instagramAccountId=" + encodeURIComponent(account.id), { cache: "no-store", credentials: "include" }),
           fetch("/api/forms?instagramAccountId=" + encodeURIComponent(account.id), { cache: "no-store", credentials: "include" }),
+          fetch("/api/automations?instagramAccountId=" + encodeURIComponent(account.id), { cache: "no-store", credentials: "include" }),
         ]);
         const showcaseResult = await showcaseResponse.json();
         const formResult = await formResponse.json();
+        const automationResult = await automationResponse.json();
         if (!cancelled) {
           setShowcases(Array.isArray(showcaseResult) ? showcaseResult : Array.isArray(showcaseResult?.data) ? showcaseResult.data : []);
           setForms(Array.isArray(formResult) ? formResult : Array.isArray(formResult?.data) ? formResult.data : []);
+          setAutomationTemplates(
+            (Array.isArray(automationResult?.data) ? automationResult.data : [])
+              .filter((item: AutomationTemplate) => item.triggerType === triggerType && (item.keyword || Array.isArray(item.messages)))
+              .slice(0, 30),
+          );
         }
       } catch {
         if (!cancelled) {
@@ -85,7 +95,21 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
       }
     })();
     return () => { cancelled = true; };
-  }, [account.id]);
+  }, [account.id, triggerType]);
+
+  function applyAutomationTemplate(template: AutomationTemplate) {
+    setSelectedTemplateId(template.id);
+    setKeyword(typeof template.keyword === "string" ? template.keyword : "");
+    setKeywordDraft("");
+    setKeywordMatchMode(template.keywordMatchMode === "CONTAINS_ANY" ? "CONTAINS_ANY" : "EXACT");
+    setCommentReply(typeof template.commentReplyText === "string" ? template.commentReplyText : "");
+    setRequireFollow(Boolean(template.requireFollow));
+    setFollowGateText(typeof template.followGateText === "string" && template.followGateText.trim() ? template.followGateText : "برای دریافت پاسخ، ابتدا پیج ما را فالو کنید.");
+    const normalized = normalizeMessages(template.messages);
+    if (normalized[0]) setMessage(normalized[0]);
+    if (triggerType === "COMMENT_KEYWORD") setDmMode("TEXT");
+    setError("");
+  }
 
   const keywords = useMemo(() => keyword.split(",").map((item) => item.trim()).filter(Boolean), [keyword]);
 
@@ -258,22 +282,23 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   }
 
   return (
-    <div dir="rtl" className="min-h-[calc(100dvh-2rem)]">
-      <div className="mx-auto w-full max-w-3xl">
+    <div dir="rtl" className="min-h-[calc(100dvh-2rem)] rounded-[28px] bg-[#F4F7FC] p-2 sm:p-4">
+      <div className="mx-auto w-full max-w-4xl space-y-4">
         <div className="mb-5">
           <button type="button" onClick={() => router.back()} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#2F61FD] transition hover:bg-[#DBEAFE] hover:text-[#2F61FD]">
             <ArrowRight size={15} strokeWidth={2} />بازگشت
           </button>
         </div>
 
-        <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
-          <div className="mb-6 flex items-start gap-3">
+        <section className="rounded-[24px] border border-[#E6ECF5] bg-white p-4 shadow-[0_4px_20px_rgba(24,35,60,0.035)] sm:p-6">
+          <div className="mb-6 flex items-start gap-3 rounded-2xl border border-[#E6ECF5] bg-[#F8FAFC] p-4">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#EFF6FF] text-[#2F61FD]">
               {triggerType === "COMMENT_KEYWORD" ? <MessageCircleReply size={17} /> : <Camera size={17} />}
             </span>
             <div className="min-w-0">
               <h1 className="text-base font-bold text-[#18233C]">{title}</h1>
               <p className="mt-1.5 text-xs leading-5 text-[#5A6B87]">{description}</p>
+              <div className="mt-3 flex flex-wrap items-center gap-2"><span className="inline-flex items-center rounded-full border border-[#DBEAFE] bg-[#EFF6FF] px-2.5 py-1 text-[10px] font-bold text-[#2F61FD]">گام ۲ از ۳ · تنظیم پاسخ</span><span className="inline-flex items-center rounded-full bg-white px-2.5 py-1 text-[10px] font-medium text-[#64748B]">{triggerType === "COMMENT_KEYWORD" ? "پاسخ خودکار کامنت" : "پاسخ خودکار استوری"}</span></div>
             </div>
           </div>
 
@@ -286,8 +311,27 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                 onToggle={(id) => setSelectedMediaIds((current) => current.includes(id) ? current.filter((value) => value !== id) : [...current, id])}
               />
             )}
-            <div>
-              <div className="mb-3 flex items-center gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#EFF6FF] text-sm font-bold text-[#2F61FD]">۲</span><label className="block text-sm font-bold text-[#18233C]">شرط فعال‌سازی</label></div>
+            {automationTemplates.length > 0 && (
+              <section className="rounded-2xl border border-[#E6ECF5] bg-white p-4 sm:p-5" aria-labelledby="automation-template-heading">
+                <div className="mb-4 flex items-start gap-3">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2F61FD]"><MessageCircleReply size={17} /></span>
+                  <div className="min-w-0 flex-1"><h2 id="automation-template-heading" className="text-sm font-bold text-[#18233C]">استفاده از پاسخ خودکار قبلی</h2><p className="mt-1 text-xs leading-5 text-[#5A6B87]">یکی از اتوماسیون‌های قبلی را انتخاب کن تا کلمات کلیدی، پیام‌ها و تنظیماتش برای این محتوا کپی شود؛ اتوماسیون قبلی تغییر نمی‌کند.</p></div>
+                </div>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {automationTemplates.map((template) => {
+                    const previewMessages = normalizeMessages(template.messages);
+                    const preview = previewMessages[0]?.text?.trim() || (previewMessages[0]?.messageType === "SHOWCASE" ? "ارسال ویترین" : previewMessages[0]?.messageType === "FORM" ? "ارسال فرم" : previewMessages[0]?.messageType === "IMAGE" ? "ارسال تصویر" : previewMessages[0]?.messageType === "VIDEO" ? "ارسال ویدیو" : previewMessages[0]?.messageType === "AUDIO" ? "ارسال پیام صوتی" : "بدون متن پاسخ");
+                    const selected = selectedTemplateId === template.id;
+                    return <button key={template.id} type="button" onClick={() => applyAutomationTemplate(template)} aria-pressed={selected} className={"rounded-xl border p-3 text-right transition focus:outline-none focus:ring-2 focus:ring-[#2F61FD]/20 " + (selected ? "border-[#2F61FD] bg-[#EFF6FF] shadow-sm" : "border-[#E6ECF5] bg-white hover:border-[#BFDBFE] hover:bg-[#F8FAFC]")}>
+                      <span className="flex items-start justify-between gap-2"><strong className="min-w-0 text-xs font-bold leading-5 text-[#18233C]">{(template.keyword || "").split(/[,،;؛\n]+/).filter(Boolean).slice(0, 3).join("، ") || "بدون کلمه کلیدی"}</strong><span className={"shrink-0 rounded-full px-2 py-1 text-[10px] font-bold " + (selected ? "bg-[#2F61FD] text-white" : "bg-[#F1F5F9] text-[#64748B]")}>{selected ? "انتخاب شد" : "انتخاب"}</span></span>
+                      <span className="mt-2 block truncate text-[11px] leading-5 text-[#64748B]">{preview}</span>
+                    </button>;
+                  })}
+                </div>
+              </section>
+            )}
+            <div className="rounded-2xl border border-[#E6ECF5] bg-white p-4 sm:p-5">
+              <div className="mb-3 flex items-center gap-3"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EFF6FF] text-sm font-bold text-[#2F61FD]">۲</span><label className="block text-sm font-bold text-[#18233C]">شرط فعال‌سازی</label></div>
               <p className="mb-3 text-xs leading-5 text-[#5A6B87]">
                 {triggerType === "COMMENT_KEYWORD" ? (keywordMatchMode === "CONTAINS_ANY" ? "با ثبت هر کامنت زیر پست یا ریلز انتخاب‌شده، همین پاسخ ارسال می‌شود." : "با ثبت یکی از کلمات کلیدی مشخص‌شده در کامنت، پاسخ خودکار فعال می‌شود.") : "با وارد شدن یکی از کلمات کلیدی در Reply استوری، پاسخ خودکار فعال می‌شود."}
               </p>
@@ -313,13 +357,13 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             </div>
 
             {triggerType === "COMMENT_KEYWORD" && (
-              <div className="border-t border-[#E2E8F0] pt-5">
+              <div className="rounded-2xl border border-[#E6ECF5] bg-white p-4 sm:p-5">
                 <div className="mb-3 flex items-center gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#EFF6FF] text-sm font-bold text-[#2F61FD]">۳</span><label className="block text-sm font-bold text-[#18233C]">پاسخ زیر کامنت</label></div>
                 <textarea value={commentReply} onChange={(e) => setCommentReply(e.target.value)} rows={3} maxLength={2000} placeholder="پاسخی که زیر کامنت کاربر منتشر می‌شود بنویس..." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#18233C] outline-none placeholder:text-[11px] placeholder:whitespace-nowrap placeholder:overflow-hidden placeholder:text-ellipsis focus:border-[#2F61FD] focus:bg-white focus:ring-2 focus:ring-[#2F61FD]/10" style={{ fontSize: "16px", lineHeight: 1.75 }} />
               </div>
             )}
 
-            <div className="border-t border-[#E2E8F0] pt-5">
+            <div className="rounded-2xl border border-[#E6ECF5] bg-white p-4 sm:p-5">
               {triggerType === "COMMENT_KEYWORD" ? (
                 <section className="space-y-5">
                   <div>
@@ -421,7 +465,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
           </div>
 
-          {error && <div className="mt-4 rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium text-[#B91C1C]">{error}</div>}
+          {error && <div role="alert" className="mt-4 rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-6 text-[#B91C1C]">{error}</div>}
         </section>
       </div>
     </div>
