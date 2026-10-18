@@ -33,6 +33,7 @@ export type AutomationMessagePayload = {
     formId?: string | null;
     linkButtonUrl?: string | null;
     linkButtonTitle?: string | null;
+    linkButtons?: Array<{ url: string; title: string }>;
     quickReplies?: QuickReplyPayload[];
   };
 };
@@ -132,12 +133,14 @@ async function callInstagramMessagesApi({ instagramAccountId, tenantId, instagra
   return { success: false, error: "Instagram API request failed" };
 }
 
-async function sendTextLike({ instagramAccountId, tenantId, instagramUserId, recipientId, commentId, accessToken, text, quickReplies, linkButtonUrl, linkButtonTitle }: { instagramAccountId: string; tenantId: string; instagramUserId: string; recipientId: string; commentId?: string | null; accessToken: string; text: string; quickReplies?: QuickReplyPayload[]; linkButtonUrl?: string | null; linkButtonTitle?: string | null }) {
+async function sendTextLike({ instagramAccountId, tenantId, instagramUserId, recipientId, commentId, accessToken, text, quickReplies, linkButtonUrl, linkButtonTitle, linkButtons }: { instagramAccountId: string; tenantId: string; instagramUserId: string; recipientId: string; commentId?: string | null; accessToken: string; text: string; quickReplies?: QuickReplyPayload[]; linkButtonUrl?: string | null; linkButtonTitle?: string | null; linkButtons?: Array<{ url: string; title: string }> }) {
   if (!text.trim()) throw new Error("متن پیام نمی‌تواند خالی باشد.");
-  const message: Record<string, unknown> = linkButtonUrl && linkButtonTitle
-    ? { attachment: { type: "template", payload: { template_type: "button", text: text.trim(), buttons: [{ type: "web_url", url: linkButtonUrl, title: linkButtonTitle.trim().slice(0, 20) }] } } }
+  const buttons = linkButtons?.length ? linkButtons : linkButtonUrl && linkButtonTitle ? [{ url: linkButtonUrl, title: linkButtonTitle }] : [];
+  if (buttons.length > 3) throw new Error("حداکثر ۳ دکمه لینک مجاز است.");
+  const message: Record<string, unknown> = buttons.length
+    ? { attachment: { type: "template", payload: { template_type: "button", text: text.trim(), buttons: buttons.map((button) => ({ type: "web_url", url: button.url, title: button.title.trim().slice(0, 20) })) } } }
     : { text: text.trim() };
-  if (!linkButtonUrl && quickReplies?.length) message.quick_replies = formatQuickReplies(quickReplies);
+  if (!buttons.length && quickReplies?.length) message.quick_replies = formatQuickReplies(quickReplies);
   return callInstagramMessagesApi({
     instagramAccountId,
     tenantId,
@@ -277,7 +280,7 @@ export async function sendAutomationMessage(payload: AutomationMessagePayload): 
   }
 
   if (message.messageType === "TEXT") {
-    const result = await sendTextLike({ instagramAccountId, tenantId, instagramUserId, recipientId, commentId: payload.commentId, accessToken, text: message.text || "", quickReplies: message.quickReplies, linkButtonUrl: message.linkButtonUrl, linkButtonTitle: message.linkButtonTitle });
+    const result = await sendTextLike({ instagramAccountId, tenantId, instagramUserId, recipientId, commentId: payload.commentId, accessToken, text: message.text || "", quickReplies: message.quickReplies, linkButtonUrl: message.linkButtonUrl, linkButtonTitle: message.linkButtonTitle, linkButtons: message.linkButtons });
     if (result.success) result.conversationText = message.text?.trim() || null;
     return await finalizeResult(result);
   }
