@@ -4,6 +4,7 @@ import { ArrowRight, Camera, Image as ImageIcon, Video, RefreshCw } from "lucide
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/dashboard/DashboardUI";
+import { dairaPalette } from "../../lib/design-system/palette";
 
 type Account = { id: string; igUsername: string; igUserId: string; isConnected: boolean };
 type Story = { id: string; mediaType: string | null; mediaUrl: string | null; thumbnailUrl: string | null; };
@@ -70,7 +71,7 @@ export default function StoryAutomationCreate() {
   }
 
   return (
-    <div dir="rtl" className="min-h-[calc(100dvh-2rem)] rounded-[28px] bg-[#F4F7FC] p-2 sm:p-4">
+    <div dir="rtl" style={{ backgroundColor: dairaPalette.background.page }} className="min-h-[calc(100dvh-2rem)] rounded-[28px] p-2 sm:p-4">
       <div className="mx-auto w-full max-w-5xl space-y-4">
         <div className="mb-1">
           <Button
