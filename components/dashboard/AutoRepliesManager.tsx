@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useDashboardAccountId } from "@/components/dashboard/DashboardAccountContext";
 import Link from "next/link";
 import AutoRepliesSkeleton from "@/components/dashboard/AutoRepliesSkeleton";
 import { AlertTriangle, LoaderCircle, Pencil, Search, Trash2 } from "lucide-react";
@@ -123,6 +124,7 @@ function writeAutoRepliesCache(accountId: string, items: ReplyItem[]) {
 }
 
 export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | "comments" | "stories" }) {
+  const initialAccountId = useDashboardAccountId();
   const [items, setItems] = useState<ReplyItem[]>([]);
   const itemsRef = useRef<ReplyItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -152,6 +154,17 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
 
   useEffect(() => {
     let cancelled = false;
+
+    // Restore only the account identified by the authenticated shared layout,
+    // then revalidate the cached content in the background.
+    if (initialAccountId) {
+      const warmItems = readAutoRepliesCache(initialAccountId);
+      if (warmItems) {
+        itemsRef.current = warmItems;
+        setItems(warmItems);
+        setLoading(false);
+      }
+    }
 
     async function load() {
       try {
@@ -335,7 +348,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [initialAccountId]);
 
   const scopedItems = useMemo(() => items.filter((item) => {
     if (scope === "comments") return item.title === "پاسخ خودکار کامنت" && ["POST", "CAROUSEL", "REEL"].includes(item.type);
