@@ -3,7 +3,6 @@
 import { ArrowRight, Camera, MessageCircleReply, Check } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/dashboard/DashboardUI";
 import PublishingStoryAutomationSetup from "./publishing/PublishingStoryAutomationSetup";
 import { createEmptyMessage, type MessageDraft, type QuickReplyDraft, type Showcase, type FormItem } from "./automation-form-utils";
 import { dairaPalette } from "../../lib/design-system/palette";
@@ -43,6 +42,9 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   const [keyword, setKeyword] = useState("");
   const [keywordDraft, setKeywordDraft] = useState("");
   const [keywordMatchMode, setKeywordMatchMode] = useState<"EXACT" | "CONTAINS_ANY">("EXACT");
+  const MAX_KEYWORDS = 10;
+  const MAX_LINK_BUTTONS = 3;
+  const [linkButtons, setLinkButtons] = useState<Array<{ title: string; url: string }>>([{ title: "مشاهده لینک", url: "" }]);
   const [mediaItems, setMediaItems] = useState<Array<{id:string; caption?:string; media_type?:string; media_product_type?:string; thumbnail_url?:string|null; media_url?:string|null; timestamp?:string}>>([]);
   const [mediaSelectionMode, setMediaSelectionMode] = useState<"ALL" | "SELECTED">(mediaId ? "SELECTED" : "ALL");
   const [selectedMediaIds, setSelectedMediaIds] = useState<string[]>(mediaId ? [mediaId] : []);
@@ -101,7 +103,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
   function addKeyword() {
     const value = keywordDraft.trim();
-    if (!value || keywords.includes(value)) return;
+    if (!value || keywords.includes(value) || keywords.length >= MAX_KEYWORDS) return;
     setKeyword([...keywords, value].join(","));
     setKeywordDraft("");
   }
@@ -113,9 +115,12 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
     if (triggerType === "COMMENT_KEYWORD" && dmMode === "TEXT_WITH_LINK") {
       let parsedUrl: URL | null = null;
-      try { parsedUrl = new URL(linkButtonUrl.trim()); } catch { parsedUrl = null; }
-      if (!parsedUrl || !["http:", "https:"].includes(parsedUrl.protocol)) { setError("آدرس دکمه باید یک لینک معتبر با http یا https باشد."); return; }
-      if (!linkButtonTitle.trim() || linkButtonTitle.trim().length > 20) { setError("عنوان دکمه را وارد کن (حداکثر ۲۰ کاراکتر)."); return; }
+      const invalidButton = linkButtons.find((button) => {
+        let parsed: URL | null = null;
+        try { parsed = new URL(button.url.trim()); } catch { parsed = null; }
+        return !parsed || !["http:", "https:"].includes(parsed.protocol) || !button.title.trim() || button.title.trim().length > 20;
+      });
+      if (invalidButton) { setError("برای هر دکمه، لینک معتبر با http یا https و عنوان حداکثر ۲۰ کاراکتر وارد کنید."); return; }
       if (currentMessage.text.trim().length > 640) { setError("متن دایرکت همراه دکمه حداکثر ۶۴۰ کاراکتر است."); return; }
     }
     if (triggerType === "COMMENT_KEYWORD" && mediaSelectionMode === "SELECTED" && selectedMediaIds.length === 0) {
@@ -126,8 +131,12 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
       setError("متن درخواست فالو را وارد کنید.");
       return;
     }
-    if (!cleanKeywords.length) {
+    if (keywordMatchMode !== "CONTAINS_ANY" && !cleanKeywords.length) {
       setError("حداقل یک کلمه کلیدی وارد کنید.");
+      return;
+    }
+    if (cleanKeywords.length > MAX_KEYWORDS) {
+      setError(`حداکثر ${MAX_KEYWORDS} کلمه کلیدی می‌توانید اضافه کنید.`);
       return;
     }
     if (currentMessage.messageType === "TEXT" && !currentMessage.text.trim()) {
@@ -150,7 +159,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
           instagramAccountId: account.id,
           triggerType,
           mediaId: triggerType === "COMMENT_KEYWORD" ? (mediaSelectionMode === "SELECTED" && selectedMediaIds.length === 1 ? selectedMediaIds[0] : null) : mediaId,
-          keyword: cleanKeywords.join(","),
+          keyword: keywordMatchMode === "CONTAINS_ANY" ? null : cleanKeywords.join(","),
           keywordMatchMode,
           mediaIds: triggerType === "COMMENT_KEYWORD" && mediaSelectionMode === "SELECTED" ? selectedMediaIds : [],
           commentReplyText: triggerType === "COMMENT_KEYWORD" ? commentReply.trim() || null : null,
@@ -182,8 +191,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
           showcaseId: currentMessage.showcaseId || null,
           formId: currentMessage.formId || null,
           order: 0,
-          linkButtonUrl: triggerType === "COMMENT_KEYWORD" && dmMode === "TEXT_WITH_LINK" ? linkButtonUrl.trim() : null,
-          linkButtonTitle: triggerType === "COMMENT_KEYWORD" && dmMode === "TEXT_WITH_LINK" ? linkButtonTitle.trim() : null,
+          linkButtons: triggerType === "COMMENT_KEYWORD" && dmMode === "TEXT_WITH_LINK" ? linkButtons.map((button) => ({ url: button.url.trim(), title: button.title.trim() })) : [],
         }),
       });
       const messageResult = await messageResponse.json();
@@ -230,14 +238,9 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     <div dir="rtl" className="min-h-[calc(100dvh-2rem)]">
       <div className="mx-auto w-full max-w-2xl">
         <div className="mb-9">
-          <Button
-            type="button"
-            onClick={() => router.back()}
-            className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]"
-          >
-            <ArrowRight size={15} strokeWidth={2} />
-            بازگشت
-          </Button>
+          <button type="button" onClick={() => router.back()} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] transition hover:bg-[#DBEAFE] hover:text-[#2563EB]">
+            <ArrowRight size={15} strokeWidth={2} />بازگشت
+          </button>
         </div>
 
         <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
@@ -255,13 +258,9 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             {triggerType === "COMMENT_KEYWORD" && (
               <section className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4">
                 <h2 className="mb-2 text-sm font-bold text-[#0F172A]">انتخاب پست‌ها و ریلزها</h2>
-                <p className="mb-3 text-xs leading-5 text-[#64748B]">یک یا چند محتوا را انتخاب کن یا پاسخ را برای همه پست‌ها و ریلزها فعال کن.</p>
-                <div className="mb-3 flex flex-wrap gap-2">
-                  <Button type="button" onClick={() => { setMediaSelectionMode("SELECTED"); setSelectedMediaIds(mediaItems.map((item) => item.id)); }} className="min-h-9 rounded-lg bg-white px-3 text-xs text-[#2563EB]">انتخاب همه موارد فعلی</Button>
-                  <Button type="button" onClick={() => { setMediaSelectionMode("ALL"); setSelectedMediaIds([]); }} className="min-h-9 rounded-lg bg-white px-3 text-xs text-[#475569]">همه پست‌ها و ریلزها</Button>
-                </div>
-                {mediaLoading ? <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">{Array.from({length:8}).map((_,i)=><div key={i} className="aspect-square animate-pulse rounded-lg bg-[#E2E8F0]" />)}</div> : mediaItems.length ? <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">{mediaItems.map((item) => { const selected = selectedMediaIds.includes(item.id); const image = item.thumbnail_url || item.media_url; return <button key={item.id} type="button" onClick={() => { if (selected) { const next = selectedMediaIds.filter((id) => id !== item.id); setSelectedMediaIds(next); if (next.length === 0) setMediaSelectionMode("ALL"); } else { setMediaSelectionMode("SELECTED"); setSelectedMediaIds((current) => [...current,item.id]); } }} className={"relative overflow-hidden rounded-lg border-2 text-right " + (selected ? "border-[#2563EB] ring-2 ring-[#2563EB]/15" : "border-transparent")} aria-pressed={selected}>{image ? <img src={image} alt="" className="aspect-square w-full object-cover" /> : <div className="flex aspect-square items-center justify-center bg-[#E2E8F0] text-xs">بدون تصویر</div>}<span className={"absolute left-1 top-1 flex h-5 w-5 items-center justify-center rounded-full " + (selected ? "bg-[#2563EB] text-white" : "bg-white/90 text-transparent")}><Check size={13}/></span><span className="block truncate bg-white px-1.5 py-1 text-[10px] text-[#475569]">{item.media_product_type === "REELS" || item.media_type === "VIDEO" ? "ریلز / ویدیو" : item.media_type === "CAROUSEL_ALBUM" ? "پست اسلایدی" : "پست"}</span></button>})}</div> : <p className="rounded-lg bg-white p-3 text-xs text-[#64748B]">محتوایی دریافت نشد. اتصال اینستاگرام و دسترسی رسانه‌ها را بررسی کن.</p>}
-                <p className="mt-3 text-xs text-[#64748B]">{mediaSelectionMode === "ALL" ? "پاسخ برای همه پست‌ها و ریلزها، از جمله محتواهای آینده، فعال می‌شود." : `${selectedMediaIds.length} محتوا انتخاب شده`}</p>
+                <p className="mb-3 text-xs leading-5 text-[#64748B]">یک یا چند محتوا را انتخاب کنید. برای پیمایش فهرست، داخل کادر محتوا اسکرول کنید.</p>
+                {mediaLoading ? <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">{Array.from({length:8}).map((_,i)=><div key={i} className="aspect-square animate-pulse rounded-lg bg-[#E2E8F0]" />)}</div> : mediaItems.length ? <div className="max-h-[340px] overflow-y-auto overscroll-contain rounded-lg pr-1"><div className="grid grid-cols-3 gap-2 sm:grid-cols-4">{mediaItems.map((item) => { const selected = selectedMediaIds.includes(item.id); const image = item.thumbnail_url || item.media_url; return <button key={item.id} type="button" onClick={() => { if (selected) { const next = selectedMediaIds.filter((id) => id !== item.id); setSelectedMediaIds(next); if (next.length === 0) setMediaSelectionMode("SELECTED"); } else { setMediaSelectionMode("SELECTED"); setSelectedMediaIds((current) => [...current,item.id]); } }} className={"relative overflow-hidden rounded-lg border-2 text-right " + (selected ? "border-[#2563EB] ring-2 ring-[#2563EB]/15" : "border-transparent")} aria-pressed={selected}>{image ? <img src={image} alt="" className="aspect-square w-full object-cover" loading="lazy" /> : <div className="flex aspect-square items-center justify-center bg-[#E2E8F0] text-xs">بدون تصویر</div>}<span className={"absolute left-1 top-1 flex h-5 w-5 items-center justify-center rounded-full " + (selected ? "bg-[#2563EB] text-white" : "bg-white/90 text-transparent")}><Check size={13}/></span><span className="block truncate bg-white px-1.5 py-1 text-[10px] text-[#475569]">{item.media_product_type === "REELS" || item.media_type === "VIDEO" ? "ریلز / ویدیو" : item.media_type === "CAROUSEL_ALBUM" ? "پست اسلایدی" : "پست"}</span></button>})}</div></div> : <p className="rounded-lg bg-white p-3 text-xs text-[#64748B]">محتوایی دریافت نشد. اتصال اینستاگرام و دسترسی رسانه‌ها را بررسی کن.</p>
+                <p className="mt-3 text-xs text-[#64748B]">{`${selectedMediaIds.length} محتوا انتخاب شده`}</p>
               </section>
             )}
             <div>
@@ -269,7 +268,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
               <p className="mb-3 text-xs leading-5 text-[#64748B]">
                 {triggerType === "COMMENT_KEYWORD" ? "با وارد شدن این کلمات در کامنت، پاسخ خودکار فعال می‌شود." : "با وارد شدن این کلمات در Reply استوری، پاسخ خودکار فعال می‌شود."}
               </p>
-              {keywords.length > 0 && (
+              {keywordMatchMode !== "CONTAINS_ANY" && keywords.length > 0 && (
                 <div className="mb-3 flex flex-wrap gap-2">
                   {keywords.map((item) => (
                     <span key={item} className="inline-flex items-center gap-1.5 rounded-full bg-[#EFF6FF] px-3 py-1.5 text-xs font-semibold text-[#2563EB]">
@@ -279,11 +278,14 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                   ))}
                 </div>
               )}
-              {triggerType === "COMMENT_KEYWORD" && <div className="mb-3 rounded-xl border border-[#E2E8F0] p-3"><p className="mb-2 text-xs font-bold text-[#334155]">روش تطبیق کلمات</p><div className="grid grid-cols-1 gap-2 sm:grid-cols-2"><button type="button" onClick={() => setKeywordMatchMode("EXACT")} className={"rounded-lg border p-3 text-right text-xs " + (keywordMatchMode === "EXACT" ? "border-[#2563EB] bg-[#EFF6FF] text-[#1D4ED8]" : "border-[#E2E8F0] text-[#475569]")}><strong className="block mb-1">عبارت دقیق</strong>کامنت باید با یکی از کلمات برابر باشد.</button><button type="button" onClick={() => setKeywordMatchMode("CONTAINS_ANY")} className={"rounded-lg border p-3 text-right text-xs " + (keywordMatchMode === "CONTAINS_ANY" ? "border-[#2563EB] bg-[#EFF6FF] text-[#1D4ED8]" : "border-[#E2E8F0] text-[#475569]")}><strong className="block mb-1">شامل هر کلمه</strong>اگر کامنت شامل یکی از کلمات باشد، فعال می‌شود.</button></div></div>}
-              <div className="flex items-center gap-2">
-                <input value={keywordDraft} onChange={(e) => setKeywordDraft(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addKeyword(); } }} placeholder="مثلاً قیمت، اطلاعات" className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-3 !text-base text-[#0F172A] outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px" }} />
-                <Button type="button" onClick={addKeyword} disabled={!keywordDraft.trim()} className="min-h-11 shrink-0 rounded-lg !bg-[#2563EB] px-3.5 text-xs font-semibold text-white hover:!bg-[#1D4ED8] disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8]">افزودن</Button>
-              </div>
+              {triggerType === "COMMENT_KEYWORD" && <div className="mb-3 rounded-xl border border-[#E2E8F0] p-3"><p className="mb-2 text-xs font-bold text-[#334155]">روش فعال‌سازی پاسخ</p><div className="grid grid-cols-1 gap-2 sm:grid-cols-2"><button type="button" onClick={() => { setKeywordMatchMode("EXACT"); setKeyword(""); setKeywordDraft(""); }} className={"rounded-lg border p-3 text-right text-xs " + (keywordMatchMode === "EXACT" ? "border-[#2563EB] bg-[#EFF6FF] text-[#1D4ED8]" : "border-[#E2E8F0] text-[#475569]")}><strong className="mb-1 block">کلمات کلیدی مشخص</strong><span className="block leading-5">فقط وقتی کامنت با یکی از کلمات تعیین‌شده برابر باشد پاسخ ارسال می‌شود.</span></button><button type="button" onClick={() => { setKeywordMatchMode("CONTAINS_ANY"); setKeyword(""); setKeywordDraft(""); }} className={"rounded-lg border p-3 text-right text-xs " + (keywordMatchMode === "CONTAINS_ANY" ? "border-[#2563EB] bg-[#EFF6FF] text-[#1D4ED8]" : "border-[#E2E8F0] text-[#475569]")}><strong className="mb-1 block">هر کامنتی</strong><span className="block leading-5">با ثبت هر کامنت زیر محتوای انتخاب‌شده، پاسخ خودکار ارسال می‌شود.</span></button></div></div>}
+              {keywordMatchMode !== "CONTAINS_ANY" && <div>
+                <div className="mb-2 flex items-center justify-between gap-2"><label className="block text-xs text-[#64748B]">حداکثر {MAX_KEYWORDS} کلمه کلیدی</label><span className="text-[11px] text-[#64748B]">{keywords.length} از {MAX_KEYWORDS}</span></div>
+                <div className="flex items-center gap-2">
+                  <input value={keywordDraft} onChange={(e) => setKeywordDraft(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addKeyword(); } }} placeholder="یک کلمه کلیدی وارد کنید" disabled={keywords.length >= MAX_KEYWORDS} className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-3 text-base text-[#0F172A] outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10 disabled:bg-[#F1F5F9]" style={{ fontSize: "16px" }} />
+                  <button type="button" onClick={addKeyword} disabled={!keywordDraft.trim() || keywords.length >= MAX_KEYWORDS} className="min-h-11 shrink-0 rounded-lg bg-[#2563EB] px-3.5 text-xs font-semibold text-white transition hover:bg-[#1D4ED8] disabled:bg-[#E2E8F0] disabled:text-[#94A3B8]">افزودن</button>
+                </div>
+              </div>}
             </div>
 
             {triggerType === "COMMENT_KEYWORD" && (
@@ -331,15 +333,16 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                   </div>
                   <textarea value={message.text} onChange={(event) => setMessage((current) => ({ ...current, messageType: "TEXT", text: event.target.value, mediaUrl: "", mediaId: "", showcaseId: "", formId: "", quickReplies: [] }))} maxLength={dmMode === "TEXT_WITH_LINK" ? 640 : 2000} rows={4} placeholder="متن دایرکتی که بعد از کامنت برای کاربر ارسال می‌شود..." className="w-full rounded-xl border bg-white px-3.5 py-3 text-base leading-7 outline-none focus:ring-2 focus:ring-[#2F61FD]/15" style={{ borderColor: dairaPalette.form.border, color: dairaPalette.text.heading, fontSize: "16px" }} />
                   {dmMode === "TEXT_WITH_LINK" && (
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      <div>
-                        <label className="mb-2 block text-xs font-semibold" style={{ color: dairaPalette.text.heading }}>آدرس لینک</label>
-                        <input type="url" value={linkButtonUrl} onChange={(event) => setLinkButtonUrl(event.target.value)} placeholder="https://example.com" dir="ltr" className="w-full rounded-xl border bg-white px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-[#2F61FD]/15" style={{ borderColor: dairaPalette.form.border, color: dairaPalette.text.heading }} />
-                      </div>
-                      <div>
-                        <label className="mb-2 block text-xs font-semibold" style={{ color: dairaPalette.text.heading }}>عنوان دکمه (حداکثر ۲۰ کاراکتر)</label>
-                        <input value={linkButtonTitle} onChange={(event) => setLinkButtonTitle(event.target.value.slice(0, 20))} maxLength={20} placeholder="مشاهده لینک" className="w-full rounded-xl border bg-white px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-[#2F61FD]/15" style={{ borderColor: dairaPalette.form.border, color: dairaPalette.text.heading }} />
-                      </div>
+                    <div className="space-y-3">
+                      <p className="text-xs leading-5" style={{ color: dairaPalette.text.body }}>حداکثر {MAX_LINK_BUTTONS} دکمه لینک می‌توانید اضافه کنید.</p>
+                      {linkButtons.map((button, index) => <div key={index} className="rounded-xl border p-3" style={{ borderColor: dairaPalette.form.border }}>
+                        <div className="mb-3 flex items-center justify-between"><strong className="text-xs" style={{ color: dairaPalette.text.heading }}>دکمه {index + 1}</strong>{linkButtons.length > 1 && <button type="button" onClick={() => setLinkButtons((current) => current.filter((_, i) => i !== index))} className="text-xs font-semibold text-red-600">حذف</button>}</div>
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                          <div><label className="mb-2 block text-xs font-semibold" style={{ color: dairaPalette.text.heading }}>آدرس لینک</label><input type="url" value={button.url} onChange={(event) => setLinkButtons((current) => current.map((item, i) => i === index ? { ...item, url: event.target.value } : item))} placeholder="https://example.com" dir="ltr" className="w-full rounded-xl border bg-white px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-[#2F61FD]/15" style={{ borderColor: dairaPalette.form.border, color: dairaPalette.text.heading }} /></div>
+                          <div><label className="mb-2 block text-xs font-semibold" style={{ color: dairaPalette.text.heading }}>عنوان دکمه (حداکثر ۲۰ کاراکتر)</label><input value={button.title} onChange={(event) => setLinkButtons((current) => current.map((item, i) => i === index ? { ...item, title: event.target.value.slice(0, 20) } : item))} maxLength={20} placeholder="مشاهده لینک" className="w-full rounded-xl border bg-white px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-[#2F61FD]/15" style={{ borderColor: dairaPalette.form.border, color: dairaPalette.text.heading }} /></div>
+                        </div>
+                      </div>)}
+                      {linkButtons.length < MAX_LINK_BUTTONS && <button type="button" onClick={() => setLinkButtons((current) => [...current, { title: "", url: "" }])} className="min-h-10 rounded-lg border px-3 text-xs font-semibold" style={{ borderColor: dairaPalette.form.border, color: dairaPalette.primary.main }}>افزودن دکمه لینک</button>}
                     </div>
                   )}
                   <button type="button" onClick={() => { setMessage((current) => ({ ...current, messageType: "TEXT" })); void saveAutomation({ ...message, messageType: "TEXT" }); }} disabled={saving} className="flex min-h-12 w-full items-center justify-center rounded-xl px-4 text-sm font-bold text-white transition disabled:opacity-60" style={{ background: dairaPalette.primary.main }}>
