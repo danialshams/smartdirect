@@ -14,11 +14,11 @@ function requiredEnv(name: string) {
   return value;
 }
 
-function sha256(value: string | Buffer) {
+function sha256(value: string | Uint8Array) {
   return createHash("sha256").update(value).digest("hex");
 }
 
-function hmac(key: string | Buffer, value: string) {
+function hmac(key: string | Uint8Array, value: string) {
   return createHmac("sha256", key).update(value).digest();
 }
 
@@ -66,7 +66,7 @@ function canonicalUri(url: URL) {
     .join("/");
 }
 
-function signedHeaders(method: "PUT" | "DELETE" | "HEAD", url: URL, body: Buffer) {
+function signedHeaders(method: "PUT" | "DELETE" | "HEAD", url: URL, body: Uint8Array) {
   const config = getConfig();
   const now = new Date();
   const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, "");
@@ -117,7 +117,12 @@ function parseStorageKey(storageKey: string) {
   return key;
 }
 
-async function requestObject(method: "PUT" | "DELETE" | "HEAD", key: string, body = Buffer.alloc(0), contentType?: string) {
+async function requestObject(
+  method: "PUT" | "DELETE" | "HEAD",
+  key: string,
+  body: Uint8Array = Buffer.alloc(0),
+  contentType?: string,
+) {
   const config = getConfig();
   const url = objectUrl(config.endpoint, config.bucket, key);
   const signed = signedHeaders(method, url, body);
