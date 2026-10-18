@@ -957,7 +957,7 @@ export async function POST(request: NextRequest) {
     let messageType: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO" = "TEXT";
 
     let mediaId: string | null = null;
-    let mediaUrl: string | null = null;
+    const mediaUrl: string | null = null;
 
     const messageBody: Record<string, unknown> = {
       recipient: {
