@@ -92,7 +92,7 @@ async function main() {
     results.backpressure = true;
     process.env.QUEUE_MAX_DEPTH = oldMax;
     for (const item of fulfilled) {
-      await deleteJob((item as PromiseFulfilledResult<any>).value.id);
+      await deleteJob(item.value.id);
     }
 
     const low = await enqueueJob("TEST", { message: "old-low" }, {
