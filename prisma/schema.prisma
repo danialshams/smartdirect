@@ -122,6 +122,8 @@ model AutomationMessage {
   formId               String?
   mediaId              String?
   mediaUrl             String?
+  linkButtonUrl        String?
+  linkButtonTitle      String?
   messageType          AutomationMessageType @default(TEXT)
   showcaseId           String?
   automation           Automation            @relation(fields: [automationId], references: [id], onDelete: Cascade)
