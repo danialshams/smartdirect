@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
 
     const normalizedMediaId = typeof mediaId === "string" && mediaId.trim() ? mediaId.trim() : null;
     const normalizedMediaIds = Array.isArray(mediaIds)
-      ? [...new Set(mediaIds.filter((id: unknown): id is string => typeof id === "string" && id.trim()).map((id: string) => id.trim()))]
+      ? [...new Set(mediaIds.filter((id: unknown): id is string => typeof id === "string" && id.trim().length > 0).map((id: string) => id.trim()))]
       : [];
     if (normalizedMediaIds.length > 0 && triggerType === "COMMENT_KEYWORD") {
       const mediaResult = await getCachedInstagramMedia(instagramAccount.id, 50);
