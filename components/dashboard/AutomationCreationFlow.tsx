@@ -263,7 +263,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             <div>
               <label className="mb-2 block text-sm font-bold text-[#18233C]">کلمات کلیدی</label>
               <p className="mb-3 text-xs leading-5 text-[#5A6B87]">
-                {triggerType === "COMMENT_KEYWORD" ? "با وارد شدن این کلمات در کامنت، پاسخ خودکار فعال می‌شود." : "با وارد شدن این کلمات در Reply استوری، پاسخ خودکار فعال می‌شود."}
+                {triggerType === "COMMENT_KEYWORD" ? (keywordMatchMode === "CONTAINS_ANY" ? "با ثبت هر کامنت زیر پست یا ریلز انتخاب‌شده، همین پاسخ ارسال می‌شود." : "با ثبت یکی از کلمات کلیدی مشخص‌شده در کامنت، پاسخ خودکار فعال می‌شود.") : "با وارد شدن یکی از کلمات کلیدی در Reply استوری، پاسخ خودکار فعال می‌شود."}
               </p>
               {keywordMatchMode !== "CONTAINS_ANY" && keywords.length > 0 && (
                 <div className="mb-3 flex flex-wrap gap-2">
