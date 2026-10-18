@@ -138,7 +138,6 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     const currentMessage = finalMessage ?? message;
 
     if (triggerType === "COMMENT_KEYWORD" && dmMode === "TEXT_WITH_LINK") {
-      let parsedUrl: URL | null = null;
       const invalidButton = linkButtons.find((button) => {
         let parsed: URL | null = null;
         try { parsed = new URL(button.url.trim()); } catch { parsed = null; }
@@ -397,10 +396,6 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                 />
               )}
             </div>
-
-            {triggerType === "COMMENT_KEYWORD" && (
-              
-
 
           </div>
 
