@@ -27,7 +27,7 @@ function mediaType(item: MediaItem): Exclude<Filter, "ALL"> {
 
 function mediaLabel(item: MediaItem) {
   const type = mediaType(item);
-  return type === "REEL" ? "ریلز" : type === "ALBUM" ? "آلبوم" : "پست";
+  return type === "REEL" ? "ریلز" : type === "ALBUM" ? "پست اسلایدی" : "پست";
 }
 
 export default function CommentAutomationCreate() {
@@ -123,7 +123,7 @@ export default function CommentAutomationCreate() {
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB]"><ImageIcon size={19} /></span>
             <div className="min-w-0">
               <h1 className="text-base font-bold text-[#0F172A]">انتخاب محتوا</h1>
-              <p className="mt-1.5 text-xs leading-5 text-[#64748B] sm:text-sm">یک پست، ریلز یا آلبوم را برای پاسخ خودکار کامنت انتخاب کنید.</p>
+              <p className="mt-1.5 text-xs leading-5 text-[#64748B] sm:text-sm">یک پست، ریلز یا پست اسلایدی را برای پاسخ خودکار کامنت انتخاب کنید.</p>
             </div>
           </div>
         </section>
@@ -139,7 +139,7 @@ export default function CommentAutomationCreate() {
                 ["ALL", "همه", ImageIcon],
                 ["POST", "پست", ImageIcon],
                 ["REEL", "ریلز", Video],
-                ["ALBUM", "آلبوم", Images],
+                ["ALBUM", "پست اسلایدی", Images],
               ] as const).map(([value, label, Icon]) => (
                 <button
                   key={value}
