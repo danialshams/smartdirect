@@ -1,10 +1,10 @@
 import DashboardRoute from "../../../../components/dashboard/DashboardRoute";
-import CommentAutomationCreate from "../../../../components/dashboard/CommentAutomationCreate";
+import CommentAutomationCreateConfigure from "../../../../components/dashboard/CommentAutomationCreateConfigure";
 
 export default function NewCommentAutomationPage() {
   return (
     <DashboardRoute>
-      <CommentAutomationCreate />
+      <CommentAutomationCreateConfigure />
     </DashboardRoute>
   );
 }

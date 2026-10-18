@@ -84,6 +84,8 @@ model Automation {
   id                  String                @id @default(cuid())
   instagramAccountId  String
   keyword             String?
+  keywordMatchMode    String                @default("EXACT")
+  mediaIds            String?
   replyText           String?
   isActive            Boolean               @default(true)
   createdAt           DateTime              @default(now())
@@ -120,6 +122,9 @@ model AutomationMessage {
   formId               String?
   mediaId              String?
   mediaUrl             String?
+  linkButtonUrl        String?
+  linkButtonTitle      String?
+  linkButtons          Json?
   messageType          AutomationMessageType @default(TEXT)
   showcaseId           String?
   automation           Automation            @relation(fields: [automationId], references: [id], onDelete: Cascade)

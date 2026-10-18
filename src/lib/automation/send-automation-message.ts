@@ -31,6 +31,9 @@ export type AutomationMessagePayload = {
     mediaId: string | null;
     showcaseId?: string | null;
     formId?: string | null;
+    linkButtonUrl?: string | null;
+    linkButtonTitle?: string | null;
+    linkButtons?: Array<{ url: string; title: string }>;
     quickReplies?: QuickReplyPayload[];
   };
 };
@@ -130,10 +133,14 @@ async function callInstagramMessagesApi({ instagramAccountId, tenantId, instagra
   return { success: false, error: "Instagram API request failed" };
 }
 
-async function sendTextLike({ instagramAccountId, tenantId, instagramUserId, recipientId, commentId, accessToken, text, quickReplies }: { instagramAccountId: string; tenantId: string; instagramUserId: string; recipientId: string; commentId?: string | null; accessToken: string; text: string; quickReplies?: QuickReplyPayload[] }) {
+async function sendTextLike({ instagramAccountId, tenantId, instagramUserId, recipientId, commentId, accessToken, text, quickReplies, linkButtonUrl, linkButtonTitle, linkButtons }: { instagramAccountId: string; tenantId: string; instagramUserId: string; recipientId: string; commentId?: string | null; accessToken: string; text: string; quickReplies?: QuickReplyPayload[]; linkButtonUrl?: string | null; linkButtonTitle?: string | null; linkButtons?: Array<{ url: string; title: string }> }) {
   if (!text.trim()) throw new Error("متن پیام نمی‌تواند خالی باشد.");
-  const message: Record<string, unknown> = { text: text.trim() };
-  if (quickReplies?.length) message.quick_replies = formatQuickReplies(quickReplies);
+  const buttons = linkButtons?.length ? linkButtons : linkButtonUrl && linkButtonTitle ? [{ url: linkButtonUrl, title: linkButtonTitle }] : [];
+  if (buttons.length > 3) throw new Error("حداکثر ۳ دکمه لینک مجاز است.");
+  const message: Record<string, unknown> = buttons.length
+    ? { attachment: { type: "template", payload: { template_type: "button", text: text.trim(), buttons: buttons.map((button) => ({ type: "web_url", url: button.url, title: button.title.trim().slice(0, 20) })) } } }
+    : { text: text.trim() };
+  if (!buttons.length && quickReplies?.length) message.quick_replies = formatQuickReplies(quickReplies);
   return callInstagramMessagesApi({
     instagramAccountId,
     tenantId,
@@ -265,15 +272,15 @@ export async function sendAutomationMessage(payload: AutomationMessagePayload): 
   if (!instagramAccount) throw new Error("Instagram account not found");
   const tenantId = instagramAccount.userId;
 
-  // Instagram Comment Private Reply supports one text reply. Rich message
-  // types below are available for normal DM / Story Reply flows, not a
-  // comment_id private reply.
+  // A comment private reply is a single outbound message. Plain text and a
+  // single URL button template are supported here; rich media/flow types below
+  // remain limited to normal DM and Story Reply flows.
   if (payload.commentId && message.messageType !== "TEXT") {
     throw new Error("Only TEXT messages are supported as Instagram Comment Private Replies.");
   }
 
   if (message.messageType === "TEXT") {
-    const result = await sendTextLike({ instagramAccountId, tenantId, instagramUserId, recipientId, commentId: payload.commentId, accessToken, text: message.text || "", quickReplies: message.quickReplies });
+    const result = await sendTextLike({ instagramAccountId, tenantId, instagramUserId, recipientId, commentId: payload.commentId, accessToken, text: message.text || "", quickReplies: message.quickReplies, linkButtonUrl: message.linkButtonUrl, linkButtonTitle: message.linkButtonTitle, linkButtons: message.linkButtons });
     if (result.success) result.conversationText = message.text?.trim() || null;
     return await finalizeResult(result);
   }
