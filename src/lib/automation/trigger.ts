@@ -33,6 +33,7 @@ export function splitAutomationKeywords(value: string): string[] {
 export function matchesAutomationKeyword(
   configuredKeyword: string | null | undefined,
   incomingKeyword: string,
+  matchMode: "EXACT" | "CONTAINS_ANY" = "EXACT",
 ): boolean {
   if (!configuredKeyword) {
     return false;
@@ -40,9 +41,10 @@ export function matchesAutomationKeyword(
 
   const normalizedIncoming = normalizeAutomationText(incomingKeyword);
 
-  return splitAutomationKeywords(configuredKeyword).includes(
-    normalizedIncoming,
-  );
+  const configuredKeywords = splitAutomationKeywords(configuredKeyword);
+  return matchMode === "CONTAINS_ANY"
+    ? configuredKeywords.some((keyword) => normalizedIncoming.includes(keyword))
+    : configuredKeywords.includes(normalizedIncoming);
 }
 
 export function matchesAutomationTrigger({
@@ -51,28 +53,29 @@ export function matchesAutomationTrigger({
   incomingKeyword,
   automationMediaId,
   incomingMediaId,
+  configuredMediaIds,
+  keywordMatchMode,
 }: {
   triggerType: SupportedAutomationTriggerType;
   configuredKeyword?: string | null;
   incomingKeyword?: string | null;
   automationMediaId?: string | null;
   incomingMediaId?: string | null;
+  configuredMediaIds?: string | null;
+  keywordMatchMode?: "EXACT" | "CONTAINS_ANY";
 }): boolean {
   if (triggerType === "DM") {
     return true;
   }
 
-  if (!incomingKeyword || !matchesAutomationKeyword(configuredKeyword, incomingKeyword)) {
+  if (!incomingKeyword || !matchesAutomationKeyword(configuredKeyword, incomingKeyword, keywordMatchMode)) {
     return false;
   }
 
-  if (automationMediaId && automationMediaId !== incomingMediaId) {
-    return false;
-  }
-
-  if (automationMediaId && !incomingMediaId) {
-    return false;
-  }
+  const selectedMediaIds = configuredMediaIds ? configuredMediaIds.split(",").filter(Boolean) : [];
+  if (selectedMediaIds.length > 0 && (!incomingMediaId || !selectedMediaIds.includes(incomingMediaId))) return false;
+  if (selectedMediaIds.length === 0 && automationMediaId && automationMediaId !== incomingMediaId) return false;
+  if (selectedMediaIds.length === 0 && automationMediaId && !incomingMediaId) return false;
 
   return true;
 }
