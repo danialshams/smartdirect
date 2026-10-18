@@ -432,6 +432,7 @@ async function executeAutomationInternal(input: ExecuteAutomationInput) {
         formId: currentMessage.formId,
         linkButtonUrl: currentMessage.linkButtonUrl,
         linkButtonTitle: currentMessage.linkButtonTitle,
+        linkButtons: Array.isArray(currentMessage.linkButtons) ? currentMessage.linkButtons as Array<{ url: string; title: string }> : undefined,
         quickReplies,
       },
     });
