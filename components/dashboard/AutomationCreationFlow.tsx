@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Camera, MessageCircleReply } from "lucide-react";
+import { ArrowRight, Camera, MessageCircleReply, Check } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/dashboard/DashboardUI";
@@ -41,6 +41,10 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   const router = useRouter();
   const [keyword, setKeyword] = useState("");
   const [keywordDraft, setKeywordDraft] = useState("");
+  const [keywordMatchMode, setKeywordMatchMode] = useState<"EXACT" | "CONTAINS_ANY">("EXACT");
+  const [mediaItems, setMediaItems] = useState<Array<{id:string; caption?:string; media_type?:string; media_product_type?:string; thumbnail_url?:string|null; media_url?:string|null; timestamp?:string}>>([]);
+  const [selectedMediaIds, setSelectedMediaIds] = useState<string[]>(mediaId ? [mediaId] : []);
+  const [mediaLoading, setMediaLoading] = useState(true);
   const [commentReply, setCommentReply] = useState("");
   const [message, setMessage] = useState<MessageDraft>(() => createEmptyMessage());
   const [showcases, setShowcases] = useState<Showcase[]>([]);
@@ -76,6 +80,17 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   }, [account.id]);
 
   const keywords = useMemo(() => keyword.split(",").map((item) => item.trim()).filter(Boolean), [keyword]);
+
+  useEffect(() => {
+    if (triggerType !== "COMMENT_KEYWORD") { setMediaLoading(false); return; }
+    let cancelled = false;
+    void fetch("/api/instagram/media?instagramAccountId=" + encodeURIComponent(account.id), { cache: "no-store", credentials: "include" })
+      .then((response) => response.json())
+      .then((result) => { if (!cancelled) setMediaItems(Array.isArray(result?.data) ? result.data.filter((item: {id?:unknown;media_type?:string;media_product_type?:string}) => typeof item.id === "string" && (item.media_type === "IMAGE" || item.media_type === "VIDEO" || item.media_type === "CAROUSEL_ALBUM" || item.media_product_type === "REELS")) : []); })
+      .catch(() => { if (!cancelled) setMediaItems([]); })
+      .finally(() => { if (!cancelled) setMediaLoading(false); });
+    return () => { cancelled = true; };
+  }, [account.id, triggerType]);
 
   function addKeyword() {
     const value = keywordDraft.trim();
@@ -114,6 +129,8 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
           triggerType,
           mediaId,
           keyword: cleanKeywords.join(","),
+          keywordMatchMode,
+          mediaIds: triggerType === "COMMENT_KEYWORD" ? selectedMediaIds : [],
           commentReplyText: triggerType === "COMMENT_KEYWORD" ? commentReply.trim() || null : null,
           replyText: null,
           likeComment: false,
@@ -226,7 +243,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                   ))}
                 </div>
               )}
-              <div className="flex items-center gap-2">
+              {triggerType === "COMMENT_KEYWORD" && <div className="mb-3 rounded-xl border border-[#E2E8F0] p-3"><p className="mb-2 text-xs font-bold text-[#334155]">روش تطبیق کلمات</p><div className="grid grid-cols-1 gap-2 sm:grid-cols-2"><button type="button" onClick={() => setKeywordMatchMode("EXACT")} className={"rounded-lg border p-3 text-right text-xs " + (keywordMatchMode === "EXACT" ? "border-[#2563EB] bg-[#EFF6FF] text-[#1D4ED8]" : "border-[#E2E8F0] text-[#475569]")}><strong className="block mb-1">عبارت دقیق</strong>کامنت باید با یکی از کلمات برابر باشد.</button><button type="button" onClick={() => setKeywordMatchMode("CONTAINS_ANY")} className={"rounded-lg border p-3 text-right text-xs " + (keywordMatchMode === "CONTAINS_ANY" ? "border-[#2563EB] bg-[#EFF6FF] text-[#1D4ED8]" : "border-[#E2E8F0] text-[#475569]")}><strong className="block mb-1">شامل هر کلمه</strong>اگر کامنت شامل یکی از کلمات باشد، فعال می‌شود.</button></div></div>}\n              <div className="flex items-center gap-2">
                 <input value={keywordDraft} onChange={(e) => setKeywordDraft(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addKeyword(); } }} placeholder="مثلاً قیمت، اطلاعات" className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-3 !text-base text-[#0F172A] outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px" }} />
                 <Button type="button" onClick={addKeyword} disabled={!keywordDraft.trim()} className="min-h-11 shrink-0 rounded-lg !bg-[#2563EB] px-3.5 text-xs font-semibold text-white hover:!bg-[#1D4ED8] disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8]">افزودن</Button>
               </div>
