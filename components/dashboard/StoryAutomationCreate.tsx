@@ -4,7 +4,6 @@ import { ArrowRight, Camera, Image as ImageIcon, Video, Search, RefreshCw } from
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/dashboard/DashboardUI";
-import { dairaPalette } from "@/lib/design-system/palette";
 
 type Account = { id: string; igUsername: string; igUserId: string; isConnected: boolean };
 type Story = { id: string; mediaType: string | null; mediaUrl: string | null; thumbnailUrl: string | null; };
@@ -114,8 +113,8 @@ export default function StoryAutomationCreate() {
             <p className="mt-2 text-xs leading-6 text-muted-foreground">استوری‌هایی که قبلاً پاسخ خودکار دارند در این لیست نمایش داده نمی‌شوند.</p>
           </div>
         ) : (
-          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {stories.map((story) => {
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
+            {visibleStories.map((story) => {
               const image = story.thumbnailUrl || story.mediaUrl;
               return (
                 <button key={story.id} type="button" onClick={() => router.push("/dashboard/story-automation/new/configure?mediaId=" + encodeURIComponent(story.id))} className="group relative aspect-[9/14] overflow-hidden rounded-xl border border-[#E2E8F0] bg-[#F1F5F9] text-right transition duration-200 hover:-translate-y-0.5 hover:border-[#BFDBFE] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#2F61FD]">
@@ -134,6 +133,7 @@ export default function StoryAutomationCreate() {
             })}
           </div>
         )}
+        {stories.length > 0 && visibleStories.length === 0 && <div className="mt-4 rounded-2xl border border-dashed border-[#CBD5E1] bg-white px-5 py-10 text-center text-sm text-[#5A6B87]">استوری‌ای با این فیلتر پیدا نشد. جست‌وجو یا فیلتر نوع را تغییر دهید.</div>}
       </div>
     </div>
   );
