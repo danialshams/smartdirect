@@ -84,6 +84,8 @@ model Automation {
   id                  String                @id @default(cuid())
   instagramAccountId  String
   keyword             String?
+  keywordMatchMode    String                @default("EXACT")
+  mediaIds            String?
   replyText           String?
   isActive            Boolean               @default(true)
   createdAt           DateTime              @default(now())
