@@ -1,12 +1,13 @@
 "use client";
 
-import { ArrowRight, Camera, MessageCircleReply, Check } from "lucide-react";
+import { ArrowRight, Camera, MessageCircleReply } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 const PublishingStoryAutomationSetup = dynamic(() => import("./publishing/PublishingStoryAutomationSetup"), { ssr: false });
 import { createEmptyMessage, type MessageDraft, type QuickReplyDraft, type Showcase, type FormItem } from "./automation-form-utils";
 import { dairaPalette } from "../../lib/design-system/palette";
+import AutomationPicker from "./AutomationPicker";
 
 type Account = { id: string; igUsername: string; igUserId: string; isConnected: boolean };
 type TriggerType = "COMMENT_KEYWORD" | "STORY_REPLY_KEYWORD";
@@ -279,12 +280,12 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
           <div className="space-y-5">
             {triggerType === "COMMENT_KEYWORD" && (
-              <section className="rounded-xl border border-[#E2E8F0] bg-white p-4 sm:p-5">
-                <div className="mb-3 flex items-center gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#EFF6FF] text-sm font-bold text-[#2F61FD]">۱</span><div><h2 className="text-sm font-bold text-[#18233C]">انتخاب پست‌ها و ریلزها</h2><p className="mt-1 text-xs text-[#64748B]">محتواهایی را انتخاب کنید که این پاسخ خودکار برای آن‌ها فعال باشد.</p></div></div>
-                <p className="mb-3 text-xs leading-5 text-[#5A6B87]">یک یا چند محتوا را انتخاب کنید. برای پیمایش فهرست، داخل کادر محتوا اسکرول کنید.</p>
-                {mediaLoading ? <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">{Array.from({length:8}).map((_,i)=><div key={i} className="aspect-square animate-pulse rounded-lg bg-[#E2E8F0]" />)}</div> : mediaItems.length ? <div className="max-h-[340px] overflow-y-auto overscroll-contain rounded-lg pr-1"><div className="grid grid-cols-3 gap-2 sm:grid-cols-4">{mediaItems.map((item) => { const selected = selectedMediaIds.includes(item.id); const image = item.thumbnail_url || item.media_url; return <button key={item.id} type="button" onClick={() => { setSelectedMediaIds((current) => selected ? current.filter((id) => id !== item.id) : [...current, item.id]); }} className={"relative overflow-hidden rounded-lg border-2 text-right " + (selected ? "border-[#2F61FD] ring-2 ring-[#2F61FD]/15" : "border-transparent")} aria-pressed={selected}>{image ? <img src={image} alt="" className="aspect-square w-full object-cover" loading="lazy" /> : <div className="flex aspect-square items-center justify-center bg-[#E2E8F0] text-xs">بدون تصویر</div>}<span className={"absolute left-1 top-1 flex h-5 w-5 items-center justify-center rounded-full " + (selected ? "bg-[#2F61FD] text-white" : "bg-white/90 text-transparent")}><Check size={13}/></span><span className="block truncate bg-white px-1.5 py-1 text-[10px] text-[#5A6B87]">{item.media_product_type === "REELS" || item.media_type === "VIDEO" ? "ریلز / ویدیو" : item.media_type === "CAROUSEL_ALBUM" ? "پست اسلایدی" : "پست"}</span></button>})}</div></div> : <p className="rounded-lg bg-white p-3 text-xs text-[#5A6B87]">محتوایی دریافت نشد. اتصال اینستاگرام و دسترسی رسانه‌ها را بررسی کن.</p>}
-                <p className="mt-3 text-xs text-[#5A6B87]">{`${selectedMediaIds.length} محتوا انتخاب شده`}</p>
-              </section>
+              <AutomationPicker
+                items={mediaItems}
+                selectedIds={selectedMediaIds}
+                loading={mediaLoading}
+                onToggle={(id) => setSelectedMediaIds((current) => current.includes(id) ? current.filter((value) => value !== id) : [...current, id])}
+              />
             )}
             <div>
               <div className="mb-3 flex items-center gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#EFF6FF] text-sm font-bold text-[#2F61FD]">۲</span><label className="block text-sm font-bold text-[#18233C]">شرط فعال‌سازی</label></div>
