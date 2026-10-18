@@ -9,7 +9,7 @@ export async function isStorageObjectReferenced(input: {
   publicUrl: string | null;
   ignorePublishMediaId?: string;
 }) {
-  const [publishMedia, automationMessage, showcaseItem] = await Promise.all([
+  const [publishMedia, automationMessage, showcaseItem, savedResponse] = await Promise.all([
     prisma.instagramPublishMedia.findFirst({
       where: {
         storageKey: input.storageKey,
@@ -30,7 +30,13 @@ export async function isStorageObjectReferenced(input: {
           select: { id: true },
         })
       : Promise.resolve(null),
+    input.publicUrl
+      ? prisma.savedAutomationResponse.findFirst({
+          where: { mediaUrl: input.publicUrl },
+          select: { id: true },
+        })
+      : Promise.resolve(null),
   ]);
 
-  return Boolean(publishMedia || automationMessage || showcaseItem);
+  return Boolean(publishMedia || automationMessage || showcaseItem || savedResponse);
 }
