@@ -31,6 +31,8 @@ export type AutomationMessagePayload = {
     mediaId: string | null;
     showcaseId?: string | null;
     formId?: string | null;
+    linkButtonUrl?: string | null;
+    linkButtonTitle?: string | null;
     quickReplies?: QuickReplyPayload[];
   };
 };
@@ -130,10 +132,12 @@ async function callInstagramMessagesApi({ instagramAccountId, tenantId, instagra
   return { success: false, error: "Instagram API request failed" };
 }
 
-async function sendTextLike({ instagramAccountId, tenantId, instagramUserId, recipientId, commentId, accessToken, text, quickReplies }: { instagramAccountId: string; tenantId: string; instagramUserId: string; recipientId: string; commentId?: string | null; accessToken: string; text: string; quickReplies?: QuickReplyPayload[] }) {
+async function sendTextLike({ instagramAccountId, tenantId, instagramUserId, recipientId, commentId, accessToken, text, quickReplies, linkButtonUrl, linkButtonTitle }: { instagramAccountId: string; tenantId: string; instagramUserId: string; recipientId: string; commentId?: string | null; accessToken: string; text: string; quickReplies?: QuickReplyPayload[]; linkButtonUrl?: string | null; linkButtonTitle?: string | null }) {
   if (!text.trim()) throw new Error("متن پیام نمی‌تواند خالی باشد.");
-  const message: Record<string, unknown> = { text: text.trim() };
-  if (quickReplies?.length) message.quick_replies = formatQuickReplies(quickReplies);
+  const message: Record<string, unknown> = linkButtonUrl && linkButtonTitle
+    ? { attachment: { type: "template", payload: { template_type: "button", text: text.trim(), buttons: [{ type: "web_url", url: linkButtonUrl, title: linkButtonTitle.trim().slice(0, 20) }] } } }
+    : { text: text.trim() };
+  if (!linkButtonUrl && quickReplies?.length) message.quick_replies = formatQuickReplies(quickReplies);
   return callInstagramMessagesApi({
     instagramAccountId,
     tenantId,
@@ -273,7 +277,7 @@ export async function sendAutomationMessage(payload: AutomationMessagePayload): 
   }
 
   if (message.messageType === "TEXT") {
-    const result = await sendTextLike({ instagramAccountId, tenantId, instagramUserId, recipientId, commentId: payload.commentId, accessToken, text: message.text || "", quickReplies: message.quickReplies });
+    const result = await sendTextLike({ instagramAccountId, tenantId, instagramUserId, recipientId, commentId: payload.commentId, accessToken, text: message.text || "", quickReplies: message.quickReplies, linkButtonUrl: message.linkButtonUrl, linkButtonTitle: message.linkButtonTitle });
     if (result.success) result.conversationText = message.text?.trim() || null;
     return await finalizeResult(result);
   }
