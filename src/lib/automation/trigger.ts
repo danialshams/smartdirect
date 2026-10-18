@@ -35,11 +35,9 @@ export function matchesAutomationKeyword(
   incomingKeyword: string,
   matchMode: "EXACT" | "CONTAINS_ANY" = "EXACT",
 ): boolean {
-  if (!configuredKeyword) {
-    return false;
-  }
-
   const normalizedIncoming = normalizeAutomationText(incomingKeyword);
+  if (!normalizedIncoming) return false;
+  if (!configuredKeyword?.trim()) return matchMode === "CONTAINS_ANY";
 
   const configuredKeywords = splitAutomationKeywords(configuredKeyword);
   return matchMode === "CONTAINS_ANY"
