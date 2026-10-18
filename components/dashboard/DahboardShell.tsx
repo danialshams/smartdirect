@@ -42,7 +42,11 @@ export default function DashboardShell({ user, instagramAccounts, children }: Da
         <DashboardHeader instagramAccounts={instagramAccounts} />
         <main className={`daira-app-main${isHome ? " daira-app-main--home" : ""}`}>
           <div className="daira-app-content">
-            {children ?? <DashboardOverview user={user} instagramAccounts={instagramAccounts} />}
+            {isHome ? (
+              <DashboardOverview user={user} instagramAccounts={instagramAccounts} />
+            ) : (
+              children
+            )}
           </div>
         </main>
 
