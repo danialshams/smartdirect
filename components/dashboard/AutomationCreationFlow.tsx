@@ -49,6 +49,9 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   const [mediaLoading, setMediaLoading] = useState(true);
   const [commentReply, setCommentReply] = useState("");
   const [requireFollow, setRequireFollow] = useState(false);
+  const [dmMode, setDmMode] = useState<"TEXT" | "TEXT_WITH_LINK">("TEXT");
+  const [linkButtonUrl, setLinkButtonUrl] = useState("");
+  const [linkButtonTitle, setLinkButtonTitle] = useState("مشاهده لینک");
   const [followGateText, setFollowGateText] = useState("برای دریافت پاسخ، ابتدا پیج ما را فالو کنید.");
   const [message, setMessage] = useState<MessageDraft>(() => createEmptyMessage());
   const [showcases, setShowcases] = useState<Showcase[]>([]);
@@ -108,6 +111,13 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     const cleanKeywords = keyword.split(",").map((item) => item.trim()).filter(Boolean);
     const currentMessage = finalMessage ?? message;
 
+    if (triggerType === "COMMENT_KEYWORD" && dmMode === "TEXT_WITH_LINK") {
+      let parsedUrl: URL | null = null;
+      try { parsedUrl = new URL(linkButtonUrl.trim()); } catch { parsedUrl = null; }
+      if (!parsedUrl || !["http:", "https:"].includes(parsedUrl.protocol)) { setError("آدرس دکمه باید یک لینک معتبر با http یا https باشد."); return; }
+      if (!linkButtonTitle.trim() || linkButtonTitle.trim().length > 20) { setError("عنوان دکمه را وارد کن (حداکثر ۲۰ کاراکتر)."); return; }
+      if (currentMessage.text.trim().length > 640) { setError("متن دایرکت همراه دکمه حداکثر ۶۴۰ کاراکتر است."); return; }
+    }
     if (triggerType === "COMMENT_KEYWORD" && mediaSelectionMode === "SELECTED" && selectedMediaIds.length === 0) {
       setError("حداقل یک پست یا ریلز انتخاب کنید، یا گزینه همه محتواها را بزنید.");
       return;
@@ -172,6 +182,8 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
           showcaseId: currentMessage.showcaseId || null,
           formId: currentMessage.formId || null,
           order: 0,
+          linkButtonUrl: triggerType === "COMMENT_KEYWORD" && dmMode === "TEXT_WITH_LINK" ? linkButtonUrl.trim() : null,
+          linkButtonTitle: triggerType === "COMMENT_KEYWORD" && dmMode === "TEXT_WITH_LINK" ? linkButtonTitle.trim() : null,
         }),
       });
       const messageResult = await messageResponse.json();
@@ -301,28 +313,63 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             )}
 
             <div className="border-t border-[#E2E8F0] pt-5">
-              <PublishingStoryAutomationSetup
-                message={message}
-                showcases={showcases}
-                forms={forms}
-                loadingResources={loadingResources}
-                instagramAccountId={account.id}
-                onUpdate={(patch) => setMessage((current) => ({ ...current, ...patch }))}
-                keywordValid={keywords.length > 0}
-                onContinue={(nextMessage) => {
-                  const next = nextMessage ?? message;
-                  setMessage(next);
-                  return saveAutomation(next);
-                }}
-                disabled={saving}
-                showFinalSave
-                finalSaveLabel="ساخت پاسخ خودکار"
-                finalSaveLoadingLabel="در حال ساخت پاسخ خودکار..."
-                finalSaveDisabled={saving}
-                responseTypeTitle="نوع پاسخ خودکار"
-                responseTypeDescription="نوع پاسخی که می‌خواهید در دایرکت برای کاربر ارسال شود."
-                textPlaceholder={triggerType === "COMMENT_KEYWORD" ? "متن دایرکتی که بعد از کامنت برای کاربر ارسال می‌شود..." : "متنی که در پاسخ خودکار برای کاربر ارسال می‌شود..."}
-              />
+              {triggerType === "COMMENT_KEYWORD" ? (
+                <section className="space-y-4">
+                  <div>
+                    <h2 className="text-sm font-bold" style={{ color: dairaPalette.text.heading }}>پیام دایرکت</h2>
+                    <p className="mt-1 text-xs leading-5" style={{ color: dairaPalette.text.body }}>متنی را که پس از کامنت برای کاربر ارسال می‌شود بنویس.</p>
+                  </div>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <button type="button" onClick={() => setDmMode("TEXT")} className={"rounded-xl border p-3 text-right text-xs " + (dmMode === "TEXT" ? "border-[#2F61FD] bg-[#EFF6FF]" : "border-[#E2E8F0] bg-white")} aria-pressed={dmMode === "TEXT"}>
+                      <strong className="block text-sm" style={{ color: dairaPalette.text.heading }}>متن ساده</strong>
+                      <span className="mt-1 block leading-5" style={{ color: dairaPalette.text.body }}>ارسال پیام متنی بدون دکمه</span>
+                    </button>
+                    <button type="button" onClick={() => setDmMode("TEXT_WITH_LINK")} className={"rounded-xl border p-3 text-right text-xs " + (dmMode === "TEXT_WITH_LINK" ? "border-[#2F61FD] bg-[#EFF6FF]" : "border-[#E2E8F0] bg-white")} aria-pressed={dmMode === "TEXT_WITH_LINK"}>
+                      <strong className="block text-sm" style={{ color: dairaPalette.text.heading }}>متن همراه دکمه لینک</strong>
+                      <span className="mt-1 block leading-5" style={{ color: dairaPalette.text.body }}>نمایش یک دکمه برای باز کردن لینک</span>
+                    </button>
+                  </div>
+                  <textarea value={message.text} onChange={(event) => setMessage((current) => ({ ...current, messageType: "TEXT", text: event.target.value, mediaUrl: "", mediaId: "", showcaseId: "", formId: "", quickReplies: [] }))} maxLength={dmMode === "TEXT_WITH_LINK" ? 640 : 2000} rows={4} placeholder="متن دایرکتی که بعد از کامنت برای کاربر ارسال می‌شود..." className="w-full rounded-xl border bg-white px-3.5 py-3 text-base leading-7 outline-none focus:ring-2 focus:ring-[#2F61FD]/15" style={{ borderColor: dairaPalette.form.border, color: dairaPalette.text.heading, fontSize: "16px" }} />
+                  {dmMode === "TEXT_WITH_LINK" && (
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <div>
+                        <label className="mb-2 block text-xs font-semibold" style={{ color: dairaPalette.text.heading }}>آدرس لینک</label>
+                        <input type="url" value={linkButtonUrl} onChange={(event) => setLinkButtonUrl(event.target.value)} placeholder="https://example.com" dir="ltr" className="w-full rounded-xl border bg-white px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-[#2F61FD]/15" style={{ borderColor: dairaPalette.form.border, color: dairaPalette.text.heading }} />
+                      </div>
+                      <div>
+                        <label className="mb-2 block text-xs font-semibold" style={{ color: dairaPalette.text.heading }}>عنوان دکمه (حداکثر ۲۰ کاراکتر)</label>
+                        <input value={linkButtonTitle} onChange={(event) => setLinkButtonTitle(event.target.value.slice(0, 20))} maxLength={20} placeholder="مشاهده لینک" className="w-full rounded-xl border bg-white px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-[#2F61FD]/15" style={{ borderColor: dairaPalette.form.border, color: dairaPalette.text.heading }} />
+                      </div>
+                    </div>
+                  )}
+                  <button type="button" onClick={() => { setMessage((current) => ({ ...current, messageType: "TEXT" })); void saveAutomation({ ...message, messageType: "TEXT" }); }} disabled={saving} className="flex min-h-12 w-full items-center justify-center rounded-xl px-4 text-sm font-bold text-white transition disabled:opacity-60" style={{ background: dairaPalette.primary.main }}>
+                    {saving ? "در حال ساخت پاسخ خودکار..." : "ساخت پاسخ خودکار"}
+                  </button>
+                </section>
+              ) : (
+                <PublishingStoryAutomationSetup
+                  message={message}
+                  showcases={showcases}
+                  forms={forms}
+                  loadingResources={loadingResources}
+                  instagramAccountId={account.id}
+                  onUpdate={(patch) => setMessage((current) => ({ ...current, ...patch }))}
+                  keywordValid={keywords.length > 0}
+                  onContinue={(nextMessage) => {
+                    const next = nextMessage ?? message;
+                    setMessage(next);
+                    return saveAutomation(next);
+                  }}
+                  disabled={saving}
+                  showFinalSave
+                  finalSaveLabel="ساخت پاسخ خودکار"
+                  finalSaveLoadingLabel="در حال ساخت پاسخ خودکار..."
+                  finalSaveDisabled={saving}
+                  responseTypeTitle="نوع پاسخ خودکار"
+                  responseTypeDescription="نوع پاسخی که می‌خواهید در دایرکت برای کاربر ارسال شود."
+                  textPlaceholder="متنی که در پاسخ خودکار برای کاربر ارسال می‌شود..."
+                />
+              )}
             </div>
           </div>
 
