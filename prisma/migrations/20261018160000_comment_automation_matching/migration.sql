@@ -1,0 +1,3 @@
+ALTER TABLE "Automation"
+ADD COLUMN "keywordMatchMode" TEXT NOT NULL DEFAULT 'EXACT',
+ADD COLUMN "mediaIds" TEXT;
