@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Camera, Image as ImageIcon, Video, Search, RefreshCw } from "lucide-react";
+import { ArrowRight, Camera, Image as ImageIcon, Video, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/dashboard/DashboardUI";
@@ -15,7 +15,6 @@ export default function StoryAutomationCreate() {
   const [stories, setStories] = useState<Story[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [search, setSearch] = useState("");
   const [mediaFilter, setMediaFilter] = useState<"ALL" | "IMAGE" | "VIDEO">("ALL");
 
   useEffect(() => {
@@ -60,11 +59,7 @@ export default function StoryAutomationCreate() {
     return () => { cancelled = true; };
   }, []);
 
-  const visibleStories = stories.filter((story) => {
-    const matchesSearch = !search.trim() || story.id.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase());
-    const matchesType = mediaFilter === "ALL" || (mediaFilter === "VIDEO" ? story.mediaType === "VIDEO" : story.mediaType !== "VIDEO");
-    return matchesSearch && matchesType;
-  });
+  const visibleStories = stories.filter((story) => mediaFilter === "ALL" || (mediaFilter === "VIDEO" ? story.mediaType === "VIDEO" : story.mediaType !== "VIDEO"));
 
   if (loading) {
     return <div dir="rtl" className="mx-auto w-full max-w-5xl animate-pulse space-y-5 px-1"><div className="h-8 w-24 rounded-lg bg-[#E2E8F0]" /><div className="rounded-2xl border border-[#E2E8F0] bg-white p-5"><div className="h-5 w-36 rounded bg-[#E2E8F0]" /><div className="mt-3 h-3 w-64 max-w-full rounded bg-[#F1F5F9]" /></div><div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">{Array.from({length:8}).map((_,i)=><div key={i} className="aspect-[9/14] rounded-xl bg-[#E2E8F0]" />)}</div></div>;
@@ -100,7 +95,7 @@ export default function StoryAutomationCreate() {
         {error && <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">{error}<button type="button" onClick={() => window.location.reload()} className="mr-3 inline-flex items-center gap-1 font-semibold underline"><RefreshCw size={13} />تلاش دوباره</button></div>}
 
         <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-[#E2E8F0] bg-white p-3 sm:flex-row sm:items-center sm:justify-between">
-          <label className="relative min-w-0 flex-1"><Search size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94A3B8]" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="جست‌وجو با شناسه استوری..." className="min-h-11 w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] pr-9 pl-3 text-base text-[#18233C] outline-none focus:border-[#2F61FD] focus:bg-white focus:ring-2 focus:ring-[#2F61FD]/10" style={{fontSize:"16px"}} /></label>
+          <p className="text-xs font-medium text-[#64748B]">{visibleStories.length} استوری قابل انتخاب</p>
           <div className="grid grid-cols-3 gap-1 rounded-xl bg-[#F1F5F9] p-1" role="group" aria-label="فیلتر نوع استوری">
             {([{value:"ALL",label:"همه"},{value:"IMAGE",label:"تصویری"},{value:"VIDEO",label:"ویدیویی"}] as const).map((option) => <button key={option.value} type="button" onClick={() => setMediaFilter(option.value)} aria-pressed={mediaFilter===option.value} className={"min-h-9 rounded-lg px-3 text-xs font-semibold transition " + (mediaFilter===option.value ? "bg-white text-[#2F61FD] shadow-sm" : "text-[#64748B] hover:text-[#18233C]")}>{option.label}</button>)}
           </div>
