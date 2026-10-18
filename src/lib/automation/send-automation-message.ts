@@ -269,9 +269,9 @@ export async function sendAutomationMessage(payload: AutomationMessagePayload): 
   if (!instagramAccount) throw new Error("Instagram account not found");
   const tenantId = instagramAccount.userId;
 
-  // Instagram Comment Private Reply supports one text reply. Rich message
-  // types below are available for normal DM / Story Reply flows, not a
-  // comment_id private reply.
+  // A comment private reply is a single outbound message. Plain text and a
+  // single URL button template are supported here; rich media/flow types below
+  // remain limited to normal DM and Story Reply flows.
   if (payload.commentId && message.messageType !== "TEXT") {
     throw new Error("Only TEXT messages are supported as Instagram Comment Private Replies.");
   }
