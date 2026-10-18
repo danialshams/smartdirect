@@ -203,13 +203,15 @@ async function executeAutomationInternal(input: ExecuteAutomationInput) {
       ? allQuickReplies.find((reply) => reply.id === input.selectedQuickReplyId)
       : null;
 
-    const findNode = (node: any, payload: string): any => {
-      if (!node || typeof node !== "object") return null;
-      if (node.payload === payload) return node;
+    type QuickReplyNode = Record<string, unknown>;
+    const findNode = (node: unknown, payload: string): QuickReplyNode | null => {
+      if (!node || typeof node !== "object" || Array.isArray(node)) return null;
+      const record = node as QuickReplyNode;
+      if (record.payload === payload) return record;
 
       const children = [
-        ...(Array.isArray(node.quickReplies) ? node.quickReplies : []),
-        ...(Array.isArray(node.destinationQuickReplies) ? node.destinationQuickReplies : []),
+        ...(Array.isArray(record.quickReplies) ? record.quickReplies : []),
+        ...(Array.isArray(record.destinationQuickReplies) ? record.destinationQuickReplies : []),
       ];
 
       for (const child of children) {
@@ -220,7 +222,7 @@ async function executeAutomationInternal(input: ExecuteAutomationInput) {
       return null;
     };
 
-    let selectedNode: any = null;
+    let selectedNode: QuickReplyNode | null = null;
 
     // A top-level quick reply has its destination stored directly in
     // that row's replyText. Nested replies are stored inside that JSON
@@ -259,14 +261,23 @@ async function executeAutomationInternal(input: ExecuteAutomationInput) {
 
     // Root Quick Replies use "type"; nested nodes from the client
     // serializer use "destinationType". Normalize both shapes.
-    const destinationType =
-      destination.type ?? destination.destinationType ?? null;
+    const destinationType = typeof destination.type === "string"
+      ? destination.type
+      : typeof destination.destinationType === "string"
+        ? destination.destinationType
+        : null;
 
-    const destinationText =
-      destination.text ?? destination.destinationText ?? null;
+    const destinationText = typeof destination.text === "string"
+      ? destination.text
+      : typeof destination.destinationText === "string"
+        ? destination.destinationText
+        : null;
 
-    const destinationQuestion =
-      destination.question ?? destination.destinationQuestion ?? null;
+    const destinationQuestion = typeof destination.question === "string"
+      ? destination.question
+      : typeof destination.destinationQuestion === "string"
+        ? destination.destinationQuestion
+        : null;
 
     const destinationMessage = {
       id: `destination:${rootReply?.id ?? "payload"}:${selectedPayload ?? "selected"}:${Date.now()}`,
@@ -295,11 +306,16 @@ async function executeAutomationInternal(input: ExecuteAutomationInput) {
           : Array.isArray(destination.destinationQuickReplies)
             ? destination.destinationQuickReplies
             : []
-      ).map((item: any) => ({
-        id: item.id,
-        title: item.title,
-        payload: item.payload,
-      })),
+      ).map((item) => {
+        const quickReply = item && typeof item === "object" && !Array.isArray(item)
+          ? item as Record<string, unknown>
+          : {};
+        return {
+          id: typeof quickReply.id === "string" ? quickReply.id : "",
+          title: typeof quickReply.title === "string" ? quickReply.title : "",
+          payload: typeof quickReply.payload === "string" ? quickReply.payload : "",
+        };
+      }),
     };
 
     console.log("[Automation Engine] Quick Reply destination resolved:", {
