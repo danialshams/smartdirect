@@ -1117,7 +1117,8 @@ function ShowcaseComposer({
       description: typeof record.description === "string" ? record.description : "",
       imageUrl: typeof record.imageUrl === "string" ? record.imageUrl : "",
       previewUrl: typeof record.imageUrl === "string" ? record.imageUrl : "",
-    })));
+      });
+    }));
   }, [showcaseId]);
 
   function patchItem(id: string, patch: Partial<ShowcaseItemDraft>) {
