@@ -259,8 +259,8 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
   return (
     <div dir="rtl" className="min-h-[calc(100dvh-2rem)]">
-      <div className="mx-auto w-full max-w-4xl">
-        <div className="mb-9">
+      <div className="mx-auto w-full max-w-3xl">
+        <div className="mb-5">
           <button type="button" onClick={() => router.back()} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#2F61FD] transition hover:bg-[#DBEAFE] hover:text-[#2F61FD]">
             <ArrowRight size={15} strokeWidth={2} />بازگشت
           </button>
@@ -279,15 +279,15 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
           <div className="space-y-5">
             {triggerType === "COMMENT_KEYWORD" && (
-              <section className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4">
-                <h2 className="mb-2 text-sm font-bold text-[#18233C]">انتخاب پست‌ها و ریلزها</h2>
+              <section className="rounded-xl border border-[#E2E8F0] bg-white p-4 sm:p-5">
+                <div className="mb-3 flex items-center gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#EFF6FF] text-sm font-bold text-[#2F61FD]">۱</span><div><h2 className="text-sm font-bold text-[#18233C]">انتخاب پست‌ها و ریلزها</h2><p className="mt-1 text-xs text-[#64748B]">محتواهایی را انتخاب کنید که این پاسخ خودکار برای آن‌ها فعال باشد.</p></div></div>
                 <p className="mb-3 text-xs leading-5 text-[#5A6B87]">یک یا چند محتوا را انتخاب کنید. برای پیمایش فهرست، داخل کادر محتوا اسکرول کنید.</p>
                 {mediaLoading ? <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">{Array.from({length:8}).map((_,i)=><div key={i} className="aspect-square animate-pulse rounded-lg bg-[#E2E8F0]" />)}</div> : mediaItems.length ? <div className="max-h-[340px] overflow-y-auto overscroll-contain rounded-lg pr-1"><div className="grid grid-cols-3 gap-2 sm:grid-cols-4">{mediaItems.map((item) => { const selected = selectedMediaIds.includes(item.id); const image = item.thumbnail_url || item.media_url; return <button key={item.id} type="button" onClick={() => { setSelectedMediaIds((current) => selected ? current.filter((id) => id !== item.id) : [...current, item.id]); }} className={"relative overflow-hidden rounded-lg border-2 text-right " + (selected ? "border-[#2F61FD] ring-2 ring-[#2F61FD]/15" : "border-transparent")} aria-pressed={selected}>{image ? <img src={image} alt="" className="aspect-square w-full object-cover" loading="lazy" /> : <div className="flex aspect-square items-center justify-center bg-[#E2E8F0] text-xs">بدون تصویر</div>}<span className={"absolute left-1 top-1 flex h-5 w-5 items-center justify-center rounded-full " + (selected ? "bg-[#2F61FD] text-white" : "bg-white/90 text-transparent")}><Check size={13}/></span><span className="block truncate bg-white px-1.5 py-1 text-[10px] text-[#5A6B87]">{item.media_product_type === "REELS" || item.media_type === "VIDEO" ? "ریلز / ویدیو" : item.media_type === "CAROUSEL_ALBUM" ? "پست اسلایدی" : "پست"}</span></button>})}</div></div> : <p className="rounded-lg bg-white p-3 text-xs text-[#5A6B87]">محتوایی دریافت نشد. اتصال اینستاگرام و دسترسی رسانه‌ها را بررسی کن.</p>}
                 <p className="mt-3 text-xs text-[#5A6B87]">{`${selectedMediaIds.length} محتوا انتخاب شده`}</p>
               </section>
             )}
             <div>
-              <label className="mb-2 block text-sm font-bold text-[#18233C]">کلمات کلیدی</label>
+              <div className="mb-3 flex items-center gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#EFF6FF] text-sm font-bold text-[#2F61FD]">۲</span><label className="block text-sm font-bold text-[#18233C]">شرط فعال‌سازی</label></div>
               <p className="mb-3 text-xs leading-5 text-[#5A6B87]">
                 {triggerType === "COMMENT_KEYWORD" ? (keywordMatchMode === "CONTAINS_ANY" ? "با ثبت هر کامنت زیر پست یا ریلز انتخاب‌شده، همین پاسخ ارسال می‌شود." : "با ثبت یکی از کلمات کلیدی مشخص‌شده در کامنت، پاسخ خودکار فعال می‌شود.") : "با وارد شدن یکی از کلمات کلیدی در Reply استوری، پاسخ خودکار فعال می‌شود."}
               </p>
@@ -314,7 +314,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
             {triggerType === "COMMENT_KEYWORD" && (
               <div className="border-t border-[#E2E8F0] pt-5">
-                <label className="mb-2 block text-sm font-bold text-[#18233C]">متن ارسالی در کامنت</label>
+                <div className="mb-3 flex items-center gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#EFF6FF] text-sm font-bold text-[#2F61FD]">۳</span><label className="block text-sm font-bold text-[#18233C]">پاسخ زیر کامنت</label></div>
                 <textarea value={commentReply} onChange={(e) => setCommentReply(e.target.value)} rows={3} maxLength={2000} placeholder="پاسخی که زیر کامنت کاربر منتشر می‌شود بنویس..." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#18233C] outline-none placeholder:text-[11px] placeholder:whitespace-nowrap placeholder:overflow-hidden placeholder:text-ellipsis focus:border-[#2F61FD] focus:bg-white focus:ring-2 focus:ring-[#2F61FD]/10" style={{ fontSize: "16px", lineHeight: 1.75 }} />
               </div>
             )}
@@ -323,7 +323,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
               {triggerType === "COMMENT_KEYWORD" ? (
                 <section className="space-y-4">
                   <div>
-                    <h2 className="text-sm font-bold" style={{ color: dairaPalette.text.heading }}>پیام دایرکت</h2>
+                    <div className="mb-3 flex items-center gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#EFF6FF] text-sm font-bold text-[#2F61FD]">۴</span><h2 className="text-sm font-bold" style={{ color: dairaPalette.text.heading }}>پیام دایرکت</h2></div>
                     <p className="mt-1 text-xs leading-5" style={{ color: dairaPalette.text.body }}>متنی را که پس از کامنت برای کاربر ارسال می‌شود بنویس.</p>
                   </div>
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -382,7 +382,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
             {triggerType === "COMMENT_KEYWORD" && (
               <section className="border-t pt-5" style={{ borderColor: dairaPalette.border }}>
-                <label className="flex cursor-pointer items-start gap-3 rounded-xl border p-3" style={{ borderColor: dairaPalette.border, background: dairaPalette.background.surfaceHover }}>
+                <div className="mb-3 flex items-center gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#EFF6FF] text-sm font-bold text-[#2F61FD]">۵</span><span className="text-sm font-bold" style={{ color: dairaPalette.text.heading }}>شرط فالو</span></div><label className="flex cursor-pointer items-start gap-3 rounded-xl border p-3" style={{ borderColor: dairaPalette.border, background: dairaPalette.background.surfaceHover }}>
                   <input type="checkbox" checked={requireFollow} onChange={(event) => setRequireFollow(event.target.checked)} className="mt-1 h-4 w-4 accent-[#2F61FD]" />
                   <span className="min-w-0">
                     <strong className="block text-sm" style={{ color: dairaPalette.text.heading }}>الزام به فالو قبل از ارسال پاسخ (اختیاری)</strong>
