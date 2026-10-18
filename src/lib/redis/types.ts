@@ -1,3 +1,5 @@
+export type RedisZAddArgument = string | number | { score: number; member: string };
+
 export type RedisSetOptions = {
   ex?: number;
   px?: number;
@@ -12,7 +14,7 @@ export type RedisZRangeOptions = {
 };
 
 export interface RedisPipelineLike {
-  get<T = unknown>(key: string): RedisPipelineLike;
+  get(key: string): RedisPipelineLike;
   del(...keys: string[]): RedisPipelineLike;
   zrem(key: string, ...members: string[]): RedisPipelineLike;
   exec<T = unknown>(): Promise<T[]>;
@@ -27,7 +29,7 @@ export interface RedisClientLike {
   ttl(key: string): Promise<number>;
   zcard(key: string): Promise<number>;
   zrem(key: string, ...members: string[]): Promise<number>;
-  zadd(key: string, ...args: any[]): Promise<number>;
+  zadd(key: string, ...args: RedisZAddArgument[]): Promise<number>;
   zrange<T = string[]>(key: string, min: number, max: number, options?: RedisZRangeOptions): Promise<T>;
   lpush(key: string, ...values: string[]): Promise<number>;
   ltrim(key: string, start: number, stop: number): Promise<string>;
