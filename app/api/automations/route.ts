@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { invalidateAutomationCache } from "@/lib/cache/instagram";
+import { getCachedInstagramMedia, invalidateAutomationCache } from "@/lib/cache/instagram";
 
 function normalizePersianDigits(value: string) {
   return value
@@ -109,6 +109,15 @@ export async function POST(request: NextRequest) {
     if (requiresKeyword && !normalizedKeyword) return NextResponse.json({ success: false, error: "حداقل یک Keyword معتبر وارد کنید" }, { status: 400 });
 
     const normalizedMediaId = typeof mediaId === "string" && mediaId.trim() ? mediaId.trim() : null;
+    const normalizedMediaIds = Array.isArray(mediaIds)
+      ? [...new Set(mediaIds.filter((id: unknown): id is string => typeof id === "string" && id.trim()).map((id: string) => id.trim()))]
+      : [];
+    if (normalizedMediaIds.length > 0 && triggerType === "COMMENT_KEYWORD") {
+      const mediaResult = await getCachedInstagramMedia(instagramAccount.id, 50);
+      if (!mediaResult) return NextResponse.json({ success: false, error: "دریافت رسانه‌های اینستاگرام برای اعتبارسنجی انتخاب‌ها ناموفق بود." }, { status: 502 });
+      const availableIds = new Set((mediaResult.data ?? []).map((item: Record<string, unknown>) => String(item.id ?? "")));
+      if (normalizedMediaIds.some((id) => !availableIds.has(id))) return NextResponse.json({ success: false, error: "یکی از پست‌های انتخاب‌شده متعلق به این اکانت نیست یا دیگر در دسترس نیست. فهرست محتوا را تازه‌سازی کنید." }, { status: 400 });
+    }
     const supportsFollowGate = triggerType === "COMMENT_KEYWORD" || triggerType === "STORY_REPLY_KEYWORD";
     const normalizedRequireFollow = supportsFollowGate ? Boolean(requireFollow) : false;
     const normalizedFollowGateText = supportsFollowGate && normalizedRequireFollow && typeof followGateText === "string" && followGateText.trim() ? followGateText.trim() : null;
@@ -123,12 +132,16 @@ export async function POST(request: NextRequest) {
       triggerType === "STORY_REPLY_KEYWORD";
 
     if (isMediaBasedTrigger) {
-      const duplicate = await prisma.automation.findFirst({
-        where: {
-          instagramAccountId,
-          triggerType,
-          mediaId: normalizedMediaId,
-        },
+      const existingAutomations = await prisma.automation.findMany({
+        where: { instagramAccountId, triggerType },
+        select: { id: true, mediaId: true, mediaIds: true },
+      });
+      const requestedIds = normalizedMediaIds.length > 0 ? normalizedMediaIds : normalizedMediaId ? [normalizedMediaId] : [];
+      const requestedAll = requestedIds.length === 0;
+      const duplicate = existingAutomations.find((existing) => {
+        const existingIds = existing.mediaIds ? existing.mediaIds.split(",").filter(Boolean) : existing.mediaId ? [existing.mediaId] : [];
+        const existingAll = existingIds.length === 0;
+        return requestedAll || existingAll || requestedIds.some((id) => existingIds.includes(id));
       });
 
       if (duplicate) {
@@ -149,7 +162,7 @@ export async function POST(request: NextRequest) {
         triggerType,
         keyword: normalizedKeyword,
         keywordMatchMode: keywordMatchMode === "CONTAINS_ANY" ? "CONTAINS_ANY" : "EXACT",
-        mediaIds: Array.isArray(mediaIds) ? [...new Set(mediaIds.filter((id: unknown): id is string => typeof id === "string" && id.trim()))].join(",") || null : null,
+        mediaIds: normalizedMediaIds.join(",") || null,
         mediaId: normalizedMediaId,
         likeComment: triggerType === "COMMENT_KEYWORD" ? Boolean(likeComment) : false,
         commentReplyText: triggerType === "COMMENT_KEYWORD" && typeof commentReplyText === "string" && commentReplyText.trim() ? commentReplyText.trim() : null,
