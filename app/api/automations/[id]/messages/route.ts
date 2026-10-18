@@ -36,21 +36,30 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (!automation) return NextResponse.json({ success: false, error: "Automation پیدا نشد" }, { status: 404 });
     const body = await request.json();
     if (!body || typeof body !== "object") return NextResponse.json({ success: false, error: "اطلاعات پیام نامعتبر است" }, { status: 400 });
-    const { messageType = "TEXT", text, mediaUrl, mediaId, showcaseId, formId, order, linkButtonUrl, linkButtonTitle } = body;
+    const { messageType = "TEXT", text, mediaUrl, mediaId, showcaseId, formId, order, linkButtonUrl, linkButtonTitle, linkButtons } = body;
     if (!isValidMessageType(messageType)) return NextResponse.json({ success: false, error: "نوع پیام نامعتبر است" }, { status: 400 });
     const normalizedText = normalizeOptionalString(text);
     const normalizedMediaUrl = normalizeOptionalString(mediaUrl);
     const normalizedMediaId = normalizeOptionalString(mediaId);
     const normalizedLinkButtonUrl = normalizeOptionalString(linkButtonUrl);
     const normalizedLinkButtonTitle = normalizeOptionalString(linkButtonTitle);
-    if (normalizedLinkButtonUrl || normalizedLinkButtonTitle) {
+    const rawLinkButtons = Array.isArray(linkButtons) ? linkButtons : (normalizedLinkButtonUrl || normalizedLinkButtonTitle ? [{ url: normalizedLinkButtonUrl, title: normalizedLinkButtonTitle }] : []);
+    if (rawLinkButtons.length > 3) return NextResponse.json({ success: false, error: "حداکثر ۳ دکمه لینک مجاز است." }, { status: 400 });
+    const normalizedLinkButtons: Array<{ url: string; title: string }> = [];
+    for (const item of rawLinkButtons) {
+      if (!item || typeof item !== "object") return NextResponse.json({ success: false, error: "ساختار دکمه لینک نامعتبر است." }, { status: 400 });
+      const url = normalizeOptionalString((item as Record<string, unknown>).url);
+      const title = normalizeOptionalString((item as Record<string, unknown>).title);
+      if (!url || !title) return NextResponse.json({ success: false, error: "آدرس و عنوان همه دکمه‌ها الزامی است." }, { status: 400 });
+      let parsed: URL;
+      try { parsed = new URL(url); } catch { return NextResponse.json({ success: false, error: "آدرس یکی از دکمه‌ها معتبر نیست." }, { status: 400 }); }
+      if (!["http:", "https:"].includes(parsed.protocol)) return NextResponse.json({ success: false, error: "آدرس دکمه باید با http یا https شروع شود." }, { status: 400 });
+      if (url.length > 2048) return NextResponse.json({ success: false, error: "آدرس هر دکمه حداکثر ۲۰۴۸ کاراکتر است." }, { status: 400 });
+      if (title.length > 20) return NextResponse.json({ success: false, error: "عنوان هر دکمه حداکثر ۲۰ کاراکتر است." }, { status: 400 });
+      normalizedLinkButtons.push({ url, title });
+    }
+    if (normalizedLinkButtons.length) {
       if (messageType !== "TEXT") return NextResponse.json({ success: false, error: "دکمه لینک فقط برای پیام متنی قابل استفاده است." }, { status: 400 });
-      if (!normalizedLinkButtonUrl || !normalizedLinkButtonTitle) return NextResponse.json({ success: false, error: "آدرس و عنوان دکمه لینک هر دو الزامی هستند." }, { status: 400 });
-      let parsedLink: URL;
-      try { parsedLink = new URL(normalizedLinkButtonUrl); } catch { return NextResponse.json({ success: false, error: "آدرس دکمه معتبر نیست." }, { status: 400 }); }
-      if (!["http:", "https:"].includes(parsedLink.protocol)) return NextResponse.json({ success: false, error: "آدرس دکمه باید با http یا https شروع شود." }, { status: 400 });
-      if (normalizedLinkButtonUrl.length > 2048) return NextResponse.json({ success: false, error: "آدرس دکمه حداکثر ۲۰۴۸ کاراکتر است." }, { status: 400 });
-      if (normalizedLinkButtonTitle.length > 20) return NextResponse.json({ success: false, error: "عنوان دکمه حداکثر ۲۰ کاراکتر است." }, { status: 400 });
       if ((normalizedText?.length ?? 0) > 640) return NextResponse.json({ success: false, error: "متن پیام دارای دکمه حداکثر ۶۴۰ کاراکتر است." }, { status: 400 });
     }
     if ((messageType === "TEXT" || messageType === "FORM") && !normalizedText) return NextResponse.json({ success: false, error: messageType === "FORM" ? "برای فرم، متن سوال الزامی است" : "برای پیام متنی، text الزامی است" }, { status: 400 });
@@ -87,8 +96,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         text: normalizedText,
         mediaUrl: ["IMAGE", "VIDEO", "AUDIO"].includes(messageType) ? normalizedMediaUrl : null,
         mediaId: ["IMAGE", "VIDEO", "AUDIO"].includes(messageType) ? normalizedMediaId : null,
-        linkButtonUrl: messageType === "TEXT" ? normalizedLinkButtonUrl : null,
-        linkButtonTitle: messageType === "TEXT" ? normalizedLinkButtonTitle : null,
+        linkButtonUrl: messageType === "TEXT" ? normalizedLinkButtons[0]?.url ?? null : null,
+        linkButtonTitle: messageType === "TEXT" ? normalizedLinkButtons[0]?.title ?? null : null,
+        linkButtons: messageType === "TEXT" && normalizedLinkButtons.length ? normalizedLinkButtons : undefined,
         showcaseId: messageType === "SHOWCASE" ? normalizedShowcaseId : null,
         formId: messageType === "FORM" ? normalizedFormId : null,
         order: messageOrder,
