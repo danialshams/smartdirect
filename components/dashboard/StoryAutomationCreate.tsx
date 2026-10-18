@@ -70,23 +70,24 @@ export default function StoryAutomationCreate() {
   }
 
   return (
-    <div dir="rtl" className="min-h-[calc(100dvh-2rem)]">
-      <div className="mx-auto w-full max-w-5xl">
-        <div className="mb-5">
+    <div dir="rtl" className="min-h-[calc(100dvh-2rem)] rounded-[28px] bg-[#F4F7FC] p-2 sm:p-4">
+      <div className="mx-auto w-full max-w-5xl space-y-4">
+        <div className="mb-1">
           <Button
             type="button"
             onClick={() => router.back()}
-            className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]"
+            className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-[#E2E8F0] bg-white px-3.5 text-xs font-bold text-[#5A6B87] shadow-sm transition hover:border-[#BFDBFE] hover:bg-[#EFF6FF] hover:text-[#2F61FD]"
           >
             <ArrowRight size={15} strokeWidth={2} />
             بازگشت
           </Button>
         </div>
-        <section className="mb-4 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-5">
+        <section className="mb-4 rounded-[24px] border border-[#E6ECF5] bg-white p-4 shadow-[0_4px_20px_rgba(24,35,60,0.035)] sm:p-6">
           <div className="flex items-start gap-3">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB]"><Camera size={19} /></span>
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#EFF6FF] text-[#2F61FD]"><Camera size={21} /></span>
             <div className="min-w-0">
-              <h1 className="text-base font-bold text-[#18233C]">انتخاب استوری</h1>
+              <h1 className="text-base font-extrabold text-[#18233C]">انتخاب استوری</h1>
+              <div className="mt-3 flex flex-wrap items-center gap-2"><span className="rounded-full bg-[#EFF6FF] px-2.5 py-1 text-[10px] font-bold text-[#2F61FD]">گام ۱ از ۳</span><span className="rounded-full bg-[#F1F5F9] px-2.5 py-1 text-[10px] font-medium text-[#64748B]">پاسخ خودکار استوری</span></div>
               <p className="mt-1.5 text-xs leading-5 text-[#5A6B87] sm:text-sm">یک استوری فعال را برای پاسخ خودکار انتخاب کنید. استوری‌هایی که از قبل پاسخ خودکار دارند نمایش داده نمی‌شوند.</p>
             </div>
           </div>
@@ -94,10 +95,10 @@ export default function StoryAutomationCreate() {
 
         {error && <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">{error}<button type="button" onClick={() => window.location.reload()} className="mr-3 inline-flex items-center gap-1 font-semibold underline"><RefreshCw size={13} />تلاش دوباره</button></div>}
 
-        <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-[#E2E8F0] bg-white p-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-4 flex flex-col gap-3 rounded-[22px] border border-[#E6ECF5] bg-white p-4 shadow-[0_3px_14px_rgba(24,35,60,0.025)] sm:flex-row sm:items-center sm:justify-between sm:p-5">
           <p className="text-xs font-medium text-[#64748B]">{visibleStories.length} استوری قابل انتخاب</p>
           <div className="grid grid-cols-3 gap-1 rounded-xl bg-[#F1F5F9] p-1" role="group" aria-label="فیلتر نوع استوری">
-            {([{value:"ALL",label:"همه"},{value:"IMAGE",label:"تصویری"},{value:"VIDEO",label:"ویدیویی"}] as const).map((option) => <button key={option.value} type="button" onClick={() => setMediaFilter(option.value)} aria-pressed={mediaFilter===option.value} className={"min-h-9 rounded-lg px-3 text-xs font-semibold transition " + (mediaFilter===option.value ? "bg-white text-[#2F61FD] shadow-sm" : "text-[#64748B] hover:text-[#18233C]")}>{option.label}</button>)}
+            {([{value:"ALL",label:"همه"},{value:"IMAGE",label:"تصویری"},{value:"VIDEO",label:"ویدیویی"}] as const).map((option) => <button key={option.value} type="button" onClick={() => setMediaFilter(option.value)} aria-pressed={mediaFilter===option.value} className={"min-h-10 rounded-xl px-3.5 text-xs font-bold transition " + (mediaFilter===option.value ? "bg-white text-[#2F61FD] shadow-sm ring-1 ring-[#E6ECF5]" : "text-[#64748B] hover:text-[#18233C]")}>{option.label}</button>)}
           </div>
         </div>
 
@@ -112,7 +113,7 @@ export default function StoryAutomationCreate() {
             {visibleStories.map((story) => {
               const image = story.thumbnailUrl || story.mediaUrl;
               return (
-                <button key={story.id} type="button" onClick={() => router.push("/dashboard/story-automation/new/configure?mediaId=" + encodeURIComponent(story.id))} className="group relative aspect-[9/14] overflow-hidden rounded-xl border border-[#E2E8F0] bg-[#F1F5F9] text-right transition duration-200 hover:-translate-y-0.5 hover:border-[#BFDBFE] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#2F61FD]">
+                <button key={story.id} type="button" onClick={() => router.push("/dashboard/story-automation/new/configure?mediaId=" + encodeURIComponent(story.id))} className="group relative aspect-[9/14] overflow-hidden rounded-[20px] border border-[#E6ECF5] bg-[#F1F5F9] text-right shadow-[0_3px_12px_rgba(24,35,60,0.025)] transition duration-200 hover:-translate-y-0.5 hover:border-[#BFDBFE] hover:shadow-[0_12px_28px_rgba(24,35,60,0.08)] focus:outline-none focus:ring-2 focus:ring-[#2F61FD]/30">
                   {image ? (
                     story.mediaType === "VIDEO" && story.mediaUrl ? (
                       <video src={story.mediaUrl} poster={story.thumbnailUrl || undefined} className="h-full w-full object-cover" muted playsInline preload="metadata" />
@@ -122,7 +123,7 @@ export default function StoryAutomationCreate() {
                   ) : (
                     <div className="flex h-full items-center justify-center">{story.mediaType === "VIDEO" ? <Video size={25} className="text-muted-foreground" /> : <ImageIcon size={25} className="text-muted-foreground" />}</div>
                   )}
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent p-2.5 pt-12 text-right text-[10px] font-semibold text-white">{story.mediaType === "VIDEO" ? "ویدیو" : "استوری"}</div>
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent p-3 pt-16 text-right text-xs font-bold text-white">{story.mediaType === "VIDEO" ? "ویدیو" : "استوری"}</div>
                 </button>
               );
             })}
