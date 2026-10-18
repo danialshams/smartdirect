@@ -480,7 +480,7 @@ function UploadSuccessMark() {
     </span>
   );
 }
-type UploadAreaProps = { id: string; accept: string; multiple: boolean; disabled: boolean; isDragging: boolean; setIsDragging: (value: boolean) => void; title: string; onChange: ChangeEvent<HTMLInputElement> extends never ? never : (event: ChangeEvent<HTMLInputElement>) => void; onDrop: (event: DragEvent<HTMLDivElement>) => void };
+type UploadAreaProps = { id: string; accept: string; multiple: boolean; disabled: boolean; isDragging: boolean; setIsDragging: (value: boolean) => void; title: string; onChange: (event: ChangeEvent<HTMLInputElement>) => void; onDrop: (event: DragEvent<HTMLDivElement>) => void };
 function UploadArea({ id, accept, multiple, disabled, isDragging, setIsDragging, title, onChange, onDrop }: UploadAreaProps) {
   return <div onDragOver={(event: DragEvent<HTMLDivElement>) => { event.preventDefault(); setIsDragging(true); }} onDragLeave={() => setIsDragging(false)} onDrop={onDrop} className={["relative overflow-hidden rounded-xl border border-dashed p-4 transition sm:p-6", isDragging ? "border-[#2563EB] bg-[#2563EB]/5" : "border-[#CBD5E1] bg-[#F8FAFC] hover:border-[#93C5FD] hover:bg-[#EFF6FF]/50", disabled ? "pointer-events-none opacity-60" : ""].join(" ")}>
     <Input id={id} type="file" accept={accept} multiple={multiple} onChange={onChange} disabled={disabled} className="sr-only" />
