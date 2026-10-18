@@ -1625,7 +1625,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                         {type !== "CAROUSEL" && !uploading && !uploadSuccess && uploadedMedia.length > 0 ? (
                           <div className="flex flex-col items-center justify-center gap-3 py-2">
                             <div className="w-32 sm:w-40">
-                              <MediaTile item={uploadedMedia[0]} type={type} ready compact bare />
+                              <MediaTile item={uploadedMedia[0]} type={type} onRemove={() => void removeUploaded(uploadedMedia[0])} ready compact bare />
                             </div>
                             <Button type="button" onClick={() => void removeUploaded(uploadedMedia[0])} className="!min-h-9 !rounded-lg !border !border-[#FECACA] !bg-[#FEF2F2] !px-4 !text-xs !font-semibold !text-[#DC2626] !shadow-none hover:!bg-[#FEE2E2] hover:!text-[#B91C1C]">
                               <Trash2 size={14} /> پاک کردن
