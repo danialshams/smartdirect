@@ -15,8 +15,6 @@ import {
 import { recoverStalledJobs } from "../src/lib/queue/recovery";
 import { disconnectRedis, setRedisCommandTimeoutMs } from "../src/lib/redis/client";
 
-type EnqueuedJob = Awaited<ReturnType<typeof enqueueJob>>;
-
 function assert(condition: unknown, message: string) {
   if (!condition) throw new Error(message);
 }
@@ -80,12 +78,9 @@ async function main() {
         enqueueJob("TEST", { message: `backpressure-${i}` }, { queueNamespace: ns }),
       ),
     );
-    const fulfilled = admission.filter(
-      (x): x is PromiseFulfilledResult<EnqueuedJob> => x.status === "fulfilled",
-    )
+    const fulfilled = admission.filter((x) => x.status === "fulfilled");
     const rejected = admission.filter(
-      (x): x is PromiseRejectedResult =>
-        x.status === "rejected" && String(x.reason).includes("QUEUE_BACKPRESSURE"),
+      (x) => x.status === "rejected" && String(x.reason).includes("QUEUE_BACKPRESSURE"),
     );
     for (const item of fulfilled) jobs.push(item.value.id);
     assert(fulfilled.length <= 2 && rejected.length >= 1, "Atomic backpressure admission failed");
