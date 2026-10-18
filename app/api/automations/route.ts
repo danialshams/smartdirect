@@ -105,8 +105,10 @@ export async function POST(request: NextRequest) {
     if (!instagramAccount) return NextResponse.json({ success: false, error: "اکانت Instagram متعلق به این کاربر نیست" }, { status: 403 });
 
     const requiresKeyword = triggerType === "COMMENT_KEYWORD" || triggerType === "STORY_REPLY_KEYWORD";
-    const normalizedKeyword = requiresKeyword ? normalizeKeywords(keyword) : null;
-    if (requiresKeyword && !normalizedKeyword) return NextResponse.json({ success: false, error: "حداقل یک Keyword معتبر وارد کنید" }, { status: 400 });
+    const normalizedKeywordMatchMode = triggerType === "COMMENT_KEYWORD" && keywordMatchMode === "CONTAINS_ANY" ? "CONTAINS_ANY" : "EXACT";
+    const normalizedKeyword = requiresKeyword && normalizedKeywordMatchMode !== "CONTAINS_ANY" ? normalizeKeywords(keyword) : null;
+    if (requiresKeyword && normalizedKeywordMatchMode !== "CONTAINS_ANY" && !normalizedKeyword) return NextResponse.json({ success: false, error: "حداقل یک کلمه کلیدی معتبر وارد کنید" }, { status: 400 });
+    if (normalizedKeyword && normalizedKeyword.split(",").filter(Boolean).length > 10) return NextResponse.json({ success: false, error: "حداکثر ۱۰ کلمه کلیدی مجاز است." }, { status: 400 });
 
     const normalizedMediaId = typeof mediaId === "string" && mediaId.trim() ? mediaId.trim() : null;
     const normalizedMediaIds = Array.isArray(mediaIds)
@@ -161,7 +163,7 @@ export async function POST(request: NextRequest) {
         instagramAccountId,
         triggerType,
         keyword: normalizedKeyword,
-        keywordMatchMode: keywordMatchMode === "CONTAINS_ANY" ? "CONTAINS_ANY" : "EXACT",
+        keywordMatchMode: normalizedKeywordMatchMode,
         mediaIds: normalizedMediaIds.join(",") || null,
         mediaId: normalizedMediaId,
         likeComment: triggerType === "COMMENT_KEYWORD" ? Boolean(likeComment) : false,
