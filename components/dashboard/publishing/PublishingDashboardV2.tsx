@@ -491,8 +491,9 @@ function UploadArea({ id, accept, multiple, disabled, isDragging, setIsDragging,
     </label>
   </div>;
 }
-function MediaTile({ item, type, onRemove, ready = false, compact = false, bare = false }: any) {
-  const image = item.type === "IMAGE"; const src = ready ? item.publicUrl : item.previewUrl;
+type MediaTileProps = { item: LocalMedia | UploadedMedia; type: PublishType; onRemove: () => void; ready?: boolean; compact?: boolean; bare?: boolean };
+function MediaTile({ item, type, onRemove, ready = false, compact = false, bare = false }: MediaTileProps) {
+  const image = item.type === "IMAGE"; const src = ready && "publicUrl" in item ? item.publicUrl : "previewUrl" in item ? item.previewUrl : item.publicUrl;
   const aspect = type === "REEL" || type === "STORY" ? "aspect-[9/16]" : "aspect-[4/5]";
   return <div className={[bare ? "relative overflow-hidden" : "group relative overflow-hidden rounded-xl border border-[#E2E8F0] bg-[#F1F5F9]", compact ? "shadow-sm" : ""].join(" ")}>
     {image ? <img src={src} alt={"file" in item ? item.file.name : item.fileName} className={["w-full object-cover", aspect].join(" ")} /> : <video src={src} controls className={["w-full object-cover", aspect].join(" ")} />}
