@@ -54,7 +54,7 @@ export class NativeRedisAdapter implements RedisClientLike {
     if (options?.xx) args.push("XX");
     if (options?.ex !== undefined) args.push("EX", String(options.ex));
     if (options?.px !== undefined) args.push("PX", String(options.px));
-    return this.client.set(key, serialized, ...args);
+    return this.client.call("SET", key, serialized, ...args);
   }
 
   del(...keys: string[]) { return this.client.del(...keys); }
@@ -67,21 +67,17 @@ export class NativeRedisAdapter implements RedisClientLike {
   async zadd(key: string, ...args: RedisZAddArgument[]) {
     if (args.length === 1 && args[0] && typeof args[0] === "object" && !Array.isArray(args[0])) {
       const entry = args[0];
-      return this.client.zadd(key, String(entry.score), entry.member);
+      return this.client.call("ZADD", key, String(entry.score), entry.member) as Promise<number>;
     }
-    return this.client.zadd(key, ...(args as (string | number)[]));
+    return this.client.call("ZADD", key, ...args.map(String)) as Promise<number>;
   }
 
   async zrange<T = string[]>(key: string, min: number, max: number, options?: RedisZRangeOptions) {
     if (options?.byScore) {
-      return this.client.zrangebyscore(
-        key,
-        min,
-        max,
-        ...(options.offset !== undefined && options.count !== undefined
-          ? ["LIMIT", options.offset, options.count]
-          : []),
-      ) as unknown as T;
+      const rangeArgs = options.offset !== undefined && options.count !== undefined
+        ? ["LIMIT", String(options.offset), String(options.count)]
+        : [];
+      return this.client.call("ZRANGEBYSCORE", key, String(min), String(max), ...rangeArgs) as Promise<T>;
     }
     return this.client.zrange(key, min, max) as unknown as T;
   }
@@ -111,11 +107,11 @@ export class NativeRedisAdapter implements RedisClientLike {
   }
 
   scan(cursor: string | number, options?: { match?: string; count?: number }) {
-    return this.client.scan(
-      String(cursor),
+    const scanArgs = [
       ...(options?.match ? ["MATCH", options.match] : []),
       ...(options?.count ? ["COUNT", String(options.count)] : []),
-    ) as Promise<[string, string[]]>;
+    ];
+    return this.client.call("SCAN", String(cursor), ...scanArgs) as Promise<[string, string[]]>;
   }
 
   eval<T = unknown>(script: string, keys: string[], args: string[]) {
