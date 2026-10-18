@@ -3,7 +3,8 @@
 import { ArrowRight, Camera, MessageCircleReply, Check } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import PublishingStoryAutomationSetup from "./publishing/PublishingStoryAutomationSetup";
+import dynamic from "next/dynamic";
+const PublishingStoryAutomationSetup = dynamic(() => import("./publishing/PublishingStoryAutomationSetup"), { ssr: false });
 import { createEmptyMessage, type MessageDraft, type QuickReplyDraft, type Showcase, type FormItem } from "./automation-form-utils";
 import { dairaPalette } from "../../lib/design-system/palette";
 
