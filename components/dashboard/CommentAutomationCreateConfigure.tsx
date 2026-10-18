@@ -1,12 +1,30 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { DashboardLoading } from "@/components/dashboard/DashboardUI";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import AutomationCreationFlow from "./AutomationCreationFlow";
 
 type Account = { id: string; igUsername: string; igUserId: string; isConnected: boolean };
+
+function CreatePageSkeleton() {
+  return (
+    <div dir="rtl" className="mx-auto w-full max-w-3xl animate-pulse space-y-4 px-1">
+      <div className="h-9 w-24 rounded-lg bg-slate-200" />
+      <div className="rounded-2xl border border-slate-200 bg-white p-5">
+        <div className="h-5 w-48 rounded bg-slate-200" />
+        <div className="mt-3 h-3 w-72 max-w-full rounded bg-slate-100" />
+      </div>
+      <div className="rounded-2xl border border-slate-200 bg-white p-5">
+        <div className="h-4 w-40 rounded bg-slate-200" />
+        <div className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, index) => <div key={index} className="aspect-square rounded-xl bg-slate-100" />)}
+        </div>
+      </div>
+      <div className="h-32 rounded-2xl bg-slate-100" />
+    </div>
+  );
+}
 
 export default function CommentAutomationCreateConfigure() {
   const router = useRouter();
@@ -20,28 +38,20 @@ export default function CommentAutomationCreateConfigure() {
     let cancelled = false;
     void (async () => {
       try {
-        if (!mediaId) throw new Error("محتوا انتخاب نشده است.");
         const accountsResponse = await fetch("/api/instagram/accounts", { cache: "no-store", credentials: "include" });
         const accountsResult = await accountsResponse.json();
         if (!accountsResponse.ok || !accountsResult.success) throw new Error(accountsResult.error || "دریافت پیج اینستاگرام ناموفق بود.");
         const active = (Array.isArray(accountsResult.accounts) ? accountsResult.accounts : []).find((item: Account) => item.isConnected) ?? null;
         if (!active) throw new Error("پیج اینستاگرام متصل نیست.");
 
-        const [mediaResponse, automationsResponse] = await Promise.all([
-          fetch("/api/instagram/media?instagramAccountId=" + encodeURIComponent(active.id), { cache: "no-store", credentials: "include" }),
-          fetch("/api/automations?instagramAccountId=" + encodeURIComponent(active.id), { cache: "no-store", credentials: "include" }),
-        ]);
-        const mediaResult = await mediaResponse.json();
-        const automationsResult = await automationsResponse.json();
-        if (!mediaResponse.ok || !mediaResult.success) throw new Error(mediaResult.error || "دریافت محتوا ناموفق بود.");
-        if (!automationsResponse.ok || !automationsResult.success) throw new Error(automationsResult.error || "دریافت اتوماسیون‌ها ناموفق بود.");
-        const selected = (Array.isArray(mediaResult.data) ? mediaResult.data : []).find((item: { id: string }) => item.id === mediaId);
-        if (!selected) throw new Error("این محتوا دیگر در پیج پیدا نشد.");
-        const existing = (Array.isArray(automationsResult.data) ? automationsResult.data : []).find((item: { triggerType: string; mediaId: string | null }) => item.triggerType === "COMMENT_KEYWORD" && item.mediaId === mediaId);
-        if (existing) {
-          router.replace("/dashboard/auto-replies");
-          return;
+        if (mediaId) {
+          const mediaResponse = await fetch("/api/instagram/media?instagramAccountId=" + encodeURIComponent(active.id), { cache: "no-store", credentials: "include" });
+          const mediaResult = await mediaResponse.json();
+          if (!mediaResponse.ok || !mediaResult.success) throw new Error(mediaResult.message || "دریافت محتوا ناموفق بود.");
+          const selected = (Array.isArray(mediaResult.data) ? mediaResult.data : []).find((item: { id: string }) => item.id === mediaId);
+          if (!selected) throw new Error("این محتوا دیگر در پیج پیدا نشد.");
         }
+
         if (!cancelled) setAccount(active);
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : "دریافت اطلاعات ناموفق بود.");
@@ -50,21 +60,21 @@ export default function CommentAutomationCreateConfigure() {
       }
     })();
     return () => { cancelled = true; };
-  }, [mediaId, router]);
+  }, [mediaId]);
 
-  if (loading) return <DashboardLoading label="در حال دریافت تنظیمات پاسخ خودکار..." className="dashboard-loading--page" />;
-  if (!account) return <div dir="rtl" className="mx-auto max-w-xl rounded-2xl border border-red-200 bg-red-50 p-6 text-sm leading-7 text-red-700">{error || "محتوا پیدا نشد."}</div>;
+  if (loading) return <CreatePageSkeleton />;
+  if (!account) return <div dir="rtl" className="mx-auto max-w-xl rounded-2xl border border-red-200 bg-red-50 p-6 text-sm leading-7 text-red-700">{error || "پیج اینستاگرام پیدا نشد."}</div>;
 
   return (
     <AutomationCreationFlow
       account={account}
-      mediaId={mediaId as string}
+      mediaId={mediaId ?? ""}
       triggerType="COMMENT_KEYWORD"
-      title="تنظیم پاسخ خودکار کامنت"
-      description="کلمات فعال‌کننده و نوع پاسخ را برای این محتوا مشخص کن."
+      title="ایجاد پاسخ خودکار کامنت"
+      description="کلمات فعال‌کننده، پست‌ها و ریلزهای هدف و پاسخ خودکار را تنظیم کن."
       onSaved={() => {
         toast.success("پاسخ خودکار با موفقیت ایجاد شد.", {
-          description: "می‌توانید در بخش «ویرایش پاسخ های خودکار» آن را مشاهده و ویرایش کنید.",
+          description: "می‌توانید در بخش پاسخ‌های خودکار آن را مشاهده و ویرایش کنید.",
           duration: 5000,
         });
         router.push("/dashboard/auto-replies");
