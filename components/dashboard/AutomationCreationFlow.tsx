@@ -44,6 +44,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   const [keywordDraft, setKeywordDraft] = useState("");
   const [keywordMatchMode, setKeywordMatchMode] = useState<"EXACT" | "CONTAINS_ANY">("EXACT");
   const [mediaItems, setMediaItems] = useState<Array<{id:string; caption?:string; media_type?:string; media_product_type?:string; thumbnail_url?:string|null; media_url?:string|null; timestamp?:string}>>([]);
+  const [mediaSelectionMode, setMediaSelectionMode] = useState<"ALL" | "SELECTED">(mediaId ? "SELECTED" : "ALL");
   const [selectedMediaIds, setSelectedMediaIds] = useState<string[]>(mediaId ? [mediaId] : []);
   const [mediaLoading, setMediaLoading] = useState(true);
   const [commentReply, setCommentReply] = useState("");
@@ -107,6 +108,10 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     const cleanKeywords = keyword.split(",").map((item) => item.trim()).filter(Boolean);
     const currentMessage = finalMessage ?? message;
 
+    if (triggerType === "COMMENT_KEYWORD" && mediaSelectionMode === "SELECTED" && selectedMediaIds.length === 0) {
+      setError("حداقل یک پست یا ریلز انتخاب کنید، یا گزینه همه محتواها را بزنید.");
+      return;
+    }
     if (triggerType === "COMMENT_KEYWORD" && requireFollow && !followGateText.trim()) {
       setError("متن درخواست فالو را وارد کنید.");
       return;
@@ -134,10 +139,10 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
         body: JSON.stringify({
           instagramAccountId: account.id,
           triggerType,
-          mediaId: triggerType === "COMMENT_KEYWORD" ? (selectedMediaIds.length === 1 ? selectedMediaIds[0] : null) : mediaId,
+          mediaId: triggerType === "COMMENT_KEYWORD" ? (mediaSelectionMode === "SELECTED" && selectedMediaIds.length === 1 ? selectedMediaIds[0] : null) : mediaId,
           keyword: cleanKeywords.join(","),
           keywordMatchMode,
-          mediaIds: triggerType === "COMMENT_KEYWORD" ? selectedMediaIds : [],
+          mediaIds: triggerType === "COMMENT_KEYWORD" && mediaSelectionMode === "SELECTED" ? selectedMediaIds : [],
           commentReplyText: triggerType === "COMMENT_KEYWORD" ? commentReply.trim() || null : null,
           replyText: null,
           likeComment: false,
@@ -238,13 +243,13 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             {triggerType === "COMMENT_KEYWORD" && (
               <section className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4">
                 <h2 className="mb-2 text-sm font-bold text-[#0F172A]">انتخاب پست‌ها و ریلزها</h2>
-                <p className="mb-3 text-xs leading-5 text-[#64748B]">یک یا چند محتوا را انتخاب کن. اگر انتخابی انجام ندهی، پاسخ برای همه پست‌ها و ریلزها فعال می‌شود.</p>
+                <p className="mb-3 text-xs leading-5 text-[#64748B]">یک یا چند محتوا را انتخاب کن یا پاسخ را برای همه پست‌ها و ریلزها فعال کن.</p>
                 <div className="mb-3 flex flex-wrap gap-2">
                   <Button type="button" onClick={() => setSelectedMediaIds(mediaItems.map((item) => item.id))} className="min-h-9 rounded-lg bg-white px-3 text-xs text-[#2563EB]">انتخاب همه</Button>
                   <Button type="button" onClick={() => setSelectedMediaIds([])} className="min-h-9 rounded-lg bg-white px-3 text-xs text-[#475569]">همه محتواها</Button>
                 </div>
-                {mediaLoading ? <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">{Array.from({length:8}).map((_,i)=><div key={i} className="aspect-square animate-pulse rounded-lg bg-[#E2E8F0]" />)}</div> : mediaItems.length ? <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">{mediaItems.map((item) => { const selected = selectedMediaIds.includes(item.id); const image = item.thumbnail_url || item.media_url; return <button key={item.id} type="button" onClick={() => setSelectedMediaIds((current) => selected ? current.filter((id) => id !== item.id) : [...current,item.id])} className={"relative overflow-hidden rounded-lg border-2 text-right " + (selected ? "border-[#2563EB] ring-2 ring-[#2563EB]/15" : "border-transparent")} aria-pressed={selected}>{image ? <img src={image} alt="" className="aspect-square w-full object-cover" /> : <div className="flex aspect-square items-center justify-center bg-[#E2E8F0] text-xs">بدون تصویر</div>}<span className={"absolute left-1 top-1 flex h-5 w-5 items-center justify-center rounded-full " + (selected ? "bg-[#2563EB] text-white" : "bg-white/90 text-transparent")}><Check size={13}/></span><span className="block truncate bg-white px-1.5 py-1 text-[10px] text-[#475569]">{item.media_product_type === "REELS" || item.media_type === "VIDEO" ? "ریلز / ویدیو" : item.media_type === "CAROUSEL_ALBUM" ? "پست اسلایدی" : "پست"}</span></button>})}</div> : <p className="rounded-lg bg-white p-3 text-xs text-[#64748B]">محتوایی دریافت نشد. اتصال اینستاگرام و دسترسی رسانه‌ها را بررسی کن.</p>}
-                <p className="mt-3 text-xs text-[#64748B]">{selectedMediaIds.length ? `${selectedMediaIds.length} محتوا انتخاب شده` : "همه پست‌ها و ریلزها انتخاب شده‌اند"}</p>
+                {mediaLoading ? <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">{Array.from({length:8}).map((_,i)=><div key={i} className="aspect-square animate-pulse rounded-lg bg-[#E2E8F0]" />)}</div> : mediaItems.length ? <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">{mediaItems.map((item) => { const selected = selectedMediaIds.includes(item.id); const image = item.thumbnail_url || item.media_url; return <button key={item.id} type="button" onClick={() => { if (selected) { const next = selectedMediaIds.filter((id) => id !== item.id); setSelectedMediaIds(next); if (next.length === 0) setMediaSelectionMode("ALL"); } else { setMediaSelectionMode("SELECTED"); setSelectedMediaIds((current) => [...current,item.id]); } }} className={"relative overflow-hidden rounded-lg border-2 text-right " + (selected ? "border-[#2563EB] ring-2 ring-[#2563EB]/15" : "border-transparent")} aria-pressed={selected}>{image ? <img src={image} alt="" className="aspect-square w-full object-cover" /> : <div className="flex aspect-square items-center justify-center bg-[#E2E8F0] text-xs">بدون تصویر</div>}<span className={"absolute left-1 top-1 flex h-5 w-5 items-center justify-center rounded-full " + (selected ? "bg-[#2563EB] text-white" : "bg-white/90 text-transparent")}><Check size={13}/></span><span className="block truncate bg-white px-1.5 py-1 text-[10px] text-[#475569]">{item.media_product_type === "REELS" || item.media_type === "VIDEO" ? "ریلز / ویدیو" : item.media_type === "CAROUSEL_ALBUM" ? "پست اسلایدی" : "پست"}</span></button>})}</div> : <p className="rounded-lg bg-white p-3 text-xs text-[#64748B]">محتوایی دریافت نشد. اتصال اینستاگرام و دسترسی رسانه‌ها را بررسی کن.</p>}
+                <p className="mt-3 text-xs text-[#64748B]">{mediaSelectionMode === "ALL" ? "پاسخ برای همه پست‌ها و ریلزها، از جمله محتواهای آینده، فعال می‌شود." : `${selectedMediaIds.length} محتوا انتخاب شده`}</p>
               </section>
             )}
             <div>
