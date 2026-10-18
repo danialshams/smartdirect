@@ -164,6 +164,8 @@ export default function AutomationFlowMessage({
   const [savedResponseTitle, setSavedResponseTitle] = useState("");
   const [savedResponseLoading, setSavedResponseLoading] = useState(false);
   const [savedResponseSaving, setSavedResponseSaving] = useState(false);
+  const [selectedSavedResponseId, setSelectedSavedResponseId] = useState("");
+  const [savedResponseDeleting, setSavedResponseDeleting] = useState(false);
   const [savedResponseError, setSavedResponseError] = useState("");
 
   useEffect(() => {
@@ -328,19 +330,56 @@ export default function AutomationFlowMessage({
               aria-label="استفاده از پاسخ ذخیره‌شده"
               defaultValue=""
               disabled={savedResponseLoading || savedResponses.length === 0}
-              onChange={(event) => {
-                const selected = savedResponses.find((item) => item.id === event.target.value);
-                if (selected) applySavedResponse(selected);
-                event.currentTarget.value = "";
-              }}
+              value={selectedSavedResponseId}
+              onChange={(event) => setSelectedSavedResponseId(event.target.value)}
               className="min-w-0 flex-1 rounded-xl border bg-white px-3 py-2.5 text-sm"
               style={{ borderColor: palette.border }}
             >
-              <option value="">{savedResponseLoading ? "در حال دریافت پاسخ‌ها..." : savedResponses.length ? "استفاده از پاسخ ذخیره‌شده..." : "پاسخی ذخیره نشده است"}</option>
+              <option value="">{savedResponseLoading ? "در حال دریافت پاسخ‌ها..." : savedResponses.length ? "انتخاب پاسخ ذخیره‌شده..." : "پاسخی ذخیره نشده است"}</option>
               {savedResponses.map((saved) => (
                 <option key={saved.id} value={saved.id}>{saved.title} · {saved.messageType}</option>
               ))}
             </select>
+            <button
+              type="button"
+              disabled={!selectedSavedResponseId || savedResponseDeleting}
+              onClick={() => {
+                const selected = savedResponses.find((item) => item.id === selectedSavedResponseId);
+                if (selected) applySavedResponse(selected);
+              }}
+              className="rounded-xl border bg-white px-3 py-2.5 text-xs font-bold disabled:opacity-40"
+              style={{ borderColor: palette.border, color: palette.primary }}
+            >
+              استفاده
+            </button>
+            <button
+              type="button"
+              title="حذف از پاسخ‌های ذخیره‌شده"
+              aria-label="حذف پاسخ ذخیره‌شده"
+              disabled={!selectedSavedResponseId || savedResponseDeleting}
+              onClick={() => {
+                const selected = savedResponses.find((item) => item.id === selectedSavedResponseId);
+                if (!selected || !window.confirm("پاسخ انتخاب‌شده از فهرست ذخیره‌شده‌ها حذف شود؟")) return;
+                setSavedResponseDeleting(true);
+                setSavedResponseError("");
+                fetch("/api/saved-responses/" + encodeURIComponent(selected.id), {
+                  method: "DELETE",
+                  credentials: "include",
+                })
+                  .then(async (response) => {
+                    const result = await response.json();
+                    if (!response.ok || !result?.success) throw new Error(result?.error || "حذف پاسخ ناموفق بود.");
+                    setSavedResponses((current) => current.filter((item) => item.id !== selected.id));
+                    setSelectedSavedResponseId("");
+                  })
+                  .catch((deleteError) => setSavedResponseError(deleteError instanceof Error ? deleteError.message : "حذف پاسخ ناموفق بود."))
+                  .finally(() => setSavedResponseDeleting(false));
+              }}
+              className="rounded-xl border bg-white px-3 py-2.5 text-xs font-bold disabled:opacity-40"
+              style={{ borderColor: "#FECACA", color: palette.error }}
+            >
+              {savedResponseDeleting ? "..." : "حذف"}
+            </button>
           </div>
           {savedResponseError && <p className="text-xs" style={{ color: palette.error }}>{savedResponseError}</p>}
         </div>
