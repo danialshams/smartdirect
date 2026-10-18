@@ -366,7 +366,6 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                                     </div>
                                   )}
                                 </section>
-                              )}
                   <button type="button" onClick={() => { setMessage((current) => ({ ...current, messageType: "TEXT" })); void saveAutomation({ ...message, messageType: "TEXT" }); }} disabled={saving} className="flex min-h-12 w-full items-center justify-center rounded-xl px-4 text-sm font-bold text-white transition disabled:opacity-60" style={{ background: dairaPalette.primary.main }}>
                     {saving ? "در حال ساخت پاسخ خودکار..." : "ساخت پاسخ خودکار"}
                   </button>
