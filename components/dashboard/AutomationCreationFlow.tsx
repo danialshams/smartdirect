@@ -106,7 +106,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     setRequireFollow(Boolean(template.requireFollow));
     setFollowGateText(typeof template.followGateText === "string" && template.followGateText.trim() ? template.followGateText : "برای دریافت پاسخ، ابتدا پیج ما را فالو کنید.");
     const normalized = normalizeMessages(template.messages);
-    if (normalized[0]) setMessage(normalized[0]);
+    setMessage(normalized[0] ?? createEmptyMessage());
     if (triggerType === "COMMENT_KEYWORD") setDmMode("TEXT");
     setError("");
   }
@@ -320,13 +320,16 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                 <button type="button" onClick={() => router.push("/dashboard/comment-automation/new")} className="shrink-0 rounded-lg border border-[#BFDBFE] bg-white px-3 py-2 text-[11px] font-bold text-[#2F61FD] transition hover:bg-[#DBEAFE]">تغییر محتوا</button>
               </section>
             )}
-            {automationTemplates.length > 0 && (
+            {(loadingResources || automationTemplates.length > 0) && (
               <section className="rounded-2xl border border-[#E6ECF5] bg-white p-4 sm:p-5" aria-labelledby="automation-template-heading">
                 <div className="mb-4 flex items-start gap-3">
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2F61FD]"><MessageCircleReply size={17} /></span>
                   <div className="min-w-0 flex-1"><h2 id="automation-template-heading" className="text-sm font-bold text-[#18233C]">استفاده از پاسخ خودکار قبلی</h2><p className="mt-1 text-xs leading-5 text-[#5A6B87]">یکی از اتوماسیون‌های قبلی را انتخاب کن تا کلمات کلیدی، پیام‌ها و تنظیماتش برای این محتوا کپی شود؛ اتوماسیون قبلی تغییر نمی‌کند.</p></div>
                 </div>
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {loadingResources ? (
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2" aria-label="در حال دریافت پاسخ‌های قبلی">{[0, 1].map((item) => <div key={item} className="h-[76px] animate-pulse rounded-xl bg-[#F1F5F9]" />)}</div>
+                ) : automationTemplates.length > 0 ? (
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {automationTemplates.map((template) => {
                     const previewMessages = normalizeMessages(template.messages);
                     const preview = previewMessages[0]?.text?.trim() || (previewMessages[0]?.messageType === "SHOWCASE" ? "ارسال ویترین" : previewMessages[0]?.messageType === "FORM" ? "ارسال فرم" : previewMessages[0]?.messageType === "IMAGE" ? "ارسال تصویر" : previewMessages[0]?.messageType === "VIDEO" ? "ارسال ویدیو" : previewMessages[0]?.messageType === "AUDIO" ? "ارسال پیام صوتی" : "بدون متن پاسخ");
@@ -336,7 +339,10 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                       <span className="mt-2 block truncate text-[11px] leading-5 text-[#64748B]">{preview}</span>
                     </button>;
                   })}
-                </div>
+                  </div>
+                ) : (
+                  <p className="rounded-xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] px-3 py-4 text-xs leading-6 text-[#64748B]">هنوز پاسخ خودکار قبلی برای این نوع وجود ندارد. می‌توانی تنظیمات را از ابتدا وارد کنی.</p>
+                )}
               </section>
             )}
             <div className="rounded-2xl border border-[#E6ECF5] bg-white p-4 sm:p-5">
