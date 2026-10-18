@@ -7,7 +7,7 @@ import {
   getQueueKeys,
   getJob,
 } from "./core";
-import type { QueueJobPayload, QueueJobType } from "./types";
+import type { QueueJob, QueueJobPayload, QueueJobType } from "./types";
 
 const CLAIM_PREFIX = "smartdirect:queue:claim:";
 const JOB_PREFIX = "smartdirect:queue:job:";
@@ -51,7 +51,7 @@ export async function recoverStalledJobs(limit = 50, queueNamespace = "default")
 
   for (const id of ids) {
     const [job, claim] = await Promise.all([
-      redis.get<any>(jobKey(id)),
+      redis.get<QueueJob>(jobKey(id)),
       redis.get<string>(claimKey(id)),
     ]);
 
