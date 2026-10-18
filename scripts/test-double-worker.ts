@@ -10,7 +10,7 @@ require.cache[serverOnlyPath] = {
   filename: serverOnlyPath,
   loaded: true,
   exports: {},
-} as any;
+} as NodeJS.Module;
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
