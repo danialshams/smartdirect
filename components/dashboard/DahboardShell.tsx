@@ -7,6 +7,7 @@ import { Home, CircleUserRound, LifeBuoy } from "lucide-react";
 import DashboardTheme from "./DashboardTheme";
 import DashboardOverview from "./DashboardOverview";
 import DashboardHeader from "./DashboardHeader";
+import { DashboardAccountProvider } from "./DashboardAccountContext";
 
 type InstagramAccount = {
   id: string;
@@ -32,7 +33,10 @@ export default function DashboardShell({ user, instagramAccounts, children }: Da
   const pathname = usePathname();
   const isHome = pathname === "/dashboard";
 
+  const initialAccountId = instagramAccounts.find((account) => account.isConnected)?.id ?? null;
+
   return (
+    <DashboardAccountProvider accountId={initialAccountId}>
     <DashboardTheme>
       <div dir="rtl" className="daira-app-shell">
         <DashboardHeader instagramAccounts={instagramAccounts} />
@@ -72,5 +76,6 @@ export default function DashboardShell({ user, instagramAccounts, children }: Da
         @media(prefers-reduced-motion:reduce) { .daira-bottom-nav__icon { transition:none; } }
       `}</style>
     </DashboardTheme>
+    </DashboardAccountProvider>
   );
 }
