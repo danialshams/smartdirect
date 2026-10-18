@@ -42,19 +42,34 @@ function readStringCandidate(value: unknown): string | null {
   return null;
 }
 
-export function getInstagramWebhookEventId(event: any): string {
+export function getInstagramWebhookEventId(event: unknown): string {
+  const record = event && typeof event === "object" && !Array.isArray(event)
+    ? event as Record<string, unknown>
+    : {};
+  const message = record.message && typeof record.message === "object"
+    ? record.message as Record<string, unknown>
+    : {};
+  const postback = record.postback && typeof record.postback === "object"
+    ? record.postback as Record<string, unknown>
+    : {};
+  const read = record.read && typeof record.read === "object"
+    ? record.read as Record<string, unknown>
+    : {};
+  const reaction = record.reaction && typeof record.reaction === "object"
+    ? record.reaction as Record<string, unknown>
+    : {};
   const candidates = [
-    event?.event_id,
-    event?.eventId,
-    event?.id,
-    event?.comment_id,
-    event?.commentId,
-    event?.message?.mid,
-    event?.message?.id,
-    event?.postback?.mid,
-    event?.postback?.id,
-    event?.read?.mid,
-    event?.reaction?.mid,
+    record.event_id,
+    record.eventId,
+    record.id,
+    record.comment_id,
+    record.commentId,
+    message.mid,
+    message.id,
+    postback.mid,
+    postback.id,
+    read.mid,
+    reaction.mid,
   ];
 
   for (const candidate of candidates) {
