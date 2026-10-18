@@ -134,10 +134,9 @@ export async function runQueueWorker(
 
     let lockHandle: DistributedLockHandle | undefined;
     let idempotencyLeaseToken: string | null = null;
-    let stopClaimHeartbeat: (() => void) | undefined;
-    let stopLockHeartbeat: (() => void) | undefined;
     const jobTimeoutMs = Math.max(0, Number(process.env.QUEUE_JOB_TIMEOUT_MS ?? 0));
-    stopClaimHeartbeat = startJobClaimHeartbeat(job.id, job.claimToken ?? workerId, jobTimeoutMs || undefined, job.instagramAccountId, job.queueNamespace);
+    const stopClaimHeartbeat = startJobClaimHeartbeat(job.id, job.claimToken ?? workerId, jobTimeoutMs || undefined, job.instagramAccountId, job.queueNamespace);
+    let stopLockHeartbeat: (() => void) | undefined;
 
     try {
       const lock = await acquireLock({

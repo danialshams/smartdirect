@@ -17,7 +17,7 @@ type InstagramWebhookEventType = "MESSAGING" | "COMMENT";
 
 type ClaimInstagramWebhookEventInput = {
   instagramAccountId: string;
-  event: any;
+  event: unknown;
   eventType: InstagramWebhookEventType;
   eventId?: string;
 };

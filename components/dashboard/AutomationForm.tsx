@@ -93,7 +93,7 @@ export default function AutomationForm({
             throw new Error(`سرور برای ${endpoint} پاسخ خالی برگرداند. وضعیت: ${response.status}`);
         }
         try {
-            return JSON.parse(raw) as any;
+            return JSON.parse(raw);
         } catch {
             throw new Error(`پاسخ نامعتبر از ${endpoint} دریافت شد. وضعیت: ${response.status}`);
         }

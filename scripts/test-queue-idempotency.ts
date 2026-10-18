@@ -2,6 +2,7 @@ import "dotenv/config";
 
 import { createRequire } from "node:module";
 import { randomUUID } from "node:crypto";
+import type { QueueJob } from "../src/lib/queue/types";
 
 const require = createRequire(import.meta.url);
 const serverOnlyPath = require.resolve("server-only");
@@ -11,12 +12,12 @@ require.cache[serverOnlyPath] = {
   filename: serverOnlyPath,
   loaded: true,
   exports: {},
-} as any;
+} as NodeJS.Module;
 
 const TIMEOUT_MS = 15_000;
 
 async function waitForCompletion(
-  getJob: (id: string) => Promise<any>,
+  getJob: (id: string) => Promise<QueueJob | null>,
   jobIds: string[],
 ) {
   const startedAt = Date.now();

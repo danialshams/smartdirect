@@ -8,7 +8,7 @@ require.cache[serverOnlyPath] = {
   filename: serverOnlyPath,
   loaded: true,
   exports: {},
-} as any;
+} as NodeJS.Module;
 
 import { getLoadTestConfig } from "./load-test/config";
 import { calculateLatency } from "./load-test/metrics";

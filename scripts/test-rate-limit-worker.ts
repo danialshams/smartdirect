@@ -8,7 +8,7 @@ require.cache[serverOnlyPath] = {
   filename: serverOnlyPath,
   loaded: true,
   exports: {},
-} as any;
+} as NodeJS.Module;
 
 let consumeInstagramRateLimit: typeof import("../src/lib/instagram/rate-limit").consumeInstagramRateLimit;
 

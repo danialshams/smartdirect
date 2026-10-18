@@ -10,7 +10,7 @@ require.cache[serverOnlyPath] = {
   filename: serverOnlyPath,
   loaded: true,
   exports: {},
-} as any;
+} as NodeJS.Module;
 
 async function main() {
   const { acquireLock, releaseLock, isLockOwned, createLockKey, getLockTtlSeconds, DISTRIBUTED_LOCK_TTL_DEFAULT_SECONDS, DISTRIBUTED_LOCK_TTL_MIN_SECONDS, DISTRIBUTED_LOCK_TTL_MAX_SECONDS } = await import("../src/lib/lock/redis-lock");

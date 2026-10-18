@@ -8,7 +8,7 @@ require.cache[serverOnlyPath] = {
   filename: serverOnlyPath,
   loaded: true,
   exports: {},
-} as any;
+} as NodeJS.Module;
 
 let instagramApiRequest: typeof import("../src/lib/instagram/client").instagramApiRequest;
 let InstagramApiError: typeof import("../src/lib/instagram/client").InstagramApiError;

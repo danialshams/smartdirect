@@ -80,15 +80,14 @@ async function main() {
     );
     const fulfilled = admission.filter((x) => x.status === "fulfilled");
     const rejected = admission.filter(
-      (x): x is PromiseRejectedResult =>
-        x.status === "rejected" && String(x.reason).includes("QUEUE_BACKPRESSURE"),
+      (x) => x.status === "rejected" && String(x.reason).includes("QUEUE_BACKPRESSURE"),
     );
-    for (const item of fulfilled) jobs.push((item as PromiseFulfilledResult<any>).value.id);
+    for (const item of fulfilled) jobs.push(item.value.id);
     assert(fulfilled.length <= 2 && rejected.length >= 1, "Atomic backpressure admission failed");
     results.backpressure = true;
     process.env.QUEUE_MAX_DEPTH = oldMax;
     for (const item of fulfilled) {
-      await deleteJob((item as PromiseFulfilledResult<any>).value.id);
+      await deleteJob(item.value.id);
     }
 
     const low = await enqueueJob("TEST", { message: "old-low" }, {
