@@ -143,13 +143,16 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
     const existing = showcases.find((item) => item.id === message.showcaseId);
     const items = Array.isArray(existing?.items) ? existing.items : [];
     if (items.length > 0) {
-      setSlides(items.map((item: any) => ({
-        id: typeof item?.id === "string" ? item.id : `slide_${crypto.randomUUID()}`,
-        title: typeof item?.title === "string" ? item.title : "",
-        description: typeof item?.description === "string" ? item.description : "",
-        imageUrl: typeof item?.imageUrl === "string" ? item.imageUrl : "",
-        previewUrl: typeof item?.imageUrl === "string" ? item.imageUrl : "",
-      })));
+      setSlides(items.map((item: unknown) => {
+        const record = item && typeof item === "object" ? item as Record<string, unknown> : {};
+        return ({
+        id: typeof record.id === "string" ? record.id : `slide_${crypto.randomUUID()}`,
+        title: typeof record.title === "string" ? record.title : "",
+        description: typeof record.description === "string" ? record.description : "",
+        imageUrl: typeof record.imageUrl === "string" ? record.imageUrl : "",
+        previewUrl: typeof record.imageUrl === "string" ? record.imageUrl : "",
+      });
+      }));
     }
   }, [message.showcaseId, showcases]);
 
