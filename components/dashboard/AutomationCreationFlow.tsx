@@ -321,11 +321,15 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
             <div className="border-t border-[#E2E8F0] pt-5">
               {triggerType === "COMMENT_KEYWORD" ? (
-                <section className="space-y-4">
+                <section className="space-y-5">
                   <div>
-                    <div className="mb-3 flex items-center gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#EFF6FF] text-sm font-bold text-[#2F61FD]">۴</span><h2 className="text-sm font-bold" style={{ color: dairaPalette.text.heading }}>پیام دایرکت</h2></div>
+                    <div className="mb-3 flex items-center gap-3">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#EFF6FF] text-sm font-bold text-[#2F61FD]">۴</span>
+                      <h2 className="text-sm font-bold" style={{ color: dairaPalette.text.heading }}>پیام دایرکت</h2>
+                    </div>
                     <p className="mt-1 text-xs leading-5" style={{ color: dairaPalette.text.body }}>متنی را که پس از کامنت برای کاربر ارسال می‌شود بنویس.</p>
                   </div>
+
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                     <button type="button" onClick={() => setDmMode("TEXT")} className={"rounded-xl border p-3 text-right text-xs " + (dmMode === "TEXT" ? "border-[#2F61FD] bg-[#EFF6FF]" : "border-[#E2E8F0] bg-white")} aria-pressed={dmMode === "TEXT"}>
                       <strong className="block text-sm" style={{ color: dairaPalette.text.heading }}>متن ساده</strong>
@@ -336,36 +340,55 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                       <span className="mt-1 block leading-5" style={{ color: dairaPalette.text.body }}>نمایش یک دکمه برای باز کردن لینک</span>
                     </button>
                   </div>
+
                   <textarea value={message.text} onChange={(event) => setMessage((current) => ({ ...current, messageType: "TEXT", text: event.target.value, mediaUrl: "", mediaId: "", showcaseId: "", formId: "", quickReplies: [] }))} maxLength={dmMode === "TEXT_WITH_LINK" ? 640 : 2000} rows={4} placeholder="متن دایرکتی که بعد از کامنت برای کاربر ارسال می‌شود..." className="w-full rounded-xl border bg-white px-3.5 py-3 text-base leading-7 outline-none focus:ring-2 focus:ring-[#2F61FD]/15" style={{ borderColor: dairaPalette.form.border, color: dairaPalette.text.heading, fontSize: "16px" }} />
+
                   {dmMode === "TEXT_WITH_LINK" && (
                     <div className="space-y-3">
                       <p className="text-xs leading-5" style={{ color: dairaPalette.text.body }}>حداکثر {MAX_LINK_BUTTONS} دکمه لینک می‌توانید اضافه کنید.</p>
-                      {linkButtons.map((button, index) => <div key={index} className="rounded-xl border p-3" style={{ borderColor: dairaPalette.form.border }}>
-                        <div className="mb-3 flex items-center justify-between"><strong className="text-xs" style={{ color: dairaPalette.text.heading }}>دکمه {index + 1}</strong>{linkButtons.length > 1 && <button type="button" onClick={() => setLinkButtons((current) => current.filter((_, i) => i !== index))} className="text-xs font-semibold text-red-600">حذف</button>}</div>
-                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                          <div><label className="mb-2 block text-xs font-semibold" style={{ color: dairaPalette.text.heading }}>آدرس لینک</label><input type="url" value={button.url} onChange={(event) => setLinkButtons((current) => current.map((item, i) => i === index ? { ...item, url: event.target.value } : item))} placeholder="https://example.com" dir="ltr" className="w-full rounded-xl border bg-white px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-[#2F61FD]/15" style={{ borderColor: dairaPalette.form.border, color: dairaPalette.text.heading }} /></div>
-                          <div><label className="mb-2 block text-xs font-semibold" style={{ color: dairaPalette.text.heading }}>عنوان دکمه (حداکثر ۲۰ کاراکتر)</label><input value={button.title} onChange={(event) => setLinkButtons((current) => current.map((item, i) => i === index ? { ...item, title: event.target.value.slice(0, 20) } : item))} maxLength={20} placeholder="مشاهده لینک" className="w-full rounded-xl border bg-white px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-[#2F61FD]/15" style={{ borderColor: dairaPalette.form.border, color: dairaPalette.text.heading }} /></div>
+                      {linkButtons.map((button, index) => (
+                        <div key={index} className="rounded-xl border p-3" style={{ borderColor: dairaPalette.form.border }}>
+                          <div className="mb-3 flex items-center justify-between">
+                            <strong className="text-xs" style={{ color: dairaPalette.text.heading }}>دکمه {index + 1}</strong>
+                            {linkButtons.length > 1 && <button type="button" onClick={() => setLinkButtons((current) => current.filter((_, i) => i !== index))} className="text-xs font-semibold text-red-600">حذف</button>}
+                          </div>
+                          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            <div>
+                              <label className="mb-2 block text-xs font-semibold" style={{ color: dairaPalette.text.heading }}>آدرس لینک</label>
+                              <input type="url" value={button.url} onChange={(event) => setLinkButtons((current) => current.map((item, i) => i === index ? { ...item, url: event.target.value } : item))} placeholder="https://example.com" dir="ltr" className="w-full rounded-xl border bg-white px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-[#2F61FD]/15" style={{ borderColor: dairaPalette.form.border, color: dairaPalette.text.heading }} />
+                            </div>
+                            <div>
+                              <label className="mb-2 block text-xs font-semibold" style={{ color: dairaPalette.text.heading }}>عنوان دکمه (حداکثر ۲۰ کاراکتر)</label>
+                              <input value={button.title} onChange={(event) => setLinkButtons((current) => current.map((item, i) => i === index ? { ...item, title: event.target.value.slice(0, 20) } : item))} maxLength={20} placeholder="مشاهده لینک" className="w-full rounded-xl border bg-white px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-[#2F61FD]/15" style={{ borderColor: dairaPalette.form.border, color: dairaPalette.text.heading }} />
+                            </div>
+                          </div>
                         </div>
-                      </div>)}
+                      ))}
                       {linkButtons.length < MAX_LINK_BUTTONS && <button type="button" onClick={() => setLinkButtons((current) => [...current, { title: "", url: "" }])} className="min-h-10 rounded-lg border px-3 text-xs font-semibold" style={{ borderColor: dairaPalette.form.border, color: dairaPalette.primary.main }}>افزودن دکمه لینک</button>}
                     </div>
                   )}
-<section className="border-t pt-5" style={{ borderColor: dairaPalette.border }}>
-                                  <div className="mb-3 flex items-center gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#EFF6FF] text-sm font-bold text-[#2F61FD]">۵</span><span className="text-sm font-bold" style={{ color: dairaPalette.text.heading }}>شرط فالو</span></div><label className="flex cursor-pointer items-start gap-3 rounded-xl border p-3" style={{ borderColor: dairaPalette.border, background: dairaPalette.background.surfaceHover }}>
-                                    <input type="checkbox" checked={requireFollow} onChange={(event) => setRequireFollow(event.target.checked)} className="mt-1 h-4 w-4 accent-[#2F61FD]" />
-                                    <span className="min-w-0">
-                                      <strong className="block text-sm" style={{ color: dairaPalette.text.heading }}>الزام به فالو قبل از ارسال پاسخ (اختیاری)</strong>
-                                      <span className="mt-1 block text-xs leading-5" style={{ color: dairaPalette.text.body }}>اگر کاربر پیج را فالو نکرده باشد، ابتدا پیام درخواست فالو و دکمه بررسی ارسال می‌شود.</span>
-                                    </span>
-                                  </label>
-                                  {requireFollow && (
-                                    <div className="mt-3">
-                                      <label className="mb-2 block text-sm font-semibold" style={{ color: dairaPalette.text.heading }}>متن درخواست فالو</label>
-                                      <textarea value={followGateText} onChange={(event) => setFollowGateText(event.target.value)} maxLength={640} rows={3} placeholder="برای دریافت پاسخ، ابتدا پیج ما را فالو کنید." className="w-full rounded-xl border bg-white px-3 py-3 text-sm leading-6 outline-none focus:ring-2 focus:ring-[#2F61FD]/15" style={{ borderColor: dairaPalette.form.border, color: dairaPalette.text.heading }} />
-                                      {!followGateText.trim() && <p className="mt-1 text-xs" style={{ color: dairaPalette.status.error }}>وارد کردن متن درخواست فالو الزامی است.</p>}
-                                    </div>
-                                  )}
-                                </section>
+
+                  <section className="border-t pt-5" style={{ borderColor: dairaPalette.border }}>
+                    <div className="mb-3 flex items-center gap-3">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#EFF6FF] text-sm font-bold text-[#2F61FD]">۵</span>
+                      <span className="text-sm font-bold" style={{ color: dairaPalette.text.heading }}>شرط فالو</span>
+                    </div>
+                    <label className="flex cursor-pointer items-start gap-3 rounded-xl border p-3" style={{ borderColor: dairaPalette.border, background: dairaPalette.background.surfaceHover }}>
+                      <input type="checkbox" checked={requireFollow} onChange={(event) => setRequireFollow(event.target.checked)} className="mt-1 h-4 w-4 accent-[#2F61FD]" />
+                      <span className="min-w-0">
+                        <strong className="block text-sm" style={{ color: dairaPalette.text.heading }}>الزام به فالو قبل از ارسال پاسخ (اختیاری)</strong>
+                        <span className="mt-1 block text-xs leading-5" style={{ color: dairaPalette.text.body }}>اگر کاربر پیج را فالو نکرده باشد، ابتدا پیام درخواست فالو و دکمه بررسی ارسال می‌شود.</span>
+                      </span>
+                    </label>
+                    {requireFollow && (
+                      <div className="mt-3">
+                        <label className="mb-2 block text-sm font-semibold" style={{ color: dairaPalette.text.heading }}>متن درخواست فالو</label>
+                        <textarea value={followGateText} onChange={(event) => setFollowGateText(event.target.value)} maxLength={640} rows={3} placeholder="برای دریافت پاسخ، ابتدا پیج ما را فالو کنید." className="w-full rounded-xl border bg-white px-3 py-3 text-sm leading-6 outline-none focus:ring-2 focus:ring-[#2F61FD]/15" style={{ borderColor: dairaPalette.form.border, color: dairaPalette.text.heading }} />
+                        {!followGateText.trim() && <p className="mt-1 text-xs" style={{ color: dairaPalette.status.error }}>وارد کردن متن درخواست فالو الزامی است.</p>}
+                      </div>
+                    )}
+                  </section>
+
                   <button type="button" onClick={() => { setMessage((current) => ({ ...current, messageType: "TEXT" })); void saveAutomation({ ...message, messageType: "TEXT" }); }} disabled={saving} className="flex min-h-12 w-full items-center justify-center rounded-xl px-4 text-sm font-bold text-white transition disabled:opacity-60" style={{ background: dairaPalette.primary.main }}>
                     {saving ? "در حال ساخت پاسخ خودکار..." : "ساخت پاسخ خودکار"}
                   </button>
