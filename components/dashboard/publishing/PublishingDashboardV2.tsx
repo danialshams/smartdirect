@@ -31,6 +31,7 @@ type MediaType = "IMAGE" | "VIDEO";
 type LocalMedia = { file: File; type: MediaType; previewUrl: string; sortOrder: number };
 type UploadRow = { id: string; fileName: string; status: "queued" | "uploading" | "success" | "failed"; progress: number; storageKey?: string; error?: string; removing?: boolean };
 type UploadedMedia = { type: MediaType; storageKey: string; publicUrl: string; fileName: string; mimeType: string; fileSize: number; sortOrder: number };
+type UploadApiResult = { success?: boolean; message?: string; data?: unknown };
 type Job = { id: string; type: PublishType; status: string; caption: string | null; scheduledAt: string | null; publishedAt: string | null; createdAt: string; errorMessage: string | null; media: UploadedMedia[]; instagramAccount?: { igUsername: string | null } };
 let publishingJobsCache: Job[] | null = null;
 let publishingAccountsCache: InstagramAccount[] | null = null;
@@ -145,7 +146,7 @@ type UploadProgressCallback = (progress: number) => void;
 
 const activeUploadAbortControllerRef: { current: AbortController | null } = { current: null };
 
-function uploadFormDataWithProgress(url: string, formData: FormData, signal: AbortSignal, onProgress: UploadProgressCallback, timeoutMs: number): Promise<{ ok: boolean; result: any }> {
+function uploadFormDataWithProgress(url: string, formData: FormData, signal: AbortSignal, onProgress: UploadProgressCallback, timeoutMs: number): Promise<{ ok: boolean; result: UploadApiResult | null }> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("POST", url);
@@ -160,7 +161,7 @@ function uploadFormDataWithProgress(url: string, formData: FormData, signal: Abo
     };
     xhr.onload = () => {
       cleanup();
-      let result: any = null;
+      let result: UploadApiResult | null = null;
       try { result = JSON.parse(xhr.responseText); } catch { /* invalid response */ }
       resolve({ ok: xhr.status >= 200 && xhr.status < 300, result });
     };
@@ -479,7 +480,8 @@ function UploadSuccessMark() {
     </span>
   );
 }
-function UploadArea({ id, accept, multiple, disabled, isDragging, setIsDragging, title, onChange, onDrop }: any) {
+type UploadAreaProps = { id: string; accept: string; multiple: boolean; disabled: boolean; isDragging: boolean; setIsDragging: (value: boolean) => void; title: string; onChange: ChangeEvent<HTMLInputElement> extends never ? never : (event: ChangeEvent<HTMLInputElement>) => void; onDrop: (event: DragEvent<HTMLDivElement>) => void };
+function UploadArea({ id, accept, multiple, disabled, isDragging, setIsDragging, title, onChange, onDrop }: UploadAreaProps) {
   return <div onDragOver={(event: DragEvent<HTMLDivElement>) => { event.preventDefault(); setIsDragging(true); }} onDragLeave={() => setIsDragging(false)} onDrop={onDrop} className={["relative overflow-hidden rounded-xl border border-dashed p-4 transition sm:p-6", isDragging ? "border-[#2563EB] bg-[#2563EB]/5" : "border-[#CBD5E1] bg-[#F8FAFC] hover:border-[#93C5FD] hover:bg-[#EFF6FF]/50", disabled ? "pointer-events-none opacity-60" : ""].join(" ")}>
     <Input id={id} type="file" accept={accept} multiple={multiple} onChange={onChange} disabled={disabled} className="sr-only" />
     <label htmlFor={id} className="flex min-h-[190px] cursor-pointer flex-col items-center justify-center text-center">
@@ -493,7 +495,7 @@ function MediaTile({ item, type, onRemove, ready = false, compact = false, bare 
   const image = item.type === "IMAGE"; const src = ready ? item.publicUrl : item.previewUrl;
   const aspect = type === "REEL" || type === "STORY" ? "aspect-[9/16]" : "aspect-[4/5]";
   return <div className={[bare ? "relative overflow-hidden" : "group relative overflow-hidden rounded-xl border border-[#E2E8F0] bg-[#F1F5F9]", compact ? "shadow-sm" : ""].join(" ")}>
-    {image ? <img src={src} alt={ready ? item.fileName : item.file.name} className={["w-full object-cover", aspect].join(" ")} /> : <video src={src} controls className={["w-full object-cover", aspect].join(" ")} />}
+    {image ? <img src={src} alt={"file" in item ? item.file.name : item.fileName} className={["w-full object-cover", aspect].join(" ")} /> : <video src={src} controls className={["w-full object-cover", aspect].join(" ")} />}
     {!compact && <Button type="button" onClick={onRemove} className="absolute left-1.5 top-1.5 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 p-0 text-[#DC2626] shadow-sm ring-1 ring-black/5" aria-label="حذف فایل"><X size={15} /></Button>}
   </div>;
 }
