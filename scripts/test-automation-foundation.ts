@@ -72,6 +72,15 @@ async function main() {
   );
 
   assert(
+    matchesAutomationKeyword("قیمت, خرید", "لطفاً قیمت را بگو", "CONTAINS_ANY"),
+    "Contains-any mode should match a configured keyword inside a comment.",
+  );
+  assert(
+    !matchesAutomationKeyword("قیمت, خرید", "سلام وقت بخیر", "CONTAINS_ANY"),
+    "Contains-any mode must reject comments without configured keywords.",
+  );
+
+  assert(
     matchesAutomationTrigger({
       triggerType: "COMMENT_KEYWORD",
       configuredKeyword: "1, hello",
@@ -100,6 +109,38 @@ async function main() {
       incomingMediaId: "story-2",
     }),
     "Story keyword trigger must reject a different story.",
+  );
+
+  assert(
+    matchesAutomationTrigger({
+      triggerType: "COMMENT_KEYWORD",
+      configuredKeyword: "قیمت",
+      incomingKeyword: "لطفاً قیمت را بگو",
+      keywordMatchMode: "CONTAINS_ANY",
+      configuredMediaIds: "media-1,media-2",
+      incomingMediaId: "media-2",
+    }),
+    "Contains-any mode should match one of the selected media IDs.",
+  );
+  assert(
+    !matchesAutomationTrigger({
+      triggerType: "COMMENT_KEYWORD",
+      configuredKeyword: "قیمت",
+      incomingKeyword: "لطفاً قیمت را بگو",
+      keywordMatchMode: "CONTAINS_ANY",
+      configuredMediaIds: "media-1,media-2",
+      incomingMediaId: "media-3",
+    }),
+    "Multi-media targeting must reject unselected media.",
+  );
+  assert(
+    matchesAutomationTrigger({
+      triggerType: "COMMENT_KEYWORD",
+      configuredKeyword: "قیمت",
+      incomingKeyword: "لطفاً قیمت را بگو",
+      keywordMatchMode: "CONTAINS_ANY",
+    }),
+    "An automation without a media restriction should match all media.",
   );
 
   assert(
