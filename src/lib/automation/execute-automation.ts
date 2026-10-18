@@ -430,6 +430,8 @@ async function executeAutomationInternal(input: ExecuteAutomationInput) {
         mediaId: currentMessage.mediaId,
         showcaseId: currentMessage.showcaseId,
         formId: currentMessage.formId,
+        linkButtonUrl: currentMessage.linkButtonUrl,
+        linkButtonTitle: currentMessage.linkButtonTitle,
         quickReplies,
       },
     });
