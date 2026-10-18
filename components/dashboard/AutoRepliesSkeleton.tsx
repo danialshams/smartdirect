@@ -4,30 +4,51 @@ type AutoRepliesSkeletonProps = {
 
 export default function AutoRepliesSkeleton({ includeCreateButton = false }: AutoRepliesSkeletonProps) {
   return (
-    <div dir="rtl" className={includeCreateButton ? "min-h-[calc(100dvh-2rem)]" : "min-h-full px-1 py-2 sm:px-2 sm:py-3"} role="status" aria-label="در حال دریافت پاسخ‌های خودکار">
+    <div
+      dir="rtl"
+      className={includeCreateButton ? "min-h-[calc(100dvh-2rem)]" : "min-h-full px-1 py-2 sm:px-2 sm:py-3"}
+      role="status"
+      aria-label="در حال دریافت پاسخ‌های خودکار"
+    >
       <span className="sr-only">در حال دریافت پاسخ‌های خودکار...</span>
       <div className="mx-auto w-full max-w-4xl">
         {includeCreateButton ? (
           <section className="mb-4 px-0 pt-1" aria-hidden="true">
-            <div className="h-[54px] w-full animate-pulse rounded-full bg-[#2F61FD]/70" />
+            <div className="flex min-h-[54px] w-full animate-pulse flex-row-reverse items-center justify-center gap-2 rounded-full bg-[#2F61FD]/70 px-5 shadow-sm">
+              <span className="h-5 w-5 rounded-full bg-white/35" />
+              <span className="h-4 w-28 rounded-md bg-white/45" />
+            </div>
           </section>
         ) : null}
+
         <section className="rounded-[28px] bg-transparent">
-          <div className="mb-4 px-1">
-            <div className="h-11 animate-pulse rounded-xl border border-[#E2E8F0] bg-[#F8FAFC]" />
+          <div className="mb-4 px-1" aria-hidden="true">
+            <div className="flex h-11 animate-pulse items-center gap-2.5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5">
+              <span className="h-[17px] w-[17px] shrink-0 rounded-full bg-[#E2E8F0]" />
+              <span className="h-3 w-44 max-w-[70%] rounded-md bg-[#E8EDF5]" />
+            </div>
           </div>
+
           <div className="space-y-2.5" aria-hidden="true">
             {Array.from({ length: 3 }, (_, index) => (
-              <div key={index} className="flex min-h-[100px] items-center justify-between gap-2.5 rounded-[22px] border border-[#E8EDF5] bg-white px-2.5 py-2.5 shadow-[0_3px_12px_rgba(15,23,42,.025)] sm:px-3">
-                <div className="flex min-w-0 flex-1 items-center gap-3">
-                  <div className="h-[72px] w-[72px] shrink-0 animate-pulse rounded-2xl border border-[#E2E8F0] bg-[#EEF3FB] sm:h-[84px] sm:w-[84px]" />
-                  <div className="min-w-0 flex-1 space-y-2.5">
-                    <div className="h-3.5 w-32 max-w-[80%] animate-pulse rounded-md bg-[#E8EDF5]" />
-                    <div className="h-2.5 w-20 max-w-[55%] animate-pulse rounded-md bg-[#F1F5F9]" />
+              <article
+                key={index}
+                className="flex min-h-[84px] animate-pulse items-center justify-between gap-3 rounded-[22px] border border-[#E8EDF5] bg-white px-3 py-3 shadow-[0_3px_12px_rgba(15,23,42,.025)] sm:px-4"
+              >
+                <div className="flex min-w-0 flex-1 flex-col items-start gap-2">
+                  <div className="h-[38px] w-44 max-w-full rounded-xl border border-[#DCE6FF] bg-[#EEF3FF] px-3 py-2" />
+                  <div className="h-2.5 w-24 rounded-md bg-[#E8EDF5]" />
+                </div>
+
+                <div className="flex shrink-0 items-center gap-1.5">
+                  <div className="inline-flex h-8 w-[66px] items-center justify-center rounded-[8px] border border-[#E8EDF5] bg-[#F8FAFC] sm:w-[74px]">
+                    <span className="h-2.5 w-8 rounded bg-[#E2E8F0]" />
+                  </div>
+                  <div className="inline-flex h-8 w-[54px] items-center justify-center rounded-[8px] border border-[#F3D5D5] bg-[#FFF8F8] sm:w-[62px]">
+                    <span className="h-2.5 w-6 rounded bg-[#F1DADA]" />
                   </div>
                 </div>
-                <div className="h-8 w-[62px] shrink-0 animate-pulse rounded-[8px] border border-[#E8EDF5] bg-[#F8FAFC]" />
-              </div>
+              </article>
             ))}
           </div>
         </section>
