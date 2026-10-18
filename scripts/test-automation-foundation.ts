@@ -81,6 +81,15 @@ async function main() {
   );
 
   assert(
+    matchesAutomationKeyword(null, "سلام، قیمت چنده؟", "CONTAINS_ANY"),
+    "Contains-any mode without configured keywords should match any non-empty comment.",
+  );
+  assert(
+    !matchesAutomationKeyword(null, "   ", "CONTAINS_ANY"),
+    "Contains-any mode should reject empty comments.",
+  );
+
+  assert(
     matchesAutomationTrigger({
       triggerType: "COMMENT_KEYWORD",
       configuredKeyword: "1, hello",
