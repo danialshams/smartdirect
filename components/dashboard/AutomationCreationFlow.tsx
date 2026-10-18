@@ -97,6 +97,9 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     ])
       .then(([mediaResult, automationResult]) => {
         if (cancelled) return;
+        if (!mediaResult?.success || !automationResult?.success || !Array.isArray(mediaResult?.data) || !Array.isArray(automationResult?.data)) {
+          throw new Error("دریافت فهرست محتواها و پاسخ‌های خودکار ناموفق بود.");
+        }
         const existingMediaIds = new Set<string>();
         const automations = Array.isArray(automationResult?.data) ? automationResult.data : [];
         for (const automation of automations) {
@@ -116,7 +119,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
         setMediaItems(availableMedia);
         setSelectedMediaIds((current) => current.filter((id) => availableIds.has(id)));
       })
-      .catch(() => { if (!cancelled) setMediaItems([]); })
+      .catch(() => { if (!cancelled) { setMediaItems([]); setError("دریافت فهرست پست‌ها یا پاسخ‌های خودکار ناموفق بود. صفحه را دوباره بارگذاری کنید."); } })
       .finally(() => { if (!cancelled) setMediaLoading(false); });
     return () => { cancelled = true; };
   }, [account.id, triggerType]);
