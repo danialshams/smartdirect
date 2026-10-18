@@ -79,7 +79,7 @@ export class NativeRedisAdapter implements RedisClientLike {
         : [];
       return this.client.call("ZRANGEBYSCORE", key, String(min), String(max), ...rangeArgs) as Promise<T>;
     }
-    return this.client.zrange(key, min, max) as unknown as T;
+    return this.client.zrange(key, String(min), String(max)) as unknown as T;
   }
 
   lpush(key: string, ...values: string[]) {
