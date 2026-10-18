@@ -97,6 +97,7 @@ async function readJsonResponse(response: Response, fallback: string) {
 async function uploadFile(file: File): Promise<string> {
   const formData = new FormData();
   formData.append("file", file);
+  formData.append("purpose", "AUTOMATION");
   const response = await fetch("/api/instagram/publishing/upload", {
     method: "POST",
     body: formData,
