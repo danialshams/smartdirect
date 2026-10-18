@@ -7,7 +7,7 @@ import ffmpegPath from "ffmpeg-static";
 
 const execFileAsync = promisify(execFile);
 const SAFE_VIDEO_SIZE = 100 * 1024 * 1024;
-const SAFE_MESSAGE_VIDEO_SIZE = 24 * 1024 * 1024;
+const SAFE_MESSAGE_VIDEO_SIZE = 24_000_000;
 
 export type InstagramVideoTarget = "CAROUSEL" | "REEL" | "STORY" | "MESSAGE";
 
