@@ -84,11 +84,13 @@ const newShowcaseItem = (): ShowcaseItemDraft => ({
   previewUrl: "",
 });
 
+type SavedAutomationResponse = Pick<MessageDraft, "messageType" | "text" | "mediaUrl" | "mediaId" | "showcaseId" | "formId" | "quickReplies"> & { id: string; title?: string };
+
 async function readJsonResponse(response: Response, fallback: string) {
   const raw = await response.text();
   if (!raw.trim()) throw new Error(`${fallback} (پاسخ خالی از سرور)`);
   try {
-    return JSON.parse(raw) as Record<string, any>;
+    return JSON.parse(raw);
   } catch {
     throw new Error(`${fallback} (پاسخ نامعتبر از سرور)`);
   }
@@ -103,10 +105,11 @@ async function uploadFile(file: File): Promise<string> {
     body: formData,
   });
   const result = await readJsonResponse(response, "آپلود فایل ناموفق بود.");
-  if (!response.ok || !result?.success || typeof result?.data?.publicUrl !== "string") {
+  const uploadData = result?.data && typeof result.data === "object" ? result.data as Record<string, unknown> : {};
+  if (!response.ok || !result?.success || typeof uploadData.publicUrl !== "string") {
     throw new Error(result?.message || "آپلود فایل ناموفق بود.");
   }
-  return result.data.publicUrl;
+  return uploadData.publicUrl;
 }
 
 async function uploadBranchMedia(
@@ -161,7 +164,7 @@ export default function AutomationFlowMessage({
   const [mediaRetryFile, setMediaRetryFile] = useState<File | null>(null);
   const [contentStep, setContentStep] = useState(false);
   const [error, setError] = useState("");
-  const [savedResponses, setSavedResponses] = useState<Array<Record<string, any>>>([]);
+  const [savedResponses, setSavedResponses] = useState<SavedAutomationResponse[]>([]);
   const [savedResponseTitle, setSavedResponseTitle] = useState("");
   const [savedResponseLoading, setSavedResponseLoading] = useState(false);
   const [savedResponseSaving, setSavedResponseSaving] = useState(false);
@@ -183,7 +186,7 @@ export default function AutomationFlowMessage({
       .then(async (response) => {
         const result = await response.json();
         if (!response.ok || !result?.success) throw new Error(result?.error || "دریافت پاسخ‌های ذخیره‌شده ناموفق بود.");
-        if (!cancelled) setSavedResponses(Array.isArray(result.data) ? result.data : []);
+        if (!cancelled) setSavedResponses(Array.isArray(result.data) ? result.data as SavedAutomationResponse[] : []);
       })
       .catch((loadError) => {
         if (!cancelled) setSavedResponseError(loadError instanceof Error ? loadError.message : "دریافت پاسخ‌های ذخیره‌شده ناموفق بود.");
@@ -224,7 +227,8 @@ export default function AutomationFlowMessage({
       if (!response.ok || !result?.success || !result?.data?.id) {
         throw new Error(result?.error || "ذخیره پاسخ ناموفق بود.");
       }
-      setSavedResponses((current) => [result.data, ...current.filter((item) => item.id !== result.data.id)]);
+      const savedResponse = result.data as SavedAutomationResponse;
+      setSavedResponses((current) => [savedResponse, ...current.filter((item) => item.id !== savedResponse.id)]);
       setSavedResponseTitle("");
     } catch (saveError) {
       setSavedResponseError(saveError instanceof Error ? saveError.message : "ذخیره پاسخ ناموفق بود.");
@@ -233,7 +237,7 @@ export default function AutomationFlowMessage({
     }
   }
 
-  function applySavedResponse(saved: Record<string, any>) {
+  function applySavedResponse(saved: SavedAutomationResponse) {
     const cloneQuickReply = (reply: QuickReplyDraft): QuickReplyDraft => ({
       ...reply,
       id: `quick_reply_${crypto.randomUUID()}`,
@@ -1105,12 +1109,14 @@ function ShowcaseComposer({
   useEffect(() => {
     const rawItems = Array.isArray(existing?.items) ? existing.items : [];
     if (!rawItems.length) return;
-    setItems(rawItems.map((raw: any) => ({
-      id: typeof raw?.id === "string" ? raw.id : `showcase_item_${crypto.randomUUID()}`,
-      title: typeof raw?.title === "string" ? raw.title : "",
-      description: typeof raw?.description === "string" ? raw.description : "",
-      imageUrl: typeof raw?.imageUrl === "string" ? raw.imageUrl : "",
-      previewUrl: typeof raw?.imageUrl === "string" ? raw.imageUrl : "",
+    setItems(rawItems.map((raw: unknown) => {
+      const record = raw && typeof raw === "object" ? raw as Record<string, unknown> : {};
+      return ({
+      id: typeof record.id === "string" ? record.id : `showcase_item_${crypto.randomUUID()}`,
+      title: typeof record.title === "string" ? record.title : "",
+      description: typeof record.description === "string" ? record.description : "",
+      imageUrl: typeof record.imageUrl === "string" ? record.imageUrl : "",
+      previewUrl: typeof record.imageUrl === "string" ? record.imageUrl : "",
     })));
   }, [showcaseId]);
 
