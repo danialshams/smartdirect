@@ -7,8 +7,9 @@ import ffmpegPath from "ffmpeg-static";
 
 const execFileAsync = promisify(execFile);
 const SAFE_VIDEO_SIZE = 100 * 1024 * 1024;
+const SAFE_MESSAGE_VIDEO_SIZE = 24 * 1024 * 1024;
 
-export type InstagramVideoTarget = "CAROUSEL" | "REEL" | "STORY";
+export type InstagramVideoTarget = "CAROUSEL" | "REEL" | "STORY" | "MESSAGE";
 
 export async function normalizeInstagramVideo(
   inputBuffer: Buffer,
@@ -34,7 +35,10 @@ export async function normalizeInstagramVideo(
     // Fit the full source inside the canvas instead of cropping away user content.
     const canvas = targetType === "CAROUSEL"
       ? { width: 1080, height: 1350 }
-      : { width: 1080, height: 1920 };
+      : targetType === "MESSAGE"
+        ? { width: 720, height: 1280 }
+        : { width: 1080, height: 1920 };
+    const safeVideoSize = targetType === "MESSAGE" ? SAFE_MESSAGE_VIDEO_SIZE : SAFE_VIDEO_SIZE;
     const videoFilter = [
       "scale=" + canvas.width + ":" + canvas.height + ":force_original_aspect_ratio=decrease:force_divisible_by=2",
       "pad=" + canvas.width + ":" + canvas.height + ":(ow-iw)/2:(oh-ih)/2:color=black",
@@ -59,12 +63,16 @@ export async function normalizeInstagramVideo(
       ], { timeout: 600000, maxBuffer: 8 * 1024 * 1024 });
 
       normalized = await readFile(outputPath);
-      if (normalized.length <= SAFE_VIDEO_SIZE) break;
+      if (normalized.length <= safeVideoSize) break;
     }
 
     if (!normalized?.length) throw new Error("تبدیل ویدئو خروجی خالی تولید کرد.");
-    if (normalized.length > SAFE_VIDEO_SIZE) {
-      throw new Error("حجم ویدئو پس از بهینه‌سازی هنوز بیش از 100 مگابایت است؛ مدت ویدئو را کوتاه‌تر کنید.");
+    if (normalized.length > safeVideoSize) {
+      throw new Error(
+        targetType === "MESSAGE"
+          ? "حجم ویدئو پس از بهینه‌سازی هنوز بیش از 24 مگابایت است؛ مدت ویدئو را کوتاه‌تر کنید."
+          : "حجم ویدئو پس از بهینه‌سازی هنوز بیش از 100 مگابایت است؛ مدت ویدئو را کوتاه‌تر کنید.",
+      );
     }
 
     console.info("[Instagram Video Normalizer] completed", {
@@ -76,7 +84,7 @@ export async function normalizeInstagramVideo(
     });
     return normalized;
   } catch (error) {
-    if (error instanceof Error && error.message.includes("100 مگابایت")) throw error;
+    if (error instanceof Error && (error.message.includes("100 مگابایت") || error.message.includes("24 مگابایت"))) throw error;
     throw new Error("تبدیل ویدئو به فرمت سازگار با Instagram ناموفق بود. فایل ویدئو را بررسی کنید و دوباره تلاش کنید.");
   } finally {
     await rm(tempDir, { recursive: true, force: true }).catch(() => undefined);
