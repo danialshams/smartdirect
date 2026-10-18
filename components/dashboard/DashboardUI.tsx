@@ -554,7 +554,7 @@ export function PopoverContent({
   );
 }
 
-type DashboardCalendarProps = any;
+type DashboardCalendarProps = DayPickerProps & { className?: string };
 
 export function Calendar({ className, ...props }: DashboardCalendarProps) {
   const defaultClassNames = getDefaultClassNames();
