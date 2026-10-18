@@ -19,7 +19,10 @@ export const dynamic = "force-dynamic";
 const MAX_IMAGE_SIZE = 20 * 1024 * 1024;
 const MAX_VIDEO_SIZE = 200 * 1024 * 1024;
 const MAX_AUDIO_SIZE = 25 * 1024 * 1024;
-const SAFE_AUDIO_SIZE = 24 * 1024 * 1024;
+const SAFE_AUDIO_SIZE = 24_000_000;
+const META_DM_IMAGE_MAX_SIZE = 8_000_000 - 1;
+const META_DM_VIDEO_MAX_SIZE = 25_000_000 - 1;
+const META_DM_AUDIO_MAX_SIZE = 25_000_000 - 1;
 const execFileAsync = promisify(execFile);
 
 const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -42,6 +45,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get("file");
     const targetTypeValue = formData.get("targetType");
+    const purpose = formData.get("purpose") === "AUTOMATION" ? "AUTOMATION" : "PUBLISHING";
     const targetType = targetTypeValue === "CAROUSEL" || targetTypeValue === "STORY" || targetTypeValue === "REEL"
       ? targetTypeValue
       : "REEL";
@@ -53,6 +57,9 @@ export async function POST(request: NextRequest) {
     const fileExtension = path.extname(file.name).toLowerCase();
     const normalizedInputMime = file.type.toLowerCase();
     const isImage = allowedImageTypes.has(normalizedInputMime);
+    if (purpose === "AUTOMATION" && normalizedInputMime === "image/webp") {
+      return NextResponse.json({ success: false, message: "برای پاسخ خودکار، تصویر باید JPG یا PNG باشد." }, { status: 400 });
+    }
     // Browsers sometimes send application/octet-stream for valid video files.
     // The extension fallback is allowlisted; FFmpeg still has to decode the media.
     const isVideo = allowedVideoTypes.has(normalizedInputMime) ||
@@ -64,9 +71,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: "فرمت فایل پشتیبانی نمی‌شود." }, { status: 400 });
     }
 
-    const maxSize = isVideo ? MAX_VIDEO_SIZE : isAudio ? MAX_AUDIO_SIZE : MAX_IMAGE_SIZE;
+    const maxSize = purpose === "AUTOMATION"
+      ? isImage
+        ? META_DM_IMAGE_MAX_SIZE
+        : isVideo
+          ? META_DM_VIDEO_MAX_SIZE
+          : META_DM_AUDIO_MAX_SIZE
+      : isVideo
+        ? MAX_VIDEO_SIZE
+        : isAudio
+          ? MAX_AUDIO_SIZE
+          : MAX_IMAGE_SIZE;
 
     if (file.size > maxSize) {
+      if (purpose === "AUTOMATION") {
+        const limit = isImage ? "۸ مگابایت" : "۲۵ مگابایت";
+        return NextResponse.json({ success: false, message: "حجم فایل برای پیام خودکار اینستاگرام باید کمتر از " + limit + " باشد." }, { status: 400 });
+      }
       return NextResponse.json({ success: false, message: "حجم فایل بیش از حد مجاز است." }, { status: 400 });
     }
 
@@ -76,7 +97,7 @@ export async function POST(request: NextRequest) {
 
     if (isVideo) {
       try {
-        uploadBuffer = await normalizeInstagramVideo(uploadBuffer, file.name, targetType);
+        uploadBuffer = await normalizeInstagramVideo(uploadBuffer, file.name, purpose === "AUTOMATION" ? "MESSAGE" : targetType);
         uploadFileName = path.basename(file.name, path.extname(file.name)) + ".mp4";
         uploadContentType = "video/mp4";
       } catch (error) {

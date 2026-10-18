@@ -3,6 +3,7 @@
 import { Button, Input, Select, Textarea } from "@/components/dashboard/DashboardUI";
 import {
   ArrowDown,
+  BookmarkPlus,
   ArrowUp,
   Check,
   ChevronDown,
@@ -12,6 +13,7 @@ import {
   Mic,
   Plus,
   RotateCcw,
+  Save,
   Trash2,
   Upload,
   Video,
@@ -95,6 +97,7 @@ async function readJsonResponse(response: Response, fallback: string) {
 async function uploadFile(file: File): Promise<string> {
   const formData = new FormData();
   formData.append("file", file);
+  formData.append("purpose", "AUTOMATION");
   const response = await fetch("/api/instagram/publishing/upload", {
     method: "POST",
     body: formData,
@@ -158,6 +161,100 @@ export default function AutomationFlowMessage({
   const [mediaRetryFile, setMediaRetryFile] = useState<File | null>(null);
   const [contentStep, setContentStep] = useState(false);
   const [error, setError] = useState("");
+  const [savedResponses, setSavedResponses] = useState<Array<Record<string, any>>>([]);
+  const [savedResponseTitle, setSavedResponseTitle] = useState("");
+  const [savedResponseLoading, setSavedResponseLoading] = useState(false);
+  const [savedResponseSaving, setSavedResponseSaving] = useState(false);
+  const [selectedSavedResponseId, setSelectedSavedResponseId] = useState("");
+  const [savedResponseDeleting, setSavedResponseDeleting] = useState(false);
+  const [savedResponseError, setSavedResponseError] = useState("");
+
+  useEffect(() => {
+    if (!instagramAccountId) {
+      setSavedResponses([]);
+      return;
+    }
+    let cancelled = false;
+    setSavedResponseLoading(true);
+    fetch(`/api/saved-responses?instagramAccountId=${encodeURIComponent(instagramAccountId)}`, {
+      cache: "no-store",
+      credentials: "include",
+    })
+      .then(async (response) => {
+        const result = await response.json();
+        if (!response.ok || !result?.success) throw new Error(result?.error || "دریافت پاسخ‌های ذخیره‌شده ناموفق بود.");
+        if (!cancelled) setSavedResponses(Array.isArray(result.data) ? result.data : []);
+      })
+      .catch((loadError) => {
+        if (!cancelled) setSavedResponseError(loadError instanceof Error ? loadError.message : "دریافت پاسخ‌های ذخیره‌شده ناموفق بود.");
+      })
+      .finally(() => {
+        if (!cancelled) setSavedResponseLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [instagramAccountId]);
+
+  async function saveCurrentResponse() {
+    if (!instagramAccountId) return;
+    const title = savedResponseTitle.trim();
+    if (!title) {
+      setSavedResponseError("برای پاسخ ذخیره‌شده یک عنوان بنویس.");
+      return;
+    }
+    setSavedResponseSaving(true);
+    setSavedResponseError("");
+    try {
+      const response = await fetch("/api/saved-responses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          instagramAccountId,
+          title,
+          messageType: message.messageType,
+          text: message.text || null,
+          mediaUrl: message.mediaUrl || null,
+          mediaId: message.mediaId || null,
+          showcaseId: message.showcaseId || null,
+          formId: message.formId || null,
+          quickReplies: message.quickReplies || [],
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result?.success || !result?.data?.id) {
+        throw new Error(result?.error || "ذخیره پاسخ ناموفق بود.");
+      }
+      setSavedResponses((current) => [result.data, ...current.filter((item) => item.id !== result.data.id)]);
+      setSavedResponseTitle("");
+    } catch (saveError) {
+      setSavedResponseError(saveError instanceof Error ? saveError.message : "ذخیره پاسخ ناموفق بود.");
+    } finally {
+      setSavedResponseSaving(false);
+    }
+  }
+
+  function applySavedResponse(saved: Record<string, any>) {
+    const cloneQuickReply = (reply: QuickReplyDraft): QuickReplyDraft => ({
+      ...reply,
+      id: `quick_reply_${crypto.randomUUID()}`,
+      payload: `payload_${crypto.randomUUID()}`,
+      nextMessageId: null,
+      destinationQuickReplies: Array.isArray(reply.destinationQuickReplies)
+        ? reply.destinationQuickReplies.map(cloneQuickReply)
+        : [],
+    });
+    onUpdate({
+      messageType: saved.messageType,
+      text: saved.text || "",
+      mediaUrl: saved.mediaUrl || "",
+      mediaId: saved.mediaId || "",
+      showcaseId: saved.showcaseId || "",
+      formId: saved.formId || "",
+      quickReplies: Array.isArray(saved.quickReplies) ? saved.quickReplies.map(cloneQuickReply) : [],
+    });
+    setContentStep(saved.messageType !== "TEXT");
+    setSavedResponseError("");
+  }
 
   useEffect(() => {
     if (triggerType === "COMMENT_KEYWORD" && message.messageType !== "TEXT") {
@@ -205,6 +302,90 @@ export default function AutomationFlowMessage({
 
   return (
     <article dir="rtl" className="relative overflow-hidden rounded-[28px] border bg-white" style={{ borderColor: palette.border }}>
+      {instagramAccountId && (
+        <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center" style={{ borderColor: palette.border, background: "#F8FAFC" }}>
+          <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row">
+            <input
+              value={savedResponseTitle}
+              onChange={(event) => setSavedResponseTitle(event.target.value)}
+              maxLength={80}
+              placeholder="عنوان برای ذخیره پاسخ (مثلاً معرفی محصول)"
+              aria-label="عنوان پاسخ ذخیره‌شده"
+              className="min-w-0 flex-1 rounded-xl border bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-400"
+              style={{ borderColor: palette.border }}
+            />
+            <button
+              type="button"
+              disabled={savedResponseSaving}
+              onClick={() => void saveCurrentResponse()}
+              className="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+              style={{ background: palette.primary }}
+            >
+              <Save size={16} />
+              {savedResponseSaving ? "در حال ذخیره..." : "ذخیره پاسخ"}
+            </button>
+          </div>
+          <div className="flex min-w-0 items-center gap-2 sm:w-[300px]">
+            <BookmarkPlus size={17} style={{ color: palette.secondary, flexShrink: 0 }} />
+            <select
+              aria-label="استفاده از پاسخ ذخیره‌شده"
+              defaultValue=""
+              disabled={savedResponseLoading || savedResponses.length === 0}
+              value={selectedSavedResponseId}
+              onChange={(event) => setSelectedSavedResponseId(event.target.value)}
+              className="min-w-0 flex-1 rounded-xl border bg-white px-3 py-2.5 text-sm"
+              style={{ borderColor: palette.border }}
+            >
+              <option value="">{savedResponseLoading ? "در حال دریافت پاسخ‌ها..." : savedResponses.length ? "انتخاب پاسخ ذخیره‌شده..." : "پاسخی ذخیره نشده است"}</option>
+              {savedResponses.map((saved) => (
+                <option key={saved.id} value={saved.id}>{saved.title} · {saved.messageType}</option>
+              ))}
+            </select>
+            <button
+              type="button"
+              disabled={!selectedSavedResponseId || savedResponseDeleting}
+              onClick={() => {
+                const selected = savedResponses.find((item) => item.id === selectedSavedResponseId);
+                if (selected) applySavedResponse(selected);
+              }}
+              className="rounded-xl border bg-white px-3 py-2.5 text-xs font-bold disabled:opacity-40"
+              style={{ borderColor: palette.border, color: palette.primary }}
+            >
+              استفاده
+            </button>
+            <button
+              type="button"
+              title="حذف از پاسخ‌های ذخیره‌شده"
+              aria-label="حذف پاسخ ذخیره‌شده"
+              disabled={!selectedSavedResponseId || savedResponseDeleting}
+              onClick={() => {
+                const selected = savedResponses.find((item) => item.id === selectedSavedResponseId);
+                if (!selected || !window.confirm("پاسخ انتخاب‌شده از فهرست ذخیره‌شده‌ها حذف شود؟")) return;
+                setSavedResponseDeleting(true);
+                setSavedResponseError("");
+                fetch("/api/saved-responses/" + encodeURIComponent(selected.id), {
+                  method: "DELETE",
+                  credentials: "include",
+                })
+                  .then(async (response) => {
+                    const result = await response.json();
+                    if (!response.ok || !result?.success) throw new Error(result?.error || "حذف پاسخ ناموفق بود.");
+                    setSavedResponses((current) => current.filter((item) => item.id !== selected.id));
+                    setSelectedSavedResponseId("");
+                  })
+                  .catch((deleteError) => setSavedResponseError(deleteError instanceof Error ? deleteError.message : "حذف پاسخ ناموفق بود."))
+                  .finally(() => setSavedResponseDeleting(false));
+              }}
+              className="rounded-xl border bg-white px-3 py-2.5 text-xs font-bold disabled:opacity-40"
+              style={{ borderColor: "#FECACA", color: palette.error }}
+            >
+              {savedResponseDeleting ? "..." : "حذف"}
+            </button>
+          </div>
+          {savedResponseError && <p className="text-xs" style={{ color: palette.error }}>{savedResponseError}</p>}
+        </div>
+      )}
+
       <div
         className={[
           "transition-all duration-300 ease-out",

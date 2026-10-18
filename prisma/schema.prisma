@@ -29,6 +29,7 @@ model User {
   auditLogs AuditLog[] @relation("AuditLogActor")
   couponRedemptions CouponRedemption[]
   storageObjects InstagramStorageObject[]
+  savedAutomationResponses SavedAutomationResponse[]
 }
 
 model InstagramAccount {
@@ -51,6 +52,7 @@ model InstagramAccount {
   pendingFollowGates PendingFollowGate[]
   persistentMenu     PersistentMenu?
   showcases          Showcase[]
+  savedAutomationResponses SavedAutomationResponse[]
 
   @@unique([userId, igUserId])
   @@index([userId])
@@ -253,6 +255,27 @@ model Comment {
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, igMediaId])
+}
+
+model SavedAutomationResponse {
+  id                 String           @id @default(cuid())
+  userId             String
+  instagramAccountId String
+  title              String
+  messageType        String
+  text               String?
+  mediaUrl            String?
+  mediaId             String?
+  showcaseId          String?
+  formId              String?
+  quickReplies        Json?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  user                User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  instagramAccount    InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
+
+  @@index([userId, instagramAccountId, createdAt])
+  @@index([instagramAccountId, messageType])
 }
 
 model Showcase {

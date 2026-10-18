@@ -1,5 +1,6 @@
 import { cloudinaryStorageProvider } from "./cloudinary";
 import { localStorageProvider } from "./local";
+import { s3CompatibleStorageProvider } from "./s3-compatible";
 import { testStorageProvider } from "./test";
 import { vercelBlobStorageProvider } from "./vercel-blob";
 
@@ -15,6 +16,10 @@ export function getStorageProvider() {
 
     case "vercel-blob":
       return vercelBlobStorageProvider;
+
+    case "s3":
+    case "s3-compatible":
+      return s3CompatibleStorageProvider;
 
     case "test":
       return testStorageProvider;
