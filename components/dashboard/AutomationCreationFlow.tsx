@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/dashboard/DashboardUI";
 import PublishingStoryAutomationSetup from "./publishing/PublishingStoryAutomationSetup";
 import { createEmptyMessage, type MessageDraft, type QuickReplyDraft, type Showcase, type FormItem } from "./automation-form-utils";
+import { dairaPalette } from "@/lib/design-system/palette";
 
 type Account = { id: string; igUsername: string; igUserId: string; isConnected: boolean };
 type TriggerType = "COMMENT_KEYWORD" | "STORY_REPLY_KEYWORD";
@@ -46,6 +47,8 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   const [selectedMediaIds, setSelectedMediaIds] = useState<string[]>(mediaId ? [mediaId] : []);
   const [mediaLoading, setMediaLoading] = useState(true);
   const [commentReply, setCommentReply] = useState("");
+  const [requireFollow, setRequireFollow] = useState(false);
+  const [followGateText, setFollowGateText] = useState("برای دریافت پاسخ، ابتدا پیج ما را فالو کنید.");
   const [message, setMessage] = useState<MessageDraft>(() => createEmptyMessage());
   const [showcases, setShowcases] = useState<Showcase[]>([]);
   const [forms, setForms] = useState<FormItem[]>([]);
@@ -104,6 +107,10 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     const cleanKeywords = keyword.split(",").map((item) => item.trim()).filter(Boolean);
     const currentMessage = finalMessage ?? message;
 
+    if (triggerType === "COMMENT_KEYWORD" && requireFollow && !followGateText.trim()) {
+      setError("متن درخواست فالو را وارد کنید.");
+      return;
+    }
     if (!cleanKeywords.length) {
       setError("حداقل یک کلمه کلیدی وارد کنید.");
       return;
@@ -137,8 +144,8 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
           sendDm: true,
           likeIncomingDm: false,
           likeStoryReply: false,
-          requireFollow: false,
-          followGateText: null,
+          requireFollow: triggerType === "COMMENT_KEYWORD" && requireFollow,
+          followGateText: triggerType === "COMMENT_KEYWORD" && requireFollow ? followGateText.trim() : null,
           isActive: true,
         }),
       });
@@ -255,7 +262,8 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                   ))}
                 </div>
               )}
-              {triggerType === "COMMENT_KEYWORD" && <div className="mb-3 rounded-xl border border-[#E2E8F0] p-3"><p className="mb-2 text-xs font-bold text-[#334155]">روش تطبیق کلمات</p><div className="grid grid-cols-1 gap-2 sm:grid-cols-2"><button type="button" onClick={() => setKeywordMatchMode("EXACT")} className={"rounded-lg border p-3 text-right text-xs " + (keywordMatchMode === "EXACT" ? "border-[#2563EB] bg-[#EFF6FF] text-[#1D4ED8]" : "border-[#E2E8F0] text-[#475569]")}><strong className="block mb-1">عبارت دقیق</strong>کامنت باید با یکی از کلمات برابر باشد.</button><button type="button" onClick={() => setKeywordMatchMode("CONTAINS_ANY")} className={"rounded-lg border p-3 text-right text-xs " + (keywordMatchMode === "CONTAINS_ANY" ? "border-[#2563EB] bg-[#EFF6FF] text-[#1D4ED8]" : "border-[#E2E8F0] text-[#475569]")}><strong className="block mb-1">شامل هر کلمه</strong>اگر کامنت شامل یکی از کلمات باشد، فعال می‌شود.</button></div></div>}\n              <div className="flex items-center gap-2">
+              {triggerType === "COMMENT_KEYWORD" && <div className="mb-3 rounded-xl border border-[#E2E8F0] p-3"><p className="mb-2 text-xs font-bold text-[#334155]">روش تطبیق کلمات</p><div className="grid grid-cols-1 gap-2 sm:grid-cols-2"><button type="button" onClick={() => setKeywordMatchMode("EXACT")} className={"rounded-lg border p-3 text-right text-xs " + (keywordMatchMode === "EXACT" ? "border-[#2563EB] bg-[#EFF6FF] text-[#1D4ED8]" : "border-[#E2E8F0] text-[#475569]")}><strong className="block mb-1">عبارت دقیق</strong>کامنت باید با یکی از کلمات برابر باشد.</button><button type="button" onClick={() => setKeywordMatchMode("CONTAINS_ANY")} className={"rounded-lg border p-3 text-right text-xs " + (keywordMatchMode === "CONTAINS_ANY" ? "border-[#2563EB] bg-[#EFF6FF] text-[#1D4ED8]" : "border-[#E2E8F0] text-[#475569]")}><strong className="block mb-1">شامل هر کلمه</strong>اگر کامنت شامل یکی از کلمات باشد، فعال می‌شود.</button></div></div>}
+              <div className="flex items-center gap-2">
                 <input value={keywordDraft} onChange={(e) => setKeywordDraft(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addKeyword(); } }} placeholder="مثلاً قیمت، اطلاعات" className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-3 !text-base text-[#0F172A] outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px" }} />
                 <Button type="button" onClick={addKeyword} disabled={!keywordDraft.trim()} className="min-h-11 shrink-0 rounded-lg !bg-[#2563EB] px-3.5 text-xs font-semibold text-white hover:!bg-[#1D4ED8] disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8]">افزودن</Button>
               </div>
@@ -266,6 +274,25 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                 <label className="mb-2 block text-sm font-bold text-[#0F172A]">متن ارسالی در کامنت</label>
                 <textarea value={commentReply} onChange={(e) => setCommentReply(e.target.value)} rows={3} maxLength={2000} placeholder="پاسخی که زیر کامنت کاربر منتشر می‌شود بنویس..." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none placeholder:text-[11px] placeholder:whitespace-nowrap placeholder:overflow-hidden placeholder:text-ellipsis focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75 }} />
               </div>
+            )}
+
+            {triggerType === "COMMENT_KEYWORD" && (
+              <section className="border-t pt-5" style={{ borderColor: dairaPalette.border }}>
+                <label className="flex cursor-pointer items-start gap-3 rounded-xl border p-3" style={{ borderColor: dairaPalette.border, background: dairaPalette.background.surfaceHover }}>
+                  <input type="checkbox" checked={requireFollow} onChange={(event) => setRequireFollow(event.target.checked)} className="mt-1 h-4 w-4 accent-[#2F61FD]" />
+                  <span className="min-w-0">
+                    <strong className="block text-sm" style={{ color: dairaPalette.text.heading }}>الزام به فالو قبل از ارسال پاسخ</strong>
+                    <span className="mt-1 block text-xs leading-5" style={{ color: dairaPalette.text.body }}>اگر کاربر پیج را فالو نکرده باشد، ابتدا پیام درخواست فالو و دکمه بررسی ارسال می‌شود.</span>
+                  </span>
+                </label>
+                {requireFollow && (
+                  <div className="mt-3">
+                    <label className="mb-2 block text-sm font-semibold" style={{ color: dairaPalette.text.heading }}>متن درخواست فالو</label>
+                    <textarea value={followGateText} onChange={(event) => setFollowGateText(event.target.value)} maxLength={640} rows={3} placeholder="برای دریافت پاسخ، ابتدا پیج ما را فالو کنید." className="w-full rounded-xl border bg-white px-3 py-3 text-sm leading-6 outline-none focus:ring-2 focus:ring-[#2F61FD]/15" style={{ borderColor: dairaPalette.form.border, color: dairaPalette.text.heading }} />
+                    {!followGateText.trim() && <p className="mt-1 text-xs" style={{ color: dairaPalette.status.error }}>وارد کردن متن درخواست فالو الزامی است.</p>}
+                  </div>
+                )}
+              </section>
             )}
 
             <div className="border-t border-[#E2E8F0] pt-5">
