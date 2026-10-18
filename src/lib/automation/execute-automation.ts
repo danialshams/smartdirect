@@ -292,14 +292,26 @@ async function executeAutomationInternal(input: ExecuteAutomationInput) {
         destinationType === "FORM"
           ? (destinationQuestion ?? "")
           : destinationText,
-      mediaUrl:
-        destination.mediaUrl ?? destination.destinationMediaUrl ?? null,
-      mediaId:
-        destination.mediaId ?? destination.destinationMediaId ?? null,
-      showcaseId:
-        destination.showcaseId ?? destination.destinationShowcaseId ?? null,
-      formId:
-        destination.formId ?? destination.destinationFormId ?? null,
+      mediaUrl: typeof destination.mediaUrl === "string"
+        ? destination.mediaUrl
+        : typeof destination.destinationMediaUrl === "string"
+          ? destination.destinationMediaUrl
+          : null,
+      mediaId: typeof destination.mediaId === "string"
+        ? destination.mediaId
+        : typeof destination.destinationMediaId === "string"
+          ? destination.destinationMediaId
+          : null,
+      showcaseId: typeof destination.showcaseId === "string"
+        ? destination.showcaseId
+        : typeof destination.destinationShowcaseId === "string"
+          ? destination.destinationShowcaseId
+          : null,
+      formId: typeof destination.formId === "string"
+        ? destination.formId
+        : typeof destination.destinationFormId === "string"
+          ? destination.destinationFormId
+          : null,
       quickReplies: (
         Array.isArray(destination.quickReplies)
           ? destination.quickReplies
