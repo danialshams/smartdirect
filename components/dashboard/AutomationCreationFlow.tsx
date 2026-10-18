@@ -46,14 +46,12 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   const MAX_LINK_BUTTONS = 3;
   const [linkButtons, setLinkButtons] = useState<Array<{ title: string; url: string }>>([{ title: "مشاهده لینک", url: "" }]);
   const [mediaItems, setMediaItems] = useState<Array<{id:string; caption?:string; media_type?:string; media_product_type?:string; thumbnail_url?:string|null; media_url?:string|null; timestamp?:string}>>([]);
-  const [mediaSelectionMode, setMediaSelectionMode] = useState<"ALL" | "SELECTED">(mediaId ? "SELECTED" : "ALL");
+  const [mediaSelectionMode, setMediaSelectionMode] = useState<"ALL" | "SELECTED">("SELECTED");
   const [selectedMediaIds, setSelectedMediaIds] = useState<string[]>(mediaId ? [mediaId] : []);
   const [mediaLoading, setMediaLoading] = useState(true);
   const [commentReply, setCommentReply] = useState("");
   const [requireFollow, setRequireFollow] = useState(false);
   const [dmMode, setDmMode] = useState<"TEXT" | "TEXT_WITH_LINK">("TEXT");
-  const [linkButtonUrl, setLinkButtonUrl] = useState("");
-  const [linkButtonTitle, setLinkButtonTitle] = useState("مشاهده لینک");
   const [followGateText, setFollowGateText] = useState("برای دریافت پاسخ، ابتدا پیج ما را فالو کنید.");
   const [message, setMessage] = useState<MessageDraft>(() => createEmptyMessage());
   const [showcases, setShowcases] = useState<Showcase[]>([]);
@@ -123,8 +121,8 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
       if (invalidButton) { setError("برای هر دکمه، لینک معتبر با http یا https و عنوان حداکثر ۲۰ کاراکتر وارد کنید."); return; }
       if (currentMessage.text.trim().length > 640) { setError("متن دایرکت همراه دکمه حداکثر ۶۴۰ کاراکتر است."); return; }
     }
-    if (triggerType === "COMMENT_KEYWORD" && mediaSelectionMode === "SELECTED" && selectedMediaIds.length === 0) {
-      setError("حداقل یک پست یا ریلز انتخاب کنید، یا گزینه همه محتواها را بزنید.");
+    if (triggerType === "COMMENT_KEYWORD" && selectedMediaIds.length === 0) {
+      setError("حداقل یک پست یا ریلز انتخاب کنید.");
       return;
     }
     if (triggerType === "COMMENT_KEYWORD" && requireFollow && !followGateText.trim()) {
@@ -158,10 +156,10 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
         body: JSON.stringify({
           instagramAccountId: account.id,
           triggerType,
-          mediaId: triggerType === "COMMENT_KEYWORD" ? (mediaSelectionMode === "SELECTED" && selectedMediaIds.length === 1 ? selectedMediaIds[0] : null) : mediaId,
+          mediaId: triggerType === "COMMENT_KEYWORD" ? (selectedMediaIds.length === 1 ? selectedMediaIds[0] : null) : mediaId,
           keyword: keywordMatchMode === "CONTAINS_ANY" ? null : cleanKeywords.join(","),
           keywordMatchMode,
-          mediaIds: triggerType === "COMMENT_KEYWORD" && mediaSelectionMode === "SELECTED" ? selectedMediaIds : [],
+          mediaIds: triggerType === "COMMENT_KEYWORD" ? selectedMediaIds : [],
           commentReplyText: triggerType === "COMMENT_KEYWORD" ? commentReply.trim() || null : null,
           replyText: null,
           likeComment: false,
