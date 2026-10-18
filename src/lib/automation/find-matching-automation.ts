@@ -70,6 +70,8 @@ export async function findMatchingAutomation(input: FindAutomationInput) {
         configuredKeyword: automation.keyword,
         incomingKeyword: normalizedIncoming,
         automationMediaId: automation.mediaId,
+        configuredMediaIds: automation.mediaIds,
+        keywordMatchMode: automation.keywordMatchMode === "CONTAINS_ANY" ? "CONTAINS_ANY" : "EXACT",
         incomingMediaId: input.mediaId,
       }),
     ) ?? null
