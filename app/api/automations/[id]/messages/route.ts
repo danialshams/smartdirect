@@ -36,11 +36,22 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (!automation) return NextResponse.json({ success: false, error: "Automation پیدا نشد" }, { status: 404 });
     const body = await request.json();
     if (!body || typeof body !== "object") return NextResponse.json({ success: false, error: "اطلاعات پیام نامعتبر است" }, { status: 400 });
-    const { messageType = "TEXT", text, mediaUrl, mediaId, showcaseId, formId, order } = body;
+    const { messageType = "TEXT", text, mediaUrl, mediaId, showcaseId, formId, order, linkButtonUrl, linkButtonTitle } = body;
     if (!isValidMessageType(messageType)) return NextResponse.json({ success: false, error: "نوع پیام نامعتبر است" }, { status: 400 });
     const normalizedText = normalizeOptionalString(text);
     const normalizedMediaUrl = normalizeOptionalString(mediaUrl);
     const normalizedMediaId = normalizeOptionalString(mediaId);
+    const normalizedLinkButtonUrl = normalizeOptionalString(linkButtonUrl);
+    const normalizedLinkButtonTitle = normalizeOptionalString(linkButtonTitle);
+    if (normalizedLinkButtonUrl || normalizedLinkButtonTitle) {
+      if (messageType !== "TEXT") return NextResponse.json({ success: false, error: "دکمه لینک فقط برای پیام متنی قابل استفاده است." }, { status: 400 });
+      if (!normalizedLinkButtonUrl || !normalizedLinkButtonTitle) return NextResponse.json({ success: false, error: "آدرس و عنوان دکمه لینک هر دو الزامی هستند." }, { status: 400 });
+      let parsedLink: URL;
+      try { parsedLink = new URL(normalizedLinkButtonUrl); } catch { return NextResponse.json({ success: false, error: "آدرس دکمه معتبر نیست." }, { status: 400 }); }
+      if (!["http:", "https:"].includes(parsedLink.protocol)) return NextResponse.json({ success: false, error: "آدرس دکمه باید با http یا https شروع شود." }, { status: 400 });
+      if (normalizedLinkButtonTitle.length > 20) return NextResponse.json({ success: false, error: "عنوان دکمه حداکثر ۲۰ کاراکتر است." }, { status: 400 });
+      if ((normalizedText?.length ?? 0) > 640) return NextResponse.json({ success: false, error: "متن پیام دارای دکمه حداکثر ۶۴۰ کاراکتر است." }, { status: 400 });
+    }
     if ((messageType === "TEXT" || messageType === "FORM") && !normalizedText) return NextResponse.json({ success: false, error: messageType === "FORM" ? "برای فرم، متن سوال الزامی است" : "برای پیام متنی، text الزامی است" }, { status: 400 });
     if (["IMAGE", "VIDEO", "AUDIO"].includes(messageType) && !normalizedMediaUrl && !normalizedMediaId) return NextResponse.json({ success: false, error: "برای پیام رسانه‌ای باید mediaUrl یا mediaId ارسال شود" }, { status: 400 });
 
@@ -75,6 +86,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         text: normalizedText,
         mediaUrl: ["IMAGE", "VIDEO", "AUDIO"].includes(messageType) ? normalizedMediaUrl : null,
         mediaId: ["IMAGE", "VIDEO", "AUDIO"].includes(messageType) ? normalizedMediaId : null,
+        linkButtonUrl: messageType === "TEXT" ? normalizedLinkButtonUrl : null,
+        linkButtonTitle: messageType === "TEXT" ? normalizedLinkButtonTitle : null,
         showcaseId: messageType === "SHOWCASE" ? normalizedShowcaseId : null,
         formId: messageType === "FORM" ? normalizedFormId : null,
         order: messageOrder,
