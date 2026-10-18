@@ -49,6 +49,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       let parsedLink: URL;
       try { parsedLink = new URL(normalizedLinkButtonUrl); } catch { return NextResponse.json({ success: false, error: "آدرس دکمه معتبر نیست." }, { status: 400 }); }
       if (!["http:", "https:"].includes(parsedLink.protocol)) return NextResponse.json({ success: false, error: "آدرس دکمه باید با http یا https شروع شود." }, { status: 400 });
+      if (normalizedLinkButtonUrl.length > 2048) return NextResponse.json({ success: false, error: "آدرس دکمه حداکثر ۲۰۴۸ کاراکتر است." }, { status: 400 });
       if (normalizedLinkButtonTitle.length > 20) return NextResponse.json({ success: false, error: "عنوان دکمه حداکثر ۲۰ کاراکتر است." }, { status: 400 });
       if ((normalizedText?.length ?? 0) > 640) return NextResponse.json({ success: false, error: "متن پیام دارای دکمه حداکثر ۶۴۰ کاراکتر است." }, { status: 400 });
     }
