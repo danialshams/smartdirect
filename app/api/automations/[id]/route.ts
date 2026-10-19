@@ -133,6 +133,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         data: {
           mediaId: trigger === "STORY_REPLY_KEYWORD" ? targetIds[0] : (targetIds.length === 1 ? targetIds[0] : null),
           mediaIds: trigger === "COMMENT_KEYWORD" ? targetIds.join(",") : null,
+          // Reusing a saved response is a new activity and should update its list position/date.
+          updatedAt: new Date(),
         },
         include: automationInclude,
       });
