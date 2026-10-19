@@ -47,8 +47,8 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: Install locked dependencies
-        run: npm ci
+      - name: Install dependencies and reconcile the npm lockfile
+        run: npm install --no-audit --no-fund
 
       - name: Build application
         env:
