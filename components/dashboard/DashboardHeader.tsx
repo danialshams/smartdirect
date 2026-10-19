@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ChevronRight, X } from "lucide-react";
+import { useDashboardBackNavigation } from "./DashboardBackNavigationContext";
 
 type InstagramAccount = {
   id: string;
@@ -12,7 +14,15 @@ type InstagramAccount = {
   createdAt: Date;
 };
 
-export default function DashboardHeader({ instagramAccounts }: { instagramAccounts: InstagramAccount[] }) {
+export default function DashboardHeader({
+  instagramAccounts,
+  showBackButton = false,
+}: {
+  instagramAccounts: InstagramAccount[];
+  showBackButton?: boolean;
+}) {
+  const router = useRouter();
+  const { backHandler } = useDashboardBackNavigation();
   const [accountModalOpen, setAccountModalOpen] = useState(false);
   const connected = instagramAccounts.filter((account) => account.isConnected);
 
@@ -26,7 +36,22 @@ export default function DashboardHeader({ instagramAccounts }: { instagramAccoun
           <span className="daira-home__brand-mark">D</span>
           <span className="daira-home__brand-copy"><strong>دایرا</strong><small>اتوماسیون اینستاگرام</small></span>
         </Link>
-        <span className="daira-home__header-spacer" aria-hidden="true" />
+        {showBackButton ? (
+          <button
+            className="daira-home__back"
+            type="button"
+            aria-label="بازگشت"
+            title="بازگشت"
+            onClick={() => {
+              if (backHandler) backHandler();
+              else router.back();
+            }}
+          >
+            <ChevronRight size={25} strokeWidth={2} aria-hidden="true" />
+          </button>
+        ) : (
+          <span className="daira-home__header-spacer" aria-hidden="true" />
+        )}
       </header>
 
       {accountModalOpen ? (
@@ -52,6 +77,9 @@ export default function DashboardHeader({ instagramAccounts }: { instagramAccoun
         .daira-home__brand-copy strong { font-size:clamp(24px,3vw,36px);font-weight:900;letter-spacing:-1px; }
         .daira-home__brand-copy small { margin-top:5px;font-size:11px;color:#63769D;font-weight:600; }
         .daira-home__header-spacer { width:44px; }
+        .daira-home__back { width:44px;height:44px;display:grid;place-items:center;padding:0;border:0;border-radius:0;background:transparent;color:var(--daira-primary);cursor:pointer;transition:color .18s; }
+        .daira-home__back:hover { background:transparent;color:var(--daira-primary-hover); }
+        .daira-home__back:focus-visible { outline:2px solid var(--daira-primary);outline-offset:2px;border-radius:8px; }
         .daira-modal-backdrop { position:fixed;inset:0;z-index:3000;display:grid;place-items:center;padding:18px;background:rgba(24,35,60,.28);backdrop-filter:blur(5px); }
         .daira-account-modal { position:relative;width:min(100%,410px);max-height:min(85dvh,600px);overflow:auto;padding:28px 22px 22px;border:1px solid var(--daira-border);border-radius:26px;background:white;box-shadow:0 24px 80px rgba(22,54,110,.2);text-align:center; }
         .daira-account-modal__close { position:absolute;top:13px;left:13px;width:36px;height:36px;border:0;border-radius:12px;background:#F1F5F9;color:#64748B;display:grid;place-items:center;cursor:pointer; }
@@ -65,8 +93,8 @@ export default function DashboardHeader({ instagramAccounts }: { instagramAccoun
         .daira-account-modal__empty { margin:0 0 16px;padding:14px;border-radius:14px;background:#F8FAFC;color:var(--daira-text);font-size:12px; }
         .daira-account-modal__add { display:flex;justify-content:center;align-items:center;gap:8px;width:100%;min-height:48px;border-radius:15px;background:var(--daira-primary);color:white;text-decoration:none;font-size:13px;font-weight:800;transition:background .2s; }
         .daira-account-modal__add:hover { background:var(--daira-primary-hover); }
-        @media(max-width:900px) { .daira-home__header { min-height:68px;padding:7px 10px;margin-bottom:8px;border-radius:18px;grid-template-columns:40px minmax(0,1fr) 40px; } .daira-home__brand-mark { width:43px;height:43px;border-radius:14px;font-size:29px; } .daira-home__brand { gap:8px; } .daira-home__brand-copy strong { font-size:23px; } .daira-home__brand-copy small { margin-top:2px;font-size:9px; } .daira-home__instagram { width:38px;height:38px; } .daira-home__header-spacer { width:38px; } }
-        @media(max-width:520px) { .daira-home__header { min-height:64px;padding:6px 8px;border-radius:21px;grid-template-columns:38px minmax(0,1fr) 38px;gap:4px; } .daira-home__instagram { width:38px;height:38px; } .daira-home__brand { gap:8px; } .daira-home__brand-mark { width:47px;height:47px;border-radius:15px;font-size:31px; } .daira-home__brand-copy strong { font-size:26px; } .daira-home__brand-copy small { font-size:9px; } .daira-home__header-spacer { width:38px; } }
+        @media(max-width:900px) { .daira-home__header { min-height:68px;padding:7px 10px;margin-bottom:8px;border-radius:18px;grid-template-columns:40px minmax(0,1fr) 40px; } .daira-home__brand-mark { width:43px;height:43px;border-radius:14px;font-size:29px; } .daira-home__brand { gap:8px; } .daira-home__brand-copy strong { font-size:23px; } .daira-home__brand-copy small { margin-top:2px;font-size:9px; } .daira-home__instagram { width:38px;height:38px; } .daira-home__header-spacer { width:38px; } .daira-home__back { width:38px;height:38px; } }
+        @media(max-width:520px) { .daira-home__header { min-height:64px;padding:6px 8px;border-radius:21px;grid-template-columns:38px minmax(0,1fr) 38px;gap:4px; } .daira-home__instagram { width:38px;height:38px; } .daira-home__brand { gap:8px; } .daira-home__brand-mark { width:47px;height:47px;border-radius:15px;font-size:31px; } .daira-home__brand-copy strong { font-size:26px; } .daira-home__brand-copy small { font-size:9px; } .daira-home__header-spacer { width:38px; } .daira-home__back { width:38px;height:38px; } }
       `}</style>
     </>
   );
