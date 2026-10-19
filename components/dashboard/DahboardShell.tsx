@@ -73,12 +73,12 @@ export default function DashboardShell({ user, instagramAccounts, children }: Da
         .daira-app-main { flex:1 0 auto;min-height:0;box-sizing:border-box;padding:112px clamp(10px,2vw,24px) 128px; }
         .daira-app-content { width:100%;max-width:1240px;margin:0 auto; }
         .daira-bottom-nav-backdrop { position:fixed;left:0;right:0;bottom:0;height:100px;z-index:1490;background:var(--daira-page-bg);pointer-events:none; }
-        .daira-bottom-nav { position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom, 0px));z-index:1500;flex:0 0 auto;margin:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:center;min-height:84px;padding:8px 18px;border:1px solid rgba(226,232,240,.9);border-radius:23px;background:#FFFFFF;box-shadow:0 8px 32px rgba(22,54,110,.12);box-sizing:border-box; }
+        .daira-bottom-nav { position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom, 0px));z-index:1500;flex:0 0 auto;margin:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:center;min-height:84px;padding:8px 18px;border:1px solid rgba(226,232,240,.9);border-radius:23px;background:var(--daira-surface);box-shadow:0 8px 32px rgba(22,54,110,.12);box-sizing:border-box; }
         .daira-bottom-nav__item { display:flex;min-width:0;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--daira-text);text-decoration:none; }
         .daira-bottom-nav__icon { width:48px;height:43px;display:grid;place-items:center;border-radius:17px;transition:background .18s,color .18s,transform .18s; }
         .daira-bottom-nav__label { max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:600;line-height:1.4;text-align:center; }
-        .daira-bottom-nav__item.is-active { color:#2F61FD; }
-        .daira-bottom-nav__item.is-active .daira-bottom-nav__icon { background:linear-gradient(145deg,var(--daira-primary),var(--daira-primary-hover));color:white;box-shadow:0 7px 18px rgba(47,97,253,.22);transform:translateY(-2px); }
+        .daira-bottom-nav__item.is-active { color:var(--daira-primary); }
+        .daira-bottom-nav__item.is-active .daira-bottom-nav__icon { background:linear-gradient(145deg,var(--daira-primary),var(--daira-primary-hover));color:var(--daira-surface);box-shadow:0 7px 18px rgba(47,97,253,.22);transform:translateY(-2px); }
         .daira-bottom-nav__item:focus-visible { outline:3px solid rgba(47,97,253,.3);outline-offset:2px;border-radius:12px; }
         @media(max-width:900px) { .daira-app-main { padding-top:76px; } }
         @media(min-width:900px) { .daira-app-main { padding-bottom:128px; } .daira-bottom-nav { left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom, 0px));border-radius:23px;padding-left:24px;padding-right:24px; } }
@@ -88,9 +88,9 @@ export default function DashboardShell({ user, instagramAccounts, children }: Da
         .daira-flow-action-dock { position:fixed;left:12px;right:12px;bottom:calc(104px + env(safe-area-inset-bottom, 0px));z-index:1495;pointer-events:none; }
         .daira-flow-action-dock__inner { display:flex;align-items:stretch;gap:12px;width:min(100%,896px);margin:0 auto;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;backdrop-filter:none;pointer-events:auto; }
         .daira-flow-action-dock__button { display:flex;flex:1 1 0;min-width:0;min-height:48px;align-items:center;justify-content:center;gap:6px;padding:10px 14px;border:1px solid transparent;border-radius:12px;font-family:"Vazirmatn",Arial,sans-serif;font-size:13px;font-weight:750;line-height:1.4;text-align:center;white-space:nowrap;cursor:pointer;transition:background .16s,color .16s,border-color .16s; }
-        .daira-flow-action-dock__button--primary { background:var(--daira-primary);border-color:var(--daira-primary);color:#FFFFFF; }
+        .daira-flow-action-dock__button--primary { background:var(--daira-primary);border-color:var(--daira-primary);color:var(--daira-surface); }
         .daira-flow-action-dock__button--primary:hover:not(:disabled) { background:var(--daira-primary-hover);border-color:var(--daira-primary-hover); }
-        .daira-flow-action-dock__button--secondary { background:var(--daira-primary-hover);border-color:var(--daira-primary-hover);color:#FFFFFF; }
+        .daira-flow-action-dock__button--secondary { background:var(--daira-primary-hover);border-color:var(--daira-primary-hover);color:var(--daira-surface); }
         .daira-flow-action-dock__button--secondary:hover:not(:disabled) { background:var(--daira-primary-active);border-color:var(--daira-primary-active); }
         .daira-flow-action-dock__button:disabled { background:var(--daira-disabled-bg);border-color:var(--daira-disabled-bg);color:var(--daira-disabled-text);cursor:not-allowed; }
         @media(max-width:480px) {
