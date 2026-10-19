@@ -114,10 +114,10 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   const keywords = useMemo(() => keyword.split(",").map((item) => item.trim()).filter(Boolean), [keyword]);
 
   useEffect(() => {
-    
     let cancelled = false;
+    const mediaEndpoint = triggerType === "COMMENT_KEYWORD" ? "/api/instagram/media?instagramAccountId=" : "/api/instagram/stories?instagramAccountId=";
     void Promise.all([
-      fetch("/api/instagram/media?instagramAccountId=" + encodeURIComponent(account.id), { cache: "no-store", credentials: "include" }).then((response) => response.json()),
+      fetch(mediaEndpoint + encodeURIComponent(account.id), { cache: "no-store", credentials: "include" }).then((response) => response.json()),
       fetch("/api/automations?instagramAccountId=" + encodeURIComponent(account.id), { cache: "no-store", credentials: "include" }).then((response) => response.json()),
     ])
       .then(([mediaResult, automationResult]) => {
@@ -125,26 +125,32 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
         if (!mediaResult?.success || !automationResult?.success || !Array.isArray(mediaResult?.data) || !Array.isArray(automationResult?.data)) {
           throw new Error("دریافت فهرست محتواها و پاسخ‌های خودکار ناموفق بود.");
         }
-        const existingMediaIds = new Set<string>();
-        const automations = Array.isArray(automationResult?.data) ? automationResult.data : [];
-        for (const automation of automations) {
-          if (automation?.triggerType !== "COMMENT_KEYWORD") continue;
-          if (typeof automation.mediaId === "string" && automation.mediaId) existingMediaIds.add(automation.mediaId);
-          if (typeof automation.mediaIds === "string") {
-            for (const id of automation.mediaIds.split(",").map((value: string) => value.trim()).filter(Boolean)) existingMediaIds.add(id);
+        const used = new Set<string>();
+        for (const automation of automationResult.data) {
+          if (automation?.triggerType !== triggerType) continue;
+          if (typeof automation.mediaId === "string" && automation.mediaId) used.add(automation.mediaId);
+          if (triggerType === "COMMENT_KEYWORD" && typeof automation.mediaIds === "string") {
+            automation.mediaIds.split(",").map((id: string) => id.trim()).filter(Boolean).forEach((id: string) => used.add(id));
           }
         }
-        const availableMedia = Array.isArray(mediaResult?.data)
+        const availableMedia = triggerType === "COMMENT_KEYWORD"
           ? mediaResult.data.filter((item: { id?: unknown; media_type?: string; media_product_type?: string }) =>
-              typeof item.id === "string" &&
-              !existingMediaIds.has(item.id) &&
+              typeof item.id === "string" && !used.has(item.id) &&
               (item.media_type === "IMAGE" || item.media_type === "VIDEO" || item.media_type === "CAROUSEL_ALBUM" || item.media_product_type === "REELS"))
-          : [];
+          : mediaResult.data.filter((item: { id?: unknown }) => typeof item.id === "string" && !used.has(item.id))
+              .map((item: { id: string; mediaType?: string | null; mediaUrl?: string | null; thumbnailUrl?: string | null }) => ({
+                id: item.id,
+                media_type: item.mediaType === "VIDEO" ? "VIDEO" : "IMAGE",
+                media_product_type: "STORY",
+                media_url: item.mediaUrl,
+                thumbnail_url: item.thumbnailUrl,
+                caption: "استوری اینستاگرام",
+              }));
         const availableIds = new Set<string>(availableMedia.map((item: { id: string }) => item.id));
         setMediaItems(availableMedia);
         setSelectedMediaIds((current) => current.filter((id) => availableIds.has(id)));
       })
-      .catch(() => { if (!cancelled) { setMediaItems([]); setError("دریافت فهرست پست‌ها یا پاسخ‌های خودکار ناموفق بود. صفحه را دوباره بارگذاری کنید."); } })
+      .catch(() => { if (!cancelled) { setMediaItems([]); setError("دریافت فهرست محتواها یا پاسخ‌های خودکار ناموفق بود. صفحه را دوباره بارگذاری کنید."); } })
       .finally(() => { if (!cancelled) setMediaLoading(false); });
     return () => { cancelled = true; };
   }, [account.id, triggerType]);
