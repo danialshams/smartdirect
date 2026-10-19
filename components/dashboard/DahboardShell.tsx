@@ -85,7 +85,7 @@ export default function DashboardShell({ user, instagramAccounts, children }: Da
         @media(prefers-reduced-motion:reduce) { .daira-bottom-nav__icon { transition:none; } }
         .daira-app-main--flow-actions { padding-bottom:calc(190px + env(safe-area-inset-bottom, 0px)); }
         .daira-flow-action-dock { position:fixed;left:12px;right:12px;bottom:calc(104px + env(safe-area-inset-bottom, 0px));z-index:1495;pointer-events:none; }
-        .daira-flow-action-dock__inner { display:flex;align-items:stretch;gap:10px;width:min(100%,840px);margin:0 auto;padding:10px;border:1px solid rgba(226,232,240,.96);border-radius:18px;background:rgba(244,247,252,.97);box-shadow:0 8px 26px rgba(22,54,110,.13);backdrop-filter:blur(12px);pointer-events:auto; }
+        .daira-flow-action-dock__inner { display:flex;align-items:stretch;gap:10px;width:min(100%,896px);margin:0 auto;padding:10px;border:1px solid rgba(226,232,240,.96);border-radius:18px;background:rgba(244,247,252,.97);box-shadow:0 8px 26px rgba(22,54,110,.13);backdrop-filter:blur(12px);pointer-events:auto; }
         .daira-flow-action-dock__button { display:flex;flex:1 1 0;min-width:0;min-height:48px;align-items:center;justify-content:center;gap:6px;padding:10px 14px;border:1px solid transparent;border-radius:12px;font-family:"Vazirmatn",Arial,sans-serif;font-size:13px;font-weight:750;line-height:1.4;text-align:center;white-space:nowrap;cursor:pointer;transition:background .16s,color .16s,border-color .16s; }
         .daira-flow-action-dock__button--primary { background:var(--daira-primary);border-color:var(--daira-primary);color:#FFFFFF; }
         .daira-flow-action-dock__button--primary:hover:not(:disabled) { background:var(--daira-primary-hover);border-color:var(--daira-primary-hover); }
