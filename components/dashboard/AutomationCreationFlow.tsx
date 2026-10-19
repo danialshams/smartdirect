@@ -534,8 +534,8 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                 />
               )}
             </>
-
-
+            </>
+            )}
 
           </div>
 
