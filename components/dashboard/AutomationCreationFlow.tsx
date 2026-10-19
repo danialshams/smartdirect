@@ -413,7 +413,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                 )}
                 <div className="mt-4 grid grid-cols-1 gap-2 border-t border-[#E6ECF5] pt-4 sm:grid-cols-2">
                   <button type="button" onClick={startNewAutomation} className="flex min-h-11 items-center justify-center rounded-xl border border-[#BFDBFE] bg-[#EFF6FF] px-4 text-xs font-bold text-[#2F61FD] transition hover:bg-[#DBEAFE]">ساخت پاسخ جدید</button>
-                  <button type="button" onClick={() => { if (selectedTemplateId) { setCreationMode("existing"); setError(""); } else setError("ابتدا یکی از پاسخ‌های قبلی را انتخاب کنید."); }} disabled={!selectedTemplateId || loadingResources} className="flex min-h-11 items-center justify-center rounded-xl bg-[#2F61FD] px-4 text-xs font-bold text-white transition hover:bg-[#1E4BD8] disabled:cursor-not-allowed disabled:bg-[#E2E8F0] disabled:text-[#94A3B8]">انتخاب پاسخ</button>
+                  <button type="button" onClick={() => { setCreationMode("existing"); void saveAutomation(); }} disabled={!selectedTemplateId || loadingResources || mediaLoading || selectedMediaIds.length === 0 || saving} className="flex min-h-11 items-center justify-center rounded-xl bg-[#2F61FD] px-4 text-xs font-bold text-white transition hover:bg-[#1E4BD8] disabled:cursor-not-allowed disabled:bg-[#E2E8F0] disabled:text-[#94A3B8]">{saving ? "در حال اتصال..." : "انتخاب پاسخ"}</button>
                 </div>
               </section>
             )}
@@ -555,15 +555,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             </>
             )}
 
-            {flowStep === 2 && creationMode === "existing" && selectedTemplateId && (
-              <section className="rounded-2xl border border-[#BFDBFE] bg-[#EFF6FF] p-4 sm:p-5">
-                <h3 className="text-sm font-bold text-[#18233C]">اتصال پاسخ خودکار موجود</h3>
-                <p className="mt-2 text-xs leading-6 text-[#5A6B87]">تنظیمات، کلمات کلیدی و پیام‌های این پاسخ حفظ می‌شوند. با تأیید، فقط محتوای انتخاب‌شده به آن متصل خواهد شد.</p>
-                <button type="button" onClick={() => void saveAutomation()} disabled={saving || mediaLoading || selectedMediaIds.length === 0} className="mt-4 flex min-h-12 w-full items-center justify-center rounded-xl bg-[#2F61FD] px-4 text-sm font-bold text-white transition hover:bg-[#1E4BD8] disabled:opacity-60">
-                  {saving ? "در حال اتصال..." : "اتصال پاسخ به محتوای انتخاب‌شده"}
-                </button>
-              </section>
-            )}
+
 
           </div>
 
