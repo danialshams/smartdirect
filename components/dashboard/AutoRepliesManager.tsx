@@ -91,7 +91,7 @@ function normalizeKeywordList(value: string | null | undefined) {
   return (value || "").split(/[,،;؛\n]+/).map((item) => item.trim()).filter(Boolean).join("، ");
 }
 
-const AUTO_REPLIES_CACHE_VERSION = 2;
+const AUTO_REPLIES_CACHE_VERSION = 3;
 const AUTO_REPLIES_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 function readAutoRepliesCache(accountId: string): ReplyItem[] | null {
@@ -284,7 +284,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
             id: automation.id,
             key: `automation:${automation.id}`,
             type: media?.type ?? (isStory ? "STORY" : "UNKNOWN"),
-            date: media?.date ?? automation.createdAt,
+            date: automation.createdAt,
             sortAt: automation.createdAt,
             previewUrl: media?.previewUrl ?? null,
             previewKind: media?.previewKind ?? null,
@@ -311,8 +311,8 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
             id: job.id,
             key: `publish:${job.id}`,
             type: job.type,
-            date: job.publishedAt ?? job.createdAt,
-            sortAt: job.updatedAt ?? job.createdAt,
+            date: job.createdAt,
+            sortAt: job.createdAt,
             previewUrl: job.media[0]?.publicUrl ?? null,
             previewKind: job.media[0]?.type === "VIDEO" ? "video" : job.media[0]?.type === "IMAGE" ? "image" : null,
             title: isStory ? "پاسخ خودکار استوری" : "پاسخ خودکار کامنت",
@@ -322,9 +322,13 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
           });
         }
 
+        // The list represents when the automation was created, not when its
+        // associated Instagram post/story was published or later updated.
         nextItems.sort((a, b) => {
-          const aDate = a.sortAt ? new Date(a.sortAt).getTime() : 0;
-          const bDate = b.sortAt ? new Date(b.sortAt).getTime() : 0;
+          const parsedA = a.sortAt ? Date.parse(a.sortAt) : Number.NaN;
+          const parsedB = b.sortAt ? Date.parse(b.sortAt) : Number.NaN;
+          const aDate = Number.isFinite(parsedA) ? parsedA : 0;
+          const bDate = Number.isFinite(parsedB) ? parsedB : 0;
           return bDate - aDate;
         });
 
