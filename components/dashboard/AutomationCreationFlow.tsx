@@ -449,8 +449,8 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType }
         border-color: var(--daira-primary-hover) !important;
       }
       .automation-create-flow button:disabled {
-        background-color: #2F61FD !important;
-        border-color: #2F61FD !important;
+        background-color: var(--daira-primary) !important;
+        border-color: var(--daira-primary) !important;
         opacity: .48;
       }
       .sd-success-ring {
