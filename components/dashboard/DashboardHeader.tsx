@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { ChevronRight, X } from "lucide-react";
 import { useDashboardBackNavigation } from "./DashboardBackNavigationContext";
 
@@ -22,8 +22,7 @@ export default function DashboardHeader({
   showBackButton?: boolean;
 }) {
   const router = useRouter();
-  const pathname = usePathname();
-  const isHome = pathname === "/dashboard";
+  
   const { backHandler } = useDashboardBackNavigation();
   const [accountModalOpen, setAccountModalOpen] = useState(false);
   const connected = instagramAccounts.filter((account) => account.isConnected);
