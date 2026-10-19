@@ -4,27 +4,9 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import AutomationCreationFlow from "./AutomationCreationFlow";
+import AutomationCreationSkeleton from "./AutomationCreationSkeleton";
 
 type Account = { id: string; igUsername: string; igUserId: string; isConnected: boolean };
-
-function CreatePageSkeleton() {
-  return (
-    <div dir="rtl" className="mx-auto w-full max-w-3xl animate-pulse space-y-4 px-1">
-      <div className="h-9 w-24 rounded-lg bg-slate-200" />
-      <div className="rounded-2xl border border-slate-200 bg-white p-5">
-        <div className="h-5 w-48 rounded bg-slate-200" />
-        <div className="mt-3 h-3 w-72 max-w-full rounded bg-slate-100" />
-      </div>
-      <div className="rounded-2xl border border-slate-200 bg-white p-5">
-        <div className="h-4 w-40 rounded bg-slate-200" />
-        <div className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-4">
-          {Array.from({ length: 8 }).map((_, index) => <div key={index} className="aspect-square rounded-xl bg-slate-100" />)}
-        </div>
-      </div>
-      <div className="h-32 rounded-2xl bg-slate-100" />
-    </div>
-  );
-}
 
 export default function CommentAutomationCreateConfigure() {
   const router = useRouter();
@@ -62,7 +44,7 @@ export default function CommentAutomationCreateConfigure() {
     return () => { cancelled = true; };
   }, [mediaId]);
 
-  if (loading) return <CreatePageSkeleton />;
+  if (loading) return <AutomationCreationSkeleton triggerType="COMMENT_KEYWORD" />;
   if (!account) return <div dir="rtl" className="mx-auto max-w-xl rounded-2xl border border-red-200 bg-red-50 p-6 text-sm leading-7 text-red-700">{error || "پیج اینستاگرام پیدا نشد."}</div>;
 
   return (
