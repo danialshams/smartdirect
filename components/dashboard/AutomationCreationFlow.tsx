@@ -592,7 +592,6 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]"><Send size={15} strokeWidth={2.1} aria-hidden="true" /></span>
                       <h2 className="text-sm font-bold" style={{ color: dairaPalette.text.heading }}>پیام دایرکت</h2>
                     </div>
-                    <p className="mt-1 text-xs leading-5" style={{ color: dairaPalette.text.body }}>متنی را که پس از کامنت برای کاربر ارسال می‌شود بنویس.</p>
                   </div>
 
                   <div role="radiogroup" aria-label="نوع پیام دایرکت" className="grid grid-cols-1 gap-2 sm:grid-cols-2">
