@@ -20,17 +20,18 @@ export default function StoryAutomationConfigure() {
     let cancelled = false;
     void (async () => {
       try {
-        if (!mediaId) throw new Error("استوری انتخاب نشده است.");
         const response = await fetch("/api/instagram/accounts", { cache: "no-store", credentials: "include" });
         const result = await response.json();
         if (!response.ok || !result.success) throw new Error(result.error || "دریافت پیج اینستاگرام ناموفق بود.");
         const active = (Array.isArray(result.accounts) ? result.accounts : []).find((item: Account) => item.isConnected) ?? null;
         if (!active) throw new Error("پیج اینستاگرام متصل نیست.");
-        const storiesResponse = await fetch("/api/instagram/stories?instagramAccountId=" + encodeURIComponent(active.id), { cache: "no-store", credentials: "include" });
-        const storiesResult = await storiesResponse.json();
-        if (!storiesResponse.ok || !storiesResult.success) throw new Error(storiesResult.error || storiesResult.message || "دریافت استوری ناموفق بود.");
-        if (!(Array.isArray(storiesResult.data) ? storiesResult.data : []).some((item: { id: string }) => item.id === mediaId)) {
-          throw new Error("این استوری دیگر فعال نیست. لطفاً یک استوری جدید انتخاب کنید.");
+        if (mediaId) {
+          const storiesResponse = await fetch("/api/instagram/stories?instagramAccountId=" + encodeURIComponent(active.id), { cache: "no-store", credentials: "include" });
+          const storiesResult = await storiesResponse.json();
+          if (!storiesResponse.ok || !storiesResult.success) throw new Error(storiesResult.error || storiesResult.message || "دریافت استوری ناموفق بود.");
+          if (!(Array.isArray(storiesResult.data) ? storiesResult.data : []).some((item: { id: string }) => item.id === mediaId)) {
+            throw new Error("این استوری دیگر فعال نیست. لطفاً یک استوری جدید انتخاب کنید.");
+          }
         }
         if (!cancelled) setAccount(active);
       } catch (e) {
@@ -48,10 +49,10 @@ export default function StoryAutomationConfigure() {
   return (
     <AutomationCreationFlow
       account={account}
-      mediaId={mediaId as string}
+      mediaId={mediaId ?? ""}
       triggerType="STORY_REPLY_KEYWORD"
-      title="تنظیم پاسخ خودکار استوری"
-      description="کلمات فعال‌کننده و نوع پاسخ را برای این استوری مشخص کن."
+      title="ایجاد پاسخ خودکار استوری"
+      description="استوری را انتخاب کن، روش ساخت را مشخص کن و پاسخ خودکار را در همین صفحه تنظیم کن."
       onSaved={() => {
         toast.success("پاسخ خودکار با موفقیت ایجاد شد.", {
           description: "می‌توانید در بخش «ویرایش پاسخ های خودکار» آن را مشاهده و ویرایش کنید.",

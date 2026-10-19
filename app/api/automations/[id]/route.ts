@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { invalidateAutomationCache } from "@/lib/cache/instagram";
+import { getCachedInstagramMedia, invalidateAutomationCache } from "@/lib/cache/instagram";
+import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 
 function normalizePersianDigits(value: string) {
   return value.replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit))).replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)));
@@ -58,7 +59,87 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (!existingAutomation) return NextResponse.json({ success: false, error: "Automation پیدا نشد" }, { status: 404 });
 
     const body = await request.json();
-    if (!body || typeof body !== "object") return NextResponse.json({ success: false, error: "اطلاعات ارسالی نامعتبر است" }, { status: 400 });
+    if (!body || typeof body !== "object" || Array.isArray(body)) return NextResponse.json({ success: false, error: "اطلاعات ارسالی نامعتبر است" }, { status: 400 });
+
+    // Link an existing automation to selected content without modifying its trigger,
+    // keywords, messages, follow gate, or active state.
+    if (body.linkMediaOnly === true) {
+      if (body.triggerType !== existingAutomation.triggerType) {
+        return NextResponse.json({ success: false, error: "نوع پاسخ خودکار با محتوای انتخابی سازگار نیست" }, { status: 400 });
+      }
+      const trigger = existingAutomation.triggerType;
+      if (trigger !== "COMMENT_KEYWORD" && trigger !== "STORY_REPLY_KEYWORD") {
+        return NextResponse.json({ success: false, error: "این نوع پاسخ خودکار به محتوا متصل نمی‌شود" }, { status: 400 });
+      }
+      if (!Array.isArray(body.mediaIds) || body.mediaIds.some((value: unknown) => typeof value !== "string" || !value.trim())) {
+        return NextResponse.json({ success: false, error: "فهرست محتواهای انتخابی نامعتبر است" }, { status: 400 });
+      }
+      const targetIds = Array.from(new Set((body.mediaIds as string[]).map((value) => value.trim())));
+      if (targetIds.length === 0 || (trigger === "STORY_REPLY_KEYWORD" && targetIds.length !== 1)) {
+        return NextResponse.json({ success: false, error: trigger === "COMMENT_KEYWORD" ? "حداقل یک پست یا ریلز انتخاب کنید" : "فقط یک استوری انتخاب کنید" }, { status: 400 });
+      }
+      const requestedMediaId = typeof body.mediaId === "string" && body.mediaId.trim() ? body.mediaId.trim() : null;
+      if (trigger === "STORY_REPLY_KEYWORD" && requestedMediaId !== targetIds[0]) {
+        return NextResponse.json({ success: false, error: "شناسه استوری با محتوای انتخابی مطابقت ندارد" }, { status: 400 });
+      }
+      if (trigger === "COMMENT_KEYWORD" && requestedMediaId !== (targetIds.length === 1 ? targetIds[0] : null)) {
+        return NextResponse.json({ success: false, error: "شناسه محتوا با فهرست انتخابی مطابقت ندارد" }, { status: 400 });
+      }
+
+      // Verify that every submitted media ID belongs to this connected Instagram account.
+      const account = await prisma.instagramAccount.findFirst({
+        where: { id: existingAutomation.instagramAccountId, userId: session.user.id, isConnected: true },
+        select: { id: true, igUserId: true },
+      });
+      if (!account) return NextResponse.json({ success: false, error: "اکانت اینستاگرام متصل نیست" }, { status: 409 });
+
+      let ownedMediaIds = new Set<string>();
+      if (trigger === "COMMENT_KEYWORD") {
+        const mediaResult = await getCachedInstagramMedia(account.id, 50);
+        ownedMediaIds = new Set((mediaResult?.data ?? []).map((item: Record<string, unknown>) => String(item.id ?? "")).filter(Boolean));
+      } else {
+        const accessToken = await getValidInstagramAccessToken(account.id);
+        const storiesUrl = new URL(`https://graph.instagram.com/v26.0/${account.igUserId}/stories`);
+        storiesUrl.searchParams.set("fields", "id");
+        storiesUrl.searchParams.set("limit", "50");
+        storiesUrl.searchParams.set("access_token", accessToken);
+        const storiesResponse = await fetch(storiesUrl.toString(), { method: "GET", cache: "no-store" });
+        const storiesResult = await storiesResponse.json();
+        if (!storiesResponse.ok || !Array.isArray(storiesResult?.data)) {
+          return NextResponse.json({ success: false, error: "اعتبارسنجی استوری‌های اینستاگرام ناموفق بود؛ دوباره تلاش کنید" }, { status: 502 });
+        }
+        ownedMediaIds = new Set(storiesResult.data.map((item: { id?: unknown }) => String(item.id ?? "")).filter(Boolean));
+      }
+      const invalidMediaId = targetIds.find((targetId) => !ownedMediaIds.has(targetId));
+      if (invalidMediaId) {
+        return NextResponse.json({ success: false, error: "یکی از محتواهای انتخابی متعلق به این اکانت نیست یا دیگر در دسترس نیست" }, { status: 400 });
+      }
+
+      const peers = await prisma.automation.findMany({
+        where: { instagramAccountId: existingAutomation.instagramAccountId, triggerType: trigger, id: { not: id } },
+        select: { id: true, mediaId: true, mediaIds: true },
+      });
+      const occupied = new Set<string>();
+      for (const peer of peers) {
+        if (peer.mediaId) occupied.add(peer.mediaId);
+        if (peer.mediaIds) peer.mediaIds.split(",").map((value) => value.trim()).filter(Boolean).forEach((value) => occupied.add(value));
+      }
+      const conflict = targetIds.find((targetId) => occupied.has(targetId));
+      if (conflict) {
+        return NextResponse.json({ success: false, error: "یکی از محتواهای انتخابی از قبل به پاسخ خودکار دیگری متصل است" }, { status: 409 });
+      }
+      const automation = await prisma.automation.update({
+        where: { id },
+        data: {
+          mediaId: trigger === "STORY_REPLY_KEYWORD" ? targetIds[0] : (targetIds.length === 1 ? targetIds[0] : null),
+          mediaIds: trigger === "COMMENT_KEYWORD" ? targetIds.join(",") : null,
+        },
+        include: automationInclude,
+      });
+      try { await invalidateAutomationCache(existingAutomation.instagramAccountId); }
+      catch (cacheError) { console.warn("Automation cache invalidation failed:", cacheError); }
+      return NextResponse.json({ success: true, data: automation });
+    }
 
     const { triggerType, keyword, mediaId, likeComment, commentReplyText, sendDm, likeIncomingDm, likeStoryReply, replyText, requireFollow, followGateText, isActive } = body;
     const nextTriggerType: TriggerType = triggerType !== undefined ? triggerType : existingAutomation.triggerType;

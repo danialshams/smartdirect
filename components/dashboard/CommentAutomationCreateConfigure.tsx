@@ -71,7 +71,7 @@ export default function CommentAutomationCreateConfigure() {
       mediaId={mediaId ?? ""}
       triggerType="COMMENT_KEYWORD"
       title="ایجاد پاسخ خودکار کامنت"
-      description="کلمات فعال‌کننده، پست‌ها و ریلزهای هدف و پاسخ خودکار را تنظیم کن."
+      description="پست‌ها و ریلزها را انتخاب کن، روش ساخت را مشخص کن و پاسخ خودکار را در همین صفحه تنظیم کن."
       onSaved={() => {
         toast.success("پاسخ خودکار با موفقیت ایجاد شد.", {
           description: "می‌توانید در بخش پاسخ‌های خودکار آن را مشاهده و ویرایش کنید.",

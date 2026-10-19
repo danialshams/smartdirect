@@ -4,6 +4,7 @@ import { ArrowRight, Image as ImageIcon, Images, Play, Video } from "lucide-reac
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, DashboardLoading } from "@/components/dashboard/DashboardUI";
+import { dairaPalette } from "../../lib/design-system/palette";
 
 type Account = { id: string; igUsername: string; igUserId: string; isConnected: boolean };
 type MediaItem = {
@@ -102,36 +103,37 @@ export default function CommentAutomationCreate() {
   }
 
   if (!account) {
-    return <div dir="rtl" className="mx-auto max-w-xl rounded-3xl border border-dashed bg-card px-6 py-16 text-center text-sm text-muted-foreground">{error || "پیج اینستاگرام متصل نیست."}</div>;
+    return <div dir="rtl" className="mx-auto max-w-xl rounded-[24px] border border-dashed border-[#CBD5E1] bg-white px-6 py-16 text-center text-sm text-[#5A6B87]">{error || "پیج اینستاگرام متصل نیست."}</div>;
   }
 
   return (
-    <div dir="rtl" className="min-h-[calc(100dvh-2rem)]">
-      <div className="mx-auto w-full max-w-2xl">
-        <div className="mb-9">
+    <div dir="rtl" style={{ backgroundColor: dairaPalette.background.page }} className="min-h-[calc(100dvh-2rem)] rounded-[28px] p-2 sm:p-4">
+      <div className="mx-auto w-full max-w-5xl space-y-4">
+        <div className="mb-1">
           <Button
             type="button"
             onClick={() => router.back()}
-            className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]"
+            className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-[#E2E8F0] bg-white px-3.5 text-xs font-bold text-[#5A6B87] shadow-sm transition hover:border-[#BFDBFE] hover:bg-[#EFF6FF] hover:text-[#2F61FD]"
           >
             <ArrowRight size={15} strokeWidth={2} />
             بازگشت
           </Button>
         </div>
-        <section className="mb-4 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-5">
+        <section className="mb-4 rounded-[24px] border border-[#E6ECF5] bg-white p-4 shadow-[0_4px_20px_rgba(24,35,60,0.035)] sm:p-6">
           <div className="flex items-start gap-3">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB]"><ImageIcon size={19} /></span>
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#EFF6FF] text-[#2F61FD]"><ImageIcon size={21} /></span>
             <div className="min-w-0">
-              <h1 className="text-base font-bold text-[#0F172A]">انتخاب محتوا</h1>
+              <h1 className="text-base font-extrabold text-[#18233C]">انتخاب محتوا</h1>
+              <div className="mt-3 flex flex-wrap items-center gap-2"><span className="rounded-full bg-[#EFF6FF] px-2.5 py-1 text-[10px] font-bold text-[#2F61FD]">گام ۱ از ۳</span><span className="rounded-full bg-[#F1F5F9] px-2.5 py-1 text-[10px] font-medium text-[#64748B]">پاسخ خودکار کامنت</span></div>
               <p className="mt-1.5 text-xs leading-5 text-[#64748B] sm:text-sm">یک پست، ریلز یا پست اسلایدی را برای پاسخ خودکار کامنت انتخاب کنید.</p>
             </div>
           </div>
         </section>
 
-        <section className="mt-5 rounded-2xl border border-[#E2E8F0] bg-white p-3 sm:p-4">
+        <section className="mt-4 rounded-[22px] border border-[#E6ECF5] bg-white p-4 shadow-[0_3px_14px_rgba(24,35,60,0.025)] sm:p-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-xs font-bold text-[#0F172A]">محتواهای قابل انتخاب</p>
+              <p className="text-sm font-bold text-[#18233C]">محتواهای قابل انتخاب</p>
               <p className="mt-1 text-[10.5px] text-[#64748B]">نوع محتوایی را که می‌خواهی برای آن پاسخ خودکار بسازی انتخاب کن.</p>
             </div>
             <div className="mb-0 flex max-w-full gap-2 overflow-x-auto pb-1" role="tablist" aria-label="فیلتر نوع محتوا">
@@ -147,7 +149,7 @@ export default function CommentAutomationCreate() {
                   role="tab"
                   aria-selected={filter === value}
                   onClick={() => setFilter(value)}
-                  className={`inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border px-3 text-xs font-semibold transition ${filter === value ? "border-[#2563EB] bg-[#EFF6FF] text-[#2563EB]" : "border-[#E2E8F0] bg-white text-[#64748B] hover:bg-[#F8FAFC]"}`}
+                  className={`inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl border px-3.5 text-xs font-bold transition ${filter === value ? "border-[#2F61FD] bg-[#EFF6FF] text-[#2F61FD] shadow-sm" : "border-[#E6ECF5] bg-white text-[#64748B] hover:border-[#BFDBFE] hover:bg-[#F8FAFC]"}`}
                 >
                   <Icon size={14} />{label}
                 </button>
@@ -170,22 +172,22 @@ export default function CommentAutomationCreate() {
               const image = item.thumbnail_url || item.media_url;
               const publishedDate = item.timestamp ? new Intl.DateTimeFormat("fa-IR-u-ca-persian", { year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(item.timestamp)) : null;
               return (
-                <button key={item.id} type="button" onClick={() => router.push("/dashboard/comment-automation/new/configure?mediaId=" + encodeURIComponent(item.id))} className="group block w-full min-w-0 overflow-hidden rounded-[10px] border border-[#E2E8F0] bg-white text-right shadow-[0_1px_2px_rgba(15,23,42,.04)] transition hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(15,23,42,.08)] focus:outline-none focus:ring-2 focus:ring-[#2563EB] lg:rounded-md lg:shadow-none lg:hover:translate-y-0 lg:hover:shadow-none">
-                  <div className="relative aspect-square overflow-hidden bg-[#F1F5F9] lg:rounded-xl">
+                <button key={item.id} type="button" onClick={() => router.push("/dashboard/comment-automation/new/configure?mediaId=" + encodeURIComponent(item.id))} className="group block w-full min-w-0 overflow-hidden rounded-[20px] border border-[#E6ECF5] bg-white text-right shadow-[0_3px_12px_rgba(24,35,60,0.025)] transition duration-200 hover:-translate-y-0.5 hover:border-[#BFDBFE] hover:shadow-[0_12px_28px_rgba(24,35,60,0.08)] focus:outline-none focus:ring-2 focus:ring-[#2F61FD]/30">
+                  <div className="relative aspect-square overflow-hidden bg-[#F1F5F9]">
                     {image && !mediaFailed[item.id] ? (
                       <img src={image} alt={item.caption || mediaLabel(item)} className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.025]" loading="lazy" onError={() => setMediaFailed((current) => ({ ...current, [item.id]: true }))} />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center">{item.media_type === "VIDEO" ? <Video size={25} className="text-[#64748B]" /> : <ImageIcon size={25} className="text-[#64748B]" />}</div>
                     )}
                     <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/55 to-transparent" />
-                    <span className="absolute right-2.5 top-2.5 inline-flex h-7 items-center gap-1 rounded-full bg-white/95 px-2 text-[10px] font-bold text-[#0F172A] shadow-sm">
+                    <span className="absolute right-2.5 top-2.5 inline-flex h-7 items-center gap-1 rounded-full border border-white/70 bg-white/95 px-2.5 text-[10px] font-bold text-[#18233C] shadow-sm">
                       {item.media_type === "VIDEO" ? <Video size={11} /> : item.media_type === "CAROUSEL_ALBUM" ? <Images size={11} /> : <ImageIcon size={11} />}
                       {mediaLabel(item)}
                     </span>
                     {item.media_type === "VIDEO" && <Play size={14} fill="currentColor" className="absolute bottom-3 left-3 text-white drop-shadow" />}
                   </div>
-                  <div className="p-3 text-right">
-                    <p className="mb-2 min-h-10 overflow-hidden text-left text-[11px] leading-[1.8] text-[#0F172A] [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]">{item.caption?.trim() || "بدون کپشن"}</p>
+                  <div className="p-3.5 text-right">
+                    <p className="mb-2 min-h-10 overflow-hidden text-right text-[11px] font-medium leading-[1.8] text-[#18233C] [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]">{item.caption?.trim() || "بدون کپشن"}</p>
                     <div className="flex items-center justify-end">
                       {publishedDate && <span className="text-[9.5px] font-medium text-[#64748B]">{publishedDate}</span>}
                     </div>
