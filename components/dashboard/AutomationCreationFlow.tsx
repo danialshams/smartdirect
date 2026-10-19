@@ -522,7 +522,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType }
         <h1 className="mt-5 text-xl font-extrabold" style={{ color: dairaPalette.text.heading }}>عملیات با موفقیت انجام شد</h1>
         <button
           type="button"
-          onClick={() => { window.scrollTo({ top: 0, left: 0, behavior: "instant" }); router.push(triggerType === "COMMENT_KEYWORD" ? "/dashboard/comment-automation" : "/dashboard/story-automation", { scroll: true }); }}
+          onClick={() => { window.scrollTo(0, 0); router.push(triggerType === "COMMENT_KEYWORD" ? "/dashboard/comment-automation" : "/dashboard/story-automation", { scroll: true }); }}
           className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl px-5 text-sm font-bold text-white transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--daira-primary)]/30"
           style={{ background: dairaPalette.primary.main }}
         >
