@@ -618,18 +618,15 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                     </label>
                   </div>
 
+                  {dmMode === "TEXT_WITH_LINK" && <p className="mb-2 text-xs leading-5" style={{ color: dairaPalette.text.body }}>حداکثر {MAX_LINK_BUTTONS} دکمه لینک می‌توانید اضافه کنید.</p>}
                   <textarea value={message.text} onChange={(event) => setMessage((current) => ({ ...current, messageType: "TEXT", text: event.target.value, mediaUrl: "", mediaId: "", showcaseId: "", formId: "", quickReplies: [] }))} maxLength={dmMode === "TEXT_WITH_LINK" ? 640 : 2000} rows={4} placeholder="متن دایرکتی که بعد از کامنت برای کاربر ارسال می‌شود..." className="w-full rounded-xl border bg-white px-3.5 py-3 text-base leading-7 outline-none focus:ring-2 focus:ring-[color:var(--daira-primary)]/15" style={{ borderColor: dairaPalette.form.border, color: dairaPalette.text.heading, fontSize: "16px" }} />
 
                   {dmMode === "TEXT_WITH_LINK" && (
                     <div className="space-y-3">
-                      <p className="text-xs leading-5" style={{ color: dairaPalette.text.body }}>حداکثر {MAX_LINK_BUTTONS} دکمه لینک می‌توانید اضافه کنید.</p>
                       {linkButtons.map((button, index) => (
                         <div key={index} className="rounded-xl border p-3" style={{ borderColor: dairaPalette.form.border }}>
-                          <div className="relative mb-3 flex min-h-10 items-center justify-center">
-                            <span className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-extrabold" style={{ background: dairaPalette.secondary.activeBackground, borderColor: dairaPalette.primary.main, color: dairaPalette.primary.main }}>
-                              <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-full px-1 text-[10px] font-extrabold text-white" style={{ background: dairaPalette.primary.main }}>{new Intl.NumberFormat("fa-IR").format(index + 1)}</span>
-                              <span>دکمه لینک</span>
-                            </span>
+                          <div className="relative mb-3 flex min-h-8 items-center justify-center">
+                            <span className="text-sm font-bold" style={{ color: dairaPalette.primary.main }}>دکمه {new Intl.NumberFormat("fa-IR").format(index + 1)}</span>
                             {linkButtons.length > 1 && (
                               <button
                                 type="button"
@@ -643,7 +640,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                               </button>
                             )}
                           </div>
-                          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                          <div className="grid grid-cols-2 gap-2 sm:gap-3">
                             <div>
                               <label className="mb-2 block text-xs font-semibold" style={{ color: dairaPalette.text.heading }}>عنوان دکمه (حداکثر ۲۰ کاراکتر)</label>
                               <input value={button.title} onChange={(event) => setLinkButtons((current) => current.map((item, i) => i === index ? { ...item, title: event.target.value.slice(0, 20) } : item))} maxLength={20} placeholder="مشاهده لینک" className="w-full rounded-xl border bg-white px-3 py-3 text-base outline-none focus:ring-2 focus:ring-[color:var(--daira-primary)]/15" style={{ borderColor: dairaPalette.form.border, color: dairaPalette.text.heading, fontSize: "16px" }} />
@@ -655,7 +652,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                           </div>
                         </div>
                       ))}
-                      {linkButtons.length < MAX_LINK_BUTTONS && <button type="button" onClick={() => setLinkButtons((current) => [...current, { title: "", url: "" }])} className="min-h-10 rounded-lg border px-3 text-xs font-semibold" style={{ borderColor: dairaPalette.form.border, color: dairaPalette.primary.main }}>افزودن دکمه لینک</button>}
+                      {linkButtons.length < MAX_LINK_BUTTONS && <div className="flex justify-center pt-1"><button type="button" onClick={() => setLinkButtons((current) => [...current, { title: "", url: "" }])} className="min-h-10 rounded-lg border px-4 text-xs font-semibold" style={{ borderColor: dairaPalette.form.border, color: dairaPalette.primary.main }}>افزودن دکمه‌های بیشتر</button></div>}
                     </div>
                   )}
 
