@@ -258,7 +258,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
           return true;
         });
         const allAutomations = (Array.isArray(automationsResult.data) ? automationsResult.data : []) as Automation[];
-        const automationById = new Map(allAutomations.map((automation) => [automation.id, automation]));
+        const automationById = new Map(allAutomations.map((automation) => [automation.id, automation] as const));
         const linkedAutomationIds = new Set(
           visiblePublishedJobs.flatMap((job) => [job.commentAutomationId, job.storyReplyAutomationId].filter(Boolean) as string[]),
         );
