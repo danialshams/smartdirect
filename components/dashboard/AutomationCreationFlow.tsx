@@ -1,6 +1,6 @@
 "use client";
 
-import { Camera, Check, MessageCircle, Send, ShieldCheck, Zap } from "lucide-react";
+import { Camera, MessageCircle, Send, ShieldCheck, Zap } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
