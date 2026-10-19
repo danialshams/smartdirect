@@ -13,7 +13,7 @@ import { useDashboardBackNavigation } from "./DashboardBackNavigationContext";
 type Account = { id: string; igUsername: string; igUserId: string; isConnected: boolean };
 type TriggerType = "COMMENT_KEYWORD" | "STORY_REPLY_KEYWORD";
 type CreationMode = "new" | "existing";
-type AutomationTemplate = { id: string; triggerType: string; keyword?: string | null; keywordMatchMode?: string | null; commentReplyText?: string | null; requireFollow?: boolean; followGateText?: string | null; isActive?: boolean; mediaId?: string | null; messages?: unknown; };
+type AutomationTemplate = { id: string; triggerType: string; keyword?: string | null; keywordMatchMode?: string | null; commentReplyText?: string | null; requireFollow?: boolean; followGateText?: string | null; followGateButtonText?: string | null; isActive?: boolean; mediaId?: string | null; messages?: unknown; };
 
 type Props = {
   account: Account;
@@ -105,6 +105,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   const [requireFollow, setRequireFollow] = useState(false);
   const [dmMode, setDmMode] = useState<"TEXT" | "TEXT_WITH_LINK">("TEXT");
   const [followGateText, setFollowGateText] = useState("برای دریافت پاسخ، ابتدا پیج ما را فالو کنید.");
+  const [followGateButtonText, setFollowGateButtonText] = useState("بررسی فالو");
   const [message, setMessage] = useState<MessageDraft>(() => createEmptyMessage());
   const [showcases, setShowcases] = useState<Showcase[]>([]);
   const [forms, setForms] = useState<FormItem[]>([]);
@@ -304,6 +305,10 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
       setError("متن درخواست فالو را وارد کنید.");
       return;
     }
+    if (triggerType === "COMMENT_KEYWORD" && requireFollow && (!followGateButtonText.trim() || followGateButtonText.trim().length > 20)) {
+      setError("عنوان دکمه بررسی فالو را وارد کنید (حداکثر ۲۰ کاراکتر).");
+      return;
+    }
     if (keywordMatchMode !== "CONTAINS_ANY" && !cleanKeywords.length) {
       setError("حداقل یک کلمه کلیدی وارد کنید.");
       return;
@@ -343,6 +348,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
           likeStoryReply: false,
           requireFollow: triggerType === "COMMENT_KEYWORD" && requireFollow,
           followGateText: triggerType === "COMMENT_KEYWORD" && requireFollow ? followGateText.trim() : null,
+          followGateButtonText: triggerType === "COMMENT_KEYWORD" && requireFollow ? followGateButtonText.trim() : null,
           isActive: true,
         }),
       });
@@ -671,6 +677,11 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                         <label className="mb-2 block text-sm font-semibold" style={{ color: dairaPalette.text.heading }}>متن درخواست فالو</label>
                         <textarea value={followGateText} onChange={(event) => setFollowGateText(event.target.value)} maxLength={640} rows={3} placeholder="برای دریافت پاسخ، ابتدا پیج ما را فالو کنید." className="w-full rounded-xl border bg-white px-3 py-3 text-base leading-6 outline-none focus:ring-2 focus:ring-[color:var(--daira-primary)]/15" style={{ borderColor: dairaPalette.form.border, color: dairaPalette.text.heading, fontSize: "16px" }} />
                         {!followGateText.trim() && <p className="mt-1 text-xs" style={{ color: dairaPalette.status.error }}>وارد کردن متن درخواست فالو الزامی است.</p>}
+                        <div className="mt-4">
+                          <label className="mb-2 block text-center text-sm font-semibold" style={{ color: dairaPalette.text.heading }}>متن دکمه بررسی فالو</label>
+                          <input type="text" value={followGateButtonText} onChange={(event) => setFollowGateButtonText(event.target.value)} maxLength={20} required placeholder="مثلاً فالو کردم" className="w-full rounded-xl border bg-white px-3 py-3 text-center text-base leading-6 outline-none focus:ring-2 focus:ring-[color:var(--daira-primary)]/15" style={{ borderColor: dairaPalette.form.border, color: dairaPalette.text.heading, fontSize: "16px" }} />
+                          <p className="mt-1 text-xs text-center" style={{ color: dairaPalette.text.muted }}>با زدن این دکمه، وضعیت فالو بررسی می‌شود.</p>
+                        </div>
                       </div>
                     )}
                   </section>
