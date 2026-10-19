@@ -95,6 +95,7 @@ export async function POST(request: NextRequest) {
       replyText,
       requireFollow = false,
       followGateText,
+      followGateButtonText,
       isActive = true,
     } = body;
 
@@ -123,6 +124,7 @@ export async function POST(request: NextRequest) {
     const supportsFollowGate = triggerType === "COMMENT_KEYWORD" || triggerType === "STORY_REPLY_KEYWORD";
     const normalizedRequireFollow = supportsFollowGate ? Boolean(requireFollow) : false;
     const normalizedFollowGateText = supportsFollowGate && normalizedRequireFollow && typeof followGateText === "string" && followGateText.trim() ? followGateText.trim() : null;
+    const normalizedFollowGateButtonText = supportsFollowGate && normalizedRequireFollow && typeof followGateButtonText === "string" && followGateButtonText.trim() ? followGateButtonText.trim().slice(0, 20) : (supportsFollowGate && normalizedRequireFollow ? "بررسی فالو" : null);
 
     if (supportsFollowGate && normalizedRequireFollow && !normalizedFollowGateText) return NextResponse.json({ success: false, error: "وقتی Follow Gate فعال است، متن درخواست فالو الزامی است" }, { status: 400 });
 
@@ -174,6 +176,7 @@ export async function POST(request: NextRequest) {
         replyText: typeof replyText === "string" && replyText.trim() ? replyText.trim() : null,
         requireFollow: normalizedRequireFollow,
         followGateText: normalizedFollowGateText,
+        followGateButtonText: normalizedFollowGateButtonText,
         isActive: Boolean(isActive),
       },
       include: { messages: { orderBy: { order: "asc" } } },
