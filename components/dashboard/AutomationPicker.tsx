@@ -113,7 +113,7 @@ export default function AutomationPicker({
                     type="button"
                     onClick={() => onToggle(item.id)}
                     aria-pressed={selected}
-                    className="group relative overflow-hidden rounded-xl border-2 text-right transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2F61FD]"
+                    className="group relative overflow-hidden rounded-xl border-2 text-right transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--daira-primary)]"
                     style={{
                       borderColor: selected ? dairaPalette.primary.main : "transparent",
                       boxShadow: selected ? `0 0 0 1px ${dairaPalette.primary.main}26` : undefined,
