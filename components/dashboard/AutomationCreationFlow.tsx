@@ -11,6 +11,7 @@ import AutomationPicker from "./AutomationPicker";
 
 type Account = { id: string; igUsername: string; igUserId: string; isConnected: boolean };
 type TriggerType = "COMMENT_KEYWORD" | "STORY_REPLY_KEYWORD";
+type CreationMode = "new" | "existing";
 type AutomationTemplate = { id: string; triggerType: string; keyword?: string | null; keywordMatchMode?: string | null; commentReplyText?: string | null; requireFollow?: boolean; followGateText?: string | null; isActive?: boolean; mediaId?: string | null; messages?: unknown; };
 
 type Props = {
@@ -60,6 +61,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   const [forms, setForms] = useState<FormItem[]>([]);
   const [automationTemplates, setAutomationTemplates] = useState<AutomationTemplate[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
+  const [creationMode, setCreationMode] = useState<CreationMode>("new");
   const [loadingResources, setLoadingResources] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -99,15 +101,22 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
   function applyAutomationTemplate(template: AutomationTemplate) {
     setSelectedTemplateId(template.id);
-    setKeyword(typeof template.keyword === "string" ? template.keyword : "");
+    setCreationMode("existing");
+    setError("");
+  }
+
+  function startNewAutomation() {
+    setSelectedTemplateId("");
+    setCreationMode("new");
+    setKeyword("");
     setKeywordDraft("");
-    setKeywordMatchMode(template.keywordMatchMode === "CONTAINS_ANY" ? "CONTAINS_ANY" : "EXACT");
-    setCommentReply(typeof template.commentReplyText === "string" ? template.commentReplyText : "");
-    setRequireFollow(Boolean(template.requireFollow));
-    setFollowGateText(typeof template.followGateText === "string" && template.followGateText.trim() ? template.followGateText : "برای دریافت پاسخ، ابتدا پیج ما را فالو کنید.");
-    const normalized = normalizeMessages(template.messages);
-    setMessage(normalized[0] ?? createEmptyMessage());
-    if (triggerType === "COMMENT_KEYWORD") setDmMode("TEXT");
+    setKeywordMatchMode("EXACT");
+    setCommentReply("");
+    setRequireFollow(false);
+    setFollowGateText("برای دریافت پاسخ، ابتدا پیج ما را فالو کنید.");
+    setMessage(createEmptyMessage());
+    setDmMode("TEXT");
+    setLinkButtons([{ title: "مشاهده لینک", url: "" }]);
     setError("");
   }
 
@@ -166,6 +175,37 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     if (saving) return;
     const cleanKeywords = keyword.split(",").map((item) => item.trim()).filter(Boolean);
     const currentMessage = finalMessage ?? message;
+
+    if (creationMode === "existing") {
+      const template = automationTemplates.find((item) => item.id === selectedTemplateId);
+      const targetIds = Array.from(new Set(selectedMediaIds.filter(Boolean)));
+      if (!template) { setError("ابتدا پاسخ خودکار موجود را انتخاب کنید."); return; }
+      if (targetIds.length === 0) { setError(triggerType === "COMMENT_KEYWORD" ? "حداقل یک پست یا ریلز انتخاب کنید." : "یک استوری انتخاب کنید."); return; }
+      if (triggerType === "STORY_REPLY_KEYWORD" && targetIds.length !== 1) { setError("برای پاسخ خودکار استوری فقط یک استوری انتخاب کنید."); return; }
+      setSaving(true);
+      setError("");
+      try {
+        const response = await fetch("/api/automations/" + encodeURIComponent(template.id), {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            linkMediaOnly: true,
+            triggerType,
+            mediaId: triggerType === "COMMENT_KEYWORD" ? (targetIds.length === 1 ? targetIds[0] : null) : targetIds[0],
+            mediaIds: triggerType === "COMMENT_KEYWORD" ? targetIds : [],
+          }),
+        });
+        const result = await response.json();
+        if (!response.ok || !result.success) throw new Error(result.error || result.message || "اتصال پاسخ خودکار ناموفق بود.");
+        onSaved();
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "اتصال پاسخ خودکار ناموفق بود.");
+      } finally {
+        setSaving(false);
+      }
+      return;
+    }
 
     if (triggerType === "COMMENT_KEYWORD" && dmMode === "TEXT_WITH_LINK") {
       const invalidButton = linkButtons.find((button) => {
@@ -333,7 +373,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
               <section className="rounded-2xl border border-[#E6ECF5] bg-white p-4 sm:p-5" aria-labelledby="automation-template-heading">
                 <div className="mb-4 flex items-start gap-3">
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2F61FD]"><MessageCircleReply size={17} /></span>
-                  <div className="min-w-0 flex-1"><h2 id="automation-template-heading" className="text-sm font-bold text-[#18233C]">روش ساخت پاسخ خودکار</h2><p className="mt-1 text-xs leading-5 text-[#5A6B87]">از تنظیمات یکی از پاسخ‌های قبلی شروع کن یا فرم را از ابتدا پر کن. اتوماسیون قبلی بدون تغییر باقی می‌ماند.</p><button type="button" onClick={() => { setSelectedTemplateId(""); setKeyword(""); setKeywordDraft(""); setKeywordMatchMode("EXACT"); setCommentReply(""); setRequireFollow(false); setFollowGateText("برای دریافت پاسخ، ابتدا پیج ما را فالو کنید."); setMessage(createEmptyMessage()); setDmMode("TEXT"); setLinkButtons([{ title: "مشاهده لینک", url: "" }]); setError(""); }} className="mt-3 inline-flex min-h-9 items-center rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-[11px] font-bold text-[#2F61FD] transition hover:bg-[#DBEAFE]">ساخت پاسخ جدید از ابتدا</button></div>
+                  <div className="min-w-0 flex-1"><h2 id="automation-template-heading" className="text-sm font-bold text-[#18233C]">روش ساخت پاسخ خودکار</h2><p className="mt-1 text-xs leading-5 text-[#5A6B87]">یک پاسخ تازه از ابتدا بساز، یا پاسخ خودکار موجود را بدون تغییر تنظیمات به محتوای انتخابی متصل کن.</p><button type="button" onClick={startNewAutomation} className={"mt-3 inline-flex min-h-9 items-center rounded-lg border px-3 text-[11px] font-bold transition " + (creationMode === "new" ? "border-[#2F61FD] bg-[#2F61FD] text-white" : "border-[#BFDBFE] bg-[#EFF6FF] text-[#2F61FD] hover:bg-[#DBEAFE]")}>ساخت پاسخ جدید از ابتدا</button></div>
                 </div>
                 {loadingResources ? (
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2" aria-label="در حال دریافت پاسخ‌های قبلی">{[0, 1].map((item) => <div key={item} className="h-[76px] animate-pulse rounded-xl bg-[#F1F5F9]" />)}</div>
@@ -344,7 +384,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                     const preview = previewMessages[0]?.text?.trim() || (previewMessages[0]?.messageType === "SHOWCASE" ? "ارسال ویترین" : previewMessages[0]?.messageType === "FORM" ? "ارسال فرم" : previewMessages[0]?.messageType === "IMAGE" ? "ارسال تصویر" : previewMessages[0]?.messageType === "VIDEO" ? "ارسال ویدیو" : previewMessages[0]?.messageType === "AUDIO" ? "ارسال پیام صوتی" : "بدون متن پاسخ");
                     const selected = selectedTemplateId === template.id;
                     return <button key={template.id} type="button" onClick={() => applyAutomationTemplate(template)} aria-pressed={selected} className={"rounded-xl border p-3 text-right transition focus:outline-none focus:ring-2 focus:ring-[#2F61FD]/20 " + (selected ? "border-[#2F61FD] bg-[#EFF6FF] shadow-sm" : "border-[#E6ECF5] bg-white hover:border-[#BFDBFE] hover:bg-[#F8FAFC]")}>
-                      <span className="flex items-start justify-between gap-2"><strong className="min-w-0 text-xs font-bold leading-5 text-[#18233C]">{(template.keyword || "").split(/[,،;؛\n]+/).filter(Boolean).slice(0, 3).join("، ") || "بدون کلمه کلیدی"}</strong><span className={"shrink-0 rounded-full px-2 py-1 text-[10px] font-bold " + (selected ? "bg-[#2F61FD] text-white" : "bg-[#F1F5F9] text-[#64748B]")}>{selected ? "انتخاب شد" : "انتخاب"}</span></span>
+                      <span className="flex items-start justify-between gap-2"><strong className="min-w-0 text-xs font-bold leading-5 text-[#18233C]">{(template.keyword || "").split(/[,،;؛\n]+/).filter(Boolean).slice(0, 3).join("، ") || "بدون کلمه کلیدی"}</strong><span className={"shrink-0 rounded-full px-2 py-1 text-[10px] font-bold " + (selected ? "bg-[#2F61FD] text-white" : "bg-[#F1F5F9] text-[#64748B]")}>{selected ? "برای اتصال انتخاب شد" : "اتصال این پاسخ"}</span></span>
                       <span className="mt-2 block truncate text-[11px] leading-5 text-[#64748B]">{preview}</span>
                     </button>;
                   })}
@@ -354,6 +394,8 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                 )}
               </section>
             )}
+            {creationMode === "new" && (
+            <>
             <div className="rounded-2xl border border-[#E6ECF5] bg-white p-4 sm:p-5">
               <div className="mb-3 flex items-center gap-3"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EFF6FF] text-sm font-bold text-[#2F61FD]">۲</span><label className="block text-sm font-bold text-[#18233C]">شرط فعال‌سازی</label></div>
               <p className="mb-3 text-xs leading-5 text-[#5A6B87]">
@@ -486,6 +528,22 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                 />
               )}
             </div>
+            </>
+            )}
+
+            {creationMode === "existing" && (
+              <section className="rounded-2xl border border-[#BFDBFE] bg-[#EFF6FF] p-4 sm:p-5">
+                <h3 className="text-sm font-bold text-[#18233C]">اتصال پاسخ خودکار موجود</h3>
+                <p className="mt-2 text-xs leading-6 text-[#5A6B87]">
+                  {selectedTemplateId ? "تنظیمات، کلمات کلیدی و پیام‌های پاسخ انتخاب‌شده حفظ می‌شوند. فقط محتوای انتخابی به آن متصل خواهد شد." : "یک پاسخ خودکار از فهرست بالا انتخاب کنید."}
+                </p>
+                {selectedTemplateId && (
+                  <button type="button" onClick={() => void saveAutomation()} disabled={saving || mediaLoading || selectedMediaIds.length === 0} className="mt-4 flex min-h-12 w-full items-center justify-center rounded-xl bg-[#2F61FD] px-4 text-sm font-bold text-white transition hover:bg-[#1E4BD8] disabled:opacity-60">
+                    {saving ? "در حال اتصال..." : "اتصال پاسخ به محتوای انتخاب‌شده"}
+                  </button>
+                )}
+              </section>
+            )}
 
           </div>
 
