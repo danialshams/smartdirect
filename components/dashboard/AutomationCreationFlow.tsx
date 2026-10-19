@@ -1,6 +1,6 @@
 "use client";
 
-import { Camera, Image as ImageIcon, Lightbulb, MessageCircle, Send, ShieldCheck, X, Zap } from "lucide-react";
+import { Camera, Image as ImageIcon, Lightbulb, MessageCircle, Send, ShieldCheck, X } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -396,7 +396,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   return (
     <div dir="rtl" className="mx-auto w-full max-w-4xl space-y-5 py-2 sm:py-4">
       <div className="space-y-4">
-        <AutomationSectionGuide>پست یا استوری موردنظرت را انتخاب کن؛ پاسخ خودکار فقط برای محتوای انتخاب‌شده فعال می‌شود.</AutomationSectionGuide>
+        <AutomationSectionGuide>{triggerType === "COMMENT_KEYWORD" ? "۱. انتخاب محتوا — پست یا ریلز موردنظرت را انتخاب کن." : "۱. انتخاب محتوا — استوری موردنظرت را انتخاب کن."}</AutomationSectionGuide>
         <section aria-labelledby="automation-content-title" className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
@@ -432,11 +432,8 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
           </div>
         </section>
 
-        <AutomationSectionGuide>می‌توانی از پاسخ قبلی استفاده کنی یا یک پاسخ تازه با تنظیمات دلخواه بسازی.</AutomationSectionGuide>
-        <section aria-labelledby="automation-mode-title" className="space-y-2">
-          <div>
-            <h2 id="automation-mode-title" className="text-sm font-bold text-[var(--daira-heading)]">روش پاسخ</h2>
-          </div>
+        <AutomationSectionGuide>۲. روش پاسخ — پاسخ جدید بساز یا از پاسخ قبلی استفاده کن.</AutomationSectionGuide>
+        <section aria-label="روش پاسخ" className="space-y-2">
           <div role="radiogroup" aria-label="روش پاسخ خودکار" className="grid grid-cols-2 gap-2">
             <label className={"flex min-h-[68px] cursor-pointer items-start gap-2.5 rounded-xl border p-3 transition " + (creationMode === "new" ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)]" : "border-[var(--daira-border)] bg-white hover:border-[var(--daira-outline)]")}>
               <input type="radio" name="automation-creation-mode" value="new" checked={creationMode === "new"} onChange={startNewAutomation} className="mt-1 h-4 w-4 shrink-0 accent-[var(--daira-primary)]" />
@@ -451,7 +448,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
         {creationMode === "existing" && (
           <div className="space-y-3">
-            <AutomationSectionGuide>یک پاسخ قبلی را انتخاب کن؛ دکمه زیر فهرست، آن را به محتوای انتخاب‌شده وصل می‌کند.</AutomationSectionGuide>
+            <AutomationSectionGuide>۳. پاسخ قبلی — پاسخ موردنظرت را انتخاب کن؛ سپس دکمه زیر فهرست را بزن.</AutomationSectionGuide>
             <section
                 className="rounded-2xl border p-4 sm:p-6"
                 style={{ borderColor: dairaPalette.border, background: dairaPalette.background.surface }}
@@ -520,21 +517,17 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
 
               </section>
-            <div className="rounded-2xl border p-3 sm:p-4" style={{ borderColor: dairaPalette.border, background: dairaPalette.background.surface }}>
-                <button type="button" onClick={() => { void saveAutomation(); }} disabled={!selectedTemplateId || loadingResources || mediaLoading || selectedMediaCount === 0 || saving} className="flex min-h-12 w-full items-center justify-center rounded-xl px-4 text-sm font-bold text-white transition disabled:opacity-60" style={{ background: dairaPalette.primary.main }}>
-                  {saving ? "در حال استفاده..." : "استفاده از پاسخ انتخاب‌شده"}
-                </button>
-            </div>
+            <button type="button" onClick={() => { void saveAutomation(); }} disabled={!selectedTemplateId || loadingResources || mediaLoading || selectedMediaCount === 0 || saving} className="mt-3 flex min-h-12 w-full items-center justify-center rounded-xl px-4 text-sm font-bold text-white transition disabled:opacity-60" style={{ background: dairaPalette.primary.main }}>
+              {saving ? "در حال استفاده..." : "استفاده از پاسخ انتخاب‌شده"}
+            </button>
           </div>
             )}
             {creationMode === "new" && (
             <div className="space-y-5">
-            <AutomationSectionGuide>{triggerType === "COMMENT_KEYWORD" ? "مشخص کن پاسخ با هر کامنت فعال شود یا فقط با کلمات مشخص. واژه‌ها در قسمت بعد قرار دارند." : "کلمه‌ها یا عبارت‌هایی را بنویس که با آن‌ها پاسخ به استوری فعال می‌شود."}</AutomationSectionGuide>
+            <AutomationSectionGuide>{triggerType === "COMMENT_KEYWORD" ? "۳. شرط فعال‌سازی — انتخاب کن پاسخ با هر کامنت فعال شود یا فقط با کلمات مشخص." : "۳. شرط فعال‌سازی — کلمه‌ها یا عبارت‌هایی را بنویس که پاسخ استوری را فعال می‌کنند."}</AutomationSectionGuide>
             <div className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
-              <div className="mb-3 flex items-center gap-3"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]"><Zap size={16} strokeWidth={2.2} aria-hidden="true" /></span><label className="block text-sm font-bold text-[var(--daira-heading)]">شرط فعال‌سازی</label></div>
               {triggerType === "COMMENT_KEYWORD" && (
-                <div className="mb-3 rounded-xl border border-[var(--daira-border)] p-3">
-                  <p className="mb-2 text-xs font-bold text-[var(--daira-heading)]">روش فعال‌سازی پاسخ</p>
+                <div className="mb-3">
                   <div role="radiogroup" aria-label="روش فعال‌سازی پاسخ" className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                     <label className={"flex cursor-pointer items-start gap-3 rounded-xl border p-3 text-xs transition " + (keywordMatchMode === "CONTAINS_ANY" ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary-hover)]" : "border-[var(--daira-border)] bg-white text-[var(--daira-text)]")}>
                       <input type="radio" name="comment-keyword-match-mode" value="CONTAINS_ANY" checked={keywordMatchMode === "CONTAINS_ANY"} onChange={() => { setKeywordMatchMode("CONTAINS_ANY"); setKeyword(""); setKeywordDraft(""); }} className="mt-1 h-4 w-4 shrink-0 accent-[var(--daira-primary)]" />
@@ -575,7 +568,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
             {triggerType === "COMMENT_KEYWORD" && (
               <div className="space-y-3">
-              <AutomationSectionGuide>این متن زیر کامنت کاربر نمایش داده می‌شود. اگر خالی بماند، پاسخی زیر کامنت ارسال نمی‌شود.</AutomationSectionGuide>
+              <AutomationSectionGuide>۴. پاسخ زیر کامنت — متنی بنویس که زیر کامنت کاربر نمایش داده شود.</AutomationSectionGuide>
               <div className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
                 <div className="mb-3 flex items-center gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]"><MessageCircle size={15} strokeWidth={2.1} aria-hidden="true" /></span><label className="block text-sm font-bold text-[var(--daira-heading)]">پاسخ زیر کامنت</label></div>
                 <textarea value={commentReply} onChange={(e) => setCommentReply(e.target.value)} rows={3} maxLength={2000} placeholder="پاسخی که زیر کامنت کاربر منتشر می‌شود بنویس..." className="w-full resize-y rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3.5 py-3 !text-base leading-7 text-[var(--daira-heading)] outline-none placeholder:text-[11px] placeholder:whitespace-nowrap placeholder:overflow-hidden placeholder:text-ellipsis focus:border-[var(--daira-input-focus)] focus:bg-white focus:ring-2 focus:ring-[color:var(--daira-primary)]/10" style={{ fontSize: "16px", lineHeight: 1.75 }} />
@@ -585,7 +578,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
               {triggerType === "COMMENT_KEYWORD" ? (
                 <div className="space-y-4">
-                <AutomationSectionGuide>پیام مستقیمی را بنویس که بعد از کامنت برای کاربر فرستاده می‌شود.</AutomationSectionGuide>
+                <AutomationSectionGuide>۵. پیام دایرکت — متنی بنویس که بعد از کامنت برای کاربر فرستاده شود.</AutomationSectionGuide>
                 <section className="space-y-4 rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
                   <div>
                     <div className="mb-3 flex items-center gap-3">
@@ -640,7 +633,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
                   </section>
 
-                <AutomationSectionGuide>این گزینه اختیاری است. اگر روشنش کنی، کاربر قبل از دریافت پاسخ باید پیج را دنبال کند.</AutomationSectionGuide>
+                <AutomationSectionGuide>۶. شرط فالو — اختیاری است؛ اگر روشنش کنی، کاربر قبل از دریافت پاسخ باید پیج را دنبال کند و درخواست بررسی فالو برایش ارسال می‌شود.</AutomationSectionGuide>
                 <section className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
                     <div className="mb-3 flex items-center gap-3">
                       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]"><ShieldCheck size={15} strokeWidth={2.1} aria-hidden="true" /></span>
@@ -649,8 +642,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                     <label className="flex cursor-pointer items-start gap-3 rounded-xl border p-3.5 transition-colors" style={{ borderColor: requireFollow ? dairaPalette.primary.main : dairaPalette.border, background: requireFollow ? dairaPalette.secondary.hoverBackground : dairaPalette.background.surfaceHover }}>
                       <input type="checkbox" role="switch" aria-label="الزام به فالو قبل از ارسال پاسخ" aria-checked={requireFollow} checked={requireFollow} onChange={(event) => setRequireFollow(event.target.checked)} className="daira-form-switch mt-1" />
                       <span className="min-w-0">
-                        <strong className="block text-sm" style={{ color: dairaPalette.text.heading }}>الزام به فالو قبل از ارسال پاسخ (اختیاری)</strong>
-                        <span className="mt-1 block text-xs leading-5" style={{ color: dairaPalette.text.body }}>اگر کاربر پیج را فالو نکرده باشد، ابتدا پیام درخواست فالو و دکمه بررسی ارسال می‌شود.</span>
+                        <strong className="block text-sm" style={{ color: dairaPalette.text.heading }}>الزام به فالو قبل از ارسال پاسخ <span className="text-[var(--daira-primary)]">(اختیاری)</span></strong>
                       </span>
                     </label>
                     {requireFollow && (
@@ -668,7 +660,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                 </div>
               ) : (
                 <div className="space-y-3">
-                <AutomationSectionGuide>نوع پاسخ را انتخاب کن؛ می‌توانی متن، عکس، ویدیو، وویس، ویترین یا فرم بفرستی.</AutomationSectionGuide>
+                <AutomationSectionGuide>۴. نوع پاسخ — مشخص کن در جواب استوری متن، عکس، ویدیو، وویس، ویترین یا فرم ارسال شود.</AutomationSectionGuide>
                 <div className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
                 <PublishingStoryAutomationSetup
                   message={message}
@@ -704,20 +696,19 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
 
         {mediaDialogOpen && (
-          <div className="fixed inset-0 z-[2200] flex items-end justify-center bg-black/45 p-0 backdrop-blur-[2px] sm:items-center sm:p-5" onMouseDown={(event) => { if (event.target === event.currentTarget) setMediaDialogOpen(false); }}>
-            <section role="dialog" aria-modal="true" aria-labelledby="media-dialog-title" className="flex max-h-[94dvh] w-full max-w-3xl flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:max-h-[90dvh] sm:rounded-3xl">
-              <header className="flex shrink-0 items-start justify-between gap-3 border-b border-[var(--daira-border)] px-4 py-4 sm:px-5">
-                <div><h2 id="media-dialog-title" className="text-sm font-extrabold text-[var(--daira-heading)]">{triggerType === "COMMENT_KEYWORD" ? "انتخاب پست و ریلز" : "انتخاب استوری"}</h2><p className="mt-1 text-[11px] leading-5 text-[var(--daira-text)]">{triggerType === "COMMENT_KEYWORD" ? "هر تعداد محتوای بدون پاسخ خودکار را می‌توانی انتخاب کنی." : "برای این پاسخ فقط یک استوری انتخاب کن."}</p></div>
-                <button type="button" onClick={() => setMediaDialogOpen(false)} aria-label="بستن پنجره انتخاب محتوا" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[var(--daira-text)] transition hover:bg-[var(--daira-surface-hover)] hover:text-[var(--daira-heading)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--daira-primary)]/25"><X size={19} /></button>
+          <div className="fixed inset-0 z-[2200] flex items-end justify-center bg-black/45 p-3 backdrop-blur-[2px] sm:items-center sm:p-4" onMouseDown={(event) => { if (event.target === event.currentTarget) setMediaDialogOpen(false); }}>
+            <section role="dialog" aria-modal="true" aria-labelledby="media-dialog-title" className="flex max-h-[82dvh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+              <header className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--daira-border)] px-3 py-3 sm:px-4">
+                <div className="flex min-w-0 items-center gap-2"><h2 id="media-dialog-title" className="text-sm font-extrabold text-[var(--daira-heading)]">{triggerType === "COMMENT_KEYWORD" ? "انتخاب پست و ریلز" : "انتخاب استوری"}</h2><button type="button" onClick={() => setMediaDialogOpen(false)} aria-label="بستن پنجره انتخاب محتوا" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[var(--daira-text)] transition hover:bg-[var(--daira-surface-hover)] hover:text-[var(--daira-heading)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--daira-primary)]/25"><X size={17} /></button></div>
+                <span className="shrink-0 rounded-lg bg-[var(--daira-surface-hover)] px-2.5 py-1.5 text-[11px] font-bold text-[var(--daira-text)]">{new Intl.NumberFormat("fa-IR").format(draftSelectedMediaIds.length)} انتخاب‌شده</span>
               </header>
-              <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3 sm:px-5">
+              <div className="min-h-0 flex-1 overflow-y-auto px-3 py-2 sm:px-4">
                 <AutomationPicker items={mediaItems} selectedIds={draftSelectedMediaIds} loading={mediaLoading} showContentFilters={triggerType === "COMMENT_KEYWORD"} onToggle={(id) => setDraftSelectedMediaIds((current) => triggerType === "COMMENT_KEYWORD" ? (current.includes(id) ? current.filter((value) => value !== id) : [...current, id]) : [id])} />
               </div>
-              <footer className="flex shrink-0 items-center justify-between gap-3 border-t border-[var(--daira-border)] bg-white px-4 py-3.5 sm:px-5">
-                <span className="text-xs font-semibold text-[var(--daira-text)]">{new Intl.NumberFormat("fa-IR").format(draftSelectedMediaIds.length)} انتخاب‌شده</span>
-                <div className="flex items-center gap-2">
-                  <button type="button" onClick={() => setMediaDialogOpen(false)} className="min-h-10 rounded-xl border border-[var(--daira-border)] px-4 text-xs font-bold text-[var(--daira-text)] transition hover:bg-[var(--daira-surface-hover)]">انصراف</button>
-                  <button type="button" onClick={confirmMediaSelection} disabled={mediaLoading} className="min-h-10 rounded-xl bg-[var(--daira-primary)] px-4 text-xs font-bold text-white transition hover:bg-[var(--daira-primary-hover)] disabled:cursor-not-allowed disabled:opacity-50">تأیید انتخاب</button>
+              <footer className="flex shrink-0 items-center justify-center gap-2 border-t border-[var(--daira-border)] bg-white px-3 py-3 sm:px-4">
+                <div className="flex items-center justify-center gap-2">
+                  <button type="button" onClick={() => setMediaDialogOpen(false)} className="min-h-9 rounded-xl border border-[var(--daira-border)] px-4 text-xs font-bold text-[var(--daira-text)] transition hover:bg-[var(--daira-surface-hover)]">انصراف</button>
+                  <button type="button" onClick={confirmMediaSelection} disabled={mediaLoading} className="min-h-9 rounded-xl bg-[var(--daira-primary)] px-4 text-xs font-bold text-white transition hover:bg-[var(--daira-primary-hover)] disabled:cursor-not-allowed disabled:opacity-50">تأیید انتخاب</button>
                 </div>
               </footer>
             </section>
