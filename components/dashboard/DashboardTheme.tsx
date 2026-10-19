@@ -7,6 +7,7 @@ import { CacheProvider } from "@emotion/react";
 import createCache from "@emotion/cache";
 import { prefixer } from "stylis";
 import rtlPlugin from "stylis-plugin-rtl";
+import { dairaPalette } from "@/lib/design-system/palette";
 
 const rtlCache = createCache({
   key: "smartdirect-dashboard-rtl",
@@ -17,14 +18,19 @@ const dashboardTheme = createTheme({
   direction: "rtl",
   palette: {
     mode: "light",
-    primary: { main: "#2563EB", dark: "#1D4ED8", light: "#3B82F6", contrastText: "#FFFFFF" },
-    secondary: { main: "#64748B" },
-    success: { main: "#16A34A" },
-    warning: { main: "#D97706" },
-    error: { main: "#DC2626" },
-    background: { default: "#F8FAFC", paper: "#FFFFFF" },
-    text: { primary: "#0F172A", secondary: "#64748B" },
-    divider: "#E2E8F0",
+    primary: {
+      main: dairaPalette.primary.main,
+      dark: dairaPalette.primary.hover,
+      light: dairaPalette.secondary.activeBackground,
+      contrastText: dairaPalette.background.surface,
+    },
+    secondary: { main: dairaPalette.text.body },
+    success: { main: dairaPalette.status.success },
+    warning: { main: dairaPalette.status.warning },
+    error: { main: dairaPalette.status.error },
+    background: { default: dairaPalette.background.page, paper: dairaPalette.background.surface },
+    text: { primary: dairaPalette.text.heading, secondary: dairaPalette.text.body },
+    divider: dairaPalette.border,
   },
   typography: {
     fontFamily: '"Vazirmatn", Arial, sans-serif',
@@ -37,8 +43,8 @@ const dashboardTheme = createTheme({
     MuiCssBaseline: {
       styleOverrides: {
         body: {
-          backgroundColor: "#F8FAFC",
-          color: "#0F172A",
+          backgroundColor: dairaPalette.background.page,
+          color: dairaPalette.text.heading,
           fontFamily: '"Vazirmatn", Arial, sans-serif',
         },
         /* react-day-picker renders weeks as table rows/cells. The previous flex rules
@@ -118,7 +124,7 @@ const dashboardTheme = createTheme({
     MuiButton: { defaultProps: { disableElevation: true } },
     MuiCard: {
       styleOverrides: {
-        root: { border: "1px solid #E2E8F0", borderRadius: 12 },
+        root: { border: `1px solid ${dairaPalette.border}`, borderRadius: 12 },
       },
     },
     MuiTextField: { defaultProps: { size: "small" } },
@@ -126,8 +132,8 @@ const dashboardTheme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: 10,
-          "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#94A3B8" },
-          "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#2563EB", borderWidth: 1 },
+          "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: dairaPalette.form.borderHover },
+          "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: dairaPalette.form.focus, borderWidth: 1 },
         },
       },
     },
