@@ -17,22 +17,11 @@ type Props = {
   selectedIds: string[];
   loading: boolean;
   onToggle: (id: string) => void;
-  title?: string;
-  description?: string;
-  selectedLabel?: string;
 };
 
 export default function AutomationPicker({ items, selectedIds, loading, onToggle, title = "انتخاب پست‌ها و ریلزها", description = "محتواهایی را انتخاب کنید که این پاسخ خودکار برای آن‌ها فعال باشد.", selectedLabel = "محتوا انتخاب شده" }: Props) {
   return (
-    <section className="rounded-xl border border-[#E2E8F0] bg-white p-4 sm:p-5">
-      <div className="mb-3 flex items-center gap-3">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#EFF6FF] text-sm font-bold text-[#2F61FD]">۱</span>
-        <div>
-          <h2 className="text-sm font-bold text-[#18233C]">{title}</h2>
-          <p className="mt-1 text-xs leading-5 text-[#64748B]">{description}</p>
-        </div>
-      </div>
-      <p className="mb-3 text-xs leading-5 text-[#5A6B87]">{selectedLabel === "استوری انتخاب شده" ? "یک استوری انتخاب کنید؛ انتخاب استوری قبلی با انتخاب مورد جدید جایگزین می‌شود." : "یک یا چند محتوا را انتخاب کنید. برای پیمایش فهرست، داخل کادر محتوا اسکرول کنید."}</p>
+    <section className="rounded-2xl border border-[#E6ECF5] bg-white p-3 sm:p-4">
       {loading ? (
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
           {Array.from({ length: 8 }).map((_, i) => <div key={i} className="aspect-square animate-pulse rounded-lg bg-[#E2E8F0]" />)}
@@ -58,7 +47,6 @@ export default function AutomationPicker({ items, selectedIds, loading, onToggle
       ) : (
         <p className="rounded-lg bg-[#F8FAFC] p-3 text-xs leading-5 text-[#5A6B87]">محتوایی دریافت نشد. اتصال اینستاگرام و دسترسی رسانه‌ها را بررسی کنید.</p>
       )}
-      <p className="mt-3 text-xs font-medium text-[#5A6B87]">{selectedIds.length} {selectedLabel}</p>
     </section>
   );
 }
