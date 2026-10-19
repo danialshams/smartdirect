@@ -689,7 +689,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType }
                   {keywords.map((item) => (
                     <span key={item} className="inline-flex items-center gap-1.5 rounded-full bg-[var(--daira-outline-hover-bg)] px-3 py-1.5 text-xs font-semibold text-[var(--daira-primary)]">
                       {item}
-                      <button type="button" onClick={() => setKeyword(keywords.filter((value) => value !== item).join(","))} className="sd-neutral-button inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold" aria-label={"حذف " + item}>×</button>
+                      <button type="button" onClick={() => setKeyword(keywords.filter((value) => value !== item).join(","))} className="sd-neutral-button text-[var(--daira-text)] hover:text-[var(--daira-error-text)]" aria-label={"حذف " + item}>×</button>
                     </span>
                   ))}
                 </div>
