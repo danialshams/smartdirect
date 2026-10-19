@@ -1,6 +1,6 @@
 "use client";
 
-import { Camera } from "lucide-react";
+import { Camera, Check, MessageCircle, Send, ShieldCheck, Zap } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -139,24 +139,22 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   }, [account.id, triggerType]);
 
   function applyAutomationTemplate(template: AutomationTemplate) {
-    setSelectedTemplateId(template.id);
-    setCreationMode("existing");
+    setSelectedTemplateId((current) => {
+      if (current === template.id) {
+        setCreationMode("new");
+        return "";
+      }
+      setCreationMode("existing");
+      return template.id;
+    });
     setError("");
   }
 
   function startNewAutomation() {
+    // Returning to step 2 must not erase an unfinished new response.
     setFlowStep(3);
     setSelectedTemplateId("");
     setCreationMode("new");
-    setKeyword("");
-    setKeywordDraft("");
-    setKeywordMatchMode("EXACT");
-    setCommentReply("");
-    setRequireFollow(false);
-    setFollowGateText("برای دریافت پاسخ، ابتدا پیج ما را فالو کنید.");
-    setMessage(createEmptyMessage());
-    setDmMode("TEXT");
-    setLinkButtons([{ title: "مشاهده لینک", url: "" }]);
     setError("");
   }
 
@@ -370,9 +368,96 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   }
 
   const selectedMediaCount = new Set([...selectedMediaIds, ...(mediaId ? [mediaId] : [])]).size;
+  const flowSteps = [
+    { number: 1 as const, title: triggerType === "COMMENT_KEYWORD" ? "انتخاب محتوا" : "انتخاب استوری" },
+    { number: 2 as const, title: "انتخاب پاسخ" },
+    { number: 3 as const, title: "تنظیم پاسخ" },
+  ];
+  const activeStepTitle = flowSteps[flowStep - 1]?.title ?? flowSteps[0].title;
 
   return (
     <div dir="rtl" className="mx-auto w-full max-w-4xl space-y-5 py-2 sm:py-4">
+      <section
+        aria-label="مراحل ساخت پاسخ خودکار"
+        className="rounded-2xl border p-3 sm:p-4"
+        style={{ borderColor: dairaPalette.border, background: dairaPalette.background.surface }}
+      >
+        <div className="flex items-center justify-between gap-3">
+          <span className="shrink-0 text-[11px] font-bold sm:text-xs" style={{ color: dairaPalette.text.body }}>
+            مرحله {new Intl.NumberFormat("fa-IR").format(flowStep)} از ۳
+          </span>
+          <span className="min-w-0 truncate text-left text-[11px] font-bold sm:text-xs" style={{ color: dairaPalette.text.heading }}>
+            {activeStepTitle}
+          </span>
+        </div>
+        <ol className="mt-3 grid list-none grid-cols-3 gap-2 p-0" aria-label="انتخاب مرحله قبلی">
+          {flowSteps.map((step) => {
+            const isActive = step.number === flowStep;
+            const isComplete = step.number < flowStep;
+            const stepSurface = isActive
+              ? dairaPalette.secondary.hoverBackground
+              : isComplete
+                ? dairaPalette.secondary.activeBackground
+                : dairaPalette.background.surfaceHover;
+            const stepBorder = isActive
+              ? dairaPalette.primary.main
+              : isComplete
+                ? dairaPalette.secondary.activeBackground
+                : dairaPalette.border;
+            const stepText = isActive
+              ? dairaPalette.text.heading
+              : isComplete
+                ? dairaPalette.primary.main
+                : dairaPalette.text.muted;
+            const stepCircleBackground = isActive
+              ? dairaPalette.primary.main
+              : isComplete
+                ? dairaPalette.background.surface
+                : dairaPalette.background.surfaceActive;
+            const stepCircleColor = isActive
+              ? dairaPalette.background.surface
+              : isComplete
+                ? dairaPalette.primary.main
+                : dairaPalette.text.muted;
+            const stepContent = (
+              <>
+                <span
+                  className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-extrabold"
+                  style={{ background: stepCircleBackground, color: stepCircleColor, border: `1px solid ${stepBorder}` }}
+                  aria-hidden="true"
+                >
+                  {isComplete ? <Check size={13} strokeWidth={2.5} /> : new Intl.NumberFormat("fa-IR").format(step.number)}
+                </span>
+                <span className="min-w-0 leading-4">{step.title}</span>
+              </>
+            );
+            return (
+              <li key={step.number} className="min-w-0">
+                {isComplete ? (
+                  <button
+                    type="button"
+                    onClick={() => { setFlowStep(step.number); setError(""); }}
+                    aria-label={`بازگشت به مرحله ${new Intl.NumberFormat("fa-IR").format(step.number)}: ${step.title}`}
+                    className="flex min-h-[54px] w-full items-center justify-center gap-1.5 rounded-xl border px-1.5 py-2 text-center text-[10px] font-bold transition-colors hover:brightness-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--daira-primary)] sm:min-h-12 sm:gap-2 sm:px-3 sm:text-xs"
+                    style={{ borderColor: stepBorder, background: stepSurface, color: stepText }}
+                  >
+                    {stepContent}
+                  </button>
+                ) : (
+                  <div
+                    aria-current={isActive ? "step" : undefined}
+                    aria-disabled={!isActive}
+                    className="flex min-h-[54px] w-full items-center justify-center gap-1.5 rounded-xl border px-1.5 py-2 text-center text-[10px] font-bold sm:min-h-12 sm:gap-2 sm:px-3 sm:text-xs"
+                    style={{ borderColor: stepBorder, background: stepSurface, color: stepText }}
+                  >
+                    {stepContent}
+                  </div>
+                )}
+              </li>
+            );
+          })}
+        </ol>
+      </section>
 
       <div className="space-y-5">
             {flowStep === 1 && !mediaId && (
@@ -484,7 +569,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             {flowStep === 3 && creationMode === "new" && (
             <div className="space-y-5">
             <div className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
-              <div className="mb-3 flex items-center gap-3"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--daira-outline-hover-bg)] text-sm font-bold text-[var(--daira-primary)]">۲</span><label className="block text-sm font-bold text-[var(--daira-heading)]">شرط فعال‌سازی</label></div>
+              <div className="mb-3 flex items-center gap-3"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]"><Zap size={16} strokeWidth={2.2} aria-hidden="true" /></span><label className="block text-sm font-bold text-[var(--daira-heading)]">شرط فعال‌سازی</label></div>
               <p className="mb-3 text-xs leading-5 text-[var(--daira-text)]">
                 {triggerType === "COMMENT_KEYWORD" ? (keywordMatchMode === "CONTAINS_ANY" ? "با ثبت هر کامنت زیر پست یا ریلز انتخاب‌شده، همین پاسخ ارسال می‌شود." : "با ثبت یکی از کلمات کلیدی مشخص‌شده در کامنت، پاسخ خودکار فعال می‌شود.") : "با وارد شدن یکی از کلمات کلیدی در Reply استوری، پاسخ خودکار فعال می‌شود."}
               </p>
@@ -511,7 +596,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
             {triggerType === "COMMENT_KEYWORD" && (
               <div className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
-                <div className="mb-3 flex items-center gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--daira-outline-hover-bg)] text-sm font-bold text-[var(--daira-primary)]">۳</span><label className="block text-sm font-bold text-[var(--daira-heading)]">پاسخ زیر کامنت</label></div>
+                <div className="mb-3 flex items-center gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]"><MessageCircle size={15} strokeWidth={2.1} aria-hidden="true" /></span><label className="block text-sm font-bold text-[var(--daira-heading)]">پاسخ زیر کامنت</label></div>
                 <textarea value={commentReply} onChange={(e) => setCommentReply(e.target.value)} rows={3} maxLength={2000} placeholder="پاسخی که زیر کامنت کاربر منتشر می‌شود بنویس..." className="w-full resize-y rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3.5 py-3 !text-base leading-7 text-[var(--daira-heading)] outline-none placeholder:text-[11px] placeholder:whitespace-nowrap placeholder:overflow-hidden placeholder:text-ellipsis focus:border-[var(--daira-input-focus)] focus:bg-white focus:ring-2 focus:ring-[color:var(--daira-primary)]/10" style={{ fontSize: "16px", lineHeight: 1.75 }} />
               </div>
             )}
@@ -520,7 +605,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                 <section className="space-y-5">
                   <div>
                     <div className="mb-3 flex items-center gap-3">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--daira-outline-hover-bg)] text-sm font-bold text-[var(--daira-primary)]">۴</span>
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]"><Send size={15} strokeWidth={2.1} aria-hidden="true" /></span>
                       <h2 className="text-sm font-bold" style={{ color: dairaPalette.text.heading }}>پیام دایرکت</h2>
                     </div>
                     <p className="mt-1 text-xs leading-5" style={{ color: dairaPalette.text.body }}>متنی را که پس از کامنت برای کاربر ارسال می‌شود بنویس.</p>
@@ -566,7 +651,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
                   <section className="border-t pt-5" style={{ borderColor: dairaPalette.border }}>
                     <div className="mb-3 flex items-center gap-3">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--daira-outline-hover-bg)] text-sm font-bold text-[var(--daira-primary)]">۵</span>
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]"><ShieldCheck size={15} strokeWidth={2.1} aria-hidden="true" /></span>
                       <span className="text-sm font-bold" style={{ color: dairaPalette.text.heading }}>شرط فالو</span>
                     </div>
                     <label className="flex cursor-pointer items-start gap-3 rounded-xl border p-3" style={{ borderColor: dairaPalette.border, background: dairaPalette.background.surfaceHover }}>
@@ -627,8 +712,6 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                 type="button"
                 onClick={() => {
                   setFlowStep(2);
-                  setCreationMode("existing");
-                  setSelectedTemplateId("");
                   setError("");
                 }}
                 disabled={mediaLoading || selectedMediaCount === 0}
