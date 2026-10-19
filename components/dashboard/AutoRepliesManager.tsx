@@ -270,17 +270,26 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
 
         const nextItems: ReplyItem[] = [];
         for (const automation of allAutomations) {
+          const automationMediaIds = Array.from(new Set([
+            ...(automation.mediaId ? [automation.mediaId] : []),
+            ...(typeof automation.mediaIds === "string" ? automation.mediaIds.split(",").map((id) => id.trim()).filter(Boolean) : []),
+          ]));
+          const availableAutomationMediaIds = automationMediaIds.filter((id) => mediaById.has(id));
+          // Prefer a linked media item that isn't already represented by a publishing job,
+          // but still show the automation when every selected item came from publishing.
+          const displayMediaId = availableAutomationMediaIds.find((id) => !publishedMediaIds.has(id)) ??
+            availableAutomationMediaIds[0] ??
+            null;
+
           if (
             (automation.triggerType !== "COMMENT_KEYWORD" && automation.triggerType !== "STORY_REPLY_KEYWORD") ||
-            !automation.mediaId ||
             !normalizeKeywordList(automation.keyword) ||
             linkedAutomationIds.has(automation.id) ||
-            publishedMediaIds.has(automation.mediaId) ||
-            !mediaById.has(automation.mediaId) ||
-            (automation.triggerType === "STORY_REPLY_KEYWORD" && !activeStoryIds.has(automation.mediaId))
+            !displayMediaId ||
+            (automation.triggerType === "STORY_REPLY_KEYWORD" && !activeStoryIds.has(displayMediaId))
           ) continue;
 
-          const media = mediaById.get(automation.mediaId);
+          const media = mediaById.get(displayMediaId);
           if (!media) continue;
           const isStory = automation.triggerType === "STORY_REPLY_KEYWORD";
           nextItems.push({
@@ -320,6 +329,9 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
               Boolean(automation.mediaIds?.split(",").some((id) => id.trim() === targetMediaId));
             return automation.triggerType === (isStory ? "STORY_REPLY_KEYWORD" : "COMMENT_KEYWORD") && automationMatchesMedia;
           });
+          // If a standalone automation is already listed for this media, don't add a
+          // duplicate publishing-job row. Directly linked jobs remain represented here.
+          if (!linkedAutomationId && mediaMatchedAutomation) continue;
           const directCreatedAt = directlyLinkedAutomation?.createdAt ? Date.parse(directlyLinkedAutomation.createdAt) : Number.NEGATIVE_INFINITY;
           const mediaCreatedAt = mediaMatchedAutomation?.createdAt ? Date.parse(mediaMatchedAutomation.createdAt) : Number.NEGATIVE_INFINITY;
           const linkedAutomation = directCreatedAt > mediaCreatedAt
