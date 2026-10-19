@@ -114,7 +114,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   const keywords = useMemo(() => keyword.split(",").map((item) => item.trim()).filter(Boolean), [keyword]);
 
   useEffect(() => {
-    if (triggerType !== "COMMENT_KEYWORD") { setMediaLoading(false); return; }
+    
     let cancelled = false;
     void Promise.all([
       fetch("/api/instagram/media?instagramAccountId=" + encodeURIComponent(account.id), { cache: "no-store", credentials: "include" }).then((response) => response.json()),
@@ -170,8 +170,8 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
       if (invalidButton) { setError("برای هر دکمه، لینک معتبر با http یا https و عنوان حداکثر ۲۰ کاراکتر وارد کنید."); return; }
       if (currentMessage.text.trim().length > 640) { setError("متن دایرکت همراه دکمه حداکثر ۶۴۰ کاراکتر است."); return; }
     }
-    if (triggerType === "COMMENT_KEYWORD" && selectedMediaIds.length === 0) {
-      setError("حداقل یک پست یا ریلز انتخاب کنید.");
+    if (selectedMediaIds.length === 0 && !mediaId) {
+      setError(triggerType === "COMMENT_KEYWORD" ? "حداقل یک پست یا ریلز انتخاب کنید." : "یک استوری انتخاب کنید.");
       return;
     }
     if (triggerType === "COMMENT_KEYWORD" && requireFollow && !followGateText.trim()) {
@@ -205,7 +205,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
         body: JSON.stringify({
           instagramAccountId: account.id,
           triggerType,
-          mediaId: triggerType === "COMMENT_KEYWORD" ? (selectedMediaIds.length === 1 ? selectedMediaIds[0] : null) : mediaId,
+          mediaId: triggerType === "COMMENT_KEYWORD" ? (selectedMediaIds.length === 1 ? selectedMediaIds[0] : null) : selectedMediaIds[0] || mediaId,
           keyword: keywordMatchMode === "CONTAINS_ANY" ? null : cleanKeywords.join(","),
           keywordMatchMode,
           mediaIds: triggerType === "COMMENT_KEYWORD" ? selectedMediaIds : [],
