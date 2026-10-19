@@ -436,21 +436,21 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType }
   ];
   const pageStyles = (
     <style jsx global>{`
-      .automation-create-flow button,
-      .automation-create-flow button * {
+      .automation-create-flow button:not(.sd-neutral-button):not(.sd-destructive-button):not(.sd-content-card):not([aria-pressed="false"]),
+      .automation-create-flow button:not(.sd-neutral-button):not(.sd-destructive-button):not(.sd-content-card):not([aria-pressed="false"]) * {
         color: #fff !important;
       }
-      .automation-create-flow button {
-        background-color: var(--daira-primary) !important;
-        border-color: var(--daira-primary) !important;
+      .automation-create-flow button:not(.sd-neutral-button):not(.sd-destructive-button):not(.sd-content-card):not([aria-pressed="false"]) {
+        background-color: var(--daira-primary, #2F61FD) !important;
+        border-color: var(--daira-primary, #2F61FD) !important;
       }
-      .automation-create-flow button:hover:not(:disabled) {
-        background-color: var(--daira-primary-hover) !important;
-        border-color: var(--daira-primary-hover) !important;
+      .automation-create-flow button:not(.sd-neutral-button):not(.sd-destructive-button):not(.sd-content-card):not([aria-pressed="false"]):hover:not(:disabled) {
+        background-color: var(--daira-primary-hover, #1E4BD8) !important;
+        border-color: var(--daira-primary-hover, #1E4BD8) !important;
       }
-      .automation-create-flow button:disabled {
-        background-color: var(--daira-primary) !important;
-        border-color: var(--daira-primary) !important;
+      .automation-create-flow button:not(.sd-neutral-button):not(.sd-destructive-button):not(.sd-content-card):not([aria-pressed="false"]):disabled {
+        background-color: var(--daira-primary, #2F61FD) !important;
+        border-color: var(--daira-primary, #2F61FD) !important;
         opacity: .48;
       }
       .sd-success-ring {
@@ -522,7 +522,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType }
         <h1 className="mt-5 text-xl font-extrabold" style={{ color: dairaPalette.text.heading }}>عملیات با موفقیت انجام شد</h1>
         <button
           type="button"
-          onClick={() => router.push(triggerType === "COMMENT_KEYWORD" ? "/dashboard/comment-automation" : "/dashboard/story-automation")}
+          onClick={() => { window.scrollTo({ top: 0, left: 0, behavior: "instant" }); router.push(triggerType === "COMMENT_KEYWORD" ? "/dashboard/comment-automation" : "/dashboard/story-automation", { scroll: true }); }}
           className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl px-5 text-sm font-bold text-white transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--daira-primary)]/30"
           style={{ background: dairaPalette.primary.main }}
         >
@@ -689,7 +689,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType }
                   {keywords.map((item) => (
                     <span key={item} className="inline-flex items-center gap-1.5 rounded-full bg-[var(--daira-outline-hover-bg)] px-3 py-1.5 text-xs font-semibold text-[var(--daira-primary)]">
                       {item}
-                      <button type="button" onClick={() => setKeyword(keywords.filter((value) => value !== item).join(","))} className="inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold" aria-label={"حذف " + item}>×</button>
+                      <button type="button" onClick={() => setKeyword(keywords.filter((value) => value !== item).join(","))} className="sd-neutral-button inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold" aria-label={"حذف " + item}>×</button>
                     </span>
                   ))}
                 </div>
@@ -757,7 +757,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType }
                                 onClick={() => setLinkButtons((current) => current.filter((_, i) => i !== index))}
                                 title="حذف دکمه لینک"
                                 aria-label={`حذف دکمه لینک ${new Intl.NumberFormat("fa-IR").format(index + 1)}`}
-                                className="absolute left-0 inline-flex h-9 w-9 items-center justify-center rounded-xl border transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--daira-primary)]/25"
+                                className="sd-destructive-button absolute left-0 inline-flex h-9 w-9 items-center justify-center rounded-xl border transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--daira-primary)]/25"
                                 style={{ borderColor: dairaPalette.status.errorBorder, background: dairaPalette.status.errorBackground, color: dairaPalette.status.errorText }}
                               >
                                 <Trash2 size={16} aria-hidden="true" />
@@ -850,14 +850,14 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType }
             <section role="dialog" aria-modal="true" aria-labelledby="media-dialog-title" className="flex max-h-[82dvh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
               <header className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--daira-border)] px-3 py-2.5 sm:px-4">
                 <span className="shrink-0 rounded-lg bg-[var(--daira-surface-hover)] px-2.5 py-1.5 text-[11px] font-bold text-[var(--daira-text)]">{new Intl.NumberFormat("fa-IR").format(draftSelectedMediaIds.length)} انتخاب‌شده</span>
-                <button type="button" onClick={() => setMediaDialogOpen(false)} aria-label="بستن پنجره انتخاب محتوا" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[var(--daira-text)] transition hover:bg-[var(--daira-surface-hover)] hover:text-[var(--daira-heading)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--daira-primary)]/25"><X size={17} /></button>
+                <button type="button" onClick={() => setMediaDialogOpen(false)} aria-label="بستن پنجره انتخاب محتوا" className="sd-neutral-button flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[var(--daira-text)] transition hover:bg-[var(--daira-surface-hover)] hover:text-[var(--daira-heading)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--daira-primary)]/25"><X size={17} /></button>
               </header>
               <div className="min-h-0 flex-1 overflow-y-auto px-3 py-2 sm:px-4">
                 <AutomationPicker items={mediaItems} selectedIds={draftSelectedMediaIds} loading={mediaLoading} showContentFilters={triggerType === "COMMENT_KEYWORD"} onToggle={(id) => setDraftSelectedMediaIds((current) => triggerType === "COMMENT_KEYWORD" ? (current.includes(id) ? current.filter((value) => value !== id) : [...current, id]) : [id])} />
               </div>
               <footer className="flex shrink-0 items-center justify-center gap-2 border-t border-[var(--daira-border)] bg-white px-3 py-3 sm:px-4">
                 <div className="flex items-center justify-center gap-2">
-                  <button type="button" onClick={() => setMediaDialogOpen(false)} className="min-h-9 rounded-xl border border-[var(--daira-border)] px-4 text-xs font-bold text-[var(--daira-text)] transition hover:bg-[var(--daira-surface-hover)]">انصراف</button>
+                  <button type="button" onClick={() => setMediaDialogOpen(false)} className="sd-neutral-button min-h-9 rounded-xl border border-[var(--daira-border)] px-4 text-xs font-bold text-[var(--daira-text)] transition hover:bg-[var(--daira-surface-hover)]>انصراف</button>
                   <button type="button" onClick={confirmMediaSelection} disabled={mediaLoading} className="min-h-9 rounded-xl bg-[var(--daira-primary)] px-4 text-xs font-bold text-white transition hover:bg-[var(--daira-primary-hover)] disabled:cursor-not-allowed disabled:opacity-50">تأیید انتخاب</button>
                 </div>
               </footer>
