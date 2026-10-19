@@ -41,7 +41,7 @@ function serializeQuickReplies(replies: QuickReplyDraft[]): unknown[] {
   }));
 }
 
-export default function AutomationCreationFlow({ account, mediaId, triggerType, title, description, onSaved }: Props) {
+export default function AutomationCreationFlow({ account, mediaId, triggerType, onSaved }: Props) {
   const router = useRouter();
   const [keyword, setKeyword] = useState("");
   const [keywordDraft, setKeywordDraft] = useState("");
@@ -374,7 +374,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
               </div>
             )}
             {flowStep === 2 && (
-              <section className="rounded-2xl border border-[#E6ECF5] bg-white p-4 sm:p-5" aria-labelledby="automation-template-heading">
+              <section className="rounded-2xl border border-[#E6ECF5] bg-white p-4 sm:p-5">
                 
                 {loadingResources ? (
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2" aria-label="در حال دریافت پاسخ‌های قبلی">{[0, 1].map((item) => <div key={item} className="h-[76px] animate-pulse rounded-xl bg-[#F1F5F9]" />)}</div>
