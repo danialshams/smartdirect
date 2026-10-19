@@ -1,6 +1,6 @@
 "use client";
 
-import { Camera, Image as ImageIcon, Lightbulb, MessageCircle, Send, ShieldCheck, Trash2, X } from "lucide-react";
+import { Camera, CheckCircle2, Image as ImageIcon, Lightbulb, MessageCircle, Send, ShieldCheck, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -21,7 +21,6 @@ type Props = {
   triggerType: TriggerType;
   title: string;
   description: string;
-  onSaved: () => void;
 };
 
 function AutomationSectionGuide({ children }: { children: ReactNode }) {
@@ -114,6 +113,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   const [creationMode, setCreationMode] = useState<CreationMode>("new");
   const [loadingResources, setLoadingResources] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [completed, setCompleted] = useState(false);
   const [error, setError] = useState("");
   const { registerBackHandler } = useDashboardBackNavigation();
 
@@ -279,7 +279,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
         });
         const result = await response.json();
         if (!response.ok || !result.success) throw new Error(result.error || result.message || "اتصال پاسخ خودکار ناموفق بود.");
-        onSaved();
+        setCompleted(true);
       } catch (e) {
         setError(e instanceof Error ? e.message : "اتصال پاسخ خودکار ناموفق بود.");
       } finally {
@@ -405,7 +405,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
         }
       }
 
-      onSaved();
+      setCompleted(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : "ذخیره پاسخ خودکار ناموفق بود.");
     } finally {
@@ -415,6 +415,24 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
   const selectedMediaCount = selectedMediaIds.length;
   const selectedMediaItems = mediaItems.filter((item) => selectedMediaIds.includes(item.id));
+
+  if (completed) {
+    return (
+      <div dir="rtl" className="flex min-h-[65vh] w-full flex-col items-center justify-center px-4 py-12 text-center">
+        <CheckCircle2 size={76} strokeWidth={1.8} aria-hidden="true" style={{ color: dairaPalette.status.success }} />
+        <h1 className="mt-5 text-xl font-extrabold" style={{ color: dairaPalette.text.heading }}>عملیات با موفقیت انجام شد</h1>
+        <button
+          type="button"
+          onClick={() => router.push("/dashboard/auto-replies")}
+          className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl px-5 text-sm font-bold text-white transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--daira-primary)]/30"
+          style={{ background: dairaPalette.primary.main }}
+        >
+          بازگشت به لیست پاسخ‌ها
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div dir="rtl" className="mx-auto w-full max-w-4xl py-2 sm:py-4">
       <div className="space-y-0">
@@ -447,7 +465,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                 </p>
               </div>
             </div>
-            <button type="button" onClick={openMediaDialog} aria-haspopup="dialog" aria-expanded={mediaDialogOpen} className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-[var(--daira-outline)] bg-white px-4 text-xs font-bold text-[var(--daira-primary)] transition hover:border-[var(--daira-primary)] hover:bg-[var(--daira-outline-hover-bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--daira-primary)]/25">
+            <button type="button" onClick={openMediaDialog} aria-haspopup="dialog" aria-expanded={mediaDialogOpen} className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl px-4 text-xs font-bold text-white transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--daira-primary)]/25" style={{ background: dairaPalette.primary.main }}>
               <ImageIcon size={16} aria-hidden="true" />
               {selectedMediaCount > 0 ? "تغییر انتخاب" : "انتخاب محتوا"}
             </button>
@@ -459,11 +477,11 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
           <div role="radiogroup" aria-label="روش پاسخ خودکار" className="grid grid-cols-2 gap-2">
             <label className={"flex min-h-[68px] cursor-pointer items-start gap-2.5 rounded-xl border p-3 transition " + (creationMode === "new" ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)]" : "border-[var(--daira-border)] bg-white hover:border-[var(--daira-outline)]")}>
               <input type="radio" name="automation-creation-mode" value="new" checked={creationMode === "new"} onChange={startNewAutomation} className="mt-1 h-4 w-4 shrink-0 accent-[var(--daira-primary)]" />
-              <span className="min-w-0"><strong className="block text-xs leading-5 text-[var(--daira-heading)]">ساخت پاسخ جدید</strong><span className="mt-1 block text-[10px] leading-4 text-[var(--daira-text)]">تنظیم متن و شرط‌ها</span></span>
+              <span className="min-w-0"><strong className="block text-xs leading-5 text-[var(--daira-heading)]">ساخت پاسخ جدید</strong></span>
             </label>
             <label className={"flex min-h-[68px] cursor-pointer items-start gap-2.5 rounded-xl border p-3 transition " + (creationMode === "existing" ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)]" : "border-[var(--daira-border)] bg-white hover:border-[var(--daira-outline)]")}>
               <input type="radio" name="automation-creation-mode" value="existing" checked={creationMode === "existing"} onChange={() => { setCreationMode("existing"); setError(""); }} className="mt-1 h-4 w-4 shrink-0 accent-[var(--daira-primary)]" />
-              <span className="min-w-0"><strong className="block text-xs leading-5 text-[var(--daira-heading)]">استفاده از پاسخ قبلی</strong><span className="mt-1 block text-[10px] leading-4 text-[var(--daira-text)]">بدون ساخت پاسخ تکراری</span></span>
+              <span className="min-w-0"><strong className="block text-xs leading-5 text-[var(--daira-heading)]">استفاده از پاسخ‌های قبلی</strong></span>
             </label>
           </div>
         </section>
@@ -590,7 +608,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
               <div className="space-y-3">
               <div className="mb-2 mt-6"><AutomationSectionGuide>۴. پاسخ زیر کامنت — متنی بنویس که زیر کامنت کاربر نمایش داده شود.</AutomationSectionGuide></div>
               <div className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
-                <div className="mb-3 flex items-center gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]"><MessageCircle size={15} strokeWidth={2.1} aria-hidden="true" /></span><label className="block text-sm font-bold text-[var(--daira-heading)]">پاسخ زیر کامنت</label></div>
+                <div className="mb-3 flex items-center gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]"><MessageCircle size={15} strokeWidth={2.1} aria-hidden="true" /></span><label className="block text-sm font-bold text-[var(--daira-heading)]">پاسخ زیر کامنت (اختیاری)</label></div>
                 <textarea value={commentReply} onChange={(e) => setCommentReply(e.target.value)} rows={3} maxLength={2000} placeholder="پاسخی که زیر کامنت کاربر منتشر می‌شود بنویس..." className="w-full resize-y rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3.5 py-3 !text-base leading-7 text-[var(--daira-heading)] outline-none placeholder:text-[11px] placeholder:whitespace-nowrap placeholder:overflow-hidden placeholder:text-ellipsis focus:border-[var(--daira-input-focus)] focus:bg-white focus:ring-2 focus:ring-[color:var(--daira-primary)]/10" style={{ fontSize: "16px", lineHeight: 1.75 }} />
               </div>
               </div>
