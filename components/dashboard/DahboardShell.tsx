@@ -33,9 +33,10 @@ const bottomItems = [
 export default function DashboardShell({ user, instagramAccounts, children }: DashboardShellProps) {
   const pathname = usePathname();
   const isHome = pathname === "/dashboard";
-  const isAutomationCreateFlow =
-    pathname === "/dashboard/comment-automation/new" ||
-    pathname === "/dashboard/story-automation/new";
+  const isAutomationCreateFlow = [
+    "/dashboard/comment-automation/new",
+    "/dashboard/story-automation/new",
+  ].some((route) => pathname === route || pathname.startsWith(route + "/"));
 
   const initialAccountId = instagramAccounts.find((account) => account.isConnected)?.id ?? null;
 
@@ -43,7 +44,8 @@ export default function DashboardShell({ user, instagramAccounts, children }: Da
     <DashboardAccountProvider accountId={initialAccountId}>
     <DashboardBackNavigationProvider>
     <DashboardTheme>
-      <div dir="rtl" className="daira-app-shell">
+      <div dir="rtl" className={`daira-app-shell${isAutomationCreateFlow ? " daira-app-shell--automation-flow" : ""}`}>
+        <div className="daira-header-backdrop" aria-hidden="true" />
         <DashboardHeader instagramAccounts={instagramAccounts} showBackButton={!isHome} />
         <main className={`daira-app-main${isHome ? " daira-app-main--home" : ""}${isAutomationCreateFlow ? " daira-app-main--flow-actions" : ""}`}>
           <div className="daira-app-content">
@@ -55,6 +57,8 @@ export default function DashboardShell({ user, instagramAccounts, children }: Da
           </div>
         </main>
 
+        {!isAutomationCreateFlow && (
+          <>
         <div className="daira-bottom-nav-backdrop" aria-hidden="true" />
         <nav className="daira-bottom-nav" aria-label="ناوبری اصلی">
           {bottomItems.map(({ title, href, icon: Icon }) => {
@@ -67,9 +71,14 @@ export default function DashboardShell({ user, instagramAccounts, children }: Da
             );
           })}
         </nav>
+          </>
+        )}
       </div>
       <style jsx global>{`
          .daira-app-shell { display:flex;flex-direction:column;min-height:100dvh;background:var(--daira-page-bg);color:var(--daira-heading); }
+        .daira-header-backdrop { position:fixed;top:0;left:0;right:0;height:110px;z-index:1550;background:var(--daira-page-bg);pointer-events:none; }
+        @media(max-width:900px) { .daira-header-backdrop { height:84px; } }
+        @media(max-width:480px) { .daira-header-backdrop { height:76px; } }
         .daira-app-main { flex:1 0 auto;min-height:0;box-sizing:border-box;padding:calc(112px + max(8px, env(safe-area-inset-top, 0px))) clamp(10px,2vw,24px) 128px; }
         .daira-app-content { width:100%;max-width:1240px;margin:0 auto; }
         .daira-bottom-nav-backdrop { position:fixed;left:0;right:0;bottom:0;height:100px;z-index:1490;background:var(--daira-page-bg);pointer-events:none; }
@@ -84,20 +93,26 @@ export default function DashboardShell({ user, instagramAccounts, children }: Da
         @media(min-width:900px) { .daira-app-main { padding-bottom:128px; } .daira-bottom-nav { left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom, 0px));border-radius:23px;padding-left:24px;padding-right:24px; } }
         @media(max-width:480px) { .daira-bottom-nav-backdrop { height:88px; } .daira-app-main { padding:calc(72px + max(8px, env(safe-area-inset-top, 0px))) 7px calc(100px + env(safe-area-inset-bottom, 0px)); } .daira-bottom-nav { left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom, 0px));min-height:76px;grid-template-columns:repeat(3,minmax(0,1fr));padding-left:10px;padding-right:10px;border-radius:14px; } .daira-bottom-nav__icon { width:44px;height:39px;border-radius:15px; } .daira-bottom-nav__label { font-size:10px; } }
         @media(prefers-reduced-motion:reduce) { .daira-bottom-nav__icon { transition:none; } }
-        .daira-app-main--flow-actions { padding-bottom:calc(190px + env(safe-area-inset-bottom, 0px)); }
-        .daira-flow-action-dock { position:fixed;left:12px;right:12px;bottom:calc(104px + env(safe-area-inset-bottom, 0px));z-index:1495;pointer-events:none; }
-        .daira-flow-action-dock__inner { display:flex;align-items:stretch;gap:12px;width:min(100%,896px);margin:0 auto;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;backdrop-filter:none;pointer-events:auto; }
+        .daira-app-main--flow-actions { padding-bottom:calc(108px + env(safe-area-inset-bottom, 0px)); }
+        .daira-flow-action-dock { position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom, 0px));z-index:1495;pointer-events:none; }
+        .daira-flow-action-dock__inner { display:flex;align-items:stretch;gap:12px;width:min(100%,896px);margin:0 auto;padding:10px;border:1px solid var(--daira-border);border-radius:18px;background:var(--daira-surface);box-shadow:0 8px 32px rgba(22,54,110,.12);backdrop-filter:none;box-sizing:border-box;pointer-events:auto; }
         .daira-flow-action-dock__button { display:flex;flex:1 1 0;min-width:0;min-height:48px;align-items:center;justify-content:center;gap:6px;padding:10px 14px;border:1px solid transparent;border-radius:12px;font-family:"Vazirmatn",Arial,sans-serif;font-size:13px;font-weight:750;line-height:1.4;text-align:center;white-space:nowrap;cursor:pointer;transition:background .16s,color .16s,border-color .16s; }
         .daira-flow-action-dock__button--primary { background:var(--daira-primary);border-color:var(--daira-primary);color:var(--daira-surface); }
         .daira-flow-action-dock__button--primary:hover:not(:disabled) { background:var(--daira-primary-hover);border-color:var(--daira-primary-hover); }
         .daira-flow-action-dock__button--secondary { background:var(--daira-primary-hover);border-color:var(--daira-primary-hover);color:var(--daira-surface); }
         .daira-flow-action-dock__button--secondary:hover:not(:disabled) { background:var(--daira-primary-active);border-color:var(--daira-primary-active); }
         .daira-flow-action-dock__button:disabled { background:var(--daira-disabled-bg);border-color:var(--daira-disabled-bg);color:var(--daira-disabled-text);cursor:not-allowed; }
+        .daira-form-switch { appearance:none;position:relative;display:inline-block;flex:0 0 auto;width:44px;height:25px;margin:0;border:1px solid #CBD5E1;border-radius:999px;background:#CBD5E1;cursor:pointer;transition:background .18s,border-color .18s; }
+        .daira-form-switch::after { content:"";position:absolute;top:2px;right:2px;width:19px;height:19px;border-radius:50%;background:#FFFFFF;box-shadow:0 1px 3px rgba(24,35,60,.18);transition:transform .18s; }
+        .daira-form-switch:checked { border-color:var(--daira-primary);background:var(--daira-primary); }
+        .daira-form-switch:checked::after { transform:translateX(-19px); }
+        .daira-form-switch:focus-visible { outline:0;box-shadow:0 0 0 3px rgba(47,97,253,.22); }
+        .daira-form-switch:disabled { opacity:.55;cursor:not-allowed; }
         @media(max-width:480px) {
-          .daira-app-main--flow-actions { padding-bottom:calc(182px + env(safe-area-inset-bottom, 0px)); }
-          .daira-flow-action-dock { left:8px;right:8px;bottom:calc(92px + env(safe-area-inset-bottom, 0px)); }
-          .daira-flow-action-dock__inner { gap:8px; }
-          .daira-flow-action-dock__button { min-height:46px;padding:9px 8px;font-size:11px; }
+          .daira-app-main--flow-actions { padding-bottom:calc(104px + env(safe-area-inset-bottom, 0px)); }
+          .daira-flow-action-dock { left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom, 0px)); }
+          .daira-flow-action-dock__inner { gap:8px;padding:8px;border-radius:16px; }
+          .daira-flow-action-dock__button { min-height:44px;padding:8px;font-size:12px; }
         }
         @media(prefers-reduced-motion:reduce) { .daira-flow-action-dock__button { transition:none; } }
       `}</style>
