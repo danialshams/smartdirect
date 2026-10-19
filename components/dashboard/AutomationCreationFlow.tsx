@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Camera } from "lucide-react";
+import { Camera } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -8,6 +8,7 @@ const PublishingStoryAutomationSetup = dynamic(() => import("./publishing/Publis
 import { createEmptyMessage, normalizeMessages, type MessageDraft, type QuickReplyDraft, type Showcase, type FormItem } from "./automation-form-utils";
 import { dairaPalette } from "../../lib/design-system/palette";
 import AutomationPicker from "./AutomationPicker";
+import { useDashboardBackNavigation } from "./DashboardBackNavigationContext";
 
 type Account = { id: string; igUsername: string; igUserId: string; isConnected: boolean };
 type TriggerType = "COMMENT_KEYWORD" | "STORY_REPLY_KEYWORD";
@@ -80,6 +81,20 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   const [loadingResources, setLoadingResources] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const { registerBackHandler } = useDashboardBackNavigation();
+
+  useEffect(() => {
+    const handleBack = () => {
+      if (flowStep > 1) {
+        setFlowStep((current) => (current === 3 ? 2 : 1));
+      } else {
+        router.back();
+      }
+    };
+
+    registerBackHandler(handleBack);
+    return () => registerBackHandler(null);
+  }, [flowStep, registerBackHandler, router]);
 
   useEffect(() => {
     let cancelled = false;
@@ -348,38 +363,19 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
   return (
     <div dir="rtl" className="mx-auto w-full max-w-4xl space-y-5 py-2 sm:py-4">
-      <header className="mb-2 flex items-center gap-2 px-1">
-        <button
-          type="button"
-          aria-label="بازگشت"
-          title="بازگشت"
-          onClick={() => { if (flowStep > 1) setFlowStep((current) => (current === 3 ? 2 : 1)); else router.back(); }}
-          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition"
-          style={{ borderColor: dairaPalette.border, background: dairaPalette.background.surface, color: dairaPalette.text.body }}
-        >
-          <ArrowRight size={17} strokeWidth={2} />
-        </button>
+      <header className="mb-3 flex min-w-0 items-center px-1">
         {flowStep === 1 && (
-          <h1 className="min-w-0 text-sm font-medium leading-6" style={{ color: dairaPalette.text.body }}>
-            محتوای مورد نظر خودتون رو انتخاب کنید
+          <h1 className="w-full truncate whitespace-nowrap text-sm font-semibold leading-6" style={{ color: dairaPalette.text.body }}>
+            انتخاب محتوای موردنظر
           </h1>
         )}
         {flowStep === 2 && (
-          <div className="flex min-w-0 flex-1 items-start justify-between gap-3">
-            <h1 className="min-w-0 text-sm font-medium leading-6" style={{ color: dairaPalette.text.body }}>
-              پاسخ جدید بسازید یا از پاسخ‌های ساخته‌شده قبلی استفاده کنید
-            </h1>
-            <span
-              className="inline-flex h-7 min-w-7 shrink-0 items-center justify-center rounded-full px-2 text-xs font-bold"
-              style={{ background: dairaPalette.primary.main, color: dairaPalette.background.surface }}
-              aria-label={`تعداد پاسخ‌های قبلی: ${automationTemplates.length}`}
-            >
-              {new Intl.NumberFormat("fa-IR").format(automationTemplates.length)}
-            </span>
-          </div>
+          <h1 className="w-full truncate whitespace-nowrap text-sm font-semibold leading-6" style={{ color: dairaPalette.text.body }}>
+            انتخاب یا ساخت پاسخ خودکار
+          </h1>
         )}
         {flowStep === 3 && (
-          <h1 className="min-w-0 text-lg font-bold leading-6" style={{ color: dairaPalette.text.heading }}>
+          <h1 className="w-full truncate whitespace-nowrap text-base font-bold leading-6" style={{ color: dairaPalette.text.heading }}>
             ساخت پاسخ خودکار جدید
           </h1>
         )}
@@ -413,16 +409,23 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                 <button type="button" onClick={() => router.push("/dashboard/comment-automation/new")} className="shrink-0 rounded-lg border border-[#BFDBFE] bg-white px-3 py-2 text-[11px] font-bold text-[#2F61FD] transition hover:bg-[#DBEAFE]">تغییر محتوا</button>
               </section>
             )}
-            {flowStep === 1 && (
-              <div className="flex justify-end pt-1">
-                <button type="button" onClick={() => { setFlowStep(2); setCreationMode("existing"); setSelectedTemplateId(""); setError(""); }} disabled={mediaLoading || (selectedMediaIds.length === 0 && !mediaId)} className="min-h-11 w-full rounded-xl bg-[#2F61FD] px-6 text-xs font-bold text-white transition hover:bg-[#1E4BD8] disabled:cursor-not-allowed disabled:bg-[#E2E8F0] disabled:text-[#94A3B8] sm:w-auto">ادامه ({new Intl.NumberFormat("fa-IR").format(selectedMediaCount)} محتوا)</button>
-              </div>
-            )}
             {flowStep === 2 && (
               <section
                 className="rounded-2xl border p-4 sm:p-5"
                 style={{ borderColor: dairaPalette.border, background: dairaPalette.background.surface }}
               >
+                <div className="mb-4 flex justify-start">
+                  <span
+                    className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs"
+                    style={{ background: dairaPalette.secondary.hoverBackground, color: dairaPalette.text.body }}
+                    aria-label={`${automationTemplates.length} پاسخ خودکار`}
+                  >
+                    <strong className="font-extrabold" style={{ color: dairaPalette.primary.main }}>
+                      {new Intl.NumberFormat("fa-IR").format(automationTemplates.length)}
+                    </strong>
+                    <span>پاسخ خودکار</span>
+                  </span>
+                </div>
                 {loadingResources ? (
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2" aria-label="در حال دریافت پاسخ‌های قبلی">
                     {[0, 1].map((item) => (
@@ -483,36 +486,6 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                     هنوز پاسخ خودکار قبلی برای این نوع وجود ندارد. می‌توانی تنظیمات را از ابتدا وارد کنی.
                   </p>
                 )}
-                <div className="mt-4 flex flex-col gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => { setCreationMode("existing"); void saveAutomation(); }}
-                    disabled={!selectedTemplateId || loadingResources || mediaLoading || (selectedMediaIds.length === 0 && !mediaId) || saving}
-                    className="flex min-h-11 items-center justify-center rounded-xl px-4 text-xs font-bold text-white transition disabled:cursor-not-allowed"
-                    style={{
-                      background: (!selectedTemplateId || loadingResources || mediaLoading || (selectedMediaIds.length === 0 && !mediaId) || saving)
-                        ? dairaPalette.primary.disabledBackground
-                        : dairaPalette.primary.main,
-                      color: (!selectedTemplateId || loadingResources || mediaLoading || (selectedMediaIds.length === 0 && !mediaId) || saving)
-                        ? dairaPalette.primary.disabledText
-                        : dairaPalette.background.surface,
-                    }}
-                  >
-                    {saving ? "در حال اتصال..." : "انتخاب پاسخ"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={startNewAutomation}
-                    className="flex min-h-11 items-center justify-center rounded-xl border px-4 text-xs font-bold transition"
-                    style={{
-                      borderColor: dairaPalette.secondary.outline,
-                      background: dairaPalette.secondary.hoverBackground,
-                      color: dairaPalette.primary.main,
-                    }}
-                  >
-                    ساخت پاسخ جدید
-                  </button>
-                </div>
               </section>
             )}
             {flowStep === 3 && creationMode === "new" && (
@@ -654,5 +627,51 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
           {error && <div role="alert" className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-6 text-[#B91C1C]">{error}</div>}
         </div>
+
+        {flowStep === 1 && (
+          <div className="daira-flow-action-dock" role="group" aria-label="ادامه ساخت پاسخ خودکار">
+            <div className="daira-flow-action-dock__inner">
+              <button
+                type="button"
+                onClick={() => {
+                  setFlowStep(2);
+                  setCreationMode("existing");
+                  setSelectedTemplateId("");
+                  setError("");
+                }}
+                disabled={mediaLoading || selectedMediaCount === 0}
+                className="daira-flow-action-dock__button daira-flow-action-dock__button--primary"
+              >
+                ادامه ({new Intl.NumberFormat("fa-IR").format(selectedMediaCount)} محتوا)
+              </button>
+            </div>
+          </div>
+        )}
+
+        {flowStep === 2 && (
+          <div className="daira-flow-action-dock" role="group" aria-label="اقدامات پاسخ خودکار">
+            <div className="daira-flow-action-dock__inner">
+              <button
+                type="button"
+                onClick={() => {
+                  setCreationMode("existing");
+                  void saveAutomation();
+                }}
+                disabled={!selectedTemplateId || loadingResources || mediaLoading || selectedMediaCount === 0 || saving}
+                className="daira-flow-action-dock__button daira-flow-action-dock__button--primary"
+              >
+                {saving ? "در حال اتصال..." : "انتخاب پاسخ"}
+              </button>
+              <button
+                type="button"
+                onClick={startNewAutomation}
+                className="daira-flow-action-dock__button daira-flow-action-dock__button--secondary"
+              >
+                ساخت پاسخ جدید
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
   );
 }
