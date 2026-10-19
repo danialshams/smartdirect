@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { invalidateAutomationCache } from "@/lib/cache/instagram";
+import { getCachedInstagramMedia, invalidateAutomationCache } from "@/lib/cache/instagram";
+import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 
 function normalizePersianDigits(value: string) {
   return value.replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit))).replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)));
@@ -81,9 +82,39 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       if (trigger === "STORY_REPLY_KEYWORD" && requestedMediaId !== targetIds[0]) {
         return NextResponse.json({ success: false, error: "شناسه استوری با محتوای انتخابی مطابقت ندارد" }, { status: 400 });
       }
-      if (trigger === "COMMENT_KEYWORD" && targetIds.length === 1 && requestedMediaId !== targetIds[0]) {
+      if (trigger === "COMMENT_KEYWORD" && requestedMediaId !== (targetIds.length === 1 ? targetIds[0] : null)) {
         return NextResponse.json({ success: false, error: "شناسه محتوا با فهرست انتخابی مطابقت ندارد" }, { status: 400 });
       }
+
+      // Verify that every submitted media ID belongs to this connected Instagram account.
+      const account = await prisma.instagramAccount.findFirst({
+        where: { id: existingAutomation.instagramAccountId, userId: session.user.id, isConnected: true },
+        select: { id: true, igUserId: true },
+      });
+      if (!account) return NextResponse.json({ success: false, error: "اکانت اینستاگرام متصل نیست" }, { status: 409 });
+
+      let ownedMediaIds = new Set<string>();
+      if (trigger === "COMMENT_KEYWORD") {
+        const mediaResult = await getCachedInstagramMedia(account.id, 50);
+        ownedMediaIds = new Set((mediaResult?.data ?? []).map((item: Record<string, unknown>) => String(item.id ?? "")).filter(Boolean));
+      } else {
+        const accessToken = await getValidInstagramAccessToken(account.id);
+        const storiesUrl = new URL(`https://graph.instagram.com/v26.0/${account.igUserId}/stories`);
+        storiesUrl.searchParams.set("fields", "id");
+        storiesUrl.searchParams.set("limit", "50");
+        storiesUrl.searchParams.set("access_token", accessToken);
+        const storiesResponse = await fetch(storiesUrl.toString(), { method: "GET", cache: "no-store" });
+        const storiesResult = await storiesResponse.json();
+        if (!storiesResponse.ok || !Array.isArray(storiesResult?.data)) {
+          return NextResponse.json({ success: false, error: "اعتبارسنجی استوری‌های اینستاگرام ناموفق بود؛ دوباره تلاش کنید" }, { status: 502 });
+        }
+        ownedMediaIds = new Set(storiesResult.data.map((item: { id?: unknown }) => String(item.id ?? "")).filter(Boolean));
+      }
+      const invalidMediaId = targetIds.find((targetId) => !ownedMediaIds.has(targetId));
+      if (invalidMediaId) {
+        return NextResponse.json({ success: false, error: "یکی از محتواهای انتخابی متعلق به این اکانت نیست یا دیگر در دسترس نیست" }, { status: 400 });
+      }
+
       const peers = await prisma.automation.findMany({
         where: { instagramAccountId: existingAutomation.instagramAccountId, triggerType: trigger, id: { not: id } },
         select: { id: true, mediaId: true, mediaIds: true },
