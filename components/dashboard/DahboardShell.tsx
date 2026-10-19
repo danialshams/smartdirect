@@ -8,6 +8,7 @@ import DashboardTheme from "./DashboardTheme";
 import DashboardOverview from "./DashboardOverview";
 import DashboardHeader from "./DashboardHeader";
 import { DashboardAccountProvider } from "./DashboardAccountContext";
+import { DashboardBackNavigationProvider } from "./DashboardBackNavigationContext";
 
 type InstagramAccount = {
   id: string;
@@ -32,15 +33,19 @@ const bottomItems = [
 export default function DashboardShell({ user, instagramAccounts, children }: DashboardShellProps) {
   const pathname = usePathname();
   const isHome = pathname === "/dashboard";
+  const isAutomationCreateFlow =
+    pathname === "/dashboard/comment-automation/new" ||
+    pathname === "/dashboard/story-automation/new";
 
   const initialAccountId = instagramAccounts.find((account) => account.isConnected)?.id ?? null;
 
   return (
     <DashboardAccountProvider accountId={initialAccountId}>
+    <DashboardBackNavigationProvider>
     <DashboardTheme>
       <div dir="rtl" className="daira-app-shell">
-        <DashboardHeader instagramAccounts={instagramAccounts} />
-        <main className={`daira-app-main${isHome ? " daira-app-main--home" : ""}`}>
+        <DashboardHeader instagramAccounts={instagramAccounts} showBackButton={isAutomationCreateFlow} />
+        <main className={`daira-app-main${isHome ? " daira-app-main--home" : ""}${isAutomationCreateFlow ? " daira-app-main--flow-actions" : ""}`}>
           <div className="daira-app-content">
             {isHome ? (
               <DashboardOverview user={user} instagramAccounts={instagramAccounts} />
@@ -78,8 +83,25 @@ export default function DashboardShell({ user, instagramAccounts, children }: Da
         @media(min-width:900px) { .daira-app-main { padding-bottom:128px; } .daira-bottom-nav { left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom, 0px));border-radius:23px;padding-left:24px;padding-right:24px; } }
         @media(max-width:480px) { .daira-bottom-nav-backdrop { height:88px; } .daira-app-main { padding:8px 7px calc(100px + env(safe-area-inset-bottom, 0px)); } .daira-bottom-nav { left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom, 0px));min-height:76px;grid-template-columns:repeat(3,minmax(0,1fr));padding-left:10px;padding-right:10px;border-radius:14px; } .daira-bottom-nav__icon { width:44px;height:39px;border-radius:15px; } .daira-bottom-nav__label { font-size:10px; } }
         @media(prefers-reduced-motion:reduce) { .daira-bottom-nav__icon { transition:none; } }
+        .daira-app-main--flow-actions { padding-bottom:calc(190px + env(safe-area-inset-bottom, 0px)); }
+        .daira-flow-action-dock { position:fixed;left:12px;right:12px;bottom:calc(104px + env(safe-area-inset-bottom, 0px));z-index:1495;pointer-events:none; }
+        .daira-flow-action-dock__inner { display:flex;align-items:stretch;gap:10px;width:min(100%,840px);margin:0 auto;padding:10px;border:1px solid rgba(226,232,240,.96);border-radius:18px;background:rgba(244,247,252,.97);box-shadow:0 8px 26px rgba(22,54,110,.13);backdrop-filter:blur(12px);pointer-events:auto; }
+        .daira-flow-action-dock__button { display:flex;flex:1 1 0;min-width:0;min-height:48px;align-items:center;justify-content:center;gap:6px;padding:10px 14px;border:1px solid transparent;border-radius:12px;font-family:"Vazirmatn",Arial,sans-serif;font-size:13px;font-weight:750;line-height:1.4;text-align:center;white-space:nowrap;cursor:pointer;transition:background .16s,color .16s,border-color .16s; }
+        .daira-flow-action-dock__button--primary { background:var(--daira-primary);border-color:var(--daira-primary);color:#FFFFFF; }
+        .daira-flow-action-dock__button--primary:hover:not(:disabled) { background:var(--daira-primary-hover);border-color:var(--daira-primary-hover); }
+        .daira-flow-action-dock__button--secondary { background:var(--daira-outline-hover-bg);border-color:var(--daira-outline);color:var(--daira-primary); }
+        .daira-flow-action-dock__button--secondary:hover:not(:disabled) { background:var(--daira-outline-active-bg); }
+        .daira-flow-action-dock__button:disabled { background:var(--daira-disabled-bg);border-color:var(--daira-disabled-bg);color:var(--daira-disabled-text);cursor:not-allowed; }
+        @media(max-width:480px) {
+          .daira-app-main--flow-actions { padding-bottom:calc(182px + env(safe-area-inset-bottom, 0px)); }
+          .daira-flow-action-dock { left:8px;right:8px;bottom:calc(92px + env(safe-area-inset-bottom, 0px)); }
+          .daira-flow-action-dock__inner { gap:8px;padding:8px;border-radius:15px; }
+          .daira-flow-action-dock__button { min-height:46px;padding:9px 8px;font-size:11px; }
+        }
+        @media(prefers-reduced-motion:reduce) { .daira-flow-action-dock__button { transition:none; } }
       `}</style>
     </DashboardTheme>
+    </DashboardBackNavigationProvider>
     </DashboardAccountProvider>
   );
 }
