@@ -6,29 +6,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { ChevronRight, X } from "lucide-react";
 import { useDashboardBackNavigation } from "./DashboardBackNavigationContext";
 
-function resolveDashboardPageTitle(pathname: string): string {
-  const routes: Array<{ pattern: RegExp; title: string }> = [
-    { pattern: /\/(?:comment-automation)(?:\/|$)/, title: "پاسخ خودکار کامنت" },
-    { pattern: /\/(?:story-automation)(?:\/|$)/, title: "پاسخ خودکار استوری" },
-    { pattern: /\/(?:publishing|publish|content-publishing|publish-content|instagram-publishing)(?:\/|$)/, title: "انتشار محتوا" },
-    { pattern: /\/(?:persistent-menu|direct-menu|instagram-menu|menu)(?:\/|$)/, title: "منوی دایرکت" },
-    { pattern: /\/(?:ice-breaker|ice-breakers|conversation-starters)(?:\/|$)/, title: "سؤال‌های شروع گفتگو" },
-    { pattern: /\/(?:showcases|showcase|vitirine|vitrines)(?:\/|$)/, title: "ویترین‌ها" },
-    { pattern: /\/(?:forms|form)(?:\/|$)/, title: "فرم‌ها" },
-    { pattern: /\/(?:comments)(?:\/|$)/, title: "کامنت‌های بی‌پاسخ" },
-    { pattern: /\/(?:content-analytics)(?:\/|$)/, title: "عملکرد محتوا" },
-    { pattern: /\/(?:inbox|direct|messages|conversations)(?:\/|$)/, title: "پیام‌های دایرکت" },
-    { pattern: /\/(?:quick-replies|quick-reply)(?:\/|$)/, title: "پاسخ‌های سریع" },
-    { pattern: /\/(?:insights|analytics|reports)(?:\/|$)/, title: "آمار و گزارش‌ها" },
-    { pattern: /\/(?:subscriptions|subscription)(?:\/|$)/, title: "اشتراک" },
-    { pattern: /\/(?:profile|account)(?:\/|$)/, title: "پروفایل" },
-    { pattern: /\/(?:tickets|support)(?:\/|$)/, title: "پشتیبانی" },
-    { pattern: /\/(?:settings)(?:\/|$)/, title: "تنظیمات" },
-    { pattern: /\/(?:auto-replies|automations|automation)(?:\/|$)/, title: "پاسخ‌های خودکار" },
-  ];
-  return routes.find((route) => route.pattern.test(pathname))?.title ?? "داشبورد";
-}
-
 type InstagramAccount = {
   id: string;
   igUsername: string;
@@ -47,8 +24,7 @@ export default function DashboardHeader({
   const router = useRouter();
   const pathname = usePathname();
   const isHome = pathname === "/dashboard";
-  const { backHandler, pageTitle: contextualPageTitle } = useDashboardBackNavigation();
-  const pageTitle = isHome ? null : contextualPageTitle ?? resolveDashboardPageTitle(pathname);
+  const { backHandler } = useDashboardBackNavigation();
   const [accountModalOpen, setAccountModalOpen] = useState(false);
   const connected = instagramAccounts.filter((account) => account.isConnected);
 
@@ -58,16 +34,10 @@ export default function DashboardHeader({
         <button className="daira-home__instagram" type="button" aria-label="افزودن یا مدیریت اکانت اینستاگرام" onClick={() => setAccountModalOpen(true)}>
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true"><defs><linearGradient id="instagramGradient" x1="2" y1="22" x2="22" y2="2" gradientUnits="userSpaceOnUse"><stop stopColor="#FEDA75"/><stop offset=".35" stopColor="#FA7E1E"/><stop offset=".65" stopColor="#D62976"/><stop offset="1" stopColor="#4F5BD5"/></linearGradient></defs><rect x="3" y="3" width="18" height="18" rx="5" stroke="url(#instagramGradient)" strokeWidth="2"/><circle cx="12" cy="12" r="4" stroke="url(#instagramGradient)" strokeWidth="2"/><circle cx="17.5" cy="6.8" r="1.2" fill="#D62976"/></svg>
         </button>
-        {pageTitle ? (
-          <div className="daira-home__page-title" aria-label={pageTitle}>
-            <strong>{pageTitle}</strong>
-          </div>
-        ) : (
-          <Link href="/dashboard" className="daira-home__brand" aria-label="دایرا - خانه">
-            <span className="daira-home__brand-mark">D</span>
-            <span className="daira-home__brand-copy"><strong>دایرا</strong><small>اتوماسیون اینستاگرام</small></span>
-          </Link>
-        )}
+        <Link href="/dashboard" className="daira-home__brand" aria-label="دایرا - خانه">
+          <span className="daira-home__brand-mark">D</span>
+          <span className="daira-home__brand-copy"><strong>دایرا</strong><small>اتوماسیون اینستاگرام</small></span>
+        </Link>
         {showBackButton ? (
           <button
             className="daira-home__back"
@@ -100,7 +70,7 @@ export default function DashboardHeader({
       ) : null}
 
       <style jsx global>{`
-        .daira-home__header { position:fixed;top:max(8px,env(safe-area-inset-top, 0px));left:clamp(7px,2vw,24px);right:clamp(7px,2vw,24px);z-index:1600;box-sizing:border-box;direction:ltr;display:grid;grid-template-columns:48px minmax(0,1fr) 48px;align-items:center;gap:8px;min-height:94px;padding:12px 18px;border:1px solid var(--daira-border);border-radius:26px;background:linear-gradient(115deg,var(--daira-header-start) 0%,var(--daira-header-middle) 55%,var(--daira-header-end) 100%);margin:0;box-shadow:0 6px 24px rgba(24,35,60,.07);}
+        .daira-home__header { position:fixed;top:max(8px,env(safe-area-inset-top, 0px));left:clamp(7px,2vw,24px);right:clamp(7px,2vw,24px);z-index:1600;isolation:isolate;opacity:1;box-sizing:border-box;direction:ltr;display:grid;grid-template-columns:48px minmax(0,1fr) 48px;align-items:center;gap:8px;min-height:94px;padding:12px 18px;border:1px solid var(--daira-border);border-radius:26px;background-color:var(--daira-header-middle);background:linear-gradient(115deg,var(--daira-header-start) 0%,var(--daira-header-middle) 55%,var(--daira-header-end) 100%);backdrop-filter:none;margin:0;box-shadow:0 6px 24px rgba(24,35,60,.07);}
         .daira-home__instagram { width:44px;height:44px;border:0;background:transparent;color:var(--daira-accent);display:grid;place-items:center;cursor:pointer;border-radius:14px;transition:background .2s,transform .2s; }
         .daira-home__instagram:hover { background:var(--daira-surface-hover);transform:translateY(-1px); }
         .daira-home__brand { direction:rtl;display:flex;justify-content:center;align-items:center;gap:12px;color:inherit;text-decoration:none;min-width:0; }
