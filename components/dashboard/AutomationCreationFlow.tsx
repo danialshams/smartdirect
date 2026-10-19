@@ -680,7 +680,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                         <div className="mt-4">
                           <label className="mb-2 block text-center text-sm font-semibold" style={{ color: dairaPalette.text.heading }}>متن دکمه بررسی فالو</label>
                           <input type="text" value={followGateButtonText} onChange={(event) => setFollowGateButtonText(event.target.value)} maxLength={20} required placeholder="مثلاً فالو کردم" className="w-full rounded-xl border bg-white px-3 py-3 text-center text-base leading-6 outline-none focus:ring-2 focus:ring-[color:var(--daira-primary)]/15" style={{ borderColor: dairaPalette.form.border, color: dairaPalette.text.heading, fontSize: "16px" }} />
-                          <p className="mt-1 text-xs text-center" style={{ color: dairaPalette.text.muted }}>با زدن این دکمه، وضعیت فالو بررسی می‌شود.</p>
+                          <p className="mt-1 text-xs text-center" style={{ color: dairaPalette.text.body }}>با زدن این دکمه، وضعیت فالو بررسی می‌شود.</p>
                         </div>
                       </div>
                     )}
