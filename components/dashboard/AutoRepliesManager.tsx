@@ -19,6 +19,7 @@ type Automation = {
   keyword: string | null;
   keywordMatchMode?: string | null;
   createdAt: string;
+  updatedAt?: string;
   isActive: boolean;
 };
 
@@ -93,7 +94,7 @@ function normalizeKeywordList(value: string | null | undefined) {
   return (value || "").split(/[,،;؛\n]+/).map((item) => item.trim()).filter(Boolean).join("، ");
 }
 
-const AUTO_REPLIES_CACHE_VERSION = 5;
+const AUTO_REPLIES_CACHE_VERSION = 6;
 const AUTO_REPLIES_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 function readAutoRepliesCache(accountId: string): ReplyItem[] | null {
@@ -259,7 +260,13 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
           if (job.type === "STORY") return activeStoryIds.has(job.instagramMediaId);
           return true;
         });
-        const allAutomations = (Array.isArray(automationsResult.data) ? automationsResult.data : []) as Automation[];
+        const allAutomations = ((Array.isArray(automationsResult.data) ? automationsResult.data : []) as Automation[])
+          .slice()
+          .sort((a, b) => {
+            const aTimestamp = Date.parse(a.updatedAt || a.createdAt);
+            const bTimestamp = Date.parse(b.updatedAt || b.createdAt);
+            return (Number.isFinite(bTimestamp) ? bTimestamp : 0) - (Number.isFinite(aTimestamp) ? aTimestamp : 0);
+          });
         const automationById = new Map(allAutomations.map((automation) => [automation.id, automation] as const));
         const linkedAutomationIds = new Set(
           visiblePublishedJobs.flatMap((job) => [job.commentAutomationId, job.storyReplyAutomationId].filter(Boolean) as string[]),
@@ -301,8 +308,8 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
             id: automation.id,
             key: `automation:${automation.id}`,
             type: media?.type ?? (isStory ? "STORY" : "UNKNOWN"),
-            date: automation.createdAt,
-            sortAt: automation.createdAt,
+            date: automation.updatedAt || automation.createdAt,
+            sortAt: automation.updatedAt || automation.createdAt,
             previewUrl: media?.previewUrl ?? null,
             previewKind: media?.previewKind ?? null,
             title: isStory ? "پاسخ خودکار استوری" : "پاسخ خودکار کامنت",
@@ -337,12 +344,12 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
           // If a standalone automation is already listed for this media, don't add a
           // duplicate publishing-job row. Directly linked jobs remain represented here.
           if (!linkedAutomationId && mediaMatchedAutomation) continue;
-          const directCreatedAt = directlyLinkedAutomation?.createdAt ? Date.parse(directlyLinkedAutomation.createdAt) : Number.NEGATIVE_INFINITY;
-          const mediaCreatedAt = mediaMatchedAutomation?.createdAt ? Date.parse(mediaMatchedAutomation.createdAt) : Number.NEGATIVE_INFINITY;
-          const linkedAutomation = directCreatedAt > mediaCreatedAt
+          const directActivityAt = directlyLinkedAutomation ? Date.parse(directlyLinkedAutomation.updatedAt || directlyLinkedAutomation.createdAt) : Number.NEGATIVE_INFINITY;
+          const mediaActivityAt = mediaMatchedAutomation ? Date.parse(mediaMatchedAutomation.updatedAt || mediaMatchedAutomation.createdAt) : Number.NEGATIVE_INFINITY;
+          const linkedAutomation = directActivityAt > mediaActivityAt
             ? directlyLinkedAutomation
             : mediaMatchedAutomation ?? directlyLinkedAutomation;
-          const itemCreatedAt = linkedAutomation?.createdAt || job.createdAt;
+          const itemCreatedAt = linkedAutomation?.updatedAt || linkedAutomation?.createdAt || job.createdAt;
           nextItems.push({
             id: job.id,
             key: `publish:${job.id}`,
@@ -358,8 +365,8 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
           });
         }
 
-        // The list represents when the automation was created, not when its
-        // associated Instagram post/story was published or later updated.
+        // The list represents the latest automation activity (including reusing a saved response),
+        // not when its associated Instagram post/story was originally published.
         nextItems.sort((a, b) => {
           const parsedA = a.sortAt ? Date.parse(a.sortAt) : Number.NaN;
           const parsedB = b.sortAt ? Date.parse(b.sortAt) : Number.NaN;
