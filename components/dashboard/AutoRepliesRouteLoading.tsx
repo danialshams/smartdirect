@@ -10,5 +10,5 @@ export default function AutoRepliesRouteLoading() {
   // The nested /new/loading.tsx owns the creation skeleton.
   if (pathname?.replace(/\/$/, "").endsWith("/new")) return null;
 
-  return <AutoRepliesSkeleton />;
+  return <AutoRepliesSkeleton includeCreateButton />;
 }
