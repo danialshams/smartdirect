@@ -58,6 +58,6 @@ jobs:
           CRON_SECRET: ci-only-placeholder-cron-secret-with-more-than-32-characters
           DATABASE_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
           DIRECT_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
-          REDIS_DRIVER: local
-          REDIS_LOCAL_URL: redis://127.0.0.1:6379
+          REDIS_DRIVER: redis
+          REDIS_URL: redis://127.0.0.1:6379
         run: npm run build
