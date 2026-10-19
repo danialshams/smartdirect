@@ -87,7 +87,7 @@ function serializeQuickReplies(replies: QuickReplyDraft[]): unknown[] {
   }));
 }
 
-export default function AutomationCreationFlow({ account, mediaId, triggerType, onSaved }: Props) {
+export default function AutomationCreationFlow({ account, mediaId, triggerType }: Props) {
   const router = useRouter();
   const [keyword, setKeyword] = useState("");
   const [keywordDraft, setKeywordDraft] = useState("");
