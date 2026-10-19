@@ -1,7 +1,7 @@
 "use client";
 
-import { Camera, Image as ImageIcon, MessageCircle, Send, ShieldCheck, X, Zap } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { Camera, Image as ImageIcon, Lightbulb, MessageCircle, Send, ShieldCheck, X, Zap } from "lucide-react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 const PublishingStoryAutomationSetup = dynamic(() => import("./publishing/PublishingStoryAutomationSetup"), { ssr: false });
@@ -23,6 +23,22 @@ type Props = {
   description: string;
   onSaved: () => void;
 };
+
+function AutomationSectionGuide({ children }: { children: ReactNode }) {
+  return (
+    <div
+      className="flex items-start gap-2.5 rounded-xl border px-3.5 py-3"
+      style={{
+        background: dairaPalette.guide.background,
+        borderColor: dairaPalette.guide.border,
+        color: dairaPalette.guide.text,
+      }}
+    >
+      <Lightbulb size={17} className="mt-0.5 shrink-0" style={{ color: dairaPalette.guide.icon }} aria-hidden="true" />
+      <p className="text-xs leading-5">{children}</p>
+    </div>
+  );
+}
 
 function sortNewestFirst<T extends { timestamp?: string | null }>(items: T[]): T[] {
   return items
@@ -379,16 +395,8 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   const selectedMediaItems = mediaItems.filter((item) => selectedMediaIds.includes(item.id));
   return (
     <div dir="rtl" className="mx-auto w-full max-w-4xl space-y-5 py-2 sm:py-4">
-      <header className="mb-4 px-1 sm:mb-5">
-        <h1 className="text-lg font-extrabold tracking-tight text-[var(--daira-heading)] sm:text-xl">
-          {triggerType === "COMMENT_KEYWORD" ? "پاسخ خودکار کامنت" : "پاسخ خودکار استوری"}
-        </h1>
-        <p className="mt-1.5 text-xs leading-6 text-[var(--daira-text)] sm:text-sm">
-          همه تنظیمات را همین‌جا انجام بده؛ فقط محتوای موردنظر را از پنجره انتخاب کن.
-        </p>
-      </header>
-
       <div className="space-y-4">
+        <AutomationSectionGuide>پست یا استوری موردنظرت را انتخاب کن؛ پاسخ خودکار فقط برای محتوای انتخاب‌شده فعال می‌شود.</AutomationSectionGuide>
         <section aria-labelledby="automation-content-title" className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
@@ -412,10 +420,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                 )}
               </div>
               <div className="min-w-0">
-                <h2 id="automation-content-title" className="text-sm font-bold text-[var(--daira-heading)]">
-                  {triggerType === "COMMENT_KEYWORD" ? "محتوای هدف" : "استوری هدف"}
-                </h2>
-                <p className="mt-1 text-xs leading-5 text-[var(--daira-text)]">
+                <p className="text-xs leading-5 text-[var(--daira-text)]">
                   {mediaLoading ? "در حال دریافت محتوا..." : selectedMediaCount > 0 ? new Intl.NumberFormat("fa-IR").format(selectedMediaCount) + (triggerType === "COMMENT_KEYWORD" ? " محتوا انتخاب شده" : " استوری انتخاب شده") : "هنوز محتوایی انتخاب نشده"}
                 </p>
               </div>
@@ -425,15 +430,12 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
               {selectedMediaCount > 0 ? "تغییر انتخاب" : "انتخاب محتوا"}
             </button>
           </div>
-          <p className="mt-3 text-[11px] leading-5 text-[var(--daira-text)]">
-            {triggerType === "COMMENT_KEYWORD" ? "یک یا چند پست و ریلز را برای پاسخ به کامنت‌ها انتخاب کن." : "فقط یک استوری فعال را انتخاب کن."}
-          </p>
         </section>
 
+        <AutomationSectionGuide>می‌توانی از پاسخ قبلی استفاده کنی یا یک پاسخ تازه با تنظیمات دلخواه بسازی.</AutomationSectionGuide>
         <section aria-labelledby="automation-mode-title" className="space-y-2">
           <div>
             <h2 id="automation-mode-title" className="text-sm font-bold text-[var(--daira-heading)]">روش پاسخ</h2>
-            <p className="mt-1 text-[11px] leading-5 text-[var(--daira-text)]">پاسخ جدید بساز یا از پاسخی که قبلاً ساخته‌ای استفاده کن.</p>
           </div>
           <div role="radiogroup" aria-label="روش پاسخ خودکار" className="grid grid-cols-2 gap-2">
             <label className={"flex min-h-[68px] cursor-pointer items-start gap-2.5 rounded-xl border p-3 transition " + (creationMode === "new" ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)]" : "border-[var(--daira-border)] bg-white hover:border-[var(--daira-outline)]")}>
@@ -448,12 +450,14 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
         </section>
 
         {creationMode === "existing" && (
-              <section
+          <div className="space-y-3">
+            <AutomationSectionGuide>یک پاسخ قبلی را انتخاب کن؛ دکمه زیر فهرست، آن را به محتوای انتخاب‌شده وصل می‌کند.</AutomationSectionGuide>
+            <section
                 className="rounded-2xl border p-4 sm:p-6"
                 style={{ borderColor: dairaPalette.border, background: dairaPalette.background.surface }}
               >
                 <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-                  <div><h2 className="text-sm font-bold" style={{ color: dairaPalette.text.heading }}>پاسخ‌های خودکار قبلی</h2><p className="mt-1 text-[11px] leading-5" style={{ color: dairaPalette.text.body }}>پاسخ موردنظر را انتخاب کن تا به محتوای بالا وصل شود.</p></div>
+                  <div><h2 className="text-sm font-bold" style={{ color: dairaPalette.text.heading }}>پاسخ‌های خودکار قبلی</h2></div>
                   <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs" style={{ background: dairaPalette.secondary.hoverBackground, color: dairaPalette.text.body }}><strong className="font-extrabold" style={{ color: dairaPalette.primary.main }}>{new Intl.NumberFormat("fa-IR").format(automationTemplates.length)}</strong><span>پاسخ</span></span>
                 </div>
                 {loadingResources ? (
@@ -514,18 +518,41 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                   </p>
                 )}
 
-                <button type="button" onClick={() => { void saveAutomation(); }} disabled={!selectedTemplateId || loadingResources || mediaLoading || selectedMediaCount === 0 || saving} className="mt-4 flex min-h-12 w-full items-center justify-center rounded-xl px-4 text-sm font-bold text-white transition disabled:opacity-60" style={{ background: dairaPalette.primary.main }}>
+
+              </section>
+            <div className="rounded-2xl border p-3 sm:p-4" style={{ borderColor: dairaPalette.border, background: dairaPalette.background.surface }}>
+                <button type="button" onClick={() => { void saveAutomation(); }} disabled={!selectedTemplateId || loadingResources || mediaLoading || selectedMediaCount === 0 || saving} className="flex min-h-12 w-full items-center justify-center rounded-xl px-4 text-sm font-bold text-white transition disabled:opacity-60" style={{ background: dairaPalette.primary.main }}>
                   {saving ? "در حال استفاده..." : "استفاده از پاسخ انتخاب‌شده"}
                 </button>
-              </section>
+            </div>
+          </div>
             )}
             {creationMode === "new" && (
             <div className="space-y-5">
+            <AutomationSectionGuide>{triggerType === "COMMENT_KEYWORD" ? "مشخص کن پاسخ با هر کامنت فعال شود یا فقط با کلمات مشخص. واژه‌ها در قسمت بعد قرار دارند." : "کلمه‌ها یا عبارت‌هایی را بنویس که با آن‌ها پاسخ به استوری فعال می‌شود."}</AutomationSectionGuide>
             <div className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
               <div className="mb-3 flex items-center gap-3"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]"><Zap size={16} strokeWidth={2.2} aria-hidden="true" /></span><label className="block text-sm font-bold text-[var(--daira-heading)]">شرط فعال‌سازی</label></div>
-              <p className="mb-3 text-xs leading-5 text-[var(--daira-text)]">
-                {triggerType === "COMMENT_KEYWORD" ? (keywordMatchMode === "CONTAINS_ANY" ? "با ثبت هر کامنت زیر پست یا ریلز انتخاب‌شده، همین پاسخ ارسال می‌شود." : "با ثبت یکی از کلمات کلیدی مشخص‌شده در کامنت، پاسخ خودکار فعال می‌شود.") : "با وارد شدن یکی از کلمات کلیدی در Reply استوری، پاسخ خودکار فعال می‌شود."}
-              </p>
+              {triggerType === "COMMENT_KEYWORD" && (
+                <div className="mb-3 rounded-xl border border-[var(--daira-border)] p-3">
+                  <p className="mb-2 text-xs font-bold text-[var(--daira-heading)]">روش فعال‌سازی پاسخ</p>
+                  <div role="radiogroup" aria-label="روش فعال‌سازی پاسخ" className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <label className={"flex cursor-pointer items-start gap-3 rounded-xl border p-3 text-xs transition " + (keywordMatchMode === "CONTAINS_ANY" ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary-hover)]" : "border-[var(--daira-border)] bg-white text-[var(--daira-text)]")}>
+                      <input type="radio" name="comment-keyword-match-mode" value="CONTAINS_ANY" checked={keywordMatchMode === "CONTAINS_ANY"} onChange={() => { setKeywordMatchMode("CONTAINS_ANY"); setKeyword(""); setKeywordDraft(""); }} className="mt-1 h-4 w-4 shrink-0 accent-[var(--daira-primary)]" />
+                      <span className="min-w-0">
+                        <strong className="mb-1 block">شامل هر کلمه</strong>
+                        <span className="block leading-5">با ثبت هر کامنت زیر محتوای انتخاب‌شده، پاسخ خودکار ارسال می‌شود.</span>
+                      </span>
+                    </label>
+                    <label className={"flex cursor-pointer items-start gap-3 rounded-xl border p-3 text-xs transition " + (keywordMatchMode === "EXACT" ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary-hover)]" : "border-[var(--daira-border)] bg-white text-[var(--daira-text)]")}>
+                      <input type="radio" name="comment-keyword-match-mode" value="EXACT" checked={keywordMatchMode === "EXACT"} onChange={() => { setKeywordMatchMode("EXACT"); setKeyword(""); setKeywordDraft(""); }} className="mt-1 h-4 w-4 shrink-0 accent-[var(--daira-primary)]" />
+                      <span className="min-w-0">
+                        <strong className="mb-1 block">کلمات کلیدی مشخص</strong>
+                        <span className="block leading-5">فقط وقتی کامنت با یکی از کلمات تعیین‌شده برابر باشد پاسخ ارسال می‌شود.</span>
+                      </span>
+                    </label>
+                  </div>
+                </div>
+              )}
               {keywordMatchMode !== "CONTAINS_ANY" && keywords.length > 0 && (
                 <div className="mb-3 flex flex-wrap gap-2">
                   {keywords.map((item) => (
@@ -543,39 +570,22 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                   <button type="button" onClick={addKeyword} disabled={!keywordDraft.trim() || keywords.length >= MAX_KEYWORDS} className="min-h-11 shrink-0 rounded-lg bg-[var(--daira-primary)] px-3.5 text-xs font-semibold text-white transition hover:bg-[var(--daira-primary-hover)] disabled:bg-[var(--daira-disabled-bg)] disabled:text-[var(--daira-disabled-text)]">افزودن</button>
                 </div>
               </div>}
-              {triggerType === "COMMENT_KEYWORD" && (
-                <div className="mb-3 rounded-xl border border-[var(--daira-border)] p-3">
-                  <p className="mb-2 text-xs font-bold text-[var(--daira-heading)]">روش فعال‌سازی پاسخ</p>
-                  <div role="radiogroup" aria-label="روش فعال‌سازی پاسخ" className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    <label className={"flex cursor-pointer items-start gap-3 rounded-xl border p-3 text-xs transition " + (keywordMatchMode === "EXACT" ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary-hover)]" : "border-[var(--daira-border)] bg-white text-[var(--daira-text)]")}>
-                      <input type="radio" name="comment-keyword-match-mode" value="EXACT" checked={keywordMatchMode === "EXACT"} onChange={() => { setKeywordMatchMode("EXACT"); setKeyword(""); setKeywordDraft(""); }} className="mt-1 h-4 w-4 shrink-0 accent-[var(--daira-primary)]" />
-                      <span className="min-w-0">
-                        <strong className="mb-1 block">کلمات کلیدی مشخص</strong>
-                        <span className="block leading-5">فقط وقتی کامنت با یکی از کلمات تعیین‌شده برابر باشد پاسخ ارسال می‌شود.</span>
-                      </span>
-                    </label>
-                    <label className={"flex cursor-pointer items-start gap-3 rounded-xl border p-3 text-xs transition " + (keywordMatchMode === "CONTAINS_ANY" ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary-hover)]" : "border-[var(--daira-border)] bg-white text-[var(--daira-text)]")}>
-                      <input type="radio" name="comment-keyword-match-mode" value="CONTAINS_ANY" checked={keywordMatchMode === "CONTAINS_ANY"} onChange={() => { setKeywordMatchMode("CONTAINS_ANY"); setKeyword(""); setKeywordDraft(""); }} className="mt-1 h-4 w-4 shrink-0 accent-[var(--daira-primary)]" />
-                      <span className="min-w-0">
-                        <strong className="mb-1 block">شامل هر کلمه</strong>
-                        <span className="block leading-5">با ثبت هر کامنت زیر محتوای انتخاب‌شده، پاسخ خودکار ارسال می‌شود.</span>
-                      </span>
-                    </label>
-                  </div>
-                </div>
-              )}
 
             </div>
 
             {triggerType === "COMMENT_KEYWORD" && (
+              <div className="space-y-3">
+              <AutomationSectionGuide>این متن زیر کامنت کاربر نمایش داده می‌شود. اگر خالی بماند، پاسخی زیر کامنت ارسال نمی‌شود.</AutomationSectionGuide>
               <div className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
                 <div className="mb-3 flex items-center gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]"><MessageCircle size={15} strokeWidth={2.1} aria-hidden="true" /></span><label className="block text-sm font-bold text-[var(--daira-heading)]">پاسخ زیر کامنت</label></div>
                 <textarea value={commentReply} onChange={(e) => setCommentReply(e.target.value)} rows={3} maxLength={2000} placeholder="پاسخی که زیر کامنت کاربر منتشر می‌شود بنویس..." className="w-full resize-y rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3.5 py-3 !text-base leading-7 text-[var(--daira-heading)] outline-none placeholder:text-[11px] placeholder:whitespace-nowrap placeholder:overflow-hidden placeholder:text-ellipsis focus:border-[var(--daira-input-focus)] focus:bg-white focus:ring-2 focus:ring-[color:var(--daira-primary)]/10" style={{ fontSize: "16px", lineHeight: 1.75 }} />
+              </div>
               </div>
             )}
 
               {triggerType === "COMMENT_KEYWORD" ? (
                 <div className="space-y-4">
+                <AutomationSectionGuide>پیام مستقیمی را بنویس که بعد از کامنت برای کاربر فرستاده می‌شود.</AutomationSectionGuide>
                 <section className="space-y-4 rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
                   <div>
                     <div className="mb-3 flex items-center gap-3">
@@ -631,6 +641,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
                   </section>
 
+                <AutomationSectionGuide>این گزینه اختیاری است. اگر روشنش کنی، کاربر قبل از دریافت پاسخ باید پیج را دنبال کند.</AutomationSectionGuide>
                 <section className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
                     <div className="mb-3 flex items-center gap-3">
                       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]"><ShieldCheck size={15} strokeWidth={2.1} aria-hidden="true" /></span>
@@ -657,6 +668,8 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                   </button>
                 </div>
               ) : (
+                <div className="space-y-3">
+                <AutomationSectionGuide>نوع پاسخ را انتخاب کن؛ می‌توانی متن، عکس، ویدیو، وویس، ویترین یا فرم بفرستی.</AutomationSectionGuide>
                 <div className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
                 <PublishingStoryAutomationSetup
                   message={message}
@@ -677,9 +690,10 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                   finalSaveLoadingLabel="در حال ساخت پاسخ خودکار..."
                   finalSaveDisabled={saving}
                   responseTypeTitle="نوع پاسخ خودکار"
-                  responseTypeDescription="نوع پاسخی که می‌خواهید در دایرکت برای کاربر ارسال شود."
+                  responseTypeDescription=""
                   textPlaceholder="متنی که در پاسخ خودکار برای کاربر ارسال می‌شود..."
                 />
+                </div>
                 </div>
               )}
             </div>
