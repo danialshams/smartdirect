@@ -311,13 +311,20 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
           if (seenPublishedItems.has(publishedItemKey)) continue;
           seenPublishedItems.add(publishedItemKey);
           const linkedAutomationId = isStory ? job.storyReplyAutomationId : job.commentAutomationId;
-          const linkedAutomation = (linkedAutomationId ? automationById.get(linkedAutomationId) : undefined) ??
-            allAutomations.find((automation) => {
-              const targetMediaId = job.instagramMediaId || "";
-              const automationMatchesMedia = automation.mediaId === targetMediaId ||
-                Boolean(automation.mediaIds?.split(",").some((id) => id.trim() === targetMediaId));
-              return automation.triggerType === (isStory ? "STORY_REPLY_KEYWORD" : "COMMENT_KEYWORD") && automationMatchesMedia;
-            });
+          const directlyLinkedAutomation = linkedAutomationId ? automationById.get(linkedAutomationId) : undefined;
+          const targetMediaId = job.instagramMediaId || "";
+          // Prefer the newest matching automation for this media/trigger so a new
+          // response isn't masked by an older automation still linked to the job.
+          const mediaMatchedAutomation = allAutomations.find((automation) => {
+            const automationMatchesMedia = automation.mediaId === targetMediaId ||
+              Boolean(automation.mediaIds?.split(",").some((id) => id.trim() === targetMediaId));
+            return automation.triggerType === (isStory ? "STORY_REPLY_KEYWORD" : "COMMENT_KEYWORD") && automationMatchesMedia;
+          });
+          const directCreatedAt = directlyLinkedAutomation?.createdAt ? Date.parse(directlyLinkedAutomation.createdAt) : Number.NEGATIVE_INFINITY;
+          const mediaCreatedAt = mediaMatchedAutomation?.createdAt ? Date.parse(mediaMatchedAutomation.createdAt) : Number.NEGATIVE_INFINITY;
+          const linkedAutomation = directCreatedAt > mediaCreatedAt
+            ? directlyLinkedAutomation
+            : mediaMatchedAutomation ?? directlyLinkedAutomation;
           const itemCreatedAt = linkedAutomation?.createdAt || job.createdAt;
           nextItems.push({
             id: job.id,
