@@ -139,14 +139,13 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   }, [account.id, triggerType]);
 
   function applyAutomationTemplate(template: AutomationTemplate) {
-    setSelectedTemplateId((current) => {
-      if (current === template.id) {
-        setCreationMode("new");
-        return "";
-      }
+    if (selectedTemplateId === template.id) {
+      setSelectedTemplateId("");
+      setCreationMode("new");
+    } else {
+      setSelectedTemplateId(template.id);
       setCreationMode("existing");
-      return template.id;
-    });
+    }
     setError("");
   }
 
