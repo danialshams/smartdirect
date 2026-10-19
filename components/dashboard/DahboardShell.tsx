@@ -93,9 +93,9 @@ export default function DashboardShell({ user, instagramAccounts, children }: Da
         @media(min-width:900px) { .daira-app-main { padding-bottom:128px; } .daira-bottom-nav { left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom, 0px));border-radius:23px;padding-left:24px;padding-right:24px; } }
         @media(max-width:480px) { .daira-bottom-nav-backdrop { height:88px; } .daira-app-main { padding:calc(72px + max(8px, env(safe-area-inset-top, 0px))) 7px calc(100px + env(safe-area-inset-bottom, 0px)); } .daira-bottom-nav { left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom, 0px));min-height:76px;grid-template-columns:repeat(3,minmax(0,1fr));padding-left:10px;padding-right:10px;border-radius:14px; } .daira-bottom-nav__icon { width:44px;height:39px;border-radius:15px; } .daira-bottom-nav__label { font-size:10px; } }
         @media(prefers-reduced-motion:reduce) { .daira-bottom-nav__icon { transition:none; } }
-        .daira-app-main--flow-actions { padding-bottom:calc(108px + env(safe-area-inset-bottom, 0px)); }
-        .daira-flow-action-dock { position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom, 0px));z-index:1495;pointer-events:none; }
-        .daira-flow-action-dock__inner { display:flex;align-items:stretch;gap:12px;width:min(100%,896px);margin:0 auto;padding:10px;border:1px solid var(--daira-border);border-radius:18px;background:var(--daira-surface);box-shadow:0 8px 32px rgba(22,54,110,.12);backdrop-filter:none;box-sizing:border-box;pointer-events:auto; }
+        .daira-app-main--flow-actions { padding-bottom:calc(32px + env(safe-area-inset-bottom, 0px)); }
+        .daira-flow-action-dock { position:static;left:auto;right:auto;bottom:auto;z-index:auto;margin:16px 0 0;pointer-events:auto; }
+        .daira-flow-action-dock__inner { display:flex;align-items:stretch;gap:12px;width:min(100%,896px);margin:0 auto;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;backdrop-filter:none;box-sizing:border-box;pointer-events:auto; }
         .daira-flow-action-dock__button { display:flex;flex:1 1 0;min-width:0;min-height:48px;align-items:center;justify-content:center;gap:6px;padding:10px 14px;border:1px solid transparent;border-radius:12px;font-family:"Vazirmatn",Arial,sans-serif;font-size:13px;font-weight:750;line-height:1.4;text-align:center;white-space:nowrap;cursor:pointer;transition:background .16s,color .16s,border-color .16s; }
         .daira-flow-action-dock__button--primary { background:var(--daira-primary);border-color:var(--daira-primary);color:var(--daira-surface); }
         .daira-flow-action-dock__button--primary:hover:not(:disabled) { background:var(--daira-primary-hover);border-color:var(--daira-primary-hover); }
@@ -109,9 +109,9 @@ export default function DashboardShell({ user, instagramAccounts, children }: Da
         .daira-form-switch:focus-visible { outline:0;box-shadow:0 0 0 3px rgba(47,97,253,.22); }
         .daira-form-switch:disabled { opacity:.55;cursor:not-allowed; }
         @media(max-width:480px) {
-          .daira-app-main--flow-actions { padding-bottom:calc(104px + env(safe-area-inset-bottom, 0px)); }
-          .daira-flow-action-dock { left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom, 0px)); }
-          .daira-flow-action-dock__inner { gap:8px;padding:8px;border-radius:16px; }
+          .daira-app-main--flow-actions { padding-bottom:calc(28px + env(safe-area-inset-bottom, 0px)); }
+          .daira-flow-action-dock { margin-top:12px; }
+          .daira-flow-action-dock__inner { gap:8px;padding:0;border-radius:0; }
           .daira-flow-action-dock__button { min-height:44px;padding:8px;font-size:12px; }
         }
         @media(prefers-reduced-motion:reduce) { .daira-flow-action-dock__button { transition:none; } }
