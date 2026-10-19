@@ -360,6 +360,15 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                 selectedLabel={triggerType === "COMMENT_KEYWORD" ? "محتوا انتخاب شده" : "استوری انتخاب شده"}
               />
             )}
+            {triggerType === "STORY_REPLY_KEYWORD" && mediaId && (
+              <section className="flex items-center gap-3 rounded-2xl border border-[#DBEAFE] bg-[#EFF6FF] p-3.5 sm:p-4">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white text-[#2F61FD]">
+                  {(() => { const selected = mediaItems.find((item) => item.id === mediaId); const image = selected?.thumbnail_url || selected?.media_url; return image ? <img src={image} alt="" className="h-full w-full object-cover" /> : <Camera size={18} />; })()}
+                </span>
+                <div className="min-w-0 flex-1"><p className="text-xs font-bold text-[#18233C]">استوری انتخاب‌شده</p><p className="mt-1 truncate text-[11px] leading-5 text-[#5A6B87]">استوری انتخاب‌شده برای اتصال پاسخ خودکار</p></div>
+                <button type="button" onClick={() => router.push("/dashboard/story-automation/new")} className="shrink-0 rounded-lg border border-[#BFDBFE] bg-white px-3 py-2 text-[11px] font-bold text-[#2F61FD] transition hover:bg-[#DBEAFE]">تغییر استوری</button>
+              </section>
+            )}
             {triggerType === "COMMENT_KEYWORD" && mediaId && (
               <section className="flex items-center gap-3 rounded-2xl border border-[#DBEAFE] bg-[#EFF6FF] p-3.5 sm:p-4">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white text-[#2F61FD]">
