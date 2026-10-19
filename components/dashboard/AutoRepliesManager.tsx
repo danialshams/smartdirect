@@ -15,6 +15,7 @@ type Automation = {
   instagramAccountId: string;
   triggerType: TriggerType | string;
   mediaId: string | null;
+  mediaIds?: string | null;
   keyword: string | null;
   createdAt: string;
   isActive: boolean;
@@ -72,7 +73,7 @@ type ReplyItem = {
 
 function formatDate(value: string | null) {
   return value
-    ? new Date(value).toLocaleString("fa-IR", {
+    ? new Date(value).toLocaleString("fa-IR-u-ca-persian", {
         dateStyle: "medium",
         timeStyle: "short",
       })
@@ -91,7 +92,7 @@ function normalizeKeywordList(value: string | null | undefined) {
   return (value || "").split(/[,،;؛\n]+/).map((item) => item.trim()).filter(Boolean).join("، ");
 }
 
-const AUTO_REPLIES_CACHE_VERSION = 3;
+const AUTO_REPLIES_CACHE_VERSION = 4;
 const AUTO_REPLIES_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 function readAutoRepliesCache(accountId: string): ReplyItem[] | null {
@@ -257,6 +258,8 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
           if (job.type === "STORY") return activeStoryIds.has(job.instagramMediaId);
           return true;
         });
+        const allAutomations = (Array.isArray(automationsResult.data) ? automationsResult.data : []) as Automation[];
+        const automationById = new Map(allAutomations.map((automation) => [automation.id, automation] as const));
         const linkedAutomationIds = new Set(
           visiblePublishedJobs.flatMap((job) => [job.commentAutomationId, job.storyReplyAutomationId].filter(Boolean) as string[]),
         );
@@ -266,7 +269,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
         const seenPublishedItems = new Set<string>();
 
         const nextItems: ReplyItem[] = [];
-        for (const automation of (Array.isArray(automationsResult.data) ? automationsResult.data : []) as Automation[]) {
+        for (const automation of allAutomations) {
           if (
             (automation.triggerType !== "COMMENT_KEYWORD" && automation.triggerType !== "STORY_REPLY_KEYWORD") ||
             !automation.mediaId ||
@@ -307,12 +310,28 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
           const publishedItemKey = `${job.type}:${job.instagramMediaId || job.commentAutomationId || job.storyReplyAutomationId || job.id}`;
           if (seenPublishedItems.has(publishedItemKey)) continue;
           seenPublishedItems.add(publishedItemKey);
+          const linkedAutomationId = isStory ? job.storyReplyAutomationId : job.commentAutomationId;
+          const directlyLinkedAutomation = linkedAutomationId ? automationById.get(linkedAutomationId) : undefined;
+          const targetMediaId = job.instagramMediaId || "";
+          // Prefer the newest matching automation for this media/trigger so a new
+          // response isn't masked by an older automation still linked to the job.
+          const mediaMatchedAutomation = allAutomations.find((automation) => {
+            const automationMatchesMedia = automation.mediaId === targetMediaId ||
+              Boolean(automation.mediaIds?.split(",").some((id) => id.trim() === targetMediaId));
+            return automation.triggerType === (isStory ? "STORY_REPLY_KEYWORD" : "COMMENT_KEYWORD") && automationMatchesMedia;
+          });
+          const directCreatedAt = directlyLinkedAutomation?.createdAt ? Date.parse(directlyLinkedAutomation.createdAt) : Number.NEGATIVE_INFINITY;
+          const mediaCreatedAt = mediaMatchedAutomation?.createdAt ? Date.parse(mediaMatchedAutomation.createdAt) : Number.NEGATIVE_INFINITY;
+          const linkedAutomation = directCreatedAt > mediaCreatedAt
+            ? directlyLinkedAutomation
+            : mediaMatchedAutomation ?? directlyLinkedAutomation;
+          const itemCreatedAt = linkedAutomation?.createdAt || job.createdAt;
           nextItems.push({
             id: job.id,
             key: `publish:${job.id}`,
             type: job.type,
-            date: job.createdAt,
-            sortAt: job.createdAt,
+            date: itemCreatedAt,
+            sortAt: itemCreatedAt,
             previewUrl: job.media[0]?.publicUrl ?? null,
             previewKind: job.media[0]?.type === "VIDEO" ? "video" : job.media[0]?.type === "IMAGE" ? "image" : null,
             title: isStory ? "پاسخ خودکار استوری" : "پاسخ خودکار کامنت",
