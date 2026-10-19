@@ -23,6 +23,20 @@ type Props = {
   onSaved: () => void;
 };
 
+function sortNewestFirst<T extends { timestamp?: string | null }>(items: T[]): T[] {
+  return items
+    .map((item, index) => {
+      const parsedTimestamp = item.timestamp ? Date.parse(item.timestamp) : Number.NaN;
+      return {
+        item,
+        index,
+        timestamp: Number.isFinite(parsedTimestamp) ? parsedTimestamp : Number.NEGATIVE_INFINITY,
+      };
+    })
+    .sort((a, b) => (b.timestamp - a.timestamp) || (a.index - b.index))
+    .map(({ item }) => item);
+}
+
 function serializeQuickReplies(replies: QuickReplyDraft[]): unknown[] {
   return replies.map((reply) => ({
     id: reply.id,
@@ -149,16 +163,17 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
               typeof item.id === "string" && !used.has(item.id) &&
               (item.media_type === "IMAGE" || item.media_type === "VIDEO" || item.media_type === "CAROUSEL_ALBUM" || item.media_product_type === "REELS"))
           : mediaResult.data.filter((item: { id?: unknown }) => typeof item.id === "string" && !used.has(item.id))
-              .map((item: { id: string; mediaType?: string | null; mediaUrl?: string | null; thumbnailUrl?: string | null }) => ({
+              .map((item: { id: string; mediaType?: string | null; mediaUrl?: string | null; thumbnailUrl?: string | null; timestamp?: string | null; createdAt?: string | null; created_time?: string | null }) => ({
                 id: item.id,
                 media_type: item.mediaType === "VIDEO" ? "VIDEO" : "IMAGE",
                 media_product_type: "STORY",
                 media_url: item.mediaUrl,
                 thumbnail_url: item.thumbnailUrl,
+                timestamp: item.timestamp ?? item.createdAt ?? item.created_time ?? undefined,
                 caption: "استوری اینستاگرام",
               }));
         const availableIds = new Set<string>(availableMedia.map((item: { id: string }) => item.id));
-        setMediaItems(availableMedia);
+        setMediaItems(sortNewestFirst(availableMedia));
         setSelectedMediaIds((current) => current.filter((id) => availableIds.has(id)));
       })
       .catch(() => { if (!cancelled) { setMediaItems([]); setError("دریافت فهرست محتواها یا پاسخ‌های خودکار ناموفق بود. صفحه را دوباره بارگذاری کنید."); } })
@@ -329,23 +344,54 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     }
   }
 
+  const selectedMediaCount = new Set([...selectedMediaIds, ...(mediaId ? [mediaId] : [])]).size;
+
   return (
     <div dir="rtl" className="mx-auto w-full max-w-4xl space-y-5 py-2 sm:py-4">
-        <div className="mb-5">
-          <button type="button" onClick={() => { if (flowStep > 1) setFlowStep((current) => (current === 3 ? 2 : 1)); else router.back(); }} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#2F61FD] transition hover:bg-[#DBEAFE] hover:text-[#2F61FD]">
-            <ArrowRight size={15} strokeWidth={2} />بازگشت
-          </button>
-        </div>
+      <header className="mb-2 flex items-center gap-2 px-1">
+        <button
+          type="button"
+          aria-label="بازگشت"
+          title="بازگشت"
+          onClick={() => { if (flowStep > 1) setFlowStep((current) => (current === 3 ? 2 : 1)); else router.back(); }}
+          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition"
+          style={{ borderColor: dairaPalette.border, background: dairaPalette.background.surface, color: dairaPalette.text.body }}
+        >
+          <ArrowRight size={17} strokeWidth={2} />
+        </button>
+        {flowStep === 1 && (
+          <h1 className="min-w-0 text-sm font-medium leading-6" style={{ color: dairaPalette.text.body }}>
+            محتوای مورد نظر خودتون رو انتخاب کنید
+          </h1>
+        )}
+        {flowStep === 2 && (
+          <div className="flex min-w-0 flex-1 items-start justify-between gap-3">
+            <h1 className="min-w-0 text-sm font-medium leading-6" style={{ color: dairaPalette.text.body }}>
+              پاسخ جدید بسازید یا از پاسخ‌های ساخته‌شده قبلی استفاده کنید
+            </h1>
+            <span
+              className="inline-flex h-7 min-w-7 shrink-0 items-center justify-center rounded-full px-2 text-xs font-bold"
+              style={{ background: dairaPalette.primary.main, color: dairaPalette.background.surface }}
+              aria-label={`تعداد پاسخ‌های قبلی: ${automationTemplates.length}`}
+            >
+              {new Intl.NumberFormat("fa-IR").format(automationTemplates.length)}
+            </span>
+          </div>
+        )}
+        {flowStep === 3 && (
+          <h1 className="min-w-0 text-lg font-bold leading-6" style={{ color: dairaPalette.text.heading }}>
+            ساخت پاسخ خودکار جدید
+          </h1>
+        )}
+      </header>
 
-        <div className="space-y-5">
-          {flowStep === 1 && <h1 className="px-1 text-lg font-bold text-[#18233C]">محتوای مورد نظر خودتون رو انتخاب کنید</h1>}
-          {flowStep === 2 && <h1 className="px-1 text-lg font-bold text-[#18233C]">پاسخ جدید بسازید یا از پاسخ‌های ساخته‌شده قبلی استفاده کنید</h1>}
-          {flowStep === 3 && <h1 className="px-1 text-lg font-bold text-[#18233C]">ساخت پاسخ خودکار جدید</h1>}
+      <div className="space-y-5">
             {flowStep === 1 && !mediaId && (
               <AutomationPicker
                 items={mediaItems}
                 selectedIds={selectedMediaIds}
                 loading={mediaLoading}
+                showContentFilters={triggerType === "COMMENT_KEYWORD"}
                 onToggle={(id) => setSelectedMediaIds((current) => triggerType === "COMMENT_KEYWORD" ? (current.includes(id) ? current.filter((value) => value !== id) : [...current, id]) : [id])}
               />
             )}
@@ -368,8 +414,8 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
               </section>
             )}
             {flowStep === 1 && (
-              <div className="flex justify-end border-t border-[#E6ECF5] pt-4">
-                <button type="button" onClick={() => { setFlowStep(2); setCreationMode("existing"); setSelectedTemplateId(""); setError(""); }} disabled={mediaLoading || selectedMediaIds.length === 0} className="min-h-11 w-full rounded-xl bg-[#2F61FD] px-6 text-xs font-bold text-white transition hover:bg-[#1E4BD8] disabled:cursor-not-allowed disabled:bg-[#E2E8F0] disabled:text-[#94A3B8] sm:w-auto">ادامه</button>
+              <div className="flex justify-end pt-1">
+                <button type="button" onClick={() => { setFlowStep(2); setCreationMode("existing"); setSelectedTemplateId(""); setError(""); }} disabled={mediaLoading || (selectedMediaIds.length === 0 && !mediaId)} className="min-h-11 w-full rounded-xl bg-[#2F61FD] px-6 text-xs font-bold text-white transition hover:bg-[#1E4BD8] disabled:cursor-not-allowed disabled:bg-[#E2E8F0] disabled:text-[#94A3B8] sm:w-auto">ادامه ({new Intl.NumberFormat("fa-IR").format(selectedMediaCount)} محتوا)</button>
               </div>
             )}
             {flowStep === 2 && (
