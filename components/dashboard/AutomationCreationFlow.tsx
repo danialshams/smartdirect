@@ -1,6 +1,6 @@
 "use client";
 
-import { Camera, MessageCircle, Send, ShieldCheck, Zap } from "lucide-react";
+import { Camera, Image as ImageIcon, MessageCircle, Send, ShieldCheck, X, Zap } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -66,6 +66,8 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   const [linkButtons, setLinkButtons] = useState<Array<{ title: string; url: string }>>([{ title: "مشاهده لینک", url: "" }]);
   const [mediaItems, setMediaItems] = useState<Array<{id:string; caption?:string; media_type?:string; media_product_type?:string; thumbnail_url?:string|null; media_url?:string|null; timestamp?:string}>>([]);
   const [selectedMediaIds, setSelectedMediaIds] = useState<string[]>(mediaId ? [mediaId] : []);
+  const [mediaDialogOpen, setMediaDialogOpen] = useState(false);
+  const [draftSelectedMediaIds, setDraftSelectedMediaIds] = useState<string[]>([]);
   const [mediaLoading, setMediaLoading] = useState(true);
   const [commentReply, setCommentReply] = useState("");
   const [requireFollow, setRequireFollow] = useState(false);
@@ -77,34 +79,36 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   const [automationTemplates, setAutomationTemplates] = useState<AutomationTemplate[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
   const [creationMode, setCreationMode] = useState<CreationMode>("new");
-  const [flowStep, setFlowStep] = useState<1 | 2 | 3>(1);
   const [loadingResources, setLoadingResources] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const { registerBackHandler, registerPageTitle } = useDashboardBackNavigation();
+  const { registerBackHandler } = useDashboardBackNavigation();
 
   useEffect(() => {
     const handleBack = () => {
-      if (flowStep > 1) {
-        setFlowStep((current) => (current === 3 ? 2 : 1));
-      } else {
-        router.back();
+      if (mediaDialogOpen) {
+        setMediaDialogOpen(false);
+        return;
       }
+      router.back();
     };
-
     registerBackHandler(handleBack);
     return () => registerBackHandler(null);
-  }, [flowStep, registerBackHandler, router]);
+  }, [mediaDialogOpen, registerBackHandler, router]);
 
   useEffect(() => {
-    const pageTitle = flowStep === 1
-      ? (triggerType === "COMMENT_KEYWORD" ? "انتخاب محتوا" : "انتخاب استوری")
-      : flowStep === 2
-        ? "انتخاب پاسخ"
-        : "ساخت پاسخ خودکار";
-    registerPageTitle(pageTitle);
-    return () => registerPageTitle(null);
-  }, [flowStep, registerPageTitle, triggerType]);
+    if (!mediaDialogOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMediaDialogOpen(false);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [mediaDialogOpen]);
 
   useEffect(() => {
     let cancelled = false;
@@ -139,21 +143,25 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   }, [account.id, triggerType]);
 
   function applyAutomationTemplate(template: AutomationTemplate) {
-    if (selectedTemplateId === template.id) {
-      setSelectedTemplateId("");
-      setCreationMode("new");
-    } else {
-      setSelectedTemplateId(template.id);
-      setCreationMode("existing");
-    }
+    setSelectedTemplateId(template.id);
+    setCreationMode("existing");
     setError("");
   }
 
   function startNewAutomation() {
-    // Returning to step 2 must not erase an unfinished new response.
-    setFlowStep(3);
     setSelectedTemplateId("");
     setCreationMode("new");
+    setError("");
+  }
+
+  function openMediaDialog() {
+    setDraftSelectedMediaIds(selectedMediaIds);
+    setMediaDialogOpen(true);
+  }
+
+  function confirmMediaSelection() {
+    setSelectedMediaIds(draftSelectedMediaIds);
+    setMediaDialogOpen(false);
     setError("");
   }
 
@@ -196,6 +204,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
         const availableIds = new Set<string>(availableMedia.map((item: { id: string }) => item.id));
         setMediaItems(sortNewestFirst(availableMedia));
         setSelectedMediaIds((current) => current.filter((id) => availableIds.has(id)));
+        setDraftSelectedMediaIds((current) => current.filter((id) => availableIds.has(id)));
       })
       .catch(() => { if (!cancelled) { setMediaItems([]); setError("دریافت فهرست محتواها یا پاسخ‌های خودکار ناموفق بود. صفحه را دوباره بارگذاری کنید."); } })
       .finally(() => { if (!cancelled) setMediaLoading(false); });
@@ -213,7 +222,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     if (saving) return;
     const cleanKeywords = keyword.split(",").map((item) => item.trim()).filter(Boolean);
     const currentMessage = finalMessage ?? message;
-    const targetMediaIds = Array.from(new Set([...selectedMediaIds.filter(Boolean), ...(mediaId ? [mediaId] : [])]));
+    const targetMediaIds = Array.from(new Set(selectedMediaIds.filter(Boolean)));
 
     if (creationMode === "existing") {
       const template = automationTemplates.find((item) => item.id === selectedTemplateId);
@@ -255,7 +264,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
       if (invalidButton) { setError("برای هر دکمه، لینک معتبر با http یا https و عنوان حداکثر ۲۰ کاراکتر وارد کنید."); return; }
       if (currentMessage.text.trim().length > 640) { setError("متن دایرکت همراه دکمه حداکثر ۶۴۰ کاراکتر است."); return; }
     }
-    if (selectedMediaIds.length === 0 && !mediaId) {
+    if (selectedMediaIds.length === 0) {
       setError(triggerType === "COMMENT_KEYWORD" ? "حداقل یک پست یا ریلز انتخاب کنید." : "یک استوری انتخاب کنید.");
       return;
     }
@@ -290,7 +299,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
         body: JSON.stringify({
           instagramAccountId: account.id,
           triggerType,
-          mediaId: triggerType === "COMMENT_KEYWORD" ? (targetMediaIds.length === 1 ? targetMediaIds[0] : null) : targetMediaIds[0] || mediaId,
+          mediaId: triggerType === "COMMENT_KEYWORD" ? (targetMediaIds.length === 1 ? targetMediaIds[0] : null) : targetMediaIds[0] || null,
           keyword: keywordMatchMode === "CONTAINS_ANY" ? null : cleanKeywords.join(","),
           keywordMatchMode,
           mediaIds: triggerType === "COMMENT_KEYWORD" ? targetMediaIds : [],
@@ -366,114 +375,86 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     }
   }
 
-  const selectedMediaCount = new Set([...selectedMediaIds, ...(mediaId ? [mediaId] : [])]).size;
-  const flowSteps = [
-    { number: 1 as const, title: triggerType === "COMMENT_KEYWORD" ? "انتخاب محتوا" : "انتخاب استوری" },
-    { number: 2 as const, title: "انتخاب پاسخ" },
-    { number: 3 as const, title: "تنظیم پاسخ" },
-  ];
+  const selectedMediaCount = selectedMediaIds.length;
+  const selectedMediaItems = mediaItems.filter((item) => selectedMediaIds.includes(item.id));
   return (
     <div dir="rtl" className="mx-auto w-full max-w-4xl space-y-5 py-2 sm:py-4">
-      <nav aria-label="مراحل ساخت پاسخ خودکار" className="w-full px-0.5 sm:px-2">
-        <ol className="m-0 flex w-full list-none items-center p-0" aria-label="وضعیت مراحل ساخت پاسخ خودکار">
-          {flowSteps.map((step) => {
-            const isActive = step.number === flowStep;
-            const isComplete = step.number < flowStep;
-            const stepColor = isComplete
-              ? dairaPalette.status.success
-              : isActive
-                ? dairaPalette.primary.main
-                : dairaPalette.border;
-            const stepText = isComplete
-              ? dairaPalette.background.surface
-              : isActive
-                ? dairaPalette.primary.main
-                : dairaPalette.text.muted;
-            const circleClass = "daira-automation-step flex h-[86px] w-[86px] shrink-0 items-center justify-center rounded-full border-2 px-1.5 text-center text-[10px] font-extrabold leading-4 transition-colors sm:h-[104px] sm:w-[104px] sm:px-3 sm:text-xs sm:leading-5" + (isActive ? " daira-automation-step--current" : "");
-            const circleStyle = {
-              borderColor: stepColor,
-              background: isComplete ? dairaPalette.status.success : isActive ? dairaPalette.secondary.hoverBackground : "transparent",
-              color: stepText,
-            };
-            return (
-              <li key={step.number} className="flex min-w-0 flex-1 items-center">
-                {isComplete ? (
-                  <button
-                    type="button"
-                    onClick={() => { setFlowStep(step.number); setError(""); }}
-                    aria-label={`بازگشت به مرحله ${new Intl.NumberFormat("fa-IR").format(step.number)}: ${step.title}`}
-                    className={circleClass}
-                    style={circleStyle}
-                  >
-                    {step.title}
-                  </button>
-                ) : (
-                  <div
-                    aria-current={isActive ? "step" : undefined}
-                    aria-disabled="true"
-                    className={circleClass}
-                    style={circleStyle}
-                  >
-                    {step.title}
-                  </div>
-                )}
-                {step.number < 3 && (
-                  <span
-                    aria-hidden="true"
-                    className="mx-1 h-[3px] min-w-1 flex-1 rounded-full sm:mx-2"
-                    style={{ background: isComplete ? dairaPalette.status.success : dairaPalette.border }}
-                  />
-                )}
-              </li>
-            );
-          })}
-        </ol>
-      </nav>
+      <header className="mb-4 px-1 sm:mb-5">
+        <h1 className="text-lg font-extrabold tracking-tight text-[var(--daira-heading)] sm:text-xl">
+          {triggerType === "COMMENT_KEYWORD" ? "پاسخ خودکار کامنت" : "پاسخ خودکار استوری"}
+        </h1>
+        <p className="mt-1.5 text-xs leading-6 text-[var(--daira-text)] sm:text-sm">
+          همه تنظیمات را همین‌جا انجام بده؛ فقط محتوای موردنظر را از پنجره انتخاب کن.
+        </p>
+      </header>
 
-      <div className="space-y-5">
-            {flowStep === 1 && !mediaId && (
-              <AutomationPicker
-                items={mediaItems}
-                selectedIds={selectedMediaIds}
-                loading={mediaLoading}
-                showContentFilters={triggerType === "COMMENT_KEYWORD"}
-                onToggle={(id) => setSelectedMediaIds((current) => triggerType === "COMMENT_KEYWORD" ? (current.includes(id) ? current.filter((value) => value !== id) : [...current, id]) : [id])}
-              />
-            )}
-            {flowStep === 1 && triggerType === "STORY_REPLY_KEYWORD" && mediaId && (
-              <section className="flex items-center gap-3 rounded-2xl border border-[var(--daira-outline-active-bg)] bg-[var(--daira-outline-hover-bg)] p-3.5 sm:p-4">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white text-[var(--daira-primary)]">
-                  {(() => { const selected = mediaItems.find((item) => item.id === mediaId); const image = selected?.thumbnail_url || selected?.media_url; return image ? <img src={image} alt="" className="h-full w-full object-cover" /> : <Camera size={18} />; })()}
-                </span>
-                <div className="min-w-0 flex-1"><p className="text-xs font-bold text-[var(--daira-heading)]">استوری انتخاب‌شده</p><p className="mt-1 truncate text-[11px] leading-5 text-[var(--daira-text)]">استوری انتخاب‌شده برای اتصال پاسخ خودکار</p></div>
-                <button type="button" onClick={() => router.push("/dashboard/story-automation/new")} className="shrink-0 rounded-lg border border-[var(--daira-outline-active-bg)] bg-white px-3 py-2 text-[11px] font-bold text-[var(--daira-primary)] transition hover:bg-[var(--daira-outline-active-bg)]">تغییر استوری</button>
-              </section>
-            )}
-            {flowStep === 1 && triggerType === "COMMENT_KEYWORD" && mediaId && (
-              <section className="flex items-center gap-3 rounded-2xl border border-[var(--daira-outline-active-bg)] bg-[var(--daira-outline-hover-bg)] p-3.5 sm:p-4">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white text-[var(--daira-primary)]">
-                  {(() => { const selected = mediaItems.find((item) => item.id === mediaId); const image = selected?.thumbnail_url || selected?.media_url; return image ? <img src={image} alt="" className="h-full w-full object-cover" /> : <Camera size={18} />; })()}
-                </span>
-                <div className="min-w-0 flex-1"><p className="text-xs font-bold text-[var(--daira-heading)]">محتوای انتخاب‌شده</p><p className="mt-1 truncate text-[11px] leading-5 text-[var(--daira-text)]">{mediaItems.find((item) => item.id === mediaId)?.caption?.trim() || "پست یا ریلز انتخاب‌شده برای این پاسخ خودکار"}</p></div>
-                <button type="button" onClick={() => router.push("/dashboard/comment-automation/new")} className="shrink-0 rounded-lg border border-[var(--daira-outline-active-bg)] bg-white px-3 py-2 text-[11px] font-bold text-[var(--daira-primary)] transition hover:bg-[var(--daira-outline-active-bg)]">تغییر محتوا</button>
-              </section>
-            )}
-            {flowStep === 2 && (
+      <div className="space-y-4">
+        <section aria-labelledby="automation-content-title" className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex shrink-0 items-center gap-1">
+                {selectedMediaItems.length > 0 ? selectedMediaItems.slice(0, 3).map((item) => {
+                  const image = item.thumbnail_url || item.media_url;
+                  return (
+                    <span key={item.id} className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] text-[var(--daira-text)]">
+                      {image ? <img src={image} alt="" className="h-full w-full object-cover" /> : <Camera size={17} />}
+                    </span>
+                  );
+                }) : (
+                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]">
+                    <Camera size={19} />
+                  </span>
+                )}
+                {selectedMediaCount > 3 && (
+                  <span className="flex h-11 min-w-11 items-center justify-center rounded-xl bg-[var(--daira-surface-hover)] px-2 text-xs font-bold text-[var(--daira-text)]">
+                    +{new Intl.NumberFormat("fa-IR").format(selectedMediaCount - 3)}
+                  </span>
+                )}
+              </div>
+              <div className="min-w-0">
+                <h2 id="automation-content-title" className="text-sm font-bold text-[var(--daira-heading)]">
+                  {triggerType === "COMMENT_KEYWORD" ? "محتوای هدف" : "استوری هدف"}
+                </h2>
+                <p className="mt-1 text-xs leading-5 text-[var(--daira-text)]">
+                  {mediaLoading ? "در حال دریافت محتوا..." : selectedMediaCount > 0 ? new Intl.NumberFormat("fa-IR").format(selectedMediaCount) + (triggerType === "COMMENT_KEYWORD" ? " محتوا انتخاب شده" : " استوری انتخاب شده") : "هنوز محتوایی انتخاب نشده"}
+                </p>
+              </div>
+            </div>
+            <button type="button" onClick={openMediaDialog} aria-haspopup="dialog" aria-expanded={mediaDialogOpen} className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-[var(--daira-outline)] bg-white px-4 text-xs font-bold text-[var(--daira-primary)] transition hover:border-[var(--daira-primary)] hover:bg-[var(--daira-outline-hover-bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--daira-primary)]/25">
+              <ImageIcon size={16} aria-hidden="true" />
+              {selectedMediaCount > 0 ? "تغییر انتخاب" : "انتخاب محتوا"}
+            </button>
+          </div>
+          <p className="mt-3 text-[11px] leading-5 text-[var(--daira-text)]">
+            {triggerType === "COMMENT_KEYWORD" ? "یک یا چند پست و ریلز را برای پاسخ به کامنت‌ها انتخاب کن." : "فقط یک استوری فعال را انتخاب کن."}
+          </p>
+        </section>
+
+        <section aria-labelledby="automation-mode-title" className="space-y-2">
+          <div>
+            <h2 id="automation-mode-title" className="text-sm font-bold text-[var(--daira-heading)]">روش پاسخ</h2>
+            <p className="mt-1 text-[11px] leading-5 text-[var(--daira-text)]">پاسخ جدید بساز یا از پاسخی که قبلاً ساخته‌ای استفاده کن.</p>
+          </div>
+          <div role="radiogroup" aria-label="روش پاسخ خودکار" className="grid grid-cols-2 gap-2">
+            <label className={"flex min-h-[68px] cursor-pointer items-start gap-2.5 rounded-xl border p-3 transition " + (creationMode === "new" ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)]" : "border-[var(--daira-border)] bg-white hover:border-[var(--daira-outline)]")}>
+              <input type="radio" name="automation-creation-mode" value="new" checked={creationMode === "new"} onChange={startNewAutomation} className="mt-1 h-4 w-4 shrink-0 accent-[var(--daira-primary)]" />
+              <span className="min-w-0"><strong className="block text-xs leading-5 text-[var(--daira-heading)]">ساخت پاسخ جدید</strong><span className="mt-1 block text-[10px] leading-4 text-[var(--daira-text)]">تنظیم متن و شرط‌ها</span></span>
+            </label>
+            <label className={"flex min-h-[68px] cursor-pointer items-start gap-2.5 rounded-xl border p-3 transition " + (creationMode === "existing" ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)]" : "border-[var(--daira-border)] bg-white hover:border-[var(--daira-outline)]")}>
+              <input type="radio" name="automation-creation-mode" value="existing" checked={creationMode === "existing"} onChange={() => { setCreationMode("existing"); setError(""); }} className="mt-1 h-4 w-4 shrink-0 accent-[var(--daira-primary)]" />
+              <span className="min-w-0"><strong className="block text-xs leading-5 text-[var(--daira-heading)]">استفاده از پاسخ قبلی</strong><span className="mt-1 block text-[10px] leading-4 text-[var(--daira-text)]">بدون ساخت پاسخ تکراری</span></span>
+            </label>
+          </div>
+        </section>
+
+        {creationMode === "existing" && (
               <section
                 className="rounded-2xl border p-4 sm:p-6"
                 style={{ borderColor: dairaPalette.border, background: dairaPalette.background.surface }}
               >
-                <div className="mb-4 flex justify-start">
-                  <span
-                    className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs"
-                    style={{ background: dairaPalette.secondary.hoverBackground, color: dairaPalette.text.body }}
-                    aria-label={`${automationTemplates.length} پاسخ خودکار`}
-                  >
-                    <strong className="font-extrabold" style={{ color: dairaPalette.primary.main }}>
-                      {new Intl.NumberFormat("fa-IR").format(automationTemplates.length)}
-                    </strong>
-                    <span>پاسخ خودکار</span>
-                  </span>
+                <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+                  <div><h2 className="text-sm font-bold" style={{ color: dairaPalette.text.heading }}>پاسخ‌های خودکار قبلی</h2><p className="mt-1 text-[11px] leading-5" style={{ color: dairaPalette.text.body }}>پاسخ موردنظر را انتخاب کن تا به محتوای بالا وصل شود.</p></div>
+                  <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs" style={{ background: dairaPalette.secondary.hoverBackground, color: dairaPalette.text.body }}><strong className="font-extrabold" style={{ color: dairaPalette.primary.main }}>{new Intl.NumberFormat("fa-IR").format(automationTemplates.length)}</strong><span>پاسخ</span></span>
                 </div>
                 {loadingResources ? (
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2" aria-label="در حال دریافت پاسخ‌های قبلی">
@@ -532,9 +513,13 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                     هنوز پاسخ خودکار قبلی برای این نوع وجود ندارد. می‌توانی تنظیمات را از ابتدا وارد کنی.
                   </p>
                 )}
+
+                <button type="button" onClick={() => { void saveAutomation(); }} disabled={!selectedTemplateId || loadingResources || mediaLoading || selectedMediaCount === 0 || saving} className="mt-4 flex min-h-12 w-full items-center justify-center rounded-xl px-4 text-sm font-bold text-white transition disabled:opacity-60" style={{ background: dairaPalette.primary.main }}>
+                  {saving ? "در حال استفاده..." : "استفاده از پاسخ انتخاب‌شده"}
+                </button>
               </section>
             )}
-            {flowStep === 3 && creationMode === "new" && (
+            {creationMode === "new" && (
             <div className="space-y-5">
             <div className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
               <div className="mb-3 flex items-center gap-3"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]"><Zap size={16} strokeWidth={2.2} aria-hidden="true" /></span><label className="block text-sm font-bold text-[var(--daira-heading)]">شرط فعال‌سازی</label></div>
@@ -590,7 +575,8 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             )}
 
               {triggerType === "COMMENT_KEYWORD" ? (
-                <section className="space-y-5">
+                <div className="space-y-4">
+                <section className="space-y-4 rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
                   <div>
                     <div className="mb-3 flex items-center gap-3">
                       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]"><Send size={15} strokeWidth={2.1} aria-hidden="true" /></span>
@@ -643,7 +629,9 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                     </div>
                   )}
 
-                  <section className="border-t pt-5" style={{ borderColor: dairaPalette.border }}>
+                  </section>
+
+                <section className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
                     <div className="mb-3 flex items-center gap-3">
                       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]"><ShieldCheck size={15} strokeWidth={2.1} aria-hidden="true" /></span>
                       <span className="text-sm font-bold" style={{ color: dairaPalette.text.heading }}>شرط فالو</span>
@@ -667,8 +655,9 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                   <button type="button" onClick={() => { setMessage((current) => ({ ...current, messageType: "TEXT" })); void saveAutomation({ ...message, messageType: "TEXT" }); }} disabled={saving} className="flex min-h-12 w-full items-center justify-center rounded-xl px-4 text-sm font-bold text-white transition disabled:opacity-60" style={{ background: dairaPalette.primary.main }}>
                     {saving ? "در حال ساخت پاسخ خودکار..." : "ساخت پاسخ خودکار"}
                   </button>
-                </section>
+                </div>
               ) : (
+                <div className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
                 <PublishingStoryAutomationSetup
                   message={message}
                   showcases={showcases}
@@ -691,6 +680,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                   responseTypeDescription="نوع پاسخی که می‌خواهید در دایرکت برای کاربر ارسال شود."
                   textPlaceholder="متنی که در پاسخ خودکار برای کاربر ارسال می‌شود..."
                 />
+                </div>
               )}
             </div>
             )}
@@ -699,47 +689,25 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
           {error && <div role="alert" className="rounded-xl border border-[var(--daira-error-border)] bg-[var(--daira-error-background)] px-3.5 py-3 text-xs font-medium leading-6 text-[var(--daira-error-text)]">{error}</div>}
 
-        {flowStep === 1 && (
-          <div className="daira-flow-action-dock" role="group" aria-label="ادامه ساخت پاسخ خودکار">
-            <div className="daira-flow-action-dock__inner">
-              <button
-                type="button"
-                onClick={() => {
-                  setFlowStep(2);
-                  setError("");
-                }}
-                disabled={mediaLoading || selectedMediaCount === 0}
-                className="daira-flow-action-dock__button daira-flow-action-dock__button--primary"
-              >
-                ادامه ({new Intl.NumberFormat("fa-IR").format(selectedMediaCount)} محتوا)
-              </button>
-            </div>
-          </div>
-        )}
 
-        {flowStep === 2 && (
-          <div className="daira-flow-action-dock" role="group" aria-label="اقدامات پاسخ خودکار">
-            <div className="daira-flow-action-dock__inner">
-              <button
-                type="button"
-                onClick={() => {
-                  setCreationMode("existing");
-                  void saveAutomation();
-                }}
-                disabled={!selectedTemplateId || loadingResources || mediaLoading || selectedMediaCount === 0 || saving}
-                className="daira-flow-action-dock__button daira-flow-action-dock__button--primary"
-              >
-                {saving ? "در حال اتصال..." : "انتخاب پاسخ"}
-              </button>
-              <button
-                type="button"
-                onClick={startNewAutomation}
-                disabled={Boolean(selectedTemplateId) || saving}
-                className="daira-flow-action-dock__button daira-flow-action-dock__button--secondary"
-              >
-                ساخت پاسخ جدید
-              </button>
-            </div>
+        {mediaDialogOpen && (
+          <div className="fixed inset-0 z-[2200] flex items-end justify-center bg-black/45 p-0 backdrop-blur-[2px] sm:items-center sm:p-5" onMouseDown={(event) => { if (event.target === event.currentTarget) setMediaDialogOpen(false); }}>
+            <section role="dialog" aria-modal="true" aria-labelledby="media-dialog-title" className="flex max-h-[94dvh] w-full max-w-3xl flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:max-h-[90dvh] sm:rounded-3xl">
+              <header className="flex shrink-0 items-start justify-between gap-3 border-b border-[var(--daira-border)] px-4 py-4 sm:px-5">
+                <div><h2 id="media-dialog-title" className="text-sm font-extrabold text-[var(--daira-heading)]">{triggerType === "COMMENT_KEYWORD" ? "انتخاب پست و ریلز" : "انتخاب استوری"}</h2><p className="mt-1 text-[11px] leading-5 text-[var(--daira-text)]">{triggerType === "COMMENT_KEYWORD" ? "هر تعداد محتوای بدون پاسخ خودکار را می‌توانی انتخاب کنی." : "برای این پاسخ فقط یک استوری انتخاب کن."}</p></div>
+                <button type="button" onClick={() => setMediaDialogOpen(false)} aria-label="بستن پنجره انتخاب محتوا" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[var(--daira-text)] transition hover:bg-[var(--daira-surface-hover)] hover:text-[var(--daira-heading)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--daira-primary)]/25"><X size={19} /></button>
+              </header>
+              <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3 sm:px-5">
+                <AutomationPicker items={mediaItems} selectedIds={draftSelectedMediaIds} loading={mediaLoading} showContentFilters={triggerType === "COMMENT_KEYWORD"} onToggle={(id) => setDraftSelectedMediaIds((current) => triggerType === "COMMENT_KEYWORD" ? (current.includes(id) ? current.filter((value) => value !== id) : [...current, id]) : [id])} />
+              </div>
+              <footer className="flex shrink-0 items-center justify-between gap-3 border-t border-[var(--daira-border)] bg-white px-4 py-3.5 sm:px-5">
+                <span className="text-xs font-semibold text-[var(--daira-text)]">{new Intl.NumberFormat("fa-IR").format(draftSelectedMediaIds.length)} انتخاب‌شده</span>
+                <div className="flex items-center gap-2">
+                  <button type="button" onClick={() => setMediaDialogOpen(false)} className="min-h-10 rounded-xl border border-[var(--daira-border)] px-4 text-xs font-bold text-[var(--daira-text)] transition hover:bg-[var(--daira-surface-hover)]">انصراف</button>
+                  <button type="button" onClick={confirmMediaSelection} disabled={mediaLoading} className="min-h-10 rounded-xl bg-[var(--daira-primary)] px-4 text-xs font-bold text-white transition hover:bg-[var(--daira-primary-hover)] disabled:cursor-not-allowed disabled:opacity-50">تأیید انتخاب</button>
+                </div>
+              </footer>
+            </section>
           </div>
         )}
     </div>
