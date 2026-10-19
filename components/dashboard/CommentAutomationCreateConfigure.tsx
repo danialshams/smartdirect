@@ -1,15 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { toast } from "sonner";
+import { useSearchParams } from "next/navigation";
 import AutomationCreationFlow from "./AutomationCreationFlow";
 import AutomationCreationSkeleton from "./AutomationCreationSkeleton";
 
 type Account = { id: string; igUsername: string; igUserId: string; isConnected: boolean };
 
 export default function CommentAutomationCreateConfigure() {
-  const router = useRouter();
   const params = useSearchParams();
   const mediaId = params.get("mediaId");
   const [account, setAccount] = useState<Account | null>(null);
@@ -54,13 +52,6 @@ export default function CommentAutomationCreateConfigure() {
       triggerType="COMMENT_KEYWORD"
       title="ایجاد پاسخ خودکار کامنت"
       description="پست‌ها و ریلزها را انتخاب کن، روش ساخت را مشخص کن و پاسخ خودکار را در همین صفحه تنظیم کن."
-      onSaved={() => {
-        toast.success("پاسخ خودکار با موفقیت ایجاد شد.", {
-          description: "می‌توانید در بخش پاسخ‌های خودکار آن را مشاهده و ویرایش کنید.",
-          duration: 5000,
-        });
-        router.push("/dashboard/auto-replies");
-      }}
     />
   );
 }
