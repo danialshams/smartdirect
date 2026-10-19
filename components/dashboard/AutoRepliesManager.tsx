@@ -17,6 +17,7 @@ type Automation = {
   mediaId: string | null;
   mediaIds?: string | null;
   keyword: string | null;
+  keywordMatchMode?: string | null;
   createdAt: string;
   isActive: boolean;
 };
@@ -281,9 +282,12 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
             availableAutomationMediaIds[0] ??
             null;
 
+          const normalizedAutomationKeyword = normalizeKeywordList(automation.keyword);
+          const isAnyCommentAutomation =
+            automation.triggerType === "COMMENT_KEYWORD" && automation.keywordMatchMode === "CONTAINS_ANY";
           if (
             (automation.triggerType !== "COMMENT_KEYWORD" && automation.triggerType !== "STORY_REPLY_KEYWORD") ||
-            !normalizeKeywordList(automation.keyword) ||
+            (!normalizedAutomationKeyword && !isAnyCommentAutomation) ||
             linkedAutomationIds.has(automation.id) ||
             !displayMediaId ||
             (automation.triggerType === "STORY_REPLY_KEYWORD" && !activeStoryIds.has(displayMediaId))
@@ -292,6 +296,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
           const media = mediaById.get(displayMediaId);
           if (!media) continue;
           const isStory = automation.triggerType === "STORY_REPLY_KEYWORD";
+          const displayKeyword = normalizedAutomationKeyword || (isAnyCommentAutomation ? "شامل هر کلمه" : "بدون کلمه کلیدی");
           nextItems.push({
             id: automation.id,
             key: `automation:${automation.id}`,
@@ -301,8 +306,8 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
             previewUrl: media?.previewUrl ?? null,
             previewKind: media?.previewKind ?? null,
             title: isStory ? "پاسخ خودکار استوری" : "پاسخ خودکار کامنت",
-            subtitle: normalizeKeywordList(automation.keyword) || "بدون کلمه کلیدی",
-            keyword: normalizeKeywordList(automation.keyword),
+            subtitle: displayKeyword,
+            keyword: displayKeyword,
             href: isStory
               ? `/dashboard/story-automation/${automation.id}`
               : `/dashboard/comment-automation/${automation.id}`,
