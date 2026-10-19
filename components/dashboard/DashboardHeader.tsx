@@ -15,6 +15,8 @@ function resolveDashboardPageTitle(pathname: string): string {
     { pattern: /\/(?:ice-breaker|ice-breakers|conversation-starters)(?:\/|$)/, title: "سؤال‌های شروع گفتگو" },
     { pattern: /\/(?:showcases|showcase|vitirine|vitrines)(?:\/|$)/, title: "ویترین‌ها" },
     { pattern: /\/(?:forms|form)(?:\/|$)/, title: "فرم‌ها" },
+    { pattern: /\/(?:comments)(?:\/|$)/, title: "کامنت‌های بی‌پاسخ" },
+    { pattern: /\/(?:content-analytics)(?:\/|$)/, title: "عملکرد محتوا" },
     { pattern: /\/(?:inbox|direct|messages|conversations)(?:\/|$)/, title: "پیام‌های دایرکت" },
     { pattern: /\/(?:quick-replies|quick-reply)(?:\/|$)/, title: "پاسخ‌های سریع" },
     { pattern: /\/(?:insights|analytics|reports)(?:\/|$)/, title: "آمار و گزارش‌ها" },
@@ -22,7 +24,7 @@ function resolveDashboardPageTitle(pathname: string): string {
     { pattern: /\/(?:profile|account)(?:\/|$)/, title: "پروفایل" },
     { pattern: /\/(?:tickets|support)(?:\/|$)/, title: "پشتیبانی" },
     { pattern: /\/(?:settings)(?:\/|$)/, title: "تنظیمات" },
-    { pattern: /\/(?:automations|automation)(?:\/|$)/, title: "پاسخ‌های خودکار" },
+    { pattern: /\/(?:auto-replies|automations|automation)(?:\/|$)/, title: "پاسخ‌های خودکار" },
   ];
   return routes.find((route) => route.pattern.test(pathname))?.title ?? "داشبورد";
 }
@@ -98,7 +100,7 @@ export default function DashboardHeader({
       ) : null}
 
       <style jsx global>{`
-        .daira-home__header { position:fixed;top:0;left:clamp(7px,2vw,24px);right:clamp(7px,2vw,24px);z-index:1600;box-sizing:border-box;direction:ltr;display:grid;grid-template-columns:48px minmax(0,1fr) 48px;align-items:center;gap:8px;min-height:94px;padding:12px 18px;border-radius:0 0 26px 26px;background:linear-gradient(115deg,var(--daira-header-start) 0%,var(--daira-header-middle) 55%,var(--daira-header-end) 100%);margin:0;box-shadow:0 6px 24px rgba(24,35,60,.07);}
+        .daira-home__header { position:fixed;top:max(8px,env(safe-area-inset-top, 0px));left:clamp(7px,2vw,24px);right:clamp(7px,2vw,24px);z-index:1600;box-sizing:border-box;direction:ltr;display:grid;grid-template-columns:48px minmax(0,1fr) 48px;align-items:center;gap:8px;min-height:94px;padding:12px 18px;border:1px solid rgba(226,232,240,.78);border-radius:26px;background:linear-gradient(115deg,var(--daira-header-start) 0%,var(--daira-header-middle) 55%,var(--daira-header-end) 100%);margin:0;box-shadow:0 6px 24px rgba(24,35,60,.07);}
         .daira-home__instagram { width:44px;height:44px;border:0;background:transparent;color:var(--daira-accent);display:grid;place-items:center;cursor:pointer;border-radius:14px;transition:background .2s,transform .2s; }
         .daira-home__instagram:hover { background:var(--daira-surface-hover);transform:translateY(-1px); }
         .daira-home__brand { direction:rtl;display:flex;justify-content:center;align-items:center;gap:12px;color:inherit;text-decoration:none;min-width:0; }
@@ -125,8 +127,8 @@ export default function DashboardHeader({
         .daira-account-modal__empty { margin:0 0 16px;padding:14px;border-radius:14px;background:var(--daira-surface-hover);color:var(--daira-text);font-size:12px; }
         .daira-account-modal__add { display:flex;justify-content:center;align-items:center;gap:8px;width:100%;min-height:48px;border-radius:15px;background:var(--daira-primary);color:var(--daira-surface);text-decoration:none;font-size:13px;font-weight:800;transition:background .2s; }
         .daira-account-modal__add:hover { background:var(--daira-primary-hover); }
-        @media(max-width:900px) { .daira-home__header { min-height:68px;padding:7px 10px;border-radius:0 0 18px 18px;grid-template-columns:40px minmax(0,1fr) 40px; } .daira-home__brand-mark { width:43px;height:43px;border-radius:14px;font-size:29px; } .daira-home__brand { gap:8px; } .daira-home__brand-copy strong { font-size:23px; } .daira-home__brand-copy small { margin-top:2px;font-size:9px; } .daira-home__instagram { width:38px;height:38px; } .daira-home__header-spacer { width:38px; } .daira-home__back { width:38px;height:38px; } }
-        @media(max-width:520px) { .daira-home__header { min-height:64px;padding:6px 8px;border-radius:0 0 21px 21px;grid-template-columns:38px minmax(0,1fr) 38px;gap:4px; } .daira-home__instagram { width:38px;height:38px; } .daira-home__brand { gap:8px; } .daira-home__brand-mark { width:47px;height:47px;border-radius:15px;font-size:31px; } .daira-home__brand-copy strong { font-size:26px; } .daira-home__brand-copy small { font-size:9px; } .daira-home__header-spacer { width:38px; } .daira-home__back { width:38px;height:38px; } }
+        @media(max-width:900px) { .daira-home__header { min-height:68px;padding:7px 10px;border-radius:20px;grid-template-columns:40px minmax(0,1fr) 40px; } .daira-home__brand-mark { width:43px;height:43px;border-radius:14px;font-size:29px; } .daira-home__brand { gap:8px; } .daira-home__brand-copy strong { font-size:23px; } .daira-home__brand-copy small { margin-top:2px;font-size:9px; } .daira-home__instagram { width:38px;height:38px; } .daira-home__header-spacer { width:38px; } .daira-home__back { width:38px;height:38px; } }
+        @media(max-width:520px) { .daira-home__header { min-height:64px;padding:6px 8px;border-radius:20px;grid-template-columns:38px minmax(0,1fr) 38px;gap:4px; } .daira-home__instagram { width:38px;height:38px; } .daira-home__brand { gap:8px; } .daira-home__brand-mark { width:47px;height:47px;border-radius:15px;font-size:31px; } .daira-home__brand-copy strong { font-size:26px; } .daira-home__brand-copy small { font-size:9px; } .daira-home__header-spacer { width:38px; } .daira-home__back { width:38px;height:38px; } }
       `}</style>
     </>
   );
