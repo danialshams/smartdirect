@@ -98,8 +98,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
           setForms(Array.isArray(formResult) ? formResult : Array.isArray(formResult?.data) ? formResult.data : []);
           setAutomationTemplates(
             (Array.isArray(automationResult?.data) ? automationResult.data : [])
-              .filter((item: AutomationTemplate) => item.triggerType === triggerType && (item.keyword || Array.isArray(item.messages)))
-              .slice(0, 30),
+              .filter((item: AutomationTemplate) => item.triggerType === triggerType && (item.keyword || Array.isArray(item.messages))),
           );
         }
       } catch {
@@ -419,10 +418,20 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
               </div>
             )}
             {flowStep === 2 && (
-              <section className="rounded-2xl border border-[#E6ECF5] bg-white p-4 sm:p-5">
-                
+              <section
+                className="rounded-2xl border p-4 sm:p-5"
+                style={{ borderColor: dairaPalette.border, background: dairaPalette.background.surface }}
+              >
                 {loadingResources ? (
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2" aria-label="در حال دریافت پاسخ‌های قبلی">{[0, 1].map((item) => <div key={item} className="h-[76px] animate-pulse rounded-xl bg-[#F1F5F9]" />)}</div>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2" aria-label="در حال دریافت پاسخ‌های قبلی">
+                    {[0, 1].map((item) => (
+                      <div
+                        key={item}
+                        className="h-[76px] animate-pulse rounded-xl"
+                        style={{ background: dairaPalette.background.surfaceActive }}
+                      />
+                    ))}
+                  </div>
                 ) : automationTemplates.length > 0 ? (
                   <div className="max-h-72 overflow-y-auto overscroll-contain rounded-xl pr-1">
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -430,19 +439,78 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                     const previewMessages = normalizeMessages(template.messages);
                     const preview = previewMessages[0]?.text?.trim() || (previewMessages[0]?.messageType === "SHOWCASE" ? "ارسال ویترین" : previewMessages[0]?.messageType === "FORM" ? "ارسال فرم" : previewMessages[0]?.messageType === "IMAGE" ? "ارسال تصویر" : previewMessages[0]?.messageType === "VIDEO" ? "ارسال ویدیو" : previewMessages[0]?.messageType === "AUDIO" ? "ارسال پیام صوتی" : "بدون متن پاسخ");
                     const selected = selectedTemplateId === template.id;
-                    return <button key={template.id} type="button" onClick={() => applyAutomationTemplate(template)} aria-pressed={selected} className={"rounded-xl border p-3 text-right transition focus:outline-none focus:ring-2 focus:ring-[#2F61FD]/20 " + (selected ? "border-[#2F61FD] bg-[#EFF6FF] shadow-sm" : "border-[#E6ECF5] bg-white hover:border-[#BFDBFE] hover:bg-[#F8FAFC]")}>
-                      <span className="flex items-start justify-between gap-2"><strong className="min-w-0 text-xs font-bold leading-5 text-[#18233C]">{(template.keyword || "").split(/[,،;؛\n]+/).filter(Boolean).slice(0, 3).join("، ") || "بدون کلمه کلیدی"}</strong><span className={"shrink-0 rounded-full px-2 py-1 text-[10px] font-bold " + (selected ? "bg-[#2F61FD] text-white" : "bg-[#F1F5F9] text-[#64748B]")}>{selected ? "برای اتصال انتخاب شد" : "اتصال این پاسخ"}</span></span>
-                      <span className="mt-2 block truncate text-[11px] leading-5 text-[#64748B]">{preview}</span>
-                    </button>;
+                    return (
+                      <button
+                        key={template.id}
+                        type="button"
+                        onClick={() => applyAutomationTemplate(template)}
+                        aria-pressed={selected}
+                        className="rounded-xl border p-3 text-right transition focus:outline-none focus:ring-2 focus:ring-[#2F61FD]/20"
+                        style={{
+                          borderColor: selected ? dairaPalette.primary.main : dairaPalette.border,
+                          background: selected ? dairaPalette.secondary.hoverBackground : dairaPalette.background.surface,
+                          boxShadow: selected ? `0 1px 3px ${dairaPalette.primary.main}20` : undefined,
+                        }}
+                      >
+                        <span className="flex items-start justify-between gap-2">
+                          <strong className="min-w-0 text-xs font-bold leading-5" style={{ color: dairaPalette.text.heading }}>
+                            {(template.keyword || "").split(/[,،;؛\n]+/).filter(Boolean).slice(0, 3).join("، ") || "بدون کلمه کلیدی"}
+                          </strong>
+                          <span
+                            className="shrink-0 rounded-full px-2 py-1 text-[10px] font-bold"
+                            style={{
+                              background: selected ? dairaPalette.primary.main : dairaPalette.background.surfaceActive,
+                              color: selected ? dairaPalette.background.surface : dairaPalette.text.body,
+                            }}
+                          >
+                            {selected ? "برای اتصال انتخاب شد" : "اتصال این پاسخ"}
+                          </span>
+                        </span>
+                        <span className="mt-2 block truncate text-[11px] leading-5" style={{ color: dairaPalette.text.body }}>
+                          {preview}
+                        </span>
+                      </button>
+                    );
                   })}
                   </div>
                   </div>
                 ) : (
-                  <p className="rounded-xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] px-3 py-4 text-xs leading-6 text-[#64748B]">هنوز پاسخ خودکار قبلی برای این نوع وجود ندارد. می‌توانی تنظیمات را از ابتدا وارد کنی.</p>
+                  <p
+                    className="rounded-xl border border-dashed px-3 py-4 text-xs leading-6"
+                    style={{ borderColor: dairaPalette.form.borderHover, background: dairaPalette.background.surfaceHover, color: dairaPalette.text.body }}
+                  >
+                    هنوز پاسخ خودکار قبلی برای این نوع وجود ندارد. می‌توانی تنظیمات را از ابتدا وارد کنی.
+                  </p>
                 )}
                 <div className="mt-4 flex flex-col gap-2 pt-2">
-                  <button type="button" onClick={() => { setCreationMode("existing"); void saveAutomation(); }} disabled={!selectedTemplateId || loadingResources || mediaLoading || selectedMediaIds.length === 0 || saving} className="flex min-h-11 items-center justify-center rounded-xl bg-[#2F61FD] px-4 text-xs font-bold text-white transition hover:bg-[#1E4BD8] disabled:cursor-not-allowed disabled:bg-[#E2E8F0] disabled:text-[#94A3B8]">{saving ? "در حال اتصال..." : "انتخاب پاسخ"}</button>
-                  <button type="button" onClick={startNewAutomation} className="flex min-h-11 items-center justify-center rounded-xl border border-[#BFDBFE] bg-[#EFF6FF] px-4 text-xs font-bold text-[#2F61FD] transition hover:bg-[#DBEAFE]">ساخت پاسخ جدید</button>
+                  <button
+                    type="button"
+                    onClick={() => { setCreationMode("existing"); void saveAutomation(); }}
+                    disabled={!selectedTemplateId || loadingResources || mediaLoading || (selectedMediaIds.length === 0 && !mediaId) || saving}
+                    className="flex min-h-11 items-center justify-center rounded-xl px-4 text-xs font-bold text-white transition disabled:cursor-not-allowed"
+                    style={{
+                      background: (!selectedTemplateId || loadingResources || mediaLoading || (selectedMediaIds.length === 0 && !mediaId) || saving)
+                        ? dairaPalette.primary.disabledBackground
+                        : dairaPalette.primary.main,
+                      color: (!selectedTemplateId || loadingResources || mediaLoading || (selectedMediaIds.length === 0 && !mediaId) || saving)
+                        ? dairaPalette.primary.disabledText
+                        : dairaPalette.background.surface,
+                    }}
+                  >
+                    {saving ? "در حال اتصال..." : "انتخاب پاسخ"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={startNewAutomation}
+                    className="flex min-h-11 items-center justify-center rounded-xl border px-4 text-xs font-bold transition"
+                    style={{
+                      borderColor: dairaPalette.secondary.outline,
+                      background: dairaPalette.secondary.hoverBackground,
+                      color: dairaPalette.primary.main,
+                    }}
+                  >
+                    ساخت پاسخ جدید
+                  </button>
                 </div>
               </section>
             )}
