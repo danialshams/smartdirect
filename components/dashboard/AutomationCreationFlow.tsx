@@ -378,7 +378,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     <div dir="rtl" className="mx-auto w-full max-w-4xl space-y-5 py-2 sm:py-4">
       <section
         aria-label="مراحل ساخت پاسخ خودکار"
-        className="rounded-2xl border p-3 sm:p-4"
+        className="rounded-2xl border p-2 sm:p-4"
         style={{ borderColor: dairaPalette.border, background: dairaPalette.background.surface }}
       >
         <div className="flex items-center justify-between gap-3">
@@ -389,7 +389,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             {activeStepTitle}
           </span>
         </div>
-        <ol className="mt-3 grid list-none grid-cols-3 gap-2 p-0" aria-label="وضعیت مراحل ساخت پاسخ خودکار">
+        <ol className="mt-2 grid list-none grid-cols-3 gap-1.5 sm:gap-2 p-0" aria-label="وضعیت مراحل ساخت پاسخ خودکار">
           {flowSteps.map((step) => {
             const isActive = step.number === flowStep;
             const isComplete = step.number < flowStep;
@@ -421,13 +421,13 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             const stepContent = (
               <>
                 <span
-                  className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-extrabold"
+                  className="inline-flex h-5 w-5 sm:h-6 sm:w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-extrabold"
                   style={{ background: stepCircleBackground, color: stepCircleColor, border: `1px solid ${stepBorder}` }}
                   aria-hidden="true"
                 >
                   {isComplete ? <Check size={13} strokeWidth={2.5} /> : new Intl.NumberFormat("fa-IR").format(step.number)}
                 </span>
-                <span className="min-w-0 leading-4">{step.title}</span>
+                <span className="min-w-0 leading-4 max-[480px]:hidden">{step.title}</span>
               </>
             );
             return (
@@ -437,7 +437,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                     type="button"
                     onClick={() => { setFlowStep(step.number); setError(""); }}
                     aria-label={`بازگشت به مرحله ${new Intl.NumberFormat("fa-IR").format(step.number)}: ${step.title}`}
-                    className="flex min-h-[54px] w-full items-center justify-center gap-1.5 rounded-xl border px-1.5 py-2 text-center text-[10px] font-bold transition-colors hover:brightness-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--daira-primary)] sm:min-h-12 sm:gap-2 sm:px-3 sm:text-xs"
+                    className="flex min-h-[38px] w-full items-center justify-center gap-1 rounded-xl border px-1 py-1 text-center text-[10px] font-bold transition-colors hover:brightness-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--daira-primary)] sm:min-h-12 sm:gap-2 sm:px-3 sm:py-2 sm:text-xs"
                     style={{ borderColor: stepBorder, background: stepSurface, color: stepText }}
                   >
                     {stepContent}
@@ -446,7 +446,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                   <div
                     aria-current={isActive ? "step" : undefined}
                     aria-disabled={!isActive}
-                    className="flex min-h-[54px] w-full items-center justify-center gap-1.5 rounded-xl border px-1.5 py-2 text-center text-[10px] font-bold sm:min-h-12 sm:gap-2 sm:px-3 sm:text-xs"
+                    className="flex min-h-[38px] w-full items-center justify-center gap-1 rounded-xl border px-1 py-1 text-center text-[10px] font-bold sm:min-h-12 sm:gap-2 sm:px-3 sm:py-2 sm:text-xs"
                     style={{ borderColor: stepBorder, background: stepSurface, color: stepText }}
                   >
                     {stepContent}
@@ -589,7 +589,27 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                   <button type="button" onClick={addKeyword} disabled={!keywordDraft.trim() || keywords.length >= MAX_KEYWORDS} className="min-h-11 shrink-0 rounded-lg bg-[var(--daira-primary)] px-3.5 text-xs font-semibold text-white transition hover:bg-[var(--daira-primary-hover)] disabled:bg-[var(--daira-disabled-bg)] disabled:text-[var(--daira-disabled-text)]">افزودن</button>
                 </div>
               </div>}
-              {triggerType === "COMMENT_KEYWORD" && <div className="mb-3 rounded-xl border border-[var(--daira-border)] p-3"><p className="mb-2 text-xs font-bold text-[var(--daira-heading)]">روش فعال‌سازی پاسخ</p><div className="grid grid-cols-1 gap-2 sm:grid-cols-2"><button type="button" onClick={() => { setKeywordMatchMode("EXACT"); setKeyword(""); setKeywordDraft(""); }} className={"rounded-lg border p-3 text-right text-xs " + (keywordMatchMode === "EXACT" ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary-hover)]" : "border-[var(--daira-border)] text-[var(--daira-text)]")}><strong className="mb-1 block">کلمات کلیدی مشخص</strong><span className="block leading-5">فقط وقتی کامنت با یکی از کلمات تعیین‌شده برابر باشد پاسخ ارسال می‌شود.</span></button><button type="button" onClick={() => { setKeywordMatchMode("CONTAINS_ANY"); setKeyword(""); setKeywordDraft(""); }} className={"rounded-lg border p-3 text-right text-xs " + (keywordMatchMode === "CONTAINS_ANY" ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary-hover)]" : "border-[var(--daira-border)] text-[var(--daira-text)]")}><strong className="mb-1 block">شامل هر کلمه</strong><span className="block leading-5">با ثبت هر کامنت زیر محتوای انتخاب‌شده، پاسخ خودکار ارسال می‌شود.</span></button></div></div>}
+              {triggerType === "COMMENT_KEYWORD" && (
+                <div className="mb-3 rounded-xl border border-[var(--daira-border)] p-3">
+                  <p className="mb-2 text-xs font-bold text-[var(--daira-heading)]">روش فعال‌سازی پاسخ</p>
+                  <div role="radiogroup" aria-label="روش فعال‌سازی پاسخ" className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <label className={"flex cursor-pointer items-start gap-3 rounded-xl border p-3 text-xs transition " + (keywordMatchMode === "EXACT" ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary-hover)]" : "border-[var(--daira-border)] bg-white text-[var(--daira-text)]")}>
+                      <input type="radio" name="comment-keyword-match-mode" value="EXACT" checked={keywordMatchMode === "EXACT"} onChange={() => { setKeywordMatchMode("EXACT"); setKeyword(""); setKeywordDraft(""); }} className="mt-1 h-4 w-4 shrink-0 accent-[var(--daira-primary)]" />
+                      <span className="min-w-0">
+                        <strong className="mb-1 block">کلمات کلیدی مشخص</strong>
+                        <span className="block leading-5">فقط وقتی کامنت با یکی از کلمات تعیین‌شده برابر باشد پاسخ ارسال می‌شود.</span>
+                      </span>
+                    </label>
+                    <label className={"flex cursor-pointer items-start gap-3 rounded-xl border p-3 text-xs transition " + (keywordMatchMode === "CONTAINS_ANY" ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary-hover)]" : "border-[var(--daira-border)] bg-white text-[var(--daira-text)]")}>
+                      <input type="radio" name="comment-keyword-match-mode" value="CONTAINS_ANY" checked={keywordMatchMode === "CONTAINS_ANY"} onChange={() => { setKeywordMatchMode("CONTAINS_ANY"); setKeyword(""); setKeywordDraft(""); }} className="mt-1 h-4 w-4 shrink-0 accent-[var(--daira-primary)]" />
+                      <span className="min-w-0">
+                        <strong className="mb-1 block">شامل هر کلمه</strong>
+                        <span className="block leading-5">با ثبت هر کامنت زیر محتوای انتخاب‌شده، پاسخ خودکار ارسال می‌شود.</span>
+                      </span>
+                    </label>
+                  </div>
+                </div>
+              )}
 
             </div>
 
@@ -610,15 +630,21 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                     <p className="mt-1 text-xs leading-5" style={{ color: dairaPalette.text.body }}>متنی را که پس از کامنت برای کاربر ارسال می‌شود بنویس.</p>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    <button type="button" onClick={() => setDmMode("TEXT")} className={"rounded-xl border p-3 text-right text-xs " + (dmMode === "TEXT" ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)]" : "border-[var(--daira-border)] bg-white")} aria-pressed={dmMode === "TEXT"}>
-                      <strong className="block text-sm" style={{ color: dairaPalette.text.heading }}>متن ساده</strong>
-                      <span className="mt-1 block leading-5" style={{ color: dairaPalette.text.body }}>ارسال پیام متنی بدون دکمه</span>
-                    </button>
-                    <button type="button" onClick={() => setDmMode("TEXT_WITH_LINK")} className={"rounded-xl border p-3 text-right text-xs " + (dmMode === "TEXT_WITH_LINK" ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)]" : "border-[var(--daira-border)] bg-white")} aria-pressed={dmMode === "TEXT_WITH_LINK"}>
-                      <strong className="block text-sm" style={{ color: dairaPalette.text.heading }}>متن همراه دکمه لینک</strong>
-                      <span className="mt-1 block leading-5" style={{ color: dairaPalette.text.body }}>نمایش یک دکمه برای باز کردن لینک</span>
-                    </button>
+                  <div role="radiogroup" aria-label="نوع پیام دایرکت" className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <label className={"flex cursor-pointer items-start gap-3 rounded-xl border p-3 text-xs transition " + (dmMode === "TEXT" ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)]" : "border-[var(--daira-border)] bg-white")}>
+                      <input type="radio" name="direct-message-mode" value="TEXT" checked={dmMode === "TEXT"} onChange={() => setDmMode("TEXT")} className="mt-1 h-4 w-4 shrink-0 accent-[var(--daira-primary)]" />
+                      <span className="min-w-0">
+                        <strong className="block text-sm" style={{ color: dairaPalette.text.heading }}>متن ساده</strong>
+                        <span className="mt-1 block leading-5" style={{ color: dairaPalette.text.body }}>ارسال پیام متنی بدون دکمه</span>
+                      </span>
+                    </label>
+                    <label className={"flex cursor-pointer items-start gap-3 rounded-xl border p-3 text-xs transition " + (dmMode === "TEXT_WITH_LINK" ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)]" : "border-[var(--daira-border)] bg-white")}>
+                      <input type="radio" name="direct-message-mode" value="TEXT_WITH_LINK" checked={dmMode === "TEXT_WITH_LINK"} onChange={() => setDmMode("TEXT_WITH_LINK")} className="mt-1 h-4 w-4 shrink-0 accent-[var(--daira-primary)]" />
+                      <span className="min-w-0">
+                        <strong className="block text-sm" style={{ color: dairaPalette.text.heading }}>متن همراه دکمه لینک</strong>
+                        <span className="mt-1 block leading-5" style={{ color: dairaPalette.text.body }}>نمایش یک دکمه برای باز کردن لینک</span>
+                      </span>
+                    </label>
                   </div>
 
                   <textarea value={message.text} onChange={(event) => setMessage((current) => ({ ...current, messageType: "TEXT", text: event.target.value, mediaUrl: "", mediaId: "", showcaseId: "", formId: "", quickReplies: [] }))} maxLength={dmMode === "TEXT_WITH_LINK" ? 640 : 2000} rows={4} placeholder="متن دایرکتی که بعد از کامنت برای کاربر ارسال می‌شود..." className="w-full rounded-xl border bg-white px-3.5 py-3 text-base leading-7 outline-none focus:ring-2 focus:ring-[color:var(--daira-primary)]/15" style={{ borderColor: dairaPalette.form.border, color: dairaPalette.text.heading, fontSize: "16px" }} />
@@ -653,8 +679,8 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]"><ShieldCheck size={15} strokeWidth={2.1} aria-hidden="true" /></span>
                       <span className="text-sm font-bold" style={{ color: dairaPalette.text.heading }}>شرط فالو</span>
                     </div>
-                    <label className="flex cursor-pointer items-start gap-3 rounded-xl border p-3" style={{ borderColor: dairaPalette.border, background: dairaPalette.background.surfaceHover }}>
-                      <input type="checkbox" checked={requireFollow} onChange={(event) => setRequireFollow(event.target.checked)} className="mt-1 h-4 w-4 accent-[var(--daira-primary)]" />
+                    <label className="flex cursor-pointer items-start gap-3 rounded-xl border p-3.5 transition-colors" style={{ borderColor: requireFollow ? dairaPalette.primary.main : dairaPalette.border, background: requireFollow ? dairaPalette.secondary.hoverBackground : dairaPalette.background.surfaceHover }}>
+                      <input type="checkbox" role="switch" aria-label="الزام به فالو قبل از ارسال پاسخ" aria-checked={requireFollow} checked={requireFollow} onChange={(event) => setRequireFollow(event.target.checked)} className="daira-form-switch mt-1" />
                       <span className="min-w-0">
                         <strong className="block text-sm" style={{ color: dairaPalette.text.heading }}>الزام به فالو قبل از ارسال پاسخ (اختیاری)</strong>
                         <span className="mt-1 block text-xs leading-5" style={{ color: dairaPalette.text.body }}>اگر کاربر پیج را فالو نکرده باشد، ابتدا پیام درخواست فالو و دکمه بررسی ارسال می‌شود.</span>
