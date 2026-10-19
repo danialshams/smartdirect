@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { toast } from "sonner";
 import AutomationCreationFlow from "./AutomationCreationFlow";
 import AutomationCreationSkeleton from "./AutomationCreationSkeleton";
 
@@ -53,13 +52,6 @@ export default function StoryAutomationConfigure() {
       triggerType="STORY_REPLY_KEYWORD"
       title="ایجاد پاسخ خودکار استوری"
       description="استوری را انتخاب کن، روش ساخت را مشخص کن و پاسخ خودکار را در همین صفحه تنظیم کن."
-      onSaved={() => {
-        toast.success("پاسخ خودکار با موفقیت ایجاد شد.", {
-          description: "می‌توانید در بخش «ویرایش پاسخ های خودکار» آن را مشاهده و ویرایش کنید.",
-          duration: 5000,
-        });
-        router.push("/dashboard/auto-replies");
-      }}
     />
   );
 }
