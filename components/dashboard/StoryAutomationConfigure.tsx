@@ -1,14 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import AutomationCreationFlow from "./AutomationCreationFlow";
 import AutomationCreationSkeleton from "./AutomationCreationSkeleton";
 
 type Account = { id: string; igUsername: string; igUserId: string; isConnected: boolean };
 
 export default function StoryAutomationConfigure() {
-  const router = useRouter();
   const params = useSearchParams();
   const mediaId = params.get("mediaId");
   const [account, setAccount] = useState<Account | null>(null);
