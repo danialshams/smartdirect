@@ -50,40 +50,28 @@ export default function AutomationPicker({
   return (
     <div className="space-y-3">
       {showContentFilters && (
-        <section
-          className="flex justify-center rounded-2xl border p-2"
-          style={{
-            borderColor: dairaPalette.border,
-            background: dairaPalette.background.surface,
-          }}
-        >
-          <div
-            className="inline-flex max-w-full items-center justify-center gap-1 rounded-full p-1"
-            style={{ background: dairaPalette.background.surfaceHover }}
-            role="group"
-            aria-label="فیلتر نوع محتوا"
-          >
-            {contentFilters.map((filter) => {
-              const active = contentFilter === filter.value;
-              return (
-                <button
-                  key={filter.value}
-                  type="button"
-                  onClick={() => setContentFilter(filter.value)}
-                  aria-pressed={active}
-                  className="flex min-h-9 min-w-[72px] items-center justify-center rounded-full px-4 text-xs font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2F61FD]/30"
-                  style={{
-                    background: active ? dairaPalette.primary.main : "transparent",
-                    color: active ? dairaPalette.background.surface : dairaPalette.text.body,
-                    boxShadow: active ? "0 2px 7px rgba(47,97,253,0.2)" : "none",
-                  }}
-                >
-                  {filter.label}
-                </button>
-              );
-            })}
-          </div>
-        </section>
+        <div className="flex justify-center gap-3 py-1" role="group" aria-label="فیلتر نوع محتوا">
+          {contentFilters.map((filter) => {
+            const active = contentFilter === filter.value;
+            return (
+              <button
+                key={filter.value}
+                type="button"
+                onClick={() => setContentFilter(filter.value)}
+                aria-pressed={active}
+                className="flex min-h-10 min-w-[76px] items-center justify-center rounded-xl border px-5 text-xs font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--daira-primary)]/30"
+                style={{
+                  borderColor: active ? dairaPalette.primary.main : dairaPalette.border,
+                  background: active ? dairaPalette.primary.main : dairaPalette.background.surface,
+                  color: active ? dairaPalette.background.surface : dairaPalette.text.body,
+                  boxShadow: active ? "0 2px 7px rgba(47,97,253,0.16)" : "none",
+                }}
+              >
+                {filter.label}
+              </button>
+            );
+          })}
+        </div>
       )}
 
       <section
