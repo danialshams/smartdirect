@@ -100,7 +100,7 @@ export default function DashboardHeader({
       ) : null}
 
       <style jsx global>{`
-        .daira-home__header { position:fixed;top:max(8px,env(safe-area-inset-top, 0px));left:clamp(7px,2vw,24px);right:clamp(7px,2vw,24px);z-index:1600;box-sizing:border-box;direction:ltr;display:grid;grid-template-columns:48px minmax(0,1fr) 48px;align-items:center;gap:8px;min-height:94px;padding:12px 18px;border:1px solid rgba(226,232,240,.78);border-radius:26px;background:linear-gradient(115deg,var(--daira-header-start) 0%,var(--daira-header-middle) 55%,var(--daira-header-end) 100%);margin:0;box-shadow:0 6px 24px rgba(24,35,60,.07);}
+        .daira-home__header { position:fixed;top:max(8px,env(safe-area-inset-top, 0px));left:clamp(7px,2vw,24px);right:clamp(7px,2vw,24px);z-index:1600;box-sizing:border-box;direction:ltr;display:grid;grid-template-columns:48px minmax(0,1fr) 48px;align-items:center;gap:8px;min-height:94px;padding:12px 18px;border:1px solid var(--daira-border);border-radius:26px;background:linear-gradient(115deg,var(--daira-header-start) 0%,var(--daira-header-middle) 55%,var(--daira-header-end) 100%);margin:0;box-shadow:0 6px 24px rgba(24,35,60,.07);}
         .daira-home__instagram { width:44px;height:44px;border:0;background:transparent;color:var(--daira-accent);display:grid;place-items:center;cursor:pointer;border-radius:14px;transition:background .2s,transform .2s; }
         .daira-home__instagram:hover { background:var(--daira-surface-hover);transform:translateY(-1px); }
         .daira-home__brand { direction:rtl;display:flex;justify-content:center;align-items:center;gap:12px;color:inherit;text-decoration:none;min-width:0; }
