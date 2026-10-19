@@ -6,6 +6,9 @@ export const dairaPalette = {
     surface: "#FFFFFF", // سفید؛ کارت‌ها و سطوح اصلی
     surfaceHover: "#F8FAFC", // خاکستری مایل به آبی بسیار روشن؛ حالت هاور سطح
     surfaceActive: "#F1F5F9", // خاکستری مایل به آبی روشن؛ سطح فعال
+    headerStart: "#DCE7FF", // ابتدای گرادیان ثابت هدر داشبورد
+    headerMiddle: "#E5EDFF", // میانه گرادیان هدر داشبورد
+    headerEnd: "#EAF0FF", // انتهای گرادیان هدر داشبورد
   },
   primary: {
     main: "#2F61FD", // آبی اصلی برند
@@ -39,7 +42,10 @@ export const dairaPalette = {
     accentHover: "#C026D3", // ارغوانی تیره؛ تأکید در حالت هاور
     success: "#10B981", // سبز؛ موفقیت
     warning: "#F59E0B", // نارنجی؛ هشدار
-    error: "#EF4444", // قرمز؛ خطا
+    error: "#EF4444", // قرمز؛ آیکن‌ها و وضعیت خطا
+    errorBackground: "#FEF2F2", // پس‌زمینه پیام خطا
+    errorBorder: "#FECACA", // حاشیه پیام خطا
+    errorText: "#B91C1C", // متن پیام خطا با کنتراست بیشتر
   },
   border: "#E2E8F0", // خاکستری روشن؛ مرز عمومی
   heroGlow: "#E0EAFF", // آبی بسیار روشن؛ درخشش تزئینی
