@@ -1,7 +1,7 @@
 "use client";
 
-import { Camera, CheckCircle2, Image as ImageIcon, Lightbulb, MessageCircle, Send, ShieldCheck, Trash2, X } from "lucide-react";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { Camera, Image as ImageIcon, Lightbulb, MessageCircle, Send, ShieldCheck, Trash2, X } from "lucide-react";
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 const PublishingStoryAutomationSetup = dynamic(() => import("./publishing/PublishingStoryAutomationSetup"), { ssr: false });
@@ -67,6 +67,13 @@ function sortNewestFirst<T extends { timestamp?: string | null }>(items: T[]): T
     })
     .sort((a, b) => (b.timestamp - a.timestamp) || (a.index - b.index))
     .map(({ item }) => item);
+}
+
+function normalizeExternalLink(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  if (/^https?:\/\//i.test(trimmed) || /^[a-z][a-z\d+.-]*:\/\//i.test(trimmed)) return trimmed;
+  return "https://" + trimmed.replace(/^\/+/, "");
 }
 
 function serializeQuickReplies(replies: QuickReplyDraft[]): unknown[] {
@@ -256,6 +263,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType }
     const cleanKeywords = keyword.split(",").map((item) => item.trim()).filter(Boolean);
     const currentMessage = finalMessage ?? message;
     const targetMediaIds = Array.from(new Set(selectedMediaIds.filter(Boolean)));
+    const normalizedLinkButtons = linkButtons.map((button) => ({ ...button, url: normalizeExternalLink(button.url) }));
 
     if (creationMode === "existing") {
       const template = automationTemplates.find((item) => item.id === selectedTemplateId);
@@ -289,12 +297,12 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType }
     }
 
     if (triggerType === "COMMENT_KEYWORD" && dmMode === "TEXT_WITH_LINK") {
-      const invalidButton = linkButtons.find((button) => {
+      const invalidButton = normalizedLinkButtons.find((button) => {
         let parsed: URL | null = null;
-        try { parsed = new URL(button.url.trim()); } catch { parsed = null; }
-        return !parsed || !["http:", "https:"].includes(parsed.protocol) || !button.title.trim() || button.title.trim().length > 20;
+        try { parsed = new URL(button.url); } catch { parsed = null; }
+        return !parsed || !["http:", "https:"].includes(parsed.protocol) || !parsed.hostname || !button.title.trim() || button.title.trim().length > 20;
       });
-      if (invalidButton) { setError("برای هر دکمه، لینک معتبر با http یا https و عنوان حداکثر ۲۰ کاراکتر وارد کنید."); return; }
+      if (invalidButton) { setError("برای هر دکمه، آدرس لینک معتبر و عنوان حداکثر ۲۰ کاراکتر وارد کنید."); return; }
       if (currentMessage.text.trim().length > 640) { setError("متن دایرکت همراه دکمه حداکثر ۶۴۰ کاراکتر است."); return; }
     }
     if (selectedMediaIds.length === 0) {
@@ -370,7 +378,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType }
           showcaseId: currentMessage.showcaseId || null,
           formId: currentMessage.formId || null,
           order: 0,
-          linkButtons: triggerType === "COMMENT_KEYWORD" && dmMode === "TEXT_WITH_LINK" ? linkButtons.map((button) => ({ url: button.url.trim(), title: button.title.trim() })) : [],
+          linkButtons: triggerType === "COMMENT_KEYWORD" && dmMode === "TEXT_WITH_LINK" ? normalizedLinkButtons.map((button) => ({ url: button.url, title: button.title.trim() })) : [],
         }),
       });
       const messageResult = await messageResponse.json();
@@ -416,14 +424,105 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType }
   const selectedMediaCount = selectedMediaIds.length;
   const selectedMediaItems = mediaItems.filter((item) => selectedMediaIds.includes(item.id));
 
+  const successOrbits = [
+    { angle: 0, size: 7, duration: 3.4, delay: 0.2, pulse: 1.7, pulseDelay: 0.4 },
+    { angle: 42, size: 5, duration: 4.8, delay: 1.1, pulse: 2.1, pulseDelay: 0.1 },
+    { angle: 86, size: 8, duration: 3.1, delay: 2.0, pulse: 1.6, pulseDelay: 0.8 },
+    { angle: 131, size: 5, duration: 5.2, delay: 0.7, pulse: 2.3, pulseDelay: 1.2 },
+    { angle: 177, size: 6, duration: 3.8, delay: 1.6, pulse: 1.8, pulseDelay: 0.5 },
+    { angle: 223, size: 8, duration: 4.5, delay: 2.5, pulse: 2.0, pulseDelay: 1.4 },
+    { angle: 268, size: 5, duration: 3.3, delay: 0.9, pulse: 1.9, pulseDelay: 0.7 },
+    { angle: 314, size: 7, duration: 5.0, delay: 1.9, pulse: 2.2, pulseDelay: 0.2 },
+  ];
+  const pageStyles = (
+    <style jsx global>{`
+      .automation-create-flow button,
+      .automation-create-flow button * {
+        color: #fff !important;
+      }
+      .automation-create-flow button {
+        background-color: #2F61FD !important;
+        border-color: #2F61FD !important;
+      }
+      .automation-create-flow button:hover:not(:disabled) {
+        background-color: #1E4BD8 !important;
+        border-color: #1E4BD8 !important;
+      }
+      .automation-create-flow button:disabled {
+        background-color: #2F61FD !important;
+        border-color: #2F61FD !important;
+        opacity: .48;
+      }
+      .sd-success-ring {
+        stroke-dasharray: 183;
+        stroke-dashoffset: 183;
+        animation: sd-success-ring-draw 850ms cubic-bezier(.22,.7,.22,1) 100ms forwards;
+      }
+      .sd-success-path {
+        stroke-dasharray: 48;
+        stroke-dashoffset: 48;
+        animation: sd-success-path-draw 650ms cubic-bezier(.22,.7,.22,1) 780ms forwards;
+      }
+      .sd-success-orbit {
+        position: absolute;
+        inset: 0;
+        transform-origin: center;
+      }
+      .sd-success-orbit-spin {
+        position: absolute;
+        inset: 0;
+        transform-origin: center;
+        animation-name: sd-success-orbit;
+        animation-timing-function: linear;
+        animation-duration: var(--sd-orbit-duration, 3.5s);
+        animation-delay: var(--sd-orbit-delay, 0s);
+        animation-iteration-count: infinite;
+      }
+      .sd-success-orbit-spin.sd-success-orbit-reverse {
+        animation-name: sd-success-orbit-reverse;
+      }
+      .sd-success-dot {
+        position: absolute;
+        top: 5px;
+        left: 50%;
+        border-radius: 9999px;
+        animation: sd-success-dot-pulse var(--sd-pulse-duration, 1.8s) ease-in-out var(--sd-pulse-delay, 0s) infinite;
+      }
+      @keyframes sd-success-ring-draw { to { stroke-dashoffset: 0; } }
+      @keyframes sd-success-path-draw { to { stroke-dashoffset: 0; } }
+      @keyframes sd-success-orbit { to { transform: rotate(360deg); } }
+      @keyframes sd-success-orbit-reverse { to { transform: rotate(-360deg); } }
+      @keyframes sd-success-dot-pulse { 0%, 100% { opacity: .2; } 50% { opacity: .95; } }
+      @media (prefers-reduced-motion: reduce) {
+        .sd-success-ring, .sd-success-path, .sd-success-orbit-spin, .sd-success-dot {
+          animation-duration: 1ms !important;
+          animation-delay: 0ms !important;
+        }
+      }
+    `}</style>
+  );
+
   if (completed) {
     return (
-      <div dir="rtl" className="flex min-h-[65vh] w-full flex-col items-center justify-center px-4 py-12 text-center">
-        <CheckCircle2 size={76} strokeWidth={1.8} aria-hidden="true" style={{ color: dairaPalette.status.success }} />
+      <div dir="rtl" className="automation-create-flow flex min-h-[65vh] w-full flex-col items-center justify-center px-4 py-12 text-center">
+        {pageStyles}
+        <div className="relative mb-4 flex h-32 w-32 items-center justify-center" role="img" aria-label="عملیات با موفقیت انجام شد">
+          {successOrbits.map((orbit, index) => (
+            <span key={index} className="sd-success-orbit" style={{ transform: `rotate(${orbit.angle}deg)` }} aria-hidden="true">
+              <span className={`sd-success-orbit-spin ${index % 2 ? "sd-success-orbit-reverse" : ""}`} style={{ "--sd-orbit-duration": `${orbit.duration}s`, "--sd-orbit-delay": `-${orbit.delay}s`, "--sd-pulse-duration": `${orbit.pulse}s`, "--sd-pulse-delay": `-${orbit.pulseDelay}s` } as CSSProperties}>
+                <span className="sd-success-dot" style={{ width: `${orbit.size}px`, height: `${orbit.size}px`, marginLeft: `-${orbit.size / 2}px`, backgroundColor: dairaPalette.status.success }} />
+              </span>
+            </span>
+          ))}
+          <svg viewBox="0 0 84 84" className="relative z-10 h-24 w-24 overflow-visible" fill="none" aria-hidden="true">
+            <circle className="sd-success-ring" cx="42" cy="42" r="29" stroke={dairaPalette.status.success} strokeWidth="4" />
+            <path className="sd-success-path" d="M25 42.5 36.5 54 59 30" stroke={dairaPalette.status.success} strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
         <h1 className="mt-5 text-xl font-extrabold" style={{ color: dairaPalette.text.heading }}>عملیات با موفقیت انجام شد</h1>
         <button
           type="button"
-          onClick={() => router.push("/dashboard/auto-replies")}
+          onClick={() => router.push(triggerType === "COMMENT_KEYWORD" ? "/dashboard/comment-automation" : "/dashboard/story-automation")}
           className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl px-5 text-sm font-bold text-white transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--daira-primary)]/30"
           style={{ background: dairaPalette.primary.main }}
         >
@@ -434,7 +533,8 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType }
   }
 
   return (
-    <div dir="rtl" className="mx-auto w-full max-w-4xl py-2 sm:py-4">
+    <div dir="rtl" className="automation-create-flow mx-auto w-full max-w-4xl py-2 sm:py-4">
+      {pageStyles}
       <div className="space-y-0">
         <div className="mb-2"><AutomationSectionGuide>{triggerType === "COMMENT_KEYWORD" ? "۱. انتخاب محتوا — پست یا ریلز موردنظرت را انتخاب کن." : "۱. انتخاب محتوا — استوری موردنظرت را انتخاب کن."}</AutomationSectionGuide></div>
         <section aria-labelledby="automation-content-title" className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
@@ -475,13 +575,13 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType }
         <div className="mb-2 mt-6"><AutomationSectionGuide>۲. روش پاسخ — پاسخ جدید بساز یا از پاسخ قبلی استفاده کن.</AutomationSectionGuide></div>
         <section aria-label="روش پاسخ" className="space-y-2">
           <div role="radiogroup" aria-label="روش پاسخ خودکار" className="grid grid-cols-2 gap-2">
-            <label className={"flex min-h-[68px] cursor-pointer items-start gap-2.5 rounded-xl border p-3 transition " + (creationMode === "new" ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)]" : "border-[var(--daira-border)] bg-white hover:border-[var(--daira-outline)]")}>
-              <input type="radio" name="automation-creation-mode" value="new" checked={creationMode === "new"} onChange={startNewAutomation} className="mt-1 h-4 w-4 shrink-0 accent-[var(--daira-primary)]" />
-              <span className="min-w-0"><strong className="block text-xs leading-5 text-[var(--daira-heading)]">ساخت پاسخ جدید</strong></span>
+            <label className={"flex min-h-[68px] cursor-pointer items-center gap-2.5 rounded-xl border p-3 transition " + (creationMode === "new" ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)]" : "border-[var(--daira-border)] bg-white hover:border-[var(--daira-outline)]")}>
+              <input type="radio" name="automation-creation-mode" value="new" checked={creationMode === "new"} onChange={startNewAutomation} className="h-4 w-4 shrink-0 accent-[var(--daira-primary)]" />
+              <span className="flex min-h-10 min-w-0 items-center"><strong className="text-center text-xs leading-5 text-[var(--daira-heading)]">ساخت پاسخ جدید</strong></span>
             </label>
-            <label className={"flex min-h-[68px] cursor-pointer items-start gap-2.5 rounded-xl border p-3 transition " + (creationMode === "existing" ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)]" : "border-[var(--daira-border)] bg-white hover:border-[var(--daira-outline)]")}>
-              <input type="radio" name="automation-creation-mode" value="existing" checked={creationMode === "existing"} onChange={() => { setCreationMode("existing"); setError(""); }} className="mt-1 h-4 w-4 shrink-0 accent-[var(--daira-primary)]" />
-              <span className="min-w-0"><strong className="block text-xs leading-5 text-[var(--daira-heading)]">استفاده از پاسخ‌های قبلی</strong></span>
+            <label className={"flex min-h-[68px] cursor-pointer items-center gap-2.5 rounded-xl border p-3 transition " + (creationMode === "existing" ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)]" : "border-[var(--daira-border)] bg-white hover:border-[var(--daira-outline)]")}>
+              <input type="radio" name="automation-creation-mode" value="existing" checked={creationMode === "existing"} onChange={() => { setCreationMode("existing"); setError(""); }} className="h-4 w-4 shrink-0 accent-[var(--daira-primary)]" />
+              <span className="flex min-h-10 min-w-0 items-center"><strong className="text-center text-xs leading-5 text-[var(--daira-heading)]">استفاده از پاسخ‌های قبلی</strong></span>
             </label>
           </div>
         </section>
@@ -589,7 +689,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType }
                   {keywords.map((item) => (
                     <span key={item} className="inline-flex items-center gap-1.5 rounded-full bg-[var(--daira-outline-hover-bg)] px-3 py-1.5 text-xs font-semibold text-[var(--daira-primary)]">
                       {item}
-                      <button type="button" onClick={() => setKeyword(keywords.filter((value) => value !== item).join(","))} className="text-[var(--daira-text)] hover:text-[var(--daira-error-text)]" aria-label={"حذف " + item}>×</button>
+                      <button type="button" onClick={() => setKeyword(keywords.filter((value) => value !== item).join(","))} className="inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold" aria-label={"حذف " + item}>×</button>
                     </span>
                   ))}
                 </div>
@@ -608,7 +708,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType }
               <div className="space-y-3">
               <div className="mb-2 mt-6"><AutomationSectionGuide>۴. پاسخ زیر کامنت — متنی بنویس که زیر کامنت کاربر نمایش داده شود.</AutomationSectionGuide></div>
               <div className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
-                <div className="mb-3 flex items-center gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]"><MessageCircle size={15} strokeWidth={2.1} aria-hidden="true" /></span><label className="block text-sm font-bold text-[var(--daira-heading)]">پاسخ زیر کامنت (اختیاری)</label></div>
+                <div className="mb-3 flex items-center gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]"><MessageCircle size={15} strokeWidth={2.1} aria-hidden="true" /></span><label className="block text-sm font-bold text-[var(--daira-heading)]">پاسخ زیر کامنت <span className="text-[var(--daira-primary)]">(اختیاری)</span></label></div>
                 <textarea value={commentReply} onChange={(e) => setCommentReply(e.target.value)} rows={3} maxLength={2000} placeholder="پاسخی که زیر کامنت کاربر منتشر می‌شود بنویس..." className="w-full resize-y rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3.5 py-3 !text-base leading-7 text-[var(--daira-heading)] outline-none placeholder:text-[11px] placeholder:whitespace-nowrap placeholder:overflow-hidden placeholder:text-ellipsis focus:border-[var(--daira-input-focus)] focus:bg-white focus:ring-2 focus:ring-[color:var(--daira-primary)]/10" style={{ fontSize: "16px", lineHeight: 1.75 }} />
               </div>
               </div>
@@ -671,7 +771,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType }
                             </div>
                             <div>
                               <label className="mb-2 block text-center text-xs font-semibold" style={{ color: dairaPalette.text.heading }}>آدرس لینک</label>
-                              <input type="url" value={button.url} onChange={(event) => setLinkButtons((current) => current.map((item, i) => i === index ? { ...item, url: event.target.value } : item))} placeholder="example.com" dir="ltr" className="w-full rounded-xl border bg-white px-3 py-3 text-base outline-none placeholder:text-xs focus:ring-2 focus:ring-[color:var(--daira-primary)]/15" style={{ borderColor: dairaPalette.form.border, color: dairaPalette.text.heading, fontSize: "16px" }} />
+                              <input type="url" value={button.url} onChange={(event) => setLinkButtons((current) => current.map((item, i) => i === index ? { ...item, url: event.target.value } : item))} onBlur={() => setLinkButtons((current) => current.map((item, i) => i === index ? { ...item, url: normalizeExternalLink(item.url) } : item))} placeholder="example.com" dir="ltr" className="w-full rounded-xl border bg-white px-3 py-3 text-base outline-none placeholder:text-xs focus:ring-2 focus:ring-[color:var(--daira-primary)]/15" style={{ borderColor: dairaPalette.form.border, color: dairaPalette.text.heading, fontSize: "16px" }} />
                             </div>
                           </div>
                         </div>
