@@ -15,7 +15,7 @@ type AutomationTemplate = { id: string; triggerType: string; keyword?: string | 
 
 type Props = {
   account: Account;
-  mediaId: string;
+  mediaId?: string;
   triggerType: TriggerType;
   title: string;
   description: string;
@@ -303,12 +303,15 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
           </div>
 
           <div className="space-y-5">
-            {triggerType === "COMMENT_KEYWORD" && !mediaId && (
+            {!mediaId && (
               <AutomationPicker
                 items={mediaItems}
                 selectedIds={selectedMediaIds}
                 loading={mediaLoading}
-                onToggle={(id) => setSelectedMediaIds((current) => current.includes(id) ? current.filter((value) => value !== id) : [...current, id])}
+                onToggle={(id) => setSelectedMediaIds((current) => triggerType === "COMMENT_KEYWORD" ? (current.includes(id) ? current.filter((value) => value !== id) : [...current, id]) : [id])}
+                title={triggerType === "COMMENT_KEYWORD" ? "انتخاب پست‌ها و ریلزها" : "انتخاب استوری"}
+                description={triggerType === "COMMENT_KEYWORD" ? "یک یا چند پست یا ریلز را انتخاب کنید." : "یک استوری را انتخاب کنید تا پاسخ خودکار به آن متصل شود."}
+                selectedLabel={triggerType === "COMMENT_KEYWORD" ? "محتوا انتخاب شده" : "استوری انتخاب شده"}
               />
             )}
             {triggerType === "COMMENT_KEYWORD" && mediaId && (
