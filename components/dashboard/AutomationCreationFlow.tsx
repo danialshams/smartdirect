@@ -45,7 +45,7 @@ function AutomationSectionGuide({ children }: { children: ReactNode }) {
       <Lightbulb size={17} className="mt-1 shrink-0" style={{ color: dairaPalette.guide.icon }} aria-hidden="true" />
       <div className="min-w-0 flex-1">
         <div className="mb-1.5 flex items-center gap-2">
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-extrabold text-white" style={{ background: dairaPalette.guide.icon }}>
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-extrabold text-white" style={{ background: dairaPalette.guide.icon }}>
             {number ? new Intl.NumberFormat("fa-IR").format(Number(number)) : ""}
           </span>
           <strong className="text-sm font-extrabold leading-6">{title}</strong>
@@ -411,7 +411,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   const selectedMediaItems = mediaItems.filter((item) => selectedMediaIds.includes(item.id));
   return (
     <div dir="rtl" className="mx-auto w-full max-w-4xl space-y-5 py-2 sm:py-4">
-      <div className="space-y-4">
+      <div className="space-y-5">
         <AutomationSectionGuide>{triggerType === "COMMENT_KEYWORD" ? "۱. انتخاب محتوا — پست یا ریلز موردنظرت را انتخاب کن." : "۱. انتخاب محتوا — استوری موردنظرت را انتخاب کن."}</AutomationSectionGuide>
         <section aria-labelledby="automation-content-title" className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -592,7 +592,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
               {triggerType === "COMMENT_KEYWORD" ? (
                 <div className="space-y-4">
-                <AutomationSectionGuide>۵. پیام دایرکت — متنی بنویس که بعد از کامنت برای کاربر فرستاده شود.</AutomationSectionGuide>
+                <AutomationSectionGuide>۵. پیام دایرکت — متن پیام را بنویس. اگر «متن همراه دکمه لینک» را انتخاب کنی، دکمه‌ای با عنوان و آدرس دلخواه زیر پیام نمایش داده می‌شود تا کاربر با لمس آن لینک را باز کند.</AutomationSectionGuide>
                 <section className="space-y-4 rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
                   <div>
                     <div className="mb-3 flex items-center gap-3">
@@ -649,12 +649,8 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
                 <AutomationSectionGuide>۶. شرط فالو — اختیاری است؛ اگر روشنش کنی، کاربر قبل از دریافت پاسخ باید پیج را دنبال کند و درخواست بررسی فالو برایش ارسال می‌شود.</AutomationSectionGuide>
                 <section className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
-                    <div className="mb-3 flex items-center gap-3">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]"><ShieldCheck size={15} strokeWidth={2.1} aria-hidden="true" /></span>
-                      <span className="text-sm font-bold" style={{ color: dairaPalette.text.heading }}>شرط فالو</span>
-                    </div>
                     <label className="flex cursor-pointer items-start gap-3 rounded-xl border p-3.5 transition-colors" style={{ borderColor: requireFollow ? dairaPalette.primary.main : dairaPalette.border, background: requireFollow ? dairaPalette.secondary.hoverBackground : dairaPalette.background.surfaceHover }}>
-                      <input type="checkbox" role="switch" aria-label="الزام به فالو قبل از ارسال پاسخ" aria-checked={requireFollow} checked={requireFollow} onChange={(event) => setRequireFollow(event.target.checked)} className="daira-form-switch mt-1" />
+                      <input type="checkbox" role="switch" aria-label="الزام به فالو قبل از ارسال پاسخ" aria-checked={requireFollow} checked={requireFollow} onChange={(event) => setRequireFollow(event.target.checked)} className="daira-form-switch mt-1 -scale-x-100" />
                       <span className="min-w-0">
                         <strong className="block text-sm" style={{ color: dairaPalette.text.heading }}>الزام به فالو قبل از ارسال پاسخ <span className="text-[var(--daira-primary)]">(اختیاری)</span></strong>
                       </span>
@@ -710,7 +706,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
 
         {mediaDialogOpen && (
-          <div className="fixed inset-0 z-[2200] flex items-end justify-center bg-black/45 p-3 backdrop-blur-[2px] sm:items-center sm:p-4" onMouseDown={(event) => { if (event.target === event.currentTarget) setMediaDialogOpen(false); }}>
+          <div className="fixed inset-0 z-[2200] flex items-end justify-center bg-black/45 p-5 backdrop-blur-[2px] sm:items-center sm:p-6 md:p-8" onMouseDown={(event) => { if (event.target === event.currentTarget) setMediaDialogOpen(false); }}>
             <section role="dialog" aria-modal="true" aria-labelledby="media-dialog-title" className="flex max-h-[82dvh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
               <header className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--daira-border)] px-3 py-2.5 sm:px-4">
                 <span className="shrink-0 rounded-lg bg-[var(--daira-surface-hover)] px-2.5 py-1.5 text-[11px] font-bold text-[var(--daira-text)]">{new Intl.NumberFormat("fa-IR").format(draftSelectedMediaIds.length)} انتخاب‌شده</span>
