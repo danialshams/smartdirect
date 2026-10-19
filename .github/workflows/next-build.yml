@@ -1,0 +1,63 @@
+name: Next.js build
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - "app/**"
+      - "components/**"
+      - "lib/**"
+      - "prisma/**"
+      - "package.json"
+      - "package-lock.json"
+      - "next.config.ts"
+      - "tsconfig.json"
+      - ".github/workflows/**"
+  push:
+    branches: [master]
+    paths:
+      - "app/**"
+      - "components/**"
+      - "lib/**"
+      - "prisma/**"
+      - "package.json"
+      - "package-lock.json"
+      - "next.config.ts"
+      - "tsconfig.json"
+      - ".github/workflows/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: next-build-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Build application
+        env:
+          NODE_ENV: production
+          NEXTAUTH_URL: https://example.invalid
+          NEXTAUTH_SECRET: ci-only-placeholder-secret-with-more-than-32-characters
+          CRON_SECRET: ci-only-placeholder-cron-secret-with-more-than-32-characters
+          DATABASE_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
+          DIRECT_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
+          REDIS_DRIVER: local
+          REDIS_LOCAL_URL: redis://127.0.0.1:6379
+        run: npm run build
