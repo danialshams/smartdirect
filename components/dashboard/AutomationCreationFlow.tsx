@@ -374,8 +374,8 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   ];
   return (
     <div dir="rtl" className="mx-auto w-full max-w-4xl space-y-5 py-2 sm:py-4">
-      <nav aria-label="مراحل ساخت پاسخ خودکار" className="w-full">
-        <ol className="m-0 grid list-none grid-cols-3 items-stretch gap-1.5 p-0 sm:gap-2" aria-label="وضعیت مراحل ساخت پاسخ خودکار">
+      <nav aria-label="مراحل ساخت پاسخ خودکار" className="w-full px-0.5 sm:px-2">
+        <ol className="m-0 flex w-full list-none items-center p-0" aria-label="وضعیت مراحل ساخت پاسخ خودکار">
           {flowSteps.map((step) => {
             const isActive = step.number === flowStep;
             const isComplete = step.number < flowStep;
@@ -385,49 +385,44 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                 ? dairaPalette.primary.main
                 : dairaPalette.border;
             const stepText = isComplete
-              ? dairaPalette.status.success
+              ? dairaPalette.background.surface
               : isActive
                 ? dairaPalette.primary.main
                 : dairaPalette.text.muted;
-            const stepContent = (
-              <>
-                <span
-                  className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-extrabold sm:h-6 sm:w-6"
-                  style={{
-                    borderColor: stepColor,
-                    background: isComplete ? dairaPalette.status.success : "transparent",
-                    color: isComplete ? dairaPalette.background.surface : stepText,
-                  }}
-                  aria-hidden="true"
-                >
-                  {isComplete ? <Check size={13} strokeWidth={2.5} /> : new Intl.NumberFormat("fa-IR").format(step.number)}
-                </span>
-                <span className="min-w-0 leading-4">{step.title}</span>
-              </>
-            );
-            const stepClass = "flex min-h-[40px] w-full items-center justify-center gap-1 rounded-full border bg-transparent px-1.5 py-1.5 text-center text-[9px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--daira-primary)] sm:min-h-12 sm:gap-2 sm:px-3 sm:text-xs";
-            const stepStyle = { borderColor: stepColor, color: stepText };
+            const circleClass = "daira-automation-step flex h-[86px] w-[86px] shrink-0 items-center justify-center rounded-full border-2 px-1.5 text-center text-[10px] font-extrabold leading-4 transition-colors sm:h-[104px] sm:w-[104px] sm:px-3 sm:text-xs sm:leading-5" + (isActive ? " daira-automation-step--current" : "");
+            const circleStyle = {
+              borderColor: stepColor,
+              background: isComplete ? dairaPalette.status.success : isActive ? dairaPalette.secondary.hoverBackground : "transparent",
+              color: stepText,
+            };
             return (
-              <li key={step.number} className="min-w-0">
+              <li key={step.number} className="flex min-w-0 flex-1 items-center">
                 {isComplete ? (
                   <button
                     type="button"
                     onClick={() => { setFlowStep(step.number); setError(""); }}
                     aria-label={`بازگشت به مرحله ${new Intl.NumberFormat("fa-IR").format(step.number)}: ${step.title}`}
-                    className={stepClass}
-                    style={stepStyle}
+                    className={circleClass}
+                    style={circleStyle}
                   >
-                    {stepContent}
+                    {step.title}
                   </button>
                 ) : (
                   <div
                     aria-current={isActive ? "step" : undefined}
-                    aria-disabled={!isActive}
-                    className={stepClass}
-                    style={stepStyle}
+                    aria-disabled="true"
+                    className={circleClass}
+                    style={circleStyle}
                   >
-                    {stepContent}
+                    {step.title}
                   </div>
+                )}
+                {step.number < 3 && (
+                  <span
+                    aria-hidden="true"
+                    className="mx-1 h-[3px] min-w-1 flex-1 rounded-full sm:mx-2"
+                    style={{ background: isComplete ? dairaPalette.status.success : dairaPalette.border }}
+                  />
                 )}
               </li>
             );
@@ -465,7 +460,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             )}
             {flowStep === 2 && (
               <section
-                className="rounded-2xl border p-4 sm:p-5"
+                className="rounded-2xl border p-4 sm:p-6"
                 style={{ borderColor: dairaPalette.border, background: dairaPalette.background.surface }}
               >
                 <div className="mb-4 flex justify-start">
@@ -481,53 +476,50 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                   </span>
                 </div>
                 {loadingResources ? (
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2" aria-label="در حال دریافت پاسخ‌های قبلی">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2" aria-label="در حال دریافت پاسخ‌های قبلی">
                     {[0, 1].map((item) => (
                       <div
                         key={item}
-                        className="h-[76px] animate-pulse rounded-xl"
+                        className="h-[104px] animate-pulse rounded-2xl"
                         style={{ background: dairaPalette.background.surfaceActive }}
                       />
                     ))}
                   </div>
                 ) : automationTemplates.length > 0 ? (
-                  <div className="max-h-72 overflow-y-auto overscroll-contain rounded-xl pr-1">
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <div className="max-h-[65dvh] overflow-y-auto overscroll-contain rounded-xl pr-1 sm:max-h-[640px]">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   {automationTemplates.map((template) => {
                     const previewMessages = normalizeMessages(template.messages);
                     const preview = previewMessages[0]?.text?.trim() || (previewMessages[0]?.messageType === "SHOWCASE" ? "ارسال ویترین" : previewMessages[0]?.messageType === "FORM" ? "ارسال فرم" : previewMessages[0]?.messageType === "IMAGE" ? "ارسال تصویر" : previewMessages[0]?.messageType === "VIDEO" ? "ارسال ویدیو" : previewMessages[0]?.messageType === "AUDIO" ? "ارسال پیام صوتی" : "بدون متن پاسخ");
                     const selected = selectedTemplateId === template.id;
                     return (
-                      <button
+                      <label
                         key={template.id}
-                        type="button"
-                        onClick={() => applyAutomationTemplate(template)}
-                        aria-pressed={selected}
-                        className="rounded-xl border p-3 text-right transition focus:outline-none focus:ring-2 focus:ring-[color:var(--daira-primary)]/20"
+                        className="flex min-h-[104px] cursor-pointer items-start gap-3 rounded-2xl border p-4 text-right transition focus-within:ring-2 focus-within:ring-[color:var(--daira-primary)]/20"
                         style={{
                           borderColor: selected ? dairaPalette.primary.main : dairaPalette.border,
                           background: selected ? dairaPalette.secondary.hoverBackground : dairaPalette.background.surface,
-                          boxShadow: selected ? `0 1px 3px ${dairaPalette.primary.main}20` : undefined,
+                          boxShadow: selected ? `0 2px 8px ${dairaPalette.primary.main}20` : undefined,
                         }}
                       >
-                        <span className="flex items-start justify-between gap-2">
-                          <strong className="min-w-0 text-xs font-bold leading-5" style={{ color: dairaPalette.text.heading }}>
+                        <input
+                          type="radio"
+                          name="existing-automation-template"
+                          value={template.id}
+                          checked={selected}
+                          onChange={() => applyAutomationTemplate(template)}
+                          className="mt-1 h-5 w-5 shrink-0 accent-[var(--daira-primary)]"
+                          aria-label={`انتخاب پاسخ ${(template.keyword || "").split(/[,،;؛\n]+/).filter(Boolean).slice(0, 3).join("، ") || "بدون کلمه کلیدی"}`}
+                        />
+                        <span className="flex min-w-0 flex-1 flex-col gap-2">
+                          <strong className="block text-sm font-bold leading-6" style={{ color: dairaPalette.text.heading }}>
                             {(template.keyword || "").split(/[,،;؛\n]+/).filter(Boolean).slice(0, 3).join("، ") || "بدون کلمه کلیدی"}
                           </strong>
-                          <span
-                            className="shrink-0 rounded-full px-2 py-1 text-[10px] font-bold"
-                            style={{
-                              background: selected ? dairaPalette.primary.main : dairaPalette.background.surfaceActive,
-                              color: selected ? dairaPalette.background.surface : dairaPalette.text.body,
-                            }}
-                          >
-                            {selected ? "برای اتصال انتخاب شد" : "اتصال این پاسخ"}
+                          <span className="block text-xs leading-6" style={{ color: dairaPalette.text.body }}>
+                            {preview}
                           </span>
                         </span>
-                        <span className="mt-2 block truncate text-[11px] leading-5" style={{ color: dairaPalette.text.body }}>
-                          {preview}
-                        </span>
-                      </button>
+                      </label>
                     );
                   })}
                   </div>
