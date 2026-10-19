@@ -407,7 +407,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                 )}
                 <input type="file" accept={mediaAccept} disabled={uploading} className="hidden" onChange={(event) => { const file = event.target.files?.[0]; event.currentTarget.value = ""; void uploadMedia(file); }} />
               </label>
-              {retryFile && !uploading && error && <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] p-3"><div className="sd-destructive-button flex items-center justify-between text-[11px] font-bold text-[#B91C1C]"><span>آپلود ناموفق بود</span><span>{progress}٪</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-[#FEE2E2]"><div className="h-full rounded-full bg-[#DC2626]" style={{ width: `${Math.max(3, progress)}%` }} /></div><button type="button" onClick={() => void uploadMedia(retryFile)} className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-[#DC2626] px-3 py-2 text-[11px] font-bold text-white"><RotateCcw size={14}/>تلاش دوباره</button></div>}
+              {retryFile && !uploading && error && <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] p-3"><div className="flex items-center justify-between text-[11px] font-bold text-[#B91C1C]"><span>آپلود ناموفق بود</span><span>{progress}٪</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-[#FEE2E2]"><div className="h-full rounded-full bg-[#DC2626]" style={{ width: `${Math.max(3, progress)}%` }} /></div><button type="button" onClick={() => void uploadMedia(retryFile)} className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-[#DC2626] px-3 py-2 text-[11px] font-bold text-white"><RotateCcw size={14}/>تلاش دوباره</button></div>}
 {responseType === "AUDIO" && (
                 <>
                   <div className="text-center text-[10px] font-semibold text-[#94A3B8]">یا</div>
@@ -443,7 +443,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                     <img src={slide.previewUrl} alt="" className="h-44 w-full object-cover" />
                   ) : slideRetryFiles[slide.id] ? (
                     <div className="flex w-full flex-col items-center justify-center px-6">
-                      <span className="sd-destructive-button mb-2 text-[10px] font-bold text-[#B91C1C]">آپلود ناموفق بود — {slideUploadProgress[slide.id] ?? 0}٪</span>
+                      <span className="mb-2 text-[10px] font-bold text-[#B91C1C]">آپلود ناموفق بود — {slideUploadProgress[slide.id] ?? 0}٪</span>
                       <div className="h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-[#FEE2E2]"><div className="h-full rounded-full bg-[#DC2626]" style={{ width: `${Math.max(3, Math.min(100, slideUploadProgress[slide.id] ?? 0))}%` }} /></div>
                       <button type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); void uploadSlideImage(slide.id, slideRetryFiles[slide.id] ?? undefined); }} className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#DC2626] px-3 py-2 text-[11px] font-bold text-white">
                         <RotateCcw size={14}/>تلاش دوباره
@@ -593,7 +593,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
         </div>
       )}
 
-      {error && <p className="sd-destructive-button rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-2.5 text-xs text-[#B91C1C]">{error}</p>}
+      {error && <p className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-2.5 text-xs text-[#B91C1C]">{error}</p>}
     </div>
   );
 });
