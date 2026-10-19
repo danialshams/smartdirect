@@ -464,7 +464,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
         {creationMode === "existing" && (
           <div className="space-y-3">
-            <div className="mb-2"><AutomationSectionGuide>۳. پاسخ قبلی — پاسخ موردنظرت را انتخاب کن؛ سپس دکمه زیر فهرست را بزن.</AutomationSectionGuide></div>
+            <div className="mb-2 mt-6"><AutomationSectionGuide>۳. پاسخ قبلی — پاسخ موردنظرت را انتخاب کن؛ سپس دکمه زیر فهرست را بزن.</AutomationSectionGuide></div>
             <section
                 className="rounded-2xl border p-3"
                 style={{ borderColor: dairaPalette.border, background: dairaPalette.background.surface }}
