@@ -15,6 +15,7 @@ type Automation = {
   instagramAccountId: string;
   triggerType: TriggerType | string;
   mediaId: string | null;
+  mediaIds?: string | null;
   keyword: string | null;
   createdAt: string;
   isActive: boolean;
@@ -310,8 +311,14 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
           if (seenPublishedItems.has(publishedItemKey)) continue;
           seenPublishedItems.add(publishedItemKey);
           const linkedAutomationId = isStory ? job.storyReplyAutomationId : job.commentAutomationId;
-          const linkedAutomationCreatedAt = linkedAutomationId ? automationById.get(linkedAutomationId)?.createdAt : null;
-          const itemCreatedAt = linkedAutomationCreatedAt || job.createdAt;
+          const linkedAutomation = (linkedAutomationId ? automationById.get(linkedAutomationId) : undefined) ??
+            allAutomations.find((automation) => {
+              const targetMediaId = job.instagramMediaId || "";
+              const automationMatchesMedia = automation.mediaId === targetMediaId ||
+                Boolean(automation.mediaIds?.split(",").some((id) => id.trim() === targetMediaId));
+              return automation.triggerType === (isStory ? "STORY_REPLY_KEYWORD" : "COMMENT_KEYWORD") && automationMatchesMedia;
+            });
+          const itemCreatedAt = linkedAutomation?.createdAt || job.createdAt;
           nextItems.push({
             id: job.id,
             key: `publish:${job.id}`,
