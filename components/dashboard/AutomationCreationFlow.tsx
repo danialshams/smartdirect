@@ -25,17 +25,32 @@ type Props = {
 };
 
 function AutomationSectionGuide({ children }: { children: ReactNode }) {
+  const text = typeof children === "string" ? children : "";
+  const [step = "", remainder = text] = text.split(" — ");
+  const match = step.match(/^(\d+)\.\s*(.*)$/);
+  const number = match?.[1] ?? "";
+  const title = match?.[2] ?? step;
+  const description = remainder === text ? "" : remainder;
+
   return (
     <div
-      className="flex items-start gap-2.5 rounded-xl border px-3.5 py-3"
+      className="flex items-start gap-3 rounded-xl border px-3.5 py-3"
       style={{
         background: dairaPalette.guide.background,
         borderColor: dairaPalette.guide.border,
         color: dairaPalette.guide.text,
       }}
     >
-      <Lightbulb size={17} className="mt-0.5 shrink-0" style={{ color: dairaPalette.guide.icon }} aria-hidden="true" />
-      <p className="text-xs leading-5">{children}</p>
+      <Lightbulb size={17} className="mt-1 shrink-0" style={{ color: dairaPalette.guide.icon }} aria-hidden="true" />
+      <div className="min-w-0 flex-1">
+        <div className="mb-1.5 flex items-center gap-2">
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-extrabold text-white" style={{ background: dairaPalette.guide.icon }}>
+            {number ? new Intl.NumberFormat("fa-IR").format(Number(number)) : ""}
+          </span>
+          <strong className="text-sm font-extrabold leading-6">{title}</strong>
+        </div>
+        {description && <p className="text-xs leading-5">{description}</p>}
+      </div>
     </div>
   );
 }
@@ -450,57 +465,55 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
           <div className="space-y-3">
             <AutomationSectionGuide>۳. پاسخ قبلی — پاسخ موردنظرت را انتخاب کن؛ سپس دکمه زیر فهرست را بزن.</AutomationSectionGuide>
             <section
-                className="rounded-2xl border p-4 sm:p-6"
+                className="rounded-2xl border p-3"
                 style={{ borderColor: dairaPalette.border, background: dairaPalette.background.surface }}
               >
-                <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-                  <div><h2 className="text-sm font-bold" style={{ color: dairaPalette.text.heading }}>پاسخ‌های خودکار قبلی</h2></div>
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <div />
                   <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs" style={{ background: dairaPalette.secondary.hoverBackground, color: dairaPalette.text.body }}><strong className="font-extrabold" style={{ color: dairaPalette.primary.main }}>{new Intl.NumberFormat("fa-IR").format(automationTemplates.length)}</strong><span>پاسخ</span></span>
                 </div>
                 {loadingResources ? (
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2" aria-label="در حال دریافت پاسخ‌های قبلی">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2" aria-label="در حال دریافت پاسخ‌های قبلی">
                     {[0, 1].map((item) => (
                       <div
                         key={item}
-                        className="h-[104px] animate-pulse rounded-2xl"
+                        className="h-[76px] animate-pulse rounded-xl"
                         style={{ background: dairaPalette.background.surfaceActive }}
                       />
                     ))}
                   </div>
                 ) : automationTemplates.length > 0 ? (
                   <div className="max-h-[65dvh] overflow-y-auto overscroll-contain rounded-xl pr-1 sm:max-h-[640px]">
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {automationTemplates.map((template) => {
                     const previewMessages = normalizeMessages(template.messages);
-                    const preview = previewMessages[0]?.text?.trim() || (previewMessages[0]?.messageType === "SHOWCASE" ? "ارسال ویترین" : previewMessages[0]?.messageType === "FORM" ? "ارسال فرم" : previewMessages[0]?.messageType === "IMAGE" ? "ارسال تصویر" : previewMessages[0]?.messageType === "VIDEO" ? "ارسال ویدیو" : previewMessages[0]?.messageType === "AUDIO" ? "ارسال پیام صوتی" : "بدون متن پاسخ");
+                    const preview = previewMessages[0]?.messageType === "SHOWCASE" ? "ویترین" : previewMessages[0]?.messageType === "FORM" ? "فرم" : previewMessages[0]?.messageType === "IMAGE" ? "تصویر" : previewMessages[0]?.messageType === "VIDEO" ? "ویدیو" : previewMessages[0]?.messageType === "AUDIO" ? "پیام صوتی" : "";
                     const selected = selectedTemplateId === template.id;
                     return (
                       <label
                         key={template.id}
-                        className="flex min-h-[104px] cursor-pointer items-start gap-3 rounded-2xl border p-4 text-right transition focus-within:ring-2 focus-within:ring-[color:var(--daira-primary)]/20"
+                        className="flex min-h-[72px] cursor-pointer items-start gap-2 rounded-xl border p-2.5 text-right transition focus-within:ring-2 focus-within:ring-[color:var(--daira-primary)]/20"
                         style={{
                           borderColor: selected ? dairaPalette.primary.main : dairaPalette.border,
                           background: selected ? dairaPalette.secondary.hoverBackground : dairaPalette.background.surface,
                           boxShadow: selected ? `0 2px 8px ${dairaPalette.primary.main}20` : undefined,
                         }}
                       >
+                        <span className="flex min-w-0 flex-1 flex-col gap-1">
+                          <strong className="block text-xs font-bold leading-5" style={{ color: dairaPalette.text.heading }}>
+                            {(template.keyword || "").split(/[,،;؛\n]+/).filter(Boolean).slice(0, 3).join("، ") || "بدون کلمه کلیدی"}
+                          </strong>
+                          {preview && <span className="block text-[10px] leading-4" style={{ color: dairaPalette.text.body }}>{preview}</span>}
+                        </span>
                         <input
                           type="radio"
                           name="existing-automation-template"
                           value={template.id}
                           checked={selected}
                           onChange={() => applyAutomationTemplate(template)}
-                          className="mt-1 h-5 w-5 shrink-0 accent-[var(--daira-primary)]"
+                          className="mt-1 h-4 w-4 shrink-0 accent-[var(--daira-primary)]"
                           aria-label={`انتخاب پاسخ ${(template.keyword || "").split(/[,،;؛\n]+/).filter(Boolean).slice(0, 3).join("، ") || "بدون کلمه کلیدی"}`}
                         />
-                        <span className="flex min-w-0 flex-1 flex-col gap-2">
-                          <strong className="block text-sm font-bold leading-6" style={{ color: dairaPalette.text.heading }}>
-                            {(template.keyword || "").split(/[,،;؛\n]+/).filter(Boolean).slice(0, 3).join("، ") || "بدون کلمه کلیدی"}
-                          </strong>
-                          <span className="block text-xs leading-6" style={{ color: dairaPalette.text.body }}>
-                            {preview}
-                          </span>
-                        </span>
                       </label>
                     );
                   })}
@@ -698,9 +711,9 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
         {mediaDialogOpen && (
           <div className="fixed inset-0 z-[2200] flex items-end justify-center bg-black/45 p-3 backdrop-blur-[2px] sm:items-center sm:p-4" onMouseDown={(event) => { if (event.target === event.currentTarget) setMediaDialogOpen(false); }}>
             <section role="dialog" aria-modal="true" aria-labelledby="media-dialog-title" className="flex max-h-[82dvh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
-              <header className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--daira-border)] px-3 py-3 sm:px-4">
-                <div className="flex min-w-0 items-center gap-2"><h2 id="media-dialog-title" className="text-sm font-extrabold text-[var(--daira-heading)]">{triggerType === "COMMENT_KEYWORD" ? "انتخاب پست و ریلز" : "انتخاب استوری"}</h2><button type="button" onClick={() => setMediaDialogOpen(false)} aria-label="بستن پنجره انتخاب محتوا" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[var(--daira-text)] transition hover:bg-[var(--daira-surface-hover)] hover:text-[var(--daira-heading)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--daira-primary)]/25"><X size={17} /></button></div>
+              <header className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--daira-border)] px-3 py-2.5 sm:px-4">
                 <span className="shrink-0 rounded-lg bg-[var(--daira-surface-hover)] px-2.5 py-1.5 text-[11px] font-bold text-[var(--daira-text)]">{new Intl.NumberFormat("fa-IR").format(draftSelectedMediaIds.length)} انتخاب‌شده</span>
+                <button type="button" onClick={() => setMediaDialogOpen(false)} aria-label="بستن پنجره انتخاب محتوا" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[var(--daira-text)] transition hover:bg-[var(--daira-surface-hover)] hover:text-[var(--daira-heading)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--daira-primary)]/25"><X size={17} /></button>
               </header>
               <div className="min-h-0 flex-1 overflow-y-auto px-3 py-2 sm:px-4">
                 <AutomationPicker items={mediaItems} selectedIds={draftSelectedMediaIds} loading={mediaLoading} showContentFilters={triggerType === "COMMENT_KEYWORD"} onToggle={(id) => setDraftSelectedMediaIds((current) => triggerType === "COMMENT_KEYWORD" ? (current.includes(id) ? current.filter((value) => value !== id) : [...current, id]) : [id])} />
