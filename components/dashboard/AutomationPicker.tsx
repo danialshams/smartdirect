@@ -74,14 +74,7 @@ export default function AutomationPicker({
         </div>
       )}
 
-      <section
-        className="rounded-2xl border p-4 sm:p-6"
-        style={{
-          borderColor: dairaPalette.border,
-          background: dairaPalette.background.surface,
-          boxShadow: "0 1px 2px rgba(24,35,60,0.025)",
-        }}
-      >
+      <div className="mt-3">
         {loading ? (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4" aria-label="در حال دریافت محتوا">
             {Array.from({ length: 8 }).map((_, index) => (
@@ -93,7 +86,7 @@ export default function AutomationPicker({
             ))}
           </div>
         ) : filteredItems.length ? (
-          <div className="max-h-[65dvh] overflow-y-auto overscroll-contain rounded-xl pr-1 sm:max-h-[680px]">
+          <div className="max-h-[55dvh] overflow-y-auto overscroll-contain rounded-xl pr-1 sm:max-h-[560px]">
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-4">
               {filteredItems.map((item) => {
                 const selected = selectedIds.includes(item.id);
@@ -146,15 +139,14 @@ export default function AutomationPicker({
                     >
                       <Check size={13} />
                     </span>
-                    <span
-                      className="block truncate px-2 py-2 text-xs font-semibold"
-                      style={{
-                        background: dairaPalette.background.surface,
-                        color: dairaPalette.text.body,
-                      }}
-                    >
+                    <span className="block truncate px-2 pt-2 text-[11px] font-bold" style={{ background: dairaPalette.background.surface, color: dairaPalette.text.body }}>
                       {label}
                     </span>
+                    {item.caption?.trim() && (
+                      <span className="block truncate px-2 pb-2 pt-0.5 text-[10px] leading-4" style={{ background: dairaPalette.background.surface, color: dairaPalette.text.muted }}>
+                        {item.caption.trim()}
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -173,7 +165,8 @@ export default function AutomationPicker({
               : "محتوایی دریافت نشد. اتصال اینستاگرام و دسترسی رسانه‌ها را بررسی کنید."}
           </p>
         )}
-      </section>
+
+      </div>
     </div>
   );
 }
