@@ -97,8 +97,9 @@ model Automation {
   sendDm              Boolean               @default(false)
   triggerType         AutomationTriggerType @default(COMMENT_KEYWORD)
   likeStoryReply      Boolean               @default(false)
-  followGateText      String?
-  requireFollow       Boolean               @default(false)
+  followGateText       String?
+  followGateButtonText String?
+  requireFollow        Boolean               @default(false)
   instagramAccount    InstagramAccount      @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
   messages            AutomationMessage[]
   iceBreakers         IceBreaker[]
