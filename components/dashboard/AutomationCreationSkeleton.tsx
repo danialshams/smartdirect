@@ -1,4 +1,3 @@
-"import type { ReactNode } from "react";
 import { dairaPalette } from "../../lib/design-system/palette";
 
 type TriggerType = "COMMENT_KEYWORD" | "STORY_REPLY_KEYWORD";
