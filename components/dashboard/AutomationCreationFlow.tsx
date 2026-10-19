@@ -1,6 +1,6 @@
 "use client";
 
-import { Camera, Image as ImageIcon, Lightbulb, MessageCircle, Send, ShieldCheck, X } from "lucide-react";
+import { Camera, Image as ImageIcon, Lightbulb, MessageCircle, Send, ShieldCheck, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -471,7 +471,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
               >
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                   <div />
-                  <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs" style={{ background: dairaPalette.secondary.hoverBackground, color: dairaPalette.text.body }}><strong className="font-extrabold" style={{ color: dairaPalette.primary.main }}>{new Intl.NumberFormat("fa-IR").format(automationTemplates.length)}</strong><span>پاسخ</span></span>
+                  <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs" style={{ background: dairaPalette.secondary.hoverBackground, color: dairaPalette.text.body }}><strong className="font-extrabold" style={{ color: dairaPalette.primary.main }}>{new Intl.NumberFormat("fa-IR").format(automationTemplates.length)}</strong><span style={{ color: dairaPalette.primary.main }}>پاسخ</span></span>
                 </div>
                 {loadingResources ? (
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2" aria-label="در حال دریافت پاسخ‌های قبلی">
@@ -512,7 +512,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                           value={template.id}
                           checked={selected}
                           onChange={() => applyAutomationTemplate(template)}
-                          className="mt-1 h-4 w-4 shrink-0 accent-[var(--daira-primary)]"
+                          className="mt-0 h-4 w-4 shrink-0 self-center accent-[var(--daira-primary)]"
                           aria-label={`انتخاب پاسخ ${(template.keyword || "").split(/[,،;؛\n]+/).filter(Boolean).slice(0, 3).join("، ") || "بدون کلمه کلیدی"}`}
                         />
                       </label>
@@ -625,18 +625,32 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                       <p className="text-xs leading-5" style={{ color: dairaPalette.text.body }}>حداکثر {MAX_LINK_BUTTONS} دکمه لینک می‌توانید اضافه کنید.</p>
                       {linkButtons.map((button, index) => (
                         <div key={index} className="rounded-xl border p-3" style={{ borderColor: dairaPalette.form.border }}>
-                          <div className="mb-3 flex items-center justify-between">
-                            <strong className="text-xs" style={{ color: dairaPalette.text.heading }}>دکمه {index + 1}</strong>
-                            {linkButtons.length > 1 && <button type="button" onClick={() => setLinkButtons((current) => current.filter((_, i) => i !== index))} className="text-xs font-semibold text-[var(--daira-error-text)]">حذف</button>}
+                          <div className="relative mb-3 flex min-h-10 items-center justify-center">
+                            <span className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-extrabold" style={{ background: dairaPalette.secondary.activeBackground, borderColor: dairaPalette.primary.main, color: dairaPalette.primary.main }}>
+                              <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-full px-1 text-[10px] font-extrabold text-white" style={{ background: dairaPalette.primary.main }}>{new Intl.NumberFormat("fa-IR").format(index + 1)}</span>
+                              <span>دکمه لینک</span>
+                            </span>
+                            {linkButtons.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => setLinkButtons((current) => current.filter((_, i) => i !== index))}
+                                title="حذف دکمه لینک"
+                                aria-label={`حذف دکمه لینک ${new Intl.NumberFormat("fa-IR").format(index + 1)}`}
+                                className="absolute left-0 inline-flex h-9 w-9 items-center justify-center rounded-xl border transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--daira-primary)]/25"
+                                style={{ borderColor: dairaPalette.status.errorBorder, background: dairaPalette.status.errorBackground, color: dairaPalette.status.errorText }}
+                              >
+                                <Trash2 size={16} aria-hidden="true" />
+                              </button>
+                            )}
                           </div>
                           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             <div>
-                              <label className="mb-2 block text-xs font-semibold" style={{ color: dairaPalette.text.heading }}>آدرس لینک</label>
-                              <input type="url" value={button.url} onChange={(event) => setLinkButtons((current) => current.map((item, i) => i === index ? { ...item, url: event.target.value } : item))} placeholder="https://example.com" dir="ltr" className="w-full rounded-xl border bg-white px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-[color:var(--daira-primary)]/15" style={{ borderColor: dairaPalette.form.border, color: dairaPalette.text.heading }} />
+                              <label className="mb-2 block text-xs font-semibold" style={{ color: dairaPalette.text.heading }}>عنوان دکمه (حداکثر ۲۰ کاراکتر)</label>
+                              <input value={button.title} onChange={(event) => setLinkButtons((current) => current.map((item, i) => i === index ? { ...item, title: event.target.value.slice(0, 20) } : item))} maxLength={20} placeholder="مشاهده لینک" className="w-full rounded-xl border bg-white px-3 py-3 text-base outline-none focus:ring-2 focus:ring-[color:var(--daira-primary)]/15" style={{ borderColor: dairaPalette.form.border, color: dairaPalette.text.heading, fontSize: "16px" }} />
                             </div>
                             <div>
-                              <label className="mb-2 block text-xs font-semibold" style={{ color: dairaPalette.text.heading }}>عنوان دکمه (حداکثر ۲۰ کاراکتر)</label>
-                              <input value={button.title} onChange={(event) => setLinkButtons((current) => current.map((item, i) => i === index ? { ...item, title: event.target.value.slice(0, 20) } : item))} maxLength={20} placeholder="مشاهده لینک" className="w-full rounded-xl border bg-white px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-[color:var(--daira-primary)]/15" style={{ borderColor: dairaPalette.form.border, color: dairaPalette.text.heading }} />
+                              <label className="mb-2 block text-xs font-semibold" style={{ color: dairaPalette.text.heading }}>آدرس لینک</label>
+                              <input type="url" value={button.url} onChange={(event) => setLinkButtons((current) => current.map((item, i) => i === index ? { ...item, url: event.target.value } : item))} placeholder="https://example.com" dir="ltr" className="w-full rounded-xl border bg-white px-3 py-3 text-base outline-none focus:ring-2 focus:ring-[color:var(--daira-primary)]/15" style={{ borderColor: dairaPalette.form.border, color: dairaPalette.text.heading, fontSize: "16px" }} />
                             </div>
                           </div>
                         </div>
