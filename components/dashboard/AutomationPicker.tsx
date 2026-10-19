@@ -19,7 +19,7 @@ type Props = {
   onToggle: (id: string) => void;
 };
 
-export default function AutomationPicker({ items, selectedIds, loading, onToggle, title = "انتخاب پست‌ها و ریلزها", description = "محتواهایی را انتخاب کنید که این پاسخ خودکار برای آن‌ها فعال باشد.", selectedLabel = "محتوا انتخاب شده" }: Props) {
+export default function AutomationPicker({ items, selectedIds, loading, onToggle }: Props) {
   return (
     <section className="rounded-2xl border border-[#E6ECF5] bg-white p-3 sm:p-4">
       {loading ? (
