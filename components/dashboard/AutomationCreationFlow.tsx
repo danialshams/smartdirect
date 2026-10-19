@@ -35,7 +35,7 @@ function AutomationSectionGuide({ children }: { children: ReactNode }) {
 
   return (
     <div
-      className="flex items-start gap-3 rounded-xl border px-3.5 py-3"
+      className="flex items-start gap-3 rounded-xl border px-3.5 py-3 -mb-2"
       style={{
         background: dairaPalette.guide.background,
         borderColor: dairaPalette.guide.border,
@@ -45,7 +45,7 @@ function AutomationSectionGuide({ children }: { children: ReactNode }) {
       <Lightbulb size={17} className="mt-1 shrink-0" style={{ color: dairaPalette.guide.icon }} aria-hidden="true" />
       <div className="min-w-0 flex-1">
         <div className="mb-1.5 flex items-center gap-2">
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-extrabold text-white" style={{ background: dairaPalette.guide.icon }}>
+          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-extrabold text-white" style={{ background: dairaPalette.guide.icon }}>
             {number ? new Intl.NumberFormat("fa-IR").format(Number(number)) : ""}
           </span>
           <strong className="text-sm font-extrabold leading-6">{title}</strong>
@@ -410,8 +410,8 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   const selectedMediaCount = selectedMediaIds.length;
   const selectedMediaItems = mediaItems.filter((item) => selectedMediaIds.includes(item.id));
   return (
-    <div dir="rtl" className="mx-auto w-full max-w-4xl space-y-5 py-2 sm:py-4">
-      <div className="space-y-5">
+    <div dir="rtl" className="mx-auto w-full max-w-4xl space-y-6 py-2 sm:py-4">
+      <div className="space-y-6">
         <AutomationSectionGuide>{triggerType === "COMMENT_KEYWORD" ? "۱. انتخاب محتوا — پست یا ریلز موردنظرت را انتخاب کن." : "۱. انتخاب محتوا — استوری موردنظرت را انتخاب کن."}</AutomationSectionGuide>
         <section aria-labelledby="automation-content-title" className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
