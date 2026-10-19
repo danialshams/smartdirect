@@ -330,36 +330,24 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   }
 
   return (
-    <div dir="rtl" className="min-h-[calc(100dvh-2rem)] rounded-[28px] bg-[#F4F7FC] p-2 sm:p-4">
-      <div className="mx-auto w-full max-w-4xl space-y-4">
+    <div dir="rtl" className="mx-auto w-full max-w-4xl space-y-5 py-2 sm:py-4">
         <div className="mb-5">
           <button type="button" onClick={() => { if (flowStep > 1) setFlowStep((current) => (current === 3 ? 2 : 1)); else router.back(); }} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#2F61FD] transition hover:bg-[#DBEAFE] hover:text-[#2F61FD]">
             <ArrowRight size={15} strokeWidth={2} />بازگشت
           </button>
         </div>
 
-        <section className="rounded-[24px] border border-[#E6ECF5] bg-white p-4 shadow-[0_4px_20px_rgba(24,35,60,0.035)] sm:p-6">
-          <div className="mb-6 flex items-start gap-3 rounded-2xl border border-[#E6ECF5] bg-[#F8FAFC] p-4">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#EFF6FF] text-[#2F61FD]">
-              {triggerType === "COMMENT_KEYWORD" ? <MessageCircleReply size={17} /> : <Camera size={17} />}
-            </span>
-            <div className="min-w-0">
-              <h1 className="text-base font-bold text-[#18233C]">{title}</h1>
-              <p className="mt-1.5 text-xs leading-5 text-[#5A6B87]">{description}</p>
-              <div className="mt-3 flex flex-wrap items-center gap-2"><span className="inline-flex items-center rounded-full border border-[#DBEAFE] bg-[#EFF6FF] px-2.5 py-1 text-[10px] font-bold text-[#2F61FD]">مرحله {flowStep} از ۳</span><span className="inline-flex items-center rounded-full bg-white px-2.5 py-1 text-[10px] font-medium text-[#64748B]">{triggerType === "COMMENT_KEYWORD" ? "پاسخ خودکار کامنت" : "پاسخ خودکار استوری"}</span></div>
-            </div>
-          </div>
-
-          <div className="space-y-5">
+        <div className="space-y-5">
+          {flowStep === 1 && <h1 className="px-1 text-lg font-bold text-[#18233C]">محتوای مورد نظر خودتون رو انتخاب کنید</h1>}
+          {flowStep === 2 && <h1 className="px-1 text-lg font-bold text-[#18233C]">پاسخ جدید بسازید یا از پاسخ‌های ساخته‌شده قبلی استفاده کنید</h1>}
+          {flowStep === 3 && <h1 className="px-1 text-lg font-bold text-[#18233C]">ساخت پاسخ خودکار جدید</h1>}
             {flowStep === 1 && !mediaId && (
               <AutomationPicker
                 items={mediaItems}
                 selectedIds={selectedMediaIds}
                 loading={mediaLoading}
                 onToggle={(id) => setSelectedMediaIds((current) => triggerType === "COMMENT_KEYWORD" ? (current.includes(id) ? current.filter((value) => value !== id) : [...current, id]) : [id])}
-                title={triggerType === "COMMENT_KEYWORD" ? "انتخاب پست‌ها و ریلزها" : "انتخاب استوری"}
                 description={triggerType === "COMMENT_KEYWORD" ? "یک یا چند پست یا ریلز را انتخاب کنید." : "یک استوری را انتخاب کنید تا پاسخ خودکار به آن متصل شود."}
-                selectedLabel={triggerType === "COMMENT_KEYWORD" ? "محتوا انتخاب شده" : "استوری انتخاب شده"}
               />
             )}
             {flowStep === 1 && triggerType === "STORY_REPLY_KEYWORD" && mediaId && (
@@ -387,10 +375,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             )}
             {flowStep === 2 && (
               <section className="rounded-2xl border border-[#E6ECF5] bg-white p-4 sm:p-5" aria-labelledby="automation-template-heading">
-                <div className="mb-4 flex items-start gap-3">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2F61FD]"><MessageCircleReply size={17} /></span>
-                  <div className="min-w-0 flex-1"><h2 id="automation-template-heading" className="text-sm font-bold text-[#18233C]">روش ساخت پاسخ خودکار</h2><p className="mt-1 text-xs leading-5 text-[#5A6B87]">یک پاسخ تازه از ابتدا بساز، یا پاسخ خودکار موجود را بدون تغییر تنظیمات به محتوای انتخابی متصل کن.</p></div>
-                </div>
+                
                 {loadingResources ? (
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2" aria-label="در حال دریافت پاسخ‌های قبلی">{[0, 1].map((item) => <div key={item} className="h-[76px] animate-pulse rounded-xl bg-[#F1F5F9]" />)}</div>
                 ) : automationTemplates.length > 0 ? (
@@ -410,9 +395,9 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                 ) : (
                   <p className="rounded-xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] px-3 py-4 text-xs leading-6 text-[#64748B]">هنوز پاسخ خودکار قبلی برای این نوع وجود ندارد. می‌توانی تنظیمات را از ابتدا وارد کنی.</p>
                 )}
-                <div className="mt-4 grid grid-cols-1 gap-2 border-t border-[#E6ECF5] pt-4 sm:grid-cols-2">
-                  <button type="button" onClick={startNewAutomation} className="flex min-h-11 items-center justify-center rounded-xl border border-[#BFDBFE] bg-[#EFF6FF] px-4 text-xs font-bold text-[#2F61FD] transition hover:bg-[#DBEAFE]">ساخت پاسخ جدید</button>
+                <div className="mt-4 flex flex-col gap-2 pt-2">
                   <button type="button" onClick={() => { setCreationMode("existing"); void saveAutomation(); }} disabled={!selectedTemplateId || loadingResources || mediaLoading || selectedMediaIds.length === 0 || saving} className="flex min-h-11 items-center justify-center rounded-xl bg-[#2F61FD] px-4 text-xs font-bold text-white transition hover:bg-[#1E4BD8] disabled:cursor-not-allowed disabled:bg-[#E2E8F0] disabled:text-[#94A3B8]">{saving ? "در حال اتصال..." : "انتخاب پاسخ"}</button>
+                  <button type="button" onClick={startNewAutomation} className="flex min-h-11 items-center justify-center rounded-xl border border-[#BFDBFE] bg-[#EFF6FF] px-4 text-xs font-bold text-[#2F61FD] transition hover:bg-[#DBEAFE]">ساخت پاسخ جدید</button>
                 </div>
               </section>
             )}
@@ -451,7 +436,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
               </div>
             )}
 
-            <div className="rounded-2xl border border-[#E6ECF5] bg-white p-4 sm:p-5">
+            <>
               {triggerType === "COMMENT_KEYWORD" ? (
                 <section className="space-y-5">
                   <div>
@@ -524,7 +509,6 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                   <button type="button" onClick={() => { setMessage((current) => ({ ...current, messageType: "TEXT" })); void saveAutomation({ ...message, messageType: "TEXT" }); }} disabled={saving} className="flex min-h-12 w-full items-center justify-center rounded-xl px-4 text-sm font-bold text-white transition disabled:opacity-60" style={{ background: dairaPalette.primary.main }}>
                     {saving ? "در حال ساخت پاسخ خودکار..." : "ساخت پاسخ خودکار"}
                   </button>
-                  <button type="button" onClick={() => setFlowStep(2)} disabled={saving} className="mt-2 flex min-h-10 w-full items-center justify-center rounded-xl border border-[#E2E8F0] bg-white px-4 text-xs font-bold text-[#64748B] disabled:opacity-50">بازگشت به انتخاب پاسخ</button>
                 </section>
               ) : (
                 <PublishingStoryAutomationSetup
@@ -550,17 +534,14 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                   textPlaceholder="متنی که در پاسخ خودکار برای کاربر ارسال می‌شود..."
                 />
               )}
-            </div>
             </>
-            )}
 
 
 
           </div>
 
-          {error && <div role="alert" className="mt-4 rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-6 text-[#B91C1C]">{error}</div>}
-        </section>
-      </div>
+          {error && <div role="alert" className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-6 text-[#B91C1C]">{error}</div>}
+        </div>
     </div>
   );
 }
