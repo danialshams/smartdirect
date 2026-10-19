@@ -401,7 +401,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
               </section>
             )}
             {flowStep === 3 && creationMode === "new" && (
-            <>
+            <div className="space-y-5">
             <div className="rounded-2xl border border-[#E6ECF5] bg-white p-4 sm:p-5">
               <div className="mb-3 flex items-center gap-3"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EFF6FF] text-sm font-bold text-[#2F61FD]">۲</span><label className="block text-sm font-bold text-[#18233C]">شرط فعال‌سازی</label></div>
               <p className="mb-3 text-xs leading-5 text-[#5A6B87]">
@@ -532,7 +532,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                   textPlaceholder="متنی که در پاسخ خودکار برای کاربر ارسال می‌شود..."
                 />
               )}
-            </>
+            </div>
             )}
 
           </div>
