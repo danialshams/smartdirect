@@ -48,10 +48,10 @@ export default function AutomationPicker({
   }, [contentFilter, items, showContentFilters]);
 
   return (
-    <>
+    <div className="space-y-3">
       {showContentFilters && (
         <section
-          className="mb-3 flex justify-center rounded-2xl border p-2"
+          className="flex justify-center rounded-2xl border p-2"
           style={{
             borderColor: dairaPalette.border,
             background: dairaPalette.background.surface,
@@ -186,6 +186,6 @@ export default function AutomationPicker({
           </p>
         )}
       </section>
-    </>
+    </div>
   );
 }
