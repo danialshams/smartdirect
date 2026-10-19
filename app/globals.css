@@ -37,6 +37,12 @@
   --daira-border: #E2E8F0;
   --daira-hero-glow: #E0EAFF;
   --daira-pink-glow: #FCE7F3;
+  --daira-header-start: #DCE7FF;
+  --daira-header-middle: #E5EDFF;
+  --daira-header-end: #EAF0FF;
+  --daira-error-background: #FEF2F2;
+  --daira-error-border: #FECACA;
+  --daira-error-text: #B91C1C;
 
   --background: hsl(0 0% 100%);
   --foreground: hsl(0 0% 3.9%);
@@ -351,7 +357,7 @@ body {
 .daira-skeleton--section { padding:18px; border:1px solid var(--daira-border); border-radius:18px; background:var(--daira-surface); }
 .daira-skeleton__section-title { width:42%; height:15px; margin-bottom:22px; }
 .daira-skeleton--dashboard { display:flex;flex-direction:column;min-height:100dvh;box-sizing:border-box;padding:8px 8px 128px; }
-.daira-skeleton__dashboard-header { min-height:68px; display:grid; grid-template-columns:40px minmax(0,1fr) 40px; align-items:center; gap:8px; padding:8px 12px; margin-bottom:12px; border-radius:20px; background:linear-gradient(115deg,#DCE7FF 0%,#E5EDFF 55%,#EAF0FF 100%); }
+.daira-skeleton__dashboard-header { min-height:68px; display:grid; grid-template-columns:40px minmax(0,1fr) 40px; align-items:center; gap:8px; padding:8px 12px; margin-bottom:12px; border-radius:20px; background:linear-gradient(115deg,var(--daira-header-start) 0%,var(--daira-header-middle) 55%,var(--daira-header-end) 100%); }
 .daira-skeleton__icon { width:36px; height:36px; border-radius:13px; }
 .daira-skeleton__brand { display:flex; align-items:center; justify-content:center; gap:9px; }
 .daira-skeleton__brand-mark { width:44px; height:44px; border-radius:14px; }
@@ -367,7 +373,7 @@ body {
 .daira-skeleton__bottom-nav-backdrop { position:fixed;left:0;right:0;bottom:0;height:100px;z-index:1490;background:#F4F7FC;pointer-events:none; }
 .daira-skeleton__bottom-nav { position:fixed;left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom, 0px));z-index:1500;flex:0 0 auto;margin:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:center;min-height:76px;padding:10px;border:1px solid rgba(226,232,240,.9);border-radius:14px;background:#FFFFFF;box-shadow:0 8px 32px rgba(22,54,110,.12); }
 .daira-skeleton__nav-item { width:44px; height:44px; justify-self:center; border-radius:15px; }
-.daira-skeleton__nav-item--active { background:linear-gradient(100deg,#C9D8FF 20%,#AFC5FF 38%,#C9D8FF 56%); background-size:220% 100%; }
+.daira-skeleton__nav-item--active { background:linear-gradient(100deg,var(--daira-outline-active-bg) 20%,var(--daira-hero-glow) 38%,var(--daira-outline-active-bg) 56%); background-size:220% 100%; }
 @media(min-width:900px) {
   .daira-skeleton--dashboard { min-height:100dvh; margin:0; padding:26px 12px 128px; }
   .daira-skeleton__dashboard-grid { gap:18px; }
