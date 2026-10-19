@@ -539,6 +539,5 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
           {error && <div role="alert" className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-6 text-[#B91C1C]">{error}</div>}
         </div>
-    </div>
   );
 }
