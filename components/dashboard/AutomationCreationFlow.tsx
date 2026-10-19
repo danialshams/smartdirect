@@ -191,10 +191,11 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     if (saving) return;
     const cleanKeywords = keyword.split(",").map((item) => item.trim()).filter(Boolean);
     const currentMessage = finalMessage ?? message;
+    const targetMediaIds = Array.from(new Set([...selectedMediaIds.filter(Boolean), ...(mediaId ? [mediaId] : [])]));
 
     if (creationMode === "existing") {
       const template = automationTemplates.find((item) => item.id === selectedTemplateId);
-      const targetIds = Array.from(new Set(selectedMediaIds.filter(Boolean)));
+      const targetIds = targetMediaIds;
       if (!template) { setError("ابتدا پاسخ خودکار موجود را انتخاب کنید."); return; }
       if (targetIds.length === 0) { setError(triggerType === "COMMENT_KEYWORD" ? "حداقل یک پست یا ریلز انتخاب کنید." : "یک استوری انتخاب کنید."); return; }
       if (triggerType === "STORY_REPLY_KEYWORD" && targetIds.length !== 1) { setError("برای پاسخ خودکار استوری فقط یک استوری انتخاب کنید."); return; }
@@ -267,10 +268,10 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
         body: JSON.stringify({
           instagramAccountId: account.id,
           triggerType,
-          mediaId: triggerType === "COMMENT_KEYWORD" ? (selectedMediaIds.length === 1 ? selectedMediaIds[0] : null) : selectedMediaIds[0] || mediaId,
+          mediaId: triggerType === "COMMENT_KEYWORD" ? (targetMediaIds.length === 1 ? targetMediaIds[0] : null) : targetMediaIds[0] || mediaId,
           keyword: keywordMatchMode === "CONTAINS_ANY" ? null : cleanKeywords.join(","),
           keywordMatchMode,
-          mediaIds: triggerType === "COMMENT_KEYWORD" ? selectedMediaIds : [],
+          mediaIds: triggerType === "COMMENT_KEYWORD" ? targetMediaIds : [],
           commentReplyText: triggerType === "COMMENT_KEYWORD" ? commentReply.trim() || null : null,
           replyText: null,
           likeComment: false,
