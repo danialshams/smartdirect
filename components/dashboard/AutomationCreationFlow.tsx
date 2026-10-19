@@ -381,9 +381,8 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
               </section>
             )}
             {flowStep === 1 && (
-              <div className="flex flex-col-reverse gap-2 border-t border-[#E6ECF5] pt-4 sm:flex-row sm:justify-between">
-                <button type="button" onClick={() => router.back()} className="min-h-11 rounded-xl border border-[#E2E8F0] bg-white px-4 text-xs font-bold text-[#64748B]">خروج</button>
-                <button type="button" onClick={() => { setFlowStep(2); setCreationMode("existing"); setSelectedTemplateId(""); setError(""); }} disabled={mediaLoading || selectedMediaIds.length === 0} className="min-h-11 rounded-xl bg-[#2F61FD] px-6 text-xs font-bold text-white transition hover:bg-[#1E4BD8] disabled:cursor-not-allowed disabled:bg-[#E2E8F0] disabled:text-[#94A3B8]">ادامه</button>
+              <div className="flex justify-end border-t border-[#E6ECF5] pt-4">
+                <button type="button" onClick={() => { setFlowStep(2); setCreationMode("existing"); setSelectedTemplateId(""); setError(""); }} disabled={mediaLoading || selectedMediaIds.length === 0} className="min-h-11 w-full rounded-xl bg-[#2F61FD] px-6 text-xs font-bold text-white transition hover:bg-[#1E4BD8] disabled:cursor-not-allowed disabled:bg-[#E2E8F0] disabled:text-[#94A3B8] sm:w-auto">ادامه</button>
               </div>
             )}
             {flowStep === 2 && (
