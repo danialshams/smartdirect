@@ -27,8 +27,9 @@ type Props = {
 function AutomationSectionGuide({ children }: { children: ReactNode }) {
   const text = typeof children === "string" ? children : "";
   const [step = "", remainder = text] = text.split(" — ");
-  const match = step.match(/^(\d+)\.\s*(.*)$/);
-  const number = match?.[1] ?? "";
+  const match = step.match(/^([0-9۰-۹]+)\.\s*(.*)$/);
+  const numberText = match?.[1] ?? "";
+  const number = numberText.replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)));
   const title = match?.[2] ?? step;
   const description = remainder === text ? "" : remainder;
 
