@@ -435,7 +435,6 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
               </div>
             )}
 
-            <>
               {triggerType === "COMMENT_KEYWORD" ? (
                 <section className="space-y-5">
                   <div>
@@ -533,7 +532,6 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                   textPlaceholder="متنی که در پاسخ خودکار برای کاربر ارسال می‌شود..."
                 />
               )}
-            </>
             </>
             )}
 
