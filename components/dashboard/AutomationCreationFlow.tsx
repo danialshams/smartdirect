@@ -95,7 +95,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   const [keywordMatchMode, setKeywordMatchMode] = useState<"EXACT" | "CONTAINS_ANY">("EXACT");
   const MAX_KEYWORDS = 10;
   const MAX_LINK_BUTTONS = 3;
-  const [linkButtons, setLinkButtons] = useState<Array<{ title: string; url: string }>>([{ title: "مشاهده لینک", url: "" }]);
+  const [linkButtons, setLinkButtons] = useState<Array<{ title: string; url: string }>>([{ title: "", url: "" }]);
   const [mediaItems, setMediaItems] = useState<Array<{id:string; caption?:string; media_type?:string; media_product_type?:string; thumbnail_url?:string|null; media_url?:string|null; timestamp?:string}>>([]);
   const [selectedMediaIds, setSelectedMediaIds] = useState<string[]>(mediaId ? [mediaId] : []);
   const [mediaDialogOpen, setMediaDialogOpen] = useState(false);
@@ -649,11 +649,11 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                           <div className="grid grid-cols-2 gap-2 sm:gap-3">
                             <div>
                               <label className="mb-2 block text-center text-xs font-semibold" style={{ color: dairaPalette.text.heading }}>عنوان دکمه</label>
-                              <input value={button.title} onChange={(event) => setLinkButtons((current) => current.map((item, i) => i === index ? { ...item, title: event.target.value.slice(0, 20) } : item))} maxLength={20} placeholder="متن دکمه ..." className="w-full rounded-xl border bg-white px-3 py-3 text-base outline-none focus:ring-2 focus:ring-[color:var(--daira-primary)]/15" style={{ borderColor: dairaPalette.form.border, color: dairaPalette.text.heading, fontSize: "16px" }} />
+                              <input value={button.title} onChange={(event) => setLinkButtons((current) => current.map((item, i) => i === index ? { ...item, title: event.target.value.slice(0, 20) } : item))} maxLength={20} placeholder="متن دکمه" className="w-full rounded-xl border bg-white px-3 py-3 text-base outline-none placeholder:text-xs focus:ring-2 focus:ring-[color:var(--daira-primary)]/15" style={{ borderColor: dairaPalette.form.border, color: dairaPalette.text.heading, fontSize: "16px" }} />
                             </div>
                             <div>
                               <label className="mb-2 block text-center text-xs font-semibold" style={{ color: dairaPalette.text.heading }}>آدرس لینک</label>
-                              <input type="url" value={button.url} onChange={(event) => setLinkButtons((current) => current.map((item, i) => i === index ? { ...item, url: event.target.value } : item))} placeholder="https://example.com" dir="ltr" className="w-full rounded-xl border bg-white px-3 py-3 text-base outline-none focus:ring-2 focus:ring-[color:var(--daira-primary)]/15" style={{ borderColor: dairaPalette.form.border, color: dairaPalette.text.heading, fontSize: "16px" }} />
+                              <input type="url" value={button.url} onChange={(event) => setLinkButtons((current) => current.map((item, i) => i === index ? { ...item, url: event.target.value } : item))} placeholder="example.com" dir="ltr" className="w-full rounded-xl border bg-white px-3 py-3 text-base outline-none placeholder:text-xs focus:ring-2 focus:ring-[color:var(--daira-primary)]/15" style={{ borderColor: dairaPalette.form.border, color: dairaPalette.text.heading, fontSize: "16px" }} />
                             </div>
                           </div>
                         </div>
