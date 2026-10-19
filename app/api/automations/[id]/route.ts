@@ -58,7 +58,57 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (!existingAutomation) return NextResponse.json({ success: false, error: "Automation پیدا نشد" }, { status: 404 });
 
     const body = await request.json();
-    if (!body || typeof body !== "object") return NextResponse.json({ success: false, error: "اطلاعات ارسالی نامعتبر است" }, { status: 400 });
+    if (!body || typeof body !== "object" || Array.isArray(body)) return NextResponse.json({ success: false, error: "اطلاعات ارسالی نامعتبر است" }, { status: 400 });
+
+    // Link an existing automation to selected content without modifying its trigger,
+    // keywords, messages, follow gate, or active state.
+    if (body.linkMediaOnly === true) {
+      if (body.triggerType !== existingAutomation.triggerType) {
+        return NextResponse.json({ success: false, error: "نوع پاسخ خودکار با محتوای انتخابی سازگار نیست" }, { status: 400 });
+      }
+      const trigger = existingAutomation.triggerType;
+      if (trigger !== "COMMENT_KEYWORD" && trigger !== "STORY_REPLY_KEYWORD") {
+        return NextResponse.json({ success: false, error: "این نوع پاسخ خودکار به محتوا متصل نمی‌شود" }, { status: 400 });
+      }
+      if (!Array.isArray(body.mediaIds) || body.mediaIds.some((value: unknown) => typeof value !== "string" || !value.trim())) {
+        return NextResponse.json({ success: false, error: "فهرست محتواهای انتخابی نامعتبر است" }, { status: 400 });
+      }
+      const targetIds = Array.from(new Set((body.mediaIds as string[]).map((value) => value.trim())));
+      if (targetIds.length === 0 || (trigger === "STORY_REPLY_KEYWORD" && targetIds.length !== 1)) {
+        return NextResponse.json({ success: false, error: trigger === "COMMENT_KEYWORD" ? "حداقل یک پست یا ریلز انتخاب کنید" : "فقط یک استوری انتخاب کنید" }, { status: 400 });
+      }
+      const requestedMediaId = typeof body.mediaId === "string" && body.mediaId.trim() ? body.mediaId.trim() : null;
+      if (trigger === "STORY_REPLY_KEYWORD" && requestedMediaId !== targetIds[0]) {
+        return NextResponse.json({ success: false, error: "شناسه استوری با محتوای انتخابی مطابقت ندارد" }, { status: 400 });
+      }
+      if (trigger === "COMMENT_KEYWORD" && targetIds.length === 1 && requestedMediaId !== targetIds[0]) {
+        return NextResponse.json({ success: false, error: "شناسه محتوا با فهرست انتخابی مطابقت ندارد" }, { status: 400 });
+      }
+      const peers = await prisma.automation.findMany({
+        where: { instagramAccountId: existingAutomation.instagramAccountId, triggerType: trigger, id: { not: id } },
+        select: { id: true, mediaId: true, mediaIds: true },
+      });
+      const occupied = new Set<string>();
+      for (const peer of peers) {
+        if (peer.mediaId) occupied.add(peer.mediaId);
+        if (peer.mediaIds) peer.mediaIds.split(",").map((value) => value.trim()).filter(Boolean).forEach((value) => occupied.add(value));
+      }
+      const conflict = targetIds.find((targetId) => occupied.has(targetId));
+      if (conflict) {
+        return NextResponse.json({ success: false, error: "یکی از محتواهای انتخابی از قبل به پاسخ خودکار دیگری متصل است" }, { status: 409 });
+      }
+      const automation = await prisma.automation.update({
+        where: { id },
+        data: {
+          mediaId: trigger === "STORY_REPLY_KEYWORD" ? targetIds[0] : (targetIds.length === 1 ? targetIds[0] : null),
+          mediaIds: trigger === "COMMENT_KEYWORD" ? targetIds.join(",") : null,
+        },
+        include: automationInclude,
+      });
+      try { await invalidateAutomationCache(existingAutomation.instagramAccountId); }
+      catch (cacheError) { console.warn("Automation cache invalidation failed:", cacheError); }
+      return NextResponse.json({ success: true, data: automation });
+    }
 
     const { triggerType, keyword, mediaId, likeComment, commentReplyText, sendDm, likeIncomingDm, likeStoryReply, replyText, requireFollow, followGateText, isActive } = body;
     const nextTriggerType: TriggerType = triggerType !== undefined ? triggerType : existingAutomation.triggerType;
