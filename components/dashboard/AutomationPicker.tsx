@@ -59,7 +59,7 @@ export default function AutomationPicker({
                 type="button"
                 onClick={() => setContentFilter(filter.value)}
                 aria-pressed={active}
-                className="flex min-h-10 min-w-[76px] items-center justify-center rounded-xl border px-5 text-xs font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--daira-primary)]/30"
+                className="flex min-h-10 min-w-[76px] items-center justify-center rounded-full border px-5 text-xs font-bold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--daira-primary)]/30"
                 style={{
                   borderColor: active ? dairaPalette.primary.main : dairaPalette.border,
                   background: active ? dairaPalette.primary.main : dairaPalette.background.surface,
