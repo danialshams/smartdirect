@@ -108,6 +108,10 @@ export default function DashboardShell({ user, instagramAccounts, children }: Da
         .daira-form-switch:checked::after { transform:translateX(-19px); }
         .daira-form-switch:focus-visible { outline:0;box-shadow:0 0 0 3px rgba(47,97,253,.22); }
         .daira-form-switch:disabled { opacity:.55;cursor:not-allowed; }
+        .daira-automation-step--current { position:relative;isolation:isolate; }
+        .daira-automation-step--current::after { content:"";position:absolute;inset:-5px;border:2px solid var(--daira-primary);border-radius:50%;pointer-events:none;animation:dairaAutomationStepPulse 1.8s ease-out infinite; }
+        @keyframes dairaAutomationStepPulse { 0% { transform:scale(.96);opacity:.72; } 70%,100% { transform:scale(1.16);opacity:0; } }
+        @media(prefers-reduced-motion:reduce) { .daira-automation-step--current::after { animation:none;opacity:.35;inset:-3px; } }
         @media(max-width:480px) {
           .daira-app-main--flow-actions { padding-bottom:calc(28px + env(safe-area-inset-bottom, 0px)); }
           .daira-flow-action-dock { margin-top:12px; }
