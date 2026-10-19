@@ -44,7 +44,7 @@ export default function AutomationPicker({ items, selectedIds, loading, onToggle
               const selected = selectedIds.includes(item.id);
               const image = item.thumbnail_url || item.media_url;
               const isVideo = item.media_product_type === "REELS" || item.media_type === "VIDEO";
-              const label = isVideo ? "ریلز / ویدیو" : item.media_type === "CAROUSEL_ALBUM" ? "پست اسلایدی" : "پست";
+              const label = item.media_product_type === "STORY" ? (isVideo ? "استوری ویدیویی" : "استوری تصویری") : isVideo ? "ریلز / ویدیو" : item.media_type === "CAROUSEL_ALBUM" ? "پست اسلایدی" : "پست";
               return (
                 <button key={item.id} type="button" onClick={() => onToggle(item.id)} className={"group relative overflow-hidden rounded-lg border-2 text-right transition focus:outline-none focus:ring-2 focus:ring-[#2F61FD] " + (selected ? "border-[#2F61FD] ring-2 ring-[#2F61FD]/15" : "border-transparent hover:border-[#CBD5E1]")} aria-pressed={selected}>
                   {image ? <img src={image} alt={item.caption || ""} className="aspect-square w-full object-cover transition duration-200 group-hover:scale-[1.02]" loading="lazy" /> : <div className="flex aspect-square items-center justify-center bg-[#F1F5F9] text-[#94A3B8]">{isVideo ? <Video size={22} /> : <ImageIcon size={22} />}</div>}
