@@ -59,7 +59,7 @@ export default function AutomationPicker({
                 type="button"
                 onClick={() => setContentFilter(filter.value)}
                 aria-pressed={active}
-                className="flex min-h-10 min-w-[76px] items-center justify-center rounded-full border px-5 text-xs font-bold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--daira-primary)]/30"
+                className="flex min-h-12 min-w-[92px] items-center justify-center rounded-full border px-6 text-sm font-extrabold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--daira-primary)]/30 sm:min-w-[110px] sm:px-8"
                 style={{
                   borderColor: active ? dairaPalette.primary.main : dairaPalette.border,
                   background: active ? dairaPalette.primary.main : dairaPalette.background.surface,
@@ -75,7 +75,7 @@ export default function AutomationPicker({
       )}
 
       <section
-        className="rounded-2xl border p-3 sm:p-4"
+        className="rounded-2xl border p-4 sm:p-6"
         style={{
           borderColor: dairaPalette.border,
           background: dairaPalette.background.surface,
@@ -83,7 +83,7 @@ export default function AutomationPicker({
         }}
       >
         {loading ? (
-          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4" aria-label="در حال دریافت محتوا">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4" aria-label="در حال دریافت محتوا">
             {Array.from({ length: 8 }).map((_, index) => (
               <div
                 key={index}
@@ -93,8 +93,8 @@ export default function AutomationPicker({
             ))}
           </div>
         ) : filteredItems.length ? (
-          <div className="max-h-[340px] overflow-y-auto overscroll-contain rounded-lg pr-1">
-            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+          <div className="max-h-[65dvh] overflow-y-auto overscroll-contain rounded-xl pr-1 sm:max-h-[680px]">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-4">
               {filteredItems.map((item) => {
                 const selected = selectedIds.includes(item.id);
                 const image = item.thumbnail_url || item.media_url;
@@ -147,7 +147,7 @@ export default function AutomationPicker({
                       <Check size={13} />
                     </span>
                     <span
-                      className="block truncate px-1.5 py-1 text-[10px]"
+                      className="block truncate px-2 py-2 text-xs font-semibold"
                       style={{
                         background: dairaPalette.background.surface,
                         color: dairaPalette.text.body,
