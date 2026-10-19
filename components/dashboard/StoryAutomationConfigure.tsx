@@ -49,10 +49,10 @@ export default function StoryAutomationConfigure() {
   return (
     <AutomationCreationFlow
       account={account}
-      mediaId={mediaId as string}
+      mediaId={mediaId ?? ""}
       triggerType="STORY_REPLY_KEYWORD"
-      title="تنظیم پاسخ خودکار استوری"
-      description="کلمات فعال‌کننده و نوع پاسخ را برای این استوری مشخص کن."
+      title="ایجاد پاسخ خودکار استوری"
+      description="استوری را انتخاب کن، روش ساخت را مشخص کن و پاسخ خودکار را در همین صفحه تنظیم کن."
       onSaved={() => {
         toast.success("پاسخ خودکار با موفقیت ایجاد شد.", {
           description: "می‌توانید در بخش «ویرایش پاسخ های خودکار» آن را مشاهده و ویرایش کنید.",
