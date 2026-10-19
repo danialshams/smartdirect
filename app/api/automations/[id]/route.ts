@@ -141,7 +141,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return NextResponse.json({ success: true, data: automation });
     }
 
-    const { triggerType, keyword, mediaId, likeComment, commentReplyText, sendDm, likeIncomingDm, likeStoryReply, replyText, requireFollow, followGateText, isActive } = body;
+    const { triggerType, keyword, mediaId, likeComment, commentReplyText, sendDm, likeIncomingDm, likeStoryReply, replyText, requireFollow, followGateText, followGateButtonText, isActive } = body;
     const nextTriggerType: TriggerType = triggerType !== undefined ? triggerType : existingAutomation.triggerType;
     if (!isValidTriggerType(nextTriggerType)) return NextResponse.json({ success: false, error: "نوع Trigger نامعتبر است" }, { status: 400 });
 
@@ -188,6 +188,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const supportsFollowGate = nextTriggerType === "COMMENT_KEYWORD" || nextTriggerType === "STORY_REPLY_KEYWORD";
     const nextRequireFollow = !supportsFollowGate ? false : requireFollow !== undefined ? Boolean(requireFollow) : existingAutomation.requireFollow;
     const nextFollowGateText = !supportsFollowGate || !nextRequireFollow ? null : followGateText !== undefined ? normalizeOptionalString(followGateText) : existingAutomation.followGateText;
+    const requestedFollowButtonText = followGateButtonText !== undefined ? normalizeOptionalString(followGateButtonText) : existingAutomation.followGateButtonText;
+    const nextFollowGateButtonText = !supportsFollowGate || !nextRequireFollow ? null : requestedFollowButtonText?.slice(0, 20) || "بررسی فالو";
     if (supportsFollowGate && nextRequireFollow && !nextFollowGateText) return NextResponse.json({ success: false, error: "وقتی Follow Gate فعال است، متن درخواست فالو الزامی است" }, { status: 400 });
 
     const updateData: Record<string, unknown> = {
@@ -202,6 +204,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       ...(replyText !== undefined ? { replyText: normalizeOptionalString(replyText) } : {}),
       requireFollow: nextRequireFollow,
       followGateText: nextFollowGateText,
+      followGateButtonText: nextFollowGateButtonText,
       ...(isActive !== undefined ? { isActive: Boolean(isActive) } : {}),
     };
 
