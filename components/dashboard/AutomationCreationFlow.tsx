@@ -62,6 +62,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   const [automationTemplates, setAutomationTemplates] = useState<AutomationTemplate[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
   const [creationMode, setCreationMode] = useState<CreationMode>("new");
+  const [flowStep, setFlowStep] = useState<1 | 2 | 3>(1);
   const [loadingResources, setLoadingResources] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -106,6 +107,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   }
 
   function startNewAutomation() {
+    setFlowStep(3);
     setSelectedTemplateId("");
     setCreationMode("new");
     setKeyword("");
@@ -331,7 +333,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     <div dir="rtl" className="min-h-[calc(100dvh-2rem)] rounded-[28px] bg-[#F4F7FC] p-2 sm:p-4">
       <div className="mx-auto w-full max-w-4xl space-y-4">
         <div className="mb-5">
-          <button type="button" onClick={() => router.back()} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#2F61FD] transition hover:bg-[#DBEAFE] hover:text-[#2F61FD]">
+          <button type="button" onClick={() => { if (flowStep > 1) setFlowStep((current) => (current === 3 ? 2 : 1)); else router.back(); }} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#2F61FD] transition hover:bg-[#DBEAFE] hover:text-[#2F61FD]">
             <ArrowRight size={15} strokeWidth={2} />بازگشت
           </button>
         </div>
@@ -344,12 +346,12 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             <div className="min-w-0">
               <h1 className="text-base font-bold text-[#18233C]">{title}</h1>
               <p className="mt-1.5 text-xs leading-5 text-[#5A6B87]">{description}</p>
-              <div className="mt-3 flex flex-wrap items-center gap-2"><span className="inline-flex items-center rounded-full border border-[#DBEAFE] bg-[#EFF6FF] px-2.5 py-1 text-[10px] font-bold text-[#2F61FD]">مراحل ساخت در همین صفحه</span><span className="inline-flex items-center rounded-full bg-white px-2.5 py-1 text-[10px] font-medium text-[#64748B]">{triggerType === "COMMENT_KEYWORD" ? "پاسخ خودکار کامنت" : "پاسخ خودکار استوری"}</span></div>
+              <div className="mt-3 flex flex-wrap items-center gap-2"><span className="inline-flex items-center rounded-full border border-[#DBEAFE] bg-[#EFF6FF] px-2.5 py-1 text-[10px] font-bold text-[#2F61FD]">مرحله {flowStep} از ۳</span><span className="inline-flex items-center rounded-full bg-white px-2.5 py-1 text-[10px] font-medium text-[#64748B]">{triggerType === "COMMENT_KEYWORD" ? "پاسخ خودکار کامنت" : "پاسخ خودکار استوری"}</span></div>
             </div>
           </div>
 
           <div className="space-y-5">
-            {!mediaId && (
+            {flowStep === 1 && !mediaId && (
               <AutomationPicker
                 items={mediaItems}
                 selectedIds={selectedMediaIds}
@@ -360,7 +362,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                 selectedLabel={triggerType === "COMMENT_KEYWORD" ? "محتوا انتخاب شده" : "استوری انتخاب شده"}
               />
             )}
-            {triggerType === "STORY_REPLY_KEYWORD" && mediaId && (
+            {flowStep === 1 && triggerType === "STORY_REPLY_KEYWORD" && mediaId && (
               <section className="flex items-center gap-3 rounded-2xl border border-[#DBEAFE] bg-[#EFF6FF] p-3.5 sm:p-4">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white text-[#2F61FD]">
                   {(() => { const selected = mediaItems.find((item) => item.id === mediaId); const image = selected?.thumbnail_url || selected?.media_url; return image ? <img src={image} alt="" className="h-full w-full object-cover" /> : <Camera size={18} />; })()}
@@ -369,7 +371,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                 <button type="button" onClick={() => router.push("/dashboard/story-automation/new")} className="shrink-0 rounded-lg border border-[#BFDBFE] bg-white px-3 py-2 text-[11px] font-bold text-[#2F61FD] transition hover:bg-[#DBEAFE]">تغییر استوری</button>
               </section>
             )}
-            {triggerType === "COMMENT_KEYWORD" && mediaId && (
+            {flowStep === 1 && triggerType === "COMMENT_KEYWORD" && mediaId && (
               <section className="flex items-center gap-3 rounded-2xl border border-[#DBEAFE] bg-[#EFF6FF] p-3.5 sm:p-4">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white text-[#2F61FD]">
                   {(() => { const selected = mediaItems.find((item) => item.id === mediaId); const image = selected?.thumbnail_url || selected?.media_url; return image ? <img src={image} alt="" className="h-full w-full object-cover" /> : <Camera size={18} />; })()}
@@ -378,15 +380,22 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                 <button type="button" onClick={() => router.push("/dashboard/comment-automation/new")} className="shrink-0 rounded-lg border border-[#BFDBFE] bg-white px-3 py-2 text-[11px] font-bold text-[#2F61FD] transition hover:bg-[#DBEAFE]">تغییر محتوا</button>
               </section>
             )}
-            {(
+            {flowStep === 1 && (
+              <div className="flex flex-col-reverse gap-2 border-t border-[#E6ECF5] pt-4 sm:flex-row sm:justify-between">
+                <button type="button" onClick={() => router.back()} className="min-h-11 rounded-xl border border-[#E2E8F0] bg-white px-4 text-xs font-bold text-[#64748B]">خروج</button>
+                <button type="button" onClick={() => { setFlowStep(2); setCreationMode("existing"); setSelectedTemplateId(""); setError(""); }} disabled={mediaLoading || selectedMediaIds.length === 0} className="min-h-11 rounded-xl bg-[#2F61FD] px-6 text-xs font-bold text-white transition hover:bg-[#1E4BD8] disabled:cursor-not-allowed disabled:bg-[#E2E8F0] disabled:text-[#94A3B8]">ادامه</button>
+              </div>
+            )}
+            {flowStep === 2 && (
               <section className="rounded-2xl border border-[#E6ECF5] bg-white p-4 sm:p-5" aria-labelledby="automation-template-heading">
                 <div className="mb-4 flex items-start gap-3">
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2F61FD]"><MessageCircleReply size={17} /></span>
-                  <div className="min-w-0 flex-1"><h2 id="automation-template-heading" className="text-sm font-bold text-[#18233C]">روش ساخت پاسخ خودکار</h2><p className="mt-1 text-xs leading-5 text-[#5A6B87]">یک پاسخ تازه از ابتدا بساز، یا پاسخ خودکار موجود را بدون تغییر تنظیمات به محتوای انتخابی متصل کن.</p><button type="button" onClick={startNewAutomation} className={"mt-3 inline-flex min-h-9 items-center rounded-lg border px-3 text-[11px] font-bold transition " + (creationMode === "new" ? "border-[#2F61FD] bg-[#2F61FD] text-white" : "border-[#BFDBFE] bg-[#EFF6FF] text-[#2F61FD] hover:bg-[#DBEAFE]")}>ساخت پاسخ جدید از ابتدا</button></div>
+                  <div className="min-w-0 flex-1"><h2 id="automation-template-heading" className="text-sm font-bold text-[#18233C]">روش ساخت پاسخ خودکار</h2><p className="mt-1 text-xs leading-5 text-[#5A6B87]">یک پاسخ تازه از ابتدا بساز، یا پاسخ خودکار موجود را بدون تغییر تنظیمات به محتوای انتخابی متصل کن.</p></div>
                 </div>
                 {loadingResources ? (
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2" aria-label="در حال دریافت پاسخ‌های قبلی">{[0, 1].map((item) => <div key={item} className="h-[76px] animate-pulse rounded-xl bg-[#F1F5F9]" />)}</div>
                 ) : automationTemplates.length > 0 ? (
+                  <div className="max-h-72 overflow-y-auto overscroll-contain rounded-xl pr-1">
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {automationTemplates.map((template) => {
                     const previewMessages = normalizeMessages(template.messages);
@@ -398,12 +407,17 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                     </button>;
                   })}
                   </div>
+                  </div>
                 ) : (
                   <p className="rounded-xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] px-3 py-4 text-xs leading-6 text-[#64748B]">هنوز پاسخ خودکار قبلی برای این نوع وجود ندارد. می‌توانی تنظیمات را از ابتدا وارد کنی.</p>
                 )}
+                <div className="mt-4 grid grid-cols-1 gap-2 border-t border-[#E6ECF5] pt-4 sm:grid-cols-2">
+                  <button type="button" onClick={startNewAutomation} className="flex min-h-11 items-center justify-center rounded-xl border border-[#BFDBFE] bg-[#EFF6FF] px-4 text-xs font-bold text-[#2F61FD] transition hover:bg-[#DBEAFE]">ساخت پاسخ جدید</button>
+                  <button type="button" onClick={() => { if (selectedTemplateId) { setCreationMode("existing"); setError(""); } else setError("ابتدا یکی از پاسخ‌های قبلی را انتخاب کنید."); }} disabled={!selectedTemplateId || loadingResources} className="flex min-h-11 items-center justify-center rounded-xl bg-[#2F61FD] px-4 text-xs font-bold text-white transition hover:bg-[#1E4BD8] disabled:cursor-not-allowed disabled:bg-[#E2E8F0] disabled:text-[#94A3B8]">انتخاب پاسخ</button>
+                </div>
               </section>
             )}
-            {creationMode === "new" && (
+            {flowStep === 3 && creationMode === "new" && (
             <>
             <div className="rounded-2xl border border-[#E6ECF5] bg-white p-4 sm:p-5">
               <div className="mb-3 flex items-center gap-3"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EFF6FF] text-sm font-bold text-[#2F61FD]">۲</span><label className="block text-sm font-bold text-[#18233C]">شرط فعال‌سازی</label></div>
@@ -511,6 +525,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                   <button type="button" onClick={() => { setMessage((current) => ({ ...current, messageType: "TEXT" })); void saveAutomation({ ...message, messageType: "TEXT" }); }} disabled={saving} className="flex min-h-12 w-full items-center justify-center rounded-xl px-4 text-sm font-bold text-white transition disabled:opacity-60" style={{ background: dairaPalette.primary.main }}>
                     {saving ? "در حال ساخت پاسخ خودکار..." : "ساخت پاسخ خودکار"}
                   </button>
+                  <button type="button" onClick={() => setFlowStep(2)} disabled={saving} className="mt-2 flex min-h-10 w-full items-center justify-center rounded-xl border border-[#E2E8F0] bg-white px-4 text-xs font-bold text-[#64748B] disabled:opacity-50">بازگشت به انتخاب پاسخ</button>
                 </section>
               ) : (
                 <PublishingStoryAutomationSetup
@@ -540,17 +555,13 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             </>
             )}
 
-            {creationMode === "existing" && (
+            {flowStep === 2 && creationMode === "existing" && selectedTemplateId && (
               <section className="rounded-2xl border border-[#BFDBFE] bg-[#EFF6FF] p-4 sm:p-5">
                 <h3 className="text-sm font-bold text-[#18233C]">اتصال پاسخ خودکار موجود</h3>
-                <p className="mt-2 text-xs leading-6 text-[#5A6B87]">
-                  {selectedTemplateId ? "تنظیمات، کلمات کلیدی و پیام‌های پاسخ انتخاب‌شده حفظ می‌شوند. فقط محتوای انتخابی به آن متصل خواهد شد." : "یک پاسخ خودکار از فهرست بالا انتخاب کنید."}
-                </p>
-                {selectedTemplateId && (
-                  <button type="button" onClick={() => void saveAutomation()} disabled={saving || mediaLoading || selectedMediaIds.length === 0} className="mt-4 flex min-h-12 w-full items-center justify-center rounded-xl bg-[#2F61FD] px-4 text-sm font-bold text-white transition hover:bg-[#1E4BD8] disabled:opacity-60">
-                    {saving ? "در حال اتصال..." : "اتصال پاسخ به محتوای انتخاب‌شده"}
-                  </button>
-                )}
+                <p className="mt-2 text-xs leading-6 text-[#5A6B87]">تنظیمات، کلمات کلیدی و پیام‌های این پاسخ حفظ می‌شوند. با تأیید، فقط محتوای انتخاب‌شده به آن متصل خواهد شد.</p>
+                <button type="button" onClick={() => void saveAutomation()} disabled={saving || mediaLoading || selectedMediaIds.length === 0} className="mt-4 flex min-h-12 w-full items-center justify-center rounded-xl bg-[#2F61FD] px-4 text-sm font-bold text-white transition hover:bg-[#1E4BD8] disabled:opacity-60">
+                  {saving ? "در حال اتصال..." : "اتصال پاسخ به محتوای انتخاب‌شده"}
+                </button>
               </section>
             )}
 
