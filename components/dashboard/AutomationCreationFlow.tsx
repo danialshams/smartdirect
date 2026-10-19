@@ -626,7 +626,6 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
           </div>
 
           {error && <div role="alert" className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-6 text-[#B91C1C]">{error}</div>}
-        </div>
 
         {flowStep === 1 && (
           <div className="daira-flow-action-dock" role="group" aria-label="ادامه ساخت پاسخ خودکار">
@@ -672,6 +671,6 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             </div>
           </div>
         )}
-      </div>
+    </div>
   );
 }
