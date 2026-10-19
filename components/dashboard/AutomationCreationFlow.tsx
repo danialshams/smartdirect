@@ -372,64 +372,41 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     { number: 2 as const, title: "انتخاب پاسخ" },
     { number: 3 as const, title: "تنظیم پاسخ" },
   ];
-  const activeStepTitle = flowSteps[flowStep - 1]?.title ?? flowSteps[0].title;
-
   return (
     <div dir="rtl" className="mx-auto w-full max-w-4xl space-y-5 py-2 sm:py-4">
-      <section
-        aria-label="مراحل ساخت پاسخ خودکار"
-        className="rounded-2xl border p-2 sm:p-4"
-        style={{ borderColor: dairaPalette.border, background: dairaPalette.background.surface }}
-      >
-        <div className="flex items-center justify-between gap-3">
-          <span className="shrink-0 text-[11px] font-bold sm:text-xs" style={{ color: dairaPalette.text.body }}>
-            مرحله {new Intl.NumberFormat("fa-IR").format(flowStep)} از ۳
-          </span>
-          <span className="min-w-0 truncate text-left text-[11px] font-bold sm:text-xs" style={{ color: dairaPalette.text.heading }}>
-            {activeStepTitle}
-          </span>
-        </div>
-        <ol className="mt-2 grid list-none grid-cols-3 gap-1.5 sm:gap-2 p-0" aria-label="وضعیت مراحل ساخت پاسخ خودکار">
+      <nav aria-label="مراحل ساخت پاسخ خودکار" className="w-full">
+        <ol className="m-0 grid list-none grid-cols-3 items-stretch gap-1.5 p-0 sm:gap-2" aria-label="وضعیت مراحل ساخت پاسخ خودکار">
           {flowSteps.map((step) => {
             const isActive = step.number === flowStep;
             const isComplete = step.number < flowStep;
-            const stepSurface = isActive
-              ? dairaPalette.secondary.hoverBackground
-              : isComplete
-                ? dairaPalette.secondary.activeBackground
-                : dairaPalette.background.surfaceHover;
-            const stepBorder = isActive
-              ? dairaPalette.primary.main
-              : isComplete
-                ? dairaPalette.secondary.activeBackground
-                : dairaPalette.border;
-            const stepText = isActive
-              ? dairaPalette.text.heading
-              : isComplete
+            const stepColor = isComplete
+              ? dairaPalette.status.success
+              : isActive
                 ? dairaPalette.primary.main
-                : dairaPalette.text.muted;
-            const stepCircleBackground = isActive
-              ? dairaPalette.primary.main
-              : isComplete
-                ? dairaPalette.background.surface
-                : dairaPalette.background.surfaceActive;
-            const stepCircleColor = isActive
-              ? dairaPalette.background.surface
-              : isComplete
+                : dairaPalette.border;
+            const stepText = isComplete
+              ? dairaPalette.status.success
+              : isActive
                 ? dairaPalette.primary.main
                 : dairaPalette.text.muted;
             const stepContent = (
               <>
                 <span
-                  className="inline-flex h-5 w-5 sm:h-6 sm:w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-extrabold"
-                  style={{ background: stepCircleBackground, color: stepCircleColor, border: `1px solid ${stepBorder}` }}
+                  className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-extrabold sm:h-6 sm:w-6"
+                  style={{
+                    borderColor: stepColor,
+                    background: isComplete ? dairaPalette.status.success : "transparent",
+                    color: isComplete ? dairaPalette.background.surface : stepText,
+                  }}
                   aria-hidden="true"
                 >
                   {isComplete ? <Check size={13} strokeWidth={2.5} /> : new Intl.NumberFormat("fa-IR").format(step.number)}
                 </span>
-                <span className="min-w-0 leading-4 max-[480px]:hidden">{step.title}</span>
+                <span className="min-w-0 leading-4">{step.title}</span>
               </>
             );
+            const stepClass = "flex min-h-[40px] w-full items-center justify-center gap-1 rounded-full border bg-transparent px-1.5 py-1.5 text-center text-[9px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--daira-primary)] sm:min-h-12 sm:gap-2 sm:px-3 sm:text-xs";
+            const stepStyle = { borderColor: stepColor, color: stepText };
             return (
               <li key={step.number} className="min-w-0">
                 {isComplete ? (
@@ -437,8 +414,8 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                     type="button"
                     onClick={() => { setFlowStep(step.number); setError(""); }}
                     aria-label={`بازگشت به مرحله ${new Intl.NumberFormat("fa-IR").format(step.number)}: ${step.title}`}
-                    className="flex min-h-[38px] w-full items-center justify-center gap-1 rounded-xl border px-1 py-1 text-center text-[10px] font-bold transition-colors hover:brightness-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--daira-primary)] sm:min-h-12 sm:gap-2 sm:px-3 sm:py-2 sm:text-xs"
-                    style={{ borderColor: stepBorder, background: stepSurface, color: stepText }}
+                    className={stepClass}
+                    style={stepStyle}
                   >
                     {stepContent}
                   </button>
@@ -446,8 +423,8 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                   <div
                     aria-current={isActive ? "step" : undefined}
                     aria-disabled={!isActive}
-                    className="flex min-h-[38px] w-full items-center justify-center gap-1 rounded-xl border px-1 py-1 text-center text-[10px] font-bold sm:min-h-12 sm:gap-2 sm:px-3 sm:py-2 sm:text-xs"
-                    style={{ borderColor: stepBorder, background: stepSurface, color: stepText }}
+                    className={stepClass}
+                    style={stepStyle}
                   >
                     {stepContent}
                   </div>
@@ -456,7 +433,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             );
           })}
         </ol>
-      </section>
+      </nav>
 
       <div className="space-y-5">
             {flowStep === 1 && !mediaId && (
