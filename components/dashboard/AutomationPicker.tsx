@@ -76,7 +76,7 @@ export default function AutomationPicker({
 
       <div className="mt-3">
         {loading ? (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4" aria-label="در حال دریافت محتوا">
+          <div className="grid grid-cols-3 gap-2 sm:gap-3" aria-label="در حال دریافت محتوا">
             {Array.from({ length: 8 }).map((_, index) => (
               <div
                 key={index}
@@ -87,7 +87,7 @@ export default function AutomationPicker({
           </div>
         ) : filteredItems.length ? (
           <div className="max-h-[55dvh] overflow-y-auto overscroll-contain rounded-xl pr-1 sm:max-h-[560px]">
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-4">
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
               {filteredItems.map((item) => {
                 const selected = selectedIds.includes(item.id);
                 const image = item.thumbnail_url || item.media_url;
