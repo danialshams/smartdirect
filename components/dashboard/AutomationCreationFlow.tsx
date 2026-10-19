@@ -441,12 +441,12 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType }
         color: #fff !important;
       }
       .automation-create-flow button {
-        background-color: #2F61FD !important;
-        border-color: #2F61FD !important;
+        background-color: var(--daira-primary) !important;
+        border-color: var(--daira-primary) !important;
       }
       .automation-create-flow button:hover:not(:disabled) {
-        background-color: #1E4BD8 !important;
-        border-color: #1E4BD8 !important;
+        background-color: var(--daira-primary-hover) !important;
+        border-color: var(--daira-primary-hover) !important;
       }
       .automation-create-flow button:disabled {
         background-color: #2F61FD !important;
