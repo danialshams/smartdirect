@@ -389,7 +389,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             {activeStepTitle}
           </span>
         </div>
-        <ol className="mt-3 grid list-none grid-cols-3 gap-2 p-0" aria-label="انتخاب مرحله قبلی">
+        <ol className="mt-3 grid list-none grid-cols-3 gap-2 p-0" aria-label="وضعیت مراحل ساخت پاسخ خودکار">
           {flowSteps.map((step) => {
             const isActive = step.number === flowStep;
             const isComplete = step.number < flowStep;
