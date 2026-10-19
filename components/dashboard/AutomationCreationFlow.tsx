@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Camera, MessageCircleReply } from "lucide-react";
+import { ArrowRight, Camera } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -347,7 +347,6 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                 selectedIds={selectedMediaIds}
                 loading={mediaLoading}
                 onToggle={(id) => setSelectedMediaIds((current) => triggerType === "COMMENT_KEYWORD" ? (current.includes(id) ? current.filter((value) => value !== id) : [...current, id]) : [id])}
-                description={triggerType === "COMMENT_KEYWORD" ? "یک یا چند پست یا ریلز را انتخاب کنید." : "یک استوری را انتخاب کنید تا پاسخ خودکار به آن متصل شود."}
               />
             )}
             {flowStep === 1 && triggerType === "STORY_REPLY_KEYWORD" && mediaId && (
