@@ -131,7 +131,7 @@ export default function AutomationPicker({
                   <span
                     className="absolute left-1 top-1 flex h-5 w-5 items-center justify-center rounded-full"
                     style={{
-                      background: selected ? dairaPalette.primary.main : "rgba(255,255,255,0.92)",
+                      background: selected ? dairaPalette.primary.main : dairaPalette.background.surface,
                       color: selected ? dairaPalette.background.surface : "transparent",
                     }}
                   >
