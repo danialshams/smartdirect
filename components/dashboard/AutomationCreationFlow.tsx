@@ -304,7 +304,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             <div className="min-w-0">
               <h1 className="text-base font-bold text-[#18233C]">{title}</h1>
               <p className="mt-1.5 text-xs leading-5 text-[#5A6B87]">{description}</p>
-              <div className="mt-3 flex flex-wrap items-center gap-2"><span className="inline-flex items-center rounded-full border border-[#DBEAFE] bg-[#EFF6FF] px-2.5 py-1 text-[10px] font-bold text-[#2F61FD]">گام ۲ از ۳ · تنظیم پاسخ</span><span className="inline-flex items-center rounded-full bg-white px-2.5 py-1 text-[10px] font-medium text-[#64748B]">{triggerType === "COMMENT_KEYWORD" ? "پاسخ خودکار کامنت" : "پاسخ خودکار استوری"}</span></div>
+              <div className="mt-3 flex flex-wrap items-center gap-2"><span className="inline-flex items-center rounded-full border border-[#DBEAFE] bg-[#EFF6FF] px-2.5 py-1 text-[10px] font-bold text-[#2F61FD]">مراحل ساخت در همین صفحه</span><span className="inline-flex items-center rounded-full bg-white px-2.5 py-1 text-[10px] font-medium text-[#64748B]">{triggerType === "COMMENT_KEYWORD" ? "پاسخ خودکار کامنت" : "پاسخ خودکار استوری"}</span></div>
             </div>
           </div>
 
