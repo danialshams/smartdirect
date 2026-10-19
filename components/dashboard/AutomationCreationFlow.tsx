@@ -857,7 +857,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType }
               </div>
               <footer className="flex shrink-0 items-center justify-center gap-2 border-t border-[var(--daira-border)] bg-white px-3 py-3 sm:px-4">
                 <div className="flex items-center justify-center gap-2">
-                  <button type="button" onClick={() => setMediaDialogOpen(false)} className="sd-neutral-button min-h-9 rounded-xl border border-[var(--daira-border)] px-4 text-xs font-bold text-[var(--daira-text)] transition hover:bg-[var(--daira-surface-hover)]>انصراف</button>
+                  <button type="button" onClick={() => setMediaDialogOpen(false)} className="sd-neutral-button min-h-9 rounded-xl border border-[var(--daira-border)] px-4 text-xs font-bold text-[var(--daira-text)] transition hover:bg-[var(--daira-surface-hover)]">انصراف</button>
                   <button type="button" onClick={confirmMediaSelection} disabled={mediaLoading} className="min-h-9 rounded-xl bg-[var(--daira-primary)] px-4 text-xs font-bold text-white transition hover:bg-[var(--daira-primary-hover)] disabled:cursor-not-allowed disabled:opacity-50">تأیید انتخاب</button>
                 </div>
               </footer>
