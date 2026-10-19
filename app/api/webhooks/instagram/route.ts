@@ -2215,6 +2215,7 @@ async function processInstagramStoryReply(
           accessToken,
           pendingGateId: pendingGate.id,
           followGateText: gateText,
+          followGateButtonText: automation.followGateButtonText?.trim() || "بررسی فالو",
         });
 
         if (gateSent) {
@@ -2423,16 +2424,15 @@ async function sendFollowGateMessage({
   accessToken,
   pendingGateId,
   followGateText,
+  followGateButtonText,
 }: {
   instagramAccount: InstagramAccountData;
   participantId: string;
   accessToken: string;
   pendingGateId: string;
   followGateText: string;
+  followGateButtonText: string;
 }): Promise<boolean> {
-  const instagramProfileUrl = `https://www.instagram.com/${encodeURIComponent(
-    instagramAccount.igUsername,
-  )}/`;
   const postbackPayload = `${FOLLOW_GATE_PAYLOAD_PREFIX}${pendingGateId}`;
 
   try {
@@ -2448,8 +2448,7 @@ async function sendFollowGateMessage({
               template_type: "button",
               text: followGateText,
               buttons: [
-                { type: "web_url", url: instagramProfileUrl, title: "فالو کردن" },
-                { type: "postback", title: "بررسی فالو", payload: postbackPayload },
+                { type: "postback", title: followGateButtonText.trim().slice(0, 20) || "بررسی فالو", payload: postbackPayload },
               ],
             },
           },
@@ -2717,6 +2716,7 @@ async function processFollowGatePostback({
         pendingGateId: updatedGate.id,
 
         followGateText: gateText,
+        followGateButtonText: pendingGate.automation.followGateButtonText?.trim() || "بررسی فالو",
       });
 
       return true;
@@ -3780,6 +3780,7 @@ async function processCommentEvent(
         pendingGateId: pendingGate.id,
 
         followGateText: gateText,
+        followGateButtonText: matchedAutomation.followGateButtonText?.trim() || "بررسی فالو",
       });
 
       if (gateSent) {
