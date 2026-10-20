@@ -143,7 +143,8 @@ function StoryAnswer({ reply, index, level, showcases, loadingResources, onChang
   useStorageUploadLease([reply.destinationMediaUrl]);
 
   function changeDestination(value: QuickReplyDraft["destinationType"]) {
-    if (reply.destinationMediaUrl && !mediaTypes.includes(value as typeof mediaTypes[number]))
+    const keepPreviousFile = reply.destinationType === value && mediaTypes.includes(value as typeof mediaTypes[number]);
+    if (reply.destinationMediaUrl && !keepPreviousFile)
       void requestStorageCleanupByPublicUrl(reply.destinationMediaUrl).catch(() => undefined);
     setUploadError("");
     onChange({
@@ -151,8 +152,8 @@ function StoryAnswer({ reply, index, level, showcases, loadingResources, onChang
       destinationText: value === "TEXT" ? reply.destinationText : "",
       destinationFormId: "",
       destinationShowcaseId: value === "SHOWCASE" ? reply.destinationShowcaseId : "",
-      destinationMediaUrl: mediaTypes.includes(value as typeof mediaTypes[number]) ? reply.destinationMediaUrl : "",
-      destinationMediaId: mediaTypes.includes(value as typeof mediaTypes[number]) ? reply.destinationMediaId : "",
+      destinationMediaUrl: keepPreviousFile ? reply.destinationMediaUrl : "",
+      destinationMediaId: keepPreviousFile ? reply.destinationMediaId : "",
       destinationQuestion: value === "FORM" ? reply.destinationQuestion : "",
       destinationQuickReplies: value === "FORM"
         ? (reply.destinationQuickReplies.length ? reply.destinationQuickReplies : [createEmptyQuickReply(), createEmptyQuickReply()])
@@ -185,8 +186,10 @@ function StoryAnswer({ reply, index, level, showcases, loadingResources, onChang
         <button type="button" aria-expanded={expanded} aria-label={`تنظیم گزینه ${index + 1}`}
           onClick={() => setExpanded((value) => !value)}
           className="sd-neutral-button flex min-w-0 flex-1 items-center gap-2 text-right">
-          <span className="min-w-0 flex-1 truncate text-xs font-bold text-[#0F172A]">{title}</span>
-          {reply.destinationType && <span className="hidden shrink-0 text-[10px] text-[#64748B] sm:block">{answerLabels[reply.destinationType]}</span>}
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-xs font-bold text-[#0F172A]">{title}</span>
+            {reply.destinationType && <span className="mt-0.5 block text-[10px] text-[#64748B]">{answerLabels[reply.destinationType]}</span>}
+          </span>
           <span className={["shrink-0 text-[10px] font-medium", complete ? "text-[#15803D]" : "text-[#D97706]"].join(" ")}>
             {complete ? "آماده" : "ناقص"}
           </span>
