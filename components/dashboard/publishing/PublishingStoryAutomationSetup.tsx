@@ -104,6 +104,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
   const [showcaseSource, setShowcaseSource] = useState<"new" | "existing">(storyEditMode && Boolean(message.showcaseId) ? "existing" : "new");
   const [selectedShowcaseId, setSelectedShowcaseId] = useState(storyEditMode ? message.showcaseId : "");
   const hydratedShowcaseRef = useRef("");
+  const initiallyEditingFormRef = useRef(storyEditMode && message.messageType === "FORM");
   const [formSource, setFormSource] = useState<"new" | "existing">("new");
   const [selectedFormTemplateId, setSelectedFormTemplateId] = useState("");
   const newFormDraftRef = useRef<{ text: string; quickReplies: QuickReplyDraft[] } | null>(null);
@@ -265,7 +266,9 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
   const existingShowcaseEdited = Boolean(storyCreateMode && showcaseSource === "existing" && selectedShowcase &&
     comparableSlides(slides) !== comparableSlides(originalSlides));
   const storyShowcaseReady = storyCreateMode && showcaseSource === "existing"
-    ? Boolean(selectedShowcase && slides.length > 0 && (existingShowcaseEdited ? hasValidSlide : true))
+    ? (selectedShowcase
+      ? Boolean(slides.length > 0 && (existingShowcaseEdited ? hasValidSlide : true))
+      : Boolean(storyEditMode && message.showcaseId && selectedShowcaseId === message.showcaseId))
     : (Boolean(message.showcaseId) || hasValidSlide);
   function releaseDraftImage(url: string) {
     if (!url) return;
@@ -731,7 +734,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                         setFormSaved(false);
                       }}
                       className={["sd-neutral-button min-h-10 rounded-lg px-2 text-xs font-bold transition", formSource === value ? "bg-white text-[#1D4ED8] shadow-sm" : "bg-transparent text-[#64748B] hover:text-[#0F172A]"].join(" ")}>
-                      {value === "new" ? "فرم جدید" : "استفاده از فرم‌های قبلی"}
+                      {value === "new" ? (initiallyEditingFormRef.current ? "ویرایش فرم فعلی" : "فرم جدید") : "استفاده از فرم‌های قبلی"}
                     </button>
                   ))}
                 </div>
