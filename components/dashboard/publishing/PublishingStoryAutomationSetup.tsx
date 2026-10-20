@@ -438,7 +438,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
           </div>
 
           <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3" role="group" aria-label={storyCreateMode ? "انتخاب نوع پاسخ استوری" : "انتخاب نوع پاسخ"}>
-            {options.filter(({ value }) => !((hideVideo && value === "VIDEO") || (hideForm && value === "FORM"))).map(({ value, label, description, Icon }) => {
+            {options.filter(({ value }) => !((hideVideo && value === "VIDEO") || (hideForm && value === "FORM"))).map(({ value, label, Icon }) => {
               const active = responseType === value;
               return (
                 <button
@@ -447,7 +447,8 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                   aria-pressed={active}
                   onClick={() => selectType(value)}
                   className={[
-                    "sd-neutral-button group flex min-h-[78px] items-center gap-2.5 rounded-xl border px-3 py-3 text-right transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB]/30",
+                    "sd-neutral-button group flex items-center gap-2.5 rounded-xl border px-3 text-right transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB]/30",
+                    storyCreateMode ? "min-h-[64px] py-2.5" : "min-h-[78px] py-3",
                     active ? "border-[#2563EB] bg-[#EFF6FF] ring-1 ring-[#2563EB]/15" : "border-[#E2E8F0] bg-white hover:border-[#93B5FC] hover:bg-[#F8FAFC]",
                   ].join(" ")}
                 >
@@ -456,7 +457,6 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className={["block text-[13px] font-bold", active ? "text-[#1D4ED8]" : "text-[#0F172A]"].join(" ")}>{label}</span>
-                    {storyCreateMode && <span className="mt-1 block text-[10px] leading-4 text-[#64748B]">{description}</span>}
                   </span>
                   <span aria-hidden="true" className={["flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border", active ? "border-[#2563EB] bg-[#2563EB] text-white" : "border-[#CBD5E1] bg-white"].join(" ")}>
                     {active && <Check size={12} strokeWidth={3} />}
@@ -530,8 +530,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
 
       {responseType === "SHOWCASE" && (
         storyCreateMode ? (
-          <div className="space-y-4 rounded-2xl border border-[#E2E8F0] bg-[#FBFCFE] p-3.5 sm:p-5">
-            <h3 className="text-sm font-bold text-[#0F172A]">ویترین</h3>
+          <div className="space-y-4">
             <div className="grid grid-cols-2 gap-1 rounded-xl bg-[#F1F5F9] p-1" role="group" aria-label="روش انتخاب ویترین">
                 {(["new", "existing"] as const).map((value) => (
                   <button key={value} type="button" aria-pressed={showcaseSource === value}
@@ -551,8 +550,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
             </div>
             {showcaseSource === "existing" && (
               <div className="space-y-2">
-                <label htmlFor="story-existing-showcase" className="block text-xs font-bold text-[#334155]">انتخاب ویترین قبلی</label>
-                <select id="story-existing-showcase" value={selectedShowcaseId} disabled={loadingResources}
+                <select id="story-existing-showcase" aria-label="انتخاب ویترین قبلی" value={selectedShowcaseId} disabled={loadingResources}
                   onChange={(event) => {
                     const id = event.target.value;
                     setSelectedShowcaseId(id);
@@ -567,13 +565,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                   {showcases.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
                 </select>
                 {!loadingResources && showcases.length === 0 && <p className="text-xs text-[#64748B]">هنوز ویترینی نداری.</p>}
-                {selectedShowcase && (
-                  <p className="rounded-xl border border-[#DBEAFE] bg-[#EFF6FF] px-3 py-3 text-xs leading-6 text-[#1E40AF]">
-                    {existingShowcaseEdited
-                      ? "تغییرات در یک کپی جدید ذخیره می‌شوند؛ ویترین قبلی و پاسخ‌های متصل به آن دست‌نخورده می‌مانند."
-                      : "همهٔ اسلایدهای ویترین زیر نمایش داده می‌شوند. می‌توانی بدون تغییر از آن استفاده کنی یا هر بخش را ویرایش کنی."}
-                  </p>
-                )}
+                {existingShowcaseEdited && <p className="text-xs text-[#64748B]">تغییرات در یک نسخهٔ جدید ذخیره می‌شوند.</p>}
               </div>
             )}
             {(showcaseSource === "new" || selectedShowcase) && (
@@ -594,11 +586,6 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                 onAdd={() => setSlides((current) => current.length < MAX_SHOWCASE_ITEMS ? [...current, createSlide()] : current)}
                 onUpload={(id, file) => { void uploadSlideImage(id, file); }}
               />
-            )}
-            {showcaseSource === "existing" && !selectedShowcase && (
-              <p className="rounded-xl border border-dashed border-[#CBD5E1] bg-white px-3 py-8 text-center text-xs text-[#64748B]">
-                برای مشاهده و ویرایش اسلایدها، یک ویترین قبلی را انتخاب کن.
-              </p>
             )}
           </div>
         ) : (
@@ -707,8 +694,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
         <div className={["space-y-4 transition-opacity duration-200", formSaved ? "opacity-55" : ""].join(" ")}>
         {storyCreateMode ? (
           <div className="space-y-4">
-            <div className="space-y-3 rounded-2xl border border-[#E2E8F0] bg-[#FBFCFE] p-3.5 sm:p-4">
-                <h3 className="text-sm font-bold text-[#0F172A]">فرم</h3>
+            <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-1 rounded-xl bg-[#F1F5F9] p-1" role="group" aria-label="ساخت یا استفاده مجدد از فرم">
                   {(["new", "existing"] as const).map((value) => (
                     <button key={value} type="button" aria-pressed={formSource === value}
@@ -738,8 +724,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                 </div>
                 {formSource === "existing" && (
                   <div className="space-y-2">
-                    <label htmlFor="story-previous-form" className="block text-xs font-bold text-[#334155]">انتخاب فرم قبلی</label>
-                    <select id="story-previous-form" value={selectedFormTemplateId}
+                    <select id="story-previous-form" aria-label="انتخاب فرم قبلی" value={selectedFormTemplateId}
                       onChange={(event) => {
                         const id = event.target.value;
                         const template = formTemplates.find((item) => item.id === id);
@@ -756,11 +741,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                       {formTemplates.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
                     </select>
                     {!loadingResources && formTemplates.length === 0 && <p className="text-xs text-[#64748B]">هنوز فرم ذخیره‌شده‌ای نداری.</p>}
-                    {selectedFormTemplateId && (
-                      <p className="rounded-xl bg-[#EFF6FF] px-3 py-3 text-xs leading-6 text-[#1E40AF]">
-                        این نسخه قابل ویرایش است؛ فرم قبلی تغییر نمی‌کند.
-                      </p>
-                    )}
+                    {selectedFormTemplateId && <p className="text-xs text-[#64748B]">فرم قبلی بدون تغییر می‌ماند.</p>}
                   </div>
                 )}
               </div>
@@ -773,11 +754,6 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                 onUpdate={onUpdate}
                 onUploadMedia={uploadFormMedia}
               />
-            )}
-            {formSource === "existing" && !selectedFormTemplateId && (
-              <p className="rounded-xl border border-dashed border-[#CBD5E1] bg-white px-3 py-8 text-center text-xs text-[#64748B]">
-                برای دیدن همهٔ سؤال‌ها و ویرایش گزینه‌ها، یک فرم قبلی را انتخاب کن.
-              </p>
             )}
           </div>
         ) : (
