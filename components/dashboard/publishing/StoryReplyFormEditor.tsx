@@ -98,7 +98,7 @@ type AnswerProps = {
 };
 
 function StoryAnswer({ reply, index, level, instagramAccountId, showcases, loadingResources, onChange, onRemove, onUploadMedia }: AnswerProps) {
-  const [showcaseMode, setShowcaseMode] = useState<"existing" | "new">(reply.destinationShowcaseId ? "existing" : "new");
+  const [showcaseMode, setShowcaseMode] = useState<"choose" | "existing" | "new">(reply.destinationShowcaseId ? "existing" : "choose");
   const [previousShowcaseId, setPreviousShowcaseId] = useState(reply.destinationShowcaseId || "");
   const [createdShowcaseId, setCreatedShowcaseId] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -110,7 +110,7 @@ function StoryAnswer({ reply, index, level, instagramAccountId, showcases, loadi
     if (reply.destinationMediaUrl && !keepPreviousFile)
       void requestStorageCleanupByPublicUrl(reply.destinationMediaUrl).catch(() => undefined);
     setUploadError("");
-    if (value === "SHOWCASE" && reply.destinationType !== "SHOWCASE") setShowcaseMode(reply.destinationShowcaseId ? "existing" : "new");
+    if (value === "SHOWCASE" && reply.destinationType !== "SHOWCASE") setShowcaseMode(reply.destinationShowcaseId ? "existing" : "choose");
     onChange({
       destinationType: value,
       destinationText: value === "TEXT" ? reply.destinationText : "",
@@ -219,7 +219,7 @@ function StoryAnswer({ reply, index, level, instagramAccountId, showcases, loadi
                     {showcases.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
                   </select>
                 </div>
-              ) : createdShowcaseId ? (
+              ) : showcaseMode === "new" ? (createdShowcaseId ? (
                 <div role="status" className="flex items-center justify-between gap-3 rounded-xl bg-[#ECFDF5] px-3 py-3 text-xs text-[#166534]">
                   <span className="font-semibold">ویترین جدید انتخاب شد.</span>
                   <button type="button" onClick={() => {
@@ -237,20 +237,19 @@ function StoryAnswer({ reply, index, level, instagramAccountId, showcases, loadi
                     setCreatedShowcaseId(id);
                     onChange({ destinationShowcaseId: id });
                   }}
-                />
-              )}
+                />) : null}
             </div>
           )}
           {reply.destinationType === "FORM" && level < 3 && (
             <div className="mt-4 border-r-2 border-[#DBEAFE] bg-white/70 py-3 pr-3 sm:pr-4">
-            <StoryBranch
-              question={reply.destinationQuestion} replies={reply.destinationQuickReplies}
-              instagramAccountId={instagramAccountId} showcases={showcases} loadingResources={loadingResources} onUploadMedia={onUploadMedia} level={level + 1}
-              onChange={(patch) => onChange({
-                ...(patch.question !== undefined ? { destinationQuestion: patch.question } : {}),
-                ...(patch.replies !== undefined ? { destinationQuickReplies: patch.replies } : {}),
-              })}
-            />
+              <StoryBranch
+                question={reply.destinationQuestion} replies={reply.destinationQuickReplies}
+                instagramAccountId={instagramAccountId} showcases={showcases} loadingResources={loadingResources} onUploadMedia={onUploadMedia} level={level + 1}
+                onChange={(patch) => onChange({
+                  ...(patch.question !== undefined ? { destinationQuestion: patch.question } : {}),
+                  ...(patch.replies !== undefined ? { destinationQuickReplies: patch.replies } : {}),
+                })}
+              />
             </div>
           )}
           {mediaTypes.includes(reply.destinationType as typeof mediaTypes[number]) && (
