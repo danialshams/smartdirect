@@ -12,7 +12,7 @@ export class LiveReplyValidationError extends Error {
 export type ValidatedLiveRule = {
   keyword: string; matchMode: "EXACT" | "CONTAINS_ANY"; initialText: string;
   followupKeyword: string; message: MessageDraft | null;
-  requireFollow: boolean; followGateText: string;
+  requireFollow: boolean; followGateText: string; followGateButtonText: string;
 };
 
 function parseOption(raw: unknown, level: number, seen: Set<string>): QuickReplyDraft {
@@ -69,6 +69,10 @@ export function validateLiveReplyInput(input: unknown): ValidatedLiveRule {
   const followGateText = asString(data.followGateText);
   if (requireFollow && (!followGateText || followGateText.length > 640))
     throw new LiveReplyValidationError("متن درخواست فالو باید بین ۱ تا ۶۴۰ کاراکتر باشد.");
+  const buttonRaw = data.followGateButtonText;
+  const followGateButtonText = buttonRaw === undefined || buttonRaw === null ? "بررسی فالو" : asString(buttonRaw);
+  if (requireFollow && (!followGateButtonText || followGateButtonText.length > 20))
+    throw new LiveReplyValidationError("عنوان بررسی فالو باید بین ۱ تا ۲۰ کاراکتر باشد.");
   const hasFollowup = data.followupEnabled === true;
   let message: MessageDraft | null = null;
   if (hasFollowup) {
@@ -94,7 +98,8 @@ export function validateLiveReplyInput(input: unknown): ValidatedLiveRule {
     };
   }
   return { keyword, matchMode, initialText, followupKeyword: hasFollowup ? followupKeyword : "",
-    message, requireFollow, followGateText: requireFollow ? followGateText : "" };
+    message, requireFollow, followGateText: requireFollow ? followGateText : "",
+    followGateButtonText: requireFollow ? followGateButtonText : "" };
 }
 
 export function serializeLiveQuickReply(item: QuickReplyDraft) {
