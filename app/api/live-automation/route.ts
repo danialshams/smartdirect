@@ -53,6 +53,7 @@ export async function POST(request: NextRequest) {
     try { await invalidateAutomationCache(account.id); }
     catch (e) { console.warn("Live automation cache invalidate failed:", e); }
     const subscription = await subscribeLiveComments(account.id);
+    if (!subscription.subscribed) console.error("[LIVE_WEBHOOK] subscription-on-rule-create-failed", { instagramAccountId: account.id, automationId: rule.id, error: subscription.error ?? "Meta did not confirm subscription" });
     return NextResponse.json({ success: true, data: displayLiveReply(rule), subscription }, { status: 201 });
   } catch (error) {
     if (error instanceof LiveReplyValidationError)
