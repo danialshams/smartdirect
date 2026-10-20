@@ -7,6 +7,7 @@ import {
 } from "@/generated/prisma/client";
 
 import { sendAutomationMessage } from "./send-automation-message";
+import { scheduleSmartReminder } from "./smart-reminders";
 import { evaluateAutomationConditions } from "./conditions";
 import { resolveAutomationAction } from "./action";
 import { resolveNextSequentialMessage, resolveQuickReplyDestination } from "./quick-reply-flow";
@@ -368,7 +369,7 @@ async function executeAutomationInternal(input: ExecuteAutomationInput) {
       throw new Error(destinationResult.error || "Quick reply destination could not be sent.");
     }
 
-    await prisma.conversationMessage.create({
+    const savedDestination = await prisma.conversationMessage.create({
       data: {
         conversationId: conversation.id,
         direction: MessageDirection.OUTBOUND,
@@ -379,6 +380,12 @@ async function executeAutomationInternal(input: ExecuteAutomationInput) {
         igMessageId: destinationResult.igMessageId ?? null,
       },
     });
+
+    try {
+      await scheduleSmartReminder({ automationId: automation.id, conversationId: conversation.id, anchorMessageId: savedDestination.id });
+    } catch (error) {
+      console.error("[SMART_REMINDER] scheduling after quick reply failed", error);
+    }
 
     const quickReplyResult = {
       success: true,
@@ -399,6 +406,7 @@ async function executeAutomationInternal(input: ExecuteAutomationInput) {
 
   const visitedMessages = new Set<string>();
   const executedMessages: string[] = [];
+  let lastAutomatedOutboundId: string | null = null;
   let privateReplyCommentId = input.commentId ?? null;
   const isCommentTriggeredFlow = Boolean(input.commentId);
 
@@ -500,7 +508,7 @@ async function executeAutomationInternal(input: ExecuteAutomationInput) {
     // 12. Save outbound message
     // =======================================================
 
-    await prisma.conversationMessage.create({
+    const savedOutgoing = await prisma.conversationMessage.create({
       data: {
         conversationId: conversation.id,
         direction: MessageDirection.OUTBOUND,
@@ -512,6 +520,7 @@ async function executeAutomationInternal(input: ExecuteAutomationInput) {
       },
     });
 
+    lastAutomatedOutboundId = savedOutgoing.id;
     executedMessages.push(currentMessage.id);
 
     // A comment-triggered flow gets exactly one Private Reply.
@@ -557,6 +566,14 @@ async function executeAutomationInternal(input: ExecuteAutomationInput) {
       isActive: true,
     },
   });
+
+  if (!isCommentTriggeredFlow && lastAutomatedOutboundId) {
+    try {
+      await scheduleSmartReminder({ automationId: automation.id, conversationId: conversation.id, anchorMessageId: lastAutomatedOutboundId });
+    } catch (error) {
+      console.error("[SMART_REMINDER] scheduling after DM automation failed", error);
+    }
+  }
 
   const result = {
     success: true,
