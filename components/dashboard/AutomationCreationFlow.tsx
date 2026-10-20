@@ -393,7 +393,11 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
   async function saveAutomation(finalMessage?: MessageDraft) {
     if (saving) return;
-    const cleanKeywords = keyword.split(",").map((item) => item.trim()).filter(Boolean);
+    if (triggerType === "COMMENT_KEYWORD" && !canSaveComment) {
+      setError(commentFormError || "برای ذخیره، ابتدا تغییری در پاسخ خودکار ایجاد کنید.");
+      return;
+    }
+    const cleanKeywords = keywords;
     const currentMessage = finalMessage ?? message;
     const targetMediaIds = Array.from(new Set(selectedMediaIds.filter(Boolean)));
     const normalizedLinkButtons = linkButtons.map((button) => ({ ...button, url: normalizeExternalLink(button.url) }));
@@ -444,9 +448,9 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             requireFollow,
             followGateText: requireFollow ? followGateText.trim() : null,
             followGateButtonText: requireFollow ? followGateButtonText.trim() : null,
-            isActive,
-            sendDm,
-            messages: allMessages,
+            isActive: editAutomation.isActive !== false,
+            sendDm: shouldSendDm,
+            messages: enteredDm ? allMessages : [],
           }),
         });
         const result = await response.json();
@@ -491,13 +495,8 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
       return;
     }
 
-    if (triggerType === "COMMENT_KEYWORD" && dmMode === "TEXT_WITH_LINK") {
-      const invalidButton = normalizedLinkButtons.find((button) => {
-        let parsed: URL | null = null;
-        try { parsed = new URL(button.url); } catch { parsed = null; }
-        return !parsed || !["http:", "https:"].includes(parsed.protocol) || !parsed.hostname || !button.title.trim() || button.title.trim().length > 20;
-      });
-      if (invalidButton) { setError("برای هر دکمه، آدرس لینک معتبر و عنوان حداکثر ۲۰ کاراکتر وارد کنید."); return; }
+    if (triggerType === "COMMENT_KEYWORD" && dmMode === "TEXT_WITH_LINK" && enteredDm) {
+      if (!mainLinksValid) { setError("برای هر دکمه، آدرس لینک و عنوان معتبر وارد کنید."); return; }
       if (currentMessage.text.trim().length > 640) { setError("متن دایرکت همراه دکمه حداکثر ۶۴۰ کاراکتر است."); return; }
     }
     if (selectedMediaIds.length === 0) {
@@ -520,13 +519,9 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
       setError(`حداکثر ${MAX_KEYWORDS} کلمه کلیدی می‌توانید اضافه کنید.`);
       return;
     }
-    if (currentMessage.messageType === "TEXT" && !currentMessage.text.trim()) {
-      setError("متن پاسخ را وارد کنید.");
-      return;
-    }
-    if (["IMAGE", "VIDEO", "AUDIO"].includes(currentMessage.messageType) && !currentMessage.mediaUrl.trim()) {
-      setError("فایل پاسخ را انتخاب کنید.");
-      return;
+    if (triggerType === "STORY_REPLY_KEYWORD") {
+      try { validateMessages([currentMessage]); }
+      catch (e) { setError(e instanceof Error ? e.message : "پاسخ استوری ناقص است."); return; }
     }
 
     setSaving(true);
@@ -546,7 +541,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
           commentReplyText: triggerType === "COMMENT_KEYWORD" ? commentReply.trim() || null : null,
           replyText: null,
           likeComment: false,
-          sendDm: true,
+          sendDm: triggerType === "COMMENT_KEYWORD" ? enteredDm : true,
           likeIncomingDm: false,
           likeStoryReply: false,
           requireFollow: triggerType === "COMMENT_KEYWORD" && requireFollow,
@@ -561,50 +556,57 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
       }
 
       const automationId = result.data.id as string;
-      const messageResponse = await fetch("/api/automations/" + automationId + "/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          messageType: currentMessage.messageType,
-          text: currentMessage.text.trim() || null,
-          mediaUrl: currentMessage.mediaUrl.trim() || null,
-          mediaId: currentMessage.mediaId.trim() || null,
-          showcaseId: currentMessage.showcaseId || null,
-          formId: currentMessage.formId || null,
-          order: 0,
-          linkButtons: triggerType === "COMMENT_KEYWORD" && dmMode === "TEXT_WITH_LINK" ? normalizedLinkButtons.map((button) => ({ url: button.url, title: button.title.trim() })) : [],
-        }),
-      });
-      const messageResult = await messageResponse.json();
-      if (!messageResponse.ok || !messageResult.success || !messageResult.data?.id) {
-        throw new Error(messageResult.error || messageResult.message || "ذخیره پیام پاسخ ناموفق بود.");
-      }
-
-      const serverMessageId = messageResult.data.id as string;
-      for (const reply of currentMessage.quickReplies) {
-        const qrResponse = await fetch("/api/automations/" + automationId + "/messages/" + serverMessageId + "/quick-replies", {
+      const messagesToCreate = triggerType === "COMMENT_KEYWORD"
+        ? (enteredDm ? [currentMessage, ...extraMessages] : [])
+        : [currentMessage];
+      for (const [index, entry] of messagesToCreate.entries()) {
+        const entryLinks = triggerType === "COMMENT_KEYWORD" && entry.messageType === "TEXT"
+          ? (index === 0
+            ? dmMode === "TEXT_WITH_LINK" ? normalizedLinkButtons : []
+            : extraLinks[entry.id] || [])
+          : [];
+        const messageResponse = await fetch("/api/automations/" + automationId + "/messages", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
           body: JSON.stringify({
-            title: reply.title.trim(),
-            payload: reply.payload,
-            destinationType: reply.destinationType,
-            destinationText: reply.destinationText.trim(),
-            destinationFormId: reply.destinationFormId,
-            destinationShowcaseId: reply.destinationShowcaseId,
-            destinationMediaUrl: reply.destinationMediaUrl,
-            destinationMediaId: reply.destinationMediaId,
-            destinationQuestion: reply.destinationQuestion.trim(),
-            question: reply.destinationQuestion.trim(),
-            destinationQuickReplies: serializeQuickReplies(reply.destinationQuickReplies),
-            nextMessageId: null,
+            messageType: entry.messageType,
+            text: entry.text.trim() || null,
+            mediaUrl: entry.mediaUrl.trim() || null,
+            mediaId: entry.mediaId.trim() || null,
+            showcaseId: entry.showcaseId || null,
+            formId: entry.formId || null,
+            order: index,
+            linkButtons: entryLinks.map((button) => ({ title: button.title.trim(), url: normalizeExternalLink(button.url) })),
           }),
         });
-        const qrResult = await qrResponse.json();
-        if (!qrResponse.ok || !qrResult.success) {
-          throw new Error(qrResult.error || qrResult.message || "ذخیره گزینه‌های پاسخ ناموفق بود.");
+        const messageResult = await messageResponse.json();
+        if (!messageResponse.ok || !messageResult.success || !messageResult.data?.id)
+          throw new Error(messageResult.error || messageResult.message || "ذخیره پیام پاسخ ناموفق بود.");
+        const serverMessageId = messageResult.data.id as string;
+        for (const reply of entry.quickReplies) {
+          const qrResponse = await fetch("/api/automations/" + automationId + "/messages/" + serverMessageId + "/quick-replies", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({
+              title: reply.title.trim(),
+              payload: reply.payload,
+              destinationType: reply.destinationType,
+              destinationText: reply.destinationText.trim(),
+              destinationFormId: reply.destinationFormId,
+              destinationShowcaseId: reply.destinationShowcaseId,
+              destinationMediaUrl: reply.destinationMediaUrl,
+              destinationMediaId: reply.destinationMediaId,
+              destinationQuestion: reply.destinationQuestion.trim(),
+              question: reply.destinationQuestion.trim(),
+              destinationQuickReplies: serializeQuickReplies(reply.destinationQuickReplies),
+              nextMessageId: null,
+            }),
+          });
+          const qrResult = await qrResponse.json();
+          if (!qrResponse.ok || !qrResult.success)
+            throw new Error(qrResult.error || qrResult.message || "ذخیره گزینه‌های پاسخ ناموفق بود.");
         }
       }
 
