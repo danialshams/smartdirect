@@ -447,7 +447,8 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                   aria-pressed={active}
                   onClick={() => selectType(value)}
                   className={[
-                    "sd-neutral-button group flex min-h-[64px] items-center gap-2.5 rounded-xl border px-3 py-2.5 text-right transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB]/30",
+                    "sd-neutral-button group flex items-center gap-2.5 rounded-xl border px-3 text-right transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB]/30",
+                    storyCreateMode ? "min-h-[64px] py-2.5" : "min-h-[78px] py-3",
                     active ? "border-[#2563EB] bg-[#EFF6FF] ring-1 ring-[#2563EB]/15" : "border-[#E2E8F0] bg-white hover:border-[#93B5FC] hover:bg-[#F8FAFC]",
                   ].join(" ")}
                 >
