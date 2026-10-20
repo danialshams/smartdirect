@@ -276,6 +276,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
 
         const nextItems: ReplyItem[] = [];
         for (const automation of allAutomations) {
+          if (automation.mediaId === "__smartdirect_live_comments_v1__") continue;
           const automationMediaIds = Array.from(new Set([
             ...(automation.mediaId ? [automation.mediaId] : []),
             ...(typeof automation.mediaIds === "string" ? automation.mediaIds.split(",").map((id) => id.trim()).filter(Boolean) : []),
