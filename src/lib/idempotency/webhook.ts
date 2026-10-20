@@ -13,7 +13,7 @@ import {
 
 const WEBHOOK_OPERATION = "WEBHOOK_INSTAGRAM_EVENT";
 
-type InstagramWebhookEventType = "MESSAGING" | "COMMENT";
+type InstagramWebhookEventType = "MESSAGING" | "COMMENT" | "LIVE_COMMENT";
 
 type ClaimInstagramWebhookEventInput = {
   instagramAccountId: string;
