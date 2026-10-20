@@ -18,9 +18,16 @@ export default function CommentAutomationEditSkeleton() {
     <div dir="rtl" role="status" aria-label="در حال بارگذاری ویرایش پاسخ خودکار کامنت" aria-busy="true" className="mx-auto w-full max-w-4xl space-y-5 py-2 sm:py-4">
       <div className="space-y-2">
         <GuideSkeleton width="w-44" />
-        <div className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--daira-border,#E2E8F0)] bg-white p-4 sm:p-5">
-          <div className="flex items-center gap-2"><Bar className="h-11 w-11 rounded-xl" /><Bar className="h-11 w-11 rounded-xl" /><Bar className="h-11 w-11 rounded-xl" /><Bar className="mr-2 h-4 w-20" /></div>
-          <Bar className="h-11 w-28 rounded-xl" />
+        <div className="space-y-4 rounded-2xl border border-[var(--daira-border,#E2E8F0)] bg-white p-4 sm:p-5">
+          <div className="flex items-center justify-between gap-3"><Bar className="h-5 w-32" /><Bar className="h-10 w-36 rounded-xl" /></div>
+          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5">
+            {Array.from({ length: 10 }, (_, i) => (
+              <div key={i} className="overflow-hidden rounded-xl border border-[var(--daira-border,#E2E8F0)]">
+                <Bar className="aspect-square w-full rounded-none" />
+                <Bar className="mx-auto my-2 h-3 w-3/4" />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
       <div className="space-y-2">
