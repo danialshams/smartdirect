@@ -25,6 +25,7 @@ export type EditableCommentAutomation = {
   keyword: string | null;
   keywordMatchMode?: string | null;
   commentReplyText?: string | null;
+  likeStoryReply?: boolean;
   requireFollow?: boolean;
   followGateText?: string | null;
   followGateButtonText?: string | null;
@@ -157,6 +158,8 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
       keyword: editAutomation.keyword || "",
       keywordMatchMode: editAutomation.keywordMatchMode === "CONTAINS_ANY" ? "CONTAINS_ANY" as const : "EXACT" as const,
       commentReply: editAutomation.commentReplyText || "",
+      likeStoryReply: Boolean(editAutomation.likeStoryReply),
+      isActive: editAutomation.isActive !== false,
       requireFollow: Boolean(editAutomation.requireFollow),
       followGateText: editAutomation.followGateText || "برای دریافت پاسخ، ابتدا پیج ما را فالو کنید.",
       followGateButtonText: editAutomation.followGateButtonText || "بررسی فالو",
@@ -182,7 +185,10 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   const [mediaLoading, setMediaLoading] = useState(true);
   const [commentReply, setCommentReply] = useState(() => initialEditState?.commentReply ?? "");
   const [requireFollow, setRequireFollow] = useState(() => initialEditState?.requireFollow ?? false);
-  const [likeStoryReply, setLikeStoryReply] = useState(false);
+  const [likeStoryReply, setLikeStoryReply] = useState(() => initialEditState?.likeStoryReply ?? false);
+  const [isActive, setIsActive] = useState(() => initialEditState?.isActive ?? true);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [dmMode, setDmMode] = useState<"TEXT" | "TEXT_WITH_LINK">(() => initialEditState?.dmMode ?? "TEXT");
   const [followGateText, setFollowGateText] = useState(() => initialEditState?.followGateText ?? "برای دریافت پاسخ، ابتدا پیج ما را فالو کنید.");
   const [followGateButtonText, setFollowGateButtonText] = useState(() => initialEditState?.followGateButtonText ?? "بررسی فالو");
@@ -314,7 +320,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   const keywords = useMemo(() => keyword.split(/[,،;؛\n]+/).map((item) => item.trim()).filter(Boolean), [keyword]);
   const formSnapshot = JSON.stringify({
     mediaIds: [...selectedMediaIds].sort(), keyword, keywordMatchMode, commentReply,
-    requireFollow, followGateText, followGateButtonText, dmMode,
+    likeStoryReply, isActive, requireFollow, followGateText, followGateButtonText, dmMode,
     linkButtons, message, extraMessages, extraLinks,
   });
   const originalSnapshot = initialEditState ? JSON.stringify({
@@ -322,6 +328,8 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     keyword: initialEditState.keyword,
     keywordMatchMode: initialEditState.keywordMatchMode,
     commentReply: initialEditState.commentReply,
+    likeStoryReply: initialEditState.likeStoryReply,
+    isActive: initialEditState.isActive,
     requireFollow: initialEditState.requireFollow,
     followGateText: initialEditState.followGateText,
     followGateButtonText: initialEditState.followGateButtonText,
