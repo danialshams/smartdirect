@@ -5,10 +5,9 @@ import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 const PublishingStoryAutomationSetup = dynamic(() => import("./publishing/PublishingStoryAutomationSetup"), { ssr: false });
-import { createEmptyMessage, normalizeMessages, type MessageDraft, type QuickReplyDraft, type Showcase, type FormItem } from "./automation-form-utils";
+import { createEmptyMessage, normalizeMessages, validateMessages, type MessageDraft, type QuickReplyDraft, type Showcase, type FormItem } from "./automation-form-utils";
 import { dairaPalette } from "../../lib/design-system/palette";
 import AutomationPicker from "./AutomationPicker";
-import CommentAutomationEditSkeleton from "./CommentAutomationEditSkeleton";
 import { useDashboardBackNavigation } from "./DashboardBackNavigationContext";
 
 type Account = { id: string; igUsername: string; igUserId: string; isConnected: boolean };
@@ -133,29 +132,56 @@ function serializeQuickReplies(replies: QuickReplyDraft[]): unknown[] {
 export default function AutomationCreationFlow({ account, mediaId, triggerType, editAutomation }: Props) {
   const router = useRouter();
   const isEditing = Boolean(editAutomation);
-  const [editHydrated, setEditHydrated] = useState(!editAutomation);
-  const [isActive, setIsActive] = useState(true);
-  const [sendDm, setSendDm] = useState(true);
-  const [advancedMessageEditor, setAdvancedMessageEditor] = useState(false);
-  const [extraMessages, setExtraMessages] = useState<MessageDraft[]>([]);
-  const [extraLinks, setExtraLinks] = useState<Record<string, LinkButton[]>>({});
-  const [keyword, setKeyword] = useState("");
+  // Initialize editing directly from the fetched record; don't render a second skeleton
+  // while another effect hydrates form fields.
+  const initialEditState = useMemo(() => {
+    if (!editAutomation) return null;
+    const mediaIds = Array.from(new Set([
+      ...(editAutomation.mediaId ? [editAutomation.mediaId] : []),
+      ...(editAutomation.mediaIds || "").split(",").map((value) => value.trim()).filter(Boolean),
+    ]));
+    const rawMessages = Array.isArray(editAutomation.messages) ? editAutomation.messages : [];
+    const loadedMessages = normalizeMessages(rawMessages);
+    const first: MessageDraft = loadedMessages[0] ?? { ...createEmptyMessage(), text: editAutomation.replyText || "" };
+    const firstLinks = readSavedLinks(rawMessages[0]);
+    const extraLinks: Record<string, LinkButton[]> = {};
+    loadedMessages.slice(1).forEach((item, index) => {
+      extraLinks[item.id] = readSavedLinks(rawMessages[index + 1]);
+    });
+    return {
+      mediaIds,
+      keyword: editAutomation.keyword || "",
+      keywordMatchMode: editAutomation.keywordMatchMode === "CONTAINS_ANY" ? "CONTAINS_ANY" as const : "EXACT" as const,
+      commentReply: editAutomation.commentReplyText || "",
+      requireFollow: Boolean(editAutomation.requireFollow),
+      followGateText: editAutomation.followGateText || "برای دریافت پاسخ، ابتدا پیج ما را فالو کنید.",
+      followGateButtonText: editAutomation.followGateButtonText || "بررسی فالو",
+      dmMode: firstLinks.length ? "TEXT_WITH_LINK" as const : "TEXT" as const,
+      linkButtons: firstLinks.length ? firstLinks : [{ title: "", url: "" }],
+      message: first,
+      extraMessages: loadedMessages.slice(1),
+      extraLinks,
+    };
+  }, [editAutomation]);
+  const [extraMessages, setExtraMessages] = useState<MessageDraft[]>(() => initialEditState?.extraMessages ?? []);
+  const [extraLinks, setExtraLinks] = useState<Record<string, LinkButton[]>>(() => initialEditState?.extraLinks ?? {});
+  const [keyword, setKeyword] = useState(() => initialEditState?.keyword ?? "");
   const [keywordDraft, setKeywordDraft] = useState("");
-  const [keywordMatchMode, setKeywordMatchMode] = useState<"EXACT" | "CONTAINS_ANY">("EXACT");
+  const [keywordMatchMode, setKeywordMatchMode] = useState<"EXACT" | "CONTAINS_ANY">(() => initialEditState?.keywordMatchMode ?? "EXACT");
   const MAX_KEYWORDS = 10;
   const MAX_LINK_BUTTONS = 3;
-  const [linkButtons, setLinkButtons] = useState<Array<{ title: string; url: string }>>([{ title: "", url: "" }]);
+  const [linkButtons, setLinkButtons] = useState<LinkButton[]>(() => initialEditState?.linkButtons ?? [{ title: "", url: "" }]);
   const [mediaItems, setMediaItems] = useState<Array<{id:string; caption?:string; media_type?:string; media_product_type?:string; thumbnail_url?:string|null; media_url?:string|null; timestamp?:string}>>([]);
-  const [selectedMediaIds, setSelectedMediaIds] = useState<string[]>(mediaId ? [mediaId] : []);
+  const [selectedMediaIds, setSelectedMediaIds] = useState<string[]>(() => initialEditState?.mediaIds ?? (mediaId ? [mediaId] : []));
   const [mediaDialogOpen, setMediaDialogOpen] = useState(false);
   const [draftSelectedMediaIds, setDraftSelectedMediaIds] = useState<string[]>([]);
   const [mediaLoading, setMediaLoading] = useState(true);
-  const [commentReply, setCommentReply] = useState("");
-  const [requireFollow, setRequireFollow] = useState(false);
-  const [dmMode, setDmMode] = useState<"TEXT" | "TEXT_WITH_LINK">("TEXT");
-  const [followGateText, setFollowGateText] = useState("برای دریافت پاسخ، ابتدا پیج ما را فالو کنید.");
-  const [followGateButtonText, setFollowGateButtonText] = useState("بررسی فالو");
-  const [message, setMessage] = useState<MessageDraft>(() => createEmptyMessage());
+  const [commentReply, setCommentReply] = useState(() => initialEditState?.commentReply ?? "");
+  const [requireFollow, setRequireFollow] = useState(() => initialEditState?.requireFollow ?? false);
+  const [dmMode, setDmMode] = useState<"TEXT" | "TEXT_WITH_LINK">(() => initialEditState?.dmMode ?? "TEXT");
+  const [followGateText, setFollowGateText] = useState(() => initialEditState?.followGateText ?? "برای دریافت پاسخ، ابتدا پیج ما را فالو کنید.");
+  const [followGateButtonText, setFollowGateButtonText] = useState(() => initialEditState?.followGateButtonText ?? "بررسی فالو");
+  const [message, setMessage] = useState<MessageDraft>(() => initialEditState?.message ?? createEmptyMessage());
   const [showcases, setShowcases] = useState<Showcase[]>([]);
   const [forms, setForms] = useState<FormItem[]>([]);
   const [automationTemplates, setAutomationTemplates] = useState<AutomationTemplate[]>([]);
@@ -166,41 +192,6 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   const [completed, setCompleted] = useState(false);
   const [error, setError] = useState("");
   const { registerBackHandler } = useDashboardBackNavigation();
-
-  useEffect(() => {
-    if (!editAutomation) return;
-    const media = Array.from(new Set([
-      ...(editAutomation.mediaId ? [editAutomation.mediaId] : []),
-      ...(editAutomation.mediaIds || "").split(",").map((value) => value.trim()).filter(Boolean),
-    ]));
-    const rawMessages = Array.isArray(editAutomation.messages) ? editAutomation.messages : [];
-    const loadedMessages = normalizeMessages(rawMessages);
-    const first = loadedMessages[0] ?? { ...createEmptyMessage(), text: editAutomation.replyText || "" };
-    const firstLinks = readSavedLinks(rawMessages[0]);
-    const otherLinks: Record<string, LinkButton[]> = {};
-    for (let index = 1; index < loadedMessages.length; index += 1) {
-      const item = loadedMessages[index];
-      if (item) otherLinks[item.id] = readSavedLinks(rawMessages[index]);
-    }
-    setSelectedMediaIds(media);
-    setDraftSelectedMediaIds(media);
-    setKeyword(editAutomation.keyword || "");
-    setKeywordDraft("");
-    setKeywordMatchMode(editAutomation.keywordMatchMode === "CONTAINS_ANY" ? "CONTAINS_ANY" : "EXACT");
-    setCommentReply(editAutomation.commentReplyText || "");
-    setRequireFollow(Boolean(editAutomation.requireFollow));
-    setFollowGateText(editAutomation.followGateText || "برای دریافت پاسخ، ابتدا پیج ما را فالو کنید.");
-    setFollowGateButtonText(editAutomation.followGateButtonText || "بررسی فالو");
-    setIsActive(editAutomation.isActive !== false);
-    setSendDm(editAutomation.sendDm !== false);
-    setMessage(first);
-    setExtraMessages(loadedMessages.slice(1));
-    setExtraLinks(otherLinks);
-    setAdvancedMessageEditor(first.messageType !== "TEXT" || first.quickReplies.length > 0);
-    setDmMode(firstLinks.length ? "TEXT_WITH_LINK" : "TEXT");
-    setLinkButtons(firstLinks.length ? firstLinks : [{ title: "", url: "" }]);
-    setEditHydrated(true);
-  }, [editAutomation]);
 
   useEffect(() => {
     const handleBack = () => {
@@ -273,7 +264,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   }
 
   function openMediaDialog() {
-    setDraftSelectedMediaIds(selectedMediaIds);
+    setDraftSelectedMediaIds([...selectedMediaIds]);
     setMediaDialogOpen(true);
   }
 
@@ -283,7 +274,69 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     setError("");
   }
 
-  const keywords = useMemo(() => keyword.split(",").map((item) => item.trim()).filter(Boolean), [keyword]);
+  const keywords = useMemo(() => keyword.split(/[,،;؛\n]+/).map((item) => item.trim()).filter(Boolean), [keyword]);
+  const formSnapshot = JSON.stringify({
+    mediaIds: [...selectedMediaIds].sort(), keyword, keywordMatchMode, commentReply,
+    requireFollow, followGateText, followGateButtonText, dmMode,
+    linkButtons, message, extraMessages, extraLinks,
+  });
+  const originalSnapshot = initialEditState ? JSON.stringify({
+    mediaIds: [...initialEditState.mediaIds].sort(),
+    keyword: initialEditState.keyword,
+    keywordMatchMode: initialEditState.keywordMatchMode,
+    commentReply: initialEditState.commentReply,
+    requireFollow: initialEditState.requireFollow,
+    followGateText: initialEditState.followGateText,
+    followGateButtonText: initialEditState.followGateButtonText,
+    dmMode: initialEditState.dmMode,
+    linkButtons: initialEditState.linkButtons,
+    message: initialEditState.message,
+    extraMessages: initialEditState.extraMessages,
+    extraLinks: initialEditState.extraLinks,
+  }) : "";
+  const hasUnsavedEdits = isEditing && formSnapshot !== originalSnapshot;
+  const enteredDm = message.messageType !== "TEXT" || Boolean(message.text.trim()) ||
+    extraMessages.length > 0 || dmMode === "TEXT_WITH_LINK";
+  const dmMessages = [message, ...extraMessages];
+  let validDm = false;
+  if (enteredDm) {
+    try { validDm = validateMessages(dmMessages); } catch { validDm = false; }
+  }
+  const validUrl = (value: string) => {
+    try { const url = new URL(normalizeExternalLink(value)); return ["http:", "https:"].includes(url.protocol) && Boolean(url.hostname); }
+    catch { return false; }
+  };
+  const validateLinks = (items: LinkButton[]) => items.length <= MAX_LINK_BUTTONS && items.every((button) =>
+    Boolean(button.title.trim()) && button.title.trim().length <= 20 && button.url.trim().length <= 2048 && validUrl(button.url));
+  const mainLinksValid = dmMode !== "TEXT_WITH_LINK" || (message.messageType === "TEXT" &&
+    linkButtons.length > 0 && validateLinks(linkButtons) && message.text.trim().length <= 640);
+  const extraLinksValid = extraMessages.every((item) => item.messageType !== "TEXT" ||
+    validateLinks(extraLinks[item.id] || []));
+  const commentFormError = triggerType !== "COMMENT_KEYWORD" ? "" :
+    mediaLoading || loadingResources ? "اطلاعات صفحه هنوز کامل بارگذاری نشده است." :
+    selectedMediaIds.length === 0 ? "حداقل یک پست یا ریلز انتخاب کنید." :
+    keywordMatchMode === "EXACT" && keywords.length === 0 ? "حداقل یک کلمه کلیدی وارد کنید." :
+    keywords.length > MAX_KEYWORDS ? "حداکثر ده کلمه کلیدی مجاز است." :
+    commentReply.length > 2000 ? "پاسخ زیر کامنت بیش از ۲۰۰۰ کاراکتر است." :
+    enteredDm && !validDm ? "همه پیام‌های دایرکت را کامل وارد کنید." :
+    enteredDm && (!mainLinksValid || !extraLinksValid) ? "عنوان و آدرس دکمه‌های لینک را کامل و معتبر وارد کنید." :
+    !commentReply.trim() && !enteredDm ? "حداقل یک پاسخ زیر کامنت یا پیام دایرکت وارد کنید." :
+    requireFollow && !enteredDm ? "برای فعال کردن شرط فالو، پیام دایرکت لازم است." :
+    requireFollow && (!followGateText.trim() || followGateText.length > 640 ||
+      !followGateButtonText.trim() || followGateButtonText.trim().length > 20) ?
+      "متن درخواست فالو و عنوان دکمه بررسی فالو را کامل وارد کنید." : "";
+  const canSaveComment = !saving && !commentFormError && (!isEditing || hasUnsavedEdits);
+  const canAddMessage = !saving && extraMessages.length < 19 && (!isEditing || hasUnsavedEdits) &&
+    enteredDm && validDm && mainLinksValid && extraLinksValid;
+  const initialDmSnapshot = initialEditState ? JSON.stringify({
+    message: initialEditState.message, extraMessages: initialEditState.extraMessages,
+    dmMode: initialEditState.dmMode, linkButtons: initialEditState.linkButtons,
+    extraLinks: initialEditState.extraLinks,
+  }) : "";
+  const currentDmSnapshot = JSON.stringify({ message, extraMessages, dmMode, linkButtons, extraLinks });
+  const dmWasEdited = isEditing && currentDmSnapshot !== initialDmSnapshot;
+  const shouldSendDm = !enteredDm ? false :
+    editAutomation && !dmWasEdited ? editAutomation.sendDm !== false : true;
 
   useEffect(() => {
     let cancelled = false;
@@ -561,11 +614,6 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     } finally {
       setSaving(false);
     }
-  }
-
-  if (!editHydrated) {
-    // The edit form must never flash empty defaults before stored fields are populated.
-    return <CommentAutomationEditSkeleton />;
   }
 
   const selectedMediaCount = selectedMediaIds.length;
