@@ -103,18 +103,21 @@ export async function processLiveComment(value: unknown, instagramAccount: {
     message: { id: `live-intro-${rule.id}`, messageType: "TEXT", text: reply, mediaUrl: null, mediaId: null },
   });
   if (!send.success) throw new Error(send.error || "Live private reply could not be delivered");
+  // Meta returns the messaging recipient ID for Private Replies. Prefer it
+  // over the commenter ID when linking the later incoming DM continuation.
+  const dmParticipantId = send.recipientId?.trim() || participantId;
 
   // A reply by the viewer opens the normal 24-hour DM messaging window.
   // We never send a second unsolicited message after the Private Reply.
   if (shouldGate || (followupKeyword && rule.messages.length)) {
     const gate = await prisma.pendingFollowGate.findFirst({
-      where: { instagramAccountId: instagramAccount.id, participantId, automationId: rule.id, status: "PENDING" },
+      where: { instagramAccountId: instagramAccount.id, participantId: dmParticipantId, automationId: rule.id, status: "PENDING" },
       select: { id: true },
     });
     const data = { expiresAt: new Date(Date.now() + LIVE_PENDING_LIFETIME_MS) };
     if (gate) await prisma.pendingFollowGate.update({ where: { id: gate.id }, data });
     else await prisma.pendingFollowGate.create({ data: {
-      instagramAccountId: instagramAccount.id, participantId, automationId: rule.id, status: "PENDING", ...data,
+      instagramAccountId: instagramAccount.id, participantId: dmParticipantId, automationId: rule.id, status: "PENDING", ...data,
     } });
   }
   console.info("[LIVE_REPLY] private-reply-processed", { accountId: instagramAccount.id, automationId: rule.id, commentId, eventId, followGate: shouldGate });
