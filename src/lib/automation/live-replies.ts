@@ -173,6 +173,15 @@ export async function processLiveReplyContinuation(input: {
     });
     if (!result.success) throw new Error(result.error || "Live followup reply failed");
   }
-  await prisma.pendingFollowGate.update({ where: { id: matched.id }, data: { status: "COMPLETED" } });
+  // One viewer may comment more than once during the same Live. All those
+  // comments can create pending continuations, but the viewer must receive
+  // the configured DM follow-up only once after explicitly opting in.
+  await prisma.pendingFollowGate.updateMany({
+    where: {
+      instagramAccountId, participantId, automationId: rule.id,
+      status: "PENDING",
+    },
+    data: { status: "COMPLETED" },
+  });
   return true;
 }
