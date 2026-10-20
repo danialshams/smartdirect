@@ -15,6 +15,7 @@ type Props = {
   message: MessageDraft;
   showcases: Showcase[];
   forms: FormItem[];
+  formTemplates?: StoryFormTemplate[];
   loadingResources: boolean;
   instagramAccountId: string;
   onUpdate: (patch: Partial<MessageDraft>) => void;
@@ -39,6 +40,7 @@ type Props = {
   finalSaveDisabled?: boolean;
 };
 
+export type StoryFormTemplate = { id: string; title: string; text: string; quickReplies: QuickReplyDraft[] };
 type ResponseType = "TEXT" | "AUDIO" | "SHOWCASE" | "IMAGE" | "VIDEO" | "FORM";
 
 const options: Array<{ value: ResponseType; label: string; description: string; Icon: typeof MessageSquareText }> = [
@@ -50,13 +52,45 @@ const options: Array<{ value: ResponseType; label: string; description: string; 
   { value: "FORM", label: "فرم", description: "سؤال و گزینه‌های پاسخ", Icon: ClipboardList },
 ];
 
-type ShowcaseSlide = { id: string; title: string; description: string; imageUrl: string; previewUrl: string };
-
-function createSlide(): ShowcaseSlide {
-  return { id: `slide_${crypto.randomUUID()}`, title: "", description: "", imageUrl: "", previewUrl: "" };
+type ShowcaseSlide = {
+  id: string; title: string; description: string; imageUrl: string; previewUrl: string;
+  price: string; originalPrice: string; linkUrl: string; buttonText: string; isActive: boolean;
+};
+type StoredShowcaseItem = {
+  id?: string; title?: string; description?: string | null; imageUrl?: string | null;
+  price?: string | number | null; originalPrice?: string | number | null;
+  linkUrl?: string | null; buttonText?: string | null; isActive?: boolean;
+};
+function slideFromItem(item: StoredShowcaseItem): ShowcaseSlide {
+  return {
+    id: typeof item.id === "string" ? item.id : `slide_${crypto.randomUUID()}`,
+    title: item.title || "", description: item.description || "",
+    imageUrl: item.imageUrl || "", previewUrl: item.imageUrl || "",
+    price: item.price == null ? "" : String(item.price),
+    originalPrice: item.originalPrice == null ? "" : String(item.originalPrice),
+    linkUrl: item.linkUrl || "", buttonText: item.buttonText || "",
+    isActive: item.isActive !== false,
+  };
+}
+function comparableSlides(slides: ShowcaseSlide[]): string {
+  return JSON.stringify(slides.map(({ title, description, imageUrl, price, originalPrice, linkUrl, buttonText, isActive }) =>
+    ({ title, description, imageUrl, price, originalPrice, linkUrl, buttonText, isActive })));
+}
+function cloneFormTree(replies: QuickReplyDraft[]): QuickReplyDraft[] {
+  return replies.map((reply) => ({
+    ...reply,
+    id: `quick_reply_${crypto.randomUUID()}`,
+    payload: `payload_${crypto.randomUUID()}`,
+    nextMessageId: null,
+    destinationQuickReplies: cloneFormTree(reply.destinationQuickReplies || []),
+  }));
 }
 
-const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetupHandle, Props>(function PublishingStoryAutomationSetup({ message, showcases, forms, loadingResources, instagramAccountId, onUpdate, onSavedChange, keywordValid, onContinue, disabled, hideVideo = false, hideForm = false, textOnly = false, storyCreateMode = false, extraSettings, finalActions, responseTypeTitle = "نوع پاسخ خودکار", responseTypeDescription = "نوع پاسخی را که می‌خواهید برای این محتوا ارسال شود انتخاب کنید.", textPlaceholder = "متنی که به‌عنوان پاسخ پیام شروع گفتگو برای کاربر ارسال می‌شود...", showFinalSave = false, finalSaveLabel = "ساخت پیام شروع گفتگو", usePublishingSaveLabel = false, finalSaveLoadingLabel = "در حال ساخت پیام شروع گفتگو...", finalSaveDisabled = false }: Props, ref) {
+function createSlide(): ShowcaseSlide {
+  return { id: `slide_${crypto.randomUUID()}`, title: "", description: "", imageUrl: "", previewUrl: "", price: "", originalPrice: "", linkUrl: "", buttonText: "", isActive: true };
+}
+
+const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetupHandle, Props>(function PublishingStoryAutomationSetup({ message, showcases, forms, formTemplates = [], loadingResources, instagramAccountId, onUpdate, onSavedChange, keywordValid, onContinue, disabled, hideVideo = false, hideForm = false, textOnly = false, storyCreateMode = false, extraSettings, finalActions, responseTypeTitle = "نوع پاسخ خودکار", responseTypeDescription = "نوع پاسخی را که می‌خواهید برای این محتوا ارسال شود انتخاب کنید.", textPlaceholder = "متنی که به‌عنوان پاسخ پیام شروع گفتگو برای کاربر ارسال می‌شود...", showFinalSave = false, finalSaveLabel = "ساخت پیام شروع گفتگو", usePublishingSaveLabel = false, finalSaveLoadingLabel = "در حال ساخت پیام شروع گفتگو...", finalSaveDisabled = false }: Props, ref) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [retryFile, setRetryFile] = useState<File | null>(null);
@@ -66,6 +100,10 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
   const [savingShowcase, setSavingShowcase] = useState(false);
   const [showcaseSaved, setShowcaseSaved] = useState(Boolean(message.showcaseId));
   const [showcaseSource, setShowcaseSource] = useState<"new" | "existing">("new");
+  const [selectedShowcaseId, setSelectedShowcaseId] = useState("");
+  const [formSource, setFormSource] = useState<"new" | "existing">("new");
+  const [selectedFormTemplateId, setSelectedFormTemplateId] = useState("");
+  const newFormDraftRef = useRef<{ text: string; quickReplies: QuickReplyDraft[] } | null>(null);
   const [formSaved, setFormSaved] = useState(false);
   const [formSaving, setFormSaving] = useState(false);
   const [formUploadsInFlight, setFormUploadsInFlight] = useState(0);
@@ -147,21 +185,14 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
   }
 
   useEffect(() => {
+    // The story editor handles source selection explicitly. The legacy
+    // publishing editors still hydrate their selected showcase from props.
+    if (storyCreateMode) return;
     const existing = showcases.find((item) => item.id === message.showcaseId);
-    const items = Array.isArray(existing?.items) ? existing.items : [];
-    if (items.length > 0) {
-      setSlides(items.map((item: unknown) => {
-        const record = item && typeof item === "object" ? item as Record<string, unknown> : {};
-        return ({
-        id: typeof record.id === "string" ? record.id : `slide_${crypto.randomUUID()}`,
-        title: typeof record.title === "string" ? record.title : "",
-        description: typeof record.description === "string" ? record.description : "",
-        imageUrl: typeof record.imageUrl === "string" ? record.imageUrl : "",
-        previewUrl: typeof record.imageUrl === "string" ? record.imageUrl : "",
-      });
-      }));
+    if (Array.isArray(existing?.items) && existing.items.length > 0) {
+      setSlides((existing.items as StoredShowcaseItem[]).map(slideFromItem));
     }
-  }, [message.showcaseId, showcases]);
+  }, [message.showcaseId, showcases, storyCreateMode]);
 
   function patchSlide(id: string, patch: Partial<ShowcaseSlide>) {
     setSlides((current) => current.map((slide) => slide.id === id ? { ...slide, ...patch } : slide));
@@ -196,7 +227,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
           setSlideUploadProgress((current) => ({ ...current, [id]: 100 }));
           patchSlide(id, { imageUrl: result.data.publicUrl, previewUrl: result.data.publicUrl });
           if (previousImageUrl && previousImageUrl !== result.data.publicUrl)
-            void requestStorageCleanupByPublicUrl(previousImageUrl).catch(() => undefined);
+            releaseDraftImage(previousImageUrl);
           setSlideRetryFiles((current) => ({ ...current, [id]: null }));
           resolve();
         } catch {
@@ -215,8 +246,21 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
   const hasValidSlide = slides.length > 0 && slides.every((slide) => slide.imageUrl.trim() && slide.title.trim() && slide.description.trim());
   const completedSlides = slides.filter((slide) => slide.imageUrl.trim() && slide.title.trim() && slide.description.trim()).length;
   const slideUploadInProgress = Object.values(slideUploading).some(Boolean);
-  const selectedShowcase = showcases.find((item) => item.id === message.showcaseId);
-  const storyShowcaseReady = Boolean(message.showcaseId) || hasValidSlide;
+  const selectedShowcase = showcases.find((item) => item.id === (storyCreateMode ? selectedShowcaseId : message.showcaseId));
+  const originalSlides = selectedShowcase && Array.isArray(selectedShowcase.items)
+    ? (selectedShowcase.items as StoredShowcaseItem[]).map(slideFromItem) : [];
+  const existingShowcaseEdited = Boolean(storyCreateMode && showcaseSource === "existing" && selectedShowcase &&
+    comparableSlides(slides) !== comparableSlides(originalSlides));
+  const storyShowcaseReady = storyCreateMode && showcaseSource === "existing"
+    ? Boolean(selectedShowcase && slides.length > 0 && (existingShowcaseEdited ? hasValidSlide : true))
+    : (Boolean(message.showcaseId) || hasValidSlide);
+  function releaseDraftImage(url: string) {
+    if (!url) return;
+    // Editing an existing card must not delete images referenced by its
+    // original showcase or by other automations.
+    if (originalSlides.some((item) => item.imageUrl === url)) return;
+    void requestStorageCleanupByPublicUrl(url).catch(() => undefined);
+  }
 
   async function deleteShowcase() {
     if (!message.showcaseId) return;
@@ -257,7 +301,14 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
       const response = await fetch("/api/showcases", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ instagramAccountId, title: `ویترین ${new Date().toLocaleDateString("fa-IR")}`, description: null, isActive: true }),
+        body: JSON.stringify({
+          instagramAccountId,
+          title: existingShowcaseEdited && selectedShowcase
+            ? `کپی ویرایش‌شدهٔ ${selectedShowcase.title}`
+            : `ویترین ${new Date().toLocaleDateString("fa-IR")}`,
+          description: existingShowcaseEdited ? selectedShowcase?.description || null : null,
+          isActive: true,
+        }),
       });
       const result = await response.json().catch(() => null);
       if (!response.ok || result?.error) throw new Error(result?.error || result?.message || "ساخت ویترین ناموفق بود.");
@@ -269,7 +320,12 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
         const itemResponse = await fetch(`/api/showcases/${created.id}/items`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title: slide.title.trim(), description: slide.description.trim() || null, imageUrl: slide.imageUrl.trim(), order: index, isActive: true }),
+          body: JSON.stringify({
+            title: slide.title.trim(), description: slide.description.trim() || null,
+            imageUrl: slide.imageUrl.trim(), order: index, isActive: slide.isActive,
+            price: slide.price || null, originalPrice: slide.originalPrice || null,
+            linkUrl: slide.linkUrl.trim() || null, buttonText: slide.buttonText.trim() || null,
+          }),
         });
         const itemResult = await itemResponse.json().catch(() => null);
         if (!itemResponse.ok || itemResult?.error) throw new Error(itemResult?.error || itemResult?.message || `ساخت اسلاید ${index + 1} ناموفق بود.`);
@@ -299,7 +355,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
         onUpdate({ text: message.text.trim() });
       }
       if (["IMAGE", "VIDEO", "AUDIO"].includes(responseType) && !message.mediaUrl) return false;
-      if (responseType === "SHOWCASE" && !message.showcaseId) {
+      if (responseType === "SHOWCASE" && (!message.showcaseId || existingShowcaseEdited)) {
         const ok = await saveShowcase();
         if (!ok) return false;
       }
