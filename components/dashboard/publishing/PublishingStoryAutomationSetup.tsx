@@ -30,6 +30,8 @@ type Props = {
   /** New story auto-reply creator: isolate its streamlined UI from other consumers. */
   storyCreateMode?: boolean;
   storyEditMode?: boolean;
+  /** Reports changes to slide drafts that have not yet been written to message.showcaseId. */
+  onDraftChange?: (changed: boolean) => void;
   extraSettings?: ReactNode;
   finalActions?: ReactNode;
   responseTypeTitle?: string;
@@ -92,7 +94,7 @@ function createSlide(): ShowcaseSlide {
   return { id: `slide_${crypto.randomUUID()}`, title: "", description: "", imageUrl: "", previewUrl: "", price: "", originalPrice: "", linkUrl: "", buttonText: "", isActive: true };
 }
 
-const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetupHandle, Props>(function PublishingStoryAutomationSetup({ message, showcases, forms, formTemplates = [], loadingResources, instagramAccountId, onUpdate, onSavedChange, keywordValid, onContinue, disabled, hideVideo = false, hideForm = false, textOnly = false, storyCreateMode = false, storyEditMode = false, extraSettings, finalActions, responseTypeTitle = "نوع پاسخ خودکار", responseTypeDescription = "نوع پاسخی را که می‌خواهید برای این محتوا ارسال شود انتخاب کنید.", textPlaceholder = "متنی که به‌عنوان پاسخ پیام شروع گفتگو برای کاربر ارسال می‌شود...", showFinalSave = false, finalSaveLabel = "ساخت پیام شروع گفتگو", usePublishingSaveLabel = false, finalSaveLoadingLabel = "در حال ساخت پیام شروع گفتگو...", finalSaveDisabled = false }: Props, ref) {
+const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetupHandle, Props>(function PublishingStoryAutomationSetup({ message, showcases, forms, formTemplates = [], loadingResources, instagramAccountId, onUpdate, onSavedChange, keywordValid, onContinue, disabled, hideVideo = false, hideForm = false, textOnly = false, storyCreateMode = false, storyEditMode = false, onDraftChange, extraSettings, finalActions, responseTypeTitle = "نوع پاسخ خودکار", responseTypeDescription = "نوع پاسخی را که می‌خواهید برای این محتوا ارسال شود انتخاب کنید.", textPlaceholder = "متنی که به‌عنوان پاسخ پیام شروع گفتگو برای کاربر ارسال می‌شود...", showFinalSave = false, finalSaveLabel = "ساخت پیام شروع گفتگو", usePublishingSaveLabel = false, finalSaveLoadingLabel = "در حال ساخت پیام شروع گفتگو...", finalSaveDisabled = false }: Props, ref) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [retryFile, setRetryFile] = useState<File | null>(null);
@@ -265,6 +267,9 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
     ? (selectedShowcase.items as StoredShowcaseItem[]).map(slideFromItem) : [];
   const existingShowcaseEdited = Boolean(storyCreateMode && showcaseSource === "existing" && selectedShowcase &&
     comparableSlides(slides) !== comparableSlides(originalSlides));
+  useEffect(() => {
+    if (storyEditMode) onDraftChange?.(responseType === "SHOWCASE" && existingShowcaseEdited);
+  }, [storyEditMode, responseType, existingShowcaseEdited, onDraftChange]);
   const storyShowcaseReady = storyCreateMode && showcaseSource === "existing"
     ? (selectedShowcase
       ? Boolean(slides.length > 0 && (existingShowcaseEdited ? hasValidSlide : true))
