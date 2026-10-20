@@ -35,14 +35,19 @@ export async function verifyLiveResponseOwnership(input: ValidatedLiveRule, acco
   }
 }
 
-export async function assertNonOverlappingLiveKeywords(accountId: string, keyword: string, exceptId?: string) {
+export async function assertNonOverlappingLiveKeywords(
+  accountId: string, keyword: string, matchMode: "EXACT" | "CONTAINS_ANY", exceptId?: string,
+) {
   const candidates = await prisma.automation.findMany({
     where: { instagramAccountId: accountId, triggerType: "COMMENT_KEYWORD", mediaId: LIVE_MEDIA_ID,
       ...(exceptId ? { id: { not: exceptId } } : {}) },
-    select: { keyword: true },
+    select: { keyword: true, keywordMatchMode: true },
   });
-  if (candidates.some(item => liveReplyOptionsOverlap(item.keyword || "", keyword)))
-    throw new LiveReplyValidationError("یکی از کلمات کلیدی قبلاً برای پاسخ لایو ثبت شده است.", 409);
+  if (candidates.some(item => liveReplyOptionsOverlap(
+    item.keyword || "", keyword,
+    item.keywordMatchMode === "CONTAINS_ANY" ? "CONTAINS_ANY" : "EXACT", matchMode,
+  )))
+    throw new LiveReplyValidationError("این عبارت با یکی از پاسخ‌های لایو تداخل دارد.", 409);
 }
 
 function savedMessageData(message: MessageDraft) {
