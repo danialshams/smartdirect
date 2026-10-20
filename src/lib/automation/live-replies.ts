@@ -79,9 +79,11 @@ export async function processLiveComment(value: unknown, instagramAccount: {
     orderBy: { createdAt: "asc" },
     select: { id: true, keyword: true, keywordMatchMode: true, replyText: true, commentReplyText: true, requireFollow: true, followGateText: true, followGateButtonText: true, messages: { select: { id: true }, take: 1 } },
   });
-  const rule = automations.find(a => matchesAutomationKeyword(
+  // Match explicit keywords first. A catch-all is the fallback for any
+  // nonempty live comment; it must never shadow a more specific automation.
+  const rule = automations.find(a => a.keyword?.trim() && matchesAutomationKeyword(
     a.keyword, text, a.keywordMatchMode === "CONTAINS_ANY" ? "CONTAINS_ANY" : "EXACT",
-  ));
+  )) ?? automations.find(a => a.keywordMatchMode === "CONTAINS_ANY" && !a.keyword?.trim());
   if (!rule?.replyText?.trim()) return;
 
   const followupKeyword = parseLiveConfig(rule.commentReplyText).followupKeyword;
