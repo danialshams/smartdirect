@@ -9,6 +9,7 @@ import {
   assertNonOverlappingLiveKeywords, verifyLiveResponseOwnership,
 } from "@/lib/automation/live-reply-storage";
 import { invalidateAutomationCache } from "@/lib/cache/instagram";
+import { subscribeLiveComments } from "@/lib/instagram/live-webhook-subscription";
 
 export const dynamic = "force-dynamic";
 
@@ -51,7 +52,8 @@ export async function POST(request: NextRequest) {
     const rule = await createLiveReplyRule(input, account.id);
     try { await invalidateAutomationCache(account.id); }
     catch (e) { console.warn("Live automation cache invalidate failed:", e); }
-    return NextResponse.json({ success: true, data: displayLiveReply(rule) }, { status: 201 });
+    const subscription = await subscribeLiveComments(account.id);
+    return NextResponse.json({ success: true, data: displayLiveReply(rule), subscription }, { status: 201 });
   } catch (error) {
     if (error instanceof LiveReplyValidationError)
       return NextResponse.json({ success: false, error: error.message }, { status: error.status });
