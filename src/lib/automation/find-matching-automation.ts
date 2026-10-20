@@ -15,6 +15,7 @@ type FindAutomationInput =
       mediaId?: string | null;
     }
   | { instagramAccountId: string; triggerType: "DM" }
+  | { instagramAccountId: string; triggerType: "LIVE_COMMENT_KEYWORD"; keyword: string; mediaId?: string | null }
   | {
       instagramAccountId: string;
       triggerType: "STORY_REPLY_KEYWORD";
