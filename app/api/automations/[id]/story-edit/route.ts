@@ -116,7 +116,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const { id } = await params;
     const current = await prisma.automation.findFirst({
       where: { id, instagramAccount: { userId: session.user.id } },
-      include: { messages: { orderBy: { order: "asc" }, select: { id: true } } },
+      include: { messages: { orderBy: { order: "asc" }, select: { id: true, messageType: true, _count: { select: { quickReplies: true } } } } },
     });
     if (!current || current.triggerType !== "STORY_REPLY_KEYWORD")
       return NextResponse.json({ success: false, error: "پاسخ خودکار استوری پیدا نشد." }, { status: 404 });
@@ -148,8 +148,9 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     if (message.id && message.id !== originalMessageId &&
         !message.id.startsWith("message_") && !message.id.startsWith("local_"))
       throw new StoryEditError("پیام انتخاب‌شده متعلق به این پاسخ نیست.");
-    if (message.messageType === "FORM" && !message.updateQuickReplies && !originalMessageId)
-      throw new StoryEditError("گزینه‌های فرم ذخیره‌شده در دسترس نیست.");
+    if (message.messageType === "FORM" && !message.updateQuickReplies &&
+        (!originalMessageId || current.messages[0]?.messageType !== "FORM" || current.messages[0]?._count.quickReplies < 2))
+      throw new StoryEditError("گزینه‌های فرم ذخیره‌شده معتبر نیستند. صفحه را دوباره باز کنید.");
 
     if (mediaId !== current.mediaId) {
       const account = await prisma.instagramAccount.findFirst({
