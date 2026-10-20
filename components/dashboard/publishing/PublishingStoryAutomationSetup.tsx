@@ -515,6 +515,11 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
             </div>
           ) : (
             <div className="space-y-3">
+              {storyEditMode && Boolean(message.mediaId) && !message.mediaUrl && (
+                <p className="rounded-xl bg-[#F1F5F9] p-3 text-xs leading-6 text-[#475569]">
+                  فایل قبلی ذخیره شده است؛ می‌توانی آن را با فایل جدید جایگزین کنی.
+                </p>
+              )}
               <label className={["flex min-h-36 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed bg-[#F8FAFC] px-4 text-center transition", uploading ? "pointer-events-none opacity-60" : "hover:border-[#93C5FD] hover:bg-[#EFF6FF]"].join(" ")}>
                 {uploading ? (
                   <div className="flex w-full flex-col items-center justify-center px-6">
