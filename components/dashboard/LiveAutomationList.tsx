@@ -117,18 +117,6 @@ export default function LiveAutomationList() {
         style={{ background: dairaPalette.primary.main }}>
         <Plus size={20} /> ایجاد پاسخ جدید
       </button>
-      {subscription && !subscription.subscribed && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#FDE68A] bg-[#FFFBEB] p-4 text-xs leading-6 text-[#92400E]" role="status">
-          <div className="min-w-0 flex-1">
-            <strong className="block text-sm">{subscriptionBusy ? "در حال آماده‌سازی پاسخ به لایو..." : "دریافت کامنت‌های لایو فعال نشده است"}</strong>
-            <span>{subscription.error || (subscriptionBusy ? "برنامه در حال فعال‌سازی خودکار اتصال به Meta است." : "اتصال دریافت کامنت‌های لایو هنوز تأیید نشده است.")}</span>
-          </div>
-          <button type="button" onClick={() => account && void activateSubscription(account.id)} disabled={subscriptionBusy}
-            className="min-h-10 rounded-xl bg-white px-4 font-bold text-[#92400E] ring-1 ring-[#FDE68A] disabled:opacity-50">
-            {subscriptionBusy ? "در حال اتصال..." : "تلاش دوباره"}
-          </button>
-        </div>
-      )}
       <label className="relative block">
         <Search size={18} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#94A3B8]" aria-hidden="true" />
         <input value={search} onChange={event => setSearch(event.target.value)}
@@ -168,6 +156,7 @@ export default function LiveAutomationList() {
         <div className="space-y-3 rounded-2xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] px-4 py-14 text-center">
           <RadioTower size={30} className="mx-auto text-[#94A3B8]" />
           <p className="text-sm font-semibold text-[#475569]">{search ? "پاسخی با این عبارت پیدا نشد." : "هنوز پاسخ خودکار لایو ساخته نشده است."}</p>
+          {!search && <p className="mx-auto max-w-md text-xs leading-6 text-[#64748B]">می‌توانی پاسخ را قبل از شروع لایو بسازی. هنگام لایو، کامنت‌های دارای کلمهٔ کلیدی به‌صورت خودکار بررسی می‌شوند.</p>}
         </div>
       )}
       {deleteTarget && (
