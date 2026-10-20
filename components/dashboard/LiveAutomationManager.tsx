@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { RadioTower, Plus, Pencil, Trash2, Search, X } from "lucide-react";
-import { dairaPalette } from "@/lib/design-system/palette";
+import { dairaPalette } from "../../lib/design-system/palette";
 import LiveAutomationSkeleton from "./LiveAutomationSkeleton";
 import { parseLiveRule, type LiveRule } from "@/lib/live-replies/config";
 
