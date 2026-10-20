@@ -116,6 +116,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
   const unsavedDraftsRef = useRef<Partial<Record<ResponseType, Partial<MessageDraft>>>>({});
   const unsavedSlidesRef = useRef<Partial<Record<ResponseType, ShowcaseSlide[]>>>({});
   const storyShowcaseDraftRef = useRef<ShowcaseSlide[] | null>(null);
+  const savedShowcaseCopyRef = useRef<{ signature: string; id: string } | null>(null);
 
   const responseType = (textOnly || (hideVideo && message.messageType === "VIDEO") || (hideForm && message.messageType === "FORM") ? "TEXT" : message.messageType) as ResponseType;
   const resolvedFinalSaveLabel = usePublishingSaveLabel ? `ذخیره ${responseType === "FORM" ? "فرم" : responseType === "SHOWCASE" ? "ویترین" : responseType === "TEXT" ? "متن" : responseType === "IMAGE" ? "عکس" : responseType === "VIDEO" ? "فیلم" : "وویس"} و ادامه` : finalSaveLabel;
@@ -282,6 +283,9 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
   }
 
   async function saveShowcase(): Promise<string | null> {
+    const signature = comparableSlides(slides);
+    if (storyCreateMode && savedShowcaseCopyRef.current?.signature === signature)
+      return savedShowcaseCopyRef.current.id;
     if (saveShowcaseLockRef.current || savingShowcase || slideUploadInProgress) return null;
     saveShowcaseLockRef.current = true;
     if (!hasValidSlide) {
@@ -332,13 +336,18 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
         if (!itemResponse.ok || itemResult?.error) throw new Error(itemResult?.error || itemResult?.message || `ساخت اسلاید ${index + 1} ناموفق بود.`);
       }
       setSlides((current) => current.map((slide) => ({ ...slide })));
+      savedShowcaseCopyRef.current = { signature, id: created.id };
       onUpdate({ showcaseId: created.id });
       setShowcaseSaved(true);
       return created.id as string;
     } catch (saveError) {
       if (createdShowcaseId) {
-        try { await fetch(`/api/showcases/${createdShowcaseId}`, { method: "DELETE" }); }
-        catch { /* A failed cleanup must not hide the original error. */ }
+        try {
+          const cleanupResponse = await fetch(`/api/showcases/${createdShowcaseId}`, { method: "DELETE" });
+          if (!cleanupResponse.ok) console.warn("Incomplete showcase cleanup failed:", cleanupResponse.status);
+        } catch (cleanupError) {
+          console.warn("Incomplete showcase cleanup failed:", cleanupError);
+        }
       }
       setError(saveError instanceof Error ? saveError.message : "ساخت ویترین ناموفق بود.");
       return null;
@@ -356,7 +365,8 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
         onUpdate({ text: message.text.trim() });
       }
       if (["IMAGE", "VIDEO", "AUDIO"].includes(responseType) && !message.mediaUrl) return false;
-      if (responseType === "SHOWCASE" && (!message.showcaseId || existingShowcaseEdited)) {
+      if (responseType === "SHOWCASE" &&
+          (!message.showcaseId || (storyCreateMode && showcaseSource === "existing" && existingShowcaseEdited))) {
         const ok = await saveShowcase();
         if (!ok) return false;
       }
@@ -815,7 +825,8 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                 text: message.text.trim(),
               };
 
-              if (responseType === "SHOWCASE" && !message.showcaseId) {
+              if (responseType === "SHOWCASE" &&
+                (!message.showcaseId || (storyCreateMode && showcaseSource === "existing" && existingShowcaseEdited))) {
                 const showcaseId = await saveShowcase();
                 if (!showcaseId) return;
                 messageToSave = { ...messageToSave, showcaseId };
