@@ -1142,6 +1142,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                   finalSaveDisabled={saving}
                   responseTypeTitle="نوع پاسخ خودکار"
                   responseTypeDescription=""
+                  storyCreateMode
                   textPlaceholder="متنی که در پاسخ خودکار برای کاربر ارسال می‌شود..."
                 />
                 </div>

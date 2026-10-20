@@ -1,12 +1,13 @@
 "use client";
 
 import { Button, Select } from "@/components/dashboard/DashboardUI";
-import { ImagePlus, Loader2, Mic, RotateCcw, Video, Store, ClipboardList, MessageSquareText, Plus } from "lucide-react";
+import { Check, ChevronDown, CircleCheck, ImagePlus, Loader2, Mic, RotateCcw, Video, Store, ClipboardList, MessageSquareText, Plus, Trash2 } from "lucide-react";
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState, type ReactNode } from "react";
 import type { FormItem, MessageDraft, QuickReplyDraft, Showcase } from "../automation-form-utils";
 import VoiceRecorder from "../VoiceRecorder";
 import { requestStorageCleanupByPublicUrl, useStorageUploadLease } from "./useStorageUploadLease";
 import { createEmptyQuickReply } from "../automation-form-utils";
+import StoryReplyFormEditor from "./StoryReplyFormEditor";
 
 export type PublishingStoryAutomationSetupHandle = { saveAndContinue: () => Promise<boolean>; deleteAndReset: () => Promise<boolean> };
 
@@ -24,6 +25,8 @@ type Props = {
   hideVideo?: boolean;
   hideForm?: boolean;
   textOnly?: boolean;
+  /** New story auto-reply creator: isolate its streamlined UI from other consumers. */
+  storyCreateMode?: boolean;
   extraSettings?: ReactNode;
   finalActions?: ReactNode;
   responseTypeTitle?: string;
@@ -38,13 +41,13 @@ type Props = {
 
 type ResponseType = "TEXT" | "AUDIO" | "SHOWCASE" | "IMAGE" | "VIDEO" | "FORM";
 
-const options: Array<{ value: ResponseType; label: string; Icon: typeof MessageSquareText }> = [
-  { value: "TEXT", label: "متن", Icon: MessageSquareText },
-  { value: "AUDIO", label: "وویس", Icon: Mic },
-  { value: "SHOWCASE", label: "ویترین", Icon: Store },
-  { value: "IMAGE", label: "عکس", Icon: ImagePlus },
-  { value: "VIDEO", label: "ویدیو", Icon: Video },
-  { value: "FORM", label: "فرم", Icon: ClipboardList },
+const options: Array<{ value: ResponseType; label: string; description: string; Icon: typeof MessageSquareText }> = [
+  { value: "TEXT", label: "متن", description: "ارسال پیام متنی", Icon: MessageSquareText },
+  { value: "IMAGE", label: "عکس", description: "ارسال تصویر", Icon: ImagePlus },
+  { value: "VIDEO", label: "ویدیو", description: "ارسال ویدیو", Icon: Video },
+  { value: "AUDIO", label: "وویس", description: "ارسال پیام صوتی", Icon: Mic },
+  { value: "SHOWCASE", label: "ویترین", description: "معرفی محصولات", Icon: Store },
+  { value: "FORM", label: "فرم", description: "سؤال و گزینه‌های پاسخ", Icon: ClipboardList },
 ];
 
 type ShowcaseSlide = { id: string; title: string; description: string; imageUrl: string; previewUrl: string };
@@ -53,7 +56,7 @@ function createSlide(): ShowcaseSlide {
   return { id: `slide_${crypto.randomUUID()}`, title: "", description: "", imageUrl: "", previewUrl: "" };
 }
 
-const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetupHandle, Props>(function PublishingStoryAutomationSetup({ message, showcases, forms, loadingResources, instagramAccountId, onUpdate, onSavedChange, keywordValid, onContinue, disabled, hideVideo = false, hideForm = false, textOnly = false, extraSettings, finalActions, responseTypeTitle = "نوع پاسخ خودکار", responseTypeDescription = "نوع پاسخی را که می‌خواهید برای این محتوا ارسال شود انتخاب کنید.", textPlaceholder = "متنی که به‌عنوان پاسخ پیام شروع گفتگو برای کاربر ارسال می‌شود...", showFinalSave = false, finalSaveLabel = "ساخت پیام شروع گفتگو", usePublishingSaveLabel = false, finalSaveLoadingLabel = "در حال ساخت پیام شروع گفتگو...", finalSaveDisabled = false }: Props, ref) {
+const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetupHandle, Props>(function PublishingStoryAutomationSetup({ message, showcases, forms, loadingResources, instagramAccountId, onUpdate, onSavedChange, keywordValid, onContinue, disabled, hideVideo = false, hideForm = false, textOnly = false, storyCreateMode = false, extraSettings, finalActions, responseTypeTitle = "نوع پاسخ خودکار", responseTypeDescription = "نوع پاسخی را که می‌خواهید برای این محتوا ارسال شود انتخاب کنید.", textPlaceholder = "متنی که به‌عنوان پاسخ پیام شروع گفتگو برای کاربر ارسال می‌شود...", showFinalSave = false, finalSaveLabel = "ساخت پیام شروع گفتگو", usePublishingSaveLabel = false, finalSaveLoadingLabel = "در حال ساخت پیام شروع گفتگو...", finalSaveDisabled = false }: Props, ref) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [retryFile, setRetryFile] = useState<File | null>(null);
@@ -62,8 +65,10 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
   useStorageUploadLease([message.mediaUrl, ...slides.map((slide) => slide.imageUrl)]);
   const [savingShowcase, setSavingShowcase] = useState(false);
   const [showcaseSaved, setShowcaseSaved] = useState(Boolean(message.showcaseId));
+  const [showcaseSource, setShowcaseSource] = useState<"new" | "existing">("new");
   const [formSaved, setFormSaved] = useState(false);
   const [formSaving, setFormSaving] = useState(false);
+  const [formUploadsInFlight, setFormUploadsInFlight] = useState(0);
   const [finalSaving, setFinalSaving] = useState(false);
   const saveShowcaseLockRef = useRef(false);
   const [slideUploadProgress, setSlideUploadProgress] = useState<Record<string, number>>({});
@@ -71,6 +76,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
   const [slideRetryFiles, setSlideRetryFiles] = useState<Record<string, File | null>>({});
   const unsavedDraftsRef = useRef<Partial<Record<ResponseType, Partial<MessageDraft>>>>({});
   const unsavedSlidesRef = useRef<Partial<Record<ResponseType, ShowcaseSlide[]>>>({});
+  const storyShowcaseDraftRef = useRef<ShowcaseSlide[] | null>(null);
 
   const responseType = (textOnly || (hideVideo && message.messageType === "VIDEO") || (hideForm && message.messageType === "FORM") ? "TEXT" : message.messageType) as ResponseType;
   const resolvedFinalSaveLabel = usePublishingSaveLabel ? `ذخیره ${responseType === "FORM" ? "فرم" : responseType === "SHOWCASE" ? "ویترین" : responseType === "TEXT" ? "متن" : responseType === "IMAGE" ? "عکس" : responseType === "VIDEO" ? "فیلم" : "وویس"} و ادامه` : finalSaveLabel;
@@ -80,6 +86,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
   function selectType(value: ResponseType) {
     if (value === responseType) return;
     setError("");
+    setFormSaved(false);
     unsavedDraftsRef.current[responseType] = { text: message.text, mediaUrl: message.mediaUrl, mediaId: message.mediaId, showcaseId: message.showcaseId, formId: message.formId, quickReplies: message.quickReplies };
     unsavedSlidesRef.current[responseType] = slides;
     const draft = unsavedDraftsRef.current[value];
@@ -93,7 +100,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
       mediaId: ["IMAGE", "VIDEO", "AUDIO"].includes(value) ? (draft?.mediaId ?? "") : "",
       showcaseId: value === "SHOWCASE" ? (draft?.showcaseId ?? "") : "",
       formId: value === "FORM" ? (draft?.formId ?? "") : "",
-      quickReplies: value === "FORM" ? (draft?.quickReplies ?? []) : [],
+      quickReplies: value === "FORM" ? (draft?.quickReplies ?? (storyCreateMode ? [createEmptyQuickReply(), createEmptyQuickReply()] : [])) : [],
     });
   }
 
@@ -166,9 +173,8 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
     setSlideRetryFiles((current) => ({ ...current, [id]: file }));
     setSlideUploadProgress((current) => ({ ...current, [id]: 0 }));
     setSlideUploading((current) => ({ ...current, [id]: true }));
+    // Keep the previous image usable if replacement upload fails.
     const previousImageUrl = slides.find((slide) => slide.id === id)?.imageUrl;
-    if (previousImageUrl) void requestStorageCleanupByPublicUrl(previousImageUrl).catch(() => undefined);
-    patchSlide(id, { imageUrl: "", previewUrl: "" });
     await new Promise<void>((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       const data = new FormData();
@@ -189,6 +195,8 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
           }
           setSlideUploadProgress((current) => ({ ...current, [id]: 100 }));
           patchSlide(id, { imageUrl: result.data.publicUrl, previewUrl: result.data.publicUrl });
+          if (previousImageUrl && previousImageUrl !== result.data.publicUrl)
+            void requestStorageCleanupByPublicUrl(previousImageUrl).catch(() => undefined);
           setSlideRetryFiles((current) => ({ ...current, [id]: null }));
           resolve();
         } catch {
@@ -205,6 +213,10 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
 
   const MAX_SHOWCASE_ITEMS = 10;
   const hasValidSlide = slides.length > 0 && slides.every((slide) => slide.imageUrl.trim() && slide.title.trim() && slide.description.trim());
+  const completedSlides = slides.filter((slide) => slide.imageUrl.trim() && slide.title.trim() && slide.description.trim()).length;
+  const slideUploadInProgress = Object.values(slideUploading).some(Boolean);
+  const selectedShowcase = showcases.find((item) => item.id === message.showcaseId);
+  const storyShowcaseReady = Boolean(message.showcaseId) || hasValidSlide;
 
   async function deleteShowcase() {
     if (!message.showcaseId) return;
@@ -225,7 +237,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
   }
 
   async function saveShowcase(): Promise<string | null> {
-    if (saveShowcaseLockRef.current || savingShowcase) return null;
+    if (saveShowcaseLockRef.current || savingShowcase || slideUploadInProgress) return null;
     saveShowcaseLockRef.current = true;
     if (!hasValidSlide) {
       setError("برای ساخت ویترین، حداقل یک اسلاید کامل با تصویر، تیتر و توضیحات بسازید.");
@@ -240,6 +252,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
     }
     setSavingShowcase(true);
     setError("");
+    let createdShowcaseId: string | null = null;
     try {
       const response = await fetch("/api/showcases", {
         method: "POST",
@@ -249,6 +262,8 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
       const result = await response.json().catch(() => null);
       if (!response.ok || result?.error) throw new Error(result?.error || result?.message || "ساخت ویترین ناموفق بود.");
       const created = result.data ?? result;
+      if (typeof created?.id !== "string") throw new Error("شناسه ویترین ساخته‌شده نامعتبر است.");
+      createdShowcaseId = created.id;
       for (let index = 0; index < slides.length; index += 1) {
         const slide = slides[index];
         const itemResponse = await fetch(`/api/showcases/${created.id}/items`, {
@@ -264,6 +279,10 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
       setShowcaseSaved(true);
       return created.id as string;
     } catch (saveError) {
+      if (createdShowcaseId) {
+        try { await fetch(`/api/showcases/${createdShowcaseId}`, { method: "DELETE" }); }
+        catch { /* A failed cleanup must not hide the original error. */ }
+      }
       setError(saveError instanceof Error ? saveError.message : "ساخت ویترین ناموفق بود.");
       return null;
     } finally {
@@ -274,13 +293,13 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
 
   useImperativeHandle(ref, () => ({
     async saveAndContinue() {
-      if (!keywordValid || uploading || savingShowcase || formSaving) return false;
+      if (!keywordValid || uploading || slideUploadInProgress || formUploadsInFlight > 0 || savingShowcase || formSaving) return false;
       if (responseType === "TEXT") {
         if (!message.text.trim()) return false;
         onUpdate({ text: message.text.trim() });
       }
       if (["IMAGE", "VIDEO", "AUDIO"].includes(responseType) && !message.mediaUrl) return false;
-      if (responseType === "SHOWCASE" && !showcaseSaved) {
+      if (responseType === "SHOWCASE" && !message.showcaseId) {
         const ok = await saveShowcase();
         if (!ok) return false;
       }
@@ -298,7 +317,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
       return true;
     },
     async deleteAndReset() {
-      if (savingShowcase || formSaving || uploading) return false;
+      if (savingShowcase || formSaving || uploading || slideUploadInProgress || formUploadsInFlight > 0) return false;
       setError("");
       try {
         if (message.showcaseId) {
@@ -319,7 +338,23 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
         return false;
       }
     },
-  }), [keywordValid, uploading, savingShowcase, formSaving, responseType, message, showcaseSaved, onUpdate, onContinue, onSavedChange]);
+  }), [keywordValid, uploading, slideUploadInProgress, formUploadsInFlight, savingShowcase, formSaving, responseType, message, showcaseSaved, onUpdate, onContinue, onSavedChange]);
+
+  async function uploadFormMedia(file?: File): Promise<string> {
+    if (!file) return "";
+    setFormUploadsInFlight((value) => value + 1);
+    try {
+      const data = new FormData();
+      data.append("file", file);
+      const response = await fetch("/api/instagram/publishing/upload", { method: "POST", body: data });
+      const result = await response.json().catch(() => null);
+      if (!response.ok || !result?.success || typeof result?.data?.publicUrl !== "string")
+        throw new Error(result?.message || "آپلود فایل ناموفق بود.");
+      return result.data.publicUrl as string;
+    } finally {
+      setFormUploadsInFlight((value) => Math.max(0, value - 1));
+    }
+  }
 
   const mediaAccept =
     responseType === "IMAGE" ? "image/*" :
@@ -335,23 +370,30 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
             {responseTypeDescription && <p className="mt-1 text-[11px] leading-5 text-[#64748B]">{responseTypeDescription}</p>}
           </div>
 
-          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
-            {options.filter(({ value }) => !((hideVideo && value === "VIDEO") || (hideForm && value === "FORM"))).map(({ value, label, Icon }) => {
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3" role="group" aria-label={storyCreateMode ? "انتخاب نوع پاسخ استوری" : "انتخاب نوع پاسخ"}>
+            {options.filter(({ value }) => !((hideVideo && value === "VIDEO") || (hideForm && value === "FORM"))).map(({ value, label, description, Icon }) => {
               const active = responseType === value;
               return (
                 <button
                   key={value}
                   type="button"
+                  aria-pressed={active}
                   onClick={() => selectType(value)}
                   className={[
-                    "flex min-h-20 items-center gap-2.5 rounded-xl border px-3 py-3 text-right transition",
-                    active ? "border-[#2563EB] bg-[#EFF6FF] ring-2 ring-[#2563EB]/10" : "border-[#E2E8F0] bg-[#F8FAFC] hover:border-[#BFDBFE] hover:bg-white",
+                    "sd-neutral-button group flex min-h-[78px] items-center gap-2.5 rounded-xl border px-3 py-3 text-right transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB]/30",
+                    active ? "border-[#2563EB] bg-[#EFF6FF] ring-1 ring-[#2563EB]/15" : "border-[#E2E8F0] bg-white hover:border-[#93B5FC] hover:bg-[#F8FAFC]",
                   ].join(" ")}
                 >
-                  <span className={["flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", active ? "bg-[#DBEAFE] text-[#2563EB]" : "bg-white text-[#64748B]"].join(" ")}>
-                    <Icon size={17} />
+                  <span className={["flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", active ? "bg-[#DBEAFE] text-[#1D4ED8]" : "bg-[#F1F5F9] text-[#475569]"].join(" ")}>
+                    <Icon size={19} strokeWidth={1.8} aria-hidden="true" />
                   </span>
-                  <span className="text-xs font-bold text-[#0F172A]">{label}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className={["block text-[13px] font-bold", active ? "text-[#1D4ED8]" : "text-[#0F172A]"].join(" ")}>{label}</span>
+                    {storyCreateMode && <span className="mt-1 block text-[10px] leading-4 text-[#64748B]">{description}</span>}
+                  </span>
+                  <span aria-hidden="true" className={["flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border", active ? "border-[#2563EB] bg-[#2563EB] text-white" : "border-[#CBD5E1] bg-white"].join(" ")}>
+                    {active && <Check size={12} strokeWidth={3} />}
+                  </span>
                 </button>
               );
             })}
@@ -420,126 +462,235 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
       )}
 
       {responseType === "SHOWCASE" && (
-        <div className={["space-y-5 transition-opacity duration-200", showcaseSaved ? "opacity-55" : ""].join(" ")}>
-          <div>
-            <p className="text-sm font-bold text-[#0F172A]">ویترین</p>
-            <p className="mt-1 text-[11px] leading-5 text-[#64748B]">اسلایدهای ویترین را با تصویر، تیتر و توضیحات بساز.</p>
+        storyCreateMode ? (
+          <div className="space-y-4 rounded-2xl border border-[#E2E8F0] bg-[#FBFCFE] p-3.5 sm:p-5">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-bold text-[#0F172A]">ویترین پاسخ استوری</h3>
+                <p className="mt-1 text-xs leading-6 text-[#64748B]">هر اسلاید را با یک تصویر، عنوان و توضیح کوتاه کامل کن.</p>
+              </div>
+              {!message.showcaseId && showcaseSource === "new" && <span className="rounded-full bg-[#EFF6FF] px-3 py-1.5 text-xs font-semibold text-[#1D4ED8]">
+                {new Intl.NumberFormat("fa-IR").format(completedSlides)} از {new Intl.NumberFormat("fa-IR").format(slides.length)} اسلاید کامل
+              </span>}
+            </div>
+            {showcases.length > 0 && (
+              <div className="grid grid-cols-2 gap-1 rounded-xl bg-[#F1F5F9] p-1" role="group" aria-label="روش انتخاب ویترین">
+                {(["new", "existing"] as const).map((value) => (
+                  <button key={value} type="button" aria-pressed={showcaseSource === value}
+                    onClick={() => {
+                      if (value === showcaseSource) return;
+                      if (value === "existing") storyShowcaseDraftRef.current = slides;
+                      if (value === "new") setSlides(storyShowcaseDraftRef.current || [createSlide()]);
+                      setShowcaseSource(value);
+                      onUpdate({ showcaseId: "" });
+                      setShowcaseSaved(false);
+                    }}
+                    className={["sd-neutral-button min-h-10 rounded-lg px-2 text-xs font-bold transition", showcaseSource === value ? "bg-white text-[#1D4ED8] shadow-sm" : "bg-transparent text-[#64748B] hover:text-[#0F172A]"].join(" ")}>
+                    {value === "new" ? "ساخت ویترین جدید" : "ویترین آماده"}
+                  </button>
+                ))}
+              </div>
+            )}
+            {showcaseSource === "existing" ? (
+              <div className="space-y-2">
+                <label htmlFor="story-existing-showcase" className="block text-xs font-bold text-[#334155]">انتخاب ویترین</label>
+                <select id="story-existing-showcase" value={message.showcaseId} disabled={loadingResources}
+                  onChange={(event) => { onUpdate({ showcaseId: event.target.value }); setShowcaseSaved(Boolean(event.target.value)); }}
+                  className="w-full min-w-0 rounded-xl border border-[#CBD5E1] bg-white px-3 py-3 text-base text-[#0F172A] outline-none focus:border-[#2563EB]">
+                  <option value="">یک ویترین انتخاب کن</option>
+                  {showcases.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
+                </select>
+                {selectedShowcase && <p className="flex items-center gap-2 rounded-xl bg-[#F0FDF4] px-3 py-3 text-xs font-medium text-[#166534]"><CircleCheck size={17} className="shrink-0" /> ویترین «{selectedShowcase.title}» انتخاب شد.</p>}
+                <p className="text-[11px] leading-5 text-[#64748B]">ویترین آماده بدون تغییر محتوا استفاده می‌شود.</p>
+              </div>
+            ) : message.showcaseId ? (
+              <div className="rounded-xl border border-[#BBF7D0] bg-[#F0FDF4] p-3 text-xs leading-6 text-[#166534]">
+                <p className="flex items-center gap-2 font-bold"><CircleCheck size={17} /> ویترین ساخته و متصل شد.</p>
+                <button type="button" onClick={() => { onUpdate({ showcaseId: "" }); setShowcaseSaved(false); }} className="sd-neutral-button mt-2 text-xs font-semibold text-[#1D4ED8]">ساخت ویترین دیگر</button>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-3">
+                  {slides.map((slide, index) => {
+                    const complete = Boolean(slide.imageUrl.trim() && slide.title.trim() && slide.description.trim());
+                    const busy = Boolean(slideUploading[slide.id]);
+                    return <section key={slide.id} className="space-y-3 rounded-xl border border-[#E2E8F0] bg-white p-3.5" aria-label={`اسلاید ${index + 1}`}>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#F1F5F9] text-xs font-bold text-[#475569]">{new Intl.NumberFormat("fa-IR").format(index + 1)}</span>
+                          <span className="text-sm font-bold text-[#0F172A]">اسلاید {new Intl.NumberFormat("fa-IR").format(index + 1)}</span>
+                          {complete && <CircleCheck size={16} className="text-[#16A34A]" aria-label="کامل شده" />}
+                        </div>
+                        {slides.length > 1 && <button type="button" aria-label={`حذف اسلاید ${index + 1}`}
+                          onClick={() => { void requestStorageCleanupByPublicUrl(slide.imageUrl).catch(() => undefined); setSlides((current) => current.filter((item) => item.id !== slide.id)); }}
+                          className="sd-destructive-button inline-flex min-h-9 items-center gap-1 rounded-lg px-2 text-xs font-bold text-[#DC2626] hover:bg-[#FEF2F2]"><Trash2 size={15} /> حذف</button>}
+                      </div>
+                      <div className="grid grid-cols-[100px_minmax(0,1fr)] gap-3" dir="ltr">
+                        <div className="min-w-0" dir="rtl">
+                          <label className="flex aspect-square cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] hover:border-[#2563EB]" aria-label={`تصویر اسلاید ${index + 1}`}>
+                            {slide.previewUrl ? <img src={slide.previewUrl} alt={`پیش‌نمایش اسلاید ${index + 1}`} className="h-full w-full object-cover" /> : <ImagePlus size={22} className="text-[#2563EB]" />}
+                            {!slide.previewUrl && <span className="mt-2 text-[10px] font-bold text-[#2563EB]">افزودن عکس</span>}
+                            <input type="file" accept="image/*" disabled={busy || savingShowcase} className="hidden"
+                              onChange={(event) => { const selected = event.currentTarget.files?.[0]; event.currentTarget.value = ""; void uploadSlideImage(slide.id, selected); }} />
+                          </label>
+                          {slide.previewUrl && <p className="mt-1 text-center text-[10px] text-[#64748B]">لمس برای تغییر</p>}
+                          {busy && <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#E2E8F0]"><div className="h-full bg-[#2563EB] transition-[width]" style={{ width: `${slideUploadProgress[slide.id] || 0}%` }} /></div>}
+                          {!busy && slideRetryFiles[slide.id] && !slide.previewUrl && <button type="button"
+                            onClick={() => void uploadSlideImage(slide.id, slideRetryFiles[slide.id] || undefined)}
+                            className="sd-neutral-button mt-2 text-[10px] font-bold text-[#B91C1C]">تلاش دوباره</button>}
+                        </div>
+                        <div className="min-w-0" dir="rtl">
+                          <label htmlFor={`story-slide-title-${slide.id}`} className="mb-1.5 block text-xs font-bold text-[#334155]">عنوان اسلاید <span className="text-[#DC2626]">*</span></label>
+                          <input id={`story-slide-title-${slide.id}`} value={slide.title} maxLength={100}
+                            onChange={(event) => patchSlide(slide.id, { title: event.target.value })}
+                            placeholder="مثلاً محصول جدید" className="w-full min-w-0 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-3 text-base text-[#0F172A] outline-none focus:border-[#2563EB]" />
+                          <p className="mt-2 text-[11px] leading-5 text-[#94A3B8]">تصویر و عنوان برای هر اسلاید ضروری است.</p>
+                        </div>
+                      </div>
+                      <div>
+                        <label htmlFor={`story-slide-description-${slide.id}`} className="mb-1.5 block text-xs font-bold text-[#334155]">توضیح کوتاه <span className="text-[#DC2626]">*</span></label>
+                        <textarea id={`story-slide-description-${slide.id}`} rows={2} maxLength={1000} value={slide.description}
+                          onChange={(event) => patchSlide(slide.id, { description: event.target.value })}
+                          placeholder="یک توضیح کوتاه درباره این محصول..."
+                          className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-3 text-base leading-6 text-[#0F172A] outline-none focus:border-[#2563EB]" />
+                      </div>
+                    </section>;
+                  })}
+                </div>
+                {slides.length < MAX_SHOWCASE_ITEMS && <button type="button" disabled={slideUploadInProgress}
+                  onClick={() => setSlides((current) => [...current, createSlide()])}
+                  className="sd-neutral-button flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[#CBD5E1] bg-white px-3 text-xs font-bold text-[#2563EB] disabled:opacity-50">
+                  <Plus size={16} /> افزودن اسلاید
+                  <span className="text-[11px] font-normal text-[#64748B]">(حداکثر {new Intl.NumberFormat("fa-IR").format(MAX_SHOWCASE_ITEMS)})</span>
+                </button>}
+                <p className="text-[11px] leading-6 text-[#64748B]">با زدن دکمه «ساخت پاسخ خودکار»، ویترین هم ذخیره می‌شود؛ ذخیره جداگانه لازم نیست.</p>
+              </>
+            )}
           </div>
-          <div className="space-y-4">
-            {slides.map((slide, index) => (
-              <div key={slide.id} className="space-y-3 rounded-2xl border border-[#E2E8F0] bg-white p-4">
-                <p className="text-center text-lg font-extrabold text-[#0F172A]">اسلاید {index + 1}</p>
-                <label className="relative flex min-h-44 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-[#CBD5E1] bg-[#F8FAFC] text-center hover:border-[#93C5FD] hover:bg-[#EFF6FF]">
-                  {slideUploading[slide.id] ? (
-                    <div className="flex w-full flex-col items-center justify-center px-6">
-                      <div className="mb-2 text-[10px] font-semibold text-[#2563EB]">
-                        {slideUploadProgress[slide.id] ?? 0}٪
+        ) : (
+          <div className={["space-y-5 transition-opacity duration-200", showcaseSaved ? "opacity-55" : ""].join(" ")}>
+            <div>
+              <p className="text-sm font-bold text-[#0F172A]">ویترین</p>
+              <p className="mt-1 text-[11px] leading-5 text-[#64748B]">اسلایدهای ویترین را با تصویر، تیتر و توضیحات بساز.</p>
+            </div>
+            <div className="space-y-4">
+              {slides.map((slide, index) => (
+                <div key={slide.id} className="space-y-3 rounded-2xl border border-[#E2E8F0] bg-white p-4">
+                  <p className="text-center text-lg font-extrabold text-[#0F172A]">اسلاید {index + 1}</p>
+                  <label className="relative flex min-h-44 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-[#CBD5E1] bg-[#F8FAFC] text-center hover:border-[#93C5FD] hover:bg-[#EFF6FF]">
+                    {slideUploading[slide.id] ? (
+                      <div className="flex w-full flex-col items-center justify-center px-6">
+                        <div className="mb-2 text-[10px] font-semibold text-[#2563EB]">
+                          {slideUploadProgress[slide.id] ?? 0}٪
+                        </div>
+                        <div className="h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-[#E2E8F0]">
+                          <div className="h-full rounded-full bg-[#2563EB] transition-[width] duration-150 ease-out" style={{ width: `${slideUploadProgress[slide.id] ?? 0}%` }} />
+                        </div>
                       </div>
-                      <div className="h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-[#E2E8F0]">
-                        <div className="h-full rounded-full bg-[#2563EB] transition-[width] duration-150 ease-out" style={{ width: `${slideUploadProgress[slide.id] ?? 0}%` }} />
+                    ) : slide.previewUrl ? (
+                      <img src={slide.previewUrl} alt="" className="h-44 w-full object-cover" />
+                    ) : slideRetryFiles[slide.id] ? (
+                      <div className="flex w-full flex-col items-center justify-center px-6">
+                        <span className="mb-2 text-[10px] font-bold text-[#B91C1C]">آپلود ناموفق بود — {slideUploadProgress[slide.id] ?? 0}٪</span>
+                        <div className="h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-[#FEE2E2]"><div className="h-full rounded-full bg-[#DC2626]" style={{ width: `${Math.max(3, Math.min(100, slideUploadProgress[slide.id] ?? 0))}%` }} /></div>
+                        <button type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); void uploadSlideImage(slide.id, slideRetryFiles[slide.id] ?? undefined); }} className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#DC2626] px-3 py-2 text-[11px] font-bold text-white">
+                          <RotateCcw size={14}/>تلاش دوباره
+                        </button>
                       </div>
-                    </div>
-                  ) : slide.previewUrl ? (
-                    <img src={slide.previewUrl} alt="" className="h-44 w-full object-cover" />
-                  ) : slideRetryFiles[slide.id] ? (
-                    <div className="flex w-full flex-col items-center justify-center px-6">
-                      <span className="mb-2 text-[10px] font-bold text-[#B91C1C]">آپلود ناموفق بود — {slideUploadProgress[slide.id] ?? 0}٪</span>
-                      <div className="h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-[#FEE2E2]"><div className="h-full rounded-full bg-[#DC2626]" style={{ width: `${Math.max(3, Math.min(100, slideUploadProgress[slide.id] ?? 0))}%` }} /></div>
-                      <button type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); void uploadSlideImage(slide.id, slideRetryFiles[slide.id] ?? undefined); }} className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#DC2626] px-3 py-2 text-[11px] font-bold text-white">
-                        <RotateCcw size={14}/>تلاش دوباره
+                    ) : (
+                      <>
+                        <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB]"><ImagePlus size={21}/></span>
+                        <span className="mt-3 text-xs font-bold text-[#0F172A]">آپلود عکس اسلاید {index + 1}</span>
+                        <span className="mt-1 text-[10px] text-[#64748B]">برای انتخاب تصویر کلیک کن</span>
+                      </>
+                    )}
+                    <input type="file" accept="image/*" disabled={slideUploading[slide.id] || savingShowcase || Boolean(message.showcaseId)} className="hidden" onChange={(event) => { const file = event.target.files?.[0]; event.currentTarget.value = ""; void uploadSlideImage(slide.id, file); }} />
+                  </label>
+                  {slide.previewUrl && !slideUploading[slide.id] && (
+                    <div className="flex justify-center">
+                      <button type="button" onClick={() => { void requestStorageCleanupByPublicUrl(slide.imageUrl).catch(() => undefined); patchSlide(slide.id, { imageUrl: "", previewUrl: "" }); }} className="sd-destructive-button text-xs font-bold text-[#DC2626] transition hover:text-[#B91C1C]">
+                        حذف عکس
                       </button>
                     </div>
-                  ) : (
-                    <>
-                      <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB]"><ImagePlus size={21}/></span>
-                      <span className="mt-3 text-xs font-bold text-[#0F172A]">آپلود عکس اسلاید {index + 1}</span>
-                      <span className="mt-1 text-[10px] text-[#64748B]">برای انتخاب تصویر کلیک کن</span>
-                    </>
                   )}
-                  <input type="file" accept="image/*" disabled={slideUploading[slide.id] || savingShowcase || Boolean(message.showcaseId)} className="hidden" onChange={(event) => { const file = event.target.files?.[0]; event.currentTarget.value = ""; void uploadSlideImage(slide.id, file); }} />
-                </label>
-                {slide.previewUrl && !slideUploading[slide.id] && (
-                  <div className="flex justify-center">
-                    <button type="button" onClick={() => { void requestStorageCleanupByPublicUrl(slide.imageUrl).catch(() => undefined); patchSlide(slide.id, { imageUrl: "", previewUrl: "" }); }} className="sd-destructive-button text-xs font-bold text-[#DC2626] transition hover:text-[#B91C1C]">
-                      حذف عکس
-                    </button>
+                  <div>
+                    <label className="mb-2 block text-sm font-bold text-[#0F172A]">تیتر اسلاید {index + 1}</label>
+                    <input value={slide.title} onChange={(event) => patchSlide(slide.id, { title: event.target.value })} placeholder="تیتر اسلاید را وارد کن..." className="w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
                   </div>
-                )}
-                <div>
-                  <label className="mb-2 block text-sm font-bold text-[#0F172A]">تیتر اسلاید {index + 1}</label>
-                  <input value={slide.title} onChange={(event) => patchSlide(slide.id, { title: event.target.value })} placeholder="تیتر اسلاید را وارد کن..." className="w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
-                </div>
-                <div>
-                  <label className="mb-2 block text-sm font-bold text-[#0F172A]">توضیحات اسلاید {index + 1}</label>
-                  <textarea value={slide.description} onChange={(event) => patchSlide(slide.id, { description: event.target.value })} rows={4} maxLength={1000} placeholder="توضیحات اسلاید را وارد کن..." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
-                </div>
-                {!message.showcaseId && slides.length > 1 && (
-                  <div className="text-center">
-                    <button type="button" onClick={() => { void requestStorageCleanupByPublicUrl(slide.imageUrl).catch(() => undefined); setSlides((current) => current.filter((item) => item.id !== slide.id)); }} className="sd-destructive-button text-xs font-semibold text-[#DC2626] transition hover:text-[#B91C1C]">
-                      حذف اسلاید
-                    </button>
+                  <div>
+                    <label className="mb-2 block text-sm font-bold text-[#0F172A]">توضیحات اسلاید {index + 1}</label>
+                    <textarea value={slide.description} onChange={(event) => patchSlide(slide.id, { description: event.target.value })} rows={4} maxLength={1000} placeholder="توضیحات اسلاید را وارد کن..." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
                   </div>
-                )}
-              </div>
-            ))}
+                  {!message.showcaseId && slides.length > 1 && (
+                    <div className="text-center">
+                      <button type="button" onClick={() => { void requestStorageCleanupByPublicUrl(slide.imageUrl).catch(() => undefined); setSlides((current) => current.filter((item) => item.id !== slide.id)); }} className="sd-destructive-button text-xs font-semibold text-[#DC2626] transition hover:text-[#B91C1C]">
+                        حذف اسلاید
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="space-y-3 pt-1">
+              {!message.showcaseId && slides.length < MAX_SHOWCASE_ITEMS && (
+                <div className="flex justify-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (slides.length >= MAX_SHOWCASE_ITEMS) return;
+                      setSlides((current) => current.length >= MAX_SHOWCASE_ITEMS ? current : [...current, createSlide()]);
+                    }}
+                    className="inline-flex items-center justify-center gap-1.5 text-sm font-bold text-[#2563EB] transition hover:text-[#1D4ED8]"
+                    dir="ltr"
+                  >
+                    <Plus size={16} strokeWidth={2.5} />
+                    <span dir="rtl">افزودن اسلاید</span>
+                  </button>
+                </div>
+              )}
+  
+              {message.showcaseId && (
+                <div className="space-y-2">
+                  <p className="rounded-xl border border-[#BBF7D0] bg-[#F0FDF4] px-3.5 py-3 text-xs font-semibold text-[#166534]">
+                    ویترین ساخته شد و با پاسخ متصل شد.
+                  </p>
+                  <button
+                    type="button"
+                    disabled={savingShowcase}
+                    onClick={() => void deleteShowcase()}
+                    className="sd-destructive-button text-xs font-bold text-[#DC2626] transition hover:text-[#B91C1C] disabled:opacity-50"
+                  >
+                    حذف ویترین
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
-          <div className="space-y-3 pt-1">
-            {!message.showcaseId && slides.length < MAX_SHOWCASE_ITEMS && (
-              <div className="flex justify-center">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (slides.length >= MAX_SHOWCASE_ITEMS) return;
-                    setSlides((current) => current.length >= MAX_SHOWCASE_ITEMS ? current : [...current, createSlide()]);
-                  }}
-                  className="inline-flex items-center justify-center gap-1.5 text-sm font-bold text-[#2563EB] transition hover:text-[#1D4ED8]"
-                  dir="ltr"
-                >
-                  <Plus size={16} strokeWidth={2.5} />
-                  <span dir="rtl">افزودن اسلاید</span>
-                </button>
-              </div>
-            )}
-
-            {message.showcaseId && (
-              <div className="space-y-2">
-                <p className="rounded-xl border border-[#BBF7D0] bg-[#F0FDF4] px-3.5 py-3 text-xs font-semibold text-[#166534]">
-                  ویترین ساخته شد و با پاسخ متصل شد.
-                </p>
-                <button
-                  type="button"
-                  disabled={savingShowcase}
-                  onClick={() => void deleteShowcase()}
-                  className="sd-destructive-button text-xs font-bold text-[#DC2626] transition hover:text-[#B91C1C] disabled:opacity-50"
-                >
-                  حذف ویترین
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
+        )
       )}
 
       {responseType === "FORM" && (
         <div className={["space-y-4 transition-opacity duration-200", formSaved ? "opacity-55" : ""].join(" ")}>
-        <StoryFormBuilder
-          message={message}
-          showcases={showcases}
-          forms={forms}
-          loadingResources={loadingResources}
-          hideVideo={hideVideo}
-          hideForm={hideForm}
-          onUpdate={onUpdate}
-          onUploadMedia={async (file) => {
-            if (!file) return "";
-            const data = new FormData();
-            data.append("file", file);
-            const response = await fetch("/api/instagram/publishing/upload", { method: "POST", body: data });
-            const result = await response.json().catch(() => null);
-            if (!response.ok || !result?.success || typeof result?.data?.publicUrl !== "string") throw new Error(result?.message || "آپلود فایل ناموفق بود.");
-            return result.data.publicUrl as string;
-          }}
-        />
+        {storyCreateMode ? (
+          <StoryReplyFormEditor
+            message={message}
+            showcases={showcases}
+            loadingResources={loadingResources}
+            onUpdate={onUpdate}
+            onUploadMedia={uploadFormMedia}
+          />
+        ) : (
+          <StoryFormBuilder
+            message={message}
+            showcases={showcases}
+            forms={forms}
+            loadingResources={loadingResources}
+            hideVideo={hideVideo}
+            hideForm={hideForm}
+            onUpdate={onUpdate}
+            onUploadMedia={uploadFormMedia}
+          />
+        )}
         <div className="space-y-2 pt-2">
           {formSaved && <div className="space-y-2"><p className="rounded-xl border border-[#BBF7D0] bg-[#F0FDF4] px-3.5 py-3 text-xs font-semibold text-[#166534]">فرم ذخیره شده است.</p><button type="button" onClick={() => { setFormSaved(false); onUpdate({ text: "", quickReplies: [] }); }} className="sd-destructive-button text-xs font-bold text-[#DC2626] transition hover:text-[#B91C1C]">حذف فرم</button></div>}
         </div>
@@ -552,10 +703,10 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
         <div className={finalActions ? "space-y-3 border-t border-[#E2E8F0] pt-4" : usePublishingSaveLabel ? "border-t border-[#E2E8F0] pt-4" : ""}>
         <button
           type="button"
-          disabled={disabled || finalSaveDisabled || finalSaving || !keywordValid || uploading || savingShowcase || formSaving ||
+          disabled={disabled || finalSaveDisabled || finalSaving || !keywordValid || uploading || slideUploadInProgress || formUploadsInFlight > 0 || savingShowcase || formSaving ||
             (responseType === "TEXT" && !message.text.trim()) ||
             (["IMAGE", "VIDEO", "AUDIO"].includes(responseType) && !message.mediaUrl.trim()) ||
-            (responseType === "SHOWCASE" && !hasValidSlide) ||
+            (responseType === "SHOWCASE" && !storyShowcaseReady) ||
             (responseType === "FORM" && !isValidStoryForm(message.text, message.quickReplies))}
           onClick={async () => {
             setError("");
@@ -566,7 +717,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                 text: message.text.trim(),
               };
 
-              if (responseType === "SHOWCASE" && !showcaseSaved) {
+              if (responseType === "SHOWCASE" && !message.showcaseId) {
                 const showcaseId = await saveShowcase();
                 if (!showcaseId) return;
                 messageToSave = { ...messageToSave, showcaseId };
