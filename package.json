@@ -32,6 +32,7 @@
     "lock:double-worker:test": "tsx --env-file=.env --env-file=.env.local scripts/test-double-worker.ts",
     "lock:failure:test": "tsx --env-file=.env --env-file=.env.local scripts/test-lock-failure-handling.ts",
     "lock:concurrent-workers:test": "tsx --env-file=.env --env-file=.env.local scripts/test-concurrent-workers.ts",
+    "live:automation:test": "tsx scripts/test-live-automation.ts",
     "webhook:foundation:test": "tsx --env-file=.env --env-file=.env.local scripts/test-webhook-foundation.ts",
     "webhook:queue:test": "tsx --env-file=.env --env-file=.env.local scripts/test-webhook-queue.ts",
     "webhook:processing:test": "tsx --env-file=.env --env-file=.env.local scripts/test-webhook-processing.ts",
