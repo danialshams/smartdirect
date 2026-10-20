@@ -76,6 +76,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
   const [slideRetryFiles, setSlideRetryFiles] = useState<Record<string, File | null>>({});
   const unsavedDraftsRef = useRef<Partial<Record<ResponseType, Partial<MessageDraft>>>>({});
   const unsavedSlidesRef = useRef<Partial<Record<ResponseType, ShowcaseSlide[]>>>({});
+  const storyShowcaseDraftRef = useRef<ShowcaseSlide[] | null>(null);
 
   const responseType = (textOnly || (hideVideo && message.messageType === "VIDEO") || (hideForm && message.messageType === "FORM") ? "TEXT" : message.messageType) as ResponseType;
   const resolvedFinalSaveLabel = usePublishingSaveLabel ? `ذخیره ${responseType === "FORM" ? "فرم" : responseType === "SHOWCASE" ? "ویترین" : responseType === "TEXT" ? "متن" : responseType === "IMAGE" ? "عکس" : responseType === "VIDEO" ? "فیلم" : "وویس"} و ادامه` : finalSaveLabel;
@@ -369,7 +370,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
             {responseTypeDescription && <p className="mt-1 text-[11px] leading-5 text-[#64748B]">{responseTypeDescription}</p>}
           </div>
 
-          <div className={storyCreateMode ? "grid grid-cols-2 gap-2.5 sm:grid-cols-3" : "grid grid-cols-2 gap-2.5 sm:grid-cols-3"} role="group" aria-label="انتخاب نوع پاسخ استوری">
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3" role="group" aria-label={storyCreateMode ? "انتخاب نوع پاسخ استوری" : "انتخاب نوع پاسخ"}>
             {options.filter(({ value }) => !((hideVideo && value === "VIDEO") || (hideForm && value === "FORM"))).map(({ value, label, description, Icon }) => {
               const active = responseType === value;
               return (
@@ -476,7 +477,14 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
               <div className="grid grid-cols-2 gap-1 rounded-xl bg-[#F1F5F9] p-1" role="group" aria-label="روش انتخاب ویترین">
                 {(["new", "existing"] as const).map((value) => (
                   <button key={value} type="button" aria-pressed={showcaseSource === value}
-                    onClick={() => { setShowcaseSource(value); onUpdate({ showcaseId: "" }); setShowcaseSaved(false); }}
+                    onClick={() => {
+                      if (value === showcaseSource) return;
+                      if (value === "existing") storyShowcaseDraftRef.current = slides;
+                      if (value === "new") setSlides(storyShowcaseDraftRef.current || [createSlide()]);
+                      setShowcaseSource(value);
+                      onUpdate({ showcaseId: "" });
+                      setShowcaseSaved(false);
+                    }}
                     className={["sd-neutral-button min-h-10 rounded-lg px-2 text-xs font-bold transition", showcaseSource === value ? "bg-white text-[#1D4ED8] shadow-sm" : "bg-transparent text-[#64748B] hover:text-[#0F172A]"].join(" ")}>
                     {value === "new" ? "ساخت ویترین جدید" : "ویترین آماده"}
                   </button>
