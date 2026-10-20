@@ -100,7 +100,7 @@ export async function processLiveComment(value: unknown, instagramAccount: {
     recipientId: participantId,
     commentId,
     executionId: `live-comment:${commentId}`,
-    message: { id: `live-intro-${rule.id}`, messageType: "TEXT", text: reply },
+    message: { id: `live-intro-${rule.id}`, messageType: "TEXT", text: reply, mediaUrl: null, mediaId: null },
   });
   if (!send.success) throw new Error(send.error || "Live private reply could not be delivered");
 
@@ -149,7 +149,7 @@ export async function processLiveReplyContinuation(input: {
       instagramAccountId, instagramUserId: igUserId, recipientId: participantId,
       executionId: `live-follow-check:${matched.id}:${input.messageId || incoming}`,
       message: { id: `live-follow-gate-${rule.id}`, messageType: "TEXT",
-        text: rule.followGateText?.trim() || "لطفاً ابتدا پیج را فالو کن و دوباره امتحان کن." },
+        text: rule.followGateText?.trim() || "لطفاً ابتدا پیج را فالو کن و دوباره امتحان کن.", mediaUrl: null, mediaId: null },
     });
     if (!reply.success) throw new Error(reply.error || "Live follow reminder failed");
     return true;
@@ -161,12 +161,12 @@ export async function processLiveReplyContinuation(input: {
       automationId: rule.id, instagramAccountId, igUserId, participantId,
       executionId: `live-followup:${matched.id}:${input.messageId || incoming}`,
     });
-    if (!result.success) throw new Error(result.error || "Live followup automation failed");
+    if (!result.success) throw new Error(("error" in result ? result.error : null) || "Live followup automation failed");
   } else {
     const result = await sendAutomationMessage({
       instagramAccountId, instagramUserId: igUserId, recipientId: participantId,
       executionId: `live-gate-release:${matched.id}:${input.messageId || incoming}`,
-      message: { id: `live-gate-text-${rule.id}`, messageType: "TEXT", text: rule.replyText || "" },
+      message: { id: `live-gate-text-${rule.id}`, messageType: "TEXT", text: rule.replyText || "", mediaUrl: null, mediaId: null },
     });
     if (!result.success) throw new Error(result.error || "Live followup reply failed");
   }
