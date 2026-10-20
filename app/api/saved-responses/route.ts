@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await prisma.savedAutomationResponse.findMany({
-      where: { userId: session.user.id, instagramAccountId },
+      where: { userId: session.user.id, instagramAccountId, messageType: { not: "LIVE_COMMENT_RULE" } },
       orderBy: { updatedAt: "desc" },
     });
     return NextResponse.json({ success: true, data });

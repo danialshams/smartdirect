@@ -11,6 +11,7 @@ import {
 import { normalizeInstagramWebhookEvent } from "@/lib/webhook/normalize";
 import { enqueueInstagramWebhookEvent } from "@/lib/webhook/queue";
 import { processInstagramWebhookQueueJob } from "@/lib/webhook/workflow";
+import { processInstagramLiveComment, processInstagramLiveDmContinuation } from "@/lib/live-replies/service";
 
 import { executeAutomation } from "@/lib/automation/execute-automation";
 import { findAutomationByQuickReplyPayload, findMatchingAutomation } from "@/lib/automation/find-matching-automation";
@@ -484,13 +485,15 @@ export async function POST(request: NextRequest) {
         console.log("Change events received:", entry.changes.length);
 
         for (const change of entry.changes) {
-          if (change.field !== "comments") {
-            console.log("Ignoring webhook field:", change.field);
-
+          if (change.field === "live_comments") {
+            await processCommentEventWithIdempotency(change.value, accountData, true);
             continue;
           }
-
-          await processCommentEventWithIdempotency(change.value, accountData);
+          if (change.field === "comments") {
+            await processCommentEventWithIdempotency(change.value, accountData);
+            continue;
+          }
+          console.log("Ignoring webhook field:", change.field);
         }
       }
 
@@ -597,9 +600,11 @@ async function processMessagingEventWithIdempotency(
 async function processCommentEventWithIdempotency(
   value: any,
   instagramAccount: InstagramAccountData,
+  isLive = false,
 ) {
+  const eventType = isLive ? "LIVE_COMMENT" : "COMMENT";
   const normalizedEvent = normalizeInstagramWebhookEvent({
-    type: "COMMENT",
+    type: eventType,
     event: value,
     accountId: instagramAccount.id,
   });
@@ -620,7 +625,7 @@ async function processCommentEventWithIdempotency(
     const queued = await enqueueInstagramWebhookEvent({
       instagramAccountId: instagramAccount.id,
       eventId: claim.eventId,
-      eventType: "COMMENT",
+      eventType,
       event: value,
       idempotencyKey: claim.key,
     });
@@ -639,7 +644,7 @@ export async function processQueuedInstagramWebhookEvent(
   payload: {
     instagramAccountId: string;
     eventId: string;
-    eventType: "MESSAGING" | "COMMENT";
+    eventType: "MESSAGING" | "COMMENT" | "LIVE_COMMENT";
     event: unknown;
   },
   attempt = 1,
@@ -684,6 +689,8 @@ export async function processQueuedInstagramWebhookEvent(
         accountData,
         payload.eventId,
       );
+    } else if (payload.eventType === "LIVE_COMMENT") {
+      await processInstagramLiveComment(payload.event, accountData, payload.eventId);
     } else {
       await processCommentEvent(
         payload.event,
@@ -1686,6 +1693,17 @@ async function processMessagingEventLocked(
     );
 
     console.log("Incoming message type:", incomingMessageType);
+
+    // Handle an active Live private-reply continuation before the general DM
+    // automation; the same inbound message must never trigger both flows.
+    const liveContinuationHandled = await processInstagramLiveDmContinuation({
+      account: instagramAccount,
+      participantId,
+      text: messageText,
+      quickReplyPayload,
+      executionId,
+    });
+    if (liveContinuationHandled) return;
 
     // =======================================================
     // No DM automation
