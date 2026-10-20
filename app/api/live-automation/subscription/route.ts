@@ -29,6 +29,7 @@ export async function GET(request: NextRequest) {
   const a = await resolveAccount(request);
   if ("error" in a) return NextResponse.json({ success: false, error: a.error }, { status: a.status });
   const state = await getLiveSubscription(a.accountId);
+  if (state.error) console.warn("[LIVE_WEBHOOK] subscription-status-check-failed", { instagramAccountId: a.accountId, error: state.error });
   return NextResponse.json({ success: !state.error, data: state, error: state.error });
 }
 
@@ -36,5 +37,6 @@ export async function POST(request: NextRequest) {
   const a = await resolveAccount(request);
   if ("error" in a) return NextResponse.json({ success: false, error: a.error }, { status: a.status });
   const state = await subscribeLiveComments(a.accountId);
+  if (!state.subscribed) console.error("[LIVE_WEBHOOK] subscription-failed", { instagramAccountId: a.accountId, error: state.error ?? "Meta did not confirm subscription" });
   return NextResponse.json({ success: state.subscribed, data: state, error: state.error }, { status: state.subscribed ? 200 : 502 });
 }
