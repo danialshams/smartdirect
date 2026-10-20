@@ -123,6 +123,7 @@ model LiveCommentReply {
   automationId       String
   commentId          String @unique
   liveMediaId        String
+  commenterId        String?
   participantId      String?
   status             String @default("RESERVED")
   outboundMessageId  String?
@@ -131,6 +132,7 @@ model LiveCommentReply {
   updatedAt          DateTime @updatedAt
   instagramAccount   InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
   automation         Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  @@unique([instagramAccountId, liveMediaId, commenterId])
   @@index([instagramAccountId, participantId, status, expiresAt])
   @@index([automationId])
   @@index([expiresAt])
