@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Pencil, Trash2, RadioTower, MessageCircle, ArrowLeft } from "lucide-react";
 import LiveAutomationSkeleton from "./LiveAutomationSkeleton";
-import { dairaPalette } from "@/lib/design-system/palette";
+import { dairaPalette } from "../../lib/design-system/palette";
 
 type Account = { id: string; isConnected: boolean; igUsername: string };
 type Rule = {
