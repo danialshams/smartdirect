@@ -77,7 +77,7 @@ export async function processLiveComment(value: unknown, instagramAccount: {
       isActive: true,
     },
     orderBy: { createdAt: "asc" },
-    select: { id: true, keyword: true, keywordMatchMode: true, replyText: true, commentReplyText: true, requireFollow: true, followGateText: true, messages: { select: { id: true }, take: 1 } },
+    select: { id: true, keyword: true, keywordMatchMode: true, replyText: true, commentReplyText: true, requireFollow: true, followGateText: true, followGateButtonText: true, messages: { select: { id: true }, take: 1 } },
   });
   const rule = automations.find(a => matchesAutomationKeyword(
     a.keyword, text, a.keywordMatchMode === "CONTAINS_ANY" ? "CONTAINS_ANY" : "EXACT",
@@ -85,7 +85,7 @@ export async function processLiveComment(value: unknown, instagramAccount: {
   if (!rule?.replyText?.trim()) return;
 
   const followupKeyword = parseLiveConfig(rule.commentReplyText).followupKeyword;
-  const checkKeyword = followupKeyword || LIVE_CONFIRM_FOLLOW_KEYWORD;
+  const checkKeyword = rule.followGateButtonText?.trim() || LIVE_CONFIRM_FOLLOW_KEYWORD;
   const isFollowing = !rule.requireFollow || await followsAccount(participantId, instagramAccount.id);
   const shouldGate = rule.requireFollow && !isFollowing;
   const reply = shouldGate
@@ -155,7 +155,11 @@ export async function processLiveReplyContinuation(input: {
   });
   const matched = pending.find(gate => {
     const configured = parseLiveConfig(gate.automation.commentReplyText).followupKeyword;
-    return incoming === normalized(configured || LIVE_CONFIRM_FOLLOW_KEYWORD);
+    const followCheckText = gate.automation.followGateButtonText?.trim() || LIVE_CONFIRM_FOLLOW_KEYWORD;
+    // Live private replies start with a single text message. Recognize the
+    // configured follow-check phrase when the viewer replies in DM.
+    if (gate.automation.requireFollow && incoming === normalized(followCheckText)) return true;
+    return Boolean(configured) && incoming === normalized(configured);
   });
   if (!matched) return false;
 
