@@ -38,7 +38,12 @@ const follow = validateLiveReplyInput({
     mediaUrl: "https://example.com/photo.jpg", mediaId: "", showcaseId: "", formId: "", quickReplies: [] },
 });
 assert.equal(follow.requireFollow, true);
+assert.equal(follow.followGateButtonText, "بررسی فالو", "Legacy live rules keep the default follow-check label");
 assert.equal(follow.message?.messageType, "IMAGE");
+const followWithCustomLabel = validateLiveReplyInput({
+  ...base(), requireFollow: true, followGateText: "اول پیج را فالو کن.", followGateButtonText: "فالو کردم",
+});
+assert.equal(followWithCustomLabel.followGateButtonText, "فالو کردم");
 assert.equal(follow.followupKeyword, "ارسال کن");
 
 const opt = (id: string) => ({
@@ -70,6 +75,8 @@ for (const bad of [
   { ...base(), keyword: "" },
   { ...base(), initialText: "" },
   { ...base(), requireFollow: true, followGateText: "" },
+  { ...base(), requireFollow: true, followGateText: "فالو کن", followGateButtonText: "" },
+  { ...base(), requireFollow: true, followGateText: "فالو کن", followGateButtonText: "یک عنوان بسیار طولانی و نامعتبر برای دکمه" },
   { ...base(), followupEnabled: true, followupKeyword: "" },
   { ...base(), followupEnabled: true, followupKeyword: "ارسال کن", message: {
     id: "", messageType: "VIDEO", text: "", mediaUrl: "", mediaId: "",
@@ -83,5 +90,5 @@ for (const bad of [
 
 console.log("LIVE_AUTOMATION_VALIDATION_TEST_OK", {
   directText: true, commentIsolation: true, keywordMatching: true,
-  followGate: true, richMediaFollowup: true, nestedForms: true, invalidInputRejected: true,
+  followGate: true, customizableFollowCheckLabel: true, richMediaFollowup: true, nestedForms: true, invalidInputRejected: true,
 });
