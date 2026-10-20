@@ -378,7 +378,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
         if (!message.text.trim()) return false;
         onUpdate({ text: message.text.trim() });
       }
-      if (["IMAGE", "VIDEO", "AUDIO"].includes(responseType) && !message.mediaUrl) return false;
+      if (["IMAGE", "VIDEO", "AUDIO"].includes(responseType) && !message.mediaUrl && !(storyEditMode && message.mediaId)) return false;
       if (responseType === "SHOWCASE" &&
           (!message.showcaseId || (storyCreateMode && showcaseSource === "existing" && existingShowcaseEdited))) {
         const ok = await saveShowcase();
@@ -799,7 +799,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
           type="button"
           disabled={disabled || finalSaveDisabled || finalSaving || !keywordValid || uploading || slideUploadInProgress || formUploadsInFlight > 0 || savingShowcase || formSaving ||
             (responseType === "TEXT" && !message.text.trim()) ||
-            (["IMAGE", "VIDEO", "AUDIO"].includes(responseType) && !message.mediaUrl.trim()) ||
+            (["IMAGE", "VIDEO", "AUDIO"].includes(responseType) && !message.mediaUrl.trim() && !(storyEditMode && message.mediaId.trim())) ||
             (responseType === "SHOWCASE" && !storyShowcaseReady) ||
             (responseType === "FORM" && !isValidStoryForm(message.text, message.quickReplies))}
           onClick={async () => {
@@ -849,7 +849,7 @@ export default PublishingStoryAutomationSetup;
 type StoryFormBuilderProps = { message: MessageDraft; showcases: Showcase[]; forms: FormItem[]; loadingResources: boolean; hideVideo?: boolean; hideForm?: boolean; onUpdate: (patch: Partial<MessageDraft>) => void; onUploadMedia: (file?: File) => Promise<string>; };
 const FORM_MAX_OPTIONS = 13;
 const FORM_MEDIA_TYPES = ["IMAGE", "VIDEO", "AUDIO"] as const;
-function isValidStoryForm(question: string, replies: QuickReplyDraft[]): boolean { const options = replies.filter((reply) => !reply.isExit); return Boolean(question.trim()) && options.length >= 2 && options.every((reply) => Boolean(reply.title.trim()) && Boolean(reply.destinationType) && (reply.destinationType !== "TEXT" || Boolean(reply.destinationText.trim())) && (reply.destinationType !== "SHOWCASE" || Boolean(reply.destinationShowcaseId)) && (!FORM_MEDIA_TYPES.includes(reply.destinationType as typeof FORM_MEDIA_TYPES[number]) || Boolean(reply.destinationMediaUrl)) && (reply.destinationType !== "FORM" || isValidStoryForm(reply.destinationQuestion, reply.destinationQuickReplies))); }
+function isValidStoryForm(question: string, replies: QuickReplyDraft[]): boolean { const options = replies.filter((reply) => !reply.isExit); return Boolean(question.trim()) && options.length >= 2 && options.every((reply) => Boolean(reply.title.trim()) && Boolean(reply.destinationType) && (reply.destinationType !== "TEXT" || Boolean(reply.destinationText.trim())) && (reply.destinationType !== "SHOWCASE" || Boolean(reply.destinationShowcaseId)) && (!FORM_MEDIA_TYPES.includes(reply.destinationType as typeof FORM_MEDIA_TYPES[number]) || Boolean(reply.destinationMediaUrl || reply.destinationMediaId)) && (reply.destinationType !== "FORM" || isValidStoryForm(reply.destinationQuestion, reply.destinationQuickReplies))); }
 
 function StoryFormBuilder({ message, showcases, forms, loadingResources, hideVideo = false, hideForm = false, onUpdate, onUploadMedia }: StoryFormBuilderProps) {
   return <FormBranchEditor title="فرم" question={message.text} replies={message.quickReplies} showcases={showcases} forms={forms} loadingResources={loadingResources}
