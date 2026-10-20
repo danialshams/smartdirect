@@ -149,7 +149,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         !message.id.startsWith("message_") && !message.id.startsWith("local_"))
       throw new StoryEditError("پیام انتخاب‌شده متعلق به این پاسخ نیست.");
     if (message.messageType === "FORM" && !message.updateQuickReplies &&
-        (!originalMessageId || current.messages[0]?.messageType !== "FORM" || current.messages[0]?._count.quickReplies < 2))
+        (!originalMessageId || current.messages[0]?.messageType !== "FORM" || (current.messages[0]?._count.quickReplies ?? 0) < 2))
       throw new StoryEditError("گزینه‌های فرم ذخیره‌شده معتبر نیستند. صفحه را دوباره باز کنید.");
 
     if (mediaId !== current.mediaId) {
