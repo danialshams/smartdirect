@@ -434,6 +434,26 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     setKeywordDraft("");
   }
 
+  async function deleteStoryAutomation() {
+    if (!editAutomation || triggerType !== "STORY_REPLY_KEYWORD" || deleting) return;
+    setDeleting(true);
+    setError("");
+    try {
+      const response = await fetch("/api/automations/" + encodeURIComponent(editAutomation.id), {
+        method: "DELETE",
+        credentials: "include",
+      });
+      const result = await response.json();
+      if (!response.ok || !result?.success) throw new Error(result?.error || "حذف پاسخ خودکار استوری ناموفق بود.");
+      router.push("/dashboard/story-automation", { scroll: true });
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : "حذف پاسخ خودکار استوری ناموفق بود.");
+    } finally {
+      setDeleting(false);
+      setDeleteConfirmOpen(false);
+    }
+  }
+
   async function saveAutomation(finalMessage?: MessageDraft) {
     if (saving) return;
     if (triggerType === "COMMENT_KEYWORD" && !canSaveComment) {
@@ -857,13 +877,13 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     <div dir="rtl" className="automation-create-flow mx-auto w-full max-w-4xl py-2 sm:py-4">
       {pageStyles}
       <div className="space-y-0">
-        <div className="mb-2"><AutomationSectionGuide>{triggerType === "COMMENT_KEYWORD" ? "۱. انتخاب محتوا — پست یا ریلز موردنظرت را انتخاب کن." : "۱. انتخاب محتوا — استوری موردنظرت را انتخاب کن."}</AutomationSectionGuide></div>
+        <div className="mb-2"><AutomationSectionGuide>{triggerType === "COMMENT_KEYWORD" ? "۱. انتخاب محتوا — پست یا ریلز موردنظرت را انتخاب کن." : "(isEditing ? "۱. استوری — استوری متصل را ببین یا تغییر بده." : "۱. انتخاب محتوا — استوری موردنظرت را انتخاب کن.")}</AutomationSectionGuide></div>
         {isEditing ? (
           <section aria-label="محتواهای انتخاب‌شده" className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2">
-                <strong className="text-sm font-bold text-[var(--daira-heading)]">محتواهای انتخاب‌شده</strong>
-                <span className="rounded-full bg-[var(--daira-surface-hover)] px-2.5 py-1 text-xs font-bold text-[var(--daira-text)]" aria-live="polite">{new Intl.NumberFormat("fa-IR").format(selectedMediaCount)} محتوا</span>
+                <strong className="text-sm font-bold text-[var(--daira-heading)]">{triggerType === "STORY_REPLY_KEYWORD" ? "استوری انتخاب‌شده" : "محتواهای انتخاب‌شده"}</strong>
+                <span className="rounded-full bg-[var(--daira-surface-hover)] px-2.5 py-1 text-xs font-bold text-[var(--daira-text)]" aria-live="polite">{new Intl.NumberFormat("fa-IR").format(selectedMediaCount)} {triggerType === "STORY_REPLY_KEYWORD" ? "استوری" : "محتوا"}</span>
               </div>
               <button type="button" onClick={openMediaDialog} aria-haspopup="dialog" aria-expanded={mediaDialogOpen} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-[var(--daira-primary)] px-4 text-xs font-bold text-white">
                 <ImageIcon size={16} aria-hidden="true" /> افزودن یا تغییر محتوا
@@ -886,14 +906,14 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                         <X size={16} strokeWidth={2.5} aria-hidden="true" />
                       </button>
                       <p className="truncate px-2 py-2 text-center text-[11px] font-semibold text-[var(--daira-text)]">
-                        {item?.media_product_type === "REELS" ? "ریلز" : item ? "پست" : "محتوای قبلی"}
+                        {triggerType === "STORY_REPLY_KEYWORD" ? "استوری" : item?.media_product_type === "REELS" ? "ریلز" : item ? "پست" : "محتوای قبلی"}
                       </p>
                     </div>
                   );
                 })}
               </div>
             ) : (
-              <p className="rounded-xl border border-dashed border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-4 py-6 text-center text-xs leading-6 text-[var(--daira-text)]">هنوز محتوایی انتخاب نشده است. برای ذخیره حداقل یک محتوا انتخاب کنید.</p>
+              <p className="rounded-xl border border-dashed border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-4 py-6 text-center text-xs leading-6 text-[var(--daira-text)]">{triggerType === "STORY_REPLY_KEYWORD" ? "برای ذخیره، یک استوری انتخاب کن." : "هنوز محتوایی انتخاب نشده است. برای ذخیره حداقل یک محتوا انتخاب کنید."}</p>
             )}
             {!mediaLoading && unknownMediaIds.length > 0 && (
               <p className="mt-3 text-xs leading-6 text-[var(--daira-text)]">پیش‌نمایش {new Intl.NumberFormat("fa-IR").format(unknownMediaIds.length)} محتوای قدیمی فعلاً در دسترس نیست؛ اتصال آن‌ها حفظ شده است.</p>
@@ -1030,7 +1050,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             )}
             {(creationMode === "new" || isEditing) && (
             <div className="space-y-5">
-            <div className="mb-2 mt-6"><AutomationSectionGuide>{triggerType === "COMMENT_KEYWORD" ? (isEditing ? "۲. شرط فعال‌سازی — روش فعال شدن پاسخ خودکار را ویرایش کن." : "۳. شرط فعال‌سازی — انتخاب کن پاسخ با هر کامنت فعال شود یا فقط با کلمات مشخص.") : "۳. شرط فعال‌سازی — کلمه‌ها یا عبارت‌هایی را بنویس که پاسخ استوری را فعال می‌کنند."}</AutomationSectionGuide></div>
+            <div className="mb-2 mt-6"><AutomationSectionGuide>{triggerType === "COMMENT_KEYWORD" ? (isEditing ? "۲. شرط فعال‌سازی — روش فعال شدن پاسخ خودکار را ویرایش کن." : "۳. شرط فعال‌سازی — انتخاب کن پاسخ با هر کامنت فعال شود یا فقط با کلمات مشخص.") : (isEditing ? "۲. شرط فعال‌سازی — کلمات کلیدی ریپلای استوری را ویرایش کن." : "۳. شرط فعال‌سازی — کلمه‌ها یا عبارت‌هایی را بنویس که پاسخ استوری را فعال می‌کنند.")}</AutomationSectionGuide></div>
             <div className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
               {triggerType === "COMMENT_KEYWORD" && (
                 <div className="mb-3">
@@ -1239,7 +1259,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                 </div>
               ) : (
                 <div className="space-y-3">
-                <div className="mb-2 mt-6"><AutomationSectionGuide>۴. نوع پاسخ — مشخص کن در جواب استوری متن، عکس، ویدیو، وویس، ویترین یا فرم ارسال شود.</AutomationSectionGuide></div>
+                <div className="mb-2 mt-6"><AutomationSectionGuide>{isEditing ? "۳. نوع پاسخ — محتوای پاسخ استوری را ویرایش کن." : "۴. نوع پاسخ — مشخص کن در جواب استوری متن، عکس، ویدیو، وویس، ویترین یا فرم ارسال شود."}</AutomationSectionGuide></div>
                 <div className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
                 <PublishingStoryAutomationSetup
                   message={message}
@@ -1263,7 +1283,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                   extraSettings={
                     <div className="space-y-3 pt-2">
                       <div className="mb-2 mt-4">
-                        <AutomationSectionGuide>۵. اجبار به فالو — اختیاری است؛ وقتی فعال باشد کاربر قبل از دریافت پاسخ باید پیج را فالو کند.</AutomationSectionGuide>
+                        <AutomationSectionGuide>{isEditing ? "۴. اجبار به فالو — تنظیمات فالو را ویرایش کن." : "۵. اجبار به فالو — اختیاری است؛ وقتی فعال باشد کاربر قبل از دریافت پاسخ باید پیج را فالو کند."}</AutomationSectionGuide>
                       </div>
                       <section className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
                         <label className="flex cursor-pointer items-center justify-between gap-3">
@@ -1295,7 +1315,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                         )}
                       </section>
                       <div className="mb-2 mt-4">
-                        <AutomationSectionGuide>۶. لایک ریپلای — اختیاری است؛ در صورت فعال بودن، ریپلای کاربر به استوری لایک می‌شود.</AutomationSectionGuide>
+                        <AutomationSectionGuide>{isEditing ? "۵. لایک ریپلای — لایک خودکار ریپلای استوری را تنظیم کن." : "۶. لایک ریپلای — اختیاری است؛ در صورت فعال بودن، ریپلای کاربر به استوری لایک می‌شود."}</AutomationSectionGuide>
                       </div>
                       <section className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
                         <label className="flex cursor-pointer items-center justify-between gap-3">
