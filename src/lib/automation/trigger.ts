@@ -4,6 +4,7 @@ export const AUTOMATION_TRIGGER_TYPES = [
   "COMMENT_KEYWORD",
   "DM",
   "STORY_REPLY_KEYWORD",
+  "LIVE_COMMENT_KEYWORD",
 ] as const;
 
 export type SupportedAutomationTriggerType =
@@ -85,4 +86,5 @@ export const PRISMA_AUTOMATION_TRIGGER_TYPES: readonly AutomationTriggerType[] =
     AutomationTriggerType.COMMENT_KEYWORD,
     AutomationTriggerType.DM,
     AutomationTriggerType.STORY_REPLY_KEYWORD,
+    AutomationTriggerType.LIVE_COMMENT_KEYWORD,
   ];
