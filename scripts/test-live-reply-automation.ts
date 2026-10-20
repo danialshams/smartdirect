@@ -19,6 +19,17 @@ assert.ok(direct.initialText.includes("https://"));
 assert.equal(matchesAutomationKeyword(direct.keyword, "قیمت", "EXACT"), true);
 assert.equal(matchesAutomationKeyword(direct.keyword, "غیر قیمت", "EXACT"), false);
 assert.equal(matchesAutomationKeyword(direct.keyword, "غیر قیمت", "CONTAINS_ANY"), true);
+
+const anyComment = validateLiveReplyInput({ ...base(), keyword: "", matchMode: "CONTAINS_ANY" });
+assert.equal(anyComment.keyword, "");
+assert.equal(anyComment.matchMode, "CONTAINS_ANY");
+assert.equal(matchesAutomationKeyword(anyComment.keyword, "سلام!", anyComment.matchMode), true);
+assert.equal(matchesAutomationKeyword(anyComment.keyword, "سلام قیمت", anyComment.matchMode), true);
+assert.equal(matchesAutomationKeyword(anyComment.keyword, "", anyComment.matchMode), false);
+assert.equal(matchesAutomationKeyword(anyComment.keyword, "سلام!", "EXACT"), false);
+const oldSubstringRule = validateLiveReplyInput({ ...base(), keyword: "قیمت", matchMode: "CONTAINS_ANY" });
+assert.equal(oldSubstringRule.keyword, "قیمت");
+assert.equal(matchesAutomationKeyword(oldSubstringRule.keyword, "قیمت رو بگید", oldSubstringRule.matchMode), true);
 assert.equal(matchesAutomationTrigger({
   triggerType: "COMMENT_KEYWORD", configuredKeyword: direct.keyword, incomingKeyword: "قیمت",
   automationMediaId: "__smartdirect_live_comments_v1__", incomingMediaId: "1789938130",
@@ -29,6 +40,9 @@ assert.equal(liveReplyOptionsOverlap("قیمت", "قیمت‌ها", "EXACT", "EX
 assert.equal(liveReplyOptionsOverlap("قیمت", "قیمت‌ها", "CONTAINS_ANY", "EXACT"), true);
 assert.equal(liveReplyOptionsOverlap("قیمت‌ها", "قیمت", "EXACT", "CONTAINS_ANY"), true);
 assert.equal(liveReplyOptionsOverlap("لینک", "قیمت", "CONTAINS_ANY", "EXACT"), false);
+assert.equal(liveReplyOptionsOverlap("", "", "CONTAINS_ANY", "CONTAINS_ANY"), true);
+assert.equal(liveReplyOptionsOverlap("", "قیمت", "CONTAINS_ANY", "EXACT"), false);
+assert.equal(liveReplyOptionsOverlap("قیمت", "", "EXACT", "CONTAINS_ANY"), false);
 assert.deepEqual(splitAutomationKeywords("قیمت\nقیمت،ارسال"), ["قیمت", "قیمت", "ارسال"]);
 
 const follow = validateLiveReplyInput({
@@ -89,6 +103,6 @@ for (const bad of [
 ]) assert.throws(() => validateLiveReplyInput(bad), LiveReplyValidationError);
 
 console.log("LIVE_AUTOMATION_VALIDATION_TEST_OK", {
-  directText: true, commentIsolation: true, keywordMatching: true,
+  directText: true, commentIsolation: true, keywordMatching: true, anyLiveComment: true, catchAllConflict: true, legacySubstringCompatibility: true,
   followGate: true, customizableFollowCheckLabel: true, richMediaFollowup: true, nestedForms: true, invalidInputRejected: true,
 });
