@@ -19,6 +19,7 @@ import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 import { reactToInstagramMessage } from "@/lib/instagram/react-to-message";
 import { InstagramApiError, instagramApiRequest } from "@/lib/instagram/client";
 import { withConversationLock } from "@/lib/conversation/conversation-lock";
+import { cancelSmartRemindersForConversation } from "@/lib/automation/smart-reminders";
 import {
   enterObservabilityContext,
   getRequestObservabilityContext,
@@ -1703,6 +1704,8 @@ async function processMessagingEventLocked(
       },
     );
 
+    await cancelSmartRemindersForConversation(conversation.id);
+
     console.log(
       "Incoming Instagram message saved:",
       incomingConversationMessage.id,
@@ -2022,6 +2025,7 @@ async function processInstagramStoryReply(
       },
     });
 
+    await cancelSmartRemindersForConversation(conversation.id);
     console.log("Story Reply saved:", savedMessage.id);
 
     // =======================================================
@@ -3251,6 +3255,8 @@ async function executeEntryPointAutomation({
       },
     });
 
+    await cancelSmartRemindersForConversation(conversation.id);
+
     const result = await executeAutomation({
       automationId,
 
@@ -3394,6 +3400,8 @@ async function saveEntryPointInteraction({
         createdAt: new Date(),
       },
     });
+
+    await cancelSmartRemindersForConversation(conversation.id);
 
     console.log("Entry point interaction saved:", {
       source,
