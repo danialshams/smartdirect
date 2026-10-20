@@ -20,7 +20,7 @@ const features = [
   { title: "پاسخ به کامنت", description: "ارسال فوری پیام در کامنت‌ها یا دایرکت", image: "/photos/پاسخ خودکار کامنت.png", href: "/dashboard/comment-automation" },
   { title: "پاسخ به استوری", description: "ارسال خودکار پیام در دایرکت و ریپلای استوری", image: "/photos/پاسخ خودکار استوری.png", href: "/dashboard/story-automation" },
   { title: "پاسخ به لایو", description: "ارسال آنی پیام و لینک خرید در حین پخش زنده", image: "/photos/پاسخ به لایو.webp", href: "/dashboard/live-automation" },
-  { title: "یادآوری هوشمند", description: "پیام خودکار برای یادآوری خرید", image: "/photos/انتشار محتوا.png", href: "/dashboard/reminders", soon: true },
+  { title: "یادآوری هوشمند", description: "پیام خودکار برای یادآوری خرید", image: "/photos/انتشار محتوا.png", href: "/dashboard/reminders" },
   { title: "انتشار محتوا", description: "از همینجا می‌تونی استوری و پست‌های امروز و فردات رو آپلود کنی", image: "/photos/انتشار محتوا.png", href: "/dashboard/publishing" },
   { title: "صندوق دایرکت", description: "از همینجا می‌تونی دایرکت‌های بی‌پاسخ رو جواب بدی", image: "/photos/صندوق دایرکت.png", href: "/dashboard/inbox" },
   { title: "منو دایرکت", description: "پاسخگویی هوشمند به سوالات متداول مشتریان شبانه‌روزی", image: "/photos/منوی دایرکت.png", href: "/dashboard/persistent-menu" },
