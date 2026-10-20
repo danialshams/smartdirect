@@ -56,9 +56,12 @@ function parseOptions(value: unknown, level: number, seen: Set<string>): QuickRe
 export function validateLiveReplyInput(input: unknown): ValidatedLiveRule {
   if (!input || typeof input !== "object" || Array.isArray(input)) throw new LiveReplyValidationError("درخواست نامعتبر است.");
   const data = input as Record<string, unknown>;
-  const keyword = [...new Set(splitAutomationKeywords(asString(data.keyword)))].join(",");
-  if (!keyword || keyword.split(",").length > 10) throw new LiveReplyValidationError("بین ۱ تا ۱۰ کلمه کلیدی وارد کن.");
   const matchMode = data.matchMode === "CONTAINS_ANY" ? "CONTAINS_ANY" : "EXACT";
+  // An empty keyword is a catch-all ONLY for the live comment mode.
+  // Old CONTAINS_ANY rules with keywords remain substring matches.
+  const keyword = [...new Set(splitAutomationKeywords(asString(data.keyword)))].join(",");
+  if (keyword.split(",").filter(Boolean).length > 10 || (matchMode === "EXACT" && !keyword))
+    throw new LiveReplyValidationError("برای کلمات کلیدی مشخص، بین ۱ تا ۱۰ عبارت وارد کن.");
   const initialText = asString(data.initialText);
   if (!initialText || initialText.length > 1000)
     throw new LiveReplyValidationError("متن اولین دایرکت باید بین ۱ تا ۱۰۰۰ کاراکتر باشد.");
@@ -123,6 +126,10 @@ export function liveReplyOptionsOverlap(
 ) {
   const existing = splitAutomationKeywords(a);
   const incoming = splitAutomationKeywords(b);
+  // A catch-all can coexist with specific rules; two catch-alls cannot.
+  // At dispatch time specific live keywords take precedence over fallback.
+  if (!existing.length || !incoming.length)
+    return !existing.length && !incoming.length && aMode === "CONTAINS_ANY" && bMode === "CONTAINS_ANY";
   return existing.some(left => incoming.some(right => {
     if (left === right) return true;
     // EXACT + EXACT can coexist. When either rule matches substrings, a
