@@ -29,6 +29,7 @@ type Props = {
   textOnly?: boolean;
   /** New story auto-reply creator: isolate its streamlined UI from other consumers. */
   storyCreateMode?: boolean;
+  storyEditMode?: boolean;
   extraSettings?: ReactNode;
   finalActions?: ReactNode;
   responseTypeTitle?: string;
@@ -91,7 +92,7 @@ function createSlide(): ShowcaseSlide {
   return { id: `slide_${crypto.randomUUID()}`, title: "", description: "", imageUrl: "", previewUrl: "", price: "", originalPrice: "", linkUrl: "", buttonText: "", isActive: true };
 }
 
-const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetupHandle, Props>(function PublishingStoryAutomationSetup({ message, showcases, forms, formTemplates = [], loadingResources, instagramAccountId, onUpdate, onSavedChange, keywordValid, onContinue, disabled, hideVideo = false, hideForm = false, textOnly = false, storyCreateMode = false, extraSettings, finalActions, responseTypeTitle = "نوع پاسخ خودکار", responseTypeDescription = "نوع پاسخی را که می‌خواهید برای این محتوا ارسال شود انتخاب کنید.", textPlaceholder = "متنی که به‌عنوان پاسخ پیام شروع گفتگو برای کاربر ارسال می‌شود...", showFinalSave = false, finalSaveLabel = "ساخت پیام شروع گفتگو", usePublishingSaveLabel = false, finalSaveLoadingLabel = "در حال ساخت پیام شروع گفتگو...", finalSaveDisabled = false }: Props, ref) {
+const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetupHandle, Props>(function PublishingStoryAutomationSetup({ message, showcases, forms, formTemplates = [], loadingResources, instagramAccountId, onUpdate, onSavedChange, keywordValid, onContinue, disabled, hideVideo = false, hideForm = false, textOnly = false, storyCreateMode = false, storyEditMode = false, extraSettings, finalActions, responseTypeTitle = "نوع پاسخ خودکار", responseTypeDescription = "نوع پاسخی را که می‌خواهید برای این محتوا ارسال شود انتخاب کنید.", textPlaceholder = "متنی که به‌عنوان پاسخ پیام شروع گفتگو برای کاربر ارسال می‌شود...", showFinalSave = false, finalSaveLabel = "ساخت پیام شروع گفتگو", usePublishingSaveLabel = false, finalSaveLoadingLabel = "در حال ساخت پیام شروع گفتگو...", finalSaveDisabled = false }: Props, ref) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [retryFile, setRetryFile] = useState<File | null>(null);
@@ -100,8 +101,9 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
   useStorageUploadLease([message.mediaUrl, ...slides.map((slide) => slide.imageUrl)]);
   const [savingShowcase, setSavingShowcase] = useState(false);
   const [showcaseSaved, setShowcaseSaved] = useState(Boolean(message.showcaseId));
-  const [showcaseSource, setShowcaseSource] = useState<"new" | "existing">("new");
-  const [selectedShowcaseId, setSelectedShowcaseId] = useState("");
+  const [showcaseSource, setShowcaseSource] = useState<"new" | "existing">(storyEditMode && Boolean(message.showcaseId) ? "existing" : "new");
+  const [selectedShowcaseId, setSelectedShowcaseId] = useState(storyEditMode ? message.showcaseId : "");
+  const hydratedShowcaseRef = useRef("");
   const [formSource, setFormSource] = useState<"new" | "existing">("new");
   const [selectedFormTemplateId, setSelectedFormTemplateId] = useState("");
   const newFormDraftRef = useRef<{ text: string; quickReplies: QuickReplyDraft[] } | null>(null);
@@ -122,6 +124,15 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
   const resolvedFinalSaveLabel = usePublishingSaveLabel ? `ذخیره ${responseType === "FORM" ? "فرم" : responseType === "SHOWCASE" ? "ویترین" : responseType === "TEXT" ? "متن" : responseType === "IMAGE" ? "عکس" : responseType === "VIDEO" ? "فیلم" : "وویس"} و ادامه` : finalSaveLabel;
 
   useEffect(() => { setShowcaseSaved(Boolean(message.showcaseId)); }, [message.showcaseId]);
+
+  useEffect(() => {
+    if (!storyEditMode || !message.showcaseId || hydratedShowcaseRef.current === message.showcaseId) return;
+    const oldShowcase = showcases.find((item) => item.id === message.showcaseId);
+    if (!oldShowcase || !Array.isArray(oldShowcase.items) || !oldShowcase.items.length) return;
+    hydratedShowcaseRef.current = message.showcaseId;
+    setSelectedShowcaseId(message.showcaseId);
+    setSlides((oldShowcase.items as StoredShowcaseItem[]).map(slideFromItem));
+  }, [storyEditMode, message.showcaseId, showcases]);
 
   function selectType(value: ResponseType) {
     if (value === responseType) return;
@@ -540,6 +551,8 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                       if (value === "new") {
                         setSlides(storyShowcaseDraftRef.current || [createSlide()]);
                         onUpdate({ showcaseId: "" });
+                      } else if (selectedShowcaseId) {
+                        onUpdate({ showcaseId: selectedShowcaseId });
                       }
                       setShowcaseSource(value);
                     }}
