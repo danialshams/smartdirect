@@ -647,6 +647,29 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
         }
       }
 
+      // Persist branching forms in the reusable response library as well as
+      // the automation's own messages. Removing the original automation will
+      // not remove its reusable form template.
+      if (triggerType === "STORY_REPLY_KEYWORD" && currentMessage.messageType === "FORM") {
+        try {
+          const archive = await fetch("/api/saved-responses", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({
+              instagramAccountId: account.id,
+              title: "فرم استوری — " + currentMessage.text.trim().slice(0, 57),
+              messageType: "FORM",
+              text: currentMessage.text.trim(),
+              quickReplies: serializeQuickReplies(currentMessage.quickReplies),
+            }),
+          });
+          if (!archive.ok) console.warn("Saving reusable story form template failed:", archive.status);
+        } catch (archiveError) {
+          console.warn("Saving reusable story form template failed:", archiveError);
+        }
+      }
+
       setCompleted(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : "ذخیره پاسخ خودکار ناموفق بود.");
