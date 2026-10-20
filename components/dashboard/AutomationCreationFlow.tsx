@@ -37,7 +37,7 @@ export type EditableCommentAutomation = {
 function readSavedLinks(raw: unknown): LinkButton[] {
   if (!raw || typeof raw !== "object") return [];
   const item = raw as Record<string, unknown>;
-  if (Array.isArray(item.linkButtons)) {
+  if (Array.isArray(item.linkButtons) && item.linkButtons.length > 0) {
     return item.linkButtons
       .filter((value): value is Record<string, unknown> => Boolean(value && typeof value === "object"))
       .map((value) => ({ title: String(value.title ?? ""), url: String(value.url ?? "") }))
@@ -375,7 +375,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
           ...entry,
           updateQuickReplies: !originalById.has(entry.id) ||
             JSON.stringify(originalById.get(entry.id)?.quickReplies) !== JSON.stringify(entry.quickReplies),
-          linkButtons: index === 0 ? currentLinks : (extraLinks[entry.id] || []).map((button) => ({
+          linkButtons: index === 0 ? currentLinks : entry.messageType === "TEXT" ? (extraLinks[entry.id] || []).map((button) => ({
             title: button.title.trim(), url: normalizeExternalLink(button.url),
           })),
         }));
@@ -884,7 +884,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                     </div>
                   </div>
 
-                  <div role="radiogroup" aria-label="نوع پیام دایرکت" className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <div role="radiogroup" aria-label="نوع پیام دایرکت" className={"grid grid-cols-1 gap-2 sm:grid-cols-2 " + (isEditing && message.messageType !== "TEXT" ? "hidden" : "")}>
                     <label className={"flex cursor-pointer items-start gap-3 rounded-xl border p-3 text-xs transition " + (dmMode === "TEXT" ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)]" : "border-[var(--daira-border)] bg-white")}>
                       <input type="radio" name="direct-message-mode" value="TEXT" checked={dmMode === "TEXT"} onChange={() => setDmMode("TEXT")} className="mt-1 h-4 w-4 shrink-0 accent-[var(--daira-primary)]" />
                       <span className="min-w-0">
