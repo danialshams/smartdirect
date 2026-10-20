@@ -8,6 +8,7 @@ import VoiceRecorder from "../VoiceRecorder";
 import { requestStorageCleanupByPublicUrl, useStorageUploadLease } from "./useStorageUploadLease";
 import { createEmptyQuickReply } from "../automation-form-utils";
 import StoryReplyFormEditor from "./StoryReplyFormEditor";
+import StoryShowcaseSlidesEditor from "./StoryShowcaseSlidesEditor";
 
 export type PublishingStoryAutomationSetupHandle = { saveAndContinue: () => Promise<boolean>; deleteAndReset: () => Promise<boolean> };
 
@@ -15,6 +16,7 @@ type Props = {
   message: MessageDraft;
   showcases: Showcase[];
   forms: FormItem[];
+  formTemplates?: StoryFormTemplate[];
   loadingResources: boolean;
   instagramAccountId: string;
   onUpdate: (patch: Partial<MessageDraft>) => void;
@@ -39,6 +41,7 @@ type Props = {
   finalSaveDisabled?: boolean;
 };
 
+export type StoryFormTemplate = { id: string; title: string; text: string; quickReplies: QuickReplyDraft[] };
 type ResponseType = "TEXT" | "AUDIO" | "SHOWCASE" | "IMAGE" | "VIDEO" | "FORM";
 
 const options: Array<{ value: ResponseType; label: string; description: string; Icon: typeof MessageSquareText }> = [
@@ -50,13 +53,45 @@ const options: Array<{ value: ResponseType; label: string; description: string; 
   { value: "FORM", label: "فرم", description: "سؤال و گزینه‌های پاسخ", Icon: ClipboardList },
 ];
 
-type ShowcaseSlide = { id: string; title: string; description: string; imageUrl: string; previewUrl: string };
-
-function createSlide(): ShowcaseSlide {
-  return { id: `slide_${crypto.randomUUID()}`, title: "", description: "", imageUrl: "", previewUrl: "" };
+type ShowcaseSlide = {
+  id: string; title: string; description: string; imageUrl: string; previewUrl: string;
+  price: string; originalPrice: string; linkUrl: string; buttonText: string; isActive: boolean;
+};
+type StoredShowcaseItem = {
+  id?: string; title?: string; description?: string | null; imageUrl?: string | null;
+  price?: string | number | null; originalPrice?: string | number | null;
+  linkUrl?: string | null; buttonText?: string | null; isActive?: boolean;
+};
+function slideFromItem(item: StoredShowcaseItem): ShowcaseSlide {
+  return {
+    id: typeof item.id === "string" ? item.id : `slide_${crypto.randomUUID()}`,
+    title: item.title || "", description: item.description || "",
+    imageUrl: item.imageUrl || "", previewUrl: item.imageUrl || "",
+    price: item.price == null ? "" : String(item.price),
+    originalPrice: item.originalPrice == null ? "" : String(item.originalPrice),
+    linkUrl: item.linkUrl || "", buttonText: item.buttonText || "",
+    isActive: item.isActive !== false,
+  };
+}
+function comparableSlides(slides: ShowcaseSlide[]): string {
+  return JSON.stringify(slides.map(({ title, description, imageUrl, price, originalPrice, linkUrl, buttonText, isActive }) =>
+    ({ title, description, imageUrl, price, originalPrice, linkUrl, buttonText, isActive })));
+}
+function cloneFormTree(replies: QuickReplyDraft[]): QuickReplyDraft[] {
+  return replies.map((reply) => ({
+    ...reply,
+    id: `quick_reply_${crypto.randomUUID()}`,
+    payload: `payload_${crypto.randomUUID()}`,
+    nextMessageId: null,
+    destinationQuickReplies: cloneFormTree(reply.destinationQuickReplies || []),
+  }));
 }
 
-const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetupHandle, Props>(function PublishingStoryAutomationSetup({ message, showcases, forms, loadingResources, instagramAccountId, onUpdate, onSavedChange, keywordValid, onContinue, disabled, hideVideo = false, hideForm = false, textOnly = false, storyCreateMode = false, extraSettings, finalActions, responseTypeTitle = "نوع پاسخ خودکار", responseTypeDescription = "نوع پاسخی را که می‌خواهید برای این محتوا ارسال شود انتخاب کنید.", textPlaceholder = "متنی که به‌عنوان پاسخ پیام شروع گفتگو برای کاربر ارسال می‌شود...", showFinalSave = false, finalSaveLabel = "ساخت پیام شروع گفتگو", usePublishingSaveLabel = false, finalSaveLoadingLabel = "در حال ساخت پیام شروع گفتگو...", finalSaveDisabled = false }: Props, ref) {
+function createSlide(): ShowcaseSlide {
+  return { id: `slide_${crypto.randomUUID()}`, title: "", description: "", imageUrl: "", previewUrl: "", price: "", originalPrice: "", linkUrl: "", buttonText: "", isActive: true };
+}
+
+const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetupHandle, Props>(function PublishingStoryAutomationSetup({ message, showcases, forms, formTemplates = [], loadingResources, instagramAccountId, onUpdate, onSavedChange, keywordValid, onContinue, disabled, hideVideo = false, hideForm = false, textOnly = false, storyCreateMode = false, extraSettings, finalActions, responseTypeTitle = "نوع پاسخ خودکار", responseTypeDescription = "نوع پاسخی را که می‌خواهید برای این محتوا ارسال شود انتخاب کنید.", textPlaceholder = "متنی که به‌عنوان پاسخ پیام شروع گفتگو برای کاربر ارسال می‌شود...", showFinalSave = false, finalSaveLabel = "ساخت پیام شروع گفتگو", usePublishingSaveLabel = false, finalSaveLoadingLabel = "در حال ساخت پیام شروع گفتگو...", finalSaveDisabled = false }: Props, ref) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [retryFile, setRetryFile] = useState<File | null>(null);
@@ -66,6 +101,10 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
   const [savingShowcase, setSavingShowcase] = useState(false);
   const [showcaseSaved, setShowcaseSaved] = useState(Boolean(message.showcaseId));
   const [showcaseSource, setShowcaseSource] = useState<"new" | "existing">("new");
+  const [selectedShowcaseId, setSelectedShowcaseId] = useState("");
+  const [formSource, setFormSource] = useState<"new" | "existing">("new");
+  const [selectedFormTemplateId, setSelectedFormTemplateId] = useState("");
+  const newFormDraftRef = useRef<{ text: string; quickReplies: QuickReplyDraft[] } | null>(null);
   const [formSaved, setFormSaved] = useState(false);
   const [formSaving, setFormSaving] = useState(false);
   const [formUploadsInFlight, setFormUploadsInFlight] = useState(0);
@@ -77,6 +116,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
   const unsavedDraftsRef = useRef<Partial<Record<ResponseType, Partial<MessageDraft>>>>({});
   const unsavedSlidesRef = useRef<Partial<Record<ResponseType, ShowcaseSlide[]>>>({});
   const storyShowcaseDraftRef = useRef<ShowcaseSlide[] | null>(null);
+  const savedShowcaseCopyRef = useRef<{ signature: string; id: string } | null>(null);
 
   const responseType = (textOnly || (hideVideo && message.messageType === "VIDEO") || (hideForm && message.messageType === "FORM") ? "TEXT" : message.messageType) as ResponseType;
   const resolvedFinalSaveLabel = usePublishingSaveLabel ? `ذخیره ${responseType === "FORM" ? "فرم" : responseType === "SHOWCASE" ? "ویترین" : responseType === "TEXT" ? "متن" : responseType === "IMAGE" ? "عکس" : responseType === "VIDEO" ? "فیلم" : "وویس"} و ادامه` : finalSaveLabel;
@@ -147,21 +187,14 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
   }
 
   useEffect(() => {
+    // The story editor handles source selection explicitly. The legacy
+    // publishing editors still hydrate their selected showcase from props.
+    if (storyCreateMode) return;
     const existing = showcases.find((item) => item.id === message.showcaseId);
-    const items = Array.isArray(existing?.items) ? existing.items : [];
-    if (items.length > 0) {
-      setSlides(items.map((item: unknown) => {
-        const record = item && typeof item === "object" ? item as Record<string, unknown> : {};
-        return ({
-        id: typeof record.id === "string" ? record.id : `slide_${crypto.randomUUID()}`,
-        title: typeof record.title === "string" ? record.title : "",
-        description: typeof record.description === "string" ? record.description : "",
-        imageUrl: typeof record.imageUrl === "string" ? record.imageUrl : "",
-        previewUrl: typeof record.imageUrl === "string" ? record.imageUrl : "",
-      });
-      }));
+    if (Array.isArray(existing?.items) && existing.items.length > 0) {
+      setSlides((existing.items as StoredShowcaseItem[]).map(slideFromItem));
     }
-  }, [message.showcaseId, showcases]);
+  }, [message.showcaseId, showcases, storyCreateMode]);
 
   function patchSlide(id: string, patch: Partial<ShowcaseSlide>) {
     setSlides((current) => current.map((slide) => slide.id === id ? { ...slide, ...patch } : slide));
@@ -196,7 +229,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
           setSlideUploadProgress((current) => ({ ...current, [id]: 100 }));
           patchSlide(id, { imageUrl: result.data.publicUrl, previewUrl: result.data.publicUrl });
           if (previousImageUrl && previousImageUrl !== result.data.publicUrl)
-            void requestStorageCleanupByPublicUrl(previousImageUrl).catch(() => undefined);
+            releaseDraftImage(previousImageUrl);
           setSlideRetryFiles((current) => ({ ...current, [id]: null }));
           resolve();
         } catch {
@@ -215,8 +248,21 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
   const hasValidSlide = slides.length > 0 && slides.every((slide) => slide.imageUrl.trim() && slide.title.trim() && slide.description.trim());
   const completedSlides = slides.filter((slide) => slide.imageUrl.trim() && slide.title.trim() && slide.description.trim()).length;
   const slideUploadInProgress = Object.values(slideUploading).some(Boolean);
-  const selectedShowcase = showcases.find((item) => item.id === message.showcaseId);
-  const storyShowcaseReady = Boolean(message.showcaseId) || hasValidSlide;
+  const selectedShowcase = showcases.find((item) => item.id === (storyCreateMode ? selectedShowcaseId : message.showcaseId));
+  const originalSlides = selectedShowcase && Array.isArray(selectedShowcase.items)
+    ? (selectedShowcase.items as StoredShowcaseItem[]).map(slideFromItem) : [];
+  const existingShowcaseEdited = Boolean(storyCreateMode && showcaseSource === "existing" && selectedShowcase &&
+    comparableSlides(slides) !== comparableSlides(originalSlides));
+  const storyShowcaseReady = storyCreateMode && showcaseSource === "existing"
+    ? Boolean(selectedShowcase && slides.length > 0 && (existingShowcaseEdited ? hasValidSlide : true))
+    : (Boolean(message.showcaseId) || hasValidSlide);
+  function releaseDraftImage(url: string) {
+    if (!url) return;
+    // Editing an existing card must not delete images referenced by its
+    // original showcase or by other automations.
+    if (originalSlides.some((item) => item.imageUrl === url)) return;
+    void requestStorageCleanupByPublicUrl(url).catch(() => undefined);
+  }
 
   async function deleteShowcase() {
     if (!message.showcaseId) return;
@@ -237,6 +283,9 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
   }
 
   async function saveShowcase(): Promise<string | null> {
+    const signature = comparableSlides(slides);
+    if (storyCreateMode && savedShowcaseCopyRef.current?.signature === signature)
+      return savedShowcaseCopyRef.current.id;
     if (saveShowcaseLockRef.current || savingShowcase || slideUploadInProgress) return null;
     saveShowcaseLockRef.current = true;
     if (!hasValidSlide) {
@@ -257,7 +306,14 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
       const response = await fetch("/api/showcases", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ instagramAccountId, title: `ویترین ${new Date().toLocaleDateString("fa-IR")}`, description: null, isActive: true }),
+        body: JSON.stringify({
+          instagramAccountId,
+          title: existingShowcaseEdited && selectedShowcase
+            ? `کپی ویرایش‌شدهٔ ${selectedShowcase.title}`
+            : `ویترین ${new Date().toLocaleDateString("fa-IR")}`,
+          description: existingShowcaseEdited ? selectedShowcase?.description || null : null,
+          isActive: true,
+        }),
       });
       const result = await response.json().catch(() => null);
       if (!response.ok || result?.error) throw new Error(result?.error || result?.message || "ساخت ویترین ناموفق بود.");
@@ -269,19 +325,29 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
         const itemResponse = await fetch(`/api/showcases/${created.id}/items`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title: slide.title.trim(), description: slide.description.trim() || null, imageUrl: slide.imageUrl.trim(), order: index, isActive: true }),
+          body: JSON.stringify({
+            title: slide.title.trim(), description: slide.description.trim() || null,
+            imageUrl: slide.imageUrl.trim(), order: index, isActive: slide.isActive,
+            price: slide.price || null, originalPrice: slide.originalPrice || null,
+            linkUrl: slide.linkUrl.trim() || null, buttonText: slide.buttonText.trim() || null,
+          }),
         });
         const itemResult = await itemResponse.json().catch(() => null);
         if (!itemResponse.ok || itemResult?.error) throw new Error(itemResult?.error || itemResult?.message || `ساخت اسلاید ${index + 1} ناموفق بود.`);
       }
       setSlides((current) => current.map((slide) => ({ ...slide })));
+      savedShowcaseCopyRef.current = { signature, id: created.id };
       onUpdate({ showcaseId: created.id });
       setShowcaseSaved(true);
       return created.id as string;
     } catch (saveError) {
       if (createdShowcaseId) {
-        try { await fetch(`/api/showcases/${createdShowcaseId}`, { method: "DELETE" }); }
-        catch { /* A failed cleanup must not hide the original error. */ }
+        try {
+          const cleanupResponse = await fetch(`/api/showcases/${createdShowcaseId}`, { method: "DELETE" });
+          if (!cleanupResponse.ok) console.warn("Incomplete showcase cleanup failed:", cleanupResponse.status);
+        } catch (cleanupError) {
+          console.warn("Incomplete showcase cleanup failed:", cleanupError);
+        }
       }
       setError(saveError instanceof Error ? saveError.message : "ساخت ویترین ناموفق بود.");
       return null;
@@ -299,7 +365,8 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
         onUpdate({ text: message.text.trim() });
       }
       if (["IMAGE", "VIDEO", "AUDIO"].includes(responseType) && !message.mediaUrl) return false;
-      if (responseType === "SHOWCASE" && !message.showcaseId) {
+      if (responseType === "SHOWCASE" &&
+          (!message.showcaseId || (storyCreateMode && showcaseSource === "existing" && existingShowcaseEdited))) {
         const ok = await saveShowcase();
         if (!ok) return false;
       }
@@ -464,14 +531,9 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
       {responseType === "SHOWCASE" && (
         storyCreateMode ? (
           <div className="space-y-4 rounded-2xl border border-[#E2E8F0] bg-[#FBFCFE] p-3.5 sm:p-5">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h3 className="text-sm font-bold text-[#0F172A]">ویترین پاسخ استوری</h3>
-                <p className="mt-1 text-xs leading-6 text-[#64748B]">هر اسلاید را با یک تصویر، عنوان و توضیح کوتاه کامل کن.</p>
-              </div>
-              {!message.showcaseId && showcaseSource === "new" && <span className="rounded-full bg-[#EFF6FF] px-3 py-1.5 text-xs font-semibold text-[#1D4ED8]">
-                {new Intl.NumberFormat("fa-IR").format(completedSlides)} از {new Intl.NumberFormat("fa-IR").format(slides.length)} اسلاید کامل
-              </span>}
+            <div>
+              <h3 className="text-sm font-bold text-[#0F172A]">ویترین پاسخ استوری</h3>
+              <p className="mt-1 text-xs leading-6 text-[#64748B]">مانند کارت‌های ویترین اینستاگرام: تصویر، عنوان و توضیحات به‌ترتیب زیر هم.</p>
             </div>
             {showcases.length > 0 && (
               <div className="grid grid-cols-2 gap-1 rounded-xl bg-[#F1F5F9] p-1" role="group" aria-label="روش انتخاب ویترین">
@@ -480,91 +542,67 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                     onClick={() => {
                       if (value === showcaseSource) return;
                       if (value === "existing") storyShowcaseDraftRef.current = slides;
-                      if (value === "new") setSlides(storyShowcaseDraftRef.current || [createSlide()]);
+                      if (value === "new") {
+                        setSlides(storyShowcaseDraftRef.current || [createSlide()]);
+                        onUpdate({ showcaseId: "" });
+                      }
                       setShowcaseSource(value);
-                      onUpdate({ showcaseId: "" });
-                      setShowcaseSaved(false);
                     }}
                     className={["sd-neutral-button min-h-10 rounded-lg px-2 text-xs font-bold transition", showcaseSource === value ? "bg-white text-[#1D4ED8] shadow-sm" : "bg-transparent text-[#64748B] hover:text-[#0F172A]"].join(" ")}>
-                    {value === "new" ? "ساخت ویترین جدید" : "ویترین آماده"}
+                    {value === "new" ? "ساخت ویترین جدید" : "ویرایش یا استفاده از ویترین قبلی"}
                   </button>
                 ))}
               </div>
             )}
-            {showcaseSource === "existing" ? (
+            {showcaseSource === "existing" && (
               <div className="space-y-2">
-                <label htmlFor="story-existing-showcase" className="block text-xs font-bold text-[#334155]">انتخاب ویترین</label>
-                <select id="story-existing-showcase" value={message.showcaseId} disabled={loadingResources}
-                  onChange={(event) => { onUpdate({ showcaseId: event.target.value }); setShowcaseSaved(Boolean(event.target.value)); }}
+                <label htmlFor="story-existing-showcase" className="block text-xs font-bold text-[#334155]">انتخاب ویترین قبلی</label>
+                <select id="story-existing-showcase" value={selectedShowcaseId} disabled={loadingResources}
+                  onChange={(event) => {
+                    const id = event.target.value;
+                    setSelectedShowcaseId(id);
+                    const chosen = showcases.find((item) => item.id === id);
+                    setSlides(chosen && Array.isArray(chosen.items)
+                      ? (chosen.items as StoredShowcaseItem[]).map(slideFromItem) : []);
+                    onUpdate({ showcaseId: id });
+                    setError("");
+                  }}
                   className="w-full min-w-0 rounded-xl border border-[#CBD5E1] bg-white px-3 py-3 text-base text-[#0F172A] outline-none focus:border-[#2563EB]">
                   <option value="">یک ویترین انتخاب کن</option>
                   {showcases.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
                 </select>
-                {selectedShowcase && <p className="flex items-center gap-2 rounded-xl bg-[#F0FDF4] px-3 py-3 text-xs font-medium text-[#166534]"><CircleCheck size={17} className="shrink-0" /> ویترین «{selectedShowcase.title}» انتخاب شد.</p>}
-                <p className="text-[11px] leading-5 text-[#64748B]">ویترین آماده بدون تغییر محتوا استفاده می‌شود.</p>
+                {selectedShowcase && (
+                  <p className="rounded-xl border border-[#DBEAFE] bg-[#EFF6FF] px-3 py-3 text-xs leading-6 text-[#1E40AF]">
+                    {existingShowcaseEdited
+                      ? "تغییرات در یک کپی جدید ذخیره می‌شوند؛ ویترین قبلی و پاسخ‌های متصل به آن دست‌نخورده می‌مانند."
+                      : "همهٔ اسلایدهای ویترین زیر نمایش داده می‌شوند. می‌توانی بدون تغییر از آن استفاده کنی یا هر بخش را ویرایش کنی."}
+                  </p>
+                )}
               </div>
-            ) : message.showcaseId ? (
-              <div className="rounded-xl border border-[#BBF7D0] bg-[#F0FDF4] p-3 text-xs leading-6 text-[#166534]">
-                <p className="flex items-center gap-2 font-bold"><CircleCheck size={17} /> ویترین ساخته و متصل شد.</p>
-                <button type="button" onClick={() => { onUpdate({ showcaseId: "" }); setShowcaseSaved(false); }} className="sd-neutral-button mt-2 text-xs font-semibold text-[#1D4ED8]">ساخت ویترین دیگر</button>
-              </div>
-            ) : (
-              <>
-                <div className="space-y-3">
-                  {slides.map((slide, index) => {
-                    const complete = Boolean(slide.imageUrl.trim() && slide.title.trim() && slide.description.trim());
-                    const busy = Boolean(slideUploading[slide.id]);
-                    return <section key={slide.id} className="space-y-3 rounded-xl border border-[#E2E8F0] bg-white p-3.5" aria-label={`اسلاید ${index + 1}`}>
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#F1F5F9] text-xs font-bold text-[#475569]">{new Intl.NumberFormat("fa-IR").format(index + 1)}</span>
-                          <span className="text-sm font-bold text-[#0F172A]">اسلاید {new Intl.NumberFormat("fa-IR").format(index + 1)}</span>
-                          {complete && <CircleCheck size={16} className="text-[#16A34A]" aria-label="کامل شده" />}
-                        </div>
-                        {slides.length > 1 && <button type="button" aria-label={`حذف اسلاید ${index + 1}`}
-                          onClick={() => { void requestStorageCleanupByPublicUrl(slide.imageUrl).catch(() => undefined); setSlides((current) => current.filter((item) => item.id !== slide.id)); }}
-                          className="sd-destructive-button inline-flex min-h-9 items-center gap-1 rounded-lg px-2 text-xs font-bold text-[#DC2626] hover:bg-[#FEF2F2]"><Trash2 size={15} /> حذف</button>}
-                      </div>
-                      <div className="grid grid-cols-[100px_minmax(0,1fr)] gap-3" dir="ltr">
-                        <div className="min-w-0" dir="rtl">
-                          <label className="flex aspect-square cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] hover:border-[#2563EB]" aria-label={`تصویر اسلاید ${index + 1}`}>
-                            {slide.previewUrl ? <img src={slide.previewUrl} alt={`پیش‌نمایش اسلاید ${index + 1}`} className="h-full w-full object-cover" /> : <ImagePlus size={22} className="text-[#2563EB]" />}
-                            {!slide.previewUrl && <span className="mt-2 text-[10px] font-bold text-[#2563EB]">افزودن عکس</span>}
-                            <input type="file" accept="image/*" disabled={busy || savingShowcase} className="hidden"
-                              onChange={(event) => { const selected = event.currentTarget.files?.[0]; event.currentTarget.value = ""; void uploadSlideImage(slide.id, selected); }} />
-                          </label>
-                          {slide.previewUrl && <p className="mt-1 text-center text-[10px] text-[#64748B]">لمس برای تغییر</p>}
-                          {busy && <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#E2E8F0]"><div className="h-full bg-[#2563EB] transition-[width]" style={{ width: `${slideUploadProgress[slide.id] || 0}%` }} /></div>}
-                          {!busy && slideRetryFiles[slide.id] && !slide.previewUrl && <button type="button"
-                            onClick={() => void uploadSlideImage(slide.id, slideRetryFiles[slide.id] || undefined)}
-                            className="sd-neutral-button mt-2 text-[10px] font-bold text-[#B91C1C]">تلاش دوباره</button>}
-                        </div>
-                        <div className="min-w-0" dir="rtl">
-                          <label htmlFor={`story-slide-title-${slide.id}`} className="mb-1.5 block text-xs font-bold text-[#334155]">عنوان اسلاید <span className="text-[#DC2626]">*</span></label>
-                          <input id={`story-slide-title-${slide.id}`} value={slide.title} maxLength={100}
-                            onChange={(event) => patchSlide(slide.id, { title: event.target.value })}
-                            placeholder="مثلاً محصول جدید" className="w-full min-w-0 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-3 text-base text-[#0F172A] outline-none focus:border-[#2563EB]" />
-                          <p className="mt-2 text-[11px] leading-5 text-[#94A3B8]">تصویر و عنوان برای هر اسلاید ضروری است.</p>
-                        </div>
-                      </div>
-                      <div>
-                        <label htmlFor={`story-slide-description-${slide.id}`} className="mb-1.5 block text-xs font-bold text-[#334155]">توضیح کوتاه <span className="text-[#DC2626]">*</span></label>
-                        <textarea id={`story-slide-description-${slide.id}`} rows={2} maxLength={1000} value={slide.description}
-                          onChange={(event) => patchSlide(slide.id, { description: event.target.value })}
-                          placeholder="یک توضیح کوتاه درباره این محصول..."
-                          className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-3 text-base leading-6 text-[#0F172A] outline-none focus:border-[#2563EB]" />
-                      </div>
-                    </section>;
-                  })}
-                </div>
-                {slides.length < MAX_SHOWCASE_ITEMS && <button type="button" disabled={slideUploadInProgress}
-                  onClick={() => setSlides((current) => [...current, createSlide()])}
-                  className="sd-neutral-button flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[#CBD5E1] bg-white px-3 text-xs font-bold text-[#2563EB] disabled:opacity-50">
-                  <Plus size={16} /> افزودن اسلاید
-                  <span className="text-[11px] font-normal text-[#64748B]">(حداکثر {new Intl.NumberFormat("fa-IR").format(MAX_SHOWCASE_ITEMS)})</span>
-                </button>}
-                <p className="text-[11px] leading-6 text-[#64748B]">با زدن دکمه «ساخت پاسخ خودکار»، ویترین هم ذخیره می‌شود؛ ذخیره جداگانه لازم نیست.</p>
-              </>
+            )}
+            {(showcaseSource === "new" || selectedShowcase) && (
+              <StoryShowcaseSlidesEditor
+                slides={slides}
+                completed={completedSlides}
+                maxSlides={MAX_SHOWCASE_ITEMS}
+                uploading={slideUploading}
+                uploadProgress={slideUploadProgress}
+                retryFiles={slideRetryFiles}
+                disabled={savingShowcase || Boolean(disabled)}
+                onPatch={patchSlide}
+                onRemove={(id) => {
+                  const existing = slides.find((item) => item.id === id);
+                  if (existing) releaseDraftImage(existing.imageUrl);
+                  setSlides((current) => current.filter((item) => item.id !== id));
+                }}
+                onAdd={() => setSlides((current) => current.length < MAX_SHOWCASE_ITEMS ? [...current, createSlide()] : current)}
+                onUpload={(id, file) => { void uploadSlideImage(id, file); }}
+              />
+            )}
+            {showcaseSource === "existing" && !selectedShowcase && (
+              <p className="rounded-xl border border-dashed border-[#CBD5E1] bg-white px-3 py-8 text-center text-xs text-[#64748B]">
+                برای مشاهده و ویرایش اسلایدها، یک ویترین قبلی را انتخاب کن.
+              </p>
             )}
           </div>
         ) : (
@@ -672,13 +710,83 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
       {responseType === "FORM" && (
         <div className={["space-y-4 transition-opacity duration-200", formSaved ? "opacity-55" : ""].join(" ")}>
         {storyCreateMode ? (
-          <StoryReplyFormEditor
-            message={message}
-            showcases={showcases}
-            loadingResources={loadingResources}
-            onUpdate={onUpdate}
-            onUploadMedia={uploadFormMedia}
-          />
+          <div className="space-y-4">
+            {formTemplates.length > 0 && (
+              <div className="space-y-3 rounded-2xl border border-[#E2E8F0] bg-[#FBFCFE] p-3.5 sm:p-4">
+                <div>
+                  <h3 className="text-sm font-bold text-[#0F172A]">فرم پاسخ استوری</h3>
+                  <p className="mt-1 text-xs leading-6 text-[#64748B]">می‌توانی یک فرم جدید بسازی یا سؤال‌ها و گزینه‌های فرم قبلی را کپی و ویرایش کنی.</p>
+                </div>
+                <div className="grid grid-cols-2 gap-1 rounded-xl bg-[#F1F5F9] p-1" role="group" aria-label="ساخت یا استفاده مجدد از فرم">
+                  {(["new", "existing"] as const).map((value) => (
+                    <button key={value} type="button" aria-pressed={formSource === value}
+                      onClick={() => {
+                        if (value === formSource) return;
+                        if (value === "existing") newFormDraftRef.current = {
+                          text: message.text, quickReplies: message.quickReplies,
+                        };
+                        if (value === "new") {
+                          const restored = newFormDraftRef.current;
+                          onUpdate({
+                            text: restored?.text ?? "",
+                            quickReplies: restored?.quickReplies ?? [createEmptyQuickReply(), createEmptyQuickReply()],
+                            formId: "",
+                          });
+                        } else {
+                          onUpdate({ text: "", quickReplies: [createEmptyQuickReply(), createEmptyQuickReply()], formId: "" });
+                        }
+                        setFormSource(value);
+                        setSelectedFormTemplateId("");
+                        setFormSaved(false);
+                      }}
+                      className={["sd-neutral-button min-h-10 rounded-lg px-2 text-xs font-bold transition", formSource === value ? "bg-white text-[#1D4ED8] shadow-sm" : "bg-transparent text-[#64748B] hover:text-[#0F172A]"].join(" ")}>
+                      {value === "new" ? "فرم جدید" : "استفاده از فرم قبلی"}
+                    </button>
+                  ))}
+                </div>
+                {formSource === "existing" && (
+                  <div className="space-y-2">
+                    <label htmlFor="story-previous-form" className="block text-xs font-bold text-[#334155]">انتخاب فرم قبلی</label>
+                    <select id="story-previous-form" value={selectedFormTemplateId}
+                      onChange={(event) => {
+                        const id = event.target.value;
+                        const template = formTemplates.find((item) => item.id === id);
+                        setSelectedFormTemplateId(id);
+                        onUpdate({
+                          text: template?.text || "",
+                          quickReplies: template ? cloneFormTree(template.quickReplies) : [createEmptyQuickReply(), createEmptyQuickReply()],
+                          formId: "",
+                        });
+                        setFormSaved(false);
+                      }}
+                      className="w-full min-w-0 rounded-xl border border-[#CBD5E1] bg-white px-3 py-3 text-base text-[#0F172A] outline-none focus:border-[#2563EB]">
+                      <option value="">یک فرم قبلی را انتخاب کن</option>
+                      {formTemplates.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
+                    </select>
+                    {selectedFormTemplateId && (
+                      <p className="rounded-xl bg-[#EFF6FF] px-3 py-3 text-xs leading-6 text-[#1E40AF]">
+                        سؤال‌ها، گزینه‌ها و مسیر پاسخ‌ها از فرم انتخاب‌شده کپی شده‌اند. تغییرات این فرم فقط در پاسخ جدید ثبت می‌شوند.
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+            {(formSource === "new" || selectedFormTemplateId) && (
+              <StoryReplyFormEditor
+                message={message}
+                showcases={showcases}
+                loadingResources={loadingResources}
+                onUpdate={onUpdate}
+                onUploadMedia={uploadFormMedia}
+              />
+            )}
+            {formSource === "existing" && !selectedFormTemplateId && (
+              <p className="rounded-xl border border-dashed border-[#CBD5E1] bg-white px-3 py-8 text-center text-xs text-[#64748B]">
+                برای دیدن همهٔ سؤال‌ها و ویرایش گزینه‌ها، یک فرم قبلی را انتخاب کن.
+              </p>
+            )}
+          </div>
         ) : (
           <StoryFormBuilder
             message={message}
@@ -717,7 +825,8 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                 text: message.text.trim(),
               };
 
-              if (responseType === "SHOWCASE" && !message.showcaseId) {
+              if (responseType === "SHOWCASE" &&
+                (!message.showcaseId || (storyCreateMode && showcaseSource === "existing" && existingShowcaseEdited))) {
                 const showcaseId = await saveShowcase();
                 if (!showcaseId) return;
                 messageToSave = { ...messageToSave, showcaseId };
