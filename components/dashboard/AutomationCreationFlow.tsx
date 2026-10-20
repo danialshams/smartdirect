@@ -1407,6 +1407,24 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             </section>
           </div>
         )}
+        {isEditing && triggerType === "STORY_REPLY_KEYWORD" && deleteConfirmOpen && (
+          <div role="presentation" className="fixed inset-0 z-[2300] flex items-center justify-center bg-black/45 px-4"
+            onMouseDown={(event) => { if (event.target === event.currentTarget && !deleting) setDeleteConfirmOpen(false); }}>
+            <section dir="rtl" role="dialog" aria-modal="true" aria-labelledby="delete-story-automation-title"
+              className="w-full max-w-sm space-y-4 rounded-2xl bg-white p-5 shadow-2xl">
+              <h2 id="delete-story-automation-title" className="text-base font-bold text-[var(--daira-heading)]">حذف پاسخ خودکار استوری؟</h2>
+              <p className="text-sm leading-6 text-[var(--daira-text)]">این پاسخ از استوری جدا می‌شود و دیگر اجرا نخواهد شد.</p>
+              <div className="grid grid-cols-2 gap-2">
+                <button type="button" disabled={deleting} onClick={() => setDeleteConfirmOpen(false)}
+                  className="sd-neutral-button min-h-11 rounded-xl border border-[var(--daira-border)] bg-white text-sm font-semibold">انصراف</button>
+                <button type="button" disabled={deleting} onClick={() => void deleteStoryAutomation()}
+                  className="sd-destructive-button min-h-11 rounded-xl border border-[var(--daira-error-border)] bg-[var(--daira-error-background)] text-sm font-bold text-[var(--daira-error-text)] disabled:opacity-60">
+                  {deleting ? "در حال حذف..." : "بله، حذف شود"}
+                </button>
+              </div>
+            </section>
+          </div>
+        )}
     </div>
   );
 }
