@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Lightbulb, Plus, X } from "lucide-react";
-import { dairaPalette } from "@/lib/design-system/palette";
+import { dairaPalette } from "../../lib/design-system/palette";
 import LiveAutomationSkeleton from "./LiveAutomationSkeleton";
 import PublishingStoryAutomationSetup, { type StoryFormTemplate } from "./publishing/PublishingStoryAutomationSetup";
 import { createEmptyMessage, normalizeMessages, type MessageDraft, type Showcase, type FormItem } from "./automation-form-utils";
@@ -22,7 +22,7 @@ const guide = [
   ["اجبار به فالو","اختیاری است؛ وضعیت فالو پیش از ارسال محتوای مرحلهٔ دوم بررسی می‌شود."],
   ["پاسخ بعد از دایرکت","وقتی بیننده کلمه ادامه را تایپ کرد، این پاسخ ارسال می‌شود."],
 ] as const;
-function Section({ index, children }: { index: number; children: React.ReactNode }) {
+function Section({ index, children }: { index: number; children: ReactNode }) {
   const [heading,subtitle] = guide[index];
   return <section className="space-y-2">
     <div className="flex items-start gap-3 rounded-xl border border-[#DBEAFE] bg-[#EFF6FF] px-3.5 py-3">
