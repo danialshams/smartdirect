@@ -312,7 +312,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
               keyword: displayKeyword,
               href: isStory
                 ? `/dashboard/story-automation/${automation.id}`
-                : `/dashboard/comment-automation/${automation.id}`,
+                : `/dashboard/comment-automation/${automation.id}?mediaId=${encodeURIComponent(displayMediaId)}`,
               isActive: automation.isActive,
             });
           }
@@ -361,7 +361,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
             href: linkedAutomation
               ? (isStory
                 ? `/dashboard/story-automation/${linkedAutomation.id}`
-                : `/dashboard/comment-automation/${linkedAutomation.id}`)
+                : `/dashboard/comment-automation/${linkedAutomation.id}?mediaId=${encodeURIComponent(targetMediaId)}`)
               : `/dashboard/publishing/${job.id}`,
           });
         }
