@@ -1,5 +1,9 @@
-import { matchesAutomationKeyword, normalizeAutomationText } from "@/lib/automation/trigger";
-
+// Pure text helpers: shared by server and client editors without bundling Prisma.
+export function normalizeLiveText(value: string): string {
+  return value.replace(/[۰-۹]/g, (d) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(d)))
+    .replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)))
+    .trim().toLowerCase();
+}
 export const LIVE_AUTOMATION_TYPE = "LIVE_COMMENT_RULE";
 export const LIVE_REPLY_SESSION_PREFIX = "smartdirect:live-session:v1:";
 export const LIVE_COMMENT_DELIVERY_PREFIX = "smartdirect:live-comment:v1:";
@@ -96,14 +100,14 @@ function readOptions(value: unknown, depth: number, payloads: Set<string>): Live
 }
 export function parseLiveRule(raw: unknown): LiveRule {
   const o = dictionary(raw);
-  const keywords = Array.from(new Set(keywordParts(o.keywords).map(normalizeAutomationText).filter(Boolean)));
+  const keywords = Array.from(new Set(keywordParts(o.keywords).map(normalizeLiveText).filter(Boolean)));
   requireRule(keywords.length >= 1 && keywords.length <= 10 && keywords.every((k) => k.length <= 100), "بین ۱ تا ۱۰ کلمه کلیدی با طول حداکثر ۱۰۰ نویسه وارد کنید.");
   const initialText = string(o.initialText);
   requireRule(initialText.length >= 1 && initialText.length <= 1000, "متن پیام اولیه را وارد کنید (حداکثر ۱۰۰۰ نویسه).");
   const matchMode = o.matchMode === "CONTAINS_ANY" ? "CONTAINS_ANY" : "EXACT";
   const mode = o.mode === "FOLLOW_UP" ? "FOLLOW_UP" : "DIRECT";
   const requireFollow = o.requireFollow === true;
-  const nextKeyword = normalizeAutomationText(string(o.nextKeyword) || (mode === "FOLLOW_UP" ? "ارسال کن" : "بررسی فالو"));
+  const nextKeyword = normalizeLiveText(string(o.nextKeyword) || (mode === "FOLLOW_UP" ? "ارسال کن" : "بررسی فالو"));
   requireRule(nextKeyword.length > 0 && nextKeyword.length <= 100, "عبارت ادامهٔ گفتگو باید بین ۱ تا ۱۰۰ نویسه باشد.");
   const followText = string(o.followText) || defaultLiveRule().followText;
   requireRule(followText.length <= 640, "متن درخواست فالو باید حداکثر ۶۴۰ نویسه باشد.");
@@ -127,7 +131,10 @@ export function parseLiveRule(raw: unknown): LiveRule {
   return { keywords, matchMode, initialText, mode, nextKeyword, requireFollow, followText, response };
 }
 export function matchLiveRule(rule: LiveRule, text: string) {
-  return matchesAutomationKeyword(rule.keywords.join(","), text, rule.matchMode);
+  const normalized = normalizeLiveText(text);
+  return rule.matchMode === "EXACT"
+    ? rule.keywords.includes(normalized)
+    : rule.keywords.some((keyword) => normalized.includes(keyword));
 }
 export function liveOpeningMessage(rule: LiveRule) {
   if (!rule.requireFollow) return rule.initialText;
