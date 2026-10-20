@@ -446,6 +446,60 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     const normalizedLinkButtons = linkButtons.map((button) => ({ ...button, url: normalizeExternalLink(button.url) }));
 
     if (isEditing && editAutomation) {
+      if (triggerType === "STORY_REPLY_KEYWORD") {
+        if (targetMediaIds.length !== 1) { setError("یک استوری انتخاب کنید."); return; }
+        if (keywordMatchMode === "EXACT" && !cleanKeywords.length) { setError("حداقل یک کلمه کلیدی وارد کنید."); return; }
+        if (cleanKeywords.length > MAX_KEYWORDS) { setError("حداکثر ۱۰ کلمه کلیدی مجاز است."); return; }
+        if (requireFollow && (!followGateText.trim() || followGateText.trim().length > 640)) {
+          setError("متن درخواست فالو را وارد کنید (حداکثر ۶۴۰ کاراکتر)."); return;
+        }
+        if (requireFollow && (!followGateButtonText.trim() || followGateButtonText.trim().length > 20)) {
+          setError("عنوان دکمه بررسی فالو را وارد کنید (حداکثر ۲۰ کاراکتر)."); return;
+        }
+        try { validateMessages([currentMessage], "STORY_REPLY_KEYWORD"); }
+        catch (validationError) { setError(validationError instanceof Error ? validationError.message : "پاسخ استوری ناقص است."); return; }
+
+        const existingMainMessage = normalizeMessages(editAutomation.messages)[0];
+        setSaving(true);
+        setError("");
+        try {
+          const response = await fetch("/api/automations/" + encodeURIComponent(editAutomation.id) + "/story-edit", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({
+              expectedUpdatedAt: editAutomation.updatedAt,
+              mediaId: targetMediaIds[0],
+              keywordMatchMode,
+              keyword: keywordMatchMode === "CONTAINS_ANY" ? null : cleanKeywords.join(","),
+              likeStoryReply,
+              requireFollow,
+              followGateText: requireFollow ? followGateText.trim() : null,
+              followGateButtonText: requireFollow ? followGateButtonText.trim() : null,
+              isActive,
+              message: {
+                ...currentMessage,
+                updateQuickReplies: !existingMainMessage ||
+                  existingMainMessage.messageType !== currentMessage.messageType ||
+                  JSON.stringify(existingMainMessage.quickReplies) !== JSON.stringify(currentMessage.quickReplies),
+                quickReplies: currentMessage.quickReplies.map((reply) => ({
+                  ...reply,
+                  destinationQuickReplies: serializeQuickReplies(reply.destinationQuickReplies),
+                })),
+              },
+            }),
+          });
+          const result = await response.json();
+          if (!response.ok || !result?.success)
+            throw new Error(result?.error || "ذخیره ویرایش پاسخ خودکار استوری ناموفق بود.");
+          setCompleted(true);
+        } catch (saveError) {
+          setError(saveError instanceof Error ? saveError.message : "ذخیره پاسخ خودکار استوری ناموفق بود.");
+        } finally {
+          setSaving(false);
+        }
+        return;
+      }
       if (!targetMediaIds.length) { setError("حداقل یک پست یا ریلز انتخاب کنید."); return; }
       if (keywordMatchMode === "EXACT" && !cleanKeywords.length) { setError("حداقل یک کلمه کلیدی وارد کنید."); return; }
       if (cleanKeywords.length > MAX_KEYWORDS) { setError("حداکثر ۱۰ کلمه کلیدی می‌توانید اضافه کنید."); return; }
