@@ -172,9 +172,8 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
     setSlideRetryFiles((current) => ({ ...current, [id]: file }));
     setSlideUploadProgress((current) => ({ ...current, [id]: 0 }));
     setSlideUploading((current) => ({ ...current, [id]: true }));
+    // Keep the previous image usable if replacement upload fails.
     const previousImageUrl = slides.find((slide) => slide.id === id)?.imageUrl;
-    if (previousImageUrl) void requestStorageCleanupByPublicUrl(previousImageUrl).catch(() => undefined);
-    patchSlide(id, { imageUrl: "", previewUrl: "" });
     await new Promise<void>((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       const data = new FormData();
@@ -195,6 +194,8 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
           }
           setSlideUploadProgress((current) => ({ ...current, [id]: 100 }));
           patchSlide(id, { imageUrl: result.data.publicUrl, previewUrl: result.data.publicUrl });
+          if (previousImageUrl && previousImageUrl !== result.data.publicUrl)
+            void requestStorageCleanupByPublicUrl(previousImageUrl).catch(() => undefined);
           setSlideRetryFiles((current) => ({ ...current, [id]: null }));
           resolve();
         } catch {
