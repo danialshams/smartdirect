@@ -139,5 +139,5 @@ export function matchLiveRule(rule: LiveRule, text: string) {
 export function liveOpeningMessage(rule: LiveRule) {
   if (!rule.requireFollow) return rule.initialText;
   const instruction = "پس از فالو، در دایرکت عبارت «" + rule.nextKeyword + "» را بنویس.";
-  return rule.followText + "\n" + instruction;
+  return (rule.mode === "FOLLOW_UP" ? rule.initialText + "\n\n" : "") + rule.followText + "\n" + instruction;
 }
