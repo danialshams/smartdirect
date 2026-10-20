@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-export type InstagramWebhookEventType = "MESSAGING" | "COMMENT";
+export type InstagramWebhookEventType = "MESSAGING" | "COMMENT" | "LIVE_COMMENT";
 
 export type InstagramWebhookNormalizedEvent = {
   type: InstagramWebhookEventType;
@@ -116,5 +116,7 @@ export function normalizeInstagramWebhookEvent(input: {
 }): InstagramWebhookNormalizedEvent {
   return input.type === "MESSAGING"
     ? normalizeInstagramMessagingEvent(input.event, input.accountId)
-    : normalizeInstagramCommentEvent(input.event, input.accountId);
+    : input.type === "LIVE_COMMENT"
+      ? { ...normalizeInstagramCommentEvent(input.event, input.accountId), type: "LIVE_COMMENT" }
+      : normalizeInstagramCommentEvent(input.event, input.accountId);
 }
