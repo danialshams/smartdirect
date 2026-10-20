@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Lightbulb, Plus, X, ArrowRight } from "lucide-react";
-import { dairaPalette } from "@/lib/design-system/palette";
+import { dairaPalette } from "../../lib/design-system/palette";
 import { createEmptyMessage, normalizeMessages, type MessageDraft, type QuickReplyDraft, type Showcase, type FormItem } from "./automation-form-utils";
 import PublishingStoryAutomationSetup, { type StoryFormTemplate } from "./publishing/PublishingStoryAutomationSetup";
 import LiveAutomationSkeleton from "./LiveAutomationSkeleton";
