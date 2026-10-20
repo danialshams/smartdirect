@@ -143,10 +143,7 @@ function StoryAnswer({ reply, index, level, instagramAccountId, showcases, loadi
   return (
     <div className="min-w-0 rounded-xl bg-[#F8FAFC] p-3 sm:p-4">
       <div className="mb-3 flex items-center justify-between gap-2">
-        <h5 className="inline-flex items-center gap-2 text-sm font-bold text-[#0F172A]">
-          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#E9F0FD] text-xs font-bold text-[#1D4ED8]">{new Intl.NumberFormat("fa-IR").format(index + 1)}</span>
-          گزینه {new Intl.NumberFormat("fa-IR").format(index + 1)}
-        </h5>
+        <h5 className="text-sm font-bold text-[#0F172A]">گزینه {new Intl.NumberFormat("fa-IR").format(index + 1)}</h5>
         <button type="button" onClick={onRemove} aria-label={`حذف گزینه ${index + 1}`}
           className="sd-destructive-button flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[#DC2626] hover:bg-[#FEF2F2]">
           <Trash2 size={16} aria-hidden="true" />
