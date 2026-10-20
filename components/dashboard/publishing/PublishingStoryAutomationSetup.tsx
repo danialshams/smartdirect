@@ -266,6 +266,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
   const originalSlides = selectedShowcase && Array.isArray(selectedShowcase.items)
     ? (selectedShowcase.items as StoredShowcaseItem[]).map(slideFromItem) : [];
   const existingShowcaseEdited = Boolean(storyCreateMode && showcaseSource === "existing" && selectedShowcase &&
+    (!storyEditMode || hydratedShowcaseRef.current === selectedShowcaseId) &&
     comparableSlides(slides) !== comparableSlides(originalSlides));
   useEffect(() => {
     if (storyEditMode) onDraftChange?.(responseType === "SHOWCASE" && existingShowcaseEdited);
@@ -580,6 +581,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                   onChange={(event) => {
                     const id = event.target.value;
                     setSelectedShowcaseId(id);
+                    if (storyEditMode) hydratedShowcaseRef.current = id;
                     const chosen = showcases.find((item) => item.id === id);
                     setSlides(chosen && Array.isArray(chosen.items)
                       ? (chosen.items as StoredShowcaseItem[]).map(slideFromItem) : []);
