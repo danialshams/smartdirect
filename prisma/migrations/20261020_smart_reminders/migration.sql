@@ -19,6 +19,7 @@ CREATE TABLE "SmartReminderDelivery" (
   "dueAt" TIMESTAMP(3) NOT NULL,
   "status" TEXT NOT NULL DEFAULT 'PENDING',
   "queueJobId" TEXT,
+  "attempts" INTEGER NOT NULL DEFAULT 0,
   "igMessageId" TEXT,
   "sentAt" TIMESTAMP(3),
   "cancelledAt" TIMESTAMP(3),
