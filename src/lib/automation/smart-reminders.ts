@@ -1,10 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { enqueueJob } from "@/lib/queue/core";
 import { withConversationLock } from "@/lib/conversation/conversation-lock";
-import { getInstagramMessagingWindow } from "@/lib/instagram/messaging-window";
+import { reminderBlockReason, reminderWindowValidAt } from "./smart-reminder-policy";
 import { sendAutomationMessage } from "@/lib/automation/send-automation-message";
 
-const WINDOW_SAFETY_MS = 5 * 60_000;
 const STALE_CLAIM_MS = 10 * 60_000;
 const MAX_DELIVERY_ATTEMPTS = 4;
 
@@ -34,7 +33,7 @@ export async function scheduleSmartReminder(input: {
   if (!anchor || !conversation || conversation.instagramAccountId !== rule.instagramAccountId || !lastInbound) return;
   // A private comment reply alone does not open the Instagram messaging window.
   const dueAt = new Date(anchor.createdAt.getTime() + rule.delayMinutes * 60_000);
-  if (dueAt.getTime() >= lastInbound.createdAt.getTime() + 24 * 60 * 60_000 - WINDOW_SAFETY_MS) return;
+  if (!reminderWindowValidAt(lastInbound.createdAt, dueAt)) return;
 
   // Supersede earlier reminders, including those from different automations.
   await prisma.smartReminderDelivery.updateMany({
@@ -118,15 +117,14 @@ export async function processSmartReminder(deliveryId: string): Promise<void> {
         prisma.conversationMessage.findFirst({ where: { conversationId: delivery.conversationId, direction: "OUTBOUND" },
           orderBy: { createdAt: "desc" }, select: { id: true } }),
       ]);
-      if (!anchor || !lastInbound || lastInbound.createdAt > anchor.createdAt ||
-          lastOutbound?.id !== delivery.anchorMessageId) {
-        await markSkipped(deliveryId, "CONVERSATION_CHANGED");
-        return;
-      }
-      const window = getInstagramMessagingWindow(lastInbound.createdAt);
-      // Human Agent mode is forbidden for unattended automated reminders.
-      if (window.mode !== "STANDARD" || window.remainingMs <= WINDOW_SAFETY_MS) {
-        await markSkipped(deliveryId, "INSTAGRAM_24H_WINDOW_CLOSED");
+      const blocked = reminderBlockReason({
+        anchorAt: anchor?.createdAt ?? null,
+        lastInboundAt: lastInbound?.createdAt ?? null,
+        latestOutboundMatches: lastOutbound?.id === delivery.anchorMessageId,
+        now: new Date(),
+      });
+      if (blocked) {
+        await markSkipped(deliveryId, blocked);
         return;
       }
 
