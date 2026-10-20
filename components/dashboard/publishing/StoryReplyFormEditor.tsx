@@ -153,7 +153,7 @@ function StoryAnswer({ reply, index, level, instagramAccountId, showcases, loadi
       destinationType: value,
       destinationText: value === "TEXT" ? reply.destinationText : "",
       destinationFormId: "",
-      destinationShowcaseId: value === "SHOWCASE" ? reply.destinationShowcaseId : "",
+      destinationShowcaseId: value === "SHOWCASE" ? (showcaseMode === "new" ? createdShowcaseId : reply.destinationShowcaseId) : "",
       destinationMediaUrl: keepPreviousFile ? reply.destinationMediaUrl : "",
       destinationMediaId: keepPreviousFile ? reply.destinationMediaId : "",
       destinationQuestion: value === "FORM" ? reply.destinationQuestion : "",
