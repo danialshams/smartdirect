@@ -135,6 +135,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   const isEditing = Boolean(editAutomation);
   const [editHydrated, setEditHydrated] = useState(!editAutomation);
   const [isActive, setIsActive] = useState(true);
+  const [sendDm, setSendDm] = useState(true);
   const [advancedMessageEditor, setAdvancedMessageEditor] = useState(false);
   const [extraMessages, setExtraMessages] = useState<MessageDraft[]>([]);
   const [extraLinks, setExtraLinks] = useState<Record<string, LinkButton[]>>({});
@@ -191,6 +192,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     setFollowGateText(editAutomation.followGateText || "برای دریافت پاسخ، ابتدا پیج ما را فالو کنید.");
     setFollowGateButtonText(editAutomation.followGateButtonText || "بررسی فالو");
     setIsActive(editAutomation.isActive !== false);
+    setSendDm(editAutomation.sendDm !== false);
     setMessage(first);
     setExtraMessages(loadedMessages.slice(1));
     setExtraLinks(otherLinks);
@@ -390,6 +392,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             followGateText: requireFollow ? followGateText.trim() : null,
             followGateButtonText: requireFollow ? followGateButtonText.trim() : null,
             isActive,
+            sendDm,
             messages: allMessages,
           }),
         });
@@ -566,6 +569,8 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   }
 
   const selectedMediaCount = selectedMediaIds.length;
+  const availableMediaIdSet = new Set(mediaItems.map((item) => item.id));
+  const unknownMediaIds = selectedMediaIds.filter((id) => !availableMediaIdSet.has(id));
   const selectedMediaItems = mediaItems.filter((item) => selectedMediaIds.includes(item.id));
 
   const successOrbits = [
@@ -706,6 +711,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
               <div className="min-w-0">
                 <p className="text-xs leading-5 text-[var(--daira-text)]">
                   {mediaLoading ? "در حال دریافت محتوا..." : selectedMediaCount > 0 ? new Intl.NumberFormat("fa-IR").format(selectedMediaCount) + (triggerType === "COMMENT_KEYWORD" ? " محتوا انتخاب شده" : " استوری انتخاب شده") : "هنوز محتوایی انتخاب نشده"}
+                  {isEditing && !mediaLoading && unknownMediaIds.length > 0 && <span className="mt-1 block text-[11px] text-[var(--daira-text)]">{new Intl.NumberFormat("fa-IR").format(unknownMediaIds.length)} محتوای قبلی پیش‌نمایش ندارد، اما انتخاب آن حفظ شده است.</span>}
                 </p>
               </div>
             </div>
@@ -865,6 +871,12 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                 <div className="space-y-4">
                 <div className="mb-2 mt-6"><AutomationSectionGuide>{isEditing ? "۴. پیام دایرکت — پیام و دکمه‌های ذخیره‌شده را مشاهده و ویرایش کن." : "۵. پیام دایرکت — متن پیام را بنویس. اگر «متن همراه دکمه لینک» را انتخاب کنی، دکمه‌ای با عنوان و آدرس دلخواه زیر پیام نمایش داده می‌شود تا کاربر با لمس آن لینک را باز کند."}</AutomationSectionGuide></div>
                 <section className="space-y-4 rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
+                  {isEditing && (
+                    <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] p-3">
+                      <span className="min-w-0"><strong className="block text-sm text-[var(--daira-heading)]">ارسال پاسخ در دایرکت</strong><span className="mt-1 block text-xs text-[var(--daira-text)]">وقتی غیرفعال باشد، پیام‌های ذخیره‌شده باقی می‌مانند ولی ارسال نمی‌شوند.</span></span>
+                      <input type="checkbox" role="switch" checked={sendDm} onChange={(event) => setSendDm(event.target.checked)} className="daira-form-switch -scale-x-100" aria-label="ارسال دایرکت خودکار" />
+                    </label>
+                  )}
                   <div>
                     <div className="mb-3 flex items-center gap-3">
                       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]"><Send size={15} strokeWidth={2.1} aria-hidden="true" /></span>
@@ -1079,6 +1091,18 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                 <button type="button" onClick={() => setMediaDialogOpen(false)} aria-label="بستن پنجره انتخاب محتوا" className="sd-neutral-button flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[var(--daira-text)] transition hover:bg-[var(--daira-surface-hover)] hover:text-[var(--daira-heading)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--daira-primary)]/25"><X size={17} /></button>
               </header>
               <div className="min-h-0 flex-1 overflow-y-auto px-3 py-2 sm:px-4">
+                {isEditing && !mediaLoading && draftSelectedMediaIds.some((id) => !availableMediaIdSet.has(id)) && (
+                  <div className="mb-3 rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] p-3">
+                    <p className="mb-2 text-xs font-bold text-[var(--daira-text)]">محتواهای متصل که اکنون در فهرست اینستاگرام نمایش داده نمی‌شوند:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {draftSelectedMediaIds.filter((id) => !availableMediaIdSet.has(id)).map((id) => (
+                        <button key={id} type="button" onClick={() => setDraftSelectedMediaIds((current) => current.filter((value) => value !== id))} className="sd-neutral-button inline-flex min-h-9 items-center gap-2 rounded-xl border border-[var(--daira-border)] bg-white px-3 text-xs text-[var(--daira-text)]">
+                          <span dir="ltr">…{id.slice(-8)}</span><X size={14} aria-label="حذف این اتصال" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <AutomationPicker items={mediaItems} selectedIds={draftSelectedMediaIds} loading={mediaLoading} showContentFilters={triggerType === "COMMENT_KEYWORD"} onToggle={(id) => setDraftSelectedMediaIds((current) => triggerType === "COMMENT_KEYWORD" ? (current.includes(id) ? current.filter((value) => value !== id) : [...current, id]) : [id])} />
               </div>
               <footer className="flex shrink-0 items-center justify-center gap-2 border-t border-[var(--daira-border)] bg-white px-3 py-3 sm:px-4">
