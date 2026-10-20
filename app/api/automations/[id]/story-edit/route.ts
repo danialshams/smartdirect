@@ -96,7 +96,7 @@ function parseMessage(value: unknown): MessageInput {
   if (["IMAGE", "VIDEO", "AUDIO"].includes(messageType) && !mediaUrl && !mediaId)
     throw new StoryEditError("فایل پاسخ را انتخاب کنید.");
   if (messageType === "SHOWCASE" && !showcaseId) throw new StoryEditError("ویترین پاسخ را انتخاب کنید.");
-  const updateQuickReplies = messageType !== "FORM" || message.updateQuickReplies !== false;
+  const updateQuickReplies = message.updateQuickReplies !== false;
   const quickReplies = messageType === "FORM" && updateQuickReplies
     ? parseQuickReplies(message.quickReplies, 0, new Set<string>()) : [];
   return { id: clean(message.id), messageType, text, mediaUrl, mediaId, showcaseId, formId, quickReplies, updateQuickReplies };
