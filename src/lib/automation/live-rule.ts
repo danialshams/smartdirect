@@ -69,6 +69,8 @@ export function parseLiveRule(body: unknown): LiveRuleInput {
     throw new LiveRuleValidationError("برای اجبار به فالو باید پاسخ دومرحله‌ای را انتخاب کنید.");
   if (requireFollow && (!followGateText || followGateText.length > 640))
     throw new LiveRuleValidationError("متن درخواست فالو را وارد کنید (حداکثر ۶۴۰ کاراکتر).");
+  if (requireFollow && firstText.length + followGateText.length + 2 > 1000)
+    throw new LiveRuleValidationError("مجموع متن اولین دایرکت و درخواست فالو نباید بیشتر از ۱۰۰۰ کاراکتر باشد.");
   if (mode === "DIRECT") return { keyword: keys.join(","), keywordMatchMode, mode, firstText, replyKeyword: "", requireFollow: false, followGateText: "", answer: null };
   if (!replyKeyword || replyKeyword.length > 100 || replyKeyword.includes(","))
     throw new LiveRuleValidationError("کلمه ادامهٔ گفتگو را وارد کنید؛ مانند «ارسال کن».");
