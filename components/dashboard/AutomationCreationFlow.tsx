@@ -377,7 +377,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             JSON.stringify(originalById.get(entry.id)?.quickReplies) !== JSON.stringify(entry.quickReplies),
           linkButtons: index === 0 ? currentLinks : entry.messageType === "TEXT" ? (extraLinks[entry.id] || []).map((button) => ({
             title: button.title.trim(), url: normalizeExternalLink(button.url),
-          })),
+          })) : [],
         }));
         const response = await fetch("/api/automations/" + encodeURIComponent(editAutomation.id) + "/comment-edit", {
           method: "PUT",
