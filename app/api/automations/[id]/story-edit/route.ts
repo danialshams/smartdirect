@@ -245,6 +245,23 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
           else await tx.quickReply.create({ data: { ...item, automationMessageId: saved.id } });
         }
       }
+      if (mediaId !== current.mediaId && current.mediaId) {
+        // A previously published story may still link the old automation through
+        // its publishing job. Clear only that old association; never touch other
+        // stories or attach a job that already belongs to another response.
+        await tx.instagramPublishJob.updateMany({
+          where: {
+            instagramAccountId: current.instagramAccountId,
+            instagramMediaId: current.mediaId,
+            storyReplyAutomationId: id,
+          },
+          data: {
+            storyReplyAutomationId: null,
+            storyReplyTriggerKeywords: null,
+            storyReplyTriggerResponse: null,
+          },
+        });
+      }
       // Older story automations can contain additional messages; leave those
       // intact instead of silently deleting them when editing the main reply.
     }, { maxWait: 10000, timeout: 30000 });
