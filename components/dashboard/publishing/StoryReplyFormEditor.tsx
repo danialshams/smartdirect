@@ -257,6 +257,16 @@ function StoryAnswer({ reply, index, level, instagramAccountId, showcases, loadi
                   </select>
                   {!loadingResources && showcases.length === 0 && <p className="text-xs text-[#64748B]">هنوز ویترینی ساخته نشده است.</p>}
                 </div>
+              ) : createdShowcaseId ? (
+                <div role="status" className="flex items-center justify-between gap-3 rounded-xl bg-[#F0FDF4] px-3 py-3 text-xs text-[#166534]">
+                  <span className="font-semibold">ویترین جدید ساخته و به این گزینه متصل شده است.</span>
+                  <button type="button" onClick={() => {
+                    setCreatedShowcaseId("");
+                    onChange({ destinationShowcaseId: "" });
+                  }} className="sd-neutral-button shrink-0 font-bold text-[#1D4ED8]">
+                    جایگزینی
+                  </button>
+                </div>
               ) : (
                 <StoryReplyShowcaseCreator
                   instagramAccountId={instagramAccountId}
