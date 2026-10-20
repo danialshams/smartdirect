@@ -8,6 +8,7 @@ const PublishingStoryAutomationSetup = dynamic(() => import("./publishing/Publis
 import { createEmptyMessage, normalizeMessages, type MessageDraft, type QuickReplyDraft, type Showcase, type FormItem } from "./automation-form-utils";
 import { dairaPalette } from "../../lib/design-system/palette";
 import AutomationPicker from "./AutomationPicker";
+import CommentAutomationEditSkeleton from "./CommentAutomationEditSkeleton";
 import { useDashboardBackNavigation } from "./DashboardBackNavigationContext";
 
 type Account = { id: string; igUsername: string; igUserId: string; isConnected: boolean };
@@ -366,8 +367,12 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
       setSaving(true);
       setError("");
       try {
+        const previouslySavedMessages = normalizeMessages(editAutomation.messages);
+        const originalById = new Map(previouslySavedMessages.map((entry) => [entry.id, entry]));
         const allMessages = [currentMessage, ...extraMessages].map((entry, index) => ({
           ...entry,
+          updateQuickReplies: !originalById.has(entry.id) ||
+            JSON.stringify(originalById.get(entry.id)?.quickReplies) !== JSON.stringify(entry.quickReplies),
           linkButtons: index === 0 ? currentLinks : (extraLinks[entry.id] || []).map((button) => ({
             title: button.title.trim(), url: normalizeExternalLink(button.url),
           })),
@@ -557,7 +562,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
   if (!editHydrated) {
     // The edit form must never flash empty defaults before stored fields are populated.
-    return null;
+    return <CommentAutomationEditSkeleton />;
   }
 
   const selectedMediaCount = selectedMediaIds.length;
