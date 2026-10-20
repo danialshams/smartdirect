@@ -7,6 +7,7 @@ import type { FormItem, MessageDraft, QuickReplyDraft, Showcase } from "../autom
 import VoiceRecorder from "../VoiceRecorder";
 import { requestStorageCleanupByPublicUrl, useStorageUploadLease } from "./useStorageUploadLease";
 import { createEmptyQuickReply } from "../automation-form-utils";
+import StoryReplyFormEditor from "./StoryReplyFormEditor";
 
 export type PublishingStoryAutomationSetupHandle = { saveAndContinue: () => Promise<boolean>; deleteAndReset: () => Promise<boolean> };
 
@@ -67,6 +68,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
   const [showcaseSource, setShowcaseSource] = useState<"new" | "existing">("new");
   const [formSaved, setFormSaved] = useState(false);
   const [formSaving, setFormSaving] = useState(false);
+  const [formUploadsInFlight, setFormUploadsInFlight] = useState(0);
   const [finalSaving, setFinalSaving] = useState(false);
   const saveShowcaseLockRef = useRef(false);
   const [slideUploadProgress, setSlideUploadProgress] = useState<Record<string, number>>({});
@@ -289,7 +291,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
 
   useImperativeHandle(ref, () => ({
     async saveAndContinue() {
-      if (!keywordValid || uploading || slideUploadInProgress || savingShowcase || formSaving) return false;
+      if (!keywordValid || uploading || slideUploadInProgress || formUploadsInFlight > 0 || savingShowcase || formSaving) return false;
       if (responseType === "TEXT") {
         if (!message.text.trim()) return false;
         onUpdate({ text: message.text.trim() });
@@ -335,6 +337,22 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
       }
     },
   }), [keywordValid, uploading, savingShowcase, formSaving, responseType, message, showcaseSaved, onUpdate, onContinue, onSavedChange]);
+
+  async function uploadFormMedia(file?: File): Promise<string> {
+    if (!file) return "";
+    setFormUploadsInFlight((value) => value + 1);
+    try {
+      const data = new FormData();
+      data.append("file", file);
+      const response = await fetch("/api/instagram/publishing/upload", { method: "POST", body: data });
+      const result = await response.json().catch(() => null);
+      if (!response.ok || !result?.success || typeof result?.data?.publicUrl !== "string")
+        throw new Error(result?.message || "آپلود فایل ناموفق بود.");
+      return result.data.publicUrl as string;
+    } finally {
+      setFormUploadsInFlight((value) => Math.max(0, value - 1));
+    }
+  }
 
   const mediaAccept =
     responseType === "IMAGE" ? "image/*" :
@@ -644,24 +662,26 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
 
       {responseType === "FORM" && (
         <div className={["space-y-4 transition-opacity duration-200", formSaved ? "opacity-55" : ""].join(" ")}>
-        <StoryFormBuilder
-          message={message}
-          showcases={showcases}
-          forms={forms}
-          loadingResources={loadingResources}
-          hideVideo={hideVideo}
-          hideForm={hideForm}
-          onUpdate={onUpdate}
-          onUploadMedia={async (file) => {
-            if (!file) return "";
-            const data = new FormData();
-            data.append("file", file);
-            const response = await fetch("/api/instagram/publishing/upload", { method: "POST", body: data });
-            const result = await response.json().catch(() => null);
-            if (!response.ok || !result?.success || typeof result?.data?.publicUrl !== "string") throw new Error(result?.message || "آپلود فایل ناموفق بود.");
-            return result.data.publicUrl as string;
-          }}
-        />
+        {storyCreateMode ? (
+          <StoryReplyFormEditor
+            message={message}
+            showcases={showcases}
+            loadingResources={loadingResources}
+            onUpdate={onUpdate}
+            onUploadMedia={uploadFormMedia}
+          />
+        ) : (
+          <StoryFormBuilder
+            message={message}
+            showcases={showcases}
+            forms={forms}
+            loadingResources={loadingResources}
+            hideVideo={hideVideo}
+            hideForm={hideForm}
+            onUpdate={onUpdate}
+            onUploadMedia={uploadFormMedia}
+          />
+        )}
         <div className="space-y-2 pt-2">
           {formSaved && <div className="space-y-2"><p className="rounded-xl border border-[#BBF7D0] bg-[#F0FDF4] px-3.5 py-3 text-xs font-semibold text-[#166534]">فرم ذخیره شده است.</p><button type="button" onClick={() => { setFormSaved(false); onUpdate({ text: "", quickReplies: [] }); }} className="sd-destructive-button text-xs font-bold text-[#DC2626] transition hover:text-[#B91C1C]">حذف فرم</button></div>}
         </div>
@@ -674,7 +694,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
         <div className={finalActions ? "space-y-3 border-t border-[#E2E8F0] pt-4" : usePublishingSaveLabel ? "border-t border-[#E2E8F0] pt-4" : ""}>
         <button
           type="button"
-          disabled={disabled || finalSaveDisabled || finalSaving || !keywordValid || uploading || slideUploadInProgress || savingShowcase || formSaving ||
+          disabled={disabled || finalSaveDisabled || finalSaving || !keywordValid || uploading || slideUploadInProgress || formUploadsInFlight > 0 || savingShowcase || formSaving ||
             (responseType === "TEXT" && !message.text.trim()) ||
             (["IMAGE", "VIDEO", "AUDIO"].includes(responseType) && !message.mediaUrl.trim()) ||
             (responseType === "SHOWCASE" && !storyShowcaseReady) ||
