@@ -13,7 +13,8 @@ export type QueueJobType =
   | "INSTAGRAM_WEBHOOK"
   | "AUTOMATION"
   | "SEND_MESSAGE"
-  | "PUBLISH";
+  | "PUBLISH"
+  | "SMART_REMINDER";
 
 export interface QueueJobPayloadMap {
   TEST: {
@@ -36,6 +37,9 @@ export interface QueueJobPayloadMap {
   };
   PUBLISH: {
     publishingJobId: string;
+  };
+  SMART_REMINDER: {
+    deliveryId: string;
   };
 }
 
