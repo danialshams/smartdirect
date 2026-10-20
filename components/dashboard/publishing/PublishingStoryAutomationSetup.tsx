@@ -317,7 +317,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
       return true;
     },
     async deleteAndReset() {
-      if (savingShowcase || formSaving || uploading) return false;
+      if (savingShowcase || formSaving || uploading || slideUploadInProgress || formUploadsInFlight > 0) return false;
       setError("");
       try {
         if (message.showcaseId) {
@@ -338,7 +338,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
         return false;
       }
     },
-  }), [keywordValid, uploading, savingShowcase, formSaving, responseType, message, showcaseSaved, onUpdate, onContinue, onSavedChange]);
+  }), [keywordValid, uploading, slideUploadInProgress, formUploadsInFlight, savingShowcase, formSaving, responseType, message, showcaseSaved, onUpdate, onContinue, onSavedChange]);
 
   async function uploadFormMedia(file?: File): Promise<string> {
     if (!file) return "";
