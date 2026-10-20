@@ -70,7 +70,7 @@ function savedRuleData(rule: ValidatedLiveRule) {
     commentReplyText: serializeLiveConfig({ followupKeyword: rule.followupKeyword }),
     requireFollow: rule.requireFollow,
     followGateText: rule.requireFollow ? rule.followGateText : null,
-    followGateButtonText: rule.requireFollow ? "بررسی فالو" : null,
+    followGateButtonText: rule.requireFollow ? rule.followGateButtonText : null,
     sendDm: true,
   };
 }
@@ -132,7 +132,7 @@ export async function updateLiveReplyRule(input: ValidatedLiveRule, automationId
 export function displayLiveReply(rule: {
   id: string; instagramAccountId: string; keyword: string | null;
   keywordMatchMode: string; replyText: string | null; commentReplyText: string | null;
-  requireFollow: boolean; followGateText: string | null; updatedAt: Date;
+  requireFollow: boolean; followGateText: string | null; followGateButtonText: string | null; updatedAt: Date;
   createdAt: Date; messages: unknown[];
 }) {
   const config = parseLiveConfig(rule.commentReplyText);
@@ -142,6 +142,7 @@ export function displayLiveReply(rule: {
     initialText: rule.replyText ?? "", followupKeyword: config.followupKeyword,
     followupEnabled: Boolean(config.followupKeyword),
     requireFollow: rule.requireFollow, followGateText: rule.followGateText ?? "",
+    followGateButtonText: rule.followGateButtonText ?? "بررسی فالو",
     messages: rule.messages, createdAt: rule.createdAt.toISOString(),
     updatedAt: rule.updatedAt.toISOString(),
   };
