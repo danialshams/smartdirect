@@ -35,7 +35,7 @@ export default function StoryAutomationEdit({ id }: { id: string }) {
     return () => controller.abort();
   }, [id, retry]);
 
-  if (!automation && !error) return <CommentAutomationEditSkeleton />;
+  if (!automation && !error) return <CommentAutomationEditSkeleton kind="story" />;
   if (!automation) return (
     <div dir="rtl" className="mx-auto flex min-h-[45vh] max-w-2xl flex-col items-center justify-center gap-4 px-4 text-center">
       <div role="alert" className="w-full rounded-xl border border-[var(--daira-error-border,#FECACA)] bg-[var(--daira-error-background,#FEF2F2)] px-4 py-4 text-sm text-[var(--daira-error-text,#B91C1C)]">{error}</div>
