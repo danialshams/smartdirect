@@ -155,13 +155,14 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     if (commentReplyText.length > 2000) throw new EditError("متن پاسخ زیر کامنت حداکثر ۲۰۰۰ کاراکتر است.");
     if (typeof body.isActive !== "boolean") throw new EditError("وضعیت فعال بودن نامعتبر است.");
     if (typeof body.sendDm !== "boolean") throw new EditError("وضعیت ارسال دایرکت نامعتبر است.");
-    if (!Array.isArray(body.messages) || !body.messages.length || body.messages.length > 20)
-      throw new EditError("حداقل یک پیام و حداکثر بیست پیام مجاز است.");
-    const singleEmptyPlaceholder = body.sendDm === false && automation.messages.length === 0 &&
-      body.messages.length === 1 && body.messages[0] && typeof body.messages[0] === "object" &&
-      !clean((body.messages[0] as JsonRecord).text) &&
-      clean((body.messages[0] as JsonRecord).messageType) === "TEXT";
-    const messages: MessageInput[] = singleEmptyPlaceholder ? [] : body.messages.map(validateMessage);
+    if (!Array.isArray(body.messages) || body.messages.length > 20 ||
+      (body.sendDm === true && !body.messages.length))
+      throw new EditError("وقتی ارسال دایرکت فعال است، حداقل یک پیام لازم است.");
+    const messages: MessageInput[] = body.messages.map(validateMessage);
+    if (!commentReplyText && (body.sendDm !== true || !messages.length))
+      throw new EditError("حداقل یک پاسخ زیر کامنت یا پیام دایرکت لازم است.");
+    if (requireFollow && body.sendDm !== true)
+      throw new EditError("شرط فالو فقط برای پاسخ دایرکت قابل استفاده است.");
     const submittedMessageIds = messages.map((m) => m.id).filter(Boolean) as string[];
     if (new Set(submittedMessageIds).size !== submittedMessageIds.length)
       throw new EditError("شناسه پیام‌های ارسالی تکراری است.");
