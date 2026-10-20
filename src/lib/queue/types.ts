@@ -23,7 +23,7 @@ export interface QueueJobPayloadMap {
     event: unknown;
     eventId: string;
     instagramAccountId: string;
-    eventType: "MESSAGING" | "COMMENT";
+    eventType: "MESSAGING" | "COMMENT" | "LIVE_COMMENT";
   };
   AUTOMATION: {
     automationId: string;
