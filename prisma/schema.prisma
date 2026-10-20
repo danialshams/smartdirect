@@ -53,6 +53,7 @@ model InstagramAccount {
   persistentMenu     PersistentMenu?
   showcases          Showcase[]
   savedAutomationResponses SavedAutomationResponse[]
+  liveCommentReplies LiveCommentReply[]
 
   @@unique([userId, igUserId])
   @@index([userId])
@@ -105,12 +106,34 @@ model Automation {
   iceBreakers         IceBreaker[]
   pendingFollowGates  PendingFollowGate[]
   persistentMenuItems PersistentMenuItem[]
+  liveCommentReplies LiveCommentReply[]
+  liveReplyMode String @default("DIRECT")
+  liveReplyKeyword String?
 
   @@unique([instagramAccountId, keyword, mediaId])
   @@index([instagramAccountId])
   @@index([mediaId])
   @@index([instagramAccountId, triggerType])
   @@index([instagramAccountId, keyword])
+}
+
+model LiveCommentReply {
+  id                 String @id @default(cuid())
+  instagramAccountId String
+  automationId       String
+  commentId          String @unique
+  liveMediaId        String
+  participantId      String?
+  status             String @default("RESERVED")
+  outboundMessageId  String?
+  expiresAt          DateTime
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  instagramAccount   InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
+  automation         Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  @@index([instagramAccountId, participantId, status, expiresAt])
+  @@index([automationId])
+  @@index([expiresAt])
 }
 
 model AutomationMessage {
@@ -691,6 +714,7 @@ enum AutomationTriggerType {
   COMMENT_KEYWORD
   DM
   STORY_REPLY_KEYWORD
+  LIVE_COMMENT_KEYWORD
 }
 
 enum AutomationMessageType {
