@@ -61,3 +61,6 @@ jobs:
           REDIS_DRIVER: redis
           REDIS_URL: redis://127.0.0.1:6379
         run: npm run build
+
+      - name: Validate Instagram Live reply rules
+        run: npm run live:automation:test
