@@ -358,7 +358,11 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
             title: isStory ? "پاسخ خودکار استوری" : "پاسخ خودکار کامنت",
             subtitle: keyword,
             keyword,
-            href: `/dashboard/publishing/${job.id}`,
+            href: linkedAutomation
+              ? (isStory
+                ? `/dashboard/story-automation/${linkedAutomation.id}`
+                : `/dashboard/comment-automation/${linkedAutomation.id}`)
+              : `/dashboard/publishing/${job.id}`,
           });
         }
 
