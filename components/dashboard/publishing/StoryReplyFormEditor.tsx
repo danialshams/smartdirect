@@ -237,7 +237,8 @@ function StoryAnswer({ reply, index, level, instagramAccountId, showcases, loadi
                     setCreatedShowcaseId(id);
                     onChange({ destinationShowcaseId: id });
                   }}
-                />) : null}
+                />
+              )) : null}
             </div>
           )}
           {reply.destinationType === "FORM" && level < 3 && (
