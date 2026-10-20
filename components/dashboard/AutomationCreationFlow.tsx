@@ -736,41 +736,84 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
       {pageStyles}
       <div className="space-y-0">
         <div className="mb-2"><AutomationSectionGuide>{triggerType === "COMMENT_KEYWORD" ? "۱. انتخاب محتوا — پست یا ریلز موردنظرت را انتخاب کن." : "۱. انتخاب محتوا — استوری موردنظرت را انتخاب کن."}</AutomationSectionGuide></div>
-        <section aria-labelledby="automation-content-title" className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-3">
-              <div className="flex shrink-0 items-center gap-1">
-                {selectedMediaItems.length > 0 ? selectedMediaItems.slice(0, 3).map((item) => {
-                  const image = item.thumbnail_url || item.media_url;
-                  return (
-                    <span key={item.id} className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] text-[var(--daira-text)]">
-                      {image ? <img src={image} alt="" className="h-full w-full object-cover" /> : <Camera size={17} />}
-                    </span>
-                  );
-                }) : (
-                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]">
-                    <Camera size={19} />
-                  </span>
-                )}
-                {selectedMediaCount > 3 && (
-                  <span className="flex h-11 min-w-11 items-center justify-center rounded-xl bg-[var(--daira-surface-hover)] px-2 text-xs font-bold text-[var(--daira-text)]">
-                    +{new Intl.NumberFormat("fa-IR").format(selectedMediaCount - 3)}
-                  </span>
-                )}
+        {isEditing ? (
+          <section aria-label="محتواهای انتخاب‌شده" className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <strong className="text-sm font-bold text-[var(--daira-heading)]">محتواهای انتخاب‌شده</strong>
+                <span className="rounded-full bg-[var(--daira-surface-hover)] px-2.5 py-1 text-xs font-bold text-[var(--daira-text)]" aria-live="polite">{new Intl.NumberFormat("fa-IR").format(selectedMediaCount)} محتوا</span>
               </div>
-              <div className="min-w-0">
-                <p className="text-xs leading-5 text-[var(--daira-text)]">
-                  {mediaLoading ? "در حال دریافت محتوا..." : selectedMediaCount > 0 ? new Intl.NumberFormat("fa-IR").format(selectedMediaCount) + (triggerType === "COMMENT_KEYWORD" ? " محتوا انتخاب شده" : " استوری انتخاب شده") : "هنوز محتوایی انتخاب نشده"}
-                  {isEditing && !mediaLoading && unknownMediaIds.length > 0 && <span className="mt-1 block text-[11px] text-[var(--daira-text)]">{new Intl.NumberFormat("fa-IR").format(unknownMediaIds.length)} محتوای قبلی پیش‌نمایش ندارد، اما انتخاب آن حفظ شده است.</span>}
-                </p>
-              </div>
+              <button type="button" onClick={openMediaDialog} aria-haspopup="dialog" aria-expanded={mediaDialogOpen} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-[var(--daira-primary)] px-4 text-xs font-bold text-white">
+                <ImageIcon size={16} aria-hidden="true" /> افزودن یا تغییر محتوا
+              </button>
             </div>
-            <button type="button" onClick={openMediaDialog} aria-haspopup="dialog" aria-expanded={mediaDialogOpen} className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl px-4 text-xs font-bold text-white transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--daira-primary)]/25" style={{ background: dairaPalette.primary.main }}>
-              <ImageIcon size={16} aria-hidden="true" />
-              {selectedMediaCount > 0 ? "تغییر انتخاب" : "انتخاب محتوا"}
-            </button>
-          </div>
-        </section>
+            {selectedMediaCount ? (
+              <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5">
+                {selectedMediaIds.map((id) => {
+                  const item = mediaItems.find((media) => media.id === id);
+                  const preview = item?.thumbnail_url || item?.media_url;
+                  return (
+                    <div key={id} className="relative min-w-0 overflow-hidden rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)]">
+                      <div className="flex aspect-square items-center justify-center overflow-hidden bg-[var(--daira-surface-active)]">
+                        {preview ? <img src={preview} alt={item?.caption || "محتوای انتخابی"} className="h-full w-full object-cover" loading="lazy" /> : <Camera size={22} className="text-[var(--daira-text)]" />}
+                      </div>
+                      <button type="button" onClick={() => setSelectedMediaIds((current) => current.filter((value) => value !== id))}
+                        aria-label={`حذف محتوا از انتخاب‌ها ${id}`}
+                        title="حذف از انتخاب‌ها"
+                        className="sd-destructive-button absolute left-1.5 top-1.5 z-10 flex h-7 w-7 items-center justify-center rounded-full border border-[var(--daira-border)] bg-white/95 text-[var(--daira-error-text)] shadow-sm transition hover:bg-[var(--daira-error-background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--daira-primary)]">
+                        <X size={16} strokeWidth={2.5} aria-hidden="true" />
+                      </button>
+                      <p className="truncate px-2 py-2 text-center text-[11px] font-semibold text-[var(--daira-text)]">
+                        {item?.media_product_type === "REELS" ? "ریلز" : item ? "پست" : "محتوای قبلی"}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="rounded-xl border border-dashed border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-4 py-6 text-center text-xs leading-6 text-[var(--daira-text)]">هنوز محتوایی انتخاب نشده است. برای ذخیره حداقل یک محتوا انتخاب کنید.</p>
+            )}
+            {!mediaLoading && unknownMediaIds.length > 0 && (
+              <p className="mt-3 text-xs leading-6 text-[var(--daira-text)]">پیش‌نمایش {new Intl.NumberFormat("fa-IR").format(unknownMediaIds.length)} محتوای قدیمی فعلاً در دسترس نیست؛ اتصال آن‌ها حفظ شده است.</p>
+            )}
+          </section>
+        ) : (
+          <section aria-labelledby="automation-content-title" className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="flex shrink-0 items-center gap-1">
+                  {selectedMediaItems.length > 0 ? selectedMediaItems.slice(0, 3).map((item) => {
+                    const image = item.thumbnail_url || item.media_url;
+                    return (
+                      <span key={item.id} className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] text-[var(--daira-text)]">
+                        {image ? <img src={image} alt="" className="h-full w-full object-cover" /> : <Camera size={17} />}
+                      </span>
+                    );
+                  }) : (
+                    <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]">
+                      <Camera size={19} />
+                    </span>
+                  )}
+                  {selectedMediaCount > 3 && (
+                    <span className="flex h-11 min-w-11 items-center justify-center rounded-xl bg-[var(--daira-surface-hover)] px-2 text-xs font-bold text-[var(--daira-text)]">
+                      +{new Intl.NumberFormat("fa-IR").format(selectedMediaCount - 3)}
+                    </span>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs leading-5 text-[var(--daira-text)]">
+                    {mediaLoading ? "در حال دریافت محتوا..." : selectedMediaCount > 0 ? new Intl.NumberFormat("fa-IR").format(selectedMediaCount) + (triggerType === "COMMENT_KEYWORD" ? " محتوا انتخاب شده" : " استوری انتخاب شده") : "هنوز محتوایی انتخاب نشده"}
+                    {isEditing && !mediaLoading && unknownMediaIds.length > 0 && <span className="mt-1 block text-[11px] text-[var(--daira-text)]">{new Intl.NumberFormat("fa-IR").format(unknownMediaIds.length)} محتوای قبلی پیش‌نمایش ندارد، اما انتخاب آن حفظ شده است.</span>}
+                  </p>
+                </div>
+              </div>
+              <button type="button" onClick={openMediaDialog} aria-haspopup="dialog" aria-expanded={mediaDialogOpen} className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl px-4 text-xs font-bold text-white transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--daira-primary)]/25" style={{ background: dairaPalette.primary.main }}>
+                <ImageIcon size={16} aria-hidden="true" />
+                {selectedMediaCount > 0 ? "تغییر انتخاب" : "انتخاب محتوا"}
+              </button>
+            </div>
+          </section>
+        )}
 
         {!isEditing && (<>
         <div className="mb-2 mt-6"><AutomationSectionGuide>۲. روش پاسخ — پاسخ جدید بساز یا از پاسخ قبلی استفاده کن.</AutomationSectionGuide></div>
@@ -919,18 +962,12 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
               {triggerType === "COMMENT_KEYWORD" ? (
                 <div className="space-y-4">
-                <div className="mb-2 mt-6"><AutomationSectionGuide>{isEditing ? "۴. پیام دایرکت — پیام و دکمه‌های ذخیره‌شده را مشاهده و ویرایش کن." : "۵. پیام دایرکت — متن پیام را بنویس. اگر «متن همراه دکمه لینک» را انتخاب کنی، دکمه‌ای با عنوان و آدرس دلخواه زیر پیام نمایش داده می‌شود تا کاربر با لمس آن لینک را باز کند."}</AutomationSectionGuide></div>
+                <div className="mb-2 mt-6"><AutomationSectionGuide>{isEditing ? "۴. پیام دایرکت (اختیاری) — پیام و دکمه‌های ذخیره‌شده را مشاهده و ویرایش کن." : "۵. پیام دایرکت (اختیاری) — در صورت نیاز پیام دایرکت را بنویس؛ بدون پیام دایرکت هم می‌توانی پاسخ زیر کامنت را ثبت کنی."}</AutomationSectionGuide></div>
                 <section className="space-y-4 rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
-                  {isEditing && (
-                    <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] p-3">
-                      <span className="min-w-0"><strong className="block text-sm text-[var(--daira-heading)]">ارسال پاسخ در دایرکت</strong><span className="mt-1 block text-xs text-[var(--daira-text)]">وقتی غیرفعال باشد، پیام‌های ذخیره‌شده باقی می‌مانند ولی ارسال نمی‌شوند.</span></span>
-                      <input type="checkbox" role="switch" checked={sendDm} onChange={(event) => setSendDm(event.target.checked)} className="daira-form-switch -scale-x-100" aria-label="ارسال دایرکت خودکار" />
-                    </label>
-                  )}
                   <div>
                     <div className="mb-3 flex items-center gap-3">
                       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]"><Send size={15} strokeWidth={2.1} aria-hidden="true" /></span>
-                      <h2 className="text-sm font-bold" style={{ color: dairaPalette.text.heading }}>پیام دایرکت</h2>
+                      <h2 className="text-sm font-bold" style={{ color: dairaPalette.text.heading }}>پیام دایرکت <span className="text-[var(--daira-primary)]">(اختیاری)</span></h2>
                     </div>
                   </div>
 
@@ -951,13 +988,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                     </label>
                   </div>
 
-                  {isEditing && (
-                    <label className="sd-neutral-button flex cursor-pointer items-center gap-2 rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] p-3 text-xs font-bold text-[var(--daira-text)]">
-                      <input type="checkbox" checked={advancedMessageEditor} disabled={message.messageType !== "TEXT" && advancedMessageEditor} onChange={(event) => setAdvancedMessageEditor(event.target.checked)} className="h-4 w-4 accent-[var(--daira-primary)]" />
-                      نمایش و ویرایش انواع پیشرفته پیام (تصویر، ویدیو، وویس، ویترین یا فرم)
-                    </label>
-                  )}
-                  {advancedMessageEditor && isEditing ? (
+                  {isEditing && (message.messageType !== "TEXT" || message.quickReplies.length > 0) ? (
                     <PublishingStoryAutomationSetup
                       message={message}
                       showcases={showcases}
@@ -1015,9 +1046,9 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
                   </section>
 
-                {isEditing && (
+                {triggerType === "COMMENT_KEYWORD" && (
                   <div className="space-y-3">
-                    {extraMessages.length > 0 && <div className="mb-2 mt-6"><AutomationSectionGuide>۵. پیام‌های تکمیلی — پیام‌های قبلی را جداگانه ویرایش کن؛ ترتیب ارسال آن‌ها حفظ می‌شود.</AutomationSectionGuide></div>}
+                    {extraMessages.length > 0 && <div className="mb-2 mt-6"><AutomationSectionGuide>{isEditing ? "۵. پیام‌های بیشتر — پیام‌های ذخیره‌شده را ویرایش کن." : "۶. پیام‌های بیشتر — در صورت نیاز پیام دیگری به پاسخ دایرکت اضافه کن."}</AutomationSectionGuide></div>}
                     {extraMessages.map((entry, index) => (
                       <section key={entry.id} className="space-y-3 rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
                         <div className="flex items-center justify-between gap-2">
@@ -1054,7 +1085,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                         )}
                       </section>
                     ))}
-                    <button type="button" onClick={() => setExtraMessages((current) => [...current, createEmptyMessage()])} disabled={saving || extraMessages.length >= 19} className="min-h-11 w-full rounded-xl border border-[var(--daira-border)] px-4 text-sm font-bold">افزودن پیام تکمیلی</button>
+                    <button type="button" onClick={() => setExtraMessages((current) => [...current, createEmptyMessage()])} disabled={!canAddMessage} aria-disabled={!canAddMessage} className="sd-neutral-button min-h-11 w-full rounded-xl border border-[var(--daira-border)] bg-white px-4 text-sm font-bold text-[var(--daira-primary)] transition hover:bg-[var(--daira-surface-hover)] disabled:cursor-not-allowed disabled:bg-[var(--daira-surface-hover)] disabled:text-[var(--daira-text)] disabled:opacity-50">افزودن پیام</button>
                   </div>
                 )}
 
@@ -1081,18 +1112,9 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                   </section>
 
 
-                  {isEditing && (
-                    <section className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
-                      <label className="flex cursor-pointer items-center justify-between gap-3">
-                        <span className="min-w-0"><strong className="block text-sm text-[var(--daira-heading)]">وضعیت پاسخ خودکار</strong><span className="mt-1 block text-xs text-[var(--daira-text)]">می‌توانی پاسخ را بدون حذف کردن غیرفعال کنی.</span></span>
-                        <input type="checkbox" role="switch" checked={isActive} onChange={(event) => setIsActive(event.target.checked)} className="daira-form-switch -scale-x-100" aria-label="فعال بودن پاسخ خودکار" />
-                      </label>
-                    </section>
-                  )}
                   <button type="button" onClick={() => {
-                    if (isEditing) void saveAutomation();
-                    else { setMessage((current) => ({ ...current, messageType: "TEXT" })); void saveAutomation({ ...message, messageType: "TEXT" }); }
-                  }} disabled={saving || (isEditing && (mediaLoading || loadingResources))} className="flex min-h-12 w-full items-center justify-center rounded-xl px-4 text-sm font-bold text-white transition disabled:opacity-60" style={{ background: dairaPalette.primary.main }}>
+                    void saveAutomation();
+                  }} disabled={!canSaveComment} className="flex min-h-12 w-full items-center justify-center rounded-xl px-4 text-sm font-bold text-white transition disabled:opacity-60" style={{ background: dairaPalette.primary.main }}>
                     {saving ? (isEditing ? "در حال ذخیره تغییرات..." : "در حال ساخت پاسخ خودکار...") : (isEditing ? "ذخیره تغییرات" : "ساخت پاسخ خودکار")}
                   </button>
                 </div>
