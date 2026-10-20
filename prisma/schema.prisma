@@ -259,6 +259,7 @@ model SmartReminderDelivery {
   dueAt DateTime
   status String @default("PENDING")
   queueJobId String?
+  attempts Int @default(0)
   igMessageId String?
   sentAt DateTime?
   cancelledAt DateTime?
