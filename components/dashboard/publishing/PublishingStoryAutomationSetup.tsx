@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Select } from "@/components/dashboard/DashboardUI";
-import { ImagePlus, Loader2, Mic, RotateCcw, Video, Store, ClipboardList, MessageSquareText, Plus } from "lucide-react";
+import { Check, ChevronDown, CircleCheck, ImagePlus, Loader2, Mic, RotateCcw, Video, Store, ClipboardList, MessageSquareText, Plus, Trash2 } from "lucide-react";
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState, type ReactNode } from "react";
 import type { FormItem, MessageDraft, QuickReplyDraft, Showcase } from "../automation-form-utils";
 import VoiceRecorder from "../VoiceRecorder";
@@ -24,6 +24,8 @@ type Props = {
   hideVideo?: boolean;
   hideForm?: boolean;
   textOnly?: boolean;
+  /** New story auto-reply creator: isolate its streamlined UI from other consumers. */
+  storyCreateMode?: boolean;
   extraSettings?: ReactNode;
   finalActions?: ReactNode;
   responseTypeTitle?: string;
@@ -38,13 +40,13 @@ type Props = {
 
 type ResponseType = "TEXT" | "AUDIO" | "SHOWCASE" | "IMAGE" | "VIDEO" | "FORM";
 
-const options: Array<{ value: ResponseType; label: string; Icon: typeof MessageSquareText }> = [
-  { value: "TEXT", label: "متن", Icon: MessageSquareText },
-  { value: "AUDIO", label: "وویس", Icon: Mic },
-  { value: "SHOWCASE", label: "ویترین", Icon: Store },
-  { value: "IMAGE", label: "عکس", Icon: ImagePlus },
-  { value: "VIDEO", label: "ویدیو", Icon: Video },
-  { value: "FORM", label: "فرم", Icon: ClipboardList },
+const options: Array<{ value: ResponseType; label: string; description: string; Icon: typeof MessageSquareText }> = [
+  { value: "TEXT", label: "متن", description: "ارسال پیام متنی", Icon: MessageSquareText },
+  { value: "IMAGE", label: "عکس", description: "ارسال تصویر", Icon: ImagePlus },
+  { value: "VIDEO", label: "ویدیو", description: "ارسال ویدیو", Icon: Video },
+  { value: "AUDIO", label: "وویس", description: "ارسال پیام صوتی", Icon: Mic },
+  { value: "SHOWCASE", label: "ویترین", description: "معرفی محصولات", Icon: Store },
+  { value: "FORM", label: "فرم", description: "سؤال و گزینه‌های پاسخ", Icon: ClipboardList },
 ];
 
 type ShowcaseSlide = { id: string; title: string; description: string; imageUrl: string; previewUrl: string };
@@ -53,7 +55,7 @@ function createSlide(): ShowcaseSlide {
   return { id: `slide_${crypto.randomUUID()}`, title: "", description: "", imageUrl: "", previewUrl: "" };
 }
 
-const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetupHandle, Props>(function PublishingStoryAutomationSetup({ message, showcases, forms, loadingResources, instagramAccountId, onUpdate, onSavedChange, keywordValid, onContinue, disabled, hideVideo = false, hideForm = false, textOnly = false, extraSettings, finalActions, responseTypeTitle = "نوع پاسخ خودکار", responseTypeDescription = "نوع پاسخی را که می‌خواهید برای این محتوا ارسال شود انتخاب کنید.", textPlaceholder = "متنی که به‌عنوان پاسخ پیام شروع گفتگو برای کاربر ارسال می‌شود...", showFinalSave = false, finalSaveLabel = "ساخت پیام شروع گفتگو", usePublishingSaveLabel = false, finalSaveLoadingLabel = "در حال ساخت پیام شروع گفتگو...", finalSaveDisabled = false }: Props, ref) {
+const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetupHandle, Props>(function PublishingStoryAutomationSetup({ message, showcases, forms, loadingResources, instagramAccountId, onUpdate, onSavedChange, keywordValid, onContinue, disabled, hideVideo = false, hideForm = false, textOnly = false, storyCreateMode = false, extraSettings, finalActions, responseTypeTitle = "نوع پاسخ خودکار", responseTypeDescription = "نوع پاسخی را که می‌خواهید برای این محتوا ارسال شود انتخاب کنید.", textPlaceholder = "متنی که به‌عنوان پاسخ پیام شروع گفتگو برای کاربر ارسال می‌شود...", showFinalSave = false, finalSaveLabel = "ساخت پیام شروع گفتگو", usePublishingSaveLabel = false, finalSaveLoadingLabel = "در حال ساخت پیام شروع گفتگو...", finalSaveDisabled = false }: Props, ref) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [retryFile, setRetryFile] = useState<File | null>(null);
@@ -93,7 +95,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
       mediaId: ["IMAGE", "VIDEO", "AUDIO"].includes(value) ? (draft?.mediaId ?? "") : "",
       showcaseId: value === "SHOWCASE" ? (draft?.showcaseId ?? "") : "",
       formId: value === "FORM" ? (draft?.formId ?? "") : "",
-      quickReplies: value === "FORM" ? (draft?.quickReplies ?? []) : [],
+      quickReplies: value === "FORM" ? (draft?.quickReplies ?? (storyCreateMode ? [createEmptyQuickReply(), createEmptyQuickReply()] : [])) : [],
     });
   }
 
@@ -335,23 +337,30 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
             {responseTypeDescription && <p className="mt-1 text-[11px] leading-5 text-[#64748B]">{responseTypeDescription}</p>}
           </div>
 
-          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
-            {options.filter(({ value }) => !((hideVideo && value === "VIDEO") || (hideForm && value === "FORM"))).map(({ value, label, Icon }) => {
+          <div className={storyCreateMode ? "grid grid-cols-2 gap-2.5 sm:grid-cols-3" : "grid grid-cols-2 gap-2.5 sm:grid-cols-3"} role="group" aria-label="انتخاب نوع پاسخ استوری">
+            {options.filter(({ value }) => !((hideVideo && value === "VIDEO") || (hideForm && value === "FORM"))).map(({ value, label, description, Icon }) => {
               const active = responseType === value;
               return (
                 <button
                   key={value}
                   type="button"
+                  aria-pressed={active}
                   onClick={() => selectType(value)}
                   className={[
-                    "flex min-h-20 items-center gap-2.5 rounded-xl border px-3 py-3 text-right transition",
-                    active ? "border-[#2563EB] bg-[#EFF6FF] ring-2 ring-[#2563EB]/10" : "border-[#E2E8F0] bg-[#F8FAFC] hover:border-[#BFDBFE] hover:bg-white",
+                    "sd-neutral-button group flex min-h-[78px] items-center gap-2.5 rounded-xl border px-3 py-3 text-right transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB]/30",
+                    active ? "border-[#2563EB] bg-[#EFF6FF] ring-1 ring-[#2563EB]/15" : "border-[#E2E8F0] bg-white hover:border-[#93B5FC] hover:bg-[#F8FAFC]",
                   ].join(" ")}
                 >
-                  <span className={["flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", active ? "bg-[#DBEAFE] text-[#2563EB]" : "bg-white text-[#64748B]"].join(" ")}>
-                    <Icon size={17} />
+                  <span className={["flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", active ? "bg-[#DBEAFE] text-[#1D4ED8]" : "bg-[#F1F5F9] text-[#475569]"].join(" ")}>
+                    <Icon size={19} strokeWidth={1.8} aria-hidden="true" />
                   </span>
-                  <span className="text-xs font-bold text-[#0F172A]">{label}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className={["block text-[13px] font-bold", active ? "text-[#1D4ED8]" : "text-[#0F172A]"].join(" ")}>{label}</span>
+                    {storyCreateMode && <span className="mt-1 block text-[10px] leading-4 text-[#64748B]">{description}</span>}
+                  </span>
+                  <span aria-hidden="true" className={["flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border", active ? "border-[#2563EB] bg-[#2563EB] text-white" : "border-[#CBD5E1] bg-white"].join(" ")}>
+                    {active && <Check size={12} strokeWidth={3} />}
+                  </span>
                 </button>
               );
             })}
