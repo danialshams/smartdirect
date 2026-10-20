@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, RadioTower, Search, Pencil, Trash2, Loader2, RefreshCw, X } from "lucide-react";
 import { dairaPalette } from "../../lib/design-system/palette";
@@ -22,10 +22,28 @@ export default function LiveAutomationList() {
   const [error, setError] = useState("");
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [subscriptionBusy, setSubscriptionBusy] = useState(false);
+  const autoSubscriptionAttempted = useRef<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<LiveRule | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const [refresh, setRefresh] = useState(0);
+
+  const activateSubscription = useCallback(async (instagramAccountId: string) => {
+    setSubscriptionBusy(true);
+    try {
+      const response = await fetch("/api/live-automation/subscription?instagramAccountId=" + encodeURIComponent(instagramAccountId), {
+        method: "POST", credentials: "include",
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.error || "فعال‌سازی دریافت پیام‌های لایو ناموفق بود.");
+      setSubscription(result.data);
+    } catch (err) {
+      setSubscription(current => ({
+        subscribed: false, fields: current?.fields || [],
+        error: err instanceof Error ? err.message : "خطا در دریافت رویدادهای لایو",
+      }));
+    } finally { setSubscriptionBusy(false); }
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -57,24 +75,15 @@ export default function LiveAutomationList() {
     return () => controller.abort();
   }, [refresh]);
 
+  useEffect(() => {
+    if (loading || !account || !subscription || subscription.subscribed || subscription.error || subscriptionBusy || autoSubscriptionAttempted.current === account.id) return;
+    autoSubscriptionAttempted.current = account.id;
+    void activateSubscription(account.id);
+  }, [loading, account, subscription, subscriptionBusy, activateSubscription]);
+
   const filtered = useMemo(() => rules.filter(item =>
     [item.keyword, item.initialText, item.followupKeyword].some(value => value.toLocaleLowerCase("fa").includes(search.trim().toLocaleLowerCase("fa"))),
   ), [rules, search]);
-
-  async function activateSubscription() {
-    if (!account || subscriptionBusy) return;
-    setSubscriptionBusy(true);
-    try {
-      const response = await fetch("/api/live-automation/subscription?instagramAccountId=" + encodeURIComponent(account.id), {
-        method: "POST", credentials: "include",
-      });
-      const result = await response.json();
-      if (!response.ok || !result.success) throw new Error(result.error || "فعال‌سازی دریافت پیام‌های لایو ناموفق بود.");
-      setSubscription(result.data);
-    } catch (err) {
-      setSubscription({ subscribed: false, fields: subscription?.fields || [], error: err instanceof Error ? err.message : "خطای فعال‌سازی وبهوک" });
-    } finally { setSubscriptionBusy(false); }
-  }
 
   async function deleteRule() {
     if (!deleteTarget || deleting) return;
@@ -111,12 +120,12 @@ export default function LiveAutomationList() {
       {subscription && !subscription.subscribed && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#FDE68A] bg-[#FFFBEB] p-4 text-xs leading-6 text-[#92400E]" role="status">
           <div className="min-w-0 flex-1">
-            <strong className="block text-sm">دریافت نوشته‌های لایو فعال نیست</strong>
-            <span>{subscription.error || "برای کارکرد پاسخ‌های لایو، اشتراک live_comments باید در Meta فعال باشد."}</span>
+            <strong className="block text-sm">{subscriptionBusy ? "در حال آماده‌سازی پاسخ به لایو..." : "دریافت کامنت‌های لایو فعال نشده است"}</strong>
+            <span>{subscription.error || (subscriptionBusy ? "برنامه در حال فعال‌سازی خودکار اتصال به Meta است." : "اتصال دریافت کامنت‌های لایو هنوز تأیید نشده است.")}</span>
           </div>
-          <button type="button" onClick={() => void activateSubscription()} disabled={subscriptionBusy}
+          <button type="button" onClick={() => account && void activateSubscription(account.id)} disabled={subscriptionBusy}
             className="min-h-10 rounded-xl bg-white px-4 font-bold text-[#92400E] ring-1 ring-[#FDE68A] disabled:opacity-50">
-            {subscriptionBusy ? "در حال فعال‌سازی..." : "فعال‌سازی وبهوک"}
+            {subscriptionBusy ? "در حال اتصال..." : "تلاش دوباره"}
           </button>
         </div>
       )}
