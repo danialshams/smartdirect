@@ -186,7 +186,8 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   const [commentReply, setCommentReply] = useState(() => initialEditState?.commentReply ?? "");
   const [requireFollow, setRequireFollow] = useState(() => initialEditState?.requireFollow ?? false);
   const [likeStoryReply, setLikeStoryReply] = useState(() => initialEditState?.likeStoryReply ?? false);
-  const [isActive, setIsActive] = useState(() => initialEditState?.isActive ?? true);
+  // Preserve an existing automation status; editing no longer exposes an activation switch.
+  const isActive = initialEditState?.isActive ?? true;
   const [dmMode, setDmMode] = useState<"TEXT" | "TEXT_WITH_LINK">(() => initialEditState?.dmMode ?? "TEXT");
   const [followGateText, setFollowGateText] = useState(() => initialEditState?.followGateText ?? "برای دریافت پاسخ، ابتدا پیج ما را فالو کنید.");
   const [followGateButtonText, setFollowGateButtonText] = useState(() => initialEditState?.followGateButtonText ?? "بررسی فالو");
@@ -200,6 +201,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   const [loadingResources, setLoadingResources] = useState(true);
   const [saving, setSaving] = useState(false);
   const [completed, setCompleted] = useState(false);
+  const [storyShowcaseDraftChanged, setStoryShowcaseDraftChanged] = useState(false);
   const [error, setError] = useState("");
   const { registerBackHandler } = useDashboardBackNavigation();
 
@@ -338,6 +340,8 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     extraLinks: initialEditState.extraLinks,
   }) : "";
   const hasUnsavedEdits = isEditing && formSnapshot !== originalSnapshot;
+  const canSaveStoryEdit = isEditing && triggerType === "STORY_REPLY_KEYWORD" &&
+    !saving && !mediaLoading && !loadingResources && (hasUnsavedEdits || storyShowcaseDraftChanged);
   const enteredDm = message.messageType !== "TEXT" || Boolean(message.text.trim()) ||
     extraMessages.length > 0 || dmMode === "TEXT_WITH_LINK";
   const dmMessages = [message, ...extraMessages];
@@ -434,6 +438,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
   async function saveAutomation(finalMessage?: MessageDraft) {
     if (saving) return;
+    if (isEditing && triggerType === "STORY_REPLY_KEYWORD" && !canSaveStoryEdit) return;
     if (triggerType === "COMMENT_KEYWORD" && !canSaveComment) {
       setError(commentFormError || "برای ذخیره، ابتدا تغییری در پاسخ خودکار ایجاد کنید.");
       return;
@@ -1257,7 +1262,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                   showFinalSave
                   finalSaveLabel={isEditing ? "ذخیره تغییرات" : "ساخت پاسخ خودکار"}
                   finalSaveLoadingLabel={isEditing ? "در حال ذخیره تغییرات..." : "در حال ساخت پاسخ خودکار..."}
-                  finalSaveDisabled={saving || selectedMediaIds.length !== 1 || (requireFollow && (!followGateText.trim() || followGateText.trim().length > 640 || !followGateButtonText.trim() || followGateButtonText.trim().length > 20))}
+                  finalSaveDisabled={saving || (isEditing && !canSaveStoryEdit) || selectedMediaIds.length !== 1 || (requireFollow && (!followGateText.trim() || followGateText.trim().length > 640 || !followGateButtonText.trim() || followGateButtonText.trim().length > 20))}
                   extraSettings={
                     <div className="space-y-3 pt-2">
                       <div className="mb-2 mt-4">
@@ -1306,27 +1311,13 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                             className="daira-form-switch shrink-0 -scale-x-100" />
                         </label>
                       </section>
-                      {isEditing && (
-                        <>
-                          <div className="mb-2 mt-4">
-                            <AutomationSectionGuide>۶. وضعیت پاسخ — فعال یا غیرفعال بودن پاسخ استوری را تنظیم کن.</AutomationSectionGuide>
-                          </div>
-                          <section className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
-                            <label className="flex cursor-pointer items-center justify-between gap-3">
-                              <span className="text-sm font-bold text-[var(--daira-heading)]">پاسخ خودکار فعال باشد</span>
-                              <input type="checkbox" role="switch" aria-label="وضعیت فعال بودن پاسخ استوری"
-                                checked={isActive} onChange={(event) => setIsActive(event.target.checked)}
-                                className="daira-form-switch shrink-0 -scale-x-100" />
-                            </label>
-                          </section>
-                        </>
-                      )}
                     </div>
                   }
                   responseTypeTitle="نوع پاسخ خودکار"
                   responseTypeDescription=""
                   storyCreateMode
                   storyEditMode={isEditing}
+                  onDraftChange={setStoryShowcaseDraftChanged}
                   finalActions={isEditing && extraMessages.length > 0 ? (
                     <p className="text-xs leading-6 text-[var(--daira-text)]">
                       {new Intl.NumberFormat("fa-IR").format(extraMessages.length)} پیام اضافی قدیمی بدون تغییر حفظ می‌شود.
