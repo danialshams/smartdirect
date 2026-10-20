@@ -7,7 +7,7 @@ import { dairaPalette } from "../../lib/design-system/palette";
 import LiveAutomationSkeleton from "./LiveAutomationSkeleton";
 
 type LiveRule = {
-  id: string; keyword: string; initialText: string; requireFollow: boolean;
+  id: string; keyword: string; matchMode?: "EXACT" | "CONTAINS_ANY"; initialText: string; requireFollow: boolean;
   followupEnabled: boolean; followupKeyword: string; updatedAt: string;
 };
 type Account = { id: string; igUsername: string; isConnected: boolean };
@@ -82,7 +82,7 @@ export default function LiveAutomationList() {
   }, [loading, account, subscription, subscriptionBusy, activateSubscription]);
 
   const filtered = useMemo(() => rules.filter(item =>
-    [item.keyword, item.initialText, item.followupKeyword].some(value => value.toLocaleLowerCase("fa").includes(search.trim().toLocaleLowerCase("fa"))),
+    [item.keyword || (item.matchMode === "CONTAINS_ANY" ? "هر کامنتی" : ""), item.initialText, item.followupKeyword].some(value => value.toLocaleLowerCase("fa").includes(search.trim().toLocaleLowerCase("fa"))),
   ), [rules, search]);
 
   async function deleteRule() {
@@ -130,8 +130,8 @@ export default function LiveAutomationList() {
               <div className="flex items-center gap-2">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB]"><RadioTower size={18}/></span>
                 <div className="min-w-0 flex-1">
-                  <h3 className="truncate text-sm font-bold text-[#0F172A]">{rule.keyword.replace(/,/g, "، ")}</h3>
-                  <p className="mt-0.5 text-[11px] text-[#64748B]">کلمه کلیدی لایو</p>
+                  <h3 className="truncate text-sm font-bold text-[#0F172A]">{rule.matchMode === "CONTAINS_ANY" && !rule.keyword?.trim() ? "هر کامنتی" : rule.keyword.replace(/,/g, "، ")}</h3>
+                  <p className="mt-0.5 text-[11px] text-[#64748B]">{rule.matchMode === "CONTAINS_ANY" && !rule.keyword?.trim() ? "پاسخ به همه کامنت‌های لایو" : "کلمه کلیدی لایو"}</p>
                 </div>
               </div>
               <p className="line-clamp-3 min-h-12 text-xs leading-6 text-[#475569]">{rule.initialText}</p>
@@ -167,7 +167,7 @@ export default function LiveAutomationList() {
               <h2 id="delete-live-title" className="text-base font-bold text-[#0F172A]">حذف پاسخ خودکار لایو؟</h2>
               <button type="button" aria-label="بستن" onClick={() => setDeleteTarget(null)} disabled={deleting} className="rounded-lg p-2 text-[#64748B]"><X size={17}/></button>
             </div>
-            <p className="text-sm leading-6 text-[#475569]">پاسخ مربوط به «{deleteTarget.keyword.replace(/,/g, "، ")}» دیگر اجرا نمی‌شود.</p>
+            <p className="text-sm leading-6 text-[#475569]">پاسخ مربوط به «{deleteTarget.matchMode === "CONTAINS_ANY" && !deleteTarget.keyword?.trim() ? "هر کامنتی" : deleteTarget.keyword.replace(/,/g, "، ")}» دیگر اجرا نمی‌شود.</p>
             {deleteError && <p role="alert" className="text-xs text-[#B91C1C]">{deleteError}</p>}
             <div className="grid grid-cols-2 gap-2">
               <button type="button" disabled={deleting} onClick={() => setDeleteTarget(null)} className="min-h-11 rounded-xl border border-[#E2E8F0] font-semibold text-[#475569]">انصراف</button>
