@@ -235,7 +235,7 @@ export async function processInstagramLiveDmContinuation(input: {
     if (!choice) return false;
     outgoing = messageFromOption(choice);
   } else {
-    const expected = config.mode === "DIRECT" ? "بررسی فالو" : config.nextKeyword;
+    const expected = config.nextKeyword;
     if (incoming !== normalizeAutomationText(expected) && payload !== expected) return false;
     if (config.requireFollow) {
       const token = await getValidInstagramAccessToken(account.id);
