@@ -33,6 +33,7 @@ type MessageInput = {
   showcaseId?: string;
   formId?: string;
   quickReplies?: QuickReplyInput[];
+  updateQuickReplies?: boolean;
   linkButtons?: LinkButton[];
 };
 
@@ -107,16 +108,17 @@ function validateMessage(raw: unknown, index: number): MessageInput {
   const showcaseId = clean(item.showcaseId);
   const formId = clean(item.formId);
   const linkButtons = parseLinks(item.linkButtons ?? []);
-  const quickReplies = validateQuickReplies(item.quickReplies ?? []);
+  const updateQuickReplies = item.updateQuickReplies !== false;
+  const quickReplies = updateQuickReplies ? validateQuickReplies(item.quickReplies ?? []) : [];
   if ((messageType === "TEXT" || messageType === "FORM") && !text)
     throw new EditError("متن پیام " + (index + 1) + " را وارد کنید.");
   if (["IMAGE", "VIDEO", "AUDIO"].includes(messageType) && !mediaUrl && !mediaId)
     throw new EditError("فایل پیام " + (index + 1) + " را انتخاب کنید.");
   if (messageType === "SHOWCASE" && !showcaseId) throw new EditError("ویترین پیام انتخاب نشده است.");
-  if (messageType === "FORM" && !quickReplies.length) throw new EditError("برای فرم حداقل یک گزینه لازم است.");
+  if (messageType === "FORM" && !(Array.isArray(item.quickReplies) && item.quickReplies.length)) throw new EditError("برای فرم حداقل یک گزینه لازم است.");
   if (linkButtons.length && messageType !== "TEXT") throw new EditError("دکمه لینک فقط برای پیام متنی است.");
   if (text.length > (linkButtons.length ? 640 : 2000)) throw new EditError("متن پیام از حد مجاز طولانی‌تر است.");
-  return { id: clean(item.id) || undefined, messageType, text, mediaUrl, mediaId, showcaseId, formId, linkButtons, quickReplies };
+  return { id: clean(item.id) || undefined, messageType, text, mediaUrl, mediaId, showcaseId, formId, linkButtons, quickReplies, updateQuickReplies };
 }
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -232,6 +234,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
           ? await tx.automationMessage.update({ where: { id: item.id }, data })
           : await tx.automationMessage.create({ data: { ...data, automationId: id } });
         keptIds.push(saved.id);
+        if (!item.updateQuickReplies && existing) continue;
         const existingReplies = existing
           ? await tx.quickReply.findMany({ where: { automationMessageId: saved.id }, select: { id: true } })
           : [];
