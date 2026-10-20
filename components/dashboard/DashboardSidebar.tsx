@@ -17,6 +17,7 @@ import {
   MessageCircleQuestion,
   MessageSquareText,
   Plus,
+  RadioTower,
   Settings2,
   Ticket,
   UserRound,
@@ -68,6 +69,7 @@ const menuGroups = [
       { title: "منوی دایرکت", href: "/dashboard/persistent-menu", icon: MenuIcon },
       { title: "پاسخ خودکار کامنت", href: "/dashboard/comment-automation", icon: MessageCircleReply },
       { title: "پاسخ خودکار استوری", href: "/dashboard/story-automation", icon: Camera },
+      { title: "پاسخ خودکار لایو", href: "/dashboard/live-automation", icon: RadioTower },
       { title: "ویرایش پاسخ های خودکار", href: "/dashboard/auto-replies", icon: Settings2 },
       { title: "تیکت‌ها", href: "/dashboard/tickets", icon: Ticket },
     ],
@@ -367,6 +369,13 @@ export function DashboardInstagramIsland({
       title: "پاسخ خودکار استوری",
       icon: Camera,
       active: pathname === "/dashboard/story-automation" || pathname.startsWith("/dashboard/story-automation/"),
+    },
+    {
+      key: "live",
+      href: "/dashboard/live-automation",
+      title: "پاسخ خودکار لایو",
+      icon: RadioTower,
+      active: pathname === "/dashboard/live-automation" || pathname.startsWith("/dashboard/live-automation/"),
     },
   ];
 

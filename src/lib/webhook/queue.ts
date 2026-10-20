@@ -4,7 +4,7 @@ import type { QueueJob } from "@/lib/queue/types";
 export type InstagramWebhookQueueInput = {
   instagramAccountId: string;
   eventId: string;
-  eventType: "MESSAGING" | "COMMENT";
+  eventType: "MESSAGING" | "COMMENT" | "LIVE_COMMENT";
   event: unknown;
   idempotencyKey: string;
 };

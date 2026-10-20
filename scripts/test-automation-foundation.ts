@@ -16,8 +16,8 @@ function assert(condition: unknown, message: string) {
 async function main() {
   // 95 — Architecture / trigger model
   assert(
-    AUTOMATION_TRIGGER_TYPES.length === 3,
-    "Expected exactly 3 supported automation trigger types.",
+    AUTOMATION_TRIGGER_TYPES.length === 4,
+    "Expected exactly 4 supported automation trigger types.",
   );
   assert(
     AUTOMATION_TRIGGER_TYPES.includes("COMMENT_KEYWORD"),
