@@ -13,6 +13,7 @@ import { enqueueInstagramWebhookEvent } from "@/lib/webhook/queue";
 import { processInstagramWebhookQueueJob } from "@/lib/webhook/workflow";
 
 import { executeAutomation } from "@/lib/automation/execute-automation";
+import { processLiveComment, processLiveReplyContinuation } from "@/lib/automation/live-replies";
 import { findAutomationByQuickReplyPayload, findMatchingAutomation } from "@/lib/automation/find-matching-automation";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 import { reactToInstagramMessage } from "@/lib/instagram/react-to-message";
@@ -484,12 +485,14 @@ export async function POST(request: NextRequest) {
         console.log("Change events received:", entry.changes.length);
 
         for (const change of entry.changes) {
-          if (change.field !== "comments") {
-            console.log("Ignoring webhook field:", change.field);
-
+          if (change.field === "live_comments") {
+            await processLiveCommentWithIdempotency(change.value, accountData);
             continue;
           }
-
+          if (change.field !== "comments") {
+            console.log("Ignoring webhook field:", change.field);
+            continue;
+          }
           await processCommentEventWithIdempotency(change.value, accountData);
         }
       }
@@ -631,6 +634,32 @@ async function processCommentEventWithIdempotency(
   }
 }
 
+async function processLiveCommentWithIdempotency(value: unknown, instagramAccount: InstagramAccountData) {
+  const normalizedEvent = normalizeInstagramWebhookEvent({
+    type: "LIVE_COMMENT", event: value, accountId: instagramAccount.id,
+  });
+  const claim = await claimInstagramWebhookEvent({
+    instagramAccountId: instagramAccount.id,
+    event: normalizedEvent.rawEvent,
+    eventType: "LIVE_COMMENT",
+    eventId: normalizedEvent.eventId,
+  });
+  if (!claim.claimed) return;
+  try {
+    const queued = await enqueueInstagramWebhookEvent({
+      instagramAccountId: instagramAccount.id,
+      eventId: claim.eventId,
+      eventType: "LIVE_COMMENT",
+      event: value,
+      idempotencyKey: claim.key,
+    });
+    await start(processInstagramWebhookQueueJob, [queued.id]);
+  } catch (error) {
+    await failInstagramWebhookEvent(claim.key, error);
+    throw error;
+  }
+}
+
 // =========================================================
 // Queued Instagram webhook processor
 // =========================================================
@@ -639,7 +668,7 @@ export async function processQueuedInstagramWebhookEvent(
   payload: {
     instagramAccountId: string;
     eventId: string;
-    eventType: "MESSAGING" | "COMMENT";
+    eventType: "MESSAGING" | "COMMENT" | "LIVE_COMMENT";
     event: unknown;
   },
   attempt = 1,
@@ -679,17 +708,11 @@ export async function processQueuedInstagramWebhookEvent(
 
   try {
     if (payload.eventType === "MESSAGING") {
-      await processMessagingEvent(
-        payload.event,
-        accountData,
-        payload.eventId,
-      );
+      await processMessagingEvent(payload.event, accountData, payload.eventId);
+    } else if (payload.eventType === "LIVE_COMMENT") {
+      await processLiveComment(payload.event, accountData, payload.eventId);
     } else {
-      await processCommentEvent(
-        payload.event,
-        accountData,
-        payload.eventId,
-      );
+      await processCommentEvent(payload.event, accountData, payload.eventId);
     }
 
     await completeInstagramWebhookEvent(webhookEventKey);
@@ -1686,6 +1709,17 @@ async function processMessagingEventLocked(
     );
 
     console.log("Incoming message type:", incomingMessageType);
+
+    // Live comment Private Replies are one-time; any further rich response
+    // waits for the viewer to explicitly write the configured DM keyword.
+    if (messageText && !quickReplyPayload) {
+      const consumedLiveReply = await processLiveReplyContinuation({
+        instagramAccountId: instagramAccount.id,
+        igUserId: instagramAccount.igUserId,
+        participantId, text: messageText, messageId,
+      });
+      if (consumedLiveReply) return;
+    }
 
     // =======================================================
     // No DM automation

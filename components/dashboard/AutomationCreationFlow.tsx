@@ -247,7 +247,10 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
         if (!cancelled) {
           setShowcases(Array.isArray(showcaseResult) ? showcaseResult : Array.isArray(showcaseResult?.data) ? showcaseResult.data : []);
           setForms(Array.isArray(formResult) ? formResult : Array.isArray(formResult?.data) ? formResult.data : []);
-          const existingAutomations: AutomationTemplate[] = Array.isArray(automationResult?.data) ? automationResult.data : [];
+          // Live-comment DM rules use a reserved media marker. Never present them
+          // as reusable post/comment automation templates.
+          const existingAutomations: AutomationTemplate[] = (Array.isArray(automationResult?.data) ? automationResult.data : [])
+            .filter((item: AutomationTemplate) => item.mediaId !== "__smartdirect_live_comments_v1__");
           setAutomationTemplates(existingAutomations.filter((item) =>
             item.triggerType === triggerType && (item.keyword || Array.isArray(item.messages)),
           ));
