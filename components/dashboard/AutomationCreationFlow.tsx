@@ -974,7 +974,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                     </div>
                   </div>
 
-                  <div role="radiogroup" aria-label="نوع پیام دایرکت" className={"grid grid-cols-1 gap-2 sm:grid-cols-2 " + (isEditing && message.messageType !== "TEXT" ? "hidden" : "")}>
+                  <div role="radiogroup" aria-label="قالب پیام متنی دایرکت" className={"grid grid-cols-1 gap-2 sm:grid-cols-2 " + (isEditing && message.messageType !== "TEXT" ? "hidden" : "")}>
                     <label className={"flex cursor-pointer items-start gap-3 rounded-xl border p-3 text-xs transition " + (dmMode === "TEXT" ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)]" : "border-[var(--daira-border)] bg-white")}>
                       <input type="radio" name="direct-message-mode" value="TEXT" checked={dmMode === "TEXT"} onChange={() => setDmMode("TEXT")} className="mt-1 h-4 w-4 shrink-0 accent-[var(--daira-primary)]" />
                       <span className="min-w-0">
@@ -1048,7 +1048,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
                 {isEditing && extraMessages.length > 0 && (
                   <div className="space-y-3">
-                    {extraMessages.length > 0 && <div className="mb-2 mt-6"><AutomationSectionGuide>۵. پیام‌های قبلی — متن پیام‌های ذخیره‌شده را بررسی و در صورت نیاز ویرایش کن.</AutomationSectionGuide></div>}
+                    {extraMessages.length > 0 && <div className="mb-2 mt-6"><AutomationSectionGuide>۵. پیام‌های قبلی — پیام‌های متنی ذخیره‌شده را در صورت نیاز ویرایش کن.</AutomationSectionGuide></div>}
                     {extraMessages.map((entry, index) => (
                       <section key={entry.id} className="space-y-3 rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
                         <div className="flex items-center justify-between gap-2">
