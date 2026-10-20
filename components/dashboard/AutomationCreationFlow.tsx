@@ -884,10 +884,34 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                     </label>
                   </div>
 
-                  {dmMode === "TEXT_WITH_LINK" && <p className="mb-2 text-xs leading-5" style={{ color: dairaPalette.text.body }}>حداکثر {MAX_LINK_BUTTONS} دکمه لینک می‌توانید اضافه کنید.</p>}
-                  <textarea value={message.text} onChange={(event) => setMessage((current) => ({ ...current, messageType: "TEXT", text: event.target.value, mediaUrl: "", mediaId: "", showcaseId: "", formId: "", quickReplies: [] }))} maxLength={dmMode === "TEXT_WITH_LINK" ? 640 : 2000} rows={4} placeholder="متن دایرکتی که بعد از کامنت برای کاربر ارسال می‌شود..." className="w-full rounded-xl border bg-white px-3.5 py-3 text-base leading-7 outline-none focus:ring-2 focus:ring-[color:var(--daira-primary)]/15" style={{ borderColor: dairaPalette.form.border, color: dairaPalette.text.heading, fontSize: "16px" }} />
+                  {isEditing && (
+                    <label className="sd-neutral-button flex cursor-pointer items-center gap-2 rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] p-3 text-xs font-bold text-[var(--daira-text)]">
+                      <input type="checkbox" checked={advancedMessageEditor} disabled={message.messageType !== "TEXT" && advancedMessageEditor} onChange={(event) => setAdvancedMessageEditor(event.target.checked)} className="h-4 w-4 accent-[var(--daira-primary)]" />
+                      نمایش و ویرایش انواع پیشرفته پیام (تصویر، ویدیو، وویس، ویترین یا فرم)
+                    </label>
+                  )}
+                  {advancedMessageEditor && isEditing ? (
+                    <PublishingStoryAutomationSetup
+                      message={message}
+                      showcases={showcases}
+                      forms={forms}
+                      loadingResources={loadingResources}
+                      instagramAccountId={account.id}
+                      onUpdate={(patch) => setMessage((current) => ({ ...current, ...patch }))}
+                      keywordValid={true}
+                      onContinue={() => undefined}
+                      disabled={saving}
+                      showFinalSave={false}
+                      responseTypeTitle="نوع پیام ذخیره‌شده"
+                      responseTypeDescription="همه مشخصات این پیام و گزینه‌های فرم قابل ویرایش هستند."
+                      textPlaceholder="متن دایرکت ارسالی به کاربر..."
+                    />
+                  ) : (
+                    <textarea value={message.text} onChange={(event) => setMessage((current) => ({ ...current, messageType: "TEXT", text: event.target.value, mediaUrl: "", mediaId: "", showcaseId: "", formId: "", quickReplies: isEditing ? current.quickReplies : [] }))} maxLength={dmMode === "TEXT_WITH_LINK" ? 640 : 2000} rows={4} placeholder="متن دایرکتی که بعد از کامنت برای کاربر ارسال می‌شود..." className="w-full rounded-xl border bg-white px-3.5 py-3 text-base leading-7 outline-none focus:ring-2 focus:ring-[color:var(--daira-primary)]/15" style={{ borderColor: dairaPalette.form.border, color: dairaPalette.text.heading, fontSize: "16px" }} />
+                  )}
+                  {message.messageType === "TEXT" && dmMode === "TEXT_WITH_LINK" && <p className="mb-2 text-xs leading-5" style={{ color: dairaPalette.text.body }}>حداکثر {MAX_LINK_BUTTONS} دکمه لینک می‌توانید اضافه کنید.</p>}
 
-                  {dmMode === "TEXT_WITH_LINK" && (
+                  {message.messageType === "TEXT" && dmMode === "TEXT_WITH_LINK" && (
                     <div className="space-y-3">
                       {linkButtons.map((button, index) => (
                         <div key={index} className="rounded-xl border p-3" style={{ borderColor: dairaPalette.form.border }}>
@@ -924,7 +948,50 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
                   </section>
 
-                <div className="mb-2 mt-6"><AutomationSectionGuide>{isEditing ? "۵. شرط فالو — وضعیت فعلی و متن درخواست فالو را ویرایش کن." : "۶. شرط فالو — اختیاری است؛ اگر روشنش کنی، کاربر قبل از دریافت پاسخ باید پیج را دنبال کند و درخواست بررسی فالو برایش ارسال می‌شود."}</AutomationSectionGuide></div>
+                {isEditing && (
+                  <div className="space-y-3">
+                    {extraMessages.length > 0 && <div className="mb-2 mt-6"><AutomationSectionGuide>۵. پیام‌های تکمیلی — پیام‌های قبلی را جداگانه ویرایش کن؛ ترتیب ارسال آن‌ها حفظ می‌شود.</AutomationSectionGuide></div>}
+                    {extraMessages.map((entry, index) => (
+                      <section key={entry.id} className="space-y-3 rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
+                        <div className="flex items-center justify-between gap-2">
+                          <h3 className="text-sm font-bold text-[var(--daira-heading)]">پیام شماره {new Intl.NumberFormat("fa-IR").format(index + 2)}</h3>
+                          <button type="button" onClick={() => setExtraMessages((current) => current.filter((item) => item.id !== entry.id))} disabled={saving} className="sd-destructive-button inline-flex min-h-9 items-center gap-1 rounded-lg border border-[var(--daira-error-border)] bg-[var(--daira-error-background)] px-3 text-xs font-bold text-[var(--daira-error-text)]"><Trash2 size={15} /> حذف پیام</button>
+                        </div>
+                        <PublishingStoryAutomationSetup
+                          message={entry}
+                          showcases={showcases}
+                          forms={forms}
+                          loadingResources={loadingResources}
+                          instagramAccountId={account.id}
+                          onUpdate={(patch) => setExtraMessages((current) => current.map((item) => item.id === entry.id ? { ...item, ...patch } : item))}
+                          keywordValid={true}
+                          onContinue={() => undefined}
+                          disabled={saving}
+                          showFinalSave={false}
+                          responseTypeTitle="نوع پیام"
+                          responseTypeDescription="متن یا رسانه، ویترین، فرم و گزینه‌های مربوط به این پیام را ویرایش کن."
+                        />
+                        {entry.messageType === "TEXT" && (
+                          <div className="space-y-2">
+                            {(extraLinks[entry.id] || []).map((button, linkIndex) => (
+                              <div key={linkIndex} className="grid gap-2 rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] p-3 sm:grid-cols-[1fr_2fr_auto]">
+                                <input aria-label="عنوان دکمه" maxLength={20} value={button.title} placeholder="عنوان دکمه" onChange={(event) => setExtraLinks((current) => ({ ...current, [entry.id]: (current[entry.id] || []).map((value, i) => i === linkIndex ? { ...value, title: event.target.value } : value) }))} className="min-w-0 rounded-lg border border-[var(--daira-border)] bg-white p-2.5 text-base" />
+                                <input aria-label="آدرس لینک" dir="ltr" value={button.url} placeholder="example.com" onChange={(event) => setExtraLinks((current) => ({ ...current, [entry.id]: (current[entry.id] || []).map((value, i) => i === linkIndex ? { ...value, url: event.target.value } : value) }))} onBlur={() => setExtraLinks((current) => ({ ...current, [entry.id]: (current[entry.id] || []).map((value, i) => i === linkIndex ? { ...value, url: normalizeExternalLink(value.url) } : value) }))} className="min-w-0 rounded-lg border border-[var(--daira-border)] bg-white p-2.5 text-base" />
+                                <button type="button" aria-label="حذف دکمه لینک" onClick={() => setExtraLinks((current) => ({ ...current, [entry.id]: (current[entry.id] || []).filter((_, i) => i !== linkIndex) }))} className="sd-destructive-button min-h-10 rounded-lg border border-[var(--daira-error-border)] bg-[var(--daira-error-background)] px-3 text-[var(--daira-error-text)]"><Trash2 size={16} /></button>
+                              </div>
+                            ))}
+                            {(extraLinks[entry.id] || []).length < 3 && (
+                              <button type="button" onClick={() => setExtraLinks((current) => ({ ...current, [entry.id]: [...(current[entry.id] || []), { title: "", url: "" }] }))} className="min-h-10 rounded-xl border border-[var(--daira-border)] px-4 text-xs font-semibold">افزودن دکمه لینک</button>
+                            )}
+                          </div>
+                        )}
+                      </section>
+                    ))}
+                    <button type="button" onClick={() => setExtraMessages((current) => [...current, createEmptyMessage()])} disabled={saving || extraMessages.length >= 19} className="min-h-11 w-full rounded-xl border border-[var(--daira-border)] px-4 text-sm font-bold">افزودن پیام تکمیلی</button>
+                  </div>
+                )}
+
+                <div className="mb-2 mt-6"><AutomationSectionGuide>{isEditing ? "۶. شرط فالو — وضعیت فعلی و متن درخواست فالو را ویرایش کن." : "۶. شرط فالو — اختیاری است؛ اگر روشنش کنی، کاربر قبل از دریافت پاسخ باید پیج را دنبال کند و درخواست بررسی فالو برایش ارسال می‌شود."}</AutomationSectionGuide></div>
                 <section className="rounded-2xl bg-white p-4 sm:p-5">
                     <label className="flex cursor-pointer items-start gap-3 rounded-xl p-3.5 transition-colors" style={{ borderColor: requireFollow ? dairaPalette.primary.main : dairaPalette.border }}>
                       <input type="checkbox" role="switch" aria-label="الزام به فالو قبل از ارسال پاسخ" aria-checked={requireFollow} checked={requireFollow} onChange={(event) => setRequireFollow(event.target.checked)} className="daira-form-switch mt-1 -scale-x-100" />
@@ -946,8 +1013,20 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                     )}
                   </section>
 
-                  <button type="button" onClick={() => { setMessage((current) => ({ ...current, messageType: "TEXT" })); void saveAutomation({ ...message, messageType: "TEXT" }); }} disabled={saving} className="flex min-h-12 w-full items-center justify-center rounded-xl px-4 text-sm font-bold text-white transition disabled:opacity-60" style={{ background: dairaPalette.primary.main }}>
-                    {saving ? "در حال ساخت پاسخ خودکار..." : "ساخت پاسخ خودکار"}
+
+                  {isEditing && (
+                    <section className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
+                      <label className="flex cursor-pointer items-center justify-between gap-3">
+                        <span className="min-w-0"><strong className="block text-sm text-[var(--daira-heading)]">وضعیت پاسخ خودکار</strong><span className="mt-1 block text-xs text-[var(--daira-text)]">می‌توانی پاسخ را بدون حذف کردن غیرفعال کنی.</span></span>
+                        <input type="checkbox" role="switch" checked={isActive} onChange={(event) => setIsActive(event.target.checked)} className="daira-form-switch -scale-x-100" aria-label="فعال بودن پاسخ خودکار" />
+                      </label>
+                    </section>
+                  )}
+                  <button type="button" onClick={() => {
+                    if (isEditing) void saveAutomation();
+                    else { setMessage((current) => ({ ...current, messageType: "TEXT" })); void saveAutomation({ ...message, messageType: "TEXT" }); }
+                  }} disabled={saving || (isEditing && (mediaLoading || loadingResources))} className="flex min-h-12 w-full items-center justify-center rounded-xl px-4 text-sm font-bold text-white transition disabled:opacity-60" style={{ background: dairaPalette.primary.main }}>
+                    {saving ? (isEditing ? "در حال ذخیره تغییرات..." : "در حال ساخت پاسخ خودکار...") : (isEditing ? "ذخیره تغییرات" : "ساخت پاسخ خودکار")}
                   </button>
                 </div>
               ) : (
