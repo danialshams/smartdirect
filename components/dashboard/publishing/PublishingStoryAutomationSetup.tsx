@@ -29,6 +29,7 @@ type Props = {
   textOnly?: boolean;
   /** New story auto-reply creator: isolate its streamlined UI from other consumers. */
   storyCreateMode?: boolean;
+  storyEditMode?: boolean;
   extraSettings?: ReactNode;
   finalActions?: ReactNode;
   responseTypeTitle?: string;
@@ -91,7 +92,7 @@ function createSlide(): ShowcaseSlide {
   return { id: `slide_${crypto.randomUUID()}`, title: "", description: "", imageUrl: "", previewUrl: "", price: "", originalPrice: "", linkUrl: "", buttonText: "", isActive: true };
 }
 
-const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetupHandle, Props>(function PublishingStoryAutomationSetup({ message, showcases, forms, formTemplates = [], loadingResources, instagramAccountId, onUpdate, onSavedChange, keywordValid, onContinue, disabled, hideVideo = false, hideForm = false, textOnly = false, storyCreateMode = false, extraSettings, finalActions, responseTypeTitle = "نوع پاسخ خودکار", responseTypeDescription = "نوع پاسخی را که می‌خواهید برای این محتوا ارسال شود انتخاب کنید.", textPlaceholder = "متنی که به‌عنوان پاسخ پیام شروع گفتگو برای کاربر ارسال می‌شود...", showFinalSave = false, finalSaveLabel = "ساخت پیام شروع گفتگو", usePublishingSaveLabel = false, finalSaveLoadingLabel = "در حال ساخت پیام شروع گفتگو...", finalSaveDisabled = false }: Props, ref) {
+const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetupHandle, Props>(function PublishingStoryAutomationSetup({ message, showcases, forms, formTemplates = [], loadingResources, instagramAccountId, onUpdate, onSavedChange, keywordValid, onContinue, disabled, hideVideo = false, hideForm = false, textOnly = false, storyCreateMode = false, storyEditMode = false, extraSettings, finalActions, responseTypeTitle = "نوع پاسخ خودکار", responseTypeDescription = "نوع پاسخی را که می‌خواهید برای این محتوا ارسال شود انتخاب کنید.", textPlaceholder = "متنی که به‌عنوان پاسخ پیام شروع گفتگو برای کاربر ارسال می‌شود...", showFinalSave = false, finalSaveLabel = "ساخت پیام شروع گفتگو", usePublishingSaveLabel = false, finalSaveLoadingLabel = "در حال ساخت پیام شروع گفتگو...", finalSaveDisabled = false }: Props, ref) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [retryFile, setRetryFile] = useState<File | null>(null);
@@ -100,8 +101,10 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
   useStorageUploadLease([message.mediaUrl, ...slides.map((slide) => slide.imageUrl)]);
   const [savingShowcase, setSavingShowcase] = useState(false);
   const [showcaseSaved, setShowcaseSaved] = useState(Boolean(message.showcaseId));
-  const [showcaseSource, setShowcaseSource] = useState<"new" | "existing">("new");
-  const [selectedShowcaseId, setSelectedShowcaseId] = useState("");
+  const [showcaseSource, setShowcaseSource] = useState<"new" | "existing">(storyEditMode && Boolean(message.showcaseId) ? "existing" : "new");
+  const [selectedShowcaseId, setSelectedShowcaseId] = useState(storyEditMode ? message.showcaseId : "");
+  const hydratedShowcaseRef = useRef("");
+  const initiallyEditingFormRef = useRef(storyEditMode && message.messageType === "FORM");
   const [formSource, setFormSource] = useState<"new" | "existing">("new");
   const [selectedFormTemplateId, setSelectedFormTemplateId] = useState("");
   const newFormDraftRef = useRef<{ text: string; quickReplies: QuickReplyDraft[] } | null>(null);
@@ -122,6 +125,15 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
   const resolvedFinalSaveLabel = usePublishingSaveLabel ? `ذخیره ${responseType === "FORM" ? "فرم" : responseType === "SHOWCASE" ? "ویترین" : responseType === "TEXT" ? "متن" : responseType === "IMAGE" ? "عکس" : responseType === "VIDEO" ? "فیلم" : "وویس"} و ادامه` : finalSaveLabel;
 
   useEffect(() => { setShowcaseSaved(Boolean(message.showcaseId)); }, [message.showcaseId]);
+
+  useEffect(() => {
+    if (!storyEditMode || !message.showcaseId || hydratedShowcaseRef.current === message.showcaseId) return;
+    const oldShowcase = showcases.find((item) => item.id === message.showcaseId);
+    if (!oldShowcase || !Array.isArray(oldShowcase.items) || !oldShowcase.items.length) return;
+    hydratedShowcaseRef.current = message.showcaseId;
+    setSelectedShowcaseId(message.showcaseId);
+    setSlides((oldShowcase.items as StoredShowcaseItem[]).map(slideFromItem));
+  }, [storyEditMode, message.showcaseId, showcases]);
 
   function selectType(value: ResponseType) {
     if (value === responseType) return;
@@ -168,7 +180,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
             return;
           }
           setProgress(100);
-          if (message.mediaUrl && message.mediaUrl !== result.data.publicUrl) {
+          if (!storyEditMode && message.mediaUrl && message.mediaUrl !== result.data.publicUrl) {
             void requestStorageCleanupByPublicUrl(message.mediaUrl).catch(() => undefined);
           }
           onUpdate({ mediaUrl: result.data.publicUrl, mediaId: "" });
@@ -254,7 +266,9 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
   const existingShowcaseEdited = Boolean(storyCreateMode && showcaseSource === "existing" && selectedShowcase &&
     comparableSlides(slides) !== comparableSlides(originalSlides));
   const storyShowcaseReady = storyCreateMode && showcaseSource === "existing"
-    ? Boolean(selectedShowcase && slides.length > 0 && (existingShowcaseEdited ? hasValidSlide : true))
+    ? (selectedShowcase
+      ? Boolean(slides.length > 0 && (existingShowcaseEdited ? hasValidSlide : true))
+      : Boolean(storyEditMode && message.showcaseId && selectedShowcaseId === message.showcaseId))
     : (Boolean(message.showcaseId) || hasValidSlide);
   function releaseDraftImage(url: string) {
     if (!url) return;
@@ -364,7 +378,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
         if (!message.text.trim()) return false;
         onUpdate({ text: message.text.trim() });
       }
-      if (["IMAGE", "VIDEO", "AUDIO"].includes(responseType) && !message.mediaUrl) return false;
+      if (["IMAGE", "VIDEO", "AUDIO"].includes(responseType) && !message.mediaUrl && !(storyEditMode && message.mediaId)) return false;
       if (responseType === "SHOWCASE" &&
           (!message.showcaseId || (storyCreateMode && showcaseSource === "existing" && existingShowcaseEdited))) {
         const ok = await saveShowcase();
@@ -497,10 +511,15 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                 {responseType === "IMAGE" ? <img src={message.mediaUrl} alt="" className="h-56 w-full object-cover" /> : responseType === "VIDEO" ? <video src={message.mediaUrl} controls className="max-h-64 w-full bg-black object-contain" /> : <div className="w-full px-3 py-4"><audio src={message.mediaUrl} controls className="w-full" /></div>}
                 <input type="file" accept={mediaAccept} className="hidden" onChange={(event) => { const file = event.target.files?.[0]; event.currentTarget.value = ""; void uploadMedia(file); }} />
               </label>
-              <div className="flex justify-center"><button type="button" onClick={() => { void requestStorageCleanupByPublicUrl(message.mediaUrl).catch(() => undefined); onUpdate({ mediaUrl: "", mediaId: "" }); }} className="sd-destructive-button text-xs font-bold text-[#DC2626] transition hover:text-[#B91C1C]">حذف {responseType === "IMAGE" ? "عکس" : responseType === "VIDEO" ? "ویدیو" : "وویس"}</button></div>
+              <div className="flex justify-center"><button type="button" onClick={() => { if (!storyEditMode) void requestStorageCleanupByPublicUrl(message.mediaUrl).catch(() => undefined); onUpdate({ mediaUrl: "", mediaId: "" }); }} className="sd-destructive-button text-xs font-bold text-[#DC2626] transition hover:text-[#B91C1C]">حذف {responseType === "IMAGE" ? "عکس" : responseType === "VIDEO" ? "ویدیو" : "وویس"}</button></div>
             </div>
           ) : (
             <div className="space-y-3">
+              {storyEditMode && Boolean(message.mediaId) && !message.mediaUrl && (
+                <p className="rounded-xl bg-[#F1F5F9] p-3 text-xs leading-6 text-[#475569]">
+                  فایل قبلی ذخیره شده است؛ می‌توانی آن را با فایل جدید جایگزین کنی.
+                </p>
+              )}
               <label className={["flex min-h-36 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed bg-[#F8FAFC] px-4 text-center transition", uploading ? "pointer-events-none opacity-60" : "hover:border-[#93C5FD] hover:bg-[#EFF6FF]"].join(" ")}>
                 {uploading ? (
                   <div className="flex w-full flex-col items-center justify-center px-6">
@@ -540,6 +559,8 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                       if (value === "new") {
                         setSlides(storyShowcaseDraftRef.current || [createSlide()]);
                         onUpdate({ showcaseId: "" });
+                      } else if (selectedShowcaseId) {
+                        onUpdate({ showcaseId: selectedShowcaseId });
                       }
                       setShowcaseSource(value);
                     }}
@@ -718,7 +739,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                         setFormSaved(false);
                       }}
                       className={["sd-neutral-button min-h-10 rounded-lg px-2 text-xs font-bold transition", formSource === value ? "bg-white text-[#1D4ED8] shadow-sm" : "bg-transparent text-[#64748B] hover:text-[#0F172A]"].join(" ")}>
-                      {value === "new" ? "فرم جدید" : "استفاده از فرم‌های قبلی"}
+                      {value === "new" ? (initiallyEditingFormRef.current ? "ویرایش فرم فعلی" : "فرم جدید") : "استفاده از فرم‌های قبلی"}
                     </button>
                   ))}
                 </div>
@@ -751,6 +772,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                 instagramAccountId={instagramAccountId}
                 showcases={showcases}
                 loadingResources={loadingResources}
+                preserveSavedMedia={storyEditMode}
                 onUpdate={onUpdate}
                 onUploadMedia={uploadFormMedia}
               />
@@ -782,7 +804,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
           type="button"
           disabled={disabled || finalSaveDisabled || finalSaving || !keywordValid || uploading || slideUploadInProgress || formUploadsInFlight > 0 || savingShowcase || formSaving ||
             (responseType === "TEXT" && !message.text.trim()) ||
-            (["IMAGE", "VIDEO", "AUDIO"].includes(responseType) && !message.mediaUrl.trim()) ||
+            (["IMAGE", "VIDEO", "AUDIO"].includes(responseType) && !message.mediaUrl.trim() && !(storyEditMode && message.mediaId.trim())) ||
             (responseType === "SHOWCASE" && !storyShowcaseReady) ||
             (responseType === "FORM" && !isValidStoryForm(message.text, message.quickReplies))}
           onClick={async () => {
@@ -832,7 +854,7 @@ export default PublishingStoryAutomationSetup;
 type StoryFormBuilderProps = { message: MessageDraft; showcases: Showcase[]; forms: FormItem[]; loadingResources: boolean; hideVideo?: boolean; hideForm?: boolean; onUpdate: (patch: Partial<MessageDraft>) => void; onUploadMedia: (file?: File) => Promise<string>; };
 const FORM_MAX_OPTIONS = 13;
 const FORM_MEDIA_TYPES = ["IMAGE", "VIDEO", "AUDIO"] as const;
-function isValidStoryForm(question: string, replies: QuickReplyDraft[]): boolean { const options = replies.filter((reply) => !reply.isExit); return Boolean(question.trim()) && options.length >= 2 && options.every((reply) => Boolean(reply.title.trim()) && Boolean(reply.destinationType) && (reply.destinationType !== "TEXT" || Boolean(reply.destinationText.trim())) && (reply.destinationType !== "SHOWCASE" || Boolean(reply.destinationShowcaseId)) && (!FORM_MEDIA_TYPES.includes(reply.destinationType as typeof FORM_MEDIA_TYPES[number]) || Boolean(reply.destinationMediaUrl)) && (reply.destinationType !== "FORM" || isValidStoryForm(reply.destinationQuestion, reply.destinationQuickReplies))); }
+function isValidStoryForm(question: string, replies: QuickReplyDraft[]): boolean { const options = replies.filter((reply) => !reply.isExit); return Boolean(question.trim()) && options.length >= 2 && options.every((reply) => Boolean(reply.title.trim()) && Boolean(reply.destinationType) && (reply.destinationType !== "TEXT" || Boolean(reply.destinationText.trim())) && (reply.destinationType !== "SHOWCASE" || Boolean(reply.destinationShowcaseId)) && (!FORM_MEDIA_TYPES.includes(reply.destinationType as typeof FORM_MEDIA_TYPES[number]) || Boolean(reply.destinationMediaUrl || reply.destinationMediaId)) && (reply.destinationType !== "FORM" || isValidStoryForm(reply.destinationQuestion, reply.destinationQuickReplies))); }
 
 function StoryFormBuilder({ message, showcases, forms, loadingResources, hideVideo = false, hideForm = false, onUpdate, onUploadMedia }: StoryFormBuilderProps) {
   return <FormBranchEditor title="فرم" question={message.text} replies={message.quickReplies} showcases={showcases} forms={forms} loadingResources={loadingResources}

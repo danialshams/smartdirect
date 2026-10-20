@@ -12,6 +12,7 @@ type FormProps = {
   instagramAccountId: string;
   showcases: Showcase[];
   loadingResources: boolean;
+  preserveSavedMedia?: boolean;
   onUpdate: (patch: Partial<MessageDraft>) => void;
   onUploadMedia: (file?: File) => Promise<string>;
 };
@@ -22,6 +23,7 @@ type BranchProps = {
   instagramAccountId: string;
   showcases: Showcase[];
   loadingResources: boolean;
+  preserveSavedMedia?: boolean;
   onChange: (patch: { question?: string; replies?: QuickReplyDraft[] }) => void;
   onUploadMedia: (file?: File) => Promise<string>;
   level: number;
@@ -30,7 +32,7 @@ type BranchProps = {
 const maxOptions = 13;
 const mediaTypes = ["IMAGE", "VIDEO", "AUDIO"] as const;
 
-export default function StoryReplyFormEditor({ message, instagramAccountId, showcases, loadingResources, onUpdate, onUploadMedia }: FormProps) {
+export default function StoryReplyFormEditor({ message, instagramAccountId, showcases, loadingResources, preserveSavedMedia = false, onUpdate, onUploadMedia }: FormProps) {
   return (
     <StoryBranch
       question={message.text}
@@ -38,6 +40,7 @@ export default function StoryReplyFormEditor({ message, instagramAccountId, show
       instagramAccountId={instagramAccountId}
       showcases={showcases}
       loadingResources={loadingResources}
+      preserveSavedMedia={preserveSavedMedia}
       onChange={(patch) => onUpdate({
         ...(patch.question !== undefined ? { text: patch.question } : {}),
         ...(patch.replies !== undefined ? { quickReplies: patch.replies } : {}),
@@ -48,7 +51,7 @@ export default function StoryReplyFormEditor({ message, instagramAccountId, show
   );
 }
 
-function StoryBranch({ question, replies, instagramAccountId, showcases, loadingResources, onChange, onUploadMedia, level }: BranchProps) {
+function StoryBranch({ question, replies, instagramAccountId, showcases, loadingResources, preserveSavedMedia = false, onChange, onUploadMedia, level }: BranchProps) {
   const options = replies.filter((reply) => !reply.isExit);
   function updateReply(id: string, patch: Partial<QuickReplyDraft>) {
     onChange({ replies: replies.map((reply) => reply.id === id ? { ...reply, ...patch } : reply) });
@@ -70,7 +73,7 @@ function StoryBranch({ question, replies, instagramAccountId, showcases, loading
           {options.map((reply, index) => (
             <StoryAnswer key={reply.id} reply={reply} index={index} level={level}
               instagramAccountId={instagramAccountId} showcases={showcases} loadingResources={loadingResources}
-              onChange={(patch) => updateReply(reply.id, patch)}
+              preserveSavedMedia={preserveSavedMedia} onChange={(patch) => updateReply(reply.id, patch)}
               onRemove={() => onChange({ replies: replies.filter((entry) => entry.id !== reply.id) })}
               onUploadMedia={onUploadMedia} />
           ))}
@@ -92,12 +95,13 @@ type AnswerProps = {
   instagramAccountId: string;
   showcases: Showcase[];
   loadingResources: boolean;
+  preserveSavedMedia?: boolean;
   onChange: (patch: Partial<QuickReplyDraft>) => void;
   onRemove: () => void;
   onUploadMedia: (file?: File) => Promise<string>;
 };
 
-function StoryAnswer({ reply, index, level, instagramAccountId, showcases, loadingResources, onChange, onRemove, onUploadMedia }: AnswerProps) {
+function StoryAnswer({ reply, index, level, instagramAccountId, showcases, loadingResources, preserveSavedMedia = false, onChange, onRemove, onUploadMedia }: AnswerProps) {
   const [showcaseMode, setShowcaseMode] = useState<"choose" | "existing" | "new">(reply.destinationShowcaseId ? "existing" : "choose");
   const [previousShowcaseId, setPreviousShowcaseId] = useState(reply.destinationShowcaseId || "");
   const [createdShowcaseId, setCreatedShowcaseId] = useState("");
@@ -107,7 +111,7 @@ function StoryAnswer({ reply, index, level, instagramAccountId, showcases, loadi
 
   function changeDestination(value: QuickReplyDraft["destinationType"]) {
     const keepPreviousFile = reply.destinationType === value && mediaTypes.includes(value as typeof mediaTypes[number]);
-    if (reply.destinationMediaUrl && !keepPreviousFile)
+    if (reply.destinationMediaUrl && !keepPreviousFile && !preserveSavedMedia)
       void requestStorageCleanupByPublicUrl(reply.destinationMediaUrl).catch(() => undefined);
     setUploadError("");
     if (value === "SHOWCASE" && reply.destinationType !== "SHOWCASE") setShowcaseMode(reply.destinationShowcaseId ? "existing" : "choose");
@@ -132,7 +136,7 @@ function StoryAnswer({ reply, index, level, instagramAccountId, showcases, loadi
     try {
       const url = await onUploadMedia(file);
       if (!url) throw new Error("آپلود فایل ناموفق بود.");
-      if (reply.destinationMediaUrl && reply.destinationMediaUrl !== url)
+      if (reply.destinationMediaUrl && reply.destinationMediaUrl !== url && !preserveSavedMedia)
         void requestStorageCleanupByPublicUrl(reply.destinationMediaUrl).catch(() => undefined);
       onChange({ destinationMediaUrl: url, destinationMediaId: "" });
     } catch (error) {
@@ -242,7 +246,7 @@ function StoryAnswer({ reply, index, level, instagramAccountId, showcases, loadi
             <div className="mt-4 border-r-2 border-[#DBEAFE] bg-white/70 py-3 pr-3 sm:pr-4">
               <StoryBranch
                 question={reply.destinationQuestion} replies={reply.destinationQuickReplies}
-                instagramAccountId={instagramAccountId} showcases={showcases} loadingResources={loadingResources} onUploadMedia={onUploadMedia} level={level + 1}
+                instagramAccountId={instagramAccountId} showcases={showcases} loadingResources={loadingResources} preserveSavedMedia={preserveSavedMedia} onUploadMedia={onUploadMedia} level={level + 1}
                 onChange={(patch) => onChange({
                   ...(patch.question !== undefined ? { destinationQuestion: patch.question } : {}),
                   ...(patch.replies !== undefined ? { destinationQuickReplies: patch.replies } : {}),
@@ -265,7 +269,7 @@ function StoryAnswer({ reply, index, level, instagramAccountId, showcases, loadi
                   {reply.destinationType === "IMAGE" ? <img src={reply.destinationMediaUrl} alt="پیش‌نمایش فایل" className="h-36 w-full object-contain" /> :
                     reply.destinationType === "VIDEO" ? <video src={reply.destinationMediaUrl} controls className="max-h-48 w-full" /> :
                     <audio src={reply.destinationMediaUrl} controls className="w-full p-2" />}
-                  <button type="button" onClick={() => { void requestStorageCleanupByPublicUrl(reply.destinationMediaUrl).catch(() => undefined); onChange({ destinationMediaUrl: "", destinationMediaId: "" }); }}
+                  <button type="button" onClick={() => { if (!preserveSavedMedia) void requestStorageCleanupByPublicUrl(reply.destinationMediaUrl).catch(() => undefined); onChange({ destinationMediaUrl: "", destinationMediaId: "" }); }}
                     className="sd-destructive-button w-full border-t border-[#E2E8F0] px-3 py-2 text-xs font-bold text-[#DC2626]">حذف فایل</button>
                 </div>
               )}
