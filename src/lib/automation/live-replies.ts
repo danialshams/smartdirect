@@ -102,7 +102,20 @@ export async function processLiveComment(value: unknown, instagramAccount: {
     executionId: `live-comment:${commentId}`,
     message: { id: `live-intro-${rule.id}`, messageType: "TEXT", text: reply, mediaUrl: null, mediaId: null },
   });
-  if (!send.success) throw new Error(send.error || "Live private reply could not be delivered");
+  if (!send.success) {
+    const response = send.response && typeof send.response === "object"
+      ? send.response as { error?: { code?: number; error_subcode?: number } } : null;
+    // Meta permanently rejects a comment when the Live has ended, the
+    // comment was deleted or its single Private Reply was already used.
+    // This rejection cannot be fixed by queue retries.
+    if (response?.error?.code === 100 && response.error.error_subcode === 2534025) {
+      console.warn("[LIVE_REPLY] comment-no-longer-eligible-for-private-reply", {
+        accountId: instagramAccount.id, commentId, eventId,
+      });
+      return;
+    }
+    throw new Error(send.error || "Live private reply could not be delivered");
+  }
   // Meta returns the messaging recipient ID for Private Replies. Prefer it
   // over the commenter ID when linking the later incoming DM continuation.
   const dmParticipantId = send.recipientId?.trim() || participantId;
