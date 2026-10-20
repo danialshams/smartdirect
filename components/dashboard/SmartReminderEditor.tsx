@@ -60,7 +60,7 @@ export default function SmartReminderEditor({ id }: { id?: string }) {
         const options = ((result.automations || []) as Automation[]).filter(item =>
           Boolean(existing && item.id === existing.automationId) || !rules.some(rule => rule.automationId === item.id));
         if (existing && !options.some(item => item.id === existing.automationId)) options.unshift({
-          id: existing.automationId, ...existing.automation,
+          ...existing.automation,
         });
         const next: Draft = existing ? { automationId: existing.automationId,
           delayMinutes: existing.delayMinutes, text: existing.text, isActive: existing.isActive } : INITIAL;

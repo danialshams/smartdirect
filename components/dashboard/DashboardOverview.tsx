@@ -16,7 +16,9 @@ type DashboardOverviewProps = {
   instagramAccounts: InstagramAccount[];
 };
 
-const features = [
+type DashboardFeature = { title: string; description: string; image: string; href: string; soon?: boolean };
+
+const features: DashboardFeature[] = [
   { title: "پاسخ به کامنت", description: "ارسال فوری پیام در کامنت‌ها یا دایرکت", image: "/photos/پاسخ خودکار کامنت.png", href: "/dashboard/comment-automation" },
   { title: "پاسخ به استوری", description: "ارسال خودکار پیام در دایرکت و ریپلای استوری", image: "/photos/پاسخ خودکار استوری.png", href: "/dashboard/story-automation" },
   { title: "پاسخ به لایو", description: "ارسال آنی پیام و لینک خرید در حین پخش زنده", image: "/photos/پاسخ به لایو.webp", href: "/dashboard/live-automation" },
