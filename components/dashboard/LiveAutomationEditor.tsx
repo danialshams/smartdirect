@@ -12,17 +12,18 @@ type Account = { id: string; igUsername: string; isConnected: boolean };
 type Rule = {
   id: string; instagramAccountId: string; keyword: string; matchMode: "EXACT" | "CONTAINS_ANY";
   initialText: string; followupEnabled: boolean; followupKeyword: string;
-  requireFollow: boolean; followGateText: string; updatedAt: string; messages: unknown[];
+  requireFollow: boolean; followGateText: string; followGateButtonText: string; updatedAt: string; messages: unknown[];
 };
 type Draft = {
   keyword: string; matchMode: "EXACT" | "CONTAINS_ANY"; initialText: string;
   followupEnabled: boolean; followupKeyword: string; requireFollow: boolean;
-  followGateText: string; message: MessageDraft;
+  followGateText: string; followGateButtonText: string; message: MessageDraft;
 };
 const emptyDraft = (): Draft => ({
   keyword: "", matchMode: "EXACT", initialText: "", followupEnabled: false,
   followupKeyword: "ارسال کن", requireFollow: false,
-  followGateText: "برای دریافت پاسخ ابتدا پیج را فالو کن.", message: createEmptyMessage(),
+  followGateText: "برای دریافت پاسخ ابتدا پیج را فالو کن.",
+  followGateButtonText: "بررسی فالو", message: createEmptyMessage(),
 });
 function snapshot(draft: Draft) {
   return JSON.stringify({
@@ -32,6 +33,7 @@ function snapshot(draft: Draft) {
     followupKeyword: draft.followupEnabled ? draft.followupKeyword : "",
     requireFollow: draft.requireFollow,
     followGateText: draft.requireFollow ? draft.followGateText : "",
+    followGateButtonText: draft.requireFollow ? draft.followGateButtonText : "",
     message: draft.followupEnabled ? draft.message : null,
   });
 }
@@ -57,6 +59,7 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
   const responseEditorRef = useRef<PublishingStoryAutomationSetupHandle>(null);
   const [account, setAccount] = useState<Account | null>(null);
   const [draft, setDraft] = useState<Draft>(emptyDraft);
+  const [keywordDraft, setKeywordDraft] = useState("");
   const [showcases, setShowcases] = useState<Showcase[]>([]);
   const [forms, setForms] = useState<FormItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -96,6 +99,7 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
           initialText: rule.initialText, followupEnabled: rule.followupEnabled,
           followupKeyword: rule.followupKeyword || "ارسال کن",
           requireFollow: rule.requireFollow, followGateText: rule.followGateText || "برای دریافت پاسخ ابتدا پیج را فالو کن.",
+          followGateButtonText: rule.followGateButtonText || "بررسی فالو",
           message: normalizeMessages(rule.messages || [])[0] ?? createEmptyMessage(),
         } : emptyDraft();
         // Match the exact form shown on screen when calculating whether the user edited it.
@@ -127,10 +131,23 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
   const dirty = useMemo(() => snapshot(draft) !== initialSnapshot.current || showcaseDirty, [draft, showcaseDirty]);
   const keywords = useMemo(() => draft.keyword.split(/[,،;؛\n]+/).map(s => s.trim()).filter(Boolean), [draft.keyword]);
   const basicValid = keywords.length > 0 && keywords.length <= 10 && draft.initialText.trim().length > 0 &&
-    draft.initialText.trim().length <= 1000 && (!draft.requireFollow || Boolean(draft.followGateText.trim())) &&
+    draft.initialText.trim().length <= 1000 && (!draft.requireFollow ||
+    (Boolean(draft.followGateText.trim()) && Boolean(draft.followGateButtonText.trim()) && draft.followGateButtonText.trim().length <= 20)) &&
     (!draft.followupEnabled || Boolean(draft.followupKeyword.trim()));
   const canSave = Boolean(account && basicValid && !loadingResources && !saving && (!id || dirty));
   const patch = (value: Partial<Draft>) => { setDraft(current => ({ ...current, ...value })); setSaved(false); };
+  const MAX_KEYWORDS = 10;
+  const addKeyword = () => {
+    const additions = keywordDraft.split(/[,،;؛\n]+/).map(item => item.trim()).filter(Boolean);
+    if (!additions.length) return;
+    const next = [...keywords];
+    for (const item of additions) {
+      if (next.length >= MAX_KEYWORDS) break;
+      if (!next.some(value => value.toLocaleLowerCase("fa-IR") === item.toLocaleLowerCase("fa-IR"))) next.push(item);
+    }
+    patch({ keyword: next.join(",") });
+    setKeywordDraft("");
+  };
 
   async function save() {
     if (!canSave || !account) return;
@@ -149,6 +166,7 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
       keyword: draft.keyword, matchMode: draft.matchMode, initialText: draft.initialText,
       followupEnabled: draft.followupEnabled, followupKeyword: draft.followupKeyword,
       requireFollow: draft.requireFollow, followGateText: draft.followGateText,
+      followGateButtonText: draft.followGateButtonText,
       message: draft.followupEnabled ? preparedMessage : null, expectedUpdatedAt: initialVersion.current,
     };
     try {
@@ -187,18 +205,40 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
               </button>
             ))}
           </div>
-          <label htmlFor="live-keyword" className="block text-xs font-semibold text-[#334155]">عبارت‌های فعال‌کننده (حداکثر ۱۰ مورد)</label>
-          <textarea id="live-keyword" rows={2} value={draft.keyword} onChange={e => patch({ keyword: e.target.value })}
-            placeholder="مثلاً قیمت، خرید، لینک" className="w-full resize-y rounded-xl border border-[#D8E0EC] px-3.5 py-3 text-base leading-7 text-[#0F172A] outline-none focus:border-[#2563EB]" />
+          {keywords.length > 0 && (
+            <div className="mb-3 flex flex-wrap gap-2">
+              {keywords.map(item => (
+                <span key={item} className="inline-flex items-center gap-1.5 rounded-full bg-[var(--daira-outline-hover-bg)] px-3 py-1.5 text-xs font-semibold text-[var(--daira-primary)]">
+                  {item}
+                  <button type="button" onClick={() => patch({ keyword: keywords.filter(value => value !== item).join(",") })}
+                    className="sd-neutral-button text-[var(--daira-text)] hover:text-[var(--daira-error-text)]" aria-label={"حذف " + item}>×</button>
+                </span>
+              ))}
+            </div>
+          )}
+          <div>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <label htmlFor="live-keyword" className="block text-xs text-[var(--daira-text)]">حداکثر {MAX_KEYWORDS} کلمه کلیدی</label>
+              <span className="text-[11px] text-[var(--daira-text)]">{keywords.length} از {MAX_KEYWORDS}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <input id="live-keyword" value={keywordDraft} onChange={e => setKeywordDraft(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addKeyword(); } }}
+                placeholder="یک کلمه کلیدی وارد کنید" disabled={keywords.length >= MAX_KEYWORDS}
+                className="min-w-0 flex-1 rounded-lg border border-[var(--daira-outline)] bg-white px-3 py-3 text-base text-[var(--daira-heading)] outline-none focus:border-[var(--daira-input-focus)] focus:ring-2 focus:ring-[color:var(--daira-primary)]/10 disabled:bg-[var(--daira-surface-active)]" style={{ fontSize: "16px" }} />
+              <button type="button" onClick={addKeyword} disabled={!keywordDraft.trim() || keywords.length >= MAX_KEYWORDS}
+                className="min-h-11 shrink-0 rounded-lg bg-[var(--daira-primary)] px-3.5 text-xs font-semibold text-white transition hover:bg-[var(--daira-primary-hover)] disabled:bg-[var(--daira-disabled-bg)] disabled:text-[var(--daira-disabled-text)]">افزودن</button>
+            </div>
+          </div>
         </div>
       </section>
 
       <section>
-        <Guide number={2} title="دایرکت اولیه" hint="اولین پاسخ به نوشته بیننده در لایو فقط متن است؛ لینک را می‌توان داخل متن گذاشت." />
+        <Guide number={2} title="متن پاسخ در دایرکت کاربر" hint="این متن پس از ارسال کلمه کلیدی در لایو، به دایرکت کاربر ارسال می‌شود." />
         <div className="space-y-2 rounded-2xl border border-[#E2E8F0] bg-white p-4 sm:p-5">
-          <label htmlFor="live-intro" className="block text-xs font-semibold text-[#334155]">متن پاسخ</label>
+          <label htmlFor="live-intro" className="block text-xs font-semibold text-[#334155]">متن پاسخ در دایرکت کاربر</label>
           <textarea id="live-intro" rows={4} maxLength={1000} value={draft.initialText} onChange={e => patch({ initialText: e.target.value })}
-            placeholder="سلام! برای دریافت قیمت و مشخصات محصول، همینجا بنویس «ارسال کن»."
+            placeholder=""
             className="w-full resize-y rounded-xl border border-[#D8E0EC] px-3.5 py-3 text-base leading-7 text-[#0F172A] outline-none focus:border-[#2563EB]" />
           <p className="text-left text-[11px] text-[#94A3B8]">{new Intl.NumberFormat("fa-IR").format(draft.initialText.length)} / ۱۰۰۰</p>
         </div>
@@ -258,6 +298,10 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
                 value={draft.followGateText} onChange={e => patch({ followGateText: e.target.value })}
                 placeholder="برای دریافت اطلاعات، ابتدا پیج را فالو کن."
                 className="w-full resize-y rounded-xl border border-[#D8E0EC] px-3.5 py-3 text-base leading-7 outline-none focus:border-[#2563EB]" />
+              <label htmlFor="live-follow-button" className="block text-xs font-semibold text-[#334155]">متن دکمه بررسی فالو</label>
+              <input id="live-follow-button" value={draft.followGateButtonText} maxLength={20}
+                onChange={e => patch({ followGateButtonText: e.target.value })}
+                placeholder="بررسی فالو" className="min-h-12 w-full rounded-xl border border-[#D8E0EC] px-3.5 text-base outline-none focus:border-[#2563EB]" />
             </div>
           )}
         </div>
