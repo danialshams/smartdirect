@@ -1269,7 +1269,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                   loadingResources={loadingResources}
                   instagramAccountId={account.id}
                   onUpdate={(patch) => setMessage((current) => ({ ...current, ...patch }))}
-                  keywordValid={keywords.length > 0}
+                  keywordValid={keywordMatchMode === "CONTAINS_ANY" || keywords.length > 0}
                   onContinue={(nextMessage) => {
                     const next = nextMessage ?? message;
                     setMessage(next);
