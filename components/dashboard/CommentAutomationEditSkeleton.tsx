@@ -13,9 +13,9 @@ function GuideSkeleton({ width = "w-52" }: { width?: string }) {
   );
 }
 
-export default function CommentAutomationEditSkeleton() {
+export default function CommentAutomationEditSkeleton({ kind = "comment" }: { kind?: "comment" | "story" }) {
   return (
-    <div dir="rtl" role="status" aria-label="در حال بارگذاری ویرایش پاسخ خودکار کامنت" aria-busy="true" className="mx-auto w-full max-w-4xl space-y-5 py-2 sm:py-4">
+    <div dir="rtl" role="status" aria-label={kind === "story" ? "در حال بارگذاری ویرایش پاسخ خودکار استوری" : "در حال بارگذاری ویرایش پاسخ خودکار کامنت"} aria-busy="true" className="mx-auto w-full max-w-4xl space-y-5 py-2 sm:py-4">
       <div className="space-y-2">
         <GuideSkeleton width="w-44" />
         <div className="space-y-4 rounded-2xl border border-[var(--daira-border,#E2E8F0)] bg-white p-4 sm:p-5">
