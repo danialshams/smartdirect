@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, Lightbulb, Loader2 } from "lucide-react";
-import { dairaPalette } from "@/lib/design-system/palette";
+import { dairaPalette } from "../../lib/design-system/palette";
 import { createEmptyMessage, normalizeMessages, type MessageDraft, type Showcase, type FormItem } from "./automation-form-utils";
 import PublishingStoryAutomationSetup, { type PublishingStoryAutomationSetupHandle } from "./publishing/PublishingStoryAutomationSetup";
 import LiveAutomationSkeleton from "./LiveAutomationSkeleton";
@@ -104,7 +104,6 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
         if (!controller.signal.aborted) {
           setAccount(connected);
           setDraft(nextDraft);
-          setLoading(false);
         }
         const query = "?instagramAccountId=" + encodeURIComponent(connected.id);
         const [s, f] = await Promise.all([
