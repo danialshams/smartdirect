@@ -10,7 +10,7 @@ import { createEmptyQuickReply } from "../automation-form-utils";
 import StoryReplyFormEditor from "./StoryReplyFormEditor";
 import StoryShowcaseSlidesEditor from "./StoryShowcaseSlidesEditor";
 
-export type PublishingStoryAutomationSetupHandle = { saveAndContinue: () => Promise<boolean>; deleteAndReset: () => Promise<boolean> };
+export type PublishingStoryAutomationSetupHandle = { saveAndContinue: () => Promise<boolean>; deleteAndReset: () => Promise<boolean>; prepareExternalSave: () => Promise<MessageDraft | null> };
 
 type Props = {
   message: MessageDraft;
@@ -378,6 +378,29 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
   }
 
   useImperativeHandle(ref, () => ({
+    async prepareExternalSave() {
+      if (uploading || slideUploadInProgress || formUploadsInFlight > 0 || savingShowcase || formSaving) return null;
+      if (responseType === "TEXT" && !message.text.trim()) {
+        setError("متن پیام را وارد کن.");
+        return null;
+      }
+      if (["IMAGE", "VIDEO", "AUDIO"].includes(responseType) && !message.mediaUrl && !message.mediaId) {
+        setError("فایل پیام را انتخاب کن.");
+        return null;
+      }
+      if (responseType === "FORM" && !isValidStoryForm(message.text, message.quickReplies)) {
+        setError("سؤال‌ها و گزینه‌های فرم را کامل کن.");
+        return null;
+      }
+      let prepared: MessageDraft = { ...message, text: message.text.trim() };
+      if (responseType === "SHOWCASE" &&
+        (!message.showcaseId || (storyCreateMode && showcaseSource === "existing" && existingShowcaseEdited))) {
+        const showcaseId = await saveShowcase();
+        if (!showcaseId) return null;
+        prepared = { ...prepared, showcaseId };
+      }
+      return prepared;
+    },
     async saveAndContinue() {
       if (!keywordValid || uploading || slideUploadInProgress || formUploadsInFlight > 0 || savingShowcase || formSaving) return false;
       if (responseType === "TEXT") {
@@ -425,7 +448,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
         return false;
       }
     },
-  }), [keywordValid, uploading, slideUploadInProgress, formUploadsInFlight, savingShowcase, formSaving, responseType, message, showcaseSaved, onUpdate, onContinue, onSavedChange]);
+  }), [keywordValid, uploading, slideUploadInProgress, formUploadsInFlight, savingShowcase, formSaving, responseType, message, showcaseSaved, onUpdate, onContinue, onSavedChange, existingShowcaseEdited, showcaseSource, storyCreateMode, storyEditMode, slides, hasValidSlide, selectedShowcase]);
 
   async function uploadFormMedia(file?: File): Promise<string> {
     if (!file) return "";
