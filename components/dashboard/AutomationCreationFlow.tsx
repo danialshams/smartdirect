@@ -1277,9 +1277,9 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                   }}
                   disabled={saving}
                   showFinalSave
-                  finalSaveLabel="ساخت پاسخ خودکار"
-                  finalSaveLoadingLabel="در حال ساخت پاسخ خودکار..."
-                  finalSaveDisabled={saving || (requireFollow && (!followGateText.trim() || !followGateButtonText.trim() || followGateButtonText.trim().length > 20))}
+                  finalSaveLabel={isEditing ? "ذخیره تغییرات" : "ساخت پاسخ خودکار"}
+                  finalSaveLoadingLabel={isEditing ? "در حال ذخیره تغییرات..." : "در حال ساخت پاسخ خودکار..."}
+                  finalSaveDisabled={saving || selectedMediaIds.length !== 1 || (requireFollow && (!followGateText.trim() || followGateText.trim().length > 640 || !followGateButtonText.trim() || followGateButtonText.trim().length > 20))}
                   extraSettings={
                     <div className="space-y-3 pt-2">
                       <div className="mb-2 mt-4">
@@ -1328,11 +1328,41 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                             className="daira-form-switch shrink-0 -scale-x-100" />
                         </label>
                       </section>
+                      {isEditing && (
+                        <>
+                          <div className="mb-2 mt-4">
+                            <AutomationSectionGuide>۶. وضعیت پاسخ — فعال یا غیرفعال بودن پاسخ استوری را تنظیم کن.</AutomationSectionGuide>
+                          </div>
+                          <section className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
+                            <label className="flex cursor-pointer items-center justify-between gap-3">
+                              <span className="text-sm font-bold text-[var(--daira-heading)]">پاسخ خودکار فعال باشد</span>
+                              <input type="checkbox" role="switch" aria-label="وضعیت فعال بودن پاسخ استوری"
+                                checked={isActive} onChange={(event) => setIsActive(event.target.checked)}
+                                className="daira-form-switch shrink-0 -scale-x-100" />
+                            </label>
+                          </section>
+                        </>
+                      )}
                     </div>
                   }
                   responseTypeTitle="نوع پاسخ خودکار"
                   responseTypeDescription=""
                   storyCreateMode
+                  storyEditMode={isEditing}
+                  finalActions={isEditing ? (
+                    <div className="flex flex-col gap-2">
+                      {extraMessages.length > 0 && (
+                        <p className="text-xs leading-6 text-[var(--daira-text)]">
+                          {new Intl.NumberFormat("fa-IR").format(extraMessages.length)} پیام اضافی قدیمی بدون تغییر حفظ می‌شود.
+                        </p>
+                      )}
+                      <button type="button" disabled={saving || deleting}
+                        onClick={() => setDeleteConfirmOpen(true)}
+                        className="sd-destructive-button flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[var(--daira-error-border)] bg-[var(--daira-error-background)] px-4 text-sm font-bold text-[var(--daira-error-text)] transition hover:brightness-95 disabled:opacity-50">
+                        <Trash2 size={17} aria-hidden="true" /> حذف پاسخ خودکار
+                      </button>
+                    </div>
+                  ) : undefined}
                   textPlaceholder="متنی که در پاسخ خودکار برای کاربر ارسال می‌شود..."
                 />
                 </div>
