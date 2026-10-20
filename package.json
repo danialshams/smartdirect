@@ -42,6 +42,7 @@
     "automation:messages:test": "tsx --env-file=.env --env-file=.env.local scripts/test-automation-messages.ts",
     "automation:engine:test": "tsx --env-file=.env --env-file=.env.local scripts/test-automation-engine.ts",
     "live:automation:test": "tsx scripts/test-live-reply-automation.ts",
+    "reminders:test": "tsx scripts/test-smart-reminders.ts",
     "publishing:queue:test": "tsx --env-file=.env --env-file=.env.local scripts/test-publishing-queue.ts",
     "conversation:concurrency:test": "tsx --env-file=.env --env-file=.env.local scripts/test-conversation-concurrency.ts",
     "queue:recovery:test": "tsx --env-file=.env --env-file=.env.local scripts/test-failed-jobs-recovery.ts",
