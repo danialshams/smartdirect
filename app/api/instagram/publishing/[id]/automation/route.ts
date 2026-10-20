@@ -6,7 +6,7 @@ import { invalidateAutomationCache } from "@/lib/cache/instagram";
 
 type Context = { params: Promise<{ id: string }> };
 
-export async function DELETE(_request: NextRequest, { params }: Context) {
+export async function DELETE(request: NextRequest, { params }: Context) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -14,20 +14,19 @@ export async function DELETE(_request: NextRequest, { params }: Context) {
     }
 
     const { id } = await params;
-    if (!id) {
-      return NextResponse.json({ success: false, message: "شناسه محتوا الزامی است." }, { status: 400 });
+    const triggerType = new URL(request.url).searchParams.get("triggerType");
+    if (triggerType && triggerType !== "COMMENT_KEYWORD" && triggerType !== "STORY_REPLY_KEYWORD") {
+      return NextResponse.json({ success: false, message: "نوع پاسخ خودکار نامعتبر است." }, { status: 400 });
     }
+    if (!id) return NextResponse.json({ success: false, message: "شناسه محتوا الزامی است." }, { status: 400 });
 
     const job = await prisma.instagramPublishJob.findFirst({
       where: { id, userId: session.user.id, status: "PUBLISHED" },
       select: {
-        id: true,
-        instagramAccountId: true,
-        commentAutomationId: true,
-        storyReplyAutomationId: true,
+        id: true, instagramAccountId: true, instagramMediaId: true,
+        commentAutomationId: true, storyReplyAutomationId: true,
       },
     });
-
     if (!job) {
       return NextResponse.json(
         { success: false, message: "محتوای منتشرشده پیدا نشد یا متعلق به شما نیست." },
@@ -35,49 +34,62 @@ export async function DELETE(_request: NextRequest, { params }: Context) {
       );
     }
 
-    const linkedAutomationIds = [job.commentAutomationId, job.storyReplyAutomationId].filter(
-      (value): value is string => Boolean(value),
-    );
+    const removeComment = !triggerType || triggerType === "COMMENT_KEYWORD";
+    const removeStory = !triggerType || triggerType === "STORY_REPLY_KEYWORD";
+    const linkedIds = Array.from(new Set([
+      ...(removeComment && job.commentAutomationId ? [job.commentAutomationId] : []),
+      ...(removeStory && job.storyReplyAutomationId ? [job.storyReplyAutomationId] : []),
+    ]));
 
     await prisma.$transaction(async (tx) => {
-      // Remove only the reply rule/configuration. The published Instagram media stays untouched.
+      // Clear only this job's selected reply type, not the other type or the
+      // underlying Instagram content. Do not delete reusable automations.
       await tx.instagramPublishJob.update({
         where: { id: job.id },
         data: {
-          commentAutomationId: null,
-          storyReplyAutomationId: null,
-          commentTriggerKeywords: null,
-          commentTriggerResponse: null,
-          storyReplyTriggerKeywords: null,
-          storyReplyTriggerResponse: null,
+          ...(removeComment ? {
+            commentAutomationId: null,
+            commentTriggerKeywords: null,
+            commentTriggerResponse: null,
+          } : {}),
+          ...(removeStory ? {
+            storyReplyAutomationId: null,
+            storyReplyTriggerKeywords: null,
+            storyReplyTriggerResponse: null,
+          } : {}),
         },
       });
-
-      if (linkedAutomationIds.length) {
-        await tx.automation.deleteMany({
-          where: {
-            id: { in: linkedAutomationIds },
-            instagramAccountId: job.instagramAccountId,
+      for (const linkedId of linkedIds) {
+        const automation = await tx.automation.findFirst({
+          where: { id: linkedId, instagramAccountId: job.instagramAccountId },
+          select: { id: true, mediaId: true, mediaIds: true },
+        });
+        if (!automation || !job.instagramMediaId) continue;
+        const current = Array.from(new Set([
+          ...(automation.mediaId ? [automation.mediaId] : []),
+          ...(automation.mediaIds || "").split(",").map((value) => value.trim()).filter(Boolean),
+        ]));
+        if (!current.includes(job.instagramMediaId)) continue;
+        const remaining = current.filter((value) => value !== job.instagramMediaId);
+        await tx.automation.update({
+          where: { id: automation.id },
+          data: {
+            mediaId: remaining.length === 1 ? remaining[0] : null,
+            mediaIds: remaining.length ? remaining.join(",") : null,
           },
         });
       }
-    });
+    }, { maxWait: 10000, timeout: 15000 });
 
-    try {
-      await invalidateAutomationCache(job.instagramAccountId);
-    } catch (cacheError) {
-      console.warn("Automation cache invalidation failed:", cacheError);
-    }
+    try { await invalidateAutomationCache(job.instagramAccountId); }
+    catch (cacheError) { console.warn("Automation cache invalidation failed:", cacheError); }
 
     return NextResponse.json({
       success: true,
-      message: "قانون پاسخ خودکار حذف شد؛ محتوای منتشرشده در اینستاگرام باقی می‌ماند.",
+      message: "پاسخ این محتوا غیرفعال شد و تنظیمات پاسخ‌های دیگر حفظ شدند.",
     });
   } catch (error) {
     console.error("DELETE /api/instagram/publishing/[id]/automation error:", error);
-    return NextResponse.json(
-      { success: false, message: "حذف قانون پاسخ خودکار ناموفق بود." },
-      { status: 500 },
-    );
+    return NextResponse.json({ success: false, message: "حذف پاسخ این محتوا ناموفق بود." }, { status: 500 });
   }
 }
