@@ -1361,6 +1361,11 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                         className="sd-destructive-button flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[var(--daira-error-border)] bg-[var(--daira-error-background)] px-4 text-sm font-bold text-[var(--daira-error-text)] transition hover:brightness-95 disabled:opacity-50">
                         <Trash2 size={17} aria-hidden="true" /> حذف پاسخ خودکار
                       </button>
+                      <button type="button" disabled={saving || deleting}
+                        onClick={() => router.push("/dashboard/story-automation", { scroll: true })}
+                        className="sd-neutral-button min-h-11 rounded-xl border border-[var(--daira-border)] bg-white px-4 text-sm font-semibold text-[var(--daira-text)] transition hover:bg-[var(--daira-surface-hover)] disabled:opacity-50">
+                        انصراف و بازگشت
+                      </button>
                     </div>
                   ) : undefined}
                   textPlaceholder="متنی که در پاسخ خودکار برای کاربر ارسال می‌شود..."
