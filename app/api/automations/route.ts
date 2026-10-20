@@ -144,8 +144,10 @@ export async function POST(request: NextRequest) {
       const requestedAll = requestedIds.length === 0;
       const duplicate = existingAutomations.find((existing) => {
         const existingIds = existing.mediaIds ? existing.mediaIds.split(",").filter(Boolean) : existing.mediaId ? [existing.mediaId] : [];
-        const existingAll = existingIds.length === 0;
-        return requestedAll || existingAll || requestedIds.some((id) => existingIds.includes(id));
+        // Templates without any linked media are kept for reuse and must not
+        // block new replies on unrelated content.
+        if (existingIds.length === 0) return false;
+        return requestedAll || requestedIds.some((id) => existingIds.includes(id));
       });
 
       if (duplicate) {
