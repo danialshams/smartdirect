@@ -531,12 +531,8 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
       {responseType === "SHOWCASE" && (
         storyCreateMode ? (
           <div className="space-y-4 rounded-2xl border border-[#E2E8F0] bg-[#FBFCFE] p-3.5 sm:p-5">
-            <div>
-              <h3 className="text-sm font-bold text-[#0F172A]">ویترین پاسخ استوری</h3>
-              <p className="mt-1 text-xs leading-6 text-[#64748B]">مانند کارت‌های ویترین اینستاگرام: تصویر، عنوان و توضیحات به‌ترتیب زیر هم.</p>
-            </div>
-            {showcases.length > 0 && (
-              <div className="grid grid-cols-2 gap-1 rounded-xl bg-[#F1F5F9] p-1" role="group" aria-label="روش انتخاب ویترین">
+            <h3 className="text-sm font-bold text-[#0F172A]">ویترین</h3>
+            <div className="grid grid-cols-2 gap-1 rounded-xl bg-[#F1F5F9] p-1" role="group" aria-label="روش انتخاب ویترین">
                 {(["new", "existing"] as const).map((value) => (
                   <button key={value} type="button" aria-pressed={showcaseSource === value}
                     onClick={() => {
@@ -549,11 +545,10 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                       setShowcaseSource(value);
                     }}
                     className={["sd-neutral-button min-h-10 rounded-lg px-2 text-xs font-bold transition", showcaseSource === value ? "bg-white text-[#1D4ED8] shadow-sm" : "bg-transparent text-[#64748B] hover:text-[#0F172A]"].join(" ")}>
-                    {value === "new" ? "ساخت ویترین جدید" : "ویرایش یا استفاده از ویترین قبلی"}
+                    {value === "new" ? "ساخت ویترین جدید" : "استفاده از ویترین‌های قبلی"}
                   </button>
                 ))}
-              </div>
-            )}
+            </div>
             {showcaseSource === "existing" && (
               <div className="space-y-2">
                 <label htmlFor="story-existing-showcase" className="block text-xs font-bold text-[#334155]">انتخاب ویترین قبلی</label>
@@ -571,6 +566,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                   <option value="">یک ویترین انتخاب کن</option>
                   {showcases.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
                 </select>
+                {!loadingResources && showcases.length === 0 && <p className="text-xs text-[#64748B]">هنوز ویترینی نداری.</p>}
                 {selectedShowcase && (
                   <p className="rounded-xl border border-[#DBEAFE] bg-[#EFF6FF] px-3 py-3 text-xs leading-6 text-[#1E40AF]">
                     {existingShowcaseEdited
@@ -711,12 +707,8 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
         <div className={["space-y-4 transition-opacity duration-200", formSaved ? "opacity-55" : ""].join(" ")}>
         {storyCreateMode ? (
           <div className="space-y-4">
-            {formTemplates.length > 0 && (
-              <div className="space-y-3 rounded-2xl border border-[#E2E8F0] bg-[#FBFCFE] p-3.5 sm:p-4">
-                <div>
-                  <h3 className="text-sm font-bold text-[#0F172A]">فرم پاسخ استوری</h3>
-                  <p className="mt-1 text-xs leading-6 text-[#64748B]">می‌توانی یک فرم جدید بسازی یا سؤال‌ها و گزینه‌های فرم قبلی را کپی و ویرایش کنی.</p>
-                </div>
+            <div className="space-y-3 rounded-2xl border border-[#E2E8F0] bg-[#FBFCFE] p-3.5 sm:p-4">
+                <h3 className="text-sm font-bold text-[#0F172A]">فرم</h3>
                 <div className="grid grid-cols-2 gap-1 rounded-xl bg-[#F1F5F9] p-1" role="group" aria-label="ساخت یا استفاده مجدد از فرم">
                   {(["new", "existing"] as const).map((value) => (
                     <button key={value} type="button" aria-pressed={formSource === value}
@@ -740,7 +732,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                         setFormSaved(false);
                       }}
                       className={["sd-neutral-button min-h-10 rounded-lg px-2 text-xs font-bold transition", formSource === value ? "bg-white text-[#1D4ED8] shadow-sm" : "bg-transparent text-[#64748B] hover:text-[#0F172A]"].join(" ")}>
-                      {value === "new" ? "فرم جدید" : "استفاده از فرم قبلی"}
+                      {value === "new" ? "فرم جدید" : "استفاده از فرم‌های قبلی"}
                     </button>
                   ))}
                 </div>
@@ -763,18 +755,19 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                       <option value="">یک فرم قبلی را انتخاب کن</option>
                       {formTemplates.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
                     </select>
+                    {!loadingResources && formTemplates.length === 0 && <p className="text-xs text-[#64748B]">هنوز فرم ذخیره‌شده‌ای نداری.</p>}
                     {selectedFormTemplateId && (
                       <p className="rounded-xl bg-[#EFF6FF] px-3 py-3 text-xs leading-6 text-[#1E40AF]">
-                        سؤال‌ها، گزینه‌ها و مسیر پاسخ‌ها از فرم انتخاب‌شده کپی شده‌اند. تغییرات این فرم فقط در پاسخ جدید ثبت می‌شوند.
+                        این نسخه قابل ویرایش است؛ فرم قبلی تغییر نمی‌کند.
                       </p>
                     )}
                   </div>
                 )}
               </div>
-            )}
             {(formSource === "new" || selectedFormTemplateId) && (
               <StoryReplyFormEditor
                 message={message}
+                instagramAccountId={instagramAccountId}
                 showcases={showcases}
                 loadingResources={loadingResources}
                 onUpdate={onUpdate}

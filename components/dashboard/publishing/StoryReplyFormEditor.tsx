@@ -1,13 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, CircleCheck, ImagePlus, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, ImagePlus, Plus, Trash2 } from "lucide-react";
+import StoryReplyShowcaseCreator from "./StoryReplyShowcaseCreator";
 import VoiceRecorder from "../VoiceRecorder";
 import { createEmptyQuickReply, type MessageDraft, type QuickReplyDraft, type Showcase } from "../automation-form-utils";
 import { requestStorageCleanupByPublicUrl, useStorageUploadLease } from "./useStorageUploadLease";
 
 type FormProps = {
   message: MessageDraft;
+  instagramAccountId: string;
   showcases: Showcase[];
   loadingResources: boolean;
   onUpdate: (patch: Partial<MessageDraft>) => void;
@@ -17,6 +19,7 @@ type FormProps = {
 type BranchProps = {
   question: string;
   replies: QuickReplyDraft[];
+  instagramAccountId: string;
   showcases: Showcase[];
   loadingResources: boolean;
   onChange: (patch: { question?: string; replies?: QuickReplyDraft[] }) => void;
@@ -50,11 +53,12 @@ function completeOption(reply: QuickReplyDraft, depth: number): boolean {
   }
 }
 
-export default function StoryReplyFormEditor({ message, showcases, loadingResources, onUpdate, onUploadMedia }: FormProps) {
+export default function StoryReplyFormEditor({ message, instagramAccountId, showcases, loadingResources, onUpdate, onUploadMedia }: FormProps) {
   return (
     <StoryBranch
       question={message.text}
       replies={message.quickReplies}
+      instagramAccountId={instagramAccountId}
       showcases={showcases}
       loadingResources={loadingResources}
       onChange={(patch) => onUpdate({
@@ -67,7 +71,7 @@ export default function StoryReplyFormEditor({ message, showcases, loadingResour
   );
 }
 
-function StoryBranch({ question, replies, showcases, loadingResources, onChange, onUploadMedia, level }: BranchProps) {
+function StoryBranch({ question, replies, instagramAccountId, showcases, loadingResources, onChange, onUploadMedia, level }: BranchProps) {
   const options = replies.filter((reply) => !reply.isExit);
   const ready = options.filter((reply) => completeOption(reply, level)).length;
   function updateReply(id: string, patch: Partial<QuickReplyDraft>) {
@@ -76,47 +80,42 @@ function StoryBranch({ question, replies, showcases, loadingResources, onChange,
 
   return (
     <section dir="rtl" aria-label={level ? "سؤال بعدی" : "فرم پاسخ استوری"}
-      className={["space-y-4 rounded-2xl border p-3.5 sm:p-5", level ? "border-[#D8E3F2] bg-white" : "border-[#E2E8F0] bg-[#FBFCFE]"].join(" ")}>
+      className={level === 0 ? "space-y-4 rounded-2xl border border-[#E2E8F0] bg-[#FBFCFE] p-3.5 sm:p-5" : "space-y-3 pt-2"}>
       <div>
-        <div className="flex items-start gap-2">
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#EFF6FF] text-xs font-bold text-[#1D4ED8]">
-            {new Intl.NumberFormat("fa-IR").format(level + 1)}
-          </span>
-          <div className="min-w-0">
-            <h3 className="text-sm font-bold text-[#0F172A]">{level ? "سؤال بعدی" : "سؤال اصلی"}</h3>
-            <p className="mt-1 text-xs leading-6 text-[#64748B]">
-              {level ? "بعد از انتخاب گزینهٔ قبلی، این سؤال نمایش داده می‌شود." : "متنی بنویس که کاربر در دایرکت ببیند و یکی از گزینه‌ها را انتخاب کند."}
-            </p>
-          </div>
+        <div className="flex items-center gap-2">
+          {level === 0 && <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#EFF6FF] text-xs font-bold text-[#1D4ED8]">۱</span>}
+          <h3 className="text-sm font-bold text-[#0F172A]">{level ? "سؤال بعدی" : "سؤال اصلی"}</h3>
         </div>
-        <label className="mb-1.5 mt-3 block text-xs font-bold text-[#334155]">متن سؤال <span className="text-[#DC2626]">*</span></label>
+        <label className="mb-1.5 mt-2 block text-xs font-semibold text-[#334155]">متن سؤال <span className="text-[#DC2626]">*</span></label>
         <textarea rows={3} maxLength={2000} value={question}
           onChange={(event) => onChange({ question: event.target.value })}
           placeholder="مثلاً دوست داری دربارهٔ کدام محصول اطلاعات بگیری؟"
           className="w-full resize-y rounded-xl border border-[#D8E0EC] bg-white px-3.5 py-3 text-base leading-7 text-[#0F172A] outline-none placeholder:text-[#94A3B8] focus:border-[#2563EB]" />
       </div>
-      <div className="space-y-3">
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <div>
-            <p className="text-sm font-bold text-[#0F172A]">گزینه‌های پاسخ</p>
-            <p className="mt-1 text-[11px] leading-5 text-[#64748B]">حداقل ۲ گزینه؛ مقصد هر گزینه را مشخص کن.</p>
-          </div>
-          <span aria-live="polite" className="rounded-full bg-[#EFF6FF] px-3 py-1.5 text-[11px] font-semibold text-[#1D4ED8]">
-            {new Intl.NumberFormat("fa-IR").format(ready)} از {new Intl.NumberFormat("fa-IR").format(options.length)} کامل
+      <div className="space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <h4 className="text-xs font-bold text-[#334155]">گزینه‌ها</h4>
+          <span aria-live="polite" className="text-[11px] font-semibold text-[#64748B]">
+            {new Intl.NumberFormat("fa-IR").format(ready)} از {new Intl.NumberFormat("fa-IR").format(options.length)} آماده
           </span>
         </div>
-        {options.map((reply, index) => (
-          <StoryAnswer key={reply.id} reply={reply} index={index} level={level}
-            showcases={showcases} loadingResources={loadingResources}
-            onChange={(patch) => updateReply(reply.id, patch)}
-            onRemove={() => onChange({ replies: replies.filter((entry) => entry.id !== reply.id) })}
-            onUploadMedia={onUploadMedia} />
-        ))}
+        <div className={level === 0
+          ? "overflow-hidden rounded-xl border border-[#E2E8F0] bg-white divide-y divide-[#EDF1F6]"
+          : "divide-y divide-[#EDF1F6]"}>
+          {options.map((reply, index) => (
+            <StoryAnswer key={reply.id} reply={reply} index={index} level={level}
+              instagramAccountId={instagramAccountId} showcases={showcases} loadingResources={loadingResources}
+              onChange={(patch) => updateReply(reply.id, patch)}
+              onRemove={() => onChange({ replies: replies.filter((entry) => entry.id !== reply.id) })}
+              onUploadMedia={onUploadMedia} />
+          ))}
+        </div>
         <button type="button" disabled={replies.length >= maxOptions}
           onClick={() => onChange({ replies: [...replies, createEmptyQuickReply()] })}
-          className="sd-neutral-button flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[#B5C4DA] bg-white px-3 text-xs font-bold text-[#2563EB] transition hover:bg-[#F8FAFC] disabled:cursor-not-allowed disabled:opacity-50">
+          className={["sd-neutral-button flex min-h-10 w-full items-center justify-center gap-2 px-3 text-xs font-bold text-[#2563EB] transition disabled:opacity-50",
+            level === 0 ? "rounded-xl border border-dashed border-[#C4D1E1] bg-white hover:bg-[#F8FAFC]" : "rounded-lg hover:bg-[#F8FAFC]"
+          ].join(" ")}>
           <Plus size={16} aria-hidden="true" /> افزودن گزینه
-          <span className="text-[11px] font-normal text-[#64748B]">(حداکثر {new Intl.NumberFormat("fa-IR").format(maxOptions)})</span>
         </button>
       </div>
       {options.length < 2 && <p role="status" className="text-xs text-[#B45309]">برای فعال شدن دکمهٔ ساخت، حداقل دو گزینه لازم است.</p>}
@@ -128,6 +127,7 @@ type AnswerProps = {
   reply: QuickReplyDraft;
   index: number;
   level: number;
+  instagramAccountId: string;
   showcases: Showcase[];
   loadingResources: boolean;
   onChange: (patch: Partial<QuickReplyDraft>) => void;
@@ -135,8 +135,10 @@ type AnswerProps = {
   onUploadMedia: (file?: File) => Promise<string>;
 };
 
-function StoryAnswer({ reply, index, level, showcases, loadingResources, onChange, onRemove, onUploadMedia }: AnswerProps) {
-  const [expanded, setExpanded] = useState(true);
+function StoryAnswer({ reply, index, level, instagramAccountId, showcases, loadingResources, onChange, onRemove, onUploadMedia }: AnswerProps) {
+  const [expanded, setExpanded] = useState(level === 0 && index === 0);
+  const [showcaseMode, setShowcaseMode] = useState<"existing" | "new">("existing");
+  const [createdShowcaseId, setCreatedShowcaseId] = useState("");
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const complete = completeOption(reply, level);
@@ -151,7 +153,7 @@ function StoryAnswer({ reply, index, level, showcases, loadingResources, onChang
       destinationType: value,
       destinationText: value === "TEXT" ? reply.destinationText : "",
       destinationFormId: "",
-      destinationShowcaseId: value === "SHOWCASE" ? reply.destinationShowcaseId : "",
+      destinationShowcaseId: value === "SHOWCASE" ? (showcaseMode === "new" ? createdShowcaseId : reply.destinationShowcaseId) : "",
       destinationMediaUrl: keepPreviousFile ? reply.destinationMediaUrl : "",
       destinationMediaId: keepPreviousFile ? reply.destinationMediaId : "",
       destinationQuestion: value === "FORM" ? reply.destinationQuestion : "",
@@ -178,7 +180,7 @@ function StoryAnswer({ reply, index, level, showcases, loadingResources, onChang
 
   const title = reply.title.trim() || "عنوان گزینه";
   return (
-    <div className="overflow-hidden rounded-xl border border-[#E2E8F0] bg-white">
+    <div className="min-w-0 bg-white">
       <div className="flex min-h-12 items-center gap-2 px-3 py-2">
         <span className="shrink-0 rounded-lg bg-[#F1F5F9] px-2 py-1 text-[11px] font-bold text-[#475569]">
           {new Intl.NumberFormat("fa-IR").format(index + 1)}
@@ -201,7 +203,7 @@ function StoryAnswer({ reply, index, level, showcases, loadingResources, onChang
         </button>
       </div>
       {expanded && (
-        <div className="space-y-3 border-t border-[#F1F5F9] px-3 py-3">
+        <div className={level === 0 ? "space-y-3 bg-[#FCFDFE] px-3 pb-4 pt-2" : "space-y-3 px-1 pb-3 pt-1"}>
           <div>
             <label htmlFor={`story-answer-title-${reply.id}`} className="mb-1.5 block text-xs font-bold text-[#334155]">متن گزینه <span className="text-[#DC2626]">*</span></label>
             <input id={`story-answer-title-${reply.id}`} value={reply.title} maxLength={20}
@@ -219,7 +221,7 @@ function StoryAnswer({ reply, index, level, showcases, loadingResources, onChang
               <option value="IMAGE">عکس</option>
               <option value="VIDEO">ویدیو</option>
               <option value="AUDIO">وویس</option>
-              <option value="SHOWCASE">ویترین آماده</option>
+              <option value="SHOWCASE">ویترین</option>
               {level < 3 && <option value="FORM">سؤال بعدی</option>}
             </select>
           </div>
@@ -230,20 +232,57 @@ function StoryAnswer({ reply, index, level, showcases, loadingResources, onChang
               className="w-full resize-y rounded-xl border border-[#D8E0EC] bg-white px-3 py-3 text-base leading-7 text-[#0F172A] outline-none focus:border-[#2563EB]" />
           )}
           {reply.destinationType === "SHOWCASE" && (
-            <div className="space-y-1.5">
-              <label htmlFor={`story-answer-showcase-${reply.id}`} className="block text-xs font-bold text-[#334155]">انتخاب ویترین</label>
-              <select id={`story-answer-showcase-${reply.id}`} value={reply.destinationShowcaseId} disabled={loadingResources}
-                onChange={(event) => onChange({ destinationShowcaseId: event.target.value })}
-                className="w-full min-w-0 rounded-xl border border-[#D8E0EC] bg-white px-3 py-3 text-base text-[#0F172A] outline-none">
-                <option value="">{loadingResources ? "در حال دریافت..." : showcases.length ? "یک ویترین انتخاب کن" : "هنوز ویترینی ساخته نشده"}</option>
-                {showcases.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
-              </select>
+            <div className="space-y-3">
+              <div role="group" aria-label="انتخاب منبع ویترین" className="grid grid-cols-2 gap-1 rounded-xl bg-[#F1F5F9] p-1">
+                {(["existing", "new"] as const).map((mode) => (
+                  <button key={mode} type="button" aria-pressed={showcaseMode === mode}
+                    onClick={() => {
+                      if (mode === showcaseMode) return;
+                      setShowcaseMode(mode);
+                      onChange({ destinationShowcaseId: mode === "new" ? createdShowcaseId : "" });
+                    }}
+                    className={["sd-neutral-button min-h-10 rounded-lg px-2 text-xs font-bold transition", showcaseMode === mode ? "bg-white text-[#1D4ED8] shadow-sm" : "text-[#64748B] hover:text-[#334155]"].join(" ")}>
+                    {mode === "new" ? "ساخت ویترین جدید" : "استفاده از ویترین‌های قبلی"}
+                  </button>
+                ))}
+              </div>
+              {showcaseMode === "existing" ? (
+                <div className="space-y-2">
+                  <label htmlFor={`story-answer-showcase-${reply.id}`} className="block text-xs font-semibold text-[#334155]">ویترین مقصد</label>
+                  <select id={`story-answer-showcase-${reply.id}`} value={reply.destinationShowcaseId} disabled={loadingResources}
+                    onChange={(event) => onChange({ destinationShowcaseId: event.target.value })}
+                    className="w-full min-w-0 rounded-xl border border-[#D8E0EC] bg-white px-3 py-3 text-base text-[#0F172A] outline-none focus:border-[#2563EB]">
+                    <option value="">{loadingResources ? "در حال دریافت..." : "یک ویترین انتخاب کن"}</option>
+                    {showcases.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
+                  </select>
+                  {!loadingResources && showcases.length === 0 && <p className="text-xs text-[#64748B]">هنوز ویترینی ساخته نشده است.</p>}
+                </div>
+              ) : createdShowcaseId ? (
+                <div role="status" className="flex items-center justify-between gap-3 rounded-xl bg-[#F0FDF4] px-3 py-3 text-xs text-[#166534]">
+                  <span className="font-semibold">ویترین جدید ساخته و به این گزینه متصل شده است.</span>
+                  <button type="button" onClick={() => {
+                    setCreatedShowcaseId("");
+                    onChange({ destinationShowcaseId: "" });
+                  }} className="sd-neutral-button shrink-0 font-bold text-[#1D4ED8]">
+                    جایگزینی
+                  </button>
+                </div>
+              ) : (
+                <StoryReplyShowcaseCreator
+                  instagramAccountId={instagramAccountId}
+                  onUploadMedia={onUploadMedia}
+                  onCreated={(id) => {
+                    setCreatedShowcaseId(id);
+                    onChange({ destinationShowcaseId: id });
+                  }}
+                />
+              )}
             </div>
           )}
           {reply.destinationType === "FORM" && level < 3 && (
             <StoryBranch
               question={reply.destinationQuestion} replies={reply.destinationQuickReplies}
-              showcases={showcases} loadingResources={loadingResources} onUploadMedia={onUploadMedia} level={level + 1}
+              instagramAccountId={instagramAccountId} showcases={showcases} loadingResources={loadingResources} onUploadMedia={onUploadMedia} level={level + 1}
               onChange={(patch) => onChange({
                 ...(patch.question !== undefined ? { destinationQuestion: patch.question } : {}),
                 ...(patch.replies !== undefined ? { destinationQuickReplies: patch.replies } : {}),
@@ -272,7 +311,7 @@ function StoryAnswer({ reply, index, level, showcases, loadingResources, onChang
               {uploadError && <p role="alert" className="text-xs text-[#B91C1C]">{uploadError}</p>}
             </div>
           )}
-          {complete && <p className="flex items-center gap-1.5 text-[11px] font-semibold text-[#15803D]"><CircleCheck size={15} aria-hidden="true" /> این گزینه آماده است.</p>}
+
         </div>
       )}
     </div>
