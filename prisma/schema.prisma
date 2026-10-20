@@ -30,6 +30,7 @@ model User {
   couponRedemptions CouponRedemption[]
   storageObjects InstagramStorageObject[]
   savedAutomationResponses SavedAutomationResponse[]
+  smartReminderRules SmartReminderRule[]
 }
 
 model InstagramAccount {
@@ -53,6 +54,7 @@ model InstagramAccount {
   persistentMenu     PersistentMenu?
   showcases          Showcase[]
   savedAutomationResponses SavedAutomationResponse[]
+  smartReminderRules SmartReminderRule[]
 
   @@unique([userId, igUserId])
   @@index([userId])
@@ -105,6 +107,7 @@ model Automation {
   iceBreakers         IceBreaker[]
   pendingFollowGates  PendingFollowGate[]
   persistentMenuItems PersistentMenuItem[]
+  smartReminderRule SmartReminderRule?
 
   @@unique([instagramAccountId, keyword, mediaId])
   @@index([instagramAccountId])
@@ -220,11 +223,54 @@ model Conversation {
   user                      User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   ConversationHandoff       ConversationHandoff?
   messages                  ConversationMessage[]
+  smartReminderDeliveries SmartReminderDelivery[]
 
   @@unique([instagramAccountId, participantId])
   @@index([userId])
   @@index([instagramAccountId])
   @@index([instagramAccountId, lastMessageAt])
+}
+
+
+model SmartReminderRule {
+  id String @id @default(cuid())
+  userId String
+  instagramAccountId String
+  automationId String @unique
+  delayMinutes Int
+  text String
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  instagramAccount InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
+  automation Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  deliveries SmartReminderDelivery[]
+
+  @@index([instagramAccountId, isActive])
+  @@index([userId])
+}
+
+model SmartReminderDelivery {
+  id String @id @default(cuid())
+  ruleId String
+  conversationId String
+  anchorMessageId String
+  dueAt DateTime
+  status String @default("PENDING")
+  queueJobId String?
+  igMessageId String?
+  sentAt DateTime?
+  cancelledAt DateTime?
+  lastError String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  rule SmartReminderRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@unique([ruleId, anchorMessageId])
+  @@index([status, dueAt])
+  @@index([conversationId, status])
 }
 
 model ConversationMessage {
