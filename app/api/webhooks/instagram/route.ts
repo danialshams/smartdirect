@@ -13,6 +13,7 @@ import { enqueueInstagramWebhookEvent } from "@/lib/webhook/queue";
 import { processInstagramWebhookQueueJob } from "@/lib/webhook/workflow";
 
 import { executeAutomation } from "@/lib/automation/execute-automation";
+import { processLiveComment, consumeLiveReplyFollowup } from "@/lib/automation/live-comment-replies";
 import { findAutomationByQuickReplyPayload, findMatchingAutomation } from "@/lib/automation/find-matching-automation";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 import { reactToInstagramMessage } from "@/lib/instagram/react-to-message";
@@ -484,12 +485,14 @@ export async function POST(request: NextRequest) {
         console.log("Change events received:", entry.changes.length);
 
         for (const change of entry.changes) {
-          if (change.field !== "comments") {
-            console.log("Ignoring webhook field:", change.field);
-
+          if (change.field === "live_comments") {
+            await processCommentEventWithIdempotency(change.value, accountData, true);
             continue;
           }
-
+          if (change.field !== "comments") {
+            console.log("Ignoring webhook field:", change.field);
+            continue;
+          }
           await processCommentEventWithIdempotency(change.value, accountData);
         }
       }
@@ -597,9 +600,10 @@ async function processMessagingEventWithIdempotency(
 async function processCommentEventWithIdempotency(
   value: any,
   instagramAccount: InstagramAccountData,
+  isLive = false,
 ) {
   const normalizedEvent = normalizeInstagramWebhookEvent({
-    type: "COMMENT",
+    type: isLive ? "LIVE_COMMENT" : "COMMENT",
     event: value,
     accountId: instagramAccount.id,
   });
@@ -620,7 +624,7 @@ async function processCommentEventWithIdempotency(
     const queued = await enqueueInstagramWebhookEvent({
       instagramAccountId: instagramAccount.id,
       eventId: claim.eventId,
-      eventType: "COMMENT",
+      eventType: isLive ? "LIVE_COMMENT" : "COMMENT",
       event: value,
       idempotencyKey: claim.key,
     });
@@ -639,7 +643,7 @@ export async function processQueuedInstagramWebhookEvent(
   payload: {
     instagramAccountId: string;
     eventId: string;
-    eventType: "MESSAGING" | "COMMENT";
+    eventType: "MESSAGING" | "COMMENT" | "LIVE_COMMENT";
     event: unknown;
   },
   attempt = 1,
@@ -684,12 +688,10 @@ export async function processQueuedInstagramWebhookEvent(
         accountData,
         payload.eventId,
       );
+    } else if (payload.eventType === "LIVE_COMMENT") {
+      await processLiveComment(payload.event as Record<string, unknown>, accountData);
     } else {
-      await processCommentEvent(
-        payload.event,
-        accountData,
-        payload.eventId,
-      );
+      await processCommentEvent(payload.event, accountData, payload.eventId);
     }
 
     await completeInstagramWebhookEvent(webhookEventKey);
@@ -1686,6 +1688,12 @@ async function processMessagingEventLocked(
     );
 
     console.log("Incoming message type:", incomingMessageType);
+
+    // Live Private Reply follow-ups must be handled before generic DM automation.
+    // A viewer's explicit reply opens the normal messaging window.
+    if (await consumeLiveReplyFollowup({
+      account: instagramAccount, participantId, messageText, messageId,
+    })) return;
 
     // =======================================================
     // No DM automation
