@@ -4,6 +4,7 @@ import { runQueueWorker } from "../src/lib/queue/worker";
 import type { QueueJobPayload } from "../src/lib/queue/types";
 import { handleInstagramWebhookJob } from "../src/lib/webhook/worker-handler";
 import { publishInstagramJob } from "../src/lib/instagram/publishing";
+import { processSmartReminder, recoverDueSmartReminders } from "../src/lib/automation/smart-reminders";
 import { enterObservabilityContext } from "../src/lib/observability/context";
 import { observabilityLogger } from "../src/lib/observability/logger";
 
@@ -17,6 +18,20 @@ process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
 
 console.log("SmartDirect queue worker started.");
+
+// PostgreSQL-backed scan recovers reminders after Redis loss or worker restarts.
+// Redis delayed jobs handle the fast path; the scan is a durable fallback.
+let recoveryBusy = false;
+const recoveryTimer = setInterval(() => {
+  if (recoveryBusy || controller.signal.aborted) return;
+  recoveryBusy = true;
+  void recoverDueSmartReminders().catch(error => {
+    console.error("[SMART_REMINDER] recovery scan failed", error);
+  }).finally(() => { recoveryBusy = false; });
+}, 60_000);
+recoveryTimer.unref();
+controller.signal.addEventListener("abort", () => clearInterval(recoveryTimer), { once: true });
+void recoverDueSmartReminders().catch(error => console.error("[SMART_REMINDER] initial recovery scan failed", error));
 
 runQueueWorker(
   async (job) => {
@@ -41,6 +56,9 @@ runQueueWorker(
     } else if (job.type === "PUBLISH") {
       const publishJob = job as import("../src/lib/queue/types").QueueJob<"PUBLISH">;
       await publishInstagramJob(publishJob.payload.publishingJobId);
+    } else if (job.type === "SMART_REMINDER") {
+      const reminderJob = job as import("../src/lib/queue/types").QueueJob<"SMART_REMINDER">;
+      await processSmartReminder(reminderJob.payload.deliveryId);
     }
 
     observabilityLogger.info("job_completed", {
