@@ -6,6 +6,7 @@ import { sendAutomationMessage } from "@/lib/automation/send-automation-message"
 
 const WINDOW_SAFETY_MS = 5 * 60_000;
 const STALE_CLAIM_MS = 10 * 60_000;
+const MAX_DELIVERY_ATTEMPTS = 4;
 
 /** Called after a successful automated normal DM has been persisted. */
 export async function scheduleSmartReminder(input: {
@@ -94,7 +95,7 @@ export async function processSmartReminder(deliveryId: string): Promise<void> {
   }, async () => {
     const claimed = await prisma.smartReminderDelivery.updateMany({
       where: { id: deliveryId, status: "PENDING", dueAt: { lte: new Date() } },
-      data: { status: "PROCESSING" },
+      data: { status: "PROCESSING", attempts: { increment: 1 } },
     });
     if (!claimed.count) return;
     try {
@@ -155,9 +156,19 @@ export async function processSmartReminder(deliveryId: string): Promise<void> {
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
+      const previous = await prisma.smartReminderDelivery.findUnique({
+        where: { id: deliveryId }, select: { attempts: true },
+      });
+      const attempts = previous?.attempts ?? MAX_DELIVERY_ATTEMPTS;
+      const failed = attempts >= MAX_DELIVERY_ATTEMPTS;
       await prisma.smartReminderDelivery.updateMany({
         where: { id: deliveryId, status: "PROCESSING" },
-        data: { status: "PENDING", lastError: message },
+        data: {
+          status: failed ? "FAILED" : "PENDING",
+          lastError: message,
+          // Redis jobs may retry sooner; the database deadline is authoritative.
+          ...(failed ? {} : { dueAt: new Date(Date.now() + 2 ** Math.min(attempts, 6) * 60_000) }),
+        },
       });
       throw error;
     }
