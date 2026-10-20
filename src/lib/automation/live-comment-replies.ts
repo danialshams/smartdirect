@@ -141,7 +141,7 @@ export async function consumeLiveReplyFollowup({
     });
     await prisma.liveCommentReply.update({
       where: { id: session.id },
-      data: { status: result.success && result.executed ? "DONE" : "WAIT_REPLY" },
+      data: { status: result.success && (result.executed || result.reason === "IDEMPOTENT_DUPLICATE") ? "DONE" : "WAIT_REPLY" },
     });
     return true;
   } catch (error) {
