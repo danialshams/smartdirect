@@ -29,7 +29,7 @@ export async function processLiveComment(value: LiveCommentValue | null | undefi
   if (fromId) {
     const previouslySent = await prisma.liveCommentReply.findFirst({
       where: {
-        instagramAccountId: account.id, liveMediaId, participantId: fromId,
+        instagramAccountId: account.id, liveMediaId, commenterId: fromId,
         status: { in: ["RESERVED","SENT","WAIT_REPLY","PROCESSING","DONE"] },
       },
       select: { id: true },
@@ -39,7 +39,7 @@ export async function processLiveComment(value: LiveCommentValue | null | undefi
   const reservation = await prisma.liveCommentReply.createMany({
     data: [{
       instagramAccountId: account.id, automationId: rule.id, commentId, liveMediaId,
-      participantId: fromId || null, status: "RESERVED",
+      commenterId: fromId || null, participantId: null, status: "RESERVED",
       expiresAt: new Date(Date.now() + privateReplyLifetime),
     }],
     skipDuplicates: true,
