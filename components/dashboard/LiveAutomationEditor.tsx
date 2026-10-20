@@ -91,7 +91,7 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
           };
           if(controller.signal.aborted)return;
           setSaved(rule);setKeyword(initial.keyword);setKeywordMatchMode(initial.keywordMatchMode as "EXACT"|"CONTAINS_ANY");
-          setMode(initial.mode);setFirstText(initial.firstText);setReplyKeyword(initial.replyKeyword);
+          setMode(initial.mode as "DIRECT" | "FOLLOWUP");setFirstText(initial.firstText);setReplyKeyword(initial.replyKeyword);
           setRequireFollow(initial.requireFollow);setFollowGateText(initial.followGateText);setAnswer(initialAnswer);
           setInitialSnapshot(JSON.stringify(initial));
         }
