@@ -8,11 +8,46 @@ const PublishingStoryAutomationSetup = dynamic(() => import("./publishing/Publis
 import { createEmptyMessage, normalizeMessages, type MessageDraft, type QuickReplyDraft, type Showcase, type FormItem } from "./automation-form-utils";
 import { dairaPalette } from "../../lib/design-system/palette";
 import AutomationPicker from "./AutomationPicker";
+import CommentAutomationEditSkeleton from "./CommentAutomationEditSkeleton";
 import { useDashboardBackNavigation } from "./DashboardBackNavigationContext";
 
 type Account = { id: string; igUsername: string; igUserId: string; isConnected: boolean };
 type TriggerType = "COMMENT_KEYWORD" | "STORY_REPLY_KEYWORD";
 type CreationMode = "new" | "existing";
+type LinkButton = { title: string; url: string };
+export type EditableCommentAutomation = {
+  id: string;
+  instagramAccountId: string;
+  instagramAccount?: { id: string; igUsername: string; igUserId: string; isConnected: boolean };
+  triggerType: string;
+  mediaId: string | null;
+  mediaIds?: string | null;
+  keyword: string | null;
+  keywordMatchMode?: string | null;
+  commentReplyText?: string | null;
+  requireFollow?: boolean;
+  followGateText?: string | null;
+  followGateButtonText?: string | null;
+  isActive?: boolean;
+  sendDm?: boolean;
+  replyText?: string | null;
+  messages?: unknown;
+};
+
+function readSavedLinks(raw: unknown): LinkButton[] {
+  if (!raw || typeof raw !== "object") return [];
+  const item = raw as Record<string, unknown>;
+  if (Array.isArray(item.linkButtons) && item.linkButtons.length > 0) {
+    return item.linkButtons
+      .filter((value): value is Record<string, unknown> => Boolean(value && typeof value === "object"))
+      .map((value) => ({ title: String(value.title ?? ""), url: String(value.url ?? "") }))
+      .filter((button) => button.title && button.url);
+  }
+  if (typeof item.linkButtonUrl === "string" && item.linkButtonUrl) {
+    return [{ title: typeof item.linkButtonTitle === "string" ? item.linkButtonTitle : "", url: item.linkButtonUrl }];
+  }
+  return [];
+}
 type AutomationTemplate = { id: string; triggerType: string; keyword?: string | null; keywordMatchMode?: string | null; commentReplyText?: string | null; requireFollow?: boolean; followGateText?: string | null; followGateButtonText?: string | null; isActive?: boolean; mediaId?: string | null; messages?: unknown; };
 
 type Props = {
@@ -21,6 +56,7 @@ type Props = {
   triggerType: TriggerType;
   title: string;
   description: string;
+  editAutomation?: EditableCommentAutomation;
 };
 
 function AutomationSectionGuide({ children }: { children: ReactNode }) {
@@ -94,8 +130,15 @@ function serializeQuickReplies(replies: QuickReplyDraft[]): unknown[] {
   }));
 }
 
-export default function AutomationCreationFlow({ account, mediaId, triggerType }: Props) {
+export default function AutomationCreationFlow({ account, mediaId, triggerType, editAutomation }: Props) {
   const router = useRouter();
+  const isEditing = Boolean(editAutomation);
+  const [editHydrated, setEditHydrated] = useState(!editAutomation);
+  const [isActive, setIsActive] = useState(true);
+  const [sendDm, setSendDm] = useState(true);
+  const [advancedMessageEditor, setAdvancedMessageEditor] = useState(false);
+  const [extraMessages, setExtraMessages] = useState<MessageDraft[]>([]);
+  const [extraLinks, setExtraLinks] = useState<Record<string, LinkButton[]>>({});
   const [keyword, setKeyword] = useState("");
   const [keywordDraft, setKeywordDraft] = useState("");
   const [keywordMatchMode, setKeywordMatchMode] = useState<"EXACT" | "CONTAINS_ANY">("EXACT");
@@ -123,6 +166,41 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType }
   const [completed, setCompleted] = useState(false);
   const [error, setError] = useState("");
   const { registerBackHandler } = useDashboardBackNavigation();
+
+  useEffect(() => {
+    if (!editAutomation) return;
+    const media = Array.from(new Set([
+      ...(editAutomation.mediaId ? [editAutomation.mediaId] : []),
+      ...(editAutomation.mediaIds || "").split(",").map((value) => value.trim()).filter(Boolean),
+    ]));
+    const rawMessages = Array.isArray(editAutomation.messages) ? editAutomation.messages : [];
+    const loadedMessages = normalizeMessages(rawMessages);
+    const first = loadedMessages[0] ?? { ...createEmptyMessage(), text: editAutomation.replyText || "" };
+    const firstLinks = readSavedLinks(rawMessages[0]);
+    const otherLinks: Record<string, LinkButton[]> = {};
+    for (let index = 1; index < loadedMessages.length; index += 1) {
+      const item = loadedMessages[index];
+      if (item) otherLinks[item.id] = readSavedLinks(rawMessages[index]);
+    }
+    setSelectedMediaIds(media);
+    setDraftSelectedMediaIds(media);
+    setKeyword(editAutomation.keyword || "");
+    setKeywordDraft("");
+    setKeywordMatchMode(editAutomation.keywordMatchMode === "CONTAINS_ANY" ? "CONTAINS_ANY" : "EXACT");
+    setCommentReply(editAutomation.commentReplyText || "");
+    setRequireFollow(Boolean(editAutomation.requireFollow));
+    setFollowGateText(editAutomation.followGateText || "برای دریافت پاسخ، ابتدا پیج ما را فالو کنید.");
+    setFollowGateButtonText(editAutomation.followGateButtonText || "بررسی فالو");
+    setIsActive(editAutomation.isActive !== false);
+    setSendDm(editAutomation.sendDm !== false);
+    setMessage(first);
+    setExtraMessages(loadedMessages.slice(1));
+    setExtraLinks(otherLinks);
+    setAdvancedMessageEditor(first.messageType !== "TEXT" || first.quickReplies.length > 0);
+    setDmMode(firstLinks.length ? "TEXT_WITH_LINK" : "TEXT");
+    setLinkButtons(firstLinks.length ? firstLinks : [{ title: "", url: "" }]);
+    setEditHydrated(true);
+  }, [editAutomation]);
 
   useEffect(() => {
     const handleBack = () => {
@@ -221,7 +299,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType }
         }
         const used = new Set<string>();
         for (const automation of automationResult.data) {
-          if (automation?.triggerType !== triggerType) continue;
+          if (automation?.triggerType !== triggerType || (isEditing && automation.id === editAutomation?.id)) continue;
           if (typeof automation.mediaId === "string" && automation.mediaId) used.add(automation.mediaId);
           if (triggerType === "COMMENT_KEYWORD" && typeof automation.mediaIds === "string") {
             automation.mediaIds.split(",").map((id: string) => id.trim()).filter(Boolean).forEach((id: string) => used.add(id));
@@ -243,13 +321,15 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType }
               }));
         const availableIds = new Set<string>(availableMedia.map((item: { id: string }) => item.id));
         setMediaItems(sortNewestFirst(availableMedia));
-        setSelectedMediaIds((current) => current.filter((id) => availableIds.has(id)));
-        setDraftSelectedMediaIds((current) => current.filter((id) => availableIds.has(id)));
+        if (!isEditing) {
+          setSelectedMediaIds((current) => current.filter((id) => availableIds.has(id)));
+          setDraftSelectedMediaIds((current) => current.filter((id) => availableIds.has(id)));
+        }
       })
       .catch(() => { if (!cancelled) { setMediaItems([]); setError("دریافت فهرست محتواها یا پاسخ‌های خودکار ناموفق بود. صفحه را دوباره بارگذاری کنید."); } })
       .finally(() => { if (!cancelled) setMediaLoading(false); });
     return () => { cancelled = true; };
-  }, [account.id, triggerType]);
+  }, [account.id, triggerType, isEditing, editAutomation?.id]);
 
   function addKeyword() {
     const value = keywordDraft.trim();
@@ -264,6 +344,68 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType }
     const currentMessage = finalMessage ?? message;
     const targetMediaIds = Array.from(new Set(selectedMediaIds.filter(Boolean)));
     const normalizedLinkButtons = linkButtons.map((button) => ({ ...button, url: normalizeExternalLink(button.url) }));
+
+    if (isEditing && editAutomation) {
+      if (!targetMediaIds.length) { setError("حداقل یک پست یا ریلز انتخاب کنید."); return; }
+      if (keywordMatchMode === "EXACT" && !cleanKeywords.length) { setError("حداقل یک کلمه کلیدی وارد کنید."); return; }
+      if (cleanKeywords.length > MAX_KEYWORDS) { setError("حداکثر ۱۰ کلمه کلیدی می‌توانید اضافه کنید."); return; }
+      if (requireFollow && !followGateText.trim()) { setError("متن درخواست فالو را وارد کنید."); return; }
+      if (requireFollow && (!followGateButtonText.trim() || followGateButtonText.trim().length > 20)) {
+        setError("عنوان دکمه بررسی فالو را وارد کنید (حداکثر ۲۰ کاراکتر)."); return;
+      }
+      const currentLinks = currentMessage.messageType === "TEXT" && dmMode === "TEXT_WITH_LINK"
+        ? normalizedLinkButtons.map((value) => ({ title: value.title.trim(), url: value.url }))
+        : [];
+      for (const button of currentLinks) {
+        let validUrl = false;
+        try { validUrl = ["http:", "https:"].includes(new URL(button.url).protocol); } catch { validUrl = false; }
+        if (!button.title || button.title.length > 20 || !validUrl) {
+          setError("آدرس و عنوان دکمه‌های لینک را کامل و معتبر وارد کنید."); return;
+        }
+      }
+      if (currentMessage.messageType === "TEXT" && currentMessage.text.trim().length > (currentLinks.length ? 640 : 2000)) {
+        setError("متن دایرکت از حد مجاز طولانی‌تر است."); return;
+      }
+      setSaving(true);
+      setError("");
+      try {
+        const previouslySavedMessages = normalizeMessages(editAutomation.messages);
+        const originalById = new Map(previouslySavedMessages.map((entry) => [entry.id, entry]));
+        const allMessages = [currentMessage, ...extraMessages].map((entry, index) => ({
+          ...entry,
+          updateQuickReplies: !originalById.has(entry.id) ||
+            JSON.stringify(originalById.get(entry.id)?.quickReplies) !== JSON.stringify(entry.quickReplies),
+          linkButtons: index === 0 ? currentLinks : entry.messageType === "TEXT" ? (extraLinks[entry.id] || []).map((button) => ({
+            title: button.title.trim(), url: normalizeExternalLink(button.url),
+          })) : [],
+        }));
+        const response = await fetch("/api/automations/" + encodeURIComponent(editAutomation.id) + "/comment-edit", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            keywordMatchMode,
+            keyword: keywordMatchMode === "CONTAINS_ANY" ? null : cleanKeywords.join(","),
+            mediaIds: targetMediaIds,
+            commentReplyText: commentReply.trim(),
+            requireFollow,
+            followGateText: requireFollow ? followGateText.trim() : null,
+            followGateButtonText: requireFollow ? followGateButtonText.trim() : null,
+            isActive,
+            sendDm,
+            messages: allMessages,
+          }),
+        });
+        const result = await response.json();
+        if (!response.ok || !result?.success) throw new Error(result?.error || "ذخیره ویرایش پاسخ خودکار ناموفق بود.");
+        setCompleted(true);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "ذخیره ویرایش پاسخ خودکار ناموفق بود.");
+      } finally {
+        setSaving(false);
+      }
+      return;
+    }
 
     if (creationMode === "existing") {
       const template = automationTemplates.find((item) => item.id === selectedTemplateId);
@@ -421,7 +563,14 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType }
     }
   }
 
+  if (!editHydrated) {
+    // The edit form must never flash empty defaults before stored fields are populated.
+    return <CommentAutomationEditSkeleton />;
+  }
+
   const selectedMediaCount = selectedMediaIds.length;
+  const availableMediaIdSet = new Set(mediaItems.map((item) => item.id));
+  const unknownMediaIds = selectedMediaIds.filter((id) => !availableMediaIdSet.has(id));
   const selectedMediaItems = mediaItems.filter((item) => selectedMediaIds.includes(item.id));
 
   const successOrbits = [
@@ -519,7 +668,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType }
             <path className="sd-success-path" d="M25 42.5 36.5 54 59 30" stroke={dairaPalette.status.success} strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </div>
-        <h1 className="mt-5 text-xl font-extrabold" style={{ color: dairaPalette.text.heading }}>عملیات با موفقیت انجام شد</h1>
+        <h1 className="mt-5 text-xl font-extrabold" style={{ color: dairaPalette.text.heading }}>{isEditing ? "تغییرات پاسخ خودکار با موفقیت ذخیره شد" : "عملیات با موفقیت انجام شد"}</h1>
         <button
           type="button"
           onClick={() => { window.scrollTo(0, 0); router.push(triggerType === "COMMENT_KEYWORD" ? "/dashboard/comment-automation" : "/dashboard/story-automation", { scroll: true }); }}
@@ -562,6 +711,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType }
               <div className="min-w-0">
                 <p className="text-xs leading-5 text-[var(--daira-text)]">
                   {mediaLoading ? "در حال دریافت محتوا..." : selectedMediaCount > 0 ? new Intl.NumberFormat("fa-IR").format(selectedMediaCount) + (triggerType === "COMMENT_KEYWORD" ? " محتوا انتخاب شده" : " استوری انتخاب شده") : "هنوز محتوایی انتخاب نشده"}
+                  {isEditing && !mediaLoading && unknownMediaIds.length > 0 && <span className="mt-1 block text-[11px] text-[var(--daira-text)]">{new Intl.NumberFormat("fa-IR").format(unknownMediaIds.length)} محتوای قبلی پیش‌نمایش ندارد، اما انتخاب آن حفظ شده است.</span>}
                 </p>
               </div>
             </div>
@@ -572,6 +722,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType }
           </div>
         </section>
 
+        {!isEditing && (<>
         <div className="mb-2 mt-6"><AutomationSectionGuide>۲. روش پاسخ — پاسخ جدید بساز یا از پاسخ قبلی استفاده کن.</AutomationSectionGuide></div>
         <section aria-label="روش پاسخ" className="space-y-2">
           <div role="radiogroup" aria-label="روش پاسخ خودکار" className="grid grid-cols-2 gap-2">
@@ -586,7 +737,9 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType }
           </div>
         </section>
 
-        {creationMode === "existing" && (
+        </>)}
+
+        {creationMode === "existing" && !isEditing && (
           <div className="space-y-3">
             <div className="mb-2 mt-6"><AutomationSectionGuide>۳. پاسخ قبلی — پاسخ موردنظرت را انتخاب کن؛ سپس دکمه زیر فهرست را بزن.</AutomationSectionGuide></div>
             <section
@@ -660,9 +813,9 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType }
             </button>
           </div>
             )}
-            {creationMode === "new" && (
+            {(creationMode === "new" || isEditing) && (
             <div className="space-y-5">
-            <div className="mb-2 mt-6"><AutomationSectionGuide>{triggerType === "COMMENT_KEYWORD" ? "۳. شرط فعال‌سازی — انتخاب کن پاسخ با هر کامنت فعال شود یا فقط با کلمات مشخص." : "۳. شرط فعال‌سازی — کلمه‌ها یا عبارت‌هایی را بنویس که پاسخ استوری را فعال می‌کنند."}</AutomationSectionGuide></div>
+            <div className="mb-2 mt-6"><AutomationSectionGuide>{triggerType === "COMMENT_KEYWORD" ? (isEditing ? "۲. شرط فعال‌سازی — روش فعال شدن پاسخ خودکار را ویرایش کن." : "۳. شرط فعال‌سازی — انتخاب کن پاسخ با هر کامنت فعال شود یا فقط با کلمات مشخص.") : "۳. شرط فعال‌سازی — کلمه‌ها یا عبارت‌هایی را بنویس که پاسخ استوری را فعال می‌کنند."}</AutomationSectionGuide></div>
             <div className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
               {triggerType === "COMMENT_KEYWORD" && (
                 <div className="mb-3">
@@ -706,7 +859,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType }
 
             {triggerType === "COMMENT_KEYWORD" && (
               <div className="space-y-3">
-              <div className="mb-2 mt-6"><AutomationSectionGuide>۴. پاسخ زیر کامنت — متنی بنویس که زیر کامنت کاربر نمایش داده شود.</AutomationSectionGuide></div>
+              <div className="mb-2 mt-6"><AutomationSectionGuide>{isEditing ? "۳. پاسخ زیر کامنت — متن فعلی را ببین و در صورت نیاز ویرایش کن." : "۴. پاسخ زیر کامنت — متنی بنویس که زیر کامنت کاربر نمایش داده شود."}</AutomationSectionGuide></div>
               <div className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
                 <div className="mb-3 flex items-center gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]"><MessageCircle size={15} strokeWidth={2.1} aria-hidden="true" /></span><label className="block text-sm font-bold text-[var(--daira-heading)]">پاسخ زیر کامنت <span className="text-[var(--daira-primary)]">(اختیاری)</span></label></div>
                 <textarea value={commentReply} onChange={(e) => setCommentReply(e.target.value)} rows={3} maxLength={2000} placeholder="پاسخی که زیر کامنت کاربر منتشر می‌شود بنویس..." className="w-full resize-y rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3.5 py-3 !text-base leading-7 text-[var(--daira-heading)] outline-none placeholder:text-[11px] placeholder:whitespace-nowrap placeholder:overflow-hidden placeholder:text-ellipsis focus:border-[var(--daira-input-focus)] focus:bg-white focus:ring-2 focus:ring-[color:var(--daira-primary)]/10" style={{ fontSize: "16px", lineHeight: 1.75 }} />
@@ -716,8 +869,14 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType }
 
               {triggerType === "COMMENT_KEYWORD" ? (
                 <div className="space-y-4">
-                <div className="mb-2 mt-6"><AutomationSectionGuide>۵. پیام دایرکت — متن پیام را بنویس. اگر «متن همراه دکمه لینک» را انتخاب کنی، دکمه‌ای با عنوان و آدرس دلخواه زیر پیام نمایش داده می‌شود تا کاربر با لمس آن لینک را باز کند.</AutomationSectionGuide></div>
+                <div className="mb-2 mt-6"><AutomationSectionGuide>{isEditing ? "۴. پیام دایرکت — پیام و دکمه‌های ذخیره‌شده را مشاهده و ویرایش کن." : "۵. پیام دایرکت — متن پیام را بنویس. اگر «متن همراه دکمه لینک» را انتخاب کنی، دکمه‌ای با عنوان و آدرس دلخواه زیر پیام نمایش داده می‌شود تا کاربر با لمس آن لینک را باز کند."}</AutomationSectionGuide></div>
                 <section className="space-y-4 rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
+                  {isEditing && (
+                    <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] p-3">
+                      <span className="min-w-0"><strong className="block text-sm text-[var(--daira-heading)]">ارسال پاسخ در دایرکت</strong><span className="mt-1 block text-xs text-[var(--daira-text)]">وقتی غیرفعال باشد، پیام‌های ذخیره‌شده باقی می‌مانند ولی ارسال نمی‌شوند.</span></span>
+                      <input type="checkbox" role="switch" checked={sendDm} onChange={(event) => setSendDm(event.target.checked)} className="daira-form-switch -scale-x-100" aria-label="ارسال دایرکت خودکار" />
+                    </label>
+                  )}
                   <div>
                     <div className="mb-3 flex items-center gap-3">
                       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]"><Send size={15} strokeWidth={2.1} aria-hidden="true" /></span>
@@ -725,7 +884,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType }
                     </div>
                   </div>
 
-                  <div role="radiogroup" aria-label="نوع پیام دایرکت" className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <div role="radiogroup" aria-label="نوع پیام دایرکت" className={"grid grid-cols-1 gap-2 sm:grid-cols-2 " + (isEditing && message.messageType !== "TEXT" ? "hidden" : "")}>
                     <label className={"flex cursor-pointer items-start gap-3 rounded-xl border p-3 text-xs transition " + (dmMode === "TEXT" ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)]" : "border-[var(--daira-border)] bg-white")}>
                       <input type="radio" name="direct-message-mode" value="TEXT" checked={dmMode === "TEXT"} onChange={() => setDmMode("TEXT")} className="mt-1 h-4 w-4 shrink-0 accent-[var(--daira-primary)]" />
                       <span className="min-w-0">
@@ -742,10 +901,34 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType }
                     </label>
                   </div>
 
-                  {dmMode === "TEXT_WITH_LINK" && <p className="mb-2 text-xs leading-5" style={{ color: dairaPalette.text.body }}>حداکثر {MAX_LINK_BUTTONS} دکمه لینک می‌توانید اضافه کنید.</p>}
-                  <textarea value={message.text} onChange={(event) => setMessage((current) => ({ ...current, messageType: "TEXT", text: event.target.value, mediaUrl: "", mediaId: "", showcaseId: "", formId: "", quickReplies: [] }))} maxLength={dmMode === "TEXT_WITH_LINK" ? 640 : 2000} rows={4} placeholder="متن دایرکتی که بعد از کامنت برای کاربر ارسال می‌شود..." className="w-full rounded-xl border bg-white px-3.5 py-3 text-base leading-7 outline-none focus:ring-2 focus:ring-[color:var(--daira-primary)]/15" style={{ borderColor: dairaPalette.form.border, color: dairaPalette.text.heading, fontSize: "16px" }} />
+                  {isEditing && (
+                    <label className="sd-neutral-button flex cursor-pointer items-center gap-2 rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] p-3 text-xs font-bold text-[var(--daira-text)]">
+                      <input type="checkbox" checked={advancedMessageEditor} disabled={message.messageType !== "TEXT" && advancedMessageEditor} onChange={(event) => setAdvancedMessageEditor(event.target.checked)} className="h-4 w-4 accent-[var(--daira-primary)]" />
+                      نمایش و ویرایش انواع پیشرفته پیام (تصویر، ویدیو، وویس، ویترین یا فرم)
+                    </label>
+                  )}
+                  {advancedMessageEditor && isEditing ? (
+                    <PublishingStoryAutomationSetup
+                      message={message}
+                      showcases={showcases}
+                      forms={forms}
+                      loadingResources={loadingResources}
+                      instagramAccountId={account.id}
+                      onUpdate={(patch) => setMessage((current) => ({ ...current, ...patch }))}
+                      keywordValid={true}
+                      onContinue={() => undefined}
+                      disabled={saving}
+                      showFinalSave={false}
+                      responseTypeTitle="نوع پیام ذخیره‌شده"
+                      responseTypeDescription="همه مشخصات این پیام و گزینه‌های فرم قابل ویرایش هستند."
+                      textPlaceholder="متن دایرکت ارسالی به کاربر..."
+                    />
+                  ) : (
+                    <textarea value={message.text} onChange={(event) => setMessage((current) => ({ ...current, messageType: "TEXT", text: event.target.value, mediaUrl: "", mediaId: "", showcaseId: "", formId: "", quickReplies: isEditing ? current.quickReplies : [] }))} maxLength={dmMode === "TEXT_WITH_LINK" ? 640 : 2000} rows={4} placeholder="متن دایرکتی که بعد از کامنت برای کاربر ارسال می‌شود..." className="w-full rounded-xl border bg-white px-3.5 py-3 text-base leading-7 outline-none focus:ring-2 focus:ring-[color:var(--daira-primary)]/15" style={{ borderColor: dairaPalette.form.border, color: dairaPalette.text.heading, fontSize: "16px" }} />
+                  )}
+                  {message.messageType === "TEXT" && dmMode === "TEXT_WITH_LINK" && <p className="mb-2 text-xs leading-5" style={{ color: dairaPalette.text.body }}>حداکثر {MAX_LINK_BUTTONS} دکمه لینک می‌توانید اضافه کنید.</p>}
 
-                  {dmMode === "TEXT_WITH_LINK" && (
+                  {message.messageType === "TEXT" && dmMode === "TEXT_WITH_LINK" && (
                     <div className="space-y-3">
                       {linkButtons.map((button, index) => (
                         <div key={index} className="rounded-xl border p-3" style={{ borderColor: dairaPalette.form.border }}>
@@ -782,7 +965,50 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType }
 
                   </section>
 
-                <div className="mb-2 mt-6"><AutomationSectionGuide>۶. شرط فالو — اختیاری است؛ اگر روشنش کنی، کاربر قبل از دریافت پاسخ باید پیج را دنبال کند و درخواست بررسی فالو برایش ارسال می‌شود.</AutomationSectionGuide></div>
+                {isEditing && (
+                  <div className="space-y-3">
+                    {extraMessages.length > 0 && <div className="mb-2 mt-6"><AutomationSectionGuide>۵. پیام‌های تکمیلی — پیام‌های قبلی را جداگانه ویرایش کن؛ ترتیب ارسال آن‌ها حفظ می‌شود.</AutomationSectionGuide></div>}
+                    {extraMessages.map((entry, index) => (
+                      <section key={entry.id} className="space-y-3 rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
+                        <div className="flex items-center justify-between gap-2">
+                          <h3 className="text-sm font-bold text-[var(--daira-heading)]">پیام شماره {new Intl.NumberFormat("fa-IR").format(index + 2)}</h3>
+                          <button type="button" onClick={() => setExtraMessages((current) => current.filter((item) => item.id !== entry.id))} disabled={saving} className="sd-destructive-button inline-flex min-h-9 items-center gap-1 rounded-lg border border-[var(--daira-error-border)] bg-[var(--daira-error-background)] px-3 text-xs font-bold text-[var(--daira-error-text)]"><Trash2 size={15} /> حذف پیام</button>
+                        </div>
+                        <PublishingStoryAutomationSetup
+                          message={entry}
+                          showcases={showcases}
+                          forms={forms}
+                          loadingResources={loadingResources}
+                          instagramAccountId={account.id}
+                          onUpdate={(patch) => setExtraMessages((current) => current.map((item) => item.id === entry.id ? { ...item, ...patch } : item))}
+                          keywordValid={true}
+                          onContinue={() => undefined}
+                          disabled={saving}
+                          showFinalSave={false}
+                          responseTypeTitle="نوع پیام"
+                          responseTypeDescription="متن یا رسانه، ویترین، فرم و گزینه‌های مربوط به این پیام را ویرایش کن."
+                        />
+                        {entry.messageType === "TEXT" && (
+                          <div className="space-y-2">
+                            {(extraLinks[entry.id] || []).map((button, linkIndex) => (
+                              <div key={linkIndex} className="grid gap-2 rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] p-3 sm:grid-cols-[1fr_2fr_auto]">
+                                <input aria-label="عنوان دکمه" maxLength={20} value={button.title} placeholder="عنوان دکمه" onChange={(event) => setExtraLinks((current) => ({ ...current, [entry.id]: (current[entry.id] || []).map((value, i) => i === linkIndex ? { ...value, title: event.target.value } : value) }))} className="min-w-0 rounded-lg border border-[var(--daira-border)] bg-white p-2.5 text-base" />
+                                <input aria-label="آدرس لینک" dir="ltr" value={button.url} placeholder="example.com" onChange={(event) => setExtraLinks((current) => ({ ...current, [entry.id]: (current[entry.id] || []).map((value, i) => i === linkIndex ? { ...value, url: event.target.value } : value) }))} onBlur={() => setExtraLinks((current) => ({ ...current, [entry.id]: (current[entry.id] || []).map((value, i) => i === linkIndex ? { ...value, url: normalizeExternalLink(value.url) } : value) }))} className="min-w-0 rounded-lg border border-[var(--daira-border)] bg-white p-2.5 text-base" />
+                                <button type="button" aria-label="حذف دکمه لینک" onClick={() => setExtraLinks((current) => ({ ...current, [entry.id]: (current[entry.id] || []).filter((_, i) => i !== linkIndex) }))} className="sd-destructive-button min-h-10 rounded-lg border border-[var(--daira-error-border)] bg-[var(--daira-error-background)] px-3 text-[var(--daira-error-text)]"><Trash2 size={16} /></button>
+                              </div>
+                            ))}
+                            {(extraLinks[entry.id] || []).length < 3 && (
+                              <button type="button" onClick={() => setExtraLinks((current) => ({ ...current, [entry.id]: [...(current[entry.id] || []), { title: "", url: "" }] }))} className="min-h-10 rounded-xl border border-[var(--daira-border)] px-4 text-xs font-semibold">افزودن دکمه لینک</button>
+                            )}
+                          </div>
+                        )}
+                      </section>
+                    ))}
+                    <button type="button" onClick={() => setExtraMessages((current) => [...current, createEmptyMessage()])} disabled={saving || extraMessages.length >= 19} className="min-h-11 w-full rounded-xl border border-[var(--daira-border)] px-4 text-sm font-bold">افزودن پیام تکمیلی</button>
+                  </div>
+                )}
+
+                <div className="mb-2 mt-6"><AutomationSectionGuide>{isEditing ? "۶. شرط فالو — وضعیت فعلی و متن درخواست فالو را ویرایش کن." : "۶. شرط فالو — اختیاری است؛ اگر روشنش کنی، کاربر قبل از دریافت پاسخ باید پیج را دنبال کند و درخواست بررسی فالو برایش ارسال می‌شود."}</AutomationSectionGuide></div>
                 <section className="rounded-2xl bg-white p-4 sm:p-5">
                     <label className="flex cursor-pointer items-start gap-3 rounded-xl p-3.5 transition-colors" style={{ borderColor: requireFollow ? dairaPalette.primary.main : dairaPalette.border }}>
                       <input type="checkbox" role="switch" aria-label="الزام به فالو قبل از ارسال پاسخ" aria-checked={requireFollow} checked={requireFollow} onChange={(event) => setRequireFollow(event.target.checked)} className="daira-form-switch mt-1 -scale-x-100" />
@@ -804,8 +1030,20 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType }
                     )}
                   </section>
 
-                  <button type="button" onClick={() => { setMessage((current) => ({ ...current, messageType: "TEXT" })); void saveAutomation({ ...message, messageType: "TEXT" }); }} disabled={saving} className="flex min-h-12 w-full items-center justify-center rounded-xl px-4 text-sm font-bold text-white transition disabled:opacity-60" style={{ background: dairaPalette.primary.main }}>
-                    {saving ? "در حال ساخت پاسخ خودکار..." : "ساخت پاسخ خودکار"}
+
+                  {isEditing && (
+                    <section className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
+                      <label className="flex cursor-pointer items-center justify-between gap-3">
+                        <span className="min-w-0"><strong className="block text-sm text-[var(--daira-heading)]">وضعیت پاسخ خودکار</strong><span className="mt-1 block text-xs text-[var(--daira-text)]">می‌توانی پاسخ را بدون حذف کردن غیرفعال کنی.</span></span>
+                        <input type="checkbox" role="switch" checked={isActive} onChange={(event) => setIsActive(event.target.checked)} className="daira-form-switch -scale-x-100" aria-label="فعال بودن پاسخ خودکار" />
+                      </label>
+                    </section>
+                  )}
+                  <button type="button" onClick={() => {
+                    if (isEditing) void saveAutomation();
+                    else { setMessage((current) => ({ ...current, messageType: "TEXT" })); void saveAutomation({ ...message, messageType: "TEXT" }); }
+                  }} disabled={saving || (isEditing && (mediaLoading || loadingResources))} className="flex min-h-12 w-full items-center justify-center rounded-xl px-4 text-sm font-bold text-white transition disabled:opacity-60" style={{ background: dairaPalette.primary.main }}>
+                    {saving ? (isEditing ? "در حال ذخیره تغییرات..." : "در حال ساخت پاسخ خودکار...") : (isEditing ? "ذخیره تغییرات" : "ساخت پاسخ خودکار")}
                   </button>
                 </div>
               ) : (
@@ -853,6 +1091,18 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType }
                 <button type="button" onClick={() => setMediaDialogOpen(false)} aria-label="بستن پنجره انتخاب محتوا" className="sd-neutral-button flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[var(--daira-text)] transition hover:bg-[var(--daira-surface-hover)] hover:text-[var(--daira-heading)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--daira-primary)]/25"><X size={17} /></button>
               </header>
               <div className="min-h-0 flex-1 overflow-y-auto px-3 py-2 sm:px-4">
+                {isEditing && !mediaLoading && draftSelectedMediaIds.some((id) => !availableMediaIdSet.has(id)) && (
+                  <div className="mb-3 rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] p-3">
+                    <p className="mb-2 text-xs font-bold text-[var(--daira-text)]">محتواهای متصل که اکنون در فهرست اینستاگرام نمایش داده نمی‌شوند:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {draftSelectedMediaIds.filter((id) => !availableMediaIdSet.has(id)).map((id) => (
+                        <button key={id} type="button" onClick={() => setDraftSelectedMediaIds((current) => current.filter((value) => value !== id))} className="sd-neutral-button inline-flex min-h-9 items-center gap-2 rounded-xl border border-[var(--daira-border)] bg-white px-3 text-xs text-[var(--daira-text)]">
+                          <span dir="ltr">…{id.slice(-8)}</span><X size={14} aria-label="حذف این اتصال" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <AutomationPicker items={mediaItems} selectedIds={draftSelectedMediaIds} loading={mediaLoading} showContentFilters={triggerType === "COMMENT_KEYWORD"} onToggle={(id) => setDraftSelectedMediaIds((current) => triggerType === "COMMENT_KEYWORD" ? (current.includes(id) ? current.filter((value) => value !== id) : [...current, id]) : [id])} />
               </div>
               <footer className="flex shrink-0 items-center justify-center gap-2 border-t border-[var(--daira-border)] bg-white px-3 py-3 sm:px-4">
