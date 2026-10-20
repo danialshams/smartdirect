@@ -1,4 +1,4 @@
-import { dairaPalette } from "@/lib/design-system/palette";
+import { dairaPalette } from "../../lib/design-system/palette";
 
 function Shape({ className = "" }: { className?: string }) {
   return <div aria-hidden="true" className={"animate-pulse rounded-lg bg-[#E8EDF5] " + className} />;
