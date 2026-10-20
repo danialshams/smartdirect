@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 const PublishingStoryAutomationSetup = dynamic(() => import("./publishing/PublishingStoryAutomationSetup"), { ssr: false });
+import type { StoryFormTemplate } from "./publishing/PublishingStoryAutomationSetup";
 import { createEmptyMessage, normalizeMessages, validateMessages, type MessageDraft, type QuickReplyDraft, type Showcase, type FormItem } from "./automation-form-utils";
 import { dairaPalette } from "../../lib/design-system/palette";
 import AutomationPicker from "./AutomationPicker";
@@ -181,12 +182,14 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   const [mediaLoading, setMediaLoading] = useState(true);
   const [commentReply, setCommentReply] = useState(() => initialEditState?.commentReply ?? "");
   const [requireFollow, setRequireFollow] = useState(() => initialEditState?.requireFollow ?? false);
+  const [likeStoryReply, setLikeStoryReply] = useState(false);
   const [dmMode, setDmMode] = useState<"TEXT" | "TEXT_WITH_LINK">(() => initialEditState?.dmMode ?? "TEXT");
   const [followGateText, setFollowGateText] = useState(() => initialEditState?.followGateText ?? "برای دریافت پاسخ، ابتدا پیج ما را فالو کنید.");
   const [followGateButtonText, setFollowGateButtonText] = useState(() => initialEditState?.followGateButtonText ?? "بررسی فالو");
   const [message, setMessage] = useState<MessageDraft>(() => initialEditState?.message ?? createEmptyMessage());
   const [showcases, setShowcases] = useState<Showcase[]>([]);
   const [forms, setForms] = useState<FormItem[]>([]);
+  const [storyFormTemplates, setStoryFormTemplates] = useState<StoryFormTemplate[]>([]);
   const [automationTemplates, setAutomationTemplates] = useState<AutomationTemplate[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
   const [creationMode, setCreationMode] = useState<CreationMode>("new");
@@ -226,26 +229,57 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     let cancelled = false;
     void (async () => {
       try {
-        const [showcaseResponse, formResponse, automationResponse] = await Promise.all([
+        const [showcaseResponse, formResponse, automationResponse, savedResponse] = await Promise.all([
           fetch("/api/showcases?instagramAccountId=" + encodeURIComponent(account.id), { cache: "no-store", credentials: "include" }),
           fetch("/api/forms?instagramAccountId=" + encodeURIComponent(account.id), { cache: "no-store", credentials: "include" }),
           fetch("/api/automations?instagramAccountId=" + encodeURIComponent(account.id), { cache: "no-store", credentials: "include" }),
+          fetch("/api/saved-responses?instagramAccountId=" + encodeURIComponent(account.id), { cache: "no-store", credentials: "include" }),
         ]);
-        const showcaseResult = await showcaseResponse.json();
-        const formResult = await formResponse.json();
-        const automationResult = await automationResponse.json();
+        const [showcaseResult, formResult, automationResult, savedResult] = await Promise.all([
+          showcaseResponse.json(), formResponse.json(), automationResponse.json(), savedResponse.json(),
+        ]);
         if (!cancelled) {
           setShowcases(Array.isArray(showcaseResult) ? showcaseResult : Array.isArray(showcaseResult?.data) ? showcaseResult.data : []);
           setForms(Array.isArray(formResult) ? formResult : Array.isArray(formResult?.data) ? formResult.data : []);
-          setAutomationTemplates(
-            (Array.isArray(automationResult?.data) ? automationResult.data : [])
-              .filter((item: AutomationTemplate) => item.triggerType === triggerType && (item.keyword || Array.isArray(item.messages))),
-          );
+          const existingAutomations: AutomationTemplate[] = Array.isArray(automationResult?.data) ? automationResult.data : [];
+          setAutomationTemplates(existingAutomations.filter((item) =>
+            item.triggerType === triggerType && (item.keyword || Array.isArray(item.messages)),
+          ));
+          if (triggerType === "STORY_REPLY_KEYWORD") {
+            const seen = new Set<string>();
+            const templates: StoryFormTemplate[] = [];
+            for (const automation of existingAutomations) {
+              const normalized = normalizeMessages(automation.messages);
+              for (const savedMessage of normalized) {
+                if (savedMessage.messageType !== "FORM" || !savedMessage.text.trim() || !savedMessage.quickReplies.length) continue;
+                const id = `automation:${automation.id}:${savedMessage.id}`;
+                if (seen.has(id)) continue;
+                seen.add(id);
+                templates.push({
+                  id, title: `فرم استوری — ${savedMessage.text.trim().slice(0, 48)}`,
+                  text: savedMessage.text, quickReplies: savedMessage.quickReplies,
+                });
+              }
+            }
+            for (const saved of Array.isArray(savedResult?.data) ? savedResult.data : []) {
+              if (!saved || saved.messageType !== "FORM" || !saved.text) continue;
+              const id = `saved:${saved.id}`;
+              const normalized = normalizeMessages([{ ...saved, id, messageType: "FORM" }]);
+              if (!normalized[0]?.quickReplies.length || seen.has(id)) continue;
+              seen.add(id);
+              templates.push({
+                id, title: saved.title || `فرم — ${saved.text.slice(0, 48)}`,
+                text: normalized[0].text, quickReplies: normalized[0].quickReplies,
+              });
+            }
+            setStoryFormTemplates(templates);
+          }
         }
       } catch {
         if (!cancelled) {
           setShowcases([]);
           setForms([]);
+          setStoryFormTemplates([]);
         }
       } finally {
         if (!cancelled) setLoadingResources(false);
@@ -506,11 +540,11 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
       setError(triggerType === "COMMENT_KEYWORD" ? "حداقل یک پست یا ریلز انتخاب کنید." : "یک استوری انتخاب کنید.");
       return;
     }
-    if (triggerType === "COMMENT_KEYWORD" && requireFollow && !followGateText.trim()) {
+    if (requireFollow && !followGateText.trim()) {
       setError("متن درخواست فالو را وارد کنید.");
       return;
     }
-    if (triggerType === "COMMENT_KEYWORD" && requireFollow && (!followGateButtonText.trim() || followGateButtonText.trim().length > 20)) {
+    if (requireFollow && (!followGateButtonText.trim() || followGateButtonText.trim().length > 20)) {
       setError("عنوان دکمه بررسی فالو را وارد کنید (حداکثر ۲۰ کاراکتر).");
       return;
     }
@@ -546,10 +580,10 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
           likeComment: false,
           sendDm: triggerType === "COMMENT_KEYWORD" ? enteredDm : true,
           likeIncomingDm: false,
-          likeStoryReply: false,
-          requireFollow: triggerType === "COMMENT_KEYWORD" && requireFollow,
-          followGateText: triggerType === "COMMENT_KEYWORD" && requireFollow ? followGateText.trim() : null,
-          followGateButtonText: triggerType === "COMMENT_KEYWORD" && requireFollow ? followGateButtonText.trim() : null,
+          likeStoryReply: triggerType === "STORY_REPLY_KEYWORD" && likeStoryReply,
+          requireFollow: requireFollow,
+          followGateText: requireFollow ? followGateText.trim() : null,
+          followGateButtonText: requireFollow ? followGateButtonText.trim() : null,
           isActive: true,
         }),
       });
@@ -1126,6 +1160,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                   message={message}
                   showcases={showcases}
                   forms={forms}
+                  formTemplates={storyFormTemplates}
                   loadingResources={loadingResources}
                   instagramAccountId={account.id}
                   onUpdate={(patch) => setMessage((current) => ({ ...current, ...patch }))}
@@ -1139,7 +1174,57 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                   showFinalSave
                   finalSaveLabel="ساخت پاسخ خودکار"
                   finalSaveLoadingLabel="در حال ساخت پاسخ خودکار..."
-                  finalSaveDisabled={saving}
+                  finalSaveDisabled={saving || (requireFollow && (!followGateText.trim() || !followGateButtonText.trim() || followGateButtonText.trim().length > 20))}
+                  extraSettings={
+                    <div className="space-y-3 pt-2">
+                      <div className="mb-2 mt-4">
+                        <AutomationSectionGuide>۵. اجبار به فالو — اختیاری است؛ وقتی فعال باشد کاربر قبل از دریافت پاسخ باید پیج را فالو کند.</AutomationSectionGuide>
+                      </div>
+                      <section className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
+                        <label className="flex cursor-pointer items-center justify-between gap-3">
+                          <span className="min-w-0">
+                            <strong className="block text-sm font-bold text-[var(--daira-heading)]">الزام به فالو <span className="text-[var(--daira-primary)]">(اختیاری)</span></strong>
+                            <span className="mt-1 block text-xs leading-6 text-[var(--daira-text)]">برای ارسال پاسخ، ابتدا دنبال کردن پیج بررسی می‌شود.</span>
+                          </span>
+                          <input type="checkbox" role="switch" aria-label="اجبار به فالو برای پاسخ استوری"
+                            checked={requireFollow} onChange={(event) => setRequireFollow(event.target.checked)}
+                            className="daira-form-switch shrink-0 -scale-x-100" />
+                        </label>
+                        {requireFollow && (
+                          <div className="mt-4 space-y-3 border-t border-[var(--daira-border)] pt-4">
+                            <div>
+                              <label htmlFor="story-follow-text" className="mb-2 block text-xs font-bold text-[var(--daira-heading)]">متن درخواست فالو <span className="text-red-600">*</span></label>
+                              <textarea id="story-follow-text" rows={3} maxLength={640} value={followGateText}
+                                onChange={(event) => setFollowGateText(event.target.value)}
+                                placeholder="برای دریافت پاسخ، ابتدا پیج ما را فالو کن..."
+                                className="w-full resize-y rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3.5 py-3 text-base text-[var(--daira-heading)] outline-none focus:border-[var(--daira-primary)]" />
+                            </div>
+                            <div>
+                              <label htmlFor="story-follow-button" className="mb-2 block text-xs font-bold text-[var(--daira-heading)]">عنوان دکمه بررسی فالو <span className="text-red-600">*</span></label>
+                              <input id="story-follow-button" value={followGateButtonText} maxLength={20}
+                                onChange={(event) => setFollowGateButtonText(event.target.value)}
+                                placeholder="بررسی فالو"
+                                className="w-full rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3 py-3 text-base text-[var(--daira-heading)] outline-none focus:border-[var(--daira-primary)]" />
+                            </div>
+                          </div>
+                        )}
+                      </section>
+                      <div className="mb-2 mt-4">
+                        <AutomationSectionGuide>۶. لایک ریپلای — اختیاری است؛ در صورت فعال بودن، ریپلای کاربر به استوری لایک می‌شود.</AutomationSectionGuide>
+                      </div>
+                      <section className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
+                        <label className="flex cursor-pointer items-center justify-between gap-3">
+                          <span className="min-w-0">
+                            <strong className="block text-sm font-bold text-[var(--daira-heading)]">لایک ریپلای کاربر <span className="text-[var(--daira-primary)]">(اختیاری)</span></strong>
+                            <span className="mt-1 block text-xs leading-6 text-[var(--daira-text)]">ریپلای دریافتی به استوری به‌صورت خودکار لایک شود.</span>
+                          </span>
+                          <input type="checkbox" role="switch" aria-label="لایک خودکار ریپلای استوری"
+                            checked={likeStoryReply} onChange={(event) => setLikeStoryReply(event.target.checked)}
+                            className="daira-form-switch shrink-0 -scale-x-100" />
+                        </label>
+                      </section>
+                    </div>
+                  }
                   responseTypeTitle="نوع پاسخ خودکار"
                   responseTypeDescription=""
                   storyCreateMode
