@@ -312,7 +312,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
               keyword: displayKeyword,
               href: isStory
                 ? `/dashboard/story-automation/${automation.id}`
-                : `/dashboard/comment-automation/${automation.id}`,
+                : `/dashboard/comment-automation/${automation.id}?mediaId=${encodeURIComponent(displayMediaId)}`,
               isActive: automation.isActive,
             });
           }
@@ -322,8 +322,8 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
           const storyKeywords = normalizeKeywordList(job.storyReplyTriggerKeywords);
           const commentKeywords = normalizeKeywordList(job.commentTriggerKeywords);
           const isStory = Boolean(storyKeywords) || (!commentKeywords && Boolean(job.storyReplyAutomationId));
-          const keyword = isStory ? storyKeywords : commentKeywords;
-          if (!keyword) continue;
+          const jobKeyword = isStory ? storyKeywords : commentKeywords;
+          if (!jobKeyword && !(isStory ? job.storyReplyAutomationId : job.commentAutomationId)) continue;
           const publishedItemKey = `${job.type}:${job.instagramMediaId || job.commentAutomationId || job.storyReplyAutomationId || job.id}`;
           if (seenPublishedItems.has(publishedItemKey)) continue;
           seenPublishedItems.add(publishedItemKey);
@@ -346,6 +346,13 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
             ? directlyLinkedAutomation
             : mediaMatchedAutomation ?? directlyLinkedAutomation;
           const itemCreatedAt = linkedAutomation?.updatedAt || linkedAutomation?.createdAt || job.createdAt;
+          // Publishing metadata can be older than an edited automation. Always
+          // reflect the current reply for this specific media in the list.
+          const keyword = linkedAutomation
+            ? normalizeKeywordList(linkedAutomation.keyword) ||
+                (linkedAutomation.triggerType === "COMMENT_KEYWORD" && linkedAutomation.keywordMatchMode === "CONTAINS_ANY"
+                  ? "شامل هر کلمه" : jobKeyword)
+            : jobKeyword;
           nextItems.push({
             id: job.id,
             key: `publish:${job.id}`,
@@ -361,7 +368,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
             href: linkedAutomation
               ? (isStory
                 ? `/dashboard/story-automation/${linkedAutomation.id}`
-                : `/dashboard/comment-automation/${linkedAutomation.id}`)
+                : `/dashboard/comment-automation/${linkedAutomation.id}?mediaId=${encodeURIComponent(targetMediaId)}`)
               : `/dashboard/publishing/${job.id}`,
           });
         }

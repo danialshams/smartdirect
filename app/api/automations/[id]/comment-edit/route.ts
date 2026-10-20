@@ -134,6 +134,12 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ success: false, error: "پاسخ خودکار کامنت پیدا نشد." }, { status: 404 });
     const body = await request.json() as JsonRecord;
     if (!body || typeof body !== "object" || Array.isArray(body)) throw new EditError("اطلاعات ویرایش نامعتبر است.");
+    const sourceMediaId = clean(body.sourceMediaId);
+    const expectedUpdatedAt = clean(body.expectedUpdatedAt);
+    if (!expectedUpdatedAt || !Number.isFinite(Date.parse(expectedUpdatedAt)))
+      throw new EditError("نسخه اطلاعات ویرایش مشخص نیست. صفحه را دوباره باز کنید.", 409);
+    if (automation.updatedAt.getTime() !== new Date(expectedUpdatedAt).getTime())
+      throw new EditError("این پاسخ پس از باز شدن صفحه تغییر کرده است. برای جلوگیری از بازنویسی تغییرات، صفحه را دوباره باز کنید.", 409);
     const mode = body.keywordMatchMode;
     if (mode !== "EXACT" && mode !== "CONTAINS_ANY") throw new EditError("روش فعال‌سازی نامعتبر است.");
     const keywords = normalizedWords(body.keyword);
@@ -175,6 +181,13 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       ...(automation.mediaId ? [automation.mediaId] : []),
       ...((automation.mediaIds || "").split(",").map((x) => x.trim()).filter(Boolean)),
     ]);
+    if (sourceMediaId && !oldMediaIds.has(sourceMediaId))
+      throw new EditError("این محتوا دیگر به پاسخ انتخاب‌شده متصل نیست.", 409);
+    const splitShared = oldMediaIds.size > 1;
+    if (splitShared && !sourceMediaId)
+      throw new EditError("این پاسخ بین چند محتوا مشترک است؛ ویرایش را از فهرست همان محتوا شروع کنید.", 409);
+    if (splitShared && mediaIds.some((value) => oldMediaIds.has(value) && value !== sourceMediaId))
+      throw new EditError("ویرایش چند محتوای مشترک به‌صورت هم‌زمان مجاز نیست. هر محتوا را جداگانه ویرایش کنید.", 409);
     const newMediaIds = mediaIds.filter((value) => !oldMediaIds.has(value));
     if (newMediaIds.length) {
       const account = await prisma.instagramAccount.findFirst({
@@ -208,21 +221,148 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       }
     }
 
-    await prisma.$transaction(async (tx) => {
-      await tx.automation.update({
-        where: { id },
-        data: {
-          keyword, keywordMatchMode: mode,
-          mediaId: mediaIds.length === 1 ? mediaIds[0] : null,
-          mediaIds: mediaIds.join(","),
-          commentReplyText: commentReplyText || null,
-          requireFollow,
-          followGateText: requireFollow ? followGateText : null,
-          followGateButtonText: requireFollow ? followGateButtonText : null,
-          isActive: body.isActive as boolean,
-          sendDm: body.sendDm as boolean,
-        },
+    const savedId = await prisma.$transaction(async (tx) => {
+      const updatedData = {
+        keyword, keywordMatchMode: mode,
+        mediaId: mediaIds.length === 1 ? mediaIds[0] : null,
+        mediaIds: mediaIds.join(","),
+        commentReplyText: commentReplyText || null,
+        requireFollow,
+        followGateText: requireFollow ? followGateText : null,
+        followGateButtonText: requireFollow ? followGateButtonText : null,
+        isActive: body.isActive as boolean,
+        sendDm: body.sendDm as boolean,
+      };
+
+      if (splitShared) {
+        // Split the selected content away from the shared automation. Do not
+        // change the shared messages, keywords, or follow settings of siblings.
+        const remaining = [...oldMediaIds].filter((value) => value !== sourceMediaId);
+        const detached = await tx.automation.updateMany({
+          where: { id, updatedAt: new Date(expectedUpdatedAt) },
+          data: {
+            mediaId: remaining.length === 1 ? remaining[0] : null,
+            mediaIds: remaining.join(",") || null,
+          },
+        });
+        if (detached.count !== 1)
+          throw new EditError("پاسخ هم‌زمان تغییر کرده است. صفحه را دوباره باز کنید.", 409);
+
+        const cloned = await tx.automation.create({
+          data: {
+            ...updatedData,
+            instagramAccountId: automation.instagramAccountId,
+            triggerType: "COMMENT_KEYWORD",
+            replyText: automation.replyText,
+            likeComment: automation.likeComment,
+            likeIncomingDm: automation.likeIncomingDm,
+            likeStoryReply: automation.likeStoryReply,
+          },
+          select: { id: true },
+        });
+
+        // First create all messages, so quick reply nextMessageId references can
+        // be remapped to the new automation, never to a sibling's message.
+        const clonedMessageIds = new Map<string, string>();
+        const savedMessages: string[] = [];
+        for (const [index, item] of messages.entries()) {
+          const type = item.messageType;
+          const created = await tx.automationMessage.create({
+            data: {
+              automationId: cloned.id, order: index, messageType: type,
+              text: item.text || null,
+              mediaUrl: ["IMAGE", "VIDEO", "AUDIO"].includes(type) ? item.mediaUrl || null : null,
+              mediaId: ["IMAGE", "VIDEO", "AUDIO"].includes(type) ? item.mediaId || null : null,
+              showcaseId: type === "SHOWCASE" ? item.showcaseId || null : null,
+              formId: type === "FORM" ? item.formId || null : null,
+              linkButtonUrl: type === "TEXT" ? item.linkButtons?.[0]?.url || null : null,
+              linkButtonTitle: type === "TEXT" ? item.linkButtons?.[0]?.title || null : null,
+              linkButtons: type === "TEXT" ? item.linkButtons || [] : [],
+            },
+            select: { id: true },
+          });
+          savedMessages.push(created.id);
+          if (item.id && originalMessageIds.has(item.id)) clonedMessageIds.set(item.id, created.id);
+        }
+
+        for (const [index, item] of messages.entries()) {
+          const nextId = savedMessages[index];
+          if (!nextId) continue;
+          if (item.updateQuickReplies === false && item.id && originalMessageIds.has(item.id)) {
+            // Old rich replies are preserved byte-for-byte, including JSON
+            // destinations, while relational message links are remapped.
+            const oldReplies = await tx.quickReply.findMany({
+              where: { automationMessageId: item.id },
+              select: { title: true, payload: true, replyText: true, nextMessageId: true },
+            });
+            for (const reply of oldReplies) {
+              await tx.quickReply.create({
+                data: {
+                  automationMessageId: nextId,
+                  title: reply.title,
+                  payload: reply.payload,
+                  replyText: reply.replyText,
+                  nextMessageId: reply.nextMessageId ? clonedMessageIds.get(reply.nextMessageId) || null : null,
+                },
+              });
+            }
+          } else {
+            for (const reply of item.quickReplies || []) {
+              await tx.quickReply.create({
+                data: {
+                  automationMessageId: nextId,
+                  title: reply.title,
+                  payload: reply.payload,
+                  nextMessageId: reply.nextMessageId ? clonedMessageIds.get(reply.nextMessageId) || null : null,
+                  replyText: JSON.stringify({
+                    isExit: reply.isExit === true,
+                    destinationType: reply.destinationType,
+                    destinationText: reply.destinationText,
+                    destinationFormId: reply.destinationFormId,
+                    destinationShowcaseId: reply.destinationShowcaseId,
+                    destinationMediaUrl: reply.destinationMediaUrl,
+                    destinationMediaId: reply.destinationMediaId,
+                    destinationQuestion: reply.destinationQuestion,
+                    destinationQuickReplies: reply.destinationQuickReplies || [],
+                  }),
+                },
+              });
+            }
+          }
+        }
+
+        // A published media job may reference the old shared response. Move
+        // only the selected media to its independent reply configuration.
+        await tx.instagramPublishJob.updateMany({
+          where: {
+            instagramAccountId: automation.instagramAccountId,
+            instagramMediaId: { in: mediaIds },
+            commentAutomationId: id,
+          },
+          data: { commentAutomationId: cloned.id },
+        });
+        if (sourceMediaId && !mediaIds.includes(sourceMediaId)) {
+          await tx.instagramPublishJob.updateMany({
+            where: {
+              instagramAccountId: automation.instagramAccountId,
+              instagramMediaId: sourceMediaId,
+              commentAutomationId: id,
+            },
+            data: {
+              commentAutomationId: null, commentTriggerKeywords: null,
+              commentTriggerResponse: null,
+            },
+          });
+        }
+        return cloned.id;
+      }
+
+      const updated = await tx.automation.updateMany({
+        where: { id, updatedAt: new Date(expectedUpdatedAt) },
+        data: updatedData,
       });
+      if (updated.count !== 1)
+        throw new EditError("پاسخ هم‌زمان تغییر کرده است. صفحه را دوباره باز کنید.", 409);
       const keptIds: string[] = [];
       for (const [index, item] of messages.entries()) {
         const type = item.messageType;
@@ -279,10 +419,25 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         await tx.quickReply.deleteMany({ where: { automationMessageId: { in: removed } } });
         await tx.automationMessage.deleteMany({ where: { automationId: id, id: { in: removed } } });
       }
-    }, { maxWait: 10000, timeout: 20000 });
+      // Single-media edits remain in place. If the user replaced the selected
+      // media, do not leave a stale publishing-job association behind.
+      if (sourceMediaId && !mediaIds.includes(sourceMediaId)) {
+        await tx.instagramPublishJob.updateMany({
+          where: {
+            instagramAccountId: automation.instagramAccountId,
+            instagramMediaId: sourceMediaId, commentAutomationId: id,
+          },
+          data: {
+            commentAutomationId: null, commentTriggerKeywords: null,
+            commentTriggerResponse: null,
+          },
+        });
+      }
+      return id;
+    }, { maxWait: 10000, timeout: 30000 });
     try { await invalidateAutomationCache(automation.instagramAccountId); }
     catch (cacheError) { console.warn("Comment automation cache invalidation failed:", cacheError); }
-    return NextResponse.json({ success: true, data: { id } });
+    return NextResponse.json({ success: true, data: { id: savedId, detachedFromShared: splitShared } });
   } catch (error) {
     if (error instanceof EditError)
       return NextResponse.json({ success: false, error: error.message }, { status: error.status });

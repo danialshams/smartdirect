@@ -29,6 +29,7 @@ export type EditableCommentAutomation = {
   followGateButtonText?: string | null;
   isActive?: boolean;
   sendDm?: boolean;
+  updatedAt: string;
   replyText?: string | null;
   messages?: unknown;
 };
@@ -56,6 +57,7 @@ type Props = {
   title: string;
   description: string;
   editAutomation?: EditableCommentAutomation;
+  editingMediaId?: string;
 };
 
 function AutomationSectionGuide({ children }: { children: ReactNode }) {
@@ -129,14 +131,15 @@ function serializeQuickReplies(replies: QuickReplyDraft[]): unknown[] {
   }));
 }
 
-export default function AutomationCreationFlow({ account, mediaId, triggerType, editAutomation }: Props) {
+export default function AutomationCreationFlow({ account, mediaId, triggerType, editAutomation, editingMediaId }: Props) {
   const router = useRouter();
   const isEditing = Boolean(editAutomation);
   // Initialize editing directly from the fetched record; don't render a second skeleton
   // while another effect hydrates form fields.
   const initialEditState = useMemo(() => {
     if (!editAutomation) return null;
-    const mediaIds = Array.from(new Set([
+    // The list opens one media-specific edit, not a bulk edit of every linked post.
+    const mediaIds = editingMediaId ? [editingMediaId] : Array.from(new Set([
       ...(editAutomation.mediaId ? [editAutomation.mediaId] : []),
       ...(editAutomation.mediaIds || "").split(",").map((value) => value.trim()).filter(Boolean),
     ]));
@@ -162,7 +165,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
       extraMessages: loadedMessages.slice(1),
       extraLinks,
     };
-  }, [editAutomation]);
+  }, [editAutomation, editingMediaId]);
   const [extraMessages, setExtraMessages] = useState<MessageDraft[]>(() => initialEditState?.extraMessages ?? []);
   const [extraLinks, setExtraLinks] = useState<Record<string, LinkButton[]>>(() => initialEditState?.extraLinks ?? {});
   const [keyword, setKeyword] = useState(() => initialEditState?.keyword ?? "");
@@ -326,8 +329,6 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
       !followGateButtonText.trim() || followGateButtonText.trim().length > 20) ?
       "متن درخواست فالو و عنوان دکمه بررسی فالو را کامل وارد کنید." : "";
   const canSaveComment = !saving && !commentFormError && (!isEditing || hasUnsavedEdits);
-  const canAddMessage = !saving && extraMessages.length < 19 && (!isEditing || hasUnsavedEdits) &&
-    enteredDm && validDm && mainLinksValid && extraLinksValid;
   const initialDmSnapshot = initialEditState ? JSON.stringify({
     message: initialEditState.message, extraMessages: initialEditState.extraMessages,
     dmMode: initialEditState.dmMode, linkButtons: initialEditState.linkButtons,
@@ -444,6 +445,8 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             keywordMatchMode,
             keyword: keywordMatchMode === "CONTAINS_ANY" ? null : cleanKeywords.join(","),
             mediaIds: targetMediaIds,
+            sourceMediaId: editingMediaId || (initialEditState?.mediaIds.length === 1 ? initialEditState.mediaIds[0] : null),
+            expectedUpdatedAt: editAutomation.updatedAt,
             commentReplyText: commentReply.trim(),
             requireFollow,
             followGateText: requireFollow ? followGateText.trim() : null,
@@ -971,7 +974,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                     </div>
                   </div>
 
-                  <div role="radiogroup" aria-label="نوع پیام دایرکت" className={"grid grid-cols-1 gap-2 sm:grid-cols-2 " + (isEditing && message.messageType !== "TEXT" ? "hidden" : "")}>
+                  <div role="radiogroup" aria-label="قالب پیام متنی دایرکت" className={"grid grid-cols-1 gap-2 sm:grid-cols-2 " + (isEditing && message.messageType !== "TEXT" ? "hidden" : "")}>
                     <label className={"flex cursor-pointer items-start gap-3 rounded-xl border p-3 text-xs transition " + (dmMode === "TEXT" ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)]" : "border-[var(--daira-border)] bg-white")}>
                       <input type="radio" name="direct-message-mode" value="TEXT" checked={dmMode === "TEXT"} onChange={() => setDmMode("TEXT")} className="mt-1 h-4 w-4 shrink-0 accent-[var(--daira-primary)]" />
                       <span className="min-w-0">
@@ -988,24 +991,21 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                     </label>
                   </div>
 
-                  {isEditing && (message.messageType !== "TEXT" || message.quickReplies.length > 0) ? (
-                    <PublishingStoryAutomationSetup
-                      message={message}
-                      showcases={showcases}
-                      forms={forms}
-                      loadingResources={loadingResources}
-                      instagramAccountId={account.id}
-                      onUpdate={(patch) => setMessage((current) => ({ ...current, ...patch }))}
-                      keywordValid={true}
-                      onContinue={() => undefined}
-                      disabled={saving}
-                      showFinalSave={false}
-                      responseTypeTitle="نوع پیام ذخیره‌شده"
-                      responseTypeDescription="همه مشخصات این پیام و گزینه‌های فرم قابل ویرایش هستند."
-                      textPlaceholder="متن دایرکت ارسالی به کاربر..."
+                  {message.messageType === "TEXT" ? (
+                    <textarea
+                      value={message.text}
+                      onChange={(event) => setMessage((current) => ({ ...current, text: event.target.value }))}
+                      maxLength={dmMode === "TEXT_WITH_LINK" ? 640 : 2000}
+                      rows={4}
+                      placeholder="متن دایرکتی که بعد از کامنت برای کاربر ارسال می‌شود..."
+                      aria-label="متن پیام دایرکت"
+                      className="w-full rounded-xl border bg-white px-3.5 py-3 text-base leading-7 outline-none focus:ring-2 focus:ring-[color:var(--daira-primary)]/15"
+                      style={{ borderColor: dairaPalette.form.border, color: dairaPalette.text.heading, fontSize: "16px" }}
                     />
                   ) : (
-                    <textarea value={message.text} onChange={(event) => setMessage((current) => ({ ...current, messageType: "TEXT", text: event.target.value, mediaUrl: "", mediaId: "", showcaseId: "", formId: "", quickReplies: isEditing ? current.quickReplies : [] }))} maxLength={dmMode === "TEXT_WITH_LINK" ? 640 : 2000} rows={4} placeholder="متن دایرکتی که بعد از کامنت برای کاربر ارسال می‌شود..." className="w-full rounded-xl border bg-white px-3.5 py-3 text-base leading-7 outline-none focus:ring-2 focus:ring-[color:var(--daira-primary)]/15" style={{ borderColor: dairaPalette.form.border, color: dairaPalette.text.heading, fontSize: "16px" }} />
+                    <p className="rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] p-3 text-xs leading-6 text-[var(--daira-text)]">
+                      پیام قدیمی از نوع دیگری ذخیره شده است و بدون تغییر حفظ می‌شود. در پاسخ خودکار کامنت، ایجاد پیام جدید فقط به‌صورت متن ساده امکان‌پذیر است.
+                    </p>
                   )}
                   {message.messageType === "TEXT" && dmMode === "TEXT_WITH_LINK" && <p className="mb-2 text-xs leading-5" style={{ color: dairaPalette.text.body }}>حداکثر {MAX_LINK_BUTTONS} دکمه لینک می‌توانید اضافه کنید.</p>}
 
@@ -1046,29 +1046,30 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
                   </section>
 
-                {triggerType === "COMMENT_KEYWORD" && (
+                {isEditing && extraMessages.length > 0 && (
                   <div className="space-y-3">
-                    {extraMessages.length > 0 && <div className="mb-2 mt-6"><AutomationSectionGuide>{isEditing ? "۵. پیام‌های بیشتر — پیام‌های ذخیره‌شده را ویرایش کن." : "۶. پیام‌های بیشتر — در صورت نیاز پیام دیگری به پاسخ دایرکت اضافه کن."}</AutomationSectionGuide></div>}
+                    {extraMessages.length > 0 && <div className="mb-2 mt-6"><AutomationSectionGuide>۵. پیام‌های قبلی — پیام‌های متنی ذخیره‌شده را در صورت نیاز ویرایش کن.</AutomationSectionGuide></div>}
                     {extraMessages.map((entry, index) => (
                       <section key={entry.id} className="space-y-3 rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
                         <div className="flex items-center justify-between gap-2">
                           <h3 className="text-sm font-bold text-[var(--daira-heading)]">پیام شماره {new Intl.NumberFormat("fa-IR").format(index + 2)}</h3>
                           <button type="button" onClick={() => setExtraMessages((current) => current.filter((item) => item.id !== entry.id))} disabled={saving} className="sd-destructive-button inline-flex min-h-9 items-center gap-1 rounded-lg border border-[var(--daira-error-border)] bg-[var(--daira-error-background)] px-3 text-xs font-bold text-[var(--daira-error-text)]"><Trash2 size={15} /> حذف پیام</button>
                         </div>
-                        <PublishingStoryAutomationSetup
-                          message={entry}
-                          showcases={showcases}
-                          forms={forms}
-                          loadingResources={loadingResources}
-                          instagramAccountId={account.id}
-                          onUpdate={(patch) => setExtraMessages((current) => current.map((item) => item.id === entry.id ? { ...item, ...patch } : item))}
-                          keywordValid={true}
-                          onContinue={() => undefined}
-                          disabled={saving}
-                          showFinalSave={false}
-                          responseTypeTitle="نوع پیام"
-                          responseTypeDescription="متن یا رسانه، ویترین، فرم و گزینه‌های مربوط به این پیام را ویرایش کن."
-                        />
+                        {entry.messageType === "TEXT" ? (
+                          <textarea
+                            aria-label={`متن پیام شماره ${new Intl.NumberFormat("fa-IR").format(index + 2)}`}
+                            value={entry.text}
+                            onChange={(event) => setExtraMessages((current) => current.map((item) => item.id === entry.id ? { ...item, text: event.target.value } : item))}
+                            maxLength={(extraLinks[entry.id] || []).length ? 640 : 2000}
+                            rows={3}
+                            placeholder="متن پیام دایرکت..."
+                            className="w-full rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3 py-3 text-base leading-7 text-[var(--daira-heading)] outline-none focus:border-[var(--daira-input-focus)]"
+                          />
+                        ) : (
+                          <p className="rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] p-3 text-xs text-[var(--daira-text)]">
+                            پیام قدیمی غیِرمتنی برای حفظ اطلاعات، بدون تغییر نگه داشته می‌شود.
+                          </p>
+                        )}
                         {entry.messageType === "TEXT" && (
                           <div className="space-y-2">
                             {(extraLinks[entry.id] || []).map((button, linkIndex) => (
@@ -1085,7 +1086,6 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                         )}
                       </section>
                     ))}
-                    <button type="button" onClick={() => setExtraMessages((current) => [...current, createEmptyMessage()])} disabled={!canAddMessage} aria-disabled={!canAddMessage} className="sd-neutral-button min-h-11 w-full rounded-xl border border-[var(--daira-border)] bg-white px-4 text-sm font-bold text-[var(--daira-primary)] transition hover:bg-[var(--daira-surface-hover)] disabled:cursor-not-allowed disabled:bg-[var(--daira-surface-hover)] disabled:text-[var(--daira-text)] disabled:opacity-50">افزودن پیام</button>
                   </div>
                 )}
 
