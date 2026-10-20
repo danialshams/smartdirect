@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import AutomationCreationFlow, { type EditableCommentAutomation } from "./AutomationCreationFlow";
 import CommentAutomationEditSkeleton from "./CommentAutomationEditSkeleton";
 
-export default function CommentAutomationEditor({ id }: { id: string }) {
+export default function CommentAutomationEditor({ id, mediaId }: { id: string; mediaId?: string }) {
   const [automation, setAutomation] = useState<EditableCommentAutomation | null>(null);
   const [error, setError] = useState("");
   const [retry, setRetry] = useState(0);
@@ -26,6 +26,14 @@ export default function CommentAutomationEditor({ id }: { id: string }) {
         const item = result.data as EditableCommentAutomation;
         if (item.triggerType !== "COMMENT_KEYWORD" || !item.instagramAccountId)
           throw new Error("پاسخ انتخاب‌شده از نوع پاسخ خودکار کامنت نیست.");
+        const linkedMediaIds = new Set([
+          ...(item.mediaId ? [item.mediaId] : []),
+          ...(item.mediaIds || "").split(",").map((value) => value.trim()).filter(Boolean),
+        ]);
+        if (mediaId && !linkedMediaIds.has(mediaId))
+          throw new Error("این محتوا دیگر به پاسخ انتخاب‌شده متصل نیست. از فهرست پاسخ‌ها دوباره وارد شوید.");
+        if (linkedMediaIds.size > 1 && !mediaId)
+          throw new Error("این پاسخ به چند محتوا متصل است. برای ویرایش مستقل، از دکمه ویرایش همان محتوا در فهرست استفاده کنید.");
         if (!controller.signal.aborted) setAutomation(item);
       } catch (e) {
         if (!controller.signal.aborted)
@@ -33,7 +41,7 @@ export default function CommentAutomationEditor({ id }: { id: string }) {
       }
     })();
     return () => controller.abort();
-  }, [id, retry]);
+  }, [id, mediaId, retry]);
 
   if (!automation && !error) return <CommentAutomationEditSkeleton />;
   if (!automation) return (
@@ -44,7 +52,7 @@ export default function CommentAutomationEditor({ id }: { id: string }) {
   );
 
   return <AutomationCreationFlow
-    key={automation.id}
+    key={automation.id + ":" + (mediaId || "")}
     account={{
       id: automation.instagramAccountId,
       igUsername: automation.instagramAccount?.igUsername || "",
@@ -55,5 +63,6 @@ export default function CommentAutomationEditor({ id }: { id: string }) {
     title="ویرایش پاسخ خودکار کامنت"
     description="تنظیمات ذخیره‌شده پاسخ خودکار را ویرایش کنید."
     editAutomation={automation}
+    editingMediaId={mediaId}
   />;
 }
