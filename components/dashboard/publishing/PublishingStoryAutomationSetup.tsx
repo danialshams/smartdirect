@@ -180,7 +180,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
             return;
           }
           setProgress(100);
-          if (message.mediaUrl && message.mediaUrl !== result.data.publicUrl) {
+          if (!storyEditMode && message.mediaUrl && message.mediaUrl !== result.data.publicUrl) {
             void requestStorageCleanupByPublicUrl(message.mediaUrl).catch(() => undefined);
           }
           onUpdate({ mediaUrl: result.data.publicUrl, mediaId: "" });
@@ -511,7 +511,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                 {responseType === "IMAGE" ? <img src={message.mediaUrl} alt="" className="h-56 w-full object-cover" /> : responseType === "VIDEO" ? <video src={message.mediaUrl} controls className="max-h-64 w-full bg-black object-contain" /> : <div className="w-full px-3 py-4"><audio src={message.mediaUrl} controls className="w-full" /></div>}
                 <input type="file" accept={mediaAccept} className="hidden" onChange={(event) => { const file = event.target.files?.[0]; event.currentTarget.value = ""; void uploadMedia(file); }} />
               </label>
-              <div className="flex justify-center"><button type="button" onClick={() => { void requestStorageCleanupByPublicUrl(message.mediaUrl).catch(() => undefined); onUpdate({ mediaUrl: "", mediaId: "" }); }} className="sd-destructive-button text-xs font-bold text-[#DC2626] transition hover:text-[#B91C1C]">حذف {responseType === "IMAGE" ? "عکس" : responseType === "VIDEO" ? "ویدیو" : "وویس"}</button></div>
+              <div className="flex justify-center"><button type="button" onClick={() => { if (!storyEditMode) void requestStorageCleanupByPublicUrl(message.mediaUrl).catch(() => undefined); onUpdate({ mediaUrl: "", mediaId: "" }); }} className="sd-destructive-button text-xs font-bold text-[#DC2626] transition hover:text-[#B91C1C]">حذف {responseType === "IMAGE" ? "عکس" : responseType === "VIDEO" ? "ویدیو" : "وویس"}</button></div>
             </div>
           ) : (
             <div className="space-y-3">
@@ -767,6 +767,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                 instagramAccountId={instagramAccountId}
                 showcases={showcases}
                 loadingResources={loadingResources}
+                preserveSavedMedia={storyEditMode}
                 onUpdate={onUpdate}
                 onUploadMedia={uploadFormMedia}
               />
