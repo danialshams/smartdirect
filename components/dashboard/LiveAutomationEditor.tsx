@@ -168,8 +168,8 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
     }catch(e){setError(e instanceof Error?e.message:"ذخیره ناموفق بود.");}
     finally{setSaving(false);}
   }
-  if(loading)return <LiveAutomationSkeleton variant="editor"/>;
-  if(!account)return <div dir="rtl" role="alert" className="mx-auto max-w-2xl rounded-xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">{error||"پیج متصل نیست."}</div>;
+  if(loading || (account && resourcesLoading && !error))return <LiveAutomationSkeleton variant="editor"/>;
+  if(!account || (id && !saved))return <div dir="rtl" role="alert" className="mx-auto max-w-2xl rounded-xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">{error||"پاسخ خودکار پیدا نشد."}</div>;
 
   return <div dir="rtl" className="mx-auto w-full max-w-4xl space-y-5 pb-10">
     <Section index={0}>
