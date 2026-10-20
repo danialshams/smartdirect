@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { CheckCircle2, Lightbulb, Loader2 } from "lucide-react";
 import { dairaPalette } from "@/lib/design-system/palette";
 import { createEmptyMessage, normalizeMessages, type MessageDraft, type Showcase, type FormItem } from "./automation-form-utils";
-import PublishingStoryAutomationSetup from "./publishing/PublishingStoryAutomationSetup";
+import PublishingStoryAutomationSetup, { type PublishingStoryAutomationSetupHandle } from "./publishing/PublishingStoryAutomationSetup";
 import LiveAutomationSkeleton from "./LiveAutomationSkeleton";
 
 type Account = { id: string; igUsername: string; isConnected: boolean };
@@ -54,6 +54,7 @@ function Guide({ number, title, hint }: { number: number; title: string; hint?: 
 
 export default function LiveAutomationEditor({ id }: { id?: string }) {
   const router = useRouter();
+  const responseEditorRef = useRef<PublishingStoryAutomationSetupHandle>(null);
   const [account, setAccount] = useState<Account | null>(null);
   const [draft, setDraft] = useState<Draft>(emptyDraft);
   const [showcases, setShowcases] = useState<Showcase[]>([]);
@@ -136,12 +137,20 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
     if (!canSave || !account) return;
     setSaving(true);
     setError("");
+    let preparedMessage: MessageDraft | null = draft.message;
+    if (draft.followupEnabled) {
+      preparedMessage = await responseEditorRef.current?.prepareExternalSave() ?? null;
+      if (!preparedMessage) {
+        setSaving(false);
+        return;
+      }
+    }
     const payload = {
       instagramAccountId: account.id,
       keyword: draft.keyword, matchMode: draft.matchMode, initialText: draft.initialText,
       followupEnabled: draft.followupEnabled, followupKeyword: draft.followupKeyword,
       requireFollow: draft.requireFollow, followGateText: draft.followGateText,
-      message: draft.followupEnabled ? draft.message : null, expectedUpdatedAt: initialVersion.current,
+      message: draft.followupEnabled ? preparedMessage : null, expectedUpdatedAt: initialVersion.current,
     };
     try {
       const response = await fetch(id ? "/api/live-automation/" + encodeURIComponent(id) : "/api/live-automation", {
@@ -213,6 +222,7 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
               </div>
               <div className="border-t border-[#F1F5F9] pt-4">
                 <PublishingStoryAutomationSetup
+                  ref={responseEditorRef}
                   message={draft.message}
                   instagramAccountId={account?.id || ""}
                   showcases={showcases}
