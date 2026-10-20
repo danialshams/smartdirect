@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     });
     if (!account) return NextResponse.json({ success: false, error: "پیج متصل پیدا نشد." }, { status: 404 });
     const input = validateLiveReplyInput(raw);
-    await assertNonOverlappingLiveKeywords(account.id, input.keyword);
+    await assertNonOverlappingLiveKeywords(account.id, input.keyword, input.matchMode);
     await verifyLiveResponseOwnership(input, account.id, session.user.id);
     const rule = await createLiveReplyRule(input, account.id);
     try { await invalidateAutomationCache(account.id); }

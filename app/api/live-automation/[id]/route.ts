@@ -50,7 +50,7 @@ export async function PUT(request: NextRequest, { params }: Context) {
     if (typeof expected !== "string" || !Number.isFinite(Date.parse(expected)))
       throw new LiveReplyValidationError("ویرایش قدیمی است. صفحه را دوباره باز کن.", 409);
     const rule = validateLiveReplyInput(raw);
-    await assertNonOverlappingLiveKeywords(existing.instagramAccountId, rule.keyword, id);
+    await assertNonOverlappingLiveKeywords(existing.instagramAccountId, rule.keyword, rule.matchMode, id);
     await verifyLiveResponseOwnership(rule, existing.instagramAccountId, session.user.id);
     const updated = await updateLiveReplyRule(rule, id, new Date(expected));
     try { await invalidateAutomationCache(existing.instagramAccountId); }

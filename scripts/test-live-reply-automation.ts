@@ -25,6 +25,10 @@ assert.equal(matchesAutomationTrigger({
 }), false, "Live rules must not match regular post comments");
 assert.equal(liveReplyOptionsOverlap("قیمت,خرید", "قیمت،لینک"), true);
 assert.equal(liveReplyOptionsOverlap("قیمت,خرید", "تخفیف،لینک"), false);
+assert.equal(liveReplyOptionsOverlap("قیمت", "قیمت‌ها", "EXACT", "EXACT"), false);
+assert.equal(liveReplyOptionsOverlap("قیمت", "قیمت‌ها", "CONTAINS_ANY", "EXACT"), true);
+assert.equal(liveReplyOptionsOverlap("قیمت‌ها", "قیمت", "EXACT", "CONTAINS_ANY"), true);
+assert.equal(liveReplyOptionsOverlap("لینک", "قیمت", "CONTAINS_ANY", "EXACT"), false);
 assert.deepEqual(splitAutomationKeywords("قیمت\nقیمت،ارسال"), ["قیمت", "قیمت", "ارسال"]);
 
 const follow = validateLiveReplyInput({
