@@ -154,15 +154,22 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const commentReplyText = clean(body.commentReplyText);
     if (commentReplyText.length > 2000) throw new EditError("متن پاسخ زیر کامنت حداکثر ۲۰۰۰ کاراکتر است.");
     if (typeof body.isActive !== "boolean") throw new EditError("وضعیت فعال بودن نامعتبر است.");
+    if (typeof body.sendDm !== "boolean") throw new EditError("وضعیت ارسال دایرکت نامعتبر است.");
     if (!Array.isArray(body.messages) || !body.messages.length || body.messages.length > 20)
       throw new EditError("حداقل یک پیام و حداکثر بیست پیام مجاز است.");
-    const messages = body.messages.map(validateMessage);
+    const singleEmptyPlaceholder = body.sendDm === false && automation.messages.length === 0 &&
+      body.messages.length === 1 && body.messages[0] && typeof body.messages[0] === "object" &&
+      !clean((body.messages[0] as JsonRecord).text) &&
+      clean((body.messages[0] as JsonRecord).messageType) === "TEXT";
+    const messages: MessageInput[] = singleEmptyPlaceholder ? [] : body.messages.map(validateMessage);
     const submittedMessageIds = messages.map((m) => m.id).filter(Boolean) as string[];
     if (new Set(submittedMessageIds).size !== submittedMessageIds.length)
       throw new EditError("شناسه پیام‌های ارسالی تکراری است.");
     const originalMessageIds = new Set(automation.messages.map((item) => item.id));
     if (submittedMessageIds.some((value) => !originalMessageIds.has(value) && !value.startsWith("local_") && !value.startsWith("message_")))
       throw new EditError("یکی از پیام‌ها متعلق به این پاسخ نیست.");
+    if (messages.some((item) => item.updateQuickReplies === false && !(item.id && originalMessageIds.has(item.id))))
+      throw new EditError("اطلاعات گزینه‌های یکی از پیام‌های جدید کامل نیست.");
     const oldMediaIds = new Set([
       ...(automation.mediaId ? [automation.mediaId] : []),
       ...((automation.mediaIds || "").split(",").map((x) => x.trim()).filter(Boolean)),
@@ -212,6 +219,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
           followGateText: requireFollow ? followGateText : null,
           followGateButtonText: requireFollow ? followGateButtonText : null,
           isActive: body.isActive as boolean,
+          sendDm: body.sendDm as boolean,
         },
       });
       const keptIds: string[] = [];
