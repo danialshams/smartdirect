@@ -36,7 +36,7 @@ function findReferences(rule: LiveRule) {
   }
   return { showcases, forms, media };
 }
-export async function validateLiveRuleReferences(rule: LiveRule, accountId: string, userId: string) {
+async function validateLiveRuleReferences(rule: LiveRule, accountId: string, userId: string) {
   const { showcases, forms, media } = findReferences(rule);
   if (showcases.size) {
     const count = await prisma.showcase.count({
