@@ -187,8 +187,6 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   const [requireFollow, setRequireFollow] = useState(() => initialEditState?.requireFollow ?? false);
   const [likeStoryReply, setLikeStoryReply] = useState(() => initialEditState?.likeStoryReply ?? false);
   const [isActive, setIsActive] = useState(() => initialEditState?.isActive ?? true);
-  const [deleting, setDeleting] = useState(false);
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [dmMode, setDmMode] = useState<"TEXT" | "TEXT_WITH_LINK">(() => initialEditState?.dmMode ?? "TEXT");
   const [followGateText, setFollowGateText] = useState(() => initialEditState?.followGateText ?? "برای دریافت پاسخ، ابتدا پیج ما را فالو کنید.");
   const [followGateButtonText, setFollowGateButtonText] = useState(() => initialEditState?.followGateButtonText ?? "بررسی فالو");
@@ -432,26 +430,6 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     if (!value || keywords.some((item) => item.toLocaleLowerCase() === value.toLocaleLowerCase()) || keywords.length >= MAX_KEYWORDS) return;
     setKeyword([...keywords, value].join(","));
     setKeywordDraft("");
-  }
-
-  async function deleteStoryAutomation() {
-    if (!editAutomation || triggerType !== "STORY_REPLY_KEYWORD" || deleting) return;
-    setDeleting(true);
-    setError("");
-    try {
-      const response = await fetch("/api/automations/" + encodeURIComponent(editAutomation.id), {
-        method: "DELETE",
-        credentials: "include",
-      });
-      const result = await response.json();
-      if (!response.ok || !result?.success) throw new Error(result?.error || "حذف پاسخ خودکار استوری ناموفق بود.");
-      router.push("/dashboard/story-automation", { scroll: true });
-    } catch (deleteError) {
-      setError(deleteError instanceof Error ? deleteError.message : "حذف پاسخ خودکار استوری ناموفق بود.");
-    } finally {
-      setDeleting(false);
-      setDeleteConfirmOpen(false);
-    }
   }
 
   async function saveAutomation(finalMessage?: MessageDraft) {
@@ -1349,24 +1327,10 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                   responseTypeDescription=""
                   storyCreateMode
                   storyEditMode={isEditing}
-                  finalActions={isEditing ? (
-                    <div className="flex flex-col gap-2">
-                      {extraMessages.length > 0 && (
-                        <p className="text-xs leading-6 text-[var(--daira-text)]">
-                          {new Intl.NumberFormat("fa-IR").format(extraMessages.length)} پیام اضافی قدیمی بدون تغییر حفظ می‌شود.
-                        </p>
-                      )}
-                      <button type="button" disabled={saving || deleting}
-                        onClick={() => setDeleteConfirmOpen(true)}
-                        className="sd-destructive-button flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[var(--daira-error-border)] bg-[var(--daira-error-background)] px-4 text-sm font-bold text-[var(--daira-error-text)] transition hover:brightness-95 disabled:opacity-50">
-                        <Trash2 size={17} aria-hidden="true" /> حذف پاسخ خودکار
-                      </button>
-                      <button type="button" disabled={saving || deleting}
-                        onClick={() => router.push("/dashboard/story-automation", { scroll: true })}
-                        className="sd-neutral-button min-h-11 rounded-xl border border-[var(--daira-border)] bg-white px-4 text-sm font-semibold text-[var(--daira-text)] transition hover:bg-[var(--daira-surface-hover)] disabled:opacity-50">
-                        انصراف و بازگشت
-                      </button>
-                    </div>
+                  finalActions={isEditing && extraMessages.length > 0 ? (
+                    <p className="text-xs leading-6 text-[var(--daira-text)]">
+                      {new Intl.NumberFormat("fa-IR").format(extraMessages.length)} پیام اضافی قدیمی بدون تغییر حفظ می‌شود.
+                    </p>
                   ) : undefined}
                   textPlaceholder="متنی که در پاسخ خودکار برای کاربر ارسال می‌شود..."
                 />
@@ -1412,24 +1376,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             </section>
           </div>
         )}
-        {isEditing && triggerType === "STORY_REPLY_KEYWORD" && deleteConfirmOpen && (
-          <div role="presentation" className="fixed inset-0 z-[2300] flex items-center justify-center bg-black/45 px-4"
-            onMouseDown={(event) => { if (event.target === event.currentTarget && !deleting) setDeleteConfirmOpen(false); }}>
-            <section dir="rtl" role="dialog" aria-modal="true" aria-labelledby="delete-story-automation-title"
-              className="w-full max-w-sm space-y-4 rounded-2xl bg-white p-5 shadow-2xl">
-              <h2 id="delete-story-automation-title" className="text-base font-bold text-[var(--daira-heading)]">حذف پاسخ خودکار استوری؟</h2>
-              <p className="text-sm leading-6 text-[var(--daira-text)]">این پاسخ از استوری جدا می‌شود و دیگر اجرا نخواهد شد.</p>
-              <div className="grid grid-cols-2 gap-2">
-                <button type="button" disabled={deleting} onClick={() => setDeleteConfirmOpen(false)}
-                  className="sd-neutral-button min-h-11 rounded-xl border border-[var(--daira-border)] bg-white text-sm font-semibold">انصراف</button>
-                <button type="button" disabled={deleting} onClick={() => void deleteStoryAutomation()}
-                  className="sd-destructive-button min-h-11 rounded-xl border border-[var(--daira-error-border)] bg-[var(--daira-error-background)] text-sm font-bold text-[var(--daira-error-text)] disabled:opacity-60">
-                  {deleting ? "در حال حذف..." : "بله، حذف شود"}
-                </button>
-              </div>
-            </section>
-          </div>
-        )}
+
     </div>
   );
 }
