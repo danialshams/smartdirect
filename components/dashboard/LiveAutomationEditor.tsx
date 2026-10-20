@@ -27,7 +27,7 @@ const emptyDraft = (): Draft => ({
 });
 function snapshot(draft: Draft) {
   return JSON.stringify({
-    keyword: draft.keyword.split(/[,،;؛\n]+/).map(s => s.trim()).filter(Boolean).join(","),
+    keyword: draft.matchMode === "CONTAINS_ANY" && !draft.keyword.trim() ? "" : draft.keyword.split(/[,،;؛\n]+/).map(s => s.trim()).filter(Boolean).join(","),
     matchMode: draft.matchMode, initialText: draft.initialText,
     followupEnabled: draft.followupEnabled,
     followupKeyword: draft.followupEnabled ? draft.followupKeyword : "",
@@ -130,7 +130,9 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
 
   const dirty = useMemo(() => snapshot(draft) !== initialSnapshot.current || showcaseDirty, [draft, showcaseDirty]);
   const keywords = useMemo(() => draft.keyword.split(/[,،;؛\n]+/).map(s => s.trim()).filter(Boolean), [draft.keyword]);
-  const basicValid = keywords.length > 0 && keywords.length <= 10 && draft.initialText.trim().length > 0 &&
+  const anyComment = draft.matchMode === "CONTAINS_ANY" && !draft.keyword.trim();
+  const legacySubstring = draft.matchMode === "CONTAINS_ANY" && Boolean(draft.keyword.trim());
+  const basicValid = (anyComment || (keywords.length > 0 && keywords.length <= 10)) && draft.initialText.trim().length > 0 &&
     draft.initialText.trim().length <= 1000 && (!draft.requireFollow ||
     (Boolean(draft.followGateText.trim()) && Boolean(draft.followGateButtonText.trim()) && draft.followGateButtonText.trim().length <= 20)) &&
     (!draft.followupEnabled || Boolean(draft.followupKeyword.trim()));
@@ -194,18 +196,26 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
   return (
     <div dir="rtl" className="mx-auto w-full max-w-4xl space-y-5 py-3 sm:py-4">
       <section>
-        <Guide number={1} title="کلمات کلیدی" hint="وقتی بیننده داخل لایو یکی از این عبارت‌ها را بنویسد، دایرکت ارسال می‌شود." />
+        <Guide number={1} title="شرط پاسخ‌دهی به کامنت لایو" hint={anyComment ? "برای هر کامنت متنی در لایو، بدون نیاز به کلمه کلیدی، پاسخ دایرکت ارسال می‌شود." : "وقتی بیننده یکی از عبارت‌های تعیین‌شده را در لایو بنویسد، پاسخ در دایرکت ارسال می‌شود."} />
         <div className="space-y-3 rounded-2xl border border-[#E2E8F0] bg-white p-4 sm:p-5">
-          <div className="grid gap-2 sm:grid-cols-2" role="group" aria-label="روش تشخیص عبارت لایو">
-            {([{ value: "EXACT", label: "عبارت دقیق" }, { value: "CONTAINS_ANY", label: "شامل کلمه" }] as const).map(item => (
-              <button key={item.value} type="button" aria-pressed={draft.matchMode === item.value}
-                onClick={() => patch({ matchMode: item.value })}
-                className={"min-h-11 rounded-xl border px-3 text-xs font-bold transition " + (draft.matchMode === item.value ? "border-[#2563EB] bg-[#EFF6FF] text-[#1D4ED8]" : "border-[#D8E0EC] bg-white text-[#475569]")}>
-                {item.label}
-              </button>
-            ))}
+          <div className="grid gap-2 sm:grid-cols-2" role="group" aria-label="روش فعال شدن پاسخ لایو">
+            <button type="button" aria-pressed={draft.matchMode === "EXACT"}
+              onClick={() => { patch({ matchMode: "EXACT" }); setKeywordDraft(""); }}
+              className={"min-h-11 rounded-xl border px-3 text-xs font-bold transition " + (draft.matchMode === "EXACT" ? "border-[#2563EB] bg-[#EFF6FF] text-[#1D4ED8]" : "border-[#D8E0EC] bg-white text-[#475569]")}>
+              کلمات کلیدی مشخص
+            </button>
+            <button type="button" aria-pressed={anyComment}
+              onClick={() => { patch({ matchMode: "CONTAINS_ANY", keyword: "" }); setKeywordDraft(""); }}
+              className={"min-h-11 rounded-xl border px-3 text-xs font-bold transition " + (anyComment ? "border-[#2563EB] bg-[#EFF6FF] text-[#1D4ED8]" : "border-[#D8E0EC] bg-white text-[#475569]")}>
+              هر کامنتی
+            </button>
+            {legacySubstring && (
+              <div className="sm:col-span-2 rounded-xl border border-[#D8E0EC] bg-[#F8FAFC] p-3 text-xs leading-6 text-[#475569]">
+                تنظیم قدیمی «شامل یکی از عبارت‌ها» فعال است. برای حفظ آن، عبارت‌های زیر قابل ویرایش‌اند؛ یا می‌توانی «هر کامنتی» را انتخاب کنی.
+              </div>
+            )}
           </div>
-          {keywords.length > 0 && (
+          {!anyComment && keywords.length > 0 && (
             <div className="mb-3 flex flex-wrap gap-2">
               {keywords.map(item => (
                 <span key={item} className="inline-flex items-center gap-1.5 rounded-full bg-[var(--daira-outline-hover-bg)] px-3 py-1.5 text-xs font-semibold text-[var(--daira-primary)]">
@@ -216,7 +226,7 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
               ))}
             </div>
           )}
-          <div>
+          {!anyComment && <div>
             <div className="mb-2 flex items-center justify-between gap-2">
               <label htmlFor="live-keyword" className="block text-xs text-[var(--daira-text)]">حداکثر {MAX_KEYWORDS} کلمه کلیدی</label>
               <span className="text-[11px] text-[var(--daira-text)]">{keywords.length} از {MAX_KEYWORDS}</span>
@@ -229,12 +239,12 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
               <button type="button" onClick={addKeyword} disabled={!keywordDraft.trim() || keywords.length >= MAX_KEYWORDS}
                 className="min-h-11 shrink-0 rounded-lg bg-[var(--daira-primary)] px-3.5 text-xs font-semibold text-white transition hover:bg-[var(--daira-primary-hover)] disabled:bg-[var(--daira-disabled-bg)] disabled:text-[var(--daira-disabled-text)]">افزودن</button>
             </div>
-          </div>
+          </div>}
         </div>
       </section>
 
       <section>
-        <Guide number={2} title="متن پاسخ در دایرکت کاربر" hint="این متن پس از ارسال کلمه کلیدی در لایو، به دایرکت کاربر ارسال می‌شود." />
+        <Guide number={2} title="متن پاسخ در دایرکت کاربر" hint={anyComment ? "با ارسال هر کامنت متنی در لایو، این پاسخ در دایرکت کاربر ارسال می‌شود." : "پس از ارسال کلمه کلیدی مشخص در لایو، این پاسخ در دایرکت کاربر ارسال می‌شود."} />
         <div className="space-y-2 rounded-2xl border border-[#E2E8F0] bg-white p-4 sm:p-5">
           <label htmlFor="live-intro" className="block text-xs font-semibold text-[#334155]">متن پاسخ در دایرکت کاربر</label>
           <textarea id="live-intro" rows={4} maxLength={1000} value={draft.initialText} onChange={e => patch({ initialText: e.target.value })}
