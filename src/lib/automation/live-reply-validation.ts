@@ -111,7 +111,21 @@ export function serializeLiveQuickReply(item: QuickReplyDraft) {
   };
 }
 
-export function liveReplyOptionsOverlap(a: string, b: string) {
-  const aa = new Set(splitAutomationKeywords(a));
-  return splitAutomationKeywords(b).some(w => aa.has(w));
+export function liveReplyOptionsOverlap(
+  a: string, b: string,
+  aMode: "EXACT" | "CONTAINS_ANY" = "EXACT",
+  bMode: "EXACT" | "CONTAINS_ANY" = "EXACT",
+) {
+  const existing = splitAutomationKeywords(a);
+  const incoming = splitAutomationKeywords(b);
+  return existing.some(left => incoming.some(right => {
+    if (left === right) return true;
+    // EXACT + EXACT can coexist. When either rule matches substrings, a
+    // phrase containing the other rule's keyword could match both rules.
+    if (aMode === "CONTAINS_ANY" && right.includes(left)) return true;
+    if (bMode === "CONTAINS_ANY" && left.includes(right)) return true;
+    // Two substring triggers with a shared overlap are also ambiguous when
+    // one configured keyword is contained in the other.
+    return false;
+  }));
 }
