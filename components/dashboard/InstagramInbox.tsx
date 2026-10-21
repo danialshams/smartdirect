@@ -1318,8 +1318,8 @@ export default function InstagramInbox({
           {(
             [
               ["ALL", "همه", conversations.length],
-              ["READ", "خوانده", readTotal]
-              ["UNREAD", "خوانده‌نشده", unreadTotal]
+              ["READ", "خوانده", readTotal],
+              ["UNREAD", "خوانده‌نشده", unreadTotal],
             ] as const
           ).map(([value, label, count]) => (
             <button
