@@ -80,3 +80,6 @@ jobs:
 
       - name: Test modern Instagram inbox regressions
         run: npx tsx scripts/test-inbox-modern.ts
+
+      - name: Test redesigned direct menu
+        run: npx tsx scripts/test-persistent-menu-redesign.ts
