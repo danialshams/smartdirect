@@ -1,7 +1,7 @@
 "use client";
 import { DashboardLoading } from "@/components/dashboard/DashboardUI";
 import { Loader2, X } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import PublishingStoryAutomationSetup from "./publishing/PublishingStoryAutomationSetup";
 
@@ -29,6 +29,7 @@ type EntryPointFlowBuilderProps = {
     hideVideo?: boolean;
     modernResponseFlow?: boolean;
     canSave?: boolean;
+    onResponseDirtyChange?: (dirty: boolean) => void;
     triggerType?: "DM" | "COMMENT_KEYWORD" | "STORY_REPLY_KEYWORD";
     keyword?: string;
     onKeywordChange?: (value: string) => void;
@@ -80,6 +81,34 @@ const MESSAGE_TYPES = [
 ] as const;
 
 
+/**
+ * Compare the content that is actually sent to the recipient. Generated record
+ * IDs and payload tokens must not make an unchanged response look modified.
+ */
+function responseFingerprint(message: MessageDraft): string {
+    const replies = (items: QuickReplyDraft[]): unknown[] => items.map((item) => ({
+        isExit: item.isExit ?? false,
+        title: item.title,
+        destinationType: item.destinationType,
+        destinationText: item.destinationText,
+        destinationFormId: item.destinationFormId,
+        destinationShowcaseId: item.destinationShowcaseId,
+        destinationMediaUrl: item.destinationMediaUrl,
+        destinationMediaId: item.destinationMediaId,
+        destinationQuestion: item.destinationQuestion,
+        destinationQuickReplies: replies(item.destinationQuickReplies),
+    }));
+    return JSON.stringify({
+        messageType: message.messageType,
+        text: message.text,
+        mediaUrl: message.mediaUrl,
+        mediaId: message.mediaId,
+        showcaseId: message.showcaseId,
+        formId: message.formId,
+        quickReplies: replies(message.quickReplies),
+    });
+}
+
 function ModernResponseSkeleton() {
     return (
         <div role="status" aria-label="در حال دریافت تنظیمات پاسخ" className="space-y-4">
@@ -114,6 +143,7 @@ export default function EntryPointFlowBuilder({
     hideVideo = false,
     modernResponseFlow = false,
     canSave = true,
+    onResponseDirtyChange,
     triggerType = "DM",
     keyword = "",
     onKeywordChange,
@@ -132,6 +162,8 @@ export default function EntryPointFlowBuilder({
 }: EntryPointFlowBuilderProps) {
     const [messages, setMessages] =
         useState<MessageDraft[]>([]);
+    const originalResponseRef = useRef<string | null>(null);
+    const [showcaseDraftChanged, setShowcaseDraftChanged] = useState(false);
     const [keywordDraft, setKeywordDraft] = useState("");
 
     const [showcases, setShowcases] =
@@ -266,6 +298,7 @@ export default function EntryPointFlowBuilder({
 
         async function loadAutomation() {
             if (!automationId) {
+                originalResponseRef.current = null;
                 setMessages([]);
                 setLoadedAutomationId(null);
                 return;
@@ -308,15 +341,15 @@ export default function EntryPointFlowBuilder({
                 }
 
                 const loadedMessages = normalizeMessages(result.data?.messages);
-                if (loadedMessages.length > 0) {
-                    setMessages(loadedMessages);
-                } else if (result.data?.replyText?.trim()) {
-                    // Older automations may store the DM response on Automation.replyText
-                    // instead of an AutomationMessage record. Populate the editor from it.
-                    setMessages([{ ...createEmptyMessage(), text: result.data.replyText }]);
-                } else {
-                    setMessages([]);
-                }
+                const originalMessage = loadedMessages[0] ??
+                    (result.data?.replyText?.trim()
+                        ? { ...createEmptyMessage(), text: result.data.replyText }
+                        : createEmptyMessage());
+                originalResponseRef.current = responseFingerprint(originalMessage);
+                setShowcaseDraftChanged(false);
+                setMessages(loadedMessages.length > 0 || result.data?.replyText?.trim()
+                    ? [originalMessage]
+                    : []);
 
                 setLoadedAutomationId(
                     automationId,
@@ -803,6 +836,16 @@ export default function EntryPointFlowBuilder({
      * ---------------------------------------------------------
      */
 
+    // The menu edit button is enabled only when the loaded response actually
+    // differs from its original content (including nested form branches).
+    useEffect(() => {
+        if (!onResponseDirtyChange || !automationId ||
+            loadedAutomationId !== automationId || originalResponseRef.current === null) return;
+        const changed = responseFingerprint(messages[0] ?? createEmptyMessage()) !== originalResponseRef.current
+            || showcaseDraftChanged;
+        onResponseDirtyChange(changed);
+    }, [automationId, loadedAutomationId, messages, showcaseDraftChanged, onResponseDirtyChange]);
+
     const currentMessage = messages[0] ?? createEmptyMessage();
     const keywordItems = keyword.split(/[\\n,،;؛]+/).map((item) => item.trim()).filter(Boolean).filter((item, index, list) => list.findIndex((value) => value.toLocaleLowerCase() === item.toLocaleLowerCase()) === index);
 
@@ -892,6 +935,7 @@ export default function EntryPointFlowBuilder({
                         hideVideo={hideVideo}
                         storyCreateMode={modernResponseFlow}
                         storyEditMode={modernResponseFlow && Boolean(automationId)}
+                        onDraftChange={modernResponseFlow && Boolean(automationId) ? setShowcaseDraftChanged : undefined}
                         textOnly={textOnly}
                         extraSettings={optionalSettings}
                         finalActions={finalActions}
