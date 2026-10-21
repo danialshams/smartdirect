@@ -26,7 +26,11 @@ import {
     type MessageDraft,
     type Showcase
 } from "../automation-form-utils";
-import PublishingStoryAutomationSetup, { type PublishingStoryAutomationSetupHandle } from "./PublishingStoryAutomationSetup";
+import dynamic from "next/dynamic";
+import type { PublishingStoryAutomationSetupHandle } from "./PublishingStoryAutomationSetup";
+const PublishingStoryAutomationSetup = dynamic(() => import("./PublishingStoryAutomationSetup"), {
+  loading: () => <PublishingPageSkeleton view="editor" />,
+});
 import { useStorageUploadLease } from "./useStorageUploadLease";
 
 type PublishType = "POST" | "CAROUSEL" | "REEL" | "STORY";
@@ -803,7 +807,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     return () => clearTimeout(handle);
   }, [jobs, router]);
 
-  useEffect(() => { if (selectedAccountId) void loadResources(selectedAccountId); }, [selectedAccountId]);
+  useEffect(() => { if (selectedAccountId && automationEnabled && type === "STORY") void loadResources(selectedAccountId); }, [selectedAccountId, automationEnabled, type]);
 
   function revokeLocalMedia(items: LocalMedia[]) { items.forEach((item) => URL.revokeObjectURL(item.previewUrl)); }
   function clearLocalMedia() { uploadQueueRef.current = []; setUploadRows([]); setMedia((current) => { revokeLocalMedia(current); return []; }); }
