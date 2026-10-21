@@ -1615,9 +1615,9 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
             {!selectionConfirmed ? (
               <section className="mx-auto w-full max-w-4xl">
-                <div className="mb-5">
-                  <h1 className="text-lg font-extrabold text-[#18233C]">چه محتوایی می‌خواهید منتشر کنید؟</h1>
-                  <p className="mt-1 text-xs leading-6 text-[#5A6B87]">نوع محتوا را انتخاب کنید تا فقط تنظیمات مرتبط با آن نمایش داده شود.</p>
+                <div className="mb-5 rounded-[22px] border border-[#DFE7F3] bg-white px-4 py-4 shadow-sm sm:px-5">
+                  <h1 className="text-base font-extrabold text-[#18233C]">نوع محتوای جدید</h1>
+                  <p className="mt-1.5 text-xs leading-6 text-[#5A6B87]">یکی از چهار قالب زیر را انتخاب کن؛ در ادامه فقط تنظیمات مرتبط را می‌بینی.</p>
                 </div>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                   {([["POST","پست",ImagePlus],["CAROUSEL","آلبوم",Images],["REEL","ریلز",Clapperboard],["STORY","استوری",Camera]] as const).map(([value,label,Icon])=>(
@@ -1632,18 +1632,27 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             ) : (type !== "STORY" && !captionStepConfirmed) || uploadedMedia.length === 0 || uploadSuccess || (type === "STORY" && showUploadedMediaPreview) ? (
               <section className="mx-auto w-full max-w-3xl">
 
-                <div className={uploadedMedia.length > 0 && !uploading && !uploadSuccess ? "p-0" : "rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6"}>
+                <div className="rounded-[24px] border border-[#DFE7F3] bg-white p-4 shadow-[0_5px_24px_rgba(22,54,110,.035)] sm:p-6">
                   <>
-                      {!(uploadedMedia.length > 0 && !uploading && !uploadSuccess) && <SectionHeader n="۲" title={uploadTitle} text={uploadInstruction} />}
+                      <SectionHeader n="۱" title="رسانهٔ محتوا" text={uploadInstruction} />
                       <div className="relative">
                         {type !== "CAROUSEL" && !uploading && !uploadSuccess && uploadedMedia.length > 0 ? (
-                          <div className="flex flex-col items-center justify-center gap-3 py-2">
-                            <div className="w-32 sm:w-40">
-                              <MediaTile item={uploadedMedia[0]} type={type} onRemove={() => void removeUploaded(uploadedMedia[0])} ready compact bare />
+                          <div className="rounded-[22px] border border-[#DFE7F3] bg-[#F6F9FF] p-4 sm:p-5">
+                            <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-center sm:gap-7">
+                              <div className="w-full max-w-[250px] shrink-0 sm:w-52">
+                                <MediaTile item={uploadedMedia[0]} type={type} onRemove={() => void removeUploaded(uploadedMedia[0])} ready />
+                              </div>
+                              <div className="flex min-w-0 flex-1 flex-col items-center gap-3 text-center sm:items-start sm:text-right">
+                                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#EAF8EF] text-[#16A34A]"><CheckCircle2 size={24}/></span>
+                                <div>
+                                  <p className="text-sm font-extrabold text-[#18233C]">رسانه آماده است</p>
+                                  <p dir="auto" className="mt-2 max-w-[270px] truncate text-xs text-[#5A6B87]">{uploadedMedia[0].fileName}</p>
+                                </div>
+                                <p className="text-xs leading-6 text-[#5A6B87]">پیش‌نمایش محتوا را بررسی کن. برای جایگزینی می‌توانی همین فایل را حذف کنی و رسانهٔ دیگری اضافه کنی.</p>
+                                <button type="button" onClick={() => void removeUploaded(uploadedMedia[0])}
+                                  className="inline-flex min-h-10 items-center gap-2 rounded-full border border-[#FECACA] bg-white px-4 text-xs font-semibold text-[#B91C1C]"><Trash2 size={15}/> جایگزینی رسانه</button>
+                              </div>
                             </div>
-                            <Button type="button" onClick={() => void removeUploaded(uploadedMedia[0])} className="!min-h-9 !rounded-lg !border !border-[#FECACA] !bg-[#FEF2F2] !px-4 !text-xs !font-semibold !text-[#DC2626] !shadow-none hover:!bg-[#FEE2E2] hover:!text-[#B91C1C]">
-                              <Trash2 size={14} /> پاک کردن
-                            </Button>
                           </div>
                         ) : (
                           <>
@@ -1667,7 +1676,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                             {type !== "CAROUSEL" && uploadSuccess && (
                               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 rounded-xl border border-[#BBF7D0] bg-[#F0FDF4]/95 px-4 text-center" role="status" aria-live="polite">
                                 <UploadSuccessMark />
-                                <span className="text-sm font-semibold text-[#15803D]">آپلود با موفقیت انجام شد؛ در حال رفتن به مرحله بعد</span>
+                                <span className="text-sm font-semibold text-[#15803D]">آپلود کامل شد؛ رسانه آمادهٔ استفاده است</span>
                               </div>
                             )}
                           </>
@@ -1739,9 +1748,9 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                       )}
 
                       {type === "CAROUSEL" && uploadedMedia.length > 0 && (
-                        <div className="mt-5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2.5 text-center">
-                          <p className="text-sm font-bold text-[#334155]">ترتیب اسلایدهای آلبوم</p>
-                          <p className="mt-1 text-[11px] leading-5 text-[#64748B]">{toPersianDigits(uploadedMedia.length)} از ۱۰ اسلاید آماده است. ردیف را با انگشت بگیر و به بالا یا پایین بکش؛ ترتیب هنگام حرکت تغییر می‌کند.</p>
+                        <div className="mt-5 rounded-[18px] border border-[#DFE7F3] bg-[#F6F9FF] px-4 py-3.5 text-right">
+                          <div className="flex items-center gap-2"><Images size={17} className="text-[#2F61FD]" /><p className="text-sm font-bold text-[#18233C]">آلبوم: {toPersianDigits(uploadedMedia.length)} اسلاید از ۱۰</p></div>
+                          <p className="mt-2 text-xs leading-6 text-[#5A6B87]">با نگه‌داشتن و کشیدن هر ردیف ترتیب اسلایدها را تغییر بده. پس از آماده‌شدن حداقل دو اسلاید، مرحلهٔ «جزئیات» در بالا فعال می‌شود.</p>
                         </div>
                       )}
                       {type === "CAROUSEL" && uploadedMedia.length >= 10 && (
@@ -1752,9 +1761,6 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               </section>
             ) : type !== "STORY" && !automationChoiceStepStarted ? (
               <div className="mx-auto w-full max-w-4xl space-y-4">
-                <div className="flex items-center justify-between gap-2">
-
-                </div>
                 <section className="w-full rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
                   <div className="mb-4 flex items-center justify-between gap-3">
                     <div>
@@ -1834,7 +1840,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               <div className="mx-auto w-full max-w-2xl">
                 
                 <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
-                  <div className="mb-6 flex items-start gap-3">
+                  <div className="mb-6 flex items-start gap-3 rounded-2xl border border-[#DFE7F3] bg-[#F6F9FF] px-4 py-3.5">
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2F61FD]/10 text-xs font-bold text-[#2F61FD]">۳</span>
                     <div className="min-w-0">
                       <h2 className="text-sm font-bold text-[#18233C]">پاسخ خودکار <span className="text-[#2F61FD]">(اختیاری)</span></h2>
