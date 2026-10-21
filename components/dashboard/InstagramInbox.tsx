@@ -1334,7 +1334,7 @@ export default function InstagramInbox({
                 key={conversation.id}
                 type="button"
                 onClick={() => selectConversation(conversation.id)}
-                className={`group flex w-full min-h-[72px] items-center gap-3 rounded-2xl px-3 py-3 text-right transition ${
+                className={`group flex w-full min-h-[56px] items-center gap-2 rounded-xl px-2 py-2 text-right transition ${
                   active
                     ? "bg-[#EBF2FF] ring-1 ring-[#DCE8FF]"
                     : "hover:bg-[#F5F8FE]"
