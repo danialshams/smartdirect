@@ -12,6 +12,9 @@ import { CSS } from "@dnd-kit/utilities";
 import { WheelPicker, type WheelPickerOption } from "@ncdai/react-wheel-picker";
 import "@ncdai/react-wheel-picker/style.css";
 import { toast } from "sonner";
+import PublishingWizardProgress from "./PublishingWizardProgress";
+import PublishingQueue from "./PublishingQueue";
+import PublishingPageSkeleton from "./PublishingPageSkeleton";
 import { type JalaliDate } from "./PersianDatePicker";
 
 import {
@@ -513,6 +516,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const [publishResult, setPublishResult] = useState<"PUBLISHED" | "FAILED" | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [type, setType] = useState<PublishType>("POST");
+  const [activeTab, setActiveTab] = useState<"create" | "queue">("create");
   const [selectionConfirmed, setSelectionConfirmed] = useState(false);
   const [captionStepConfirmed, setCaptionStepConfirmed] = useState(false);
   const [tagStepConfirmed, setTagStepConfirmed] = useState(false);
@@ -1343,9 +1347,9 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     if (!uploadedMedia.length) { setError("ابتدا فایل را آپلود کنید."); return; }
     if (type === "CAROUSEL" && uploadedMedia.length < 2) { setError("آلبوم باید حداقل ۲ اسلاید داشته باشد."); return; }
     if (type !== "CAROUSEL" && uploadedMedia.length !== 1) { setError(`${typeLabels[type]} باید دقیقاً یک فایل داشته باشد.`); return; }
-    const selectedScheduleDate = !publishNow && type !== "STORY" ? stage6Date : scheduledDate;
-    const selectedHour = !publishNow && type !== "STORY" ? stage6Hour : hour;
-    const selectedMinute = !publishNow && type !== "STORY" ? stage6Minute : minute;
+    const selectedScheduleDate = !publishNow ? stage6Date : scheduledDate;
+    const selectedHour = !publishNow ? stage6Hour : hour;
+    const selectedMinute = !publishNow ? stage6Minute : minute;
     if (!publishNow && (!selectedScheduleDate || selectedHour === null || selectedMinute === null)) {
       setError("تاریخ، ساعت و دقیقه انتشار را انتخاب کن.");
       return;
@@ -1400,6 +1404,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       if (publishNow) {
         setJobs((current) => [job, ...current.filter((item) => item.id !== job.id)]);
         setActivePublishJobId(job.id);
+        setActiveTab("queue");
         setPublishResultVisible(true);
         setPublishResult(null);
         knownJobIdsRef.current.add(job.id);
@@ -1445,6 +1450,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       } else {
         knownJobIdsRef.current.add(job.id);
         setJobs((current) => [job, ...current.filter((item) => item.id !== job.id)]);
+        setActiveTab("queue");
         toast.success(`${typeLabels[type]} برای زمان ${formatScheduledLabel(scheduled!)} تنظیم شد.`, { icon: <Clock3 size={18} className="text-[#2563EB]" /> });
         setCaption(""); setUploadedMedia([]); setShowUploadedMediaPreview(false); resetAutomation(); setUploadProgress(0); setScheduledDate(todayJalali); setHour(officialTehranClock.hour); setMinute(officialTehranClock.minute); setStage6Date(todayJalali); setStage6Hour(officialTehranClock.hour); setStage6Minute(officialTehranClock.minute);
         animateStepChange(() => {
