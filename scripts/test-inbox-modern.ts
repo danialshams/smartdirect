@@ -23,6 +23,21 @@ assert.ok(inChatSearchField, "In-chat search field must be present");
 assert.ok(inChatSearchField.includes('text-base') && inChatSearchField.includes('fontSize: "16px"'), "In-chat search must remain at least 16px to prevent Safari/iOS input auto-zoom");
 assert.ok(inChatSearchField.includes('WebkitTextSizeAdjust: "100%"'), "In-chat search must not auto-adjust text size on mobile Safari");
 assert.ok(!inChatSearchField.includes("autoFocus"), "Opening search must not automatically raise the mobile keyboard");
+
+const chatSearchAnchor = component.indexOf('id="inbox-conversation-search"');
+const chatHeaderStart = component.indexOf('<header className="inbox-chat-header');
+const chatHeaderEnd = component.indexOf("</header>", chatHeaderStart);
+assert.ok(chatHeaderStart >= 0 && chatSearchAnchor > chatHeaderStart && chatSearchAnchor < chatHeaderEnd,
+  "Search must be layered within the fixed-height chat header, not added to the message layout");
+assert.ok(component.includes('role="search" className="absolute top-full right-0 left-0 z-40'),
+  "Expanding in-chat search must overlay messages without changing their height");
+assert.ok(component.includes('touch-manipulation') && component.includes('aria-controls="inbox-conversation-search"'),
+  "Search controls must prevent iOS double-tap zoom and expose their panel");
+assert.ok(!component.includes('.scrollIntoView('),
+  "Search results should never scroll the outer page or shift the mobile chat viewport");
+assert.ok(component.includes('messageRect.top - containerRect.top'),
+  "Search result scrolling must be confined to the messages container");
+
 assert.ok(!component.includes("persistQuickReplies") && !component.includes("showQuickReplies") && !component.includes("MessageSquareText"), "Quick reply controls must not be shown");
 assert.ok(!component.includes("toggleHumanMode") && !component.includes("handoffBusy"), "Human response toggle must not be shown");
 assert.ok(!component.includes("NEEDS_REPLY") && !component.includes("نیازمند پاسخ"), "Needs-reply tab must be removed");
