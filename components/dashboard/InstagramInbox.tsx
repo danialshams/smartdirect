@@ -388,6 +388,8 @@ export default function InstagramInbox({
   const [sending, setSending] = useState(false);
   const [text, setText] = useState("");
   const [search, setSearch] = useState("");
+  const [searchResults, setSearchResults] = useState<Conversation[]>([]);
+  const [searchingThreads, setSearchingThreads] = useState(false);
   const [filter, setFilter] = useState<InboxFilter>("ALL");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [error, setError] = useState("");
@@ -1066,6 +1068,9 @@ export default function InstagramInbox({
   }
 
   function selectConversation(conversationId: string) {
+    const discovered = searchResults.find((item) => item.id === conversationId);
+    if (discovered) setConversations((current) =>
+      current.some((item) => item.id === conversationId) ? current : [discovered, ...current]);
     if (conversationId === selectedId) {
       setMobileChatOpen(true);
       return;
@@ -1130,18 +1135,34 @@ export default function InstagramInbox({
     else await sendTextMessage(payload.text);
   }
 
-  const filteredConversations = conversations.filter((conversation) => {
+  useEffect(() => {
+    if (!search.trim() || !accountId) {
+      setSearchResults([]);
+      setSearchingThreads(false);
+      return;
+    }
+    let valid = true;
+    const timer = window.setTimeout(async () => {
+      setSearchingThreads(true);
+      try {
+        const params = new URLSearchParams({ accountId, conversationSearch: search.trim() });
+        const response = await fetch(`/api/instagram/inbox?${params.toString()}`, { cache: "no-store" });
+        const result = await readApiResult(response);
+        if (valid) setSearchResults(response.ok ? result.conversations || [] : []);
+      } catch {
+        if (valid) setSearchResults([]);
+      } finally {
+        if (valid) setSearchingThreads(false);
+      }
+    }, 300);
+    return () => { valid = false; window.clearTimeout(timer); };
+  }, [accountId, search]);
+
+  const filteredConversations = (search.trim() ? searchResults : conversations).filter((conversation) => {
     if (filter === "UNREAD" && !(conversation.unreadCount || 0)) return false;
     if (filter === "READ" && (conversation.unreadCount || 0) > 0) return false;
 
-    const query = search.trim().toLowerCase();
-    if (!query) return true;
-
-    return (
-      displayName(conversation).toLowerCase().includes(query) ||
-      conversation.participantId.toLowerCase().includes(query) ||
-      preview(conversation.messages[0]).toLowerCase().includes(query)
-    );
+    return true;
   });
 
   const unreadTotal = conversations.filter(
@@ -1310,6 +1331,8 @@ export default function InstagramInbox({
       <div className="min-h-0 flex-1 overflow-y-auto px-2.5 py-3 sm:px-3">
         {(accountsLoading || (connectedAccounts.length > 0 && (!accountId || loading))) && !conversations.length ? (
           <DashboardLoading label="در حال دریافت گفتگوها..." className="dashboard-loading--fill" />
+        ) : searchingThreads && search.trim() ? (
+          <DashboardLoading label="در حال جست‌وجوی گفتگوها..." className="dashboard-loading--fill" />
         ) : filteredConversations.length ? (
           <>
           {filteredConversations.map((conversation) => {
