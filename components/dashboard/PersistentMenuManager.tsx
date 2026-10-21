@@ -2,11 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ArrowLeft, Check, CircleCheck, ExternalLink, Lightbulb, Link2,
-  Menu, MessageSquareText, Pencil, Plus, RefreshCw, Trash2, X,
+  Check, CircleCheck, ExternalLink, Lightbulb, Link2,
+  Menu, MessageSquareText, Pencil, Plus, Trash2, X,
 } from "lucide-react";
 import { dairaPalette } from "../../lib/design-system/palette";
 import EntryPointFlowBuilder from "./EntryPointFlowBuilder";
+import { normalizePersistentMenuUrl } from "@/lib/instagram/persistent-menu-url";
 
 type Account = {
   id: string;
@@ -70,7 +71,7 @@ function Guide({ numberText, title, description }: { numberText: number; title: 
 
 function MenuSkeleton() {
   return (
-    <div role="status" aria-label="در حال دریافت گزینه‌های منوی دایرکت" className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_280px]">
+    <div role="status" aria-label="در حال دریافت گزینه‌های منوی دایرکت" className="w-full">
       <span className="sr-only">در حال دریافت منو...</span>
       <div className="space-y-3 rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
         <div className="mb-5 flex items-center justify-between">
@@ -85,12 +86,7 @@ function MenuSkeleton() {
           </div>
         ))}
       </div>
-      <div className="space-y-4 rounded-2xl border border-[var(--daira-border)] bg-white p-5">
-        <div className="daira-skeleton__bar h-4 w-32" />
-        <div className="daira-skeleton__bar h-24 w-full rounded-xl" />
-        <div className="daira-skeleton__bar h-10 w-full rounded-xl" />
-        <div className="daira-skeleton__bar h-10 w-full rounded-xl" />
-      </div>
+
     </div>
   );
 }
@@ -119,14 +115,6 @@ function normalizeMenu(items: ServerItem[]): MenuItem[] {
   });
 }
 
-function validLink(value: string) {
-  try {
-    const parsed = new URL(value.trim());
-    return parsed.protocol === "https:" || parsed.protocol === "http:";
-  } catch {
-    return false;
-  }
-}
 
 export default function PersistentMenuManager({
   accounts,
@@ -207,8 +195,9 @@ export default function PersistentMenuManager({
       setError("عنوان گزینه را بین ۱ تا ۳۰ کاراکتر وارد کن.");
       return;
     }
-    if (draft.type === "web_url" && !validLink(draft.url)) {
-      setError("آدرس لینک را با https:// یا http:// وارد کن.");
+    const normalizedUrl = draft.type === "web_url" ? normalizePersistentMenuUrl(draft.url) : null;
+    if (draft.type === "web_url" && !normalizedUrl) {
+      setError("لینک واردشده معتبر نیست.");
       return;
     }
     if (draft.type === "postback" && !automationId) {
@@ -219,7 +208,7 @@ export default function PersistentMenuManager({
       id: draft.id || "",
       label,
       type: draft.type,
-      url: draft.type === "web_url" ? draft.url.trim() : "",
+      url: draft.type === "web_url" ? normalizedUrl! : "",
       automationId: draft.type === "web_url" ? null : automationId,
     };
     const updated = draft.id
@@ -253,7 +242,7 @@ export default function PersistentMenuManager({
       const result = await readResult(response);
       if (!response.ok || !result.success) throw new Error(result.error || "ذخیره منو ناموفق بود.");
       setEditor(null);
-      setNotice(draft.id ? "تغییرات گزینه ذخیره شد." : "گزینهٔ جدید به منوی دایرکت اضافه شد.");
+      setNotice(draft.id ? "تغییرات گزینه ذخیره شد." : "گزینه جدید به منوی دایرکت اضافه شد.");
       await loadItems(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "ذخیره منو ناموفق بود.");
@@ -303,12 +292,12 @@ export default function PersistentMenuManager({
 
   return (
     <div dir="rtl" className="mx-auto w-full max-w-5xl px-1 py-2 sm:px-2 sm:py-4">
-      <header className="mb-5 flex items-start gap-3">
+      <section aria-labelledby="persistent-menu-heading" className="mb-5 flex items-start gap-3 rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
         <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[var(--daira-surface-hover)] text-[var(--daira-primary)]">
           <Menu size={23} aria-hidden="true" />
         </span>
         <div className="min-w-0 flex-1">
-          <h1 className="text-lg font-extrabold text-[var(--daira-heading)]">منوی دایرکت</h1>
+          <h1 id="persistent-menu-heading" className="text-lg font-extrabold text-[var(--daira-heading)]">منوی دایرکت</h1>
           <p className="mt-1 text-xs leading-6 text-[var(--daira-text)]">
             گزینه‌هایی که مخاطب در دایرکت می‌بیند را بساز و برای هرکدام پاسخ خودکار یا لینک تنظیم کن.
           </p>
@@ -319,14 +308,7 @@ export default function PersistentMenuManager({
             </span>
           )}
         </div>
-        {account && (
-          <button type="button" onClick={() => void loadItems()} disabled={saving || loading}
-            aria-label="به‌روزرسانی منوی دایرکت"
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[var(--daira-border)] bg-white text-[var(--daira-text)] transition hover:bg-[var(--daira-surface-hover)] disabled:opacity-50">
-            <RefreshCw size={18} />
-          </button>
-        )}
-      </header>
+      </section>
 
       {error && (
         <div role="alert" className="mb-4 flex items-start justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs leading-6 text-red-700">
@@ -348,7 +330,7 @@ export default function PersistentMenuManager({
         </section>
       ) : (
         <>
-          <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_280px]">
+          <div className="w-full">
             <section className="min-w-0 rounded-2xl border border-[var(--daira-border)] bg-white p-3 sm:p-5">
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div>
@@ -359,7 +341,7 @@ export default function PersistentMenuManager({
                 </div>
                 <button type="button" onClick={() => openEditor()} disabled={!canCreate}
                   className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[var(--daira-primary)] px-4 text-xs font-bold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">
-                  <Plus size={17} /> گزینهٔ جدید
+                  <Plus size={17} /> گزینه جدید
                 </button>
               </div>
 
@@ -367,7 +349,7 @@ export default function PersistentMenuManager({
                 <div className="flex min-h-40 flex-col items-center justify-center rounded-xl border border-dashed border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-4 text-center">
                   <MessageSquareText size={26} className="text-[var(--daira-text)]" />
                   <p className="mt-3 text-sm font-bold text-[var(--daira-heading)]">هنوز گزینه‌ای ساخته نشده</p>
-                  <p className="mt-1.5 text-xs leading-6 text-[var(--daira-text)]">با «گزینهٔ جدید» اولین گزینه را بساز.</p>
+                  <p className="mt-1.5 text-xs leading-6 text-[var(--daira-text)]">با «گزینه جدید» اولین گزینه را بساز.</p>
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -397,33 +379,13 @@ export default function PersistentMenuManager({
               </p>
             </section>
 
-            <aside className="min-w-0 rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5 lg:sticky lg:top-28">
-              <div className="mb-3 flex items-center gap-2">
-                <Menu size={16} className="text-[var(--daira-primary)]" />
-                <h2 className="text-sm font-extrabold text-[var(--daira-heading)]">پیش‌نمایش منو</h2>
-              </div>
-              <p className="mb-4 text-[11px] leading-6 text-[var(--daira-text)]">شکل تقریبی گزینه‌ها در دایرکت اینستاگرام</p>
-              <div className="overflow-hidden rounded-2xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] p-3">
-                <div className="mb-3 flex items-center justify-center gap-2 border-b border-[var(--daira-border)] pb-3 text-xs font-bold text-[var(--daira-heading)]">
-                  <MessageSquareText size={15} /> منو
-                </div>
-                <div className="space-y-1.5">
-                  {items.length ? items.map((item) => (
-                    <div key={item.id} className="flex min-h-10 items-center gap-2 rounded-lg border border-[var(--daira-border)] bg-white px-3 py-2 text-xs font-semibold text-[var(--daira-heading)]">
-                      {item.type === "web_url" ? <ExternalLink size={14} className="shrink-0 text-[var(--daira-primary)]" /> : <MessageSquareText size={14} className="shrink-0 text-[var(--daira-primary)]" />}
-                      <span className="min-w-0 flex-1 break-words">{item.label}</span>
-                      <ArrowLeft size={13} className="shrink-0 text-[var(--daira-text)]" />
-                    </div>
-                  )) : <div className="py-6 text-center text-[11px] text-[var(--daira-text)]">گزینه‌ای برای نمایش نیست</div>}
-                </div>
-              </div>
-            </aside>
+
           </div>
 
           {editor && (
             <section id="persistent-menu-editor" className="mt-6 scroll-mt-28">
               <div className="mb-4 flex items-center justify-between gap-3">
-                <h2 className="text-base font-extrabold text-[var(--daira-heading)]">{editor.id ? "ویرایش گزینهٔ منو" : "ساخت گزینهٔ جدید"}</h2>
+                <h2 className="text-base font-extrabold text-[var(--daira-heading)]">{editor.id ? "ویرایش گزینه منو" : "ساخت گزینه جدید"}</h2>
                 <button type="button" onClick={cancelEditor} disabled={saving} className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-[var(--daira-border)] bg-white px-3 text-xs font-bold text-[var(--daira-text)] disabled:opacity-50"><X size={16}/> انصراف</button>
               </div>
 
@@ -461,18 +423,19 @@ export default function PersistentMenuManager({
               </div>
 
               <Guide numberText={3} title={editor.type === "web_url" ? "آدرس لینک" : "پاسخ گزینه"} description={editor.type === "web_url"
-                ? "آدرس مقصد را با https:// وارد کن؛ مخاطب با انتخاب گزینه وارد این لینک می‌شود."
+                ? "لینک مقصد این گزینه را مشخص کن."
                 : "مانند پاسخ خودکار استوری، نوع پاسخ و محتوای آن را در همین صفحه تنظیم کن."} />
               <div className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
                 {editor.type === "web_url" ? (
                   <>
                     <label htmlFor="persistent-menu-url" className="mb-2 block text-sm font-bold text-[var(--daira-heading)]">لینک مقصد</label>
-                    <input id="persistent-menu-url" type="url" inputMode="url" dir="ltr"
+                    <input id="persistent-menu-url" type="text" inputMode="url" dir="ltr"
                       value={editor.url} onChange={(event) => { setEditor((current) => current ? { ...current, url: event.target.value } : null); setError(""); }}
-                      placeholder="https://example.com"
+                      onBlur={() => setEditor((current) => current && current.type === "web_url" ? { ...current, url: normalizePersistentMenuUrl(current.url) ?? current.url } : current)}
+                      placeholder="آدرس سایت"
                       className="h-12 w-full min-w-0 rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3 text-base text-[var(--daira-heading)] outline-none focus:border-[var(--daira-primary)] focus:bg-white"
                       style={{ fontSize: "16px", WebkitTextSizeAdjust: "100%" }} />
-                    <button type="button" disabled={!draftReady || !validLink(editor.url) || saving}
+                    <button type="button" disabled={!draftReady || !normalizePersistentMenuUrl(editor.url) || saving}
                       onClick={() => void saveItem(editor, null)}
                       className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[var(--daira-primary)] px-4 text-sm font-bold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40">
                       {saving ? "در حال ذخیره..." : editor.id ? "ذخیره تغییرات" : "ساخت گزینه"}
@@ -506,9 +469,9 @@ export default function PersistentMenuManager({
           onMouseDown={(event) => { if (event.target === event.currentTarget && !saving) setDeleteTarget(null); }}>
           <div dir="rtl" role="dialog" aria-modal="true" aria-labelledby="persistent-delete-title"
             className="w-full max-w-sm rounded-2xl border border-[var(--daira-border)] bg-white p-5 shadow-2xl">
-            <h3 id="persistent-delete-title" className="text-base font-extrabold text-[var(--daira-heading)]">حذف گزینهٔ منو</h3>
+            <h3 id="persistent-delete-title" className="text-base font-extrabold text-[var(--daira-heading)]">حذف گزینه منو</h3>
             <p className="mt-2 text-sm leading-7 text-[var(--daira-text)]">
-              گزینهٔ «{deleteTarget.label}» از منوی دایرکت حذف می‌شود. پاسخ‌های دیگر بدون تغییر باقی می‌مانند.
+              گزینه «{deleteTarget.label}» از منوی دایرکت حذف می‌شود. پاسخ‌های دیگر بدون تغییر باقی می‌مانند.
             </p>
             <div className="mt-5 grid grid-cols-2 gap-2">
               <button type="button" onClick={() => setDeleteTarget(null)} disabled={saving}
