@@ -54,7 +54,7 @@ type AutomationMeta = {
 
 const labels = {
   POST: "پست",
-  CAROUSEL: "آلبوم",
+  CAROUSEL: "پست اسلایدی",
   REEL: "ریلز",
   STORY: "استوری",
 } as const;
