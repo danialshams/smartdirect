@@ -5,7 +5,7 @@ import {
   ArrowLeft, Check, CircleCheck, ExternalLink, Lightbulb, Link2,
   Menu, MessageSquareText, Pencil, Plus, RefreshCw, Trash2, X,
 } from "lucide-react";
-import { dairaPalette } from "@/lib/design-system/palette";
+import { dairaPalette } from "../../lib/design-system/palette";
 import EntryPointFlowBuilder from "./EntryPointFlowBuilder";
 
 type Account = {
