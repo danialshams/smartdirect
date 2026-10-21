@@ -649,7 +649,7 @@ export default function InstagramInbox({
       const latestInbound = [...serverMessages].reverse().find((message) => message.direction === "INBOUND");
       const isVisible = document.visibilityState === "visible" &&
         (window.matchMedia("(min-width: 1024px)").matches || mobileChatOpen);
-      if (latestInbound && isVisible) {
+      if (!options?.before && !options?.focusId && latestInbound && isVisible) {
         void markConversationSeen(latestInbound.igMessageId || latestInbound.id);
       }
     } catch (err) {
@@ -719,14 +719,19 @@ export default function InstagramInbox({
   }, [loadConversations]);
 
   useEffect(() => {
-    void loadMessages();
-  }, [loadMessages]);
+    if (selectedId && (mobileChatOpen || window.matchMedia("(min-width: 1024px)").matches)) {
+      void loadMessages();
+    }
+  }, [loadMessages, selectedId, mobileChatOpen]);
 
   useEffect(() => {
     const refresh = () => {
       if (document.visibilityState !== "visible") return;
       void loadConversations();
-      if (selectedId && !focusedMessageId && !loadingOlderMessages) void loadMessages();
+      if (selectedId && !focusedMessageId && !loadingOlderMessages &&
+          (mobileChatOpen || window.matchMedia("(min-width: 1024px)").matches)) {
+        void loadMessages();
+      }
     };
     const interval = window.setInterval(refresh, 8000);
     document.addEventListener("visibilitychange", refresh);
@@ -734,7 +739,7 @@ export default function InstagramInbox({
       window.clearInterval(interval);
       document.removeEventListener("visibilitychange", refresh);
     };
-  }, [loadConversations, loadMessages, selectedId, focusedMessageId, loadingOlderMessages]);
+  }, [loadConversations, loadMessages, selectedId, focusedMessageId, loadingOlderMessages, mobileChatOpen]);
 
   const forceScrollToBottom = useCallback(() => {
     const container = messagesScrollRef.current;
