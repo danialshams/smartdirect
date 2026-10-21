@@ -136,6 +136,17 @@ function formatTime(value: string) {
   return timeFormatter.format(new Date(value));
 }
 
+function formatConversationTime(value: string | null) {
+  if (!value) return "";
+  const date = new Date(value);
+  const today = new Date();
+  if (date.toDateString() === today.toDateString()) return timeFormatter.format(date);
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+  if (date.toDateString() === yesterday.toDateString()) return "دیروز";
+  return new Intl.DateTimeFormat("fa-IR-u-ca-persian", { day: "numeric", month: "short" }).format(date);
+}
+
 function messagingWindowLabel(window?: MessagingWindow) {
   if (!window) return null;
   if (window.mode === "STANDARD") return "امکان پاسخ‌گویی فعال";
@@ -1394,7 +1405,7 @@ export default function InstagramInbox({
                       {displayName(conversation)}
                     </span>
                     <span className="shrink-0 text-[10px] tabular-nums text-[#8290A6]">
-                      {formatDate(conversation.lastMessageAt)}
+                      {formatConversationTime(conversation.lastMessageAt)}
                     </span>
                   </div>
                   <div className="mt-0.5 flex items-center justify-between gap-2">
