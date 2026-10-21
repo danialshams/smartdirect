@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { CalendarClock, CircleAlert, Clock3, Image as ImageIcon, LoaderCircle, Pencil, RotateCcw, Trash2, CheckCircle2, RefreshCw } from "lucide-react";
+import { CalendarClock, CircleAlert, Image as ImageIcon, LoaderCircle, Pencil, RotateCcw, Trash2, RefreshCw } from "lucide-react";
 import PublishingPageSkeleton from "./PublishingPageSkeleton";
 import { dairaPalette } from "../../../lib/design-system/palette";
 
