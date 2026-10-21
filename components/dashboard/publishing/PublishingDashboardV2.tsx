@@ -12,7 +12,8 @@ import { CSS } from "@dnd-kit/utilities";
 import { WheelPicker, type WheelPickerOption } from "@ncdai/react-wheel-picker";
 import "@ncdai/react-wheel-picker/style.css";
 import { toast } from "sonner";
-import PublishingWizardProgress from "./PublishingWizardProgress";
+import PublishingWizardProgress, { type PublishingStep } from "./PublishingWizardProgress";
+import { dairaPalette } from "../../../lib/design-system/palette";
 import PublishingQueue from "./PublishingQueue";
 import PublishingPageSkeleton from "./PublishingPageSkeleton";
 import { type JalaliDate } from "./PersianDatePicker";
@@ -522,6 +523,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const [type, setType] = useState<PublishType>("POST");
   const [activeTab, setActiveTab] = useState<"create" | "queue">("create");
   const [selectionConfirmed, setSelectionConfirmed] = useState(false);
+  const [furthestStep, setFurthestStep] = useState<PublishingStep>(1);
   const [captionStepConfirmed, setCaptionStepConfirmed] = useState(false);
   const [tagStepConfirmed, setTagStepConfirmed] = useState(false);
   const [automationChoiceStepStarted, setAutomationChoiceStepStarted] = useState(false);
@@ -817,13 +819,13 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     setStepVisible(false);
     window.setTimeout(() => { action(); window.requestAnimationFrame(() => setStepVisible(true)); }, 180);
   }
-  function handleTypeChange(nextType: PublishType) { animateStepChange(() => { setShowTags(false); clearLocalMedia(); setUploadedMedia([]); setType(nextType); setSelectionConfirmed(true); setCaptionStepConfirmed(false); setTagStepConfirmed(false); setAutomationChoiceStepStarted(false); setAutomationChoiceConfirmed(false); setAutomationSetupConfirmed(false); setAutomationKeywordDraft(""); setAutomationKeywords([]); setDirectMessageText(""); setShowUploadedMediaPreview(false); setTaggedUsersByMedia({}); setTagDraftByMedia({}); setTagInputError(""); onTypeChange?.(nextType); setUploadProgress(0); setUploadSuccess(false); setCaption(""); resetAutomation(); }); }
+  function handleTypeChange(nextType: PublishType) { animateStepChange(() => { setFurthestStep(1); setShowTags(false); clearLocalMedia(); setUploadedMedia([]); setType(nextType); setSelectionConfirmed(true); setCaptionStepConfirmed(false); setTagStepConfirmed(false); setAutomationChoiceStepStarted(false); setAutomationChoiceConfirmed(false); setAutomationSetupConfirmed(false); setAutomationKeywordDraft(""); setAutomationKeywords([]); setDirectMessageText(""); setShowUploadedMediaPreview(false); setTaggedUsersByMedia({}); setTagDraftByMedia({}); setTagInputError(""); onTypeChange?.(nextType); setUploadProgress(0); setUploadSuccess(false); setCaption(""); resetAutomation(); }); }
   function confirmBackToTypeSelection() {
     if ((uploadedMedia.length || media.length || caption.trim() || automationEnabled) &&
         !window.confirm("با تغییر نوع محتوا، فایل‌ها و تنظیمات این انتشار پاک می‌شوند. ادامه می‌دهید؟")) return;
     handleBackToTypeSelection();
   }
-  function handleBackToTypeSelection() { animateStepChange(() => { setShowTags(false); clearLocalMedia(); setUploadedMedia([]); setSelectionConfirmed(false); setCaptionStepConfirmed(false); setTagStepConfirmed(false); setAutomationChoiceStepStarted(false); setAutomationChoiceConfirmed(false); setShowUploadedMediaPreview(false); setTaggedUsersByMedia({}); setTagDraftByMedia({}); setTagInputError(""); setUploadProgress(0); setUploadSuccess(false); setCaption(""); resetAutomation(); }); }
+  function handleBackToTypeSelection() { animateStepChange(() => { setFurthestStep(1); setShowTags(false); clearLocalMedia(); setUploadedMedia([]); setSelectionConfirmed(false); setCaptionStepConfirmed(false); setTagStepConfirmed(false); setAutomationChoiceStepStarted(false); setAutomationChoiceConfirmed(false); setShowUploadedMediaPreview(false); setTaggedUsersByMedia({}); setTagDraftByMedia({}); setTagInputError(""); setUploadProgress(0); setUploadSuccess(false); setCaption(""); resetAutomation(); }); }
   async function prepareFiles(files: File[]) {
     if (!files.length || publishing) return;
     const accepted =
@@ -1493,25 +1495,53 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   async function cancelJob(id: string) { try { setError(""); const response = await fetch(`/api/instagram/publishing/${id}`, { method: "DELETE" }); const result = await response.json(); if (!response.ok) throw new Error(result.message || "لغو ناموفق بود."); await loadJobs(); } catch (e) { setError(e instanceof Error ? e.message : "لغو ناموفق بود."); } }
 
 
-  const wizardStep: 1 | 2 | 3 | 4 = !captionStepConfirmed ? 1
+  const wizardStep: PublishingStep = !captionStepConfirmed ? 1
     : type !== "STORY" && !automationChoiceStepStarted ? 2
     : !automationChoiceConfirmed || (automationEnabled && !automationSetupConfirmed) ? 3 : 4;
-  function goToWizardStep(target: 1 | 2 | 3 | 4) {
-    if (uploading || publishing || target >= wizardStep) return;
+  const mediaReady = uploadedMedia.length >= (type === "CAROUSEL" ? 2 : 1) && !uploading;
+  const detailsReady = type === "STORY" || Boolean(caption.trim());
+  const automationReady = automationChoiceConfirmed && (!automationEnabled || automationSetupConfirmed);
+  useEffect(() => {
+    if (selectionConfirmed && wizardStep > furthestStep) setFurthestStep(wizardStep);
+  }, [selectionConfirmed, wizardStep, furthestStep]);
+  function canNavigateStep(target: PublishingStep) {
+    if (uploading || publishing) return false;
+    if (target === wizardStep) return true;
+    if (target === 1) return true;
+    if (target === 2) return type !== "STORY" && mediaReady;
+    if (target === 3) return mediaReady && detailsReady;
+    return mediaReady && detailsReady && automationReady;
+  }
+  function goToWizardStep(target: PublishingStep) {
+    if (!canNavigateStep(target) || target === wizardStep) return;
     setError("");
     if (target === 1) {
-      setCaptionStepConfirmed(false); setTagStepConfirmed(false);
-      setAutomationChoiceStepStarted(false); setAutomationChoiceConfirmed(false);
-      setAutomationSetupConfirmed(false); setShowUploadedMediaPreview(false);
+      setCaptionStepConfirmed(false);
+      setAutomationChoiceStepStarted(false);
+      setAutomationChoiceConfirmed(false);
+      setAutomationSetupConfirmed(false);
+      setShowUploadedMediaPreview(false);
     } else if (target === 2 && type !== "STORY") {
-      setCaptionStepConfirmed(true); setTagStepConfirmed(false);
-      setAutomationChoiceStepStarted(false); setAutomationChoiceConfirmed(false);
+      setCaptionStepConfirmed(true);
+      setAutomationChoiceStepStarted(false);
+      setAutomationChoiceConfirmed(false);
       setAutomationSetupConfirmed(false);
     } else if (target === 3) {
-      setCaptionStepConfirmed(true); setTagStepConfirmed(type !== "STORY");
-      setAutomationChoiceStepStarted(true); setAutomationChoiceConfirmed(false);
+      setCaptionStepConfirmed(true);
+      setTagStepConfirmed(type !== "STORY");
+      setAutomationChoiceStepStarted(true);
+      setAutomationChoiceConfirmed(false);
       setAutomationSetupConfirmed(false);
+      setShowUploadedMediaPreview(false);
+    } else if (target === 4) {
+      setCaptionStepConfirmed(true);
+      setTagStepConfirmed(type !== "STORY");
+      setAutomationChoiceStepStarted(true);
+      setAutomationChoiceConfirmed(true);
+      setAutomationSetupConfirmed(true);
+      setShowUploadedMediaPreview(false);
     }
+    setFurthestStep(old => Math.max(old, target) as PublishingStep);
   }
 
   const canPublish = uploadedMedia.length > 0 && !uploading && !publishing;
@@ -1539,10 +1569,11 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             {selectionConfirmed && (
               <PublishingWizardProgress
                 step={wizardStep}
+                furthestStep={furthestStep}
                 skipDetails={type === "STORY"}
                 typeLabel={typeLabels[type]}
                 disabled={uploading || publishing}
-                onBackToType={confirmBackToTypeSelection}
+                canNavigate={canNavigateStep}
                 onNavigate={goToWizardStep}
                 summaries={[uploadedMedia.length.toLocaleString("fa-IR")+" فایل",type==="STORY"?"بدون کپشن":(caption.slice(0,25)||"جزئیات"),automationEnabled?"فعال":"غیرفعال",publishNow?"انتشار فوری":"زمان‌بندی‌شده"]}
               />
@@ -1866,6 +1897,9 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   </fieldset>
 
                   <PublishingStoryAutomationSetup
+                    storyCreateMode
+                    responseTypeTitle="نوع پاسخ خودکار"
+                    responseTypeDescription="نوع محتوایی را که در پاسخ به استوری فرستاده می‌شود انتخاب کن."
                     ref={storyAutomationSetupRef}
                     message={messages[0] ?? createEmptyMessage()}
                     showcases={showcases}
