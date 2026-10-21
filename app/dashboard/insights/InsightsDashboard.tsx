@@ -1,12 +1,12 @@
 "use client";
 
 import {
-  Activity, BarChart3, CalendarDays, ChevronLeft, Eye, HeartHandshake,
-  Info, TrendingDown, TrendingUp, UserMinus, UserPlus, Users, X,
+  Activity, BarChart3, CalendarDays, Eye, HeartHandshake,
+  Lightbulb, TrendingDown, TrendingUp, UserMinus, UserPlus, Users, X,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type ElementType, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import type { DateRange } from "@daypicker/react";
+import { dairaPalette } from "../../../lib/design-system/palette";
 import { Calendar } from "@/components/dashboard/DashboardUI";
 
 type Preset = 7 | 30 | 90;
@@ -75,18 +75,39 @@ function daysBetween(from: Date, to: Date) {
     Date.UTC(from.getFullYear(), from.getMonth(), from.getDate())) / 86400000) + 1;
 }
 
-function InfoHelp({ message }: { message: string }) {
+function InsightsGuide({ text }: { text: string }) {
   return (
-    <span className="group relative inline-flex shrink-0 items-center">
-      <button type="button" aria-label="راهنمای شاخص" title={message}
-        className="grid h-8 w-8 place-items-center rounded-full text-[var(--daira-text)] transition hover:bg-[var(--daira-surface-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500">
-        <Info size={16} aria-hidden="true" />
-      </button>
-      <span role="tooltip" className="pointer-events-none absolute bottom-full right-0 z-20 mb-1 hidden w-56 rounded-xl border border-[var(--daira-border)] bg-white p-3 text-right text-[11px] font-normal leading-6 text-[var(--daira-text)] shadow-lg group-focus-within:block group-hover:block">
-        {message}
-      </span>
-    </span>
+    <div className="mb-4 flex items-start gap-3 rounded-xl border px-3.5 py-3"
+      style={{ background: dairaPalette.guide.background, borderColor: dairaPalette.guide.border, color: dairaPalette.guide.text }}>
+      <Lightbulb size={18} className="mt-0.5 shrink-0" style={{ color: dairaPalette.guide.icon }} aria-hidden="true" />
+      <p className="text-xs leading-6">{text}</p>
+    </div>
   );
+}
+
+function AnimatedStatValue({ value }: { value: number | null | undefined }) {
+  const [display, setDisplay] = useState<number | null>(value == null ? null : 0);
+  useEffect(() => {
+    if (value == null || !Number.isFinite(value)) {
+      setDisplay(null);
+      return;
+    }
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || value === 0) {
+      setDisplay(value);
+      return;
+    }
+    let frame = 0;
+    let start: number | null = null;
+    const step = (time: number) => {
+      if (start === null) start = time;
+      const p = Math.min(1, (time - start) / 650);
+      setDisplay(Math.round(value * (1 - Math.pow(1 - p, 3))));
+      if (p < 1) frame = requestAnimationFrame(step);
+    };
+    frame = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(frame);
+  }, [value]);
+  return <>{formatNumber(display)}</>;
 }
 
 function SkeletonBar({ className = "" }: { className?: string }) {
@@ -204,7 +225,7 @@ function TrendChart({ snapshots, metric }: { snapshots: Snapshot[]; metric: Metr
   );
 
   return (
-    <div ref={containerRef} className="relative w-full min-w-0">
+    <div ref={containerRef} dir="ltr" className="relative w-full min-w-0">
       <svg viewBox={"0 0 " + width + " " + height} width="100%" height={height}
         className="block w-full touch-pan-y"
         role="img" tabIndex={0} aria-label="نمودار روند روزانه؛ برای دیدن مقدار هر روز روی نمودار لمس کنید یا از کلیدهای جهت‌دار استفاده کنید"
@@ -245,41 +266,39 @@ function TrendChart({ snapshots, metric }: { snapshots: Snapshot[]; metric: Metr
           <div className="text-sm font-bold text-[var(--daira-heading)]">{formatExact(active.value)}</div>
         </div>
       )}
-      <div dir="rtl" className="mt-1 flex items-center justify-between text-[10px] text-[var(--daira-text)]">
+      <div dir="ltr" className="mt-1 flex items-center justify-between text-[10px] text-[var(--daira-text)]">
         <span>{persianDate(snapshotDate(dates[0].date))}</span>
         {dates[1].date !== dates[0].date && dates[1].date !== dates[2].date && <span>{persianDate(snapshotDate(dates[1].date))}</span>}
         {dates[2].date !== dates[0].date && <span>{persianDate(snapshotDate(dates[2].date))}</span>}
       </div>
-      <div className="mt-2 text-center text-[10px] text-[var(--daira-text)]">
-        برای مشاهده تاریخ و مقدار دقیق، نمودار را لمس کن.
-      </div>
+
     </div>
   );
 }
 
-function Panel({ title, icon: Icon, children, help }: { title: string; icon: ElementType; children: ReactNode; help?: string }) {
+function Panel({ title, icon: Icon, children, help }: { title: string; icon: ElementType; children: ReactNode; help: string }) {
   return (
     <section className="min-w-0 rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
       <div className="mb-4 flex items-center gap-2">
         <Icon size={18} className="shrink-0 text-[var(--daira-primary)]" aria-hidden="true" />
         <h2 className="min-w-0 flex-1 text-sm font-extrabold text-[var(--daira-heading)]">{title}</h2>
-        {help && <InfoHelp message={help} />}
       </div>
+      <InsightsGuide text={help} />
       {children}
     </section>
   );
 }
 
-function Stat({ label, value, icon: Icon, note, negative }: {
-  label: string; value: number | null | undefined; icon: ElementType; note?: string; negative?: boolean;
-}) {
+function Stat({ label, value, icon: Icon }: { label: string; value: number | null | undefined; icon: ElementType }) {
   return (
-    <div className="min-w-0 space-y-2 px-2 py-4 sm:px-5">
-      <Icon size={18} className="text-[var(--daira-text)]" aria-hidden="true" />
-      <div className={"break-words text-xl font-extrabold tabular-nums sm:text-2xl " +
-        (negative ? "text-red-600" : "text-[var(--daira-heading)]")}>{formatNumber(value)}</div>
+    <div className="group flex min-h-[146px] min-w-0 flex-col items-center justify-center gap-2 px-2 py-4 text-center transition-colors duration-200 hover:bg-[var(--daira-surface-hover)] sm:min-h-[160px]">
+      <span className="grid h-10 w-10 place-items-center rounded-xl bg-blue-50 text-[var(--daira-primary)] transition-transform duration-200 group-hover:-translate-y-0.5">
+        <Icon size={19} aria-hidden="true" />
+      </span>
+      <div className="max-w-full break-words text-[22px] font-extrabold tabular-nums text-[var(--daira-heading)] sm:text-[26px]" dir="auto">
+        <AnimatedStatValue value={value} />
+      </div>
       <div className="text-[11px] font-semibold leading-5 text-[var(--daira-text)]">{label}</div>
-      {note && <p className="text-[10px] leading-5 text-[var(--daira-text)]">{note}</p>}
     </div>
   );
 }
@@ -289,9 +308,9 @@ export default function InsightsDashboard() {
   const [preset, setPreset] = useState<Preset>(30);
   const [metric, setMetric] = useState<Metric>("reach");
   const [appliedRange, setAppliedRange] = useState<DateSelection | null>(null);
-  const [draftRange, setDraftRange] = useState<DateRange | undefined>();
-  const [calendarOpen, setCalendarOpen] = useState(false);
-  const [calendarMonths, setCalendarMonths] = useState(1);
+  const [draftFrom, setDraftFrom] = useState<Date | undefined>();
+  const [draftTo, setDraftTo] = useState<Date | undefined>();
+  const [calendarOpen, setCalendarOpen] = useState<"from" | "to" | null>(null);
   const [today] = useState(() => startOfDay(new Date()));
   const [data, setData] = useState<InsightsData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -324,13 +343,6 @@ export default function InsightsDashboard() {
     return () => { cancelled = true; };
   }, []);
 
-  useEffect(() => {
-    const media = window.matchMedia("(min-width: 768px)");
-    const update = () => setCalendarMonths(media.matches ? 2 : 1);
-    update();
-    media.addEventListener("change", update);
-    return () => media.removeEventListener("change", update);
-  }, []);
 
   const fetchInsights = useCallback(async (
     id: string, days: Preset, custom: DateSelection | null, signal: AbortSignal, currentRequest: number,
@@ -393,32 +405,40 @@ export default function InsightsDashboard() {
   const fallbackStart = shiftDay(today, -729);
   const accountStart = data?.account?.analyticsStartDate ? localIsoDate(data.account.analyticsStartDate) : null;
   const minDate = accountStart && accountStart > fallbackStart ? accountStart : fallbackStart;
-  const displayedRange = appliedRange
-    ? persianDate(appliedRange.from) + " تا " + persianDate(appliedRange.to, false)
-    : "انتخاب بازه دلخواه";
-  const validRange = Boolean(draftRange?.from && draftRange?.to &&
-    draftRange.from >= minDate && draftRange.to <= today && draftRange.from <= draftRange.to &&
-    daysBetween(draftRange.from, draftRange.to) <= 730);
+  const fromValid = Boolean(draftFrom && draftFrom >= minDate && draftFrom <= today);
+  const toValid = Boolean(draftTo && draftTo >= minDate && draftTo <= today);
+  const validRange = Boolean(fromValid && toValid && draftFrom && draftTo &&
+    draftFrom <= draftTo && daysBetween(draftFrom, draftTo) <= 730);
   const snapshots = data?.snapshots ?? [];
   const summary = data?.summary;
   const follows = summary?.follows;
   const unfollows = summary?.unfollows;
   const netFollowers = follows != null && unfollows != null
     ? follows - unfollows : summary?.followerGrowth ?? null;
-  const growthNote = follows != null && unfollows != null
-    ? "تفاوت فالو و آنفالو در این بازه" : "تغییر تعداد دنبال‌کنندگان بین نخستین و آخرین ثبت";
   const tabs: { id: Metric; title: string; icon: ElementType }[] = [
     { id: "reach", title: "دسترسی", icon: Users },
     { id: "views", title: "بازدید", icon: Eye },
     { id: "interactions", title: "تعاملات", icon: HeartHandshake },
   ];
 
-  function openCalendar() {
-    setDraftRange(appliedRange ?? {
-      from: shiftDay(today, -(preset - 1)),
-      to: today,
-    });
-    setCalendarOpen(true);
+  function openCalendar(field: "from" | "to") {
+    if (!draftFrom && !draftTo) {
+      const initial = appliedRange ?? { from: shiftDay(today, -(preset - 1)), to: today };
+      setDraftFrom(initial.from < minDate ? minDate : initial.from);
+      setDraftTo(initial.to);
+    }
+    setCalendarOpen(field);
+  }
+
+  function pickDate(value: Date | undefined) {
+    if (!value) return;
+    const chosen = startOfDay(value);
+    if (calendarOpen === "from") {
+      setDraftFrom(chosen);
+      if (draftTo && draftTo < chosen) setDraftTo(undefined);
+    }
+    if (calendarOpen === "to") setDraftTo(chosen);
+    setCalendarOpen(null);
   }
 
   return (
@@ -439,10 +459,11 @@ export default function InsightsDashboard() {
         <div className="mb-3 flex items-center gap-2 text-sm font-extrabold text-[var(--daira-heading)]">
           <CalendarDays size={17} className="text-[var(--daira-primary)]" /> بازه گزارش
         </div>
+        <InsightsGuide text="آمار را برای ۷، ۳۰ یا ۹۰ روز اخیر ببین؛ برای بازه دلخواه تاریخ شروع و پایان را جداگانه انتخاب کن." />
         <div className="grid grid-cols-3 gap-2">
           {([7, 30, 90] as const).map((days) => (
             <button type="button" key={days} aria-pressed={!appliedRange && preset === days}
-              onClick={() => { setPreset(days); setAppliedRange(null); setCalendarOpen(false); }}
+              onClick={() => { setPreset(days); setAppliedRange(null); setDraftFrom(undefined); setDraftTo(undefined); setCalendarOpen(null); }}
               className={"min-h-11 rounded-xl border px-2 text-xs font-bold transition " +
                 (!appliedRange && preset === days
                   ? "border-blue-300 bg-blue-50 text-[var(--daira-primary)]"
@@ -451,14 +472,30 @@ export default function InsightsDashboard() {
             </button>
           ))}
         </div>
-        <button type="button" onClick={openCalendar} aria-haspopup="dialog"
-          className={"mt-3 flex min-h-12 w-full items-center gap-2 rounded-xl border px-3 text-right text-xs font-semibold transition " +
-            (appliedRange
-              ? "border-blue-300 bg-blue-50 text-[var(--daira-primary)]"
-              : "border-[var(--daira-border)] bg-[var(--daira-surface-hover)] text-[var(--daira-heading)]")}>
-          <CalendarDays size={17} className="shrink-0" aria-hidden="true" />
-          <span className="min-w-0 flex-1">{displayedRange}</span>
-          <ChevronLeft size={16} className="shrink-0" aria-hidden="true" />
+        <div className="mt-4 text-sm font-bold text-[var(--daira-heading)]">بازه دلخواه</div>
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          {(["from", "to"] as const).map((field) => (
+            <button type="button" key={field} onClick={() => openCalendar(field)}
+              aria-haspopup="dialog" aria-label={field === "from" ? "انتخاب تاریخ شروع" : "انتخاب تاریخ پایان"}
+              className={"flex min-h-[77px] min-w-0 flex-col gap-2 rounded-xl border p-3 text-right transition hover:border-blue-300 " +
+                (appliedRange ? "border-blue-300 bg-blue-50" : "border-[var(--daira-border)] bg-[var(--daira-surface-hover)]")}>
+              <span className="text-[11px] text-[var(--daira-text)]">{field === "from" ? "از تاریخ" : "تا تاریخ"}</span>
+              <span className="flex w-full min-w-0 items-center gap-1.5 text-xs font-bold text-[var(--daira-heading)]">
+                <span className="min-w-0 flex-1">{(field === "from" ? draftFrom : draftTo)
+                  ? persianDate((field === "from" ? draftFrom : draftTo)!, false) : "انتخاب تاریخ"}</span>
+                <CalendarDays size={15} className="shrink-0 text-[var(--daira-primary)]" />
+              </span>
+            </button>
+          ))}
+        </div>
+        <button type="button" disabled={!validRange || Boolean(appliedRange && draftFrom &&
+          draftTo && dateOnly(appliedRange.from) === dateOnly(draftFrom) && dateOnly(appliedRange.to) === dateOnly(draftTo))}
+          onClick={() => {
+            if (!draftFrom || !draftTo || !validRange) return;
+            setAppliedRange({ from: draftFrom, to: draftTo });
+          }}
+          className="mt-3 min-h-11 w-full rounded-xl bg-[var(--daira-primary)] px-4 text-xs font-bold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40">
+          اعمال بازه
         </button>
       </section>
 
@@ -476,7 +513,7 @@ export default function InsightsDashboard() {
       {loading ? <InsightsSkeleton /> : data ? (
         <>
           <Panel title="روند عملکرد" icon={Activity}
-            help="نمودار بر اساس مقادیر روزانه ثبت‌شده است. برای برخی روزها ممکن است اطلاعات موجود نباشد.">
+            help="دسترسی یعنی تعداد حساب‌هایی که محتوا را دیده‌اند؛ بازدید یعنی تعداد نمایش‌ها؛ تعاملات شامل واکنش‌های مخاطبان است. نمودار تغییرات روزانه را نشان می‌دهد.">
             <div className="mb-4 grid grid-cols-3 gap-2" role="group" aria-label="انتخاب شاخص نمودار">
               {tabs.map(({ id, title, icon: Icon }) => (
                 <button type="button" key={id} aria-pressed={metric === id} onClick={() => setMetric(id)}
@@ -490,20 +527,21 @@ export default function InsightsDashboard() {
             <TrendChart snapshots={snapshots} metric={metric} />
           </Panel>
 
-          <Panel title="نرخ‌های عملکرد" icon={TrendingUp}>
+          <Panel title="نرخ‌های عملکرد" icon={TrendingUp}
+            help="نرخ تعامل از نسبت تعاملات به جمع دسترسی روزانه به‌دست می‌آید. رشد خالص فالوور نیز تفاوت فالو و آنفالو یا تغییر تعداد دنبال‌کنندگان ثبت‌شده است.">
             <div className="grid grid-cols-2 gap-3">
               <div className="min-w-0 rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] p-3 sm:p-4">
                 <div className="flex items-center justify-between gap-1 text-[11px] font-semibold text-[var(--daira-text)]">
                   <span>نرخ تعامل</span>
-                  <InfoHelp message="نسبت مجموع تعاملات ثبت‌شده به جمع دسترسی‌های روزانه در بازه انتخاب‌شده؛ لزوماً نرخ تعامل بر اساس افراد یکتای کل بازه نیست." />
+
                 </div>
                 <div className="mt-2 text-xl font-extrabold text-[var(--daira-heading)] sm:text-2xl">{formatPercent(summary?.engagementRate)}</div>
-                <p className="mt-2 text-[10px] leading-5 text-[var(--daira-text)]">تعاملات نسبت به دسترسی</p>
+
               </div>
               <div className="min-w-0 rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] p-3 sm:p-4">
                 <div className="flex items-center justify-between gap-1 text-[11px] font-semibold text-[var(--daira-text)]">
                   <span>رشد خالص فالوور</span>
-                  <InfoHelp message={growthNote} />
+
                 </div>
                 <div className={"mt-2 flex flex-wrap items-center gap-1 text-xl font-extrabold sm:text-2xl " +
                   (netFollowers == null ? "text-[var(--daira-heading)]" : netFollowers < 0 ? "text-red-600" : "text-emerald-600")}>
@@ -512,24 +550,32 @@ export default function InsightsDashboard() {
                   {netFollowers != null && netFollowers > 0 ? "+" : ""}
                   {formatNumber(netFollowers)}
                 </div>
-                <p className="mt-2 text-[10px] leading-5 text-[var(--daira-text)]">{growthNote}</p>
+
               </div>
             </div>
           </Panel>
 
           <Panel title="آمار کلی" icon={BarChart3}
-            help="مقادیر مجموع برای روزهای دارای اطلاعات ثبت‌شده‌اند؛ تعداد دنبال‌کنندگان مربوط به آخرین ثبت است. اعداد «—» یعنی داده‌ای در دسترس نیست.">
+            help="این بخش مجموع آمار روزانه را نشان می‌دهد؛ دسترسی جمع روزهاست و تعداد افراد یکتای کل بازه نیست. دنبال‌کنندگان آخرین مقدار ثبت‌شده است. بعضی آمار مانند فالو و آنفالو برای پیج‌های زیر ۱۰۰ فالوور ممکن است در دسترس نباشند.">
             <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-[var(--daira-border)] sm:grid-cols-3">
-              <div className="border-b border-l border-[var(--daira-border)] sm:border-l"><Stat label="بازدید" value={summary?.views} icon={Eye} /></div>
-              <div className="border-b border-[var(--daira-border)] sm:border-l"><Stat label="تعاملات" value={summary?.totalInteractions} icon={HeartHandshake} /></div>
-              <div className="border-b border-l border-[var(--daira-border)] sm:border-l-0"><Stat label="فالو" value={summary?.follows} icon={UserPlus} /></div>
-              <div className="border-b border-[var(--daira-border)] sm:border-b-0 sm:border-l"><Stat label="آنفالو" value={summary?.unfollows} icon={UserMinus} /></div>
-              <div className="border-l border-[var(--daira-border)]"><Stat label="دنبال‌کنندگان" value={summary?.followerCount} icon={Users} note="آخرین مقدار ثبت‌شده" /></div>
-              <div><Stat label="جمع دسترسی روزانه" value={summary?.reach} icon={Activity} /></div>
+              {([
+                { label: "بازدید", value: summary?.views, icon: Eye },
+                { label: "تعاملات", value: summary?.totalInteractions, icon: HeartHandshake },
+                { label: "فالو", value: summary?.follows, icon: UserPlus },
+                { label: "آنفالو", value: summary?.unfollows, icon: UserMinus },
+                { label: "دنبال‌کنندگان", value: summary?.followerCount, icon: Users },
+                { label: "جمع دسترسی روزانه", value: summary?.reach, icon: Activity },
+              ] as const).map((stat, index) => (
+                <div key={stat.label}
+                  className={"min-w-0 border-[var(--daira-border)] " +
+                    (index < 4 ? "border-b " : "") +
+                    (index % 2 === 0 ? "border-l " : "") +
+                    (index < 3 ? "sm:border-b " : "sm:border-b-0 ") +
+                    (index % 3 !== 2 ? "sm:border-l " : "sm:border-l-0 ")}>
+                  <Stat label={stat.label} value={stat.value} icon={stat.icon} />
+                </div>
+              ))}
             </div>
-            <p className="mt-3 text-[11px] leading-6 text-[var(--daira-text)]">
-              دسترسی و تعاملات روزانه ممکن است شامل حساب‌های تکراری در روزهای مختلف باشند؛ جمع آن‌ها تعداد افراد یکتای کل بازه نیست.
-            </p>
           </Panel>
           {snapshots.length === 0 && (
             <p className="rounded-xl border border-dashed border-[var(--daira-border)] bg-white px-4 py-4 text-center text-xs leading-6 text-[var(--daira-text)]">
@@ -545,38 +591,30 @@ export default function InsightsDashboard() {
 
       {calendarOpen && typeof document !== "undefined" && createPortal(
         <div data-insights-calendar-popup className="fixed inset-0 z-[3000] flex items-center justify-center bg-slate-950/40 px-3 py-4"
-          onMouseDown={(event) => { if (event.target === event.currentTarget) setCalendarOpen(false); }}>
-          <section dir="rtl" role="dialog" aria-modal="true" aria-label="انتخاب بازه زمانی"
-            className="flex max-h-[min(90dvh,780px)] w-fit max-w-full flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+          onMouseDown={(event) => { if (event.target === event.currentTarget) setCalendarOpen(null); }}>
+          <section dir="rtl" role="dialog" aria-modal="true"
+            aria-label={calendarOpen === "from" ? "انتخاب تاریخ شروع" : "انتخاب تاریخ پایان"}
+            className="flex max-h-[min(90dvh,670px)] w-fit max-w-full flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
             <div className="flex items-center justify-between gap-2 border-b border-[var(--daira-border)] px-4 py-3">
-              <div className="text-sm font-extrabold text-[var(--daira-heading)]">انتخاب بازه زمانی</div>
-              <button type="button" aria-label="بستن تقویم" onClick={() => setCalendarOpen(false)}
+              <div className="text-sm font-extrabold text-[var(--daira-heading)]">
+                {calendarOpen === "from" ? "انتخاب تاریخ شروع" : "انتخاب تاریخ پایان"}
+              </div>
+              <button type="button" aria-label="بستن تقویم" onClick={() => setCalendarOpen(null)}
                 className="grid h-10 w-10 place-items-center rounded-xl text-[var(--daira-text)] hover:bg-[var(--daira-surface-hover)]">
                 <X size={19} />
               </button>
             </div>
             <div className="min-h-0 overflow-y-auto overscroll-contain">
-              <Calendar key={calendarMonths} mode="range" numberOfMonths={calendarMonths}
-                selected={draftRange} onSelect={setDraftRange}
-                defaultMonth={draftRange?.from ?? today}
-                startMonth={minDate} endMonth={today}
-                disabled={{ before: minDate, after: today }} />
-            </div>
-            <div className="border-t border-[var(--daira-border)] px-4 py-3">
-              <p className="mb-3 text-[11px] leading-5 text-[var(--daira-text)]">
-                {draftRange?.from && draftRange?.to
-                  ? persianDate(draftRange.from) + " تا " + persianDate(draftRange.to, false)
-                  : "تاریخ شروع و پایان را انتخاب کن."}
-              </p>
-              <button type="button" disabled={!validRange}
-                onClick={() => {
-                  if (!draftRange?.from || !draftRange?.to || !validRange) return;
-                  setAppliedRange({ from: draftRange.from, to: draftRange.to });
-                  setCalendarOpen(false);
-                }}
-                className="min-h-11 w-full rounded-xl bg-[var(--daira-primary)] px-4 text-sm font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-40">
-                اعمال بازه
-              </button>
+              <Calendar key={calendarOpen} mode="single" numberOfMonths={1}
+                selected={calendarOpen === "from" ? draftFrom : draftTo}
+                onSelect={pickDate}
+                defaultMonth={(calendarOpen === "from" ? draftFrom : draftTo) ?? today}
+                startMonth={calendarOpen === "to" ? (draftFrom ?? minDate) : minDate}
+                endMonth={today}
+                disabled={{
+                  before: calendarOpen === "to" ? (draftFrom ?? minDate) : minDate,
+                  after: today,
+                }} />
             </div>
           </section>
         </div>,
