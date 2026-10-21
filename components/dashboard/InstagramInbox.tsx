@@ -49,6 +49,7 @@ type Message = {
   seenAt: string | null;
   createdAt: string;
   sendStatus?: "FAILED" | "SENDING";
+  failureReason?: string;
 };
 
 type RetryPayload =
@@ -768,71 +769,98 @@ export default function InstagramInbox({
     };
   }, []);
 
-  async function sendFile(file: File) {
-    if (!accountId || !selectedId || sending) return;
+  function addOptimisticMessage(payload: RetryPayload): string {
+    const id = `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const file = payload.kind === "FILE" ? payload.file : null;
+    const mediaUrl = file ? URL.createObjectURL(file) : null;
+    if (mediaUrl) optimisticMediaRef.current.set(id, mediaUrl);
+    setMessages((current) => [...current, {
+      id,
+      direction: "OUTBOUND",
+      messageType: file?.type.startsWith("image/") ? "IMAGE" : file?.type.startsWith("video/") ? "VIDEO" : file ? "AUDIO" : "TEXT",
+      text: payload.kind === "TEXT" ? payload.text : null,
+      mediaUrl,
+      mediaId: null,
+      igMessageId: null,
+      readAt: null,
+      seenAt: null,
+      createdAt: new Date().toISOString(),
+      sendStatus: "SENDING",
+    }]);
+    shouldStickToBottomRef.current = true;
+    initialScrollPendingRef.current = true;
+    return id;
+  }
 
+  function markOptimisticFailed(id: string, payload: RetryPayload, reason: string) {
+    failedRetryRef.current.set(id, payload);
+    setMessages((current) => current.map((item) => item.id === id
+      ? { ...item, sendStatus: "FAILED", failureReason: reason }
+      : item
+    ));
+  }
+
+  async function sendFile(file: File): Promise<boolean> {
+    if (!accountId || !selectedId || sending || !selectedConversation?.messagingWindow?.canSend) return false;
+    const conversationKey = accountId + ":" + selectedId;
+    const optimisticId = addOptimisticMessage({ kind: "FILE", file });
+    setSending(true);
     try {
-      setSending(true);
-      setError("");
-
       const form = new FormData();
       form.append("accountId", accountId);
       form.append("conversationId", selectedId);
       form.append("file", file);
-
       const response = await fetch("/api/instagram/inbox", {
         method: "POST",
         body: form,
         headers: { Accept: "application/json" },
       });
-
       const result = await readApiResult(response);
-
       if (!response.ok || !result.success || !result.message) {
-        throw new Error(result.error || "ارسال رسانه ناموفق بود");
+        throw new Error(result.error || "ارسال رسانه ناموفق بود.");
       }
-
-      const serverMessage = result.message as Message;
-      const optimisticMediaUrl =
-        serverMessage.mediaUrl || URL.createObjectURL(file);
-
-      if (!serverMessage.mediaUrl) {
-        optimisticMediaRef.current.set(serverMessage.id, optimisticMediaUrl);
+      const sent = result.message;
+      const localUrl = optimisticMediaRef.current.get(optimisticId);
+      optimisticMediaRef.current.delete(optimisticId);
+      if (localUrl) {
+        if (sent.mediaUrl) URL.revokeObjectURL(localUrl);
+        else optimisticMediaRef.current.set(sent.id, localUrl);
       }
-
-      setMessages((current) => [
-        ...current,
-        {
-          ...serverMessage,
-          mediaUrl: optimisticMediaUrl,
-        },
-      ]);
-      setSelectedFile(null);
-
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
+      if (activeConversationRef.current === conversationKey) {
+        setMessages((current) => current.map((item) =>
+          item.id === optimisticId ? { ...sent, mediaUrl: sent.mediaUrl || localUrl || null } : item
+        ));
+        setSelectedFile(null);
+        setRecordedVoice(null);
+        if (fileInputRef.current) fileInputRef.current.value = "";
       }
-    } catch {
-      addFailedOutgoingMessage({ kind: "FILE", file });
-      setSelectedFile(null);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-      setError("");
+      void loadConversations();
+      return true;
+    } catch (error) {
+      markOptimisticFailed(optimisticId, { kind: "FILE", file },
+        error instanceof Error ? error.message : "ارسال رسانه ناموفق بود.");
+      if (activeConversationRef.current === conversationKey) {
+        setSelectedFile(null);
+        setRecordedVoice(null);
+      }
+      return false;
     } finally {
       setSending(false);
     }
-
-    await loadConversations();
   }
 
-  async function sendTextMessage(messageText: string) {
-    if (!messageText.trim() || !accountId || !selectedId || sending) return;
+  async function sendTextMessage(messageText: string): Promise<boolean> {
+    if (!messageText.trim() || !accountId || !selectedId || sending || !selectedConversation?.messagingWindow?.canSend) return false;
+    const cleanText = messageText.trim();
+    const conversationKey = accountId + ":" + selectedId;
+    const optimisticId = addOptimisticMessage({ kind: "TEXT", text: cleanText });
+    setSending(true);
+    if (activeConversationRef.current === conversationKey) setText("");
     try {
-      setSending(true);
-      setError("");
       const form = new FormData();
       form.append("accountId", accountId);
       form.append("conversationId", selectedId);
-      form.append("text", messageText.trim());
+      form.append("text", cleanText);
       const response = await fetch("/api/instagram/inbox", {
         method: "POST",
         body: form,
@@ -840,41 +868,35 @@ export default function InstagramInbox({
       });
       const result = await readApiResult(response);
       if (!response.ok || !result.success || !result.message) {
-        throw new Error(result.error || "ارسال پیام ناموفق بود");
+        throw new Error(result.error || "ارسال پیام ناموفق بود.");
       }
-      setMessages((current) => [...current, result.message as Message]);
-      setText("");
-    } catch {
-      addFailedOutgoingMessage({ kind: "TEXT", text: messageText.trim() });
-      setText("");
-      setError("");
+      if (activeConversationRef.current === conversationKey) {
+        setMessages((current) => current.map((item) =>
+          item.id === optimisticId ? result.message! : item
+        ));
+      }
+      void loadConversations();
+      return true;
+    } catch (error) {
+      markOptimisticFailed(optimisticId, { kind: "TEXT", text: cleanText },
+        error instanceof Error ? error.message : "ارسال پیام ناموفق بود.");
+      return false;
     } finally {
       setSending(false);
     }
-
-    await loadConversations();
   }
 
   async function sendMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
-    if (
-      (!text.trim() && !selectedFile) ||
-      !accountId ||
-      !selectedId ||
-      sending
-    ) {
+    if ((!text.trim() && !selectedFile && !recordedVoice) || !accountId || !selectedId || sending) return;
+    if (selectedFile || recordedVoice) {
+      const file = selectedFile || recordedVoice;
+      const accompanyingText = text.trim();
+      const sent = await sendFile(file);
+      // Graph API sends attachments and text as separate messages.
+      if (sent && accompanyingText) await sendTextMessage(accompanyingText);
       return;
     }
-
-    if (selectedFile) {
-      await sendFile(selectedFile);
-      if (text.trim()) {
-        setText("");
-      }
-      return;
-    }
-
     await sendTextMessage(text);
   }
 
@@ -1071,55 +1093,18 @@ export default function InstagramInbox({
     }
   }
 
-  function addFailedOutgoingMessage(payload: RetryPayload) {
-    const failedId = `failed-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    const file = payload.kind === "FILE" ? payload.file : null;
-    const mediaUrl = file ? URL.createObjectURL(file) : null;
-    const messageType = file
-      ? file.type.startsWith("image/")
-        ? "IMAGE"
-        : file.type.startsWith("video/")
-          ? "VIDEO"
-          : file.type.startsWith("audio/")
-            ? "AUDIO"
-            : "TEXT"
-      : "TEXT";
-    if (mediaUrl) optimisticMediaRef.current.set(failedId, mediaUrl);
-    failedRetryRef.current.set(failedId, payload);
-    setMessages((current) => [
-      ...current,
-      {
-        id: failedId,
-        direction: "OUTBOUND",
-        messageType,
-        text: payload.kind === "TEXT" ? payload.text : null,
-        mediaUrl,
-        mediaId: null,
-        igMessageId: null,
-        readAt: null,
-        seenAt: null,
-        createdAt: new Date().toISOString(),
-        sendStatus: "FAILED",
-      },
-    ]);
-    initialScrollPendingRef.current = true;
-  }
-
   async function retryFailedMessage(messageId: string) {
     const payload = failedRetryRef.current.get(messageId);
-    if (!payload || sending) return;
+    if (!payload || sending || !selectedConversation?.messagingWindow?.canSend) return;
+    failedRetryRef.current.delete(messageId);
     const localUrl = optimisticMediaRef.current.get(messageId);
     if (localUrl) {
       URL.revokeObjectURL(localUrl);
       optimisticMediaRef.current.delete(messageId);
     }
-    failedRetryRef.current.delete(messageId);
-    setMessages((current) => current.filter((message) => message.id !== messageId));
-    if (payload.kind === "FILE") {
-      await sendFile(payload.file);
-      return;
-    }
-    await sendTextMessage(payload.text);
+    setMessages((current) => current.filter((item) => item.id !== messageId));
+    if (payload.kind === "FILE") await sendFile(payload.file);
+    else await sendTextMessage(payload.text);
   }
 
   const filteredConversations = conversations.filter((conversation) => {
