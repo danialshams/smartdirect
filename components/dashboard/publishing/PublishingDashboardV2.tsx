@@ -1599,18 +1599,9 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             ) : (type !== "STORY" && !captionStepConfirmed) || uploadedMedia.length === 0 || uploadSuccess || (type === "STORY" && showUploadedMediaPreview) ? (
               <section className="mx-auto w-full max-w-3xl">
                 <div className="mb-3 flex items-center justify-between gap-3">
-                  <Button
-                    type="button"
-                    onClick={confirmBackToTypeSelection}
-                    className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2F61FD]"
-                  >
-                    <ArrowRight size={15} strokeWidth={2} />
-                    بازگشت
-                  </Button>
+                  
                   {uploadedMedia.length > 0 && !uploading && (
-                    <Button type="button" disabled={type === "CAROUSEL" && uploadedMedia.length < 2} onClick={handleNextStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2F61FD] disabled:cursor-not-allowed disabled:opacity-40">
-                      مرحله بعد <ArrowLeft size={15} strokeWidth={2} />
-                    </Button>
+                    
                   )}
                 </div>
 
@@ -1735,8 +1726,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             ) : type !== "STORY" && !automationChoiceStepStarted ? (
               <div className="mx-auto w-full max-w-4xl space-y-4">
                 <div className="flex items-center justify-between gap-2">
-                  <button type="button" onClick={() => { setCaptionStepConfirmed(false); setTagStepConfirmed(false); setError(""); }}
-                    className="inline-flex min-h-9 items-center gap-1 rounded-xl border border-[#DBEAFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#2F61FD]"><ArrowRight size={15}/>مرحله قبل</button>
+
                 </div>
                 <section className="w-full rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
                   <div className="mb-4 flex items-center justify-between gap-3">
@@ -1818,9 +1808,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             ) : ((type !== "STORY" && tagStepConfirmed) || (type === "STORY" && captionStepConfirmed)) && (type === "STORY" || automationChoiceStepStarted) && !automationChoiceConfirmed ? (
               <div className="mx-auto w-full max-w-2xl">
                 <div className="mb-5 flex items-center justify-between gap-3">
-                  <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2F61FD]">
-                    <ArrowRight size={15} strokeWidth={2} />مرحله قبل
-                  </Button>
+                  
 
                 </div>
                 <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
@@ -1856,14 +1844,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             ) : type === "STORY" && automationChoiceConfirmed && automationEnabled && !automationSetupConfirmed ? (
               <div className="mx-auto w-full max-w-2xl">
                 <div className="mb-5 flex items-center justify-between gap-3">
-                  <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2F61FD]">
-                    <ArrowRight size={15} strokeWidth={2} />مرحله قبل
-                  </Button>
-                  {storyResponseSaved && !storyResponseEditing && (
-                    <Button type="button" onClick={() => { animateStepChange(() => { setAutomationSetupConfirmed(true); setError(""); }); }} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2F61FD]">
-                      مرحله بعد <ArrowLeft size={15} strokeWidth={2} />
-                    </Button>
-                  )}
+                  
+                  
                 </div>
 
                 <section className="space-y-5 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
@@ -2037,9 +2019,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             ) : type !== "STORY" && automationChoiceConfirmed && automationEnabled && !automationSetupConfirmed ? (
               <div className="mx-auto w-full max-w-2xl">
                 <div className="mb-5 flex items-center justify-between gap-3">
-                  <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2F61FD]">
-                    <ArrowRight size={15} strokeWidth={2} />مرحله قبل
-                  </Button>
+                  
 
                 </div>
                 <section className="space-y-5 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
@@ -2091,9 +2071,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             ) : ((type !== "STORY" && automationChoiceConfirmed && (!automationEnabled || automationSetupConfirmed)) || (type === "STORY" && automationChoiceConfirmed && (!automationEnabled || automationSetupConfirmed))) ? (
               <div className="mx-auto w-full max-w-2xl">
                 <div className="mb-5 flex items-center justify-between gap-3">
-                  <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2F61FD]">
-                    <ArrowRight size={15} strokeWidth={2} />مرحله قبل
-                  </Button>
+                  
                 </div>
                 <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
                   <div className="mb-6 flex items-start gap-3">
