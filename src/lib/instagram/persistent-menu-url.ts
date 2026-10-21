@@ -34,3 +34,25 @@ export function normalizePersistentMenuUrl(value: string): string | null {
     return null;
   }
 }
+
+export type PersistentMenuComparableItem = {
+  label: string;
+  type: "postback" | "web_url";
+  url: string;
+};
+
+/**
+ * Compare the menu values a user will actually save, rather than raw typing.
+ * In particular, adding the https:// prefix to a link is not a change.
+ */
+export function persistentMenuItemChanged(
+  current: PersistentMenuComparableItem,
+  original: PersistentMenuComparableItem | null,
+): boolean {
+  if (!original) return true;
+  if (current.label.trim() !== original.label.trim() || current.type !== original.type) return true;
+  if (current.type !== "web_url") return false;
+  const currentUrl = normalizePersistentMenuUrl(current.url) ?? current.url.trim();
+  const originalUrl = normalizePersistentMenuUrl(original.url) ?? original.url.trim();
+  return currentUrl !== originalUrl;
+}
