@@ -818,6 +818,11 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     window.setTimeout(() => { action(); window.requestAnimationFrame(() => setStepVisible(true)); }, 180);
   }
   function handleTypeChange(nextType: PublishType) { animateStepChange(() => { setShowTags(false); clearLocalMedia(); setUploadedMedia([]); setType(nextType); setSelectionConfirmed(true); setCaptionStepConfirmed(false); setTagStepConfirmed(false); setAutomationChoiceStepStarted(false); setAutomationChoiceConfirmed(false); setAutomationSetupConfirmed(false); setAutomationKeywordDraft(""); setAutomationKeywords([]); setDirectMessageText(""); setShowUploadedMediaPreview(false); setTaggedUsersByMedia({}); setTagDraftByMedia({}); setTagInputError(""); onTypeChange?.(nextType); setUploadProgress(0); setUploadSuccess(false); setCaption(""); resetAutomation(); }); }
+  function confirmBackToTypeSelection() {
+    if ((uploadedMedia.length || media.length || caption.trim() || automationEnabled) &&
+        !window.confirm("با تغییر نوع محتوا، فایل‌ها و تنظیمات این انتشار پاک می‌شوند. ادامه می‌دهید؟")) return;
+    handleBackToTypeSelection();
+  }
   function handleBackToTypeSelection() { animateStepChange(() => { setShowTags(false); clearLocalMedia(); setUploadedMedia([]); setSelectionConfirmed(false); setCaptionStepConfirmed(false); setTagStepConfirmed(false); setAutomationChoiceStepStarted(false); setAutomationChoiceConfirmed(false); setShowUploadedMediaPreview(false); setTaggedUsersByMedia({}); setTagDraftByMedia({}); setTagInputError(""); setUploadProgress(0); setUploadSuccess(false); setCaption(""); resetAutomation(); }); }
   async function prepareFiles(files: File[]) {
     if (!files.length || publishing) return;
@@ -1537,7 +1542,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                 skipDetails={type === "STORY"}
                 typeLabel={typeLabels[type]}
                 disabled={uploading || publishing}
-                onBackToType={handleBackToTypeSelection}
+                onBackToType={confirmBackToTypeSelection}
                 onNavigate={goToWizardStep}
                 summaries={[uploadedMedia.length.toLocaleString("fa-IR")+" فایل",type==="STORY"?"بدون کپشن":(caption.slice(0,25)||"جزئیات"),automationEnabled?"فعال":"غیرفعال",publishNow?"انتشار فوری":"زمان‌بندی‌شده"]}
               />
@@ -1565,7 +1570,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <Button
                     type="button"
-                    onClick={handleBackToTypeSelection}
+                    onClick={confirmBackToTypeSelection}
                     className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2F61FD]"
                   >
                     <ArrowRight size={15} strokeWidth={2} />
