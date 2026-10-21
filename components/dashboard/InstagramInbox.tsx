@@ -1333,7 +1333,7 @@ export default function InstagramInbox({
               }`}
             >
               <span className="shrink-0 whitespace-nowrap">{label}</span>
-              <span className="shrink-0 whitespace-nowrap text-[10px] tabular-nums opacity-70">
+              <span className="sr-only">
                 {count.toLocaleString("fa-IR")}
               </span>
             </button>
