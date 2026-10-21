@@ -1452,10 +1452,10 @@ export default function InstagramInbox({
   );
 
   const chatPanel = (
-    <div className="flex min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden bg-background">
+    <div className="relative isolate flex min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden bg-background">
       {selectedConversation ? (
         <>
-          <header className="inbox-chat-header flex min-w-0 shrink-0 items-center gap-2 border-b border-[#E8EDF5] bg-white px-3 py-3 sm:px-5">
+          <header className="inbox-chat-header relative z-30 flex min-w-0 shrink-0 items-center gap-2 border-b border-[#E8EDF5] bg-white px-3 py-3 sm:px-5">
             <button type="button" onClick={goBackToList} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-[#526580] hover:bg-[#F1F5FC] lg:hidden" aria-label="بازگشت به گفتگوها"><ArrowRight size={19}/></button>
             {selectedConversation.participantProfilePicture ? (
               <img src={selectedConversation.participantProfilePicture} alt="" className="h-11 w-11 shrink-0 rounded-full object-cover ring-1 ring-[#E5EAF3]"/>
@@ -1475,11 +1475,15 @@ export default function InstagramInbox({
                 )}
               </div>
             </div>
-            <button type="button" onClick={() => setConversationSearchOpen((value) => !value)} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-[#526580] hover:bg-[#F1F5FC]" aria-label="جست‌وجو در پیام‌ها" aria-expanded={conversationSearchOpen}><Search size={19}/></button>
-          </header>
-
-          {conversationSearchOpen && (
-            <div className="shrink-0 border-b border-[#E8EDF5] bg-white px-3 py-3 sm:px-5">
+            <button type="button" onClick={() => {
+              if (conversationSearchOpen) {
+                if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+                setConversationSearchText("");
+              }
+              setConversationSearchOpen((value) => !value);
+            }} className="grid h-11 w-11 shrink-0 touch-manipulation place-items-center rounded-xl text-[#526580] hover:bg-[#F1F5FC]" aria-label="جست‌وجو در پیام‌ها" aria-expanded={conversationSearchOpen} aria-controls="inbox-conversation-search"><Search size={19}/></button>
+            {conversationSearchOpen && (
+              <div id="inbox-conversation-search" role="search" className="absolute top-full right-0 left-0 z-40 min-w-0 border-b border-[#E8EDF5] bg-white px-3 py-3 shadow-[0_12px_24px_rgba(24,35,60,0.12)] sm:px-5">
               <div className="flex items-center gap-2">
                 <input
                   type="search"
@@ -1489,16 +1493,23 @@ export default function InstagramInbox({
                   onChange={(event) => setConversationSearchText(event.target.value)}
                   placeholder="جست‌وجو در پیام‌های این گفتگو..."
                   aria-label="جست‌وجو در پیام‌های گفتگو"
-                  className="h-11 min-w-0 w-full flex-1 rounded-xl border border-[#DFE7F3] bg-[#F8FAFD] px-3 text-base leading-6 text-[#18233C] outline-none focus:border-[#2F61FD]"
+                  className="h-11 min-w-0 w-full flex-1 touch-manipulation rounded-xl border border-[#DFE7F3] bg-[#F8FAFD] px-3 text-base leading-6 text-[#18233C] outline-none focus:border-[#2F61FD]"
                   style={{ fontSize: "16px", WebkitTextSizeAdjust: "100%" }}
                 />
-                <button type="button" onClick={() => {setConversationSearchOpen(false);setConversationSearchText("");}} className="grid h-10 w-10 place-items-center rounded-xl text-[#64748B]" aria-label="بستن جست‌وجو"><X size={18}/></button>
+                <button type="button" onClick={() => {
+                  if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+                  setConversationSearchOpen(false);
+                  setConversationSearchText("");
+                }} className="grid h-11 w-11 shrink-0 touch-manipulation place-items-center rounded-xl text-[#64748B]" aria-label="بستن جست‌وجو"><X size={18}/></button>
               </div>
               {conversationSearchText.trim() && (
-                <div className="mt-2 max-h-[32vh] space-y-1 overflow-y-auto" aria-live="polite">
+                <div className="mt-2 max-h-[min(40dvh,300px)] min-w-0 space-y-1 overflow-y-auto overscroll-contain" aria-live="polite">
                   {conversationSearching ? <p className="p-3 text-xs text-[#64748B]">در حال جست‌وجو…</p> :
                   conversationMatches.length ? conversationMatches.map((result) => (
-                    <button key={result.id} type="button" onClick={() => void focusSearchResult(result.id)} className="flex w-full flex-col gap-1 rounded-xl px-3 py-2.5 text-right hover:bg-[#F1F5FC]">
+                    <button key={result.id} type="button" onClick={() => {
+                      if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+                      void focusSearchResult(result.id);
+                    }} className="flex w-full touch-manipulation flex-col gap-1 rounded-xl px-3 py-2.5 text-right hover:bg-[#F1F5FC]">
                       <span className="line-clamp-2 text-xs leading-5 text-[#18233C]">{result.text}</span>
                       <span className="text-[10px] text-[#94A3B8]">{formatDate(result.createdAt)}</span>
                     </button>
@@ -1506,7 +1517,8 @@ export default function InstagramInbox({
                 </div>
               )}
             </div>
-          )}
+            )}
+          </header>
 
           <div
             ref={messagesScrollRef}
