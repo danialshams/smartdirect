@@ -28,5 +28,5 @@ assert.ok(component.includes('viewport?.offsetTop') && component.includes('viewp
 assert.ok(component.includes('min-w-0 w-full flex-1') && component.includes('overflow-hidden bg-background'), "Mobile chat must not overflow the viewport width");
 assert.ok(component.includes("hasMoreMessages") && component.includes("loadMessages({ before: first.id })"), "Older messages must load on demand");
 assert.ok(component.includes("showJumpToLatest") && component.includes("forceScrollToBottom"), "Scroll-to-latest interaction missing");
-assert.ok(component.includes("data-mobile-chat-open") && component.includes(".daira-bottom-nav"), "Mobile immersive conversation missing");
+assert.ok(component.includes("data-mobile-chat-open") && component.includes("--inbox-visible-height") && component.includes("--inbox-viewport-top"), "Mobile immersive conversation missing");
 console.log("INBOX_MODERN_REGRESSION_OK");
