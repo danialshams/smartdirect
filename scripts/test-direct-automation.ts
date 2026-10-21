@@ -15,6 +15,7 @@ const finder=readFileSync("src/lib/automation/find-matching-automation.ts","utf8
 const webhook=readFileSync("app/api/webhooks/instagram/route.ts","utf8");
 const api=readFileSync("app/api/direct-automation/route.ts","utf8");
 const sidebar=readFileSync("components/dashboard/DashboardSidebar.tsx","utf8");
+const dashboard=readFileSync("components/dashboard/DashboardOverview.tsx","utf8");
 assert.ok(finder.includes("matchesAutomationKeyword("), "DM resolver must match keywords");
 assert.ok(finder.includes("Boolean(automation.keyword?.trim())"), "Internal menu/Icebreaker rules must be excluded");
 assert.ok(!finder.includes("return automations[0] ?? null"),"No unconditional first-DM fallback");
@@ -27,6 +28,8 @@ assert.ok(api.includes("invalidateAutomationCache"),"Update resolver cache after
 assert.ok(api.includes("parseReplies"),"Form trees must be persisted");
 assert.ok(sidebar.includes('href: "/dashboard/direct-automation"'),"DM menu must be present");
 assert.ok(!sidebar.includes('href: "/dashboard/comments"'),"Legacy unanswered comment menu must be removed");
+assert.ok(dashboard.includes('title: "پاسخ خودکار دایرکت"') && dashboard.includes('href: "/dashboard/direct-automation"'),"Real dashboard home card must link to new DM replies");
+assert.ok(!dashboard.includes('کامنت‌های بی‌پاسخ') && !dashboard.includes('href: "/dashboard/comments"'),"Real dashboard home must not link to deleted unanswered comments");
 
 console.log("DIRECT_AUTOMATION_INTEGRATION_OK",{
   exactKeywords:true,internalDmIsolation:true,quickReplyPreservation:true,

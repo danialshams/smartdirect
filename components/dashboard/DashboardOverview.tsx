@@ -26,7 +26,7 @@ const features: DashboardFeature[] = [
   { title: "انتشار محتوا", description: "از همینجا می‌تونی استوری و پست‌های امروز و فردات رو آپلود کنی", image: "/photos/انتشار محتوا.png", href: "/dashboard/publishing" },
   { title: "صندوق دایرکت", description: "از همینجا می‌تونی دایرکت‌های بی‌پاسخ رو جواب بدی", image: "/photos/صندوق دایرکت.png", href: "/dashboard/inbox" },
   { title: "منو دایرکت", description: "پاسخگویی هوشمند به سوالات متداول مشتریان شبانه‌روزی", image: "/photos/منوی دایرکت.png", href: "/dashboard/persistent-menu" },
-  { title: "کامنت‌های بی‌پاسخ", description: "پاسخ به کامنت‌های غیرخودکار", image: "/photos/کامنت های بی پاسخ.png", href: "/dashboard/comments" },
+  { title: "پاسخ خودکار دایرکت", description: "ارسال پاسخ خودکار با دریافت کلمه کلیدی در دایرکت", image: "/photos/منوی دایرکت.png", href: "/dashboard/direct-automation" },
   { title: "پیام شروع گفتگو", description: "برای خوش‌آمد، معرفی پیج و سوالات متداول مشتریان", image: "/photos/پیام شروع گفتگو.png", href: "/dashboard/ice-breaker" },
   { title: "آنالیز", description: "تحلیل و بررسی دقیق پیج اینستاگرام شما", image: "/photos/تحلیل پیج.png", href: "/dashboard/insights" },
 ];
