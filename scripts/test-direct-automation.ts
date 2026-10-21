@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { matchesAutomationKeyword, splitAutomationKeywords } from "../src/lib/automation/trigger";
+import { directAutomationHasChanges, responseFingerprint } from "../components/dashboard/automation-response-compare";
+import type { MessageDraft, QuickReplyDraft } from "../components/dashboard/automation-form-utils";
 
 assert.deepEqual(splitAutomationKeywords(" قیمت، موجودی; ۱ "), ["قیمت", "موجودی", "1"]);
 assert.equal(matchesAutomationKeyword("قیمت,موجودی", "قیمت"), true);
@@ -48,6 +50,79 @@ assert.ok(directEditor.includes('if(completed)return <DirectAutomationSuccess'),
 assert.ok(!directEditor.includes('router.push("/dashboard/direct-automation",{scroll:true})'),"Saving must not immediately redirect past success");
 assert.ok(directSuccess.includes('sd-success-ring') && directSuccess.includes('sd-success-path'),"Success checkmark animation is required");
 assert.ok(directSuccess.includes("بازگشت به لیست پاسخ‌ها"),"Success screen must have list button");
+
+
+// Editing an existing direct reply must not allow saving without a real change.
+assert.ok(directEditor.includes("const hasChanges=!original||directAutomationHasChanges("),
+  "DM edit must compute dirty state from saved keywords and response");
+assert.ok(directEditor.includes("setOriginalResponseSignature(existing?responseFingerprint(initialMessage):null)"),
+  "DM edit must take the saved response as its baseline after hydration");
+assert.ok(directEditor.includes("finalSaveDisabled={saving||!hasChanges}"),
+  "DM edit Save must be disabled when there are no changes");
+assert.ok(directEditor.includes("onDraftChange={setShowcaseDraftChanged}"),
+  "Unsaved showcase slide edits must also enable Save");
+assert.ok(directEditor.includes("(original&&!hasChanges)"),
+  "A submit triggered without changes must not send the API update");
+
+const sampleMessage: MessageDraft = {
+  id: "old-record-id", messageType: "TEXT", text: "سلام",
+  mediaUrl: "", mediaId: "", showcaseId: "", formId: "", quickReplies: [],
+};
+const signature = responseFingerprint(sampleMessage);
+const unchanged = (params: Partial<Parameters<typeof directAutomationHasChanges>[0]> = {}) =>
+  directAutomationHasChanges({
+    originalKeywords: ["قیمت", "موجودی"],
+    currentKeywords: ["موجودی", "قیمت"],
+    originalResponseSignature: signature,
+    currentMessage: { ...sampleMessage, id: "new-client-generated-id" },
+    ...params,
+  });
+assert.equal(unchanged(), false, "Opening an existing DM automation must keep Save disabled");
+assert.equal(unchanged({ currentKeywords: ["قیمت", "موجودی", "قیمت"] }), false,
+  "Keyword reordering and duplicates do not change the rule");
+assert.equal(unchanged({ currentKeywords: ["قیمت", "موجودی", "ارسال"] }), true,
+  "Adding a keyword should enable Save");
+assert.equal(unchanged({ currentKeywords: ["قیمت"] }), true,
+  "Removing a keyword should enable Save");
+assert.equal(unchanged({ currentMessage: { ...sampleMessage, text: "سلام!" } }), true,
+  "Editing reply text should enable Save");
+assert.equal(unchanged({ currentMessage: { ...sampleMessage, text: "سلام" } }), false,
+  "Undoing a text edit should disable Save again");
+assert.equal(unchanged({ showcaseDraftChanged: true }), true,
+  "Modifying a saved showcase draft should enable Save");
+assert.equal(unchanged({ originalResponseSignature: null }), false,
+  "Save must remain disabled until the saved response has finished loading");
+assert.equal(responseFingerprint({ ...sampleMessage, id: "different-id" }), signature,
+  "Generated message IDs must not count as content edits");
+const formReply: QuickReplyDraft = {
+  id: "first", title: "بله", payload: "server-payload", nextMessageId: null,
+  destinationType: "FORM", destinationText: "", destinationFormId: "",
+  destinationShowcaseId: "", destinationMediaUrl: "", destinationMediaId: "",
+  destinationQuestion: "چه رنگی؟", destinationQuickReplies: [{
+    id: "nested", title: "آبی", payload: "nested-payload", nextMessageId: null,
+    destinationType: "TEXT", destinationText: "آبی موجود است",
+    destinationFormId: "", destinationShowcaseId: "", destinationMediaUrl: "",
+    destinationMediaId: "", destinationQuestion: "", destinationQuickReplies: [],
+  }],
+};
+const formMessage: MessageDraft = { ...sampleMessage, messageType: "FORM", text: "سؤال", quickReplies: [formReply] };
+const formSignature = responseFingerprint(formMessage);
+assert.equal(unchanged({
+  originalResponseSignature: formSignature,
+  currentMessage: { ...formMessage, id: "other-id", quickReplies: [
+    { ...formReply, id: "other-reply", payload: "other-payload", destinationQuickReplies: [
+      { ...formReply.destinationQuickReplies[0], id: "other-child", payload: "other-nested-payload" },
+    ] },
+  ] },
+}), false, "Regenerated form IDs/payloads must not enable Save");
+assert.equal(unchanged({
+  originalResponseSignature: formSignature,
+  currentMessage: { ...formMessage, quickReplies: [
+    { ...formReply, destinationQuickReplies: [
+      { ...formReply.destinationQuickReplies[0], destinationText: "آبی تمام شد" },
+    ] },
+  ] },
+}), true, "Editing a nested form destination must enable Save");
 
 console.log("DIRECT_AUTOMATION_INTEGRATION_OK",{
   exactKeywords:true,internalDmIsolation:true,quickReplyPreservation:true,
