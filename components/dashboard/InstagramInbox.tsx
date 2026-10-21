@@ -428,6 +428,7 @@ export default function InstagramInbox({
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesScrollRef = useRef<HTMLDivElement>(null);
+  const inboxFrameRef = useRef<HTMLDivElement>(null);
   const previousMessageCountRef = useRef(0);
   const conversationFetchIdRef = useRef(0);
   const loadedMoreConversationsRef = useRef(false);
@@ -1253,18 +1254,42 @@ export default function InstagramInbox({
 
   useEffect(() => {
     if (!mobileChatOpen) return;
+
     const viewport = window.visualViewport;
+    const media = window.matchMedia("(max-width: 1023px)");
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+
     const updateViewport = () => {
-      const height = Math.min(window.innerHeight, viewport?.height ?? window.innerHeight);
-      document.documentElement.style.setProperty("--smartdirect-inbox-visible-height", `${height}px`);
+      const mobile = media.matches;
+      document.body.style.overflow = mobile ? "hidden" : originalBodyOverflow;
+      document.documentElement.style.overflow = mobile ? "hidden" : originalHtmlOverflow;
+      const frame = inboxFrameRef.current;
+      if (!frame) return;
+      if (mobile) {
+        frame.style.setProperty("--inbox-visible-height", `${viewport?.height ?? window.innerHeight}px`);
+        frame.style.setProperty("--inbox-viewport-top", `${Math.max(0, viewport?.offsetTop ?? 0)}px`);
+      } else {
+        frame.style.removeProperty("--inbox-visible-height");
+        frame.style.removeProperty("--inbox-viewport-top");
+      }
     };
+
     updateViewport();
-    window.addEventListener("resize", updateViewport);
     viewport?.addEventListener("resize", updateViewport);
+    viewport?.addEventListener("scroll", updateViewport);
+    window.addEventListener("resize", updateViewport);
+    media.addEventListener("change", updateViewport);
+
     return () => {
-      window.removeEventListener("resize", updateViewport);
       viewport?.removeEventListener("resize", updateViewport);
-      document.documentElement.style.removeProperty("--smartdirect-inbox-visible-height");
+      viewport?.removeEventListener("scroll", updateViewport);
+      window.removeEventListener("resize", updateViewport);
+      media.removeEventListener("change", updateViewport);
+      document.body.style.overflow = originalBodyOverflow;
+      document.documentElement.style.overflow = originalHtmlOverflow;
+      inboxFrameRef.current?.style.removeProperty("--inbox-visible-height");
+      inboxFrameRef.current?.style.removeProperty("--inbox-viewport-top");
     };
   }, [mobileChatOpen]);
 
@@ -1416,10 +1441,10 @@ export default function InstagramInbox({
   );
 
   const chatPanel = (
-    <div className="flex min-h-0 flex-1 flex-col bg-background">
+    <div className="flex min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden bg-background">
       {selectedConversation ? (
         <>
-          <header className="flex shrink-0 items-center gap-2 border-b border-[#E8EDF5] bg-white px-3 py-3 sm:px-5">
+          <header className="inbox-chat-header flex min-w-0 shrink-0 items-center gap-2 border-b border-[#E8EDF5] bg-white px-3 py-3 sm:px-5">
             <button type="button" onClick={goBackToList} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-[#526580] hover:bg-[#F1F5FC] lg:hidden" aria-label="بازگشت به گفتگوها"><ArrowRight size={19}/></button>
             {selectedConversation.participantProfilePicture ? (
               <img src={selectedConversation.participantProfilePicture} alt="" className="h-11 w-11 shrink-0 rounded-full object-cover ring-1 ring-[#E5EAF3]"/>
@@ -1787,13 +1812,24 @@ export default function InstagramInbox({
     <section id="messages" dir="rtl" data-mobile-chat-open={mobileChatOpen ? "true" : "false"} className="scroll-mt-24 overflow-x-hidden">
       <style>{`
         @media (max-width: 1023px) {
-          .daira-app-shell:has(#messages[data-mobile-chat-open="true"]) .daira-bottom-nav,
-          .daira-app-shell:has(#messages[data-mobile-chat-open="true"]) .daira-bottom-nav-backdrop { display: none; }
-          .daira-app-shell:has(#messages[data-mobile-chat-open="true"]) .daira-app-main { padding-bottom: 0; }
           #messages[data-mobile-chat-open="true"] .inbox-frame {
-            height: calc(min(100dvh, var(--smartdirect-inbox-visible-height, 100dvh)) - 90px - env(safe-area-inset-top, 0px));
+            position: fixed;
+            z-index: 2100;
+            top: var(--inbox-viewport-top, 0px);
+            right: 0;
+            left: 0;
+            width: 100%;
+            max-width: 100vw;
+            height: var(--inbox-visible-height, 100dvh);
             min-height: 0;
-            border-radius: 16px;
+            margin: 0;
+            border: 0;
+            border-radius: 0;
+            box-shadow: none;
+            box-sizing: border-box;
+          }
+          #messages[data-mobile-chat-open="true"] .inbox-chat-header {
+            padding-top: max(12px, env(safe-area-inset-top, 0px));
           }
         }
       `}</style>
@@ -1810,10 +1846,10 @@ export default function InstagramInbox({
         </div>
       )}
 
-      <div className="inbox-frame h-[calc(100dvh-196px)] min-h-0 overflow-hidden rounded-[22px] border border-[#DFE7F3] bg-white shadow-[0_10px_35px_rgba(15,23,42,0.04)] lg:h-[calc(100dvh-235px)] lg:min-h-[420px]">
-        <div className="flex h-full min-h-0">
+      <div ref={inboxFrameRef} className="inbox-frame h-[calc(100dvh-196px)] min-h-0 overflow-hidden rounded-[22px] border border-[#DFE7F3] bg-white shadow-[0_10px_35px_rgba(15,23,42,0.04)] lg:h-[calc(100dvh-235px)] lg:min-h-[420px]">
+        <div className="flex h-full min-h-0 min-w-0 w-full">
           <div
-            className={`flex min-h-0 flex-1 flex-col lg:flex-none ${
+            className={`flex min-h-0 min-w-0 w-full flex-1 flex-col lg:w-auto lg:flex-none ${
               mobileChatOpen ? "hidden lg:flex" : "flex"
             }`}
           >
@@ -1821,7 +1857,7 @@ export default function InstagramInbox({
           </div>
 
           <div
-            className={`min-h-0 flex-1 ${
+            className={`min-h-0 min-w-0 w-full flex-1 ${
               mobileChatOpen ? "flex" : "hidden lg:flex"
             }`}
           >
