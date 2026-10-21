@@ -8,16 +8,12 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/dashboard/DashboardUI";
 import PersianDatePicker from "./PersianDatePicker";
+import PublishingPageSkeleton from "./PublishingPageSkeleton";
 const EntryPointFlowBuilder = dynamic(
   () => import("@/components/dashboard/EntryPointFlowBuilder"),
   {
     ssr: false,
-    loading: () => (
-      <div dir="rtl" role="status" aria-live="polite" className="flex min-h-[45vh] w-full flex-col items-center justify-center gap-3 px-4 text-center">
-        <Loader2 size={30} strokeWidth={1.8} className="animate-spin text-[#2563EB]" />
-        <p className="text-sm leading-6 text-[#64748B]">در حال آماده‌سازی ویرایشگر پاسخ خودکار...</p>
-      </div>
-    ),
+    loading: () => <PublishingPageSkeleton view="editor" />,
   },
 );
 
@@ -493,30 +489,20 @@ export default function PublishingJobEditor({
     <>
     <div
       dir="rtl"
-      className="min-h-full bg-[#F8FAFC] px-3 py-4 sm:px-5 sm:py-6 lg:px-8"
+      className="min-h-full bg-transparent px-1 py-2 pb-24 sm:px-2 sm:py-3 sm:pb-8"
     >
       <div className="mx-auto w-full max-w-3xl space-y-5">
         <div className="mb-5 space-y-3">
-          <div className="flex justify-start">
-            <Button
-              type="button"
-              onClick={() => router.back()}
-              className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]"
-            >
-              <ArrowRight size={15} strokeWidth={2} />
-              بازگشت
-            </Button>
-          </div>
 
           {job && (
             <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
               <div className="flex items-start gap-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2F61FD]/10 text-xs font-bold text-[#2F61FD]">
                   <Pencil size={15} />
                 </span>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <h1 className="text-sm font-bold text-[#0F172A] sm:text-base">
+                    <h1 className="text-sm font-bold text-[#18233C] sm:text-base">
                       ویرایش {labels[job.type]}
                     </h1>
 
@@ -532,10 +518,7 @@ export default function PublishingJobEditor({
 
         {!job ? (
           loading ? (
-            <div dir="rtl" role="status" aria-live="polite" className="flex min-h-[55vh] w-full flex-col items-center justify-center gap-3 px-4 text-center">
-              <Loader2 size={30} strokeWidth={1.8} className="animate-spin text-[#2563EB]" />
-              <p className="text-sm leading-6 text-[#64748B]">در حال دریافت اطلاعات محتوا...</p>
-            </div>
+            <PublishingPageSkeleton view="editor" />
           ) : (
             <section className="flex min-h-[50vh] items-center justify-center rounded-2xl border border-[#E2E8F0] bg-white shadow-sm">
               <span className="text-sm text-[#64748B]">محتوا پیدا نشد.</span>
@@ -590,7 +573,7 @@ export default function PublishingJobEditor({
                         <div className="absolute inset-0 flex items-center justify-center bg-[#F8FAFC]">
                           <Loader2
                             size={20}
-                            className="animate-spin text-[#2563EB]"
+                            className="animate-spin text-[#2F61FD]"
                           />
                         </div>
                       )}
@@ -599,7 +582,7 @@ export default function PublishingJobEditor({
                     <div className="flex aspect-[4/5] items-center justify-center">
                       <Loader2
                         size={20}
-                        className="animate-spin text-[#2563EB]"
+                        className="animate-spin text-[#2F61FD]"
                       />
                     </div>
                   )}
@@ -621,7 +604,7 @@ export default function PublishingJobEditor({
             </div>
           ) : (
             <>
-              <label className="mb-2 block text-sm font-bold text-[#0F172A]">
+              <label className="mb-2 block text-sm font-bold text-[#18233C]">
                 کپشن
               </label>
               <textarea
@@ -629,7 +612,7 @@ export default function PublishingJobEditor({
                 onChange={(event) => setCaption(event.target.value)}
                 maxLength={2200}
                 rows={6}
-                className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10"
+                className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#18233C] outline-none focus:border-[#2F61FD] focus:bg-white focus:ring-2 focus:ring-[#2F61FD]/10"
                 style={{
                   fontSize: "16px",
                   WebkitTextSizeAdjust: "100%",
@@ -640,9 +623,9 @@ export default function PublishingJobEditor({
                 <div className="mb-3 flex items-center gap-2">
                   <CalendarClock
                     size={17}
-                    className="text-[#2563EB]"
+                    className="text-[#2F61FD]"
                   />
-                  <span className="text-sm font-bold text-[#0F172A]">
+                  <span className="text-sm font-bold text-[#18233C]">
                     زمان انتشار
                   </span>
                 </div>
@@ -690,7 +673,7 @@ export default function PublishingJobEditor({
                           ),
                         )
                       }
-                      className="mt-1 w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-3 !text-base font-semibold text-[#334155] outline-none focus:border-[#2563EB]"
+                      className="mt-1 w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-3 !text-base font-semibold text-[#334155] outline-none focus:border-[#2F61FD]"
                       style={{ fontSize: "16px" }}
                     />
                   </label>
@@ -709,7 +692,7 @@ export default function PublishingJobEditor({
                           ),
                         )
                       }
-                      className="mt-1 w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-3 !text-base font-semibold text-[#334155] outline-none focus:border-[#2563EB]"
+                      className="mt-1 w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-3 !text-base font-semibold text-[#334155] outline-none focus:border-[#2F61FD]"
                       style={{ fontSize: "16px" }}
                     />
                   </label>
@@ -719,7 +702,7 @@ export default function PublishingJobEditor({
                   type="button"
                   disabled={!contentDirty || contentSaving || deleting}
                   onClick={() => void saveContent()}
-                  className="mt-4 min-h-11 w-full rounded-xl !bg-[#2563EB] px-4 text-sm font-bold text-white hover:!bg-[#1D4ED8] disabled:cursor-not-allowed disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8]"
+                  className="mt-4 min-h-11 w-full rounded-xl !bg-[#2F61FD] px-4 text-sm font-bold text-white hover:!bg-[#1E4BD8] disabled:cursor-not-allowed disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8]"
                 >
                   {contentSaving ? (
                     <span className="inline-flex items-center gap-2">
@@ -745,7 +728,7 @@ export default function PublishingJobEditor({
         {job && automationId ? (
           <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
             <div className="mb-5">
-              <h2 className="text-sm font-bold text-[#0F172A]">
+              <h2 className="text-sm font-bold text-[#18233C]">
                 {job.type === "STORY"
                   ? "پاسخ خودکار استوری"
                   : "پاسخ خودکار کامنت"}
@@ -754,14 +737,14 @@ export default function PublishingJobEditor({
 
             {automationLoading || !automationLoaded ? (
               <div dir="rtl" role="status" aria-live="polite" className="fixed inset-0 z-40 flex min-h-screen flex-col items-center justify-center gap-3 bg-[#F8FAFC] px-4 text-center">
-                <Loader2 size={30} strokeWidth={1.8} className="animate-spin text-[#2563EB]" />
+                <Loader2 size={30} strokeWidth={1.8} className="animate-spin text-[#2F61FD]" />
                 <p className="text-sm leading-6 text-[#64748B]">{job.type === "STORY" ? "در حال دریافت تنظیمات پاسخ خودکار استوری..." : "در حال دریافت تنظیمات پاسخ خودکار کامنت..."}</p>
               </div>
             ) : automation ? (
               <>
                 {triggerType === "COMMENT_KEYWORD" && (
                   <div className="mb-6 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4">
-                    <label htmlFor="comment-reply-text" className="mb-2 block text-sm font-bold text-[#0F172A]">پاسخ عمومی کامنت</label>
+                    <label htmlFor="comment-reply-text" className="mb-2 block text-sm font-bold text-[#18233C]">پاسخ عمومی کامنت</label>
                     <p className="mb-3 text-xs leading-5 text-[#64748B]">این متن زیر کامنت کاربر ارسال می‌شود و جدا از پاسخ دایرکت قابل ویرایش است.</p>
                     <textarea
                       id="comment-reply-text"
@@ -769,14 +752,14 @@ export default function PublishingJobEditor({
                       onChange={(event) => setCommentReplyText(event.target.value)}
                       rows={4}
                       placeholder="متن پاسخ کامنت..."
-                      className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-white px-3.5 py-3 text-base leading-7 text-[#0F172A] outline-none focus:border-[#2563EB]"
+                      className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-white px-3.5 py-3 text-base leading-7 text-[#18233C] outline-none focus:border-[#2F61FD]"
                       style={{ fontSize: "16px", WebkitTextSizeAdjust: "100%" }}
                     />
                     <Button
                       type="button"
                       onClick={() => void saveCommentReply()}
                       disabled={commentReplySaving || commentReplyText === originalCommentReplyText}
-                      className="mt-3 min-h-10 w-full rounded-xl !bg-[#2563EB] px-4 text-sm font-bold text-white hover:!bg-[#1D4ED8] disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8]"
+                      className="mt-3 min-h-10 w-full rounded-xl !bg-[#2F61FD] px-4 text-sm font-bold text-white hover:!bg-[#1E4BD8] disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8]"
                     >
                       {commentReplySaving ? "در حال ذخیره..." : "ذخیره پاسخ کامنت"}
                     </Button>
@@ -798,9 +781,9 @@ export default function PublishingJobEditor({
                       {triggerType === "STORY_REPLY_KEYWORD" && (
                         <div className="rounded-xl border border-[#E2E8F0] bg-white p-3.5">
                           <label className="flex cursor-pointer items-start gap-3">
-                            <input type="checkbox" checked={likeStoryReply} onChange={(event) => { setLikeStoryReply(event.target.checked); setAutomationDirty(true); }} className="mt-0.5 h-4 w-4 accent-[#2563EB]" />
+                            <input type="checkbox" checked={likeStoryReply} onChange={(event) => { setLikeStoryReply(event.target.checked); setAutomationDirty(true); }} className="mt-0.5 h-4 w-4 accent-[#2F61FD]" />
                             <span>
-                              <span className="block text-sm font-bold text-[#0F172A]">لایک ریپلای <span className="font-medium text-[#2563EB]">(اختیاری)</span></span>
+                              <span className="block text-sm font-bold text-[#18233C]">لایک ریپلای <span className="font-medium text-[#2F61FD]">(اختیاری)</span></span>
                               <span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، Reply استوری کاربر لایک می‌شود.</span>
                             </span>
                           </label>
@@ -808,16 +791,16 @@ export default function PublishingJobEditor({
                       )}
                       <div className="rounded-xl border border-[#E2E8F0] bg-white p-3.5">
                         <label className="flex cursor-pointer items-start gap-3">
-                          <input type="checkbox" checked={requireFollow} onChange={(event) => { setRequireFollow(event.target.checked); setAutomationDirty(true); }} className="mt-0.5 h-4 w-4 accent-[#2563EB]" />
+                          <input type="checkbox" checked={requireFollow} onChange={(event) => { setRequireFollow(event.target.checked); setAutomationDirty(true); }} className="mt-0.5 h-4 w-4 accent-[#2F61FD]" />
                           <span>
-                            <span className="block text-sm font-bold text-[#0F172A]">اجبار به فالو <span className="font-medium text-[#2563EB]">(اختیاری)</span></span>
+                            <span className="block text-sm font-bold text-[#18233C]">اجبار به فالو <span className="font-medium text-[#2F61FD]">(اختیاری)</span></span>
                             <span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، کاربر باید پیج را فالو کرده باشد تا پاسخ را دریافت کند.</span>
                           </span>
                         </label>
                         {requireFollow && (
                           <div className="mt-3">
-                            <label htmlFor="publishing-follow-gate-text" className="mb-2 block text-sm font-bold text-[#0F172A]">متن درخواست فالو</label>
-                            <textarea id="publishing-follow-gate-text" value={followGateText} onChange={(event) => { setFollowGateText(event.target.value); setAutomationDirty(true); }} rows={2} maxLength={500} placeholder="مثلاً برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none placeholder:text-xs focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
+                            <label htmlFor="publishing-follow-gate-text" className="mb-2 block text-sm font-bold text-[#18233C]">متن درخواست فالو</label>
+                            <textarea id="publishing-follow-gate-text" value={followGateText} onChange={(event) => { setFollowGateText(event.target.value); setAutomationDirty(true); }} rows={2} maxLength={500} placeholder="مثلاً برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#18233C] outline-none placeholder:text-xs focus:border-[#2F61FD] focus:bg-white focus:ring-2 focus:ring-[#2F61FD]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
                           </div>
                         )}
                       </div>
@@ -921,7 +904,7 @@ export default function PublishingJobEditor({
             aria-labelledby="delete-automation-title"
             className="w-full max-w-sm rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-2xl"
           >
-            <h3 id="delete-automation-title" className="text-base font-bold text-[#0F172A]">
+            <h3 id="delete-automation-title" className="text-base font-bold text-[#18233C]">
               مطمئنی می‌خوای این مورد رو پاک کنی؟
             </h3>
             <p className="mt-2 text-sm leading-6 text-[#64748B]">
