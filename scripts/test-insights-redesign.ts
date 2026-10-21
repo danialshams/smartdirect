@@ -17,8 +17,7 @@ assert.ok(ui.includes("const [preset, setPreset] = useState<Preset>(30)") &&
   ui.includes("setAppliedRange(null)"),
   "7/30/90-day presets must remain available and exit custom-range mode");
 
-assert.ok(ui.includes('["from", "to"] as const') === false &&
-  ui.includes('(["from", "to"] as const).map((field)') &&
+assert.ok(ui.includes('(["from", "to"] as const).map((field)') &&
   ui.includes('openCalendar(field)'),
   "Date range uses two clear, independently accessible start/end fields");
 assert.ok(ui.includes('mode="single" numberOfMonths={1}') &&
