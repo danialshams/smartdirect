@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type ElementType, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { dairaPalette } from "@/lib/design-system/palette";
+import { dairaPalette } from "../../../lib/design-system/palette";
 import { Calendar } from "@/components/dashboard/DashboardUI";
 
 type Preset = 7 | 30 | 90;
