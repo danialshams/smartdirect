@@ -745,7 +745,7 @@ export default function InstagramInbox({
   useEffect(() => {
     if (
       !selectedId ||
-      !mobileChatOpen ||
+      (!mobileChatOpen && !window.matchMedia("(min-width: 1024px)").matches) ||
       messagesLoading ||
       !messages.length
     ) {
@@ -1813,7 +1813,7 @@ export default function InstagramInbox({
   );
 
   return (
-    <section id="messages" dir="rtl" className="scroll-mt-24 overflow-x-hidden">
+    <section id="messages" dir="rtl" data-mobile-chat-open={mobileChatOpen ? "true" : "false"} className="scroll-mt-24 overflow-x-hidden">
       {error && (
         <div className="mb-3 flex items-center justify-between gap-4 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-xs text-red-700">
           <span>{error}</span>
@@ -1827,7 +1827,7 @@ export default function InstagramInbox({
         </div>
       )}
 
-      <div className="h-[calc(100dvh-7.5rem)] min-h-[500px] overflow-hidden rounded-2xl border border-border bg-card shadow-[0_12px_40px_rgba(15,23,42,0.04)]">
+      <div className="inbox-frame h-[calc(100dvh-196px)] min-h-[290px] overflow-hidden rounded-[22px] border border-[#DFE7F3] bg-white shadow-[0_10px_35px_rgba(15,23,42,0.04)] lg:h-[calc(100dvh-235px)] lg:min-h-[420px]">
         <div className="flex h-full min-h-0">
           <div
             className={`flex min-h-0 flex-1 flex-col lg:flex-none ${
