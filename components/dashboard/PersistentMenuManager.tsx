@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Check, ExternalLink, Lightbulb, Link2,
+  Check, CircleCheck, ExternalLink, Lightbulb, Link2,
   Menu, MessageSquareText, Pencil, Plus, Trash2, X,
 } from "lucide-react";
 import { dairaPalette } from "../../lib/design-system/palette";
