@@ -1692,21 +1692,13 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                     </>
                 </div>
               </section>
-            ) : type !== "STORY" && !tagStepConfirmed ? (
-              <div>
-                <div className="mx-auto mb-5 flex w-full max-w-2xl items-center justify-between gap-3">
-                  <Button
-                    type="button"
-                    onClick={handlePreviousStep}
-                    className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2F61FD]"
-                  >
-                    <ArrowRight size={15} strokeWidth={2} />
-                    بازگشت
-                  </Button>
-                  <Button type="button" disabled={!caption.trim() || publishing} onClick={handleNextStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2F61FD] disabled:cursor-not-allowed disabled:opacity-40">مرحله بعد <ArrowLeft size={15} strokeWidth={2} /></Button>
+            ) : type !== "STORY" && !automationChoiceStepStarted ? (
+              <div className="mx-auto w-full max-w-4xl space-y-4">
+                <div className="flex items-center justify-between gap-2">
+                  <button type="button" onClick={() => { setCaptionStepConfirmed(false); setTagStepConfirmed(false); setError(""); }}
+                    className="inline-flex min-h-9 items-center gap-1 rounded-xl border border-[#DBEAFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#2F61FD]"><ArrowRight size={15}/>مرحله قبل</button>
                 </div>
-
-                <section className="mx-auto w-full max-w-2xl rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
+                <section className="w-full rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
                   <div className="mb-4 flex items-center justify-between gap-3">
                     <div>
                       <div className="flex items-center gap-2"><span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#2F61FD]/10 text-xs font-bold text-[#2F61FD]">۳</span><h2 className="text-sm font-bold text-[#18233C]">کپشن</h2></div>
@@ -1718,7 +1710,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                     value={caption}
                     onChange={e => setCaption(e.target.value)}
                     maxLength={2200}
-                    rows={8}
+                    rows={5}
                     inputMode="text"
                     autoCapitalize="sentences"
                     spellCheck
@@ -1727,59 +1719,15 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                     placeholder={`کپشن ${typeLabels[type]} را بنویس...`}
                   />
                 </section>
-              </div>
-            ) : type !== "STORY" && tagStepConfirmed && !automationChoiceStepStarted ? (
-              <div className="mx-auto w-full max-w-3xl">
-                <div className="mb-5 flex items-center justify-between gap-3">
-                  <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2F61FD]">
-                    <ArrowRight size={15} strokeWidth={2} />بازگشت
-                  </Button>
-                  <Button type="button" onClick={() => { setAutomationChoiceStepStarted(true); setError(""); }} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2F61FD]">
-                    مرحله بعد <ArrowLeft size={15} strokeWidth={2} />
-                  </Button>
-                </div>
-                <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
-                  <div className="mb-5 flex items-start gap-3">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2F61FD]/10 text-xs font-bold text-[#2F61FD]">۴</span>
-                    <div className="min-w-0">
-                      <h2 className="text-sm font-bold text-[#18233C]">تگ کردن <span className="text-[#2F61FD]">(اختیاری)</span></h2>
-                      <p className="mt-1 whitespace-nowrap text-[11px] leading-5 text-[#64748B]">در صورت نیاز، کاربرهای موردنظر را اضافه کن.</p>
+                <section className="w-full rounded-[22px] border border-[#E8EDF5] bg-white p-4 shadow-sm sm:p-6">
+                  <div className="mb-4 flex items-start gap-3">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#EFF6FF] text-xs font-bold text-[#2F61FD]">۲</span>
+                    <div>
+                      <h2 className="text-sm font-bold text-[#18233C]">تگ کردن کاربران <span className="font-medium text-[#2F61FD]">(اختیاری)</span></h2>
+                      <p className="mt-1 text-xs leading-6 text-[#5A6B87]">در صورت نیاز کاربران را به محتوای مربوط اضافه کن. برای هر رسانه حداکثر ۱۰ نفر.</p>
                     </div>
                   </div>
-
-                  {tagInputError && (
-                    <div className="mb-4 rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-5 text-[#B91C1C]" role="alert">
-                      {tagInputError}
-                    </div>
-                  )}
-
-                  {activePublishJobId && publishResultVisible && (
-                    <div className={["mb-4 overflow-hidden rounded-2xl border bg-white p-4 shadow-sm transition-all duration-300", publishResult === null ? "border-[#DBEAFE]" : publishResult === "PUBLISHED" ? "border-[#BBF7D0]" : "border-[#FECACA]", publishResultVisible ? "translate-y-0 opacity-100" : "-translate-y-2 opacity-0"].join(" ")}>
-                      {(() => {
-                        const activeJob = jobs.find((item) => item.id === activePublishJobId);
-                        return (
-                          <div className="flex items-center gap-3">
-                            {activeJob?.media?.[0]?.publicUrl ? (
-                              <div className="h-14 w-11 shrink-0 overflow-hidden rounded-lg border border-[#E2E8F0] bg-[#F1F5F9]">
-                                {activeJob.media[0].type === "IMAGE" ? (
-                                  <img src={activeJob.media[0].publicUrl} alt={typeLabels[activeJob.type]} className="h-full w-full object-cover" />
-                                ) : (
-                                  <video src={activeJob.media[0].publicUrl} muted playsInline className="h-full w-full object-cover" />
-                                )}
-                              </div>
-                            ) : null}
-                            <span className={["flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", publishResult === "PUBLISHED" ? "bg-[#F0FDF4] text-[#16A34A]" : publishResult === "FAILED" ? "bg-[#FEF2F2] text-[#DC2626]" : "bg-[#EFF6FF] text-[#2F61FD]"].join(" ")}>
-                              {publishResult === "PUBLISHED" ? <CheckCircle2 size={20} /> : publishResult === "FAILED" ? <CircleSlash2 size={20} /> : <Loader2 size={20} className="animate-spin" />}
-                            </span>
-                            <div className="min-w-0">
-                              <p className="text-sm font-bold text-[#18233C]">{publishResult === "PUBLISHED" ? "انتشار با موفقیت انجام شد" : publishResult === "FAILED" ? "انتشار ناموفق بود" : "در حال انتشار..."}</p>
-                              <p className="mt-1 text-xs text-[#64748B]">{activeJob ? `در حال انتشار ${typeLabels[activeJob.type]} در اینستاگرام هستیم.` : "در حال پردازش محتوای شما هستیم."}</p>
-                            </div>
-                          </div>
-                        );
-                      })()}
-                    </div>
-                  )}
+                  {tagInputError && <p role="alert" className="mb-3 rounded-xl border border-[#FECACA] bg-[#FEF2F2] p-3 text-xs text-[#B91C1C]">{tagInputError}</p>}
                   <div className="space-y-3">
                     {uploadedMedia.map((item, index) => {
                       const mediaKey = item.storageKey;
@@ -1816,10 +1764,12 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                       );
                     })}
                   </div>
-
-
-
                 </section>
+                <button type="button" disabled={!caption.trim() || uploading || publishing || Boolean(tagInputError)}
+                  onClick={() => { setTagStepConfirmed(true); setAutomationChoiceStepStarted(true); setError(""); }}
+                  className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[#2F61FD] px-5 text-sm font-bold text-white transition hover:bg-[#1E4BD8] disabled:cursor-not-allowed disabled:bg-[#E2E8F0] disabled:text-[#94A3B8]">
+                  ادامه به پاسخ خودکار <ArrowLeft size={17}/>
+                </button>
               </div>
             ) : ((type !== "STORY" && tagStepConfirmed) || (type === "STORY" && captionStepConfirmed)) && (type === "STORY" || automationChoiceStepStarted) && !automationChoiceConfirmed ? (
               <div className="mx-auto w-full max-w-2xl">
