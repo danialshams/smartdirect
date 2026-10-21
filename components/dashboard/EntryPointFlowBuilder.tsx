@@ -79,6 +79,29 @@ const MESSAGE_TYPES = [
     "FORM",
 ] as const;
 
+
+function ModernResponseSkeleton() {
+    return (
+        <div role="status" aria-label="در حال دریافت تنظیمات پاسخ" className="space-y-4">
+            <span className="sr-only">در حال دریافت نوع پاسخ و تنظیمات...</span>
+            <div className="space-y-2">
+                <div className="daira-skeleton__bar h-3.5 w-28" />
+                <div className="daira-skeleton__bar h-3 w-52 max-w-full" />
+            </div>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {[0, 1, 2, 3, 4, 5].map((index) => (
+                    <div key={index} className="flex h-20 items-center gap-2 rounded-xl border border-[var(--daira-border)] p-3">
+                        <div className="daira-skeleton__bar h-10 w-10 shrink-0 rounded-xl" />
+                        <div className="daira-skeleton__bar h-3 min-w-0 flex-1" />
+                    </div>
+                ))}
+            </div>
+            <div className="daira-skeleton__bar h-28 w-full rounded-xl" />
+            <div className="daira-skeleton__bar h-11 w-full rounded-xl" />
+        </div>
+    );
+}
+
 export default function EntryPointFlowBuilder({
     accountId,
     automationId,
@@ -276,7 +299,7 @@ export default function EntryPointFlowBuilder({
                 if (!response.ok || !result.success) {
                     throw new Error(
                         result.error ||
-                        "دریافت Flow ناموفق بود.",
+                        "دریافت تنظیمات پاسخ ناموفق بود.",
                     );
                 }
 
@@ -308,7 +331,7 @@ export default function EntryPointFlowBuilder({
                         loadError instanceof
                             Error
                             ? loadError.message
-                            : "دریافت Flow ناموفق بود.",
+                            : "دریافت تنظیمات پاسخ ناموفق بود.",
                     );
                 }
             } finally {
@@ -806,7 +829,9 @@ export default function EntryPointFlowBuilder({
     return (
         <div className="space-y-5">
             {loadingAutomation ? (
-                fullPageLoading ? (
+                modernResponseFlow ? (
+                    <ModernResponseSkeleton />
+                ) : fullPageLoading ? (
                     <div dir="rtl" role="status" aria-live="polite" className="fixed inset-0 z-40 flex min-h-screen flex-col items-center justify-center gap-3 bg-[#F8FAFC] px-4 text-center">
                         <Loader2 size={30} strokeWidth={1.8} className="animate-spin text-[#2563EB]" />
                         <p className="text-sm leading-6 text-[#64748B]">در حال دریافت تنظیمات پاسخ خودکار...</p>
@@ -844,7 +869,9 @@ export default function EntryPointFlowBuilder({
                     )}
                     {keywordExtraContent}
                     {flowLoading ? (
-                        fullPageLoading ? (
+                        modernResponseFlow ? (
+                            <ModernResponseSkeleton />
+                        ) : fullPageLoading ? (
                             <div dir="rtl" role="status" aria-live="polite" className="fixed inset-0 z-40 flex min-h-screen flex-col items-center justify-center gap-3 bg-[#F8FAFC] px-4 text-center">
                                 <Loader2 size={30} strokeWidth={1.8} className="animate-spin text-[#2563EB]" />
                                 <p className="text-sm leading-6 text-[#64748B]">در حال دریافت اطلاعات فرم‌ها و ویترین‌ها...</p>
@@ -852,7 +879,7 @@ export default function EntryPointFlowBuilder({
                         ) : hideLoadingSpinner ? (
                             <div role="status" aria-live="polite" className="py-8 text-center text-sm leading-6 text-[#64748B]">در حال دریافت اطلاعات فرم‌ها و ویترین‌ها...</div>
                         ) : (
-                            <DashboardLoading label="در حال دریافت Flow پاسخ..." className="min-h-32" />
+                            <DashboardLoading label="در حال دریافت پاسخ..." className="min-h-32" />
                         )
                     ) : (
                     <PublishingStoryAutomationSetup
