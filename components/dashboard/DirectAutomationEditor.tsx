@@ -8,6 +8,7 @@ import PublishingStoryAutomationSetup, { type StoryFormTemplate } from "./publis
 import { createEmptyMessage, normalizeMessages, type MessageDraft, type Showcase, type FormItem } from "./automation-form-utils";
 import DirectAutomationSkeleton from "./DirectAutomationSkeleton";
 import DirectAutomationSuccess from "./DirectAutomationSuccess";
+import { directAutomationHasChanges, responseFingerprint } from "./automation-response-compare";
 
 type Account = {id:string;igUsername:string;isConnected:boolean};
 type Automation = {id:string;triggerType:string;instagramAccountId:string;keyword:string|null;updatedAt:string;messages:unknown};
@@ -31,6 +32,8 @@ export default function DirectAutomationEditor({id}:{id?:string}){
  const [keywords,setKeywords]=useState<string[]>([]);
  const [draft,setDraft]=useState("");
  const [message,setMessage]=useState<MessageDraft>(()=>createEmptyMessage());
+ const [originalResponseSignature,setOriginalResponseSignature]=useState<string|null>(null);
+ const [showcaseDraftChanged,setShowcaseDraftChanged]=useState(false);
  const [showcases,setShowcases]=useState<Showcase[]>([]);
  const [forms,setForms]=useState<FormItem[]>([]);
  const [formTemplates,setFormTemplates]=useState<StoryFormTemplate[]>([]);
@@ -41,7 +44,15 @@ export default function DirectAutomationEditor({id}:{id?:string}){
  const [retry,setRetry]=useState(0);
  const add=()=>{const next=wordsFrom(draft);if(!next.length)return;
   setKeywords(current=>Array.from(new Set([...current,...next])).slice(0,10));setDraft("");};
- const keywordValid=keywords.length>0&&keywords.length<=10;
+ const effectiveKeywords=Array.from(new Set([...keywords,...wordsFrom(draft)]));
+ const keywordValid=effectiveKeywords.length>0&&effectiveKeywords.length<=10;
+ const hasChanges=!original||directAutomationHasChanges({
+  originalKeywords:wordsFrom(original.keyword||""),
+  currentKeywords:effectiveKeywords,
+  originalResponseSignature,
+  currentMessage:message,
+  showcaseDraftChanged,
+ });
  useEffect(()=>{
   const controller=new AbortController();setLoading(true);setError("");
   void(async()=>{
@@ -81,10 +92,14 @@ export default function DirectAutomationEditor({id}:{id?:string}){
      if(msgs[0]?.quickReplies.length>=2)templates.push({id:"saved:"+item.id,title:item.title||"فرم ذخیره‌شده",text:msgs[0].text,quickReplies:msgs[0].quickReplies});
     }
     if(!controller.signal.aborted){
+     const initialMessage=existing?normalizeMessages(existing.messages)[0]||createEmptyMessage():createEmptyMessage();
      setAccount(active);
      setOriginal(existing);
      setKeywords(existing?wordsFrom(existing.keyword||""):[]);
-     setMessage(existing?normalizeMessages(existing.messages)[0]||createEmptyMessage():createEmptyMessage());
+     setDraft("");
+     setMessage(initialMessage);
+     setOriginalResponseSignature(existing?responseFingerprint(initialMessage):null);
+     setShowcaseDraftChanged(false);
      setShowcases(Array.isArray(showcaseData)?showcaseData:Array.isArray(showcaseData?.data)?showcaseData.data:[]);
      setForms(Array.isArray(formData)?formData:Array.isArray(formData?.data)?formData.data:[]);
      setFormTemplates(templates);
@@ -95,8 +110,8 @@ export default function DirectAutomationEditor({id}:{id?:string}){
   return ()=>controller.abort();
  },[id,retry]);
  async function save(prepared?:MessageDraft){
-  if(saving||!account)return;
-  const entries=Array.from(new Set([...keywords,...wordsFrom(draft)])).slice(0,11);
+  if(saving||!account||(original&&!hasChanges))return;
+  const entries=effectiveKeywords.slice(0,11);
   if(!entries.length||entries.length>10){setError("بین ۱ تا ۱۰ کلمه کلیدی وارد کنید.");return;}
   setSaving(true);setError("");
   try{
@@ -139,8 +154,9 @@ export default function DirectAutomationEditor({id}:{id?:string}){
     <div className="rounded-2xl border bg-white p-4 sm:p-5" style={{borderColor:dairaPalette.border}}>
      <PublishingStoryAutomationSetup key={original?.id||account.id} message={message} showcases={showcases} forms={forms}
       formTemplates={formTemplates} loadingResources={false} instagramAccountId={account.id} onUpdate={patch=>setMessage(m=>({...m,...patch}))}
-      keywordValid={keywordValid||Boolean(draft.trim())} storyCreateMode storyEditMode={Boolean(original)}
-      disabled={saving} showFinalSave finalSaveDisabled={saving} onContinue={save}
+      keywordValid={keywordValid} storyCreateMode storyEditMode={Boolean(original)}
+      onDraftChange={setShowcaseDraftChanged}
+      disabled={saving} showFinalSave finalSaveDisabled={saving||!hasChanges} onContinue={save}
       finalSaveLabel={original?"ذخیره تغییرات":"ساخت پاسخ خودکار دایرکت"}
       finalSaveLoadingLabel="در حال ذخیره..." textPlaceholder="متنی که بعد از دریافت کلمه کلیدی ارسال می‌شود..."/>
     </div>
