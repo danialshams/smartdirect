@@ -929,6 +929,7 @@ export default function InstagramInbox({
     if ((!text.trim() && !selectedFile && !recordedVoice) || !accountId || !selectedId || sending) return;
     if (selectedFile || recordedVoice) {
       const file = selectedFile || recordedVoice;
+      if (!file) return;
       const accompanyingText = text.trim();
       const sent = await sendFile(file);
       // Graph API sends attachments and text as separate messages.
