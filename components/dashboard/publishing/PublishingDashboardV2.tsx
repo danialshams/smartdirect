@@ -1553,8 +1553,6 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                     </button>
                   ))}
                 </div>
-                })()}
-
               </section>
             ) : (type !== "STORY" && !captionStepConfirmed) || uploadedMedia.length === 0 || uploadSuccess || (type === "STORY" && showUploadedMediaPreview) ? (
               <section className="mx-auto w-full max-w-3xl">
@@ -1775,13 +1773,13 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               <div className="mx-auto w-full max-w-2xl">
                 <div className="mb-5 flex items-center justify-between gap-3">
                   <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2F61FD]">
-                    <ArrowRight size={15} strokeWidth={2} />بازگشت
+                    <ArrowRight size={15} strokeWidth={2} />مرحله قبل
                   </Button>
 
                 </div>
                 <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
                   <div className="mb-6 flex items-start gap-3">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2F61FD]/10 text-xs font-bold text-[#2F61FD]">{type === "STORY" ? "۳" : "۵"}</span>
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2F61FD]/10 text-xs font-bold text-[#2F61FD]">۳</span>
                     <div className="min-w-0">
                       <h2 className="text-sm font-bold text-[#18233C]">پاسخ خودکار <span className="text-[#2F61FD]">(اختیاری)</span></h2>
                       <p className="mt-1.5 text-xs leading-5 text-[#64748B]">آیا می‌خواهی برای این محتوا پاسخ خودکار تنظیم شود؟</p>
@@ -1813,7 +1811,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               <div className="mx-auto w-full max-w-2xl">
                 <div className="mb-5 flex items-center justify-between gap-3">
                   <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2F61FD]">
-                    <ArrowRight size={15} strokeWidth={2} />بازگشت
+                    <ArrowRight size={15} strokeWidth={2} />مرحله قبل
                   </Button>
                   {storyResponseSaved && !storyResponseEditing && (
                     <Button type="button" onClick={() => { animateStepChange(() => { setAutomationSetupConfirmed(true); setError(""); }); }} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2F61FD]">
@@ -1991,13 +1989,13 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               <div className="mx-auto w-full max-w-2xl">
                 <div className="mb-5 flex items-center justify-between gap-3">
                   <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2F61FD]">
-                    <ArrowRight size={15} strokeWidth={2} />بازگشت
+                    <ArrowRight size={15} strokeWidth={2} />مرحله قبل
                   </Button>
 
                 </div>
                 <section className="space-y-5 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
                   <div className="flex items-start gap-3">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2F61FD]/10 text-xs font-bold text-[#2F61FD]">۶</span>
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2F61FD]/10 text-xs font-bold text-[#2F61FD]">۳</span>
                     <div className="min-w-0">
                       <h2 className="text-sm font-bold text-[#18233C]">تنظیم پاسخ خودکار</h2>
                       <p className="mt-1.5 text-xs leading-5 text-[#64748B]">کلمات فعال‌کننده و متن پیام دایرکت را مشخص کن.</p>
@@ -2045,12 +2043,12 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               <div className="mx-auto w-full max-w-2xl">
                 <div className="mb-5 flex items-center justify-between gap-3">
                   <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2F61FD]">
-                    <ArrowRight size={15} strokeWidth={2} />بازگشت
+                    <ArrowRight size={15} strokeWidth={2} />مرحله قبل
                   </Button>
                 </div>
                 <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
                   <div className="mb-6 flex items-start gap-3">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2F61FD]/10 text-xs font-bold text-[#2F61FD]">{type === "STORY" ? (automationEnabled ? "۵" : "۴") : (automationEnabled ? "۷" : "۶")}</span>
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2F61FD]/10 text-xs font-bold text-[#2F61FD]">۴</span>
                     <div className="min-w-0">
                       <h2 className="text-sm font-bold text-[#18233C]">زمان انتشار</h2>
                       <p className="mt-1.5 text-xs leading-5 text-[#64748B]">زمان انتشار این {typeLabels[type]} را انتخاب کن.</p>
@@ -2058,24 +2056,21 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   </div>
 
                   <div className="space-y-3">
-                    <div className="flex flex-col gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5 sm:flex-row sm:items-center">
-                      <Button type="button" disabled={!publishNow} onClick={() => void createJob(true)} className="min-h-11 w-full shrink-0 whitespace-nowrap rounded-xl !bg-[#2F61FD] px-4 text-sm font-semibold !text-white hover:!bg-[#1E4BD8] active:!bg-[#1E4BD8] active:!text-white focus:!bg-[#2F61FD] focus:!text-white focus-visible:!bg-[#2F61FD] focus-visible:!text-white disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-100 disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8] sm:flex-1">
-                        <span dir="ltr" className="inline-flex flex-row items-center gap-2"><Send size={17} /><span dir="rtl">انتشار {typeLabels[type]} هم‌اکنون</span></span>
-                      </Button>
-                      <label className="flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl px-2 text-xs font-semibold text-[#334155]">
-                        <input type="checkbox" checked={!publishNow} onChange={(event) => {
-                          const enabled = event.target.checked;
-                          setPublishNow(!enabled);
-                          if (!enabled) {
-                            setStage6Date(null);
-                            setStage6Hour(null);
-                            setStage6Minute(null);
-                          }
-                          setError("");
-                        }} className="h-4 w-4 accent-[#2F61FD]" />
-                        <span className="whitespace-nowrap">انتشار در زمان دلخواه</span>
+                    <fieldset className="space-y-2.5">
+                      <legend className="sr-only">شیوه انتشار محتوا</legend>
+                      <label className={"flex min-h-[64px] cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 transition " + (publishNow?"border-[#2F61FD] bg-[#EFF6FF]":"border-[#E2E8F0] bg-white")}>
+                        <input type="radio" name="publishing-mode" checked={publishNow} onChange={()=>{setPublishNow(true);setError("");}} className="h-4 w-4 accent-[#2F61FD]" />
+                        <span className="flex-1"><span className="block text-sm font-bold text-[#18233C]">انتشار همین حالا</span>
+                          <span className="mt-1 block text-xs text-[#5A6B87]">پس از ثبت، وضعیت انتشار در صف قابل پیگیری است.</span></span>
+                        <Send size={18} className="text-[#2F61FD]"/>
                       </label>
-                    </div>
+                      <label className={"flex min-h-[64px] cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 transition " + (!publishNow?"border-[#2F61FD] bg-[#EFF6FF]":"border-[#E2E8F0] bg-white")}>
+                        <input type="radio" name="publishing-mode" checked={!publishNow} onChange={()=>{setPublishNow(false);setError("");}} className="h-4 w-4 accent-[#2F61FD]" />
+                        <span className="flex-1"><span className="block text-sm font-bold text-[#18233C]">زمان‌بندی انتشار</span>
+                          <span className="mt-1 block text-xs text-[#5A6B87]">انتخاب زمان تا ۴۸ ساعت آینده، به وقت تهران</span></span>
+                        <CalendarClock size={18} className="text-[#2F61FD]"/>
+                      </label>
+                    </fieldset>
 
                     {!publishNow && (
                       <div className="mt-3 rounded-xl border border-[#E2E8F0] bg-white p-4 sm:p-5">
@@ -2164,14 +2159,15 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                           <p className="mt-4 text-center text-[11px] leading-5 text-[#64748B]">برای انتخاب به بالا یا پایین بکشید</p>
                         </div>
 
-                        <div className="mt-5 border-t border-[#E2E8F0] pt-5">
-                          <Button type="button" onClick={() => void createJob(false)} disabled={publishing || !stage6Date || stage6Hour === null || stage6Minute === null} className="min-h-11 w-full rounded-xl !bg-[#2F61FD] px-4 text-sm font-semibold !text-white shadow-none hover:!bg-[#1E4BD8] hover:!text-white hover:shadow-none active:!bg-[#1E4BD8] active:!text-white active:shadow-none focus:!bg-[#2F61FD] focus:!text-white focus:shadow-none focus-visible:!bg-[#2F61FD] focus-visible:!text-white focus-visible:shadow-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-100 disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8]">
-                            <span dir="ltr" className="inline-flex flex-row items-center gap-2">{publishing ? <Loader2 size={17} className="animate-spin" /> : <CalendarClock size={17} />}<span dir="rtl">انتشار در زمان انتخاب‌شده</span></span>
-                          </Button>
-                        </div>
                       </div>
                     )}
 
+                    <button type="button" disabled={publishing || uploading || !canPublish || (!publishNow && (!stage6Date || stage6Hour===null || stage6Minute===null))}
+                      onClick={()=>void createJob(publishNow)}
+                      className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-full bg-[#2F61FD] px-5 text-sm font-bold text-white transition hover:bg-[#1E4BD8] disabled:cursor-not-allowed disabled:bg-[#E2E8F0] disabled:text-[#94A3B8]">
+                      {publishing?<Loader2 size={18} className="animate-spin"/>:publishNow?<Send size={18}/>:<CalendarClock size={18}/>}
+                      {publishing?"در حال ثبت انتشار...":publishNow?"انتشار همین حالا":"ثبت زمان‌بندی انتشار"}
+                    </button>
                     {error && <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-5 text-[#B91C1C]" role="alert">{error}</div>}
                   </div>
                 </section>
