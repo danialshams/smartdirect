@@ -1,11 +1,14 @@
 "use client";
 
-import { Button, DashboardLoading, Input } from "@/components/dashboard/DashboardUI";
-import { CheckCircle2, Menu, MessageSquare, Pencil, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  ArrowLeft, Check, CircleCheck, ExternalLink, Lightbulb, Link2,
+  Menu, MessageSquareText, Pencil, Plus, RefreshCw, Trash2, X,
+} from "lucide-react";
+import { dairaPalette } from "@/lib/design-system/palette";
 import EntryPointFlowBuilder from "./EntryPointFlowBuilder";
 
-type InstagramAccount = {
+type Account = {
   id: string;
   igUsername: string;
   igUserId: string;
@@ -14,724 +17,510 @@ type InstagramAccount = {
 };
 
 type MenuItem = {
-  id?: string;
+  id: string;
   label: string;
   automationId: string | null;
   type: "postback" | "web_url";
   url: string;
 };
 
-type ServerMenuItem = {
+type Draft = {
+  id: string | null;
+  label: string;
+  automationId: string | null;
+  type: "postback" | "web_url";
+  url: string;
+};
+
+type ServerItem = {
   id: string;
   title?: string;
   automationId?: string | null;
-  payload?: string;
+  payload?: string | null;
   type?: "postback" | "web_url";
   url?: string | null;
 };
+
+const MAX_MENU_ITEMS = 20;
+const MAX_TITLE_LENGTH = 30;
+const number = (value: number) => new Intl.NumberFormat("fa-IR").format(value);
+
+function Guide({ numberText, title, description }: { numberText: number; title: string; description: string }) {
+  return (
+    <div
+      className="mb-3 flex items-start gap-3 rounded-xl border px-3.5 py-3"
+      style={{
+        background: dairaPalette.guide.background,
+        borderColor: dairaPalette.guide.border,
+        color: dairaPalette.guide.text,
+      }}
+    >
+      <Lightbulb className="mt-0.5 shrink-0" size={18} style={{ color: dairaPalette.guide.icon }} aria-hidden="true" />
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full text-[10px] font-extrabold text-white"
+            style={{ background: dairaPalette.guide.icon }}>{number(numberText)}</span>
+          <strong className="text-sm font-extrabold">{title}</strong>
+        </div>
+        <p className="mt-1 text-xs leading-6">{description}</p>
+      </div>
+    </div>
+  );
+}
+
+function MenuSkeleton() {
+  return (
+    <div role="status" aria-label="در حال دریافت گزینه‌های منوی دایرکت" className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_280px]">
+      <span className="sr-only">در حال دریافت منو...</span>
+      <div className="space-y-3 rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
+        <div className="mb-5 flex items-center justify-between">
+          <div className="space-y-2"><div className="daira-skeleton__bar h-4 w-32" /><div className="daira-skeleton__bar h-3 w-48" /></div>
+          <div className="daira-skeleton__bar h-10 w-28 rounded-xl" />
+        </div>
+        {[0, 1, 2].map((index) => (
+          <div key={index} className="flex items-center gap-3 rounded-xl border border-[var(--daira-border)] p-3">
+            <div className="daira-skeleton__bar h-10 w-10 rounded-xl" />
+            <div className="min-w-0 flex-1 space-y-2"><div className="daira-skeleton__bar h-3.5 w-36 max-w-full" /><div className="daira-skeleton__bar h-3 w-24" /></div>
+            <div className="daira-skeleton__bar h-9 w-16 rounded-lg" />
+          </div>
+        ))}
+      </div>
+      <div className="space-y-4 rounded-2xl border border-[var(--daira-border)] bg-white p-5">
+        <div className="daira-skeleton__bar h-4 w-32" />
+        <div className="daira-skeleton__bar h-24 w-full rounded-xl" />
+        <div className="daira-skeleton__bar h-10 w-full rounded-xl" />
+        <div className="daira-skeleton__bar h-10 w-full rounded-xl" />
+      </div>
+    </div>
+  );
+}
+
+async function readResult(response: Response): Promise<{success?: boolean; error?: string; data?: {items?: ServerItem[]}}> {
+  const raw = await response.text();
+  if (!raw.trim()) throw new Error("پاسخی از سرور دریافت نشد.");
+  try {
+    return JSON.parse(raw) as {success?: boolean; error?: string; data?: {items?: ServerItem[]}};
+  } catch {
+    throw new Error("پاسخ نامعتبر از سرور دریافت شد.");
+  }
+}
+
+function normalizeMenu(items: ServerItem[]): MenuItem[] {
+  return items.map((item) => {
+    const webUrl = item.payload?.startsWith("__web_url__:") ?? false;
+    const type = item.type ?? (webUrl ? "web_url" : "postback");
+    return {
+      id: item.id,
+      label: item.title || "",
+      automationId: type === "web_url" ? null : item.automationId ?? null,
+      type,
+      url: item.url || (webUrl ? item.payload?.slice("__web_url__:".length) || "" : ""),
+    };
+  });
+}
+
+function validLink(value: string) {
+  try {
+    const parsed = new URL(value.trim());
+    return parsed.protocol === "https:" || parsed.protocol === "http:";
+  } catch {
+    return false;
+  }
+}
 
 export default function PersistentMenuManager({
   accounts,
   accountsLoading = false,
 }: {
-  accounts: InstagramAccount[];
+  accounts: Account[];
   accountsLoading?: boolean;
 }) {
-  const account = useMemo(
-    () => accounts.find((item) => item.isConnected) ?? null,
-    [accounts],
-  );
-
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-  const [draft, setDraft] = useState("");
-  const [draftType, setDraftType] = useState<"postback" | "web_url">("postback");
-  const [draftUrl, setDraftUrl] = useState("");
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editDraft, setEditDraft] = useState("");
-  const [editAutomationId, setEditAutomationId] = useState<string | null>(null);
+  const account = useMemo(() => accounts.find((item) => item.isConnected) ?? null, [accounts]);
+  const [items, setItems] = useState<MenuItem[]>([]);
+  const [editor, setEditor] = useState<Draft | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
+  const [notice, setNotice] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<MenuItem | null>(null);
+  const loadVersion = useRef(0);
 
-  async function readResult(response: Response) {
-    const text = await response.text();
-    if (!text) return {};
-    try {
-      return JSON.parse(text) as Record<string, unknown>;
-    } catch {
-      throw new Error("پاسخ نامعتبر از سرور دریافت شد.");
-    }
-  }
-
-  async function loadMenuItems() {
+  const loadItems = useCallback(async (quiet = false) => {
+    const version = ++loadVersion.current;
     if (!account) {
-      setMenuItems([]);
+      setItems([]);
       setLoading(false);
       return;
     }
-
+    if (!quiet) setLoading(true);
     try {
-      setLoading(true);
-      setError("");
       const response = await fetch(
-        `/api/instagram/persistent-menu?instagramAccountId=${encodeURIComponent(account.id)}`,
+        "/api/instagram/persistent-menu?instagramAccountId=" + encodeURIComponent(account.id),
         { cache: "no-store", credentials: "include" },
       );
       const result = await readResult(response);
-
-      if (!response.ok || result.success !== true) {
-        throw new Error(
-          typeof result.error === "string"
-            ? result.error
-            : "دریافت گزینه‌های منوی دایرکت ناموفق بود.",
-        );
+      if (!response.ok || !result.success) throw new Error(result.error || "دریافت منوی دایرکت ناموفق بود.");
+      if (version === loadVersion.current) {
+        setItems(normalizeMenu(Array.isArray(result.data?.items) ? result.data.items : []));
+        setError("");
       }
-
-      const menu = result.data && typeof result.data === "object" ? (result.data as { items?: ServerMenuItem[] }) : null;
-      const data = Array.isArray(menu?.items) ? menu.items : [];
-      setMenuItems(
-        data.map((item) => {
-          const value = item as ServerMenuItem;
-          return {
-            id: value.id,
-            label: value.title ?? "",
-            automationId: value.automationId ?? null,
-            type:
-              value.type ??
-              (value.payload?.startsWith("__web_url__:") ? "web_url" : "postback"),
-            url:
-              value.url ??
-              (value.payload?.startsWith("__web_url__:")
-                ? value.payload.slice("__web_url__:".length)
-                : ""),
-          };
-        }),
-      );
-    } catch (requestError) {
-      setMenuItems([]);
-      setError(
-        requestError instanceof Error
-          ? requestError.message
-          : "دریافت گزینه‌های منوی دایرکت ناموفق بود.",
-      );
+    } catch (err) {
+      if (version === loadVersion.current) {
+        setError(err instanceof Error ? err.message : "دریافت منوی دایرکت ناموفق بود.");
+      }
     } finally {
-      setLoading(false);
+      if (version === loadVersion.current) setLoading(false);
     }
-  }
-
-  useEffect(() => {
-    void loadMenuItems();
   }, [account?.id]);
 
-  function startEdit(menuItem: MenuItem) {
-    setEditingId(menuItem.id ?? null);
-    setEditDraft(menuItem.label);
-    setEditAutomationId(menuItem.automationId);
-    setSuccess(false);
+  useEffect(() => {
+    setEditor(null);
+    setNotice("");
+    void loadItems();
+    return () => { loadVersion.current += 1; };
+  }, [loadItems]);
+
+  function openEditor(item?: MenuItem) {
+    setError("");
+    setNotice("");
+    setEditor(item ? {
+      id: item.id, label: item.label, type: item.type,
+      url: item.url, automationId: item.automationId,
+    } : {
+      id: null, label: "", type: "postback", url: "", automationId: null,
+    });
+    window.requestAnimationFrame(() => {
+      document.getElementById("persistent-menu-editor")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+
+  function cancelEditor() {
+    if (saving) return;
+    setEditor(null);
     setError("");
   }
 
-  async function saveMenuItem(
-    labelOverride: string,
-    editingIdOverride: string | null,
-    automationIdOverride?: string,
-    typeOverride: "postback" | "web_url" = "postback",
-    urlOverride = "",
-  ) {
-    if (!account) return;
-
-    const label = labelOverride.trim();
-    if (!label) {
-      setError("عنوان گزینه را وارد کنید.");
+  async function saveItem(draft: Draft, automationId: string | null) {
+    if (!account || saving) return;
+    const label = draft.label.trim();
+    if (!label || label.length > MAX_TITLE_LENGTH) {
+      setError("عنوان گزینه را بین ۱ تا ۳۰ کاراکتر وارد کن.");
       return;
     }
-    if (label.length > 30) {
-      setError("عنوان گزینه نباید بیشتر از ۳۰ کاراکتر باشد.");
+    if (draft.type === "web_url" && !validLink(draft.url)) {
+      setError("آدرس لینک را با https:// یا http:// وارد کن.");
       return;
     }
-    const resolvedAutomationId = automationIdOverride;
-    const editingItem = editingIdOverride
-      ? menuItems.find((menuItem) => menuItem.id === editingIdOverride)
-      : null;
-    const itemType = editingItem?.type ?? typeOverride;
-    const itemUrl = editingItem?.url ?? urlOverride;
+    if (draft.type === "postback" && !automationId) {
+      setError("ابتدا پاسخ خودکار این گزینه را تنظیم کن.");
+      return;
+    }
+    const saved: MenuItem = {
+      id: draft.id || "",
+      label,
+      type: draft.type,
+      url: draft.type === "web_url" ? draft.url.trim() : "",
+      automationId: draft.type === "web_url" ? null : automationId,
+    };
+    const updated = draft.id
+      ? items.map((item) => item.id === draft.id ? saved : item)
+      : [...items, saved];
 
-    if (itemType === "web_url") {
-      if (!itemUrl.trim()) {
-        setError("لینک گزینه را وارد کنید.");
-        return;
-      }
-      try {
-        const parsed = new URL(itemUrl.trim());
-        if (!["http:", "https:"].includes(parsed.protocol)) throw new Error();
-      } catch {
-        setError("لینک گزینه معتبر نیست.");
-        return;
-      }
-    } else if (!resolvedAutomationId) {
-      setError("ابتدا پاسخ گزینه را تنظیم و ذخیره کنید.");
+    if (updated.length > MAX_MENU_ITEMS) {
+      setError("حداکثر ۲۰ گزینه برای منو قابل ثبت است.");
       return;
     }
 
-    const nextMenuItems = editingIdOverride
-      ? menuItems.map((menuItem) =>
-          menuItem.id === editingIdOverride
-            ? { ...menuItem, label, automationId: resolvedAutomationId ?? null }
-            : menuItem,
-        )
-: [
-          ...menuItems,
-          {
-            label,
-            automationId: resolvedAutomationId ?? null,
-            type: itemType,
-            url: itemUrl.trim(),
-          },
-        ];
-
-    if (nextMenuItems.length > 20) {
-      setError("حداکثر ۲۰ گزینه برای منوی دایرکت می‌توانید بسازید.");
-      return;
-    }
-
+    setSaving(true);
+    setError("");
+    setNotice("");
     try {
-      setSaving(true);
-      setError("");
-      setSuccess(false);
-
       const response = await fetch("/api/instagram/persistent-menu", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         credentials: "include",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           instagramAccountId: account.id,
-          enabled: nextMenuItems.length > 0,
-          items: nextMenuItems.map((menuItem) => ({
-            title: menuItem.label.trim(),
-            type: menuItem.type,
-            automationId:
-              menuItem.type === "web_url" ? null : menuItem.automationId,
-            url: menuItem.type === "web_url" ? menuItem.url.trim() : null,
+          enabled: updated.length > 0,
+          items: updated.map((item) => ({
+            title: item.label,
+            type: item.type,
+            url: item.type === "web_url" ? item.url : null,
+            automationId: item.type === "postback" ? item.automationId : null,
           })),
         }),
       });
-
       const result = await readResult(response);
-      if (!response.ok || result.success !== true) {
-        throw new Error(
-          typeof result.error === "string"
-            ? result.error
-            : "ذخیره گزینه منوی دایرکت ناموفق بود.",
-        );
-      }
-
-      setSuccess(true);
-      setEditingId(null);
-      setDraft("");
-      setDraftType("postback");
-      setDraftUrl("");
-      setEditDraft("");
-      setEditAutomationId(null);
-      await loadMenuItems();
-      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
-    } catch (saveError) {
-      setError(
-        saveError instanceof Error
-          ? saveError.message
-          : "ذخیره گزینه منوی دایرکت ناموفق بود.",
-      );
+      if (!response.ok || !result.success) throw new Error(result.error || "ذخیره منو ناموفق بود.");
+      setEditor(null);
+      setNotice(draft.id ? "تغییرات گزینه ذخیره شد." : "گزینهٔ جدید به منوی دایرکت اضافه شد.");
+      await loadItems(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "ذخیره منو ناموفق بود.");
     } finally {
       setSaving(false);
     }
   }
 
-  async function deleteMenuItem(menuItem: MenuItem) {
-    if (!account) return;
-
+  async function deleteItem() {
+    if (!account || !deleteTarget || saving) return;
+    const removed = deleteTarget;
+    setSaving(true);
+    setError("");
+    setNotice("");
     try {
-      setSaving(true);
-      setError("");
-
-      const remaining = menuItems.filter((item) => item.id !== menuItem.id);
+      const remaining = items.filter((item) => item.id !== removed.id);
       const response = await fetch("/api/instagram/persistent-menu", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         credentials: "include",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           instagramAccountId: account.id,
           enabled: remaining.length > 0,
           items: remaining.map((item) => ({
-            title: item.label.trim(),
+            title: item.label,
             type: item.type,
-            automationId: item.type === "web_url" ? null : item.automationId,
-            url: item.type === "web_url" ? item.url.trim() : null,
+            url: item.type === "web_url" ? item.url : null,
+            automationId: item.type === "postback" ? item.automationId : null,
           })),
         }),
       });
-
       const result = await readResult(response);
-      if (!response.ok || result.success !== true) {
-        throw new Error(
-          typeof result.error === "string"
-            ? result.error
-            : "حذف گزینه منوی دایرکت ناموفق بود.",
-        );
-      }
-
-      if (menuItem.automationId) {
-        await fetch(
-          `/api/automations/${encodeURIComponent(menuItem.automationId)}`,
-          { method: "DELETE", credentials: "include" },
-        ).catch(() => undefined);
-      }
-
-      if (editingId === menuItem.id) {
-        setEditingId(null);
-        setDraft("");
-      }
-
-      await loadMenuItems();
-    } catch (deleteError) {
-      setError(
-        deleteError instanceof Error
-          ? deleteError.message
-          : "حذف گزینه منوی دایرکت ناموفق بود.",
-      );
+      if (!response.ok || !result.success) throw new Error(result.error || "حذف گزینه ناموفق بود.");
+      if (editor?.id === removed.id) setEditor(null);
+      setNotice("گزینه از منوی دایرکت حذف شد.");
+      await loadItems(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "حذف گزینه ناموفق بود.");
     } finally {
       setSaving(false);
       setDeleteTarget(null);
     }
   }
 
+  const draftReady = Boolean(editor?.label.trim()) && (editor?.label.trim().length ?? 0) <= MAX_TITLE_LENGTH;
+  const canCreate = items.length < MAX_MENU_ITEMS && !saving;
+
   return (
-    <>
-    <div dir="rtl" className="bg-[#F8FAFC] px-3 py-4 sm:px-5 sm:py-6 lg:px-8">
-      <div className="mx-auto w-full max-w-6xl">
-        <section className="mb-6 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-5">
-          <div className="flex items-start gap-3">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#2563EB]/10 text-[#2563EB]">
-              <Menu size={22} strokeWidth={2} />
+    <div dir="rtl" className="mx-auto w-full max-w-5xl px-1 py-2 sm:px-2 sm:py-4">
+      <header className="mb-5 flex items-start gap-3">
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[var(--daira-surface-hover)] text-[var(--daira-primary)]">
+          <Menu size={23} aria-hidden="true" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <h1 className="text-lg font-extrabold text-[var(--daira-heading)]">منوی دایرکت</h1>
+          <p className="mt-1 text-xs leading-6 text-[var(--daira-text)]">
+            گزینه‌هایی که مخاطب در دایرکت می‌بیند را بساز و برای هرکدام پاسخ خودکار یا لینک تنظیم کن.
+          </p>
+          {account && (
+            <span className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-[var(--daira-surface-hover)] px-2.5 py-1 text-[11px] font-bold text-[var(--daira-text)]">
+              <CircleCheck size={13} className="text-[var(--daira-primary)]" />
+              {"@" + account.igUsername}
             </span>
-            <div className="min-w-0">
-              <h1 className="text-lg font-bold tracking-tight text-[#0F172A] sm:text-xl">منوی دایرکت</h1>
-              <p className="mt-1.5 max-w-2xl text-xs leading-6 text-[#64748B] sm:text-sm">
-                گزینه‌هایی بساز که کاربر بتواند از منوی دایرکت انتخاب کند و برای هر گزینه پاسخ اختصاصی تنظیم کن.
-              </p>
-            </div>
-          </div>
+          )}
+        </div>
+        {account && (
+          <button type="button" onClick={() => void loadItems()} disabled={saving || loading}
+            aria-label="به‌روزرسانی منوی دایرکت"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[var(--daira-border)] bg-white text-[var(--daira-text)] transition hover:bg-[var(--daira-surface-hover)] disabled:opacity-50">
+            <RefreshCw size={18} />
+          </button>
+        )}
+      </header>
+
+      {error && (
+        <div role="alert" className="mb-4 flex items-start justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs leading-6 text-red-700">
+          <span className="min-w-0 flex-1">{error}</span>
+          <button type="button" className="shrink-0" onClick={() => setError("")} aria-label="بستن خطا"><X size={17} /></button>
+        </div>
+      )}
+      {notice && (
+        <div role="status" className="mb-4 flex items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-xs font-semibold text-emerald-700">
+          <CircleCheck size={17} />{notice}
+        </div>
+      )}
+
+      {(accountsLoading || loading) && !editor ? <MenuSkeleton /> : !account ? (
+        <section className="rounded-2xl border border-dashed border-[var(--daira-border)] bg-white px-5 py-14 text-center">
+          <Menu size={30} className="mx-auto text-[var(--daira-text)]" />
+          <p className="mt-4 text-sm font-bold text-[var(--daira-heading)]">هیچ پیج اینستاگرامی متصل نیست</p>
+          <p className="mt-2 text-xs leading-6 text-[var(--daira-text)]">برای ساخت منوی دایرکت ابتدا پیج را متصل کن.</p>
         </section>
-
-        {!account ? (
-          accountsLoading ? (
-            <DashboardLoading label="در حال دریافت منوی دایرکت..." className="dashboard-loading--page mt-6 w-full" />
-          ) : (
-            <section className="rounded-2xl border border-dashed border-[#CBD5E1] bg-white px-6 py-16 text-center">
-              <Menu className="mx-auto text-[#94A3B8]" size={24} />
-              <h2 className="mt-4 text-base font-bold text-[#0F172A]">ابتدا یک پیج اینستاگرام متصل کنید</h2>
-            </section>
-          )
-        ) : (
-          <div className="space-y-5">
-            <section className="mx-auto w-full max-w-2xl rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
-              <div className="mb-6 flex items-start gap-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">
-                  ۱
-                </span>
-                <div className="min-w-0">
-                  <h2 className="text-sm font-bold text-[#0F172A]">عنوان گزینه</h2>
-                  <p className="mt-1.5 text-xs leading-5 text-[#64748B]">
-                    متنی بنویس که کاربر بتواند با یک لمس انتخابش کند.
+      ) : (
+        <>
+          <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_280px]">
+            <section className="min-w-0 rounded-2xl border border-[var(--daira-border)] bg-white p-3 sm:p-5">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-sm font-extrabold text-[var(--daira-heading)]">گزینه‌های منو</h2>
+                  <p className="mt-1 text-[11px] leading-5 text-[var(--daira-text)]">
+                    {number(items.length)} از {number(MAX_MENU_ITEMS)} گزینه ساخته شده
                   </p>
                 </div>
+                <button type="button" onClick={() => openEditor()} disabled={!canCreate}
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[var(--daira-primary)] px-4 text-xs font-bold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">
+                  <Plus size={17} /> گزینهٔ جدید
+                </button>
               </div>
 
-              <Input
-                value={draft}
-                onChange={(event) => {
-                  setDraft(event.target.value);
-                  setSuccess(false);
-                  setError("");
-                }}
-                maxLength={30}
-                placeholder="مثلاً: مشاهده محصولات"
-                className="h-12 rounded-xl border-[#E2E8F0] bg-[#F8FAFC] px-3.5 text-base text-[#0F172A] focus:border-[#2563EB] focus:bg-white"
-                style={{ fontSize: "16px", WebkitTextSizeAdjust: "100%" }}
-              />
-
-              <div className="dashboard-character-counter text-[10px] text-[#64748B]">
-                <span>حداکثر ۳۰ کاراکتر</span>
-                <span>{draft.length.toLocaleString("fa-IR")} / ۳۰</span>
-              </div>
-            </section>
-
-            <section className="mx-auto w-full max-w-2xl rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
-              <div className="mb-6 flex items-start gap-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">
-                  ۲
-                </span>
-                <div className="min-w-0">
-                  <h2 className="text-sm font-bold text-[#0F172A]">پاسخ گزینه</h2>
-                  <p className="mt-1.5 text-xs leading-5 text-[#64748B]">
-                    نوع و محتوای پاسخ این گزینه را مشخص کن.
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-2.5">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setDraftType("postback");
-                      setDraftUrl("");
-                      setSuccess(false);
-                      setError("");
-                      setEditAutomationId(null);
-                    }}
-                    className={[
-                      "h-11 rounded-xl text-xs font-semibold",
-                      draftType === "postback"
-                        ? "border-[#BFDBFE] bg-[#EFF6FF] text-[#2563EB]"
-                        : "border-[#E2E8F0] bg-white text-[#475569]",
-                    ].join(" ")}
-                  >
-                    پاسخ خودکار
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setDraftType("web_url");
-                      setSuccess(false);
-                      setError("");
-                    }}
-                    className={[
-                      "h-11 rounded-xl text-xs font-semibold",
-                      draftType === "web_url"
-                        ? "border-[#BFDBFE] bg-[#EFF6FF] text-[#2563EB]"
-                        : "border-[#E2E8F0] bg-white text-[#475569]",
-                    ].join(" ")}
-                  >
-                    لینک
-                  </Button>
-                </div>
-
-                <div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3 text-xs text-[#64748B]">
-                  برای این گزینه می‌توانی پاسخ خودکار یا لینک مستقیم تنظیم کنی.
-                </div>
-
-                {draftType === "web_url" ? (
-                  <div className="space-y-2">
-                    <label className="text-xs font-semibold text-[#0F172A]">آدرس لینک</label>
-                    <Input
-                      value={draftUrl}
-                      onChange={(event) => {
-                        setDraftUrl(event.target.value);
-                        setSuccess(false);
-                        setError("");
-                      }}
-                      placeholder="https://example.com"
-                      type="url"
-                      dir="ltr"
-                      className="h-12 rounded-xl border-[#E2E8F0] bg-[#F8FAFC]"
-                    />
-                    <Button
-                      type="button"
-                      onClick={() => void saveMenuItem(draft, null, undefined, "web_url", draftUrl)}
-                      disabled={saving}
-                      className="h-11 w-full rounded-xl text-sm font-semibold"
-                    >
-                      {saving ? "در حال ساخت گزینه..." : "ساخت گزینه لینک"}
-                    </Button>
-                  </div>
-                ) : (
-                <EntryPointFlowBuilder
-                  accountId={account.id}
-                  automationId={null}
-                  hideVideo
-                  responseTypeTitle="نوع پاسخ گزینه"
-                  responseTypeDescription="نوع و محتوای پاسخی را که بعد از انتخاب این گزینه ارسال می‌شود مشخص کن."
-                  textPlaceholder="متنی که به‌عنوان پاسخ گزینه منوی دایرکت برای کاربر ارسال می‌شود..."
-                  finalSaveLabel="ساخت پاسخ گزینه"
-                  finalSaveLoadingLabel="در حال ساخت پاسخ گزینه..."
-                  onAutomationReady={(automationId) => {
-                    void saveMenuItem(draft, null, automationId);
-                  }}
-                />
-                )}
-              </div>
-            </section>
-
-            {error && (
-              <div className="mx-auto w-full max-w-2xl rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-5 text-[#B91C1C]" role="alert">
-                {error}
-              </div>
-            )}
-
-            {success && (
-              <div className="mx-auto flex w-full max-w-2xl items-center gap-2 rounded-xl border border-[#BBF7D0] bg-[#F0FDF4] px-3.5 py-3 text-xs font-medium text-[#15803D]">
-                <CheckCircle2 size={16} />
-                گزینه منوی دایرکت با موفقیت ذخیره شد.
-              </div>
-            )}
-
-            <section className="mx-auto w-full max-w-2xl rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
-              <div className="mb-4 flex items-start gap-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">
-                  ۳
-                </span>
-                <div className="min-w-0">
-                  <h2 className="text-sm font-bold text-[#0F172A]">گزینه‌های ساخته‌شده</h2>
-                  <p className="mt-1.5 text-xs leading-5 text-[#64748B]">
-                    گزینه‌هایی که قبلاً ساخته‌ای را از اینجا مشاهده، ویرایش یا حذف کن.
-                  </p>
-                </div>
-              </div>
-
-              {loading ? (
-                <DashboardLoading label="در حال دریافت گزینه‌های منوی دایرکت..." className="min-h-24" />
-              ) : menuItems.length === 0 ? (
-                <div className="flex min-h-24 items-center justify-center rounded-xl border border-dashed border-[#E2E8F0] bg-[#F8FAFC] px-4 text-center text-xs font-medium text-[#94A3B8]">
-                  هنوز گزینه‌ای برای منوی دایرکت ساخته نشده است.
+              {!items.length ? (
+                <div className="flex min-h-40 flex-col items-center justify-center rounded-xl border border-dashed border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-4 text-center">
+                  <MessageSquareText size={26} className="text-[var(--daira-text)]" />
+                  <p className="mt-3 text-sm font-bold text-[var(--daira-heading)]">هنوز گزینه‌ای ساخته نشده</p>
+                  <p className="mt-1.5 text-xs leading-6 text-[var(--daira-text)]">با «گزینهٔ جدید» اولین گزینه را بساز.</p>
                 </div>
               ) : (
-                <div className="space-y-2.5">
-                  {menuItems.map((menuItem, index) => (
-                    <div key={menuItem.id ?? `menuItem-${index}`}>
-                    <div
-                      className="flex flex-col gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5 transition hover:border-[#BFDBFE] hover:bg-[#F8FBFF] sm:flex-row sm:items-center"
-                    >
-                      <div className="flex min-w-0 flex-1 items-center gap-3">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#EFF6FF] text-[#2563EB]">
-                          <MessageSquare size={16} />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="break-words whitespace-pre-wrap text-sm font-bold leading-6 text-[#0F172A]">
-                            {menuItem.label}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex w-full shrink-0 items-center gap-2 border-t border-[#E2E8F0] pt-2 sm:w-auto sm:border-0 sm:pt-0">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => startEdit(menuItem)}
-                          className="h-9 flex-1 rounded-lg border-[#BFDBFE] bg-white px-2.5 text-xs font-semibold text-[#2563EB] hover:bg-[#EFF6FF] sm:flex-none"
-                          aria-label="ویرایش گزینه"
-                        >
-                          <Pencil size={14} />
-                          <span className="hidden sm:inline">ویرایش</span>
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => setDeleteTarget(menuItem)}
-                          disabled={saving}
-                          className="h-9 flex-1 rounded-lg border-[#FECACA] bg-white px-2.5 text-xs font-semibold text-[#DC2626] hover:bg-[#FEF2F2] sm:flex-none"
-                          aria-label="حذف گزینه"
-                        >
-                          <Trash2 size={14} className="text-[#DC2626]" />
-                          <span className="hidden sm:inline text-[#DC2626]">حذف</span>
-                        </Button>
-                      </div>
-                    </div>
-                    {editingId === menuItem.id && (
-                      <div className="mt-3 rounded-2xl border border-[#BFDBFE] bg-white p-4 shadow-sm sm:p-5">
-                        <div className="mb-5 flex items-start gap-3">
-                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-[10px] font-bold text-[#2563EB]">
-                            ویرایش
-                          </span>
-                          <div className="min-w-0">
-                            <h3 className="text-sm font-bold text-[#0F172A]">ویرایش گزینه منوی دایرکت</h3>
-                            <p className="mt-1 text-xs leading-5 text-[#64748B]">
-                              عنوان و پاسخ این گزینه را در همین بخش ویرایش کن.
-                            </p>
-                          </div>
-                        </div>
-
-                        <Input
-                          value={editDraft}
-                          onChange={(event) => {
-                            setEditDraft(event.target.value);
-                            setSuccess(false);
-                            setError("");
-                          }}
-                          maxLength={30}
-                          placeholder="مثلاً: مشاهده محصولات"
-                          className="h-12 rounded-xl border-[#E2E8F0] bg-[#F8FAFC] px-3.5 text-base text-[#0F172A] focus:border-[#2563EB] focus:bg-white"
-                          style={{ fontSize: "16px", WebkitTextSizeAdjust: "100%" }}
-                        />
-
-                        <div className="dashboard-character-counter text-[10px] text-[#64748B]">
-                          <span>حداکثر ۳۰ کاراکتر</span>
-                          <span>{editDraft.length.toLocaleString("fa-IR")} / ۳۰</span>
-                        </div>
-
-                        <div className="mt-5">
-                          <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-2.5">
-                              <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => {
-                                  if (editingId) {
-                                    setMenuItems((current) =>
-                                      current.map((item) =>
-                                        item.id === editingId
-                                          ? { ...item, type: "postback", url: "" }
-                                          : item,
-                                      ),
-                                    );
-                                  }
-                                  setSuccess(false);
-                                  setError("");
-                                }}
-                                className="h-11 rounded-xl border-[#BFDBFE] bg-[#EFF6FF] text-xs font-semibold text-[#2563EB]"
-                              >
-                                پاسخ خودکار
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => {
-                                  if (editingId) {
-                                    setMenuItems((current) =>
-                                      current.map((item) =>
-                                        item.id === editingId
-                                          ? { ...item, type: "web_url", automationId: null }
-                                          : item,
-                                      ),
-                                    );
-                                  }
-                                  setSuccess(false);
-                                  setError("");
-                                }}
-                                className="h-11 rounded-xl border-[#E2E8F0] bg-white text-xs font-semibold text-[#475569]"
-                              >
-                                لینک
-                              </Button>
-                            </div>
-
-                            {menuItems.find((item) => item.id === editingId)?.type === "web_url" ? (
-                              <div className="space-y-2">
-                                <label className="text-xs font-semibold text-[#0F172A]">آدرس لینک</label>
-                                <Input
-                                  value={menuItems.find((item) => item.id === editingId)?.url ?? ""}
-                                  onChange={(event) => {
-                                    const url = event.target.value;
-                                    setMenuItems((current) =>
-                                      current.map((item) =>
-                                        item.id === editingId ? { ...item, url } : item,
-                                      ),
-                                    );
-                                    setSuccess(false);
-                                    setError("");
-                                  }}
-                                  placeholder="https://example.com"
-                                  type="url"
-                                  dir="ltr"
-                                  className="h-12 rounded-xl border-[#E2E8F0] bg-[#F8FAFC]"
-                                />
-                                <Button
-                                  type="button"
-                                  onClick={() =>
-                                    void saveMenuItem(
-                                      editDraft,
-                                      editingId,
-                                      undefined,
-                                      "web_url",
-                                      menuItems.find((item) => item.id === editingId)?.url ?? "",
-                                    )
-                                  }
-                                  disabled={saving}
-                                  className="h-11 w-full rounded-xl text-sm font-semibold"
-                                >
-                                  {saving ? "در حال ذخیره..." : "ذخیره گزینه لینک"}
-                                </Button>
-                              </div>
-                            ) : (
-                              <EntryPointFlowBuilder
-                                accountId={account.id}
-                                automationId={editAutomationId}
-                                hideVideo
-                                responseTypeTitle="نوع پاسخ گزینه"
-                                responseTypeDescription="نوع و محتوای پاسخی را که بعد از انتخاب این گزینه ارسال می‌شود مشخص کن."
-                                textPlaceholder="متنی که به‌عنوان پاسخ گزینه منوی دایرکت برای کاربر ارسال می‌شود..."
-                                finalSaveLabel="ذخیره پاسخ"
-                                finalSaveLoadingLabel="در حال ذخیره پاسخ..."
-                                onAutomationReady={(automationId) => {
-                                  void saveMenuItem(editDraft, editingId, automationId);
-                                }}
-                              />
-                            )}
-                          </div>
-                          <button
-                            type="button"
-                            disabled={saving}
-                            onClick={() => {
-                              setEditingId(null);
-                              setEditDraft("");
-                              setEditAutomationId(null);
-                              setError("");
-                            }}
-                            className="mt-2 flex h-11 w-full items-center justify-center rounded-xl border border-[#CBD5E1] bg-[#F1F5F9] px-4 text-sm font-bold text-[#475569] transition hover:bg-[#E2E8F0] disabled:cursor-not-allowed disabled:opacity-40"
-                          >
-                            انصراف
-                          </button>
-                        </div>
-                      </div>
-                    )}
+                <div className="space-y-2">
+                  {items.map((item, index) => (
+                    <div key={item.id} className={"flex min-w-0 items-center gap-2 rounded-xl border p-2.5 transition sm:gap-3 sm:p-3 " +
+                      (editor?.id === item.id ? "border-blue-300 bg-blue-50/50" : "border-[var(--daira-border)] hover:bg-[var(--daira-surface-hover)]")}>
+                      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[var(--daira-surface-hover)] text-[11px] font-bold text-[var(--daira-primary)]">{number(index + 1)}</span>
+                      <span className="min-w-0 flex-1">
+                        <strong className="block truncate text-[13px] font-bold text-[var(--daira-heading)]">{item.label}</strong>
+                        <span className="mt-1 inline-flex max-w-full items-center gap-1 truncate text-[11px] text-[var(--daira-text)]">
+                          {item.type === "web_url" ? <><ExternalLink size={13} className="shrink-0" />لینک</> : <><MessageSquareText size={13} className="shrink-0" />پاسخ خودکار</>}
+                        </span>
+                      </span>
+                      <button type="button" onClick={() => openEditor(item)} disabled={saving}
+                        className="grid h-10 w-10 shrink-0 place-items-center rounded-lg text-[var(--daira-primary)] transition hover:bg-blue-100 disabled:opacity-40"
+                        aria-label={"ویرایش " + item.label}><Pencil size={17} /></button>
+                      <button type="button" onClick={() => { setDeleteTarget(item); setError(""); }} disabled={saving}
+                        className="grid h-10 w-10 shrink-0 place-items-center rounded-lg text-red-600 transition hover:bg-red-50 disabled:opacity-40"
+                        aria-label={"حذف " + item.label}><Trash2 size={17} /></button>
                     </div>
                   ))}
                 </div>
               )}
 
-              <div className="mt-4 flex items-center justify-between border-t border-[#E2E8F0] pt-4 text-[10px] text-[#64748B]">
-                <span>حداکثر ۲۰ گزینه</span>
-                <span>{menuItems.length.toLocaleString("fa-IR")} / ۲۰</span>
+              <p className="mt-4 text-[11px] leading-6 text-[var(--daira-text)]">
+                ترتیب نمایش گزینه‌ها در اینستاگرام مطابق ترتیب این فهرست است.
+              </p>
+            </section>
+
+            <aside className="min-w-0 rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5 lg:sticky lg:top-28">
+              <div className="mb-3 flex items-center gap-2">
+                <Menu size={16} className="text-[var(--daira-primary)]" />
+                <h2 className="text-sm font-extrabold text-[var(--daira-heading)]">پیش‌نمایش منو</h2>
+              </div>
+              <p className="mb-4 text-[11px] leading-6 text-[var(--daira-text)]">شکل تقریبی گزینه‌ها در دایرکت اینستاگرام</p>
+              <div className="overflow-hidden rounded-2xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] p-3">
+                <div className="mb-3 flex items-center justify-center gap-2 border-b border-[var(--daira-border)] pb-3 text-xs font-bold text-[var(--daira-heading)]">
+                  <MessageSquareText size={15} /> منو
+                </div>
+                <div className="space-y-1.5">
+                  {items.length ? items.map((item) => (
+                    <div key={item.id} className="flex min-h-10 items-center gap-2 rounded-lg border border-[var(--daira-border)] bg-white px-3 py-2 text-xs font-semibold text-[var(--daira-heading)]">
+                      {item.type === "web_url" ? <ExternalLink size={14} className="shrink-0 text-[var(--daira-primary)]" /> : <MessageSquareText size={14} className="shrink-0 text-[var(--daira-primary)]" />}
+                      <span className="min-w-0 flex-1 break-words">{item.label}</span>
+                      <ArrowLeft size={13} className="shrink-0 text-[var(--daira-text)]" />
+                    </div>
+                  )) : <div className="py-6 text-center text-[11px] text-[var(--daira-text)]">گزینه‌ای برای نمایش نیست</div>}
+                </div>
+              </div>
+            </aside>
+          </div>
+
+          {editor && (
+            <section id="persistent-menu-editor" className="mt-6 scroll-mt-28">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <h2 className="text-base font-extrabold text-[var(--daira-heading)]">{editor.id ? "ویرایش گزینهٔ منو" : "ساخت گزینهٔ جدید"}</h2>
+                <button type="button" onClick={cancelEditor} disabled={saving} className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-[var(--daira-border)] bg-white px-3 text-xs font-bold text-[var(--daira-text)] disabled:opacity-50"><X size={16}/> انصراف</button>
+              </div>
+
+              <Guide numberText={1} title="عنوان گزینه" description="نام کوتاهی بنویس که مخاطب در منوی دایرکت می‌بیند." />
+              <div className="mb-5 rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
+                <label htmlFor="persistent-menu-title" className="mb-2 block text-sm font-bold text-[var(--daira-heading)]">عنوان</label>
+                <input id="persistent-menu-title" type="text" maxLength={MAX_TITLE_LENGTH}
+                  value={editor.label}
+                  onChange={(event) => { setEditor((current) => current ? { ...current, label: event.target.value } : null); setError(""); setNotice(""); }}
+                  placeholder="مثلاً مشاهدهٔ محصولات"
+                  className="h-12 w-full min-w-0 rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3 text-base text-[var(--daira-heading)] outline-none transition focus:border-[var(--daira-primary)] focus:bg-white"
+                  style={{ fontSize: "16px", WebkitTextSizeAdjust: "100%" }} />
+                <div className="mt-2 flex items-center justify-between text-[11px] text-[var(--daira-text)]">
+                  <span>حداکثر ۳۰ کاراکتر</span><span>{number(editor.label.length)} / {number(MAX_TITLE_LENGTH)}</span>
+                </div>
+              </div>
+
+              <Guide numberText={2} title="عملکرد گزینه" description="مشخص کن با انتخاب این گزینه، پاسخ خودکار ارسال شود یا لینکی باز شود." />
+              <div className="mb-5 rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
+                <div className="grid grid-cols-2 gap-2" role="group" aria-label="نوع عملکرد گزینه">
+                  {([
+                    { type: "postback" as const, title: "پاسخ خودکار", desc: "ارسال پیام به مخاطب", Icon: MessageSquareText },
+                    { type: "web_url" as const, title: "لینک", desc: "بازکردن آدرس سایت", Icon: Link2 },
+                  ]).map(({ type, title, desc, Icon }) => (
+                    <button key={type} type="button" aria-pressed={editor.type === type} disabled={saving}
+                      onClick={() => { setEditor((current) => current ? { ...current, type } : null); setError(""); }}
+                      className={"flex min-h-[80px] min-w-0 flex-col items-center justify-center gap-1.5 rounded-xl border px-2 py-3 text-center transition disabled:opacity-50 " +
+                        (editor.type === type ? "border-blue-300 bg-blue-50 text-blue-700" : "border-[var(--daira-border)] bg-white text-[var(--daira-text)] hover:bg-[var(--daira-surface-hover)]")}>
+                      <Icon size={20} aria-hidden="true" />
+                      <span className="text-xs font-bold">{title}</span>
+                      <span className="text-[10px] leading-4">{desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <Guide numberText={3} title={editor.type === "web_url" ? "آدرس لینک" : "پاسخ گزینه"} description={editor.type === "web_url"
+                ? "آدرس مقصد را با https:// وارد کن؛ مخاطب با انتخاب گزینه وارد این لینک می‌شود."
+                : "مانند پاسخ خودکار استوری، نوع پاسخ و محتوای آن را در همین صفحه تنظیم کن."} />
+              <div className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
+                {editor.type === "web_url" ? (
+                  <>
+                    <label htmlFor="persistent-menu-url" className="mb-2 block text-sm font-bold text-[var(--daira-heading)]">لینک مقصد</label>
+                    <input id="persistent-menu-url" type="url" inputMode="url" dir="ltr"
+                      value={editor.url} onChange={(event) => { setEditor((current) => current ? { ...current, url: event.target.value } : null); setError(""); }}
+                      placeholder="https://example.com"
+                      className="h-12 w-full min-w-0 rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3 text-base text-[var(--daira-heading)] outline-none focus:border-[var(--daira-primary)] focus:bg-white"
+                      style={{ fontSize: "16px", WebkitTextSizeAdjust: "100%" }} />
+                    <button type="button" disabled={!draftReady || !validLink(editor.url) || saving}
+                      onClick={() => void saveItem(editor, null)}
+                      className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[var(--daira-primary)] px-4 text-sm font-bold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40">
+                      {saving ? "در حال ذخیره..." : editor.id ? "ذخیره تغییرات" : "ساخت گزینه"}
+                      {!saving && <Check size={17} />}
+                    </button>
+                  </>
+                ) : (
+                  <EntryPointFlowBuilder
+                    key={editor.id || "create"}
+                    accountId={account.id}
+                    automationId={editor.automationId}
+                    modernResponseFlow
+                    hideVideo
+                    canSave={draftReady && !saving}
+                    responseTypeTitle="نوع پاسخ"
+                    responseTypeDescription="متن، عکس، وویس، ویترین یا فرم چندمرحله‌ای را انتخاب کن."
+                    textPlaceholder="متن پاسخی که بعد از انتخاب این گزینه برای مخاطب ارسال می‌شود..."
+                    finalSaveLabel={editor.id ? "ذخیره تغییرات" : "ساخت گزینه"}
+                    finalSaveLoadingLabel="در حال ذخیره..."
+                    onAutomationReady={(automationId) => saveItem(editor, automationId)}
+                  />
+                )}
               </div>
             </section>
-          </div>
-        )}
-      </div>
-    </div>
+          )}
+        </>
+      )}
+
       {deleteTarget && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/30 px-4 backdrop-blur-[2px]"
-          role="presentation"
-          onMouseDown={(event) => {
-            if (event.currentTarget === event.target) setDeleteTarget(null);
-          }}
-        >
-          <div
-            dir="rtl"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="delete-message-title"
-            className="w-full max-w-sm rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-2xl"
-          >
-            <h3 id="delete-message-title" className="text-base font-bold text-[#0F172A]">
-              مطمئنی می‌خوای این مورد رو پاک کنی؟
-            </h3>
-            <p className="mt-2 break-words text-sm leading-6 text-[#64748B]">
-              گزینه «{deleteTarget.label}» حذف می‌شود و تنظیم پاسخ آن هم دیگر به این گزینه متصل نخواهد بود.
+        <div role="presentation" className="fixed inset-0 z-[2500] flex items-center justify-center bg-slate-950/40 px-4 backdrop-blur-[2px]"
+          onMouseDown={(event) => { if (event.target === event.currentTarget && !saving) setDeleteTarget(null); }}>
+          <div dir="rtl" role="dialog" aria-modal="true" aria-labelledby="persistent-delete-title"
+            className="w-full max-w-sm rounded-2xl border border-[var(--daira-border)] bg-white p-5 shadow-2xl">
+            <h3 id="persistent-delete-title" className="text-base font-extrabold text-[var(--daira-heading)]">حذف گزینهٔ منو</h3>
+            <p className="mt-2 text-sm leading-7 text-[var(--daira-text)]">
+              گزینهٔ «{deleteTarget.label}» از منوی دایرکت حذف می‌شود. پاسخ‌های دیگر بدون تغییر باقی می‌مانند.
             </p>
-            <div className="mt-5 flex gap-2">
-              <Button type="button" variant="outline" onClick={() => setDeleteTarget(null)} disabled={saving}
-                className="h-10 flex-1 rounded-xl border-[#E2E8F0] bg-white text-xs font-semibold text-[#475569] hover:bg-[#F8FAFC]">
-                انصراف
-              </Button>
-              <Button type="button" variant="outline" onClick={() => void deleteMenuItem(deleteTarget)} disabled={saving}
-                className="h-10 flex-1 rounded-xl border-[#FECACA] bg-[#FEF2F2] text-xs font-semibold text-[#DC2626] hover:bg-[#FEE2E2]">
-                {saving ? "در حال حذف..." : "بله، حذف شود"}
-              </Button>
+            <div className="mt-5 grid grid-cols-2 gap-2">
+              <button type="button" onClick={() => setDeleteTarget(null)} disabled={saving}
+                className="min-h-11 rounded-xl border border-[var(--daira-border)] bg-white text-xs font-bold text-[var(--daira-heading)] disabled:opacity-50">انصراف</button>
+              <button type="button" onClick={() => void deleteItem()} disabled={saving}
+                className="min-h-11 rounded-xl border border-red-200 bg-red-50 text-xs font-bold text-red-700 disabled:opacity-50">
+                {saving ? "در حال حذف..." : "حذف گزینه"}
+              </button>
             </div>
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }
