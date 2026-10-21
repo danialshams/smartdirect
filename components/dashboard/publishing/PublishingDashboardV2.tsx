@@ -506,26 +506,28 @@ type UploadAreaProps = {
   onDrop: (event: DragEvent<HTMLDivElement>) => void;
 };
 function UploadArea({ id, accept, multiple, disabled, isDragging, setIsDragging, title, onChange, onDrop }: UploadAreaProps) {
-  return <div onDragOver={(event: DragEvent<HTMLDivElement>) => { event.preventDefault(); if (!disabled) setIsDragging(true); }}
-    onDragLeave={() => setIsDragging(false)} onDrop={event => {if(!disabled)onDrop(event);else event.preventDefault();}}
-    className={"group relative overflow-hidden rounded-[23px] border-2 border-dashed p-4 transition-all duration-200 sm:p-6 " +
-      (isDragging ? "scale-[1.005] border-[#2F61FD] bg-[#EDF3FF]" : "border-[#BAD0FF] bg-[#F6F9FF] hover:border-[#2F61FD] hover:bg-[#EDF3FF]")+
-      (disabled?" pointer-events-none opacity-55":"")}>
-    <Input id={id} type="file" accept={accept} multiple={multiple} onChange={onChange} disabled={disabled} className="sr-only" />
-    <label htmlFor={id} className="flex min-h-[216px] cursor-pointer flex-col items-center justify-center gap-3 text-center sm:min-h-[235px]">
-      <span className="flex h-16 w-16 items-center justify-center rounded-[20px] border border-[#DBEAFE] bg-white text-[#2F61FD] shadow-[0_7px_24px_rgba(47,97,253,.10)] transition-transform group-hover:-translate-y-1">
-        <ImagePlus size={28} strokeWidth={1.7} />
-      </span>
-      <div className="space-y-1.5">
-        <p className="text-[15px] font-extrabold leading-7 text-[#18233C]">{title}</p>
-        <p className="px-2 text-xs leading-6 text-[#5A6B87]">فایل را به این بخش بکشید یا از دستگاه انتخاب کنید.</p>
-      </div>
-      <span className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-[#2F61FD] px-6 text-sm font-bold text-white shadow-sm transition group-hover:bg-[#1E4BD8]">
-        <ImagePlus size={18}/> انتخاب فایل از دستگاه
-      </span>
-      <span className="text-[11px] text-[#71819B]">{multiple?"می‌توانید تا ۱۰ عکس یا ویدیو اضافه کنید.":"فقط فایل سازگار با نوع محتوای انتخاب‌شده پذیرفته می‌شود."}</span>
-    </label>
-  </div>;
+  return (
+    <div className={"rounded-[20px] border p-4 transition-all sm:p-5 " +
+      (isDragging ? "border-[#2F61FD] bg-[#EDF3FF] ring-2 ring-[#BAD0FF]" : "border-[#DFE7F3] bg-[#F6F9FF] hover:border-[#BAD0FF]") +
+      (disabled ? " pointer-events-none opacity-60" : "")}
+      onDragOver={event=>{event.preventDefault();if(!disabled)setIsDragging(true);}}
+      onDragLeave={()=>setIsDragging(false)}
+      onDrop={event=>{event.preventDefault();setIsDragging(false);if(!disabled)onDrop(event);}}>
+      <Input id={id} type="file" accept={accept} multiple={multiple} onChange={onChange} disabled={disabled} className="sr-only"/>
+      <label htmlFor={id} className="flex min-h-[130px] cursor-pointer flex-col items-center justify-between gap-4 text-center sm:min-h-[115px] sm:flex-row sm:text-right">
+        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[17px] bg-white text-[#2F61FD] shadow-[0_3px_16px_rgba(47,97,253,.10)]" aria-hidden="true">
+          <ImagePlus size={25} strokeWidth={1.8}/>
+        </span>
+        <span className="min-w-0 flex-1">
+          <strong className="block text-sm text-[#18233C]">{title}</strong>
+          <span className="mt-1.5 block text-xs leading-6 text-[#5A6B87]">{multiple?"چند فایل را هم‌زمان انتخاب کن یا اینجا رها کن.":"یک فایل را انتخاب کن یا اینجا رها کن."}</span>
+        </span>
+        <span className="inline-flex min-h-11 w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-[#2F61FD] px-5 text-xs font-bold text-white shadow-sm sm:w-auto">
+          <ImagePlus size={17}/> انتخاب فایل
+        </span>
+      </label>
+    </div>
+  );
 }
 type MediaTileProps = { item: LocalMedia | UploadedMedia; type: PublishType; onRemove: () => void; ready?: boolean; compact?: boolean; bare?: boolean };
 function MediaTile({ item, type, onRemove, ready = false, compact = false }: MediaTileProps) {
