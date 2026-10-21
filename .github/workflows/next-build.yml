@@ -71,3 +71,6 @@ jobs:
 
       - name: Test smart reminder policy
         run: npm run reminders:test
+
+      - name: Test direct keyword automation integration
+        run: npx tsx scripts/test-direct-automation.ts

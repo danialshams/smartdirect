@@ -16,7 +16,6 @@ import {
   MessageCircle,
   MessageCircleReply,
   MessageCircleQuestion,
-  MessageSquareText,
   Plus,
   Settings2,
   Ticket,
@@ -63,10 +62,10 @@ const menuGroups = [
     label: "مدیریت",
     items: [
       { title: "انتشار محتوا", href: "/dashboard/publishing", icon: ImagePlus },
-      { title: "کامنت‌های بی‌پاسخ", href: "/dashboard/comments", icon: MessageSquareText },
       { title: "صندوق دایرکت", href: "/dashboard/inbox", icon: Inbox },
       { title: "پیام‌های شروع گفتگو", href: "/dashboard/ice-breaker", icon: MessageCircleQuestion },
       { title: "منوی دایرکت", href: "/dashboard/persistent-menu", icon: MenuIcon },
+      { title: "پاسخ خودکار دایرکت", href: "/dashboard/direct-automation", icon: MessageCircle },
       { title: "پاسخ خودکار کامنت", href: "/dashboard/comment-automation", icon: MessageCircleReply },
       { title: "پاسخ خودکار استوری", href: "/dashboard/story-automation", icon: Camera },
       { title: "پاسخ خودکار لایو", href: "/dashboard/live-automation", icon: RadioTower },
@@ -355,6 +354,13 @@ export function DashboardInstagramIsland({
       title: "پیج‌های اینستاگرام",
       icon: null,
       active: pathname === "/dashboard",
+    },
+    {
+      key: "direct",
+      href: "/dashboard/direct-automation",
+      title: "پاسخ خودکار دایرکت",
+      icon: MessageCircle,
+      active: pathname === "/dashboard/direct-automation" || pathname.startsWith("/dashboard/direct-automation/"),
     },
     {
       key: "comment",

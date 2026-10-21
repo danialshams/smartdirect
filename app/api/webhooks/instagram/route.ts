@@ -1540,6 +1540,7 @@ async function processMessagingEventLocked(
       automation = await findMatchingAutomation({
         instagramAccountId: instagramAccount.id,
         triggerType: "DM",
+        keyword: messageText || "",
       });
 
       if (automation) {

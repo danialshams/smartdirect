@@ -4,6 +4,7 @@ import { CACHE_TTL } from "@/lib/cache/instagram";
 import { AutomationTriggerType } from "@/generated/prisma/client";
 import {
   matchesAutomationTrigger,
+  matchesAutomationKeyword,
   normalizeAutomationText,
 } from "./trigger";
 
@@ -14,7 +15,7 @@ type FindAutomationInput =
       keyword: string;
       mediaId?: string | null;
     }
-  | { instagramAccountId: string; triggerType: "DM" }
+  | { instagramAccountId: string; triggerType: "DM"; keyword: string }
   | {
       instagramAccountId: string;
       triggerType: "STORY_REPLY_KEYWORD";
@@ -58,7 +59,14 @@ export async function findMatchingAutomation(input: FindAutomationInput) {
 );
 
   if (input.triggerType === "DM") {
-    return automations[0] ?? null;
+    // Keywordless DM automations belong to Icebreakers and Persistent Menu.
+    // Those flows are resolved by their postback/quick-reply payload, never raw text.
+    return automations.find((automation) =>
+      Boolean(automation.keyword?.trim()) && matchesAutomationKeyword(
+        automation.keyword, input.keyword,
+        automation.keywordMatchMode === "CONTAINS_ANY" ? "CONTAINS_ANY" : "EXACT",
+      ),
+    ) ?? null;
   }
 
   const normalizedIncoming = normalizeAutomationText(input.keyword);
