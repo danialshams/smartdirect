@@ -459,6 +459,7 @@ export default function InsightsDashboard() {
         <div className="mb-3 flex items-center gap-2 text-sm font-extrabold text-[var(--daira-heading)]">
           <CalendarDays size={17} className="text-[var(--daira-primary)]" /> بازه گزارش
         </div>
+        <InsightsGuide text="آمار را برای ۷، ۳۰ یا ۹۰ روز اخیر ببین؛ برای بازه دلخواه تاریخ شروع و پایان را جداگانه انتخاب کن." />
         <div className="grid grid-cols-3 gap-2">
           {([7, 30, 90] as const).map((days) => (
             <button type="button" key={days} aria-pressed={!appliedRange && preset === days}
