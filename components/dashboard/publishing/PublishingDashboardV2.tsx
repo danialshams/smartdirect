@@ -2,7 +2,7 @@
 import { Button, Input } from "@/components/dashboard/DashboardUI";
 
 import { upload as uploadToBlob } from "@vercel/blob/client";
-import { ArrowLeft, ArrowRight, CalendarClock, Camera, CheckCircle2, CircleSlash2, Clapperboard, Clock3, ImagePlus, Images, Loader2, Pencil, RotateCcw, Send, Trash2, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarClock, Camera, CheckCircle2, CircleSlash2, Clapperboard, Clock3, ChevronDown, ImagePlus, Images, Loader2, Pencil, RotateCcw, Send, Trash2, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from "react";
@@ -541,6 +541,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const [tagInputError, setTagInputError] = useState("");
   const [stepVisible, setStepVisible] = useState(true);
   const [caption, setCaption] = useState("");
+  const [showTags, setShowTags] = useState(false);
   const [media, setMedia] = useState<LocalMedia[]>([]);
   const [uploadedMedia, setUploadedMedia] = useState<UploadedMedia[]>([]);
   useStorageUploadLease(uploadedMedia.map((item) => item.publicUrl));
@@ -816,8 +817,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     setStepVisible(false);
     window.setTimeout(() => { action(); window.requestAnimationFrame(() => setStepVisible(true)); }, 180);
   }
-  function handleTypeChange(nextType: PublishType) { animateStepChange(() => { clearLocalMedia(); setUploadedMedia([]); setType(nextType); setSelectionConfirmed(true); setCaptionStepConfirmed(false); setTagStepConfirmed(false); setAutomationChoiceStepStarted(false); setAutomationChoiceConfirmed(false); setAutomationSetupConfirmed(false); setAutomationKeywordDraft(""); setAutomationKeywords([]); setDirectMessageText(""); setShowUploadedMediaPreview(false); setTaggedUsersByMedia({}); setTagDraftByMedia({}); setTagInputError(""); onTypeChange?.(nextType); setUploadProgress(0); setUploadSuccess(false); setCaption(""); resetAutomation(); }); }
-  function handleBackToTypeSelection() { animateStepChange(() => { clearLocalMedia(); setUploadedMedia([]); setSelectionConfirmed(false); setCaptionStepConfirmed(false); setTagStepConfirmed(false); setAutomationChoiceStepStarted(false); setAutomationChoiceConfirmed(false); setShowUploadedMediaPreview(false); setTaggedUsersByMedia({}); setTagDraftByMedia({}); setTagInputError(""); setUploadProgress(0); setUploadSuccess(false); setCaption(""); resetAutomation(); }); }
+  function handleTypeChange(nextType: PublishType) { animateStepChange(() => { setShowTags(false); clearLocalMedia(); setUploadedMedia([]); setType(nextType); setSelectionConfirmed(true); setCaptionStepConfirmed(false); setTagStepConfirmed(false); setAutomationChoiceStepStarted(false); setAutomationChoiceConfirmed(false); setAutomationSetupConfirmed(false); setAutomationKeywordDraft(""); setAutomationKeywords([]); setDirectMessageText(""); setShowUploadedMediaPreview(false); setTaggedUsersByMedia({}); setTagDraftByMedia({}); setTagInputError(""); onTypeChange?.(nextType); setUploadProgress(0); setUploadSuccess(false); setCaption(""); resetAutomation(); }); }
+  function handleBackToTypeSelection() { animateStepChange(() => { setShowTags(false); clearLocalMedia(); setUploadedMedia([]); setSelectionConfirmed(false); setCaptionStepConfirmed(false); setTagStepConfirmed(false); setAutomationChoiceStepStarted(false); setAutomationChoiceConfirmed(false); setShowUploadedMediaPreview(false); setTaggedUsersByMedia({}); setTagDraftByMedia({}); setTagInputError(""); setUploadProgress(0); setUploadSuccess(false); setCaption(""); resetAutomation(); }); }
   async function prepareFiles(files: File[]) {
     if (!files.length || publishing) return;
     const accepted =
@@ -1533,6 +1534,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             {selectionConfirmed && (
               <PublishingWizardProgress
                 step={wizardStep}
+                skipDetails={type === "STORY"}
                 typeLabel={typeLabels[type]}
                 disabled={uploading || publishing}
                 onBackToType={handleBackToTypeSelection}
@@ -1722,13 +1724,16 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   />
                 </section>
                 <section className="w-full rounded-[22px] border border-[#E8EDF5] bg-white p-4 shadow-sm sm:p-6">
-                  <div className="mb-4 flex items-start gap-3">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#EFF6FF] text-xs font-bold text-[#2F61FD]">۲</span>
-                    <div>
-                      <h2 className="text-sm font-bold text-[#18233C]">تگ کردن کاربران <span className="font-medium text-[#2F61FD]">(اختیاری)</span></h2>
-                      <p className="mt-1 text-xs leading-6 text-[#5A6B87]">در صورت نیاز کاربران را به محتوای مربوط اضافه کن. برای هر رسانه حداکثر ۱۰ نفر.</p>
-                    </div>
-                  </div>
+                  <button type="button" onClick={()=>setShowTags(value=>!value)} aria-expanded={showTags} aria-controls="publishing-tags-panel"
+                    className="mb-2 flex w-full items-center justify-between gap-3 rounded-xl p-1 text-right focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2F61FD]">
+                    <span className="flex items-start gap-3">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#EFF6FF] text-xs font-bold text-[#2F61FD]">۲</span>
+                      <span><span className="block text-sm font-bold text-[#18233C]">تگ کردن کاربران <span className="font-medium text-[#2F61FD]">(اختیاری)</span></span>
+                        <span className="mt-1 block text-xs leading-6 text-[#5A6B87]">{Object.values(taggedUsersByMedia).reduce((sum,list)=>sum+list.length,0).toLocaleString("fa-IR")} تگ ثبت‌شده — برای ویرایش باز کنید</span></span>
+                    </span>
+                    <ChevronDown size={18} className={"shrink-0 text-[#5A6B87] transition-transform "+(showTags?"rotate-180":"")}/>
+                  </button>
+                  {showTags && <div id="publishing-tags-panel" className="mt-4 border-t border-[#E8EDF5] pt-4">
                   {tagInputError && <p role="alert" className="mb-3 rounded-xl border border-[#FECACA] bg-[#FEF2F2] p-3 text-xs text-[#B91C1C]">{tagInputError}</p>}
                   <div className="space-y-3">
                     {uploadedMedia.map((item, index) => {
@@ -1766,6 +1771,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                       );
                     })}
                   </div>
+                  </div>}
                 </section>
                 <button type="button" disabled={!caption.trim() || uploading || publishing || Boolean(tagInputError)}
                   onClick={() => { setTagStepConfirmed(true); setAutomationChoiceStepStarted(true); setError(""); }}
