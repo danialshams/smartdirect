@@ -847,7 +847,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
   function revokeLocalMedia(items: LocalMedia[]) { items.forEach((item) => URL.revokeObjectURL(item.previewUrl)); }
   function clearLocalMedia() { uploadQueueRef.current = []; setUploadRows([]); setMedia((current) => { revokeLocalMedia(current); return []; }); }
-  function resetAutomation() { setAutomationEnabled(false); setKeywords(""); setMessages([createEmptyMessage()]); setCommentReplyText(""); setLikeStoryReply(false); setRequireFollow(false); setFollowGateText("برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید."); setAutomationSetupConfirmed(false); setAutomationKeywordDraft(""); setAutomationKeywords([]); setDirectMessageText(""); setPublishingCommentReplyText(""); }
+  function resetAutomation() { setAutomationEnabled(false); setStoryResponseSaved(false); setStoryResponseEditing(false); setStoryResponseDirty(false); setKeywords(""); setMessages([createEmptyMessage()]); setCommentReplyText(""); setLikeStoryReply(false); setRequireFollow(false); setFollowGateText("برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید."); setAutomationSetupConfirmed(false); setAutomationKeywordDraft(""); setAutomationKeywords([]); setDirectMessageText(""); setPublishingCommentReplyText(""); }
   function animateStepChange(action: () => void) {
     setStepVisible(false);
     window.setTimeout(() => { action(); window.requestAnimationFrame(() => setStepVisible(true)); }, 180);
