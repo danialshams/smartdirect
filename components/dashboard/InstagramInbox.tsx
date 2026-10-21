@@ -1278,7 +1278,7 @@ export default function InstagramInbox({
           </div>
           <button type="button" onClick={() => void loadConversations()} aria-label="به‌روزرسانی گفتگوها" title="به‌روزرسانی" className="grid h-10 w-10 place-items-center rounded-xl bg-[#F1F5FC] text-[#526580] transition hover:bg-[#E7EEFC]"><RotateCcw size={17}/></button>
         </div>
-        <div className="flex items-center gap-1 overflow-x-auto rounded-xl bg-[#EEF3FB] p-1" role="group" aria-label="فیلتر گفتگوها">
+        <div className="flex min-w-0 flex-nowrap items-center gap-1 rounded-xl bg-[#EEF3FB] p-1" role="group" aria-label="فیلتر گفتگوها">
           {(
             [
               ["ALL", "همه", conversations.length],
@@ -1290,14 +1290,14 @@ export default function InstagramInbox({
               key={value}
               type="button"
               onClick={() => setFilter(value)}
-              className={`flex min-w-[74px] flex-1 shrink-0 items-center justify-center gap-1 rounded-lg px-2 py-2.5 text-[11px] font-semibold transition ${
+              className={`flex min-w-0 flex-1 items-center justify-center gap-1 whitespace-nowrap rounded-lg px-1 py-2 text-[11px] font-semibold transition ${
                 filter === value
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              <span>{label}</span>
-              <span className="text-[10px] tabular-nums opacity-70">
+              <span className="shrink-0 whitespace-nowrap">{label}</span>
+              <span className="shrink-0 whitespace-nowrap text-[10px] tabular-nums opacity-70">
                 {count.toLocaleString("fa-IR")}
               </span>
             </button>
