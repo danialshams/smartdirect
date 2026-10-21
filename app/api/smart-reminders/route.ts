@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { selectableForReminder } from "@/lib/automation/smart-reminder-options";
 
 export const dynamic = "force-dynamic";
 
@@ -34,19 +35,20 @@ export async function GET(request: NextRequest) {
       where: { id: instagramAccountId, userId }, select: { id: true },
     });
     if (!account) return fail("پیج متعلق به حساب شما نیست.", 403);
-    const [rules, automations] = await Promise.all([
+    const [rules, candidates] = await Promise.all([
       prisma.smartReminderRule.findMany({
         where: { instagramAccountId, userId }, orderBy: { createdAt: "desc" },
-        include: { automation: { select: { keyword: true, triggerType: true, isActive: true } },
+        include: { automation: { select: { keyword: true, keywordMatchMode: true, triggerType: true, isActive: true } },
           _count: { select: { deliveries: { where: { status: "SENT" } } } } },
       }),
       prisma.automation.findMany({
         where: { instagramAccountId, isActive: true,
-          triggerType: { in: ["DM", "STORY_REPLY_KEYWORD"] }, messages: { some: {} } },
-        select: { id: true, triggerType: true, keyword: true, mediaId: true },
+          triggerType: { in: ["DM", "STORY_REPLY_KEYWORD", "COMMENT_KEYWORD"] }, messages: { some: {} } },
+        select: { id: true, triggerType: true, keyword: true, keywordMatchMode: true, mediaId: true },
         orderBy: { createdAt: "desc" },
       }),
     ]);
+    const automations = candidates.filter(selectableForReminder);
     return NextResponse.json({ success: true, data: rules, automations });
   } catch (error) {
     console.error("GET /api/smart-reminders", error);
@@ -63,10 +65,10 @@ export async function POST(request: NextRequest) {
     const automation = await prisma.automation.findFirst({
       where: { id: input.automationId, instagramAccountId: input.instagramAccountId,
         instagramAccount: { userId, isConnected: true },
-        triggerType: { in: ["DM", "STORY_REPLY_KEYWORD"] }, messages: { some: {} } },
-      select: { id: true },
+        triggerType: { in: ["DM", "STORY_REPLY_KEYWORD", "COMMENT_KEYWORD"] }, messages: { some: {} }, isActive: true },
+      select: { id: true, triggerType: true, keyword: true, keywordMatchMode: true, mediaId: true },
     });
-    if (!automation) return fail("پاسخ خودکار انتخاب‌شده معتبر نیست یا متعلق به پیج شما نیست.", 403);
+    if (!automation || !selectableForReminder(automation)) return fail("پاسخ خودکار انتخاب‌شده معتبر نیست یا متعلق به پیج شما نیست.", 403);
     const exists = await prisma.smartReminderRule.findUnique({ where: { automationId: input.automationId }, select: { id: true } });
     if (exists) return fail("برای این پاسخ خودکار قبلاً یادآوری ساخته شده است.", 409);
     const row = await prisma.smartReminderRule.create({ data: { ...input, userId, isActive: true } });
@@ -97,12 +99,12 @@ export async function PUT(request: NextRequest) {
           instagramAccountId: current.instagramAccountId,
           instagramAccount: { userId, isConnected: true },
           isActive: true,
-          triggerType: { in: ["DM", "STORY_REPLY_KEYWORD"] },
+          triggerType: { in: ["DM", "STORY_REPLY_KEYWORD", "COMMENT_KEYWORD"] },
           messages: { some: {} },
         },
-        select: { id: true },
+        select: { id: true, triggerType: true, keyword: true, keywordMatchMode: true, mediaId: true },
       });
-      if (!replacement) return fail("پاسخ خودکار انتخاب‌شده معتبر نیست یا متعلق به پیج شما نیست.", 403);
+      if (!replacement || !selectableForReminder(replacement)) return fail("پاسخ خودکار انتخاب‌شده معتبر نیست یا متعلق به پیج شما نیست.", 403);
       const occupied = await prisma.smartReminderRule.findUnique({
         where: { automationId: input.automationId }, select: { id: true },
       });

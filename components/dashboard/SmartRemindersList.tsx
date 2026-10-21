@@ -5,20 +5,15 @@ import { useRouter } from "next/navigation";
 import { Plus, Search, Pencil, Trash2, Clock3, RefreshCw, X, MessageSquare } from "lucide-react";
 import { dairaPalette } from "../../lib/design-system/palette";
 import SmartReminderSkeleton from "./SmartReminderSkeleton";
+import { smartReminderOptionName } from "@/lib/automation/smart-reminder-options";
 
 type Account = { id: string; isConnected: boolean };
 type Rule = {
   id: string; automationId: string; instagramAccountId: string;
   delayMinutes: number; text: string;
-  automation: { keyword: string | null; triggerType: string };
+  automation: { keyword: string | null; triggerType: string; keywordMatchMode?: string | null };
   _count?: { deliveries: number };
 };
-function automationName(rule: Rule) {
-  const type = rule.automation.triggerType === "STORY_REPLY_KEYWORD" ? "پاسخ خودکار استوری" : "پاسخ خودکار دایرکت";
-  return rule.automation.keyword?.trim()
-    ? type + " — " + rule.automation.keyword.replace(/,/g, "، ")
-    : type;
-}
 function duration(minutes: number) {
   if (minutes < 60) return new Intl.NumberFormat("fa-IR").format(minutes) + " دقیقه";
   const hours = Math.floor(minutes / 60), rest = minutes % 60;
@@ -59,7 +54,7 @@ export default function SmartRemindersList() {
   }, [refresh]);
 
   const filtered = useMemo(() => rules.filter(r =>
-    [r.text, automationName(r)].some(text => text.toLocaleLowerCase("fa").includes(search.trim().toLocaleLowerCase("fa"))),
+    [r.text, smartReminderOptionName(r.automation)].some(text => text.toLocaleLowerCase("fa").includes(search.trim().toLocaleLowerCase("fa"))),
   ), [rules, search]);
 
   async function remove() {
@@ -86,8 +81,8 @@ export default function SmartRemindersList() {
 
   return <div dir="rtl" className="mx-auto w-full max-w-4xl space-y-4 py-3">
     <button type="button" onClick={() => router.push("/dashboard/reminders/new")}
-      className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-full text-base font-bold text-white shadow-sm transition hover:brightness-95"
-      style={{ background: dairaPalette.primary.main }}><Plus size={20}/> ایجاد یادآوری جدید</button>
+      dir="rtl" className="flex min-h-[54px] w-full flex-row-reverse items-center justify-center gap-2 rounded-full text-base font-bold text-white shadow-sm transition hover:brightness-95"
+      style={{ background: dairaPalette.primary.main }}><span>ایجاد یادآوری جدید</span><Plus size={20} aria-hidden="true"/></button>
     <label className="relative block">
       <Search size={18} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#94A3B8]"/>
       <input value={search} onChange={e => setSearch(e.target.value)} placeholder="جستجو در یادآوری‌ها..." aria-label="جستجوی یادآوری‌ها"
@@ -99,7 +94,7 @@ export default function SmartRemindersList() {
         <div className="flex items-center gap-2">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB]"><Clock3 size={18}/></span>
           <div className="min-w-0 flex-1">
-            <h3 className="truncate text-sm font-bold text-[#0F172A]">{automationName(rule)}</h3>
+            <h3 className="truncate text-sm font-bold text-[#0F172A]">{smartReminderOptionName(rule.automation)}</h3>
             <p className="mt-0.5 text-[11px] text-[#64748B]">ارسال پس از {duration(rule.delayMinutes)} بدون پاسخ</p>
           </div>
         </div>

@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { CheckCircle2, Lightbulb, Loader2 } from "lucide-react";
 import { dairaPalette } from "../../lib/design-system/palette";
 import SmartReminderSkeleton from "./SmartReminderSkeleton";
+import { smartReminderOptionName } from "@/lib/automation/smart-reminder-options";
 
 type Account = { id: string; isConnected: boolean };
-type Automation = { id: string; triggerType: string; keyword: string | null };
+type Automation = { id: string; triggerType: string; keyword: string | null; keywordMatchMode?: string | null };
 type Rule = { id: string; instagramAccountId: string; automationId: string; text: string; delayMinutes: number; isActive: boolean; automation: Automation };
 type Draft = { automationId: string; delayMinutes: string; text: string };
 const INITIAL: Draft = { automationId: "", delayMinutes: "60", text: "" };
@@ -16,11 +17,6 @@ function Guide({ number, title, hint }: { number: number; title: string; hint: s
     <Lightbulb size={17} className="mt-1 shrink-0" style={{ color: dairaPalette.guide.icon }}/>
     <div className="min-w-0 flex-1"><div className="flex items-center gap-2"><span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white" style={{ background: dairaPalette.guide.icon }}>{new Intl.NumberFormat("fa-IR").format(number)}</span><strong className="text-sm font-extrabold">{title}</strong></div><p className="mt-1 text-xs leading-6">{hint}</p></div>
   </div>;
-}
-function name(item: Automation) {
-  const type = item.triggerType === "STORY_REPLY_KEYWORD" ? "استوری" : "دایرکت";
-  const keywords = (item.keyword ?? "").split(/[,،;؛\r\n]+/).map(word => word.trim()).filter(Boolean).join("، ");
-  return `پاسخ خودکار ${type} — ${keywords || "بدون کلمه کلیدی"}`;
 }
 const presets = [15, 30, 60, 120, 360, 720] as const;
 
@@ -105,9 +101,10 @@ export default function SmartReminderEditor({ id }: { id?: string }) {
         <select id="reminder-automation" value={draft.automationId} onChange={e => patch({ automationId: e.target.value })}
           className="min-h-12 w-full rounded-xl border border-[#D8E0EC] bg-white px-3.5 text-base leading-7 text-[#0F172A] outline-none focus:border-[#2563EB]">
           <option value="">یک پاسخ خودکار انتخاب کن</option>
-          {automations.map(item => <option key={item.id} value={item.id}>{name(item)}</option>)}
+          {automations.map(item => <option key={item.id} value={item.id}>{smartReminderOptionName(item)}</option>)}
         </select>
-        {!automations.length && <p className="text-xs leading-6 text-[#64748B]">پاسخ خودکار قابل انتخابی وجود ندارد. ابتدا یک پاسخ خودکار دایرکت یا استوری بساز.</p>}
+        {!automations.length && <p className="text-xs leading-6 text-[#64748B]">پاسخ خودکار قابل انتخابی وجود ندارد. ابتدا یک پاسخ خودکار کامنت، استوری یا دایرکت با کلمهٔ کلیدی بساز.</p>}
+        <p className="text-xs leading-6 text-[#64748B]">برای پاسخ‌های کامنت، یادآوری فقط وقتی ارسال می‌شود که مشتری از قبل پنجرهٔ مجاز دایرکت را با پیام خود باز کرده باشد. کامنت به‌تنهایی مجوز ارسال پیام دوم نیست.</p>
       </div>
     </section>
     <section>

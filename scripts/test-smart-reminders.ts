@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { reminderBlockReason, reminderWindowValidAt } from "../src/lib/automation/smart-reminder-policy";
+import { selectableForReminder, smartReminderOptionName } from "../src/lib/automation/smart-reminder-options";
 
 const inbound = new Date("2026-10-20T08:00:00.000Z");
 const outbound = new Date("2026-10-20T08:01:00.000Z");
@@ -19,7 +20,19 @@ assert.equal(reminderBlockReason({ ...base, lastInboundAt: null }), "CONVERSATIO
 assert.equal(reminderBlockReason({ ...base, anchorAt: null }), "CONVERSATION_CHANGED");
 assert.equal(reminderBlockReason({ ...base, now: at(24 * 60 + 30) }), "INSTAGRAM_24H_WINDOW_CLOSED");
 
+const candidate = (triggerType: string, keyword: string | null, keywordMatchMode = "EXACT", mediaId: string | null = null) =>
+  ({ triggerType, keyword, keywordMatchMode, mediaId });
+assert.equal(selectableForReminder(candidate("DM", null)), false, "Internal keywordless DM replies must not flood the selector");
+assert.equal(selectableForReminder(candidate("DM", "اطلاعات")), true);
+assert.equal(selectableForReminder(candidate("STORY_REPLY_KEYWORD", "قیمت")), true);
+assert.equal(selectableForReminder(candidate("COMMENT_KEYWORD", "کفش")), true, "Comment replies with DM content are selectable");
+assert.equal(selectableForReminder(candidate("COMMENT_KEYWORD", null, "CONTAINS_ANY")), true, "Comment match-any rules are selectable");
+assert.equal(selectableForReminder(candidate("COMMENT_KEYWORD", "کفش", "EXACT", "__smartdirect_live_comments_v1__")), false, "Live private replies are excluded");
+assert.equal(smartReminderOptionName(candidate("COMMENT_KEYWORD", "کفش, قیمت؛سفارش")), "پاسخ خودکار کامنت — کفش، قیمت، سفارش");
+assert.equal(smartReminderOptionName(candidate("COMMENT_KEYWORD", null, "CONTAINS_ANY")), "پاسخ خودکار کامنت — هر کامنتی");
+assert.equal(smartReminderOptionName(candidate("STORY_REPLY_KEYWORD", "قیمت")), "پاسخ خودکار استوری — قیمت");
+
 console.log("SMART_REMINDERS_POLICY_TEST_OK", {
   twentyFourHourRule: true, noHumanAgentBypass: true, userReplyCancellation: true,
-  outboundSupersession: true, noPrivateReplyWithoutDM: true,
+  outboundSupersession: true, noPrivateReplyWithoutDM: true, optionLabelsAndEligibility: true,
 });

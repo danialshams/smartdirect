@@ -567,11 +567,14 @@ async function executeAutomationInternal(input: ExecuteAutomationInput) {
     },
   });
 
-  if (!isCommentTriggeredFlow && lastAutomatedOutboundId) {
+  if (lastAutomatedOutboundId) {
     try {
+      // Comment private replies alone never open the messaging window.
+      // scheduleSmartReminder requires a prior inbound DM and checks that
+      // the configured delay still fits within its 24-hour window.
       await scheduleSmartReminder({ automationId: automation.id, conversationId: conversation.id, anchorMessageId: lastAutomatedOutboundId });
     } catch (error) {
-      console.error("[SMART_REMINDER] scheduling after DM automation failed", error);
+      console.error("[SMART_REMINDER] scheduling after automation failed", error);
     }
   }
 
