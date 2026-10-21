@@ -1560,13 +1560,54 @@ export default function InstagramInbox({
             )}
           </div>
 
+          {showQuickReplies && (
+            <div className="shrink-0 border-t border-[#E8EDF5] bg-white px-3 py-3 sm:px-5">
+              <div className="mb-2 flex items-center justify-between">
+                <strong className="text-xs text-[#18233C]">پاسخ‌های آماده</strong>
+                <button type="button" onClick={() => setShowQuickReplies(false)} className="grid h-8 w-8 place-items-center rounded-lg text-[#64748B]" aria-label="بستن پاسخ‌های آماده"><X size={16}/></button>
+              </div>
+              <div className="max-h-36 space-y-1 overflow-y-auto">
+                {quickReplies.map((reply, index) => (
+                  <div key={index} className="flex items-center gap-1">
+                    <button type="button" onClick={() => { setText(reply); setShowQuickReplies(false); }}
+                      className="min-w-0 flex-1 truncate rounded-lg bg-[#F5F8FE] px-3 py-2 text-right text-xs text-[#334155] hover:bg-[#EAF1FE]" title={reply}>
+                      {reply}
+                    </button>
+                    <button type="button" onClick={() => persistQuickReplies(quickReplies.filter((_, i) => i !== index))}
+                      className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-[#94A3B8] hover:bg-[#FEF2F2] hover:text-[#DC2626]" aria-label="حذف پاسخ آماده"><X size={15}/></button>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-2 flex items-center gap-2">
+                <input type="text" value={newQuickReply} maxLength={1000} onChange={(e) => setNewQuickReply(e.target.value)} placeholder="پاسخ آماده جدید..." aria-label="متن پاسخ آماده جدید"
+                  className="h-10 min-w-0 flex-1 rounded-xl border border-[#E2E8F0] px-3 text-xs outline-none focus:border-[#2F61FD]"/>
+                <button type="button" disabled={!newQuickReply.trim() || quickReplies.length >= 12} onClick={() => {
+                  const next = newQuickReply.trim();
+                  if (!quickReplies.includes(next)) persistQuickReplies([...quickReplies, next]);
+                  setNewQuickReply("");
+                }} className="h-10 rounded-xl bg-[#2F61FD] px-3 text-xs font-bold text-white disabled:bg-[#CBD5E1]">ذخیره</button>
+              </div>
+              <p className="mt-2 text-[10px] text-[#94A3B8]">پاسخ‌های آماده در همین مرورگر ذخیره می‌شوند.</p>
+            </div>
+          )}
+
           <form
             onSubmit={sendMessage}
-            className="shrink-0 border-t border-border bg-background p-2.5 sm:p-3"
+            className="shrink-0 border-t border-[#E8EDF5] bg-white px-3 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 sm:px-5 sm:py-3"
           >
             {selectedConversation.messagingWindow && !selectedConversation.messagingWindow.canSend && (
               <div className="mb-2 rounded-lg bg-muted/60 px-3 py-2 text-[10px] leading-5 text-muted-foreground">
                 زمان مجاز پاسخ‌گویی به این گفتگو تمام شده است. با پیام جدید کاربر، امکان پاسخ دوباره فعال می‌شود.
+              </div>
+            )}
+            {recordedVoice && recordedVoiceUrl && (
+              <div className="mb-3 flex items-center gap-2 rounded-2xl border border-[#DBEAFE] bg-[#F4F8FF] p-3">
+                <Mic size={17} className="shrink-0 text-[#2F61FD]"/>
+                <div className="min-w-0 flex-1">
+                  <p className="mb-1 text-xs font-bold text-[#18233C]">پیش‌نمایش پیام صوتی</p>
+                  <audio src={recordedVoiceUrl} controls className="h-9 w-full" preload="metadata"/>
+                </div>
+                <button type="button" onClick={() => setRecordedVoice(null)} className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-[#64748B] hover:bg-[#FEE2E2]" aria-label="حذف ویس ضبط‌شده"><X size={17}/></button>
               </div>
             )}
             {selectedFile && (
@@ -1662,9 +1703,9 @@ export default function InstagramInbox({
                   disabled={sending}
                   variant="icon"
                   className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full p-0 text-primary hover:text-primary/80 disabled:text-slate-300"
-                  aria-label="ارسال Voice"
+                  aria-label="پایان ضبط و پیش‌نمایش ویس"
                 >
-                  <Send size={16} />
+                  <Square size={16} fill="currentColor" />
                 </Button>
               </div>
             ) : (
@@ -1675,16 +1716,29 @@ export default function InstagramInbox({
                   accept="image/*,video/*,audio/*"
                   className="hidden"
                   onChange={(event) => {
-                    setSelectedFile(event.target.files?.[0] || null);
+                    const file = event.target.files?.[0] || null;
+                    if (file && file.size > 25 * 1024 * 1024) {
+                      setError("حجم فایل نباید بیشتر از ۲۵ مگابایت باشد.");
+                      event.currentTarget.value = "";
+                      return;
+                    }
+                    setError("");
+                    setRecordedVoice(null);
+                    setSelectedFile(file);
                   }}
                 />
 
-                <div className="flex items-end gap-1.5">
+                <div className="flex items-end gap-2">
+                  <button type="button" onClick={() => { setShowQuickReplies((value) => !value); setConversationSearchOpen(false); }}
+                    aria-label="پاسخ‌های آماده" aria-expanded={showQuickReplies}
+                    className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#F0F5FF] text-[#2F61FD] hover:bg-[#E4EDFF]">
+                    <MessageSquareText size={20}/>
+                  </button>
                   <Button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     variant="icon"
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg p-0 text-slate-500 hover:text-primary"
+                    className="flex h-11 w-10 shrink-0 items-center justify-center rounded-xl p-0 text-[#64748B] hover:bg-[#F3F6FB] hover:text-[#2F61FD]"
                     aria-label="ارسال عکس، ویدیو یا فایل صوتی"
                   >
                     <Paperclip size={18} />
@@ -1699,7 +1753,7 @@ export default function InstagramInbox({
                       target.style.height = Math.min(160, Math.max(40, target.scrollHeight)) + "px";
                     }}
                     onKeyDown={(event) => {
-                      if (event.key === "Enter" && !event.shiftKey) {
+                      if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
                         event.preventDefault();
                         event.currentTarget.form?.requestSubmit();
                       }
@@ -1707,30 +1761,26 @@ export default function InstagramInbox({
                     rows={1}
                     maxLength={1000}
                     placeholder="پیام خود را بنویسید..."
-                    className="min-h-10 max-h-40 flex-1 resize-none appearance-none rounded-xl border border-border bg-muted/40 px-3 py-2 text-base leading-5 outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    className="min-h-11 max-h-40 min-w-0 flex-1 resize-none appearance-none rounded-2xl border border-[#E3EAF5] bg-[#F7F9FD] px-4 py-2.5 text-base leading-6 text-[#18233C] outline-none focus:border-[#2F61FD] focus:bg-white"
                     style={{ fontSize: "16px", WebkitTextSizeAdjust: "100%" }}
                   />
 
-                  <Button
-                    type="button"
-                    onClick={() => void startRecording()}
-                    disabled={sending || !selectedConversation.messagingWindow?.canSend}
-                    variant="icon"
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg p-0 text-slate-500 hover:text-primary disabled:text-slate-300"
-                    aria-label="ضبط Voice"
-                  >
-                    <Mic size={18} />
-                  </Button>
+                  {!text.trim() && !selectedFile && !recordedVoice && (
+                    <Button type="button" onClick={() => void startRecording()}
+                      disabled={sending || !selectedConversation.messagingWindow?.canSend} variant="icon"
+                      className="flex h-11 w-10 shrink-0 items-center justify-center rounded-xl p-0 text-[#64748B] hover:bg-[#F3F6FB] hover:text-[#2F61FD] disabled:text-slate-300"
+                      aria-label="ضبط ویس"><Mic size={20}/></Button>
+                  )}
 
                   <Button
                     type="submit"
                     disabled={
                     sending ||
                     !selectedConversation.messagingWindow?.canSend ||
-                    (!text.trim() && !selectedFile)
+                    (!text.trim() && !selectedFile && !recordedVoice)
                   }
                     variant="icon"
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg p-0 text-primary hover:text-primary/80 disabled:text-slate-300"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#2F61FD] p-0 text-white shadow-sm hover:bg-[#244ED2] disabled:bg-[#E7EDF6] disabled:text-[#94A3B8]"
                     aria-label="ارسال"
                   >
                     <Send size={17} />
