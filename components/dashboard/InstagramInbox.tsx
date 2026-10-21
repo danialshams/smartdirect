@@ -842,9 +842,11 @@ export default function InstagramInbox({
         else optimisticMediaRef.current.set(sent.id, localUrl);
       }
       if (activeConversationRef.current === conversationKey) {
-        setMessages((current) => current.map((item) =>
-          item.id === optimisticId ? { ...sent, mediaUrl: sent.mediaUrl || localUrl || null } : item
-        ));
+        setMessages((current) => {
+          const updated = current.map((item) => item.id === optimisticId
+            ? { ...sent, mediaUrl: sent.mediaUrl || localUrl || null } : item);
+          return [...new Map(updated.map((item) => [item.id, item])).values()];
+        });
         setSelectedFile(null);
         setRecordedVoice(null);
         if (fileInputRef.current) fileInputRef.current.value = "";
@@ -886,9 +888,10 @@ export default function InstagramInbox({
         throw new Error(result.error || "ارسال پیام ناموفق بود.");
       }
       if (activeConversationRef.current === conversationKey) {
-        setMessages((current) => current.map((item) =>
-          item.id === optimisticId ? result.message! : item
-        ));
+        setMessages((current) => {
+          const updated = current.map((item) => item.id === optimisticId ? result.message! : item);
+          return [...new Map(updated.map((item) => [item.id, item])).values()];
+        });
       }
       void loadConversations();
       return true;
@@ -1814,6 +1817,18 @@ export default function InstagramInbox({
 
   return (
     <section id="messages" dir="rtl" data-mobile-chat-open={mobileChatOpen ? "true" : "false"} className="scroll-mt-24 overflow-x-hidden">
+      <style>{`
+        @media (max-width: 1023px) {
+          .daira-app-shell:has(#messages[data-mobile-chat-open="true"]) .daira-bottom-nav,
+          .daira-app-shell:has(#messages[data-mobile-chat-open="true"]) .daira-bottom-nav-backdrop { display: none; }
+          .daira-app-shell:has(#messages[data-mobile-chat-open="true"]) .daira-app-main { padding-bottom: 0; }
+          #messages[data-mobile-chat-open="true"] .inbox-frame {
+            height: calc(100dvh - 90px - env(safe-area-inset-top, 0px));
+            min-height: 0;
+            border-radius: 16px;
+          }
+        }
+      `}</style>
       {error && (
         <div className="mb-3 flex items-center justify-between gap-4 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-xs text-red-700">
           <span>{error}</span>
