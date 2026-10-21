@@ -1402,54 +1402,57 @@ export default function InstagramInbox({
     <div className="flex min-h-0 flex-1 flex-col bg-background">
       {selectedConversation ? (
         <>
-          <header className="flex shrink-0 items-center gap-2.5 border-b border-border px-3.5 py-2.5 sm:px-4">
-            <Button
-              type="button"
-              onClick={goBackToList}
-              variant="icon"
-              className="flex h-9 w-9 items-center justify-center rounded-lg p-0 text-muted-foreground hover:text-foreground lg:hidden"
-              aria-label="بازگشت به گفتگوها"
-            >
-              <ArrowRight size={17} />
-            </Button>
-
+          <header className="flex shrink-0 items-center gap-2 border-b border-[#E8EDF5] bg-white px-3 py-3 sm:px-5">
+            <button type="button" onClick={goBackToList} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-[#526580] hover:bg-[#F1F5FC] lg:hidden" aria-label="بازگشت به گفتگوها"><ArrowRight size={19}/></button>
             {selectedConversation.participantProfilePicture ? (
-              <img
-                src={selectedConversation.participantProfilePicture}
-                alt=""
-                className="h-11 w-11 rounded-full object-cover ring-1 ring-[#E5EAF3]"
-              />
+              <img src={selectedConversation.participantProfilePicture} alt="" className="h-11 w-11 shrink-0 rounded-full object-cover ring-1 ring-[#E5EAF3]"/>
             ) : (
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#EEF3FB] text-[#64748B]">
-                <UserRound size={16} />
-              </div>
+              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#EEF3FB] text-[#64748B]"><UserRound size={19}/></div>
             )}
-
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[13px] font-bold text-foreground">
-                {displayName(selectedConversation)}
-              </p>
-              <div className="mt-0.5 flex min-w-0 items-center gap-1.5">
-                <p className="truncate text-[9px] text-muted-foreground">
-                  {selectedConversation.participantName || "Instagram Direct"}
-                </p>
+              <p className="truncate text-sm font-extrabold text-[#18233C]">{displayName(selectedConversation)}</p>
+              <div className="mt-1 flex min-w-0 items-center gap-1.5">
+                <span className="truncate text-[11px] text-[#71809A]">{selectedConversation.participantName || "دایرکت اینستاگرام"}</span>
                 {selectedConversation.messagingWindow && (
-                  <span
-                    className={
-                      "shrink-0 rounded-full px-1.5 py-0.5 text-[8px] font-medium " +
-                      (selectedConversation.messagingWindow.canSend
-                        ? selectedConversation.messagingWindow.mode === "HUMAN_AGENT"
-                          ? "bg-amber-50 text-amber-700"
-                          : "bg-emerald-50 text-emerald-700"
-                        : "bg-red-50 text-red-600")
-                    }
-                  >
-                    {messagingWindowLabel(selectedConversation.messagingWindow)}
-                  </span>
+                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                    selectedConversation.messagingWindow.canSend
+                      ? "bg-[#ECFDF3] text-[#16834C]"
+                      : "bg-[#FEF2F2] text-[#B91C1C]"
+                  }`}>{selectedConversation.messagingWindow.canSend ? "پاسخ‌گویی فعال" : "مهلت پاسخ تمام شده"}</span>
                 )}
               </div>
             </div>
+            <button type="button" onClick={() => { setConversationSearchOpen((value) => !value); setShowQuickReplies(false); }} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-[#526580] hover:bg-[#F1F5FC]" aria-label="جست‌وجو در پیام‌ها" aria-expanded={conversationSearchOpen}><Search size={19}/></button>
+            <button type="button" onClick={() => void toggleHumanMode()} disabled={handoffBusy} className={`hidden min-h-9 shrink-0 items-center rounded-xl border px-3 text-[11px] font-bold transition disabled:opacity-50 sm:inline-flex ${selectedConversation.humanMode ? "border-[#BFDBFE] bg-[#EFF6FF] text-[#2563EB]" : "border-[#E2E8F0] bg-white text-[#526580] hover:bg-[#F5F8FE]"}`} title={selectedConversation.humanMode ? "بازگشت به پاسخ‌گویی خودکار" : "واگذاری گفتگو به پاسخ‌گویی انسانی"}>
+              {handoffBusy ? "در حال تغییر…" : selectedConversation.humanMode ? "پاسخ انسانی فعال" : "پاسخ انسانی"}
+            </button>
           </header>
+
+          {conversationSearchOpen && (
+            <div className="shrink-0 border-b border-[#E8EDF5] bg-white px-3 py-3 sm:px-5">
+              <div className="flex items-center gap-2">
+                <input autoFocus value={conversationSearchText} onChange={(event) => setConversationSearchText(event.target.value)} placeholder="جست‌وجو در پیام‌های این گفتگو..." aria-label="جست‌وجو در پیام‌های گفتگو" className="h-11 min-w-0 flex-1 rounded-xl border border-[#DFE7F3] bg-[#F8FAFD] px-3 text-sm text-[#18233C] outline-none focus:border-[#2F61FD]" />
+                <button type="button" onClick={() => {setConversationSearchOpen(false);setConversationSearchText("");}} className="grid h-10 w-10 place-items-center rounded-xl text-[#64748B]" aria-label="بستن جست‌وجو"><X size={18}/></button>
+              </div>
+              {conversationSearchText.trim() && (
+                <div className="mt-2 max-h-[32vh] space-y-1 overflow-y-auto" aria-live="polite">
+                  {conversationSearching ? <p className="p-3 text-xs text-[#64748B]">در حال جست‌وجو…</p> :
+                  conversationMatches.length ? conversationMatches.map((result) => (
+                    <button key={result.id} type="button" onClick={() => void focusSearchResult(result.id)} className="flex w-full flex-col gap-1 rounded-xl px-3 py-2.5 text-right hover:bg-[#F1F5FC]">
+                      <span className="line-clamp-2 text-xs leading-5 text-[#18233C]">{result.text}</span>
+                      <span className="text-[10px] text-[#94A3B8]">{formatDate(result.createdAt)}</span>
+                    </button>
+                  )) : <p className="p-3 text-xs text-[#64748B]">پیامی پیدا نشد.</p>}
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="border-b border-[#E8EDF5] bg-white px-3 py-2 sm:hidden">
+            <button type="button" onClick={() => void toggleHumanMode()} disabled={handoffBusy} className="text-[11px] font-bold text-[#2F61FD] disabled:opacity-50">
+              {selectedConversation.humanMode ? "بازگشت به پاسخ‌گویی خودکار" : "فعال‌سازی پاسخ‌گویی انسانی"}
+            </button>
+          </div>
 
           <div
             ref={messagesScrollRef}
