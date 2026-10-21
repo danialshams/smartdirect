@@ -9,7 +9,6 @@ import {
   File as FileIcon,
   Image as ImageIcon,
   MessageCircle,
-  MessageSquareText,
   Mic,
   Paperclip,
   Pause,
@@ -79,7 +78,6 @@ type Conversation = {
   participantName: string | null;
   participantProfilePicture: string | null;
   isActive: boolean;
-  humanMode?: boolean;
   messagingWindow?: MessagingWindow;
   lastMessageAt: string | null;
   updatedAt: string;
@@ -96,13 +94,12 @@ type ApiResult = {
   conversations?: Conversation[];
   conversation?: Conversation;
   message?: Message;
-  humanMode?: boolean;
   matches?: Message[];
   hasMoreConversations?: boolean;
   nextOffset?: number;
 };
 
-type InboxFilter = "ALL" | "READ" | "UNREAD" | "NEEDS_REPLY";
+type InboxFilter = "ALL" | "READ" | "UNREAD";
 
 const dateFormatter = new Intl.DateTimeFormat("fa-IR", {
   dateStyle: "medium",
@@ -137,6 +134,17 @@ function formatDate(value: string | null) {
 
 function formatTime(value: string) {
   return timeFormatter.format(new Date(value));
+}
+
+function formatConversationTime(value: string | null) {
+  if (!value) return "";
+  const date = new Date(value);
+  const today = new Date();
+  if (date.toDateString() === today.toDateString()) return timeFormatter.format(date);
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+  if (date.toDateString() === yesterday.toDateString()) return "دیروز";
+  return new Intl.DateTimeFormat("fa-IR-u-ca-persian", { day: "numeric", month: "short" }).format(date);
 }
 
 function messagingWindowLabel(window?: MessagingWindow) {
@@ -415,10 +423,6 @@ export default function InstagramInbox({
   const [conversationMatches, setConversationMatches] = useState<Message[]>([]);
   const [conversationSearching, setConversationSearching] = useState(false);
   const [focusedMessageId, setFocusedMessageId] = useState<string | null>(null);
-  const [showQuickReplies, setShowQuickReplies] = useState(false);
-  const [quickReplies, setQuickReplies] = useState<string[]>([]);
-  const [newQuickReply, setNewQuickReply] = useState("");
-  const [handoffBusy, setHandoffBusy] = useState(false);
   const [recordedVoice, setRecordedVoice] = useState<File | null>(null);
   const [recording, setRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
@@ -435,6 +439,7 @@ export default function InstagramInbox({
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesScrollRef = useRef<HTMLDivElement>(null);
+  const inboxFrameRef = useRef<HTMLDivElement>(null);
   const previousMessageCountRef = useRef(0);
   const conversationFetchIdRef = useRef(0);
   const loadedMoreConversationsRef = useRef(false);
@@ -1109,7 +1114,6 @@ export default function InstagramInbox({
     setText("");
     setSelectedFile(null);
     setRecordedVoice(null);
-    setShowQuickReplies(false);
     setConversationSearchOpen(false);
     setConversationMatches([]);
     setHasMoreMessages(false);
@@ -1190,7 +1194,6 @@ export default function InstagramInbox({
   const filteredConversations = (search.trim() ? searchResults : conversations).filter((conversation) => {
     if (filter === "UNREAD" && !(conversation.unreadCount || 0)) return false;
     if (filter === "READ" && (conversation.unreadCount || 0) > 0) return false;
-    if (filter === "NEEDS_REPLY" && conversation.messages[0]?.direction !== "INBOUND") return false;
 
     return true;
   });
@@ -1199,7 +1202,6 @@ export default function InstagramInbox({
     (conversation) => (conversation.unreadCount || 0) > 0,
   ).length;
   const readTotal = conversations.length - unreadTotal;
-  const needsReplyTotal = conversations.filter((item) => item.messages[0]?.direction === "INBOUND").length;
   const selectedConversation = conversations.find(
     (conversation) => conversation.id === selectedId,
   );
@@ -1219,27 +1221,6 @@ export default function InstagramInbox({
       if (recordedVoiceUrl) URL.revokeObjectURL(recordedVoiceUrl);
     };
   }, [selectedFileUrl, recordedVoiceUrl]);
-
-  const suggestedReplies = [
-    "سلام، ممنون از پیامتان. چطور می‌توانم کمک کنم؟",
-    "پیامتان دریافت شد. در حال بررسی موضوع هستیم.",
-    "لطفاً جزئیات بیشتری ارسال کنید تا دقیق‌تر راهنمایی کنیم.",
-  ];
-
-  useEffect(() => {
-    if (!accountId) return;
-    try {
-      const saved = JSON.parse(window.localStorage.getItem(`smartdirect:inbox:quick-replies:${accountId}`) || "null");
-      setQuickReplies(Array.isArray(saved) ? saved.filter((item): item is string => typeof item === "string") : suggestedReplies);
-    } catch {
-      setQuickReplies(suggestedReplies);
-    }
-  }, [accountId]);
-
-  function persistQuickReplies(next: string[]) {
-    setQuickReplies(next);
-    if (accountId) window.localStorage.setItem(`smartdirect:inbox:quick-replies:${accountId}`, JSON.stringify(next));
-  }
 
   useEffect(() => {
     if (!conversationSearchOpen || !conversationSearchText.trim() || !accountId || !selectedId) {
@@ -1282,88 +1263,84 @@ export default function InstagramInbox({
     void loadMessages();
   }
 
-  async function toggleHumanMode() {
-    if (!accountId || !selectedId || handoffBusy || !selectedConversation) return;
-    setHandoffBusy(true);
-    try {
-      const response = await fetch("/api/instagram/inbox/handoff", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          accountId,
-          conversationId: selectedId,
-          action: selectedConversation.humanMode ? "resume" : "transfer",
-        }),
-      });
-      const result = await readApiResult(response);
-      if (!response.ok || !result.success) throw new Error(result.error || "تغییر حالت پاسخ‌گویی انجام نشد.");
-      setConversations((current) => current.map((item) => item.id === selectedId
-        ? { ...item, humanMode: Boolean(result.humanMode) }
-        : item
-      ));
-      setError("");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "تغییر حالت پاسخ‌گویی انجام نشد.");
-    } finally {
-      setHandoffBusy(false);
-    }
-  }
-
   useEffect(() => {
     if (!mobileChatOpen) return;
+
     const viewport = window.visualViewport;
+    const media = window.matchMedia("(max-width: 1023px)");
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+
     const updateViewport = () => {
-      const height = Math.min(window.innerHeight, viewport?.height ?? window.innerHeight);
-      document.documentElement.style.setProperty("--smartdirect-inbox-visible-height", `${height}px`);
+      const mobile = media.matches;
+      document.body.style.overflow = mobile ? "hidden" : originalBodyOverflow;
+      document.documentElement.style.overflow = mobile ? "hidden" : originalHtmlOverflow;
+      const frame = inboxFrameRef.current;
+      if (!frame) return;
+      if (mobile) {
+        frame.style.setProperty("--inbox-visible-height", `${viewport?.height ?? window.innerHeight}px`);
+        frame.style.setProperty("--inbox-viewport-top", `${Math.max(0, viewport?.offsetTop ?? 0)}px`);
+      } else {
+        frame.style.removeProperty("--inbox-visible-height");
+        frame.style.removeProperty("--inbox-viewport-top");
+      }
     };
+
     updateViewport();
-    window.addEventListener("resize", updateViewport);
     viewport?.addEventListener("resize", updateViewport);
+    viewport?.addEventListener("scroll", updateViewport);
+    window.addEventListener("resize", updateViewport);
+    media.addEventListener("change", updateViewport);
+
     return () => {
-      window.removeEventListener("resize", updateViewport);
       viewport?.removeEventListener("resize", updateViewport);
-      document.documentElement.style.removeProperty("--smartdirect-inbox-visible-height");
+      viewport?.removeEventListener("scroll", updateViewport);
+      window.removeEventListener("resize", updateViewport);
+      media.removeEventListener("change", updateViewport);
+      document.body.style.overflow = originalBodyOverflow;
+      document.documentElement.style.overflow = originalHtmlOverflow;
+      inboxFrameRef.current?.style.removeProperty("--inbox-visible-height");
+      inboxFrameRef.current?.style.removeProperty("--inbox-viewport-top");
     };
   }, [mobileChatOpen]);
 
   const listPanel = (
-    <aside className="flex min-h-0 flex-1 flex-col bg-white lg:w-[355px] lg:flex-none lg:border-l lg:border-[#E8EDF5]">
-      <div className="shrink-0 border-b border-[#E8EDF5] px-4 pb-3.5 pt-4 sm:px-5">
-        <div className="mb-4 flex items-center justify-between">
+    <aside className="flex min-h-0 min-w-0 flex-1 flex-col bg-white lg:w-[315px] lg:flex-none lg:border-l lg:border-[#E8EDF5]">
+      <div className="shrink-0 border-b border-[#E8EDF5] px-3 pb-2 pt-2 sm:px-4">
+        <div className="mb-2 flex items-center justify-between gap-2">
           <div>
-            <h1 className="text-base font-extrabold text-[#18233C]">صندوق دایرکت</h1>
-            <p className="mt-1 text-[11px] text-[#64748B]">{conversations.length.toLocaleString("fa-IR")} گفتگو</p>
+            <h1 className="text-sm font-extrabold text-[#18233C]">صندوق دایرکت</h1>
+            <p className="text-[10px] text-[#64748B]">{conversations.length.toLocaleString("fa-IR")} گفتگو</p>
           </div>
-          <button type="button" onClick={() => void loadConversations()} aria-label="به‌روزرسانی گفتگوها" title="به‌روزرسانی" className="grid h-10 w-10 place-items-center rounded-xl bg-[#F1F5FC] text-[#526580] transition hover:bg-[#E7EEFC]"><RotateCcw size={17}/></button>
+          <button type="button" onClick={() => void loadConversations()} aria-label="به‌روزرسانی گفتگوها" title="به‌روزرسانی" className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[#F1F5FC] text-[#526580] transition hover:bg-[#E7EEFC]"><RotateCcw size={17}/></button>
         </div>
-        <div className="flex items-center gap-1 overflow-x-auto rounded-xl bg-[#EEF3FB] p-1" role="group" aria-label="فیلتر گفتگوها">
+        <div className="flex min-w-0 flex-nowrap items-center gap-1 rounded-xl bg-[#EEF3FB] p-1" role="group" aria-label="فیلتر گفتگوها">
           {(
             [
               ["ALL", "همه", conversations.length],
-              ["READ", "خوانده شده", readTotal],
-              ["UNREAD", "خوانده نشده", unreadTotal],
-              ["NEEDS_REPLY", "نیازمند پاسخ", needsReplyTotal],
+              ["READ", "خوانده", readTotal],
+              ["UNREAD", "خوانده‌نشده", unreadTotal],
             ] as const
           ).map(([value, label, count]) => (
             <button
               key={value}
               type="button"
               onClick={() => setFilter(value)}
-              className={`flex min-w-[74px] flex-1 shrink-0 items-center justify-center gap-1 rounded-lg px-2 py-2.5 text-[11px] font-semibold transition ${
+              className={`flex min-w-0 flex-1 items-center justify-center gap-1 whitespace-nowrap rounded-lg px-1 py-2 text-[11px] font-semibold transition ${
                 filter === value
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              <span>{label}</span>
-              <span className="text-[10px] tabular-nums opacity-70">
+              <span className="shrink-0 whitespace-nowrap">{label}</span>
+              <span className="sr-only">
                 {count.toLocaleString("fa-IR")}
               </span>
             </button>
           ))}
         </div>
 
-        <div className="relative mt-3">
+        <div className="relative mt-2">
           <Search
             size={15}
             className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#8290A6]"
@@ -1372,12 +1349,12 @@ export default function InstagramInbox({
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="جستجوی گفتگو..."
-            className="h-11 rounded-xl border-[#E5EAF3] bg-[#F8FAFD] pr-10 text-[13px] focus:border-[#2F61FD]"
+            className="h-9 rounded-lg border-[#E5EAF3] bg-[#F8FAFD] pr-9 text-[13px] focus:border-[#2F61FD]"
           />
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-2.5 py-3 sm:px-3">
+      <div className="min-h-0 flex-1 overflow-y-auto px-2 py-1.5 sm:px-2">
         {(accountsLoading || (connectedAccounts.length > 0 && (!accountId || loading))) && !conversations.length ? (
           <DashboardLoading label="در حال دریافت گفتگوها..." className="dashboard-loading--fill" />
         ) : searchingThreads && search.trim() ? (
@@ -1393,7 +1370,7 @@ export default function InstagramInbox({
                 key={conversation.id}
                 type="button"
                 onClick={() => selectConversation(conversation.id)}
-                className={`group flex w-full min-h-[72px] items-center gap-3 rounded-2xl px-3 py-3 text-right transition ${
+                className={`group flex w-full min-h-[56px] items-center gap-2 rounded-xl px-2 py-2 text-right transition ${
                   active
                     ? "bg-[#EBF2FF] ring-1 ring-[#DCE8FF]"
                     : "hover:bg-[#F5F8FE]"
@@ -1404,10 +1381,10 @@ export default function InstagramInbox({
                     <img
                       src={conversation.participantProfilePicture}
                       alt=""
-                      className="h-11 w-11 rounded-full object-cover ring-1 ring-[#E5EAF3]"
+                      className="h-10 w-10 rounded-full object-cover ring-1 ring-[#E5EAF3]"
                     />
                   ) : (
-                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#EEF3FB] text-[#64748B]">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#EEF3FB] text-[#64748B]">
                       <UserRound size={18} />
                     </div>
                   )}
@@ -1428,10 +1405,10 @@ export default function InstagramInbox({
                       {displayName(conversation)}
                     </span>
                     <span className="shrink-0 text-[10px] tabular-nums text-[#8290A6]">
-                      {formatDate(conversation.lastMessageAt)}
+                      {formatConversationTime(conversation.lastMessageAt)}
                     </span>
                   </div>
-                  <div className="mt-1 flex items-center justify-between gap-2">
+                  <div className="mt-0.5 flex items-center justify-between gap-2">
                     <p
                       className={`truncate text-xs leading-5 ${
                         unread
@@ -1475,10 +1452,10 @@ export default function InstagramInbox({
   );
 
   const chatPanel = (
-    <div className="flex min-h-0 flex-1 flex-col bg-background">
+    <div className="flex min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden bg-background">
       {selectedConversation ? (
         <>
-          <header className="flex shrink-0 items-center gap-2 border-b border-[#E8EDF5] bg-white px-3 py-3 sm:px-5">
+          <header className="inbox-chat-header flex min-w-0 shrink-0 items-center gap-2 border-b border-[#E8EDF5] bg-white px-3 py-3 sm:px-5">
             <button type="button" onClick={goBackToList} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-[#526580] hover:bg-[#F1F5FC] lg:hidden" aria-label="بازگشت به گفتگوها"><ArrowRight size={19}/></button>
             {selectedConversation.participantProfilePicture ? (
               <img src={selectedConversation.participantProfilePicture} alt="" className="h-11 w-11 shrink-0 rounded-full object-cover ring-1 ring-[#E5EAF3]"/>
@@ -1498,10 +1475,7 @@ export default function InstagramInbox({
                 )}
               </div>
             </div>
-            <button type="button" onClick={() => { setConversationSearchOpen((value) => !value); setShowQuickReplies(false); }} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-[#526580] hover:bg-[#F1F5FC]" aria-label="جست‌وجو در پیام‌ها" aria-expanded={conversationSearchOpen}><Search size={19}/></button>
-            <button type="button" onClick={() => void toggleHumanMode()} disabled={handoffBusy} className={`hidden min-h-9 shrink-0 items-center rounded-xl border px-3 text-[11px] font-bold transition disabled:opacity-50 sm:inline-flex ${selectedConversation.humanMode ? "border-[#BFDBFE] bg-[#EFF6FF] text-[#2563EB]" : "border-[#E2E8F0] bg-white text-[#526580] hover:bg-[#F5F8FE]"}`} title={selectedConversation.humanMode ? "بازگشت به پاسخ‌گویی خودکار" : "واگذاری گفتگو به پاسخ‌گویی انسانی"}>
-              {handoffBusy ? "در حال تغییر…" : selectedConversation.humanMode ? "پاسخ انسانی فعال" : "پاسخ انسانی"}
-            </button>
+            <button type="button" onClick={() => setConversationSearchOpen((value) => !value)} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-[#526580] hover:bg-[#F1F5FC]" aria-label="جست‌وجو در پیام‌ها" aria-expanded={conversationSearchOpen}><Search size={19}/></button>
           </header>
 
           {conversationSearchOpen && (
@@ -1523,12 +1497,6 @@ export default function InstagramInbox({
               )}
             </div>
           )}
-
-          <div className="border-b border-[#E8EDF5] bg-white px-3 py-2 sm:hidden">
-            <button type="button" onClick={() => void toggleHumanMode()} disabled={handoffBusy} className="text-[11px] font-bold text-[#2F61FD] disabled:opacity-50">
-              {selectedConversation.humanMode ? "بازگشت به پاسخ‌گویی خودکار" : "فعال‌سازی پاسخ‌گویی انسانی"}
-            </button>
-          </div>
 
           <div
             ref={messagesScrollRef}
@@ -1634,37 +1602,6 @@ export default function InstagramInbox({
               </div>
             )}
           </div>
-
-          {showQuickReplies && (
-            <div className="shrink-0 border-t border-[#E8EDF5] bg-white px-3 py-3 sm:px-5">
-              <div className="mb-2 flex items-center justify-between">
-                <strong className="text-xs text-[#18233C]">پاسخ‌های آماده</strong>
-                <button type="button" onClick={() => setShowQuickReplies(false)} className="grid h-8 w-8 place-items-center rounded-lg text-[#64748B]" aria-label="بستن پاسخ‌های آماده"><X size={16}/></button>
-              </div>
-              <div className="max-h-36 space-y-1 overflow-y-auto">
-                {quickReplies.map((reply, index) => (
-                  <div key={index} className="flex items-center gap-1">
-                    <button type="button" onClick={() => { setText(reply); setShowQuickReplies(false); }}
-                      className="min-w-0 flex-1 truncate rounded-lg bg-[#F5F8FE] px-3 py-2 text-right text-xs text-[#334155] hover:bg-[#EAF1FE]" title={reply}>
-                      {reply}
-                    </button>
-                    <button type="button" onClick={() => persistQuickReplies(quickReplies.filter((_, i) => i !== index))}
-                      className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-[#94A3B8] hover:bg-[#FEF2F2] hover:text-[#DC2626]" aria-label="حذف پاسخ آماده"><X size={15}/></button>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-2 flex items-center gap-2">
-                <input type="text" value={newQuickReply} maxLength={1000} onChange={(e) => setNewQuickReply(e.target.value)} placeholder="پاسخ آماده جدید..." aria-label="متن پاسخ آماده جدید"
-                  className="h-10 min-w-0 flex-1 rounded-xl border border-[#E2E8F0] px-3 text-xs outline-none focus:border-[#2F61FD]"/>
-                <button type="button" disabled={!newQuickReply.trim() || quickReplies.length >= 12} onClick={() => {
-                  const next = newQuickReply.trim();
-                  if (!quickReplies.includes(next)) persistQuickReplies([...quickReplies, next]);
-                  setNewQuickReply("");
-                }} className="h-10 rounded-xl bg-[#2F61FD] px-3 text-xs font-bold text-white disabled:bg-[#CBD5E1]">ذخیره</button>
-              </div>
-              <p className="mt-2 text-[10px] text-[#94A3B8]">پاسخ‌های آماده در همین مرورگر ذخیره می‌شوند.</p>
-            </div>
-          )}
 
           <form
             onSubmit={sendMessage}
@@ -1804,11 +1741,6 @@ export default function InstagramInbox({
                 />
 
                 <div className="flex items-end gap-2">
-                  <button type="button" onClick={() => { setShowQuickReplies((value) => !value); setConversationSearchOpen(false); }}
-                    aria-label="پاسخ‌های آماده" aria-expanded={showQuickReplies}
-                    className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#F0F5FF] text-[#2F61FD] hover:bg-[#E4EDFF]">
-                    <MessageSquareText size={20}/>
-                  </button>
                   <Button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
@@ -1891,13 +1823,24 @@ export default function InstagramInbox({
     <section id="messages" dir="rtl" data-mobile-chat-open={mobileChatOpen ? "true" : "false"} className="scroll-mt-24 overflow-x-hidden">
       <style>{`
         @media (max-width: 1023px) {
-          .daira-app-shell:has(#messages[data-mobile-chat-open="true"]) .daira-bottom-nav,
-          .daira-app-shell:has(#messages[data-mobile-chat-open="true"]) .daira-bottom-nav-backdrop { display: none; }
-          .daira-app-shell:has(#messages[data-mobile-chat-open="true"]) .daira-app-main { padding-bottom: 0; }
           #messages[data-mobile-chat-open="true"] .inbox-frame {
-            height: calc(min(100dvh, var(--smartdirect-inbox-visible-height, 100dvh)) - 90px - env(safe-area-inset-top, 0px));
+            position: fixed;
+            z-index: 2100;
+            top: var(--inbox-viewport-top, 0px);
+            right: 0;
+            left: 0;
+            width: 100%;
+            max-width: 100vw;
+            height: var(--inbox-visible-height, 100dvh);
             min-height: 0;
-            border-radius: 16px;
+            margin: 0;
+            border: 0;
+            border-radius: 0;
+            box-shadow: none;
+            box-sizing: border-box;
+          }
+          #messages[data-mobile-chat-open="true"] .inbox-chat-header {
+            padding-top: max(12px, env(safe-area-inset-top, 0px));
           }
         }
       `}</style>
@@ -1914,10 +1857,10 @@ export default function InstagramInbox({
         </div>
       )}
 
-      <div className="inbox-frame h-[calc(100dvh-196px)] min-h-0 overflow-hidden rounded-[22px] border border-[#DFE7F3] bg-white shadow-[0_10px_35px_rgba(15,23,42,0.04)] lg:h-[calc(100dvh-235px)] lg:min-h-[420px]">
-        <div className="flex h-full min-h-0">
+      <div ref={inboxFrameRef} className="inbox-frame h-[calc(100dvh-196px)] min-h-0 overflow-hidden rounded-[22px] border border-[#DFE7F3] bg-white shadow-[0_10px_35px_rgba(15,23,42,0.04)] lg:h-[calc(100dvh-235px)] lg:min-h-[420px]">
+        <div className="flex h-full min-h-0 min-w-0 w-full">
           <div
-            className={`flex min-h-0 flex-1 flex-col lg:flex-none ${
+            className={`flex min-h-0 min-w-0 w-full flex-1 flex-col lg:w-auto lg:flex-none ${
               mobileChatOpen ? "hidden lg:flex" : "flex"
             }`}
           >
@@ -1925,7 +1868,7 @@ export default function InstagramInbox({
           </div>
 
           <div
-            className={`min-h-0 flex-1 ${
+            className={`min-h-0 min-w-0 w-full flex-1 ${
               mobileChatOpen ? "flex" : "hidden lg:flex"
             }`}
           >

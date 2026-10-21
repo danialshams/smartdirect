@@ -4,7 +4,6 @@ import { readFileSync } from "node:fs";
 const read = (file: string) => readFileSync(file, "utf8");
 const component = read("components/dashboard/InstagramInbox.tsx");
 const inbox = read("app/api/instagram/inbox/route.ts");
-const handoff = read("app/api/instagram/inbox/handoff/route.ts");
 
 const readRoute = inbox.slice(inbox.indexOf("export async function GET("), inbox.indexOf("export async function POST("));
 assert.ok(!readRoute.includes("conversationMessage.updateMany"), "Reading conversation must not mark messages read");
@@ -19,9 +18,15 @@ assert.ok(component.includes('sendStatus: "SENDING"') && component.includes('sen
 assert.ok(component.includes("failedRetryRef.current.set"), "Failed sends must be retryable");
 assert.ok(component.includes("setRecordedVoice(new File(") && !component.includes('aria-label="ارسال Voice"'), "Voice must offer a preview before sending");
 assert.ok(component.includes("conversationSearchOpen") && component.includes("focusSearchResult"), "Message search interaction missing");
-assert.ok(component.includes("persistQuickReplies") && component.includes("window.localStorage"), "Editable quick replies missing");
-assert.ok(component.includes("toggleHumanMode") && handoff.includes('action === "transfer"'), "Human handoff missing");
+assert.ok(!component.includes("persistQuickReplies") && !component.includes("showQuickReplies") && !component.includes("MessageSquareText"), "Quick reply controls must not be shown");
+assert.ok(!component.includes("toggleHumanMode") && !component.includes("handoffBusy"), "Human response toggle must not be shown");
+assert.ok(!component.includes("NEEDS_REPLY") && !component.includes("نیازمند پاسخ"), "Needs-reply tab must be removed");
+assert.ok(component.includes("خوانده‌نشده") && component.includes("whitespace-nowrap"), "Persian filter labels must never wrap");
+assert.ok(component.includes('min-h-[56px]') && !component.includes('min-h-[72px]'), "Conversation list rows must be compact");
+assert.ok(component.includes('position: fixed;') && component.includes('z-index: 2100;') && component.includes('max-width: 100vw;'), "Mobile chat must be a full-width fixed overlay");
+assert.ok(component.includes('viewport?.offsetTop') && component.includes('viewport?.height') && component.includes('document.body.style.overflow'), "Mobile composer must follow the visual viewport and lock page scroll");
+assert.ok(component.includes('min-w-0 w-full flex-1') && component.includes('overflow-hidden bg-background'), "Mobile chat must not overflow the viewport width");
 assert.ok(component.includes("hasMoreMessages") && component.includes("loadMessages({ before: first.id })"), "Older messages must load on demand");
 assert.ok(component.includes("showJumpToLatest") && component.includes("forceScrollToBottom"), "Scroll-to-latest interaction missing");
-assert.ok(component.includes("data-mobile-chat-open") && component.includes(".daira-bottom-nav"), "Mobile immersive conversation missing");
+assert.ok(component.includes("data-mobile-chat-open") && component.includes("--inbox-visible-height") && component.includes("--inbox-viewport-top"), "Mobile immersive conversation missing");
 console.log("INBOX_MODERN_REGRESSION_OK");
