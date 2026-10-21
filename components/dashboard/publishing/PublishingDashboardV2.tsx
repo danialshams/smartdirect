@@ -1760,29 +1760,23 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               <div className="mx-auto w-full max-w-2xl">
                 
                 <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
-                  <div className="mb-6 flex items-start gap-3 rounded-2xl border border-[#DFE7F3] bg-[#F6F9FF] px-4 py-3.5">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2F61FD]/10 text-xs font-bold text-[#2F61FD]">۳</span>
-                    <div className="min-w-0">
-                      <h2 className="text-sm font-bold text-[#18233C]">پاسخ خودکار <span className="text-[#2F61FD]">(اختیاری)</span></h2>
-                      <p className="mt-1.5 text-xs leading-5 text-[#64748B]">آیا می‌خواهی برای این محتوا پاسخ خودکار تنظیم شود؟</p>
-                    </div>
-                  </div>
+                  <SectionHeader n="۳" title="پاسخ خودکار (اختیاری)" text="در صورت نیاز، برای کامنت یا ریپلای این محتوا پاسخ خودکار تنظیم کن." />
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <button type="button" onClick={() => handleAutomationChoice(true)} className="group rounded-2xl border border-[#E2E8F0] bg-white p-4 text-right shadow-sm transition hover:border-[#BFDBFE] hover:bg-[#F8FBFF] active:scale-[0.99] sm:p-5">
+                    <button type="button" onClick={() => handleAutomationChoice(true)} className="group rounded-[19px] border border-[#DFE7F3] bg-[#F6F9FF] p-4 text-right transition hover:border-[#2F61FD] hover:bg-[#EDF3FF] sm:p-5">
                       <div className="flex items-start gap-3">
                         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2F61FD] transition group-hover:bg-[#DBEAFE]"><Send size={18} /></span>
                         <div className="min-w-0">
-                          <p className="text-sm font-bold text-[#18233C]">پاسخ خودکار می‌خواهم</p>
+                          <p className="text-sm font-bold text-[#18233C]">فعال‌کردن پاسخ خودکار</p>
                           <p className="mt-1.5 text-[11px] leading-5 text-[#64748B]">برای این محتوا پاسخ خودکار تنظیم کن.</p>
                         </div>
                       </div>
                     </button>
-                    <button type="button" onClick={() => handleAutomationChoice(false)} className="group rounded-2xl border border-[#E2E8F0] bg-white p-4 text-right shadow-sm transition hover:border-[#CBD5E1] hover:bg-[#F8FAFC] active:scale-[0.99] sm:p-5">
+                    <button type="button" onClick={() => handleAutomationChoice(false)} className="group rounded-[19px] border border-[#DFE7F3] bg-white p-4 text-right transition hover:border-[#2F61FD] hover:bg-[#F6F9FF] sm:p-5">
                       <div className="flex items-start gap-3">
                         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F8FAFC] text-[#64748B] transition group-hover:bg-[#F1F5F9]"><ArrowLeft size={18} /></span>
                         <div className="min-w-0">
                           <p className="text-sm font-bold text-[#18233C]">بدون پاسخ خودکار</p>
-                          <p className="mt-1.5 text-[11px] leading-5 text-[#64748B]">مستقیماً به مرحله انتشار برو.</p>
+                          <p className="mt-1.5 text-[11px] leading-5 text-[#64748B]">بدون تنظیم پاسخ خودکار منتشر می‌شود.</p>
                         </div>
                       </div>
                     </button>
@@ -1794,13 +1788,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                 
 
                 <section className="space-y-5 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
-                  <div className="flex items-start gap-3 rounded-2xl border border-[#DFE7F3] bg-[#F6F9FF] px-4 py-3.5">
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EDF3FF] text-xs font-bold text-[#2F61FD]">۳</span>
-                    <div className="min-w-0">
-                      <h2 className="text-sm font-bold text-[#18233C]">تنظیم پاسخ خودکار استوری</h2>
-                      <p className="mt-1.5 text-xs leading-5 text-[#64748B]">کلمات فعال‌کننده و پاسخ Reply استوری را مشخص کن.</p>
-                    </div>
-                  </div>
+                  <SectionHeader n="۳" title="تنظیم پاسخ خودکار استوری" text="کلمات فعال‌کننده و پاسخ Reply استوری را مشخص کن." />
 
                   <fieldset disabled={storyResponseSaved && !storyResponseEditing}>
                     <div>
@@ -1965,13 +1953,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               <div className="mx-auto w-full max-w-2xl">
                 
                 <section className="space-y-5 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
-                  <div className="flex items-start gap-3">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2F61FD]/10 text-xs font-bold text-[#2F61FD]">۳</span>
-                    <div className="min-w-0">
-                      <h2 className="text-sm font-bold text-[#18233C]">تنظیم پاسخ خودکار</h2>
-                      <p className="mt-1.5 text-xs leading-5 text-[#64748B]">کلمات فعال‌کننده و متن پیام دایرکت را مشخص کن.</p>
-                    </div>
-                  </div>
+                  <SectionHeader n="۳" title="تنظیم پاسخ خودکار" text="کلمات فعال‌کننده و متن پیام دایرکت را مشخص کن." />
 
                   <div>
                     <label htmlFor="publishing-auto-keyword" className="mb-2 block text-sm font-bold text-[#18233C]">کلمات کلیدی</label>
@@ -2014,13 +1996,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               <div className="mx-auto w-full max-w-2xl">
                 
                 <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
-                  <div className="mb-6 flex items-start gap-3">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2F61FD]/10 text-xs font-bold text-[#2F61FD]">۴</span>
-                    <div className="min-w-0">
-                      <h2 className="text-sm font-bold text-[#18233C]">زمان انتشار</h2>
-                      <p className="mt-1.5 text-xs leading-5 text-[#64748B]">زمان انتشار این {typeLabels[type]} را انتخاب کن.</p>
-                    </div>
-                  </div>
+                  <SectionHeader n="۴" title="زمان انتشار" text={`زمان انتشار ${typeLabels[type]} را انتخاب کن.`} />
 
                   <div className="space-y-3">
                     <fieldset className="space-y-2.5">
