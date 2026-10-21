@@ -1605,7 +1605,7 @@ export default function InstagramInbox({
                                 <CircleHelp size={14}/><span>ناموفق · تلاش مجدد</span>
                               </button>
                             ) : outbound && (message.seenAt ? (
-                              <span className="inline-flex items-center gap-1 font-semibold text-[#2F61FD]"><CheckCheck size={14}/>دیده‌شده</span>
+                              <span className="inline-flex items-center gap-1 font-semibold text-[#2F61FD]"><CheckCheck size={14}/>seen</span>
                             ) : <span title="ارسال‌شده"><Check size={13}/></span>)}
                           </div>
                         </div>
