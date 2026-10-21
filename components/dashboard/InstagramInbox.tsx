@@ -1309,6 +1309,23 @@ export default function InstagramInbox({
     }
   }
 
+  useEffect(() => {
+    if (!mobileChatOpen) return;
+    const viewport = window.visualViewport;
+    const updateViewport = () => {
+      const height = Math.min(window.innerHeight, viewport?.height ?? window.innerHeight);
+      document.documentElement.style.setProperty("--smartdirect-inbox-visible-height", `${height}px`);
+    };
+    updateViewport();
+    window.addEventListener("resize", updateViewport);
+    viewport?.addEventListener("resize", updateViewport);
+    return () => {
+      window.removeEventListener("resize", updateViewport);
+      viewport?.removeEventListener("resize", updateViewport);
+      document.documentElement.style.removeProperty("--smartdirect-inbox-visible-height");
+    };
+  }, [mobileChatOpen]);
+
   const listPanel = (
     <aside className="flex min-h-0 flex-1 flex-col bg-white lg:w-[355px] lg:flex-none lg:border-l lg:border-[#E8EDF5]">
       <div className="shrink-0 border-b border-[#E8EDF5] px-4 pb-3.5 pt-4 sm:px-5">
@@ -1878,7 +1895,7 @@ export default function InstagramInbox({
           .daira-app-shell:has(#messages[data-mobile-chat-open="true"]) .daira-bottom-nav-backdrop { display: none; }
           .daira-app-shell:has(#messages[data-mobile-chat-open="true"]) .daira-app-main { padding-bottom: 0; }
           #messages[data-mobile-chat-open="true"] .inbox-frame {
-            height: calc(100dvh - 90px - env(safe-area-inset-top, 0px));
+            height: calc(min(100dvh, var(--smartdirect-inbox-visible-height, 100dvh)) - 90px - env(safe-area-inset-top, 0px));
             min-height: 0;
             border-radius: 16px;
           }
@@ -1897,7 +1914,7 @@ export default function InstagramInbox({
         </div>
       )}
 
-      <div className="inbox-frame h-[calc(100dvh-196px)] min-h-[290px] overflow-hidden rounded-[22px] border border-[#DFE7F3] bg-white shadow-[0_10px_35px_rgba(15,23,42,0.04)] lg:h-[calc(100dvh-235px)] lg:min-h-[420px]">
+      <div className="inbox-frame h-[calc(100dvh-196px)] min-h-0 overflow-hidden rounded-[22px] border border-[#DFE7F3] bg-white shadow-[0_10px_35px_rgba(15,23,42,0.04)] lg:h-[calc(100dvh-235px)] lg:min-h-[420px]">
         <div className="flex h-full min-h-0">
           <div
             className={`flex min-h-0 flex-1 flex-col lg:flex-none ${
