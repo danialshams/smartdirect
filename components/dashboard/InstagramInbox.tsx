@@ -437,6 +437,7 @@ export default function InstagramInbox({
   const messagesScrollRef = useRef<HTMLDivElement>(null);
   const previousMessageCountRef = useRef(0);
   const conversationFetchIdRef = useRef(0);
+  const loadedMoreConversationsRef = useRef(false);
   const messageFetchIdRef = useRef(0);
   const pendingMessageFetchRef = useRef<string | null>(null);
   const activeConversationRef = useRef("");
@@ -460,6 +461,8 @@ export default function InstagramInbox({
       !accountId ||
       !connectedAccounts.some((account) => account.id === accountId)
     ) {
+      loadedMoreConversationsRef.current = false;
+      setConversations([]);
       setAccountId(connectedAccounts[0]?.id || "");
     }
   }, [accountId, connectedAccounts]);
@@ -471,6 +474,7 @@ export default function InstagramInbox({
       setMessages([]);
       setMobileChatOpen(false);
       setHasMoreConversations(false);
+      loadedMoreConversationsRef.current = false;
       return;
     }
 
@@ -493,8 +497,10 @@ export default function InstagramInbox({
 
       if (requestId !== conversationFetchIdRef.current) return;
       const next = result.conversations || [];
-      setHasMoreConversations(Boolean(result.hasMoreConversations));
-      setNextConversationsOffset(result.nextOffset ?? next.length);
+      if (!loadedMoreConversationsRef.current) {
+        setHasMoreConversations(Boolean(result.hasMoreConversations));
+        setNextConversationsOffset(result.nextOffset ?? next.length);
+      }
       setConversations((current) => {
         const nextIds = new Set(next.map((item) => item.id));
         return [...next, ...current.filter((item) => !nextIds.has(item.id))];
@@ -674,6 +680,7 @@ export default function InstagramInbox({
       const result = await readApiResult(response);
       if (!response.ok || !result.success) throw new Error(result.error || "دریافت گفتگوهای بیشتر ناموفق بود.");
       const page = result.conversations || [];
+      loadedMoreConversationsRef.current = true;
       setConversations((current) => [...current, ...page.filter((item) => !current.some((existing) => existing.id === item.id))]);
       setNextConversationsOffset(result.nextOffset ?? nextConversationsOffset + page.length);
       setHasMoreConversations(Boolean(result.hasMoreConversations));
