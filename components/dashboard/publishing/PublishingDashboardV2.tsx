@@ -709,7 +709,6 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             window.setTimeout(() => {
               setActivePublishJobId(null);
               setPublishResult(null);
-              handleBackToTypeSelection();
             }, 350);
           }, 500);
         }
@@ -1525,6 +1524,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   <div key={row.id} className="mt-3 flex flex-wrap items-center gap-3 rounded-xl border border-[#FECACA] bg-[#FEF2F2] p-3">
                     <p className="min-w-0 flex-1 text-xs leading-6 text-[#B91C1C]">{row.fileName}: {row.error||"آپلود ناموفق بود."}</p>
                     <button type="button" onClick={()=>retryLocalUpload(row.id)} className="inline-flex items-center gap-1 rounded-lg bg-white px-3 py-2 text-xs font-bold text-[#B91C1C]"><RotateCcw size={14}/>تلاش دوباره</button>
+                    <button type="button" onClick={()=>removeLocalById(row.id)} aria-label={"حذف فایل ناموفق "+row.fileName} className="rounded-lg border border-[#FECACA] bg-white p-2 text-[#B91C1C]"><Trash2 size={14}/></button>
                   </div>
                 )}
                                       {type === "CAROUSEL" && uploadRows.length > 0 && (
