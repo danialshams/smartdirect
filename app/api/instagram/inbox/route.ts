@@ -470,6 +470,11 @@ export async function GET(request: NextRequest) {
 
     const accountId = searchParams.get("accountId");
     const conversationId = searchParams.get("conversationId");
+    const conversationSearch = searchParams.get("conversationSearch")?.trim().slice(0, 100) || "";
+    const before = searchParams.get("before");
+    const focusId = searchParams.get("focusId");
+    const messageSearch = searchParams.get("messageSearch")?.trim().slice(0, 100) || "";
+    const conversationOffset = Math.min(10000, Math.max(0, Number(searchParams.get("offset")) || 0));
 
     const account = await getOwnedAccount(session.user.id, accountId);
 
@@ -485,65 +490,89 @@ export async function GET(request: NextRequest) {
           userId: session.user.id,
           instagramAccountId: account.id,
         },
-        include: {
-          messages: {
-            orderBy: {
-              createdAt: "asc",
-            },
-            select: {
-              id: true,
-              direction: true,
-              messageType: true,
-              text: true,
-              mediaUrl: true,
-              mediaId: true,
-              igMessageId: true,
-              readAt: true,
-              seenAt: true,
-              createdAt: true,
-            },
-          },
-        },
       });
 
       if (!conversation) {
         return jsonError("گفتگو پیدا نشد.", 404);
       }
 
-      await prisma.conversationMessage.updateMany({
-        where: {
-          conversationId: conversation.id,
-          direction: "INBOUND",
-          readAt: null,
-        },
-        data: {
-          readAt: new Date(),
-        },
-      });
-      const refreshed = await prisma.conversation.findUnique({
-        where: {
-          id: conversation.id,
-        },
-        include: {
-          messages: {
-            orderBy: {
-              createdAt: "asc",
-            },
-            select: {
-              id: true,
-              direction: true,
-              messageType: true,
-              text: true,
-              mediaUrl: true,
-              mediaId: true,
-              igMessageId: true,
-              readAt: true,
-              seenAt: true,
-              createdAt: true,
-            },
+      const messageSelect = {
+        id: true,
+        direction: true,
+        messageType: true,
+        text: true,
+        mediaUrl: true,
+        mediaId: true,
+        igMessageId: true,
+        readAt: true,
+        seenAt: true,
+        createdAt: true,
+      } as const;
+
+      if (messageSearch) {
+        const matches = await prisma.conversationMessage.findMany({
+          where: {
+            conversationId: conversation.id,
+            text: { contains: messageSearch, mode: "insensitive" },
           },
-        },
-      });
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+          take: 30,
+          select: messageSelect,
+        });
+        return NextResponse.json({ success: true, matches });
+      }
+
+      // A scoped cursor keeps chat loading bounded even for very long histories.
+      const cursor = before
+        ? await prisma.conversationMessage.findFirst({
+            where: { id: before, conversationId: conversation.id },
+            select: { id: true },
+          })
+        : null;
+
+      const focused = focusId
+        ? await prisma.conversationMessage.findFirst({
+            where: { id: focusId, conversationId: conversation.id },
+            select: { id: true },
+          })
+        : null;
+
+      let messagesPage;
+      let hasMoreMessages = false;
+      let hasNewerMessages = false;
+
+      if (focused) {
+        const [older, newer] = await Promise.all([
+          prisma.conversationMessage.findMany({
+            where: { conversationId: conversation.id },
+            orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+            cursor: { id: focused.id },
+            take: 26,
+            select: messageSelect,
+          }),
+          prisma.conversationMessage.findMany({
+            where: { conversationId: conversation.id },
+            orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+            cursor: { id: focused.id },
+            skip: 1,
+            take: 26,
+            select: messageSelect,
+          }),
+        ]);
+        hasMoreMessages = older.length > 25;
+        hasNewerMessages = newer.length > 25;
+        messagesPage = [...older.slice(0, 25).reverse(), ...newer.slice(0, 25)];
+      } else {
+        const latest = await prisma.conversationMessage.findMany({
+          where: { conversationId: conversation.id },
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+          ...(cursor ? { cursor: { id: cursor.id }, skip: 1 } : {}),
+          take: 51,
+          select: messageSelect,
+        });
+        hasMoreMessages = latest.length > 50;
+        messagesPage = latest.slice(0, 50).reverse();
+      }
 
       const accessToken = await getValidInstagramAccessToken(account.id);
       const refreshedMessages = await refreshConversationMediaUrls({
@@ -551,13 +580,8 @@ export async function GET(request: NextRequest) {
         accountId: account.id,
         tenantId: session.user.id,
         accessToken,
-        messages: (refreshed || conversation).messages,
+        messages: messagesPage,
       });
-
-      const conversationWithFreshMedia = {
-        ...(refreshed || conversation),
-        messages: refreshedMessages,
-      };
 
       const lastInbound = await prisma.conversationMessage.findFirst({
         where: {
@@ -586,7 +610,10 @@ export async function GET(request: NextRequest) {
           igUserId: account.igUserId,
         },
         conversation: {
-          ...proxyConversationMedia(conversationWithFreshMedia),
+          ...proxyConversationMedia({ ...conversation, messages: refreshedMessages }),
+          hasMoreMessages,
+          hasNewerMessages,
+          nextCursor: refreshedMessages[0]?.id ?? null,
           humanMode: handoff?.active ?? false,
           handoff,
           messagingWindow,
@@ -598,6 +625,13 @@ export async function GET(request: NextRequest) {
       where: {
         userId: session.user.id,
         instagramAccountId: account.id,
+        ...(conversationSearch ? {
+          OR: [
+            { participantUsername: { contains: conversationSearch, mode: "insensitive" as const } },
+            { participantName: { contains: conversationSearch, mode: "insensitive" as const } },
+            { messages: { some: { text: { contains: conversationSearch, mode: "insensitive" as const } } } },
+          ],
+        } : {}),
       },
       orderBy: [
         {
@@ -607,7 +641,8 @@ export async function GET(request: NextRequest) {
           updatedAt: "desc",
         },
       ],
-      take: 100,
+      skip: conversationOffset,
+      take: 51,
       include: {
         messages: {
           orderBy: {
@@ -634,7 +669,9 @@ export async function GET(request: NextRequest) {
         },
       },
     });
-    const conversationIds = conversations.map((item) => item.id);
+    const hasMoreConversations = conversations.length > 50;
+    const visibleConversations = conversations.slice(0, 50);
+    const conversationIds = visibleConversations.map((item) => item.id);
 
     const unread = await prisma.conversationMessage.groupBy({
       by: ["conversationId"],
@@ -684,7 +721,7 @@ export async function GET(request: NextRequest) {
     const freshConversations = await prisma.conversation.findMany({
       where: {
         id: {
-          in: conversations.map((item) => item.id),
+          in: visibleConversations.map((item) => item.id),
         },
       },
       orderBy: [
@@ -729,6 +766,8 @@ export async function GET(request: NextRequest) {
         username: account.igUsername,
         igUserId: account.igUserId,
       },
+      hasMoreConversations,
+      nextOffset: conversationOffset + visibleConversations.length,
       conversations: freshConversations.map((item) => {
         const handoff = handoffMap.get(item.id) ?? null;
 

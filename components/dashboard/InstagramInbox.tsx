@@ -9,18 +9,23 @@ import {
   File as FileIcon,
   Image as ImageIcon,
   MessageCircle,
+  MessageSquareText,
   Mic,
   Paperclip,
   Pause,
   Play,
   Search,
   Send,
+  ArrowDown,
+  Square,
+  RotateCcw,
   UserRound,
   Video,
   X,
   CircleHelp,
 } from "lucide-react";
 import {
+  Fragment,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -48,7 +53,8 @@ type Message = {
   readAt: string | null;
   seenAt: string | null;
   createdAt: string;
-  sendStatus?: "FAILED";
+  sendStatus?: "FAILED" | "SENDING";
+  failureReason?: string;
 };
 
 type RetryPayload =
@@ -79,6 +85,9 @@ type Conversation = {
   updatedAt: string;
   messages: Message[];
   unreadCount?: number;
+  hasMoreMessages?: boolean;
+  hasNewerMessages?: boolean;
+  nextCursor?: string | null;
 };
 
 type ApiResult = {
@@ -88,9 +97,12 @@ type ApiResult = {
   conversation?: Conversation;
   message?: Message;
   humanMode?: boolean;
+  matches?: Message[];
+  hasMoreConversations?: boolean;
+  nextOffset?: number;
 };
 
-type InboxFilter = "ALL" | "READ" | "UNREAD";
+type InboxFilter = "ALL" | "READ" | "UNREAD" | "NEEDS_REPLY";
 
 const dateFormatter = new Intl.DateTimeFormat("fa-IR", {
   dateStyle: "medium",
@@ -237,6 +249,16 @@ function AudioBubble({ src }: { src: string }) {
           <div
             className="flex h-8 min-w-0 cursor-pointer items-center gap-[2px] overflow-hidden rounded-full select-none touch-none"
             onPointerDown={seekFromWaveform}
+            onKeyDown={(event) => {
+              const audio = audioRef.current;
+              if (!audio || !Number.isFinite(audio.duration)) return;
+              if (!["ArrowRight", "ArrowLeft", "Home", "End"].includes(event.key)) return;
+              event.preventDefault();
+              const next = event.key === "Home" ? 0 : event.key === "End" ? audio.duration :
+                audio.currentTime + (event.key === "ArrowRight" ? 5 : -5);
+              audio.currentTime = Math.min(audio.duration, Math.max(0, next));
+              setCurrentTime(audio.currentTime);
+            }}
             role="slider"
             aria-label="موقعیت پیام صوتی"
             aria-valuemin={0}
@@ -366,6 +388,8 @@ export default function InstagramInbox({
   const [sending, setSending] = useState(false);
   const [text, setText] = useState("");
   const [search, setSearch] = useState("");
+  const [searchResults, setSearchResults] = useState<Conversation[]>([]);
+  const [searchingThreads, setSearchingThreads] = useState(false);
   const [filter, setFilter] = useState<InboxFilter>("ALL");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [error, setError] = useState("");
@@ -379,6 +403,23 @@ export default function InstagramInbox({
       ) === "1"
     );
   });
+  const [hasMoreConversations, setHasMoreConversations] = useState(false);
+  const [nextConversationsOffset, setNextConversationsOffset] = useState(0);
+  const [loadingMoreConversations, setLoadingMoreConversations] = useState(false);
+  const [hasMoreMessages, setHasMoreMessages] = useState(false);
+  const [loadingOlderMessages, setLoadingOlderMessages] = useState(false);
+  const [showJumpToLatest, setShowJumpToLatest] = useState(false);
+  const [newMessageCount, setNewMessageCount] = useState(0);
+  const [conversationSearchOpen, setConversationSearchOpen] = useState(false);
+  const [conversationSearchText, setConversationSearchText] = useState("");
+  const [conversationMatches, setConversationMatches] = useState<Message[]>([]);
+  const [conversationSearching, setConversationSearching] = useState(false);
+  const [focusedMessageId, setFocusedMessageId] = useState<string | null>(null);
+  const [showQuickReplies, setShowQuickReplies] = useState(false);
+  const [quickReplies, setQuickReplies] = useState<string[]>([]);
+  const [newQuickReply, setNewQuickReply] = useState("");
+  const [handoffBusy, setHandoffBusy] = useState(false);
+  const [recordedVoice, setRecordedVoice] = useState<File | null>(null);
   const [recording, setRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const [recordingWaveform, setRecordingWaveform] = useState<number[]>(
@@ -395,10 +436,18 @@ export default function InstagramInbox({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesScrollRef = useRef<HTMLDivElement>(null);
   const previousMessageCountRef = useRef(0);
+  const conversationFetchIdRef = useRef(0);
+  const loadedMoreConversationsRef = useRef(false);
+  const messageFetchIdRef = useRef(0);
+  const pendingMessageFetchRef = useRef<string | null>(null);
+  const activeConversationRef = useRef("");
+  const previousNewestIdRef = useRef<string | null>(null);
+  activeConversationRef.current = accountId + ":" + selectedId;
   const initialScrollPendingRef = useRef(false);
   const shouldStickToBottomRef = useRef(true);
   const failedRetryRef = useRef<Map<string, RetryPayload>>(new Map());
   const optimisticMediaRef = useRef<Map<string, string>>(new Map());
+  const optimisticMessagesByConversationRef = useRef<Map<string, Message[]>>(new Map());
   const lastMarkedInboundRef = useRef<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -412,6 +461,8 @@ export default function InstagramInbox({
       !accountId ||
       !connectedAccounts.some((account) => account.id === accountId)
     ) {
+      loadedMoreConversationsRef.current = false;
+      setConversations([]);
       setAccountId(connectedAccounts[0]?.id || "");
     }
   }, [accountId, connectedAccounts]);
@@ -422,13 +473,14 @@ export default function InstagramInbox({
       setSelectedId("");
       setMessages([]);
       setMobileChatOpen(false);
+      setHasMoreConversations(false);
+      loadedMoreConversationsRef.current = false;
       return;
     }
 
+    const requestId = ++conversationFetchIdRef.current;
     try {
-      setLoading(true);
-      setError("");
-
+      if (!conversations.length) setLoading(true);
       const response = await fetch(
         `/api/instagram/inbox?accountId=${encodeURIComponent(accountId)}`,
         {
@@ -443,8 +495,16 @@ export default function InstagramInbox({
         throw new Error(result.error || "خطا در دریافت گفتگوها");
       }
 
+      if (requestId !== conversationFetchIdRef.current) return;
       const next = result.conversations || [];
-      setConversations(next);
+      if (!loadedMoreConversationsRef.current) {
+        setHasMoreConversations(Boolean(result.hasMoreConversations));
+        setNextConversationsOffset(result.nextOffset ?? next.length);
+      }
+      setConversations((current) => {
+        const nextIds = new Set(next.map((item) => item.id));
+        return [...next, ...current.filter((item) => !nextIds.has(item.id))];
+      });
 
       const savedId =
         typeof window !== "undefined"
@@ -475,9 +535,11 @@ export default function InstagramInbox({
         setMobileChatOpen(savedMobileOpen);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "خطا در دریافت گفتگوها");
+      if (requestId === conversationFetchIdRef.current) {
+        setError(err instanceof Error ? err.message : "خطا در دریافت گفتگوها");
+      }
     } finally {
-      setLoading(false);
+      if (requestId === conversationFetchIdRef.current) setLoading(false);
     }
   }, [accountId]);
   const markConversationSeen = useCallback(
@@ -501,8 +563,11 @@ export default function InstagramInbox({
 
         const result = await readApiResult(response);
 
-        if (response.ok && result.success) {
+        if (response.ok && result.success && activeConversationRef.current === accountId + ":" + selectedId) {
           lastMarkedInboundRef.current = inboundMarker;
+          setConversations((current) => current.map((item) =>
+            item.id === selectedId ? { ...item, unreadCount: 0 } : item
+          ));
         }
       } catch {
         // A failed read receipt must never block the inbox.
@@ -512,80 +577,130 @@ export default function InstagramInbox({
   );
 
 
-  const loadMessages = useCallback(async () => {
+  const loadMessages = useCallback(async (options?: { before?: string; focusId?: string }) => {
     if (!accountId || !selectedId) {
       setMessages([]);
       return;
     }
 
+    const key = accountId + ":" + selectedId;
+    if (!options && pendingMessageFetchRef.current === key) return;
+    if (!options) pendingMessageFetchRef.current = key;
+    const requestId = ++messageFetchIdRef.current;
+    const container = messagesScrollRef.current;
+    const previousHeight = container?.scrollHeight ?? 0;
+    const previousTop = container?.scrollTop ?? 0;
+    if (container && !options?.before && !options?.focusId) {
+      const distance = container.scrollHeight - container.scrollTop - container.clientHeight;
+      shouldStickToBottomRef.current = distance < 100;
+    }
+
     try {
-      const scrollContainer = messagesScrollRef.current;
-      if (scrollContainer) {
-        const distanceFromBottom =
-          scrollContainer.scrollHeight -
-          scrollContainer.scrollTop -
-          scrollContainer.clientHeight;
-        shouldStickToBottomRef.current = distanceFromBottom < 96;
-      }
-      setMessagesLoading(true);
-
-      const response = await fetch(
-        `/api/instagram/inbox?accountId=${encodeURIComponent(accountId)}&conversationId=${encodeURIComponent(selectedId)}`,
-        {
-          cache: "no-store",
-          headers: { Accept: "application/json" },
-        },
-      );
-
+      if (options?.before) setLoadingOlderMessages(true);
+      else setMessagesLoading(true);
+      const params = new URLSearchParams({ accountId, conversationId: selectedId });
+      if (options?.before) params.set("before", options.before);
+      if (options?.focusId) params.set("focusId", options.focusId);
+      const response = await fetch(`/api/instagram/inbox?${params.toString()}`, {
+        cache: "no-store",
+        headers: { Accept: "application/json" },
+      });
       const result = await readApiResult(response);
-
       if (!response.ok || !result.success || !result.conversation) {
         throw new Error(result.error || "خطا در دریافت پیام‌ها");
       }
+      if (requestId !== messageFetchIdRef.current || activeConversationRef.current !== key) return;
 
-      const serverMessages = (result.conversation.messages || []) as Message[];
+      const serverMessages = result.conversation.messages || [];
       const mergedMessages = serverMessages.map((message) => {
         const optimisticUrl = optimisticMediaRef.current.get(message.id);
-
         if (message.mediaUrl && optimisticUrl) {
           URL.revokeObjectURL(optimisticUrl);
           optimisticMediaRef.current.delete(message.id);
-          return message;
         }
-
-        return message.mediaUrl || !optimisticUrl
-          ? message
-          : { ...message, mediaUrl: optimisticUrl };
+        return !message.mediaUrl && optimisticUrl ? { ...message, mediaUrl: optimisticUrl } : message;
       });
+      setMessages((current) => {
+        const localPending = optimisticMessagesByConversationRef.current.get(key) || [];
+        const merged = options?.before
+          ? [...mergedMessages, ...current]
+          : options?.focusId ? mergedMessages : [...mergedMessages, ...localPending];
+        return [...new Map(merged.map((item) => [item.id, item])).values()]
+          .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+      });
+      setHasMoreMessages(Boolean(result.conversation.hasMoreMessages));
+      setConversations((current) => current.map((item) =>
+        item.id === selectedId
+          ? { ...item, ...result.conversation, messages: item.messages, unreadCount: item.unreadCount }
+          : item
+      ));
 
-      setMessages(mergedMessages);
-      setConversations((current) =>
-        current.map((item) =>
-          item.id === selectedId
-            ? { ...item, ...result.conversation, unreadCount: 0 }
-            : item,
-        ),
-      );
+      if (options?.before && container) {
+        window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
+          if (messagesScrollRef.current === container) {
+            container.scrollTop = previousTop + container.scrollHeight - previousHeight;
+          }
+        }));
+      } else if (options?.focusId) {
+        window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
+          container?.querySelector(`[data-message-id="${options.focusId}"]`)?.scrollIntoView({ block: "center" });
+        }));
+      } else {
+        const latest = serverMessages.at(-1);
+        if (latest && previousNewestIdRef.current && latest.id !== previousNewestIdRef.current && !shouldStickToBottomRef.current) {
+          setNewMessageCount((value) => value + 1);
+        }
+        if (latest) previousNewestIdRef.current = latest.id;
+      }
 
-      const latestInbound = [...serverMessages]
-        .reverse()
-        .find((message) => message.direction === "INBOUND");
-
-      if (latestInbound) {
-        void markConversationSeen(
-          latestInbound.igMessageId || latestInbound.id,
-        );
+      const latestInbound = [...serverMessages].reverse().find((message) => message.direction === "INBOUND");
+      const isVisible = document.visibilityState === "visible" &&
+        (window.matchMedia("(min-width: 1024px)").matches || mobileChatOpen);
+      if (!options?.before && !options?.focusId && latestInbound && isVisible) {
+        void markConversationSeen(latestInbound.igMessageId || latestInbound.id);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "خطا در دریافت پیام‌ها");
+      if (requestId === messageFetchIdRef.current && activeConversationRef.current === key) {
+        setError(err instanceof Error ? err.message : "خطا در دریافت پیام‌ها");
+      }
     } finally {
-      setMessagesLoading(false);
+      if (requestId === messageFetchIdRef.current) {
+        setMessagesLoading(false);
+        setLoadingOlderMessages(false);
+      }
+      if (pendingMessageFetchRef.current === key) pendingMessageFetchRef.current = null;
     }
-  }, [accountId, selectedId, markConversationSeen]);
+  }, [accountId, selectedId, markConversationSeen, mobileChatOpen]);
+
+  async function loadMoreConversations() {
+    if (!accountId || loadingMoreConversations || !hasMoreConversations) return;
+    setLoadingMoreConversations(true);
+    try {
+      const response = await fetch(`/api/instagram/inbox?accountId=${encodeURIComponent(accountId)}&offset=${nextConversationsOffset}`, { cache: "no-store" });
+      const result = await readApiResult(response);
+      if (!response.ok || !result.success) throw new Error(result.error || "دریافت گفتگوهای بیشتر ناموفق بود.");
+      const page = result.conversations || [];
+      loadedMoreConversationsRef.current = true;
+      setConversations((current) => [...current, ...page.filter((item) => !current.some((existing) => existing.id === item.id))]);
+      setNextConversationsOffset(result.nextOffset ?? nextConversationsOffset + page.length);
+      setHasMoreConversations(Boolean(result.hasMoreConversations));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "دریافت گفتگوهای بیشتر ناموفق بود.");
+    } finally {
+      setLoadingMoreConversations(false);
+    }
+  }
 
   useEffect(() => {
     lastMarkedInboundRef.current = "";
     previousMessageCountRef.current = 0;
+    previousNewestIdRef.current = null;
+    setFocusedMessageId(null);
+    setNewMessageCount(0);
+    setShowJumpToLatest(false);
+    setConversationSearchOpen(false);
+    setConversationSearchText("");
+    setConversationMatches([]);
     initialScrollPendingRef.current = Boolean(selectedId);
   }, [accountId, selectedId]);
 
@@ -612,28 +727,40 @@ export default function InstagramInbox({
   }, [loadConversations]);
 
   useEffect(() => {
-    void loadMessages();
-  }, [loadMessages]);
+    if (selectedId && (mobileChatOpen || window.matchMedia("(min-width: 1024px)").matches)) {
+      void loadMessages();
+    }
+  }, [loadMessages, selectedId, mobileChatOpen]);
 
   useEffect(() => {
-    const interval = window.setInterval(() => {
+    const refresh = () => {
+      if (document.visibilityState !== "visible") return;
       void loadConversations();
-      if (selectedId) void loadMessages();
-    }, 2000);
-
-    return () => window.clearInterval(interval);
-  }, [loadConversations, loadMessages, selectedId]);
+      if (selectedId && !focusedMessageId && !loadingOlderMessages &&
+          (mobileChatOpen || window.matchMedia("(min-width: 1024px)").matches)) {
+        void loadMessages();
+      }
+    };
+    const interval = window.setInterval(refresh, 8000);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [loadConversations, loadMessages, selectedId, focusedMessageId, loadingOlderMessages, mobileChatOpen]);
 
   const forceScrollToBottom = useCallback(() => {
     const container = messagesScrollRef.current;
     if (!container) return;
     container.scrollTop = Math.max(0, container.scrollHeight - container.clientHeight);
+    setShowJumpToLatest(false);
+    setNewMessageCount(0);
   }, []);
 
   useEffect(() => {
     if (
       !selectedId ||
-      !mobileChatOpen ||
+      (!mobileChatOpen && !window.matchMedia("(min-width: 1024px)").matches) ||
       messagesLoading ||
       !messages.length
     ) {
@@ -669,74 +796,113 @@ export default function InstagramInbox({
         window.cancelAnimationFrame(recordingAnimationFrameRef.current);
       }
       void recordingAudioContextRef.current?.close().catch(() => undefined);
+      optimisticMediaRef.current.forEach((url) => URL.revokeObjectURL(url));
+      optimisticMediaRef.current.clear();
     };
   }, []);
 
-  async function sendFile(file: File) {
-    if (!accountId || !selectedId || sending) return;
+  function addOptimisticMessage(payload: RetryPayload): string {
+    const id = `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const file = payload.kind === "FILE" ? payload.file : null;
+    const mediaUrl = file ? URL.createObjectURL(file) : null;
+    if (mediaUrl) optimisticMediaRef.current.set(id, mediaUrl);
+    const message: Message = {
+      id,
+      direction: "OUTBOUND",
+      messageType: file?.type.startsWith("image/") ? "IMAGE" : file?.type.startsWith("video/") ? "VIDEO" : file ? "AUDIO" : "TEXT",
+      text: payload.kind === "TEXT" ? payload.text : null,
+      mediaUrl,
+      mediaId: null,
+      igMessageId: null,
+      readAt: null,
+      seenAt: null,
+      createdAt: new Date().toISOString(),
+      sendStatus: "SENDING",
+    };
+    const key = accountId + ":" + selectedId;
+    optimisticMessagesByConversationRef.current.set(key, [
+      ...(optimisticMessagesByConversationRef.current.get(key) || []), message,
+    ]);
+    if (activeConversationRef.current === key) setMessages((current) => [...current, message]);
+    shouldStickToBottomRef.current = true;
+    initialScrollPendingRef.current = true;
+    return id;
+  }
 
+  function markOptimisticFailed(id: string, payload: RetryPayload, reason: string, key: string) {
+    failedRetryRef.current.set(id, payload);
+    const update = (item: Message) => item.id === id
+      ? { ...item, sendStatus: "FAILED" as const, failureReason: reason } : item;
+    const cached = optimisticMessagesByConversationRef.current.get(key) || [];
+    optimisticMessagesByConversationRef.current.set(key, cached.map(update));
+    if (activeConversationRef.current === key) setMessages((current) => current.map(update));
+  }
+
+  async function sendFile(file: File): Promise<boolean> {
+    if (!accountId || !selectedId || sending || !selectedConversation?.messagingWindow?.canSend) return false;
+    const conversationKey = accountId + ":" + selectedId;
+    const optimisticId = addOptimisticMessage({ kind: "FILE", file });
+    setSending(true);
     try {
-      setSending(true);
-      setError("");
-
       const form = new FormData();
       form.append("accountId", accountId);
       form.append("conversationId", selectedId);
       form.append("file", file);
-
       const response = await fetch("/api/instagram/inbox", {
         method: "POST",
         body: form,
         headers: { Accept: "application/json" },
       });
-
       const result = await readApiResult(response);
-
       if (!response.ok || !result.success || !result.message) {
-        throw new Error(result.error || "ارسال رسانه ناموفق بود");
+        throw new Error(result.error || "ارسال رسانه ناموفق بود.");
       }
-
-      const serverMessage = result.message as Message;
-      const optimisticMediaUrl =
-        serverMessage.mediaUrl || URL.createObjectURL(file);
-
-      if (!serverMessage.mediaUrl) {
-        optimisticMediaRef.current.set(serverMessage.id, optimisticMediaUrl);
+      const sent = result.message;
+      optimisticMessagesByConversationRef.current.set(conversationKey,
+        (optimisticMessagesByConversationRef.current.get(conversationKey) || []).filter((item) => item.id !== optimisticId));
+      const localUrl = optimisticMediaRef.current.get(optimisticId);
+      optimisticMediaRef.current.delete(optimisticId);
+      if (localUrl) {
+        if (sent.mediaUrl) URL.revokeObjectURL(localUrl);
+        else optimisticMediaRef.current.set(sent.id, localUrl);
       }
-
-      setMessages((current) => [
-        ...current,
-        {
-          ...serverMessage,
-          mediaUrl: optimisticMediaUrl,
-        },
-      ]);
-      setSelectedFile(null);
-
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
+      if (activeConversationRef.current === conversationKey) {
+        setMessages((current) => {
+          const updated = current.map((item) => item.id === optimisticId
+            ? { ...sent, mediaUrl: sent.mediaUrl || localUrl || null } : item);
+          return [...new Map(updated.map((item) => [item.id, item])).values()];
+        });
+        setSelectedFile(null);
+        setRecordedVoice(null);
+        if (fileInputRef.current) fileInputRef.current.value = "";
       }
-    } catch {
-      addFailedOutgoingMessage({ kind: "FILE", file });
-      setSelectedFile(null);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-      setError("");
+      void loadConversations();
+      return true;
+    } catch (error) {
+      markOptimisticFailed(optimisticId, { kind: "FILE", file },
+        error instanceof Error ? error.message : "ارسال رسانه ناموفق بود.", conversationKey);
+      if (activeConversationRef.current === conversationKey) {
+        setSelectedFile(null);
+        setRecordedVoice(null);
+      }
+      return false;
     } finally {
       setSending(false);
     }
-
-    await loadConversations();
   }
 
-  async function sendTextMessage(messageText: string) {
-    if (!messageText.trim() || !accountId || !selectedId || sending) return;
+  async function sendTextMessage(messageText: string): Promise<boolean> {
+    if (!messageText.trim() || !accountId || !selectedId || sending || !selectedConversation?.messagingWindow?.canSend) return false;
+    const cleanText = messageText.trim();
+    const conversationKey = accountId + ":" + selectedId;
+    const optimisticId = addOptimisticMessage({ kind: "TEXT", text: cleanText });
+    setSending(true);
+    if (activeConversationRef.current === conversationKey) setText("");
     try {
-      setSending(true);
-      setError("");
       const form = new FormData();
       form.append("accountId", accountId);
       form.append("conversationId", selectedId);
-      form.append("text", messageText.trim());
+      form.append("text", cleanText);
       const response = await fetch("/api/instagram/inbox", {
         method: "POST",
         body: form,
@@ -744,41 +910,39 @@ export default function InstagramInbox({
       });
       const result = await readApiResult(response);
       if (!response.ok || !result.success || !result.message) {
-        throw new Error(result.error || "ارسال پیام ناموفق بود");
+        throw new Error(result.error || "ارسال پیام ناموفق بود.");
       }
-      setMessages((current) => [...current, result.message as Message]);
-      setText("");
-    } catch {
-      addFailedOutgoingMessage({ kind: "TEXT", text: messageText.trim() });
-      setText("");
-      setError("");
+      optimisticMessagesByConversationRef.current.set(conversationKey,
+        (optimisticMessagesByConversationRef.current.get(conversationKey) || []).filter((item) => item.id !== optimisticId));
+      if (activeConversationRef.current === conversationKey) {
+        setMessages((current) => {
+          const updated = current.map((item) => item.id === optimisticId ? result.message! : item);
+          return [...new Map(updated.map((item) => [item.id, item])).values()];
+        });
+      }
+      void loadConversations();
+      return true;
+    } catch (error) {
+      markOptimisticFailed(optimisticId, { kind: "TEXT", text: cleanText },
+        error instanceof Error ? error.message : "ارسال پیام ناموفق بود.", conversationKey);
+      return false;
     } finally {
       setSending(false);
     }
-
-    await loadConversations();
   }
 
   async function sendMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
-    if (
-      (!text.trim() && !selectedFile) ||
-      !accountId ||
-      !selectedId ||
-      sending
-    ) {
+    if ((!text.trim() && !selectedFile && !recordedVoice) || !accountId || !selectedId || sending) return;
+    if (selectedFile || recordedVoice) {
+      const file = selectedFile || recordedVoice;
+      if (!file) return;
+      const accompanyingText = text.trim();
+      const sent = await sendFile(file);
+      // Graph API sends attachments and text as separate messages.
+      if (sent && accompanyingText) await sendTextMessage(accompanyingText);
       return;
     }
-
-    if (selectedFile) {
-      await sendFile(selectedFile);
-      if (text.trim()) {
-        setText("");
-      }
-      return;
-    }
-
     await sendTextMessage(text);
   }
 
@@ -864,13 +1028,11 @@ export default function InstagramInbox({
 
         if (blob.size > 0) {
           const extension = blob.type.includes("webm") ? "webm" : "audio";
-          void sendFile(
-            new File(
-              [blob],
-              `smartdirect-voice-${Date.now()}.${extension}`,
-              { type: blob.type },
-            ),
-          );
+          setRecordedVoice(new File(
+            [blob],
+            `smartdirect-voice-${Date.now()}.${extension}`,
+            { type: blob.type },
+          ));
         }
       };
 
@@ -932,6 +1094,9 @@ export default function InstagramInbox({
   }
 
   function selectConversation(conversationId: string) {
+    const discovered = searchResults.find((item) => item.id === conversationId);
+    if (discovered) setConversations((current) =>
+      current.some((item) => item.id === conversationId) ? current : [discovered, ...current]);
     if (conversationId === selectedId) {
       setMobileChatOpen(true);
       return;
@@ -940,9 +1105,16 @@ export default function InstagramInbox({
     setSelectedId(conversationId);
     initialScrollPendingRef.current = true;
     previousMessageCountRef.current = 0;
-    setMessages([]);
+    setMessages(optimisticMessagesByConversationRef.current.get(accountId + ":" + conversationId) || []);
     setText("");
     setSelectedFile(null);
+    setRecordedVoice(null);
+    setShowQuickReplies(false);
+    setConversationSearchOpen(false);
+    setConversationMatches([]);
+    setHasMoreMessages(false);
+    pendingMessageFetchRef.current = null;
+    messageFetchIdRef.current += 1;
     setError("");
     initialScrollPendingRef.current = true;
     setMobileChatOpen(true);
@@ -975,75 +1147,59 @@ export default function InstagramInbox({
     }
   }
 
-  function addFailedOutgoingMessage(payload: RetryPayload) {
-    const failedId = `failed-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    const file = payload.kind === "FILE" ? payload.file : null;
-    const mediaUrl = file ? URL.createObjectURL(file) : null;
-    const messageType = file
-      ? file.type.startsWith("image/")
-        ? "IMAGE"
-        : file.type.startsWith("video/")
-          ? "VIDEO"
-          : file.type.startsWith("audio/")
-            ? "AUDIO"
-            : "TEXT"
-      : "TEXT";
-    if (mediaUrl) optimisticMediaRef.current.set(failedId, mediaUrl);
-    failedRetryRef.current.set(failedId, payload);
-    setMessages((current) => [
-      ...current,
-      {
-        id: failedId,
-        direction: "OUTBOUND",
-        messageType,
-        text: payload.kind === "TEXT" ? payload.text : null,
-        mediaUrl,
-        mediaId: null,
-        igMessageId: null,
-        readAt: null,
-        seenAt: null,
-        createdAt: new Date().toISOString(),
-        sendStatus: "FAILED",
-      },
-    ]);
-    initialScrollPendingRef.current = true;
-  }
-
   async function retryFailedMessage(messageId: string) {
     const payload = failedRetryRef.current.get(messageId);
-    if (!payload || sending) return;
+    if (!payload || sending || !selectedConversation?.messagingWindow?.canSend) return;
+    failedRetryRef.current.delete(messageId);
+    const key = accountId + ":" + selectedId;
+    optimisticMessagesByConversationRef.current.set(key,
+      (optimisticMessagesByConversationRef.current.get(key) || []).filter((item) => item.id !== messageId));
     const localUrl = optimisticMediaRef.current.get(messageId);
     if (localUrl) {
       URL.revokeObjectURL(localUrl);
       optimisticMediaRef.current.delete(messageId);
     }
-    failedRetryRef.current.delete(messageId);
-    setMessages((current) => current.filter((message) => message.id !== messageId));
-    if (payload.kind === "FILE") {
-      await sendFile(payload.file);
-      return;
-    }
-    await sendTextMessage(payload.text);
+    setMessages((current) => current.filter((item) => item.id !== messageId));
+    if (payload.kind === "FILE") await sendFile(payload.file);
+    else await sendTextMessage(payload.text);
   }
 
-  const filteredConversations = conversations.filter((conversation) => {
+  useEffect(() => {
+    if (!search.trim() || !accountId) {
+      setSearchResults([]);
+      setSearchingThreads(false);
+      return;
+    }
+    let valid = true;
+    const timer = window.setTimeout(async () => {
+      setSearchingThreads(true);
+      try {
+        const params = new URLSearchParams({ accountId, conversationSearch: search.trim() });
+        const response = await fetch(`/api/instagram/inbox?${params.toString()}`, { cache: "no-store" });
+        const result = await readApiResult(response);
+        if (valid) setSearchResults(response.ok ? result.conversations || [] : []);
+      } catch {
+        if (valid) setSearchResults([]);
+      } finally {
+        if (valid) setSearchingThreads(false);
+      }
+    }, 300);
+    return () => { valid = false; window.clearTimeout(timer); };
+  }, [accountId, search]);
+
+  const filteredConversations = (search.trim() ? searchResults : conversations).filter((conversation) => {
     if (filter === "UNREAD" && !(conversation.unreadCount || 0)) return false;
     if (filter === "READ" && (conversation.unreadCount || 0) > 0) return false;
+    if (filter === "NEEDS_REPLY" && conversation.messages[0]?.direction !== "INBOUND") return false;
 
-    const query = search.trim().toLowerCase();
-    if (!query) return true;
-
-    return (
-      displayName(conversation).toLowerCase().includes(query) ||
-      conversation.participantId.toLowerCase().includes(query) ||
-      preview(conversation.messages[0]).toLowerCase().includes(query)
-    );
+    return true;
   });
 
   const unreadTotal = conversations.filter(
     (conversation) => (conversation.unreadCount || 0) > 0,
   ).length;
   const readTotal = conversations.length - unreadTotal;
+  const needsReplyTotal = conversations.filter((item) => item.messages[0]?.direction === "INBOUND").length;
   const selectedConversation = conversations.find(
     (conversation) => conversation.id === selectedId,
   );
@@ -1052,29 +1208,148 @@ export default function InstagramInbox({
     () => (selectedFile ? URL.createObjectURL(selectedFile) : null),
     [selectedFile],
   );
+  const recordedVoiceUrl = useMemo(
+    () => (recordedVoice ? URL.createObjectURL(recordedVoice) : null),
+    [recordedVoice],
+  );
 
   useEffect(() => {
     return () => {
       if (selectedFileUrl) URL.revokeObjectURL(selectedFileUrl);
+      if (recordedVoiceUrl) URL.revokeObjectURL(recordedVoiceUrl);
     };
-  }, [selectedFileUrl]);
+  }, [selectedFileUrl, recordedVoiceUrl]);
+
+  const suggestedReplies = [
+    "سلام، ممنون از پیامتان. چطور می‌توانم کمک کنم؟",
+    "پیامتان دریافت شد. در حال بررسی موضوع هستیم.",
+    "لطفاً جزئیات بیشتری ارسال کنید تا دقیق‌تر راهنمایی کنیم.",
+  ];
+
+  useEffect(() => {
+    if (!accountId) return;
+    try {
+      const saved = JSON.parse(window.localStorage.getItem(`smartdirect:inbox:quick-replies:${accountId}`) || "null");
+      setQuickReplies(Array.isArray(saved) ? saved.filter((item): item is string => typeof item === "string") : suggestedReplies);
+    } catch {
+      setQuickReplies(suggestedReplies);
+    }
+  }, [accountId]);
+
+  function persistQuickReplies(next: string[]) {
+    setQuickReplies(next);
+    if (accountId) window.localStorage.setItem(`smartdirect:inbox:quick-replies:${accountId}`, JSON.stringify(next));
+  }
+
+  useEffect(() => {
+    if (!conversationSearchOpen || !conversationSearchText.trim() || !accountId || !selectedId) {
+      setConversationMatches([]);
+      setConversationSearching(false);
+      return;
+    }
+    let active = true;
+    const timeout = window.setTimeout(async () => {
+      setConversationSearching(true);
+      try {
+        const params = new URLSearchParams({
+          accountId,
+          conversationId: selectedId,
+          messageSearch: conversationSearchText.trim(),
+        });
+        const response = await fetch(`/api/instagram/inbox?${params.toString()}`, { cache: "no-store" });
+        const result = await readApiResult(response);
+        if (active) setConversationMatches(response.ok ? result.matches || [] : []);
+      } catch {
+        if (active) setConversationMatches([]);
+      } finally {
+        if (active) setConversationSearching(false);
+      }
+    }, 320);
+    return () => { active = false; window.clearTimeout(timeout); };
+  }, [accountId, selectedId, conversationSearchOpen, conversationSearchText]);
+
+  async function focusSearchResult(id: string) {
+    setFocusedMessageId(id);
+    setConversationSearchOpen(false);
+    setConversationMatches([]);
+    await loadMessages({ focusId: id });
+  }
+
+  function returnToLatest() {
+    setFocusedMessageId(null);
+    initialScrollPendingRef.current = true;
+    shouldStickToBottomRef.current = true;
+    void loadMessages();
+  }
+
+  async function toggleHumanMode() {
+    if (!accountId || !selectedId || handoffBusy || !selectedConversation) return;
+    setHandoffBusy(true);
+    try {
+      const response = await fetch("/api/instagram/inbox/handoff", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          accountId,
+          conversationId: selectedId,
+          action: selectedConversation.humanMode ? "resume" : "transfer",
+        }),
+      });
+      const result = await readApiResult(response);
+      if (!response.ok || !result.success) throw new Error(result.error || "تغییر حالت پاسخ‌گویی انجام نشد.");
+      setConversations((current) => current.map((item) => item.id === selectedId
+        ? { ...item, humanMode: Boolean(result.humanMode) }
+        : item
+      ));
+      setError("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "تغییر حالت پاسخ‌گویی انجام نشد.");
+    } finally {
+      setHandoffBusy(false);
+    }
+  }
+
+  useEffect(() => {
+    if (!mobileChatOpen) return;
+    const viewport = window.visualViewport;
+    const updateViewport = () => {
+      const height = Math.min(window.innerHeight, viewport?.height ?? window.innerHeight);
+      document.documentElement.style.setProperty("--smartdirect-inbox-visible-height", `${height}px`);
+    };
+    updateViewport();
+    window.addEventListener("resize", updateViewport);
+    viewport?.addEventListener("resize", updateViewport);
+    return () => {
+      window.removeEventListener("resize", updateViewport);
+      viewport?.removeEventListener("resize", updateViewport);
+      document.documentElement.style.removeProperty("--smartdirect-inbox-visible-height");
+    };
+  }, [mobileChatOpen]);
 
   const listPanel = (
-    <aside className="flex min-h-0 flex-1 flex-col bg-background lg:w-[330px] lg:flex-none lg:border-l lg:border-border">
-      <div className="shrink-0 border-b border-border px-3.5 pb-3 pt-3.5 sm:px-4">
-        <div className="mt-3 flex items-center rounded-xl bg-muted/60 p-1">
+    <aside className="flex min-h-0 flex-1 flex-col bg-white lg:w-[355px] lg:flex-none lg:border-l lg:border-[#E8EDF5]">
+      <div className="shrink-0 border-b border-[#E8EDF5] px-4 pb-3.5 pt-4 sm:px-5">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h1 className="text-base font-extrabold text-[#18233C]">صندوق دایرکت</h1>
+            <p className="mt-1 text-[11px] text-[#64748B]">{conversations.length.toLocaleString("fa-IR")} گفتگو</p>
+          </div>
+          <button type="button" onClick={() => void loadConversations()} aria-label="به‌روزرسانی گفتگوها" title="به‌روزرسانی" className="grid h-10 w-10 place-items-center rounded-xl bg-[#F1F5FC] text-[#526580] transition hover:bg-[#E7EEFC]"><RotateCcw size={17}/></button>
+        </div>
+        <div className="flex items-center gap-1 overflow-x-auto rounded-xl bg-[#EEF3FB] p-1" role="group" aria-label="فیلتر گفتگوها">
           {(
             [
               ["ALL", "همه", conversations.length],
               ["READ", "خوانده شده", readTotal],
               ["UNREAD", "خوانده نشده", unreadTotal],
+              ["NEEDS_REPLY", "نیازمند پاسخ", needsReplyTotal],
             ] as const
           ).map(([value, label, count]) => (
             <button
               key={value}
               type="button"
               onClick={() => setFilter(value)}
-              className={`flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-[11px] font-medium transition ${
+              className={`flex min-w-[74px] flex-1 shrink-0 items-center justify-center gap-1 rounded-lg px-2 py-2.5 text-[11px] font-semibold transition ${
                 filter === value
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
@@ -1088,25 +1363,28 @@ export default function InstagramInbox({
           ))}
         </div>
 
-        <div className="relative mt-2.5">
+        <div className="relative mt-3">
           <Search
             size={15}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#8290A6]"
           />
           <Input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="جستجوی گفتگو..."
-            className="h-9 rounded-lg border-border bg-muted/30 pr-9 text-[11px]"
+            className="h-11 rounded-xl border-[#E5EAF3] bg-[#F8FAFD] pr-10 text-[13px] focus:border-[#2F61FD]"
           />
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-2 py-2 sm:px-3">
+      <div className="min-h-0 flex-1 overflow-y-auto px-2.5 py-3 sm:px-3">
         {(accountsLoading || (connectedAccounts.length > 0 && (!accountId || loading))) && !conversations.length ? (
           <DashboardLoading label="در حال دریافت گفتگوها..." className="dashboard-loading--fill" />
+        ) : searchingThreads && search.trim() ? (
+          <DashboardLoading label="در حال جست‌وجوی گفتگوها..." className="dashboard-loading--fill" />
         ) : filteredConversations.length ? (
-          filteredConversations.map((conversation) => {
+          <>
+          {filteredConversations.map((conversation) => {
             const active = conversation.id === selectedId;
             const unread = (conversation.unreadCount || 0) > 0;
 
@@ -1115,10 +1393,10 @@ export default function InstagramInbox({
                 key={conversation.id}
                 type="button"
                 onClick={() => selectConversation(conversation.id)}
-                className={`group flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-right transition ${
+                className={`group flex w-full min-h-[72px] items-center gap-3 rounded-2xl px-3 py-3 text-right transition ${
                   active
-                    ? "bg-muted"
-                    : "hover:bg-muted/60"
+                    ? "bg-[#EBF2FF] ring-1 ring-[#DCE8FF]"
+                    : "hover:bg-[#F5F8FE]"
                 }`}
               >
                 <div className="relative shrink-0">
@@ -1126,10 +1404,10 @@ export default function InstagramInbox({
                     <img
                       src={conversation.participantProfilePicture}
                       alt=""
-                      className="h-9 w-9 rounded-full object-cover ring-1 ring-border"
+                      className="h-11 w-11 rounded-full object-cover ring-1 ring-[#E5EAF3]"
                     />
                   ) : (
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#EEF3FB] text-[#64748B]">
                       <UserRound size={18} />
                     </div>
                   )}
@@ -1141,7 +1419,7 @@ export default function InstagramInbox({
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
                     <span
-                      className={`truncate text-xs ${
+                      className={`truncate text-[13px] ${
                         unread
                           ? "font-bold text-foreground"
                           : "font-medium text-foreground"
@@ -1149,13 +1427,13 @@ export default function InstagramInbox({
                     >
                       {displayName(conversation)}
                     </span>
-                    <span className="shrink-0 text-[9px] text-muted-foreground">
+                    <span className="shrink-0 text-[10px] tabular-nums text-[#8290A6]">
                       {formatDate(conversation.lastMessageAt)}
                     </span>
                   </div>
                   <div className="mt-1 flex items-center justify-between gap-2">
                     <p
-                      className={`truncate text-[11px] leading-5 ${
+                      className={`truncate text-xs leading-5 ${
                         unread
                           ? "font-medium text-foreground"
                           : "text-muted-foreground"
@@ -1164,7 +1442,7 @@ export default function InstagramInbox({
                       {preview(conversation.messages[conversation.messages.length - 1])}
                     </p>
                     {unread && (
-                      <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-blue-600 px-1.5 text-[9px] font-semibold text-white">
+                      <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-[#2F61FD] px-1.5 text-[10px] font-bold text-white">
                         {(conversation.unreadCount || 0).toLocaleString("fa-IR")}
                       </span>
                     )}
@@ -1172,7 +1450,13 @@ export default function InstagramInbox({
                 </div>
               </button>
             );
-          })
+          })}
+          {hasMoreConversations && !search.trim() && (
+            <button type="button" disabled={loadingMoreConversations} onClick={() => void loadMoreConversations()} className="my-3 w-full rounded-xl border border-[#DBEAFE] bg-[#F8FAFF] px-3 py-3 text-xs font-bold text-[#2F61FD] disabled:opacity-50">
+              {loadingMoreConversations ? "در حال بارگذاری…" : "نمایش گفتگوهای بیشتر"}
+            </button>
+          )}
+          </>
         ) : (
           <div className="px-6 py-16 text-center">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
@@ -1194,140 +1478,140 @@ export default function InstagramInbox({
     <div className="flex min-h-0 flex-1 flex-col bg-background">
       {selectedConversation ? (
         <>
-          <header className="flex shrink-0 items-center gap-2.5 border-b border-border px-3.5 py-2.5 sm:px-4">
-            <Button
-              type="button"
-              onClick={goBackToList}
-              variant="icon"
-              className="flex h-9 w-9 items-center justify-center rounded-lg p-0 text-muted-foreground hover:text-foreground lg:hidden"
-              aria-label="بازگشت به گفتگوها"
-            >
-              <ArrowRight size={17} />
-            </Button>
-
+          <header className="flex shrink-0 items-center gap-2 border-b border-[#E8EDF5] bg-white px-3 py-3 sm:px-5">
+            <button type="button" onClick={goBackToList} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-[#526580] hover:bg-[#F1F5FC] lg:hidden" aria-label="بازگشت به گفتگوها"><ArrowRight size={19}/></button>
             {selectedConversation.participantProfilePicture ? (
-              <img
-                src={selectedConversation.participantProfilePicture}
-                alt=""
-                className="h-9 w-9 rounded-full object-cover ring-1 ring-border"
-              />
+              <img src={selectedConversation.participantProfilePicture} alt="" className="h-11 w-11 shrink-0 rounded-full object-cover ring-1 ring-[#E5EAF3]"/>
             ) : (
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-muted-foreground">
-                <UserRound size={16} />
-              </div>
+              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#EEF3FB] text-[#64748B]"><UserRound size={19}/></div>
             )}
-
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[13px] font-bold text-foreground">
-                {displayName(selectedConversation)}
-              </p>
-              <div className="mt-0.5 flex min-w-0 items-center gap-1.5">
-                <p className="truncate text-[9px] text-muted-foreground">
-                  {selectedConversation.participantName || "Instagram Direct"}
-                </p>
+              <p className="truncate text-sm font-extrabold text-[#18233C]">{displayName(selectedConversation)}</p>
+              <div className="mt-1 flex min-w-0 items-center gap-1.5">
+                <span className="truncate text-[11px] text-[#71809A]">{selectedConversation.participantName || "دایرکت اینستاگرام"}</span>
                 {selectedConversation.messagingWindow && (
-                  <span
-                    className={
-                      "shrink-0 rounded-full px-1.5 py-0.5 text-[8px] font-medium " +
-                      (selectedConversation.messagingWindow.canSend
-                        ? selectedConversation.messagingWindow.mode === "HUMAN_AGENT"
-                          ? "bg-amber-50 text-amber-700"
-                          : "bg-emerald-50 text-emerald-700"
-                        : "bg-red-50 text-red-600")
-                    }
-                  >
-                    {messagingWindowLabel(selectedConversation.messagingWindow)}
-                  </span>
+                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                    selectedConversation.messagingWindow.canSend
+                      ? "bg-[#ECFDF3] text-[#16834C]"
+                      : "bg-[#FEF2F2] text-[#B91C1C]"
+                  }`}>{selectedConversation.messagingWindow.canSend ? "پاسخ‌گویی فعال" : "مهلت پاسخ تمام شده"}</span>
                 )}
               </div>
             </div>
+            <button type="button" onClick={() => { setConversationSearchOpen((value) => !value); setShowQuickReplies(false); }} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-[#526580] hover:bg-[#F1F5FC]" aria-label="جست‌وجو در پیام‌ها" aria-expanded={conversationSearchOpen}><Search size={19}/></button>
+            <button type="button" onClick={() => void toggleHumanMode()} disabled={handoffBusy} className={`hidden min-h-9 shrink-0 items-center rounded-xl border px-3 text-[11px] font-bold transition disabled:opacity-50 sm:inline-flex ${selectedConversation.humanMode ? "border-[#BFDBFE] bg-[#EFF6FF] text-[#2563EB]" : "border-[#E2E8F0] bg-white text-[#526580] hover:bg-[#F5F8FE]"}`} title={selectedConversation.humanMode ? "بازگشت به پاسخ‌گویی خودکار" : "واگذاری گفتگو به پاسخ‌گویی انسانی"}>
+              {handoffBusy ? "در حال تغییر…" : selectedConversation.humanMode ? "پاسخ انسانی فعال" : "پاسخ انسانی"}
+            </button>
           </header>
+
+          {conversationSearchOpen && (
+            <div className="shrink-0 border-b border-[#E8EDF5] bg-white px-3 py-3 sm:px-5">
+              <div className="flex items-center gap-2">
+                <input autoFocus value={conversationSearchText} onChange={(event) => setConversationSearchText(event.target.value)} placeholder="جست‌وجو در پیام‌های این گفتگو..." aria-label="جست‌وجو در پیام‌های گفتگو" className="h-11 min-w-0 flex-1 rounded-xl border border-[#DFE7F3] bg-[#F8FAFD] px-3 text-sm text-[#18233C] outline-none focus:border-[#2F61FD]" />
+                <button type="button" onClick={() => {setConversationSearchOpen(false);setConversationSearchText("");}} className="grid h-10 w-10 place-items-center rounded-xl text-[#64748B]" aria-label="بستن جست‌وجو"><X size={18}/></button>
+              </div>
+              {conversationSearchText.trim() && (
+                <div className="mt-2 max-h-[32vh] space-y-1 overflow-y-auto" aria-live="polite">
+                  {conversationSearching ? <p className="p-3 text-xs text-[#64748B]">در حال جست‌وجو…</p> :
+                  conversationMatches.length ? conversationMatches.map((result) => (
+                    <button key={result.id} type="button" onClick={() => void focusSearchResult(result.id)} className="flex w-full flex-col gap-1 rounded-xl px-3 py-2.5 text-right hover:bg-[#F1F5FC]">
+                      <span className="line-clamp-2 text-xs leading-5 text-[#18233C]">{result.text}</span>
+                      <span className="text-[10px] text-[#94A3B8]">{formatDate(result.createdAt)}</span>
+                    </button>
+                  )) : <p className="p-3 text-xs text-[#64748B]">پیامی پیدا نشد.</p>}
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="border-b border-[#E8EDF5] bg-white px-3 py-2 sm:hidden">
+            <button type="button" onClick={() => void toggleHumanMode()} disabled={handoffBusy} className="text-[11px] font-bold text-[#2F61FD] disabled:opacity-50">
+              {selectedConversation.humanMode ? "بازگشت به پاسخ‌گویی خودکار" : "فعال‌سازی پاسخ‌گویی انسانی"}
+            </button>
+          </div>
 
           <div
             ref={messagesScrollRef}
-            className="relative min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain bg-muted/20 px-3 py-3 sm:px-4 sm:py-4"
+            onScroll={(event) => {
+              const element = event.currentTarget;
+              const distance = element.scrollHeight - element.scrollTop - element.clientHeight;
+              shouldStickToBottomRef.current = distance < 100;
+              setShowJumpToLatest(distance > 180);
+              if (distance < 100) setNewMessageCount(0);
+            }}
+            className="relative min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain bg-[#F7F9FD] px-3 py-4 sm:px-6 sm:py-5"
           >
+            {focusedMessageId && (
+              <div className="mx-auto mb-4 flex max-w-2xl justify-center">
+                <button type="button" onClick={returnToLatest} className="inline-flex items-center gap-2 rounded-full border border-[#DBEAFE] bg-white px-4 py-2 text-xs font-bold text-[#2F61FD] shadow-sm">
+                  <ArrowDown size={15}/> بازگشت به آخرین پیام‌ها
+                </button>
+              </div>
+            )}
             {messagesLoading && !messages.length ? (
               <DashboardLoading label="در حال دریافت پیام‌ها..." className="dashboard-loading--fill" />
             ) : messages.length ? (
-              <div className="mx-auto flex w-full max-w-2xl flex-col gap-2.5">
-                {messages.map((message) => {
+              <div className="mx-auto flex w-full max-w-[760px] flex-col gap-1">
+                {hasMoreMessages && (
+                  <button type="button" disabled={loadingOlderMessages} onClick={() => {
+                    const first = messages.find((message) => !message.sendStatus);
+                    if (first) void loadMessages({ before: first.id });
+                  }} className="mx-auto mb-4 rounded-full border border-[#E0E8F5] bg-white px-4 py-2 text-xs font-bold text-[#64748B] shadow-sm disabled:opacity-50">
+                    {loadingOlderMessages ? "در حال دریافت…" : "نمایش پیام‌های قدیمی‌تر"}
+                  </button>
+                )}
+                {messages.map((message, index) => {
                   const outbound = message.direction === "OUTBOUND";
+                  const previous = messages[index - 1];
+                  const sameSender = Boolean(previous && previous.direction === message.direction &&
+                    new Date(message.createdAt).getTime() - new Date(previous.createdAt).getTime() < 300000);
+                  const showDate = !previous || new Date(previous.createdAt).toDateString() !== new Date(message.createdAt).toDateString();
                   const hasMedia = Boolean(message.mediaUrl);
-
                   return (
-                    <div
-                      key={message.id}
-                      className={`flex ${outbound ? "justify-start" : "justify-end"}`}
-                    >
-                      <div className="max-w-[82%] sm:max-w-[62%]">
-                        <div
-                          className={`overflow-hidden shadow-sm ${
-                            message.messageType === "AUDIO"
-                              ? "rounded-[22px]"
-                              : "rounded-2xl " +
-                                (outbound
-                                  ? "rounded-bl-md bg-primary text-primary-foreground"
-                                  : "rounded-br-md border border-border bg-background text-foreground")
-                          } ${
-                            message.messageType === "AUDIO"
-                              ? outbound
-                                ? "bg-primary text-primary-foreground"
-                                : "border border-border bg-background text-foreground"
-                              : ""
-                          }`}
-                        >
-                          {hasMedia && (
-                            <MediaBubble
-                              message={message}
-                              onMediaLoad={scrollToInitialBottom}
-                            />
-                          )}
-
-                          {message.text && (
-                            <div className="px-3.5 py-2.5">
-                              <p className="whitespace-pre-wrap text-[12px] leading-5.5">
-                                {message.text}
-                              </p>
-                            </div>
-                          )}
-
-                          {!hasMedia && !message.text && (
-                            <div className="px-3.5 py-2.5 text-xs text-muted-foreground">
-                              {preview(message)}
-                            </div>
-                          )}
+                    <Fragment key={message.id}>
+                      {showDate && (
+                        <div className="my-4 flex items-center justify-center" role="separator">
+                          <span className="rounded-full bg-[#E9EEF7] px-3 py-1.5 text-[11px] font-medium text-[#667893]">
+                            {new Date(message.createdAt).toLocaleDateString("fa-IR-u-ca-persian", { day: "numeric", month: "long", year: "numeric" })}
+                          </span>
                         </div>
-
-                        <div
-                          className={`mt-1 flex items-center gap-1.5 px-1 text-[9px] text-muted-foreground ${
-                            outbound ? "justify-start" : "justify-end"
-                          }`}
-                        >
-                          <span>{formatTime(message.createdAt)}</span>
-                          {outbound && message.sendStatus === "FAILED" ? (
-                            <button
-                              type="button"
-                              onClick={() => void retryFailedMessage(message.id)}
-                              disabled={sending}
-                              className="flex items-center gap-1 rounded-full text-red-500 transition hover:bg-red-50 disabled:opacity-50"
-                              title="ارسال مجدد"
-                              aria-label="ارسال مجدد پیام"
-                            >
-                              <CircleHelp size={14} strokeWidth={2.5} />
-                            </button>
-                          ) : outbound &&
-                            (message.seenAt ? (
-                              <span className="flex items-center gap-0.5 font-medium text-blue-500">
-                                <CheckCheck size={12} strokeWidth={2.5} />
-                                <span>Seen</span>
-                              </span>
-                            ) : (
-                              <Check size={12} />
-                            ))}
+                      )}
+                      <div data-message-id={message.id} className={`flex ${sameSender ? "mt-0.5" : "mt-2"} ${outbound ? "justify-start" : "justify-end"}`}>
+                        <div className="max-w-[85%] sm:max-w-[70%]">
+                          <div className={`overflow-hidden shadow-[0_2px_8px_rgba(20,40,80,.04)] ${
+                            message.messageType === "AUDIO" ? "rounded-[21px]" :
+                              "rounded-[20px] " + (outbound
+                                ? "rounded-br-[20px] rounded-bl-md bg-[#2F61FD] text-white"
+                                : "rounded-br-md border border-[#E7EDF5] bg-white text-[#18233C]")
+                          } ${message.messageType === "AUDIO" ? (outbound ? "bg-[#2F61FD] text-white" : "border border-[#E7EDF5] bg-white text-[#18233C]") : ""}`}>
+                            {hasMedia && <MediaBubble message={message} onMediaLoad={scrollToInitialBottom}/>}
+                            {message.text && (
+                              <div className="px-3.5 py-2.5">
+                                <p dir="auto" className="whitespace-pre-wrap break-words text-[13px] leading-6">{message.text}</p>
+                              </div>
+                            )}
+                            {!hasMedia && !message.text && (
+                              <div className="px-3.5 py-2.5 text-xs opacity-75">{preview(message)}</div>
+                            )}
+                          </div>
+                          <div className={`mt-1 flex items-center gap-1.5 px-1 text-[10px] text-[#8290A6] ${outbound ? "justify-start" : "justify-end"}`}>
+                            <span>{formatTime(message.createdAt)}</span>
+                            {outbound && message.sendStatus === "SENDING" ? (
+                              <span className="text-[#64748B]" role="status">در حال ارسال…</span>
+                            ) : outbound && message.sendStatus === "FAILED" ? (
+                              <button type="button" onClick={() => void retryFailedMessage(message.id)}
+                                disabled={sending || !selectedConversation.messagingWindow?.canSend}
+                                className="inline-flex items-center gap-1 rounded-lg px-1 text-[#DC2626] hover:bg-[#FEF2F2] disabled:opacity-50"
+                                title={message.failureReason || "ارسال ناموفق بود"} aria-label="تلاش دوباره برای ارسال پیام">
+                                <CircleHelp size={14}/><span>ناموفق · تلاش مجدد</span>
+                              </button>
+                            ) : outbound && (message.seenAt ? (
+                              <span className="inline-flex items-center gap-1 font-semibold text-[#2F61FD]"><CheckCheck size={14}/>دیده‌شده</span>
+                            ) : <span title="ارسال‌شده"><Check size={13}/></span>)}
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    </Fragment>
                   );
                 })}
                 <div ref={messagesEndRef} />
@@ -1335,27 +1619,70 @@ export default function InstagramInbox({
             ) : (
               <div className="flex h-full items-center justify-center p-8 text-center">
                 <div>
-                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-background text-muted-foreground shadow-sm">
-                    <MessageCircle size={24} />
-                  </div>
-                  <h3 className="mt-4 text-sm font-bold text-foreground">
-                    هنوز پیامی وجود ندارد
-                  </h3>
-                  <p className="mt-2 max-w-xs text-xs leading-6 text-muted-foreground">
-                    اولین پیام را از همین‌جا ارسال کنید.
-                  </p>
+                  <div className="mx-auto grid h-16 w-16 place-items-center rounded-[22px] bg-white text-[#94A3B8] shadow-sm"><MessageCircle size={27}/></div>
+                  <h3 className="mt-4 text-sm font-bold text-[#18233C]">هنوز پیامی وجود ندارد</h3>
+                  <p className="mt-2 max-w-xs text-xs leading-6 text-[#64748B]">اولین پیام را از همین‌جا ارسال کنید.</p>
                 </div>
+              </div>
+            )}
+            {showJumpToLatest && !focusedMessageId && (
+              <div className="pointer-events-none sticky bottom-3 mt-3 flex justify-center">
+                <button type="button" onClick={forceScrollToBottom} className="pointer-events-auto inline-flex min-h-10 items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-bold text-[#2F61FD] shadow-[0_4px_16px_rgba(24,35,60,.15)]" aria-label="رفتن به آخرین پیام">
+                  <ArrowDown size={16}/>
+                  {newMessageCount ? `${newMessageCount.toLocaleString("fa-IR")} پیام جدید` : "آخرین پیام"}
+                </button>
               </div>
             )}
           </div>
 
+          {showQuickReplies && (
+            <div className="shrink-0 border-t border-[#E8EDF5] bg-white px-3 py-3 sm:px-5">
+              <div className="mb-2 flex items-center justify-between">
+                <strong className="text-xs text-[#18233C]">پاسخ‌های آماده</strong>
+                <button type="button" onClick={() => setShowQuickReplies(false)} className="grid h-8 w-8 place-items-center rounded-lg text-[#64748B]" aria-label="بستن پاسخ‌های آماده"><X size={16}/></button>
+              </div>
+              <div className="max-h-36 space-y-1 overflow-y-auto">
+                {quickReplies.map((reply, index) => (
+                  <div key={index} className="flex items-center gap-1">
+                    <button type="button" onClick={() => { setText(reply); setShowQuickReplies(false); }}
+                      className="min-w-0 flex-1 truncate rounded-lg bg-[#F5F8FE] px-3 py-2 text-right text-xs text-[#334155] hover:bg-[#EAF1FE]" title={reply}>
+                      {reply}
+                    </button>
+                    <button type="button" onClick={() => persistQuickReplies(quickReplies.filter((_, i) => i !== index))}
+                      className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-[#94A3B8] hover:bg-[#FEF2F2] hover:text-[#DC2626]" aria-label="حذف پاسخ آماده"><X size={15}/></button>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-2 flex items-center gap-2">
+                <input type="text" value={newQuickReply} maxLength={1000} onChange={(e) => setNewQuickReply(e.target.value)} placeholder="پاسخ آماده جدید..." aria-label="متن پاسخ آماده جدید"
+                  className="h-10 min-w-0 flex-1 rounded-xl border border-[#E2E8F0] px-3 text-xs outline-none focus:border-[#2F61FD]"/>
+                <button type="button" disabled={!newQuickReply.trim() || quickReplies.length >= 12} onClick={() => {
+                  const next = newQuickReply.trim();
+                  if (!quickReplies.includes(next)) persistQuickReplies([...quickReplies, next]);
+                  setNewQuickReply("");
+                }} className="h-10 rounded-xl bg-[#2F61FD] px-3 text-xs font-bold text-white disabled:bg-[#CBD5E1]">ذخیره</button>
+              </div>
+              <p className="mt-2 text-[10px] text-[#94A3B8]">پاسخ‌های آماده در همین مرورگر ذخیره می‌شوند.</p>
+            </div>
+          )}
+
           <form
             onSubmit={sendMessage}
-            className="shrink-0 border-t border-border bg-background p-2.5 sm:p-3"
+            className="shrink-0 border-t border-[#E8EDF5] bg-white px-3 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 sm:px-5 sm:py-3"
           >
             {selectedConversation.messagingWindow && !selectedConversation.messagingWindow.canSend && (
               <div className="mb-2 rounded-lg bg-muted/60 px-3 py-2 text-[10px] leading-5 text-muted-foreground">
                 زمان مجاز پاسخ‌گویی به این گفتگو تمام شده است. با پیام جدید کاربر، امکان پاسخ دوباره فعال می‌شود.
+              </div>
+            )}
+            {recordedVoice && recordedVoiceUrl && (
+              <div className="mb-3 flex items-center gap-2 rounded-2xl border border-[#DBEAFE] bg-[#F4F8FF] p-3">
+                <Mic size={17} className="shrink-0 text-[#2F61FD]"/>
+                <div className="min-w-0 flex-1">
+                  <p className="mb-1 text-xs font-bold text-[#18233C]">پیش‌نمایش پیام صوتی</p>
+                  <audio src={recordedVoiceUrl} controls className="h-9 w-full" preload="metadata"/>
+                </div>
+                <button type="button" onClick={() => setRecordedVoice(null)} className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-[#64748B] hover:bg-[#FEE2E2]" aria-label="حذف ویس ضبط‌شده"><X size={17}/></button>
               </div>
             )}
             {selectedFile && (
@@ -1372,7 +1699,7 @@ export default function InstagramInbox({
                     <span className="truncate text-xs font-medium">
                       {selectedFile.name}
                     </span>
-                    <span className="shrink-0 text-[9px] text-muted-foreground">
+                    <span className="shrink-0 text-[10px] tabular-nums text-[#8290A6]">
                       {Math.max(1, Math.round(selectedFile.size / 1024))} KB
                     </span>
                   </div>
@@ -1451,9 +1778,9 @@ export default function InstagramInbox({
                   disabled={sending}
                   variant="icon"
                   className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full p-0 text-primary hover:text-primary/80 disabled:text-slate-300"
-                  aria-label="ارسال Voice"
+                  aria-label="پایان ضبط و پیش‌نمایش ویس"
                 >
-                  <Send size={16} />
+                  <Square size={16} fill="currentColor" />
                 </Button>
               </div>
             ) : (
@@ -1464,16 +1791,29 @@ export default function InstagramInbox({
                   accept="image/*,video/*,audio/*"
                   className="hidden"
                   onChange={(event) => {
-                    setSelectedFile(event.target.files?.[0] || null);
+                    const file = event.target.files?.[0] || null;
+                    if (file && file.size > 25 * 1024 * 1024) {
+                      setError("حجم فایل نباید بیشتر از ۲۵ مگابایت باشد.");
+                      event.currentTarget.value = "";
+                      return;
+                    }
+                    setError("");
+                    setRecordedVoice(null);
+                    setSelectedFile(file);
                   }}
                 />
 
-                <div className="flex items-end gap-1.5">
+                <div className="flex items-end gap-2">
+                  <button type="button" onClick={() => { setShowQuickReplies((value) => !value); setConversationSearchOpen(false); }}
+                    aria-label="پاسخ‌های آماده" aria-expanded={showQuickReplies}
+                    className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#F0F5FF] text-[#2F61FD] hover:bg-[#E4EDFF]">
+                    <MessageSquareText size={20}/>
+                  </button>
                   <Button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     variant="icon"
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg p-0 text-slate-500 hover:text-primary"
+                    className="flex h-11 w-10 shrink-0 items-center justify-center rounded-xl p-0 text-[#64748B] hover:bg-[#F3F6FB] hover:text-[#2F61FD]"
                     aria-label="ارسال عکس، ویدیو یا فایل صوتی"
                   >
                     <Paperclip size={18} />
@@ -1488,7 +1828,7 @@ export default function InstagramInbox({
                       target.style.height = Math.min(160, Math.max(40, target.scrollHeight)) + "px";
                     }}
                     onKeyDown={(event) => {
-                      if (event.key === "Enter" && !event.shiftKey) {
+                      if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
                         event.preventDefault();
                         event.currentTarget.form?.requestSubmit();
                       }
@@ -1496,30 +1836,26 @@ export default function InstagramInbox({
                     rows={1}
                     maxLength={1000}
                     placeholder="پیام خود را بنویسید..."
-                    className="min-h-10 max-h-40 flex-1 resize-none appearance-none rounded-xl border border-border bg-muted/40 px-3 py-2 text-base leading-5 outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    className="min-h-11 max-h-40 min-w-0 flex-1 resize-none appearance-none rounded-2xl border border-[#E3EAF5] bg-[#F7F9FD] px-4 py-2.5 text-base leading-6 text-[#18233C] outline-none focus:border-[#2F61FD] focus:bg-white"
                     style={{ fontSize: "16px", WebkitTextSizeAdjust: "100%" }}
                   />
 
-                  <Button
-                    type="button"
-                    onClick={() => void startRecording()}
-                    disabled={sending || !selectedConversation.messagingWindow?.canSend}
-                    variant="icon"
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg p-0 text-slate-500 hover:text-primary disabled:text-slate-300"
-                    aria-label="ضبط Voice"
-                  >
-                    <Mic size={18} />
-                  </Button>
+                  {!text.trim() && !selectedFile && !recordedVoice && (
+                    <Button type="button" onClick={() => void startRecording()}
+                      disabled={sending || !selectedConversation.messagingWindow?.canSend} variant="icon"
+                      className="flex h-11 w-10 shrink-0 items-center justify-center rounded-xl p-0 text-[#64748B] hover:bg-[#F3F6FB] hover:text-[#2F61FD] disabled:text-slate-300"
+                      aria-label="ضبط ویس"><Mic size={20}/></Button>
+                  )}
 
                   <Button
                     type="submit"
                     disabled={
                     sending ||
                     !selectedConversation.messagingWindow?.canSend ||
-                    (!text.trim() && !selectedFile)
+                    (!text.trim() && !selectedFile && !recordedVoice)
                   }
                     variant="icon"
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg p-0 text-primary hover:text-primary/80 disabled:text-slate-300"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#2F61FD] p-0 text-white shadow-sm hover:bg-[#244ED2] disabled:bg-[#E7EDF6] disabled:text-[#94A3B8]"
                     aria-label="ارسال"
                   >
                     <Send size={17} />
@@ -1552,7 +1888,19 @@ export default function InstagramInbox({
   );
 
   return (
-    <section id="messages" dir="rtl" className="scroll-mt-24 overflow-x-hidden">
+    <section id="messages" dir="rtl" data-mobile-chat-open={mobileChatOpen ? "true" : "false"} className="scroll-mt-24 overflow-x-hidden">
+      <style>{`
+        @media (max-width: 1023px) {
+          .daira-app-shell:has(#messages[data-mobile-chat-open="true"]) .daira-bottom-nav,
+          .daira-app-shell:has(#messages[data-mobile-chat-open="true"]) .daira-bottom-nav-backdrop { display: none; }
+          .daira-app-shell:has(#messages[data-mobile-chat-open="true"]) .daira-app-main { padding-bottom: 0; }
+          #messages[data-mobile-chat-open="true"] .inbox-frame {
+            height: calc(min(100dvh, var(--smartdirect-inbox-visible-height, 100dvh)) - 90px - env(safe-area-inset-top, 0px));
+            min-height: 0;
+            border-radius: 16px;
+          }
+        }
+      `}</style>
       {error && (
         <div className="mb-3 flex items-center justify-between gap-4 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-xs text-red-700">
           <span>{error}</span>
@@ -1566,7 +1914,7 @@ export default function InstagramInbox({
         </div>
       )}
 
-      <div className="h-[calc(100dvh-7.5rem)] min-h-[500px] overflow-hidden rounded-2xl border border-border bg-card shadow-[0_12px_40px_rgba(15,23,42,0.04)]">
+      <div className="inbox-frame h-[calc(100dvh-196px)] min-h-0 overflow-hidden rounded-[22px] border border-[#DFE7F3] bg-white shadow-[0_10px_35px_rgba(15,23,42,0.04)] lg:h-[calc(100dvh-235px)] lg:min-h-[420px]">
         <div className="flex h-full min-h-0">
           <div
             className={`flex min-h-0 flex-1 flex-col lg:flex-none ${
