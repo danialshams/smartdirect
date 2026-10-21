@@ -564,7 +564,7 @@ export function Calendar({ className, ...props }: DashboardCalendarProps) {
       className={className}
       sx={{
         p: 1.5,
-        width: "352px",
+        width: props.numberOfMonths && props.numberOfMonths > 1 ? "704px" : "352px",
         maxWidth: "calc(100vw - 24px)",
         boxSizing: "border-box",
         bgcolor: COLORS.surface,
