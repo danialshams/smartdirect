@@ -1269,14 +1269,14 @@ export default function InstagramInbox({
   }, [mobileChatOpen]);
 
   const listPanel = (
-    <aside className="flex min-h-0 flex-1 flex-col bg-white lg:w-[355px] lg:flex-none lg:border-l lg:border-[#E8EDF5]">
-      <div className="shrink-0 border-b border-[#E8EDF5] px-4 pb-3.5 pt-4 sm:px-5">
-        <div className="mb-4 flex items-center justify-between">
+    <aside className="flex min-h-0 min-w-0 flex-1 flex-col bg-white lg:w-[315px] lg:flex-none lg:border-l lg:border-[#E8EDF5]">
+      <div className="shrink-0 border-b border-[#E8EDF5] px-3 pb-2 pt-2 sm:px-4">
+        <div className="mb-2 flex items-center justify-between gap-2">
           <div>
-            <h1 className="text-base font-extrabold text-[#18233C]">صندوق دایرکت</h1>
-            <p className="mt-1 text-[11px] text-[#64748B]">{conversations.length.toLocaleString("fa-IR")} گفتگو</p>
+            <h1 className="text-sm font-extrabold text-[#18233C]">صندوق دایرکت</h1>
+            <p className="text-[10px] text-[#64748B]">{conversations.length.toLocaleString("fa-IR")} گفتگو</p>
           </div>
-          <button type="button" onClick={() => void loadConversations()} aria-label="به‌روزرسانی گفتگوها" title="به‌روزرسانی" className="grid h-10 w-10 place-items-center rounded-xl bg-[#F1F5FC] text-[#526580] transition hover:bg-[#E7EEFC]"><RotateCcw size={17}/></button>
+          <button type="button" onClick={() => void loadConversations()} aria-label="به‌روزرسانی گفتگوها" title="به‌روزرسانی" className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[#F1F5FC] text-[#526580] transition hover:bg-[#E7EEFC]"><RotateCcw size={17}/></button>
         </div>
         <div className="flex min-w-0 flex-nowrap items-center gap-1 rounded-xl bg-[#EEF3FB] p-1" role="group" aria-label="فیلتر گفتگوها">
           {(
@@ -1304,7 +1304,7 @@ export default function InstagramInbox({
           ))}
         </div>
 
-        <div className="relative mt-3">
+        <div className="relative mt-2">
           <Search
             size={15}
             className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#8290A6]"
@@ -1313,12 +1313,12 @@ export default function InstagramInbox({
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="جستجوی گفتگو..."
-            className="h-11 rounded-xl border-[#E5EAF3] bg-[#F8FAFD] pr-10 text-[13px] focus:border-[#2F61FD]"
+            className="h-9 rounded-lg border-[#E5EAF3] bg-[#F8FAFD] pr-9 text-[13px] focus:border-[#2F61FD]"
           />
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-2.5 py-3 sm:px-3">
+      <div className="min-h-0 flex-1 overflow-y-auto px-2 py-1.5 sm:px-2">
         {(accountsLoading || (connectedAccounts.length > 0 && (!accountId || loading))) && !conversations.length ? (
           <DashboardLoading label="در حال دریافت گفتگوها..." className="dashboard-loading--fill" />
         ) : searchingThreads && search.trim() ? (
@@ -1345,10 +1345,10 @@ export default function InstagramInbox({
                     <img
                       src={conversation.participantProfilePicture}
                       alt=""
-                      className="h-11 w-11 rounded-full object-cover ring-1 ring-[#E5EAF3]"
+                      className="h-10 w-10 rounded-full object-cover ring-1 ring-[#E5EAF3]"
                     />
                   ) : (
-                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#EEF3FB] text-[#64748B]">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#EEF3FB] text-[#64748B]">
                       <UserRound size={18} />
                     </div>
                   )}
@@ -1372,7 +1372,7 @@ export default function InstagramInbox({
                       {formatDate(conversation.lastMessageAt)}
                     </span>
                   </div>
-                  <div className="mt-1 flex items-center justify-between gap-2">
+                  <div className="mt-0.5 flex items-center justify-between gap-2">
                     <p
                       className={`truncate text-xs leading-5 ${
                         unread
