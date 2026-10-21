@@ -1598,12 +1598,6 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               </section>
             ) : (type !== "STORY" && !captionStepConfirmed) || uploadedMedia.length === 0 || uploadSuccess || (type === "STORY" && showUploadedMediaPreview) ? (
               <section className="mx-auto w-full max-w-3xl">
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  
-                  {uploadedMedia.length > 0 && !uploading && (
-                    
-                  )}
-                </div>
 
                 <div className={uploadedMedia.length > 0 && !uploading && !uploadSuccess ? "p-0" : "rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6"}>
                   <>
@@ -1799,18 +1793,13 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   </div>
                   </div>}
                 </section>
-                <button type="button" disabled={!caption.trim() || uploading || publishing || Boolean(tagInputError)}
-                  onClick={() => { setTagStepConfirmed(true); setAutomationChoiceStepStarted(true); setError(""); }}
-                  className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[#2F61FD] px-5 text-sm font-bold text-white transition hover:bg-[#1E4BD8] disabled:cursor-not-allowed disabled:bg-[#E2E8F0] disabled:text-[#94A3B8]">
-                  ادامه به پاسخ خودکار <ArrowLeft size={17}/>
-                </button>
+                <p role="note" className="rounded-xl border border-[#DFE7F3] bg-[#F6F9FF] px-4 py-3 text-center text-xs leading-6 text-[#5A6B87]">
+                  {caption.trim() ? "جزئیات آماده است. مرحله «پاسخ خودکار» را از نوار بالای صفحه انتخاب کن." : "برای فعال‌شدن مرحله پاسخ خودکار، ابتدا کپشن را تکمیل کن."}
+                </p>
               </div>
             ) : ((type !== "STORY" && tagStepConfirmed) || (type === "STORY" && captionStepConfirmed)) && (type === "STORY" || automationChoiceStepStarted) && !automationChoiceConfirmed ? (
               <div className="mx-auto w-full max-w-2xl">
-                <div className="mb-5 flex items-center justify-between gap-3">
-                  
-
-                </div>
+                
                 <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
                   <div className="mb-6 flex items-start gap-3">
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2F61FD]/10 text-xs font-bold text-[#2F61FD]">۳</span>
@@ -1843,10 +1832,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               </div>
             ) : type === "STORY" && automationChoiceConfirmed && automationEnabled && !automationSetupConfirmed ? (
               <div className="mx-auto w-full max-w-2xl">
-                <div className="mb-5 flex items-center justify-between gap-3">
-                  
-                  
-                </div>
+                
 
                 <section className="space-y-5 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
                   <div className="flex items-start gap-3">
@@ -2018,10 +2004,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               </div>
             ) : type !== "STORY" && automationChoiceConfirmed && automationEnabled && !automationSetupConfirmed ? (
               <div className="mx-auto w-full max-w-2xl">
-                <div className="mb-5 flex items-center justify-between gap-3">
-                  
-
-                </div>
+                
                 <section className="space-y-5 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
                   <div className="flex items-start gap-3">
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2F61FD]/10 text-xs font-bold text-[#2F61FD]">۳</span>
@@ -2070,9 +2053,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               </div>
             ) : ((type !== "STORY" && automationChoiceConfirmed && (!automationEnabled || automationSetupConfirmed)) || (type === "STORY" && automationChoiceConfirmed && (!automationEnabled || automationSetupConfirmed))) ? (
               <div className="mx-auto w-full max-w-2xl">
-                <div className="mb-5 flex items-center justify-between gap-3">
-                  
-                </div>
+                
                 <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
                   <div className="mb-6 flex items-start gap-3">
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2F61FD]/10 text-xs font-bold text-[#2F61FD]">۴</span>
