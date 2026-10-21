@@ -401,7 +401,7 @@ function InlineWheelPicker({
         classNames={{
           optionItem: "!text-base !font-semibold !text-[#94A3B8]",
           highlightWrapper: "!rounded-none !border-y !border-[#E2E8F0] !bg-white",
-          highlightItem: "!text-2xl !font-bold !text-[#0F172A]",
+          highlightItem: "!text-2xl !font-bold !text-[#18233C]",
         }}
       />
     </div>
@@ -438,17 +438,17 @@ function KeywordChipsInput({ value, onChange, placeholder }: { value: string; on
   const [draft, setDraft] = useState("");
   const sync = (next: string[]) => onChange(next.map((item) => item.trim()).filter(Boolean).filter((item, index, list) => list.indexOf(item) === index).join(","));
   const add = () => { const item = draft.trim(); if (!item) return; sync([...keywords, item]); setDraft(""); };
-  return <div className="flex min-h-[56px] flex-wrap items-center gap-2 rounded-xl border border-[#E2E8F0] bg-white px-3 py-2.5 transition focus-within:border-[#7C3AED] focus-within:ring-2 focus-within:ring-[#7C3AED]/10">{keywords.map((item) => <span key={item} className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1.5 text-xs font-medium text-foreground">{item}<Button type="button" onClick={() => sync(keywords.filter((keyword) => keyword !== item))} className="text-muted-foreground hover:text-foreground" aria-label={`حذف ${item}`}><X size={13} /></Button></span>)}<Input value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (["Enter", ",", "،"].includes(event.key)) { event.preventDefault(); add(); } }} onBlur={add} placeholder={keywords.length ? "کلمه بعدی..." : placeholder} className="min-w-[140px] flex-1 border-0 bg-transparent px-1 py-1 text-sm text-[#0F172A] outline-none ring-0 placeholder:text-[#94A3B8]" /><Button type="button" onPointerDown={(event) => event.preventDefault()} onClick={add} className="shrink-0 rounded-lg border border-[#E2E8F0] bg-white px-2.5 py-1.5 text-xs font-medium text-[#64748B] hover:bg-[#F8FAFC]">افزودن کلمه</Button></div>;
+  return <div className="flex min-h-[56px] flex-wrap items-center gap-2 rounded-xl border border-[#E2E8F0] bg-white px-3 py-2.5 transition focus-within:border-[#7C3AED] focus-within:ring-2 focus-within:ring-[#7C3AED]/10">{keywords.map((item) => <span key={item} className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1.5 text-xs font-medium text-foreground">{item}<Button type="button" onClick={() => sync(keywords.filter((keyword) => keyword !== item))} className="text-muted-foreground hover:text-foreground" aria-label={`حذف ${item}`}><X size={13} /></Button></span>)}<Input value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (["Enter", ",", "،"].includes(event.key)) { event.preventDefault(); add(); } }} onBlur={add} placeholder={keywords.length ? "کلمه بعدی..." : placeholder} className="min-w-[140px] flex-1 border-0 bg-transparent px-1 py-1 text-sm text-[#18233C] outline-none ring-0 placeholder:text-[#94A3B8]" /><Button type="button" onPointerDown={(event) => event.preventDefault()} onClick={add} className="shrink-0 rounded-lg border border-[#E2E8F0] bg-white px-2.5 py-1.5 text-xs font-medium text-[#64748B] hover:bg-[#F8FAFC]">افزودن کلمه</Button></div>;
 }
 
-function SectionHeader({ n, title, text }: { n: string; title: string; text: string }) { return <div className="mb-4"><div className="flex items-center gap-2"><span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">{n}</span><h2 className="text-sm font-bold text-[#0F172A]">{title}</h2></div><p className={["mt-2 leading-5 text-[#64748B]", title === "آپلود آلبوم" ? "whitespace-nowrap text-[9px] sm:text-xs" : "text-xs"].join(" ")}>{text}</p></div>; }
+function SectionHeader({ n, title, text }: { n: string; title: string; text: string }) { return <div className="mb-4"><div className="flex items-center gap-2"><span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#2F61FD]/10 text-xs font-bold text-[#2F61FD]">{n}</span><h2 className="text-sm font-bold text-[#18233C]">{title}</h2></div><p className={["mt-2 leading-5 text-[#64748B]", title === "آپلود آلبوم" ? "whitespace-nowrap text-[9px] sm:text-xs" : "text-xs"].join(" ")}>{text}</p></div>; }
 function ProgressBar({ progress }: { progress: number }) {
   return <div className="mt-4 w-full max-w-md">
-    <div className="mb-2 text-center text-[10px] font-semibold text-[#2563EB]">
+    <div className="mb-2 text-center text-[10px] font-semibold text-[#2F61FD]">
       {toPersianDigits(progress)}٪
     </div>
     <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#E2E8F0]">
-      <div className="h-full rounded-full bg-[#2563EB] transition-[width] duration-150 ease-out" style={{ width: `${Math.max(0, Math.min(100, progress))}%` }} />
+      <div className="h-full rounded-full bg-[#2F61FD] transition-[width] duration-150 ease-out" style={{ width: `${Math.max(0, Math.min(100, progress))}%` }} />
     </div>
   </div>;
 }
@@ -485,11 +485,11 @@ function UploadSuccessMark() {
 }
 type UploadAreaProps = { id: string; accept: string; multiple: boolean; disabled: boolean; isDragging: boolean; setIsDragging: (value: boolean) => void; title: string; onChange: (event: ChangeEvent<HTMLInputElement>) => void; onDrop: (event: DragEvent<HTMLDivElement>) => void };
 function UploadArea({ id, accept, multiple, disabled, isDragging, setIsDragging, title, onChange, onDrop }: UploadAreaProps) {
-  return <div onDragOver={(event: DragEvent<HTMLDivElement>) => { event.preventDefault(); setIsDragging(true); }} onDragLeave={() => setIsDragging(false)} onDrop={onDrop} className={["relative overflow-hidden rounded-xl border border-dashed p-4 transition sm:p-6", isDragging ? "border-[#2563EB] bg-[#2563EB]/5" : "border-[#CBD5E1] bg-[#F8FAFC] hover:border-[#93C5FD] hover:bg-[#EFF6FF]/50", disabled ? "pointer-events-none opacity-60" : ""].join(" ")}>
+  return <div onDragOver={(event: DragEvent<HTMLDivElement>) => { event.preventDefault(); setIsDragging(true); }} onDragLeave={() => setIsDragging(false)} onDrop={onDrop} className={["relative overflow-hidden rounded-xl border border-dashed p-4 transition sm:p-6", isDragging ? "border-[#2F61FD] bg-[#2F61FD]/5" : "border-[#CBD5E1] bg-[#F8FAFC] hover:border-[#93C5FD] hover:bg-[#EFF6FF]/50", disabled ? "pointer-events-none opacity-60" : ""].join(" ")}>
     <Input id={id} type="file" accept={accept} multiple={multiple} onChange={onChange} disabled={disabled} className="sr-only" />
     <label htmlFor={id} className="flex min-h-[190px] cursor-pointer flex-col items-center justify-center text-center">
-      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-[#2563EB] shadow-sm ring-1 ring-[#E2E8F0]"><ImagePlus size={22} /></div>
-      <span className="mt-4 inline-flex min-h-6 items-center justify-center gap-2 text-sm font-bold text-[#0F172A]">{title}</span>
+      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-[#2F61FD] shadow-sm ring-1 ring-[#E2E8F0]"><ImagePlus size={22} /></div>
+      <span className="mt-4 inline-flex min-h-6 items-center justify-center gap-2 text-sm font-bold text-[#18233C]">{title}</span>
       <span className="mt-1.5 whitespace-nowrap text-[11px] leading-5 text-[#64748B]">فایل را بکش و اینجا رها کن یا برای انتخاب از دستگاه کلیک کن.</span>
     </label>
   </div>;
@@ -1451,7 +1451,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
         knownJobIdsRef.current.add(job.id);
         setJobs((current) => [job, ...current.filter((item) => item.id !== job.id)]);
         setActiveTab("queue");
-        toast.success(`${typeLabels[type]} برای زمان ${formatScheduledLabel(scheduled!)} تنظیم شد.`, { icon: <Clock3 size={18} className="text-[#2563EB]" /> });
+        toast.success(`${typeLabels[type]} برای زمان ${formatScheduledLabel(scheduled!)} تنظیم شد.`, { icon: <Clock3 size={18} className="text-[#2F61FD]" /> });
         setCaption(""); setUploadedMedia([]); setShowUploadedMediaPreview(false); resetAutomation(); setUploadProgress(0); setScheduledDate(todayJalali); setHour(officialTehranClock.hour); setMinute(officialTehranClock.minute); setStage6Date(todayJalali); setStage6Hour(officialTehranClock.hour); setStage6Minute(officialTehranClock.minute);
         animateStepChange(() => {
           clearLocalMedia();
@@ -1482,127 +1482,77 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   async function retryJob(id: string) { try { setError(""); const response = await fetch(`/api/instagram/publishing/${id}/retry`, { method: "POST" }); const result = await response.json(); if (!response.ok) throw new Error(result.message || "Retry ناموفق بود."); await loadJobs(); } catch (e) { setError(e instanceof Error ? e.message : "Retry ناموفق بود."); } }
   async function cancelJob(id: string) { try { setError(""); const response = await fetch(`/api/instagram/publishing/${id}`, { method: "DELETE" }); const result = await response.json(); if (!response.ok) throw new Error(result.message || "لغو ناموفق بود."); await loadJobs(); } catch (e) { setError(e instanceof Error ? e.message : "لغو ناموفق بود."); } }
 
+
+  const wizardStep: 1 | 2 | 3 | 4 = !captionStepConfirmed ? 1
+    : type !== "STORY" && !automationChoiceStepStarted ? 2
+    : !automationChoiceConfirmed || (automationEnabled && !automationSetupConfirmed) ? 3 : 4;
+  function goToWizardStep(target: 1 | 2 | 3 | 4) {
+    if (uploading || publishing || target >= wizardStep) return;
+    setError("");
+    if (target === 1) {
+      setCaptionStepConfirmed(false); setTagStepConfirmed(false);
+      setAutomationChoiceStepStarted(false); setAutomationChoiceConfirmed(false);
+      setAutomationSetupConfirmed(false); setShowUploadedMediaPreview(false);
+    } else if (target === 2 && type !== "STORY") {
+      setCaptionStepConfirmed(true); setTagStepConfirmed(false);
+      setAutomationChoiceStepStarted(false); setAutomationChoiceConfirmed(false);
+      setAutomationSetupConfirmed(false);
+    } else if (target === 3) {
+      setCaptionStepConfirmed(true); setTagStepConfirmed(type !== "STORY");
+      setAutomationChoiceStepStarted(true); setAutomationChoiceConfirmed(false);
+      setAutomationSetupConfirmed(false);
+    }
+  }
+
   const canPublish = uploadedMedia.length > 0 && !uploading && !publishing;
   const acceptedVideos = "video/mp4,video/quicktime,video/webm,video/x-matroska,video/x-msvideo,video/mpeg,video/3gpp,video/mp2t,.mp4,.mov,.m4v,.webm,.mkv,.avi,.3gp,.mpeg,.mpg,.mts,.m2ts";
   const accept = type === "REEL" ? acceptedVideos : type === "STORY" || type === "CAROUSEL" ? "image/jpeg,image/png,image/webp," + acceptedVideos : "image/jpeg,image/png,image/webp";
 
   return (
     <>
-      <div dir="rtl" className={["bg-[#F8FAFC] px-3 py-4 sm:px-5 sm:py-6 lg:px-8", !selectionConfirmed ? "pb-8" : "pb-8"].join(" ")}>
-        <div className="mx-auto w-full max-w-6xl">
-          <div className={["transition-all duration-300 ease-out", stepVisible ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0"].join(" ")}>
+      <div dir="rtl" className="min-h-full bg-transparent px-1 py-2 pb-24 sm:px-2 sm:py-3 sm:pb-8">
+        <div className="mx-auto w-full max-w-4xl">
+          <nav className="mb-5 grid grid-cols-2 gap-2 rounded-[20px] bg-[#EEF3FB] p-1.5" aria-label="بخش‌های انتشار">
+            <button type="button" onClick={()=>setActiveTab("create")} aria-current={activeTab==="create"?"page":undefined}
+              className={"flex min-h-[49px] items-center justify-center gap-2 rounded-2xl px-3 text-sm font-bold transition "+(activeTab==="create"?"bg-white text-[#2F61FD] shadow-sm":"text-[#5A6B87]")}>
+              <ImagePlus size={18}/> انتشار محتوا
+            </button>
+            <button type="button" onClick={()=>setActiveTab("queue")} aria-current={activeTab==="queue"?"page":undefined}
+              className={"flex min-h-[49px] items-center justify-center gap-2 rounded-2xl px-3 text-sm font-bold transition "+(activeTab==="queue"?"bg-white text-[#2F61FD] shadow-sm":"text-[#5A6B87]")}>
+              <CalendarClock size={18}/> صف انتشار
+            </button>
+          </nav>
+          {activeTab==="queue" ? (
+            <PublishingQueue jobs={jobs} loading={loading} error={error} onRetry={retryJob} onCancel={cancelJob} onRefresh={loadJobs}/>
+          ) : loading ? <PublishingPageSkeleton/> : (
+          <>
+            {selectionConfirmed && (
+              <PublishingWizardProgress
+                step={wizardStep}
+                typeLabel={typeLabels[type]}
+                disabled={uploading || publishing}
+                onBackToType={handleBackToTypeSelection}
+                onNavigate={goToWizardStep}
+                summaries={[uploadedMedia.length.toLocaleString("fa-IR")+" فایل",type==="STORY"?"بدون کپشن":(caption.slice(0,25)||"جزئیات"),automationEnabled?"فعال":"غیرفعال",publishNow?"انتشار فوری":"زمان‌بندی‌شده"]}
+              />
+            )}
+            <div className={["transition-all duration-300 ease-out", stepVisible ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0"].join(" ")}>
+
             {!selectionConfirmed ? (
-              <section className="w-full">
-                <SectionHeader n="۱" title="نوع محتوا" text="نوع محتوایی را که می‌خواهی در Instagram منتشر کنی انتخاب کن." />
-                <div className="grid w-full grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
-                  {([["POST", "پست", ImagePlus, "#2563EB", "#EFF6FF", "#1D4ED8"], ["CAROUSEL", "آلبوم", Images, "#7C3AED", "#F5F3FF", "#6D28D9"], ["REEL", "ریلز", Clapperboard, "#D97706", "#FFF7ED", "#B45309"], ["STORY", "استوری", Camera, "#16A34A", "#F0FDF4", "#15803D"]] as const).map(([value, label, Icon, accent, soft, border]) => (
-                    <Button
-                      key={value}
-                      type="button"
-                      onClick={() => handleTypeChange(value)}
-                      className="group relative flex aspect-square w-full flex-col items-center justify-center gap-3 rounded-[28px] p-5 text-center shadow-none transition-all duration-200 hover:-translate-y-1 hover:shadow-lg active:translate-y-0 sm:rounded-[32px] sm:p-7"
-                      style={{ backgroundColor: soft, border: `1px solid ${border}`, color: accent }}
-                    >
-                      <span
-                        className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/55 sm:h-14 sm:w-14"
-                        style={{ color: accent }}
-                      >
-                        <Icon size={22} strokeWidth={1.9} className="sm:h-6 sm:w-6" />
-                      </span>
-                      <span className="text-base font-bold text-[#0F172A] sm:text-lg">{label}</span>
-                    </Button>
+              <section className="mx-auto w-full max-w-4xl">
+                <div className="mb-5">
+                  <h1 className="text-lg font-extrabold text-[#18233C]">چه محتوایی می‌خواهید منتشر کنید؟</h1>
+                  <p className="mt-1 text-xs leading-6 text-[#5A6B87]">نوع محتوا را انتخاب کنید تا فقط تنظیمات مرتبط با آن نمایش داده شود.</p>
+                </div>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  {([["POST","پست",ImagePlus],["CAROUSEL","آلبوم",Images],["REEL","ریلز",Clapperboard],["STORY","استوری",Camera]] as const).map(([value,label,Icon])=>(
+                    <button key={value} type="button" onClick={()=>handleTypeChange(value)}
+                      className="group flex min-h-[118px] flex-col items-center justify-center gap-3 rounded-[22px] border border-[#E8EDF5] bg-white px-3 py-4 text-center shadow-[0_4px_18px_rgba(22,54,110,.035)] transition hover:-translate-y-0.5 hover:border-[#2F61FD] hover:bg-[#EFF6FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2F61FD]">
+                      <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#EFF6FF] text-[#2F61FD] group-hover:bg-[#DBEAFE]"><Icon size={23} strokeWidth={1.8}/></span>
+                      <span className="text-sm font-bold text-[#18233C]">{label}</span>
+                    </button>
                   ))}
                 </div>
-                {(() => {
-                  const nowMs = Date.now();
-                  const scheduledJobs = jobs
-                    .filter((job) => {
-                      if (!job.scheduledAt) return false;
-                      const scheduledMs = new Date(job.scheduledAt).getTime();
-                      if (!Number.isFinite(scheduledMs)) return false;
-                      if (job.status === "SCHEDULED") return scheduledMs >= nowMs - 5 * 60 * 1000;
-                      if (job.status === "PROCESSING" || job.status === "PUBLISHING") {
-                        // Hide stuck jobs whose scheduled time is long past; the server remains the source of truth.
-                        return scheduledMs >= nowMs - 30 * 60 * 1000;
-                      }
-                      return false;
-                    })
-                    .sort((a, b) => new Date(a.scheduledAt!).getTime() - new Date(b.scheduledAt!).getTime());
-
-                  return (
-                    <div className="mt-6 space-y-4">
-                      {activePublishJobId && publishResultVisible && (
-                        <section className="rounded-2xl border border-[#DBEAFE] bg-white p-4 shadow-sm sm:p-5">
-                          {(() => {
-                            const activeJob = jobs.find((job) => job.id === activePublishJobId);
-                            if (!activeJob) return null;
-                            return (
-                              <div className="flex items-center gap-3">
-                                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB]">
-                                  {publishResult === "PUBLISHED" ? <CheckCircle2 size={20} /> : publishResult === "FAILED" ? <CircleSlash2 size={20} /> : <Loader2 size={20} className="animate-spin" />}
-                                </span>
-                                <div className="min-w-0">
-                                  <p className="text-sm font-bold text-[#0F172A]">
-                                    {publishResult === "PUBLISHED" ? "انتشار با موفقیت انجام شد" : publishResult === "FAILED" ? "انتشار ناموفق بود" : "در حال انتشار..."}
-                                  </p>
-                                  <p className="mt-1 text-xs text-[#64748B]">
-                                    {publishResult === null
-                                      ? `در حال انتشار ${typeLabels[activeJob.type]} در اینستاگرام هستیم.`
-                                      : publishResult === "PUBLISHED"
-                                        ? `${typeLabels[activeJob.type]} با موفقیت منتشر شد. می‌توانید در منو → مدیریت پاسخ‌های خودکار آن را مشاهده و ویرایش کنید.`
-                                        : `${typeLabels[activeJob.type]} در اینستاگرام منتشر نشد.`}
-                                  </p>
-                                </div>
-                              </div>
-                            );
-                          })()}
-                        </section>
-                      )}
-
-                      {scheduledJobs.length > 0 && (
-                        <section className="rounded-2xl border border-[#DBEAFE] bg-white p-4 shadow-sm sm:p-5">
-                          <div className="mb-3 flex items-center gap-2">
-                            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#EFF6FF] text-[#2563EB]">
-                              <Clock3 size={17} className="animate-pulse" />
-                            </span>
-                            <div>
-                              <h2 className="text-sm font-bold text-[#0F172A]">وضعیت محتواهای زمان‌بندی‌شده</h2>
-                              <p className="mt-1 text-[11px] text-[#64748B]">محتوای منتظر انتشار، در حال پردازش و ناموفق در این بخش باقی می‌ماند.</p>
-                            </div>
-                          </div>
-                          <div className="space-y-2">
-                            {scheduledJobs.map((job) => (
-                              <div key={job.id} className="flex items-center justify-between gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3">
-                                <div className="flex min-w-0 flex-1 items-center gap-3">
-                                  {job.media[0]?.publicUrl ? (
-                                    <div className="h-14 w-11 shrink-0 overflow-hidden rounded-lg border border-[#E2E8F0] bg-white">
-                                      {job.media[0].type === "IMAGE" ? <img src={job.media[0].publicUrl} alt={typeLabels[job.type]} className="h-full w-full object-cover" /> : <video src={job.media[0].publicUrl} muted playsInline className="h-full w-full object-cover" />}
-                                    </div>
-                                  ) : null}
-                                  <div className="min-w-0">
-                                    <span className="text-sm font-bold text-[#0F172A]">{typeLabels[job.type]}</span>
-                                    <span className={["mr-2 text-xs font-semibold", job.status === "FAILED" ? "text-[#DC2626]" : job.status === "SCHEDULED" ? "text-[#2563EB]" : "text-[#D97706]"].join(" ")}>{statusLabels[job.status]}</span>
-                                    <p className="mt-1 text-xs text-[#64748B]">{formatScheduledLabel(new Date(job.scheduledAt!))}</p>
-                                    {job.status === "FAILED" && job.errorMessage && <p className="mt-2 text-xs leading-5 text-[#B91C1C]">{job.errorMessage}</p>}
-                                  </div>
-                                </div>
-                                {job.status === "SCHEDULED" ? <Link
-                                  href={`/dashboard/publishing/${job.id}`}
-                                  prefetch
-                                  onPointerEnter={() => router.prefetch(`/dashboard/publishing/${job.id}`)}
-                                  onFocus={() => router.prefetch(`/dashboard/publishing/${job.id}`)}
-                                  onTouchStart={() => router.prefetch(`/dashboard/publishing/${job.id}`)}
-                                  className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-[#BFDBFE] bg-white px-2.5 text-xs font-semibold text-[#2563EB] no-underline hover:bg-[#EFF6FF] sm:flex-none"
-                                  aria-label="ویرایش محتوا"
-                                ><Pencil size={14} /><span className="hidden sm:inline">ویرایش</span></Link> : <Link href={`/dashboard/publishing/${job.id}`} className="inline-flex h-9 shrink-0 items-center justify-center rounded-lg border border-[#E2E8F0] bg-white px-3 text-xs font-semibold text-[#475569] no-underline hover:bg-[#F8FAFC]">جزئیات</Link>}
-                              </div>
-                            ))}
-                          </div>
-                        </section>
-                      )}
-
-                    </div>
-                  );
                 })()}
 
               </section>
@@ -1612,13 +1562,13 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   <Button
                     type="button"
                     onClick={handleBackToTypeSelection}
-                    className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]"
+                    className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2F61FD]"
                   >
                     <ArrowRight size={15} strokeWidth={2} />
                     بازگشت
                   </Button>
                   {uploadedMedia.length > 0 && !uploading && (
-                    <Button type="button" disabled={type === "CAROUSEL" && uploadedMedia.length < 2} onClick={handleNextStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB] disabled:cursor-not-allowed disabled:opacity-40">
+                    <Button type="button" disabled={type === "CAROUSEL" && uploadedMedia.length < 2} onClick={handleNextStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2F61FD] disabled:cursor-not-allowed disabled:opacity-40">
                       مرحله بعد <ArrowLeft size={15} strokeWidth={2} />
                     </Button>
                   )}
@@ -1698,12 +1648,12 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                                     </span>
                                   ) : (
                                     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-[#64748B] ring-1 ring-black/5">
-                                      {row.status === "failed" ? <CircleSlash2 size={17} className="text-[#DC2626]" /> : row.status === "uploading" ? <Loader2 size={17} className="animate-spin text-[#2563EB]" /> : <Images size={17} />}
+                                      {row.status === "failed" ? <CircleSlash2 size={17} className="text-[#DC2626]" /> : row.status === "uploading" ? <Loader2 size={17} className="animate-spin text-[#2F61FD]" /> : <Images size={17} />}
                                     </span>
                                   )}
                                   <div className="min-w-0 flex-1">
                                     <div className="flex flex-wrap items-center gap-2">
-                                      <p className="max-w-full truncate text-xs font-semibold text-[#0F172A]" dir="auto">{row.fileName}</p>
+                                      <p className="max-w-full truncate text-xs font-semibold text-[#18233C]" dir="auto">{row.fileName}</p>
 
                                     </div>
                                     <p className={["mt-1 text-[11px] font-medium", row.status === "failed" ? "text-[#B91C1C]" : row.status === "success" ? "text-[#15803D]" : "text-[#64748B]"].join(" ")}>
@@ -1711,7 +1661,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                                     </p>
                                     {(row.status === "queued" || row.status === "uploading" || row.status === "failed") && (
                                       <div className={["mt-2 h-1.5 overflow-hidden rounded-full", row.status === "failed" ? "bg-[#FEE2E2]" : "bg-[#E2E8F0]"].join(" ")}>
-                                        <div className={["h-full rounded-full transition-[width] duration-150", row.status === "failed" ? "bg-[#DC2626]" : "bg-[#2563EB]"].join(" ")} style={{ width: `${Math.max(row.status === "failed" ? 3 : 0, Math.min(100, row.progress))}%` }} />
+                                        <div className={["h-full rounded-full transition-[width] duration-150", row.status === "failed" ? "bg-[#DC2626]" : "bg-[#2F61FD]"].join(" ")} style={{ width: `${Math.max(row.status === "failed" ? 3 : 0, Math.min(100, row.progress))}%` }} />
                                       </div>
                                     )}
                                     {row.error && <p className="mt-2 text-[11px] leading-5 text-[#B91C1C]">{row.error}</p>}
@@ -1748,18 +1698,18 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   <Button
                     type="button"
                     onClick={handlePreviousStep}
-                    className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]"
+                    className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2F61FD]"
                   >
                     <ArrowRight size={15} strokeWidth={2} />
                     بازگشت
                   </Button>
-                  <Button type="button" disabled={!caption.trim() || publishing} onClick={handleNextStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB] disabled:cursor-not-allowed disabled:opacity-40">مرحله بعد <ArrowLeft size={15} strokeWidth={2} /></Button>
+                  <Button type="button" disabled={!caption.trim() || publishing} onClick={handleNextStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2F61FD] disabled:cursor-not-allowed disabled:opacity-40">مرحله بعد <ArrowLeft size={15} strokeWidth={2} /></Button>
                 </div>
 
                 <section className="mx-auto w-full max-w-2xl rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
                   <div className="mb-4 flex items-center justify-between gap-3">
                     <div>
-                      <div className="flex items-center gap-2"><span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">۳</span><h2 className="text-sm font-bold text-[#0F172A]">کپشن</h2></div>
+                      <div className="flex items-center gap-2"><span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#2F61FD]/10 text-xs font-bold text-[#2F61FD]">۳</span><h2 className="text-sm font-bold text-[#18233C]">کپشن</h2></div>
                       <p className="mt-1.5 text-xs leading-5 text-[#64748B]">{`کپشن ${typeLabels[type]} را بنویس.`}</p>
                     </div>
                     <span className="text-[11px] text-[#64748B]">{toPersianDigits(caption.length)} / ۲۲۰۰</span>
@@ -1773,7 +1723,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                     autoCapitalize="sentences"
                     spellCheck
                     style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }}
-                    className="w-full resize-none rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10"
+                    className="w-full resize-none rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#18233C] outline-none focus:border-[#2F61FD] focus:bg-white focus:ring-2 focus:ring-[#2F61FD]/10"
                     placeholder={`کپشن ${typeLabels[type]} را بنویس...`}
                   />
                 </section>
@@ -1781,18 +1731,18 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             ) : type !== "STORY" && tagStepConfirmed && !automationChoiceStepStarted ? (
               <div className="mx-auto w-full max-w-3xl">
                 <div className="mb-5 flex items-center justify-between gap-3">
-                  <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
+                  <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2F61FD]">
                     <ArrowRight size={15} strokeWidth={2} />بازگشت
                   </Button>
-                  <Button type="button" onClick={() => { setAutomationChoiceStepStarted(true); setError(""); }} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
+                  <Button type="button" onClick={() => { setAutomationChoiceStepStarted(true); setError(""); }} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2F61FD]">
                     مرحله بعد <ArrowLeft size={15} strokeWidth={2} />
                   </Button>
                 </div>
                 <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
                   <div className="mb-5 flex items-start gap-3">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">۴</span>
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2F61FD]/10 text-xs font-bold text-[#2F61FD]">۴</span>
                     <div className="min-w-0">
-                      <h2 className="text-sm font-bold text-[#0F172A]">تگ کردن <span className="text-[#2563EB]">(اختیاری)</span></h2>
+                      <h2 className="text-sm font-bold text-[#18233C]">تگ کردن <span className="text-[#2F61FD]">(اختیاری)</span></h2>
                       <p className="mt-1 whitespace-nowrap text-[11px] leading-5 text-[#64748B]">در صورت نیاز، کاربرهای موردنظر را اضافه کن.</p>
                     </div>
                   </div>
@@ -1818,11 +1768,11 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                                 )}
                               </div>
                             ) : null}
-                            <span className={["flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", publishResult === "PUBLISHED" ? "bg-[#F0FDF4] text-[#16A34A]" : publishResult === "FAILED" ? "bg-[#FEF2F2] text-[#DC2626]" : "bg-[#EFF6FF] text-[#2563EB]"].join(" ")}>
+                            <span className={["flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", publishResult === "PUBLISHED" ? "bg-[#F0FDF4] text-[#16A34A]" : publishResult === "FAILED" ? "bg-[#FEF2F2] text-[#DC2626]" : "bg-[#EFF6FF] text-[#2F61FD]"].join(" ")}>
                               {publishResult === "PUBLISHED" ? <CheckCircle2 size={20} /> : publishResult === "FAILED" ? <CircleSlash2 size={20} /> : <Loader2 size={20} className="animate-spin" />}
                             </span>
                             <div className="min-w-0">
-                              <p className="text-sm font-bold text-[#0F172A]">{publishResult === "PUBLISHED" ? "انتشار با موفقیت انجام شد" : publishResult === "FAILED" ? "انتشار ناموفق بود" : "در حال انتشار..."}</p>
+                              <p className="text-sm font-bold text-[#18233C]">{publishResult === "PUBLISHED" ? "انتشار با موفقیت انجام شد" : publishResult === "FAILED" ? "انتشار ناموفق بود" : "در حال انتشار..."}</p>
                               <p className="mt-1 text-xs text-[#64748B]">{activeJob ? `در حال انتشار ${typeLabels[activeJob.type]} در اینستاگرام هستیم.` : "در حال پردازش محتوای شما هستیم."}</p>
                             </div>
                           </div>
@@ -1838,13 +1788,13 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                       return (
                         <div key={mediaKey} className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5 sm:p-4">
                           <div className="mb-2 flex items-center justify-between gap-2">
-                            <p className="text-xs font-bold text-[#0F172A]">{type === "CAROUSEL" ? `اسلاید ${toPersianDigits(index + 1)}` : typeLabels[type]}</p>
+                            <p className="text-xs font-bold text-[#18233C]">{type === "CAROUSEL" ? `اسلاید ${toPersianDigits(index + 1)}` : typeLabels[type]}</p>
                             <span className="rounded-full bg-white px-2 py-1 text-[10px] font-medium text-[#64748B] ring-1 ring-[#E2E8F0]">{toPersianDigits(tags.length)} تگ</span>
                           </div>
                           {tags.length > 0 && (
                             <div className="mb-2.5 flex flex-wrap gap-1.5">
                               {tags.map((username) => (
-                                <span key={username} className="inline-flex items-center gap-1 rounded-full bg-[#EFF6FF] px-2.5 py-1.5 text-[11px] font-semibold text-[#2563EB] ring-1 ring-[#DBEAFE]">
+                                <span key={username} className="inline-flex items-center gap-1 rounded-full bg-[#EFF6FF] px-2.5 py-1.5 text-[11px] font-semibold text-[#2F61FD] ring-1 ring-[#DBEAFE]">
                                   <span dir="ltr">@{username}</span>
                                   <button type="button" onClick={() => removeTagForMedia(mediaKey, username)} className="flex h-4 w-4 items-center justify-center rounded-full text-[#64748B] hover:bg-white hover:text-[#DC2626]" aria-label={`حذف تگ @${username}`}>
                                     <X size={11} />
@@ -1859,8 +1809,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                                 <MediaTile item={item} type="CAROUSEL" onRemove={() => void removeUploaded(item)} ready compact />
                               </div>
                             )}
-                            <input value={draft} onChange={(event) => handleTagInputChange(mediaKey, event.target.value)} onKeyDown={(event) => handleTagInputKeyDown(mediaKey, event)} placeholder="نام کاربر بدون @" maxLength={30} inputMode="text" autoCapitalize="none" spellCheck={false} className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-2.5 !text-base leading-5 text-[#0F172A] outline-none placeholder:text-xs placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
-                            <Button type="button" onClick={() => addTagForMedia(mediaKey)} disabled={!draft.trim()} className="shrink-0 rounded-lg !bg-[#2563EB] px-3.5 py-2.5 text-xs font-semibold text-white hover:!bg-[#1D4ED8] disabled:pointer-events-none disabled:cursor-not-allowed disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8] disabled:opacity-100 disabled:hover:!bg-[#E2E8F0]">افزودن</Button>
+                            <input value={draft} onChange={(event) => handleTagInputChange(mediaKey, event.target.value)} onKeyDown={(event) => handleTagInputKeyDown(mediaKey, event)} placeholder="نام کاربر بدون @" maxLength={30} inputMode="text" autoCapitalize="none" spellCheck={false} className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-2.5 !text-base leading-5 text-[#18233C] outline-none placeholder:text-xs placeholder:text-[#94A3B8] focus:border-[#2F61FD] focus:ring-2 focus:ring-[#2F61FD]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
+                            <Button type="button" onClick={() => addTagForMedia(mediaKey)} disabled={!draft.trim()} className="shrink-0 rounded-lg !bg-[#2F61FD] px-3.5 py-2.5 text-xs font-semibold text-white hover:!bg-[#1E4BD8] disabled:pointer-events-none disabled:cursor-not-allowed disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8] disabled:opacity-100 disabled:hover:!bg-[#E2E8F0]">افزودن</Button>
                           </div>
                         </div>
                       );
@@ -1874,25 +1824,25 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             ) : ((type !== "STORY" && tagStepConfirmed) || (type === "STORY" && captionStepConfirmed)) && (type === "STORY" || automationChoiceStepStarted) && !automationChoiceConfirmed ? (
               <div className="mx-auto w-full max-w-2xl">
                 <div className="mb-5 flex items-center justify-between gap-3">
-                  <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
+                  <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2F61FD]">
                     <ArrowRight size={15} strokeWidth={2} />بازگشت
                   </Button>
 
                 </div>
                 <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
                   <div className="mb-6 flex items-start gap-3">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">{type === "STORY" ? "۳" : "۵"}</span>
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2F61FD]/10 text-xs font-bold text-[#2F61FD]">{type === "STORY" ? "۳" : "۵"}</span>
                     <div className="min-w-0">
-                      <h2 className="text-sm font-bold text-[#0F172A]">پاسخ خودکار <span className="text-[#2563EB]">(اختیاری)</span></h2>
+                      <h2 className="text-sm font-bold text-[#18233C]">پاسخ خودکار <span className="text-[#2F61FD]">(اختیاری)</span></h2>
                       <p className="mt-1.5 text-xs leading-5 text-[#64748B]">آیا می‌خواهی برای این محتوا پاسخ خودکار تنظیم شود؟</p>
                     </div>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <button type="button" onClick={() => handleAutomationChoice(true)} className="group rounded-2xl border border-[#E2E8F0] bg-white p-4 text-right shadow-sm transition hover:border-[#BFDBFE] hover:bg-[#F8FBFF] active:scale-[0.99] sm:p-5">
                       <div className="flex items-start gap-3">
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB] transition group-hover:bg-[#DBEAFE]"><Send size={18} /></span>
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2F61FD] transition group-hover:bg-[#DBEAFE]"><Send size={18} /></span>
                         <div className="min-w-0">
-                          <p className="text-sm font-bold text-[#0F172A]">پاسخ خودکار می‌خواهم</p>
+                          <p className="text-sm font-bold text-[#18233C]">پاسخ خودکار می‌خواهم</p>
                           <p className="mt-1.5 text-[11px] leading-5 text-[#64748B]">برای این محتوا پاسخ خودکار تنظیم کن.</p>
                         </div>
                       </div>
@@ -1901,7 +1851,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                       <div className="flex items-start gap-3">
                         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F8FAFC] text-[#64748B] transition group-hover:bg-[#F1F5F9]"><ArrowLeft size={18} /></span>
                         <div className="min-w-0">
-                          <p className="text-sm font-bold text-[#0F172A]">بدون پاسخ خودکار</p>
+                          <p className="text-sm font-bold text-[#18233C]">بدون پاسخ خودکار</p>
                           <p className="mt-1.5 text-[11px] leading-5 text-[#64748B]">مستقیماً به مرحله انتشار برو.</p>
                         </div>
                       </div>
@@ -1912,11 +1862,11 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             ) : type === "STORY" && automationChoiceConfirmed && automationEnabled && !automationSetupConfirmed ? (
               <div className="mx-auto w-full max-w-2xl">
                 <div className="mb-5 flex items-center justify-between gap-3">
-                  <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
+                  <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2F61FD]">
                     <ArrowRight size={15} strokeWidth={2} />بازگشت
                   </Button>
                   {storyResponseSaved && !storyResponseEditing && (
-                    <Button type="button" onClick={() => { animateStepChange(() => { setAutomationSetupConfirmed(true); setError(""); }); }} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
+                    <Button type="button" onClick={() => { animateStepChange(() => { setAutomationSetupConfirmed(true); setError(""); }); }} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2F61FD]">
                       مرحله بعد <ArrowLeft size={15} strokeWidth={2} />
                     </Button>
                   )}
@@ -1924,21 +1874,21 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
                 <section className="space-y-5 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
                   <div className="flex items-start gap-3">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">۴</span>
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2F61FD]/10 text-xs font-bold text-[#2F61FD]">۴</span>
                     <div className="min-w-0">
-                      <h2 className="text-sm font-bold text-[#0F172A]">تنظیم پاسخ خودکار استوری</h2>
+                      <h2 className="text-sm font-bold text-[#18233C]">تنظیم پاسخ خودکار استوری</h2>
                       <p className="mt-1.5 text-xs leading-5 text-[#64748B]">کلمات فعال‌کننده و پاسخ Reply استوری را مشخص کن.</p>
                     </div>
                   </div>
 
                   <fieldset disabled={storyResponseSaved && !storyResponseEditing}>
                     <div>
-                      <label className="mb-2 block text-sm font-bold text-[#0F172A]">کلمات کلیدی Reply استوری</label>
+                      <label className="mb-2 block text-sm font-bold text-[#18233C]">کلمات کلیدی Reply استوری</label>
                       <p className="mb-3 text-xs leading-5 text-[#64748B]">با وارد شدن این کلمات در Reply استوری، پاسخ خودکار فعال می‌شود.</p>
                       {keywords.trim() && (
                         <div className="mb-3 flex flex-wrap gap-2">
                           {keywords.split(",").map((keyword) => keyword.trim()).filter(Boolean).map((keyword) => (
-                            <span key={keyword} className="inline-flex items-center gap-1.5 rounded-full bg-[#EFF6FF] px-3 py-1.5 text-xs font-semibold text-[#2563EB]">
+                            <span key={keyword} className="inline-flex items-center gap-1.5 rounded-full bg-[#EFF6FF] px-3 py-1.5 text-xs font-semibold text-[#2F61FD]">
                               <span>{keyword}</span>
                               <button type="button" onClick={() => { setKeywords(keywords.split(",").map(item => item.trim()).filter(item => item && item !== keyword).join(",")); if (storyResponseEditing) setStoryResponseDirty(true); }} aria-label={`حذف ${keyword}`} className="flex h-4 w-4 items-center justify-center rounded-full hover:bg-white"><X size={12} /></button>
                             </span>
@@ -1946,8 +1896,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                         </div>
                       )}
                       <div className="flex items-center gap-2">
-                        <input id="publishing-story-keyword" value={automationKeywordDraft} onChange={event => setAutomationKeywordDraft(event.target.value)} onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); const value = automationKeywordDraft.trim(); const current = keywords.split(",").map(item => item.trim()).filter(Boolean); if (value && !current.includes(value)) setKeywords(current.concat(value).join(",")); if (storyResponseEditing) setStoryResponseDirty(true); setAutomationKeywordDraft(""); } }} placeholder="مثلاً قیمت، اطلاعات" inputMode="text" className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-3 !text-base leading-5 text-[#0F172A] outline-none placeholder:text-xs placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
-                        <Button type="button" onClick={() => { const value = automationKeywordDraft.trim(); const current = keywords.split(",").map(item => item.trim()).filter(Boolean); if (value && !current.includes(value)) setKeywords(current.concat(value).join(",")); setAutomationKeywordDraft(""); }} disabled={!automationKeywordDraft.trim() || keywords.split(",").map(item => item.trim()).filter(Boolean).includes(automationKeywordDraft.trim())} className="min-h-11 shrink-0 rounded-lg !bg-[#2563EB] px-3.5 text-xs font-semibold text-white hover:!bg-[#1D4ED8] disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8]">افزودن</Button>
+                        <input id="publishing-story-keyword" value={automationKeywordDraft} onChange={event => setAutomationKeywordDraft(event.target.value)} onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); const value = automationKeywordDraft.trim(); const current = keywords.split(",").map(item => item.trim()).filter(Boolean); if (value && !current.includes(value)) setKeywords(current.concat(value).join(",")); if (storyResponseEditing) setStoryResponseDirty(true); setAutomationKeywordDraft(""); } }} placeholder="مثلاً قیمت، اطلاعات" inputMode="text" className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-3 !text-base leading-5 text-[#18233C] outline-none placeholder:text-xs placeholder:text-[#94A3B8] focus:border-[#2F61FD] focus:ring-2 focus:ring-[#2F61FD]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
+                        <Button type="button" onClick={() => { const value = automationKeywordDraft.trim(); const current = keywords.split(",").map(item => item.trim()).filter(Boolean); if (value && !current.includes(value)) setKeywords(current.concat(value).join(",")); setAutomationKeywordDraft(""); }} disabled={!automationKeywordDraft.trim() || keywords.split(",").map(item => item.trim()).filter(Boolean).includes(automationKeywordDraft.trim())} className="min-h-11 shrink-0 rounded-lg !bg-[#2F61FD] px-3.5 text-xs font-semibold text-white hover:!bg-[#1E4BD8] disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8]">افزودن</Button>
                       </div>
                     </div>
                   </fieldset>
@@ -1999,10 +1949,10 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                                 }
                               }}
                               disabled={!messages[0]?.quickReplies?.some((reply) => reply.isExit) && (messages[0]?.quickReplies?.length ?? 0) >= 13}
-                              className="mt-0.5 h-4 w-4 accent-[#2563EB]"
+                              className="mt-0.5 h-4 w-4 accent-[#2F61FD]"
                             />
                             <span>
-                              <span className="block text-sm font-bold text-[#0F172A]">خروج از فرم <span className="font-medium text-[#2563EB]">(اختیاری)</span></span>
+                              <span className="block text-sm font-bold text-[#18233C]">خروج از فرم <span className="font-medium text-[#2F61FD]">(اختیاری)</span></span>
                               <span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال‌سازی، کاربر با این گزینه از شاخه فرم خارج می‌شود.</span>
                             </span>
                           </label>
@@ -2010,7 +1960,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                           {messages[0]?.quickReplies?.find((reply) => reply.isExit) && (
                             <div className="mt-3 space-y-3">
                               <div>
-                                <label className="mb-2 block text-xs font-bold text-[#0F172A]">متن دکمه خروج</label>
+                                <label className="mb-2 block text-xs font-bold text-[#18233C]">متن دکمه خروج</label>
                                 <input
                                   value={messages[0]?.quickReplies?.find((reply) => reply.isExit)?.title ?? ""}
                                   maxLength={20}
@@ -2019,12 +1969,12 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                                     if (!exitId) return;
                                     updateMessage(0, { quickReplies: (messages[0]?.quickReplies ?? []).map((reply) => reply.id === exitId ? { ...reply, title: event.target.value } : reply) });
                                   }}
-                                  className="w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10"
+                                  className="w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base text-[#18233C] outline-none focus:border-[#2F61FD] focus:bg-white focus:ring-2 focus:ring-[#2F61FD]/10"
                                   style={{ fontSize: "16px", WebkitTextSizeAdjust: "100%" }}
                                 />
                               </div>
                               <div>
-                                <label className="mb-2 block text-xs font-bold text-[#0F172A]">متن خروج از فرم</label>
+                                <label className="mb-2 block text-xs font-bold text-[#18233C]">متن خروج از فرم</label>
                                 <textarea
                                   value={messages[0]?.quickReplies?.find((reply) => reply.isExit)?.destinationText ?? ""}
                                   rows={3}
@@ -2034,7 +1984,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                                     if (!exitId) return;
                                     updateMessage(0, { quickReplies: (messages[0]?.quickReplies ?? []).map((reply) => reply.id === exitId ? { ...reply, destinationText: event.target.value } : reply) });
                                   }}
-                                  className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10"
+                                  className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#18233C] outline-none focus:border-[#2F61FD] focus:bg-white focus:ring-2 focus:ring-[#2F61FD]/10"
                                   style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }}
                                 />
                               </div>
@@ -2045,19 +1995,19 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
                       <div className="rounded-xl border border-[#E2E8F0] bg-white p-3.5">
                         <label className="flex cursor-pointer items-start gap-3">
-                          <input type="checkbox" checked={likeStoryReply} onChange={event => { setLikeStoryReply(event.target.checked); if (storyResponseEditing) setStoryResponseDirty(true); }} className="mt-0.5 h-4 w-4 accent-[#2563EB]" />
-                          <span><span className="block text-sm font-bold text-[#0F172A]">لایک ریپلای <span className="font-medium text-[#2563EB]">(اختیاری)</span></span><span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، Reply استوری کاربر لایک می‌شود.</span></span>
+                          <input type="checkbox" checked={likeStoryReply} onChange={event => { setLikeStoryReply(event.target.checked); if (storyResponseEditing) setStoryResponseDirty(true); }} className="mt-0.5 h-4 w-4 accent-[#2F61FD]" />
+                          <span><span className="block text-sm font-bold text-[#18233C]">لایک ریپلای <span className="font-medium text-[#2F61FD]">(اختیاری)</span></span><span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، Reply استوری کاربر لایک می‌شود.</span></span>
                         </label>
                       </div>
 
                       <div className="rounded-xl border border-[#E2E8F0] bg-white p-3.5">
                         <label className="flex cursor-pointer items-start gap-3">
-                          <input type="checkbox" checked={requireFollow} onChange={event => { setRequireFollow(event.target.checked); if (storyResponseEditing) setStoryResponseDirty(true); }} className="mt-0.5 h-4 w-4 accent-[#2563EB]" />
-                          <span><span className="block text-sm font-bold text-[#0F172A]">اجبار به فالو <span className="font-medium text-[#2563EB]">(اختیاری)</span></span><span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، کاربر باید پیج را فالو کرده باشد تا پاسخ را دریافت کند.</span></span>
+                          <input type="checkbox" checked={requireFollow} onChange={event => { setRequireFollow(event.target.checked); if (storyResponseEditing) setStoryResponseDirty(true); }} className="mt-0.5 h-4 w-4 accent-[#2F61FD]" />
+                          <span><span className="block text-sm font-bold text-[#18233C]">اجبار به فالو <span className="font-medium text-[#2F61FD]">(اختیاری)</span></span><span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، کاربر باید پیج را فالو کرده باشد تا پاسخ را دریافت کند.</span></span>
                         </label>
                         {requireFollow && <div className="mt-2.5">
-                          <label htmlFor="publishing-follow-gate-text" className="mb-2 block text-sm font-bold text-[#0F172A]">متن درخواست فالو</label>
-                          <textarea id="publishing-follow-gate-text" value={followGateText} onChange={event => { setFollowGateText(event.target.value); if (storyResponseEditing) setStoryResponseDirty(true); }} rows={2} maxLength={500} inputMode="text" placeholder="مثلاً برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none placeholder:text-xs focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
+                          <label htmlFor="publishing-follow-gate-text" className="mb-2 block text-sm font-bold text-[#18233C]">متن درخواست فالو</label>
+                          <textarea id="publishing-follow-gate-text" value={followGateText} onChange={event => { setFollowGateText(event.target.value); if (storyResponseEditing) setStoryResponseDirty(true); }} rows={2} maxLength={500} inputMode="text" placeholder="مثلاً برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#18233C] outline-none placeholder:text-xs focus:border-[#2F61FD] focus:bg-white focus:ring-2 focus:ring-[#2F61FD]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
                         </div>}
                       </div>
                     </section>
@@ -2067,7 +2017,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
                   {(!storyResponseSaved || storyResponseEditing) && (
                     <div className="border-t border-[#E2E8F0] pt-4">
-                      <Button type="button" onClick={() => { void storyAutomationSetupRef.current?.saveAndContinue(); }} disabled={!keywords.trim() || (messages[0]?.messageType === "TEXT" && !messages[0]?.text.trim()) || (storyResponseEditing && !storyResponseDirty)} className="w-full min-h-11 rounded-xl bg-[#2563EB] px-4 text-sm font-bold text-white hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-40">
+                      <Button type="button" onClick={() => { void storyAutomationSetupRef.current?.saveAndContinue(); }} disabled={!keywords.trim() || (messages[0]?.messageType === "TEXT" && !messages[0]?.text.trim()) || (storyResponseEditing && !storyResponseDirty)} className="w-full min-h-11 rounded-xl bg-[#2F61FD] px-4 text-sm font-bold text-white hover:bg-[#1E4BD8] disabled:cursor-not-allowed disabled:opacity-40">
                         ذخیره {messages[0]?.messageType === "FORM" ? "فرم" : messages[0]?.messageType === "SHOWCASE" ? "ویترین" : messages[0]?.messageType === "TEXT" ? "متن" : messages[0]?.messageType === "IMAGE" ? "عکس" : messages[0]?.messageType === "VIDEO" ? "فیلم" : "وویس"} و ادامه
                       </Button>
                     </div>
@@ -2075,7 +2025,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
                   {storyResponseSaved && !storyResponseEditing && (
                     <div className="flex items-center justify-center gap-2 border-t border-[#E2E8F0] pt-4">
-                      <Button type="button" onClick={handleEditStoryResponse} className="min-h-10 flex-1 rounded-xl border border-[#BFDBFE] bg-[#EFF6FF] px-4 text-sm font-bold text-[#2563EB] hover:bg-[#DBEAFE]">
+                      <Button type="button" onClick={handleEditStoryResponse} className="min-h-10 flex-1 rounded-xl border border-[#BFDBFE] bg-[#EFF6FF] px-4 text-sm font-bold text-[#2F61FD] hover:bg-[#DBEAFE]">
                         <span dir="ltr" className="inline-flex items-center justify-center gap-1.5"><Pencil size={15} /><span dir="rtl">ویرایش</span></span>
                       </Button>
                       <Button type="button" variant="destructive" onClick={() => void handleDeleteStoryResponse()} className="min-h-10 flex-1 !rounded-xl !border !border-[#FECACA] !bg-[#FEF2F2] !px-4 !text-sm !font-bold !text-[#DC2626] hover:!bg-[#FEE2E2]">
@@ -2090,52 +2040,52 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             ) : type !== "STORY" && automationChoiceConfirmed && automationEnabled && !automationSetupConfirmed ? (
               <div className="mx-auto w-full max-w-2xl">
                 <div className="mb-5 flex items-center justify-between gap-3">
-                  <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
+                  <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2F61FD]">
                     <ArrowRight size={15} strokeWidth={2} />بازگشت
                   </Button>
 
                 </div>
                 <section className="space-y-5 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
                   <div className="flex items-start gap-3">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">۶</span>
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2F61FD]/10 text-xs font-bold text-[#2F61FD]">۶</span>
                     <div className="min-w-0">
-                      <h2 className="text-sm font-bold text-[#0F172A]">تنظیم پاسخ خودکار</h2>
+                      <h2 className="text-sm font-bold text-[#18233C]">تنظیم پاسخ خودکار</h2>
                       <p className="mt-1.5 text-xs leading-5 text-[#64748B]">کلمات فعال‌کننده و متن پیام دایرکت را مشخص کن.</p>
                     </div>
                   </div>
 
                   <div>
-                    <label htmlFor="publishing-auto-keyword" className="mb-2 block text-sm font-bold text-[#0F172A]">کلمات کلیدی</label>
+                    <label htmlFor="publishing-auto-keyword" className="mb-2 block text-sm font-bold text-[#18233C]">کلمات کلیدی</label>
                     <p className="mb-3 text-xs leading-5 text-[#64748B]">با وارد شدن این کلمات در کامنت، پاسخ خودکار فعال می‌شود.</p>
-                    {automationKeywords.length > 0 && <div className="mb-3 flex flex-wrap gap-2">{automationKeywords.map((keyword) => <span key={keyword} className="inline-flex items-center gap-1.5 rounded-full bg-[#EFF6FF] px-3 py-1.5 text-xs font-semibold text-[#2563EB]"><span>{keyword}</span><button type="button" onClick={() => setAutomationKeywords(current => current.filter(item => item !== keyword))} aria-label={`حذف ${keyword}`} className="flex h-4 w-4 items-center justify-center rounded-full hover:bg-white"><X size={12} /></button></span>)}</div>}
+                    {automationKeywords.length > 0 && <div className="mb-3 flex flex-wrap gap-2">{automationKeywords.map((keyword) => <span key={keyword} className="inline-flex items-center gap-1.5 rounded-full bg-[#EFF6FF] px-3 py-1.5 text-xs font-semibold text-[#2F61FD]"><span>{keyword}</span><button type="button" onClick={() => setAutomationKeywords(current => current.filter(item => item !== keyword))} aria-label={`حذف ${keyword}`} className="flex h-4 w-4 items-center justify-center rounded-full hover:bg-white"><X size={12} /></button></span>)}</div>}
                     <div className="flex items-center gap-2">
-                      <input id="publishing-auto-keyword" value={automationKeywordDraft} onChange={event => setAutomationKeywordDraft(event.target.value)} onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); const value = automationKeywordDraft.trim(); if (value && !automationKeywords.includes(value)) setAutomationKeywords(current => [...current, value]); setAutomationKeywordDraft(""); } }} placeholder="مثلاً قیمت، اطلاعات" inputMode="text" className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-3 !text-base leading-5 text-[#0F172A] outline-none placeholder:text-xs placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
-                      <Button type="button" onClick={() => { const value = automationKeywordDraft.trim(); if (value && !automationKeywords.includes(value)) setAutomationKeywords(current => [...current, value]); setAutomationKeywordDraft(""); }} disabled={!automationKeywordDraft.trim() || automationKeywords.includes(automationKeywordDraft.trim())} className="min-h-11 shrink-0 rounded-lg !bg-[#2563EB] px-3.5 text-xs font-semibold text-white hover:!bg-[#1D4ED8] disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8]">افزودن</Button>
+                      <input id="publishing-auto-keyword" value={automationKeywordDraft} onChange={event => setAutomationKeywordDraft(event.target.value)} onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); const value = automationKeywordDraft.trim(); if (value && !automationKeywords.includes(value)) setAutomationKeywords(current => [...current, value]); setAutomationKeywordDraft(""); } }} placeholder="مثلاً قیمت، اطلاعات" inputMode="text" className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-3 !text-base leading-5 text-[#18233C] outline-none placeholder:text-xs placeholder:text-[#94A3B8] focus:border-[#2F61FD] focus:ring-2 focus:ring-[#2F61FD]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
+                      <Button type="button" onClick={() => { const value = automationKeywordDraft.trim(); if (value && !automationKeywords.includes(value)) setAutomationKeywords(current => [...current, value]); setAutomationKeywordDraft(""); }} disabled={!automationKeywordDraft.trim() || automationKeywords.includes(automationKeywordDraft.trim())} className="min-h-11 shrink-0 rounded-lg !bg-[#2F61FD] px-3.5 text-xs font-semibold text-white hover:!bg-[#1E4BD8] disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8]">افزودن</Button>
                     </div>
                   </div>
 
                   <div className="border-t border-[#E2E8F0] pt-5">
-                    <label htmlFor="publishing-comment-reply" className="mb-2 block text-sm font-bold text-[#0F172A]">متن ارسالی در کامنت</label>
-                    <textarea id="publishing-comment-reply" value={publishingCommentReplyText} onChange={event => setPublishingCommentReplyText(event.target.value)} rows={3} maxLength={2000} inputMode="text" placeholder="پاسخی که زیر کامنت کاربر منتشر می‌شود بنویس..." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none placeholder:text-xs focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
+                    <label htmlFor="publishing-comment-reply" className="mb-2 block text-sm font-bold text-[#18233C]">متن ارسالی در کامنت</label>
+                    <textarea id="publishing-comment-reply" value={publishingCommentReplyText} onChange={event => setPublishingCommentReplyText(event.target.value)} rows={3} maxLength={2000} inputMode="text" placeholder="پاسخی که زیر کامنت کاربر منتشر می‌شود بنویس..." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#18233C] outline-none placeholder:text-xs focus:border-[#2F61FD] focus:bg-white focus:ring-2 focus:ring-[#2F61FD]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
                   </div>
 
                   <div className="border-t border-[#E2E8F0] pt-5">
-                    <label htmlFor="publishing-direct-message" className="mb-2 block text-sm font-bold text-[#0F172A]">متن ارسالی در دایرکت <span className="font-medium text-[#2563EB]">(اختیاری)</span></label>
-                    <textarea id="publishing-direct-message" value={directMessageText} onChange={event => setDirectMessageText(event.target.value)} rows={4} maxLength={2000} inputMode="text" placeholder="متن پیامی را که می‌خواهی در دایرکت ارسال شود بنویس..." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none placeholder:text-xs focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
+                    <label htmlFor="publishing-direct-message" className="mb-2 block text-sm font-bold text-[#18233C]">متن ارسالی در دایرکت <span className="font-medium text-[#2F61FD]">(اختیاری)</span></label>
+                    <textarea id="publishing-direct-message" value={directMessageText} onChange={event => setDirectMessageText(event.target.value)} rows={4} maxLength={2000} inputMode="text" placeholder="متن پیامی را که می‌خواهی در دایرکت ارسال شود بنویس..." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#18233C] outline-none placeholder:text-xs focus:border-[#2F61FD] focus:bg-white focus:ring-2 focus:ring-[#2F61FD]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
                   </div>
 
                   <div className="border-t border-[#E2E8F0] pt-5">
                     <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5">
-                      <input type="checkbox" checked={requireFollow} onChange={event => setRequireFollow(event.target.checked)} className="mt-0.5 h-4 w-4 accent-[#2563EB]" />
-                      <span><span className="block text-sm font-bold text-[#0F172A]">اجبار به فالو <span className="font-medium text-[#2563EB]">(اختیاری)</span></span><span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، کاربر باید پیج را فالو کرده باشد تا پاسخ را دریافت کند.</span></span>
+                      <input type="checkbox" checked={requireFollow} onChange={event => setRequireFollow(event.target.checked)} className="mt-0.5 h-4 w-4 accent-[#2F61FD]" />
+                      <span><span className="block text-sm font-bold text-[#18233C]">اجبار به فالو <span className="font-medium text-[#2F61FD]">(اختیاری)</span></span><span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، کاربر باید پیج را فالو کرده باشد تا پاسخ را دریافت کند.</span></span>
                     </label>
                     {requireFollow && <div className="mt-2.5">
-                      <label htmlFor="publishing-follow-gate-text" className="mb-2 block text-sm font-bold text-[#0F172A]">متن درخواست فالو</label>
-                      <textarea id="publishing-follow-gate-text" value={followGateText} onChange={event => setFollowGateText(event.target.value)} rows={2} maxLength={500} inputMode="text" placeholder="مثلاً برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none placeholder:text-xs focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
+                      <label htmlFor="publishing-follow-gate-text" className="mb-2 block text-sm font-bold text-[#18233C]">متن درخواست فالو</label>
+                      <textarea id="publishing-follow-gate-text" value={followGateText} onChange={event => setFollowGateText(event.target.value)} rows={2} maxLength={500} inputMode="text" placeholder="مثلاً برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#18233C] outline-none placeholder:text-xs focus:border-[#2F61FD] focus:bg-white focus:ring-2 focus:ring-[#2F61FD]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
                     </div>}
                   </div>
                   <div className="border-t border-[#E2E8F0] pt-4">
-                    <Button type="button" onClick={() => { if (!automationKeywords.length || !publishingCommentReplyText.trim()) return; setAutomationSetupConfirmed(true); setError(""); }} disabled={automationKeywords.length === 0 || !publishingCommentReplyText.trim()} className="w-full min-h-11 rounded-xl bg-[#2563EB] px-4 text-sm font-bold text-white hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-40">ذخیره متن و ادامه</Button>
+                    <Button type="button" onClick={() => { if (!automationKeywords.length || !publishingCommentReplyText.trim()) return; setAutomationSetupConfirmed(true); setError(""); }} disabled={automationKeywords.length === 0 || !publishingCommentReplyText.trim()} className="w-full min-h-11 rounded-xl bg-[#2F61FD] px-4 text-sm font-bold text-white hover:bg-[#1E4BD8] disabled:cursor-not-allowed disabled:opacity-40">ذخیره متن و ادامه</Button>
                   </div>
 
                   {error && <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-5 text-[#B91C1C]" role="alert">{error}</div>}
@@ -2144,22 +2094,22 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             ) : ((type !== "STORY" && automationChoiceConfirmed && (!automationEnabled || automationSetupConfirmed)) || (type === "STORY" && automationChoiceConfirmed && (!automationEnabled || automationSetupConfirmed))) ? (
               <div className="mx-auto w-full max-w-2xl">
                 <div className="mb-5 flex items-center justify-between gap-3">
-                  <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]">
+                  <Button type="button" onClick={handlePreviousStep} className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2F61FD]">
                     <ArrowRight size={15} strokeWidth={2} />بازگشت
                   </Button>
                 </div>
                 <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
                   <div className="mb-6 flex items-start gap-3">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]">{type === "STORY" ? (automationEnabled ? "۵" : "۴") : (automationEnabled ? "۷" : "۶")}</span>
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2F61FD]/10 text-xs font-bold text-[#2F61FD]">{type === "STORY" ? (automationEnabled ? "۵" : "۴") : (automationEnabled ? "۷" : "۶")}</span>
                     <div className="min-w-0">
-                      <h2 className="text-sm font-bold text-[#0F172A]">زمان انتشار</h2>
+                      <h2 className="text-sm font-bold text-[#18233C]">زمان انتشار</h2>
                       <p className="mt-1.5 text-xs leading-5 text-[#64748B]">زمان انتشار این {typeLabels[type]} را انتخاب کن.</p>
                     </div>
                   </div>
 
                   <div className="space-y-3">
                     <div className="flex flex-col gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5 sm:flex-row sm:items-center">
-                      <Button type="button" disabled={!publishNow} onClick={() => void createJob(true)} className="min-h-11 w-full shrink-0 whitespace-nowrap rounded-xl !bg-[#2563EB] px-4 text-sm font-semibold !text-white hover:!bg-[#1D4ED8] active:!bg-[#1D4ED8] active:!text-white focus:!bg-[#2563EB] focus:!text-white focus-visible:!bg-[#2563EB] focus-visible:!text-white disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-100 disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8] sm:flex-1">
+                      <Button type="button" disabled={!publishNow} onClick={() => void createJob(true)} className="min-h-11 w-full shrink-0 whitespace-nowrap rounded-xl !bg-[#2F61FD] px-4 text-sm font-semibold !text-white hover:!bg-[#1E4BD8] active:!bg-[#1E4BD8] active:!text-white focus:!bg-[#2F61FD] focus:!text-white focus-visible:!bg-[#2F61FD] focus-visible:!text-white disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-100 disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8] sm:flex-1">
                         <span dir="ltr" className="inline-flex flex-row items-center gap-2"><Send size={17} /><span dir="rtl">انتشار {typeLabels[type]} هم‌اکنون</span></span>
                       </Button>
                       <label className="flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl px-2 text-xs font-semibold text-[#334155]">
@@ -2172,7 +2122,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                             setStage6Minute(null);
                           }
                           setError("");
-                        }} className="h-4 w-4 accent-[#2563EB]" />
+                        }} className="h-4 w-4 accent-[#2F61FD]" />
                         <span className="whitespace-nowrap">انتشار در زمان دلخواه</span>
                       </label>
                     </div>
@@ -2180,7 +2130,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                     {!publishNow && (
                       <div className="mt-3 rounded-xl border border-[#E2E8F0] bg-white p-4 sm:p-5">
                         <div className="mb-4">
-                          <p className="text-sm font-bold text-[#0F172A]">انتخاب زمان دقیق</p>
+                          <p className="text-sm font-bold text-[#18233C]">انتخاب زمان دقیق</p>
                           <p className="mt-1 text-[11px] leading-5 text-[#64748B]">تاریخ انتشار را انتخاب کن.</p>
                         </div>
 
@@ -2203,13 +2153,13 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                                   }
                                   setError("");
                                 }}
-                                className={["relative min-h-24 overflow-hidden rounded-2xl border p-3.5 text-right transition-all", selected ? "border-[#2563EB] bg-[#EFF6FF] shadow-sm ring-2 ring-[#2563EB]/10" : "border-[#E2E8F0] bg-white hover:border-[#BFDBFE] hover:bg-[#F8FAFC]"].join(" ")}
+                                className={["relative min-h-24 overflow-hidden rounded-2xl border p-3.5 text-right transition-all", selected ? "border-[#2F61FD] bg-[#EFF6FF] shadow-sm ring-2 ring-[#2F61FD]/10" : "border-[#E2E8F0] bg-white hover:border-[#BFDBFE] hover:bg-[#F8FAFC]"].join(" ")}
                               >
                                 <span className="absolute right-3.5 top-3.5 text-[11px] font-semibold text-[#64748B]">{getJalaliWeekday(date)}</span>
-                                <span className="absolute left-3.5 top-3.5 text-[10px] font-semibold text-[#2563EB]">{label}</span>
-                                <div className="mt-5 text-center text-base font-bold text-[#0F172A]">{toPersianDigits(date.day)} {jalaliMonths[date.month - 1]}</div>
+                                <span className="absolute left-3.5 top-3.5 text-[10px] font-semibold text-[#2F61FD]">{label}</span>
+                                <div className="mt-5 text-center text-base font-bold text-[#18233C]">{toPersianDigits(date.day)} {jalaliMonths[date.month - 1]}</div>
                                 <div className="mt-2 text-center text-[10px] font-medium text-[#64748B]">{toPersianDigits(date.year)}</div>
-                                {selected && <span className="absolute bottom-2.5 left-2.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#2563EB] text-[10px] font-bold text-white">✓</span>}
+                                {selected && <span className="absolute bottom-2.5 left-2.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#2F61FD] text-[10px] font-bold text-white">✓</span>}
                               </button>
                             );
                           })}
@@ -2217,7 +2167,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
                         <div className="mt-6 border-t border-[#E2E8F0] pt-5">
                           <div className="mb-3">
-                            <p className="text-sm font-bold text-[#0F172A]">ساعت انتشار</p>
+                            <p className="text-sm font-bold text-[#18233C]">ساعت انتشار</p>
                           </div>
 
                           <div dir="ltr" className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
@@ -2265,7 +2215,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                         </div>
 
                         <div className="mt-5 border-t border-[#E2E8F0] pt-5">
-                          <Button type="button" onClick={() => void createJob(false)} disabled={publishing || !stage6Date || stage6Hour === null || stage6Minute === null} className="min-h-11 w-full rounded-xl !bg-[#2563EB] px-4 text-sm font-semibold !text-white shadow-none hover:!bg-[#1D4ED8] hover:!text-white hover:shadow-none active:!bg-[#1D4ED8] active:!text-white active:shadow-none focus:!bg-[#2563EB] focus:!text-white focus:shadow-none focus-visible:!bg-[#2563EB] focus-visible:!text-white focus-visible:shadow-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-100 disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8]">
+                          <Button type="button" onClick={() => void createJob(false)} disabled={publishing || !stage6Date || stage6Hour === null || stage6Minute === null} className="min-h-11 w-full rounded-xl !bg-[#2F61FD] px-4 text-sm font-semibold !text-white shadow-none hover:!bg-[#1E4BD8] hover:!text-white hover:shadow-none active:!bg-[#1E4BD8] active:!text-white active:shadow-none focus:!bg-[#2F61FD] focus:!text-white focus:shadow-none focus-visible:!bg-[#2F61FD] focus-visible:!text-white focus-visible:shadow-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-100 disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8]">
                             <span dir="ltr" className="inline-flex flex-row items-center gap-2">{publishing ? <Loader2 size={17} className="animate-spin" /> : <CalendarClock size={17} />}<span dir="rtl">انتشار در زمان انتخاب‌شده</span></span>
                           </Button>
                         </div>
@@ -2279,6 +2229,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             ) : null
             }
           </div>
+          </>
+          )}
         </div>
       </div>
     </>
