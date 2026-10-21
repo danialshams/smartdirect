@@ -12,9 +12,9 @@ const workflow = src("app/dashboard/publishing/page.tsx");
 assert.match(wizard, /activeTab\s*===\s*"queue"/, "Publishing must have a separate queue tab");
 assert.match(wizard, /<PublishingQueue/, "Publishing must render the queue");
 assert.match(wizard, /<PublishingWizardProgress/, "Publishing must render four-stage progress");
-assert.ok(wizard.includes("چه محتوایی می‌خواهید منتشر کنید؟"), "Compact content selector is missing");
+assert.ok(wizard.includes("نوع محتوای جدید"), "Compact, contained content selector is missing");
 assert.ok(wizard.includes("تگ کردن کاربران") && wizard.includes("showTags &&"), "Optional tags accordion is missing");
-assert.ok(wizard.includes("ادامه به پاسخ خودکار"), "Details must advance to automation");
+assert.ok(wizard.includes("canNavigate={canNavigateStep}") && wizard.includes("caption.trim()"), "Details should unlock next step via progress instead of a next button");
 assert.ok(wizard.includes('name="publishing-mode"') && wizard.includes("زمان‌بندی انتشار"), "Explicit publishing mode radio choice required");
 assert.ok(wizard.includes("onClick={()=>void createJob(publishNow)}"), "Both publishing modes must use the existing engine");
 assert.ok(wizard.includes('const selectedScheduleDate = !publishNow ? stage6Date : scheduledDate;'), "Story scheduling must honor the chosen date");
@@ -33,4 +33,23 @@ assert.ok(wizard.includes("taggedUsersByMedia[item.storageKey]"), "Per-media tag
 assert.ok(workflow.includes("PublishingWithTags"), "Existing published route must still resolve");
 assert.ok(existsSync("app/dashboard/publishing/loading.tsx"), "Create route skeleton missing");
 assert.ok(src("app/dashboard/publishing/[id]/loading.tsx").includes('view="editor"'), "Editor route skeleton missing");
+// Version 2: all publishing steps use one actionable progress bar and current palette.
+const palette = src("lib/design-system/palette.ts");
+const storyResponse = src(root+"PublishingStoryAutomationSetup.tsx");
+assert.ok(palette.includes("publishing: {") && palette.includes("pulseGlow") && palette.includes("completedSoft"), "Publishing colors must be documented centrally in Daira palette");
+assert.ok(progress.includes("furthestStep") && progress.includes("canNavigate"), "Wizard must distinguish completion from revisited current step and allow navigation");
+assert.ok(progress.includes("Check size={19}") && progress.includes("bg-[#16A34A]"), "Finished stages should render centered green check marks");
+assert.ok(progress.includes("motion-safe:animate-pulse") && progress.includes("aria-current"), "Active stage must have accessible pulse");
+assert.ok(progress.includes('skipDetails?"grid-cols-3":"grid-cols-4"'), "Story must use three real steps, not a placeholder details label");
+assert.ok(wizard.includes("storyCreateMode") && storyResponse.includes("storyCreateMode ?"), "Publishing story response type picker must reuse the existing new story creator UI");
+assert.ok(wizard.includes("رسانه آماده است") && wizard.includes("max-w-[250px]"), "Uploaded media preview must have a large, polished media studio");
+assert.ok(wizard.includes('className="rounded-[24px] border border-[#DFE7F3] bg-white p-4'), "Upload studio must retain an aligned section shell even after upload");
+assert.ok(wizard.includes('<SectionHeader n="۱"') && wizard.includes('<SectionHeader n="۴"'), "Upload and publish titles must live inside section headers");
+assert.ok(wizard.includes("activeTab") && wizard.includes("uploading") && wizard.includes("!publishNow"), "Publishing queue, uploads and scheduling states must remain intact");
+assert.ok(wizard.includes('!captionStepConfirmed || uploadedMedia.length === 0'), "Revisiting the story media step should not lead to a blank stage");
+for (const forbidden of ["بازگشت", "مرحله قبل", "مرحله بعد", "تغییر نوع", "بدون جزئیات"]) {
+  assert.ok(!wizard.includes(forbidden) && !progress.includes(forbidden), "Redundant wizard navigation/labels remain: "+forbidden);
+}
+assert.ok(!wizard.includes("function handlePreviousStep(") && !wizard.includes("function handleNextStep("), "Legacy step control logic should not remain");
+
 console.log("PUBLISHING_DAIRA_UI_REGRESSION_OK");
