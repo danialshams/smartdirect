@@ -609,10 +609,10 @@ export default function InsightsDashboard() {
                 onSelect={pickDate}
                 defaultMonth={(calendarOpen === "from" ? draftFrom : draftTo) ?? today}
                 startMonth={calendarOpen === "to" ? (draftFrom ?? minDate) : minDate}
-                endMonth={calendarOpen === "from" && draftTo ? draftTo : today}
+                endMonth={today}
                 disabled={{
                   before: calendarOpen === "to" ? (draftFrom ?? minDate) : minDate,
-                  after: calendarOpen === "from" && draftTo ? draftTo : today,
+                  after: today,
                 }} />
             </div>
           </section>
