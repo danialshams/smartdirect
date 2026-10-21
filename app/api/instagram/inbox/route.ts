@@ -470,6 +470,7 @@ export async function GET(request: NextRequest) {
 
     const accountId = searchParams.get("accountId");
     const conversationId = searchParams.get("conversationId");
+    const conversationSearch = searchParams.get("conversationSearch")?.trim().slice(0, 100) || "";
     const before = searchParams.get("before");
     const focusId = searchParams.get("focusId");
     const messageSearch = searchParams.get("messageSearch")?.trim().slice(0, 100) || "";
@@ -624,6 +625,13 @@ export async function GET(request: NextRequest) {
       where: {
         userId: session.user.id,
         instagramAccountId: account.id,
+        ...(conversationSearch ? {
+          OR: [
+            { participantUsername: { contains: conversationSearch, mode: "insensitive" as const } },
+            { participantName: { contains: conversationSearch, mode: "insensitive" as const } },
+            { messages: { some: { text: { contains: conversationSearch, mode: "insensitive" as const } } } },
+          ],
+        } : {}),
       },
       orderBy: [
         {
