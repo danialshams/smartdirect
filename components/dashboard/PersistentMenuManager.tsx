@@ -2,12 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Check, CircleCheck, ExternalLink, Lightbulb, Link2,
+  Check, ExternalLink, Lightbulb, Link2,
   Menu, MessageSquareText, Pencil, Plus, Trash2, X,
 } from "lucide-react";
 import { dairaPalette } from "../../lib/design-system/palette";
 import EntryPointFlowBuilder from "./EntryPointFlowBuilder";
-import { normalizePersistentMenuUrl } from "@/lib/instagram/persistent-menu-url";
+import { normalizePersistentMenuUrl, persistentMenuItemChanged } from "@/lib/instagram/persistent-menu-url";
 
 type Account = {
   id: string;
@@ -126,6 +126,7 @@ export default function PersistentMenuManager({
   const account = useMemo(() => accounts.find((item) => item.isConnected) ?? null, [accounts]);
   const [items, setItems] = useState<MenuItem[]>([]);
   const [editor, setEditor] = useState<Draft | null>(null);
+  const [responseDirty, setResponseDirty] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -169,6 +170,7 @@ export default function PersistentMenuManager({
   }, [loadItems]);
 
   function openEditor(item?: MenuItem) {
+    setResponseDirty(false);
     setError("");
     setNotice("");
     setEditor(item ? {
@@ -185,11 +187,14 @@ export default function PersistentMenuManager({
   function cancelEditor() {
     if (saving) return;
     setEditor(null);
+    setResponseDirty(false);
     setError("");
   }
 
   async function saveItem(draft: Draft, automationId: string | null) {
     if (!account || saving) return;
+    const original = draft.id ? items.find((item) => item.id === draft.id) ?? null : null;
+    if (draft.id && !persistentMenuItemChanged(draft, original) && !responseDirty) return;
     const label = draft.label.trim();
     if (!label || label.length > MAX_TITLE_LENGTH) {
       setError("عنوان گزینه را بین ۱ تا ۳۰ کاراکتر وارد کن.");
@@ -242,6 +247,7 @@ export default function PersistentMenuManager({
       const result = await readResult(response);
       if (!response.ok || !result.success) throw new Error(result.error || "ذخیره منو ناموفق بود.");
       setEditor(null);
+      setResponseDirty(false);
       setNotice(draft.id ? "تغییرات گزینه ذخیره شد." : "گزینه جدید به منوی دایرکت اضافه شد.");
       await loadItems(true);
     } catch (err) {
@@ -288,6 +294,9 @@ export default function PersistentMenuManager({
   }
 
   const draftReady = Boolean(editor?.label.trim()) && (editor?.label.trim().length ?? 0) <= MAX_TITLE_LENGTH;
+  const savedItem = editor?.id ? items.find((item) => item.id === editor.id) ?? null : null;
+  const draftChanged = editor ? persistentMenuItemChanged(editor, savedItem) : false;
+  const canSaveChanges = !editor?.id || draftChanged || responseDirty;
   const canCreate = items.length < MAX_MENU_ITEMS && !saving;
 
   return (
@@ -301,12 +310,6 @@ export default function PersistentMenuManager({
           <p className="mt-1 text-xs leading-6 text-[var(--daira-text)]">
             گزینه‌هایی که مخاطب در دایرکت می‌بیند را بساز و برای هرکدام پاسخ خودکار یا لینک تنظیم کن.
           </p>
-          {account && (
-            <span className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-[var(--daira-surface-hover)] px-2.5 py-1 text-[11px] font-bold text-[var(--daira-text)]">
-              <CircleCheck size={13} className="text-[var(--daira-primary)]" />
-              {"@" + account.igUsername}
-            </span>
-          )}
         </div>
       </section>
 
@@ -435,7 +438,7 @@ export default function PersistentMenuManager({
                       placeholder="آدرس سایت"
                       className="h-12 w-full min-w-0 rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3 text-base text-[var(--daira-heading)] outline-none focus:border-[var(--daira-primary)] focus:bg-white"
                       style={{ fontSize: "16px", WebkitTextSizeAdjust: "100%" }} />
-                    <button type="button" disabled={!draftReady || !normalizePersistentMenuUrl(editor.url) || saving}
+                    <button type="button" disabled={!draftReady || !normalizePersistentMenuUrl(editor.url) || !canSaveChanges || saving}
                       onClick={() => void saveItem(editor, null)}
                       className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[var(--daira-primary)] px-4 text-sm font-bold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40">
                       {saving ? "در حال ذخیره..." : editor.id ? "ذخیره تغییرات" : "ساخت گزینه"}
@@ -450,6 +453,8 @@ export default function PersistentMenuManager({
                     modernResponseFlow
                     hideVideo
                     canSave={draftReady && !saving}
+                    dirty={canSaveChanges}
+                    onResponseDirtyChange={setResponseDirty}
                     responseTypeTitle="نوع پاسخ"
                     responseTypeDescription="متن، عکس، وویس، ویترین یا فرم چندمرحله‌ای را انتخاب کن."
                     textPlaceholder="متن پاسخی که بعد از انتخاب این گزینه برای مخاطب ارسال می‌شود..."
