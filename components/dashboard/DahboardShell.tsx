@@ -36,6 +36,7 @@ export default function DashboardShell({ user, instagramAccounts, children }: Da
   const isAutomationCreateFlow = [
     "/dashboard/comment-automation/new",
     "/dashboard/story-automation/new",
+    "/dashboard/direct-automation/new",
   ].some((route) => pathname === route || pathname.startsWith(route + "/"));
 
   const initialAccountId = instagramAccounts.find((account) => account.isConnected)?.id ?? null;

@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Lightbulb, X } from "lucide-react";
+import { Lightbulb, X } from "lucide-react";
 import { dairaPalette } from "../../lib/design-system/palette";
 import PublishingStoryAutomationSetup, { type StoryFormTemplate } from "./publishing/PublishingStoryAutomationSetup";
 import { createEmptyMessage, normalizeMessages, type MessageDraft, type Showcase, type FormItem } from "./automation-form-utils";
 import DirectAutomationSkeleton from "./DirectAutomationSkeleton";
+import DirectAutomationSuccess from "./DirectAutomationSuccess";
 
 type Account = {id:string;igUsername:string;isConnected:boolean};
 type Automation = {id:string;triggerType:string;instagramAccountId:string;keyword:string|null;updatedAt:string;messages:unknown};
@@ -35,6 +36,7 @@ export default function DirectAutomationEditor({id}:{id?:string}){
  const [formTemplates,setFormTemplates]=useState<StoryFormTemplate[]>([]);
  const [loading,setLoading]=useState(true);
  const [saving,setSaving]=useState(false);
+ const [completed,setCompleted]=useState(false);
  const [error,setError]=useState("");
  const [retry,setRetry]=useState(0);
  const add=()=>{const next=wordsFrom(draft);if(!next.length)return;
@@ -104,17 +106,17 @@ export default function DirectAutomationEditor({id}:{id?:string}){
      instagramAccountId:account.id,keyword:entries.join(","),message:prepared||message})});
    const body=await response.json();
    if(!response.ok||!body.success)throw new Error(body.error||"ذخیره پاسخ خودکار ناموفق بود.");
-   router.push("/dashboard/direct-automation",{scroll:true});router.refresh();
+   setCompleted(true);
+   window.scrollTo(0,0);
   }catch(e){setError(e instanceof Error?e.message:"ذخیره ناموفق بود.");}
   finally{setSaving(false);}
  }
  if(loading)return <DirectAutomationSkeleton view="editor"/>;
+ if(completed)return <DirectAutomationSuccess isEditing={Boolean(original)}/>;
  if(!account)return <div dir="rtl" className="mx-auto max-w-xl space-y-4 rounded-2xl border p-5 text-center" style={{borderColor:dairaPalette.border}}>
   <p role="alert" className="text-sm" style={{color:dairaPalette.status.error}}>{error||"پیج متصل نیست."}</p>
   <button onClick={()=>setRetry(v=>v+1)} className="rounded-xl px-5 py-3 text-sm text-white" style={{background:dairaPalette.primary.main}}>تلاش دوباره</button></div>;
  return <div dir="rtl" className="mx-auto w-full max-w-4xl space-y-5 py-3 sm:py-4">
-   <button type="button" onClick={()=>router.push("/dashboard/direct-automation")} className="flex items-center gap-2 rounded-xl border bg-white px-3.5 py-2.5 text-xs font-semibold"
-    style={{color:dairaPalette.text.body,borderColor:dairaPalette.border}}><ArrowRight size={15}/> بازگشت</button>
    <section><Guide step={1} title="کلمات کلیدی دایرکت"
      hint="اگر مشتری یکی از این کلمات را مستقیماً در دایرکت بفرستد، پاسخ انتخاب‌شده برای او ارسال می‌شود."/>
     <div className="space-y-3 rounded-2xl border bg-white p-4 sm:p-5" style={{borderColor:dairaPalette.border}}>
