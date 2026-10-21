@@ -115,7 +115,7 @@ export default function SmartReminderEditor({ id }: { id?: string }) {
         <div className="grid grid-cols-3 gap-2">
           {presets.map(minutes => <button type="button" key={minutes} onClick={() => patch({ delayMinutes: String(minutes) })}
             aria-pressed={draft.delayMinutes === String(minutes)}
-            className={"min-h-11 rounded-xl border px-2 text-xs font-bold transition " + (draft.delayMinutes === minutes
+            className={"min-h-11 rounded-xl border px-2 text-xs font-bold transition " + (draft.delayMinutes === String(minutes)
               ? "border-[#2563EB] bg-[#EFF6FF] text-[#1D4ED8]" : "border-[#D8E0EC] bg-white text-[#475569]")}>
             {minutes < 60 ? new Intl.NumberFormat("fa-IR").format(minutes) + " دقیقه" :
               new Intl.NumberFormat("fa-IR").format(minutes / 60) + " ساعت"}
