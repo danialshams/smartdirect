@@ -446,7 +446,18 @@ function KeywordChipsInput({ value, onChange, placeholder }: { value: string; on
   return <div className="flex min-h-[56px] flex-wrap items-center gap-2 rounded-xl border border-[#E2E8F0] bg-white px-3 py-2.5 transition focus-within:border-[#7C3AED] focus-within:ring-2 focus-within:ring-[#7C3AED]/10">{keywords.map((item) => <span key={item} className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1.5 text-xs font-medium text-foreground">{item}<Button type="button" onClick={() => sync(keywords.filter((keyword) => keyword !== item))} className="text-muted-foreground hover:text-foreground" aria-label={`حذف ${item}`}><X size={13} /></Button></span>)}<Input value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (["Enter", ",", "،"].includes(event.key)) { event.preventDefault(); add(); } }} onBlur={add} placeholder={keywords.length ? "کلمه بعدی..." : placeholder} className="min-w-[140px] flex-1 border-0 bg-transparent px-1 py-1 text-sm text-[#18233C] outline-none ring-0 placeholder:text-[#94A3B8]" /><Button type="button" onPointerDown={(event) => event.preventDefault()} onClick={add} className="shrink-0 rounded-lg border border-[#E2E8F0] bg-white px-2.5 py-1.5 text-xs font-medium text-[#64748B] hover:bg-[#F8FAFC]">افزودن کلمه</Button></div>;
 }
 
-function SectionHeader({ n, title, text }: { n: string; title: string; text: string }) { return <div className="mb-4"><div className="flex items-center gap-2"><span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#2F61FD]/10 text-xs font-bold text-[#2F61FD]">{n}</span><h2 className="text-sm font-bold text-[#18233C]">{title}</h2></div><p className={["mt-2 leading-5 text-[#64748B]", title === "آپلود آلبوم" ? "whitespace-nowrap text-[9px] sm:text-xs" : "text-xs"].join(" ")}>{text}</p></div>; }
+function SectionHeader({ n, title, text }: { n: string; title: string; text: string }) {
+  const palette = dairaPalette.publishing;
+  return <div className="mb-5 flex items-start gap-3 rounded-2xl border px-4 py-3.5 text-right sm:px-5"
+    style={{background:palette.soft,borderColor:palette.border}}>
+    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-extrabold"
+      style={{background:palette.selectedBackground,color:dairaPalette.primary.main}}>{n}</span>
+    <div className="min-w-0 flex-1">
+      <h2 className="text-sm font-extrabold leading-6" style={{color:dairaPalette.text.heading}}>{title}</h2>
+      <p className="mt-1 text-xs leading-6" style={{color:dairaPalette.text.body}}>{text}</p>
+    </div>
+  </div>;
+}
 function ProgressBar({ progress }: { progress: number }) {
   return <div className="mt-4 w-full max-w-md">
     <div className="mb-2 text-center text-[10px] font-semibold text-[#2F61FD]">
@@ -488,24 +499,46 @@ function UploadSuccessMark() {
     </span>
   );
 }
-type UploadAreaProps = { id: string; accept: string; multiple: boolean; disabled: boolean; isDragging: boolean; setIsDragging: (value: boolean) => void; title: string; onChange: (event: ChangeEvent<HTMLInputElement>) => void; onDrop: (event: DragEvent<HTMLDivElement>) => void };
+type UploadAreaProps = {
+  id: string; accept: string; multiple: boolean; disabled: boolean; isDragging: boolean;
+  setIsDragging: (value: boolean) => void; title: string;
+  onChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  onDrop: (event: DragEvent<HTMLDivElement>) => void;
+};
 function UploadArea({ id, accept, multiple, disabled, isDragging, setIsDragging, title, onChange, onDrop }: UploadAreaProps) {
-  return <div onDragOver={(event: DragEvent<HTMLDivElement>) => { event.preventDefault(); setIsDragging(true); }} onDragLeave={() => setIsDragging(false)} onDrop={onDrop} className={["relative overflow-hidden rounded-xl border border-dashed p-4 transition sm:p-6", isDragging ? "border-[#2F61FD] bg-[#2F61FD]/5" : "border-[#CBD5E1] bg-[#F8FAFC] hover:border-[#93C5FD] hover:bg-[#EFF6FF]/50", disabled ? "pointer-events-none opacity-60" : ""].join(" ")}>
+  return <div onDragOver={(event: DragEvent<HTMLDivElement>) => { event.preventDefault(); if (!disabled) setIsDragging(true); }}
+    onDragLeave={() => setIsDragging(false)} onDrop={event => {if(!disabled)onDrop(event);else event.preventDefault();}}
+    className={"group relative overflow-hidden rounded-[23px] border-2 border-dashed p-4 transition-all duration-200 sm:p-6 " +
+      (isDragging ? "scale-[1.005] border-[#2F61FD] bg-[#EDF3FF]" : "border-[#BAD0FF] bg-[#F6F9FF] hover:border-[#2F61FD] hover:bg-[#EDF3FF]")+
+      (disabled?" pointer-events-none opacity-55":"")}>
     <Input id={id} type="file" accept={accept} multiple={multiple} onChange={onChange} disabled={disabled} className="sr-only" />
-    <label htmlFor={id} className="flex min-h-[190px] cursor-pointer flex-col items-center justify-center text-center">
-      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-[#2F61FD] shadow-sm ring-1 ring-[#E2E8F0]"><ImagePlus size={22} /></div>
-      <span className="mt-4 inline-flex min-h-6 items-center justify-center gap-2 text-sm font-bold text-[#18233C]">{title}</span>
-      <span className="mt-1.5 whitespace-nowrap text-[11px] leading-5 text-[#64748B]">فایل را بکش و اینجا رها کن یا برای انتخاب از دستگاه کلیک کن.</span>
+    <label htmlFor={id} className="flex min-h-[216px] cursor-pointer flex-col items-center justify-center gap-3 text-center sm:min-h-[235px]">
+      <span className="flex h-16 w-16 items-center justify-center rounded-[20px] border border-[#DBEAFE] bg-white text-[#2F61FD] shadow-[0_7px_24px_rgba(47,97,253,.10)] transition-transform group-hover:-translate-y-1">
+        <ImagePlus size={28} strokeWidth={1.7} />
+      </span>
+      <div className="space-y-1.5">
+        <p className="text-[15px] font-extrabold leading-7 text-[#18233C]">{title}</p>
+        <p className="px-2 text-xs leading-6 text-[#5A6B87]">فایل را به این بخش بکشید یا از دستگاه انتخاب کنید.</p>
+      </div>
+      <span className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-[#2F61FD] px-6 text-sm font-bold text-white shadow-sm transition group-hover:bg-[#1E4BD8]">
+        <ImagePlus size={18}/> انتخاب فایل از دستگاه
+      </span>
+      <span className="text-[11px] text-[#71819B]">{multiple?"می‌توانید تا ۱۰ عکس یا ویدیو اضافه کنید.":"فقط فایل سازگار با نوع محتوای انتخاب‌شده پذیرفته می‌شود."}</span>
     </label>
   </div>;
 }
 type MediaTileProps = { item: LocalMedia | UploadedMedia; type: PublishType; onRemove: () => void; ready?: boolean; compact?: boolean; bare?: boolean };
-function MediaTile({ item, type, onRemove, ready = false, compact = false, bare = false }: MediaTileProps) {
-  const image = item.type === "IMAGE"; const src = ready && "publicUrl" in item ? item.publicUrl : "previewUrl" in item ? item.previewUrl : item.publicUrl;
+function MediaTile({ item, type, onRemove, ready = false, compact = false }: MediaTileProps) {
+  const image = item.type === "IMAGE";
+  const src = ready && "publicUrl" in item ? item.publicUrl : "previewUrl" in item ? item.previewUrl : item.publicUrl;
   const aspect = type === "REEL" || type === "STORY" ? "aspect-[9/16]" : "aspect-[4/5]";
-  return <div className={[bare ? "relative overflow-hidden" : "group relative overflow-hidden rounded-xl border border-[#E2E8F0] bg-[#F1F5F9]", compact ? "shadow-sm" : ""].join(" ")}>
-    {image ? <img src={src} alt={"file" in item ? item.file.name : item.fileName} className={["w-full object-cover", aspect].join(" ")} /> : <video src={src} controls className={["w-full object-cover", aspect].join(" ")} />}
-    {!compact && <Button type="button" onClick={onRemove} className="absolute left-1.5 top-1.5 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 p-0 text-[#DC2626] shadow-sm ring-1 ring-black/5" aria-label="حذف فایل"><X size={15} /></Button>}
+  return <div className={"group relative overflow-hidden rounded-2xl border border-[#DFE7F3] bg-[#F6F9FF] shadow-[0_8px_24px_rgba(22,54,110,.06)] "+(!compact?"w-full":"")}>
+    {image ? <img src={src} alt={"file" in item ? item.file.name : item.fileName}
+      className={"w-full object-cover "+aspect} /> :
+      <video src={src} controls playsInline preload="metadata" className={"w-full object-cover "+aspect} />}
+    {!compact && <button type="button" onClick={onRemove}
+      className="absolute left-2 top-2 flex h-9 w-9 items-center justify-center rounded-full border border-[#FECACA] bg-white/95 text-[#B91C1C] shadow-sm"
+      aria-label="حذف فایل"><Trash2 size={16}/></button>}
   </div>;
 }
 
