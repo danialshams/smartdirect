@@ -853,11 +853,6 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     window.setTimeout(() => { action(); window.requestAnimationFrame(() => setStepVisible(true)); }, 180);
   }
   function handleTypeChange(nextType: PublishType) { animateStepChange(() => { setFurthestStep(1); setShowTags(false); clearLocalMedia(); setUploadedMedia([]); setType(nextType); setSelectionConfirmed(true); setCaptionStepConfirmed(false); setTagStepConfirmed(false); setAutomationChoiceStepStarted(false); setAutomationChoiceConfirmed(false); setAutomationSetupConfirmed(false); setAutomationKeywordDraft(""); setAutomationKeywords([]); setDirectMessageText(""); setShowUploadedMediaPreview(false); setTaggedUsersByMedia({}); setTagDraftByMedia({}); setTagInputError(""); onTypeChange?.(nextType); setUploadProgress(0); setUploadSuccess(false); setCaption(""); resetAutomation(); }); }
-  function confirmBackToTypeSelection() {
-    if ((uploadedMedia.length || media.length || caption.trim() || automationEnabled) &&
-        !window.confirm("با تغییر نوع محتوا، فایل‌ها و تنظیمات این انتشار پاک می‌شوند. ادامه می‌دهید؟")) return;
-    handleBackToTypeSelection();
-  }
   function handleBackToTypeSelection() { animateStepChange(() => { setFurthestStep(1); setShowTags(false); clearLocalMedia(); setUploadedMedia([]); setSelectionConfirmed(false); setCaptionStepConfirmed(false); setTagStepConfirmed(false); setAutomationChoiceStepStarted(false); setAutomationChoiceConfirmed(false); setShowUploadedMediaPreview(false); setTaggedUsersByMedia({}); setTagDraftByMedia({}); setTagInputError(""); setUploadProgress(0); setUploadSuccess(false); setCaption(""); resetAutomation(); }); }
   async function prepareFiles(files: File[]) {
     if (!files.length || publishing) return;
@@ -1130,81 +1125,6 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       addTagForMedia(mediaKey);
     }
   }
-  function handleNextStep() {
-    if (uploading || publishing || uploadedMedia.length < (type === "CAROUSEL" ? 2 : 1)) return;
-
-    if (!captionStepConfirmed) {
-      animateStepChange(() => {
-        setCaptionStepConfirmed(true);
-        if (type === "STORY") setShowUploadedMediaPreview(false);
-        setError("");
-      });
-      return;
-    }
-
-    if (!tagStepConfirmed && caption.trim()) {
-      animateStepChange(() => {
-        setTagStepConfirmed(true);
-        setError("");
-      });
-    }
-  }
-
-  function handlePreviousStep() {
-    if (publishing || uploading) return;
-
-    if (automationSetupConfirmed) {
-      animateStepChange(() => {
-        setAutomationSetupConfirmed(false);
-        setAutomationChoiceConfirmed(false);
-        setAutomationChoiceStepStarted(true);
-        setStoryResponseEditing(false);
-        setStoryResponseDirty(false);
-        setError("");
-      });
-      return;
-    }
-
-    if (automationChoiceConfirmed) {
-      animateStepChange(() => {
-        setAutomationChoiceConfirmed(false);
-        setAutomationChoiceStepStarted(false);
-
-        setError("");
-      });
-      return;
-    }
-
-    if (automationChoiceStepStarted) {
-      animateStepChange(() => {
-        setAutomationChoiceStepStarted(false);
-        setError("");
-      });
-      return;
-    }
-
-    if (tagStepConfirmed) {
-      animateStepChange(() => {
-        setTagStepConfirmed(false);
-        setError("");
-      });
-      return;
-    }
-
-    if (captionStepConfirmed) {
-      animateStepChange(() => {
-        setCaptionStepConfirmed(false);
-        setShowUploadedMediaPreview(type !== "CAROUSEL");
-        setUploadProgress(0);
-        setUploadSuccess(false);
-        setError("");
-      });
-      return;
-    }
-
-    handleBackToTypeSelection();
-  }
-
   function handleEditStoryResponse() {
     setStoryResponseEditing(true);
     setStoryResponseDirty(false);
@@ -1700,21 +1620,21 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                             const isCarouselSlide = type === "CAROUSEL" && Boolean(slide);
                             return (
                               <div key={row.id} className="relative flex items-stretch gap-2">
-                                {type === "CAROUSEL" && <span className="flex shrink-0 items-center justify-center self-stretch whitespace-nowrap px-1 text-xs font-bold tabular-nums text-[#64748B]">{"اسلاید " + toPersianDigits(slideIndex >= 0 ? slideIndex + 1 : rowPosition + 1)}</span>}
+                                {type === "CAROUSEL" && <span className="flex w-12 shrink-0 items-center justify-center self-stretch whitespace-nowrap px-1 text-[11px] font-bold tabular-nums text-[#5A6B87]">{"اسلاید " + toPersianDigits(slideIndex >= 0 ? slideIndex + 1 : rowPosition + 1)}</span>}
                                 <SortableSlideShell
                                 id={row.storageKey ?? row.id}
                                 disabled={!isCarouselSlide || row.status !== "success" || Boolean(row.removing)}
                                 className="relative min-w-0 flex-1"
                               >
-                                <div className={["relative flex-1 overflow-hidden rounded-xl border px-3.5 py-3 transition-[border-color,background-color,opacity] duration-150 ease-out", row.removing ? "max-h-0 -translate-y-1 !border-transparent !p-0 opacity-0" : "max-h-36 opacity-100", row.status === "failed" ? "border-[#FECACA] bg-[#FEF2F2]" : row.status === "success" && slide ? "border-transparent bg-transparent !px-0 !py-1" : row.status === "success" ? "border-[#BBF7D0] bg-[#F0FDF4]" : "border-[#E2E8F0] bg-white", isCarouselSlide ? "cursor-grab active:cursor-grabbing" : ""].join(" ")}
+                                <div className={["relative flex-1 overflow-hidden rounded-[17px] border px-3 py-3 shadow-[0_2px_10px_rgba(22,54,110,.025)] transition-[border-color,background-color,opacity] duration-150 ease-out", row.removing ? "max-h-0 -translate-y-1 !border-transparent !p-0 opacity-0" : "max-h-36 opacity-100", row.status === "failed" ? "border-[#FECACA] bg-[#FEF2F2]" : row.status === "success" && slide ? "border-[#DFE7F3] bg-[#F6F9FF]" : row.status === "success" ? "border-[#BBF7D0] bg-[#F0FDF4]" : "border-[#E2E8F0] bg-white", isCarouselSlide ? "cursor-grab active:cursor-grabbing" : ""].join(" ")}
                                 >
                                 <div className="flex items-center gap-3">
                                   {slide ? (
-                                    <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg">
+                                    <span className="flex h-[68px] w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[#DFE7F3] bg-white">
                                       {slide.type === "IMAGE" ? <img src={slide.publicUrl} alt={slide.fileName} className="h-full w-full object-cover" /> : <video src={slide.publicUrl} muted preload="metadata" className="h-full w-full object-cover" />}
                                     </span>
                                   ) : (
-                                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-[#64748B] ring-1 ring-black/5">
+                                    <span className="flex h-[68px] w-14 shrink-0 items-center justify-center rounded-xl border border-[#DFE7F3] bg-white text-[#64748B]">
                                       {row.status === "failed" ? <CircleSlash2 size={17} className="text-[#DC2626]" /> : row.status === "uploading" ? <Loader2 size={17} className="animate-spin text-[#2F61FD]" /> : <Images size={17} />}
                                     </span>
                                   )}
@@ -1734,7 +1654,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                                     {row.error && <p className="mt-2 text-[11px] leading-5 text-[#B91C1C]">{row.error}</p>}
                                   </div>
                                   {row.status === "failed" && <button type="button" onClick={() => retryLocalUpload(row.id)} className="inline-flex h-9 shrink-0 items-center gap-1 rounded-lg bg-[#DC2626] px-2.5 text-[11px] font-bold text-white"><RotateCcw size={13} />تلاش دوباره</button>}
-                                  {row.status === "success" && slide && <button type="button" onClick={() => void removeUploaded(slide)} aria-label="حذف اسلاید از آلبوم" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[#DC2626] hover:bg-[#FEF2F2] hover:text-[#B91C1C]"><X size={16} /></button>}
+                                  {row.status === "success" && slide && <button type="button" onClick={() => void removeUploaded(slide)} aria-label="حذف اسلاید از آلبوم" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[#FECACA] bg-white text-[#B91C1C] hover:bg-[#FEF2F2]"><X size={16} /></button>}
                                   {row.status !== "success" && <button type="button" onClick={() => removeLocalById(row.id)} aria-label="حذف فایل از صف آپلود" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[#64748B] hover:bg-black/5 hover:text-[#DC2626]"><X size={16} /></button>}
                                 </div>
                                 </div>
@@ -1874,8 +1794,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                 
 
                 <section className="space-y-5 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
-                  <div className="flex items-start gap-3">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2F61FD]/10 text-xs font-bold text-[#2F61FD]">۴</span>
+                  <div className="flex items-start gap-3 rounded-2xl border border-[#DFE7F3] bg-[#F6F9FF] px-4 py-3.5">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EDF3FF] text-xs font-bold text-[#2F61FD]">۳</span>
                     <div className="min-w-0">
                       <h2 className="text-sm font-bold text-[#18233C]">تنظیم پاسخ خودکار استوری</h2>
                       <p className="mt-1.5 text-xs leading-5 text-[#64748B]">کلمات فعال‌کننده و پاسخ Reply استوری را مشخص کن.</p>
@@ -2022,7 +1942,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   {(!storyResponseSaved || storyResponseEditing) && (
                     <div className="border-t border-[#E2E8F0] pt-4">
                       <Button type="button" onClick={() => { void storyAutomationSetupRef.current?.saveAndContinue(); }} disabled={!keywords.trim() || (messages[0]?.messageType === "TEXT" && !messages[0]?.text.trim()) || (storyResponseEditing && !storyResponseDirty)} className="w-full min-h-11 rounded-xl bg-[#2F61FD] px-4 text-sm font-bold text-white hover:bg-[#1E4BD8] disabled:cursor-not-allowed disabled:opacity-40">
-                        ذخیره {messages[0]?.messageType === "FORM" ? "فرم" : messages[0]?.messageType === "SHOWCASE" ? "ویترین" : messages[0]?.messageType === "TEXT" ? "متن" : messages[0]?.messageType === "IMAGE" ? "عکس" : messages[0]?.messageType === "VIDEO" ? "فیلم" : "وویس"} و ادامه
+                        ذخیره {messages[0]?.messageType === "FORM" ? "فرم" : messages[0]?.messageType === "SHOWCASE" ? "ویترین" : messages[0]?.messageType === "TEXT" ? "متن" : messages[0]?.messageType === "IMAGE" ? "عکس" : messages[0]?.messageType === "VIDEO" ? "فیلم" : "وویس"} 
                       </Button>
                     </div>
                   )}
@@ -2084,7 +2004,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                     </div>}
                   </div>
                   <div className="border-t border-[#E2E8F0] pt-4">
-                    <Button type="button" onClick={() => { if (!automationKeywords.length || !publishingCommentReplyText.trim()) return; setAutomationSetupConfirmed(true); setError(""); }} disabled={automationKeywords.length === 0 || !publishingCommentReplyText.trim()} className="w-full min-h-11 rounded-xl bg-[#2F61FD] px-4 text-sm font-bold text-white hover:bg-[#1E4BD8] disabled:cursor-not-allowed disabled:opacity-40">ذخیره متن و ادامه</Button>
+                    <Button type="button" onClick={() => { if (!automationKeywords.length || !publishingCommentReplyText.trim()) return; setAutomationSetupConfirmed(true); setError(""); }} disabled={automationKeywords.length === 0 || !publishingCommentReplyText.trim()} className="w-full min-h-11 rounded-xl bg-[#2F61FD] px-4 text-sm font-bold text-white hover:bg-[#1E4BD8] disabled:cursor-not-allowed disabled:opacity-40">ذخیره پاسخ خودکار</Button>
                   </div>
 
                   {error && <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-5 text-[#B91C1C]" role="alert">{error}</div>}
