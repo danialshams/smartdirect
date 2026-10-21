@@ -45,7 +45,7 @@ assert.ok(menu.includes('onBlur={() => setEditor(') && menu.includes('normalizeP
 assert.ok(!menu.includes("آدرس مقصد را با https://") && !menu.includes('placeholder="https://example.com"'),
   "Users should not need to know or type the scheme");
 assert.ok(route.includes('const normalizedUrl = isWebUrl ? normalizePersistentMenuUrl(')
-  && route.includes('WEB_URL_PREFIX}\${normalizedUrl!}'),
+  && route.includes('normalizedUrl!}` : generatePayload()'),
   "The backend must normalize URLs before saving links and Meta payloads");
 const validCases: Array<[string, string]> = [
   ["example.com", "https://example.com"],
