@@ -2,7 +2,7 @@
 
 import {
   Activity, BarChart3, CalendarDays, ChevronLeft, Eye, HeartHandshake,
-  Info, MessageCircle, TrendingDown, TrendingUp, UserMinus, UserPlus, Users, X,
+  Info, TrendingDown, TrendingUp, UserMinus, UserPlus, Users, X,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type ElementType, type ReactNode } from "react";
 import { createPortal } from "react-dom";
@@ -207,10 +207,16 @@ function TrendChart({ snapshots, metric }: { snapshots: Snapshot[]; metric: Metr
     <div ref={containerRef} className="relative w-full min-w-0">
       <svg viewBox={"0 0 " + width + " " + height} width="100%" height={height}
         className="block w-full touch-pan-y"
-        role="img" aria-label="نمودار روند روزانه؛ برای دیدن مقدار هر روز روی نمودار لمس کنید"
+        role="img" tabIndex={0} aria-label="نمودار روند روزانه؛ برای دیدن مقدار هر روز روی نمودار لمس کنید یا از کلیدهای جهت‌دار استفاده کنید"
         onPointerDown={(event) => choosePoint(event.clientX)}
         onPointerMove={(event) => choosePoint(event.clientX)}
-        onPointerLeave={() => setActiveIndex(null)}>
+        onPointerLeave={(event) => { if (event.pointerType === "mouse") setActiveIndex(null); }}
+        onKeyDown={(event) => {
+          if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+          event.preventDefault();
+          setActiveIndex((index) => Math.max(0, Math.min(points.length - 1,
+            (index ?? 0) + (event.key === "ArrowRight" ? 1 : -1))));
+        }}>
         <defs>
           <linearGradient id="insights-line-fill" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#2F61FD" stopOpacity="0.16" />
@@ -391,7 +397,7 @@ export default function InsightsDashboard() {
     ? persianDate(appliedRange.from) + " تا " + persianDate(appliedRange.to, false)
     : "انتخاب بازه دلخواه";
   const validRange = Boolean(draftRange?.from && draftRange?.to &&
-    draftRange.from >= minDate && draftRange.to <= today &&
+    draftRange.from >= minDate && draftRange.to <= today && draftRange.from <= draftRange.to &&
     daysBetween(draftRange.from, draftRange.to) <= 730);
   const snapshots = data?.snapshots ?? [];
   const summary = data?.summary;
@@ -409,7 +415,7 @@ export default function InsightsDashboard() {
 
   function openCalendar() {
     setDraftRange(appliedRange ?? {
-      from: shiftDay(today, -(preset - 1) >= -729 ? -(preset - 1) : -729),
+      from: shiftDay(today, -(preset - 1)),
       to: today,
     });
     setCalendarOpen(true);
@@ -516,10 +522,10 @@ export default function InsightsDashboard() {
             <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-[var(--daira-border)] sm:grid-cols-3">
               <div className="border-b border-l border-[var(--daira-border)] sm:border-l"><Stat label="بازدید" value={summary?.views} icon={Eye} /></div>
               <div className="border-b border-[var(--daira-border)] sm:border-l"><Stat label="تعاملات" value={summary?.totalInteractions} icon={HeartHandshake} /></div>
-              <div className="border-b border-l border-[var(--daira-border)] sm:border-l"><Stat label="فالو" value={summary?.follows} icon={UserPlus} /></div>
-              <div className="border-b border-[var(--daira-border)] sm:border-l"><Stat label="آنفالو" value={summary?.unfollows} icon={UserMinus} /></div>
-              <div className="border-l border-[var(--daira-border)] sm:border-b sm:border-l-0"><Stat label="دنبال‌کنندگان" value={summary?.followerCount} icon={Users} note="آخرین مقدار ثبت‌شده" /></div>
-              <div><Stat label="جمع دسترسی روزانه" value={summary?.reach} icon={MessageCircle} /></div>
+              <div className="border-b border-l border-[var(--daira-border)] sm:border-l-0"><Stat label="فالو" value={summary?.follows} icon={UserPlus} /></div>
+              <div className="border-b border-[var(--daira-border)] sm:border-b-0 sm:border-l"><Stat label="آنفالو" value={summary?.unfollows} icon={UserMinus} /></div>
+              <div className="border-l border-[var(--daira-border)]"><Stat label="دنبال‌کنندگان" value={summary?.followerCount} icon={Users} note="آخرین مقدار ثبت‌شده" /></div>
+              <div><Stat label="جمع دسترسی روزانه" value={summary?.reach} icon={Activity} /></div>
             </div>
             <p className="mt-3 text-[11px] leading-6 text-[var(--daira-text)]">
               دسترسی و تعاملات روزانه ممکن است شامل حساب‌های تکراری در روزهای مختلف باشند؛ جمع آن‌ها تعداد افراد یکتای کل بازه نیست.
