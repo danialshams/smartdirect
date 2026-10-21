@@ -34,6 +34,12 @@ assert.ok(editor.includes("retryLocalUpload") && editor.includes("removeUploaded
 assert.ok(editor.includes("changeContentType(nextType)") || editor.includes("changeContentType(value)"),"Changing content type must require explicit interaction");
 assert.ok(editor.includes('window.confirm("با تغییر نوع محتوا'),"Unsaved media must be protected when changing content type");
 assert.ok(queue.includes("onRetry") && queue.includes("onCancel") && queue.includes("در انتظار"),"Queue actions must be preserved");
+assert.ok(!queue.includes(">جزئیات</Link>") && queue.includes("<span>ویرایش</span>"),"Queue must omit details link but preserve edit action");
+assert.ok(queue.includes('CAROUSEL:"پست اسلایدی"') && editor.includes('CAROUSEL: "پست اسلایدی"') && editPage.includes('CAROUSEL: "پست اسلایدی"'),"Carousel must be called پست اسلایدی everywhere in publishing UI");
+assert.ok(!editor.includes("به وقت تهران"),"Timezone note should not appear in schedule UI");
+assert.ok(editor.includes('(uploadedMedia.length ? uploadedMedia : [null]).map') && editor.includes('item?.storageKey ?? "__pending__"'),"Tag input must be available before upload");
+assert.ok(editor.includes('next[result.storageKey] = [...new Set') && editor.includes('next[result.storageKey] = pending'),"Pending tags and drafts must transfer to uploaded media");
+assert.ok(editor.includes('type === "CAROUSEL" && item && ('),"Empty carousel must not try to render missing media preview");
 assert.ok(loading.includes('view === "queue"') && loading.includes('view === "editor"'),"Skeletons for queue/editor must remain");
 assert.ok(editPage.includes('<PublishingPageSkeleton view="editor" />'),"Editor skeleton required");
 assert.ok(route.includes("PublishingWithTags"),"Publishing page route should resolve");

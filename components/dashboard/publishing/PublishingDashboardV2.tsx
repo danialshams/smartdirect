@@ -47,7 +47,7 @@ let publishingAccountsCache: InstagramAccount[] | null = null;
 type InstagramAccount = { id: string; igUsername: string | null; username?: string | null; igUserId: string; isConnected?: boolean };
 
 
-const typeLabels: Record<PublishType, string> = { POST: "پست", CAROUSEL: "آلبوم", REEL: "ریلز", STORY: "استوری" };
+const typeLabels: Record<PublishType, string> = { POST: "پست", CAROUSEL: "پست اسلایدی", REEL: "ریلز", STORY: "استوری" };
 const statusLabels: Record<string, string> = { DRAFT: "پیش‌نویس", PROCESSING: "در حال پردازش", PUBLISHING: "در حال انتشار", PUBLISHED: "منتشر شده", FAILED: "ناموفق", SCHEDULED: "زمان‌بندی شده", CANCELLED: "لغو شده" };
 const jalaliMonths = ["فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور", "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"];
 const weekDays = ["ش", "ی", "د", "س", "چ", "پ", "ج"];
@@ -635,7 +635,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     type === "CAROUSEL"
       ? uploadedMedia.length >= 2
         ? "برای آپلود اسلایدهای بیشتر (تا ۱۰ اسلاید)، فایل موردنظرت را انتخاب کن."
-        : "تصویر یا ویدیوی آلبوم را انتخاب کن."
+        : "تصویر یا ویدیوی پست اسلایدی را انتخاب کن."
       : type === "REEL"
         ? "ویدیوی ریلز را انتخاب کن."
         : type === "STORY"
@@ -870,7 +870,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
           : type === "STORY"
             ? "برای استوری یک تصویر یا ویدیو انتخاب کن."
             : type === "CAROUSEL"
-              ? "برای آلبوم یک تصویر یا ویدیو انتخاب کن."
+              ? "برای پست اسلایدی یک تصویر یا ویدیو انتخاب کن."
               : "برای پست یک تصویر انتخاب کن.",
       );
       return;
@@ -880,7 +880,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       ? Math.max(0, 10 - uploadedMedia.length - media.length - pendingValidationCountRef.current)
       : Math.max(0, 1 - uploadedMedia.length - media.length - pendingValidationCountRef.current);
     if (remaining <= 0) {
-      const message = type === "CAROUSEL" ? "آلبوم نمی‌تواند بیشتر از ۱۰ اسلاید داشته باشد." : `برای ${typeLabels[type]} فقط یک فایل مجاز است.`;
+      const message = type === "CAROUSEL" ? "پست اسلایدی نمی‌تواند بیشتر از ۱۰ اسلاید داشته باشد." : `برای ${typeLabels[type]} فقط یک فایل مجاز است.`;
       setError(message);
       toast.error(message);
       return;
@@ -1037,6 +1037,23 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               }
             }
             return next.map((entry, index) => ({ ...entry, sortOrder: index }));
+          });
+          // Tags entered before uploading belong to the first successfully uploaded media.
+          setTaggedUsersByMedia((current) => {
+            const pending = current["__pending__"];
+            if (!pending?.length) return current;
+            const next = { ...current };
+            delete next["__pending__"];
+            next[result.storageKey] = [...new Set([...(next[result.storageKey] ?? []), ...pending])];
+            return next;
+          });
+          setTagDraftByMedia((current) => {
+            const pending = current["__pending__"];
+            if (!pending) return current;
+            const next = { ...current };
+            delete next["__pending__"];
+            next[result.storageKey] = pending;
+            return next;
           });
           setMedia((current) => current.filter((candidate) => candidate.previewUrl !== item.previewUrl).map((entry, index) => ({ ...entry, sortOrder: index + uploadedMedia.length })));
           URL.revokeObjectURL(item.previewUrl);
@@ -1303,7 +1320,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     const accountId = selectedAccountId;
     if (!accountId) { setError("اکانت فعال Instagram پیدا نشد."); return; }
     if (!uploadedMedia.length) { setError("ابتدا فایل را آپلود کنید."); return; }
-    if (type === "CAROUSEL" && uploadedMedia.length < 2) { setError("آلبوم باید حداقل ۲ اسلاید داشته باشد."); return; }
+    if (type === "CAROUSEL" && uploadedMedia.length < 2) { setError("پست اسلایدی باید حداقل ۲ اسلاید داشته باشد."); return; }
     if (type !== "CAROUSEL" && uploadedMedia.length !== 1) { setError(`${typeLabels[type]} باید دقیقاً یک فایل داشته باشد.`); return; }
     const selectedScheduleDate = !publishNow ? stage6Date : scheduledDate;
     const selectedHour = !publishNow ? stage6Hour : hour;
@@ -1480,7 +1497,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                 <p className="mt-1 text-xs leading-6 text-[#5A6B87]">نوع محتوا را انتخاب کن؛ تمام تنظیمات مربوط به آن در همین صفحه است.</p>
               </div>
               <div className="grid grid-cols-4 gap-2 sm:gap-3" role="group" aria-label="انتخاب نوع محتوا">
-                {([["POST","پست",ImagePlus],["REEL","ریلز",Clapperboard],["CAROUSEL","آلبوم",Images],["STORY","استوری",Camera]] as const).map(([value,label,Icon])=>{
+                {([["POST","پست",ImagePlus],["REEL","ریلز",Clapperboard],["CAROUSEL","پست اسلایدی",Images],["STORY","استوری",Camera]] as const).map(([value,label,Icon])=>{
                   const selected=type===value;
                   return <button key={value} type="button" disabled={uploading||publishing} aria-pressed={selected} onClick={()=>changeContentType(value)}
                     className={"relative flex min-h-[78px] flex-col items-center justify-center gap-2 rounded-2xl border px-1.5 py-3 text-center transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2F61FD] disabled:opacity-50 "+(selected?"border-[#2F61FD] bg-[#EDF3FF] text-[#2F61FD]":"border-[#E2E8F0] bg-[#F8FAFC] text-[#5A6B87] hover:border-[#BAD0FF]")}>
@@ -1579,7 +1596,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                                     {row.error && <p className="mt-2 text-[11px] leading-5 text-[#B91C1C]">{row.error}</p>}
                                   </div>
                                   {row.status === "failed" && <button type="button" onClick={() => retryLocalUpload(row.id)} className="inline-flex h-9 shrink-0 items-center gap-1 rounded-lg bg-[#DC2626] px-2.5 text-[11px] font-bold text-white"><RotateCcw size={13} />تلاش دوباره</button>}
-                                  {row.status === "success" && slide && <button type="button" onClick={() => void removeUploaded(slide)} aria-label="حذف اسلاید از آلبوم" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[#FECACA] bg-white text-[#B91C1C] hover:bg-[#FEF2F2]"><X size={16} /></button>}
+                                  {row.status === "success" && slide && <button type="button" onClick={() => void removeUploaded(slide)} aria-label="حذف اسلاید از پست اسلایدی" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[#FECACA] bg-white text-[#B91C1C] hover:bg-[#FEF2F2]"><X size={16} /></button>}
                                   {row.status !== "success" && <button type="button" onClick={() => removeLocalById(row.id)} aria-label="حذف فایل از صف آپلود" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[#64748B] hover:bg-black/5 hover:text-[#DC2626]"><X size={16} /></button>}
                                 </div>
                                 </div>
@@ -1639,14 +1656,17 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   {showTags && <div id="publishing-tags-panel" className="mt-4 border-t border-[#E8EDF5] pt-4">
                   {tagInputError && <p role="alert" className="mb-3 rounded-xl border border-[#FECACA] bg-[#FEF2F2] p-3 text-xs text-[#B91C1C]">{tagInputError}</p>}
                   <div className="space-y-3">
-                    {uploadedMedia.map((item, index) => {
-                      const mediaKey = item.storageKey;
+                    {uploadedMedia.length === 0 && (
+                      <p className="text-xs leading-6 text-[#5A6B87]">می‌توانی همین حالا کاربر را تگ کنی؛ پس از بارگذاری، تگ‌ها به {type === "CAROUSEL" ? "اولین اسلاید" : "رسانه"} منتقل می‌شوند.</p>
+                    )}
+                    {(uploadedMedia.length ? uploadedMedia : [null]).map((item, index) => {
+                      const mediaKey = item?.storageKey ?? "__pending__";
                       const tags = taggedUsersByMedia[mediaKey] ?? [];
                       const draft = tagDraftByMedia[mediaKey] ?? "";
                       return (
                         <div key={mediaKey} className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5 sm:p-4">
                           <div className="mb-2 flex items-center justify-between gap-2">
-                            <p className="text-xs font-bold text-[#18233C]">{type === "CAROUSEL" ? `اسلاید ${toPersianDigits(index + 1)}` : typeLabels[type]}</p>
+                            <p className="text-xs font-bold text-[#18233C]">{!item ? "تگ‌های محتوا" : type === "CAROUSEL" ? `اسلاید ${toPersianDigits(index + 1)}` : typeLabels[type]}</p>
                             <span className="rounded-full bg-white px-2 py-1 text-[10px] font-medium text-[#64748B] ring-1 ring-[#E2E8F0]">{toPersianDigits(tags.length)} تگ</span>
                           </div>
                           {tags.length > 0 && (
@@ -1662,7 +1682,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                             </div>
                           )}
                           <div className="flex items-center gap-2">
-                            {type === "CAROUSEL" && (
+                            {type === "CAROUSEL" && item && (
                               <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-[#E2E8F0] bg-white">
                                 <MediaTile item={item} type="CAROUSEL" onRemove={() => void removeUploaded(item)} ready compact />
                               </div>
@@ -1900,7 +1920,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
             <section aria-label="انتشار" className="space-y-3">
               <PublishingSectionGuide number={type==="STORY"?3:4} title="زمان انتشار">
-                انتشار فوری را انتخاب کن یا محتوایت را تا ۴۸ ساعت آینده زمان‌بندی کن؛ ساعت‌ها به وقت تهران هستند.
+                انتشار فوری را انتخاب کن یا محتوایت را تا ۴۸ ساعت آینده زمان‌بندی کن.
               </PublishingSectionGuide>
               <div className="mx-auto w-full max-w-2xl">
                 
@@ -1919,7 +1939,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                       <label className={"flex min-h-[64px] cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 transition " + (!publishNow?"border-[#2F61FD] bg-[#EFF6FF]":"border-[#E2E8F0] bg-white")}>
                         <input type="radio" name="publishing-mode" checked={!publishNow} onChange={()=>{setPublishNow(false);setError("");}} className="h-4 w-4 accent-[#2F61FD]" />
                         <span className="flex-1"><span className="block text-sm font-bold text-[#18233C]">زمان‌بندی انتشار</span>
-                          <span className="mt-1 block text-xs text-[#5A6B87]">انتخاب زمان تا ۴۸ ساعت آینده، به وقت تهران</span></span>
+                          <span className="mt-1 block text-xs text-[#5A6B87]">انتخاب زمان تا ۴۸ ساعت آینده</span></span>
                         <CalendarClock size={18} className="text-[#2F61FD]"/>
                       </label>
                     </fieldset>

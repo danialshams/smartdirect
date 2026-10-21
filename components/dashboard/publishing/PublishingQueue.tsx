@@ -19,7 +19,7 @@ type Props = {
   onCancel: (id: string) => Promise<void>;
   onRefresh: () => Promise<void>;
 };
-const labels: Record<PublishType, string> = {POST:"پست",CAROUSEL:"آلبوم",REEL:"ریلز",STORY:"استوری"};
+const labels: Record<PublishType, string> = {POST:"پست",CAROUSEL:"پست اسلایدی",REEL:"ریلز",STORY:"استوری"};
 const statuses: Record<string, {text:string;color:string;background:string}> = {
   SCHEDULED:{text:"زمان‌بندی‌شده",color:"#2F61FD",background:"#EFF6FF"},
   PROCESSING:{text:"در حال پردازش",color:"#B45309",background:"#FFF7ED"},
@@ -94,8 +94,7 @@ export default function PublishingQueue({jobs,loading,error,onRetry,onCancel,onR
           {job.status==="FAILED"&&job.errorMessage&&<p className="line-clamp-2 text-[11px] leading-5 text-[#B91C1C]">{job.errorMessage}</p>}
         </div>
         <div className="flex shrink-0 flex-col gap-1.5 sm:flex-row">
-          {["SCHEDULED","DRAFT"].includes(job.status) ? <Link href={"/dashboard/publishing/"+encodeURIComponent(job.id)} className="inline-flex min-h-8 items-center justify-center gap-1 rounded-lg border border-[#DBEAFE] bg-white px-2 text-[11px] font-semibold text-[#2F61FD]"><Pencil size={13}/><span>ویرایش</span></Link>:
-            <Link href={"/dashboard/publishing/"+encodeURIComponent(job.id)} className="inline-flex min-h-8 items-center justify-center rounded-lg border border-[#E2E8F0] bg-white px-2 text-[11px] font-semibold text-[#5A6B87]">جزئیات</Link>}
+          {["SCHEDULED","DRAFT"].includes(job.status) && <Link href={"/dashboard/publishing/"+encodeURIComponent(job.id)} className="inline-flex min-h-8 items-center justify-center gap-1 rounded-lg border border-[#DBEAFE] bg-white px-2 text-[11px] font-semibold text-[#2F61FD]"><Pencil size={13}/><span>ویرایش</span></Link>}
           {job.status==="FAILED"&&<button type="button" disabled={busyThis} onClick={()=>void runAction(job.id,"retry")} className="inline-flex min-h-8 items-center justify-center gap-1 rounded-lg border border-[#DBEAFE] bg-[#EFF6FF] px-2 text-[11px] font-semibold text-[#2F61FD] disabled:opacity-50">{busyThis?<LoaderCircle size={13} className="animate-spin"/>:<RotateCcw size={13}/>}تلاش مجدد</button>}
           {job.status==="SCHEDULED"&&<button type="button" disabled={busyThis} onClick={()=>setConfirmCancel(job.id)} className="inline-flex min-h-8 items-center justify-center gap-1 rounded-lg border border-[#FECACA] bg-white px-2 text-[11px] font-semibold text-[#B91C1C] disabled:opacity-50"><Trash2 size={13}/>لغو</button>}
         </div>
