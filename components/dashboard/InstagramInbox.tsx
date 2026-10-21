@@ -48,7 +48,7 @@ type Message = {
   readAt: string | null;
   seenAt: string | null;
   createdAt: string;
-  sendStatus?: "FAILED";
+  sendStatus?: "FAILED" | "SENDING";
 };
 
 type RetryPayload =
@@ -79,6 +79,9 @@ type Conversation = {
   updatedAt: string;
   messages: Message[];
   unreadCount?: number;
+  hasMoreMessages?: boolean;
+  hasNewerMessages?: boolean;
+  nextCursor?: string | null;
 };
 
 type ApiResult = {
@@ -88,6 +91,9 @@ type ApiResult = {
   conversation?: Conversation;
   message?: Message;
   humanMode?: boolean;
+  matches?: Message[];
+  hasMoreConversations?: boolean;
+  nextOffset?: number;
 };
 
 type InboxFilter = "ALL" | "READ" | "UNREAD";
@@ -379,6 +385,23 @@ export default function InstagramInbox({
       ) === "1"
     );
   });
+  const [hasMoreConversations, setHasMoreConversations] = useState(false);
+  const [nextConversationsOffset, setNextConversationsOffset] = useState(0);
+  const [loadingMoreConversations, setLoadingMoreConversations] = useState(false);
+  const [hasMoreMessages, setHasMoreMessages] = useState(false);
+  const [loadingOlderMessages, setLoadingOlderMessages] = useState(false);
+  const [showJumpToLatest, setShowJumpToLatest] = useState(false);
+  const [newMessageCount, setNewMessageCount] = useState(0);
+  const [conversationSearchOpen, setConversationSearchOpen] = useState(false);
+  const [conversationSearchText, setConversationSearchText] = useState("");
+  const [conversationMatches, setConversationMatches] = useState<Message[]>([]);
+  const [conversationSearching, setConversationSearching] = useState(false);
+  const [focusedMessageId, setFocusedMessageId] = useState<string | null>(null);
+  const [showQuickReplies, setShowQuickReplies] = useState(false);
+  const [quickReplies, setQuickReplies] = useState<string[]>([]);
+  const [newQuickReply, setNewQuickReply] = useState("");
+  const [handoffBusy, setHandoffBusy] = useState(false);
+  const [recordedVoice, setRecordedVoice] = useState<File | null>(null);
   const [recording, setRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const [recordingWaveform, setRecordingWaveform] = useState<number[]>(
@@ -395,6 +418,12 @@ export default function InstagramInbox({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesScrollRef = useRef<HTMLDivElement>(null);
   const previousMessageCountRef = useRef(0);
+  const conversationFetchIdRef = useRef(0);
+  const messageFetchIdRef = useRef(0);
+  const pendingMessageFetchRef = useRef<string | null>(null);
+  const activeConversationRef = useRef("");
+  const previousNewestIdRef = useRef<string | null>(null);
+  activeConversationRef.current = accountId + ":" + selectedId;
   const initialScrollPendingRef = useRef(false);
   const shouldStickToBottomRef = useRef(true);
   const failedRetryRef = useRef<Map<string, RetryPayload>>(new Map());
@@ -422,6 +451,7 @@ export default function InstagramInbox({
       setSelectedId("");
       setMessages([]);
       setMobileChatOpen(false);
+      setHasMoreConversations(false);
       return;
     }
 
