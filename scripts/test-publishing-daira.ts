@@ -23,6 +23,8 @@ assert.ok(editor.includes('type==="STORY" ?') && editor.includes("storyCreateMod
 assert.ok(editor.includes("showTags &&") && editor.includes("taggedUsersByMedia[item.storageKey]"),"Optional per-media tagging should work");
 assert.ok(!tags.includes("window.fetch ="),"Legacy global fetch override must remain absent");
 assert.ok(editor.includes("canSubmitMedia") && editor.includes("canSubmitAutomation") && editor.includes("!publishing"),"Final button must validate real media/automation state");
+assert.ok(editor.includes("setStoryResponseSaved(false); setStoryResponseEditing(false); setStoryResponseDirty(false);"),"Switching content types must clear saved story reply state");
+assert.ok(!editor.includes("handleBackToTypeSelection();"),"Late publish failures must never clear a fresh in-progress draft");
 assert.ok(editor.includes('onClick={()=>void createJob(publishNow)}'),"Publishing must still call original engine");
 assert.ok(editor.includes('const selectedScheduleDate = !publishNow ? stage6Date : scheduledDate;'),"Jalali schedule must be respected for all types");
 assert.ok(editor.includes('const selectedHour = !publishNow ? stage6Hour : hour;'),"Schedule hour missing");
