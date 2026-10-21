@@ -18,6 +18,11 @@ assert.ok(component.includes('sendStatus: "SENDING"') && component.includes('sen
 assert.ok(component.includes("failedRetryRef.current.set"), "Failed sends must be retryable");
 assert.ok(component.includes("setRecordedVoice(new File(") && !component.includes('aria-label="ارسال Voice"'), "Voice must offer a preview before sending");
 assert.ok(component.includes("conversationSearchOpen") && component.includes("focusSearchResult"), "Message search interaction missing");
+const inChatSearchField = component.match(/<input\s+type="search"[\s\S]*?aria-label="جست‌وجو در پیام‌های گفتگو"[\s\S]*?\/>/)?.[0];
+assert.ok(inChatSearchField, "In-chat search field must be present");
+assert.ok(inChatSearchField.includes('text-base') && inChatSearchField.includes('fontSize: "16px"'), "In-chat search must remain at least 16px to prevent Safari/iOS input auto-zoom");
+assert.ok(inChatSearchField.includes('WebkitTextSizeAdjust: "100%"'), "In-chat search must not auto-adjust text size on mobile Safari");
+assert.ok(!inChatSearchField.includes("autoFocus"), "Opening search must not automatically raise the mobile keyboard");
 assert.ok(!component.includes("persistQuickReplies") && !component.includes("showQuickReplies") && !component.includes("MessageSquareText"), "Quick reply controls must not be shown");
 assert.ok(!component.includes("toggleHumanMode") && !component.includes("handoffBusy"), "Human response toggle must not be shown");
 assert.ok(!component.includes("NEEDS_REPLY") && !component.includes("نیازمند پاسخ"), "Needs-reply tab must be removed");

@@ -1481,7 +1481,17 @@ export default function InstagramInbox({
           {conversationSearchOpen && (
             <div className="shrink-0 border-b border-[#E8EDF5] bg-white px-3 py-3 sm:px-5">
               <div className="flex items-center gap-2">
-                <input autoFocus value={conversationSearchText} onChange={(event) => setConversationSearchText(event.target.value)} placeholder="جست‌وجو در پیام‌های این گفتگو..." aria-label="جست‌وجو در پیام‌های گفتگو" className="h-11 min-w-0 flex-1 rounded-xl border border-[#DFE7F3] bg-[#F8FAFD] px-3 text-sm text-[#18233C] outline-none focus:border-[#2F61FD]" />
+                <input
+                  type="search"
+                  inputMode="search"
+                  enterKeyHint="search"
+                  value={conversationSearchText}
+                  onChange={(event) => setConversationSearchText(event.target.value)}
+                  placeholder="جست‌وجو در پیام‌های این گفتگو..."
+                  aria-label="جست‌وجو در پیام‌های گفتگو"
+                  className="h-11 min-w-0 w-full flex-1 rounded-xl border border-[#DFE7F3] bg-[#F8FAFD] px-3 text-base leading-6 text-[#18233C] outline-none focus:border-[#2F61FD]"
+                  style={{ fontSize: "16px", WebkitTextSizeAdjust: "100%" }}
+                />
                 <button type="button" onClick={() => {setConversationSearchOpen(false);setConversationSearchText("");}} className="grid h-10 w-10 place-items-center rounded-xl text-[#64748B]" aria-label="بستن جست‌وجو"><X size={18}/></button>
               </div>
               {conversationSearchText.trim() && (
