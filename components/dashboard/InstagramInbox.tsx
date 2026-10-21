@@ -982,13 +982,11 @@ export default function InstagramInbox({
 
         if (blob.size > 0) {
           const extension = blob.type.includes("webm") ? "webm" : "audio";
-          void sendFile(
-            new File(
-              [blob],
-              `smartdirect-voice-${Date.now()}.${extension}`,
-              { type: blob.type },
-            ),
-          );
+          setRecordedVoice(new File(
+            [blob],
+            `smartdirect-voice-${Date.now()}.${extension}`,
+            { type: blob.type },
+          ));
         }
       };
 
@@ -1061,6 +1059,13 @@ export default function InstagramInbox({
     setMessages([]);
     setText("");
     setSelectedFile(null);
+    setRecordedVoice(null);
+    setShowQuickReplies(false);
+    setConversationSearchOpen(false);
+    setConversationMatches([]);
+    setHasMoreMessages(false);
+    pendingMessageFetchRef.current = null;
+    messageFetchIdRef.current += 1;
     setError("");
     initialScrollPendingRef.current = true;
     setMobileChatOpen(true);
@@ -1133,12 +1138,106 @@ export default function InstagramInbox({
     () => (selectedFile ? URL.createObjectURL(selectedFile) : null),
     [selectedFile],
   );
+  const recordedVoiceUrl = useMemo(
+    () => (recordedVoice ? URL.createObjectURL(recordedVoice) : null),
+    [recordedVoice],
+  );
 
   useEffect(() => {
     return () => {
       if (selectedFileUrl) URL.revokeObjectURL(selectedFileUrl);
+      if (recordedVoiceUrl) URL.revokeObjectURL(recordedVoiceUrl);
     };
-  }, [selectedFileUrl]);
+  }, [selectedFileUrl, recordedVoiceUrl]);
+
+  const suggestedReplies = [
+    "سلام، ممنون از پیامتان. چطور می‌توانم کمک کنم؟",
+    "پیامتان دریافت شد. در حال بررسی موضوع هستیم.",
+    "لطفاً جزئیات بیشتری ارسال کنید تا دقیق‌تر راهنمایی کنیم.",
+  ];
+
+  useEffect(() => {
+    if (!accountId) return;
+    try {
+      const saved = JSON.parse(window.localStorage.getItem(`smartdirect:inbox:quick-replies:${accountId}`) || "null");
+      setQuickReplies(Array.isArray(saved) ? saved.filter((item): item is string => typeof item === "string") : suggestedReplies);
+    } catch {
+      setQuickReplies(suggestedReplies);
+    }
+  }, [accountId]);
+
+  function persistQuickReplies(next: string[]) {
+    setQuickReplies(next);
+    if (accountId) window.localStorage.setItem(`smartdirect:inbox:quick-replies:${accountId}`, JSON.stringify(next));
+  }
+
+  useEffect(() => {
+    if (!conversationSearchOpen || !conversationSearchText.trim() || !accountId || !selectedId) {
+      setConversationMatches([]);
+      setConversationSearching(false);
+      return;
+    }
+    let active = true;
+    const timeout = window.setTimeout(async () => {
+      setConversationSearching(true);
+      try {
+        const params = new URLSearchParams({
+          accountId,
+          conversationId: selectedId,
+          messageSearch: conversationSearchText.trim(),
+        });
+        const response = await fetch(`/api/instagram/inbox?${params.toString()}`, { cache: "no-store" });
+        const result = await readApiResult(response);
+        if (active) setConversationMatches(response.ok ? result.matches || [] : []);
+      } catch {
+        if (active) setConversationMatches([]);
+      } finally {
+        if (active) setConversationSearching(false);
+      }
+    }, 320);
+    return () => { active = false; window.clearTimeout(timeout); };
+  }, [accountId, selectedId, conversationSearchOpen, conversationSearchText]);
+
+  async function focusSearchResult(id: string) {
+    setFocusedMessageId(id);
+    setConversationSearchOpen(false);
+    setConversationMatches([]);
+    await loadMessages({ focusId: id });
+  }
+
+  function returnToLatest() {
+    setFocusedMessageId(null);
+    initialScrollPendingRef.current = true;
+    shouldStickToBottomRef.current = true;
+    void loadMessages();
+  }
+
+  async function toggleHumanMode() {
+    if (!accountId || !selectedId || handoffBusy || !selectedConversation) return;
+    setHandoffBusy(true);
+    try {
+      const response = await fetch("/api/instagram/inbox/handoff", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          accountId,
+          conversationId: selectedId,
+          action: selectedConversation.humanMode ? "resume" : "transfer",
+        }),
+      });
+      const result = await readApiResult(response);
+      if (!response.ok || !result.success) throw new Error(result.error || "تغییر حالت پاسخ‌گویی انجام نشد.");
+      setConversations((current) => current.map((item) => item.id === selectedId
+        ? { ...item, humanMode: Boolean(result.humanMode) }
+        : item
+      ));
+      setError("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "تغییر حالت پاسخ‌گویی انجام نشد.");
+    } finally {
+      setHandoffBusy(false);
+    }
+  }
 
   const listPanel = (
     <aside className="flex min-h-0 flex-1 flex-col bg-background lg:w-[330px] lg:flex-none lg:border-l lg:border-border">
