@@ -25,6 +25,7 @@ import {
   CircleHelp,
 } from "lucide-react";
 import {
+  Fragment,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -1456,89 +1457,86 @@ export default function InstagramInbox({
 
           <div
             ref={messagesScrollRef}
-            className="relative min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain bg-muted/20 px-3 py-3 sm:px-4 sm:py-4"
+            onScroll={(event) => {
+              const element = event.currentTarget;
+              const distance = element.scrollHeight - element.scrollTop - element.clientHeight;
+              shouldStickToBottomRef.current = distance < 100;
+              setShowJumpToLatest(distance > 180);
+              if (distance < 100) setNewMessageCount(0);
+            }}
+            className="relative min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain bg-[#F7F9FD] px-3 py-4 sm:px-6 sm:py-5"
           >
+            {focusedMessageId && (
+              <div className="mx-auto mb-4 flex max-w-2xl justify-center">
+                <button type="button" onClick={returnToLatest} className="inline-flex items-center gap-2 rounded-full border border-[#DBEAFE] bg-white px-4 py-2 text-xs font-bold text-[#2F61FD] shadow-sm">
+                  <ArrowDown size={15}/> بازگشت به آخرین پیام‌ها
+                </button>
+              </div>
+            )}
             {messagesLoading && !messages.length ? (
               <DashboardLoading label="در حال دریافت پیام‌ها..." className="dashboard-loading--fill" />
             ) : messages.length ? (
-              <div className="mx-auto flex w-full max-w-2xl flex-col gap-2.5">
-                {messages.map((message) => {
+              <div className="mx-auto flex w-full max-w-[760px] flex-col gap-1">
+                {hasMoreMessages && (
+                  <button type="button" disabled={loadingOlderMessages} onClick={() => {
+                    const first = messages.find((message) => !message.sendStatus);
+                    if (first) void loadMessages({ before: first.id });
+                  }} className="mx-auto mb-4 rounded-full border border-[#E0E8F5] bg-white px-4 py-2 text-xs font-bold text-[#64748B] shadow-sm disabled:opacity-50">
+                    {loadingOlderMessages ? "در حال دریافت…" : "نمایش پیام‌های قدیمی‌تر"}
+                  </button>
+                )}
+                {messages.map((message, index) => {
                   const outbound = message.direction === "OUTBOUND";
+                  const previous = messages[index - 1];
+                  const sameSender = Boolean(previous && previous.direction === message.direction &&
+                    new Date(message.createdAt).getTime() - new Date(previous.createdAt).getTime() < 300000);
+                  const showDate = !previous || new Date(previous.createdAt).toDateString() !== new Date(message.createdAt).toDateString();
                   const hasMedia = Boolean(message.mediaUrl);
-
                   return (
-                    <div
-                      key={message.id}
-                      className={`flex ${outbound ? "justify-start" : "justify-end"}`}
-                    >
-                      <div className="max-w-[82%] sm:max-w-[62%]">
-                        <div
-                          className={`overflow-hidden shadow-sm ${
-                            message.messageType === "AUDIO"
-                              ? "rounded-[22px]"
-                              : "rounded-2xl " +
-                                (outbound
-                                  ? "rounded-bl-md bg-primary text-primary-foreground"
-                                  : "rounded-br-md border border-border bg-background text-foreground")
-                          } ${
-                            message.messageType === "AUDIO"
-                              ? outbound
-                                ? "bg-primary text-primary-foreground"
-                                : "border border-border bg-background text-foreground"
-                              : ""
-                          }`}
-                        >
-                          {hasMedia && (
-                            <MediaBubble
-                              message={message}
-                              onMediaLoad={scrollToInitialBottom}
-                            />
-                          )}
-
-                          {message.text && (
-                            <div className="px-3.5 py-2.5">
-                              <p className="whitespace-pre-wrap text-[12px] leading-5.5">
-                                {message.text}
-                              </p>
-                            </div>
-                          )}
-
-                          {!hasMedia && !message.text && (
-                            <div className="px-3.5 py-2.5 text-xs text-muted-foreground">
-                              {preview(message)}
-                            </div>
-                          )}
+                    <Fragment key={message.id}>
+                      {showDate && (
+                        <div className="my-4 flex items-center justify-center" role="separator">
+                          <span className="rounded-full bg-[#E9EEF7] px-3 py-1.5 text-[11px] font-medium text-[#667893]">
+                            {new Date(message.createdAt).toLocaleDateString("fa-IR-u-ca-persian", { day: "numeric", month: "long", year: "numeric" })}
+                          </span>
                         </div>
-
-                        <div
-                          className={`mt-1 flex items-center gap-1.5 px-1 text-[9px] text-muted-foreground ${
-                            outbound ? "justify-start" : "justify-end"
-                          }`}
-                        >
-                          <span>{formatTime(message.createdAt)}</span>
-                          {outbound && message.sendStatus === "FAILED" ? (
-                            <button
-                              type="button"
-                              onClick={() => void retryFailedMessage(message.id)}
-                              disabled={sending}
-                              className="flex items-center gap-1 rounded-full text-red-500 transition hover:bg-red-50 disabled:opacity-50"
-                              title="ارسال مجدد"
-                              aria-label="ارسال مجدد پیام"
-                            >
-                              <CircleHelp size={14} strokeWidth={2.5} />
-                            </button>
-                          ) : outbound &&
-                            (message.seenAt ? (
-                              <span className="flex items-center gap-0.5 font-medium text-blue-500">
-                                <CheckCheck size={12} strokeWidth={2.5} />
-                                <span>Seen</span>
-                              </span>
-                            ) : (
-                              <Check size={12} />
-                            ))}
+                      )}
+                      <div data-message-id={message.id} className={`flex ${sameSender ? "mt-0.5" : "mt-2"} ${outbound ? "justify-start" : "justify-end"}`}>
+                        <div className="max-w-[85%] sm:max-w-[70%]">
+                          <div className={`overflow-hidden shadow-[0_2px_8px_rgba(20,40,80,.04)] ${
+                            message.messageType === "AUDIO" ? "rounded-[21px]" :
+                              "rounded-[20px] " + (outbound
+                                ? "rounded-br-[20px] rounded-bl-md bg-[#2F61FD] text-white"
+                                : "rounded-br-md border border-[#E7EDF5] bg-white text-[#18233C]")
+                          } ${message.messageType === "AUDIO" ? (outbound ? "bg-[#2F61FD] text-white" : "border border-[#E7EDF5] bg-white text-[#18233C]") : ""}`}>
+                            {hasMedia && <MediaBubble message={message} onMediaLoad={scrollToInitialBottom}/>}
+                            {message.text && (
+                              <div className="px-3.5 py-2.5">
+                                <p dir="auto" className="whitespace-pre-wrap break-words text-[13px] leading-6">{message.text}</p>
+                              </div>
+                            )}
+                            {!hasMedia && !message.text && (
+                              <div className="px-3.5 py-2.5 text-xs opacity-75">{preview(message)}</div>
+                            )}
+                          </div>
+                          <div className={`mt-1 flex items-center gap-1.5 px-1 text-[10px] text-[#8290A6] ${outbound ? "justify-start" : "justify-end"}`}>
+                            <span>{formatTime(message.createdAt)}</span>
+                            {outbound && message.sendStatus === "SENDING" ? (
+                              <span className="text-[#64748B]" role="status">در حال ارسال…</span>
+                            ) : outbound && message.sendStatus === "FAILED" ? (
+                              <button type="button" onClick={() => void retryFailedMessage(message.id)}
+                                disabled={sending || !selectedConversation.messagingWindow?.canSend}
+                                className="inline-flex items-center gap-1 rounded-lg px-1 text-[#DC2626] hover:bg-[#FEF2F2] disabled:opacity-50"
+                                title={message.failureReason || "ارسال ناموفق بود"} aria-label="تلاش دوباره برای ارسال پیام">
+                                <CircleHelp size={14}/><span>ناموفق · تلاش مجدد</span>
+                              </button>
+                            ) : outbound && (message.seenAt ? (
+                              <span className="inline-flex items-center gap-1 font-semibold text-[#2F61FD]"><CheckCheck size={14}/>دیده‌شده</span>
+                            ) : <span title="ارسال‌شده"><Check size={13}/></span>)}
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    </Fragment>
                   );
                 })}
                 <div ref={messagesEndRef} />
@@ -1546,16 +1544,18 @@ export default function InstagramInbox({
             ) : (
               <div className="flex h-full items-center justify-center p-8 text-center">
                 <div>
-                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-background text-muted-foreground shadow-sm">
-                    <MessageCircle size={24} />
-                  </div>
-                  <h3 className="mt-4 text-sm font-bold text-foreground">
-                    هنوز پیامی وجود ندارد
-                  </h3>
-                  <p className="mt-2 max-w-xs text-xs leading-6 text-muted-foreground">
-                    اولین پیام را از همین‌جا ارسال کنید.
-                  </p>
+                  <div className="mx-auto grid h-16 w-16 place-items-center rounded-[22px] bg-white text-[#94A3B8] shadow-sm"><MessageCircle size={27}/></div>
+                  <h3 className="mt-4 text-sm font-bold text-[#18233C]">هنوز پیامی وجود ندارد</h3>
+                  <p className="mt-2 max-w-xs text-xs leading-6 text-[#64748B]">اولین پیام را از همین‌جا ارسال کنید.</p>
                 </div>
+              </div>
+            )}
+            {showJumpToLatest && !focusedMessageId && (
+              <div className="pointer-events-none sticky bottom-3 mt-3 flex justify-center">
+                <button type="button" onClick={forceScrollToBottom} className="pointer-events-auto inline-flex min-h-10 items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-bold text-[#2F61FD] shadow-[0_4px_16px_rgba(24,35,60,.15)]" aria-label="رفتن به آخرین پیام">
+                  <ArrowDown size={16}/>
+                  {newMessageCount ? `${newMessageCount.toLocaleString("fa-IR")} پیام جدید` : "آخرین پیام"}
+                </button>
               </div>
             )}
           </div>
