@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { normalizePersistentMenuUrl } from "../src/lib/instagram/persistent-menu-url";
+import { normalizePersistentMenuUrl, persistentMenuItemChanged } from "../src/lib/instagram/persistent-menu-url";
 
 const read = (path: string) => readFileSync(path, "utf8");
 const menu = read("components/dashboard/PersistentMenuManager.tsx");
@@ -64,5 +64,34 @@ for (const invalid of ["", "not-a-site", "www", "ftp://example.com", "javascript
   "https://", "https://user:pass@example.com", "example .com"]) {
   assert.equal(normalizePersistentMenuUrl(invalid), null, "Unsafe/invalid URL accepted: " + invalid);
 }
+
+assert.ok(!menu.includes('"@" + account.igUsername') && !menu.includes('{"@" + account.igUsername}'),
+  "The direct-menu title must not show the Instagram account username");
+assert.ok(menu.includes("const draftChanged = editor ? persistentMenuItemChanged(editor, savedItem) : false;")
+  && menu.includes("const canSaveChanges = !editor?.id || draftChanged || responseDirty;"),
+  "Editing an existing menu option must stay disabled until its saved content changes");
+assert.ok(menu.includes("disabled={!draftReady || !normalizePersistentMenuUrl(editor.url) || !canSaveChanges || saving}"),
+  "Unchanged URL edits must not enable the save action");
+assert.ok(menu.includes("onResponseDirtyChange={setResponseDirty}")
+  && menu.includes("dirty={canSaveChanges}"),
+  "Reply editor must react to real response changes rather than assuming that every edit is dirty");
+assert.ok(builder.includes("responseFingerprint") && builder.includes("originalResponseRef.current = responseFingerprint(originalMessage)")
+  && builder.includes("onResponseDirtyChange(changed)"),
+  "The reply flow must compare loaded content to edited content, including nested form responses");
+assert.ok(builder.includes("onDraftChange={modernResponseFlow && Boolean(automationId) ? setShowcaseDraftChanged : undefined}"),
+  "Editing existing showcase slides must also activate the save button");
+const savedLink = { label: "محصولات", type: "web_url" as const, url: "https://example.com" };
+assert.equal(persistentMenuItemChanged({ ...savedLink }, savedLink), false);
+assert.equal(persistentMenuItemChanged({ ...savedLink, label: " محصولات " }, savedLink), false);
+assert.equal(persistentMenuItemChanged({ ...savedLink, url: "example.com" }, savedLink), false,
+  "Automatically adding https:// is not a meaningful edit");
+assert.equal(persistentMenuItemChanged({ ...savedLink, url: "http://example.com" }, savedLink), true);
+assert.equal(persistentMenuItemChanged({ ...savedLink, label: "قیمت" }, savedLink), true);
+assert.equal(persistentMenuItemChanged({ ...savedLink, type: "postback" }, savedLink), true);
+assert.equal(persistentMenuItemChanged(savedLink, null), true, "Creation should not be blocked");
+const originalReply = { label: "قیمت", type: "postback" as const, url: "" };
+assert.equal(persistentMenuItemChanged({ ...originalReply }, originalReply), false);
+assert.equal(persistentMenuItemChanged({ ...originalReply, label: "قیمت جدید" }, originalReply), true);
+assert.equal(persistentMenuItemChanged({ ...originalReply, type: "web_url", url: "example.com" }, originalReply), true);
 
 console.log("PERSISTENT_MENU_REDESIGN_REGRESSION_OK");
