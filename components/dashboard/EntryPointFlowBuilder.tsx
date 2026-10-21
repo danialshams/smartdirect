@@ -27,6 +27,8 @@ type EntryPointFlowBuilderProps = {
     responseTypeDescription?: string;
     textPlaceholder?: string;
     hideVideo?: boolean;
+    modernResponseFlow?: boolean;
+    canSave?: boolean;
     triggerType?: "DM" | "COMMENT_KEYWORD" | "STORY_REPLY_KEYWORD";
     keyword?: string;
     onKeywordChange?: (value: string) => void;
@@ -87,6 +89,8 @@ export default function EntryPointFlowBuilder({
     responseTypeDescription = "نوع پاسخی را که می‌خواهید برای این محتوا ارسال شود انتخاب کنید.",
     textPlaceholder = "متنی که به‌عنوان پاسخ پیام شروع گفتگو برای کاربر ارسال می‌شود...",
     hideVideo = false,
+    modernResponseFlow = false,
+    canSave = true,
     triggerType = "DM",
     keyword = "",
     onKeywordChange,
@@ -859,6 +863,8 @@ export default function EntryPointFlowBuilder({
                         instagramAccountId={accountId}
                         showFinalSave
                         hideVideo={hideVideo}
+                        storyCreateMode={modernResponseFlow}
+                        storyEditMode={modernResponseFlow && Boolean(automationId)}
                         textOnly={textOnly}
                         extraSettings={optionalSettings}
                         finalActions={finalActions}
@@ -870,7 +876,7 @@ export default function EntryPointFlowBuilder({
                         finalSaveLoadingLabel={finalSaveLoadingLabel}
                         keywordValid={triggerType === "DM" || Boolean(keyword.trim())}
                         disabled={saving}
-                        finalSaveDisabled={!dirty}
+                        finalSaveDisabled={!dirty || !canSave}
                         onUpdate={updateEntryMessage}
                         onSavedChange={setSuccess}
                         onContinue={(messageOverride) =>
