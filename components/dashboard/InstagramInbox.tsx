@@ -102,7 +102,7 @@ type ApiResult = {
   nextOffset?: number;
 };
 
-type InboxFilter = "ALL" | "READ" | "UNREAD";
+type InboxFilter = "ALL" | "READ" | "UNREAD" | "NEEDS_REPLY";
 
 const dateFormatter = new Intl.DateTimeFormat("fa-IR", {
   dateStyle: "medium",
@@ -1190,6 +1190,7 @@ export default function InstagramInbox({
   const filteredConversations = (search.trim() ? searchResults : conversations).filter((conversation) => {
     if (filter === "UNREAD" && !(conversation.unreadCount || 0)) return false;
     if (filter === "READ" && (conversation.unreadCount || 0) > 0) return false;
+    if (filter === "NEEDS_REPLY" && conversation.messages[0]?.direction !== "INBOUND") return false;
 
     return true;
   });
@@ -1198,6 +1199,7 @@ export default function InstagramInbox({
     (conversation) => (conversation.unreadCount || 0) > 0,
   ).length;
   const readTotal = conversations.length - unreadTotal;
+  const needsReplyTotal = conversations.filter((item) => item.messages[0]?.direction === "INBOUND").length;
   const selectedConversation = conversations.find(
     (conversation) => conversation.id === selectedId,
   );
@@ -1317,19 +1319,20 @@ export default function InstagramInbox({
           </div>
           <button type="button" onClick={() => void loadConversations()} aria-label="به‌روزرسانی گفتگوها" title="به‌روزرسانی" className="grid h-10 w-10 place-items-center rounded-xl bg-[#F1F5FC] text-[#526580] transition hover:bg-[#E7EEFC]"><RotateCcw size={17}/></button>
         </div>
-        <div className="flex items-center rounded-xl bg-[#EEF3FB] p-1">
+        <div className="flex items-center gap-1 overflow-x-auto rounded-xl bg-[#EEF3FB] p-1" role="group" aria-label="فیلتر گفتگوها">
           {(
             [
               ["ALL", "همه", conversations.length],
               ["READ", "خوانده شده", readTotal],
               ["UNREAD", "خوانده نشده", unreadTotal],
+              ["NEEDS_REPLY", "نیازمند پاسخ", needsReplyTotal],
             ] as const
           ).map(([value, label, count]) => (
             <button
               key={value}
               type="button"
               onClick={() => setFilter(value)}
-              className={`flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-[11px] font-medium transition ${
+              className={`flex min-w-[74px] flex-1 shrink-0 items-center justify-center gap-1 rounded-lg px-2 py-2.5 text-[11px] font-semibold transition ${
                 filter === value
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
