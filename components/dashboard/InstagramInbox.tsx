@@ -9,12 +9,16 @@ import {
   File as FileIcon,
   Image as ImageIcon,
   MessageCircle,
+  MessageSquareText,
   Mic,
   Paperclip,
   Pause,
   Play,
   Search,
   Send,
+  ArrowDown,
+  Square,
+  RotateCcw,
   UserRound,
   Video,
   X,
@@ -244,6 +248,16 @@ function AudioBubble({ src }: { src: string }) {
           <div
             className="flex h-8 min-w-0 cursor-pointer items-center gap-[2px] overflow-hidden rounded-full select-none touch-none"
             onPointerDown={seekFromWaveform}
+            onKeyDown={(event) => {
+              const audio = audioRef.current;
+              if (!audio || !Number.isFinite(audio.duration)) return;
+              if (!["ArrowRight", "ArrowLeft", "Home", "End"].includes(event.key)) return;
+              event.preventDefault();
+              const next = event.key === "Home" ? 0 : event.key === "End" ? audio.duration :
+                audio.currentTime + (event.key === "ArrowRight" ? 5 : -5);
+              audio.currentTime = Math.min(audio.duration, Math.max(0, next));
+              setCurrentTime(audio.currentTime);
+            }}
             role="slider"
             aria-label="موقعیت پیام صوتی"
             aria-valuemin={0}
@@ -1240,9 +1254,16 @@ export default function InstagramInbox({
   }
 
   const listPanel = (
-    <aside className="flex min-h-0 flex-1 flex-col bg-background lg:w-[330px] lg:flex-none lg:border-l lg:border-border">
-      <div className="shrink-0 border-b border-border px-3.5 pb-3 pt-3.5 sm:px-4">
-        <div className="mt-3 flex items-center rounded-xl bg-muted/60 p-1">
+    <aside className="flex min-h-0 flex-1 flex-col bg-white lg:w-[355px] lg:flex-none lg:border-l lg:border-[#E8EDF5]">
+      <div className="shrink-0 border-b border-[#E8EDF5] px-4 pb-3.5 pt-4 sm:px-5">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h1 className="text-base font-extrabold text-[#18233C]">صندوق دایرکت</h1>
+            <p className="mt-1 text-[11px] text-[#64748B]">{conversations.length.toLocaleString("fa-IR")} گفتگو</p>
+          </div>
+          <button type="button" onClick={() => void loadConversations()} aria-label="به‌روزرسانی گفتگوها" title="به‌روزرسانی" className="grid h-10 w-10 place-items-center rounded-xl bg-[#F1F5FC] text-[#526580] transition hover:bg-[#E7EEFC]"><RotateCcw size={17}/></button>
+        </div>
+        <div className="flex items-center rounded-xl bg-[#EEF3FB] p-1">
           {(
             [
               ["ALL", "همه", conversations.length],
@@ -1268,25 +1289,26 @@ export default function InstagramInbox({
           ))}
         </div>
 
-        <div className="relative mt-2.5">
+        <div className="relative mt-3">
           <Search
             size={15}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#8290A6]"
           />
           <Input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="جستجوی گفتگو..."
-            className="h-9 rounded-lg border-border bg-muted/30 pr-9 text-[11px]"
+            className="h-11 rounded-xl border-[#E5EAF3] bg-[#F8FAFD] pr-10 text-[13px] focus:border-[#2F61FD]"
           />
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-2 py-2 sm:px-3">
+      <div className="min-h-0 flex-1 overflow-y-auto px-2.5 py-3 sm:px-3">
         {(accountsLoading || (connectedAccounts.length > 0 && (!accountId || loading))) && !conversations.length ? (
           <DashboardLoading label="در حال دریافت گفتگوها..." className="dashboard-loading--fill" />
         ) : filteredConversations.length ? (
-          filteredConversations.map((conversation) => {
+          <>
+          {filteredConversations.map((conversation) => {
             const active = conversation.id === selectedId;
             const unread = (conversation.unreadCount || 0) > 0;
 
@@ -1295,10 +1317,10 @@ export default function InstagramInbox({
                 key={conversation.id}
                 type="button"
                 onClick={() => selectConversation(conversation.id)}
-                className={`group flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-right transition ${
+                className={`group flex w-full min-h-[72px] items-center gap-3 rounded-2xl px-3 py-3 text-right transition ${
                   active
-                    ? "bg-muted"
-                    : "hover:bg-muted/60"
+                    ? "bg-[#EBF2FF] ring-1 ring-[#DCE8FF]"
+                    : "hover:bg-[#F5F8FE]"
                 }`}
               >
                 <div className="relative shrink-0">
@@ -1306,10 +1328,10 @@ export default function InstagramInbox({
                     <img
                       src={conversation.participantProfilePicture}
                       alt=""
-                      className="h-9 w-9 rounded-full object-cover ring-1 ring-border"
+                      className="h-11 w-11 rounded-full object-cover ring-1 ring-[#E5EAF3]"
                     />
                   ) : (
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#EEF3FB] text-[#64748B]">
                       <UserRound size={18} />
                     </div>
                   )}
@@ -1321,7 +1343,7 @@ export default function InstagramInbox({
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
                     <span
-                      className={`truncate text-xs ${
+                      className={`truncate text-[13px] ${
                         unread
                           ? "font-bold text-foreground"
                           : "font-medium text-foreground"
@@ -1329,13 +1351,13 @@ export default function InstagramInbox({
                     >
                       {displayName(conversation)}
                     </span>
-                    <span className="shrink-0 text-[9px] text-muted-foreground">
+                    <span className="shrink-0 text-[10px] tabular-nums text-[#8290A6]">
                       {formatDate(conversation.lastMessageAt)}
                     </span>
                   </div>
                   <div className="mt-1 flex items-center justify-between gap-2">
                     <p
-                      className={`truncate text-[11px] leading-5 ${
+                      className={`truncate text-xs leading-5 ${
                         unread
                           ? "font-medium text-foreground"
                           : "text-muted-foreground"
@@ -1344,7 +1366,7 @@ export default function InstagramInbox({
                       {preview(conversation.messages[conversation.messages.length - 1])}
                     </p>
                     {unread && (
-                      <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-blue-600 px-1.5 text-[9px] font-semibold text-white">
+                      <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-[#2F61FD] px-1.5 text-[10px] font-bold text-white">
                         {(conversation.unreadCount || 0).toLocaleString("fa-IR")}
                       </span>
                     )}
@@ -1352,7 +1374,13 @@ export default function InstagramInbox({
                 </div>
               </button>
             );
-          })
+          })}
+          {hasMoreConversations && !search.trim() && (
+            <button type="button" disabled={loadingMoreConversations} onClick={() => void loadMoreConversations()} className="my-3 w-full rounded-xl border border-[#DBEAFE] bg-[#F8FAFF] px-3 py-3 text-xs font-bold text-[#2F61FD] disabled:opacity-50">
+              {loadingMoreConversations ? "در حال بارگذاری…" : "نمایش گفتگوهای بیشتر"}
+            </button>
+          )}
+          </>
         ) : (
           <div className="px-6 py-16 text-center">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
@@ -1389,10 +1417,10 @@ export default function InstagramInbox({
               <img
                 src={selectedConversation.participantProfilePicture}
                 alt=""
-                className="h-9 w-9 rounded-full object-cover ring-1 ring-border"
+                className="h-11 w-11 rounded-full object-cover ring-1 ring-[#E5EAF3]"
               />
             ) : (
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-muted-foreground">
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#EEF3FB] text-[#64748B]">
                 <UserRound size={16} />
               </div>
             )}
@@ -1552,7 +1580,7 @@ export default function InstagramInbox({
                     <span className="truncate text-xs font-medium">
                       {selectedFile.name}
                     </span>
-                    <span className="shrink-0 text-[9px] text-muted-foreground">
+                    <span className="shrink-0 text-[10px] tabular-nums text-[#8290A6]">
                       {Math.max(1, Math.round(selectedFile.size / 1024))} KB
                     </span>
                   </div>
