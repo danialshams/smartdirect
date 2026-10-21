@@ -4,6 +4,7 @@ import { Loader2, X } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import PublishingStoryAutomationSetup from "./publishing/PublishingStoryAutomationSetup";
+import { responseFingerprint } from "./automation-response-compare";
 
 import {
     createEmptyMessage,
@@ -80,34 +81,6 @@ const MESSAGE_TYPES = [
     "FORM",
 ] as const;
 
-
-/**
- * Compare the content that is actually sent to the recipient. Generated record
- * IDs and payload tokens must not make an unchanged response look modified.
- */
-function responseFingerprint(message: MessageDraft): string {
-    const replies = (items: QuickReplyDraft[]): unknown[] => items.map((item) => ({
-        isExit: item.isExit ?? false,
-        title: item.title,
-        destinationType: item.destinationType,
-        destinationText: item.destinationText,
-        destinationFormId: item.destinationFormId,
-        destinationShowcaseId: item.destinationShowcaseId,
-        destinationMediaUrl: item.destinationMediaUrl,
-        destinationMediaId: item.destinationMediaId,
-        destinationQuestion: item.destinationQuestion,
-        destinationQuickReplies: replies(item.destinationQuickReplies),
-    }));
-    return JSON.stringify({
-        messageType: message.messageType,
-        text: message.text,
-        mediaUrl: message.mediaUrl,
-        mediaId: message.mediaId,
-        showcaseId: message.showcaseId,
-        formId: message.formId,
-        quickReplies: replies(message.quickReplies),
-    });
-}
 
 function ModernResponseSkeleton() {
     return (
