@@ -53,6 +53,18 @@ export const dairaPalette = {
     errorBorder: "#FECACA", // حاشیه پیام خطا
     errorText: "#B91C1C", // متن پیام خطا با کنتراست بیشتر
   },
+  publishing: {
+    surface: "#FFFFFF", // سطح اصلی مراحل انتشار
+    soft: "#F6F9FF", // زمینه آرام ناحیه آپلود و پیش نمایش
+    border: "#DFE7F3", // مرز کارت‌های انتشار
+    selectedBackground: "#EDF3FF", // زمینه مرحله جاری
+    selectedBorder: "#2F61FD", // مرز مرحله جاری
+    pulseGlow: "#BAD0FF", // هاله پالس ملایم مرحله جاری
+    completed: "#16A34A", // تیک سبز مراحل تکمیل‌شده
+    completedSoft: "#EAF8EF", // زمینه مرحله تکمیل‌شده
+    completedBorder: "#B8E7C6", // مرز سبز ملایم
+    muted: "#71819B", // متن توضیحات کم اهمیت
+  },
   border: "#E2E8F0", // خاکستری روشن؛ مرز عمومی
   heroGlow: "#E0EAFF", // آبی بسیار روشن؛ درخشش تزئینی
   pinkGlow: "#FCE7F3", // صورتی بسیار روشن؛ درخشش تزئینی
