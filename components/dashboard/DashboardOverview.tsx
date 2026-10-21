@@ -19,16 +19,16 @@ type DashboardOverviewProps = {
 type DashboardFeature = { title: string; description: string; image: string; href: string; soon?: boolean };
 
 const features: DashboardFeature[] = [
-  { title: "پاسخ به کامنت", description: "ارسال فوری پیام در کامنت‌ها یا دایرکت", image: "/photos/پاسخ خودکار کامنت.png", href: "/dashboard/comment-automation" },
-  { title: "پاسخ به استوری", description: "ارسال خودکار پیام در دایرکت و ریپلای استوری", image: "/photos/پاسخ خودکار استوری.png", href: "/dashboard/story-automation" },
-  { title: "پاسخ به لایو", description: "ارسال آنی پیام و لینک خرید در حین پخش زنده", image: "/photos/پاسخ به لایو.webp", href: "/dashboard/live-automation" },
-  { title: "یادآوری هوشمند", description: "پیام خودکار برای یادآوری خرید", image: "/photos/انتشار محتوا.png", href: "/dashboard/reminders" },
-  { title: "انتشار محتوا", description: "از همینجا می‌تونی استوری و پست‌های امروز و فردات رو آپلود کنی", image: "/photos/انتشار محتوا.png", href: "/dashboard/publishing" },
-  { title: "صندوق دایرکت", description: "از همینجا می‌تونی دایرکت‌های بی‌پاسخ رو جواب بدی", image: "/photos/صندوق دایرکت.png", href: "/dashboard/inbox" },
-  { title: "منو دایرکت", description: "پاسخگویی هوشمند به سوالات متداول مشتریان شبانه‌روزی", image: "/photos/منوی دایرکت.png", href: "/dashboard/persistent-menu" },
-  { title: "پاسخ خودکار دایرکت", description: "ارسال پاسخ خودکار با دریافت کلمه کلیدی در دایرکت", image: "/photos/منوی دایرکت.png", href: "/dashboard/direct-automation" },
-  { title: "پیام شروع گفتگو", description: "برای خوش‌آمد، معرفی پیج و سوالات متداول مشتریان", image: "/photos/پیام شروع گفتگو.png", href: "/dashboard/ice-breaker" },
-  { title: "آنالیز", description: "تحلیل و بررسی دقیق پیج اینستاگرام شما", image: "/photos/تحلیل پیج.png", href: "/dashboard/insights" },
+  { title: "پاسخ به کامنت", description: "ارسال فوری پیام در کامنت‌ها یا دایرکت", image: "/photos/01-comment.webp", href: "/dashboard/comment-automation" },
+  { title: "پاسخ به استوری", description: "ارسال خودکار پیام در دایرکت و ریپلای استوری", image: "/photos/02-story.webp", href: "/dashboard/story-automation" },
+  { title: "پاسخ به لایو", description: "ارسال آنی پیام و لینک خرید در حین پخش زنده", image: "/photos/03-live.webp", href: "/dashboard/live-automation" },
+  { title: "یادآوری هوشمند", description: "پیام خودکار برای یادآوری خرید", image: "/photos/04-reminder.webp", href: "/dashboard/reminders" },
+  { title: "انتشار محتوا", description: "از همینجا می‌تونی استوری و پست‌های امروز و فردات رو آپلود کنی", image: "/photos/05-publishing.webp", href: "/dashboard/publishing" },
+  { title: "صندوق دایرکت", description: "از همینجا می‌تونی دایرکت‌های بی‌پاسخ رو جواب بدی", image: "/photos/06-inbox.webp", href: "/dashboard/inbox" },
+  { title: "منو دایرکت", description: "پاسخگویی هوشمند به سوالات متداول مشتریان شبانه‌روزی", image: "/photos/07-direct-menu.webp", href: "/dashboard/persistent-menu" },
+  { title: "پاسخ خودکار دایرکت", description: "ارسال پاسخ خودکار با دریافت کلمه کلیدی در دایرکت", image: "/photos/08-direct-auto.webp", href: "/dashboard/direct-automation" },
+  { title: "پیام شروع گفتگو", description: "برای خوش‌آمد، معرفی پیج و سوالات متداول مشتریان", image: "/photos/09-icebreaker.webp", href: "/dashboard/ice-breaker" },
+  { title: "آنالیز", description: "تحلیل و بررسی دقیق پیج اینستاگرام شما", image: "/photos/10-insights.webp", href: "/dashboard/insights" },
 ];
 
 export default function DashboardOverview({}: DashboardOverviewProps) {

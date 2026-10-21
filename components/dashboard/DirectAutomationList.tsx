@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Image as ImageIcon, MessageCircle, Mic, Pencil, Plus, Search, Store, Trash2, Video, ListChecks, X, RefreshCw } from "lucide-react";
+import { Pencil, Plus, Search, Trash2, X, RefreshCw } from "lucide-react";
 import { dairaPalette } from "../../lib/design-system/palette";
 import DirectAutomationSkeleton from "./DirectAutomationSkeleton";
 
@@ -12,12 +12,6 @@ type Rule = { id: string; keyword: string | null; triggerType: string; updatedAt
 const formatWords = (value: string | null) => (value || "").split(/[,،;؛\n]+/).map(word => word.trim()).filter(Boolean).join("، ");
 const formatDate = (value: string) => value ? new Date(value).toLocaleString("fa-IR-u-ca-persian", { dateStyle: "medium", timeStyle: "short" }) : "";
 const typeLabels: Record<string, string> = { TEXT: "متن", IMAGE: "عکس", VIDEO: "ویدیو", AUDIO: "وویس", SHOWCASE: "ویترین", FORM: "فرم" };
-const typeIcons = { TEXT: MessageCircle, IMAGE: ImageIcon, VIDEO: Video, AUDIO: Mic, SHOWCASE: Store, FORM: ListChecks };
-function ReplyIcon({ type }: { type?: string }) {
-  const Icon = typeIcons[type as keyof typeof typeIcons] || MessageCircle;
-  return <Icon size={20} className="text-[#94A3B8]" aria-hidden="true" />;
-}
-
 export default function DirectAutomationList() {
   const router = useRouter();
   const [rules, setRules] = useState<Rule[]>([]);
@@ -117,9 +111,6 @@ export default function DirectAutomationList() {
                 {filtered.map(item => (
                   <div key={item.id} className="flex min-h-[84px] items-center justify-between gap-3 rounded-[22px] border border-[#E8EDF5] bg-white px-3 py-3 shadow-[0_3px_12px_rgba(15,23,42,.025)] sm:px-4">
                     <div className="flex min-w-0 flex-1 items-center gap-3">
-                      <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[#E8EDF5] bg-[#F8FAFC]">
-                        <ReplyIcon type={item.messages?.[0]?.messageType} />
-                      </div>
                       <div className="flex min-w-0 flex-1 flex-col items-start gap-2">
                         <div className="max-w-full rounded-xl px-3 py-2 text-[13px] font-bold leading-6"
                           style={{ color: dairaPalette.primary.main, backgroundColor: dairaPalette.secondary.hoverBackground,
