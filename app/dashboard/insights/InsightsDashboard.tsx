@@ -1,27 +1,16 @@
 "use client";
 
 import {
-  Activity,
-  Lightbulb,
-  BarChart3,
-  Calendar as CalendarIcon,
-  Eye,
-  HeartHandshake,
-  TrendingDown,
-  TrendingUp,
-  UserCheck,
-  Users,
-  UserRoundPlus,
+  Activity, BarChart3, CalendarDays, ChevronLeft, Eye, HeartHandshake,
+  Info, MessageCircle, TrendingDown, TrendingUp, UserMinus, UserPlus, Users, X,
 } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ElementType, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { ElementType } from "react";
+import type { DateRange } from "@daypicker/react";
 import { Calendar } from "@/components/dashboard/DashboardUI";
 
-type Range = 7 | 30 | 90;
-type Metric = "reach" | "views" | "interactions" | "accountsEngaged";
-
-type Account = { id: string; igUserId: string; username: string; isConnected: boolean; analyticsStartDate?: string };
+type Preset = 7 | 30 | 90;
+type Metric = "reach" | "views" | "interactions";
 type Snapshot = {
   id: string;
   snapshotDate: string;
@@ -31,488 +20,562 @@ type Snapshot = {
   totalInteractions: number | null;
   followerCount: number | null;
 };
-type Data = {
+type Summary = {
+  reach: number | null;
+  views: number | null;
+  accountsEngaged: number | null;
+  totalInteractions: number | null;
+  engagementRate: number | null;
+  follows: number | null;
+  unfollows: number | null;
+  followerCount: number | null;
+  followerGrowth: number | null;
+};
+type InsightsData = {
   success: boolean;
-  account: Account;
-  summary: {
-    reach: number | null;
-    views: number | null;
-    accountsEngaged: number | null;
-    totalInteractions: number | null;
-    followerCount: number | null;
-    followerGrowth: number | null;
-    engagementRate: number | null;
-  };
-  latest: Snapshot | null;
+  account?: { analyticsStartDate?: string };
+  summary: Summary;
   snapshots: Snapshot[];
   error?: string;
 };
+type DateSelection = { from: Date; to: Date };
 
-const n = (value: number | null | undefined) => {
-  if (value == null) return "—";
-  const absolute = Math.abs(value);
-  const sign = value < 0 ? "−" : "";
-  if (absolute >= 1_000_000) {
-    const compact = absolute / 1_000_000;
-    return sign + (compact >= 10 ? Math.round(compact) : Number(compact.toFixed(1))) + "m";
-  }
-  if (absolute >= 1_000) {
-    const compact = absolute / 1_000;
-    return sign + (compact >= 10 ? Math.round(compact) : Number(compact.toFixed(1))) + "k";
-  }
-  return sign + new Intl.NumberFormat("fa-IR").format(Math.round(absolute));
-};
-
-const date = (value: string | Date, options?: Intl.DateTimeFormatOptions) =>
-  new Intl.DateTimeFormat("fa-IR", options || { month: "short", day: "numeric" }).format(
-    typeof value === "string" ? new Date(value) : value,
-  );
-
-function metricValue(snapshot: Snapshot, metric: Metric): number | null {
-  if (metric === "reach") return snapshot.reach;
-  if (metric === "views") return snapshot.views;
-  if (metric === "interactions") return snapshot.totalInteractions;
-  return snapshot.accountsEngaged;
+const fullNumber = new Intl.NumberFormat("fa-IR", { maximumFractionDigits: 0 });
+const compactNumber = new Intl.NumberFormat("fa-IR", { notation: "compact", maximumFractionDigits: 1 });
+const percentNumber = new Intl.NumberFormat("fa-IR", { maximumFractionDigits: 2 });
+const formatNumber = (value: number | null | undefined) =>
+  value == null || !Number.isFinite(value) ? "—"
+  : Math.abs(value) >= 10000 ? compactNumber.format(value) : fullNumber.format(value);
+const formatExact = (value: number) => fullNumber.format(value);
+const formatPercent = (value: number | null | undefined) =>
+  value == null || !Number.isFinite(value) ? "—" : percentNumber.format(value) + "٪";
+const startOfDay = (value: Date) => new Date(value.getFullYear(), value.getMonth(), value.getDate());
+const shiftDay = (value: Date, offset: number) =>
+  new Date(value.getFullYear(), value.getMonth(), value.getDate() + offset);
+const dateOnly = (date: Date) =>
+  [date.getFullYear(), String(date.getMonth() + 1).padStart(2, "0"), String(date.getDate()).padStart(2, "0")].join("-");
+function localIsoDate(value: string) {
+  const part = value.slice(0, 10).split("-").map(Number);
+  if (part.length !== 3 || part.some((x) => !Number.isFinite(x))) return null;
+  return new Date(part[0], part[1] - 1, part[2]);
+}
+function persianDate(value: Date, short = true) {
+  return new Intl.DateTimeFormat("fa-IR-u-ca-persian",
+    short ? { day: "numeric", month: "long" } : { day: "numeric", month: "long", year: "numeric" },
+  ).format(value);
+}
+function snapshotDate(value: string) {
+  return localIsoDate(value) ?? new Date(value);
+}
+function selectedValue(s: Snapshot, metric: Metric) {
+  return metric === "reach" ? s.reach : metric === "views" ? s.views : s.totalInteractions;
+}
+function daysBetween(from: Date, to: Date) {
+  return Math.round((Date.UTC(to.getFullYear(), to.getMonth(), to.getDate()) -
+    Date.UTC(from.getFullYear(), from.getMonth(), from.getDate())) / 86400000) + 1;
 }
 
-function Spinner({ label }: { label: string }) {
+function InfoHelp({ message }: { message: string }) {
   return (
-    <div className="flex min-h-[150px] flex-col items-center justify-center gap-2">
-      <div
-        className="h-[34px] w-[34px] rounded-full border-[3px] border-[#E2E8F0] border-t-[#2563EB]"
-        style={{ animation: "sdDashboardSpin 800ms linear infinite" }}
-      />
-      <span className="text-[11px] text-[#64748B]">{label}</span>
-      <style jsx global>{`
-        @keyframes sdDashboardSpin { to { transform: rotate(360deg); } }
-      `}</style>
+    <span className="group relative inline-flex shrink-0 items-center">
+      <button type="button" aria-label="راهنمای شاخص" title={message}
+        className="grid h-8 w-8 place-items-center rounded-full text-[var(--daira-text)] transition hover:bg-[var(--daira-surface-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500">
+        <Info size={16} aria-hidden="true" />
+      </button>
+      <span role="tooltip" className="pointer-events-none absolute bottom-full right-0 z-20 mb-1 hidden w-56 rounded-xl border border-[var(--daira-border)] bg-white p-3 text-right text-[11px] font-normal leading-6 text-[var(--daira-text)] shadow-lg group-focus-within:block group-hover:block">
+        {message}
+      </span>
+    </span>
+  );
+}
+
+function SkeletonBar({ className = "" }: { className?: string }) {
+  return <span aria-hidden="true" className={"daira-skeleton__bar " + className} />;
+}
+function InsightsSkeleton() {
+  return (
+    <div role="status" aria-label="در حال بارگذاری تحلیل پیج" className="space-y-4">
+      <span className="sr-only">در حال دریافت آمار پیج...</span>
+      <section className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
+        <div className="mb-4 flex items-center justify-between">
+          <SkeletonBar className="h-4 w-36" />
+          <SkeletonBar className="h-8 w-8 rounded-full" />
+        </div>
+        <div className="flex gap-2">
+          {[0, 1, 2].map((i) => <SkeletonBar key={i} className="h-9 w-20 rounded-lg" />)}
+        </div>
+        <SkeletonBar className="mt-3 h-11 w-full rounded-xl" />
+      </section>
+      <section className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
+        <SkeletonBar className="mb-4 h-4 w-28" />
+        <div className="mb-5 flex gap-2">
+          {[0, 1, 2].map((i) => <SkeletonBar key={i} className="h-9 flex-1 rounded-lg" />)}
+        </div>
+        <SkeletonBar className="h-52 w-full rounded-xl sm:h-64" />
+        <div className="mt-3 flex justify-between">
+          <SkeletonBar className="h-3 w-12" /><SkeletonBar className="h-3 w-12" /><SkeletonBar className="h-3 w-12" />
+        </div>
+      </section>
+      <section className="grid grid-cols-2 gap-3">
+        {[0, 1].map((i) => (
+          <div key={i} className="rounded-2xl border border-[var(--daira-border)] bg-white p-4">
+            <SkeletonBar className="h-3 w-20" /><SkeletonBar className="mt-3 h-8 w-24" /><SkeletonBar className="mt-3 h-3 w-28 max-w-full" />
+          </div>
+        ))}
+      </section>
+      <section className="rounded-2xl border border-[var(--daira-border)] bg-white p-4">
+        <SkeletonBar className="mb-4 h-4 w-24" />
+        <div className="grid grid-cols-2">
+          {Array.from({ length: 6 }, (_, i) => (
+            <div key={i} className="space-y-3 border-b border-[var(--daira-border)] p-4">
+              <SkeletonBar className="h-7 w-20" /><SkeletonBar className="h-3 w-16" />
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
 
-function Section({
-  title,
-  description,
-  icon: Icon,
-  children,
-}: {
-  title: string;
-  description?: string;
-  icon: ElementType;
-  children: React.ReactNode;
-}) {
+function TrendChart({ snapshots, metric }: { snapshots: Snapshot[]; metric: Metric }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(320);
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const height = 224;
+  const horizontalPadding = 14;
+  const top = 18;
+  const bottom = 18;
+
+  useEffect(() => {
+    const element = containerRef.current;
+    if (!element) return;
+    const update = () => setWidth(Math.max(240, Math.round(element.getBoundingClientRect().width)));
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => setActiveIndex(null), [metric, snapshots]);
+
+  const points = useMemo(() => {
+    const available = snapshots.filter((item) => selectedValue(item, metric) != null);
+    if (!available.length) return [];
+    const values = available.map((item) => selectedValue(item, metric) as number);
+    const lowest = Math.min(0, ...values);
+    const highest = Math.max(1, ...values);
+    const range = Math.max(1, highest - lowest);
+    return available.map((item, i) => ({
+      x: available.length === 1 ? width / 2 : horizontalPadding + (i / (available.length - 1)) * (width - 2 * horizontalPadding),
+      y: top + ((highest - (selectedValue(item, metric) as number)) / range) * (height - top - bottom),
+      value: selectedValue(item, metric) as number,
+      label: persianDate(snapshotDate(item.snapshotDate), false),
+      date: item.snapshotDate,
+    }));
+  }, [snapshots, metric, width]);
+
+  const line = useMemo(() => points.reduce((result, p, i) => {
+    if (i === 0) return "M " + p.x + " " + p.y;
+    const prior = points[i - 1];
+    const mid = (prior.x + p.x) / 2;
+    return result + " C " + mid + " " + prior.y + " " + mid + " " + p.y + " " + p.x + " " + p.y;
+  }, ""), [points]);
+  const area = points.length > 1
+    ? line + " L " + points[points.length - 1].x + " " + height + " L " + points[0].x + " " + height + " Z"
+    : "";
+  const active = activeIndex == null ? null : points[activeIndex] ?? null;
+  const dates = points.length ? [points[0], points[Math.floor((points.length - 1) / 2)], points[points.length - 1]] : [];
+
+  function choosePoint(clientX: number) {
+    const bounds = containerRef.current?.getBoundingClientRect();
+    if (!bounds || !points.length) return;
+    const x = clientX - bounds.left;
+    let nearest = 0;
+    for (let i = 1; i < points.length; i++) {
+      if (Math.abs(points[i].x - x) < Math.abs(points[nearest].x - x)) nearest = i;
+    }
+    setActiveIndex((previous) => previous === nearest ? previous : nearest);
+  }
+
+  if (!snapshots.some((item) => selectedValue(item, metric) != null)) return (
+    <div className="flex min-h-52 items-center justify-center rounded-xl border border-dashed border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-4 text-center text-xs leading-6 text-[var(--daira-text)]">
+      برای این شاخص در بازه انتخاب‌شده داده‌ای ثبت نشده است.
+    </div>
+  );
+
   return (
-    <section className="rounded-[22px] border border-[#E2E8F0] bg-white p-3.5 shadow-[0_8px_24px_rgba(15,23,42,0.035)] sm:p-5 lg:p-6">
-      <div className="mb-4 flex items-center gap-3">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB]">
-          <Icon className="h-[17px] w-[17px]" />
+    <div ref={containerRef} className="relative w-full min-w-0">
+      <svg viewBox={"0 0 " + width + " " + height} width="100%" height={height}
+        className="block w-full touch-pan-y"
+        role="img" aria-label="نمودار روند روزانه؛ برای دیدن مقدار هر روز روی نمودار لمس کنید"
+        onPointerDown={(event) => choosePoint(event.clientX)}
+        onPointerMove={(event) => choosePoint(event.clientX)}
+        onPointerLeave={() => setActiveIndex(null)}>
+        <defs>
+          <linearGradient id="insights-line-fill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#2F61FD" stopOpacity="0.16" />
+            <stop offset="100%" stopColor="#2F61FD" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        {[0.22, 0.47, 0.72, 0.97].map((fraction) => (
+          <line key={fraction} x1={horizontalPadding} x2={width - horizontalPadding}
+            y1={height * fraction} y2={height * fraction}
+            stroke="#E2E8F0" strokeDasharray="4 6" strokeWidth="1" />
+        ))}
+        {area && <path d={area} fill="url(#insights-line-fill)" />}
+        <path d={line} fill="none" stroke="#2F61FD" strokeWidth="2.8" strokeLinecap="round" />
+        {active && (
+          <>
+            <line x1={active.x} x2={active.x} y1={top} y2={height}
+              stroke="#2F61FD" strokeDasharray="3 4" opacity="0.5" />
+            <circle cx={active.x} cy={active.y} r={6} fill="#FFFFFF" stroke="#2F61FD" strokeWidth={3} />
+          </>
+        )}
+      </svg>
+      {active && (
+        <div className="pointer-events-none absolute top-0 z-10 rounded-lg border border-[var(--daira-border)] bg-white px-2.5 py-1.5 text-center shadow-md"
+          style={{ left: Math.min(width - 75, Math.max(75, active.x)), transform: "translateX(-50%)" }}>
+          <div className="text-[10px] text-[var(--daira-text)]">{active.label}</div>
+          <div className="text-sm font-bold text-[var(--daira-heading)]">{formatExact(active.value)}</div>
         </div>
-        <div>
-          <h2 className="text-sm font-bold text-[#0F172A] sm:text-[15px]">{title}</h2>
-          {description && <p className="mt-0.5 text-[10px] leading-5 text-[#64748B] sm:text-[11px]">{description}</p>}
-        </div>
+      )}
+      <div dir="rtl" className="mt-1 flex items-center justify-between text-[10px] text-[var(--daira-text)]">
+        <span>{persianDate(snapshotDate(dates[0].date))}</span>
+        {dates[1].date !== dates[0].date && dates[1].date !== dates[2].date && <span>{persianDate(snapshotDate(dates[1].date))}</span>}
+        {dates[2].date !== dates[0].date && <span>{persianDate(snapshotDate(dates[2].date))}</span>}
+      </div>
+      <div className="mt-2 text-center text-[10px] text-[var(--daira-text)]">
+        برای مشاهده تاریخ و مقدار دقیق، نمودار را لمس کن.
+      </div>
+    </div>
+  );
+}
+
+function Panel({ title, icon: Icon, children, help }: { title: string; icon: ElementType; children: ReactNode; help?: string }) {
+  return (
+    <section className="min-w-0 rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
+      <div className="mb-4 flex items-center gap-2">
+        <Icon size={18} className="shrink-0 text-[var(--daira-primary)]" aria-hidden="true" />
+        <h2 className="min-w-0 flex-1 text-sm font-extrabold text-[var(--daira-heading)]">{title}</h2>
+        {help && <InfoHelp message={help} />}
       </div>
       {children}
     </section>
   );
 }
 
-function MetricCard({
-  label,
-  value,
-  icon: Icon,
-  tone,
-  active,
-  onClick,
-}: {
-  label: string;
-  value: number | null;
-  icon: ElementType;
-  tone: "blue" | "purple" | "green" | "slate";
-  active: boolean;
-  onClick: () => void;
+function Stat({ label, value, icon: Icon, note, negative }: {
+  label: string; value: number | null | undefined; icon: ElementType; note?: string; negative?: boolean;
 }) {
-  const palette = {
-    blue: ["#EFF6FF", "#DBEAFE", "#2563EB"],
-    purple: ["#F5F3FF", "#EDE9FE", "#7C3AED"],
-    green: ["#F0FDF4", "#DCFCE7", "#16A34A"],
-    slate: ["#F8FAFC", "#E2E8F0", "#64748B"],
-  }[tone];
-
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="min-w-0 rounded-[18px] border p-3 text-right transition-all active:scale-[0.99] lg:hover:-translate-y-0.5"
-      style={{ background: active ? palette[0] : "#FFFFFF", borderColor: active ? palette[1] : "#E2E8F0" }}
-    >
-      <div className="flex items-center justify-between gap-2">
-        <span className="truncate text-[10px] font-medium text-[#64748B] sm:text-[11px]">{label}</span>
-        <span
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl"
-          style={{ background: active ? palette[2] : palette[0], color: active ? "#FFFFFF" : palette[2] }}
-        >
-          <Icon className="h-4 w-4" />
-        </span>
-      </div>
-      <div className="mt-3 text-[20px] font-bold tracking-tight text-[#0F172A] sm:text-[22px]">{n(value)}</div>
-    </button>
-  );
-}
-
-function Trend({ value }: { value: number | null }) {
-  if (value == null) return <span className="text-[#94A3B8]">—</span>;
-  const positive = value >= 0;
-  return (
-    <span className={positive ? "inline-flex items-center gap-1 text-xs font-bold text-[#16A34A]" : "inline-flex items-center gap-1 text-xs font-bold text-[#DC2626]"}>
-      {positive ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
-      {n(Math.abs(value))}٪
-    </span>
-  );
-}
-
-function Chart({ snapshots, metric }: { snapshots: Snapshot[]; metric: Metric }) {
-  const [active, setActive] = useState<{ x: number; y: number; value: number; date: string } | null>(null);
-  const width = 820;
-  const height = 245;
-  const pad = 24;
-
-  const points = useMemo(() => {
-    const usableSnapshots = snapshots.filter((snapshot) => metricValue(snapshot, metric) != null);
-    if (!usableSnapshots.length) return [];
-    const values = usableSnapshots.map((snapshot) => metricValue(snapshot, metric) ?? 0);
-    const max = Math.max(...values, 1);
-    const min = Math.min(...values, 0);
-    const range = Math.max(max - min, 1);
-    return usableSnapshots.map((s, i) => {
-      const value = metricValue(s, metric) ?? 0;
-      const x = usableSnapshots.length === 1 ? width / 2 : pad + (i / (usableSnapshots.length - 1)) * (width - pad * 2);
-      const y = height - 28 - ((value - min) / range) * (height - 56);
-      return { x, y, value, date: s.snapshotDate };
-    });
-  }, [snapshots, metric]);
-
-  const path = useMemo(() => {
-    if (!points.length) return "";
-    return points.reduce((result, point, i) => {
-      if (i === 0) return "M " + point.x.toFixed(1) + "," + point.y.toFixed(1);
-      const previous = points[i - 1];
-      const cx = ((previous.x + point.x) / 2).toFixed(1);
-      return result + " C " + cx + "," + previous.y.toFixed(1) + " " + cx + "," + point.y.toFixed(1) + " " + point.x.toFixed(1) + "," + point.y.toFixed(1);
-    }, "");
-  }, [points]);
-
-  if (!points.length) return <div className="flex h-52 items-center justify-center rounded-2xl bg-[#F8FAFC] text-xs text-[#64748B]">برای این بازه داده‌ای ثبت نشده است.</div>;
-
-  const area = path + " L " + points[points.length - 1].x.toFixed(1) + "," + height + " L " + points[0].x.toFixed(1) + "," + height + " Z";
-  const labels = points.filter((_, i) => i === 0 || i === Math.floor(points.length / 2) || i === points.length - 1);
-
-  return (
-    <div className="relative">
-      <div className="overflow-x-auto">
-        <svg viewBox={"0 0 " + width + " " + height} className="h-[220px] w-full min-w-[560px] sm:h-[245px] sm:min-w-0" onMouseLeave={() => setActive(null)}>
-          <defs>
-            <linearGradient id="smartDirectInsightsArea" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#2563EB" stopOpacity="0.18" />
-              <stop offset="100%" stopColor="#2563EB" stopOpacity="0" />
-            </linearGradient>
-          </defs>
-          {[0.2, 0.4, 0.6, 0.8].map((r) => (
-            <line key={r} x1={pad} x2={width - pad} y1={height * r} y2={height * r} stroke="#E2E8F0" strokeDasharray="4 5" />
-          ))}
-          <path d={area} fill="url(#smartDirectInsightsArea)" />
-          <path d={path} fill="none" stroke="#2563EB" strokeWidth="3" strokeLinecap="round" />
-          {points.map((point) => (
-            <circle
-              key={point.date}
-              cx={point.x}
-              cy={point.y}
-              r={active?.date === point.date ? 6 : 3.5}
-              fill={active?.date === point.date ? "#2563EB" : "#FFFFFF"}
-              stroke="#2563EB"
-              strokeWidth="2"
-              onMouseEnter={() => setActive(point)}
-            />
-          ))}
-          {labels.map((point, i) => (
-            <text key={point.date + "-label"} x={point.x} y={height - 6} textAnchor={i === 0 ? "start" : i === labels.length - 1 ? "end" : "middle"} className="fill-[#64748B] text-[11px]">
-              {date(point.date)}
-            </text>
-          ))}
-        </svg>
-      </div>
-      {active && (
-        <div className="pointer-events-none absolute -top-1 z-10 rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 shadow-lg" style={{ left: (active.x / width) * 100 + "%", transform: "translateX(-50%) translateY(-100%)" }}>
-          <div className="text-[10px] text-[#64748B]">{date(active.date, { dateStyle: "long" })}</div>
-          <div className="mt-0.5 text-xs font-bold text-[#0F172A]">{n(active.value)}</div>
-        </div>
-      )}
+    <div className="min-w-0 space-y-2 px-2 py-4 sm:px-5">
+      <Icon size={18} className="text-[var(--daira-text)]" aria-hidden="true" />
+      <div className={"break-words text-xl font-extrabold tabular-nums sm:text-2xl " +
+        (negative ? "text-red-600" : "text-[var(--daira-heading)]")}>{formatNumber(value)}</div>
+      <div className="text-[11px] font-semibold leading-5 text-[var(--daira-text)]">{label}</div>
+      {note && <p className="text-[10px] leading-5 text-[var(--daira-text)]">{note}</p>}
     </div>
   );
 }
 
 export default function InsightsDashboard() {
   const [accountId, setAccountId] = useState("");
-  const [range, setRange] = useState<Range>(7);
+  const [preset, setPreset] = useState<Preset>(30);
   const [metric, setMetric] = useState<Metric>("reach");
-  const [dateFrom, setDateFrom] = useState<Date | undefined>();
-  const [dateTo, setDateTo] = useState<Date | undefined>();
-  const [draftFrom, setDraftFrom] = useState<Date | undefined>();
-  const [draftTo, setDraftTo] = useState<Date | undefined>();
-  const [calendarOpen, setCalendarOpen] = useState<"from" | "to" | null>(null);
+  const [appliedRange, setAppliedRange] = useState<DateSelection | null>(null);
+  const [draftRange, setDraftRange] = useState<DateRange | undefined>();
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [calendarMonths, setCalendarMonths] = useState(1);
+  const [today] = useState(() => startOfDay(new Date()));
+  const [data, setData] = useState<InsightsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [data, setData] = useState<Data | null>(null);
-  const calendarRef = useRef<HTMLDivElement>(null);
-  const fromButtonRef = useRef<HTMLButtonElement>(null);
-  const toButtonRef = useRef<HTMLButtonElement>(null);
-  const [calendarPosition, setCalendarPosition] = useState<{ top: number } | null>(null);
+  const [warning, setWarning] = useState("");
+  const requestNumber = useRef(0);
+  const lastSync = useRef<{ id: string; at: number } | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
     void (async () => {
       try {
-        const response = await fetch("/api/instagram/accounts", { cache: "no-store" });
-        const result = await response.json();
-        if (!response.ok || !result.success) throw new Error(result.error || "خطا در دریافت اکانت فعال");
-        const list = (result.accounts || []) as Account[];
-        const active = list.find((account) => account.isConnected) || list[0];
-        if (active) setAccountId(active.id);
-        else setError("اکانت اینستاگرامی فعالی پیدا نشد.");
-      } catch (e) { setError(e instanceof Error ? e.message : "خطا در ارتباط با سرور"); }
+        const response = await fetch("/api/instagram/accounts", { cache: "no-store", credentials: "include" });
+        const json = await response.json();
+        if (!response.ok || !json.success)
+          throw new Error(json.error || "دریافت پیج فعال ناموفق بود.");
+        const accounts = (Array.isArray(json.accounts) ? json.accounts : []) as Array<{id:string;isConnected:boolean}>;
+        const current = accounts.find((account) => account.isConnected);
+        if (!cancelled) {
+          if (current) setAccountId(current.id);
+          else { setError("هیچ پیج اینستاگرامی متصل نیست."); setLoading(false); }
+        }
+      } catch (requestError) {
+        if (!cancelled) {
+          setError(requestError instanceof Error ? requestError.message : "دریافت پیج فعال ناموفق بود.");
+          setLoading(false);
+        }
+      }
     })();
+    return () => { cancelled = true; };
   }, []);
 
-  function toIsoDate(value: Date) {
-    const y = value.getFullYear(), m = String(value.getMonth() + 1).padStart(2, "0"), day = String(value.getDate()).padStart(2, "0");
-    return y + "-" + m + "-" + day;
-  }
-  const load = useCallback(async (days: Range, id: string, from?: Date, to?: Date) => {
-    if (!id) return;
+  useEffect(() => {
+    const media = window.matchMedia("(min-width: 768px)");
+    const update = () => setCalendarMonths(media.matches ? 2 : 1);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+
+  const fetchInsights = useCallback(async (
+    id: string, days: Preset, custom: DateSelection | null, signal: AbortSignal, currentRequest: number,
+  ) => {
+    setLoading(true);
+    setError("");
+    setWarning("");
     try {
-      setLoading(true); setError("");
-      // Refresh a bounded recent window before reading the saved history.
-      // This seeds the default chart without attempting hundreds of Meta API
-      // calls when a user selects a 30/90-day or custom date range.
-      const today = new Date();
-      today.setUTCHours(0, 0, 0, 0);
-      const syncFrom = new Date(today);
-      syncFrom.setUTCDate(syncFrom.getUTCDate() - 6);
-      const syncParams = new URLSearchParams({
-        accountId: id,
-        from: syncFrom.toISOString().slice(0, 10),
-        to: today.toISOString().slice(0, 10),
-      });
-      const syncResponse = await fetch("/api/instagram/insights?" + syncParams.toString(), { cache: "no-store" });
-      const syncResult = await syncResponse.json() as {
-        error?: string;
-        sync?: { syncedDays?: number; errors?: Array<{ error: string }> };
-      };
-      if (!syncResponse.ok) {
-        throw new Error(syncResult.error || "همگام‌سازی آمار اینستاگرام ناموفق بود.");
+      let syncWarning = "";
+      if (!lastSync.current || lastSync.current.id !== id || Date.now() - lastSync.current.at > 5 * 60 * 1000) {
+        // Sync only a bounded recent window. Date filter changes must not fan
+        // out into expensive duplicate Meta requests.
+        lastSync.current = { id, at: Date.now() };
+        try {
+          const syncFrom = shiftDay(today, -6);
+          const sync = new URLSearchParams({ accountId: id, from: dateOnly(syncFrom), to: dateOnly(today) });
+          const syncResponse = await fetch("/api/instagram/insights?" + sync, { cache: "no-store", credentials: "include", signal });
+          const result = await syncResponse.json() as { error?: string; sync?: { syncedDays?: number; errors?: Array<{ error: string }> } };
+          if (!syncResponse.ok) syncWarning = result.error || "بروزرسانی داده‌ها از اینستاگرام ناموفق بود.";
+          else if ((result.sync?.syncedDays ?? 0) === 0 && (result.sync?.errors?.length ?? 0) > 0)
+            syncWarning = "آمار تازه دریافت نشد؛ داده‌های ذخیره‌شده نمایش داده می‌شوند.";
+        } catch (e) {
+          if (signal.aborted) return;
+          syncWarning = "بروزرسانی داده‌ها ناموفق بود؛ آمار ذخیره‌شده نمایش داده می‌شود.";
+        }
       }
-      const syncWarning =
-        (syncResult.sync?.syncedDays ?? 0) === 0 &&
-        (syncResult.sync?.errors?.length ?? 0) > 0
-          ? "دریافت آمار از Meta ناموفق بود: " + syncResult.sync!.errors![0].error
-          : "";
 
       const params = new URLSearchParams({ accountId: id });
-      if (from && to) { params.set("from", toIsoDate(from)); params.set("to", toIsoDate(to)); }
-      else params.set("days", String(days));
-      const response = await fetch("/api/instagram/insights/history?" + params.toString(), { cache: "no-store" });
-      const result = (await response.json()) as Data;
-      if (!response.ok || !result.success) throw new Error(result.error || "خطا در دریافت آمار");
-      setData(result);
-      if (syncWarning) setError(syncWarning);
-    } catch (e) { setData(null); setError(e instanceof Error ? e.message : "خطا در ارتباط با سرور"); }
-    finally { setLoading(false); }
-  }, []);
-
-  useEffect(() => {
-    if (accountId) void load(range, accountId, dateFrom, dateTo);
-  }, [accountId, range, dateFrom, dateTo, load]);
-
-  useEffect(() => {
-    if (!calendarOpen) {
-      setCalendarPosition(null);
-      return;
-    }
-
-    const updateCalendarPosition = () => {
-      const button = calendarOpen === "from" ? fromButtonRef.current : toButtonRef.current;
-      if (!button) return;
-
-      const rect = button.getBoundingClientRect();
-      const estimatedHeight = 430;
-      const gap = 8;
-      const maxTop = Math.max(12, window.innerHeight - estimatedHeight - 12);
-      setCalendarPosition({ top: Math.min(rect.bottom + gap, maxTop) });
-    };
-
-    updateCalendarPosition();
-    window.addEventListener("resize", updateCalendarPosition);
-    window.addEventListener("scroll", updateCalendarPosition, true);
-
-    const handlePointerDown = (event: PointerEvent) => {
-      const target = event.target as Node | null;
-      if (
-        target &&
-        !calendarRef.current?.contains(target) &&
-        !(target instanceof Element && target.closest("[data-insights-calendar-popup]"))
-      ) {
-        setCalendarOpen(null);
+      if (custom) {
+        params.set("from", dateOnly(custom.from));
+        params.set("to", dateOnly(custom.to));
+      } else params.set("days", String(days));
+      const response = await fetch("/api/instagram/insights/history?" + params, {
+        cache: "no-store", credentials: "include", signal,
+      });
+      const result = await response.json() as InsightsData;
+      if (!response.ok || !result.success) throw new Error(result.error || "دریافت آمار ناموفق بود.");
+      if (!signal.aborted && requestNumber.current === currentRequest) {
+        setData(result);
+        setWarning(syncWarning);
       }
-    };
+    } catch (requestError) {
+      if (!signal.aborted && requestNumber.current === currentRequest) {
+        setData(null);
+        setError(requestError instanceof Error ? requestError.message : "خطا در دریافت آمار.");
+      }
+    } finally {
+      if (!signal.aborted && requestNumber.current === currentRequest) setLoading(false);
+    }
+  }, [today]);
 
-    document.addEventListener("pointerdown", handlePointerDown);
-    return () => {
-      window.removeEventListener("resize", updateCalendarPosition);
-      window.removeEventListener("scroll", updateCalendarPosition, true);
-      document.removeEventListener("pointerdown", handlePointerDown);
-    };
-  }, [calendarOpen]);
+  useEffect(() => {
+    if (!accountId) return;
+    const controller = new AbortController();
+    const request = ++requestNumber.current;
+    void fetchInsights(accountId, preset, appliedRange, controller.signal, request);
+    return () => controller.abort();
+  }, [accountId, preset, appliedRange, fetchInsights]);
 
+  const fallbackStart = shiftDay(today, -729);
+  const accountStart = data?.account?.analyticsStartDate ? localIsoDate(data.account.analyticsStartDate) : null;
+  const minDate = accountStart && accountStart > fallbackStart ? accountStart : fallbackStart;
+  const displayedRange = appliedRange
+    ? persianDate(appliedRange.from) + " تا " + persianDate(appliedRange.to, false)
+    : "انتخاب بازه دلخواه";
+  const validRange = Boolean(draftRange?.from && draftRange?.to &&
+    draftRange.from >= minDate && draftRange.to <= today &&
+    daysBetween(draftRange.from, draftRange.to) <= 730);
   const snapshots = data?.snapshots ?? [];
   const summary = data?.summary;
-  const visibleSnapshots = snapshots;
-  const today = useMemo(() => { const value = new Date(); value.setHours(0,0,0,0); return value; }, []);
-  const maxStart = useMemo(() => { const value = new Date(today); value.setDate(value.getDate()-729); return value; }, [today]);
-  const earliestAvailable = data?.account?.analyticsStartDate ? new Date(data.account.analyticsStartDate) : maxStart;
-  const minDate = earliestAvailable > maxStart ? earliestAvailable : maxStart;
-  const formatDateField = (value?: Date) => value ? date(value, { dateStyle: "medium" }) : "انتخاب تاریخ";
-
-
-  const tabs: { id: Metric; label: string; icon: ElementType }[] = [
-    { id: "reach", label: "دسترسی", icon: Users },
-    { id: "views", label: "بازدید", icon: Eye },
-    { id: "interactions", label: "تعاملات", icon: HeartHandshake },
-    { id: "accountsEngaged", label: "افراد فعال", icon: UserCheck },
+  const follows = summary?.follows;
+  const unfollows = summary?.unfollows;
+  const netFollowers = follows != null && unfollows != null
+    ? follows - unfollows : summary?.followerGrowth ?? null;
+  const growthNote = follows != null && unfollows != null
+    ? "تفاوت فالو و آنفالو در این بازه" : "تغییر تعداد دنبال‌کنندگان بین نخستین و آخرین ثبت";
+  const tabs: { id: Metric; title: string; icon: ElementType }[] = [
+    { id: "reach", title: "دسترسی", icon: Users },
+    { id: "views", title: "بازدید", icon: Eye },
+    { id: "interactions", title: "تعاملات", icon: HeartHandshake },
   ];
-  const selectedLabel = tabs.find((tab) => tab.id === metric)?.label || "دسترسی";
+
+  function openCalendar() {
+    setDraftRange(appliedRange ?? {
+      from: shiftDay(today, -(preset - 1) >= -729 ? -(preset - 1) : -729),
+      to: today,
+    });
+    setCalendarOpen(true);
+  }
 
   return (
-    <main dir="rtl" className="min-h-screen overflow-x-clip bg-[#F8FAFC] pb-16 pt-1 sm:pb-16 sm:pt-2 lg:pb-6 lg:pt-2">
-      <div className="mx-auto flex max-w-[1400px] flex-col gap-3 px-2 sm:gap-4 sm:px-3 lg:gap-5 lg:px-5">
-        <div className="flex items-start gap-3 rounded-2xl border border-[#FDE68A] bg-[#FFFBEB] p-3.5 text-[#78350F]">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#FEF3C7] text-[#B45309]"><Lightbulb className="h-5 w-5" /></span>
-          <div className="min-w-0">
-            <h2 className="text-sm font-bold text-[#92400E]">راهنمای صفحه</h2>
-            <div className="mt-1 flex flex-wrap gap-x-5 gap-y-0.5 text-[11px] leading-6">
-              <p className="whitespace-nowrap"><strong>دسترسی:</strong> چند اکانت مختلف محتوای پیجت رو دیدن.</p>
-              <p className="whitespace-nowrap"><strong>بازدید:</strong> تعداد دفعاتی که محتوای پیجت دیده یا پخش شده.</p>
-              <p className="whitespace-nowrap"><strong>تعاملات:</strong> لایک، کامنت، ذخیره و اشتراک‌گذاری.</p>
-              <p className="whitespace-nowrap"><strong>افراد فعال:</strong> چند اکانت مختلف با محتوای پیجت تعامل داشتن.</p>
-            </div>
-          </div>
+    <main dir="rtl" className="mx-auto w-full max-w-5xl space-y-4 overflow-x-clip px-1 pb-12 pt-2 sm:px-2 sm:py-4">
+      <section aria-labelledby="insights-heading" className="flex items-start gap-3 rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[var(--daira-surface-hover)] text-[var(--daira-primary)]">
+          <BarChart3 size={23} aria-hidden="true" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <h1 id="insights-heading" className="text-lg font-extrabold text-[var(--daira-heading)]">تحلیل پیج</h1>
+          <p className="mt-1 text-xs leading-6 text-[var(--daira-text)]">
+            بررسی روند و عملکرد پیج در بازه زمانی دلخواه
+          </p>
         </div>
-        <header className="rounded-[22px] border border-[#E2E8F0] bg-white p-3.5 shadow-[0_8px_24px_rgba(15,23,42,0.035)] sm:p-4 lg:p-5">
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#2563EB] text-white"><BarChart3 className="h-[18px] w-[18px]" /></div><h1 className="text-[15px] font-bold text-[#0F172A] sm:text-base">تحلیل پیج</h1></div>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-              <div className="flex shrink-0 items-center gap-1 rounded-xl bg-[#F8FAFC] p-1">{[7, 30, 90].map((days) => <button key={days} type="button" onClick={() => {setDateFrom(undefined);setDateTo(undefined);setDraftFrom(undefined);setDraftTo(undefined);setRange(days as Range);}} className={range === days && !dateFrom ? "rounded-lg bg-[#2563EB] px-3 py-2 text-[10px] font-bold text-white shadow-sm" : "rounded-lg px-3 py-2 text-[10px] font-bold text-[#64748B]"}>{days} روز</button>)}</div>
-              <div ref={calendarRef} className="grid flex-1 grid-cols-2 gap-2">
-                <div>
-                  <span className="mb-1 block text-[10px] font-medium text-[#64748B]">از تاریخ</span>
-                  <button ref={fromButtonRef} type="button" onClick={() => setCalendarOpen(calendarOpen === "from" ? null : "from")} className="flex h-10 w-full items-center justify-between gap-2 rounded-xl border border-[#E2E8F0] bg-white px-3 text-xs font-semibold text-[#0F172A]">
-                    <span>{formatDateField(draftFrom || dateFrom)}</span><CalendarIcon className="h-4 w-4 text-[#2563EB]" />
-                  </button>
-                </div>
-                <div>
-                  <span className="mb-1 block text-[10px] font-medium text-[#64748B]">تا تاریخ</span>
-                  <button ref={toButtonRef} type="button" onClick={() => setCalendarOpen(calendarOpen === "to" ? null : "to")} className="flex h-10 w-full items-center justify-between gap-2 rounded-xl border border-[#E2E8F0] bg-white px-3 text-xs font-semibold text-[#0F172A]">
-                    <span>{formatDateField(draftTo || dateTo)}</span><CalendarIcon className="h-4 w-4 text-[#2563EB]" />
-                  </button>
-                </div>
-                {typeof document !== "undefined" && calendarOpen && calendarPosition
-                  ? createPortal(
-                      <div
-                        data-insights-calendar-popup
-                        className="fixed z-[9999] w-[352px] max-w-[calc(100vw-24px)] box-border overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white p-0 shadow-2xl transition-all duration-200 ease-out"
-                        style={{
-                          left: "50%",
-                          top: calendarPosition.top,
-                          opacity: 1,
-                          transform: "translateX(-50%)",
-                          pointerEvents: "auto",
-                        }}
-                      >
-                        {calendarOpen === "from" ? (
-                          <Calendar
-                            mode="single"
-                            selected={draftFrom || dateFrom}
-                            onSelect={(value: Date | undefined) => {
-                              if (value) {
-                                setDraftFrom(value);
-                                if (draftTo && value > draftTo) setDraftTo(undefined);
-                                setCalendarOpen(null);
-                              }
-                            }}
-                            startMonth={minDate}
-                            endMonth={today}
-                            disabled={{ before: minDate, after: today }}
-                          />
-                        ) : (
-                          <Calendar
-                            mode="single"
-                            selected={draftTo || dateTo}
-                            onSelect={(value: Date | undefined) => {
-                              if (value) {
-                                setDraftTo(value);
-                                setCalendarOpen(null);
-                              }
-                            }}
-                            startMonth={draftFrom || dateFrom || minDate}
-                            endMonth={today}
-                            disabled={{ before: draftFrom || dateFrom || minDate, after: today }}
-                          />
-                        )}
-                      </div>,
-                      document.body,
-                    )
-                  : null}
-              </div>
-              <button type="button" disabled={!draftFrom||!draftTo||draftFrom<minDate||draftTo>today||draftTo<draftFrom||(draftTo.getTime()-draftFrom.getTime())/86400000+1>730} onClick={() => {setDateFrom(draftFrom);setDateTo(draftTo);setCalendarOpen(null);}} className="h-10 rounded-xl bg-[#2563EB] px-5 text-xs font-bold text-white disabled:cursor-not-allowed disabled:bg-[#CBD5E1]">اعمال بازه</button>
-            </div>
-            {draftFrom&&draftTo&&(draftTo<draftFrom||(draftTo.getTime()-draftFrom.getTime())/86400000+1>730)&&<p className="text-[10px] text-[#DC2626]">بازه باید حداکثر دو سال باشه و تاریخ پایان بعد از تاریخ شروع قرار بگیره.</p>}
-          </div>
-        </header>
-        {error && <div className="rounded-2xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-6 text-[#B91C1C]">{error}</div>}
+      </section>
 
-        <Section title="خلاصه عملکرد" description={dateFrom && dateTo ? "آمار بازه انتخاب‌شده" : "آمار " + range + " روز اخیر"} icon={Activity}>
-          {loading ? <Spinner label="در حال دریافت خلاصه عملکرد..." /> : summary ? (
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3 lg:gap-4">
-              <MetricCard label="دسترسی" value={summary.reach} icon={Users} tone="blue" active={metric === "reach"} onClick={() => setMetric("reach")} />
-              <MetricCard label="بازدید" value={summary.views} icon={Eye} tone="purple" active={metric === "views"} onClick={() => setMetric("views")} />
-              <MetricCard label="تعاملات" value={summary.totalInteractions} icon={HeartHandshake} tone="green" active={metric === "interactions"} onClick={() => setMetric("interactions")} />
-              <MetricCard label="افراد فعال" value={summary.accountsEngaged} icon={UserCheck} tone="slate" active={metric === "accountsEngaged"} onClick={() => setMetric("accountsEngaged")} />
-            </div>
-          ) : <div className="py-6 text-center text-xs text-[#64748B]">داده‌ای برای نمایش وجود ندارد.</div>}
-        </Section>
+      <section aria-label="انتخاب بازه گزارش" className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
+        <div className="mb-3 flex items-center gap-2 text-sm font-extrabold text-[var(--daira-heading)]">
+          <CalendarDays size={17} className="text-[var(--daira-primary)]" /> بازه گزارش
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          {([7, 30, 90] as const).map((days) => (
+            <button type="button" key={days} aria-pressed={!appliedRange && preset === days}
+              onClick={() => { setPreset(days); setAppliedRange(null); setCalendarOpen(false); }}
+              className={"min-h-11 rounded-xl border px-2 text-xs font-bold transition " +
+                (!appliedRange && preset === days
+                  ? "border-blue-300 bg-blue-50 text-[var(--daira-primary)]"
+                  : "border-[var(--daira-border)] bg-white text-[var(--daira-text)] hover:bg-[var(--daira-surface-hover)]")}>
+              {new Intl.NumberFormat("fa-IR").format(days)} روز
+            </button>
+          ))}
+        </div>
+        <button type="button" onClick={openCalendar} aria-haspopup="dialog"
+          className={"mt-3 flex min-h-12 w-full items-center gap-2 rounded-xl border px-3 text-right text-xs font-semibold transition " +
+            (appliedRange
+              ? "border-blue-300 bg-blue-50 text-[var(--daira-primary)]"
+              : "border-[var(--daira-border)] bg-[var(--daira-surface-hover)] text-[var(--daira-heading)]")}>
+          <CalendarDays size={17} className="shrink-0" aria-hidden="true" />
+          <span className="min-w-0 flex-1">{displayedRange}</span>
+          <ChevronLeft size={16} className="shrink-0" aria-hidden="true" />
+        </button>
+      </section>
 
-        <Section title={"روند " + selectedLabel} description="شاخص موردنظر را انتخاب کنید و روند آن را ببینید." icon={BarChart3}>
-          {loading ? <Spinner label="در حال آماده‌سازی نمودار..." /> : (
-            <>
-              <div className="mb-4 grid grid-cols-2 gap-1 rounded-2xl bg-[#F8FAFC] p-1 sm:grid-cols-4">
-                {tabs.map((tab) => {
-                  const Icon = tab.icon;
-                  return (
-                    <button key={tab.id} type="button" onClick={() => setMetric(tab.id)} className={metric === tab.id ? "flex items-center justify-center gap-1.5 rounded-xl bg-white px-2 py-2.5 text-[10px] font-bold text-[#2563EB] shadow-sm ring-1 ring-[#DBEAFE]" : "flex items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-[10px] font-bold text-[#64748B]"}>
-                      <Icon className="h-3.5 w-3.5" />{tab.label}
-                    </button>
-                  );
-                })}
+      {error && (
+        <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs leading-6 text-red-700">
+          {error}
+        </div>
+      )}
+      {warning && !loading && (
+        <div role="status" className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-6 text-amber-800">
+          {warning}
+        </div>
+      )}
+
+      {loading ? <InsightsSkeleton /> : data ? (
+        <>
+          <Panel title="روند عملکرد" icon={Activity}
+            help="نمودار بر اساس مقادیر روزانه ثبت‌شده است. برای برخی روزها ممکن است اطلاعات موجود نباشد.">
+            <div className="mb-4 grid grid-cols-3 gap-2" role="group" aria-label="انتخاب شاخص نمودار">
+              {tabs.map(({ id, title, icon: Icon }) => (
+                <button type="button" key={id} aria-pressed={metric === id} onClick={() => setMetric(id)}
+                  className={"flex min-h-11 items-center justify-center gap-1.5 rounded-xl border px-1 text-[11px] font-bold transition " +
+                    (metric === id ? "border-blue-300 bg-blue-50 text-[var(--daira-primary)]"
+                      : "border-[var(--daira-border)] bg-white text-[var(--daira-text)] hover:bg-[var(--daira-surface-hover)]")}>
+                  <Icon size={15} aria-hidden="true" />{title}
+                </button>
+              ))}
+            </div>
+            <TrendChart snapshots={snapshots} metric={metric} />
+          </Panel>
+
+          <Panel title="نرخ‌های عملکرد" icon={TrendingUp}>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="min-w-0 rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] p-3 sm:p-4">
+                <div className="flex items-center justify-between gap-1 text-[11px] font-semibold text-[var(--daira-text)]">
+                  <span>نرخ تعامل</span>
+                  <InfoHelp message="نسبت مجموع تعاملات ثبت‌شده به جمع دسترسی‌های روزانه در بازه انتخاب‌شده؛ لزوماً نرخ تعامل بر اساس افراد یکتای کل بازه نیست." />
+                </div>
+                <div className="mt-2 text-xl font-extrabold text-[var(--daira-heading)] sm:text-2xl">{formatPercent(summary?.engagementRate)}</div>
+                <p className="mt-2 text-[10px] leading-5 text-[var(--daira-text)]">تعاملات نسبت به دسترسی</p>
               </div>
-              <Chart snapshots={visibleSnapshots} metric={metric} />
-            </>
+              <div className="min-w-0 rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] p-3 sm:p-4">
+                <div className="flex items-center justify-between gap-1 text-[11px] font-semibold text-[var(--daira-text)]">
+                  <span>رشد خالص فالوور</span>
+                  <InfoHelp message={growthNote} />
+                </div>
+                <div className={"mt-2 flex flex-wrap items-center gap-1 text-xl font-extrabold sm:text-2xl " +
+                  (netFollowers == null ? "text-[var(--daira-heading)]" : netFollowers < 0 ? "text-red-600" : "text-emerald-600")}>
+                  {netFollowers != null && netFollowers > 0 && <TrendingUp size={19} aria-hidden="true" />}
+                  {netFollowers != null && netFollowers < 0 && <TrendingDown size={19} aria-hidden="true" />}
+                  {netFollowers != null && netFollowers > 0 ? "+" : ""}
+                  {formatNumber(netFollowers)}
+                </div>
+                <p className="mt-2 text-[10px] leading-5 text-[var(--daira-text)]">{growthNote}</p>
+              </div>
+            </div>
+          </Panel>
+
+          <Panel title="آمار کلی" icon={BarChart3}
+            help="مقادیر مجموع برای روزهای دارای اطلاعات ثبت‌شده‌اند؛ تعداد دنبال‌کنندگان مربوط به آخرین ثبت است. اعداد «—» یعنی داده‌ای در دسترس نیست.">
+            <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-[var(--daira-border)] sm:grid-cols-3">
+              <div className="border-b border-l border-[var(--daira-border)] sm:border-l"><Stat label="بازدید" value={summary?.views} icon={Eye} /></div>
+              <div className="border-b border-[var(--daira-border)] sm:border-l"><Stat label="تعاملات" value={summary?.totalInteractions} icon={HeartHandshake} /></div>
+              <div className="border-b border-l border-[var(--daira-border)] sm:border-l"><Stat label="فالو" value={summary?.follows} icon={UserPlus} /></div>
+              <div className="border-b border-[var(--daira-border)] sm:border-l"><Stat label="آنفالو" value={summary?.unfollows} icon={UserMinus} /></div>
+              <div className="border-l border-[var(--daira-border)] sm:border-b sm:border-l-0"><Stat label="دنبال‌کنندگان" value={summary?.followerCount} icon={Users} note="آخرین مقدار ثبت‌شده" /></div>
+              <div><Stat label="جمع دسترسی روزانه" value={summary?.reach} icon={MessageCircle} /></div>
+            </div>
+            <p className="mt-3 text-[11px] leading-6 text-[var(--daira-text)]">
+              دسترسی و تعاملات روزانه ممکن است شامل حساب‌های تکراری در روزهای مختلف باشند؛ جمع آن‌ها تعداد افراد یکتای کل بازه نیست.
+            </p>
+          </Panel>
+          {snapshots.length === 0 && (
+            <p className="rounded-xl border border-dashed border-[var(--daira-border)] bg-white px-4 py-4 text-center text-xs leading-6 text-[var(--daira-text)]">
+              برای این بازه هنوز داده‌ای ثبت نشده است. با ثبت آمار روزهای جدید، روند اینجا نمایش داده می‌شود.
+            </p>
           )}
-        </Section>
+        </>
+      ) : !error ? (
+        <div className="rounded-xl border border-dashed border-[var(--daira-border)] bg-white p-6 text-center text-xs text-[var(--daira-text)]">
+          اطلاعات قابل‌نمایشی در دسترس نیست.
+        </div>
+      ) : null}
 
-        <section className="grid gap-3 sm:grid-cols-3 sm:gap-4">
-          <Section title="بازدید" icon={Eye}>{loading?<Spinner label="در حال دریافت..." />:<div className="flex min-h-[110px] items-center justify-center"><div className="text-center text-3xl font-bold tracking-tight text-[#0F172A]">{n(summary?.views)}</div></div>}</Section>
-          <Section title="رشد فالوور" icon={UserRoundPlus}>{loading?<Spinner label="در حال دریافت..." />:<div className="flex min-h-[110px] items-center justify-center"><div className="text-center text-3xl font-bold tracking-tight text-[#0F172A]">{summary?.followerGrowth==null?"—":(summary.followerGrowth>0?"+":"") + n(summary.followerGrowth)}</div></div>}</Section>
-          <Section title="نرخ تعامل" icon={HeartHandshake}>{loading?<Spinner label="در حال دریافت..." />:<div className="flex min-h-[110px] items-center justify-center"><div className="text-center text-3xl font-bold tracking-tight text-[#0F172A]">{summary?.engagementRate==null?"—":new Intl.NumberFormat("fa-IR",{maximumFractionDigits:2}).format(summary.engagementRate)+"٪"}</div></div>}</Section>
-        </section>
-      </div>
+      {calendarOpen && typeof document !== "undefined" && createPortal(
+        <div data-insights-calendar-popup className="fixed inset-0 z-[3000] flex items-center justify-center bg-slate-950/40 px-3 py-4"
+          onMouseDown={(event) => { if (event.target === event.currentTarget) setCalendarOpen(false); }}>
+          <section dir="rtl" role="dialog" aria-modal="true" aria-label="انتخاب بازه زمانی"
+            className="flex max-h-[min(90dvh,780px)] w-fit max-w-full flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+            <div className="flex items-center justify-between gap-2 border-b border-[var(--daira-border)] px-4 py-3">
+              <div className="text-sm font-extrabold text-[var(--daira-heading)]">انتخاب بازه زمانی</div>
+              <button type="button" aria-label="بستن تقویم" onClick={() => setCalendarOpen(false)}
+                className="grid h-10 w-10 place-items-center rounded-xl text-[var(--daira-text)] hover:bg-[var(--daira-surface-hover)]">
+                <X size={19} />
+              </button>
+            </div>
+            <div className="min-h-0 overflow-y-auto overscroll-contain">
+              <Calendar key={calendarMonths} mode="range" numberOfMonths={calendarMonths}
+                selected={draftRange} onSelect={setDraftRange}
+                defaultMonth={draftRange?.from ?? today}
+                startMonth={minDate} endMonth={today}
+                disabled={{ before: minDate, after: today }} />
+            </div>
+            <div className="border-t border-[var(--daira-border)] px-4 py-3">
+              <p className="mb-3 text-[11px] leading-5 text-[var(--daira-text)]">
+                {draftRange?.from && draftRange?.to
+                  ? persianDate(draftRange.from) + " تا " + persianDate(draftRange.to, false)
+                  : "تاریخ شروع و پایان را انتخاب کن."}
+              </p>
+              <button type="button" disabled={!validRange}
+                onClick={() => {
+                  if (!draftRange?.from || !draftRange?.to || !validRange) return;
+                  setAppliedRange({ from: draftRange.from, to: draftRange.to });
+                  setCalendarOpen(false);
+                }}
+                className="min-h-11 w-full rounded-xl bg-[var(--daira-primary)] px-4 text-sm font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-40">
+                اعمال بازه
+              </button>
+            </div>
+          </section>
+        </div>,
+        document.body,
+      )}
     </main>
   );
 }
