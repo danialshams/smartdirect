@@ -9,7 +9,6 @@ import {
   File as FileIcon,
   Image as ImageIcon,
   MessageCircle,
-  MessageSquareText,
   Mic,
   Paperclip,
   Pause,
@@ -79,7 +78,6 @@ type Conversation = {
   participantName: string | null;
   participantProfilePicture: string | null;
   isActive: boolean;
-  humanMode?: boolean;
   messagingWindow?: MessagingWindow;
   lastMessageAt: string | null;
   updatedAt: string;
@@ -96,13 +94,12 @@ type ApiResult = {
   conversations?: Conversation[];
   conversation?: Conversation;
   message?: Message;
-  humanMode?: boolean;
   matches?: Message[];
   hasMoreConversations?: boolean;
   nextOffset?: number;
 };
 
-type InboxFilter = "ALL" | "READ" | "UNREAD" | "NEEDS_REPLY";
+type InboxFilter = "ALL" | "READ" | "UNREAD";
 
 const dateFormatter = new Intl.DateTimeFormat("fa-IR", {
   dateStyle: "medium",
@@ -415,10 +412,6 @@ export default function InstagramInbox({
   const [conversationMatches, setConversationMatches] = useState<Message[]>([]);
   const [conversationSearching, setConversationSearching] = useState(false);
   const [focusedMessageId, setFocusedMessageId] = useState<string | null>(null);
-  const [showQuickReplies, setShowQuickReplies] = useState(false);
-  const [quickReplies, setQuickReplies] = useState<string[]>([]);
-  const [newQuickReply, setNewQuickReply] = useState("");
-  const [handoffBusy, setHandoffBusy] = useState(false);
   const [recordedVoice, setRecordedVoice] = useState<File | null>(null);
   const [recording, setRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
@@ -1109,7 +1102,6 @@ export default function InstagramInbox({
     setText("");
     setSelectedFile(null);
     setRecordedVoice(null);
-    setShowQuickReplies(false);
     setConversationSearchOpen(false);
     setConversationMatches([]);
     setHasMoreMessages(false);
@@ -1190,7 +1182,6 @@ export default function InstagramInbox({
   const filteredConversations = (search.trim() ? searchResults : conversations).filter((conversation) => {
     if (filter === "UNREAD" && !(conversation.unreadCount || 0)) return false;
     if (filter === "READ" && (conversation.unreadCount || 0) > 0) return false;
-    if (filter === "NEEDS_REPLY" && conversation.messages[0]?.direction !== "INBOUND") return false;
 
     return true;
   });
@@ -1199,7 +1190,6 @@ export default function InstagramInbox({
     (conversation) => (conversation.unreadCount || 0) > 0,
   ).length;
   const readTotal = conversations.length - unreadTotal;
-  const needsReplyTotal = conversations.filter((item) => item.messages[0]?.direction === "INBOUND").length;
   const selectedConversation = conversations.find(
     (conversation) => conversation.id === selectedId,
   );
@@ -1219,27 +1209,6 @@ export default function InstagramInbox({
       if (recordedVoiceUrl) URL.revokeObjectURL(recordedVoiceUrl);
     };
   }, [selectedFileUrl, recordedVoiceUrl]);
-
-  const suggestedReplies = [
-    "سلام، ممنون از پیامتان. چطور می‌توانم کمک کنم؟",
-    "پیامتان دریافت شد. در حال بررسی موضوع هستیم.",
-    "لطفاً جزئیات بیشتری ارسال کنید تا دقیق‌تر راهنمایی کنیم.",
-  ];
-
-  useEffect(() => {
-    if (!accountId) return;
-    try {
-      const saved = JSON.parse(window.localStorage.getItem(`smartdirect:inbox:quick-replies:${accountId}`) || "null");
-      setQuickReplies(Array.isArray(saved) ? saved.filter((item): item is string => typeof item === "string") : suggestedReplies);
-    } catch {
-      setQuickReplies(suggestedReplies);
-    }
-  }, [accountId]);
-
-  function persistQuickReplies(next: string[]) {
-    setQuickReplies(next);
-    if (accountId) window.localStorage.setItem(`smartdirect:inbox:quick-replies:${accountId}`, JSON.stringify(next));
-  }
 
   useEffect(() => {
     if (!conversationSearchOpen || !conversationSearchText.trim() || !accountId || !selectedId) {
@@ -1282,33 +1251,6 @@ export default function InstagramInbox({
     void loadMessages();
   }
 
-  async function toggleHumanMode() {
-    if (!accountId || !selectedId || handoffBusy || !selectedConversation) return;
-    setHandoffBusy(true);
-    try {
-      const response = await fetch("/api/instagram/inbox/handoff", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          accountId,
-          conversationId: selectedId,
-          action: selectedConversation.humanMode ? "resume" : "transfer",
-        }),
-      });
-      const result = await readApiResult(response);
-      if (!response.ok || !result.success) throw new Error(result.error || "تغییر حالت پاسخ‌گویی انجام نشد.");
-      setConversations((current) => current.map((item) => item.id === selectedId
-        ? { ...item, humanMode: Boolean(result.humanMode) }
-        : item
-      ));
-      setError("");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "تغییر حالت پاسخ‌گویی انجام نشد.");
-    } finally {
-      setHandoffBusy(false);
-    }
-  }
-
   useEffect(() => {
     if (!mobileChatOpen) return;
     const viewport = window.visualViewport;
@@ -1340,9 +1282,8 @@ export default function InstagramInbox({
           {(
             [
               ["ALL", "همه", conversations.length],
-              ["READ", "خوانده شده", readTotal],
-              ["UNREAD", "خوانده نشده", unreadTotal],
-              ["NEEDS_REPLY", "نیازمند پاسخ", needsReplyTotal],
+              ["READ", "خوانده", readTotal]
+              ["UNREAD", "خوانده‌نشده", unreadTotal]
             ] as const
           ).map(([value, label, count]) => (
             <button
@@ -1498,10 +1439,7 @@ export default function InstagramInbox({
                 )}
               </div>
             </div>
-            <button type="button" onClick={() => { setConversationSearchOpen((value) => !value); setShowQuickReplies(false); }} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-[#526580] hover:bg-[#F1F5FC]" aria-label="جست‌وجو در پیام‌ها" aria-expanded={conversationSearchOpen}><Search size={19}/></button>
-            <button type="button" onClick={() => void toggleHumanMode()} disabled={handoffBusy} className={`hidden min-h-9 shrink-0 items-center rounded-xl border px-3 text-[11px] font-bold transition disabled:opacity-50 sm:inline-flex ${selectedConversation.humanMode ? "border-[#BFDBFE] bg-[#EFF6FF] text-[#2563EB]" : "border-[#E2E8F0] bg-white text-[#526580] hover:bg-[#F5F8FE]"}`} title={selectedConversation.humanMode ? "بازگشت به پاسخ‌گویی خودکار" : "واگذاری گفتگو به پاسخ‌گویی انسانی"}>
-              {handoffBusy ? "در حال تغییر…" : selectedConversation.humanMode ? "پاسخ انسانی فعال" : "پاسخ انسانی"}
-            </button>
+            <button type="button" onClick={() => setConversationSearchOpen((value) => !value)} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-[#526580] hover:bg-[#F1F5FC]" aria-label="جست‌وجو در پیام‌ها" aria-expanded={conversationSearchOpen}><Search size={19}/></button>
           </header>
 
           {conversationSearchOpen && (
@@ -1523,12 +1461,6 @@ export default function InstagramInbox({
               )}
             </div>
           )}
-
-          <div className="border-b border-[#E8EDF5] bg-white px-3 py-2 sm:hidden">
-            <button type="button" onClick={() => void toggleHumanMode()} disabled={handoffBusy} className="text-[11px] font-bold text-[#2F61FD] disabled:opacity-50">
-              {selectedConversation.humanMode ? "بازگشت به پاسخ‌گویی خودکار" : "فعال‌سازی پاسخ‌گویی انسانی"}
-            </button>
-          </div>
 
           <div
             ref={messagesScrollRef}
@@ -1634,37 +1566,6 @@ export default function InstagramInbox({
               </div>
             )}
           </div>
-
-          {showQuickReplies && (
-            <div className="shrink-0 border-t border-[#E8EDF5] bg-white px-3 py-3 sm:px-5">
-              <div className="mb-2 flex items-center justify-between">
-                <strong className="text-xs text-[#18233C]">پاسخ‌های آماده</strong>
-                <button type="button" onClick={() => setShowQuickReplies(false)} className="grid h-8 w-8 place-items-center rounded-lg text-[#64748B]" aria-label="بستن پاسخ‌های آماده"><X size={16}/></button>
-              </div>
-              <div className="max-h-36 space-y-1 overflow-y-auto">
-                {quickReplies.map((reply, index) => (
-                  <div key={index} className="flex items-center gap-1">
-                    <button type="button" onClick={() => { setText(reply); setShowQuickReplies(false); }}
-                      className="min-w-0 flex-1 truncate rounded-lg bg-[#F5F8FE] px-3 py-2 text-right text-xs text-[#334155] hover:bg-[#EAF1FE]" title={reply}>
-                      {reply}
-                    </button>
-                    <button type="button" onClick={() => persistQuickReplies(quickReplies.filter((_, i) => i !== index))}
-                      className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-[#94A3B8] hover:bg-[#FEF2F2] hover:text-[#DC2626]" aria-label="حذف پاسخ آماده"><X size={15}/></button>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-2 flex items-center gap-2">
-                <input type="text" value={newQuickReply} maxLength={1000} onChange={(e) => setNewQuickReply(e.target.value)} placeholder="پاسخ آماده جدید..." aria-label="متن پاسخ آماده جدید"
-                  className="h-10 min-w-0 flex-1 rounded-xl border border-[#E2E8F0] px-3 text-xs outline-none focus:border-[#2F61FD]"/>
-                <button type="button" disabled={!newQuickReply.trim() || quickReplies.length >= 12} onClick={() => {
-                  const next = newQuickReply.trim();
-                  if (!quickReplies.includes(next)) persistQuickReplies([...quickReplies, next]);
-                  setNewQuickReply("");
-                }} className="h-10 rounded-xl bg-[#2F61FD] px-3 text-xs font-bold text-white disabled:bg-[#CBD5E1]">ذخیره</button>
-              </div>
-              <p className="mt-2 text-[10px] text-[#94A3B8]">پاسخ‌های آماده در همین مرورگر ذخیره می‌شوند.</p>
-            </div>
-          )}
 
           <form
             onSubmit={sendMessage}
@@ -1804,11 +1705,6 @@ export default function InstagramInbox({
                 />
 
                 <div className="flex items-end gap-2">
-                  <button type="button" onClick={() => { setShowQuickReplies((value) => !value); setConversationSearchOpen(false); }}
-                    aria-label="پاسخ‌های آماده" aria-expanded={showQuickReplies}
-                    className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#F0F5FF] text-[#2F61FD] hover:bg-[#E4EDFF]">
-                    <MessageSquareText size={20}/>
-                  </button>
                   <Button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
