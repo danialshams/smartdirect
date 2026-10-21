@@ -83,3 +83,6 @@ jobs:
 
       - name: Test redesigned direct menu
         run: npx tsx scripts/test-persistent-menu-redesign.ts
+
+      - name: Test redesigned ice-breaker messages
+        run: npx tsx scripts/test-icebreaker-redesign.ts
