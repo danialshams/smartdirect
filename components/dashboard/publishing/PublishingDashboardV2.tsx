@@ -12,7 +12,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { WheelPicker, type WheelPickerOption } from "@ncdai/react-wheel-picker";
 import "@ncdai/react-wheel-picker/style.css";
 import { toast } from "sonner";
-import PublishingWizardProgress, { type PublishingStep } from "./PublishingWizardProgress";
+import PublishingSectionGuide from "./PublishingSectionGuide";
 import { dairaPalette } from "../../../lib/design-system/palette";
 import PublishingQueue from "./PublishingQueue";
 import PublishingPageSkeleton from "./PublishingPageSkeleton";
@@ -555,7 +555,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const [isDragging, setIsDragging] = useState(false);
   const [type, setType] = useState<PublishType>("POST");
   const [activeTab, setActiveTab] = useState<"create" | "queue">("create");
-  const [selectionConfirmed, setSelectionConfirmed] = useState(false);
+  const [selectionConfirmed, setSelectionConfirmed] = useState(true);
   const [furthestStep, setFurthestStep] = useState<PublishingStep>(1);
   const [captionStepConfirmed, setCaptionStepConfirmed] = useState(false);
   const [tagStepConfirmed, setTagStepConfirmed] = useState(false);
@@ -1068,14 +1068,9 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
         setUploadSuccess(true);
         setUploadProgress(100);
         window.setTimeout(() => {
-          animateStepChange(() => {
-            setCaptionStepConfirmed(true);
-            setShowUploadedMediaPreview(false);
-            setUploadSuccess(false);
-            setUploadProgress(0);
-            setUploadRows([]);
-          });
-        }, 700);
+          setUploadSuccess(false);
+          setUploadProgress(0);
+        }, 900);
       } else {
         setUploadSuccess(false);
         setUploadProgress(0);
@@ -1145,13 +1140,11 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     setError("");
   }
   function handleAutomationChoice(enabled: boolean) {
-    if (publishing || uploading) return;
-    animateStepChange(() => {
-      setAutomationEnabled(enabled);
-      setAutomationChoiceConfirmed(true);
-      setAutomationSetupConfirmed(false);
-      setError("");
-    });
+    if (publishing) return;
+    setAutomationEnabled(enabled);
+    setAutomationChoiceConfirmed(true);
+    setAutomationSetupConfirmed(false);
+    setError("");
   }
 
   function updateMessage(index: number, patch: Partial<MessageDraft>) { setMessages((current) => current.map((message, messageIndex) => messageIndex === index ? { ...message, ...patch } : message)); }
@@ -1448,161 +1441,92 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   async function cancelJob(id: string) { try { setError(""); const response = await fetch(`/api/instagram/publishing/${id}`, { method: "DELETE" }); const result = await response.json(); if (!response.ok) throw new Error(result.message || "لغو ناموفق بود."); await loadJobs(); } catch (e) { setError(e instanceof Error ? e.message : "لغو ناموفق بود."); } }
 
 
-  const wizardStep: PublishingStep = !captionStepConfirmed ? 1
-    : type !== "STORY" && !automationChoiceStepStarted ? 2
-    : !automationChoiceConfirmed || (automationEnabled && !automationSetupConfirmed) ? 3 : 4;
-  const mediaReady = uploadedMedia.length >= (type === "CAROUSEL" ? 2 : 1) && !uploading;
-  const detailsReady = type === "STORY" || Boolean(caption.trim());
-  const automationReady = automationChoiceConfirmed && (!automationEnabled || automationSetupConfirmed);
-  useEffect(() => {
-    if (selectionConfirmed && wizardStep > furthestStep) setFurthestStep(wizardStep);
-  }, [selectionConfirmed, wizardStep, furthestStep]);
-  function canNavigateStep(target: PublishingStep) {
-    if (uploading || publishing) return false;
-    if (target === wizardStep) return true;
-    if (target === 1) return true;
-    if (target === 2) return type !== "STORY" && mediaReady;
-    if (target === 3) return mediaReady && detailsReady;
-    return mediaReady && detailsReady && automationReady;
-  }
-  function goToWizardStep(target: PublishingStep) {
-    if (!canNavigateStep(target) || target === wizardStep) return;
-    setError("");
-    if (target === 1) {
-      setCaptionStepConfirmed(false);
-      setAutomationChoiceStepStarted(false);
-      setAutomationChoiceConfirmed(false);
-      setAutomationSetupConfirmed(false);
-      setShowUploadedMediaPreview(false);
-    } else if (target === 2 && type !== "STORY") {
-      setCaptionStepConfirmed(true);
-      setAutomationChoiceStepStarted(false);
-      setAutomationChoiceConfirmed(false);
-      setAutomationSetupConfirmed(false);
-    } else if (target === 3) {
-      setCaptionStepConfirmed(true);
-      setTagStepConfirmed(type !== "STORY");
-      setAutomationChoiceStepStarted(true);
-      setAutomationChoiceConfirmed(false);
-      setAutomationSetupConfirmed(false);
-      setShowUploadedMediaPreview(false);
-    } else if (target === 4) {
-      setCaptionStepConfirmed(true);
-      setTagStepConfirmed(type !== "STORY");
-      setAutomationChoiceStepStarted(true);
-      setAutomationChoiceConfirmed(true);
-      setAutomationSetupConfirmed(true);
-      setShowUploadedMediaPreview(false);
-    }
-    setFurthestStep(old => Math.max(old, target) as PublishingStep);
+  const canUpload = type === "CAROUSEL" ? uploadedMedia.length + media.length < 10 : uploadedMedia.length + media.length < 1;
+  const hasDraft = uploadedMedia.length > 0 || media.length > 0 || Boolean(caption.trim()) || automationEnabled;
+  const canSubmitMedia = uploadedMedia.length >= (type === "CAROUSEL" ? 2 : 1) && !uploading && !media.length;
+  const canSubmitAutomation = !automationEnabled || (type === "STORY"
+    ? storyResponseSaved && !storyResponseEditing && !storyResponseDirty
+    : automationKeywords.length > 0 && Boolean(publishingCommentReplyText.trim()));
+  function changeContentType(nextType: PublishType) {
+    if (nextType === type || uploading || publishing) return;
+    if (hasDraft && !window.confirm("با تغییر نوع محتوا، رسانه‌های آپلودشده و تنظیمات فعلی حذف می‌شوند. ادامه می‌دهید؟")) return;
+    handleTypeChange(nextType);
   }
 
-  const canPublish = uploadedMedia.length > 0 && !uploading && !publishing;
+  const canPublish = canSubmitMedia && canSubmitAutomation && !publishing;
   const acceptedVideos = "video/mp4,video/quicktime,video/webm,video/x-matroska,video/x-msvideo,video/mpeg,video/3gpp,video/mp2t,.mp4,.mov,.m4v,.webm,.mkv,.avi,.3gp,.mpeg,.mpg,.mts,.m2ts";
   const accept = type === "REEL" ? acceptedVideos : type === "STORY" || type === "CAROUSEL" ? "image/jpeg,image/png,image/webp," + acceptedVideos : "image/jpeg,image/png,image/webp";
 
   return (
-    <>
-      <div dir="rtl" className="min-h-full bg-transparent px-1 py-2 pb-24 sm:px-2 sm:py-3 sm:pb-8">
-        <div className="mx-auto w-full max-w-4xl">
-          <nav className="mb-5 grid grid-cols-2 gap-2 rounded-[20px] bg-[#EEF3FB] p-1.5" aria-label="بخش‌های انتشار">
-            <button type="button" onClick={()=>setActiveTab("create")} aria-current={activeTab==="create"?"page":undefined}
-              className={"flex min-h-[49px] items-center justify-center gap-2 rounded-2xl px-3 text-sm font-bold transition "+(activeTab==="create"?"bg-white text-[#2F61FD] shadow-sm":"text-[#5A6B87]")}>
-              <ImagePlus size={18}/> انتشار محتوا
-            </button>
-            <button type="button" onClick={()=>setActiveTab("queue")} aria-current={activeTab==="queue"?"page":undefined}
-              className={"flex min-h-[49px] items-center justify-center gap-2 rounded-2xl px-3 text-sm font-bold transition "+(activeTab==="queue"?"bg-white text-[#2F61FD] shadow-sm":"text-[#5A6B87]")}>
-              <CalendarClock size={18}/> صف انتشار
-            </button>
-          </nav>
-          {activeTab==="queue" ? (
-            <PublishingQueue jobs={jobs} loading={loading} error={error} onRetry={retryJob} onCancel={cancelJob} onRefresh={loadJobs}/>
-          ) : loading ? <PublishingPageSkeleton/> : (
-          <>
-            {selectionConfirmed && (
-              <PublishingWizardProgress
-                step={wizardStep}
-                furthestStep={furthestStep}
-                skipDetails={type === "STORY"}
-                typeLabel={typeLabels[type]}
-                disabled={uploading || publishing}
-                canNavigate={canNavigateStep}
-                onNavigate={goToWizardStep}
-                summaries={[uploadedMedia.length.toLocaleString("fa-IR")+" فایل",type==="STORY"?"بدون کپشن":(caption.slice(0,25)||"جزئیات"),automationEnabled?"فعال":"غیرفعال",publishNow?"انتشار فوری":"زمان‌بندی‌شده"]}
-              />
-            )}
-            <div className={["transition-all duration-300 ease-out", stepVisible ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0"].join(" ")}>
+    <div dir="rtl" className="min-h-full bg-transparent px-1 py-2 pb-24 sm:px-2 sm:py-3 sm:pb-10">
+      <div className="mx-auto w-full max-w-4xl">
+        <nav className="mb-5 grid grid-cols-2 gap-2 rounded-[20px] bg-[#EEF3FB] p-1.5" aria-label="بخش‌های انتشار">
+          <button type="button" onClick={()=>setActiveTab("create")} aria-current={activeTab==="create"?"page":undefined}
+            className={"flex min-h-[48px] items-center justify-center gap-2 rounded-2xl px-3 text-sm font-bold transition "+(activeTab==="create"?"bg-white text-[#2F61FD] shadow-sm":"text-[#5A6B87]")}>
+            <ImagePlus size={18}/> انتشار محتوا
+          </button>
+          <button type="button" onClick={()=>setActiveTab("queue")} aria-current={activeTab==="queue"?"page":undefined}
+            className={"flex min-h-[48px] items-center justify-center gap-2 rounded-2xl px-3 text-sm font-bold transition "+(activeTab==="queue"?"bg-white text-[#2F61FD] shadow-sm":"text-[#5A6B87]")}>
+            <CalendarClock size={18}/> صف انتشار
+          </button>
+        </nav>
+        {activeTab==="queue" ? (
+          <PublishingQueue jobs={jobs} loading={loading} error={error} onRetry={retryJob} onCancel={cancelJob} onRefresh={loadJobs}/>
+        ) : loading ? <PublishingPageSkeleton/> : (
+          <div className="space-y-5 pb-7">
+            <section aria-label="نوع محتوا" className="rounded-[22px] border border-[#DFE7F3] bg-white p-4 shadow-sm sm:p-5">
+              <div className="mb-4">
+                <h1 className="text-base font-extrabold text-[#18233C]">انتشار محتوای جدید</h1>
+                <p className="mt-1 text-xs leading-6 text-[#5A6B87]">نوع محتوا را انتخاب کن؛ تمام تنظیمات مربوط به آن در همین صفحه است.</p>
+              </div>
+              <div className="grid grid-cols-4 gap-2 sm:gap-3" role="group" aria-label="انتخاب نوع محتوا">
+                {([["POST","پست",ImagePlus],["REEL","ریلز",Clapperboard],["CAROUSEL","آلبوم",Images],["STORY","استوری",Camera]] as const).map(([value,label,Icon])=>{
+                  const selected=type===value;
+                  return <button key={value} type="button" disabled={uploading||publishing} aria-pressed={selected} onClick={()=>changeContentType(value)}
+                    className={"relative flex min-h-[78px] flex-col items-center justify-center gap-2 rounded-2xl border px-1.5 py-3 text-center transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2F61FD] disabled:opacity-50 "+(selected?"border-[#2F61FD] bg-[#EDF3FF] text-[#2F61FD]":"border-[#E2E8F0] bg-[#F8FAFC] text-[#5A6B87] hover:border-[#BAD0FF]")}>
+                    <Icon size={22} strokeWidth={1.8}/>
+                    <span className="text-[11px] font-bold sm:text-xs">{label}</span>
+                    {selected&&<CheckCircle2 size={14} className="absolute left-2 top-2 text-[#2F61FD]"/>}
+                  </button>;
+                })}
+              </div>
+            </section>
 
-            {!selectionConfirmed ? (
-              <section className="mx-auto w-full max-w-4xl">
-                <div className="mb-5 rounded-[22px] border border-[#DFE7F3] bg-white px-4 py-4 shadow-sm sm:px-5">
-                  <h1 className="text-base font-extrabold text-[#18233C]">نوع محتوای جدید</h1>
-                  <p className="mt-1.5 text-xs leading-6 text-[#5A6B87]">یکی از چهار قالب زیر را انتخاب کن؛ در ادامه فقط تنظیمات مرتبط را می‌بینی.</p>
-                </div>
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  {([["POST","پست",ImagePlus],["CAROUSEL","آلبوم",Images],["REEL","ریلز",Clapperboard],["STORY","استوری",Camera]] as const).map(([value,label,Icon])=>(
-                    <button key={value} type="button" onClick={()=>handleTypeChange(value)}
-                      className="group flex min-h-[118px] flex-col items-center justify-center gap-3 rounded-[22px] border border-[#E8EDF5] bg-white px-3 py-4 text-center shadow-[0_4px_18px_rgba(22,54,110,.035)] transition hover:-translate-y-0.5 hover:border-[#2F61FD] hover:bg-[#EFF6FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2F61FD]">
-                      <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#EFF6FF] text-[#2F61FD] group-hover:bg-[#DBEAFE]"><Icon size={23} strokeWidth={1.8}/></span>
-                      <span className="text-sm font-bold text-[#18233C]">{label}</span>
-                    </button>
-                  ))}
-                </div>
-              </section>
-            ) : !captionStepConfirmed || uploadedMedia.length === 0 || uploadSuccess || (type === "STORY" && showUploadedMediaPreview) ? (
-              <section className="mx-auto w-full max-w-3xl">
-
-                <div className="rounded-[24px] border border-[#DFE7F3] bg-white p-4 shadow-[0_5px_24px_rgba(22,54,110,.035)] sm:p-6">
-                  <>
-                      <SectionHeader n="۱" title="رسانهٔ محتوا" text={uploadInstruction} />
-                      <div className="relative">
-                        {type !== "CAROUSEL" && !uploading && !uploadSuccess && uploadedMedia.length > 0 ? (
-                          <div className="rounded-[22px] border border-[#DFE7F3] bg-[#F6F9FF] p-4 sm:p-5">
-                            <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-center sm:gap-7">
-                              <div className="w-full max-w-[250px] shrink-0 sm:w-52">
-                                <MediaTile item={uploadedMedia[0]} type={type} onRemove={() => void removeUploaded(uploadedMedia[0])} ready />
-                              </div>
-                              <div className="flex min-w-0 flex-1 flex-col items-center gap-3 text-center sm:items-start sm:text-right">
-                                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#EAF8EF] text-[#16A34A]"><CheckCircle2 size={24}/></span>
-                                <div>
-                                  <p className="text-sm font-extrabold text-[#18233C]">رسانه آماده است</p>
-                                  <p dir="auto" className="mt-2 max-w-[270px] truncate text-xs text-[#5A6B87]">{uploadedMedia[0].fileName}</p>
-                                </div>
-                                <p className="text-xs leading-6 text-[#5A6B87]">پیش‌نمایش محتوا را بررسی کن. برای جایگزینی می‌توانی همین فایل را حذف کنی و رسانهٔ دیگری اضافه کنی.</p>
-                                <button type="button" onClick={() => void removeUploaded(uploadedMedia[0])}
-                                  className="inline-flex min-h-10 items-center gap-2 rounded-full border border-[#FECACA] bg-white px-4 text-xs font-semibold text-[#B91C1C]"><Trash2 size={15}/> جایگزینی رسانه</button>
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <>
-                            <UploadArea
-                              id="publishing-media-upload"
-                              accept={accept}
-                              multiple={type === "CAROUSEL"}
-                              title={uploadTitle}
-                              disabled={publishing || (type === "CAROUSEL" && uploadedMedia.length + media.length >= 10) || (type !== "CAROUSEL" && uploadedMedia.length + media.length >= 1)}
-                              isDragging={isDragging}
-                              setIsDragging={setIsDragging}
-                              onChange={handleFiles}
-                              onDrop={handleDrop}
-                            />
-                            {type !== "CAROUSEL" && uploading && (
-                              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-xl bg-white/90 px-4 text-center" role="status" aria-live="polite">
-                                <p className="text-xs font-semibold text-[#334155]">در حال آپلود محتوا...</p>
-                                <ProgressBar progress={uploadProgress} />
-                              </div>
-                            )}
-                            {type !== "CAROUSEL" && uploadSuccess && (
-                              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 rounded-xl border border-[#BBF7D0] bg-[#F0FDF4]/95 px-4 text-center" role="status" aria-live="polite">
-                                <UploadSuccessMark />
-                                <span className="text-sm font-semibold text-[#15803D]">آپلود کامل شد؛ رسانه آمادهٔ استفاده است</span>
-                              </div>
-                            )}
-                          </>
-                        )}
-                      </div>
-                      {type === "CAROUSEL" && uploadRows.length > 0 && (
+            <section aria-label="رسانه محتوا" className="space-y-3">
+              <PublishingSectionGuide number={1} title="افزودن رسانه">
+                {type==="POST"?"یک عکس برای پست انتخاب کن.":type==="REEL"?"ویدیوی ریلز را بارگذاری کن.":type==="CAROUSEL"?"بین ۲ تا ۱۰ تصویر یا ویدیو اضافه کن؛ ترتیب اسلایدها قابل جابه‌جایی است.":"یک عکس یا ویدیو برای استوری انتخاب کن."}
+              </PublishingSectionGuide>
+              <div className="rounded-[22px] border border-[#DFE7F3] bg-white p-4 shadow-sm sm:p-5">
+                {type!=="CAROUSEL" && uploadedMedia[0] ? (
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+                    <div className="mx-auto w-full max-w-[200px] shrink-0 sm:mx-0 sm:w-44">
+                      <MediaTile item={uploadedMedia[0]} type={type} onRemove={()=>void removeUploaded(uploadedMedia[0])} ready/>
+                    </div>
+                    <div className="min-w-0 flex-1 space-y-3 text-center sm:text-right">
+                      <div className="flex items-center justify-center gap-2 text-[#15803D] sm:justify-start"><CheckCircle2 size={19}/><strong className="text-sm">رسانه آماده است</strong></div>
+                      <p dir="auto" className="truncate text-xs text-[#5A6B87]">{uploadedMedia[0].fileName}</p>
+                      <button type="button" onClick={()=>void removeUploaded(uploadedMedia[0])}
+                        className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-[#DFE7F3] bg-[#F8FAFC] px-4 text-xs font-bold text-[#18233C]"><Trash2 size={15}/> جایگزینی فایل</button>
+                    </div>
+                  </div>
+                ) : canUpload ? (
+                  <UploadArea id="publishing-media-upload" accept={accept} multiple={type==="CAROUSEL"}
+                    disabled={publishing || !canUpload} isDragging={isDragging} setIsDragging={setIsDragging}
+                    title={uploadTitle} onChange={handleFiles} onDrop={handleDrop}/>
+                ) : type!=="CAROUSEL" && uploading ? (
+                  <div role="status" className="rounded-xl bg-[#F6F9FF] p-5 text-center">
+                    <Loader2 className="mx-auto mb-2 animate-spin text-[#2F61FD]" size={22}/>
+                    <p className="text-xs text-[#5A6B87]">در حال بارگذاری رسانه…</p>
+                  </div>
+                ) : null}
+                {uploading&&type!=="CAROUSEL"&&<ProgressBar progress={uploadProgress}/>}
+                {uploadRows.filter(row=>row.status==="failed").map(row=>
+                  <div key={row.id} className="mt-3 flex flex-wrap items-center gap-3 rounded-xl border border-[#FECACA] bg-[#FEF2F2] p-3">
+                    <p className="min-w-0 flex-1 text-xs leading-6 text-[#B91C1C]">{row.fileName}: {row.error||"آپلود ناموفق بود."}</p>
+                    <button type="button" onClick={()=>retryLocalUpload(row.id)} className="inline-flex items-center gap-1 rounded-lg bg-white px-3 py-2 text-xs font-bold text-[#B91C1C]"><RotateCcw size={14}/>تلاش دوباره</button>
+                  </div>
+                )}
+                                      {type === "CAROUSEL" && uploadRows.length > 0 && (
                         <DndContext
                           sensors={sensors}
                           modifiers={[restrictSlideDragToList]}
@@ -1667,20 +1591,19 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                         </DndContext>
                       )}
 
-                      {type === "CAROUSEL" && uploadedMedia.length > 0 && (
-                        <div className="mt-5 rounded-[18px] border border-[#DFE7F3] bg-[#F6F9FF] px-4 py-3.5 text-right">
-                          <div className="flex items-center gap-2"><Images size={17} className="text-[#2F61FD]" /><p className="text-sm font-bold text-[#18233C]">آلبوم: {toPersianDigits(uploadedMedia.length)} اسلاید از ۱۰</p></div>
-                          <p className="mt-2 text-xs leading-6 text-[#5A6B87]">با نگه‌داشتن و کشیدن هر ردیف ترتیب اسلایدها را تغییر بده. پس از آماده‌شدن حداقل دو اسلاید، مرحلهٔ «جزئیات» در بالا فعال می‌شود.</p>
-                        </div>
-                      )}
-                      {type === "CAROUSEL" && uploadedMedia.length >= 10 && (
-                        <p className="mt-3 text-center text-xs font-medium text-[#64748B]">حداکثر ۱۰ اسلاید آپلود شده؛ برای افزودن فایل جدید ابتدا یک اسلاید را پاک کن.</p>
-                      )}
-                    </>
-                </div>
-              </section>
-            ) : type !== "STORY" && !automationChoiceStepStarted ? (
-              <div className="mx-auto w-full max-w-4xl space-y-4">
+
+                {type==="CAROUSEL" && uploadedMedia.length>0 && <p className="mt-3 rounded-xl bg-[#F6F9FF] px-3 py-2.5 text-xs leading-6 text-[#5A6B87]">
+                  {toPersianDigits(uploadedMedia.length)} اسلاید از ۱۰ آماده است؛ برای تغییر ترتیب، اسلاید را بگیر و جابه‌جا کن.
+                </p>}
+              </div>
+            </section>
+
+            {type!=="STORY" && (
+              <section aria-label="جزئیات محتوا" className="space-y-3">
+                <PublishingSectionGuide number={2} title="جزئیات محتوا">
+                  کپشن را بنویس؛ در صورت نیاز، تگ کاربران را برای هر رسانه اضافه کن.
+                </PublishingSectionGuide>
+                <div className="mx-auto w-full max-w-4xl space-y-4">
                 <section className="w-full rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
                   <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-[#DFE7F3] bg-[#F6F9FF] px-4 py-3.5">
                     <div>
@@ -1706,7 +1629,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   <button type="button" onClick={()=>setShowTags(value=>!value)} aria-expanded={showTags} aria-controls="publishing-tags-panel"
                     className="mb-2 flex w-full items-center justify-between gap-3 rounded-xl p-1 text-right focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2F61FD]">
                     <span className="flex items-start gap-3">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#EFF6FF] text-xs font-bold text-[#2F61FD]">۲</span>
+
                       <span><span className="block text-sm font-bold text-[#18233C]">تگ کردن کاربران <span className="font-medium text-[#2F61FD]">(اختیاری)</span></span>
                         <span className="mt-1 block text-xs leading-6 text-[#5A6B87]">{Object.values(taggedUsersByMedia).reduce((sum,list)=>sum+list.length,0).toLocaleString("fa-IR")} تگ ثبت‌شده — برای ویرایش باز کنید</span></span>
                     </span>
@@ -1752,43 +1675,27 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   </div>
                   </div>}
                 </section>
-                <p role="note" className="rounded-xl border border-[#DFE7F3] bg-[#F6F9FF] px-4 py-3 text-center text-xs leading-6 text-[#5A6B87]">
-                  {caption.trim() ? "جزئیات آماده است. مرحله «پاسخ خودکار» را از نوار بالای صفحه انتخاب کن." : "برای فعال‌شدن مرحله پاسخ خودکار، ابتدا کپشن را تکمیل کن."}
-                </p>
-              </div>
-            ) : ((type !== "STORY" && tagStepConfirmed) || (type === "STORY" && captionStepConfirmed)) && (type === "STORY" || automationChoiceStepStarted) && !automationChoiceConfirmed ? (
-              <div className="mx-auto w-full max-w-2xl">
                 
-                <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
-                  <SectionHeader n="۳" title="پاسخ خودکار (اختیاری)" text="در صورت نیاز، برای کامنت یا ریپلای این محتوا پاسخ خودکار تنظیم کن." />
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <button type="button" onClick={() => handleAutomationChoice(true)} className="group rounded-[19px] border border-[#DFE7F3] bg-[#F6F9FF] p-4 text-right transition hover:border-[#2F61FD] hover:bg-[#EDF3FF] sm:p-5">
-                      <div className="flex items-start gap-3">
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2F61FD] transition group-hover:bg-[#DBEAFE]"><Send size={18} /></span>
-                        <div className="min-w-0">
-                          <p className="text-sm font-bold text-[#18233C]">فعال‌کردن پاسخ خودکار</p>
-                          <p className="mt-1.5 text-[11px] leading-5 text-[#64748B]">برای این محتوا پاسخ خودکار تنظیم کن.</p>
-                        </div>
-                      </div>
-                    </button>
-                    <button type="button" onClick={() => handleAutomationChoice(false)} className="group rounded-[19px] border border-[#DFE7F3] bg-white p-4 text-right transition hover:border-[#2F61FD] hover:bg-[#F6F9FF] sm:p-5">
-                      <div className="flex items-start gap-3">
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F8FAFC] text-[#64748B] transition group-hover:bg-[#F1F5F9]"><ArrowLeft size={18} /></span>
-                        <div className="min-w-0">
-                          <p className="text-sm font-bold text-[#18233C]">بدون پاسخ خودکار</p>
-                          <p className="mt-1.5 text-[11px] leading-5 text-[#64748B]">بدون تنظیم پاسخ خودکار منتشر می‌شود.</p>
-                        </div>
-                      </div>
-                    </button>
-                  </div>
-                </section>
               </div>
-            ) : type === "STORY" && automationChoiceConfirmed && automationEnabled && !automationSetupConfirmed ? (
-              <div className="mx-auto w-full max-w-2xl">
+              </section>
+            )}
+
+            <section aria-label="پاسخ خودکار" className="space-y-3">
+              <PublishingSectionGuide number={type==="STORY"?2:3} title="پاسخ خودکار (اختیاری)">
+                {type==="STORY"?"اگر می‌خواهی به ریپلای این استوری پاسخ داده شود، این بخش را فعال کن.":"اگر می‌خواهی به کامنت‌ها و دایرکت‌ها پاسخ داده شود، این بخش را فعال کن."}
+              </PublishingSectionGuide>
+              <div className="rounded-[22px] border border-[#DFE7F3] bg-white p-4 shadow-sm sm:p-5">
+                <label className="flex min-h-12 cursor-pointer items-center justify-between gap-3">
+                  <span className="min-w-0"><strong className="block text-sm text-[#18233C]">فعال‌سازی پاسخ خودکار</strong>
+                    <span className="mt-1 block text-xs leading-6 text-[#5A6B87]">بدون فعال‌سازی، محتوا عادی منتشر می‌شود.</span></span>
+                  <input type="checkbox" role="switch" checked={automationEnabled} disabled={publishing} onChange={e=>handleAutomationChoice(e.target.checked)} className="daira-form-switch shrink-0 -scale-x-100"/>
+                </label>
+              </div>
+              {automationEnabled && (type==="STORY" ? <div className="mx-auto w-full max-w-2xl">
                 
 
                 <section className="space-y-5 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
-                  <SectionHeader n="۳" title="تنظیم پاسخ خودکار استوری" text="کلمات فعال‌کننده و پاسخ Reply استوری را مشخص کن." />
+                  
 
                   <fieldset disabled={storyResponseSaved && !storyResponseEditing}>
                     <div>
@@ -1948,12 +1855,10 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
                   {error && <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-5 text-[#B91C1C]" role="alert">{error}</div>}
                 </section>
-              </div>
-            ) : type !== "STORY" && automationChoiceConfirmed && automationEnabled && !automationSetupConfirmed ? (
-              <div className="mx-auto w-full max-w-2xl">
+              </div> : <div className="mx-auto w-full max-w-2xl">
                 
                 <section className="space-y-5 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
-                  <SectionHeader n="۳" title="تنظیم پاسخ خودکار" text="کلمات فعال‌کننده و متن پیام دایرکت را مشخص کن." />
+                  
 
                   <div>
                     <label htmlFor="publishing-auto-keyword" className="mb-2 block text-sm font-bold text-[#18233C]">کلمات کلیدی</label>
@@ -1985,18 +1890,21 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                       <textarea id="publishing-follow-gate-text" value={followGateText} onChange={event => setFollowGateText(event.target.value)} rows={2} maxLength={500} inputMode="text" placeholder="مثلاً برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#18233C] outline-none placeholder:text-xs focus:border-[#2F61FD] focus:bg-white focus:ring-2 focus:ring-[#2F61FD]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
                     </div>}
                   </div>
-                  <div className="border-t border-[#E2E8F0] pt-4">
-                    <Button type="button" onClick={() => { if (!automationKeywords.length || !publishingCommentReplyText.trim()) return; setAutomationSetupConfirmed(true); setError(""); }} disabled={automationKeywords.length === 0 || !publishingCommentReplyText.trim()} className="w-full min-h-11 rounded-xl bg-[#2F61FD] px-4 text-sm font-bold text-white hover:bg-[#1E4BD8] disabled:cursor-not-allowed disabled:opacity-40">ذخیره پاسخ خودکار</Button>
-                  </div>
+                  
 
                   {error && <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-5 text-[#B91C1C]" role="alert">{error}</div>}
                 </section>
-              </div>
-            ) : ((type !== "STORY" && automationChoiceConfirmed && (!automationEnabled || automationSetupConfirmed)) || (type === "STORY" && automationChoiceConfirmed && (!automationEnabled || automationSetupConfirmed))) ? (
+              </div>)}
+            </section>
+
+            <section aria-label="انتشار" className="space-y-3">
+              <PublishingSectionGuide number={type==="STORY"?3:4} title="زمان انتشار">
+                انتشار فوری را انتخاب کن یا محتوایت را تا ۴۸ ساعت آینده زمان‌بندی کن؛ ساعت‌ها به وقت تهران هستند.
+              </PublishingSectionGuide>
               <div className="mx-auto w-full max-w-2xl">
                 
                 <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
-                  <SectionHeader n="۴" title="زمان انتشار" text={`زمان انتشار ${typeLabels[type]} را انتخاب کن.`} />
+                  
 
                   <div className="space-y-3">
                     <fieldset className="space-y-2.5">
@@ -2105,7 +2013,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                       </div>
                     )}
 
-                    <button type="button" disabled={publishing || uploading || !canPublish || (!publishNow && (!stage6Date || stage6Hour===null || stage6Minute===null))}
+                    <button type="button" disabled={!canPublish || (!publishNow && (!stage6Date || stage6Hour===null || stage6Minute===null))}
                       onClick={()=>void createJob(publishNow)}
                       className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-full bg-[#2F61FD] px-5 text-sm font-bold text-white transition hover:bg-[#1E4BD8] disabled:cursor-not-allowed disabled:bg-[#E2E8F0] disabled:text-[#94A3B8]">
                       {publishing?<Loader2 size={18} className="animate-spin"/>:publishNow?<Send size={18}/>:<CalendarClock size={18}/>}
@@ -2115,13 +2023,14 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   </div>
                 </section>
               </div>
-            ) : null
-            }
+              {automationEnabled&&!canSubmitAutomation&&<p className="rounded-xl border border-[#FDE68A] bg-[#FFFBEB] px-4 py-3 text-xs leading-6 text-[#92400E]">
+                {type==="STORY"?"برای انتشار با پاسخ خودکار، ابتدا پاسخ استوری را ذخیره کن.":"برای فعال‌سازی پاسخ خودکار، حداقل یک کلمه کلیدی و متن پاسخ کامنت لازم است."}
+              </p>}
+              {error&&<p role="alert" className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-4 py-3 text-xs leading-6 text-[#B91C1C]">{error}</p>}
+            </section>
           </div>
-          </>
-          )}
-        </div>
+        )}
       </div>
-    </>
+    </div>
   );
 }
