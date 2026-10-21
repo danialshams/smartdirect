@@ -648,7 +648,16 @@ export default function InstagramInbox({
         }));
       } else if (options?.focusId) {
         window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
-          container?.querySelector(`[data-message-id="${options.focusId}"]`)?.scrollIntoView({ block: "center" });
+          // Only scroll the message viewport. scrollIntoView can also move
+          // the outer page (and disturb an iOS fixed-position chat overlay).
+          if (!container || messagesScrollRef.current !== container) return;
+          const message = Array.from(container.querySelectorAll<HTMLElement>("[data-message-id]"))
+            .find((element) => element.dataset.messageId === options.focusId);
+          if (!message) return;
+          const containerRect = container.getBoundingClientRect();
+          const messageRect = message.getBoundingClientRect();
+          container.scrollTop += messageRect.top - containerRect.top
+            - (container.clientHeight - messageRect.height) / 2;
         }));
       } else {
         const latest = serverMessages.at(-1);
