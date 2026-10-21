@@ -7,11 +7,12 @@ type Props = {
   typeLabel: string;
   summaries: [string, string, string, string];
   disabled?: boolean;
+  skipDetails?: boolean;
   onBackToType: () => void;
   onNavigate: (step: Step) => void;
 };
 const titles = ["رسانه", "جزئیات", "پاسخ خودکار", "انتشار"] as const;
-export default function PublishingWizardProgress({ step, typeLabel, summaries, disabled, onBackToType, onNavigate }: Props) {
+export default function PublishingWizardProgress({ step, typeLabel, summaries, disabled, skipDetails = false, onBackToType, onNavigate }: Props) {
   return <section dir="rtl" aria-label="مراحل ساخت محتوا" className="mb-5 rounded-[24px] border border-[#E8EDF5] bg-white p-3.5 shadow-[0_4px_18px_rgba(22,54,110,.035)] sm:p-5">
     <div className="mb-4 flex items-center justify-between gap-3">
       <p className="min-w-0 text-sm font-bold" style={{color:dairaPalette.text.heading}}>انتشار {typeLabel}</p>
@@ -22,13 +23,13 @@ export default function PublishingWizardProgress({ step, typeLabel, summaries, d
         const number = (i + 1) as Step;
         const done = number < step, current = number === step;
         return <li key={label} className="min-w-0">
-          <button type="button" disabled={!done || disabled} onClick={()=>onNavigate(number)}
+          <button type="button" disabled={!done || disabled || (skipDetails && number===2)} onClick={()=>onNavigate(number)}
             aria-current={current?"step":undefined}
-            aria-label={done ? "ویرایش " + label : label}
+            aria-label={skipDetails && number===2 ? "جزئیات برای استوری کاربرد ندارد" : done ? "ویرایش " + label : label}
             className={"flex w-full min-w-0 flex-col items-center gap-1.5 rounded-xl border px-1 py-2.5 text-center transition sm:px-3 " +
               (current ? "border-[#2F61FD] bg-[#EFF6FF]" : done ? "border-[#DBEAFE] bg-white hover:bg-[#F8FAFC]" : "border-[#E8EDF5] bg-[#F8FAFC]")}>
             <span className={"flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold " + (current?"bg-[#2F61FD] text-white":done?"bg-[#DCE7FF] text-[#2F61FD]":"bg-[#E2E8F0] text-[#64748B]")}>{done?<Check size={14}/>:number.toLocaleString("fa-IR")}</span>
-            <span className={"truncate text-[10px] font-bold sm:text-xs " + (current?"text-[#2F61FD]":"text-[#334155]")}>{label}</span>
+            <span className={"truncate text-[10px] font-bold sm:text-xs " + (current?"text-[#2F61FD]":"text-[#334155]")}>{skipDetails && number===2?"بدون جزئیات":label}</span>
           </button>
           {done ? <p className="mt-1 hidden truncate text-center text-[10px] text-[#64748B] sm:block">{summaries[i]}</p> : null}
         </li>;
