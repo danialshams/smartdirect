@@ -17,17 +17,22 @@ assert.ok(ui.includes("const [preset, setPreset] = useState<Preset>(30)") &&
   ui.includes("setAppliedRange(null)"),
   "7/30/90-day presets must remain available and exit custom-range mode");
 
-assert.ok(ui.includes('mode="range" numberOfMonths={calendarMonths}') &&
-  ui.includes('onSelect={setDraftRange}') &&
-  ui.includes('aria-modal="true" aria-label="انتخاب بازه زمانی"') &&
-  ui.includes('startMonth={minDate} endMonth={today}'),
-  "Custom range uses a single accessible Persian calendar with bounded date range");
-assert.ok(ui.includes('draftRange.from <= draftRange.to') &&
-  ui.includes("daysBetween(draftRange.from, draftRange.to) <= 730"),
-  "Reject reversed or greater-than-2-years date ranges");
-assert.ok(calendar.includes('props.numberOfMonths && props.numberOfMonths > 1 ? "704px" : "352px"') &&
-  calendar.includes("locale={faIR}") && calendar.includes('numerals="arabext"'),
-  "Shared Jalali calendar supports two months on desktop and one on mobile");
+assert.ok(ui.includes('["from", "to"] as const') === false &&
+  ui.includes('(["from", "to"] as const).map((field)') &&
+  ui.includes('openCalendar(field)'),
+  "Date range uses two clear, independently accessible start/end fields");
+assert.ok(ui.includes('mode="single" numberOfMonths={1}') &&
+  ui.includes('selected={calendarOpen === "from" ? draftFrom : draftTo}') &&
+  ui.includes('onSelect={pickDate}') &&
+  ui.includes('aria-modal="true"') &&
+  ui.includes('before: calendarOpen === "to" ? (draftFrom ?? minDate) : minDate'),
+  "Each Persian date picker must use one month and respect selectable boundaries");
+assert.ok(ui.includes('draftFrom <= draftTo') &&
+  ui.includes("daysBetween(draftFrom, draftTo) <= 730") &&
+  ui.includes('if (draftTo && draftTo < chosen) setDraftTo(undefined);'),
+  "Reject reversed/overlong ranges and clear outdated end dates when start changes");
+assert.ok(calendar.includes("locale={faIR}") && calendar.includes('numerals="arabext"'),
+  "Use the existing shared Jalali calendar");
 
 assert.ok(ui.includes("new ResizeObserver(update)") &&
   ui.includes('className="block w-full touch-pan-y"') &&
@@ -45,14 +50,37 @@ assert.ok(ui.includes('{ id: "reach", title: "دسترسی"') &&
 
 assert.ok(ui.includes('title="نرخ‌های عملکرد"') &&
   ui.includes('title="آمار کلی"') &&
-  ui.includes('label="فالو"') && ui.includes('label="آنفالو"') &&
-  ui.includes('label="دنبال‌کنندگان"') &&
-  ui.includes('label="جمع دسترسی روزانه"'),
+  ui.includes('label: "فالو"') && ui.includes('label: "آنفالو"') &&
+  ui.includes('label: "دنبال‌کنندگان"') &&
+  ui.includes('label: "جمع دسترسی روزانه"'),
   "Performance rates and six grid metrics must be present");
+assert.ok(ui.includes('ref={containerRef} dir="ltr"') &&
+  ui.includes('<div dir="ltr" className="mt-1 flex'),
+  "The historical trend and date labels must run left-to-right within the RTL page");
+assert.ok(ui.includes('function InsightsGuide(') &&
+  ui.includes('dairaPalette.guide.background') &&
+  ui.includes('<InsightsGuide text={help} />') &&
+  ui.includes('help="دسترسی یعنی') &&
+  ui.includes('help="نرخ تعامل از نسبت') &&
+  ui.includes('help="این بخش مجموع آمار روزانه'),
+  "Every analytics section must have a short yellow guide without a More option");
+assert.ok(!ui.includes("بیشتر بدانیم") &&
+  !ui.includes("برای مشاهده تاریخ و مقدار دقیق، نمودار را لمس کن.") &&
+  !ui.includes("تعاملات نسبت به دسترسی") &&
+  !ui.includes("{growthNote}") &&
+  !ui.includes("دسترسی و تعاملات روزانه ممکن است شامل"),
+  "Remove repeated descriptive copy under the chart, rates, and page footer");
+assert.ok(ui.includes('function AnimatedStatValue(') &&
+  ui.includes('prefers-reduced-motion: reduce') &&
+  ui.includes('group flex min-h-[146px]') &&
+  ui.includes('flex-col items-center justify-center') &&
+  ui.includes('transition-colors duration-200'),
+  "Centered metric tiles must animate softly and respect reduced motion");
 assert.ok(ui.includes("فالو و آنفالو") && ui.includes("تعداد افراد یکتای کل بازه نیست"),
   "Daily reach/engagement aggregations cannot be represented as unique people over the entire range");
 assert.ok(ui.includes('value == null || !Number.isFinite(value) ? "—"') &&
-  ui.includes('summary?.follows') && ui.includes('summary?.unfollows'),
+  ui.includes('summary?.follows') && ui.includes('summary?.unfollows') &&
+  ui.includes('زیر ۱۰۰ فالوور'),
   "Missing values must not be converted to zero");
 
 assert.ok(ui.includes("lastSync.current") && ui.includes("requestNumber.current") &&
