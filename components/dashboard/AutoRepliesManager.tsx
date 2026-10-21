@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useDashboardAccountId } from "@/components/dashboard/DashboardAccountContext";
 import Link from "next/link";
 import AutoRepliesSkeleton from "@/components/dashboard/AutoRepliesSkeleton";
-import { AlertTriangle, Image as ImageIcon, LoaderCircle, Pencil, RadioTower, Search, Trash2 } from "lucide-react";
+import { AlertTriangle, Image as ImageIcon, LoaderCircle, Pencil, Search, Trash2 } from "lucide-react";
 import { dairaPalette } from "../../lib/design-system/palette";
 
 type PublishType = "POST" | "CAROUSEL" | "REEL" | "STORY" | "UNKNOWN";
@@ -56,14 +56,6 @@ type PublishJob = {
   storyReplyTriggerKeywords?: string | null;
 };
 
-type LiveAutomation = {
-  id: string;
-  keyword: string;
-  matchMode?: "EXACT" | "CONTAINS_ANY";
-  createdAt: string;
-  updatedAt: string;
-};
-
 type ReplyItem = {
   id: string;
   key: string;
@@ -103,7 +95,7 @@ function normalizeKeywordList(value: string | null | undefined) {
   return (value || "").split(/[,،;؛\n]+/).map((item) => item.trim()).filter(Boolean).join("، ");
 }
 
-const AUTO_REPLIES_CACHE_VERSION = 8;
+const AUTO_REPLIES_CACHE_VERSION = 7;
 const AUTO_REPLIES_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 function readAutoRepliesCache(accountId: string): ReplyItem[] | null {
@@ -217,14 +209,11 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
         }
 
         const accountQuery = `?instagramAccountId=${encodeURIComponent(account.id)}`;
-        const [automationsResponse, mediaResponse, storiesResponse, jobsResponse, liveResponse] = await Promise.all([
+        const [automationsResponse, mediaResponse, storiesResponse, jobsResponse] = await Promise.all([
           fetch(`/api/automations${accountQuery}`, { cache: "no-store", credentials: "include" }),
           fetch(`/api/instagram/media${accountQuery}`, { cache: "no-store", credentials: "include" }).catch(() => null),
           fetch(`/api/instagram/stories${accountQuery}`, { cache: "no-store", credentials: "include" }).catch(() => null),
           fetch(`/api/instagram/publishing${accountQuery}`, { cache: "no-store", credentials: "include" }).catch(() => null),
-          scope === "all"
-            ? fetch(`/api/live-automation${accountQuery}`, { cache: "no-store", credentials: "include" }).catch(() => null)
-            : Promise.resolve(null),
         ]);
 
         const automationsResult = await automationsResponse.json();
@@ -235,7 +224,6 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
         const mediaResult = mediaResponse?.ok ? await mediaResponse.json().catch(() => null) : null;
         const storiesResult = storiesResponse?.ok ? await storiesResponse.json().catch(() => null) : null;
         const jobsResult = jobsResponse?.ok ? await jobsResponse.json().catch(() => null) : null;
-        const liveResult = liveResponse?.ok ? await liveResponse.json().catch(() => null) : null;
 
         const activeStoryIds = new Set<string>(
           (Array.isArray(storiesResult?.data) ? storiesResult.data : []).map((story: Story) => story.id),
@@ -386,26 +374,6 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
           });
         }
 
-        // Live replies are stored as automations with a special media ID.
-        // Show them only in the combined list, and route editing/deletion to their own API.
-        for (const rule of (Array.isArray(liveResult?.data) ? liveResult.data : []) as LiveAutomation[]) {
-          const keyword = normalizeKeywordList(rule.keyword) ||
-            (rule.matchMode === "CONTAINS_ANY" ? "هر کامنتی" : "بدون کلمه کلیدی");
-          nextItems.push({
-            id: rule.id,
-            key: `live:${rule.id}`,
-            type: "UNKNOWN",
-            date: rule.updatedAt || rule.createdAt,
-            sortAt: rule.updatedAt || rule.createdAt,
-            previewUrl: null,
-            previewKind: null,
-            title: "پاسخ خودکار لایو",
-            subtitle: keyword,
-            keyword,
-            href: `/dashboard/live-automation/${rule.id}`,
-          });
-        }
-
         // The list represents the latest automation activity (including reusing a saved response),
         // not when its associated Instagram post/story was originally published.
         nextItems.sort((a, b) => {
@@ -447,7 +415,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
   const filteredItems = useMemo(() => {
     const query = searchQuery.trim().toLocaleLowerCase("fa-IR");
     if (!query) return scopedItems;
-    return scopedItems.filter((item) => [item.title, item.keyword].some(value => value.toLocaleLowerCase("fa-IR").includes(query)));
+    return scopedItems.filter((item) => item.keyword.toLocaleLowerCase("fa-IR").includes(query));
   }, [scopedItems, searchQuery]);
 
   function closeDeleteModal() {
@@ -464,16 +432,13 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
     setDeleting(true);
     setDeleteError("");
     try {
-      const isLiveItem = deleteTarget.key.startsWith("live:");
       const isPublishedItem = deleteTarget.key.startsWith("publish:");
-      if (!isLiveItem && !isPublishedItem && !deleteTarget.mediaId) throw new Error("شناسه محتوای موردنظر پیدا نشد.");
-      const endpoint = isLiveItem
-        ? "/api/live-automation/" + encodeURIComponent(deleteTarget.id)
-        : isPublishedItem
-          ? "/api/instagram/publishing/" + encodeURIComponent(deleteTarget.id) +
-            "/automation?triggerType=" + (deleteTarget.title === "پاسخ خودکار استوری" ? "STORY_REPLY_KEYWORD" : "COMMENT_KEYWORD")
-          : "/api/automations/" + encodeURIComponent(deleteTarget.id) +
-            "/media?mediaId=" + encodeURIComponent(deleteTarget.mediaId || "");
+      if (!isPublishedItem && !deleteTarget.mediaId) throw new Error("شناسه محتوای موردنظر پیدا نشد.");
+      const endpoint = isPublishedItem
+        ? "/api/instagram/publishing/" + encodeURIComponent(deleteTarget.id) +
+          "/automation?triggerType=" + (deleteTarget.title === "پاسخ خودکار استوری" ? "STORY_REPLY_KEYWORD" : "COMMENT_KEYWORD")
+        : "/api/automations/" + encodeURIComponent(deleteTarget.id) +
+          "/media?mediaId=" + encodeURIComponent(deleteTarget.mediaId || "");
       const response = await fetch(endpoint, { method: "DELETE", cache: "no-store", credentials: "include" });
       const result = await response.json().catch(() => null);
       if (!response.ok || !result?.success) {
@@ -521,8 +486,8 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
                   type="search"
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder="جستجو براساس نوع پاسخ یا کلمه کلیدی..."
-                  aria-label="جستجو براساس نوع پاسخ یا کلمه کلیدی"
+                  placeholder="جستجو براساس کلمه کلیدی..."
+                  aria-label="جستجو براساس کلمه کلیدی"
                   className="h-full min-w-0 flex-1 bg-transparent text-base text-[#0F172A] outline-none placeholder:text-[#94A3B8] sm:text-sm"
                 />
               </label>
@@ -547,7 +512,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
                         <video src={item.previewUrl} muted playsInline preload="metadata" className="h-full w-full object-cover" aria-label="پیش‌نمایش ویدیو" />
                       ) : item.previewUrl ? (
                         <img src={item.previewUrl} alt="پیش‌نمایش محتوا" loading="lazy" className="h-full w-full object-cover" />
-                      ) : item.key.startsWith("live:") ? <RadioTower size={20} className="text-[#94A3B8]" /> : <ImageIcon size={20} className="text-[#94A3B8]" />}
+                      ) : <ImageIcon size={20} className="text-[#94A3B8]" />}
                     </div>
                     <div className="flex min-w-0 flex-1 flex-col items-start gap-2">
                     <div
@@ -558,7 +523,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
                         border: `1px solid ${dairaPalette.secondary.activeBackground}`,
                       }}
                     >
-                      <span className="break-words">{item.title} — {item.keyword || "بدون کلمه کلیدی"}</span>
+                      <span className="break-words">{item.keyword || "بدون کلمه کلیدی"}</span>
                     </div>
                     <span className="text-[11px] font-medium" style={{ color: dairaPalette.text.muted }}>{formatDate(item.date)}</span>
                     </div>
@@ -576,7 +541,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
                     <button
                       type="button"
                       onClick={() => { setDeleteError(""); setDeleteTarget(item); }}
-                      aria-label={`حذف ${item.title} — ${item.keyword}`}
+                      aria-label={`حذف پاسخ این محتوا برای ${item.keyword}`}
                       className="inline-flex h-8 flex-row-reverse items-center justify-center gap-1 rounded-[8px] px-2 text-[11px] font-semibold transition sm:px-2.5 sm:text-xs"
                       style={{ color: dairaPalette.status.error, border: `1px solid ${dairaPalette.status.error}55`, backgroundColor: dairaPalette.background.surface }}
                     >
@@ -611,9 +576,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
               <div className="min-w-0 flex-1 pt-0.5">
                 <h2 id="delete-reply-title" className="text-base font-bold" style={{ color: dairaPalette.text.heading }}>از حذف این پاسخ خودکار مطمئنی؟</h2>
                 <p className="mt-2 text-sm leading-6" style={{ color: dairaPalette.text.body }}>
-                  {deleteTarget.key.startsWith("live:")
-                    ? "این پاسخ خودکار لایو حذف می‌شود و دیگر اجرا نخواهد شد."
-                    : "اتصال پاسخ خودکار به همین محتوا حذف می‌شود. پیام‌های پاسخ و اتصال سایر محتواها محفوظ می‌مانند."}
+                  اتصال پاسخ خودکار به همین محتوا حذف می‌شود. پیام‌های پاسخ و اتصال سایر محتواها محفوظ می‌مانند.
                 </p>
                 {deleteTarget.key.startsWith("publish:") ? (
                   <p className="mt-2 text-xs leading-5" style={{ color: dairaPalette.text.muted }}>خود پست یا استوری منتشرشده در اینستاگرام حذف نمی‌شود.</p>

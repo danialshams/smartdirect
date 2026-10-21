@@ -18,8 +18,9 @@ function Guide({ number, title, hint }: { number: number; title: string; hint: s
   </div>;
 }
 function name(item: Automation) {
-  const prefix = item.triggerType === "STORY_REPLY_KEYWORD" ? "پاسخ خودکار استوری" : "پاسخ خودکار دایرکت";
-  return prefix + (item.keyword?.trim() ? " — " + item.keyword.replace(/,/g, "، ") : "");
+  const type = item.triggerType === "STORY_REPLY_KEYWORD" ? "استوری" : "دایرکت";
+  const keywords = (item.keyword ?? "").split(/[,،;؛\r\n]+/).map(word => word.trim()).filter(Boolean).join("، ");
+  return `پاسخ خودکار ${type} — ${keywords || "بدون کلمه کلیدی"}`;
 }
 const presets = [15, 30, 60, 120, 360, 720] as const;
 
