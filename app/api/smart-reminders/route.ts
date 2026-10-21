@@ -17,11 +17,11 @@ function validRuleData(body: Record<string, unknown>) {
   const automationId = typeof body.automationId === "string" ? body.automationId.trim() : "";
   const text = typeof body.text === "string" ? body.text.trim() : "";
   const delayMinutes = Number(body.delayMinutes);
-  if (!instagramAccountId || !automationId) throw new Error("پیج و اتوماسیون را انتخاب کن.");
+  if (!instagramAccountId || !automationId) throw new Error("پیج و پاسخ خودکار را انتخاب کن.");
   if (!Number.isInteger(delayMinutes) || delayMinutes < 5 || delayMinutes > 1380)
     throw new Error("زمان انتظار باید بین ۵ دقیقه تا ۲۳ ساعت باشد.");
   if (!text || text.length > 1000) throw new Error("متن یادآوری باید بین ۱ تا ۱۰۰۰ کاراکتر باشد.");
-  return { instagramAccountId, automationId, text, delayMinutes, isActive: body.isActive !== false };
+  return { instagramAccountId, automationId, text, delayMinutes };
 }
 
 export async function GET(request: NextRequest) {
@@ -66,10 +66,10 @@ export async function POST(request: NextRequest) {
         triggerType: { in: ["DM", "STORY_REPLY_KEYWORD"] }, messages: { some: {} } },
       select: { id: true },
     });
-    if (!automation) return fail("اتوماسیون انتخاب‌شده معتبر نیست یا متعلق به پیج شما نیست.", 403);
+    if (!automation) return fail("پاسخ خودکار انتخاب‌شده معتبر نیست یا متعلق به پیج شما نیست.", 403);
     const exists = await prisma.smartReminderRule.findUnique({ where: { automationId: input.automationId }, select: { id: true } });
-    if (exists) return fail("برای این اتوماسیون قبلاً یادآوری ساخته شده است.", 409);
-    const row = await prisma.smartReminderRule.create({ data: { ...input, userId } });
+    if (exists) return fail("برای این پاسخ خودکار قبلاً یادآوری ساخته شده است.", 409);
+    const row = await prisma.smartReminderRule.create({ data: { ...input, userId, isActive: true } });
     return NextResponse.json({ success: true, data: row }, { status: 201 });
   } catch (error) {
     if (error instanceof Error && (error.message.includes("زمان انتظار") || error.message.includes("متن یادآوری") || error.message.includes("انتخاب کن")))
@@ -90,7 +90,26 @@ export async function PUT(request: NextRequest) {
       where: { id, userId, instagramAccountId: input.instagramAccountId },
     });
     if (!current) return fail("یادآوری پیدا نشد.", 404);
-    if (input.automationId !== current.automationId) return fail("برای تغییر اتوماسیون، یک یادآوری جدید بساز.");
+    if (input.automationId !== current.automationId) {
+      const replacement = await prisma.automation.findFirst({
+        where: {
+          id: input.automationId,
+          instagramAccountId: current.instagramAccountId,
+          instagramAccount: { userId, isConnected: true },
+          isActive: true,
+          triggerType: { in: ["DM", "STORY_REPLY_KEYWORD"] },
+          messages: { some: {} },
+        },
+        select: { id: true },
+      });
+      if (!replacement) return fail("پاسخ خودکار انتخاب‌شده معتبر نیست یا متعلق به پیج شما نیست.", 403);
+      const occupied = await prisma.smartReminderRule.findUnique({
+        where: { automationId: input.automationId }, select: { id: true },
+      });
+      if (occupied && occupied.id !== current.id) {
+        return fail("برای این پاسخ خودکار قبلاً یادآوری ساخته شده است.", 409);
+      }
+    }
     const row = await prisma.$transaction(async tx => {
       // Once settings change, a previously scheduled copy must not send old text.
       await tx.smartReminderDelivery.updateMany({
@@ -98,7 +117,7 @@ export async function PUT(request: NextRequest) {
         data: { status: "CANCELLED", cancelledAt: new Date() },
       });
       return tx.smartReminderRule.update({
-        where: { id: current.id }, data: { text: input.text, delayMinutes: input.delayMinutes, isActive: input.isActive },
+        where: { id: current.id }, data: { automationId: input.automationId, text: input.text, delayMinutes: input.delayMinutes, isActive: true },
       });
     });
     return NextResponse.json({ success: true, data: row });

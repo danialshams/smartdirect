@@ -13,9 +13,9 @@ export async function scheduleSmartReminder(input: {
 }) {
   const rule = await prisma.smartReminderRule.findUnique({
     where: { automationId: input.automationId },
-    select: { id: true, delayMinutes: true, isActive: true, instagramAccountId: true },
+    select: { id: true, delayMinutes: true, instagramAccountId: true },
   });
-  if (!rule?.isActive) return;
+  if (!rule) return;
   const [anchor, conversation, lastInbound] = await Promise.all([
     prisma.conversationMessage.findFirst({
       where: { id: input.anchorMessageId, conversationId: input.conversationId, direction: "OUTBOUND" },
@@ -104,7 +104,7 @@ export async function processSmartReminder(deliveryId: string): Promise<void> {
           instagramAccount: { select: { isConnected: true, igUserId: true } } } },
           conversation: { include: { ConversationHandoff: { select: { active: true } } } } },
       });
-      if (!delivery.rule.isActive || !delivery.rule.automation.isActive ||
+      if (!delivery.rule.automation.isActive ||
           !delivery.rule.instagramAccount.isConnected || !delivery.conversation.isActive ||
           delivery.conversation.ConversationHandoff?.active) {
         await markSkipped(deliveryId, "RULE_ACCOUNT_OR_CONVERSATION_INACTIVE");

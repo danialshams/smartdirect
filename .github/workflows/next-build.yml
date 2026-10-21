@@ -7,6 +7,8 @@ on:
       - "app/**"
       - "components/**"
       - "lib/**"
+      - "src/**"
+      - "scripts/**"
       - "prisma/**"
       - "package.json"
       - "package-lock.json"
@@ -19,6 +21,8 @@ on:
       - "app/**"
       - "components/**"
       - "lib/**"
+      - "src/**"
+      - "scripts/**"
       - "prisma/**"
       - "package.json"
       - "package-lock.json"
@@ -47,8 +51,8 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: Install dependencies and reconcile the npm lockfile
-        run: npm install --no-audit --no-fund
+      - name: Install exactly from lockfile
+        run: npm ci --no-audit --no-fund
 
       - name: Build application
         env:
@@ -64,3 +68,6 @@ jobs:
 
       - name: Test Instagram Live automation validation
         run: npm run live:automation:test
+
+      - name: Test smart reminder policy
+        run: npm run reminders:test

@@ -9,12 +9,12 @@ import SmartReminderSkeleton from "./SmartReminderSkeleton";
 type Account = { id: string; isConnected: boolean };
 type Rule = {
   id: string; automationId: string; instagramAccountId: string;
-  delayMinutes: number; text: string; isActive: boolean;
-  automation: { keyword: string | null; triggerType: string; isActive: boolean };
+  delayMinutes: number; text: string;
+  automation: { keyword: string | null; triggerType: string };
   _count?: { deliveries: number };
 };
 function automationName(rule: Rule) {
-  const type = rule.automation.triggerType === "STORY_REPLY_KEYWORD" ? "پاسخ استوری" : "پاسخ دایرکت";
+  const type = rule.automation.triggerType === "STORY_REPLY_KEYWORD" ? "پاسخ خودکار استوری" : "پاسخ خودکار دایرکت";
   return rule.automation.keyword?.trim()
     ? type + " — " + rule.automation.keyword.replace(/,/g, "، ")
     : type;
@@ -62,22 +62,6 @@ export default function SmartRemindersList() {
     [r.text, automationName(r)].some(text => text.toLocaleLowerCase("fa").includes(search.trim().toLocaleLowerCase("fa"))),
   ), [rules, search]);
 
-  async function toggle(rule: Rule) {
-    if (busy) return;
-    setBusy(rule.id); setActionError("");
-    try {
-      const response = await fetch("/api/smart-reminders", {
-        method: "PUT", credentials: "include", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: rule.id, instagramAccountId: rule.instagramAccountId,
-          automationId: rule.automationId, delayMinutes: rule.delayMinutes,
-          text: rule.text, isActive: !rule.isActive }),
-      });
-      const data = await response.json();
-      if (!response.ok || !data.success) throw new Error(data.error || "تغییر وضعیت ناموفق بود.");
-      setRules(current => current.map(r => r.id === rule.id ? { ...r, isActive: !r.isActive } : r));
-    } catch (e) { setActionError(e instanceof Error ? e.message : "خطا در تغییر وضعیت."); }
-    finally { setBusy(null); }
-  }
   async function remove() {
     if (!deleteTarget || busy) return;
     setBusy(deleteTarget.id); setActionError("");
@@ -118,14 +102,9 @@ export default function SmartRemindersList() {
             <h3 className="truncate text-sm font-bold text-[#0F172A]">{automationName(rule)}</h3>
             <p className="mt-0.5 text-[11px] text-[#64748B]">ارسال پس از {duration(rule.delayMinutes)} بدون پاسخ</p>
           </div>
-          <label className="shrink-0 cursor-pointer" aria-label="وضعیت یادآوری">
-            <input type="checkbox" role="switch" className="daira-form-switch -scale-x-100" checked={rule.isActive}
-              disabled={Boolean(busy)} onChange={() => void toggle(rule)} aria-label={rule.isActive ? "غیرفعال‌کردن یادآوری" : "فعال‌کردن یادآوری"}/>
-          </label>
         </div>
         <p className="line-clamp-3 min-h-12 text-xs leading-6 text-[#475569]">{rule.text}</p>
         <div className="flex flex-wrap gap-2 text-[11px] text-[#64748B]">
-          <span className="rounded-lg bg-[#F1F5F9] px-2.5 py-1">{rule.isActive ? "فعال" : "غیرفعال"}</span>
           <span className="rounded-lg bg-[#F1F5F9] px-2.5 py-1">ارسال‌شده: {new Intl.NumberFormat("fa-IR").format(rule._count?.deliveries || 0)}</span>
         </div>
         <div className="flex gap-2 border-t border-[#F1F5F9] pt-3">
@@ -136,7 +115,7 @@ export default function SmartRemindersList() {
     </div> : <div className="space-y-3 rounded-2xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] px-4 py-14 text-center">
       <MessageSquare size={30} className="mx-auto text-[#94A3B8]"/>
       <p className="text-sm font-semibold text-[#475569]">{search ? "یادآوری‌ای با این عبارت پیدا نشد." : "هنوز یادآوری هوشمندی ساخته نشده است."}</p>
-      {!search && <p className="mx-auto max-w-md text-xs leading-6 text-[#64748B]">برای اتوماسیون دایرکت یا استوری، زمان انتظار و متن یادآوری را مشخص کن؛ اگر کاربر پاسخی ندهد و پنجره مجاز باشد، پیام ارسال می‌شود.</p>}
+      {!search && <p className="mx-auto max-w-md text-xs leading-6 text-[#64748B]">یک پاسخ خودکار را انتخاب کن، زمان انتظار و متن یادآوری را مشخص کن؛ اگر کاربر پاسخی ندهد و پنجره مجاز باشد، پیام ارسال می‌شود.</p>}
     </div>}
     {deleteTarget && <div className="fixed inset-0 z-[2500] flex items-center justify-center bg-[#18233C]/40 p-4">
       <div role="dialog" aria-modal="true" aria-label="حذف یادآوری" className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
