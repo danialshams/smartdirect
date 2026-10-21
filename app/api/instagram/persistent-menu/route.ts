@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { normalizePersistentMenuUrl } from "@/lib/instagram/persistent-menu-url";
 import {
   deleteInstagramPersistentMenu,
   setInstagramPersistentMenu,
@@ -195,10 +196,7 @@ export async function POST(request: NextRequest) {
         if (!item.url?.trim()) {
           return NextResponse.json({ error: "Web URL is required" }, { status: 400 });
         }
-        try {
-          const url = new URL(item.url.trim());
-          if (!["http:", "https:"].includes(url.protocol)) throw new Error();
-        } catch {
+        if (!normalizePersistentMenuUrl(item.url)) {
           return NextResponse.json({ error: "Web URL is invalid" }, { status: 400 });
         }
       } else if (!item.automationId) {
@@ -291,12 +289,13 @@ export async function POST(request: NextRequest) {
      */
     const preparedItems = items.map((item, index) => {
       const isWebUrl = item.type === "web_url";
+      const normalizedUrl = isWebUrl ? normalizePersistentMenuUrl(item.url ?? "") : null;
       return {
         title: item.title.trim(),
         automationId: isWebUrl ? null : item.automationId!,
-        payload: isWebUrl ? `${WEB_URL_PREFIX}${item.url!.trim()}` : generatePayload(),
+        payload: isWebUrl ? `${WEB_URL_PREFIX}${normalizedUrl!}` : generatePayload(),
         type: isWebUrl ? "web_url" as const : "postback" as const,
-        url: isWebUrl ? item.url!.trim() : null,
+        url: isWebUrl ? normalizedUrl : null,
         order: index,
       };
     });
