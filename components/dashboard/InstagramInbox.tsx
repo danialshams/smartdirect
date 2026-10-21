@@ -446,6 +446,7 @@ export default function InstagramInbox({
   const shouldStickToBottomRef = useRef(true);
   const failedRetryRef = useRef<Map<string, RetryPayload>>(new Map());
   const optimisticMediaRef = useRef<Map<string, string>>(new Map());
+  const optimisticMessagesByConversationRef = useRef<Map<string, Message[]>>(new Map());
   const lastMarkedInboundRef = useRef<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -614,7 +615,7 @@ export default function InstagramInbox({
         return !message.mediaUrl && optimisticUrl ? { ...message, mediaUrl: optimisticUrl } : message;
       });
       setMessages((current) => {
-        const localPending = current.filter((item) => Boolean(item.sendStatus));
+        const localPending = optimisticMessagesByConversationRef.current.get(key) || [];
         const merged = options?.before
           ? [...mergedMessages, ...current]
           : options?.focusId ? mergedMessages : [...mergedMessages, ...localPending];
@@ -788,6 +789,8 @@ export default function InstagramInbox({
         window.cancelAnimationFrame(recordingAnimationFrameRef.current);
       }
       void recordingAudioContextRef.current?.close().catch(() => undefined);
+      optimisticMediaRef.current.forEach((url) => URL.revokeObjectURL(url));
+      optimisticMediaRef.current.clear();
     };
   }, []);
 
@@ -796,7 +799,7 @@ export default function InstagramInbox({
     const file = payload.kind === "FILE" ? payload.file : null;
     const mediaUrl = file ? URL.createObjectURL(file) : null;
     if (mediaUrl) optimisticMediaRef.current.set(id, mediaUrl);
-    setMessages((current) => [...current, {
+    const message: Message = {
       id,
       direction: "OUTBOUND",
       messageType: file?.type.startsWith("image/") ? "IMAGE" : file?.type.startsWith("video/") ? "VIDEO" : file ? "AUDIO" : "TEXT",
@@ -808,18 +811,24 @@ export default function InstagramInbox({
       seenAt: null,
       createdAt: new Date().toISOString(),
       sendStatus: "SENDING",
-    }]);
+    };
+    const key = accountId + ":" + selectedId;
+    optimisticMessagesByConversationRef.current.set(key, [
+      ...(optimisticMessagesByConversationRef.current.get(key) || []), message,
+    ]);
+    if (activeConversationRef.current === key) setMessages((current) => [...current, message]);
     shouldStickToBottomRef.current = true;
     initialScrollPendingRef.current = true;
     return id;
   }
 
-  function markOptimisticFailed(id: string, payload: RetryPayload, reason: string) {
+  function markOptimisticFailed(id: string, payload: RetryPayload, reason: string, key: string) {
     failedRetryRef.current.set(id, payload);
-    setMessages((current) => current.map((item) => item.id === id
-      ? { ...item, sendStatus: "FAILED", failureReason: reason }
-      : item
-    ));
+    const update = (item: Message) => item.id === id
+      ? { ...item, sendStatus: "FAILED" as const, failureReason: reason } : item;
+    const cached = optimisticMessagesByConversationRef.current.get(key) || [];
+    optimisticMessagesByConversationRef.current.set(key, cached.map(update));
+    if (activeConversationRef.current === key) setMessages((current) => current.map(update));
   }
 
   async function sendFile(file: File): Promise<boolean> {
@@ -842,6 +851,8 @@ export default function InstagramInbox({
         throw new Error(result.error || "ارسال رسانه ناموفق بود.");
       }
       const sent = result.message;
+      optimisticMessagesByConversationRef.current.set(conversationKey,
+        (optimisticMessagesByConversationRef.current.get(conversationKey) || []).filter((item) => item.id !== optimisticId));
       const localUrl = optimisticMediaRef.current.get(optimisticId);
       optimisticMediaRef.current.delete(optimisticId);
       if (localUrl) {
@@ -862,7 +873,7 @@ export default function InstagramInbox({
       return true;
     } catch (error) {
       markOptimisticFailed(optimisticId, { kind: "FILE", file },
-        error instanceof Error ? error.message : "ارسال رسانه ناموفق بود.");
+        error instanceof Error ? error.message : "ارسال رسانه ناموفق بود.", conversationKey);
       if (activeConversationRef.current === conversationKey) {
         setSelectedFile(null);
         setRecordedVoice(null);
@@ -894,6 +905,8 @@ export default function InstagramInbox({
       if (!response.ok || !result.success || !result.message) {
         throw new Error(result.error || "ارسال پیام ناموفق بود.");
       }
+      optimisticMessagesByConversationRef.current.set(conversationKey,
+        (optimisticMessagesByConversationRef.current.get(conversationKey) || []).filter((item) => item.id !== optimisticId));
       if (activeConversationRef.current === conversationKey) {
         setMessages((current) => {
           const updated = current.map((item) => item.id === optimisticId ? result.message! : item);
@@ -904,7 +917,7 @@ export default function InstagramInbox({
       return true;
     } catch (error) {
       markOptimisticFailed(optimisticId, { kind: "TEXT", text: cleanText },
-        error instanceof Error ? error.message : "ارسال پیام ناموفق بود.");
+        error instanceof Error ? error.message : "ارسال پیام ناموفق بود.", conversationKey);
       return false;
     } finally {
       setSending(false);
@@ -1084,7 +1097,7 @@ export default function InstagramInbox({
     setSelectedId(conversationId);
     initialScrollPendingRef.current = true;
     previousMessageCountRef.current = 0;
-    setMessages([]);
+    setMessages(optimisticMessagesByConversationRef.current.get(accountId + ":" + conversationId) || []);
     setText("");
     setSelectedFile(null);
     setRecordedVoice(null);
@@ -1130,6 +1143,9 @@ export default function InstagramInbox({
     const payload = failedRetryRef.current.get(messageId);
     if (!payload || sending || !selectedConversation?.messagingWindow?.canSend) return;
     failedRetryRef.current.delete(messageId);
+    const key = accountId + ":" + selectedId;
+    optimisticMessagesByConversationRef.current.set(key,
+      (optimisticMessagesByConversationRef.current.get(key) || []).filter((item) => item.id !== messageId));
     const localUrl = optimisticMediaRef.current.get(messageId);
     if (localUrl) {
       URL.revokeObjectURL(localUrl);
