@@ -1629,7 +1629,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   ))}
                 </div>
               </section>
-            ) : (type !== "STORY" && !captionStepConfirmed) || uploadedMedia.length === 0 || uploadSuccess || (type === "STORY" && showUploadedMediaPreview) ? (
+            ) : !captionStepConfirmed || uploadedMedia.length === 0 || uploadSuccess || (type === "STORY" && showUploadedMediaPreview) ? (
               <section className="mx-auto w-full max-w-3xl">
 
                 <div className="rounded-[24px] border border-[#DFE7F3] bg-white p-4 shadow-[0_5px_24px_rgba(22,54,110,.035)] sm:p-6">
@@ -1762,9 +1762,9 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             ) : type !== "STORY" && !automationChoiceStepStarted ? (
               <div className="mx-auto w-full max-w-4xl space-y-4">
                 <section className="w-full rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
-                  <div className="mb-4 flex items-center justify-between gap-3">
+                  <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-[#DFE7F3] bg-[#F6F9FF] px-4 py-3.5">
                     <div>
-                      <div className="flex items-center gap-2"><span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#2F61FD]/10 text-xs font-bold text-[#2F61FD]">۳</span><h2 className="text-sm font-bold text-[#18233C]">کپشن</h2></div>
+                      <div className="flex items-center gap-2"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#EDF3FF] text-xs font-bold text-[#2F61FD]">۲</span><h2 className="text-sm font-bold text-[#18233C]">کپشن</h2></div>
                       <p className="mt-1.5 text-xs leading-5 text-[#64748B]">{`کپشن ${typeLabels[type]} را بنویس.`}</p>
                     </div>
                     <span className="text-[11px] text-[#64748B]">{toPersianDigits(caption.length)} / ۲۲۰۰</span>
