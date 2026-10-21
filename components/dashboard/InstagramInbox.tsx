@@ -455,10 +455,9 @@ export default function InstagramInbox({
       return;
     }
 
+    const requestId = ++conversationFetchIdRef.current;
     try {
-      setLoading(true);
-      setError("");
-
+      if (!conversations.length) setLoading(true);
       const response = await fetch(
         `/api/instagram/inbox?accountId=${encodeURIComponent(accountId)}`,
         {
@@ -473,8 +472,14 @@ export default function InstagramInbox({
         throw new Error(result.error || "خطا در دریافت گفتگوها");
       }
 
+      if (requestId !== conversationFetchIdRef.current) return;
       const next = result.conversations || [];
-      setConversations(next);
+      setHasMoreConversations(Boolean(result.hasMoreConversations));
+      setNextConversationsOffset(result.nextOffset ?? next.length);
+      setConversations((current) => {
+        const nextIds = new Set(next.map((item) => item.id));
+        return [...next, ...current.filter((item) => !nextIds.has(item.id))];
+      });
 
       const savedId =
         typeof window !== "undefined"
@@ -505,9 +510,11 @@ export default function InstagramInbox({
         setMobileChatOpen(savedMobileOpen);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "خطا در دریافت گفتگوها");
+      if (requestId === conversationFetchIdRef.current) {
+        setError(err instanceof Error ? err.message : "خطا در دریافت گفتگوها");
+      }
     } finally {
-      setLoading(false);
+      if (requestId === conversationFetchIdRef.current) setLoading(false);
     }
   }, [accountId]);
   const markConversationSeen = useCallback(
@@ -531,8 +538,11 @@ export default function InstagramInbox({
 
         const result = await readApiResult(response);
 
-        if (response.ok && result.success) {
+        if (response.ok && result.success && activeConversationRef.current === accountId + ":" + selectedId) {
           lastMarkedInboundRef.current = inboundMarker;
+          setConversations((current) => current.map((item) =>
+            item.id === selectedId ? { ...item, unreadCount: 0 } : item
+          ));
         }
       } catch {
         // A failed read receipt must never block the inbox.
@@ -542,80 +552,129 @@ export default function InstagramInbox({
   );
 
 
-  const loadMessages = useCallback(async () => {
+  const loadMessages = useCallback(async (options?: { before?: string; focusId?: string }) => {
     if (!accountId || !selectedId) {
       setMessages([]);
       return;
     }
 
+    const key = accountId + ":" + selectedId;
+    if (!options && pendingMessageFetchRef.current === key) return;
+    if (!options) pendingMessageFetchRef.current = key;
+    const requestId = ++messageFetchIdRef.current;
+    const container = messagesScrollRef.current;
+    const previousHeight = container?.scrollHeight ?? 0;
+    const previousTop = container?.scrollTop ?? 0;
+    if (container && !options?.before && !options?.focusId) {
+      const distance = container.scrollHeight - container.scrollTop - container.clientHeight;
+      shouldStickToBottomRef.current = distance < 100;
+    }
+
     try {
-      const scrollContainer = messagesScrollRef.current;
-      if (scrollContainer) {
-        const distanceFromBottom =
-          scrollContainer.scrollHeight -
-          scrollContainer.scrollTop -
-          scrollContainer.clientHeight;
-        shouldStickToBottomRef.current = distanceFromBottom < 96;
-      }
-      setMessagesLoading(true);
-
-      const response = await fetch(
-        `/api/instagram/inbox?accountId=${encodeURIComponent(accountId)}&conversationId=${encodeURIComponent(selectedId)}`,
-        {
-          cache: "no-store",
-          headers: { Accept: "application/json" },
-        },
-      );
-
+      if (options?.before) setLoadingOlderMessages(true);
+      else setMessagesLoading(true);
+      const params = new URLSearchParams({ accountId, conversationId: selectedId });
+      if (options?.before) params.set("before", options.before);
+      if (options?.focusId) params.set("focusId", options.focusId);
+      const response = await fetch(`/api/instagram/inbox?${params.toString()}`, {
+        cache: "no-store",
+        headers: { Accept: "application/json" },
+      });
       const result = await readApiResult(response);
-
       if (!response.ok || !result.success || !result.conversation) {
         throw new Error(result.error || "خطا در دریافت پیام‌ها");
       }
+      if (requestId !== messageFetchIdRef.current || activeConversationRef.current !== key) return;
 
-      const serverMessages = (result.conversation.messages || []) as Message[];
+      const serverMessages = result.conversation.messages || [];
       const mergedMessages = serverMessages.map((message) => {
         const optimisticUrl = optimisticMediaRef.current.get(message.id);
-
         if (message.mediaUrl && optimisticUrl) {
           URL.revokeObjectURL(optimisticUrl);
           optimisticMediaRef.current.delete(message.id);
-          return message;
         }
-
-        return message.mediaUrl || !optimisticUrl
-          ? message
-          : { ...message, mediaUrl: optimisticUrl };
+        return !message.mediaUrl && optimisticUrl ? { ...message, mediaUrl: optimisticUrl } : message;
       });
+      setMessages((current) => {
+        const localPending = current.filter((item) => Boolean(item.sendStatus));
+        const merged = options?.before
+          ? [...mergedMessages, ...current]
+          : options?.focusId ? mergedMessages : [...mergedMessages, ...localPending];
+        return [...new Map(merged.map((item) => [item.id, item])).values()]
+          .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+      });
+      setHasMoreMessages(Boolean(result.conversation.hasMoreMessages));
+      setConversations((current) => current.map((item) =>
+        item.id === selectedId
+          ? { ...item, ...result.conversation, messages: item.messages, unreadCount: item.unreadCount }
+          : item
+      ));
 
-      setMessages(mergedMessages);
-      setConversations((current) =>
-        current.map((item) =>
-          item.id === selectedId
-            ? { ...item, ...result.conversation, unreadCount: 0 }
-            : item,
-        ),
-      );
+      if (options?.before && container) {
+        window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
+          if (messagesScrollRef.current === container) {
+            container.scrollTop = previousTop + container.scrollHeight - previousHeight;
+          }
+        }));
+      } else if (options?.focusId) {
+        window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
+          container?.querySelector(`[data-message-id="${options.focusId}"]`)?.scrollIntoView({ block: "center" });
+        }));
+      } else {
+        const latest = serverMessages.at(-1);
+        if (latest && previousNewestIdRef.current && latest.id !== previousNewestIdRef.current && !shouldStickToBottomRef.current) {
+          setNewMessageCount((value) => value + 1);
+        }
+        if (latest) previousNewestIdRef.current = latest.id;
+      }
 
-      const latestInbound = [...serverMessages]
-        .reverse()
-        .find((message) => message.direction === "INBOUND");
-
-      if (latestInbound) {
-        void markConversationSeen(
-          latestInbound.igMessageId || latestInbound.id,
-        );
+      const latestInbound = [...serverMessages].reverse().find((message) => message.direction === "INBOUND");
+      const isVisible = document.visibilityState === "visible" &&
+        (window.matchMedia("(min-width: 1024px)").matches || mobileChatOpen);
+      if (latestInbound && isVisible) {
+        void markConversationSeen(latestInbound.igMessageId || latestInbound.id);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "خطا در دریافت پیام‌ها");
+      if (requestId === messageFetchIdRef.current && activeConversationRef.current === key) {
+        setError(err instanceof Error ? err.message : "خطا در دریافت پیام‌ها");
+      }
     } finally {
-      setMessagesLoading(false);
+      if (requestId === messageFetchIdRef.current) {
+        setMessagesLoading(false);
+        setLoadingOlderMessages(false);
+      }
+      if (pendingMessageFetchRef.current === key) pendingMessageFetchRef.current = null;
     }
-  }, [accountId, selectedId, markConversationSeen]);
+  }, [accountId, selectedId, markConversationSeen, mobileChatOpen]);
+
+  async function loadMoreConversations() {
+    if (!accountId || loadingMoreConversations || !hasMoreConversations) return;
+    setLoadingMoreConversations(true);
+    try {
+      const response = await fetch(`/api/instagram/inbox?accountId=${encodeURIComponent(accountId)}&offset=${nextConversationsOffset}`, { cache: "no-store" });
+      const result = await readApiResult(response);
+      if (!response.ok || !result.success) throw new Error(result.error || "دریافت گفتگوهای بیشتر ناموفق بود.");
+      const page = result.conversations || [];
+      setConversations((current) => [...current, ...page.filter((item) => !current.some((existing) => existing.id === item.id))]);
+      setNextConversationsOffset(result.nextOffset ?? nextConversationsOffset + page.length);
+      setHasMoreConversations(Boolean(result.hasMoreConversations));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "دریافت گفتگوهای بیشتر ناموفق بود.");
+    } finally {
+      setLoadingMoreConversations(false);
+    }
+  }
 
   useEffect(() => {
     lastMarkedInboundRef.current = "";
     previousMessageCountRef.current = 0;
+    previousNewestIdRef.current = null;
+    setFocusedMessageId(null);
+    setNewMessageCount(0);
+    setShowJumpToLatest(false);
+    setConversationSearchOpen(false);
+    setConversationSearchText("");
+    setConversationMatches([]);
     initialScrollPendingRef.current = Boolean(selectedId);
   }, [accountId, selectedId]);
 
@@ -646,18 +705,25 @@ export default function InstagramInbox({
   }, [loadMessages]);
 
   useEffect(() => {
-    const interval = window.setInterval(() => {
+    const refresh = () => {
+      if (document.visibilityState !== "visible") return;
       void loadConversations();
-      if (selectedId) void loadMessages();
-    }, 2000);
-
-    return () => window.clearInterval(interval);
-  }, [loadConversations, loadMessages, selectedId]);
+      if (selectedId && !focusedMessageId && !loadingOlderMessages) void loadMessages();
+    };
+    const interval = window.setInterval(refresh, 8000);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [loadConversations, loadMessages, selectedId, focusedMessageId, loadingOlderMessages]);
 
   const forceScrollToBottom = useCallback(() => {
     const container = messagesScrollRef.current;
     if (!container) return;
     container.scrollTop = Math.max(0, container.scrollHeight - container.clientHeight);
+    setShowJumpToLatest(false);
+    setNewMessageCount(0);
   }, []);
 
   useEffect(() => {
