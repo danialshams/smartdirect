@@ -86,3 +86,6 @@ jobs:
 
       - name: Test redesigned ice-breaker messages
         run: npx tsx scripts/test-icebreaker-redesign.ts
+
+      - name: Test redesigned Instagram insights dashboard
+        run: npx tsx scripts/test-insights-redesign.ts
