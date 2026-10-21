@@ -1038,15 +1038,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             }
             return next.map((entry, index) => ({ ...entry, sortOrder: index }));
           });
-          // Tags entered before uploading belong to the first successfully uploaded media.
-          setTaggedUsersByMedia((current) => {
-            const pending = current["__pending__"];
-            if (!pending?.length) return current;
-            const next = { ...current };
-            delete next["__pending__"];
-            next[result.storageKey] = [...new Set([...(next[result.storageKey] ?? []), ...pending])];
-            return next;
-          });
+          // Preserve the typed username but do not register any tag before media upload.
           setTagDraftByMedia((current) => {
             const pending = current["__pending__"];
             if (!pending) return current;
@@ -1096,6 +1088,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   }
 
   function addTagForMedia(mediaKey: string) {
+    // Guard both the button and Enter-key flow until a completed upload exists.
+    if (!uploadedMedia.some((item) => item.storageKey === mediaKey)) return;
     const draft = (tagDraftByMedia[mediaKey] ?? "").trim();
     if (!draft) return;
     if (draft.includes("@")) {
@@ -1657,7 +1651,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   {tagInputError && <p role="alert" className="mb-3 rounded-xl border border-[#FECACA] bg-[#FEF2F2] p-3 text-xs text-[#B91C1C]">{tagInputError}</p>}
                   <div className="space-y-3">
                     {uploadedMedia.length === 0 && (
-                      <p className="text-xs leading-6 text-[#5A6B87]">می‌توانی همین حالا کاربر را تگ کنی؛ پس از بارگذاری، تگ‌ها به {type === "CAROUSEL" ? "اولین اسلاید" : "رسانه"} منتقل می‌شوند.</p>
+                      <p className="text-xs leading-6 text-[#5A6B87]">برای فعال‌شدن دکمه افزودن تگ، ابتدا رسانه را آپلود کن.</p>
                     )}
                     {(uploadedMedia.length ? uploadedMedia : [null]).map((item, index) => {
                       const mediaKey = item?.storageKey ?? "__pending__";
@@ -1688,7 +1682,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                               </div>
                             )}
                             <input value={draft} onChange={(event) => handleTagInputChange(mediaKey, event.target.value)} onKeyDown={(event) => handleTagInputKeyDown(mediaKey, event)} placeholder="نام کاربر بدون @" maxLength={30} inputMode="text" autoCapitalize="none" spellCheck={false} className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-2.5 !text-base leading-5 text-[#18233C] outline-none placeholder:text-xs placeholder:text-[#94A3B8] focus:border-[#2F61FD] focus:ring-2 focus:ring-[#2F61FD]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
-                            <Button type="button" onClick={() => addTagForMedia(mediaKey)} disabled={!draft.trim()} className="shrink-0 rounded-lg !bg-[#2F61FD] px-3.5 py-2.5 text-xs font-semibold text-white hover:!bg-[#1E4BD8] disabled:pointer-events-none disabled:cursor-not-allowed disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8] disabled:opacity-100 disabled:hover:!bg-[#E2E8F0]">افزودن</Button>
+                            <Button type="button" onClick={() => addTagForMedia(mediaKey)} disabled={!item || !draft.trim()} className="shrink-0 rounded-lg !bg-[#2F61FD] px-3.5 py-2.5 text-xs font-semibold text-white hover:!bg-[#1E4BD8] disabled:pointer-events-none disabled:cursor-not-allowed disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8] disabled:opacity-100 disabled:hover:!bg-[#E2E8F0]">افزودن</Button>
                           </div>
                         </div>
                       );
