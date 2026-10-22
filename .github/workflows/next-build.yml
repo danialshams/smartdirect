@@ -41,6 +41,16 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -68,6 +78,16 @@ jobs:
 
       - name: Verify Meta webhook signatures
         run: npx tsx scripts/test-webhook-signature.ts
+
+      - name: Test distributed Instagram traffic control
+        env:
+          REDIS_DRIVER: redis
+          REDIS_URL: redis://127.0.0.1:6379
+          NODE_ENV: test
+        run: |
+          npx tsx scripts/test-instagram-traffic-control.ts
+          npx tsx scripts/test-instagram-traffic-release.ts
+          npx tsx scripts/test-traffic-lease-recovery.ts
 
       - name: Test Instagram Live automation validation
         run: npm run live:automation:test
