@@ -76,16 +76,8 @@ export async function recoverDuePublishingJobs(
       await enqueue(job.id, { maxAttempts: 4 });
       queued++;
       if (wasAbandoned) recovered++;
-      // Queue acknowledgement may race with this update; preserve the
-      // worker's new state and never reset a started publication.
-      await prisma.instagramPublishJob.updateMany({
-        where: {
-          id: job.id,
-          status: "PROCESSING",
-          errorMessage: PORTABLE_PUBLISH_DISPATCH_PENDING,
-        },
-        data: { errorMessage: null },
-      });
+      // Keep the marker until the worker starts; this also survives
+      // Redis loss after a successful enqueue.
     } catch (error) {
       // Only a still-pending dispatch is safe to return to SCHEDULED.
       // If a worker already acknowledged, it may have called Meta.
