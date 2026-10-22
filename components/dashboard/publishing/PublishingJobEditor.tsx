@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/dashboard/DashboardUI";
 import PersianDatePicker from "./PersianDatePicker";
 import ReelSettingsFields from "./ReelSettingsFields";
+import { useStorageUploadLease } from "./useStorageUploadLease";
 import { readReelOptions, type ReelOptions } from "@/lib/instagram/reel-settings";
 import PublishingPageSkeleton from "./PublishingPageSkeleton";
 const EntryPointFlowBuilder = dynamic(
@@ -142,6 +143,7 @@ export default function PublishingJobEditor({
   const [reelOptions, setReelOptions] = useState<ReelOptions>(() => readReelOptions(initialJob?.reelOptions));
   const [originalReelOptions, setOriginalReelOptions] = useState<ReelOptions>(() => readReelOptions(initialJob?.reelOptions));
   const [reelCoverUploading, setReelCoverUploading] = useState(false);
+  useStorageUploadLease(reelOptions.coverUrl ? [reelOptions.coverUrl] : []);
   const [scheduledDate, setScheduledDate] = useState("");
   const [originalScheduledDate, setOriginalScheduledDate] = useState("");
   const [hour, setHour] = useState(0);
