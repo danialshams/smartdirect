@@ -68,6 +68,8 @@ export interface QueueJob<T extends QueueJobType = QueueJobType> {
   idempotency?: QueueJobIdempotency;
   recoveryId?: string;
   instagramAccountId?: string;
+  /** Key for account or conversation-level serialized execution. */
+  orderingKey?: string;
   queueNamespace?: string;
 }
 
@@ -78,5 +80,7 @@ export interface EnqueueJobOptions {
   idempotency?: QueueJobIdempotency;
   recoveryId?: string;
   instagramAccountId?: string;
+  /** Key for account or conversation-level serialized execution. */
+  orderingKey?: string;
   queueNamespace?: string;
 }

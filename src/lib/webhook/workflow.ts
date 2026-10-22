@@ -21,7 +21,7 @@ export async function processInstagramWebhookQueueJobStep(jobId: string) {
   }
 
   enterObservabilityContext({ jobId: job.id });
-  const stopClaimHeartbeat = startJobClaimHeartbeat(job.id, workflowWorkerId);
+  const stopClaimHeartbeat = startJobClaimHeartbeat(job.id, job.claimToken ?? "", undefined, job.instagramAccountId, job.queueNamespace);
 
   let lockHandle: DistributedLockHandle | undefined;
 

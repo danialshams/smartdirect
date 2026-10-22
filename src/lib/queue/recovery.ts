@@ -22,6 +22,7 @@ const QUEUE_JOB_TYPES: QueueJobType[] = [
   "AUTOMATION",
   "SEND_MESSAGE",
   "PUBLISH",
+  "SMART_REMINDER",
 ];
 
 function isQueueJobType(value: string): value is QueueJobType {
@@ -35,6 +36,24 @@ function claimKey(jobId: string) {
 function jobKey(jobId: string) {
   return `${JOB_PREFIX}${jobId}`;
 }
+
+// A recovery decision must be made atomically with the absent-claim check.
+const RECOVER_STALLED_SCRIPT = [
+  'local raw = redis.call("GET", KEYS[1])',
+  'if not raw then redis.call("ZREM", KEYS[3], ARGV[1]); return 0 end',
+  'if redis.call("GET", KEYS[2]) then return 0 end',
+  'local job = cjson.decode(raw)',
+  'if job.status ~= "active" then redis.call("ZREM", KEYS[3], ARGV[1]); return 0 end',
+  'if (job.attempts or 0) >= (job.maxAttempts or 3) then return 2 end',
+  'job.status = "waiting"',
+  'job.workerId = nil',
+  'job.claimToken = nil',
+  'redis.call("SET", KEYS[1], cjson.encode(job))',
+  'redis.call("ZREM", KEYS[3], ARGV[1])',
+  'local priority = { critical=0, high=1, normal=2, low=3 }',
+  'redis.call("ZADD", KEYS[4], job.scheduledAt * 10 + (priority[job.priority] or 2), ARGV[1])',
+  'return 1',
+].join("\n");
 
 export async function recoverStalledJobs(limit = 50, queueNamespace = "default") {
   const redis = createQueueRedis();
@@ -50,54 +69,20 @@ export async function recoverStalledJobs(limit = 50, queueNamespace = "default")
   let permanentlyFailed = 0;
 
   for (const id of ids) {
-    const [job, claim] = await Promise.all([
-      redis.get<QueueJob>(jobKey(id)),
-      redis.get<string>(claimKey(id)),
-    ]);
-
-    if (!job) {
-      await redis.zrem(keys.active, id);
+    const result = Number(await redis.eval(
+      RECOVER_STALLED_SCRIPT,
+      [jobKey(id), claimKey(id), keys.active, keys.ready],
+      [id],
+    ));
+    if (result === 1) {
+      recovered++;
       continue;
     }
-
-    if (claim) {
-      continue;
+    if (result === 2) {
+      // Forced failure refuses an active claim and rechecks ownership in Lua.
+      const failed = await failJob(id, new Error("JOB_STALLED_MAX_ATTEMPTS"), { force: true });
+      if (failed?.status === "failed") permanentlyFailed++;
     }
-
-    if (job.status !== "active") {
-      await redis.zrem(keys.active, id);
-      continue;
-    }
-
-    if (job.attempts >= job.maxAttempts) {
-      await failJob(id, new Error("JOB_STALLED_MAX_ATTEMPTS"), { force: true });
-      permanentlyFailed++;
-      console.log(JSON.stringify({
-        event: "queue:stalled:permanent-failure",
-        jobId: id,
-        attempts: job.attempts,
-        maxAttempts: job.maxAttempts,
-      }));
-      continue;
-    }
-
-    job.status = "waiting";
-    job.workerId = undefined;
-    job.claimToken = undefined;
-
-    await redis.set(jobKey(id), job);
-    await redis.zrem(keys.active, id);
-    await redis.zadd(keys.ready, {
-      score: job.scheduledAt * 10,
-      member: id,
-    });
-
-    recovered++;
-    console.log(JSON.stringify({
-      event: "queue:stalled:recovered",
-      jobId: id,
-      attempts: job.attempts,
-    }));
   }
 
   return { scanned: ids.length, recovered, permanentlyFailed };
@@ -149,6 +134,8 @@ export async function retryFailedJob(failureId: string) {
       idempotency,
       recoveryId: failure.id,
       queueNamespace,
+      instagramAccountId: originalJob?.instagramAccountId,
+      orderingKey: originalJob?.orderingKey,
     },
   );
 

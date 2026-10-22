@@ -41,46 +41,45 @@ function keys(accountId: string) {
 }
 
 const ACQUIRE_SCRIPT = [
-  'local now = tonumber(ARGV[1])',
+  'local serverTime = redis.call("TIME")',
+  'local now = tonumber(serverTime[1]) * 1000 + math.floor(tonumber(serverTime[2]) / 1000)',
   'local initial = tonumber(ARGV[2])',
   'local minLimit = tonumber(ARGV[3])',
   'local maxLimit = tonumber(ARGV[4])',
-  'local leaseSeconds = tonumber(ARGV[5])',
+  'local leaseMs = tonumber(ARGV[5]) * 1000',
   'local token = ARGV[6]',
   'local critical = tonumber(ARGV[7]) or 0',
   'local openUntil = tonumber(redis.call("GET", KEYS[4]) or "0")',
   'if openUntil > now then return {-1, openUntil - now, 0} end',
   'if openUntil > 0 then',
-  '  redis.call("DEL", KEYS[4])',
-  '  if redis.call("SET", KEYS[5], token, "NX", "EX", "5") ~= "OK" then return {-2, 100, 0} end',
-  'else redis.call("DEL", KEYS[5]) end',
+  '  if redis.call("SET", KEYS[5], token, "NX", "PX", leaseMs) ~= "OK" then return {-2, 100, 0} end',
+  'end',
   'local limit = tonumber(redis.call("GET", KEYS[1]) or "")',
   'if not limit then limit = math.min(maxLimit, math.max(minLimit, initial)); redis.call("SET", KEYS[1], tostring(limit), "EX", "86400") end',
-  'local inflight = tonumber(redis.call("GET", KEYS[2]) or "0")',
+  'redis.call("ZREMRANGEBYSCORE", KEYS[3], "-inf", now)',
+  'local inflight = redis.call("ZCARD", KEYS[3])',
   'local pendingCritical = tonumber(redis.call("GET", KEYS[6]) or "0")',
   'local effectiveLimit = limit',
   'if critical == 0 and pendingCritical > 0 then effectiveLimit = math.max(1, limit - 1) end',
   'if inflight >= effectiveLimit then return {0, 25, limit} end',
-  'redis.call("INCR", KEYS[2])',
-  'redis.call("EXPIRE", KEYS[2], leaseSeconds)',
-  'redis.call("SET", KEYS[3] .. ":" .. token, "1", "EX", leaseSeconds)',
-  'if critical == 1 and pendingCritical > 0 then',
-  '  local remaining = redis.call("DECR", KEYS[6])',
-  '  if remaining <= 0 then redis.call("DEL", KEYS[6]) end',
-  'end',
+  'redis.call("ZADD", KEYS[3], now + leaseMs, token)',
+  'redis.call("PEXPIRE", KEYS[3], leaseMs + 60000)',
+  'redis.call("SET", KEYS[2], tostring(inflight + 1), "PX", leaseMs + 60000)',
   'return {1, 0, limit}',
 ].join("\n");
 
 const RELEASE_SCRIPT = [
-  'local tokenKey = KEYS[1] .. ":" .. ARGV[1]',
-  'if redis.call("GET", tokenKey) then',
-  '  redis.call("DEL", tokenKey)',
-  '  local current = tonumber(redis.call("GET", KEYS[2]) or "0")',
-  '  if current > 0 then current = redis.call("DECR", KEYS[2]) end',
-  '  if current <= 0 then redis.call("DEL", KEYS[2]) end',
-  '  return current',
+  'if redis.call("ZREM", KEYS[1], ARGV[1]) == 0 then return -1 end',
+  'local serverTime = redis.call("TIME")',
+  'local now = tonumber(serverTime[1]) * 1000 + math.floor(tonumber(serverTime[2]) / 1000)',
+  'redis.call("ZREMRANGEBYSCORE", KEYS[1], "-inf", now)',
+  'local current = redis.call("ZCARD", KEYS[1])',
+  'if current == 0 then',
+  '  redis.call("DEL", KEYS[1], KEYS[2])',
+  'else',
+  '  redis.call("SET", KEYS[2], tostring(current), "EX", "120")',
   'end',
-  'return -1',
+  'return current',
 ].join("\n");
 
 const OUTCOME_SCRIPT = [
@@ -111,7 +110,8 @@ const OUTCOME_SCRIPT = [
   'redis.call("SET", KEYS[2], tostring(successes), "EX", "86400")',
   'redis.call("SET", KEYS[3], tostring(failures), "EX", "86400")',
   'redis.call("SET", KEYS[4], tostring(failureAt), "EX", "86400")',
-  'if failures >= threshold and failureAt > 0 and now - failureAt <= windowMs then redis.call("SET", KEYS[5], tostring(now + openMs), "PX", openMs) end',
+  'if outcome == "success" and redis.call("EXISTS", KEYS[6]) == 1 then redis.call("DEL", KEYS[5], KEYS[6]) end',
+  'if failures >= threshold and failureAt > 0 and now - failureAt <= windowMs then redis.call("SET", KEYS[5], tostring(now + openMs), "PX", openMs * 5); redis.call("DEL", KEYS[6]) end',
   'return {limit, successes, failures, tonumber(redis.call("GET", KEYS[5]) or "0")}',
 ].join("\n");
 
@@ -133,13 +133,7 @@ async function getTrafficSlotDiagnostics(redis: Awaited<ReturnType<typeof import
     redis.ttl(k.inflight),
   ]);
 
-  let leaseCount = 0;
-  let cursor: string | number = "0";
-  do {
-    const [nextCursor, members] = await redis.scan(cursor, { match: k.lease + ":*", count: 100 });
-    leaseCount += members.length;
-    cursor = nextCursor;
-  } while (String(cursor) !== "0");
+  const leaseCount = await redis.zcard(k.lease);
 
   return {
     limit: Number(limit ?? 0),
@@ -171,7 +165,7 @@ export async function acquireInstagramTrafficSlot(context: InstagramRateLimitCon
   const { getRedisClient } = await import("@/lib/redis/client");
   const redis = getRedisClient();
   const k = keys(context.instagramAccountId);
-  const configuredWait = options.maxWaitMs && options.maxWaitMs > 0 ? options.maxWaitMs : maxWaitMs();
+  const configuredWait = options.maxWaitMs !== undefined ? Math.max(0, options.maxWaitMs) : maxWaitMs();
   const deadline = Date.now() + configuredWait;
   const token = crypto.randomUUID();
   const critical = isCriticalInstagramOperation(context.operation);
@@ -249,7 +243,6 @@ export async function acquireInstagramTrafficSlot(context: InstagramRateLimitCon
         operation: context.operation,
         concurrencyLimit: Number(result[2]),
       });
-      if (critical) criticalPendingRegistered = false;
       return { accountId: context.instagramAccountId, token };
     }
     if (status === -1) throw new InstagramCircuitOpenError(Math.max(100, Number(result[1])));
@@ -258,8 +251,11 @@ export async function acquireInstagramTrafficSlot(context: InstagramRateLimitCon
   } finally {
     if (critical && criticalPendingRegistered) {
       try {
-        const remaining = Number(await redis.decr(k.criticalPending));
-        if (remaining <= 0) await redis.del(k.criticalPending);
+        await redis.eval(
+          'local n = tonumber(redis.call("GET", KEYS[1]) or "0"); if n <= 1 then redis.call("DEL", KEYS[1]); return 0 end; return redis.call("DECR", KEYS[1])',
+          [k.criticalPending],
+          [],
+        );
       } catch (error) {
         observabilityLogger.warn("instagram_critical_pending_cleanup_failed", {
           instagramAccountId: context.instagramAccountId,
@@ -298,7 +294,7 @@ export async function recordInstagramTrafficOutcome(context: InstagramRateLimitC
   const k = keys(context.instagramAccountId);
   const result = await redis.eval(
     OUTCOME_SCRIPT,
-    [k.limit, k.successes, k.failures, k.failureAt, k.circuit],
+    [k.limit, k.successes, k.failures, k.failureAt, k.circuit, k.probe],
     [String(Date.now()), outcome, String(minLimit()), String(maxLimit()), String(failureThreshold()), String(failureWindowMs()), String(circuitOpenMs())],
   ) as [number, number, number, number];
 

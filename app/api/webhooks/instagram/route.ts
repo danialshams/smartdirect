@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { verifyInstagramWebhookSignature } from "@/lib/webhook/verify-signature";
 import { NextRequest, NextResponse } from "next/server";
 import { start } from "workflow/api";
 import { prisma } from "@/lib/prisma";
@@ -344,7 +345,22 @@ export async function POST(request: NextRequest) {
   });
 
   try {
-    const body = await request.json();
+    const rawBody = await request.text();
+    const webhookSecret = process.env.INSTAGRAM_WEBHOOK_APP_SECRET?.trim() || process.env.INSTAGRAM_CLIENT_SECRET?.trim();
+    if (!webhookSecret) {
+      observabilityLogger.error("webhook_app_secret_missing");
+      return NextResponse.json({ error: "Webhook authentication unavailable" }, { status: 503 });
+    }
+    if (!verifyInstagramWebhookSignature(rawBody, request.headers.get("x-hub-signature-256"), webhookSecret)) {
+      observabilityLogger.warn("webhook_signature_invalid");
+      return NextResponse.json({ error: "Invalid webhook signature" }, { status: 401 });
+    }
+    let body: Record<string, any>;
+    try {
+      body = JSON.parse(rawBody);
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    }
 
     console.log("========================================");
     console.log("INSTAGRAM WEBHOOK EVENT");
@@ -2182,6 +2198,7 @@ async function processInstagramStoryReply(
       console.log("========================================");
 
       const followStatus = await getInstagramUserFollowStatus({
+        instagramAccountId: instagramAccount.id,
         instagramUserId: participantId,
         accessToken,
       });
@@ -2301,6 +2318,7 @@ async function processInstagramStoryReply(
       console.log("Reply text:", automation.replyText);
 
       directReplySent = await sendStoryReplyMessage({
+        instagramAccountId: instagramAccount.id,
         igUserId: instagramAccount.igUserId,
 
         participantId,
@@ -2386,11 +2404,13 @@ async function processInstagramStoryReply(
 // =========================================================
 
 async function sendStoryReplyMessage({
+  instagramAccountId,
   igUserId,
   participantId,
   accessToken,
   replyText,
 }: {
+  instagramAccountId: string;
   igUserId: string;
   participantId: string;
   accessToken: string;
@@ -2404,6 +2424,7 @@ async function sendStoryReplyMessage({
         recipient: { id: participantId },
         message: { text: replyText },
       },
+      rateLimit: { instagramAccountId, operation: "MESSAGE_TEXT" },
     });
     return true;
   } catch (error) {
@@ -2418,9 +2439,11 @@ async function sendStoryReplyMessage({
 // =========================================================
 
 async function getInstagramUserFollowStatus({
+  instagramAccountId,
   instagramUserId,
   accessToken,
 }: {
+  instagramAccountId: string;
   instagramUserId: string;
   accessToken: string;
 }): Promise<InstagramFollowStatus> {
@@ -2431,6 +2454,7 @@ async function getInstagramUserFollowStatus({
         method: "GET",
         accessToken,
         params: { fields: "is_user_follow_business" },
+        rateLimit: { instagramAccountId, operation: "PROFILE_READ" },
       },
     );
     const rawValue = data?.is_user_follow_business;
@@ -2493,6 +2517,7 @@ async function sendFollowGateMessage({
           },
         },
       },
+      rateLimit: { instagramAccountId: instagramAccount.id, tenantId: instagramAccount.userId, operation: "MESSAGE_TEXT" },
     });
     return true;
   } catch (error) {
@@ -2507,11 +2532,13 @@ async function sendFollowGateMessage({
 // =========================================================
 
 async function sendDirectInstagramMessage({
+  instagramAccountId,
   igUserId,
   participantId,
   accessToken,
   text,
 }: {
+  instagramAccountId: string;
   igUserId: string;
   participantId: string;
   accessToken: string;
@@ -2525,6 +2552,7 @@ async function sendDirectInstagramMessage({
         recipient: { id: participantId },
         message: { text },
       },
+      rateLimit: { instagramAccountId, operation: "MESSAGE_TEXT" },
     });
     return true;
   } catch (error) {
@@ -2615,6 +2643,7 @@ async function processFollowGatePostback({
       );
 
       await sendDirectInstagramMessage({
+        instagramAccountId: instagramAccount.id,
         igUserId: instagramAccount.igUserId,
 
         participantId,
@@ -2647,6 +2676,7 @@ async function processFollowGatePostback({
       );
 
       await sendDirectInstagramMessage({
+        instagramAccountId: instagramAccount.id,
         igUserId: instagramAccount.igUserId,
 
         participantId,
@@ -2685,6 +2715,7 @@ async function processFollowGatePostback({
     // =======================================================
 
     const followStatus = await getInstagramUserFollowStatus({
+        instagramAccountId: instagramAccount.id,
       instagramUserId: participantId,
 
       accessToken,
@@ -2708,6 +2739,7 @@ async function processFollowGatePostback({
       });
 
       await sendDirectInstagramMessage({
+        instagramAccountId: instagramAccount.id,
         igUserId: instagramAccount.igUserId,
 
         participantId,
@@ -2807,6 +2839,7 @@ async function processFollowGatePostback({
 
     if (hasDirectReply && !hasFlowMessages) {
       directReplySent = await sendDirectInstagramMessage({
+        instagramAccountId: instagramAccount.id,
         igUserId: instagramAccount.igUserId,
 
         participantId,
@@ -3611,6 +3644,7 @@ async function processCommentEvent(
 
     if (hasPublicCommentReply) {
       publicCommentReplySent = await sendPublicCommentReply({
+        instagramAccountId: instagramAccount.id,
         igCommentId,
 
         accessToken,
@@ -3654,6 +3688,7 @@ async function processCommentEvent(
       // =====================================================
 
       const followStatus = await getInstagramUserFollowStatus({
+        instagramAccountId: instagramAccount.id,
         instagramUserId: commenterIgUserId,
 
         accessToken,
@@ -3706,6 +3741,7 @@ async function processCommentEvent(
           console.log("Comment automation engine result:", result);
         } else if (hasPrivateReply) {
           privateReplySent = await sendPrivateReply({
+        instagramAccountId: instagramAccount.id,
             igUserId: instagramAccount.igUserId,
 
             igCommentId,
@@ -3933,6 +3969,7 @@ async function processCommentEvent(
         );
       } else {
         privateReplySent = await sendPrivateReply({
+        instagramAccountId: instagramAccount.id,
           igUserId: instagramAccount.igUserId,
 
           igCommentId,
@@ -3996,10 +4033,12 @@ async function processCommentEvent(
 // =========================================================
 
 async function sendPublicCommentReply({
+  instagramAccountId,
   igCommentId,
   accessToken,
   replyText,
 }: {
+  instagramAccountId: string;
   igCommentId: string;
   accessToken: string;
   replyText: string;
@@ -4009,6 +4048,7 @@ async function sendPublicCommentReply({
       method: "POST",
       accessToken,
       body: new URLSearchParams({ message: replyText }),
+      rateLimit: { instagramAccountId, operation: "COMMENT_REPLY" },
     });
     return true;
   } catch (error) {
@@ -4023,11 +4063,13 @@ async function sendPublicCommentReply({
 // =========================================================
 
 async function sendPrivateReply({
+  instagramAccountId,
   igUserId,
   igCommentId,
   accessToken,
   replyText,
 }: {
+  instagramAccountId: string;
   igUserId: string;
   igCommentId: string;
   accessToken: string;
@@ -4041,6 +4083,7 @@ async function sendPrivateReply({
         recipient: { comment_id: igCommentId },
         message: { text: replyText },
       },
+      rateLimit: { instagramAccountId, operation: "COMMENT_PRIVATE_REPLY" },
     });
 
     return true;

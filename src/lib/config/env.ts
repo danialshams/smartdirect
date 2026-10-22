@@ -47,7 +47,7 @@ export function validateServerEnvironment(): ServerEnvironment {
   const env = nodeEnv();
   const redisDriver = (process.env.REDIS_DRIVER?.trim() || "upstash") as RedisDriver;
 
-  if (redisDriver !== "upstash" && redisDriver !== "redis") {
+  if (redisDriver !== "upstash" && redisDriver !== "redis" && redisDriver !== "local") {
     throw new Error(`UNSUPPORTED_REDIS_DRIVER:${redisDriver}`);
   }
 
@@ -55,9 +55,9 @@ export function validateServerEnvironment(): ServerEnvironment {
   const databasePoolMax = parseBoundedNumber("DB_POOL_MAX", 5, 1, 50);
   const databaseConnectionTimeoutMs = parseBoundedNumber("DB_CONNECTION_TIMEOUT_MS", 5000, 1000, 60000);
   const databaseIdleTimeoutMs = parseBoundedNumber("DB_IDLE_TIMEOUT_MS", 10000, 1000, 300000);
-  const redisRestUrl = redisDriver === "redis" ? "" : required("UPSTASH_REDIS_REST_URL");
-  const redisRestToken = redisDriver === "redis" ? "" : required("UPSTASH_REDIS_REST_TOKEN");
-  if (redisDriver === "redis") required("REDIS_URL");
+  const redisRestUrl = redisDriver === "redis" || redisDriver === "local" ? "" : required("UPSTASH_REDIS_REST_URL");
+  const redisRestToken = redisDriver === "redis" || redisDriver === "local" ? "" : required("UPSTASH_REDIS_REST_TOKEN");
+  if ((redisDriver === "redis" || redisDriver === "local") && !process.env.REDIS_URL?.trim() && !process.env.REDIS_LOCAL_URL?.trim()) required("REDIS_URL");
 
   try {
     new URL(databaseUrl);
