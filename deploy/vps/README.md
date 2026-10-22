@@ -63,11 +63,15 @@ production stays on Vercel. Do not change `vercel.json`, production
 
 ## Important limitations to resolve before actual cutover
 
-- A crash **between the scheduled-publishing CAS and Redis enqueue**
-  can leave a `PROCESSING` row without a queue job. It must be
-  reconciled manually or by a fully durable publishing-outbox design
-  before high-availability launch. Do **not** blindly replay stale
-  PROCESSING rows: Meta could already have accepted the publish.
+- The scheduled-publishing scanner now retains an explicit
+  `PORTABLE_PUBLISH_DISPATCH_PENDING` marker until the worker acknowledges
+  startup. Abandoned pre-worker dispatches are scanned after two minutes,
+  covering a scheduler crash between PostgreSQL CAS and Redis enqueue,
+  or a Redis loss before worker start. Concurrent recovery may enqueue
+  duplicates; the publishing idempotency lease is still required.
+  **Never** blindly replay unmarked `PROCESSING` rows: a worker may already
+  have contacted Meta. Crashes during remote publication and true
+  end-to-end exactly-once guarantees remain separate cutover checks.
 - Instagram/Meta remote-send exactly-once delivery is not guaranteed
   merely by Redis or the webhook Inbox. Audit outbound idempotency before
   production high-volume usage.
