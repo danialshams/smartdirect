@@ -22,6 +22,7 @@ const QUEUE_JOB_TYPES: QueueJobType[] = [
   "AUTOMATION",
   "SEND_MESSAGE",
   "PUBLISH",
+  "SMART_REMINDER",
 ];
 
 function isQueueJobType(value: string): value is QueueJobType {
@@ -149,6 +150,8 @@ export async function retryFailedJob(failureId: string) {
       idempotency,
       recoveryId: failure.id,
       queueNamespace,
+      instagramAccountId: originalJob?.instagramAccountId,
+      orderingKey: originalJob?.orderingKey,
     },
   );
 

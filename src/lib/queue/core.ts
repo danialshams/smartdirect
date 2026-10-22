@@ -149,6 +149,7 @@ export async function enqueueJob<T extends QueueJobType>(
     idempotency: options.idempotency,
     recoveryId: options.recoveryId,
     instagramAccountId: options.instagramAccountId,
+    orderingKey: options.orderingKey,
     queueNamespace,
   };
 
@@ -202,6 +203,7 @@ export async function enqueueJobsBatch<T extends QueueJobType>(
       idempotency: options.idempotency,
       recoveryId: options.recoveryId,
       instagramAccountId: options.instagramAccountId,
+    orderingKey: options.orderingKey,
       queueNamespace,
     } as QueueJob<T>;
   });
@@ -313,7 +315,7 @@ for pass = 1, 2 do
         if job.status ~= "waiting" then
           redis.call("ZREM", KEYS[1], id)
         else
-          local account = job.instagramAccountId or ""
+          local account = job.orderingKey or job.instagramAccountId or ""
           local eligible = (pass == 2) or (not lastAccount) or account == "" or account ~= lastAccount
           local accountLockKey = KEYS[4] .. ":" .. account
           if eligible and (account == "" or not redis.call("GET", accountLockKey)) then
@@ -346,7 +348,7 @@ if account ~= "" then
   redis.call("SET", accountLockKey, ARGV[4], "EX", ARGV[5])
 end
 redis.call("SET", ARGV[2] .. id, cjson.encode(job))
-redis.call("ZADD", KEYS[2], ARGV[5], id)
+redis.call("ZADD", KEYS[2], ARGV[6], id)
 redis.call("ZREM", KEYS[1], id)
 if account ~= "" then redis.call("SET", KEYS[3], account, "EX", "3600") end
 
@@ -418,8 +420,8 @@ redis.call("ZREM", KEYS[2], ARGV[1])
 redis.call("ZREM", KEYS[3], ARGV[1])
 redis.call("ZREM", KEYS[4], ARGV[1])
 redis.call("DEL", KEYS[5])
-if job.instagramAccountId then
-  local accountLockKey = KEYS[6] .. ":" .. job.instagramAccountId
+if job.orderingKey or job.instagramAccountId then
+  local accountLockKey = KEYS[6] .. ":" .. (job.orderingKey or job.instagramAccountId)
   if redis.call("GET", accountLockKey) == claimToken then redis.call("DEL", accountLockKey) end
 end
 return "CANCELLED"
@@ -455,8 +457,8 @@ redis.call("ZREM", KEYS[3], ARGV[1])
 redis.call("ZREM", KEYS[4], ARGV[1])
 redis.call("ZREM", KEYS[5], ARGV[1])
 redis.call("DEL", KEYS[2])
-if job.instagramAccountId then
-  local accountLockKey = KEYS[6] .. ":" .. job.instagramAccountId
+if job.orderingKey or job.instagramAccountId then
+  local accountLockKey = KEYS[6] .. ":" .. (job.orderingKey or job.instagramAccountId)
   if redis.call("GET", accountLockKey) == claimToken then redis.call("DEL", accountLockKey) end
 end
 return cjson.encode(job)
@@ -507,8 +509,8 @@ export async function failJob(jobId: string, error: unknown, options: { force?: 
   job.claimToken = undefined;
 
   await redis.del(claimKey(jobId));
-  if (job.instagramAccountId) {
-    const accountLockKey = getQueueKeys(job.queueNamespace).accountLocks + ":" + job.instagramAccountId;
+  if (job.orderingKey || job.instagramAccountId) {
+    const accountLockKey = getQueueKeys(job.queueNamespace).accountLocks + ":" + (job.orderingKey || job.instagramAccountId);
     const lockOwner = await redis.get<string>(accountLockKey);
     if (lockOwner === claimToken) await redis.del(accountLockKey);
   }
@@ -638,7 +640,7 @@ job.claimToken = ARGV[5]
 
 redis.call("SET", claimKey, ARGV[5], "EX", ARGV[6])
 redis.call("SET", jobKey, cjson.encode(job))
-redis.call("ZADD", KEYS[1], ARGV[6], ARGV[2])
+redis.call("ZADD", KEYS[1], ARGV[7], ARGV[2])
 redis.call("ZREM", KEYS[2], ARGV[2])
 redis.call("ZREM", KEYS[3], ARGV[2])
 
