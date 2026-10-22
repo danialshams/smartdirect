@@ -109,6 +109,23 @@ jobs:
           npx tsx scripts/test-durable-webhook-inbox.ts
           npx tsx scripts/test-meta-usage-headers.ts
 
+      - name: Test portable execution-backend selection
+        run: npx tsx scripts/test-execution-backend.ts
+
+      - name: Verify VPS compose configuration
+        run: |
+          docker compose -f docker-compose.vps.example.yml config --quiet
+          node -e 'const j=require("./package.json");for(const s of ["build:self-hosted","db:migrate:deploy","queue:worker"])if(!j.scripts[s])throw Error("Missing portable lifecycle "+s)'
+
+      - name: Test portable publishing scheduler with PostgreSQL and Redis
+        env:
+          DATABASE_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
+          DIRECT_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
+          REDIS_DRIVER: redis
+          REDIS_URL: redis://127.0.0.1:6379
+          NODE_ENV: test
+        run: npx tsx scripts/test-portable-publishing-scheduler.ts
+
       - name: Test authenticated Meta request gateway
         run: npx tsx scripts/test-instagram-gateway-policy.ts
 

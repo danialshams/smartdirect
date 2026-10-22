@@ -1,6 +1,7 @@
 import { after, NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { start } from "workflow/api";
+import { resolveExecutionBackend } from "@/lib/runtime/execution-backend";
 import { z } from "zod";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -294,8 +295,12 @@ export async function POST(request: NextRequest) {
     let queueJobId: string | null = null;
     if (isScheduled && scheduledAt) {
       try {
-        const workflowRun = await start(scheduleInstagramPublish, [job.id, scheduledAt.toISOString()]);
-        workflowRunId = workflowRun.runId;
+        if (resolveExecutionBackend() === "workflow") {
+          const workflowRun = await start(scheduleInstagramPublish, [job.id, scheduledAt.toISOString()]);
+          workflowRunId = workflowRun.runId;
+        }
+        // In worker mode the PostgreSQL SCHEDULED row is the durable timer.
+        // recoverDuePublishingJobs() claims it when the target time arrives.
       } catch (error) {
         await prisma.instagramPublishJob.update({ where: { id: job.id }, data: { status: "FAILED", errorMessage: error instanceof Error ? `شروع Workflow ناموفق بود: ${error.message}` : "شروع Workflow ناموفق بود.", retryCount: { increment: 1 } } });
         throw error;
@@ -304,8 +309,10 @@ export async function POST(request: NextRequest) {
       try {
         const queued = await enqueueInstagramPublishing(job.id, { maxAttempts: 4 });
         queueJobId = queued.job.id;
-        const workflowRun = await start(processPublishingQueueJob, [queued.job.id]);
-        workflowRunId = workflowRun.runId;
+        if (resolveExecutionBackend() === "workflow") {
+          const workflowRun = await start(processPublishingQueueJob, [queued.job.id]);
+          workflowRunId = workflowRun.runId;
+        }
       } catch (error) {
         await prisma.instagramPublishJob.update({
           where: { id: job.id },

@@ -73,7 +73,11 @@
     "instagram:container-status:pressure:test": "tsx --env-file=.env --env-file=.env.local scripts/test-instagram-container-status-pressure.ts",
     "instagram:publish:container:pressure:test": "tsx --env-file=.env --env-file=.env.local scripts/test-instagram-publish-container-pressure.ts",
     "instagram:container-status:rate-limit:test": "tsx --env-file=.env --env-file=.env.local scripts/test-instagram-container-status-rate-limit.ts",
-    "instagram:storage:lifecycle:test": "tsx --env-file=.env --env-file=.env.local scripts/test-instagram-storage-lifecycle.ts"
+    "instagram:storage:lifecycle:test": "tsx --env-file=.env --env-file=.env.local scripts/test-instagram-storage-lifecycle.ts",
+    "build:self-hosted": "prisma generate && next build",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:migrate:status": "prisma migrate status",
+    "start:self-hosted": "node .next/standalone/server.js"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",

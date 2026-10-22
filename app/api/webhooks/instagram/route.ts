@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { verifyInstagramWebhookSignature } from "@/lib/webhook/verify-signature";
 import { after, NextRequest, NextResponse } from "next/server";
 import { start } from "workflow/api";
+import { resolveExecutionBackend } from "@/lib/runtime/execution-backend";
 import { prisma } from "@/lib/prisma";
 import {
   completeInstagramWebhookEvent,
@@ -588,9 +589,15 @@ async function acceptDurableInstagramEvent(input: {
   // The durable worker/cron scanner recovers even if this invocation crashes.
   after(async () => {
     try {
-      await dispatchWebhookInboxEvent(saved.id, async (jobId) => {
-        await start(processInstagramWebhookQueueJob, [jobId]);
-      });
+      if (resolveExecutionBackend() === "workflow") {
+        await dispatchWebhookInboxEvent(saved.id, async (jobId) => {
+          await start(processInstagramWebhookQueueJob, [jobId]);
+        });
+      } else {
+        // On VPS an independently supervised Redis worker claims this job.
+        // The PostgreSQL durable inbox replays an interrupted enqueue.
+        await dispatchWebhookInboxEvent(saved.id);
+      }
     } catch (error) {
       observabilityLogger.warn("webhook_durable_dispatch_deferred", {
         inboxId: saved.id, error: error instanceof Error ? error.message : String(error),

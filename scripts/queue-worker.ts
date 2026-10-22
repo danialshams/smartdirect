@@ -6,6 +6,8 @@ import { handleInstagramWebhookJob } from "../src/lib/webhook/worker-handler";
 import { publishInstagramJob } from "../src/lib/instagram/publishing";
 import { processSmartReminder, recoverDueSmartReminders } from "../src/lib/automation/smart-reminders";
 import { recoverWebhookInbox, purgeCompletedWebhookInbox } from "../src/lib/webhook/durable-inbox";
+import { recoverDuePublishingJobs } from "../src/lib/instagram/portable-publishing-scheduler";
+import { resolveExecutionBackend } from "../src/lib/runtime/execution-backend";
 import { enterObservabilityContext } from "../src/lib/observability/context";
 import { observabilityLogger } from "../src/lib/observability/logger";
 
@@ -19,6 +21,7 @@ process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
 
 console.log("SmartDirect queue worker started.");
+const isPortablePublishingScheduler = resolveExecutionBackend() === "worker";
 
 // PostgreSQL-backed scan recovers reminders after Redis loss or worker restarts.
 // Redis delayed jobs handle the fast path; the scan is a durable fallback.
@@ -65,6 +68,25 @@ void recoverWebhookInbox(100).catch(error => {
 });
 
 
+if (isPortablePublishingScheduler) {
+  let publishingRecoveryBusy = false;
+  const publishTimer = setInterval(() => {
+    if (controller.signal.aborted || publishingRecoveryBusy) return;
+    publishingRecoveryBusy = true;
+    void recoverDuePublishingJobs(50).catch(error => {
+      observabilityLogger.error("portable_publish_scheduler_failed", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }).finally(() => { publishingRecoveryBusy = false; });
+  }, 15_000);
+  publishTimer.unref();
+  controller.signal.addEventListener("abort", () => clearInterval(publishTimer), { once: true });
+  void recoverDuePublishingJobs(50).catch(error => {
+    observabilityLogger.error("portable_publish_scheduler_initial_scan_failed", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  });
+}
 runQueueWorker(
   async (job) => {
     enterObservabilityContext({ jobId: job.id });
