@@ -492,57 +492,63 @@ export async function completeJob(jobId: string) {
   return job;
 }
 
+const FAIL_JOB_SCRIPT = [
+  'local raw = redis.call("GET", KEYS[1])',
+  'if not raw then return nil end',
+  'local job = cjson.decode(raw)',
+  'if job.status == "completed" or job.status == "cancelled" or job.status == "failed" then return nil end',
+  'local claim = redis.call("GET", KEYS[2])',
+  'if job.status == "active" then',
+  '  if ARGV[4] == "1" then',
+  '    if claim then return nil end',
+  '  else',
+  '    if not job.claimToken or claim ~= job.claimToken then return nil end',
+  '  end',
+  'end',
+  'local previousToken = job.claimToken',
+  'job.lastError = ARGV[2]',
+  'job.workerId = nil',
+  'job.claimToken = nil',
+  'redis.call("ZREM", KEYS[3], ARGV[1])',
+  'redis.call("ZREM", KEYS[4], ARGV[1])',
+  'redis.call("ZREM", KEYS[5], ARGV[1])',
+  'if previousToken and claim == previousToken then redis.call("DEL", KEYS[2]) end',
+  'local orderingKey = job.orderingKey or job.instagramAccountId',
+  'if orderingKey and previousToken then',
+  '  local lockKey = KEYS[7] .. ":" .. orderingKey',
+  '  if redis.call("GET", lockKey) == previousToken then redis.call("DEL", lockKey) end',
+  'end',
+  'if (job.attempts or 0) < (job.maxAttempts or 3) then',
+  '  local delay = math.min(60000, 1000 * 2 ^ math.max(0, (job.attempts or 1) - 1)) + tonumber(ARGV[5])',
+  '  job.status = "delayed"',
+  '  job.scheduledAt = tonumber(ARGV[3]) + delay',
+  '  redis.call("ZADD", KEYS[5], job.scheduledAt, ARGV[1])',
+  'else',
+  '  job.status = "failed"',
+  '  redis.call("ZADD", KEYS[6], ARGV[3], ARGV[1])',
+  'end',
+  'redis.call("SET", KEYS[1], cjson.encode(job))',
+  'return cjson.encode(job)',
+].join("\n");
+
 export async function failJob(jobId: string, error: unknown, options: { force?: boolean } = {}) {
   const redis = createQueueRedis();
-  const job = await redis.get<QueueJob>(jobKey(jobId));
-
-  if (!job) return null;
-
-  const currentClaim = await redis.get<string>(claimKey(jobId));
-  if (!options.force && job.status === "active" && job.claimToken && currentClaim !== job.claimToken) {
-    return null;
-  }
-
-  job.lastError = error instanceof Error ? error.message : String(error);
-  const claimToken = job.claimToken;
-  job.workerId = undefined;
-  job.claimToken = undefined;
-
-  await redis.del(claimKey(jobId));
-  if (job.orderingKey || job.instagramAccountId) {
-    const accountLockKey = getQueueKeys(job.queueNamespace).accountLocks + ":" + (job.orderingKey || job.instagramAccountId);
-    const lockOwner = await redis.get<string>(accountLockKey);
-    if (lockOwner === claimToken) await redis.del(accountLockKey);
-  }
-  const keys = getQueueKeys(job.queueNamespace);
-
-  await redis.zrem(keys.active, jobId);
-
-  if (job.attempts < job.maxAttempts) {
-    const retryDelayMs = Math.min(
-      MAX_RETRY_DELAY_MS,
-      DEFAULT_RETRY_DELAY_MS * 2 ** Math.max(0, job.attempts - 1),
-    );
-
-    job.status = "delayed";
-    job.scheduledAt = Date.now() + retryDelayMs;
-
-    await redis.set(jobKey(jobId), job);
-    await redis.zadd(keys.delayed, {
-      score: job.scheduledAt,
-      member: job.id,
-    });
-
-    return job;
-  }
-
-  job.status = "failed";
-
-  await Promise.all([
-    redis.set(jobKey(jobId), job),
-    removeJobFromQueue(redis, jobId, job.queueNamespace),
-    redis.zadd(keys.failed, { score: Date.now(), member: jobId }),
-  ]);
+  const current = await redis.get<QueueJob>(jobKey(jobId));
+  if (!current) return null;
+  const keys = getQueueKeys(current.queueNamespace);
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  // Redis atomically fences the old claim, status transition and index updates.
+  const result = await redis.eval(
+    FAIL_JOB_SCRIPT,
+    [
+      jobKey(jobId), claimKey(jobId), keys.active, keys.ready,
+      keys.delayed, keys.failed, keys.accountLocks,
+    ],
+    [jobId, errorMessage, String(Date.now()), options.force ? "1" : "0", String(Math.floor(Math.random() * 250))],
+  );
+  if (!result) return null;
+  const job = (typeof result === "string" ? JSON.parse(result) : result) as QueueJob;
+  if (job.status !== "failed") return job;
 
   await prisma.queueFailure.upsert({
     where: { jobId },
