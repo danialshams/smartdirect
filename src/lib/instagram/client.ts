@@ -269,7 +269,7 @@ export async function instagramApiRequest<T = unknown>(
   // All authenticated Graph requests are rate-limited, including legacy
   // callsites that omitted the rateLimit option. Explicit account IDs remain
   // authoritative; fallback tokens are hashed and never logged.
-  const trafficContext = resolveInstagramTrafficContext(method, path, options.accessToken, trafficContext);
+  const trafficContext = resolveInstagramTrafficContext(method, path, options.accessToken, options.rateLimit);
 
   observabilityLogger.info("instagram_api_request_started", {
     method,
