@@ -19,7 +19,7 @@ function getRedisCommandTimeoutMs() {
 }
 
 function getRedisDriver() {
-  return process.env.REDIS_DRIVER?.trim().toLowerCase() === "redis" ? "redis" : "upstash";
+  return ["redis", "local"].includes(process.env.REDIS_DRIVER?.trim().toLowerCase() ?? "") ? "redis" : "upstash";
 }
 
 function getRedisConfig() {
@@ -32,7 +32,7 @@ function getRedisConfig() {
 }
 
 function createNativeRedisClient(): RedisClientLike {
-  const url = process.env["REDIS_URL"]?.trim();
+  const url = process.env["REDIS_URL"]?.trim() || process.env["REDIS_LOCAL_URL"]?.trim();
   if (!url) throw new Error("REDIS_URL is not configured.");
   return new NativeRedisAdapter(new IORedis(url, { commandTimeout: getRedisCommandTimeoutMs() }));
 }

@@ -189,6 +189,10 @@ function getRetryBaseDelayMs(retryBaseDelayMs?: number) {
     : DEFAULT_RETRY_BASE_DELAY_MS;
 }
 
+export function isMetaThrottleCode(code?: number) {
+  return code === 4 || code === 17 || code === 32 || code === 613 || code === 80002;
+}
+
 function isRetryableStatus(status: number) {
   return status === 429 || status >= 500;
 }
@@ -340,8 +344,22 @@ export async function instagramApiRequest<T = unknown>(
       const data = await parseResponse(response);
 
       if (options.rateLimit) {
-        const outcome = response.ok ? "success" : response.status === 429 ? "429" : response.status >= 500 ? "5xx" : null;
-        if (outcome) void recordInstagramTrafficOutcome(options.rateLimit, outcome).catch(() => undefined);
+        const code = data && typeof data === "object" && "error" in data
+          ? (data as { error?: { code?: number } }).error?.code
+          : undefined;
+        const outcome = response.ok ? "success"
+          : response.status === 429 || isMetaThrottleCode(code) ? "429"
+          : response.status >= 500 ? "5xx" : null;
+        if (outcome) {
+          try {
+            await recordInstagramTrafficOutcome(options.rateLimit, outcome);
+          } catch (trafficError) {
+            observabilityLogger.warn("instagram_traffic_outcome_record_failed", {
+              operation: options.rateLimit.operation,
+              error: trafficError instanceof Error ? trafficError.message : String(trafficError),
+            });
+          }
+        }
       }
 
       console.info("[INSTAGRAM_CLIENT_DEBUG] fetch-response", {
@@ -356,13 +374,7 @@ export async function instagramApiRequest<T = unknown>(
         traceId: response.headers.get("x-fb-trace-id"),
         // Vercel's structured log viewer collapses nested objects to "[Object]".
         // Keep the exact parsed Meta response visible as a bounded JSON string.
-        responseBodyJson: (() => {
-          try {
-            return JSON.stringify(data).slice(0, 8000);
-          } catch {
-            return String(data).slice(0, 1000);
-          }
-        })(),
+        responseBodyPresent: data !== null,
       });
 
       const details =
@@ -386,7 +398,7 @@ export async function instagramApiRequest<T = unknown>(
         const canRetry =
           attempt <= maxRetries &&
           isRetryableMethod(method) &&
-          isRetryableStatus(response.status);
+          (isRetryableStatus(response.status) || isMetaThrottleCode(details?.code));
 
         const latencyMs = Date.now() - startedAt;
 
@@ -402,7 +414,7 @@ export async function instagramApiRequest<T = unknown>(
           errorCode: details?.code,
           errorSubcode: details?.error_subcode,
           fbtraceId: details?.fbtrace_id,
-          metaResponse: data,
+          metaErrorCode: details?.code ?? null,
           responseHeaders,
         });
         console.error("[INSTAGRAM_API_ERROR_DETAIL]", {
@@ -419,8 +431,8 @@ export async function instagramApiRequest<T = unknown>(
           params: Object.fromEntries(
             Object.entries(params).filter(([key]) => key !== "access_token"),
           ),
-          requestBody: options.body ?? null,
-          metaResponse: data,
+          hasRequestBody: options.body !== undefined,
+          metaErrorCode: details?.code ?? null,
           responseHeaders,
         });
 

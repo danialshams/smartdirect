@@ -270,6 +270,12 @@ export async function consumeInstagramRateLimit(context: InstagramRateLimitConte
       instagramAccountId: context.instagramAccountId,
       error: error instanceof Error ? error.message : String(error),
     });
+    // A process-local fallback cannot preserve shared Meta quotas at scale.
+    // In production, retain work in the queue rather than allowing each
+    // serverless instance to spend its own independent quota.
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("INSTAGRAM_RATE_LIMIT_SHARED_REDIS_UNAVAILABLE");
+    }
     return consumeLocalFallback(buckets, now);
   }
 }

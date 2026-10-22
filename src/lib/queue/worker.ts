@@ -127,6 +127,7 @@ export async function runQueueWorker(
     }
 
     if (!job) {
+      await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
       return;
     }
 
