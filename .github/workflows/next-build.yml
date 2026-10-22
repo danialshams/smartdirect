@@ -123,6 +123,14 @@ jobs:
           npx tsx scripts/test-traffic-lease-recovery.ts
           npx tsx scripts/test-queue-ownership-regressions.ts
 
+      - name: Test independent Worker processes under account and conversation contention
+        env:
+          REDIS_DRIVER: redis
+          REDIS_URL: redis://127.0.0.1:6379
+          NODE_ENV: test
+          QUEUE_WORKER_TEST_MODE: "1"
+        run: npx tsx scripts/test-parallel-worker-processes.ts
+
       - name: Test Instagram Live automation validation
         run: npm run live:automation:test
 
