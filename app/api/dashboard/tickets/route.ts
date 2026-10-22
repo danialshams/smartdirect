@@ -1,0 +1,57 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+
+export const dynamic = "force-dynamic";
+
+export async function GET() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) return NextResponse.json({ message: "ابتدا وارد حساب شوید." }, { status: 401 });
+
+  try {
+    const items = await prisma.ticket.findMany({
+      where: { userId: session.user.id },
+      orderBy: { updatedAt: "desc" },
+      take: 100,
+      select: {
+        id: true, subject: true, status: true, createdAt: true, updatedAt: true,
+        messages: { orderBy: { createdAt: "desc" }, take: 1, select: { body: true, senderUserId: true, createdAt: true } },
+      },
+    });
+    return NextResponse.json({ data: items }, { headers: { "Cache-Control": "private, no-store" } });
+  } catch (error) {
+    console.error("[Support tickets list]", error);
+    return NextResponse.json({ message: "دریافت درخواست‌های پشتیبانی ناموفق بود." }, { status: 500 });
+  }
+}
+
+export async function POST(req: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) return NextResponse.json({ message: "ابتدا وارد حساب شوید." }, { status: 401 });
+
+  const data = await req.json().catch(() => null);
+  const subject = typeof data?.subject === "string" ? data.subject.trim() : "";
+  const body = typeof data?.body === "string" ? data.body.trim() : "";
+  if (subject.length < 5 || subject.length > 140 || body.length < 10 || body.length > 5000) {
+    return NextResponse.json({ message: "عنوان باید ۵ تا ۱۴۰ و متن درخواست ۱۰ تا ۵۰۰۰ نویسه باشد." }, { status: 400 });
+  }
+
+  try {
+    const recentCount = await prisma.ticket.count({
+      where: { userId: session.user.id, createdAt: { gte: new Date(Date.now() - 60 * 60 * 1000) } },
+    });
+    if (recentCount >= 10) {
+      return NextResponse.json({ message: "حداکثر ۱۰ درخواست در هر ساعت مجاز است." }, { status: 429 });
+    }
+
+    const ticket = await prisma.ticket.create({
+      data: { userId: session.user.id, subject, messages: { create: { body, senderUserId: session.user.id } } },
+      select: { id: true },
+    });
+    return NextResponse.json(ticket, { status: 201, headers: { "Cache-Control": "private, no-store" } });
+  } catch (error) {
+    console.error("[Support create ticket]", error);
+    return NextResponse.json({ message: "ثبت درخواست پشتیبانی ناموفق بود." }, { status: 500 });
+  }
+}
