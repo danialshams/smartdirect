@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { verifyInstagramWebhookSignature } from "@/lib/webhook/verify-signature";
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { start } from "workflow/api";
 import { prisma } from "@/lib/prisma";
 import {
@@ -583,17 +583,20 @@ async function acceptDurableInstagramEvent(input: {
     instagramAccountId: input.instagramAccountId,
   });
   if (saved.status === "DONE") return;
-  // Fast path is best-effort. A shared Redis outage must NOT turn a durably
-  // accepted event into a lost event: worker/cron recovery will retry it.
-  try {
-    await dispatchWebhookInboxEvent(saved.id, async (jobId) => {
-      await start(processInstagramWebhookQueueJob, [jobId]);
-    });
-  } catch (error) {
-    observabilityLogger.warn("webhook_durable_dispatch_deferred", {
-      inboxId: saved.id, error: error instanceof Error ? error.message : String(error),
-    });
-  }
+  // The response acknowledges only the committed PostgreSQL insert.
+  // Enqueue/Workflow run after response to keep Meta webhook latency low.
+  // The durable worker/cron scanner recovers even if this invocation crashes.
+  after(async () => {
+    try {
+      await dispatchWebhookInboxEvent(saved.id, async (jobId) => {
+        await start(processInstagramWebhookQueueJob, [jobId]);
+      });
+    } catch (error) {
+      observabilityLogger.warn("webhook_durable_dispatch_deferred", {
+        inboxId: saved.id, error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  });
 }
 
 async function processMessagingEventWithIdempotency(
