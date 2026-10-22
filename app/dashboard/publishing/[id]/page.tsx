@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { readReelOptions } from "@/lib/instagram/reel-settings";
 import PublishingJobEditor, {
   type PublishingJobInitialData,
 } from "@/components/dashboard/publishing/PublishingJobEditor";
@@ -55,6 +56,7 @@ export default async function PublishingJobPage({ params }: Context) {
     type: job.type as PublishingJobInitialData["type"],
     status: job.status,
     caption: job.caption,
+    reelOptions: job.type === "REEL" ? readReelOptions(job.reelOptions) : null,
     scheduledAt: job.scheduledAt?.toISOString() ?? null,
     publishedAt: job.publishedAt?.toISOString() ?? null,
     media: job.media.map((item) => ({

@@ -1,0 +1,31 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { DEFAULT_REEL_OPTIONS, readReelOptions, reelOptionsSchema } from "../src/lib/instagram/reel-settings";
+
+assert.deepEqual(readReelOptions(null), DEFAULT_REEL_OPTIONS);
+assert.equal(reelOptionsSchema.safeParse({ ...DEFAULT_REEL_OPTIONS, shareToFeed: false }).success, true);
+assert.equal(reelOptionsSchema.safeParse({ ...DEFAULT_REEL_OPTIONS, coverMode: "frame", thumbOffsetMs: 12300 }).success, true);
+assert.equal(reelOptionsSchema.safeParse({ ...DEFAULT_REEL_OPTIONS, coverMode: "frame" }).success, false);
+assert.equal(reelOptionsSchema.safeParse({ ...DEFAULT_REEL_OPTIONS, coverMode: "upload" }).success, false);
+assert.equal(reelOptionsSchema.safeParse({ ...DEFAULT_REEL_OPTIONS, coverMode: "upload", coverUrl: "https://example.org/cover.jpg", coverStorageKey: "pending/owner/cover.jpg" }).success, true);
+assert.equal(reelOptionsSchema.safeParse({ ...DEFAULT_REEL_OPTIONS, coverMode: "upload", coverUrl: "https://example.org/cover.jpg", coverStorageKey: "pending/owner/cover.jpg", thumbOffsetMs: 2000 }).success, false);
+assert.equal(reelOptionsSchema.safeParse({ ...DEFAULT_REEL_OPTIONS, coverMode: "frame", thumbOffsetMs: 900001 }).success, false);
+
+const read=(path: string)=>readFileSync(path,"utf8");
+const create=read("app/api/instagram/publishing/route.ts");
+const edit=read("app/api/instagram/publishing/[id]/route.ts");
+const worker=read("src/lib/instagram/publishing.ts");
+const composer=read("components/dashboard/publishing/PublishingDashboardV2.tsx");
+const editor=read("components/dashboard/publishing/PublishingJobEditor.tsx");
+const upload=read("components/dashboard/publishing/ReelSettingsFields.tsx");
+const refs=read("src/lib/instagram/storage-references.ts");
+assert.ok(create.includes("reelOptions: reelOptionsSchema.optional()") && create.includes("storageKey: reelOptions.coverStorageKey") && create.includes("reelOptions }"),"reel create must validate owned covers and persist settings");
+assert.ok(edit.includes("reelOptions: reelOptionsSchema.optional()") && edit.includes("storageKey: reelOptions.coverStorageKey"),"scheduled reel edits must validate owned covers");
+assert.ok(worker.includes("body.cover_url = settings.coverUrl") && worker.includes("body.thumb_offset = settings.thumbOffsetMs") && worker.includes("body.share_to_feed = settings.shareToFeed"),"worker must send Meta reel options");
+assert.ok(composer.includes("ReelSettingsFields") && composer.includes("...(type === \"REEL\" ? { reelOptions } : {})"),"composer must submit reel options");
+assert.ok(editor.includes("ReelSettingsFields") && editor.includes("...(job.type === \"REEL\" ? { reelOptions } : {})"),"scheduled editor must retain reel options");
+assert.ok(upload.includes("canvas.toBlob") && upload.includes("image/jpeg") && upload.includes("onLoadedMetadata") && upload.includes("thumbOffsetMs"),"cover JPEG normalization and seekable frame selection missing");
+assert.ok(refs.includes('path: ["coverStorageKey"]'),"storage cleanup must protect scheduled cover");
+assert.ok(read("prisma/schema.prisma").includes("reelOptions               Json?"),"Prisma must persist reel options");
+assert.ok(read("prisma/migrations/20261022102000_reel_cover_options/migration.sql").includes('"reelOptions"'),"migration missing");
+console.log("Reel cover, frame, feed and scheduled editing regression tests OK");

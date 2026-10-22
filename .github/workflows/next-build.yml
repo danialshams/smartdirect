@@ -75,6 +75,9 @@ jobs:
       - name: Test direct keyword automation integration
         run: npx tsx scripts/test-direct-automation.ts
 
+      - name: Test advanced Instagram Reel publishing options
+        run: npx tsx scripts/test-reel-settings.ts
+
       - name: Test Daira publishing UX and data integrity
         run: npx tsx scripts/test-publishing-daira.ts
 

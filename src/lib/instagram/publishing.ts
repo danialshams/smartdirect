@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 import { InstagramApiError, instagramApiRequest } from "@/lib/instagram/client";
 import { deletePublishMediaStorage } from "@/lib/instagram/publishing-media-cleanup";
+import { readReelOptions, type ReelOptions } from "@/lib/instagram/reel-settings";
 import { invalidateAutomationCache } from "@/lib/cache/instagram";
 import {
   claimPublishingExecution,
@@ -523,6 +524,7 @@ async function createReelContainer(
   tags: UserTag[] = [],
   tenantId?: string,
   rateLimitAccountId?: string,
+  reelOptions?: ReelOptions,
 ) {
   const body: Record<string, unknown> = {
     media_type: "REELS",
@@ -530,6 +532,10 @@ async function createReelContainer(
   };
   if (caption) body.caption = caption;
   if (tags.length) body.user_tags = JSON.stringify(tags);
+  const settings = readReelOptions(reelOptions);
+  body.share_to_feed = settings.shareToFeed;
+  if (settings.coverMode === "upload" && settings.coverUrl) body.cover_url = settings.coverUrl;
+  if (settings.coverMode === "frame" && settings.thumbOffsetMs !== null) body.thumb_offset = settings.thumbOffsetMs;
 
   const data = await instagramApiRequest<ContainerResponse>(`/${igUserId}/media`, {
     method: "POST",
@@ -1048,6 +1054,7 @@ async function publishInstagramJobInternal(jobId: string) {
         tags,
         tenantId,
         job.instagramAccountId,
+        readReelOptions(job.reelOptions),
       );
     } else {
       if (media.length < 2 || media.length > 10) {
@@ -1177,6 +1184,10 @@ async function publishInstagramJobInternal(jobId: string) {
     });
 
     await cleanupPublishedMedia(updatedJob.media);
+    if (job.type === "REEL") {
+      const coverStorageKey = readReelOptions(job.reelOptions).coverStorageKey;
+      if (coverStorageKey) await prisma.instagramStorageObject.updateMany({ where: { storageKey: coverStorageKey, userId: tenantId, deletedAt: null }, data: { expiresAt: new Date() } });
+    }
 
     await completePublishingExecution(
       idempotencyKey,

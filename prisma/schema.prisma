@@ -455,6 +455,7 @@ model InstagramPublishJob {
   createdAt                 DateTime                @default(now())
   updatedAt                 DateTime                @updatedAt
   userTags                  Json?
+  reelOptions               Json?
   commentAutomationId       String?
   storyReplyAutomationId    String?
   commentTriggerKeywords    String?

@@ -10,6 +10,7 @@ import { proxyInstagramMediaUrl } from "@/lib/instagram/media-proxy";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 import { scheduleInstagramPublish } from "@/lib/instagram/scheduled-publishing-workflow";
 import { getStorageObjectExpiry } from "@/lib/instagram/publishing-media-cleanup";
+import { readReelOptions, reelOptionsSchema } from "@/lib/instagram/reel-settings";
 
 export const dynamic = "force-dynamic";
 const INSTAGRAM_API_VERSION = "v26.0";
@@ -124,6 +125,7 @@ export async function GET(request: NextRequest, context: Context) {
 const updateSchema = z.object({
   caption: z.string().max(2200).optional().nullable(),
   scheduledAt: z.string().datetime().optional().nullable(),
+  reelOptions: reelOptionsSchema.optional(),
 });
 
 export async function PATCH(request: NextRequest, context: Context) {
@@ -139,6 +141,12 @@ export async function PATCH(request: NextRequest, context: Context) {
     const parsed = updateSchema.safeParse(await request.json());
     if (!parsed.success) return NextResponse.json({ success: false, message: "اطلاعات ویرایش معتبر نیست." }, { status: 400 });
 
+    if (parsed.data.reelOptions && job.type !== "REEL") return NextResponse.json({ success: false, message: "این تنظیمات فقط برای ریلز است." }, { status: 400 });
+    const reelOptions = parsed.data.reelOptions ?? readReelOptions(job.reelOptions);
+    if (job.type === "REEL" && reelOptions.coverStorageKey) {
+      const cover = await prisma.instagramStorageObject.findFirst({ where: { userId: session.user.id, storageKey: reelOptions.coverStorageKey, publicUrl: reelOptions.coverUrl, deletedAt: null, expiresAt: { gt: new Date() } }, select: { id: true } });
+      if (!cover) return NextResponse.json({ success: false, message: "کاور معتبر نیست یا منقضی شده؛ دوباره آپلود کن." }, { status: 400 });
+    }
     const nextScheduledAt = parsed.data.scheduledAt ? new Date(parsed.data.scheduledAt) : null;
     if (!nextScheduledAt || Number.isNaN(nextScheduledAt.getTime()) || nextScheduledAt.getTime() <= Date.now()) {
       return NextResponse.json({ success: false, message: "زمان انتشار باید در آینده باشد." }, { status: 400 });
@@ -157,7 +165,7 @@ export async function PATCH(request: NextRequest, context: Context) {
 
     const updated = await prisma.instagramPublishJob.update({
       where: { id: job.id },
-      data: { caption: parsed.data.caption?.trim() || null, scheduledAt: nextScheduledAt, errorMessage: null },
+      data: { caption: parsed.data.caption?.trim() || null, scheduledAt: nextScheduledAt, errorMessage: null, ...(job.type === "REEL" ? { reelOptions } : {}) },
       include: { media: { orderBy: { sortOrder: "asc" } } },
     });
 
@@ -168,7 +176,7 @@ export async function PATCH(request: NextRequest, context: Context) {
 
     await prisma.instagramStorageObject.updateMany({
       where: {
-        storageKey: { in: updated.media.map((item) => item.storageKey) },
+        storageKey: { in: [...updated.media.map((item) => item.storageKey), ...(job.type === "REEL" && reelOptions.coverStorageKey ? [reelOptions.coverStorageKey] : [])] },
         deletedAt: null,
       },
       data: { expiresAt: mediaExpiry },
@@ -230,6 +238,10 @@ export async function DELETE(_request: NextRequest, context: Context) {
 
     await prisma.instagramPublishJob.update({ where: { id }, data: { status: "CANCELLED" } });
 
+    const oldCover = readReelOptions(job.reelOptions).coverStorageKey;
+    if (oldCover) {
+      await prisma.instagramStorageObject.updateMany({ where: { userId: session.user.id, storageKey: oldCover, deletedAt: null }, data: { expiresAt: new Date() } });
+    }
     const cleanupResult = await deletePublishMediaStorage(media);
     const cleanupPending = cleanupResult.failed > 0;
 

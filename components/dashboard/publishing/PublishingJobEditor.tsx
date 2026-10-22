@@ -8,6 +8,9 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/dashboard/DashboardUI";
 import PersianDatePicker from "./PersianDatePicker";
+import ReelSettingsFields from "./ReelSettingsFields";
+import { useStorageUploadLease } from "./useStorageUploadLease";
+import { readReelOptions, type ReelOptions } from "@/lib/instagram/reel-settings";
 import PublishingPageSkeleton from "./PublishingPageSkeleton";
 const EntryPointFlowBuilder = dynamic(
   () => import("@/components/dashboard/EntryPointFlowBuilder"),
@@ -22,6 +25,7 @@ export type PublishingJobInitialData = {
   type: "POST" | "CAROUSEL" | "REEL" | "STORY";
   status: string;
   caption: string | null;
+  reelOptions?: ReelOptions | null;
   scheduledAt: string | null;
   publishedAt: string | null;
   media: Array<{
@@ -136,6 +140,11 @@ export default function PublishingJobEditor({
 
   const [caption, setCaption] = useState("");
   const [originalCaption, setOriginalCaption] = useState("");
+  const [reelOptions, setReelOptions] = useState<ReelOptions>(() => readReelOptions(initialJob?.reelOptions));
+  const [originalReelOptions, setOriginalReelOptions] = useState<ReelOptions>(() => readReelOptions(initialJob?.reelOptions));
+  const [reelCoverUploading, setReelCoverUploading] = useState(false);
+  // Only renew unsaved uploads. A scheduled job already has a longer, publish-aware expiry.
+  useStorageUploadLease(reelOptions.coverUrl && reelOptions.coverUrl !== originalReelOptions.coverUrl ? [reelOptions.coverUrl] : []);
   const [scheduledDate, setScheduledDate] = useState("");
   const [originalScheduledDate, setOriginalScheduledDate] = useState("");
   const [hour, setHour] = useState(0);
@@ -164,6 +173,7 @@ export default function PublishingJobEditor({
     if (!isScheduled) return false;
     return (
       caption !== originalCaption ||
+      (job?.type === "REEL" && JSON.stringify(reelOptions) !== JSON.stringify(originalReelOptions)) ||
       scheduledDate !== originalScheduledDate ||
       hour !== originalHour ||
       minute !== originalMinute
@@ -171,6 +181,9 @@ export default function PublishingJobEditor({
   }, [
     caption,
     originalCaption,
+    reelOptions,
+    originalReelOptions,
+    job?.type,
     scheduledDate,
     originalScheduledDate,
     hour,
@@ -208,6 +221,8 @@ export default function PublishingJobEditor({
         const nextCaption = data.caption ?? "";
         setCaption(nextCaption);
         setOriginalCaption(nextCaption);
+        setReelOptions(readReelOptions(data.reelOptions));
+        setOriginalReelOptions(readReelOptions(data.reelOptions));
 
         if (data.scheduledAt) {
           const parts = getTehranDateParts(data.scheduledAt);
@@ -309,7 +324,11 @@ export default function PublishingJobEditor({
   }, [id]);
 
   async function saveContent() {
-    if (!job || !isScheduled || !contentDirty) return;
+    if (!job || !isScheduled || !contentDirty || reelCoverUploading) return;
+    if (job.type === "REEL" && reelOptions.coverMode === "upload" && !reelOptions.coverUrl) {
+      toast.error("ابتدا عکس کاور را آپلود کن.");
+      return;
+    }
 
     if (!scheduledDate) {
       toast.error("تاریخ انتشار را انتخاب کن.");
@@ -335,6 +354,7 @@ export default function PublishingJobEditor({
           body: JSON.stringify({
             caption: caption.trim() || null,
             scheduledAt,
+            ...(job.type === "REEL" ? { reelOptions } : {}),
           }),
         },
       );
@@ -349,6 +369,7 @@ export default function PublishingJobEditor({
 
       setJob(result.data);
       setOriginalCaption(caption);
+      setOriginalReelOptions({ ...reelOptions });
       setOriginalScheduledDate(scheduledDate);
       setOriginalHour(hour);
       setOriginalMinute(minute);
@@ -619,6 +640,14 @@ export default function PublishingJobEditor({
                 }}
               />
 
+              {job.type === "REEL" && isScheduled && (
+                <div className="mt-5 space-y-2">
+                  <ReelSettingsFields value={reelOptions} onChange={setReelOptions}
+                    videoUrl={job.media.find((item) => item.type === "VIDEO")?.publicUrl ?? null}
+                    disabled={contentSaving || deleting} onBusyChange={setReelCoverUploading}/>
+                </div>
+              )}
+
               <div className="mt-5 rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-4">
                 <div className="mb-3 flex items-center gap-2">
                   <CalendarClock
@@ -700,7 +729,7 @@ export default function PublishingJobEditor({
 
                 <Button
                   type="button"
-                  disabled={!contentDirty || contentSaving || deleting}
+                  disabled={!contentDirty || contentSaving || deleting || reelCoverUploading || (job.type === "REEL" && reelOptions.coverMode === "upload" && !reelOptions.coverUrl)}
                   onClick={() => void saveContent()}
                   className="mt-4 min-h-11 w-full rounded-xl !bg-[#2F61FD] px-4 text-sm font-bold text-white hover:!bg-[#1E4BD8] disabled:cursor-not-allowed disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8]"
                 >
