@@ -109,6 +109,9 @@ jobs:
           npx tsx scripts/test-durable-webhook-inbox.ts
           npx tsx scripts/test-meta-usage-headers.ts
 
+      - name: Test authenticated Meta request gateway
+        run: npx tsx scripts/test-instagram-gateway-policy.ts
+
       - name: Verify Meta webhook signatures
         run: npx tsx scripts/test-webhook-signature.ts
 

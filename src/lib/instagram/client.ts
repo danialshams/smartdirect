@@ -1,3 +1,4 @@
+import { resolveInstagramTrafficContext } from "@/lib/instagram/gateway-policy";
 import { readMetaUsageHeaders } from "@/lib/instagram/usage-headers";
 import type { InstagramRateLimitContext } from "@/lib/instagram/rate-limit";
 import {
@@ -265,29 +266,24 @@ export async function instagramApiRequest<T = unknown>(
 
   const url = buildUrl(path, params);
   const operation = getObservabilityOperation(method, path);
+  // All authenticated Graph requests are rate-limited, including legacy
+  // callsites that omitted the rateLimit option. Explicit account IDs remain
+  // authoritative; fallback tokens are hashed and never logged.
+  const trafficContext = resolveInstagramTrafficContext(method, path, options.accessToken, trafficContext);
 
   observabilityLogger.info("instagram_api_request_started", {
     method,
     path,
     operation,
     hasAccessToken: Boolean(options.accessToken),
-    hasRateLimit: Boolean(options.rateLimit),
-    ...(options.logRequestBody
-      ? {
-          requestBody:
-            options.body instanceof FormData
-              ? { type: "FormData" }
-              : options.body instanceof URLSearchParams
-                ? Object.fromEntries(options.body.entries())
-                : options.body,
-        }
-      : {}),
+    hasRateLimit: Boolean(trafficContext),
+    hasRequestBody: options.body !== undefined,
   });
 
   for (let attempt = 1; attempt <= maxRetries + 1; attempt += 1) {
     let trafficLease: Awaited<ReturnType<typeof acquireInstagramTrafficSlot>> | undefined;
-    if (options.rateLimit) {
-      trafficLease = await acquireInstagramTrafficSlot(options.rateLimit, {
+    if (trafficContext) {
+      trafficLease = await acquireInstagramTrafficSlot(trafficContext, {
         signal: options.signal,
         maxWaitMs: options.rateLimitWaitMs ?? undefined,
       });
@@ -344,12 +340,12 @@ export async function instagramApiRequest<T = unknown>(
 
       const data = await parseResponse(response);
       const usage = readMetaUsageHeaders(response.headers);
-      if (usage && options.rateLimit) {
+      if (usage && trafficContext) {
         // Meta's budget headers are advisory and vary across endpoints. Do not
         // apply one account's business-use-case % as a universal global quota.
         observabilityLogger.info("instagram_meta_budget_sample", {
-          instagramAccountId: options.rateLimit.instagramAccountId,
-          operation: options.rateLimit.operation,
+          instagramAccountId: trafficContext.instagramAccountId,
+          operation: trafficContext.operation,
           maxUsagePercent: usage.maxUsagePercent,
           source: usage.source,
         });
@@ -360,20 +356,20 @@ export async function instagramApiRequest<T = unknown>(
           const { getRedisClient } = await import("@/lib/redis/client");
           const redis = getRedisClient();
           await redis.set(
-            "smartdirect:instagram:usage:v1:" + options.rateLimit.instagramAccountId,
+            "smartdirect:instagram:usage:v1:" + trafficContext.instagramAccountId,
             { ...usage, observedAt: Date.now() },
             { ex: 15 * 60 },
           );
         } catch (usageError) {
           observabilityLogger.warn("instagram_meta_usage_storage_failed", {
-            operation: options.rateLimit.operation,
+            operation: trafficContext.operation,
             error: usageError instanceof Error ? usageError.message : String(usageError),
           });
         }
       }
 
 
-      if (options.rateLimit) {
+      if (trafficContext) {
         const code = data && typeof data === "object" && "error" in data
           ? (data as { error?: { code?: number } }).error?.code
           : undefined;
@@ -382,10 +378,10 @@ export async function instagramApiRequest<T = unknown>(
           : response.status >= 500 ? "5xx" : null;
         if (outcome) {
           try {
-            await recordInstagramTrafficOutcome(options.rateLimit, outcome);
+            await recordInstagramTrafficOutcome(trafficContext, outcome);
           } catch (trafficError) {
             observabilityLogger.warn("instagram_traffic_outcome_record_failed", {
-              operation: options.rateLimit.operation,
+              operation: trafficContext.operation,
               error: trafficError instanceof Error ? trafficError.message : String(trafficError),
             });
           }
@@ -548,10 +544,10 @@ export async function instagramApiRequest<T = unknown>(
       }
 
       if (timedOut) {
-        if (options.rateLimit) void recordInstagramTrafficOutcome(options.rateLimit, "timeout").catch(() => undefined);
+        if (trafficContext) void recordInstagramTrafficOutcome(trafficContext, "timeout").catch(() => undefined);
         throw new InstagramApiTimeoutError(getTimeoutMs(options.timeoutMs));
       }
-      if (options.rateLimit) void recordInstagramTrafficOutcome(options.rateLimit, "network").catch(() => undefined);
+      if (trafficContext) void recordInstagramTrafficOutcome(trafficContext, "network").catch(() => undefined);
 
       throw error instanceof Error ? error : new Error("Instagram API request failed");
     } finally {
