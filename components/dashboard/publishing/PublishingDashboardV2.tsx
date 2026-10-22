@@ -15,6 +15,8 @@ import { toast } from "sonner";
 import PublishingSectionGuide from "./PublishingSectionGuide";
 import { dairaPalette } from "../../../lib/design-system/palette";
 import PublishingQueue from "./PublishingQueue";
+import ReelSettingsFields from "./ReelSettingsFields";
+import { DEFAULT_REEL_OPTIONS, type ReelOptions } from "@/lib/instagram/reel-settings";
 import PublishingPageSkeleton from "./PublishingPageSkeleton";
 import { type JalaliDate } from "./PersianDatePicker";
 
@@ -580,7 +582,9 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const [showTags, setShowTags] = useState(false);
   const [media, setMedia] = useState<LocalMedia[]>([]);
   const [uploadedMedia, setUploadedMedia] = useState<UploadedMedia[]>([]);
-  useStorageUploadLease(uploadedMedia.map((item) => item.publicUrl));
+  const [reelOptions, setReelOptions] = useState<ReelOptions>({ ...DEFAULT_REEL_OPTIONS });
+  const [reelCoverUploading, setReelCoverUploading] = useState(false);
+  useStorageUploadLease([...uploadedMedia.map((item) => item.publicUrl), ...(reelOptions.coverUrl ? [reelOptions.coverUrl] : [])]);
   const [automationEnabled, setAutomationEnabled] = useState(false);
   const [keywords, setKeywords] = useState("");
   const [messages, setMessages] = useState<MessageDraft[]>([createEmptyMessage()]);
@@ -852,8 +856,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     setStepVisible(false);
     window.setTimeout(() => { action(); window.requestAnimationFrame(() => setStepVisible(true)); }, 180);
   }
-  function handleTypeChange(nextType: PublishType) { animateStepChange(() => { setShowTags(false); clearLocalMedia(); setUploadedMedia([]); setType(nextType); setSelectionConfirmed(true); setCaptionStepConfirmed(false); setTagStepConfirmed(false); setAutomationChoiceStepStarted(false); setAutomationChoiceConfirmed(false); setAutomationSetupConfirmed(false); setAutomationKeywordDraft(""); setAutomationKeywords([]); setDirectMessageText(""); setShowUploadedMediaPreview(false); setTaggedUsersByMedia({}); setTagDraftByMedia({}); setTagInputError(""); onTypeChange?.(nextType); setUploadProgress(0); setUploadSuccess(false); setCaption(""); resetAutomation(); }); }
-  function handleBackToTypeSelection() { animateStepChange(() => { setShowTags(false); clearLocalMedia(); setUploadedMedia([]); setSelectionConfirmed(false); setCaptionStepConfirmed(false); setTagStepConfirmed(false); setAutomationChoiceStepStarted(false); setAutomationChoiceConfirmed(false); setShowUploadedMediaPreview(false); setTaggedUsersByMedia({}); setTagDraftByMedia({}); setTagInputError(""); setUploadProgress(0); setUploadSuccess(false); setCaption(""); resetAutomation(); }); }
+  function handleTypeChange(nextType: PublishType) { animateStepChange(() => { setReelOptions({ ...DEFAULT_REEL_OPTIONS }); setShowTags(false); clearLocalMedia(); setUploadedMedia([]); setType(nextType); setSelectionConfirmed(true); setCaptionStepConfirmed(false); setTagStepConfirmed(false); setAutomationChoiceStepStarted(false); setAutomationChoiceConfirmed(false); setAutomationSetupConfirmed(false); setAutomationKeywordDraft(""); setAutomationKeywords([]); setDirectMessageText(""); setShowUploadedMediaPreview(false); setTaggedUsersByMedia({}); setTagDraftByMedia({}); setTagInputError(""); onTypeChange?.(nextType); setUploadProgress(0); setUploadSuccess(false); setCaption(""); resetAutomation(); }); }
+  function handleBackToTypeSelection() { animateStepChange(() => { setReelOptions({ ...DEFAULT_REEL_OPTIONS }); setShowTags(false); clearLocalMedia(); setUploadedMedia([]); setSelectionConfirmed(false); setCaptionStepConfirmed(false); setTagStepConfirmed(false); setAutomationChoiceStepStarted(false); setAutomationChoiceConfirmed(false); setShowUploadedMediaPreview(false); setTaggedUsersByMedia({}); setTagDraftByMedia({}); setTagInputError(""); setUploadProgress(0); setUploadSuccess(false); setCaption(""); resetAutomation(); }); }
   async function prepareFiles(files: File[]) {
     if (!files.length || publishing) return;
     const accepted =
@@ -1316,6 +1320,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     if (!uploadedMedia.length) { setError("ابتدا فایل را آپلود کنید."); return; }
     if (type === "CAROUSEL" && uploadedMedia.length < 2) { setError("پست اسلایدی باید حداقل ۲ اسلاید داشته باشد."); return; }
     if (type !== "CAROUSEL" && uploadedMedia.length !== 1) { setError(`${typeLabels[type]} باید دقیقاً یک فایل داشته باشد.`); return; }
+    if (type === "REEL" && (reelCoverUploading || (reelOptions.coverMode === "upload" && !reelOptions.coverUrl))) { setError("آپلود کاور را کامل کن یا روش کاور را تغییر بده."); return; }
     const selectedScheduleDate = !publishNow ? stage6Date : scheduledDate;
     const selectedHour = !publishNow ? stage6Hour : hour;
     const selectedMinute = !publishNow ? stage6Minute : minute;
@@ -1362,6 +1367,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             : (taggedUsersByMedia[uploadedMedia[0]?.storageKey ?? ""] ?? []).map((username) => ({ username })),
           scheduledAt: publishNow ? null : scheduledAt,
           idempotencyKey: crypto.randomUUID(),
+          ...(type === "REEL" ? { reelOptions } : {}),
           commentAutomationId: type === "STORY" ? null : automationId,
           storyReplyAutomationId: type === "STORY" ? automationId : null,
           media: uploadedMedia,
@@ -1396,6 +1402,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
           setTagDraftByMedia({});
           setTagInputError("");
           setCaption("");
+          setReelOptions({ ...DEFAULT_REEL_OPTIONS });
           setUploadedMedia([]);
           setShowUploadedMediaPreview(false);
           resetAutomation();
@@ -1421,7 +1428,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
         setJobs((current) => [job, ...current.filter((item) => item.id !== job.id)]);
         setActiveTab("queue");
         toast.success(`${typeLabels[type]} برای زمان ${formatScheduledLabel(scheduled!)} تنظیم شد.`, { icon: <Clock3 size={18} className="text-[#2F61FD]" /> });
-        setCaption(""); setUploadedMedia([]); setShowUploadedMediaPreview(false); resetAutomation(); setUploadProgress(0); setScheduledDate(todayJalali); setHour(officialTehranClock.hour); setMinute(officialTehranClock.minute); setStage6Date(todayJalali); setStage6Hour(officialTehranClock.hour); setStage6Minute(officialTehranClock.minute);
+        setCaption(""); setReelOptions({ ...DEFAULT_REEL_OPTIONS }); setUploadedMedia([]); setShowUploadedMediaPreview(false); resetAutomation(); setUploadProgress(0); setScheduledDate(todayJalali); setHour(officialTehranClock.hour); setMinute(officialTehranClock.minute); setStage6Date(todayJalali); setStage6Hour(officialTehranClock.hour); setStage6Minute(officialTehranClock.minute);
         animateStepChange(() => {
           clearLocalMedia();
           setSelectionConfirmed(false);
@@ -1453,18 +1460,18 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
 
   const canUpload = type === "CAROUSEL" ? uploadedMedia.length + media.length < 10 : uploadedMedia.length + media.length < 1;
-  const hasDraft = uploadedMedia.length > 0 || media.length > 0 || Boolean(caption.trim()) || automationEnabled;
+  const hasDraft = uploadedMedia.length > 0 || media.length > 0 || Boolean(caption.trim()) || automationEnabled || (type === "REEL" && JSON.stringify(reelOptions) !== JSON.stringify(DEFAULT_REEL_OPTIONS));
   const canSubmitMedia = uploadedMedia.length >= (type === "CAROUSEL" ? 2 : 1) && !uploading && !media.length;
   const canSubmitAutomation = !automationEnabled || (type === "STORY"
     ? storyResponseSaved && !storyResponseEditing && !storyResponseDirty
     : automationKeywords.length > 0 && Boolean(publishingCommentReplyText.trim()));
   function changeContentType(nextType: PublishType) {
-    if (nextType === type || uploading || publishing) return;
+    if (nextType === type || uploading || reelCoverUploading || publishing) return;
     if (hasDraft && !window.confirm("با تغییر نوع محتوا، رسانه‌های آپلودشده و تنظیمات فعلی حذف می‌شوند. ادامه می‌دهید؟")) return;
     handleTypeChange(nextType);
   }
 
-  const canPublish = canSubmitMedia && canSubmitAutomation && !publishing;
+  const canPublish = canSubmitMedia && canSubmitAutomation && !publishing && !reelCoverUploading && (type !== "REEL" || reelOptions.coverMode !== "upload" || Boolean(reelOptions.coverUrl));
   const acceptedVideos = "video/mp4,video/quicktime,video/webm,video/x-matroska,video/x-msvideo,video/mpeg,video/3gpp,video/mp2t,.mp4,.mov,.m4v,.webm,.mkv,.avi,.3gp,.mpeg,.mpg,.mts,.m2ts";
   const accept = type === "REEL" ? acceptedVideos : type === "STORY" || type === "CAROUSEL" ? "image/jpeg,image/png,image/webp," + acceptedVideos : "image/jpeg,image/png,image/webp";
 
@@ -1493,7 +1500,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               <div className="grid grid-cols-4 gap-2 sm:gap-3" role="group" aria-label="انتخاب نوع محتوا">
                 {([["POST","پست",ImagePlus],["REEL","ریلز",Clapperboard],["CAROUSEL","پست اسلایدی",Images],["STORY","استوری",Camera]] as const).map(([value,label,Icon])=>{
                   const selected=type===value;
-                  return <button key={value} type="button" disabled={uploading||publishing} aria-pressed={selected} onClick={()=>changeContentType(value)}
+                  return <button key={value} type="button" disabled={uploading||reelCoverUploading||publishing} aria-pressed={selected} onClick={()=>changeContentType(value)}
                     className={"relative flex min-h-[78px] flex-col items-center justify-center gap-2 rounded-2xl border px-1.5 py-3 text-center transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2F61FD] disabled:opacity-50 "+(selected?"border-[#2F61FD] bg-[#EDF3FF] text-[#2F61FD]":"border-[#E2E8F0] bg-[#F8FAFC] text-[#5A6B87] hover:border-[#BAD0FF]")}>
                     <Icon size={22} strokeWidth={1.8}/>
                     <span className="text-[11px] font-bold sm:text-xs">{label}</span>
@@ -1610,9 +1617,18 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               </div>
             </section>
 
+            {type==="REEL" && (
+              <section aria-label="تنظیمات ریلز" className="space-y-3">
+                <PublishingSectionGuide number={2} title="تنظیمات ریلز">
+                  کاور ریلز و نمایش آن در فید را به‌دلخواه تنظیم کن. هر دو اختیاری‌اند.
+                </PublishingSectionGuide>
+                <ReelSettingsFields value={reelOptions} onChange={setReelOptions} videoUrl={uploadedMedia[0]?.publicUrl ?? media[0]?.previewUrl ?? null} disabled={publishing || uploading} onBusyChange={setReelCoverUploading}/>
+              </section>
+            )}
+
             {type!=="STORY" && (
               <section aria-label="جزئیات محتوا" className="space-y-3">
-                <PublishingSectionGuide number={2} title="جزئیات محتوا">
+                <PublishingSectionGuide number={type==="REEL"?3:2} title="جزئیات محتوا">
                   کپشن را بنویس؛ در صورت نیاز، تگ کاربران را برای هر رسانه اضافه کن.
                 </PublishingSectionGuide>
                 <div className="mx-auto w-full max-w-4xl space-y-4">
