@@ -2,7 +2,7 @@
 
 import { upload as uploadToBlob } from "@vercel/blob/client";
 import { useRef, useState } from "react";
-import { CheckCircle2, ImagePlus, Loader2, Play, X } from "lucide-react";
+import { CheckCircle2, ImagePlus, Loader2 } from "lucide-react";
 import type { ReelOptions } from "@/lib/instagram/reel-settings";
 
 const MAX_INPUT_BYTES = 12 * 1024 * 1024;
