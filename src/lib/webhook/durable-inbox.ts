@@ -56,7 +56,11 @@ async function postpone(id: string, message: string, delayMs: number) {
 
 /** Claim the database row with a compare-and-swap. Concurrent serverless
  * receivers and worker recovery scanners may safely attempt dispatch. */
-export async function dispatchWebhookInboxEvent(id: string, launch?: (jobId: string) => Promise<unknown>) {
+export async function dispatchWebhookInboxEvent(
+  id: string,
+  launch?: (jobId: string) => Promise<unknown>,
+  enqueue = enqueueInstagramWebhookEvent,
+) {
   const row = await prisma.webhookInboxEvent.findUnique({ where: { id } });
   if (!row || row.status === "DONE") return false;
   const now = new Date();
@@ -122,7 +126,7 @@ export async function dispatchWebhookInboxEvent(id: string, launch?: (jobId: str
         return false;
       }
     }
-    const queued = await enqueueInstagramWebhookEvent({
+    const queued = await enqueue({
       instagramAccountId: row.instagramAccountId,
       eventId: row.eventId,
       eventType: row.eventType as DurableWebhookEventType,

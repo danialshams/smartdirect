@@ -48,6 +48,16 @@ async function main() {
     assert.equal((await persistWebhookInboxEvent(input)).status, "DONE");
 
     const second = await persistWebhookInboxEvent({ ...input, eventId: "m2", event: { sender: { id: "friend2" }, message: { mid: "m2" } } });
+    assert.equal(await dispatchWebhookInboxEvent(second.id, undefined, async () => {
+      throw new Error("INJECTED_REDIS_OUTAGE");
+    }), false, "Redis outage must not reject the durable receipt");
+    const retained = await prisma.webhookInboxEvent.findUniqueOrThrow({ where: { id: second.id } });
+    assert.equal(retained.status, "PENDING");
+    assert.equal(retained.lastError, "INJECTED_REDIS_OUTAGE");
+    // Allow recovery to retry immediately, simulating the backoff expiring.
+    await prisma.webhookInboxEvent.update({
+      where: { id: second.id }, data: { nextAttemptAt: new Date(Date.now() - 1_000) },
+    });
     const scan = await recoverWebhookInbox(10);
     assert(scan.dispatched >= 1, "Recovery must enqueue a pending durable item");
     const replayed = await prisma.webhookInboxEvent.findUniqueOrThrow({ where: { id: second.id } });
