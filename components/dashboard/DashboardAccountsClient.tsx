@@ -104,6 +104,10 @@ export default function DashboardAccountsClient({
     );
   }
 
+  const orderedAccounts = selectedDashboardAccountId
+    ? [...accounts].sort((left, right) => Number(right.id === selectedDashboardAccountId) - Number(left.id === selectedDashboardAccountId))
+    : accounts;
+
   if (mode === "profile") {
     const activeAccount = accounts.find((account) => account.id === selectedDashboardAccountId && account.isConnected)
       ?? accounts.find((account) => account.isConnected);
@@ -120,23 +124,23 @@ export default function DashboardAccountsClient({
   }
 
   if (mode === "inbox") {
-    return <InstagramInbox accounts={accounts} accountsLoading={loading} />;
+    return <InstagramInbox accounts={orderedAccounts} accountsLoading={loading} />;
   }
 
   if (mode === "comments") {
-    return <AutomationManager accounts={accounts} onlyTab="comments" />;
+    return <AutomationManager accounts={orderedAccounts} onlyTab="comments" />;
   }
 
   if (mode === "stories") {
-    return <AutomationManager accounts={accounts} onlyTab="stories" />;
+    return <AutomationManager accounts={orderedAccounts} onlyTab="stories" />;
   }
 
   if (mode === "ice-breaker") {
-    return <IceBreakerManager accounts={accounts} accountsLoading={loading} />;
+    return <IceBreakerManager accounts={orderedAccounts} accountsLoading={loading} />;
   }
 
   if (mode === "persistent-menu") {
-    return <PersistentMenuManager accounts={accounts} accountsLoading={loading} />;
+    return <PersistentMenuManager accounts={orderedAccounts} accountsLoading={loading} />;
   }
 
   return null;

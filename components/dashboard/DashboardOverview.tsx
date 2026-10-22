@@ -169,9 +169,10 @@ export default function DashboardOverview({ instagramAccounts }: DashboardOvervi
             <span className="daira-home__section-underline" aria-hidden="true" />
           </span>
           {summary ? (
-            <span className={"daira-home__automation-count" + (summary.activeAutomations === 0 ? " is-empty" : "")} aria-live="polite">
+            <span className={"daira-home__automation-count" + (summary.activeAutomations === 0 ? " is-empty" : "")} aria-live="polite" aria-label={"تعداد پاسخ هوشمند فعال: " + formatNumber(summary.activeAutomations)}>
               <CheckCircle2 size={14} aria-hidden="true" />
-              تعداد پاسخ هوشمند فعال: {formatNumber(summary.activeAutomations)}
+              <span className="daira-home__automation-count-full">تعداد پاسخ هوشمند فعال: {formatNumber(summary.activeAutomations)}</span>
+              <span className="daira-home__automation-count-mobile">{formatNumber(summary.activeAutomations)} فعال</span>
             </span>
           ) : summaryStatus === "loading" ? (
             <span className="daira-home__skeleton-block daira-home__automation-count-skeleton" aria-hidden="true" />
