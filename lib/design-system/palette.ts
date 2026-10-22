@@ -6,9 +6,9 @@ export const dairaPalette = {
     surface: "#FFFFFF", // سفید؛ کارت‌ها و سطوح اصلی
     surfaceHover: "#F8FAFC", // خاکستری مایل به آبی بسیار روشن؛ حالت هاور سطح
     surfaceActive: "#F1F5F9", // خاکستری مایل به آبی روشن؛ سطح فعال
-    headerStart: "#DCE7FF", // ابتدای گرادیان ثابت هدر داشبورد
-    headerMiddle: "#E5EDFF", // میانه گرادیان هدر داشبورد
-    headerEnd: "#EAF0FF", // انتهای گرادیان هدر داشبورد
+    headerStart: "#EDF3FF", // ابتدای گرادیان ثابت هدر داشبورد
+    headerMiddle: "#F8FAFF", // میانه گرادیان هدر داشبورد
+    headerEnd: "#F2F6FF", // انتهای گرادیان هدر داشبورد
   },
   primary: {
     main: "#2F61FD", // آبی اصلی برند
