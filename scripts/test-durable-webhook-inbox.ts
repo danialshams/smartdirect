@@ -36,6 +36,13 @@ async function main() {
     jobIds.push(sent.queueJobId);
     assert.equal((await getJob(sent.queueJobId))?.type, "INSTAGRAM_WEBHOOK");
     assert.equal(await dispatchWebhookInboxEvent(one.id), false, "Duplicate delivery must not enqueue twice");
+    await prisma.webhookInboxEvent.update({
+      where: { id: one.id }, data: { nextAttemptAt: new Date(Date.now() - 1_000) },
+    });
+    const launched: string[] = [];
+    assert.equal(await dispatchWebhookInboxEvent(one.id, async jobId => { launched.push(jobId); }), false);
+    assert.deepEqual(launched, [sent.queueJobId], "Stuck queued job relaunches without a new enqueue");
+
     await markWebhookInboxDone(webhookInboxKey(input));
     assert.equal((await prisma.webhookInboxEvent.findUniqueOrThrow({ where: { id: one.id } })).status, "DONE");
     assert.equal((await persistWebhookInboxEvent(input)).status, "DONE");

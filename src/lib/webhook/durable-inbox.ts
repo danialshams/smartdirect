@@ -65,6 +65,17 @@ export async function dispatchWebhookInboxEvent(id: string, launch?: (jobId: str
   if (row.queueJobId && row.status === "DISPATCHED") {
     const existing = await getJob(row.queueJobId);
     if (existing && ["waiting", "delayed", "active"].includes(existing.status)) {
+      if (existing.status === "waiting" && launch && row.nextAttemptAt <= now) {
+        // Workflow launch may have failed while Redis enqueue succeeded.
+        // Relaunch *the same job ID*, preserving queue/claim idempotency.
+        try { await launch(existing.id); }
+        catch (error) {
+          observabilityLogger.warn("webhook_existing_job_relaunch_failed", {
+            inboxId: id, jobId: existing.id,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+      }
       await prisma.webhookInboxEvent.updateMany({
         where: { id, status: "DISPATCHED" },
         data: { nextAttemptAt: new Date(Date.now() + QUEUED_RECHECK_MS) },

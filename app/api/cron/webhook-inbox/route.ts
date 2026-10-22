@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { recoverWebhookInbox, webhookInboxHealth } from "@/lib/webhook/durable-inbox";
+import { recoverStalledJobs } from "@/lib/queue/recovery";
+import { promoteDueJobs } from "@/lib/queue/core";
 import { getLatencyPercentiles, getFailureCount } from "@/lib/observability/metrics";
 import { observabilityLogger } from "@/lib/observability/logger";
 
@@ -14,6 +16,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
+    // This fallback also runs when dedicated Workers are unavailable.
+    const stalled = await recoverStalledJobs(40);
+    const promoted = await promoteDueJobs(40);
     const results = await recoverWebhookInbox(50);
     const metrics = await webhookInboxHealth();
     const [ackLatency, replyLatency, dispatchFailures] = await Promise.all([
@@ -28,7 +33,7 @@ export async function GET(request: NextRequest) {
       observabilityLogger.warn("webhook_inbox_backlog_alert", { ...metrics, maxAgeMs, maxPending });
     }
     return NextResponse.json({
-      success: true, degraded, ...results, metrics, dispatchFailures,
+      success: true, degraded, stalled, promoted, ...results, metrics, dispatchFailures,
       latency: { webhookAck: ackLatency, endToEnd: replyLatency },
     }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
