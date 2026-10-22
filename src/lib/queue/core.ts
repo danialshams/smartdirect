@@ -680,6 +680,7 @@ if redis.call("GET", KEYS[1]) == ARGV[1] then
   if KEYS[2] and redis.call("GET", KEYS[2]) == ARGV[1] then
     redis.call("EXPIRE", KEYS[2], ARGV[2])
   end
+  redis.call("ZADD", KEYS[3], ARGV[4], ARGV[3])
   return 1
 end
 return 0
@@ -690,8 +691,8 @@ export async function refreshJobClaim(jobId: string, claimToken: string, instagr
   const keys = getQueueKeys(queueNamespace);
   const result = await redis.eval(
     REFRESH_CLAIM_SCRIPT,
-    [claimKey(jobId), ...(instagramAccountId ? [keys.accountLocks + ":" + instagramAccountId] : [])],
-    [claimToken, String(getQueueClaimTtlSeconds())],
+    [claimKey(jobId), ...(instagramAccountId ? [keys.accountLocks + ":" + instagramAccountId] : [""]), keys.active],
+    [claimToken, String(getQueueClaimTtlSeconds()), jobId, String(Date.now())],
   );
   return Number(result) === 1;
 }
