@@ -55,7 +55,7 @@ const menuGroups = [
     label: "نمای کلی",
     items: [
       { title: "داشبورد", href: "/dashboard", icon: LayoutDashboard },
-      { title: "تحلیل پیج", href: "/dashboard/insights", icon: BarChart3 },
+      { title: "آنالیز پیج", href: "/dashboard/insights", icon: BarChart3 },
     ],
   },
   {

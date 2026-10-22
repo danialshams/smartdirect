@@ -115,7 +115,7 @@ function SkeletonBar({ className = "" }: { className?: string }) {
 }
 function InsightsSkeleton() {
   return (
-    <div role="status" aria-label="در حال بارگذاری تحلیل پیج" className="space-y-4">
+    <div role="status" aria-label="در حال بارگذاری آنالیز پیج" className="space-y-4">
       <span className="sr-only">در حال دریافت آمار پیج...</span>
       <section className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
         <div className="mb-4 flex items-center justify-between">
@@ -448,7 +448,7 @@ export default function InsightsDashboard() {
           <BarChart3 size={23} aria-hidden="true" />
         </span>
         <div className="min-w-0 flex-1">
-          <h1 id="insights-heading" className="text-lg font-extrabold text-[var(--daira-heading)]">تحلیل پیج</h1>
+          <h1 id="insights-heading" className="text-lg font-extrabold text-[var(--daira-heading)]">آنالیز پیج</h1>
           <p className="mt-1 text-xs leading-6 text-[var(--daira-text)]">
             بررسی روند و عملکرد پیج در بازه زمانی دلخواه
           </p>
