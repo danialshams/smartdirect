@@ -35,7 +35,7 @@ export default function DashboardHeader({
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true"><defs><linearGradient id="instagramGradient" x1="2" y1="22" x2="22" y2="2" gradientUnits="userSpaceOnUse"><stop stopColor="#FEDA75"/><stop offset=".35" stopColor="#FA7E1E"/><stop offset=".65" stopColor="#D62976"/><stop offset="1" stopColor="#4F5BD5"/></linearGradient></defs><rect x="3" y="3" width="18" height="18" rx="5" stroke="url(#instagramGradient)" strokeWidth="2"/><circle cx="12" cy="12" r="4" stroke="url(#instagramGradient)" strokeWidth="2"/><circle cx="17.5" cy="6.8" r="1.2" fill="#D62976"/></svg>
         </button>
         <Link href="/dashboard" className="daira-home__brand" aria-label="دایرا - خانه">
-          <Image src="/daira-header-logo-hd.webp" alt="Daira" width={700} height={230} unoptimized priority className="daira-home__brand-image" />
+          <Image src="/daira-header-logo-original.png" alt="Daira" width={1479} height={462} unoptimized priority className="daira-home__brand-image" />
         </Link>
         {showBackButton ? (
           <button
@@ -93,8 +93,8 @@ export default function DashboardHeader({
         .daira-account-modal__empty { margin:0 0 16px;padding:14px;border-radius:14px;background:var(--daira-surface-hover);color:var(--daira-text);font-size:12px; }
         .daira-account-modal__add { display:flex;justify-content:center;align-items:center;gap:8px;width:100%;min-height:48px;border-radius:15px;background:var(--daira-primary);color:var(--daira-surface);text-decoration:none;font-size:13px;font-weight:800;transition:background .2s; }
         .daira-account-modal__add:hover { background:var(--daira-primary-hover); }
-        @media(max-width:900px) { .daira-home__header { min-height:68px;padding:7px 10px;border-radius:20px;grid-template-columns:40px minmax(0,1fr) 40px; } .daira-home__instagram { width:38px;height:38px; } .daira-home__header-spacer { width:38px; } .daira-home__back { width:38px;height:38px; } }
-        @media(max-width:520px) { .daira-home__header { min-height:64px;padding:6px 8px;border-radius:20px;grid-template-columns:38px minmax(0,1fr) 38px;gap:4px; } .daira-home__instagram { width:38px;height:38px; } .daira-home__brand { gap:8px; } .daira-home__header-spacer { width:38px; } .daira-home__back { width:38px;height:38px; } }
+        @media(max-width:900px) { .daira-home__brand-image { width:clamp(108px,15vw,132px);max-height:44px; } .daira-home__header { min-height:68px;padding:7px 10px;border-radius:20px;grid-template-columns:40px minmax(0,1fr) 40px; } .daira-home__instagram { width:38px;height:38px; } .daira-home__header-spacer { width:38px; } .daira-home__back { width:38px;height:38px; } }
+        @media(max-width:520px) { .daira-home__brand-image { width:clamp(92px,27vw,110px);max-height:36px; } .daira-home__header { min-height:64px;padding:6px 8px;border-radius:20px;grid-template-columns:38px minmax(0,1fr) 38px;gap:4px; } .daira-home__instagram { width:38px;height:38px; } .daira-home__brand { gap:8px; } .daira-home__header-spacer { width:38px; } .daira-home__back { width:38px;height:38px; } }
       `}</style>
     </>
   );
