@@ -59,6 +59,10 @@ runQueueWorker(
     } else if (job.type === "SMART_REMINDER") {
       const reminderJob = job as import("../src/lib/queue/types").QueueJob<"SMART_REMINDER">;
       await processSmartReminder(reminderJob.payload.deliveryId);
+    } else {
+      // Never acknowledge a job type that has no execution implementation.
+      // Route it through retry / dead-letter rather than silently losing work.
+      throw new Error(`UNSUPPORTED_QUEUE_JOB_TYPE:${job.type}`);
     }
 
     observabilityLogger.info("job_completed", {
