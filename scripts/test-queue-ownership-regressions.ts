@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { cancelJob, claimNextJob, completeJob, deleteJob, enqueueJob, getJob, getQueueKeys } from "../src/lib/queue/core";
+import { cancelJob, claimJobById, claimNextJob, completeJob, deleteJob, enqueueJob, getJob, getQueueKeys } from "../src/lib/queue/core";
 import { recoverStalledJobs } from "../src/lib/queue/recovery";
 import { getRedisClient } from "../src/lib/redis/client";
 
@@ -18,6 +18,7 @@ async function main() {
     assert(claim1 && claim2, "Independent conversations should run concurrently");
     assert.notEqual(claim1.orderingKey, claim2.orderingKey);
     assert.equal(await claimNextJob("worker-c", ns), null, "Same conversation must remain serialized");
+    assert.equal(await claimJobById(third.id, "workflow-worker", ns), null, "Direct Workflow claim must honor conversation lock");
     await completeJob(claim1.id);
     const claim3 = await claimNextJob("worker-c", ns);
     assert.equal(claim3?.id, third.id, "Next same-conversation job should start once unlocked");

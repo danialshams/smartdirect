@@ -296,6 +296,17 @@ export async function promoteDueJobs(limit = 50, queueNamespace = DEFAULT_QUEUE_
 
 const CLAIM_NEXT_JOB_SCRIPT = `
 local ids = redis.call("ZRANGE", KEYS[1], 0, 49)
+local total = redis.call("ZCARD", KEYS[1])
+-- Always consider highest-priority/oldest jobs. Also rotate a secondary
+-- window so 50 blocked conversations cannot starve later ready accounts.
+if total > 50 then
+  local scanKey = KEYS[3] .. ":scan"
+  local offset = tonumber(redis.call("GET", scanKey) or "50")
+  if offset >= total then offset = 50 end
+  local more = redis.call("ZRANGE", KEYS[1], offset, offset + 49)
+  for _, id in ipairs(more) do table.insert(ids, id) end
+  redis.call("SET", scanKey, tostring((offset + 50) % total), "EX", "3600")
+end
 local lastAccount = redis.call("GET", KEYS[3])
 local fallback = nil
 
@@ -638,6 +649,9 @@ end
 if redis.call("GET", claimKey) then
   return nil
 end
+local orderingKey = job.orderingKey or job.instagramAccountId or ""
+local accountLockKey = KEYS[4] .. ":" .. orderingKey
+if orderingKey ~= "" and redis.call("GET", accountLockKey) then return nil end
 
 job.status = "active"
 job.attempts = (job.attempts or 0) + 1
@@ -645,6 +659,7 @@ job.workerId = ARGV[4]
 job.claimToken = ARGV[5]
 
 redis.call("SET", claimKey, ARGV[5], "EX", ARGV[6])
+if orderingKey ~= "" then redis.call("SET", accountLockKey, ARGV[5], "EX", ARGV[6]) end
 redis.call("SET", jobKey, cjson.encode(job))
 redis.call("ZADD", KEYS[1], ARGV[7], ARGV[2])
 redis.call("ZREM", KEYS[2], ARGV[2])
@@ -663,7 +678,7 @@ export async function claimJobById(
 
   const result = await redis.eval(
     CLAIM_JOB_BY_ID_SCRIPT,
-    [keys.active, keys.ready, keys.delayed],
+    [keys.active, keys.ready, keys.delayed, keys.accountLocks],
     [
       JOB_PREFIX,
       jobId,
