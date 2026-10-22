@@ -5,6 +5,7 @@ import type { QueueJobPayload } from "../src/lib/queue/types";
 import { handleInstagramWebhookJob } from "../src/lib/webhook/worker-handler";
 import { publishInstagramJob } from "../src/lib/instagram/publishing";
 import { processSmartReminder, recoverDueSmartReminders } from "../src/lib/automation/smart-reminders";
+import { recoverWebhookInbox } from "../src/lib/webhook/durable-inbox";
 import { enterObservabilityContext } from "../src/lib/observability/context";
 import { observabilityLogger } from "../src/lib/observability/logger";
 
@@ -32,6 +33,27 @@ const recoveryTimer = setInterval(() => {
 recoveryTimer.unref();
 controller.signal.addEventListener("abort", () => clearInterval(recoveryTimer), { once: true });
 void recoverDueSmartReminders().catch(error => console.error("[SMART_REMINDER] initial recovery scan failed", error));
+
+// Rescan PostgreSQL so a failed Redis enqueue or a process crash cannot
+// permanently drop a Meta webhook. Run this worker independently of Next.js.
+let inboxRecoveryBusy = false;
+const inboxRecoveryTimer = setInterval(() => {
+  if (inboxRecoveryBusy || controller.signal.aborted) return;
+  inboxRecoveryBusy = true;
+  void recoverWebhookInbox(100).catch(error => {
+    observabilityLogger.error("webhook_inbox_recovery_failed", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }).finally(() => { inboxRecoveryBusy = false; });
+}, 30_000);
+inboxRecoveryTimer.unref();
+controller.signal.addEventListener("abort", () => clearInterval(inboxRecoveryTimer), { once: true });
+void recoverWebhookInbox(100).catch(error => {
+  observabilityLogger.error("webhook_inbox_initial_recovery_failed", {
+    error: error instanceof Error ? error.message : String(error),
+  });
+});
+
 
 runQueueWorker(
   async (job) => {
