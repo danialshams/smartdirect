@@ -4,7 +4,7 @@
  */
 export type ExecutionBackend = "workflow" | "worker";
 
-export function resolveExecutionBackend(env: Pick<NodeJS.ProcessEnv, "EXECUTION_BACKEND" | "VERCEL"> = process.env): ExecutionBackend {
+export function resolveExecutionBackend(env: Partial<Pick<NodeJS.ProcessEnv, "EXECUTION_BACKEND" | "VERCEL">> = process.env): ExecutionBackend {
   if (env.EXECUTION_BACKEND === "workflow" || env.EXECUTION_BACKEND === "worker") {
     return env.EXECUTION_BACKEND;
   }
