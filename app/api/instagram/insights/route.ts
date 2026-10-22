@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
+import { acquireInstagramTrafficSlot, releaseInstagramTrafficSlot, recordInstagramTrafficOutcome } from "@/lib/instagram/traffic-control";
 
 export const dynamic = "force-dynamic";
 
@@ -54,11 +55,16 @@ function getErrorMessage(data: InstagramInsightsResponse) {
 
 async function fetchInstagram<T>(
   url: string,
+  instagramAccountId: string,
+  tenantId: string,
 ): Promise<{ response: Response; data: T }> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const trafficContext = { instagramAccountId, tenantId, operation: "INSIGHTS_READ" as const };
+  let trafficLease: Awaited<ReturnType<typeof acquireInstagramTrafficSlot>> | undefined;
 
   try {
+    trafficLease = await acquireInstagramTrafficSlot(trafficContext, { maxWaitMs: 5000 });
     const response = await fetch(url, {
       method: "GET",
       cache: "no-store",
@@ -75,9 +81,17 @@ async function fetchInstagram<T>(
       throw new Error("Instagram returned an invalid JSON response");
     }
 
+    const errorCode = data && typeof data === "object" && "error" in data
+      ? (data as { error?: { code?: number } }).error?.code
+      : undefined;
+    const outcome = response.ok ? "success"
+      : response.status === 429 || [4, 17, 32, 613, 80002].includes(Number(errorCode)) ? "429"
+      : response.status >= 500 ? "5xx" : null;
+    if (outcome) await recordInstagramTrafficOutcome(trafficContext, outcome).catch(() => undefined);
     return { response, data };
   } finally {
     clearTimeout(timeout);
+    if (trafficLease) await releaseInstagramTrafficSlot(trafficLease);
   }
 }
 
@@ -151,6 +165,8 @@ async function fetchDailyInsight(
   igUserId: string,
   accessToken: string,
   dayKey: string,
+  instagramAccountId: string,
+  tenantId: string,
 ) {
   const start = new Date(dayKey + "T00:00:00.000Z");
   const end = new Date(dayKey + "T23:59:59.999Z");
@@ -168,7 +184,7 @@ async function fetchDailyInsight(
   baseUrl.searchParams.set("until", String(Math.floor(end.getTime() / 1000)));
   baseUrl.searchParams.set("access_token", accessToken);
 
-  let baseResult = await fetchInstagram<InstagramInsightsResponse>(baseUrl.toString());
+  let baseResult = await fetchInstagram<InstagramInsightsResponse>(baseUrl.toString(), instagramAccountId, tenantId);
 
   // Keep the normal one-request path. Only retry metrics individually when
   // Meta rejects the combined request, so one unavailable metric cannot block
@@ -194,7 +210,7 @@ async function fetchDailyInsight(
         metricUrl.searchParams.set("access_token", accessToken);
 
         const result = await fetchInstagram<InstagramInsightsResponse>(
-          metricUrl.toString(),
+          metricUrl.toString(), instagramAccountId, tenantId,
         );
         return result.response.ok && result.data.data ? result.data.data : [];
       }),
@@ -234,7 +250,7 @@ async function fetchDailyInsight(
     followUrl.searchParams.set("access_token", accessToken);
 
     const followResult =
-      await fetchInstagram<InstagramInsightsResponse>(followUrl.toString());
+      await fetchInstagram<InstagramInsightsResponse>(followUrl.toString(), instagramAccountId, tenantId);
 
     if (followResult.response.ok && followResult.data.data) {
       ({ follows, unfollows } = getFollowValues(followResult.data));
@@ -440,6 +456,8 @@ export async function GET(request: NextRequest) {
                 igUserId,
                 validAccessToken,
                 day,
+                instagramAccount.id,
+                session.user.id,
               ),
             };
           } catch (error) {
@@ -477,7 +495,7 @@ export async function GET(request: NextRequest) {
 
       const { response, data } =
         await fetchInstagram<InstagramProfileResponse>(
-          profileUrl.toString(),
+          profileUrl.toString(), instagramAccount.id, session.user.id,
         );
 
       if (response.ok && typeof data.followers_count === "number") {
