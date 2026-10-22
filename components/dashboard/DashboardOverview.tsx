@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, ArrowUpLeft, Bot, Camera, CheckCircle2, Clock3, LayoutGrid, MessageCircle, Zap } from "lucide-react";
+import { ArrowLeft, Bot, Camera, CheckCircle2, Clock3, LayoutGrid, MessageCircle, Zap } from "lucide-react";
 import { useDashboardAccountSelection } from "./DashboardAccountContext";
 import DashboardHomeSkeleton from "./DashboardHomeSkeleton";
 
@@ -218,7 +218,6 @@ export default function DashboardOverview({ instagramAccounts }: DashboardOvervi
                     <span className="daira-home__skeleton-block daira-home__status-skeleton" aria-hidden="true" />
                   ) : null}
                 </span>
-                <ArrowUpLeft className="daira-home__card-arrow" size={18} aria-hidden="true" />
               </Link>
             );
           })}

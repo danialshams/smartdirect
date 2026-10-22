@@ -501,7 +501,6 @@ body {
 .daira-home__status--attention { background:#FFF0ED;color:#BB4939; }
 .daira-home__status--queue { background:#EBF2FF;color:#254DC2; }
 .daira-home__status--neutral { background:#F1F5F9;color:#64748B; }
-.daira-home__card-arrow { position:absolute;left:10px;top:10px;color:#98A8C3;opacity:.75; }
 .daira-home__tool-grid { display:grid;gap:12px; }
 .daira-home__tool-grid--automation { grid-template-columns:repeat(4,minmax(0,1fr)); }
 .daira-home__tool-grid--extra { grid-template-columns:repeat(3,minmax(0,1fr)); }
@@ -559,7 +558,6 @@ body {
  .daira-home__quick-copy { flex:0 0 auto;align-items:center;padding:0;gap:4px; }
  .daira-home__quick-copy strong { font-size:14px; }
  .daira-home__quick-desc { font-size:12px;line-height:1.55; }
- .daira-home__card-arrow { left:8px;top:8px;width:15px;height:15px; }
  .daira-home__quick-card--inbox { grid-column:1 / -1;flex-direction:row;justify-content:flex-start;text-align:right;min-height:112px;padding:12px 13px;gap:11px; }
  .daira-home__quick-card--inbox .daira-home__quick-art { width:92px;max-width:92px; }
  .daira-home__quick-card--inbox .daira-home__quick-copy { align-items:flex-start; }
