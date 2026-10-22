@@ -27,6 +27,7 @@ function SkeletonHeading({ title, withStatus = false }: { title: string; withSta
       </span>
       <span className="daira-home__section-title">
         <h2>{title}</h2>
+        <span className="daira-home__section-underline" aria-hidden="true" />
       </span>
       {withStatus ? <span className="daira-home__skeleton-block daira-home__automation-count-skeleton" aria-hidden="true" /> : null}
     </div>
