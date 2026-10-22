@@ -25,8 +25,10 @@ function SkeletonHeading({ title, withStatus = false }: { title: string; withSta
       <span className="daira-home__section-icon" aria-hidden="true">
         <span className="daira-home__skeleton-block daira-home__skeleton-heading-icon" />
       </span>
-      <h2>{title}</h2>
-      <span className="daira-home__section-rule" aria-hidden="true" />
+      <span className="daira-home__section-title">
+        <h2>{title}</h2>
+        <span className="daira-home__section-underline" aria-hidden="true" />
+      </span>
       {withStatus ? <span className="daira-home__skeleton-block daira-home__automation-count-skeleton" aria-hidden="true" /> : null}
     </div>
   );
@@ -37,7 +39,14 @@ export default function DashboardHomeSkeleton() {
     <div className="daira-home" dir="rtl" role="status" aria-busy="true" aria-label="در حال بارگذاری صفحه اصلی داشبورد">
       <span className="sr-only">در حال بارگذاری صفحه اصلی داشبورد</span>
       <div className="daira-home__account-bar" aria-hidden="true">
-        <span className="daira-home__skeleton-block daira-home__skeleton-account" />
+        <div className="daira-home__account-panel daira-home__account-panel--skeleton">
+          <span className="daira-home__account-avatar"><span className="daira-home__skeleton-block daira-home__skeleton-avatar" /></span>
+          <span className="daira-home__account-details">
+            <span className="daira-home__skeleton-block daira-home__skeleton-account-label" />
+            <span className="daira-home__skeleton-block daira-home__skeleton-account-name" />
+          </span>
+          <span className="daira-home__skeleton-block daira-home__skeleton-account-status" />
+        </div>
       </div>
 
       <section className="daira-home__section">

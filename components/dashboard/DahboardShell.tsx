@@ -42,7 +42,7 @@ export default function DashboardShell({ user, instagramAccounts, children }: Da
   const initialAccountId = instagramAccounts.find((account) => account.isConnected)?.id ?? null;
 
   return (
-    <DashboardAccountProvider accountId={initialAccountId}>
+    <DashboardAccountProvider accountId={initialAccountId} accountIds={instagramAccounts.filter((account) => account.isConnected).map((account) => account.id)}>
     <DashboardBackNavigationProvider>
     <DashboardTheme>
       <div dir="rtl" className={`daira-app-shell${isAutomationCreateFlow ? " daira-app-shell--automation-flow" : ""}`}>

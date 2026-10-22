@@ -589,3 +589,52 @@ body {
  .daira-home__quick-card:hover,.daira-home__tool-card:hover { transform:none; }
  .daira-home__skeleton-block { animation:none; }
 }
+
+/* Matched account selector and compact brand section bands, shared by live UI and skeleton. */
+.daira-home__account-bar { display:block;min-height:0;margin:0 0 18px; }
+.daira-home__account-panel { display:flex;direction:rtl;align-items:center;gap:13px;width:100%;min-height:72px;padding:10px 14px;border:1px solid #DFE9FA;border-radius:17px;background:linear-gradient(105deg,#F0F5FF 0%,#F7FAFF 100%);text-align:right;color:var(--daira-heading);cursor:pointer;transition:border-color .18s,box-shadow .18s,background .18s; }
+.daira-home__account-panel:hover { border-color:#C9D9F9;box-shadow:0 5px 18px rgba(47,97,253,.07); }
+.daira-home__account-panel:focus-visible { outline:2px solid var(--daira-primary);outline-offset:3px; }
+.daira-home__account-avatar { display:grid;place-items:center;flex:0 0 50px;width:50px;height:50px;overflow:hidden;border:1px solid #DFE9FA;border-radius:15px;background:#FFF;color:#D62976; }
+.daira-home__account-avatar img { display:block;width:100%;height:100%;object-fit:cover; }
+.daira-home__account-details { display:flex;flex:1;flex-direction:column;align-items:flex-start;justify-content:center;gap:3px;min-width:0; }
+.daira-home__account-label { font-size:11.5px;line-height:1.5;color:#63769D;font-weight:650; }
+.daira-home__account-details strong { display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;align-self:flex-start;color:#18233C;font-size:15px;font-weight:850;line-height:1.5;text-align:left; }
+.daira-home__account-connected { display:inline-flex;flex:0 0 auto;align-items:center;justify-content:center;gap:5px;min-height:28px;padding:5px 10px;border-radius:999px;background:#E3F5EB;color:#15803D;font-size:11px;font-weight:750; }
+.daira-home__section-heading { min-height:56px;display:flex;align-items:center;flex-wrap:nowrap;gap:12px;margin:0 0 12px;padding:9px 13px;border-radius:16px;background:linear-gradient(105deg,#F0F5FF 0%,#F8FAFF 100%); }
+.daira-home__section-icon { display:grid;place-items:center;flex:0 0 38px;width:38px;height:38px;border-radius:12px;background:#DDEAFE;color:#2F61FD; }
+.daira-home__section-title { flex:1;display:flex;align-items:flex-start;justify-content:center;flex-direction:column;gap:6px;min-width:0; }
+.daira-home__section-heading .daira-home__section-title h2 { margin:0;white-space:normal;color:#18233C;font-size:clamp(16px,1.45vw,18px);font-weight:850;line-height:1.5; }
+.daira-home__section-underline { width:38px;height:2px;border-radius:99px;background:#2F61FD; }
+.daira-home__section-heading .daira-home__automation-count { flex:0 0 auto; }
+.daira-account-modal__account { width:100%;text-align:right;cursor:pointer;background:var(--daira-surface);color:var(--daira-heading);transition:background .16s,border-color .16s; }
+.daira-account-modal__account:hover,.daira-account-modal__account.is-active { border-color:#BED1FF;background:#F3F7FF; }
+.daira-account-modal__account:focus-visible { outline:2px solid var(--daira-primary);outline-offset:2px; }
+.daira-account-modal__account.is-active .daira-account-modal__connected { font-weight:850;color:#15803D; }
+.daira-home__account-panel--skeleton { pointer-events:none; }
+.daira-home__skeleton-avatar { width:100%;height:100%;border-radius:13px; }
+.daira-home__skeleton-account-label { width:116px;height:11px; }
+.daira-home__skeleton-account-name { width:150px;max-width:100%;height:16px; }
+.daira-home__skeleton-account-status { flex:0 0 66px;width:66px;height:28px;border-radius:999px; }
+.daira-home__skeleton-heading-icon { width:20px;height:20px;border-radius:6px;background:#C9DAFA; }
+@media(max-width:680px) {
+ .daira-home__account-bar { margin-bottom:16px; }
+ .daira-home__account-panel { min-height:70px;padding:9px 11px;gap:10px;border-radius:15px; }
+ .daira-home__account-avatar { flex-basis:48px;width:48px;height:48px;border-radius:14px; }
+ .daira-home__account-details strong { font-size:14px; }
+ .daira-home__account-label { font-size:11px; }
+ .daira-home__section-heading { min-height:54px;padding:8px 10px;gap:10px;border-radius:14px; }
+ .daira-home__section-icon { flex-basis:36px;width:36px;height:36px;border-radius:11px; }
+ .daira-home__section-heading .daira-home__section-title h2 { font-size:16px; }
+ .daira-home__section-heading .daira-home__automation-count { max-width:49%;font-size:10px;padding:5px 7px; }
+ .daira-home__skeleton-account-status { flex-basis:66px; }
+}
+@media(max-width:370px) {
+ .daira-home__account-panel { gap:8px;padding:8px; }
+ .daira-home__account-connected { padding:5px 8px;font-size:10px; }
+ .daira-home__section-heading { gap:7px;padding:8px; }
+ .daira-home__section-heading .daira-home__automation-count { max-width:47%;font-size:9px; }
+}
+@media(prefers-reduced-motion:reduce) {
+ .daira-home__account-panel { transition:none; }
+}

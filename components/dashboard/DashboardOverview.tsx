@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, ArrowUpLeft, Bot, Camera, CheckCircle2, Clock3, LayoutGrid, MessageCircle, Zap } from "lucide-react";
+import { useDashboardAccountSelection } from "./DashboardAccountContext";
+import DashboardHomeSkeleton from "./DashboardHomeSkeleton";
 
 type InstagramAccount = {
   id: string;
@@ -56,8 +58,11 @@ function formatNumber(value: number) {
 }
 
 export default function DashboardOverview({ instagramAccounts }: DashboardOverviewProps) {
-  const activeAccount = instagramAccounts.find((account) => account.isConnected);
+  const { accountId, isReady } = useDashboardAccountSelection();
+  const activeAccount = instagramAccounts.find((account) => account.id === accountId && account.isConnected)
+    ?? instagramAccounts.find((account) => account.isConnected);
   const activeAccountId = activeAccount?.id ?? null;
+  const [avatarFailedFor, setAvatarFailedFor] = useState<string | null>(null);
   const [summary, setSummary] = useState<HomeSummary | null>(null);
   const [summaryStatus, setSummaryStatus] = useState<"loading" | "ready" | "unavailable">("loading");
 
@@ -90,6 +95,8 @@ export default function DashboardOverview({ instagramAccounts }: DashboardOvervi
     void loadSummary();
     return () => controller.abort();
   }, [activeAccountId]);
+
+  if (!isReady) return <DashboardHomeSkeleton />;
 
   if (!activeAccount) {
     return (
@@ -128,17 +135,39 @@ export default function DashboardOverview({ instagramAccounts }: DashboardOvervi
   return (
     <div className="daira-home" dir="rtl">
       <div className="daira-home__account-bar">
-        <div className="daira-home__account" aria-label="پیج اینستاگرام متصل">
-          <span className="daira-home__account-dot" aria-hidden="true" />
-          <span dir="ltr">{"@" + activeAccount.igUsername}</span>
-        </div>
+        <button
+          type="button"
+          className="daira-home__account-panel"
+          aria-label={"مدیریت پیج فعال اینستاگرام، @" + activeAccount.igUsername}
+          onClick={() => window.dispatchEvent(new Event("daira:open-account-manager"))}
+        >
+          <span className="daira-home__account-avatar">
+            {avatarFailedFor !== activeAccount.id ? (
+              <Image
+                src={"/api/instagram/media-proxy?accountId=" + encodeURIComponent(activeAccount.id)}
+                alt=""
+                width={50}
+                height={50}
+                unoptimized
+                onError={() => setAvatarFailedFor(activeAccount.id)}
+              />
+            ) : <Camera size={24} strokeWidth={1.8} aria-hidden="true" />}
+          </span>
+          <span className="daira-home__account-details">
+            <span className="daira-home__account-label">پیج فعال اینستاگرام</span>
+            <strong dir="ltr">{"@" + activeAccount.igUsername}</strong>
+          </span>
+          <span className="daira-home__account-connected"><CheckCircle2 size={14} aria-hidden="true" />متصل</span>
+        </button>
       </div>
 
       <section className="daira-home__section" aria-labelledby="daira-automation-title">
         <div className="daira-home__section-heading">
-          <span className="daira-home__section-icon" aria-hidden="true"><Bot size={18} strokeWidth={2} /></span>
-          <h2 id="daira-automation-title">پاسخ‌های هوشمند</h2>
-          <span className="daira-home__section-rule" aria-hidden="true" />
+          <span className="daira-home__section-icon" aria-hidden="true"><Bot size={20} strokeWidth={2} /></span>
+          <span className="daira-home__section-title">
+            <h2 id="daira-automation-title">پاسخ‌های هوشمند</h2>
+            <span className="daira-home__section-underline" aria-hidden="true" />
+          </span>
           {summary ? (
             <span className={"daira-home__automation-count" + (summary.activeAutomations === 0 ? " is-empty" : "")} aria-live="polite">
               <CheckCircle2 size={14} aria-hidden="true" />
@@ -165,9 +194,11 @@ export default function DashboardOverview({ instagramAccounts }: DashboardOvervi
 
       <section className="daira-home__section" aria-labelledby="daira-quick-title">
         <div className="daira-home__section-heading">
-          <span className="daira-home__section-icon" aria-hidden="true"><Zap size={18} strokeWidth={2} /></span>
-          <h2 id="daira-quick-title">دسترسی سریع</h2>
-          <span className="daira-home__section-rule" aria-hidden="true" />
+          <span className="daira-home__section-icon" aria-hidden="true"><Zap size={20} strokeWidth={2} /></span>
+          <span className="daira-home__section-title">
+            <h2 id="daira-quick-title">دسترسی سریع</h2>
+            <span className="daira-home__section-underline" aria-hidden="true" />
+          </span>
         </div>
         <div className="daira-home__quick-grid">
           {quickTools.map((tool) => {
@@ -198,9 +229,11 @@ export default function DashboardOverview({ instagramAccounts }: DashboardOvervi
 
       <section className="daira-home__section" aria-labelledby="daira-extra-title">
         <div className="daira-home__section-heading">
-          <span className="daira-home__section-icon" aria-hidden="true"><LayoutGrid size={18} strokeWidth={2} /></span>
-          <h2 id="daira-extra-title">ابزارهای تکمیلی</h2>
-          <span className="daira-home__section-rule" aria-hidden="true" />
+          <span className="daira-home__section-icon" aria-hidden="true"><LayoutGrid size={20} strokeWidth={2} /></span>
+          <span className="daira-home__section-title">
+            <h2 id="daira-extra-title">ابزارهای تکمیلی</h2>
+            <span className="daira-home__section-underline" aria-hidden="true" />
+          </span>
         </div>
         <div className="daira-home__tool-grid daira-home__tool-grid--extra">
           {extraTools.map((tool) => (

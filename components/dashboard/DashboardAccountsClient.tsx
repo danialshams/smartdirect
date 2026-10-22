@@ -13,6 +13,7 @@ import IceBreakerManager from "./IceBreakerManager";
 import PersistentMenuManager from "./PersistentMenuManager";
 import InstagramInbox from "./InstagramInbox";
 import InstagramProfileDashboard from "./InstagramProfileDashboard";
+import { useDashboardAccountId } from "./DashboardAccountContext";
 
 type Account = {
   id: string;
@@ -35,6 +36,7 @@ export default function DashboardAccountsClient({
 }: {
   mode: Mode;
 }) {
+  const selectedDashboardAccountId = useDashboardAccountId();
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -103,7 +105,8 @@ export default function DashboardAccountsClient({
   }
 
   if (mode === "profile") {
-    const activeAccount = accounts.find((account) => account.isConnected);
+    const activeAccount = accounts.find((account) => account.id === selectedDashboardAccountId && account.isConnected)
+      ?? accounts.find((account) => account.isConnected);
 
     if (!activeAccount) {
       return null;

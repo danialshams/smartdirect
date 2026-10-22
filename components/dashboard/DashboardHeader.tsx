@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ChevronRight, X } from "lucide-react";
 import { useDashboardBackNavigation } from "./DashboardBackNavigationContext";
+import { useDashboardAccountSelection } from "./DashboardAccountContext";
 
 type InstagramAccount = {
   id: string;
@@ -26,10 +27,17 @@ export default function DashboardHeader({
   
   const { backHandler } = useDashboardBackNavigation();
   const [accountModalOpen, setAccountModalOpen] = useState(false);
+  const { accountId: selectedAccountId, selectAccount } = useDashboardAccountSelection();
   const connected = instagramAccounts.filter((account) => account.isConnected);
   const [isScrolled, setIsScrolled] = useState(false);
   const closeModalRef = useRef<HTMLButtonElement>(null);
   const accountDialogRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const openAccountModal = () => setAccountModalOpen(true);
+    window.addEventListener("daira:open-account-manager", openAccountModal);
+    return () => window.removeEventListener("daira:open-account-manager", openAccountModal);
+  }, []);
 
   useEffect(() => {
     const updateScroll = () => setIsScrolled(window.scrollY > 8);
@@ -112,8 +120,27 @@ export default function DashboardHeader({
             <button ref={closeModalRef} className="daira-account-modal__close" type="button" aria-label="بستن" onClick={() => setAccountModalOpen(false)}><X size={20} /></button>
             <div className="daira-account-modal__icon"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="2"/><circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="2"/></svg></div>
             <h2 id="daira-account-title">اکانت‌های اینستاگرام</h2>
-            <p className="daira-account-modal__description">پیج متصل رو مدیریت کن یا یک پیج جدید اضافه کن.</p>
-            {connected.length ? <div className="daira-account-modal__accounts">{connected.map((account) => <div className="daira-account-modal__account" key={account.id}><span className="daira-account-modal__avatar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="2"/><circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="2"/></svg></span><span dir="ltr">@{account.igUsername}</span><span className="daira-account-modal__connected">متصل</span></div>)}</div> : <p className="daira-account-modal__empty">هنوز پیجی متصل نکردی.</p>}
+            <p className="daira-account-modal__description">پیج فعال رو انتخاب کن یا یک پیج جدید اضافه کن.</p>
+            {connected.length ? (
+              <div className="daira-account-modal__accounts" role="group" aria-label="انتخاب پیج فعال">
+                {connected.map((account) => (
+                  <button
+                    type="button"
+                    className={"daira-account-modal__account" + (selectedAccountId === account.id ? " is-active" : "")}
+                    key={account.id}
+                    aria-pressed={selectedAccountId === account.id}
+                    onClick={() => {
+                      selectAccount(account.id);
+                      setAccountModalOpen(false);
+                    }}
+                  >
+                    <span className="daira-account-modal__avatar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="2"/><circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="2"/></svg></span>
+                    <span dir="ltr">@{account.igUsername}</span>
+                    <span className="daira-account-modal__connected">{selectedAccountId === account.id ? "فعال" : "انتخاب"}</span>
+                  </button>
+                ))}
+              </div>
+            ) : <p className="daira-account-modal__empty">هنوز پیجی متصل نکردی.</p>}
             <Link className="daira-account-modal__add" href="/api/instagram/connect" onClick={() => setAccountModalOpen(false)}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="2"/><circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="2"/></svg> افزودن اکانت اینستاگرام</Link>
           </section>
         </div>
