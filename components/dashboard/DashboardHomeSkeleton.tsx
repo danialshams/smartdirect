@@ -21,13 +21,12 @@ function SkeletonCard({ kind, index, featured = false }: SkeletonCardProps) {
 
 function SkeletonHeading({ title, withStatus = false }: { title: string; withStatus?: boolean }) {
   return (
-    <div className="daira-home__section-heading">
+    <div className={"daira-home__section-heading" + (withStatus ? " daira-home__section-heading--automation" : "")}>
       <span className="daira-home__section-icon" aria-hidden="true">
         <span className="daira-home__skeleton-block daira-home__skeleton-heading-icon" />
       </span>
       <span className="daira-home__section-title">
         <h2>{title}</h2>
-        <span className="daira-home__section-underline" aria-hidden="true" />
       </span>
       {withStatus ? <span className="daira-home__skeleton-block daira-home__automation-count-skeleton" aria-hidden="true" /> : null}
     </div>

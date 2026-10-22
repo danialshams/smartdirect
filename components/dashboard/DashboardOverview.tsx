@@ -162,17 +162,15 @@ export default function DashboardOverview({ instagramAccounts }: DashboardOvervi
       </div>
 
       <section className="daira-home__section" aria-labelledby="daira-automation-title">
-        <div className="daira-home__section-heading">
+        <div className="daira-home__section-heading daira-home__section-heading--automation">
           <span className="daira-home__section-icon" aria-hidden="true"><Bot size={20} strokeWidth={2} /></span>
           <span className="daira-home__section-title">
             <h2 id="daira-automation-title">پاسخ‌های هوشمند</h2>
-            <span className="daira-home__section-underline" aria-hidden="true" />
           </span>
           {summary ? (
-            <span className={"daira-home__automation-count" + (summary.activeAutomations === 0 ? " is-empty" : "")} aria-live="polite" aria-label={"تعداد پاسخ هوشمند فعال: " + formatNumber(summary.activeAutomations)}>
+            <span className={"daira-home__automation-count" + (summary.activeAutomations === 0 ? " is-empty" : "")} aria-live="polite">
               <CheckCircle2 size={14} aria-hidden="true" />
-              <span className="daira-home__automation-count-full">تعداد پاسخ هوشمند فعال: {formatNumber(summary.activeAutomations)}</span>
-              <span className="daira-home__automation-count-mobile">{formatNumber(summary.activeAutomations)} فعال</span>
+              <span>{formatNumber(summary.activeAutomations)} پاسخ خودکار فعال</span>
             </span>
           ) : summaryStatus === "loading" ? (
             <span className="daira-home__skeleton-block daira-home__automation-count-skeleton" aria-hidden="true" />
@@ -198,7 +196,6 @@ export default function DashboardOverview({ instagramAccounts }: DashboardOvervi
           <span className="daira-home__section-icon" aria-hidden="true"><Zap size={20} strokeWidth={2} /></span>
           <span className="daira-home__section-title">
             <h2 id="daira-quick-title">دسترسی سریع</h2>
-            <span className="daira-home__section-underline" aria-hidden="true" />
           </span>
         </div>
         <div className="daira-home__quick-grid">
@@ -233,7 +230,6 @@ export default function DashboardOverview({ instagramAccounts }: DashboardOvervi
           <span className="daira-home__section-icon" aria-hidden="true"><LayoutGrid size={20} strokeWidth={2} /></span>
           <span className="daira-home__section-title">
             <h2 id="daira-extra-title">ابزارهای تکمیلی</h2>
-            <span className="daira-home__section-underline" aria-hidden="true" />
           </span>
         </div>
         <div className="daira-home__tool-grid daira-home__tool-grid--extra">
