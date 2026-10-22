@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { verifyInstagramWebhookSignature } from "@/lib/webhook/verify-signature";
 import { NextRequest, NextResponse } from "next/server";
 import { start } from "workflow/api";
 import { prisma } from "@/lib/prisma";
@@ -344,7 +345,22 @@ export async function POST(request: NextRequest) {
   });
 
   try {
-    const body = await request.json();
+    const rawBody = await request.text();
+    const webhookSecret = process.env.INSTAGRAM_WEBHOOK_APP_SECRET?.trim() || process.env.INSTAGRAM_CLIENT_SECRET?.trim();
+    if (!webhookSecret) {
+      observabilityLogger.error("webhook_app_secret_missing");
+      return NextResponse.json({ error: "Webhook authentication unavailable" }, { status: 503 });
+    }
+    if (!verifyInstagramWebhookSignature(rawBody, request.headers.get("x-hub-signature-256"), webhookSecret)) {
+      observabilityLogger.warn("webhook_signature_invalid");
+      return NextResponse.json({ error: "Invalid webhook signature" }, { status: 401 });
+    }
+    let body: Record<string, any>;
+    try {
+      body = JSON.parse(rawBody);
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    }
 
     console.log("========================================");
     console.log("INSTAGRAM WEBHOOK EVENT");
