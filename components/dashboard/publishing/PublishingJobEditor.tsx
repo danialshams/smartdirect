@@ -143,7 +143,8 @@ export default function PublishingJobEditor({
   const [reelOptions, setReelOptions] = useState<ReelOptions>(() => readReelOptions(initialJob?.reelOptions));
   const [originalReelOptions, setOriginalReelOptions] = useState<ReelOptions>(() => readReelOptions(initialJob?.reelOptions));
   const [reelCoverUploading, setReelCoverUploading] = useState(false);
-  useStorageUploadLease(reelOptions.coverUrl ? [reelOptions.coverUrl] : []);
+  // Only renew unsaved uploads. A scheduled job already has a longer, publish-aware expiry.
+  useStorageUploadLease(reelOptions.coverUrl && reelOptions.coverUrl !== originalReelOptions.coverUrl ? [reelOptions.coverUrl] : []);
   const [scheduledDate, setScheduledDate] = useState("");
   const [originalScheduledDate, setOriginalScheduledDate] = useState("");
   const [hour, setHour] = useState(0);
