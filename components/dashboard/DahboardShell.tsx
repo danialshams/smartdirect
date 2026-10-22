@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, CircleUserRound, Inbox } from "lucide-react";
+import { Home, CircleUserRound, Ticket } from "lucide-react";
 import DashboardTheme from "./DashboardTheme";
 import DashboardOverview from "./DashboardOverview";
 import DashboardHeader from "./DashboardHeader";
@@ -27,7 +27,7 @@ type DashboardShellProps = {
 const bottomItems = [
   { title: "پروفایل", href: "/dashboard/profile", icon: CircleUserRound },
   { title: "خانه", href: "/dashboard", icon: Home },
-  { title: "دایرکت", href: "/dashboard/inbox", icon: Inbox },
+  { title: "پشتیبانی", href: "/dashboard/tickets", icon: Ticket },
 ];
 
 export default function DashboardShell({ user, instagramAccounts, children }: DashboardShellProps) {
