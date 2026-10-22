@@ -35,7 +35,7 @@ export default function DashboardHeader({
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true"><defs><linearGradient id="instagramGradient" x1="2" y1="22" x2="22" y2="2" gradientUnits="userSpaceOnUse"><stop stopColor="#FEDA75"/><stop offset=".35" stopColor="#FA7E1E"/><stop offset=".65" stopColor="#D62976"/><stop offset="1" stopColor="#4F5BD5"/></linearGradient></defs><rect x="3" y="3" width="18" height="18" rx="5" stroke="url(#instagramGradient)" strokeWidth="2"/><circle cx="12" cy="12" r="4" stroke="url(#instagramGradient)" strokeWidth="2"/><circle cx="17.5" cy="6.8" r="1.2" fill="#D62976"/></svg>
         </button>
         <Link href="/dashboard" className="daira-home__brand" aria-label="دایرا - خانه">
-          <Image src="/daira-header-logo.svg" alt="Daira" width={208} height={68} priority className="daira-home__brand-image" />
+          <Image src="/daira-header-logo.svg" alt="Daira" width={174} height={60} priority className="daira-home__brand-image" />
         </Link>
         {showBackButton ? (
           <button
@@ -73,7 +73,7 @@ export default function DashboardHeader({
         .daira-home__instagram { width:44px;height:44px;border:0;background:transparent;color:var(--daira-accent);display:grid;place-items:center;cursor:pointer;border-radius:14px;transition:background .2s,transform .2s; }
         .daira-home__instagram:hover { background:var(--daira-surface-hover);transform:translateY(-1px); }
         .daira-home__brand { direction:ltr;display:flex;justify-content:center;align-items:center;color:inherit;text-decoration:none;min-width:0; }
-        .daira-home__brand-image { display:block;width:clamp(150px,20vw,208px);height:auto;max-height:69px;object-fit:contain; }
+        .daira-home__brand-image { display:block;width:clamp(136px,16vw,174px);height:auto;max-height:60px;object-fit:contain; }
         .daira-home__page-title { direction:rtl;display:flex;align-items:center;justify-content:center;width:100%;min-width:0;overflow:hidden;color:var(--daira-heading);text-align:center; }
         .daira-home__page-title strong { display:block;max-width:100%;font-size:clamp(15px,2vw,20px);font-weight:800;line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
         .daira-home__header-spacer { width:44px; }
