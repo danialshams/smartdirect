@@ -166,7 +166,6 @@ export default function DashboardOverview({ instagramAccounts }: DashboardOvervi
           <span className="daira-home__section-icon" aria-hidden="true"><Bot size={20} strokeWidth={2} /></span>
           <span className="daira-home__section-title">
             <h2 id="daira-automation-title">پاسخ‌های هوشمند</h2>
-            <span className="daira-home__section-underline" aria-hidden="true" />
           </span>
           {summary ? (
             <span className={"daira-home__automation-count" + (summary.activeAutomations === 0 ? " is-empty" : "")} aria-live="polite">
@@ -197,7 +196,6 @@ export default function DashboardOverview({ instagramAccounts }: DashboardOvervi
           <span className="daira-home__section-icon" aria-hidden="true"><Zap size={20} strokeWidth={2} /></span>
           <span className="daira-home__section-title">
             <h2 id="daira-quick-title">دسترسی سریع</h2>
-            <span className="daira-home__section-underline" aria-hidden="true" />
           </span>
         </div>
         <div className="daira-home__quick-grid">
@@ -232,7 +230,6 @@ export default function DashboardOverview({ instagramAccounts }: DashboardOvervi
           <span className="daira-home__section-icon" aria-hidden="true"><LayoutGrid size={20} strokeWidth={2} /></span>
           <span className="daira-home__section-title">
             <h2 id="daira-extra-title">ابزارهای تکمیلی</h2>
-            <span className="daira-home__section-underline" aria-hidden="true" />
           </span>
         </div>
         <div className="daira-home__tool-grid daira-home__tool-grid--extra">
