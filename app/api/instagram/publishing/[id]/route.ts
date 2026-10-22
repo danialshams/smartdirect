@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { start } from "workflow/api";
+import { resolveExecutionBackend } from "@/lib/runtime/execution-backend";
 import { z } from "zod";
 
 import { authOptions } from "@/lib/auth";
@@ -182,7 +183,9 @@ export async function PATCH(request: NextRequest, context: Context) {
       data: { expiresAt: mediaExpiry },
     });
 
-    await start(scheduleInstagramPublish, [updated.id, nextScheduledAt.toISOString()]);
+    if (resolveExecutionBackend() === "workflow") {
+      await start(scheduleInstagramPublish, [updated.id, nextScheduledAt.toISOString()]);
+    }
     return NextResponse.json({ success: true, data: updated });
   } catch (error) {
     console.error("PATCH /api/instagram/publishing/[id] error:", error);
