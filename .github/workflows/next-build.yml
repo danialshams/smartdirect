@@ -89,10 +89,14 @@ jobs:
           REDIS_URL: redis://127.0.0.1:6379
         run: npm run build
 
-      - name: Migrate isolated PostgreSQL integration database
+      - name: Initialize isolated PostgreSQL schema and verify incremental inbox migration
         env:
           DATABASE_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
-        run: npx prisma migrate deploy
+        run: |
+          # Historical migrations from September contain a duplicate column
+          # declaration; do not rewrite applied production migration history.
+          npx prisma db push
+          npx tsx scripts/test-durable-webhook-migration.ts
 
       - name: Test durable webhook recovery against PostgreSQL and Redis
         env:
