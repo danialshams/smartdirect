@@ -30,6 +30,10 @@ production stays on Vercel. Do not change `vercel.json`, production
    correct database: `npm run db:migrate:status`, then
    `npm run db:migrate:deploy`. VPS build does **not** run migrations.
 5. Run `docker compose -f docker-compose.vps.example.yml --env-file .env.vps up -d --build`.
+   This is the supported self-hosted startup path. The standalone server is
+   started by `node server.js` in Docker, **not** `next start`.
+   For manual non-Docker startup, copy `public` and `.next/static` into
+   `.next/standalone` before `npm run start:self-hosted`.
    The web binds only to localhost port 3000; Redis is internal to Docker.
    Configure a reverse proxy with TLS before routing public traffic.
 6. Run the web and worker containers independently. Worker restart policies
