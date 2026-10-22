@@ -490,7 +490,6 @@ body {
 .daira-home__quick-grid { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px; }
 .daira-home__quick-card,.daira-home__tool-card { position:relative;display:flex;align-items:center;min-width:0;background:var(--daira-surface);color:var(--daira-heading);text-decoration:none;overflow:hidden;transition:transform .18s ease,box-shadow .18s ease,background .18s ease; }
 .daira-home__quick-card { gap:9px;min-height:148px;padding:15px 13px;border:1px solid #EAF0FA;border-radius:20px;box-shadow:0 4px 18px rgba(24,35,60,.035); }
-.daira-home__quick-card--inbox { background:linear-gradient(125deg,#EFF5FF,#FFFFFF 78%);border-color:#DCE8FF; }
 .daira-home__quick-art { display:grid;place-items:center;flex:0 0 37%;min-width:0;max-width:118px; }
 .daira-home__quick-art img,.daira-home__tool-art img { display:block;width:100%;height:auto;object-fit:contain; }
 .daira-home__quick-copy { display:flex;flex:1;flex-direction:column;align-items:flex-start;gap:6px;min-width:0;padding-left:12px; }
@@ -592,8 +591,8 @@ body {
 
 /* Matched account selector and compact brand section bands, shared by live UI and skeleton. */
 .daira-home__account-bar { display:block;min-height:0;margin:0 0 18px; }
-.daira-home__account-panel { display:flex;direction:rtl;align-items:center;gap:13px;width:100%;min-height:72px;padding:10px 14px;border:1px solid #DFE9FA;border-radius:17px;background:linear-gradient(105deg,#F0F5FF 0%,#F7FAFF 100%);text-align:right;color:var(--daira-heading);cursor:pointer;transition:border-color .18s,box-shadow .18s,background .18s; }
-.daira-home__account-panel:hover { border-color:#C9D9F9;box-shadow:0 5px 18px rgba(47,97,253,.07); }
+.daira-home__account-panel { display:flex;direction:rtl;align-items:center;gap:13px;width:100%;min-height:72px;padding:10px 14px;border:1px solid #D3E0F5;border-radius:17px;background:#DFEAFB;text-align:right;color:var(--daira-heading);cursor:pointer;transition:border-color .18s,box-shadow .18s,background .18s; }
+.daira-home__account-panel:hover { border-color:#C3D6F1;background:#D8E5FA;box-shadow:0 5px 18px rgba(47,97,253,.07); }
 .daira-home__account-panel:focus-visible { outline:2px solid var(--daira-primary);outline-offset:3px; }
 .daira-home__account-avatar { display:grid;place-items:center;flex:0 0 50px;width:50px;height:50px;overflow:hidden;border:1px solid #DFE9FA;border-radius:15px;background:#FFF;color:#D62976; }
 .daira-home__account-avatar img { display:block;width:100%;height:100%;object-fit:cover; }
@@ -601,7 +600,7 @@ body {
 .daira-home__account-label { font-size:11.5px;line-height:1.5;color:#63769D;font-weight:650; }
 .daira-home__account-details strong { display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;align-self:flex-start;color:#18233C;font-size:15px;font-weight:850;line-height:1.5;text-align:left; }
 .daira-home__account-connected { display:inline-flex;flex:0 0 auto;align-items:center;justify-content:center;gap:5px;min-height:28px;padding:5px 10px;border-radius:999px;background:#E3F5EB;color:#15803D;font-size:11px;font-weight:750; }
-.daira-home__section-heading { min-height:56px;display:flex;align-items:center;flex-wrap:nowrap;gap:12px;margin:0 0 12px;padding:9px 13px;border-radius:16px;background:linear-gradient(105deg,#F0F5FF 0%,#F8FAFF 100%); }
+.daira-home__section-heading { min-height:56px;display:flex;align-items:center;flex-wrap:nowrap;gap:12px;margin:0 0 12px;padding:9px 13px;border-radius:16px;background:#E7EFFC; }
 .daira-home__section-icon { display:grid;place-items:center;flex:0 0 38px;width:38px;height:38px;border-radius:12px;background:#DDEAFE;color:#2F61FD; }
 .daira-home__section-title { flex:1;display:flex;align-items:flex-start;justify-content:center;flex-direction:column;gap:6px;min-width:0; }
 .daira-home__section-heading .daira-home__section-title h2 { margin:0;white-space:normal;color:#18233C;font-size:clamp(16px,1.45vw,18px);font-weight:850;line-height:1.5; }
@@ -638,39 +637,74 @@ body {
 @media(prefers-reduced-motion:reduce) {
  .daira-home__account-panel { transition:none; }
 }
-/* Keep the active-responses badge a single row on mobile, matching the loading skeleton. */
-.daira-home__automation-count-mobile { display:none; }
+
+/* The active reply count stays opposite the title on every screen size.
+   On small screens its complete wording may wrap inside the badge, never below the title. */
 @media(max-width:680px) {
- .daira-home__automation-count-full { display:none; }
- .daira-home__automation-count-mobile { display:inline;white-space:nowrap; }
- .daira-home__section-heading .daira-home__automation-count { max-width:none;white-space:nowrap;font-size:11px;padding:5px 9px; }
- .daira-home__automation-count-skeleton { width:76px;min-width:76px;height:30px; }
+  .daira-home__section-heading--automation {
+    display:flex;
+    flex-wrap:nowrap;
+    align-items:center;
+    gap:7px;
+    padding:8px 9px;
+  }
+  .daira-home__section-heading--automation .daira-home__section-icon {
+    flex:0 0 30px;
+    width:30px;
+    height:30px;
+    border-radius:9px;
+  }
+  .daira-home__section-heading--automation .daira-home__section-title {
+    flex:1 1 auto;
+    min-width:0;
+  }
+  .daira-home__section-heading--automation .daira-home__section-title h2 {
+    font-size:clamp(12px,3.7vw,16px);
+    white-space:nowrap;
+  }
+  .daira-home__section-heading--automation .daira-home__automation-count {
+    flex:0 1 auto;
+    min-width:0;
+    max-width:54%;
+    gap:4px;
+    padding:6px 7px;
+    font-size:clamp(9px,2.75vw,11px);
+    line-height:1.4;
+    white-space:normal;
+  }
+  .daira-home__section-heading--automation .daira-home__automation-count span {
+    min-width:0;
+    overflow-wrap:normal;
+  }
+  .daira-home__section-heading--automation .daira-home__automation-count-skeleton {
+    flex:0 1 143px;
+    min-width:0;
+    max-width:54%;
+    width:143px;
+    height:30px;
+  }
 }
 @media(max-width:370px) {
- .daira-home__section-heading .daira-home__automation-count { max-width:none;font-size:10px;padding:5px 7px; }
+  .daira-home__section-heading--automation {
+    gap:5px;
+    padding:8px 7px;
+  }
+  .daira-home__section-heading--automation .daira-home__section-icon {
+    flex-basis:28px;
+    width:28px;
+    height:28px;
+  }
+  .daira-home__section-heading--automation .daira-home__section-title h2 {
+    font-size:12px;
+  }
+  .daira-home__section-heading--automation .daira-home__automation-count {
+    padding:5px 6px;
+    font-size:9px;
+    gap:3px;
+  }
+  .daira-home__section-heading--automation .daira-home__automation-count-skeleton {
+    width:132px;
+    flex-basis:132px;
+  }
 }
 
-/* Preserve full auto-reply count on compact screens while using the original section design. */
-@media(max-width:480px) {
-  .daira-home__section-heading--automation {
-    display:grid;
-    grid-template-columns:36px minmax(0,1fr);
-    grid-template-rows:auto auto;
-    align-items:center;
-    column-gap:10px;
-    row-gap:5px;
-    padding:9px 11px;
-  }
-  .daira-home__section-heading--automation .daira-home__section-icon { grid-column:1;grid-row:1; }
-  .daira-home__section-heading--automation .daira-home__section-title { grid-column:2;grid-row:1; }
-  .daira-home__section-heading--automation .daira-home__automation-count,
-  .daira-home__section-heading--automation .daira-home__automation-count-skeleton {
-    grid-column:2;grid-row:2;justify-self:start;min-width:0;max-width:100%;
-  }
-  .daira-home__section-heading--automation .daira-home__automation-count-skeleton { width:146px;min-width:0;height:30px; }
-  .daira-home__section-heading--automation .daira-home__automation-count { padding:5px 9px;font-size:11px;white-space:nowrap; }
-}
-@media(max-width:370px) {
-  .daira-home__section-heading--automation { grid-template-columns:32px minmax(0,1fr);column-gap:7px;padding:9px 8px; }
-  .daira-home__section-heading--automation .daira-home__automation-count { font-size:10px; }
-}
