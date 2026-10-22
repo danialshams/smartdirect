@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { ArrowLeft, ArrowUpLeft, Instagram, Link2, MessageCircle, Sparkles } from "lucide-react";
 
 type InstagramAccount = {
   id: string;
@@ -16,69 +18,272 @@ type DashboardOverviewProps = {
   instagramAccounts: InstagramAccount[];
 };
 
-type DashboardFeature = { title: string; description: string; image: string; href: string; soon?: boolean };
+type Tool = {
+  title: string;
+  description: string;
+  image: string;
+  href: string;
+  key: string;
+};
 
-const features: DashboardFeature[] = [
-  { title: "پاسخ به کامنت", description: "ارسال فوری پیام در کامنت‌ها یا دایرکت", image: "/photos/01-comment.webp", href: "/dashboard/comment-automation" },
-  { title: "پاسخ به استوری", description: "ارسال خودکار پیام در دایرکت و ریپلای استوری", image: "/photos/02-story.webp", href: "/dashboard/story-automation" },
-  { title: "پاسخ به لایو", description: "ارسال آنی پیام و لینک خرید در حین پخش زنده", image: "/photos/03-live.webp", href: "/dashboard/live-automation" },
-  { title: "یادآوری هوشمند", description: "پیام خودکار برای یادآوری خرید", image: "/photos/04-reminder.webp", href: "/dashboard/reminders" },
-  { title: "انتشار محتوا", description: "از همینجا می‌تونی استوری و پست‌های امروز و فردات رو آپلود کنی", image: "/photos/05-publishing.webp", href: "/dashboard/publishing" },
-  { title: "صندوق دایرکت", description: "از همینجا می‌تونی دایرکت‌های بی‌پاسخ رو جواب بدی", image: "/photos/06-inbox.webp", href: "/dashboard/inbox" },
-  { title: "منو دایرکت", description: "پاسخگویی هوشمند به سوالات متداول مشتریان شبانه‌روزی", image: "/photos/07-direct-menu.webp", href: "/dashboard/persistent-menu" },
-  { title: "پاسخ خودکار دایرکت", description: "ارسال پاسخ خودکار با دریافت کلمه کلیدی در دایرکت", image: "/photos/08-direct-auto.webp", href: "/dashboard/direct-automation" },
-  { title: "پیام شروع گفتگو", description: "برای خوش‌آمد، معرفی پیج و سوالات متداول مشتریان", image: "/photos/09-icebreaker.webp", href: "/dashboard/ice-breaker" },
-  { title: "آنالیز", description: "تحلیل و بررسی دقیق پیج اینستاگرام شما", image: "/photos/10-insights.webp", href: "/dashboard/insights" },
+type HomeSummary = {
+  unreadConversations: number;
+  pendingPublishing: number;
+  activeAutomations: number;
+};
+
+const quickTools: Tool[] = [
+  { key: "inbox", title: "صندوق دایرکت", description: "مدیریت گفتگوها و پاسخ به پیام‌های مشتریان", image: "/photos/06-inbox.webp", href: "/dashboard/inbox" },
+  { key: "publishing", title: "انتشار محتوا", description: "ساخت، زمان‌بندی و پیگیری انتشار محتوا", image: "/photos/05-publishing.webp", href: "/dashboard/publishing" },
+  { key: "insights", title: "تحلیل پیج", description: "بررسی روند بازدید، تعامل و عملکرد پیج", image: "/photos/10-insights.webp", href: "/dashboard/insights" },
 ];
 
-export default function DashboardOverview({}: DashboardOverviewProps) {
+const automationTools: Tool[] = [
+  { key: "comment", title: "پاسخ به کامنت", description: "پاسخ خودکار به کامنت‌ها", image: "/photos/01-comment.webp", href: "/dashboard/comment-automation" },
+  { key: "story", title: "پاسخ به استوری", description: "پاسخ خودکار به ریپلای استوری", image: "/photos/02-story.webp", href: "/dashboard/story-automation" },
+  { key: "direct", title: "پاسخ خودکار دایرکت", description: "واکنش به کلمات کلیدی دایرکت", image: "/photos/08-direct-auto.webp", href: "/dashboard/direct-automation" },
+  { key: "live", title: "پاسخ به لایو", description: "ارسال پاسخ هنگام لایو", image: "/photos/03-live.webp", href: "/dashboard/live-automation" },
+];
+
+const extraTools: Tool[] = [
+  { key: "menu", title: "منوی دایرکت", description: "دسترسی سریع مخاطبان به گزینه‌ها", image: "/photos/07-direct-menu.webp", href: "/dashboard/persistent-menu" },
+  { key: "icebreaker", title: "پیام شروع گفتگو", description: "خوش‌آمدگویی و شروع گفتگو", image: "/photos/09-icebreaker.webp", href: "/dashboard/ice-breaker" },
+  { key: "reminders", title: "یادآوری هوشمند", description: "پیگیری هوشمند گفتگوها", image: "/photos/04-reminder.webp", href: "/dashboard/reminders" },
+];
+
+function formatNumber(value: number) {
+  return value.toLocaleString("fa-IR");
+}
+
+export default function DashboardOverview({ instagramAccounts }: DashboardOverviewProps) {
+  const activeAccount = instagramAccounts.find((account) => account.isConnected);
+  const activeAccountId = activeAccount?.id ?? null;
+  const [summary, setSummary] = useState<HomeSummary | null>(null);
+
+  useEffect(() => {
+    if (!activeAccountId) return;
+    const controller = new AbortController();
+    setSummary(null);
+
+    async function loadSummary() {
+      try {
+        const response = await fetch(
+          "/api/dashboard/home-summary?accountId=" + encodeURIComponent(activeAccountId!),
+          { cache: "no-store", signal: controller.signal },
+        );
+        if (!response.ok) return;
+        const result: { success?: boolean; data?: HomeSummary } = await response.json();
+        if (result.success && result.data && !controller.signal.aborted) {
+          setSummary(result.data);
+        }
+      } catch {
+        // The tools stay available if summary metrics cannot be loaded.
+      }
+    }
+
+    void loadSummary();
+    return () => controller.abort();
+  }, [activeAccountId]);
+
+  if (!activeAccount) {
+    return (
+      <div className="daira-home" dir="rtl">
+        <section className="daira-home__onboarding" aria-labelledby="daira-connect-title">
+          <span className="daira-home__onboarding-icon"><Instagram size={27} strokeWidth={1.8} /></span>
+          <h1 id="daira-connect-title">پیج اینستاگرامت رو به دایرا وصل کن</h1>
+          <p>بعد از اتصال پیج، ابزارهای پاسخ‌گویی خودکار، دایرکت، انتشار محتوا و تحلیل پیج از همین صفحه در دسترست قرار می‌گیرند.</p>
+          <Link href="/api/instagram/connect" className="daira-home__connect-link">
+            اتصال پیج اینستاگرام
+            <ArrowLeft size={17} aria-hidden="true" />
+          </Link>
+        </section>
+        <style jsx global>{homeStyles}</style>
+      </div>
+    );
+  }
+
+  const unread = summary?.unreadConversations;
+  const publishing = summary?.pendingPublishing;
+
+  const quickStatus = (key: string) => {
+    if (key === "inbox" && unread !== undefined) {
+      return unread > 0 ? formatNumber(unread) + " گفت‌وگوی خوانده‌نشده" : "همه گفتگوها خوانده شده‌اند";
+    }
+    if (key === "publishing" && publishing !== undefined) {
+      return publishing > 0 ? formatNumber(publishing) + " محتوا در صف انتشار" : "صف انتشار خالی است";
+    }
+    return null;
+  };
+
   return (
-    <main className="daira-home" dir="rtl">
-      <section className="daira-home__grid" aria-label="ابزارهای دایرا">
-        {features.map((feature) => {
-          const content = (
-            <>
-              <div className="daira-home__card-art">
-                <Image src={feature.image} alt="" width={144} height={144} sizes="(max-width: 480px) 34vw, 144px" />
-              </div>
-              <div className="daira-home__card-copy">
-                <h2>{feature.title}</h2>
-                <p>{feature.description}</p>
-              </div>
-              {feature.soon ? <span className="daira-home__soon">به‌زودی</span> : null}
-            </>
-          );
-          return feature.soon ? (
-            <article className="daira-home__card daira-home__card--soon" key={feature.title}>{content}</article>
-          ) : (
-            <Link className="daira-home__card" href={feature.href} key={feature.title}>{content}</Link>
-          );
-        })}
+    <div className="daira-home" dir="rtl">
+      <div className="daira-home__topline">
+        <div>
+          <h1>ابزارهای شما</h1>
+          <p>دسترسی سریع به مدیریت پیج و پیام‌ها</p>
+        </div>
+        <div className="daira-home__account" aria-label="پیج اینستاگرام متصل">
+          <span className="daira-home__account-dot" aria-hidden="true" />
+          <span dir="ltr">{"@" + activeAccount.igUsername}</span>
+        </div>
+      </div>
+
+      <section className="daira-home__section" aria-labelledby="daira-quick-title">
+        <div className="daira-home__section-heading">
+          <h2 id="daira-quick-title">دسترسی سریع</h2>
+          <span>کارهای روزمره</span>
+        </div>
+        <div className="daira-home__quick-grid">
+          {quickTools.map((tool) => {
+            const status = quickStatus(tool.key);
+            return (
+              <Link key={tool.key} className={"daira-home__quick-card daira-home__quick-card--" + tool.key} href={tool.href}>
+                <span className="daira-home__quick-art">
+                  <Image src={tool.image} alt="" width={144} height={144} sizes="(max-width: 680px) 94px, (max-width: 1000px) 104px, 126px" />
+                </span>
+                <span className="daira-home__quick-copy">
+                  <strong>{tool.title}</strong>
+                  <span className="daira-home__quick-desc">{tool.description}</span>
+                  {status ? <span className="daira-home__status" aria-live="polite">{status}</span> : null}
+                </span>
+                <ArrowUpLeft className="daira-home__card-arrow" size={18} aria-hidden="true" />
+              </Link>
+            );
+          })}
+        </div>
       </section>
 
-      <style jsx global>{`
-        .daira-home { width:100%; min-height:100%; padding:clamp(12px,2.6vw,28px); padding-bottom:24px; color:var(--daira-heading); font-family:inherit; }
-        .daira-home__welcome { padding:3px 4px 16px;text-align:right; }
-        .daira-home__welcome p { margin:0;color:var(--daira-heading);font-size:clamp(17px,2vw,22px);font-weight:800; }
-        .daira-home__welcome span { display:block;margin-top:4px;color:var(--daira-text);font-size:13px; }
-        .daira-home__grid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px; }
-        .daira-home__card { position:relative;display:flex;align-items:center;gap:clamp(8px,1.8vw,18px);min-width:0;min-height:156px;padding:clamp(12px,2vw,20px);border:1px solid #FFFFFF;border-radius:23px;background:var(--daira-surface);box-shadow:0 4px 20px rgba(22,54,110,.05);color:inherit;text-decoration:none;overflow:hidden;transition:transform .2s,box-shadow .2s,background .2s; }
-        .daira-home__card:hover { background:var(--daira-surface-hover);box-shadow:0 12px 30px rgba(22,54,110,.12);transform:translateY(-2px); }
-        .daira-home__card:focus-visible { outline:3px solid #2F61FD55;outline-offset:3px; }
-        .daira-home__card-art { flex:0 0 49%;max-width:200px;display:grid;place-items:center;min-width:0; }
-        .daira-home__card-art :global(img) { display:block;width:100%;height:auto;max-height:205px;object-fit:contain;filter:drop-shadow(0 7px 9px #2F61FD12); }
-        .daira-home__card-copy { min-width:0;flex:1;text-align:right; }
-        .daira-home__card-copy h2 { margin:0 0 7px;font-size:clamp(13px,1.45vw,17px);font-weight:800;line-height:1.65;color:var(--daira-heading); }
-        .daira-home__card-copy p { margin:0;color:var(--daira-text);font-size:clamp(10px,1.12vw,13px);line-height:1.85;font-weight:500; }
-        .daira-home__card--soon { cursor:default; }
-        .daira-home__card--soon:hover { transform:none; }
-        .daira-home__soon { position:absolute;top:9px;left:10px;padding:3px 7px;border-radius:20px;background:#FCE7F3;color:#A21CAF;font-size:9px;font-weight:800; }
-        @media (min-width:900px) { .daira-home { max-width:1120px;margin:0 auto;padding-top:26px; } .daira-home__grid { gap:18px; } .daira-home__card { min-height:180px; } }
-        @media (max-width:900px) { .daira-home { padding:7px 8px 8px; } .daira-home__grid { gap:7px; } .daira-home__card { min-height:112px;padding:8px 7px;gap:6px;border-radius:14px; } .daira-home__card-art { flex:0 0 48%;max-width:144px; } .daira-home__card-art :global(img) { max-height:160px; } .daira-home__card-copy h2 { margin-bottom:0;font-size:clamp(11px,1.65vw,14px);line-height:1.55; } .daira-home__card-copy p { display:block;font-size:clamp(9px,1.25vw,12px);line-height:1.55;margin-top:3px; } .daira-home__soon { top:3px;left:4px;padding:2px 4px;font-size:8px; } }
-        @media (max-width:520px) { .daira-home { padding:7px 6px 8px; } .daira-home__grid { gap:7px; } .daira-home__card { min-height:112px;flex-direction:row;justify-content:space-between;align-items:center;gap:5px;padding:7px 6px;border-radius:14px;text-align:right; } .daira-home__card-art { flex:0 0 45%;width:auto;height:auto;max-width:128px; } .daira-home__card-art :global(img) { width:100%;height:auto;max-width:100%;max-height:150px; } .daira-home__card-copy { flex:1;width:auto;text-align:right; } .daira-home__card-copy h2 { margin-bottom:2px;font-size:clamp(11px,2.9vw,13px);line-height:1.5; } .daira-home__card-copy p { display:block;font-size:clamp(9px,2.35vw,11px);line-height:1.5;margin-top:2px; } .daira-home__soon { top:6px;left:6px;font-size:8px;padding:2px 5px; } }
-        @media (max-width:360px) { .daira-home__grid { gap:5px; } .daira-home__card { min-height:108px;padding:5px 4px;gap:3px; } .daira-home__card-art { flex-basis:42%;max-width:92px; } .daira-home__card-art :global(img) { max-height:108px; } .daira-home__card-copy h2 { font-size:11px; } .daira-home__card-copy p { font-size:9px;line-height:1.4; } }
-        @media (prefers-reduced-motion:reduce) { .daira-home__card,.daira-home__card:hover { transition:none;transform:none; } }
-      `}</style>
-    </main>
+      <section className="daira-home__section" aria-labelledby="daira-automation-title">
+        <div className="daira-home__section-heading">
+          <h2 id="daira-automation-title">پاسخ‌گویی خودکار</h2>
+          {summary ? (
+            <span className="daira-home__automation-count">
+              {formatNumber(summary.activeAutomations)} اتوماسیون فعال
+            </span>
+          ) : <span>مدیریت پاسخ‌ها</span>}
+        </div>
+        <div className="daira-home__tool-grid daira-home__tool-grid--automation">
+          {automationTools.map((tool) => (
+            <Link className="daira-home__tool-card" href={tool.href} key={tool.key}>
+              <span className="daira-home__tool-art">
+                <Image src={tool.image} alt="" width={120} height={120} sizes="(max-width: 680px) 60px, 72px" />
+              </span>
+              <span className="daira-home__tool-copy">
+                <strong>{tool.title}</strong>
+                <span>{tool.description}</span>
+              </span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section className="daira-home__section" aria-labelledby="daira-extra-title">
+        <div className="daira-home__section-heading">
+          <h2 id="daira-extra-title">ابزارهای تکمیلی</h2>
+          <span>امکانات بیشتر</span>
+        </div>
+        <div className="daira-home__tool-grid daira-home__tool-grid--extra">
+          {extraTools.map((tool) => (
+            <Link className="daira-home__tool-card" href={tool.href} key={tool.key}>
+              <span className="daira-home__tool-art">
+                <Image src={tool.image} alt="" width={120} height={120} sizes="(max-width: 680px) 60px, 72px" />
+              </span>
+              <span className="daira-home__tool-copy">
+                <strong>{tool.title}</strong>
+                <span>{tool.description}</span>
+              </span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <style jsx global>{homeStyles}</style>
+    </div>
   );
 }
+
+const homeStyles = \`
+  .daira-home { width:100%;max-width:1120px;min-height:100%;margin:0 auto;padding:clamp(8px,1.8vw,20px) clamp(4px,1.1vw,14px) 28px;color:var(--daira-heading);font-family:inherit; }
+  .daira-home__topline { display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin:0 0 20px; }
+  .daira-home__topline h1 { margin:0;color:var(--daira-heading);font-size:clamp(18px,2vw,23px);font-weight:850;line-height:1.6; }
+  .daira-home__topline p { margin:2px 0 0;font-size:12px;color:var(--daira-text);line-height:1.7; }
+  .daira-home__account { max-width:100%;display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border:1px solid #DBE7FA;border-radius:999px;background:var(--daira-surface);color:var(--daira-heading);font-size:12px;font-weight:700; }
+  .daira-home__account span[dir=ltr] { min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+  .daira-home__account-dot { width:8px;height:8px;flex-shrink:0;border-radius:50%;background:var(--daira-success); }
+  .daira-home__section { margin:0 0 26px; }
+  .daira-home__section-heading { display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 2px 12px; }
+  .daira-home__section-heading h2 { margin:0;font-size:clamp(15px,1.5vw,17px);font-weight:850;line-height:1.5; }
+  .daira-home__section-heading > span { color:var(--daira-text);font-size:11px;font-weight:550;text-align:left; }
+  .daira-home__automation-count { color:var(--daira-primary)!important; }
+  .daira-home__quick-grid { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px; }
+  .daira-home__quick-card,.daira-home__tool-card { position:relative;display:flex;align-items:center;min-width:0;background:var(--daira-surface);color:var(--daira-heading);text-decoration:none;overflow:hidden;transition:transform .18s ease,box-shadow .18s ease,background .18s ease; }
+  .daira-home__quick-card { gap:7px;min-height:148px;padding:15px 13px;border:1px solid #EAF0FA;border-radius:20px;box-shadow:0 4px 18px rgba(24,35,60,.035); }
+  .daira-home__quick-card--inbox { background:linear-gradient(125deg,#EFF5FF,#FFFFFF 78%);border-color:#DCE8FF; }
+  .daira-home__quick-art { display:grid;place-items:center;flex:0 0 37%;min-width:0;max-width:118px; }
+  .daira-home__quick-art img,.daira-home__tool-art img { display:block;width:100%;height:auto;object-fit:contain; }
+  .daira-home__quick-copy { display:flex;flex:1;flex-direction:column;align-items:flex-start;gap:5px;min-width:0;padding-left:12px; }
+  .daira-home__quick-copy strong { font-size:clamp(13px,1.45vw,16px);font-weight:850;line-height:1.6; }
+  .daira-home__quick-desc { font-size:11.5px;color:var(--daira-text);line-height:1.75; }
+  .daira-home__status { font-size:10.5px;font-weight:700;line-height:1.6;color:var(--daira-primary); }
+  .daira-home__card-arrow { position:absolute;left:10px;top:10px;color:#98A8C3;opacity:.75; }
+  .daira-home__tool-grid { display:grid;gap:12px; }
+  .daira-home__tool-grid--automation { grid-template-columns:repeat(4,minmax(0,1fr)); }
+  .daira-home__tool-grid--extra { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .daira-home__tool-card { gap:9px;min-height:105px;padding:10px 12px;border:1px solid #EAF0FA;border-radius:17px;box-shadow:0 3px 14px rgba(24,35,60,.025); }
+  .daira-home__tool-art { flex:0 0 66px;max-width:66px;display:grid;place-items:center; }
+  .daira-home__tool-copy { flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:3px; }
+  .daira-home__tool-copy strong { font-size:12.5px;line-height:1.6;font-weight:800; }
+  .daira-home__tool-copy > span { color:var(--daira-text);font-size:10.5px;line-height:1.6; }
+  .daira-home__quick-card:hover,.daira-home__tool-card:hover { transform:translateY(-2px);box-shadow:0 9px 25px rgba(24,35,60,.075);background-color:#F9FBFF; }
+  .daira-home__quick-card:focus-visible,.daira-home__tool-card:focus-visible,.daira-home__connect-link:focus-visible { outline:2px solid var(--daira-primary);outline-offset:3px; }
+  .daira-home__onboarding { display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:320px;padding:38px 24px;text-align:center;border-radius:24px;border:1px solid #DEE8FA;background:linear-gradient(135deg,#EEF5FF,#FFFFFF); }
+  .daira-home__onboarding-icon { display:grid;place-items:center;width:60px;height:60px;margin-bottom:14px;color:var(--daira-primary);background:#E0EAFF;border-radius:19px; }
+  .daira-home__onboarding h1 { margin:0;font-size:clamp(17px,2vw,22px);font-weight:850;line-height:1.7; }
+  .daira-home__onboarding p { max-width:480px;margin:9px 0 22px;color:var(--daira-text);font-size:13px;line-height:1.95; }
+  .daira-home__connect-link { display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:46px;padding:10px 19px;border-radius:13px;background:var(--daira-primary);color:#FFF;text-decoration:none;font-size:13px;font-weight:800; }
+  .daira-home__connect-link:hover { background:var(--daira-primary-hover); }
+  @media(max-width:1050px) {
+    .daira-home__quick-grid { gap:10px; }
+    .daira-home__quick-card { padding:12px 10px; }
+    .daira-home__quick-art { flex-basis:35%; }
+    .daira-home__tool-grid--automation { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  }
+  @media(max-width:680px) {
+    .daira-home { padding:7px 5px 20px; }
+    .daira-home__topline { gap:8px;margin-bottom:17px; }
+    .daira-home__topline h1 { font-size:18px; }
+    .daira-home__topline p { font-size:11.5px; }
+    .daira-home__account { max-width:100%;padding:6px 10px;font-size:11px; }
+    .daira-home__section { margin-bottom:24px; }
+    .daira-home__section-heading { margin-bottom:10px; }
+    .daira-home__quick-grid { grid-template-columns:repeat(2,minmax(0,1fr));gap:9px; }
+    .daira-home__quick-card { flex-direction:column;justify-content:center;gap:5px;min-height:155px;padding:12px 9px 11px;border-radius:17px;text-align:center; }
+    .daira-home__quick-art { flex:0 0 auto;width:72px;max-width:72px; }
+    .daira-home__quick-copy { flex:0 0 auto;align-items:center;padding:0;gap:3px; }
+    .daira-home__quick-copy strong { font-size:13px; }
+    .daira-home__quick-desc { font-size:11px;line-height:1.55; }
+    .daira-home__card-arrow { left:8px;top:8px;width:15px;height:15px; }
+    .daira-home__quick-card--inbox { grid-column:1 / -1;flex-direction:row;justify-content:flex-start;text-align:right;min-height:112px;padding:12px 13px;gap:11px; }
+    .daira-home__quick-card--inbox .daira-home__quick-art { width:92px;max-width:92px; }
+    .daira-home__quick-card--inbox .daira-home__quick-copy { align-items:flex-start; }
+    .daira-home__quick-card--inbox .daira-home__quick-copy strong { font-size:15px; }
+    .daira-home__tool-grid { gap:9px; }
+    .daira-home__tool-grid--extra { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .daira-home__tool-grid--extra .daira-home__tool-card:last-child { grid-column:1 / -1; }
+    .daira-home__tool-card { flex-direction:column;justify-content:center;gap:4px;min-height:118px;padding:9px 7px;border-radius:15px;text-align:center; }
+    .daira-home__tool-art { flex-basis:auto;width:62px;max-width:62px; }
+    .daira-home__tool-copy { align-items:center;gap:3px; }
+    .daira-home__tool-copy strong { font-size:12.5px;line-height:1.6; }
+    .daira-home__tool-copy > span { font-size:11px;line-height:1.6; }
+    .daira-home__tool-grid--extra .daira-home__tool-card:last-child { flex-direction:row;gap:12px;min-height:94px;text-align:right; }
+    .daira-home__tool-grid--extra .daira-home__tool-card:last-child .daira-home__tool-copy { align-items:flex-start; }
+    .daira-home__onboarding { min-height:290px;padding:30px 18px; }
+  }
+  @media(max-width:370px) {
+    .daira-home__quick-card { min-height:165px; }
+    .daira-home__quick-card--inbox { min-height:112px; }
+    .daira-home__tool-copy strong { font-size:12px; }
+    .daira-home__quick-desc { font-size:10.5px; }
+  }
+  @media(prefers-reduced-motion:reduce) { .daira-home__quick-card,.daira-home__tool-card { transition:none; } .daira-home__quick-card:hover,.daira-home__tool-card:hover { transform:none; } }
+\`;
