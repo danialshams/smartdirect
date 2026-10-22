@@ -10,6 +10,7 @@ import { processPublishingQueueJob } from "@/lib/instagram/publishing-workflow";
 import { proxyInstagramMediaUrl } from "@/lib/instagram/media-proxy";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 import { getStorageObjectExpiry } from "@/lib/instagram/publishing-media-cleanup";
+import { DEFAULT_REEL_OPTIONS, reelOptionsSchema } from "@/lib/instagram/reel-settings";
 
 export const dynamic = "force-dynamic";
 const INSTAGRAM_API_VERSION = "v26.0";
@@ -20,6 +21,7 @@ const createSchema = z.object({
   type: z.enum(["POST", "CAROUSEL", "REEL", "STORY"]),
   caption: z.string().max(2200).optional().nullable(),
   userTags: userTagsSchema.optional().default([]),
+  reelOptions: reelOptionsSchema.optional(),
   scheduledAt: z.string().datetime().optional().nullable(),
   idempotencyKey: z.string().max(200).optional().nullable(),
   commentAutomationId: z.string().min(1).optional().nullable(),
@@ -191,6 +193,9 @@ export async function POST(request: NextRequest) {
     const hasUserTags = Array.isArray(normalizedUserTags) ? normalizedUserTags.length > 0 : Object.values(normalizedUserTags.media).some((tags) => tags.length > 0);
     if (hasUserTags && data.type === "STORY") return NextResponse.json({ success: false, message: "Tag کردن با این روش برای Story فعال نیست." }, { status: 400 });
 
+    if (data.type !== "REEL" && data.reelOptions) return NextResponse.json({ success: false, message: "تنظیمات کاور فقط برای ریلز مجاز است." }, { status: 400 });
+    const reelOptions = data.type === "REEL" ? data.reelOptions ?? DEFAULT_REEL_OPTIONS : null;
+
     const account = await prisma.instagramAccount.findFirst({ where: { id: data.instagramAccountId, userId: session.user.id, isConnected: true } });
     if (!account) return NextResponse.json({ success: false, message: "اکانت Instagram پیدا نشد یا متصل نیست." }, { status: 404 });
 
@@ -225,7 +230,14 @@ export async function POST(request: NextRequest) {
     const isScheduled = !!scheduledAt && scheduledAt.getTime() > Date.now();
     const mediaExpiry = getStorageObjectExpiry(scheduledAt);
 
-    const uploadedStorageKeys = data.media.map((item) => item.storageKey);
+    const uploadedStorageKeys = [...data.media.map((item) => item.storageKey), ...(reelOptions?.coverStorageKey ? [reelOptions.coverStorageKey] : [])];
+    if (reelOptions?.coverStorageKey) {
+      const ownedCover = await prisma.instagramStorageObject.findFirst({
+        where: { userId: session.user.id, storageKey: reelOptions.coverStorageKey, publicUrl: reelOptions.coverUrl, deletedAt: null, expiresAt: { gt: new Date() } },
+        select: { id: true },
+      });
+      if (!ownedCover) return NextResponse.json({ success: false, message: "کاور معتبر نیست یا منقضی شده؛ دوباره آپلود کن." }, { status: 400 });
+    }
     if (uploadedStorageKeys.some((key) => key.startsWith("pending/"))) {
       const tracked = await prisma.instagramStorageObject.findMany({
         where: {
@@ -251,6 +263,7 @@ export async function POST(request: NextRequest) {
           status: isScheduled ? "SCHEDULED" : "DRAFT",
           caption: data.caption ?? null,
           ...(hasUserTags ? { userTags: normalizedUserTags } : {}),
+          ...(reelOptions ? { reelOptions } : {}),
           commentAutomationId: data.commentAutomationId ?? null,
           storyReplyAutomationId: data.storyReplyAutomationId ?? null,
           commentTriggerKeywords: data.commentTriggerKeywords?.trim() || null,
