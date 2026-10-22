@@ -1,16 +1,15 @@
 import { createHash } from "node:crypto";
 import { verifyInstagramWebhookSignature } from "@/lib/webhook/verify-signature";
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { start } from "workflow/api";
 import { prisma } from "@/lib/prisma";
 import {
-  claimInstagramWebhookEvent,
   completeInstagramWebhookEvent,
   failInstagramWebhookEvent,
   retryInstagramWebhookEvent,
 } from "@/lib/idempotency/webhook";
 import { normalizeInstagramWebhookEvent } from "@/lib/webhook/normalize";
-import { enqueueInstagramWebhookEvent } from "@/lib/webhook/queue";
+import { dispatchWebhookInboxEvent, markWebhookInboxDone, persistWebhookInboxEvent, webhookInboxKey } from "@/lib/webhook/durable-inbox";
 import { processInstagramWebhookQueueJob } from "@/lib/webhook/workflow";
 
 import { executeAutomation } from "@/lib/automation/execute-automation";
@@ -478,17 +477,6 @@ export async function POST(request: NextRequest) {
             continue;
           }
 
-          if (messagingEvent?.read) {
-            await processInstagramReadReceipt(messagingEvent, accountData);
-            console.log("[INSTAGRAM_READ_DEBUG] receipt-processed", {
-              accountId: accountData.id,
-              senderId: messagingEvent?.sender?.id ?? null,
-              recipientId: messagingEvent?.recipient?.id ?? null,
-              mid: messagingEvent?.read?.mid ?? null,
-              watermark: messagingEvent?.read?.watermark ?? null,
-            });
-            continue;
-          }
 
           await processMessagingEventWithIdempotency(messagingEvent, accountData);
         }
@@ -577,104 +565,62 @@ export async function POST(request: NextRequest) {
 // Webhook Idempotency wrappers
 // =========================================================
 
+async function acceptDurableInstagramEvent(input: {
+  event: unknown;
+  eventType: "MESSAGING" | "COMMENT" | "LIVE_COMMENT";
+  instagramAccountId: string;
+}) {
+  const normalized = normalizeInstagramWebhookEvent({
+    type: input.eventType,
+    event: input.event,
+    accountId: input.instagramAccountId,
+  });
+  // Durability boundary: acknowledge Meta only once the event is in Postgres.
+  const saved = await persistWebhookInboxEvent({
+    eventId: normalized.eventId,
+    event: normalized.rawEvent,
+    eventType: normalized.type,
+    instagramAccountId: input.instagramAccountId,
+  });
+  if (saved.status === "DONE") return;
+  // The response acknowledges only the committed PostgreSQL insert.
+  // Enqueue/Workflow run after response to keep Meta webhook latency low.
+  // The durable worker/cron scanner recovers even if this invocation crashes.
+  after(async () => {
+    try {
+      await dispatchWebhookInboxEvent(saved.id, async (jobId) => {
+        await start(processInstagramWebhookQueueJob, [jobId]);
+      });
+    } catch (error) {
+      observabilityLogger.warn("webhook_durable_dispatch_deferred", {
+        inboxId: saved.id, error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  });
+}
+
 async function processMessagingEventWithIdempotency(
-  messagingEvent: any,
-  instagramAccount: InstagramAccountData,
+  messagingEvent: any, instagramAccount: InstagramAccountData,
 ) {
-  const normalizedEvent = normalizeInstagramWebhookEvent({
-    type: "MESSAGING",
-    event: messagingEvent,
-    accountId: instagramAccount.id,
+  await acceptDurableInstagramEvent({
+    event: messagingEvent, eventType: "MESSAGING", instagramAccountId: instagramAccount.id,
   });
-
-  const claim = await claimInstagramWebhookEvent({
-    instagramAccountId: instagramAccount.id,
-    event: normalizedEvent.rawEvent,
-    eventType: normalizedEvent.type,
-    eventId: normalizedEvent.eventId,
-  });
-
-  if (!claim.claimed) {
-    console.log("Duplicate Instagram messaging webhook skipped:", claim.eventId);
-    return;
-  }
-
-  try {
-    const queued = await enqueueInstagramWebhookEvent({
-      instagramAccountId: instagramAccount.id,
-      eventId: claim.eventId,
-      eventType: "MESSAGING",
-      event: messagingEvent,
-      idempotencyKey: claim.key,
-    });
-    await start(processInstagramWebhookQueueJob, [queued.id]);
-  } catch (error) {
-    await failInstagramWebhookEvent(claim.key, error);
-    throw error;
-  }
 }
 
 async function processCommentEventWithIdempotency(
-  value: any,
-  instagramAccount: InstagramAccountData,
+  value: any, instagramAccount: InstagramAccountData,
 ) {
-  const normalizedEvent = normalizeInstagramWebhookEvent({
-    type: "COMMENT",
-    event: value,
-    accountId: instagramAccount.id,
+  await acceptDurableInstagramEvent({
+    event: value, eventType: "COMMENT", instagramAccountId: instagramAccount.id,
   });
-
-  const claim = await claimInstagramWebhookEvent({
-    instagramAccountId: instagramAccount.id,
-    event: normalizedEvent.rawEvent,
-    eventType: normalizedEvent.type,
-    eventId: normalizedEvent.eventId,
-  });
-
-  if (!claim.claimed) {
-    console.log("Duplicate Instagram comment webhook skipped:", claim.eventId);
-    return;
-  }
-
-  try {
-    const queued = await enqueueInstagramWebhookEvent({
-      instagramAccountId: instagramAccount.id,
-      eventId: claim.eventId,
-      eventType: "COMMENT",
-      event: value,
-      idempotencyKey: claim.key,
-    });
-    await start(processInstagramWebhookQueueJob, [queued.id]);
-  } catch (error) {
-    await failInstagramWebhookEvent(claim.key, error);
-    throw error;
-  }
 }
 
-async function processLiveCommentWithIdempotency(value: unknown, instagramAccount: InstagramAccountData) {
-  const normalizedEvent = normalizeInstagramWebhookEvent({
-    type: "LIVE_COMMENT", event: value, accountId: instagramAccount.id,
+async function processLiveCommentWithIdempotency(
+  value: unknown, instagramAccount: InstagramAccountData,
+) {
+  await acceptDurableInstagramEvent({
+    event: value, eventType: "LIVE_COMMENT", instagramAccountId: instagramAccount.id,
   });
-  const claim = await claimInstagramWebhookEvent({
-    instagramAccountId: instagramAccount.id,
-    event: normalizedEvent.rawEvent,
-    eventType: "LIVE_COMMENT",
-    eventId: normalizedEvent.eventId,
-  });
-  if (!claim.claimed) return;
-  try {
-    const queued = await enqueueInstagramWebhookEvent({
-      instagramAccountId: instagramAccount.id,
-      eventId: claim.eventId,
-      eventType: "LIVE_COMMENT",
-      event: value,
-      idempotencyKey: claim.key,
-    });
-    await start(processInstagramWebhookQueueJob, [queued.id]);
-  } catch (error) {
-    await failInstagramWebhookEvent(claim.key, error);
-    throw error;
-  }
 }
 
 // =========================================================
@@ -733,6 +679,9 @@ export async function processQueuedInstagramWebhookEvent(
     }
 
     await completeInstagramWebhookEvent(webhookEventKey);
+    await markWebhookInboxDone(webhookInboxKey({
+      instagramAccountId: accountData.id, eventType: payload.eventType, eventId: payload.eventId,
+    }));
   } catch (error) {
     await failInstagramWebhookEvent(webhookEventKey, error);
     throw error;

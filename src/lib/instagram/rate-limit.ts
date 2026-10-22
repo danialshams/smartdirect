@@ -42,10 +42,12 @@ const DEFAULTS: Record<InstagramRateLimitOperation, { limit: number; windowMs: n
   COMMENT_REPLY: { limit: 100, windowMs: 1_000 },
   COMMENT_LIKE: { limit: 100, windowMs: 1_000 },
   COMMENT_PRIVATE_REPLY: { limit: 750, windowMs: 60 * 60 * 1_000 },
-  PUBLISH_MEDIA: { limit: 100, windowMs: 24 * 60 * 60 * 1_000 },
-  PUBLISH_REEL: { limit: 100, windowMs: 24 * 60 * 60 * 1_000 },
-  PUBLISH_CAROUSEL: { limit: 100, windowMs: 24 * 60 * 60 * 1_000 },
-  PUBLISH_STORY: { limit: 100, windowMs: 24 * 60 * 60 * 1_000 },
+  // These are API-call pacing limits, NOT Meta's content-publication quota.
+  // The separate content_publishing_limit endpoint controls the 24h publication budget.
+  PUBLISH_MEDIA: { limit: 15, windowMs: 1_000 },
+  PUBLISH_REEL: { limit: 15, windowMs: 1_000 },
+  PUBLISH_CAROUSEL: { limit: 15, windowMs: 1_000 },
+  PUBLISH_STORY: { limit: 15, windowMs: 1_000 },
   PUBLISH_QUOTA_READ: { limit: 2, windowMs: 1_000 },
   PUBLISH_CONTAINER_STATUS: { limit: 20, windowMs: 1_000 },
   AUTOMATION_MEDIA_PREVIEW: { limit: 100, windowMs: 60 * 1_000 },

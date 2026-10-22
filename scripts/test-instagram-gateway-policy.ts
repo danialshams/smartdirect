@@ -1,0 +1,12 @@
+import assert from "node:assert/strict";
+import { resolveInstagramTrafficContext } from "../src/lib/instagram/gateway-policy";
+assert.equal(resolveInstagramTrafficContext("GET", "me", undefined), undefined);
+const t = resolveInstagramTrafficContext("POST", "123/messages", "token-secret")!;
+assert.equal(t.operation, "MESSAGE_TEXT");
+assert(t.instagramAccountId.startsWith("token:"));
+assert(!t.instagramAccountId.includes("secret"));
+assert.equal(resolveInstagramTrafficContext("GET", "123/insights", "token-secret")!.operation, "INSIGHTS_READ");
+assert.equal(resolveInstagramTrafficContext("POST", "some/replies", "token-secret")!.operation, "COMMENT_REPLY");
+const explicit = { instagramAccountId: "canonical-account-id", operation: "MESSAGE_MEDIA" as const };
+assert.deepEqual(resolveInstagramTrafficContext("POST", "123/messages", "token-secret", explicit), explicit);
+console.log("Authenticated Instagram gateway fallback classification: OK");

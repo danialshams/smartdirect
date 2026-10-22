@@ -1,4 +1,4 @@
-import { claimJobById, completeJob, startJobClaimHeartbeat } from "@/lib/queue/core";
+import { claimJobById, completeJob, getJob, startJobClaimHeartbeat } from "@/lib/queue/core";
 import { acquireLock, releaseLock } from "@/lib/lock/redis-lock";
 import type { DistributedLockHandle } from "@/lib/lock/types";
 import { handleInstagramWebhookJob } from "@/lib/webhook/worker-handler";
@@ -13,7 +13,13 @@ export async function processInstagramWebhookQueueJobStep(jobId: string) {
   const job = await claimJobById(jobId, workflowWorkerId);
 
   if (!job) {
-    return { ok: false, skipped: true, message: "Webhook queue job پیدا نشد." };
+    const existing = await getJob(jobId);
+    // Let Workflow retry while a different worker owns the conversation.
+    // A skipped Workflow would otherwise strand a waiting Redis job on Vercel.
+    if (existing?.status === "waiting" || existing?.status === "delayed") {
+      throw new Error("WEBHOOK_JOB_CLAIM_BUSY_RETRY");
+    }
+    return { ok: false, skipped: true, message: "Webhook queue job پیدا نشد یا قبلاً پردازش شده است." };
   }
 
   if (job.type !== "INSTAGRAM_WEBHOOK") {
@@ -21,7 +27,7 @@ export async function processInstagramWebhookQueueJobStep(jobId: string) {
   }
 
   enterObservabilityContext({ jobId: job.id });
-  const stopClaimHeartbeat = startJobClaimHeartbeat(job.id, job.claimToken ?? "", undefined, job.instagramAccountId, job.queueNamespace);
+  const stopClaimHeartbeat = startJobClaimHeartbeat(job.id, job.claimToken ?? "", undefined, job.orderingKey ?? job.instagramAccountId, job.queueNamespace);
 
   let lockHandle: DistributedLockHandle | undefined;
 

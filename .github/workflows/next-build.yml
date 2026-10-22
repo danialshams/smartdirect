@@ -51,6 +51,19 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: smartdirect
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U user -d smartdirect"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -76,6 +89,29 @@ jobs:
           REDIS_URL: redis://127.0.0.1:6379
         run: npm run build
 
+      - name: Initialize isolated PostgreSQL schema and verify incremental inbox migration
+        env:
+          DATABASE_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
+        run: |
+          # Historical migrations from September contain a duplicate column
+          # declaration; do not rewrite applied production migration history.
+          npx prisma db push
+          npx tsx scripts/test-durable-webhook-migration.ts
+
+      - name: Test durable webhook recovery against PostgreSQL and Redis
+        env:
+          DATABASE_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
+          DIRECT_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
+          REDIS_DRIVER: redis
+          REDIS_URL: redis://127.0.0.1:6379
+          NODE_ENV: test
+        run: |
+          npx tsx scripts/test-durable-webhook-inbox.ts
+          npx tsx scripts/test-meta-usage-headers.ts
+
+      - name: Test authenticated Meta request gateway
+        run: npx tsx scripts/test-instagram-gateway-policy.ts
+
       - name: Verify Meta webhook signatures
         run: npx tsx scripts/test-webhook-signature.ts
 
@@ -89,6 +125,14 @@ jobs:
           npx tsx scripts/test-instagram-traffic-release.ts
           npx tsx scripts/test-traffic-lease-recovery.ts
           npx tsx scripts/test-queue-ownership-regressions.ts
+
+      - name: Test independent Worker processes under account and conversation contention
+        env:
+          REDIS_DRIVER: redis
+          REDIS_URL: redis://127.0.0.1:6379
+          NODE_ENV: test
+          QUEUE_WORKER_TEST_MODE: "1"
+        run: npx tsx scripts/test-parallel-worker-processes.ts
 
       - name: Test Instagram Live automation validation
         run: npm run live:automation:test
