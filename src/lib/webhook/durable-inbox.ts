@@ -212,3 +212,21 @@ export async function webhookInboxHealth() {
     oldestPendingAgeMs: oldest ? Date.now() - oldest.createdAt.getTime() : 0,
   };
 }
+
+/** Prevent indefinitely retaining private Meta webhook payloads in PostgreSQL.
+ * Keep pending and dispatched events until an operator resolves them. */
+export async function purgeCompletedWebhookInbox(retentionDays = 7, batchSize = 500) {
+  const days = Number.isFinite(retentionDays) && retentionDays > 0 ? Math.min(retentionDays, 365) : 7;
+  const cutoff = new Date(Date.now() - days * 86_400_000);
+  const old = await prisma.webhookInboxEvent.findMany({
+    where: { status: "DONE", completedAt: { lt: cutoff } },
+    orderBy: { completedAt: "asc" },
+    take: Math.max(1, Math.min(1000, batchSize)),
+    select: { id: true },
+  });
+  if (!old.length) return 0;
+  const deleted = await prisma.webhookInboxEvent.deleteMany({
+    where: { id: { in: old.map(row => row.id) }, status: "DONE", completedAt: { lt: cutoff } },
+  });
+  return deleted.count;
+}
