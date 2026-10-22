@@ -35,7 +35,7 @@ export default function DashboardHeader({
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true"><defs><linearGradient id="instagramGradient" x1="2" y1="22" x2="22" y2="2" gradientUnits="userSpaceOnUse"><stop stopColor="#FEDA75"/><stop offset=".35" stopColor="#FA7E1E"/><stop offset=".65" stopColor="#D62976"/><stop offset="1" stopColor="#4F5BD5"/></linearGradient></defs><rect x="3" y="3" width="18" height="18" rx="5" stroke="url(#instagramGradient)" strokeWidth="2"/><circle cx="12" cy="12" r="4" stroke="url(#instagramGradient)" strokeWidth="2"/><circle cx="17.5" cy="6.8" r="1.2" fill="#D62976"/></svg>
         </button>
         <Link href="/dashboard" className="daira-home__brand" aria-label="دایرا - خانه">
-          <Image src="/daira-header-logo.svg" alt="Daira" width={174} height={60} priority className="daira-home__brand-image" />
+          <Image src="/daira-header-logo.webp" alt="Daira" width={175} height={56} priority className="daira-home__brand-image" />
         </Link>
         {showBackButton ? (
           <button
