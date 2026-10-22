@@ -43,8 +43,8 @@ export async function persistWebhookInboxEvent(input: DurableWebhookInput) {
 }
 
 async function postpone(id: string, message: string, delayMs: number) {
-  await prisma.webhookInboxEvent.update({
-    where: { id },
+  await prisma.webhookInboxEvent.updateMany({
+    where: { id, status: { not: "DONE" } },
     data: {
       status: "PENDING",
       leaseUntil: null,
@@ -118,8 +118,9 @@ export async function dispatchWebhookInboxEvent(id: string, launch?: (jobId: str
       event: row.payload,
       idempotencyKey: claim.key,
     });
-    await prisma.webhookInboxEvent.update({
-      where: { id },
+    await prisma.webhookInboxEvent.updateMany({
+      // Processing can finish before this write. Never overwrite DONE.
+      where: { id, status: "DISPATCHING" },
       data: {
         status: "DISPATCHED",
         queueJobId: queued.id,
@@ -142,6 +143,12 @@ export async function dispatchWebhookInboxEvent(id: string, launch?: (jobId: str
     return true;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+    // A fast Worker may already have completed a successfully queued event.
+    // Never turn a completed send back into FAILED on an outbox write race.
+    const latest = await prisma.webhookInboxEvent.findUnique({
+      where: { id }, select: { status: true },
+    }).catch(() => null);
+    if (latest?.status === "DONE") return true;
     if (idempotencyKey) {
       await failInstagramWebhookEvent(idempotencyKey, error).catch(() => undefined);
     }
