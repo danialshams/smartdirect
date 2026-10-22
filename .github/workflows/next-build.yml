@@ -88,6 +88,7 @@ jobs:
           npx tsx scripts/test-instagram-traffic-control.ts
           npx tsx scripts/test-instagram-traffic-release.ts
           npx tsx scripts/test-traffic-lease-recovery.ts
+          npx tsx scripts/test-queue-ownership-regressions.ts
 
       - name: Test Instagram Live automation validation
         run: npm run live:automation:test
