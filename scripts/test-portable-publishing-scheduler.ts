@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { prisma } from "../src/lib/prisma";
 import { enqueueInstagramPublishing } from "../src/lib/instagram/publishing-queue";
-import { recoverDuePublishingJobs } from "../src/lib/instagram/portable-publishing-scheduler";
+import { recoverDuePublishingJobs, acknowledgePortablePublishingDispatch, PORTABLE_PUBLISH_DISPATCH_PENDING } from "../src/lib/instagram/portable-publishing-scheduler";
 import { getJob, deleteJob } from "../src/lib/queue/core";
 import { disconnectRedis } from "../src/lib/redis/client";
 
@@ -37,6 +37,32 @@ async function main() {
     dbJob = await prisma.instagramPublishJob.findUniqueOrThrow({ where: { id: publish.id } });
     assert.equal(dbJob.status, "PROCESSING");
     assert.equal((await getJob(jobs[0]))?.type, "PUBLISH");
+    assert.equal(dbJob.errorMessage, PORTABLE_PUBLISH_DISPATCH_PENDING);
+    // Crash injection after CAS but before Redis enqueue: the database
+    // retains an unacknowledged dispatch which the scanner can resume.
+    const abandoned = await prisma.instagramPublishJob.create({
+      data: {
+        userId: user.id, instagramAccountId: account.id, type: "POST",
+        status: "PROCESSING", scheduledAt: new Date(Date.now() - 300000),
+        lastAttemptAt: new Date(Date.now() - 180000),
+        errorMessage: PORTABLE_PUBLISH_DISPATCH_PENDING,
+      },
+    });
+    const recovered = await recoverDuePublishingJobs(30, async (id, opts) => {
+      const result = await enqueueInstagramPublishing(id, opts);
+      jobs.push(result.job.id);
+      return result;
+    });
+    assert.equal(recovered.recovered, 1, "Only abandoned pre-worker dispatch may be replayed");
+    assert.equal((await prisma.instagramPublishJob.findUniqueOrThrow({ where: { id: abandoned.id } })).errorMessage, PORTABLE_PUBLISH_DISPATCH_PENDING);
+    await acknowledgePortablePublishingDispatch(abandoned.id);
+    await prisma.instagramPublishJob.update({
+      where: { id: abandoned.id },
+      data: { lastAttemptAt: new Date(Date.now() - 180000) },
+    });
+    const noReplay = await recoverDuePublishingJobs(30);
+    assert.equal(noReplay.queued, 0, "Acknowledged worker must not be replayed");
+    await acknowledgePortablePublishingDispatch(publish.id);
     const duplicate = await recoverDuePublishingJobs(30);
     assert.equal(duplicate.queued, 0, "Only one dispatcher may claim a scheduled publish");
     console.log("Portable due-publishing scheduler, Redis failure and duplicate recovery: OK");
