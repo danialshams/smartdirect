@@ -1,4 +1,4 @@
-import { acquireLock, releaseLock } from "@/lib/lock/redis-lock";
+import { acquireLock, releaseLock, startLockHeartbeat } from "@/lib/lock/redis-lock";
 
 export type ConversationLockScope = {
   instagramAccountId: string;
@@ -18,9 +18,11 @@ export async function withConversationLock<T>(
   if (!result.acquired || !result.handle) {
     throw new Error("CONVERSATION_LOCK_BUSY");
   }
+  const stopHeartbeat = startLockHeartbeat(result.handle);
   try {
     return await work();
   } finally {
+    stopHeartbeat();
     await releaseLock(result.handle);
   }
 }
