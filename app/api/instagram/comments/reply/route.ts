@@ -99,6 +99,7 @@ export async function POST(request: NextRequest) {
       comment.igCommentId,
       accessToken,
       message,
+      account.id,
     );
 
     await prisma.comment.update({
