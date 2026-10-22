@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, ArrowUpLeft, Instagram } from "lucide-react";
+import { ArrowLeft, ArrowUpLeft, Camera } from "lucide-react";
 
 type InstagramAccount = {
   id: string;
@@ -89,7 +89,7 @@ export default function DashboardOverview({ instagramAccounts }: DashboardOvervi
     return (
       <div className="daira-home" dir="rtl">
         <section className="daira-home__onboarding" aria-labelledby="daira-connect-title">
-          <span className="daira-home__onboarding-icon"><Instagram size={27} strokeWidth={1.8} /></span>
+          <span className="daira-home__onboarding-icon"><Camera size={27} strokeWidth={1.8} /></span>
           <h1 id="daira-connect-title">پیج اینستاگرامت رو به دایرا وصل کن</h1>
           <p>بعد از اتصال پیج، ابزارهای پاسخ‌گویی خودکار، دایرکت، انتشار محتوا و تحلیل پیج از همین صفحه در دسترست قرار می‌گیرند.</p>
           <Link href="/api/instagram/connect" className="daira-home__connect-link">
