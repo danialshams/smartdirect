@@ -6,7 +6,7 @@ import { handleInstagramWebhookJob } from "../src/lib/webhook/worker-handler";
 import { publishInstagramJob } from "../src/lib/instagram/publishing";
 import { processSmartReminder, recoverDueSmartReminders } from "../src/lib/automation/smart-reminders";
 import { recoverWebhookInbox, purgeCompletedWebhookInbox } from "../src/lib/webhook/durable-inbox";
-import { recoverDuePublishingJobs } from "../src/lib/instagram/portable-publishing-scheduler";
+import { recoverDuePublishingJobs, acknowledgePortablePublishingDispatch } from "../src/lib/instagram/portable-publishing-scheduler";
 import { resolveExecutionBackend } from "../src/lib/runtime/execution-backend";
 import { enterObservabilityContext } from "../src/lib/observability/context";
 import { observabilityLogger } from "../src/lib/observability/logger";
@@ -109,6 +109,9 @@ runQueueWorker(
       await handleInstagramWebhookJob(webhookJob);
     } else if (job.type === "PUBLISH") {
       const publishJob = job as import("../src/lib/queue/types").QueueJob<"PUBLISH">;
+      if (isPortablePublishingScheduler) {
+        await acknowledgePortablePublishingDispatch(publishJob.payload.publishingJobId);
+      }
       await publishInstagramJob(publishJob.payload.publishingJobId);
     } else if (job.type === "SMART_REMINDER") {
       const reminderJob = job as import("../src/lib/queue/types").QueueJob<"SMART_REMINDER">;
