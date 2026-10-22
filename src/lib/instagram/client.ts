@@ -1,3 +1,4 @@
+import { readMetaUsageHeaders } from "@/lib/instagram/usage-headers";
 import type { InstagramRateLimitContext } from "@/lib/instagram/rate-limit";
 import {
   acquireInstagramTrafficSlot,
@@ -342,6 +343,35 @@ export async function instagramApiRequest<T = unknown>(
       });
 
       const data = await parseResponse(response);
+      const usage = readMetaUsageHeaders(response.headers);
+      if (usage && options.rateLimit) {
+        // Meta's budget headers are advisory and vary across endpoints. Do not
+        // apply one account's business-use-case % as a universal global quota.
+        observabilityLogger.info("instagram_meta_budget_sample", {
+          instagramAccountId: options.rateLimit.instagramAccountId,
+          operation: options.rateLimit.operation,
+          maxUsagePercent: usage.maxUsagePercent,
+          source: usage.source,
+        });
+        if (usage.maxUsagePercent >= 90) {
+          void recordFailure("instagram_meta_budget", "over_90_percent");
+        }
+        try {
+          const { getRedisClient } = await import("@/lib/redis/client");
+          const redis = getRedisClient();
+          await redis.set(
+            "smartdirect:instagram:usage:v1:" + options.rateLimit.instagramAccountId,
+            { ...usage, observedAt: Date.now() },
+            { ex: 15 * 60 },
+          );
+        } catch (usageError) {
+          observabilityLogger.warn("instagram_meta_usage_storage_failed", {
+            operation: options.rateLimit.operation,
+            error: usageError instanceof Error ? usageError.message : String(usageError),
+          });
+        }
+      }
+
 
       if (options.rateLimit) {
         const code = data && typeof data === "object" && "error" in data

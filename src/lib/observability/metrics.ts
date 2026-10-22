@@ -18,10 +18,11 @@ const memoryState: MemoryMetricState = {
 };
 
 function isRedisConfigured() {
-  return Boolean(
-    process.env.UPSTASH_REDIS_REST_URL &&
-      process.env.UPSTASH_REDIS_REST_TOKEN,
-  );
+  const driver = (process.env.REDIS_DRIVER || "upstash").trim().toLowerCase();
+  if (driver === "redis" || driver === "local") {
+    return Boolean(process.env.REDIS_URL || process.env.REDIS_LOCAL_URL);
+  }
+  return Boolean(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
 }
 
 function addMemoryLatency(operation: string, latencyMs: number) {
