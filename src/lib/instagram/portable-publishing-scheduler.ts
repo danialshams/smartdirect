@@ -5,7 +5,10 @@ import { enqueueInstagramPublishing } from "@/lib/instagram/publishing-queue";
  * A PostgreSQL compare-and-swap prevents simultaneous schedulers from
  * dispatching the same scheduled row.
  */
-export async function recoverDuePublishingJobs(limit = 50) {
+export async function recoverDuePublishingJobs(
+  limit = 50,
+  enqueue: typeof enqueueInstagramPublishing = enqueueInstagramPublishing,
+) {
   const due = await prisma.instagramPublishJob.findMany({
     where: { status: "SCHEDULED", scheduledAt: { lte: new Date() } },
     orderBy: { scheduledAt: "asc" },
@@ -22,7 +25,7 @@ export async function recoverDuePublishingJobs(limit = 50) {
     });
     if (!claimed.count) continue;
     try {
-      await enqueueInstagramPublishing(job.id, { maxAttempts: 4 });
+      await enqueue(job.id, { maxAttempts: 4 });
       queued++;
     } catch (error) {
       // Return to durable scheduling when Redis is unavailable.
