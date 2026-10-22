@@ -51,6 +51,19 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: smartdirect
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U user -d smartdirect"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -75,6 +88,22 @@ jobs:
           REDIS_DRIVER: redis
           REDIS_URL: redis://127.0.0.1:6379
         run: npm run build
+
+      - name: Migrate isolated PostgreSQL integration database
+        env:
+          DATABASE_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
+        run: npx prisma migrate deploy
+
+      - name: Test durable webhook recovery against PostgreSQL and Redis
+        env:
+          DATABASE_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
+          DIRECT_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
+          REDIS_DRIVER: redis
+          REDIS_URL: redis://127.0.0.1:6379
+          NODE_ENV: test
+        run: |
+          npx tsx scripts/test-durable-webhook-inbox.ts
+          npx tsx scripts/test-meta-usage-headers.ts
 
       - name: Verify Meta webhook signatures
         run: npx tsx scripts/test-webhook-signature.ts
