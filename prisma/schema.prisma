@@ -55,6 +55,7 @@ model InstagramAccount {
   showcases          Showcase[]
   savedAutomationResponses SavedAutomationResponse[]
   smartReminderRules SmartReminderRule[]
+  webhookInboxEvents WebhookInboxEvent[]
 
   @@unique([userId, igUserId])
   @@index([userId])
@@ -502,6 +503,30 @@ model QueueFailure {
   @@index([status, failedAt])
   @@index([tenantId, status])
   @@index([type, status])
+}
+
+/// PostgreSQL is the durable source of truth for received Instagram events.
+/// Redis stores only disposable queue/dispatch acceleration.
+model WebhookInboxEvent {
+  id                 String           @id @default(cuid())
+  eventKey           String           @unique
+  instagramAccountId String
+  eventId            String
+  eventType          String
+  payload            Json
+  status             String           @default("PENDING")
+  queueJobId         String?
+  attempts           Int              @default(0)
+  nextAttemptAt      DateTime         @default(now())
+  leaseUntil         DateTime?
+  lastError          String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  completedAt        DateTime?
+  instagramAccount   InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
+
+  @@index([status, nextAttemptAt])
+  @@index([instagramAccountId, createdAt])
 }
 
 model IdempotencyRecord {
