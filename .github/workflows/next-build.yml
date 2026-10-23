@@ -71,7 +71,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
 
       - name: Install exactly from lockfile
@@ -86,9 +86,14 @@ jobs:
       - name: Test cross-module Daira Liquid Glass coverage
         run: npx tsx scripts/test-daira-glass-coverage.ts
 
+      - name: Verify dashboard create-action alignment, glass cards and safe build parity
+        run: npx tsx scripts/test-dashboard-create-actions-glass.ts
+
       - name: Build application
         env:
           NODE_ENV: production
+          VERCEL: "1"
+          VERCEL_ENV: production
           NEXTAUTH_URL: https://example.invalid
           NEXTAUTH_SECRET: ci-only-placeholder-secret-with-more-than-32-characters
           CRON_SECRET: ci-only-placeholder-cron-secret-with-more-than-32-characters

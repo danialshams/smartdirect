@@ -114,7 +114,7 @@ export default function LiveAutomationList() {
   return (
     <div dir="rtl" className="mx-auto w-full max-w-4xl space-y-4 py-3">
       <button type="button" onClick={() => router.push("/dashboard/live-automation/new")}
-        className="daira-create-action flex min-h-[54px] w-full flex-row items-center justify-center gap-2 rounded-full text-base font-bold text-white shadow-sm transition hover:brightness-95"
+        className="daira-create-action daira-leading-action flex min-h-[54px] w-full flex-row items-center justify-center gap-2 rounded-full text-base font-bold text-white shadow-sm transition hover:brightness-95"
         style={{ background: dairaPalette.primary.main }}>
         <Plus size={20} /> ایجاد پاسخ جدید
       </button>
@@ -127,7 +127,7 @@ export default function LiveAutomationList() {
       {filtered.length ? (
         <div className="grid gap-3 sm:grid-cols-2">
           {filtered.map(rule => (
-            <article key={rule.id} className="space-y-3 rounded-2xl border border-[var(--daira-border)] bg-white p-4 shadow-[0_3px_12px_rgba(24,35,60,0.025)]">
+            <article key={rule.id} className="daira-automation-list-card space-y-3 rounded-2xl border border-[var(--daira-border)] bg-[var(--daira-surface)] p-4">
               <div className="flex items-center gap-2">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]"><RadioTower size={18}/></span>
                 <div className="min-w-0 flex-1">

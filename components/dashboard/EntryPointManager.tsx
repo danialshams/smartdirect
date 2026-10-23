@@ -511,7 +511,7 @@ export default function EntryPointManager({ accounts, kind }: Props) {
               type="button"
               onClick={addItem}
               disabled={!account || items.length >= c.max}
-              className="min-h-11 shrink-0 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground"
+              className="daira-leading-action min-h-11 shrink-0 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground"
             >
               <Plus size={16} />
               {c.addLabel}
@@ -591,7 +591,7 @@ export default function EntryPointManager({ accounts, kind }: Props) {
             <Button
               type="button"
               onClick={addItem}
-              className="mt-5 rounded-xl"
+              className="daira-leading-action mt-5 rounded-xl"
               disabled={items.length >= c.max}
             >
               <Plus size={16} />
@@ -600,7 +600,7 @@ export default function EntryPointManager({ accounts, kind }: Props) {
           )}
         </section>
       ) : (
-        <section className="overflow-hidden rounded-3xl border border-border/80 bg-card shadow-sm">
+        <section className="daira-automation-list-card overflow-hidden rounded-3xl border border-[var(--daira-border)] bg-[var(--daira-surface)]">
           <div className="divide-y divide-border/70">
             {filteredItems.map((item, index) => {
               const id = item.id!;
@@ -767,7 +767,7 @@ export default function EntryPointManager({ accounts, kind }: Props) {
               onClick={addItem}
               disabled={items.length >= c.max}
               variant="outline"
-              className="min-h-11 rounded-xl"
+              className="daira-leading-action min-h-11 rounded-xl"
             >
               <Plus size={16} />
               {c.addLabel}

@@ -344,7 +344,7 @@ export default function PersistentMenuManager({
                   </p>
                 </div>
                 <button type="button" onClick={() => openEditor()} disabled={!canCreate}
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[var(--daira-primary)] px-4 text-xs font-bold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">
+                  className="daira-leading-action inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[var(--daira-primary)] px-4 text-xs font-bold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">
                   <Plus size={17} aria-hidden="true" className="shrink-0" /> گزینه جدید
                 </button>
               </div>
@@ -358,7 +358,7 @@ export default function PersistentMenuManager({
               ) : (
                 <div className="space-y-2">
                   {items.map((item, index) => (
-                    <div key={item.id} className={"flex min-w-0 items-center gap-2 rounded-xl border p-2.5 transition sm:gap-3 sm:p-3 " +
+                    <div key={item.id} className={"daira-automation-list-card flex min-w-0 items-center gap-2 rounded-xl border p-2.5 transition sm:gap-3 sm:p-3 " +
                       (editor?.id === item.id ? "border-blue-300 bg-blue-50/50" : "border-[var(--daira-border)] hover:bg-[var(--daira-surface-hover)]")}>
                       <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[var(--daira-surface-hover)] text-[11px] font-bold text-[var(--daira-primary)]">{number(index + 1)}</span>
                       <span className="min-w-0 flex-1">

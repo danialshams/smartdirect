@@ -42,8 +42,8 @@ assert.ok(!dashboard.includes('کامنت‌های بی‌پاسخ') && !dashboa
 assert.ok(directSkeleton.includes("<AutoRepliesSkeleton includeCreateButton />"),"DM list loading must use the story/comment skeleton including create button");
 assert.ok(directList.includes('min-h-[84px]') && directList.includes('rounded-[22px]') && directList.includes('space-y-2.5'),"DM list must mirror story/comment row layout");
 assert.ok(sharedList.includes('min-h-[84px]') && sharedList.includes('rounded-[22px]'),"Story/comment row reference changed");
-assert.ok(directList.includes('className="flex min-h-[54px] w-full flex-row items-center'),"DM plus icon must visually precede label in RTL");
-assert.ok(storyList.includes('className="flex min-h-[54px] w-full flex-row items-center'),"DM and story create buttons must use the same RTL icon order");
+assert.ok(directList.includes('className="daira-leading-action flex min-h-[54px] w-full flex-row items-center'),"DM create button must use shared RTL leading icon layout");
+assert.ok(storyList.includes('className="daira-leading-action flex min-h-[54px] w-full flex-row items-center'),"Story create button must share the RTL leading icon layout");
 assert.ok(directList.indexOf('<Plus size={20} aria-hidden="true" />') < directList.indexOf('<span>ایجاد پاسخ جدید</span>'),"DM plus icon must lead label");
 assert.ok(storyList.includes("<Plus size={20} />") && storyList.indexOf("<Plus size={20} />") < storyList.indexOf("<span>ایجاد پاسخ جدید</span>"),"Story reference button expected");
 assert.ok(!directEditor.includes("ArrowRight") && !directEditor.includes("> بازگشت</button>"),"Do not duplicate header back button");

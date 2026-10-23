@@ -48,7 +48,7 @@ export default function ShareMentionManager(){
  }
  if(loading)return <AutoRepliesSkeleton includeCreateButton />;
  return <div dir="rtl" className="mx-auto w-full max-w-4xl space-y-4 py-3">
-  <Link href="/dashboard/share-mention/new" dir="rtl" className="flex min-h-[54px] w-full flex-row items-center justify-center gap-2 rounded-full px-4 text-sm font-bold text-white" style={{background:dairaPalette.primary.main}}><span className="flex shrink-0 items-center justify-center" aria-hidden="true"><Plus size={20}/></span><span className="whitespace-nowrap">ایجاد پاسخ جدید</span></Link>
+  <Link href="/dashboard/share-mention/new" dir="rtl" className="daira-leading-action flex min-h-[54px] w-full flex-row items-center justify-center gap-2 rounded-full px-4 text-sm font-bold text-white" style={{background:dairaPalette.primary.main}}><span className="flex shrink-0 items-center justify-center" aria-hidden="true"><Plus size={20}/></span><span className="whitespace-nowrap">ایجاد پاسخ جدید</span></Link>
   <>
    <div className="daira-search-field relative flex"><Search size={17} className="shrink-0 text-[var(--daira-search-placeholder)]"/><input className="daira-search-input min-w-0 flex-1 border-0 bg-transparent text-base outline-none" value={query} onChange={e=>setQuery(e.target.value)} placeholder="جستجو در پاسخ‌ها"/></div>
    {error&&<p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-700">{error}<button onClick={()=>setReload(x=>x+1)} className="mr-2 underline">تلاش دوباره</button></p>}
@@ -56,17 +56,17 @@ export default function ShareMentionManager(){
    <div className="space-y-3">{filtered.map(item=>{
     const mention=item.triggerType==="STORY_MENTION";
     const count=(item.mediaIds||item.mediaId||"").split(",").filter(Boolean).length;
-    return <article key={item.id} className="rounded-2xl border bg-white p-4" style={{borderColor:dairaPalette.border}}>
+    return <article key={item.id} className="daira-automation-list-card rounded-2xl border p-4">
      <div className="flex items-start gap-3">
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">{mention?<AtSign size={21}/>:<Share2 size={21}/>}</div>
-      <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><strong className="text-sm text-slate-900">{title(item.triggerType)}</strong><span className={`rounded-full px-2 py-0.5 text-[10px] ${item.isActive?"bg-green-50 text-green-700":"bg-slate-100 text-slate-500"}`}>{item.isActive?"فعال":"غیرفعال"}</span></div>
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--daira-brand-100)] text-[var(--daira-primary)]">{mention?<AtSign size={21}/>:<Share2 size={21}/>}</div>
+      <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><strong className="text-sm text-[var(--daira-heading)]">{title(item.triggerType)}</strong><span className={`rounded-full px-2 py-0.5 text-[10px] ${item.isActive?"bg-green-50 text-green-700":"bg-slate-100 text-slate-500"}`}>{item.isActive?"فعال":"غیرفعال"}</span></div>
        <p className="mt-1 text-xs leading-6 text-slate-500">{mention?"پاسخ هنگام منشن‌شدن در استوری دیگران":`متصل به ${count.toLocaleString("fa-IR")} پست یا ریلز`}</p>
        <p className="mt-1 max-w-md truncate text-xs text-slate-500">{item.messages?.[0]?.text||"پاسخ رسانه‌ای یا ویترین"}</p>
       </div>
      </div>
      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t pt-3" style={{borderColor:dairaPalette.border}}>
       <label className="flex items-center gap-2 text-xs text-slate-600"><input type="checkbox" checked={item.isActive} disabled={busy===item.id} onChange={()=>void change(item,"toggle")} className="accent-blue-600"/>فعال</label>
-      <div className="flex gap-2"><Link href={"/dashboard/share-mention/"+item.id} className="inline-flex min-h-10 items-center gap-1 rounded-xl border px-3 text-xs text-blue-600" style={{borderColor:dairaPalette.border}}><Pencil size={14}/>ویرایش</Link>
+      <div className="flex gap-2"><Link href={"/dashboard/share-mention/"+item.id} className="inline-flex min-h-10 items-center gap-1 rounded-xl border border-[var(--daira-outline)] bg-[var(--daira-glass-raised)] px-3 text-xs text-[var(--daira-primary)]" style={{borderColor:dairaPalette.border}}><Pencil size={14}/>ویرایش</Link>
        <button type="button" disabled={busy===item.id} onClick={()=>setDeleteId(item.id)} className="inline-flex min-h-10 items-center gap-1 rounded-xl border border-red-100 px-3 text-xs text-red-600">{busy===item.id?<LoaderCircle size={14} className="animate-spin"/>:<Trash2 size={14}/>}حذف</button></div>
      </div>
      {deleteId===item.id&&<div className="mt-3 rounded-xl bg-red-50 p-3 text-xs leading-7 text-red-700">این پاسخ حذف شود؟ <div className="mt-2 flex gap-2"><button type="button" disabled={Boolean(busy)} onClick={()=>void change(item,"delete")} className="rounded-lg bg-red-600 px-4 py-2 text-white">حذف پاسخ</button><button type="button" onClick={()=>setDeleteId("")} className="rounded-lg border bg-white px-4 py-2">انصراف</button></div></div>}
