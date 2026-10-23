@@ -373,6 +373,52 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ success: true, data });
         }
 
+        if (contentType.startsWith("image/") && purpose === "PUBLISHING") {
+          const source = await prisma.instagramStorageObject.findUnique({ where: { storageKey: pathname } });
+          if (!source || source.userId !== session.user.id || source.deletedAt) {
+            return NextResponse.json({ success: false, message: "فایل اولیه در سهمیه کاربر ثبت نشده است." }, { status: 400 });
+          }
+          const sourceResponse = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(120_000) });
+          if (!sourceResponse.ok) throw new Error("دانلود تصویر برای تبدیل ناموفق بود.");
+          const raw = Buffer.from(await sourceResponse.arrayBuffer());
+          if (!raw.length || raw.length > MAX_IMAGE_SIZE) throw new Error("حجم تصویر ورودی بیشتر از حد مجاز است.");
+          const normalized = await normalizeInstagramPublishImage(raw, fileName, targetType === "STORY" ? "STORY" : "POST");
+          checkMediaOutputSize("PUBLISHING", "IMAGE", normalized.length);
+          const normalizedKey = pathname + ".normalized.jpg";
+          const already = await prisma.instagramStorageObject.findUnique({ where: { storageKey: normalizedKey } });
+          if (already?.publicUrl && !already.deletedAt && already.userId === session.user.id) {
+            return NextResponse.json({ success: true, data: {
+              storageKey: already.storageKey, publicUrl: already.publicUrl, type: "IMAGE",
+              fileName: fileName.replace(/\.[^/.]+$/, "") + ".jpg", mimeType: "image/jpeg", fileSize: normalized.length,
+            } });
+          }
+          await reserveUpload({ userId: session.user.id, storageKey: normalizedKey, bytes: normalized.length, purpose: "PUBLISHING" });
+          const provider = getStorageProvider();
+          let uploaded: Awaited<ReturnType<typeof provider.upload>>;
+          try {
+            uploaded = await provider.upload({ key: normalizedKey, body: normalized, contentType: "image/jpeg" });
+            await prisma.instagramStorageObject.update({
+              where: { storageKey: normalizedKey },
+              data: { storageKey: uploaded.storageKey, publicUrl: uploaded.publicUrl, fileSize: BigInt(normalized.length), expiresAt: getUnlinkedUploadExpiry() },
+            });
+          } catch (error) {
+            await releaseUploadReservation(session.user.id, normalizedKey).catch(() => undefined);
+            throw error;
+          }
+          try {
+            await provider.delete(pathname);
+            await prisma.instagramStorageObject.updateMany({
+              where: { storageKey: pathname, userId: session.user.id, deletedAt: null },
+              data: { deletedAt: new Date() },
+            });
+          } catch (error) {
+            console.warn("Original image cleanup deferred:", error);
+          }
+          return NextResponse.json({ success: true, data: {
+            storageKey: uploaded.storageKey, publicUrl: uploaded.publicUrl, type: "IMAGE",
+            fileName: fileName.replace(/\.[^/.]+$/, "") + ".jpg", mimeType: "image/jpeg", fileSize: normalized.length,
+          } });
+        }
         const existing = await prisma.instagramStorageObject.findUnique({ where: { storageKey: pathname } });
         if (existing) {
           if (existing.userId !== session.user.id || existing.deletedAt) {
@@ -383,7 +429,7 @@ export async function POST(request: NextRequest) {
           }
           await prisma.instagramStorageObject.update({
             where: { id: existing.id },
-            data: { publicUrl: existing.publicUrl || url, expiresAt: getUnlinkedUploadExpiry() },
+            data: { publicUrl: existing.publicUrl || url, fileSize: BigInt(fileSize), expiresAt: getUnlinkedUploadExpiry() },
           });
           return NextResponse.json({
             success: true,
@@ -391,9 +437,7 @@ export async function POST(request: NextRequest) {
           });
         }
 
-        await prisma.instagramStorageObject.create({
-          data: { userId: session.user.id, storageKey: pathname, publicUrl: url, expiresAt: getUnlinkedUploadExpiry() },
-        });
+        return NextResponse.json({ success: false, message: "فایل آپلودشده در سهمیه کاربر رزرو نشده است." }, { status: 409 });
         return NextResponse.json({
           success: true,
           data: { storageKey: pathname, publicUrl: url, type: "IMAGE", fileName, mimeType: contentType, fileSize },
