@@ -315,11 +315,16 @@ export async function POST(request: NextRequest) {
             }
 
             const automation = payload.purpose === "AUTOMATION";
+      const inbox = payload.purpose === "INBOX";
+      const messageMedia = automation || inbox;
+            const inbox = payload.purpose === "INBOX";
+            const messageMedia = automation || inbox;
+            if (automation && payload.contentType.startsWith("video/")) throw new Error("آپلود ویدیو برای پاسخ‌های خودکار فعلاً غیرفعال است.");
             if (automation && payload.contentType === "image/webp") throw new Error("برای پاسخ خودکار فقط JPG یا PNG مجاز است.");
-            if (!automation && payload.contentType.startsWith("audio/")) throw new Error("صوت فقط برای پاسخ خودکار مجاز است.");
+            if (!messageMedia && payload.contentType.startsWith("audio/")) throw new Error("صوت فقط برای پاسخ خودکار مجاز است.");
             const kind = payload.contentType.startsWith("image/") ? "IMAGE" : payload.contentType.startsWith("audio/") ? "AUDIO" : "VIDEO";
             const incomingTarget = payload.targetType === "STORY" || payload.targetType === "CAROUSEL" ? payload.targetType : "REEL";
-            const maxSize = maximumUploadBytes(automation ? "AUTOMATION" : "PUBLISHING", kind, incomingTarget);
+            const maxSize = maximumUploadBytes(messageMedia ? "AUTOMATION" : "PUBLISHING", kind, incomingTarget);
 
             return {
               pathname,
@@ -340,11 +345,12 @@ export async function POST(request: NextRequest) {
         const contentType = typeof body.contentType === "string" ? body.contentType : "";
         const fileName = typeof body.fileName === "string" ? body.fileName : "media";
         const fileSize = typeof body.fileSize === "number" ? body.fileSize : 0;
-        const purpose = body.purpose === "AUTOMATION" ? "AUTOMATION" : "PUBLISHING";
+        const purpose = body.purpose === "AUTOMATION" || body.purpose === "INBOX" ? body.purpose : "PUBLISHING";
+        const messageMedia = purpose === "AUTOMATION" || purpose === "INBOX";
         const targetTypeValue = body.targetType;
         const targetType: InstagramVideoTarget = targetTypeValue === "CAROUSEL" || targetTypeValue === "STORY"
           ? targetTypeValue
-          : purpose === "AUTOMATION" ? "MESSAGE" : "REEL";
+          : messageMedia ? "MESSAGE" : "REEL";
         const expectedPrefix = `pending/${session.user.id}/`;
 
         if (!pathname.startsWith(expectedPrefix) || !url || !allowedContentTypes.includes(contentType) || fileSize <= 0) {
@@ -355,8 +361,8 @@ export async function POST(request: NextRequest) {
         }
 
         const kind = contentType.startsWith("image/") ? "IMAGE" : contentType.startsWith("audio/") ? "AUDIO" : "VIDEO";
-        const maxSize = maximumUploadBytes(purpose, kind, targetType === "MESSAGE" ? "REEL" : targetType);
-        if ((purpose === "AUTOMATION" && contentType === "image/webp") || (purpose !== "AUTOMATION" && contentType.startsWith("audio/"))) {
+        const maxSize = maximumUploadBytes(messageMedia ? "AUTOMATION" : "PUBLISHING", kind, targetType === "MESSAGE" ? "REEL" : targetType);
+        if ((messageMedia && contentType === "image/webp") || (!messageMedia && contentType.startsWith("audio/")) || (purpose === "AUTOMATION" && contentType.startsWith("video/"))) {
           return NextResponse.json({ success: false, message: "فرمت فایل برای این بخش مجاز نیست." }, { status: 400 });
         }
         if (fileSize > maxSize) {
@@ -469,7 +475,7 @@ export async function POST(request: NextRequest) {
         fileName?: string;
         contentType?: string;
         fileSize?: number;
-        purpose?: "AUTOMATION" | "PUBLISHING";
+        purpose?: "AUTOMATION" | "INBOX" | "PUBLISHING";
         targetType?: string;
       };
 
@@ -488,13 +494,13 @@ export async function POST(request: NextRequest) {
       const isImage = payload.contentType.startsWith("image/");
       const isAudio = payload.contentType.startsWith("audio/");
       const isVideo = payload.contentType.startsWith("video/");
-      if ((automation && isImage && payload.contentType === "image/webp") ||
-          (!automation && isAudio)) {
+      if ((messageMedia && isImage && payload.contentType === "image/webp") ||
+          (!messageMedia && isAudio) || (automation && isVideo)) {
         return NextResponse.json({ success: false, message: "فرمت فایل برای این بخش مجاز نیست." }, { status: 400 });
       }
       const kind = isImage ? "IMAGE" : isVideo ? "VIDEO" : "AUDIO";
       const targetForLimits = payload.targetType === "STORY" || payload.targetType === "CAROUSEL" ? payload.targetType : "REEL";
-      const maxSize = maximumUploadBytes(automation ? "AUTOMATION" : "PUBLISHING", kind, targetForLimits);
+      const maxSize = maximumUploadBytes(messageMedia ? "AUTOMATION" : "PUBLISHING", kind, targetForLimits);
 
       if (payload.fileSize <= 0 || payload.fileSize > maxSize) {
         return NextResponse.json(
@@ -528,7 +534,7 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      await reserveUpload({ userId: session.user.id, storageKey: pathname, bytes: payload.fileSize, purpose: automation ? "AUTOMATION" : "PUBLISHING" });
+      await reserveUpload({ userId: session.user.id, storageKey: pathname, bytes: payload.fileSize, purpose: automation ? "AUTOMATION" : inbox ? "INBOX" : "PUBLISHING" });
       return NextResponse.json({
         success: true,
         mode: "vercel-blob",
