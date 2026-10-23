@@ -37,10 +37,10 @@ export default function SupportNotifications({ children }: { children: ReactNode
       lastId.current = latest?.id || null;
       setCount(unread);
       if (reason === "silent" || !unread) {
-        if (!unread) setNotice(null);
+        if (!unread) { if (initialTimer.current) clearTimeout(initialTimer.current); setNotice(null); }
         return;
       }
-      if (first) {
+      if (first && !(latest && pathRef.current.startsWith("/dashboard/tickets/" + latest.ticketId))) {
         initialTimer.current = setTimeout(() => { setNotice({ count: unread, item: latest, initial: true }); }, 500);
       } else if (latest && latest.id !== original && !pathRef.current.startsWith("/dashboard/tickets/" + latest.ticketId)) {
         setNotice({ count: unread, item: latest, initial: false });
