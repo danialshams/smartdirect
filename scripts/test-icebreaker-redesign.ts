@@ -16,7 +16,7 @@ assert.ok(ice.includes('id="ice-breaker-heading"') &&
   ice.includes('aria-labelledby="ice-breaker-heading"') &&
   ice.includes('rounded-2xl border border-[var(--daira-border)] bg-white'),
   "Ice-breaker title must use a dedicated modern themed section");
-assert.ok(ice.includes("dairaPalette.guide.background") && ice.includes('className="mb-3 flex items-start gap-3 rounded-xl border'),
+assert.ok(ice.includes("dairaPalette.guide.background") && ice.includes('className="daira-guide-glass mb-3 flex items-start gap-3 rounded-xl border'),
   "Ice-breaker create/edit guides must use the same design palette as direct menu");
 assert.ok(ice.includes("IceBreakerSkeleton") && ice.includes("daira-skeleton__bar") &&
   ice.includes('role="status" aria-label="در حال دریافت پیام‌های شروع گفتگو"'),
