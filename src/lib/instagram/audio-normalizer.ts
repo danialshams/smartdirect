@@ -5,16 +5,16 @@ import os from "node:os";
 import { promisify } from "node:util";
 import ffmpegPath from "ffmpeg-static";
 
+import { MAX_INSTAGRAM_VOICE_SECONDS, MAX_INSTAGRAM_VOICE_BYTES } from "./voice-limits";
+export { MAX_INSTAGRAM_VOICE_SECONDS, MAX_INSTAGRAM_VOICE_BYTES } from "./voice-limits";
+
 const execFileAsync = promisify(execFile);
-/** Product policy, not a documented 60-second limit from Meta's Messaging API. */
-export const MAX_INSTAGRAM_VOICE_SECONDS = 60;
-export const MAX_INSTAGRAM_VOICE_BYTES = 25_000_000 - 1;
 const SAFE_AUDIO_SIZE = 24_000_000;
 
 export function assertInstagramVoiceDuration(seconds: number): void {
   if (!Number.isFinite(seconds) || seconds <= 0) throw new Error("مدت فایل صوتی قابل تشخیص نیست. از فایل صوتی معتبر استفاده کنید.");
   if (seconds > MAX_INSTAGRAM_VOICE_SECONDS + 0.05)
-    throw new Error("مدت وویس نباید بیشتر از ۶۰ ثانیه باشد.");
+    throw new Error("مدت وویس نباید بیشتر از ۵ دقیقه باشد.");
 }
 
 /** Uses FFmpeg metadata probing. Rejects files with missing duration instead of guessing. */
