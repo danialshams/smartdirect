@@ -345,7 +345,7 @@ export default function PersistentMenuManager({
                 </div>
                 <button type="button" onClick={() => openEditor()} disabled={!canCreate}
                   className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[var(--daira-primary)] px-4 text-xs font-bold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">
-                  گزینه جدید <Plus size={17} aria-hidden="true" />
+                  <Plus size={17} aria-hidden="true" className="shrink-0" /> گزینه جدید
                 </button>
               </div>
 

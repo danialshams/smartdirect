@@ -532,7 +532,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
                   <div className="flex shrink-0 items-center gap-1.5">
                     <Link
                       href={item.href}
-                      className="inline-flex h-8 flex-row-reverse items-center justify-center gap-1 rounded-[8px] px-2 text-[11px] font-semibold no-underline transition sm:px-2.5 sm:text-xs"
+                      className="inline-flex h-8 flex-row items-center justify-center gap-1 rounded-[8px] px-2 text-[11px] font-semibold no-underline transition sm:px-2.5 sm:text-xs"
                       style={{ color: dairaPalette.primary.main, border: `1px solid ${dairaPalette.secondary.outline}`, backgroundColor: dairaPalette.background.surface }}
                     >
                       <Pencil size={14} />
@@ -542,7 +542,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
                       type="button"
                       onClick={() => { setDeleteError(""); setDeleteTarget(item); }}
                       aria-label={`حذف پاسخ این محتوا برای ${item.keyword}`}
-                      className="inline-flex h-8 flex-row-reverse items-center justify-center gap-1 rounded-[8px] px-2 text-[11px] font-semibold transition sm:px-2.5 sm:text-xs"
+                      className="inline-flex h-8 flex-row items-center justify-center gap-1 rounded-[8px] px-2 text-[11px] font-semibold transition sm:px-2.5 sm:text-xs"
                       style={{ color: dairaPalette.status.error, border: `1px solid ${dairaPalette.status.error}55`, backgroundColor: dairaPalette.background.surface }}
                     >
                       <Trash2 size={14} />
@@ -600,7 +600,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
                 type="button"
                 disabled={deleting}
                 onClick={() => void confirmDelete()}
-                className="inline-flex h-10 flex-1 flex-row-reverse items-center justify-center gap-2 rounded-xl text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex h-10 flex-1 flex-row items-center justify-center gap-2 rounded-xl text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-60"
                 style={{ color: dairaPalette.background.surface, backgroundColor: dairaPalette.status.error }}
               >
                 {deleting ? <LoaderCircle size={16} className="animate-spin" /> : <Trash2 size={16} />}
