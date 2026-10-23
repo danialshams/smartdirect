@@ -18,7 +18,7 @@ export function getUploadQuota() {
 
 /** Serialize reservations per tenant so parallel browser uploads cannot bypass the cap. */
 export async function reserveUpload(input: {
-  userId: string; storageKey: string; bytes: number; purpose: "AUTOMATION" | "PUBLISHING";
+  userId: string; storageKey: string; bytes: number; purpose: "AUTOMATION" | "PUBLISHING" | "INBOX";
 }) {
   if (!Number.isSafeInteger(input.bytes) || input.bytes <= 0) throw new Error("حجم فایل نامعتبر است.");
   return prisma.$transaction(async (tx) => {
