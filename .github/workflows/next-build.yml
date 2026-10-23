@@ -191,6 +191,12 @@ jobs:
           STORAGE_PROVIDER: test
         run: npx tsx scripts/test-instagram-storage-lifecycle.ts
 
+      - name: Test share and mention rules against PostgreSQL
+        env:
+          DATABASE_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
+          DIRECT_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
+        run: npx tsx scripts/test-share-mention-account-isolation.ts
+
       - name: Test shared posts and story mentions webhook matching
         run: npx tsx scripts/test-share-mention-interactions.ts
 
