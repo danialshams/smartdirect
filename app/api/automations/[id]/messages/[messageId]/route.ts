@@ -250,6 +250,8 @@ export async function PATCH(
     const nextMessageType =
       messageType !== undefined ? messageType : existingMessage.messageType;
 
+    if (nextMessageType === "VIDEO" && existingMessage.messageType !== "VIDEO") return NextResponse.json({success:false,error:"ساخت پاسخ ویدیویی فعلاً غیرفعال است."},{status:400});
+
     if (!isValidMessageType(nextMessageType)) {
       return NextResponse.json(
         {
