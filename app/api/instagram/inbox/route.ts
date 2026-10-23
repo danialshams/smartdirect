@@ -15,7 +15,7 @@ import {
   proxyInstagramParticipantProfileUrl,
 } from "@/lib/instagram/media-proxy";
 import { getInstagramMessagingWindow } from "@/lib/instagram/messaging-window";
-import { normalizeInstagramAudio } from "@/lib/instagram/audio-normalizer";
+import { normalizeInstagramAudio, validateInstagramVoiceBuffer } from "@/lib/instagram/audio-normalizer";
 import { normalizeInstagramVideo } from "@/lib/instagram/video-normalizer";
 import { getStorageProvider } from "@/lib/storage/provider";
 
@@ -238,6 +238,9 @@ async function uploadInstagramAttachment({
   let uploadBuffer: Uint8Array<ArrayBufferLike> = new Uint8Array(await file.arrayBuffer());
   let uploadFileName = file.name || "smartdirect-media";
   let uploadContentType = mimeType;
+  if (attachmentType === "audio" && alreadyNormalized) {
+    await validateInstagramVoiceBuffer(Buffer.from(uploadBuffer), uploadFileName);
+  }
   if (attachmentType === "audio" && !alreadyNormalized) {
     uploadBuffer = await normalizeInstagramAudio(Buffer.from(uploadBuffer), uploadFileName);
     uploadFileName = path.basename(uploadFileName, path.extname(uploadFileName)) + ".m4a";
