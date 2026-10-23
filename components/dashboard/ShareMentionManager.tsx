@@ -4,7 +4,7 @@ import {useEffect,useMemo,useState} from "react";
 import Link from "next/link";
 import {AtSign,Share2,Plus,Search,Trash2,Pencil,LoaderCircle,Check} from "lucide-react";
 import {dairaPalette} from "../../lib/design-system/palette";
-import DirectAutomationSkeleton from "./DirectAutomationSkeleton";
+import AutoRepliesSkeleton from "./AutoRepliesSkeleton";
 type Item={id:string;instagramAccountId:string;triggerType:string;mediaId:string|null;mediaIds:string|null;isActive:boolean;updatedAt:string;messages:Array<{messageType:string;text?:string|null}>};
 const title=(type:string)=>type==="STORY_MENTION"?"منشن در استوری":"اشتراک‌گذاری پست و ریلز";
 export default function ShareMentionManager(){
@@ -47,10 +47,9 @@ export default function ShareMentionManager(){
   finally{setBusy("");}
  }
  return <div dir="rtl" className="mx-auto w-full max-w-4xl space-y-4 py-3">
-  <div className="px-1"><h1 className="text-lg font-extrabold text-slate-900">پاسخ به اشتراک‌گذاری و منشن</h1><p className="mt-2 text-xs leading-7 text-slate-500">وقتی کسی پست یا ریلزت را به دایرکت بفرستد یا تو را در استوری منشن کند، پاسخ دلخواهت به‌صورت خودکار اجرا می‌شود.</p></div>
-  <Link href="/dashboard/share-mention/new" className="flex min-h-[54px] items-center justify-center gap-2 rounded-full text-sm font-bold text-white" style={{background:dairaPalette.primary.main}}><Plus size={19}/>ایجاد پاسخ جدید</Link>
-  {loading?<DirectAutomationSkeleton view="list"/>:<>
-   <div className="relative"><Search size={17} className="absolute right-3 top-3.5 text-slate-400"/><input className="min-h-11 w-full rounded-xl border bg-white pr-10 pl-3 text-sm outline-none focus:border-blue-500" style={{borderColor:dairaPalette.border}} value={query} onChange={e=>setQuery(e.target.value)} placeholder="جستجو در پاسخ‌ها"/></div>
+  <Link href="/dashboard/share-mention/new" className="flex min-h-[54px] flex-row items-center justify-center gap-2 rounded-full text-sm font-bold text-white" style={{background:dairaPalette.primary.main}}><Plus size={19}/>ایجاد پاسخ جدید</Link>
+  {loading?<AutoRepliesSkeleton />:<>
+   <div className="relative"><Search size={17} className="absolute right-3 top-3.5 text-slate-400"/><input className="min-h-11 w-full rounded-xl border bg-white pr-10 pl-3 !text-base outline-none focus:border-blue-500" style={{borderColor:dairaPalette.border,fontSize:"16px",WebkitTextSizeAdjust:"100%"}} value={query} onChange={e=>setQuery(e.target.value)} placeholder="جستجو در پاسخ‌ها"/></div>
    {error&&<p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-700">{error}<button onClick={()=>setReload(x=>x+1)} className="mr-2 underline">تلاش دوباره</button></p>}
    {!filtered.length&&!error&&<div className="rounded-2xl border bg-white px-4 py-10 text-center text-sm leading-8 text-slate-500" style={{borderColor:dairaPalette.border}}>{items.length?"پاسخی با جستجوی تو پیدا نشد.":"هنوز پاسخی برای اشتراک‌گذاری یا منشن ساخته نشده است."}</div>}
    <div className="space-y-3">{filtered.map(item=>{
