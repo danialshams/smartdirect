@@ -480,7 +480,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
 
           {!error && scopedItems.length > 0 ? (
             <div className="mb-4 px-1">
-              <label className="flex h-11 items-center gap-2.5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 text-[#64748B] transition focus-within:border-[#2563EB] focus-within:ring-2 focus-within:ring-[#2563EB]/10">
+              <label className="flex h-11 items-center gap-2.5 rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3.5 text-[var(--daira-text-secondary)] transition focus-within:border-[var(--daira-primary)] focus-within:ring-2 focus-within:ring-[var(--daira-primary)]/10">
                 <Search size={17} className="shrink-0" aria-hidden="true" />
                 <input
                   type="search"
@@ -488,18 +488,18 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
                   onChange={(event) => setSearchQuery(event.target.value)}
                   placeholder="جستجو براساس کلمه کلیدی..."
                   aria-label="جستجو براساس کلمه کلیدی"
-                  className="h-full min-w-0 flex-1 bg-transparent text-base text-[#0F172A] outline-none placeholder:text-[#94A3B8] sm:text-sm"
+                  className="h-full min-w-0 flex-1 bg-transparent text-base text-[var(--daira-heading)] outline-none placeholder:text-[var(--daira-text-disabled)] sm:text-sm"
                 />
               </label>
             </div>
           ) : null}
 
           {error ? (
-            <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium text-[#B91C1C]">
+            <div className="rounded-xl border border-[var(--daira-error-border)] bg-[var(--daira-error-background)] px-3.5 py-3 text-xs font-medium text-[var(--daira-error-text)]">
               {error}
             </div>
           ) : filteredItems.length === 0 ? (
-            <div className="flex min-h-28 items-center justify-center rounded-xl border border-[#E2E8F0] px-4 text-center text-xs font-medium text-[#94A3B8]">
+            <div className="flex min-h-28 items-center justify-center rounded-xl border border-[var(--daira-border)] px-4 text-center text-xs font-medium text-[var(--daira-text-disabled)]">
               هنوز پاسخ خودکاری برای نمایش وجود ندارد.
             </div>
           ) : (
@@ -507,12 +507,12 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
               {filteredItems.map((item) => (
                 <div key={item.key} className="flex min-h-[84px] items-center justify-between gap-3 rounded-[22px] border border-[#E8EDF5] bg-white px-3 py-3 shadow-[0_3px_12px_rgba(15,23,42,.025)] sm:px-4">
                   <div className="flex min-w-0 flex-1 items-center gap-3">
-                    <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[#E8EDF5] bg-[#F8FAFC]">
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[#E8EDF5] bg-[var(--daira-surface-hover)]">
                       {item.previewUrl && item.previewKind === "video" ? (
                         <video src={item.previewUrl} muted playsInline preload="metadata" className="h-full w-full object-cover" aria-label="پیش‌نمایش ویدیو" />
                       ) : item.previewUrl ? (
                         <img src={item.previewUrl} alt="پیش‌نمایش محتوا" loading="lazy" className="h-full w-full object-cover" />
-                      ) : <ImageIcon size={20} className="text-[#94A3B8]" />}
+                      ) : <ImageIcon size={20} className="text-[var(--daira-text-disabled)]" />}
                     </div>
                     <div className="flex min-w-0 flex-1 flex-col items-start gap-2">
                     <div

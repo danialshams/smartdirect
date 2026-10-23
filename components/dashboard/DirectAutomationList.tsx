@@ -89,21 +89,21 @@ export default function DirectAutomationList() {
           <section className="rounded-[28px] bg-transparent">
             {!error && rules.length > 0 ? (
               <div className="mb-4 px-1">
-                <label className="flex h-11 items-center gap-2.5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 text-[#64748B] transition focus-within:border-[#2563EB] focus-within:ring-2 focus-within:ring-[#2563EB]/10">
+                <label className="flex h-11 items-center gap-2.5 rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3.5 text-[var(--daira-text-secondary)] transition focus-within:border-[var(--daira-primary)] focus-within:ring-2 focus-within:ring-[var(--daira-primary)]/10">
                   <Search size={17} className="shrink-0" aria-hidden="true" />
                   <input type="search" value={search} onChange={event => setSearch(event.target.value)}
                     placeholder="جستجو براساس کلمه کلیدی..." aria-label="جستجو براساس کلمه کلیدی"
-                    className="h-full min-w-0 flex-1 bg-transparent text-base text-[#0F172A] outline-none placeholder:text-[#94A3B8] sm:text-sm" />
+                    className="h-full min-w-0 flex-1 bg-transparent text-base text-[var(--daira-heading)] outline-none placeholder:text-[var(--daira-text-disabled)] sm:text-sm" />
                 </label>
               </div>
             ) : null}
             {error ? (
-              <div role="alert" className="flex items-center justify-between gap-3 rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium text-[#B91C1C]">
+              <div role="alert" className="flex items-center justify-between gap-3 rounded-xl border border-[var(--daira-error-border)] bg-[var(--daira-error-background)] px-3.5 py-3 text-xs font-medium text-[var(--daira-error-text)]">
                 <span>{error}</span>
                 <button type="button" onClick={() => setRefresh(value => value + 1)} aria-label="تلاش دوباره"><RefreshCw size={17} /></button>
               </div>
             ) : filtered.length === 0 ? (
-              <div className="flex min-h-28 items-center justify-center rounded-xl border border-[#E2E8F0] px-4 text-center text-xs font-medium text-[#94A3B8]">
+              <div className="flex min-h-28 items-center justify-center rounded-xl border border-[var(--daira-border)] px-4 text-center text-xs font-medium text-[var(--daira-text-disabled)]">
                 {search ? "پاسخی با این کلمه کلیدی پیدا نشد." : "هنوز پاسخ خودکاری برای نمایش وجود ندارد."}
               </div>
             ) : (
@@ -149,13 +149,13 @@ export default function DirectAutomationList() {
           <section role="dialog" aria-modal="true" aria-labelledby="direct-delete-title"
             className="w-full max-w-sm space-y-4 rounded-[24px] bg-white p-5 shadow-2xl">
             <div className="flex items-start justify-between">
-              <h2 id="direct-delete-title" className="font-bold text-[#0F172A]">حذف پاسخ خودکار دایرکت؟</h2>
+              <h2 id="direct-delete-title" className="font-bold text-[var(--daira-heading)]">حذف پاسخ خودکار دایرکت؟</h2>
               <button type="button" disabled={deleting} onClick={() => setTarget(null)} aria-label="بستن"><X size={18} /></button>
             </div>
-            <p className="text-xs leading-6 text-[#475569]">پاسخ «{formatWords(target.keyword)}» حذف می‌شود و دیگر برای کاربران ارسال نخواهد شد.</p>
+            <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">پاسخ «{formatWords(target.keyword)}» حذف می‌شود و دیگر برای کاربران ارسال نخواهد شد.</p>
             <div className="flex gap-2">
               <button type="button" disabled={deleting} onClick={() => setTarget(null)}
-                className="min-h-11 flex-1 rounded-xl border border-[#E2E8F0] text-xs font-bold">انصراف</button>
+                className="min-h-11 flex-1 rounded-xl border border-[var(--daira-border)] text-xs font-bold">انصراف</button>
               <button type="button" disabled={deleting} onClick={() => void remove()}
                 className="min-h-11 flex-1 rounded-xl bg-red-600 text-xs font-bold text-white disabled:opacity-50">
                 {deleting ? "در حال حذف..." : "حذف پاسخ"}

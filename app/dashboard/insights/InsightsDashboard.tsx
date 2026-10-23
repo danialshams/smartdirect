@@ -240,22 +240,22 @@ function TrendChart({ snapshots, metric }: { snapshots: Snapshot[]; metric: Metr
         }}>
         <defs>
           <linearGradient id="insights-line-fill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#2F61FD" stopOpacity="0.16" />
-            <stop offset="100%" stopColor="#2F61FD" stopOpacity="0" />
+            <stop offset="0%" stopColor="var(--daira-primary)" stopOpacity="0.16" />
+            <stop offset="100%" stopColor="var(--daira-primary)" stopOpacity="0" />
           </linearGradient>
         </defs>
         {[0.22, 0.47, 0.72, 0.97].map((fraction) => (
           <line key={fraction} x1={horizontalPadding} x2={width - horizontalPadding}
             y1={height * fraction} y2={height * fraction}
-            stroke="#E2E8F0" strokeDasharray="4 6" strokeWidth="1" />
+            stroke="var(--daira-border)" strokeDasharray="4 6" strokeWidth="1" />
         ))}
         {area && <path d={area} fill="url(#insights-line-fill)" />}
-        <path d={line} fill="none" stroke="#2F61FD" strokeWidth="2.8" strokeLinecap="round" />
+        <path d={line} fill="none" stroke="var(--daira-primary)" strokeWidth="2.8" strokeLinecap="round" />
         {active && (
           <>
             <line x1={active.x} x2={active.x} y1={top} y2={height}
-              stroke="#2F61FD" strokeDasharray="3 4" opacity="0.5" />
-            <circle cx={active.x} cy={active.y} r={6} fill="#FFFFFF" stroke="#2F61FD" strokeWidth={3} />
+              stroke="var(--daira-primary)" strokeDasharray="3 4" opacity="0.5" />
+            <circle cx={active.x} cy={active.y} r={6} fill="var(--daira-surface)" stroke="var(--daira-primary)" strokeWidth={3} />
           </>
         )}
       </svg>
