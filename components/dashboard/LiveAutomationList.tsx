@@ -113,15 +113,15 @@ export default function LiveAutomationList() {
   return (
     <div dir="rtl" className="mx-auto w-full max-w-4xl space-y-4 py-3">
       <button type="button" onClick={() => router.push("/dashboard/live-automation/new")}
-        className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-full text-base font-bold text-white shadow-sm transition hover:brightness-95"
+        className="flex min-h-[54px] w-full flex-row-reverse items-center justify-center gap-2 rounded-full text-base font-bold text-white shadow-sm transition hover:brightness-95"
         style={{ background: dairaPalette.primary.main }}>
         <Plus size={20} /> ایجاد پاسخ جدید
       </button>
-      <label className="relative block">
+      <label className="daira-search-field daira-search-field--floating relative block">
         <Search size={18} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[var(--daira-text-disabled)]" aria-hidden="true" />
         <input value={search} onChange={event => setSearch(event.target.value)}
           placeholder="جستجو در کلمات کلیدی یا پاسخ‌ها..." aria-label="جستجوی پاسخ‌های لایو"
-          className="min-h-12 w-full rounded-xl border border-[#DBE2ED] bg-white py-3 pl-4 pr-10 text-base outline-none focus:border-[var(--daira-primary)]" />
+          className="daira-search-input min-h-12 w-full rounded-xl border border-[#DBE2ED] bg-white py-3 pl-4 pr-10 text-base outline-none focus:border-[var(--daira-primary)]" />
       </label>
       {filtered.length ? (
         <div className="grid gap-3 sm:grid-cols-2">
@@ -153,16 +153,16 @@ export default function LiveAutomationList() {
           ))}
         </div>
       ) : (
-        <div className="space-y-3 rounded-2xl border border-dashed border-[var(--daira-outline)] bg-[var(--daira-surface-hover)] px-4 py-14 text-center">
+        <div className="daira-empty-state space-y-3 rounded-2xl border border-dashed border-[var(--daira-outline)] bg-[var(--daira-surface-hover)] px-4 py-14 text-center">
           <RadioTower size={30} className="mx-auto text-[var(--daira-text-disabled)]" />
           <p className="text-sm font-semibold text-[var(--daira-text-secondary)]">{search ? "پاسخی با این عبارت پیدا نشد." : "هنوز پاسخ خودکار لایو ساخته نشده است."}</p>
           {!search && <p className="mx-auto max-w-md text-xs leading-6 text-[var(--daira-text-secondary)]">می‌توانی پاسخ را قبل از شروع لایو بسازی. هنگام لایو، کامنت‌های دارای کلمهٔ کلیدی به‌صورت خودکار بررسی می‌شوند.</p>}
         </div>
       )}
       {deleteTarget && (
-        <div className="fixed inset-0 z-[2500] flex items-center justify-center bg-[var(--daira-heading)]/40 p-4" role="presentation"
+        <div className="daira-glass-overlay fixed inset-0 z-[2500] flex items-center justify-center p-4" role="presentation"
           onMouseDown={event => { if (event.currentTarget === event.target && !deleting) setDeleteTarget(null); }}>
-          <section role="dialog" aria-modal="true" aria-labelledby="delete-live-title" className="w-full max-w-sm space-y-4 rounded-2xl bg-white p-5 shadow-xl">
+          <section role="dialog" aria-modal="true" aria-labelledby="delete-live-title" className="daira-glass-dialog daira-glass-dialog--danger w-full max-w-sm space-y-4 rounded-2xl p-5">
             <div className="flex items-center justify-between">
               <h2 id="delete-live-title" className="text-base font-bold text-[var(--daira-heading)]">حذف پاسخ خودکار لایو؟</h2>
               <button type="button" aria-label="بستن" onClick={() => setDeleteTarget(null)} disabled={deleting} className="rounded-lg p-2 text-[var(--daira-text-secondary)]"><X size={17}/></button>
