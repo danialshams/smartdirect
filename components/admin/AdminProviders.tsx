@@ -36,6 +36,19 @@ const theme = createTheme({
   },
   shape: { borderRadius: 10 },
   components: {
+    MuiPopover: { styleOverrides: { paper: {
+      background:"var(--daira-glass-popover)",backdropFilter:"blur(12px) saturate(110%)",
+      border:"1px solid var(--daira-glass-rim)",boxShadow:"var(--daira-shadow-floating)",borderRadius:16
+    } } },
+    MuiMenu: { styleOverrides: { paper: {
+      background:"var(--daira-glass-popover)",backdropFilter:"blur(12px)",
+      border:"1px solid var(--daira-glass-rim)",borderRadius:15
+    } } },
+    MuiChip: { styleOverrides: { root: {borderColor:"var(--daira-border)"} } },
+    MuiTooltip: { styleOverrides: {tooltip: {backgroundColor:"var(--daira-tooltip-bg)",color:"var(--daira-tooltip-text)"} } },
+    MuiAlert: { styleOverrides: {root: {borderRadius:13}} },
+    MuiSkeleton: {styleOverrides: {root: {backgroundColor:"var(--daira-skeleton-base)"}} },
+    MuiTabs: {styleOverrides: {indicator: {backgroundColor:"var(--daira-primary)"}} },
     MuiPaper: { defaultProps: { elevation: 0 } },
     MuiCard: { styleOverrides: { root: { border: "1px solid #E2E8F0" } } },
     MuiButton: { defaultProps: { disableElevation: true } },
@@ -83,6 +96,10 @@ const theme = createTheme({
       styleOverrides: {
         paper: {
           margin: 12,
+          background:"var(--daira-glass-modal)",
+          backdropFilter:"blur(18px)",
+          border:"1px solid var(--daira-glass-rim)",
+          boxShadow:"var(--daira-shadow-floating)",
           width: "calc(100% - 24px)",
           "@media (min-width:600px)": {
             margin: 32,

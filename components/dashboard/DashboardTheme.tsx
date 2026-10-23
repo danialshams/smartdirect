@@ -121,6 +121,23 @@ const dashboardTheme = createTheme({
         },
       },
     },
+    MuiDialog: { styleOverrides: { paper: {
+      background:"var(--daira-glass-modal)",backdropFilter:"blur(18px) saturate(115%)",
+      border:"1px solid var(--daira-glass-rim)",boxShadow:"var(--daira-shadow-floating)",borderRadius:20
+    } } },
+    MuiPopover: { styleOverrides: { paper: {
+      background:"var(--daira-glass-popover)",backdropFilter:"blur(12px) saturate(110%)",
+      border:"1px solid var(--daira-glass-rim)",boxShadow:"var(--daira-shadow-floating)",borderRadius:16
+    } } },
+    MuiMenu: { styleOverrides: { paper: {
+      background:"var(--daira-glass-popover)",backdropFilter:"blur(12px)",
+      border:"1px solid var(--daira-glass-rim)",borderRadius:15
+    } } },
+    MuiChip: { styleOverrides: { root: {borderColor:"var(--daira-border)"} } },
+    MuiTooltip: { styleOverrides: {tooltip: {backgroundColor:"var(--daira-tooltip-bg)",color:"var(--daira-tooltip-text)"} } },
+    MuiAlert: { styleOverrides: {root: {borderRadius:13}} },
+    MuiSkeleton: {styleOverrides: {root: {backgroundColor:"var(--daira-skeleton-base)"}} },
+    MuiTabs: {styleOverrides: {indicator: {backgroundColor:"var(--daira-primary)"}} },
     MuiPaper: { defaultProps: { elevation: 0 } },
     MuiButton: { defaultProps: { disableElevation: true } },
     MuiCard: {

@@ -22,9 +22,9 @@ const aliases = {
   "--ring": "var(--daira-primary)",
   "--radius": "0.6rem"
 } as const;
-const output = "/* GENERATED: edit lib/design-system/palette.ts, then run npm run theme:generate. */\\n:root {\\n" +
-  Object.entries({ ...dairaTokens, ...aliases }).map(([key,value]) => "  " + key + ": " + value + ";").join("\\n") +
-  "\\n}\\n";
+const output = "/* GENERATED: edit lib/design-system/palette.ts, then run npm run theme:generate. */\n:root {\n" +
+  Object.entries({ ...dairaTokens, ...aliases }).map(([key,value]) => "  " + key + ": " + value + ";").join("\n") +
+  "\n}\n";
 const target = "app/daira-tokens.css";
 if (process.argv.includes("--check")) {
   if (readFileSync(target, "utf8") !== output) throw Error("Daira tokens are out of sync. Run npm run theme:generate.");

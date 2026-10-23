@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import "./daira-glass.css";
 import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
