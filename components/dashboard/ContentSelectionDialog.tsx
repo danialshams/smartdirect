@@ -106,7 +106,7 @@ export default function ContentSelectionDialog({
     <div className="fixed inset-0 z-[2500] flex items-end justify-center bg-[#101A32]/55 p-0 backdrop-blur-[3px] sm:items-center sm:p-5"
       onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       <section ref={dialogRef} dir="rtl" role="dialog" aria-modal="true" aria-labelledby="content-dialog-title" aria-describedby="content-dialog-hint"
-        className="flex max-h-[92dvh] w-full max-w-[760px] flex-col overflow-hidden rounded-t-[28px] border border-[#E3EAF5] bg-white shadow-[0_24px_80px_rgba(15,23,42,.20)] sm:max-h-[86dvh] sm:rounded-[28px]">
+        className="flex h-[min(92dvh,720px)] w-full max-w-[760px] flex-col overflow-hidden rounded-t-[28px] border border-[#E3EAF5] bg-white shadow-[0_24px_80px_rgba(15,23,42,.20)] sm:h-[min(86dvh,720px)] sm:rounded-[28px]">
         <header className="flex shrink-0 items-start justify-between gap-3 border-b border-[#E8EDF5] px-4 pb-4 pt-5 sm:px-6">
           <div className="min-w-0">
             <h2 id="content-dialog-title" className="text-base font-extrabold text-[#18233C]">انتخاب محتوا</h2>
