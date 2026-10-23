@@ -7,20 +7,23 @@ import { prefixer } from "stylis";
 import rtlPlugin from "stylis-plugin-rtl";
 import { CacheProvider } from "@emotion/react";
 import createCache from "@emotion/cache";
+import { dairaPalette, dairaTokens } from "../../lib/design-system/palette";
 
 const cache = createCache({ key: "mui-rtl", stylisPlugins: [prefixer, rtlPlugin] });
 
 const theme = createTheme({
   direction: "rtl",
   palette: {
-    primary: { main: "#2563EB", dark: "#1D4ED8", light: "#EFF6FF" },
-    secondary: { main: "#64748B" },
-    success: { main: "#16A34A" },
-    warning: { main: "#D97706" },
-    error: { main: "#DC2626" },
-    background: { default: "#F8FAFC", paper: "#FFFFFF" },
-    text: { primary: "#0F172A", secondary: "#64748B" },
-    divider: "#E2E8F0",
+    mode: "light",
+    primary: { main:dairaPalette.primary.main,dark:dairaPalette.primary.hover,light:dairaTokens["--daira-brand-100"],contrastText:dairaTokens["--daira-inverse-text"] },
+    secondary: {main:dairaPalette.text.secondary},
+    success: {main:dairaPalette.status.success},
+    warning: {main:dairaPalette.status.warning},
+    error: {main:dairaPalette.status.error},
+    info: {main:dairaPalette.status.info},
+    background: {default:dairaPalette.background.page,paper:dairaPalette.background.surface},
+    text: {primary:dairaPalette.text.heading,secondary:dairaPalette.text.secondary},
+    divider:dairaPalette.border,
   },
   typography: {
     fontFamily: "Vazirmatn, Arial, sans-serif",
@@ -33,8 +36,21 @@ const theme = createTheme({
   },
   shape: { borderRadius: 10 },
   components: {
+    MuiPopover: { styleOverrides: { paper: {
+      background:"var(--daira-glass-popover)",backdropFilter:"blur(12px) saturate(110%)",
+      border:"1px solid var(--daira-glass-rim)",boxShadow:"var(--daira-shadow-floating)",borderRadius:16
+    } } },
+    MuiMenu: { styleOverrides: { paper: {
+      background:"var(--daira-glass-popover)",backdropFilter:"blur(12px)",
+      border:"1px solid var(--daira-glass-rim)",borderRadius:15
+    } } },
+    MuiChip: { styleOverrides: { root: {borderColor:"var(--daira-border)"} } },
+    MuiTooltip: { styleOverrides: {tooltip: {backgroundColor:"var(--daira-tooltip-bg)",color:"var(--daira-tooltip-text)"} } },
+    MuiAlert: { styleOverrides: {root: {borderRadius:13}} },
+    MuiSkeleton: {styleOverrides: {root: {backgroundColor:"var(--daira-skeleton-base)"}} },
+    MuiTabs: {styleOverrides: {indicator: {backgroundColor:"var(--daira-primary)"}} },
     MuiPaper: { defaultProps: { elevation: 0 } },
-    MuiCard: { styleOverrides: { root: { border: "1px solid #E2E8F0" } } },
+    MuiCard: { styleOverrides: { root: { border: "1px solid var(--daira-border)" } } },
     MuiButton: { defaultProps: { disableElevation: true } },
     MuiTableCell: {
       styleOverrides: {
@@ -48,7 +64,7 @@ const theme = createTheme({
         },
         head: {
           fontWeight: 700,
-          backgroundColor: "#F8FAFC",
+          backgroundColor: "var(--daira-surface-hover)",
           "@media (max-width:600px)": {
             fontSize: "0.72rem",
           },
@@ -80,6 +96,10 @@ const theme = createTheme({
       styleOverrides: {
         paper: {
           margin: 12,
+          background:"var(--daira-glass-modal)",
+          backdropFilter:"blur(18px)",
+          border:"1px solid var(--daira-glass-rim)",
+          boxShadow:"var(--daira-shadow-floating)",
           width: "calc(100% - 24px)",
           "@media (min-width:600px)": {
             margin: 32,

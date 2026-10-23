@@ -10,8 +10,8 @@ import { toast } from "sonner";
 const LoadingState = ({ label }: { label: string }) => (
   <div dir="rtl" className="flex min-h-[60vh] w-full items-center justify-center px-4 py-10">
     <div className="flex flex-col items-center justify-center gap-3 text-center">
-      <Loader2 size={30} strokeWidth={1.8} className="animate-spin text-[#2563EB]" />
-      <p className="text-sm leading-6 text-[#64748B]">{label}</p>
+      <Loader2 size={30} strokeWidth={1.8} className="animate-spin text-[var(--daira-primary)]" />
+      <p className="text-sm leading-6 text-[var(--daira-text-secondary)]">{label}</p>
     </div>
   </div>
 );
@@ -110,9 +110,9 @@ export default function MediaAutomationEditor({ id, expectedTriggerType }: { id:
   const isStory = expectedTriggerType === "STORY_REPLY_KEYWORD";
 
 const commentReplyField = !isStory ? (
-  <div className="border-t border-[#E2E8F0] pt-5">
-    <label htmlFor="edit-publishing-comment-reply" className="mb-2 block text-sm font-bold text-[#0F172A]">متن ارسالی در کامنت</label>
-    <textarea id="edit-publishing-comment-reply" value={commentReplyText} onChange={(event) => { setCommentReplyText(event.target.value); setDirty(true); }} rows={3} maxLength={2000} inputMode="text" placeholder="پاسخی که زیر کامنت کاربر منتشر می‌شود بنویس..." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none placeholder:text-xs focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
+  <div className="border-t border-[var(--daira-border)] pt-5">
+    <label htmlFor="edit-publishing-comment-reply" className="mb-2 block text-sm font-bold text-[var(--daira-heading)]">متن ارسالی در کامنت</label>
+    <textarea id="edit-publishing-comment-reply" value={commentReplyText} onChange={(event) => { setCommentReplyText(event.target.value); setDirty(true); }} rows={3} maxLength={2000} inputMode="text" placeholder="پاسخی که زیر کامنت کاربر منتشر می‌شود بنویس..." className="w-full resize-y rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3.5 py-3 !text-base leading-7 text-[var(--daira-heading)] outline-none placeholder:text-xs focus:border-[var(--daira-primary)] focus:bg-white focus:ring-2 focus:ring-[var(--daira-primary)]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
   </div>
 ) : null;
 
@@ -121,29 +121,29 @@ const commentReplyField = !isStory ? (
 const optionalSettings = (
   <div className={isStory ? "space-y-3" : "space-y-5"}>
     {isStory && (
-      <div className="rounded-xl border border-[#E2E8F0] bg-white p-3.5">
+      <div className="rounded-xl border border-[var(--daira-border)] bg-white p-3.5">
         <label className="flex cursor-pointer items-start gap-3">
-          <input type="checkbox" checked={likeStoryReply} onChange={(event) => { setLikeStoryReply(event.target.checked); setDirty(true); }} className="mt-0.5 h-4 w-4 accent-[#2563EB]" />
+          <input type="checkbox" checked={likeStoryReply} onChange={(event) => { setLikeStoryReply(event.target.checked); setDirty(true); }} className="mt-0.5 h-4 w-4 accent-[var(--daira-primary)]" />
           <span>
-            <span className="block text-sm font-bold text-[#0F172A]">لایک ریپلای <span className="font-medium text-[#2563EB]">(اختیاری)</span></span>
-            <span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، Reply استوری کاربر لایک می‌شود.</span>
+            <span className="block text-sm font-bold text-[var(--daira-heading)]">لایک ریپلای <span className="font-medium text-[var(--daira-primary)]">(اختیاری)</span></span>
+            <span className="mt-1 block text-xs leading-5 text-[var(--daira-text-secondary)]">در صورت فعال بودن، Reply استوری کاربر لایک می‌شود.</span>
           </span>
         </label>
       </div>
     )}
 
-<div className={isStory ? "rounded-xl border border-[#E2E8F0] bg-white p-3.5" : "border-t border-[#E2E8F0] pt-5"}>
-      <label className={isStory ? "flex cursor-pointer items-start gap-3" : "flex cursor-pointer items-start gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5"}>
-        <input type="checkbox" checked={requireFollow} onChange={(event) => { setRequireFollow(event.target.checked); setDirty(true); }} className="mt-0.5 h-4 w-4 accent-[#2563EB]" />
+<div className={isStory ? "rounded-xl border border-[var(--daira-border)] bg-white p-3.5" : "border-t border-[var(--daira-border)] pt-5"}>
+      <label className={isStory ? "flex cursor-pointer items-start gap-3" : "flex cursor-pointer items-start gap-3 rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] p-3.5"}>
+        <input type="checkbox" checked={requireFollow} onChange={(event) => { setRequireFollow(event.target.checked); setDirty(true); }} className="mt-0.5 h-4 w-4 accent-[var(--daira-primary)]" />
         <span>
-          <span className="block text-sm font-bold text-[#0F172A]">اجبار به فالو <span className="font-medium text-[#2563EB]">(اختیاری)</span></span>
-          <span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، کاربر باید پیج را فالو کرده باشد تا پاسخ را دریافت کند.</span>
+          <span className="block text-sm font-bold text-[var(--daira-heading)]">اجبار به فالو <span className="font-medium text-[var(--daira-primary)]">(اختیاری)</span></span>
+          <span className="mt-1 block text-xs leading-5 text-[var(--daira-text-secondary)]">در صورت فعال بودن، کاربر باید پیج را فالو کرده باشد تا پاسخ را دریافت کند.</span>
         </span>
       </label>
       {requireFollow && (
         <div className="mt-2.5">
-          <label htmlFor="edit-publishing-follow-gate-text" className="mb-2 block text-sm font-bold text-[#0F172A]">متن درخواست فالو</label>
-          <textarea id="edit-publishing-follow-gate-text" value={followGateText} onChange={(event) => { setFollowGateText(event.target.value); setDirty(true); }} rows={2} maxLength={500} inputMode="text" placeholder="مثلاً برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none placeholder:text-xs focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
+          <label htmlFor="edit-publishing-follow-gate-text" className="mb-2 block text-sm font-bold text-[var(--daira-heading)]">متن درخواست فالو</label>
+          <textarea id="edit-publishing-follow-gate-text" value={followGateText} onChange={(event) => { setFollowGateText(event.target.value); setDirty(true); }} rows={2} maxLength={500} inputMode="text" placeholder="مثلاً برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید." className="w-full resize-y rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3.5 py-3 !text-base leading-7 text-[var(--daira-heading)] outline-none placeholder:text-xs focus:border-[var(--daira-primary)] focus:bg-white focus:ring-2 focus:ring-[var(--daira-primary)]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
         </div>
       )}
     </div>
@@ -159,19 +159,19 @@ const optionalSettings = (
           <Button
             type="button"
             onClick={() => router.back()}
-            className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[#DBEAFE] hover:text-[#2563EB]"
+            className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[var(--daira-outline-hover-bg)] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[var(--daira-outline-active-bg)] hover:text-[var(--daira-primary)]"
           >
             <ArrowRight size={15} strokeWidth={2} />
             بازگشت
           </Button>
         </div>
 
-        <section className="space-y-5 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
+        <section className="space-y-5 rounded-2xl border border-[var(--daira-border)] bg-white p-4 shadow-sm sm:p-6">
           <div className="flex items-start gap-3">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-xs font-bold text-[#2563EB]"><Pencil size={15} /></span>
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--daira-primary)]/10 text-xs font-bold text-[var(--daira-primary)]"><Pencil size={15} /></span>
             <div className="min-w-0">
-              <h2 className="text-sm font-bold text-[#0F172A]">{isStory ? "ویرایش پاسخ خودکار استوری" : "ویرایش پاسخ خودکار کامنت"}</h2>
-              <p className="mt-1.5 text-xs leading-5 text-[#64748B]">{isStory ? "کلمات کلیدی، نوع پاسخ و تنظیمات اختیاری استوری را ویرایش کن." : "کلمات کلیدی، پاسخ کامنت و تنظیمات اختیاری را ویرایش کن."}</p>
+              <h2 className="text-sm font-bold text-[var(--daira-heading)]">{isStory ? "ویرایش پاسخ خودکار استوری" : "ویرایش پاسخ خودکار کامنت"}</h2>
+              <p className="mt-1.5 text-xs leading-5 text-[var(--daira-text-secondary)]">{isStory ? "کلمات کلیدی، نوع پاسخ و تنظیمات اختیاری استوری را ویرایش کن." : "کلمات کلیدی، پاسخ کامنت و تنظیمات اختیاری را ویرایش کن."}</p>
             </div>
           </div>
 
@@ -181,8 +181,8 @@ const optionalSettings = (
             optionalSettings={optionalSettings}
             finalActions={(
               <>
-                <button type="button" onClick={() => setShowDeleteConfirm(true)} disabled={deleting} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-4 text-sm font-bold text-[#DC2626] hover:bg-[#FEE2E2] disabled:opacity-60"><span>{deleting ? "در حال حذف..." : "حذف پاسخ خودکار"}</span><Trash2 size={17} className="shrink-0" /></button>
-                <button type="button" onClick={() => router.back()} disabled={deleting} className="inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] px-4 text-sm font-bold text-[#475569] hover:bg-[#F1F5F9] disabled:opacity-60">انصراف</button>
+                <button type="button" onClick={() => setShowDeleteConfirm(true)} disabled={deleting} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[var(--daira-error-border)] bg-[var(--daira-error-background)] px-4 text-sm font-bold text-[var(--daira-error-text)] hover:bg-[#FEE2E2] disabled:opacity-60"><span>{deleting ? "در حال حذف..." : "حذف پاسخ خودکار"}</span><Trash2 size={17} className="shrink-0" /></button>
+                <button type="button" onClick={() => router.back()} disabled={deleting} className="inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-[var(--daira-outline)] bg-[var(--daira-surface-hover)] px-4 text-sm font-bold text-[var(--daira-text-secondary)] hover:bg-[var(--daira-neutral-bg)] disabled:opacity-60">انصراف</button>
               </>
             )}
             accountId={automation.instagramAccountId}
@@ -226,18 +226,18 @@ const optionalSettings = (
               }
             }}
           />
-          {error && <div role="alert" className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-5 text-[#B91C1C]">{error}</div>}
+          {error && <div role="alert" className="rounded-xl border border-[var(--daira-error-border)] bg-[var(--daira-error-background)] px-3.5 py-3 text-xs font-medium leading-5 text-[var(--daira-error-text)]">{error}</div>}
 
 
         </section>
         {showDeleteConfirm && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/30 px-4 backdrop-blur-[2px]" role="presentation" onMouseDown={(event) => { if (event.currentTarget === event.target && !deleting) setShowDeleteConfirm(false); }}>
-            <div dir="rtl" role="dialog" aria-modal="true" aria-labelledby="delete-media-automation-title" className="w-full max-w-sm rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-2xl">
-              <h3 id="delete-media-automation-title" className="text-base font-bold text-[#0F172A]">حذف پاسخ خودکار؟</h3>
-              <p className="mt-2 text-sm leading-6 text-[#64748B]">این پاسخ خودکار حذف می‌شود و دیگر اجرا نخواهد شد.</p>
+            <div dir="rtl" role="dialog" aria-modal="true" aria-labelledby="delete-media-automation-title" className="w-full max-w-sm rounded-2xl border border-[var(--daira-border)] bg-white p-5 shadow-2xl">
+              <h3 id="delete-media-automation-title" className="text-base font-bold text-[var(--daira-heading)]">حذف پاسخ خودکار؟</h3>
+              <p className="mt-2 text-sm leading-6 text-[var(--daira-text-secondary)]">این پاسخ خودکار حذف می‌شود و دیگر اجرا نخواهد شد.</p>
               <div className="mt-5 flex gap-2">
-                <button type="button" onClick={() => setShowDeleteConfirm(false)} disabled={deleting} className="min-h-10 flex-1 rounded-xl border border-[#E2E8F0] bg-white text-xs font-semibold text-[#475569] hover:bg-[#F8FAFC]">انصراف</button>
-                <button type="button" onClick={() => void deleteAutomation()} disabled={deleting} className="min-h-10 flex-1 rounded-xl border border-[#FECACA] bg-[#FEF2F2] text-xs font-semibold text-[#DC2626] hover:bg-[#FEE2E2] disabled:opacity-60">{deleting ? "در حال حذف..." : "بله، حذف شود"}</button>
+                <button type="button" onClick={() => setShowDeleteConfirm(false)} disabled={deleting} className="min-h-10 flex-1 rounded-xl border border-[var(--daira-border)] bg-white text-xs font-semibold text-[var(--daira-text-secondary)] hover:bg-[var(--daira-surface-hover)]">انصراف</button>
+                <button type="button" onClick={() => void deleteAutomation()} disabled={deleting} className="min-h-10 flex-1 rounded-xl border border-[var(--daira-error-border)] bg-[var(--daira-error-background)] text-xs font-semibold text-[var(--daira-error-text)] hover:bg-[#FEE2E2] disabled:opacity-60">{deleting ? "در حال حذف..." : "بله، حذف شود"}</button>
               </div>
             </div>
           </div>

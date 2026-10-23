@@ -93,10 +93,10 @@ export default function DashboardAccountsClient({
       <Alert
         severity="error"
         sx={{
-          border: "1px solid #FECACA",
-          bgcolor: "#FEF2F2",
+          border: "1px solid var(--daira-error-border)",
+          bgcolor: "var(--daira-error-background)",
           color: "#991B1B",
-          "& .MuiAlert-icon": { color: "#DC2626" },
+          "& .MuiAlert-icon": { color: "var(--daira-error-text)" },
         }}
       >
         {error}

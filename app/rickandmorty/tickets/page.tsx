@@ -112,10 +112,10 @@ export default function TicketsPage() {
         }}
       >
         <Box>
-          <Typography variant="h5" sx={{ fontSize: { xs: 22, sm: 26 }, fontWeight: 800, color: "#0F172A" }}>
+          <Typography variant="h5" sx={{ fontSize: { xs: 22, sm: 26 }, fontWeight: 800, color: "var(--daira-heading)" }}>
             تیکت‌های پشتیبانی
           </Typography>
-          <Typography variant="body2" sx={{ color: "#64748B", mt: 0.5 }}>
+          <Typography variant="body2" sx={{ color: "var(--daira-text-secondary)", mt: 0.5 }}>
             پیگیری درخواست‌ها و پاسخ‌گویی به کاربران در یک نگاه
           </Typography>
         </Box>
@@ -127,9 +127,9 @@ export default function TicketsPage() {
             borderRadius: 2.5,
             minHeight: 42,
             fontWeight: 700,
-            bgcolor: "#2563EB",
+            bgcolor: "var(--daira-primary)",
             boxShadow: "none",
-            "&:hover": { bgcolor: "#1D4ED8", boxShadow: "none" },
+            "&:hover": { bgcolor: "var(--daira-primary-hover)", boxShadow: "none" },
           }}
         >
           ارسال گروهی تیکت
@@ -137,7 +137,7 @@ export default function TicketsPage() {
       </Box>
 
       {/* فیلتر و جستجو */}
-      <Card variant="outlined" sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 3, borderColor: "#E2E8F0", bgcolor: "#FFFFFF" }}>
+      <Card variant="outlined" sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 3, borderColor: "var(--daira-border)", bgcolor: "var(--daira-surface)" }}>
         <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "2fr 1fr" }, gap: 1.5 }}>
           <TextField
             fullWidth
@@ -149,7 +149,7 @@ export default function TicketsPage() {
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <Search size={18} color="#94A3B8" />
+                  <Search size={18} color="var(--daira-text-disabled)" />
                 </InputAdornment>
               ),
               endAdornment: q ? (
@@ -185,7 +185,7 @@ export default function TicketsPage() {
         </Box>
 
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mt: 1.5, px: 0.5 }}>
-          <Typography variant="caption" sx={{ color: "#64748B", fontWeight: 700 }}>
+          <Typography variant="caption" sx={{ color: "var(--daira-text-secondary)", fontWeight: 700 }}>
             {loading ? "در حال دریافت آمار…" : `${rows.length.toLocaleString("fa-IR")} تیکت`}
           </Typography>
           {(status || q) && (
@@ -239,10 +239,10 @@ export default function TicketsPage() {
                 onClick={() => router.push(`/rickandmorty/tickets/${t.id}`)}
                 sx={{
                   borderRadius: 2.5,
-                  borderColor: "#E2E8F0",
+                  borderColor: "var(--daira-border)",
                   cursor: "pointer",
                   transition: "all 0.18s ease-in-out",
-                  bgcolor: "#FFFFFF",
+                  bgcolor: "var(--daira-surface)",
                   p: { xs: 1.5, sm: 2 },
                   "&:hover": {
                     borderColor: "#93C5FD",
@@ -256,21 +256,21 @@ export default function TicketsPage() {
                     sx={{
                       fontSize: { xs: 14.5, sm: 16 },
                       fontWeight: 800,
-                      color: "#0F172A",
+                      color: "var(--daira-heading)",
                       lineHeight: 1.6,
                       overflowWrap: "anywhere",
                     }}
                   >
                     {t.subject}
                   </Typography>
-                  <ArrowLeft size={18} color="#94A3B8" style={{ flexShrink: 0, marginTop: 4 }} />
+                  <ArrowLeft size={18} color="var(--daira-text-disabled)" style={{ flexShrink: 0, marginTop: 4 }} />
                 </Box>
 
                 <Typography
                   variant="body2"
                   sx={{
                     fontSize: 12.5,
-                    color: "#64748B",
+                    color: "var(--daira-text-secondary)",
                     mt: 0.5,
                     fontWeight: 600,
                   }}
@@ -287,7 +287,7 @@ export default function TicketsPage() {
                     gap: 1,
                     mt: 1.5,
                     pt: 1.25,
-                    borderTop: "1px dashed #F1F5F9",
+                    borderTop: "1px dashed var(--daira-neutral-bg)",
                   }}
                 >
                   <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap>
@@ -311,7 +311,7 @@ export default function TicketsPage() {
                     direction="row"
                     spacing={1.5}
                     alignItems="center"
-                    sx={{ color: "#64748B", fontSize: 11.5, alignSelf: { xs: "flex-end", sm: "center" } }}
+                    sx={{ color: "var(--daira-text-secondary)", fontSize: 11.5, alignSelf: { xs: "flex-end", sm: "center" } }}
                   >
                     <Stack direction="row" spacing={0.5} alignItems="center">
                       <MessageSquareText size={14} />
@@ -332,10 +332,10 @@ export default function TicketsPage() {
             sx={{
               borderRadius: 3,
               borderStyle: "dashed",
-              borderColor: "#CBD5E1",
+              borderColor: "var(--daira-outline)",
               p: { xs: 4, sm: 6 },
               textAlign: "center",
-              bgcolor: "#FFFFFF",
+              bgcolor: "var(--daira-surface)",
             }}
           >
             <Box
@@ -347,14 +347,14 @@ export default function TicketsPage() {
                 display: "grid",
                 placeItems: "center",
                 borderRadius: 2.5,
-                bgcolor: "#F1F5F9",
-                color: "#64748B",
+                bgcolor: "var(--daira-neutral-bg)",
+                color: "var(--daira-text-secondary)",
               }}
             >
               <UserRound size={22} />
             </Box>
             <Typography sx={{ fontWeight: 800, color: "#1E293B", fontSize: 15 }}>تیکتی یافت نشد</Typography>
-            <Typography sx={{ color: "#64748B", fontSize: 13, mt: 0.5 }}>
+            <Typography sx={{ color: "var(--daira-text-secondary)", fontSize: 13, mt: 0.5 }}>
               فیلترهای انتخابی را بررسی کرده یا عبارت دیگری را جستجو کنید.
             </Typography>
             {(q || status) && (

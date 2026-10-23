@@ -1,0 +1,178 @@
+/* Daira Liquid Glass — semantic applications. Color values live ONLY in palette.ts.
+   Use restrained blur on large panels and translucent non-filtered surfaces on
+   repetitive rows: mobile scrolling stays responsive. The fixed header/dock
+   retain their previously approved dedicated optical treatment in globals.css. */
+
+.daira-app-shell {
+  background:var(--daira-page-bg);
+  color:var(--daira-text);
+}
+.daira-app-shell :is(.daira-home__account-panel,.daira-home__tool-card,
+  .daira-home__quick-card,.daira-home__section-heading,.daira-home__onboarding,
+  .dashboard-page-section,.daira-support__header,.daira-support__ticket,
+  .daira-support__form,.daira-support__chat-header) {
+  border:1px solid var(--daira-glass-rim);
+  background:var(--daira-glass-card);
+  box-shadow:var(--daira-shadow-card),inset 0 1px 0 var(--daira-glass-inner-rim);
+}
+.daira-app-shell :is(.daira-home__account-panel,.daira-home__section-heading,
+  .daira-support__header,.daira-support__chat-header,.dashboard-page-header,
+  .dashboard-page-section__header) {
+  background:var(--daira-glass-raised);
+}
+.daira-app-shell :is(.daira-home__account-panel,.daira-home__tool-card,
+  .daira-home__quick-card,.daira-support__ticket) {
+  transition:background-color .18s,border-color .18s,box-shadow .18s,transform .18s;
+}
+.daira-app-shell :is(.daira-home__tool-card,.daira-home__quick-card,
+  .daira-support__ticket,.daira-home__account-panel):hover {
+  background:var(--daira-glass-raised);
+  border-color:var(--daira-glass-rim);
+  box-shadow:var(--daira-shadow-card-hover),inset 0 1px 0 var(--daira-glass-rim);
+}
+.daira-app-shell :is(.daira-home__section-heading,.daira-home__account-panel,
+  .daira-support__header,.dashboard-page-section) {
+  -webkit-backdrop-filter:blur(10px) saturate(110%);
+  backdrop-filter:blur(10px) saturate(110%);
+}
+.daira-app-shell :is(.daira-home__tool-card,.daira-home__quick-card,
+  .daira-support__ticket,.daira-support__filter) {
+  -webkit-backdrop-filter:none;
+  backdrop-filter:none;
+}
+/* Tailwind-based dashboard cards, dashboards, queues, insights and publishing.
+   Restrict to container elements; do not glassify form controls or media. */
+.daira-app-shell :is(section,article)[class*="rounded-2xl"][class*="border"],
+.daira-app-shell div[class*="rounded-2xl"][class*="bg-white"][class*="border"] {
+  background-color:var(--daira-glass-card);
+  border-color:var(--daira-glass-rim);
+  box-shadow:var(--daira-shadow-card),inset 0 1px 0 var(--daira-glass-inner-rim);
+}
+.daira-app-shell :is(section,article)[class*="rounded-2xl"][class*="border"]:hover {
+  border-color:var(--daira-glass-rim);
+}
+.daira-app-shell .dashboard-page-unified {
+  background:transparent;
+  color:var(--daira-heading);
+}
+.daira-app-shell .dashboard-page-unified :is(.dashboard-page-section,section[class*="border"],article[class*="border"]) {
+  background:var(--daira-glass-card);
+  border-color:var(--daira-glass-rim);
+  box-shadow:var(--daira-shadow-card);
+}
+.daira-app-shell .dashboard-page-unified .dashboard-page-header {
+  border:1px solid var(--daira-glass-rim);
+  border-radius:16px;
+  padding:12px 14px;
+  background:var(--daira-glass-raised);
+}
+.daira-app-shell .daira-home__section-icon,
+.daira-app-shell .daira-support__header-icon {
+  background:var(--daira-brand-200);
+  color:var(--daira-primary);
+}
+.daira-app-shell .daira-home__account-connected {
+  background:var(--daira-success-bg);
+  color:var(--daira-success-text);
+}
+/* Separate tab / filter layers, with high contrast even on blurred cards. */
+.daira-app-shell .daira-support__filter {
+  background:var(--daira-glass-raised);
+  border-color:var(--daira-glass-rim);
+  color:var(--daira-text-secondary);
+}
+.daira-app-shell .daira-support__filter.is-active {
+  background:var(--daira-tabs-active-bg);
+  color:var(--daira-tabs-active-text);
+  border-color:var(--daira-queue-border);
+}
+.daira-app-shell .daira-support__status--waiting_user {
+  background:var(--daira-queue-bg);color:var(--daira-queue-text);
+}
+.daira-app-shell .daira-support__status--resolved {
+  background:var(--daira-success-bg);color:var(--daira-success-text);
+}
+.daira-app-shell .daira-support__status--closed {
+  background:var(--daira-neutral-bg);color:var(--daira-neutral-text);
+}
+/* Editor controls, chat and input text remain opaque enough for legibility. */
+.daira-app-shell :is(input:not([type=checkbox]):not([type=radio]),
+  textarea,select)[class*="border"],
+.daira-app-shell .daira-support__form :is(input,textarea,select) {
+  background:var(--daira-input-bg);
+  border-color:var(--daira-input-border);
+  color:var(--daira-heading);
+}
+.daira-app-shell :is(input,textarea,select):focus-visible {
+  border-color:var(--daira-input-focus);
+  outline-color:var(--daira-input-focus);
+}
+.daira-app-shell :is(.daira-support__thread,.daira-support__message,
+  .daira-support__composer) {
+  border-color:var(--daira-border);
+}
+.daira-app-shell .daira-support__message {
+  background:var(--daira-chat-received-bg);
+}
+.daira-app-shell .daira-support__message.is-mine {
+  background:var(--daira-chat-sent-bg);
+}
+.daira-app-shell .daira-account-modal,
+.daira-app-shell .daira-support__menu {
+  border:1px solid var(--daira-glass-rim);
+  background:var(--daira-glass-modal);
+  -webkit-backdrop-filter:blur(18px) saturate(115%);
+  backdrop-filter:blur(18px) saturate(115%);
+  box-shadow:var(--daira-shadow-floating),inset 0 1px var(--daira-glass-rim);
+}
+.daira-support-toast {
+  border:1px solid var(--daira-glass-rim);
+  background:var(--daira-glass-toast);
+  -webkit-backdrop-filter:blur(16px) saturate(112%);
+  backdrop-filter:blur(16px) saturate(112%);
+  box-shadow:var(--daira-shadow-floating),inset 0 1px var(--daira-glass-rim);
+}
+.daira-support-toast__icon {
+  background:var(--daira-info-bg);color:var(--daira-info);
+}
+/* Sonner is portal-based; shared feedback tokens are scoped to Sonner DOM. */
+[data-sonner-toaster] [data-sonner-toast] {
+  background:var(--daira-glass-toast)!important;
+  border:1px solid var(--daira-glass-rim)!important;
+  color:var(--daira-heading)!important;
+  -webkit-backdrop-filter:blur(16px);
+  backdrop-filter:blur(16px);
+  box-shadow:var(--daira-shadow-floating),inset 0 1px var(--daira-glass-rim)!important;
+  font-family:"Vazirmatn",Arial,sans-serif!important;
+}
+[data-sonner-toast][data-type="success"] { --normal-icon-color:var(--daira-success); }
+[data-sonner-toast][data-type="error"] { --normal-icon-color:var(--daira-error); }
+[data-sonner-toast][data-type="warning"] { --normal-icon-color:var(--daira-warning); }
+[data-sonner-toast][data-type="info"] { --normal-icon-color:var(--daira-info); }
+.daira-app-shell .daira-skeleton__bar,
+.daira-app-shell .daira-home__skeleton-block {
+  background:linear-gradient(100deg,var(--daira-skeleton-base) 20%,
+    var(--daira-skeleton-highlight) 44%,var(--daira-skeleton-base) 65%);
+  background-size:220% 100%;
+}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
+  .daira-app-shell :is(.daira-home__account-panel,.daira-home__section-heading,
+    .daira-support__header,.dashboard-page-section) { background:var(--daira-surface); }
+  .daira-app-shell .daira-account-modal,
+  .daira-support-toast { background:var(--daira-surface); }
+}
+@media(prefers-reduced-transparency:reduce) {
+  .daira-app-shell :is(.daira-home__account-panel,.daira-home__section-heading,
+    .daira-support__header,.dashboard-page-section,.daira-support__ticket,
+    .daira-home__tool-card,.daira-home__quick-card),
+  .daira-app-shell .daira-account-modal,
+  .daira-support-toast,[data-sonner-toaster] [data-sonner-toast] {
+    background:var(--daira-surface)!important;
+    -webkit-backdrop-filter:none!important;
+    backdrop-filter:none!important;
+  }
+}
+@media(prefers-reduced-motion:reduce) {
+  .daira-app-shell :is(.daira-home__account-panel,.daira-home__tool-card,
+    .daira-home__quick-card,.daira-support__ticket) { transition:none; }
+}

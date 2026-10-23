@@ -98,25 +98,25 @@ function AccountSection({ instagramAccounts }: { instagramAccounts: InstagramAcc
   return (
     <Box sx={{ px: 1.25, py: 1 }}>
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: { xs: 0.8, lg: 0.65 }, px: 0.35 }}>
-        <Typography fontSize={10.5} fontWeight={700} color="#64748B">پیج‌های اینستاگرام</Typography>
-        <Box component={Link} href="/api/instagram/connect" aria-label="افزودن حساب" sx={{ display: "flex", alignItems: "center", gap: 0.35, color: "#2563EB", textDecoration: "none", fontSize: 11, fontWeight: 700, "&:hover": { color: "#1D4ED8" } }}>
+        <Typography fontSize={10.5} fontWeight={700} color="var(--daira-text-secondary)">پیج‌های اینستاگرام</Typography>
+        <Box component={Link} href="/api/instagram/connect" aria-label="افزودن حساب" sx={{ display: "flex", alignItems: "center", gap: 0.35, color: "var(--daira-primary)", textDecoration: "none", fontSize: 11, fontWeight: 700, "&:hover": { color: "var(--daira-primary-hover)" } }}>
           <Plus size={16} strokeWidth={2.2} />
           <span>افزودن پیج</span>
         </Box>
       </Box>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1.05, minWidth: 0, px: 1, py: 1, borderRadius: 1.75, bgcolor: "#F8FAFC", border: "1px solid #E2E8F0" }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.05, minWidth: 0, px: 1, py: 1, borderRadius: 1.75, bgcolor: "var(--daira-surface-hover)", border: "1px solid var(--daira-border)" }}>
         <Box sx={{ flexShrink: 0 }}>
-          <Avatar src={activeAccount?.profilePictureUrl || undefined} alt={activeAccount?.igUsername || "Instagram"} sx={{ width: 40, height: 40, bgcolor: "#E2E8F0", color: "#64748B" }}>
+          <Avatar src={activeAccount?.profilePictureUrl || undefined} alt={activeAccount?.igUsername || "Instagram"} sx={{ width: 40, height: 40, bgcolor: "var(--daira-border)", color: "var(--daira-text-secondary)" }}>
             {!activeAccount?.profilePictureUrl ? <UserRound size={16} /> : null}
           </Avatar>
         </Box>
         <Box sx={{ minWidth: 0, flex: 1 }}>
-          <Typography dir="ltr" noWrap fontSize={13.5} fontWeight={600} color="#0F172A" sx={{ textAlign: "right" }}>
+          <Typography dir="ltr" noWrap fontSize={13.5} fontWeight={600} color="var(--daira-heading)" sx={{ textAlign: "right" }}>
             {activeAccount ? `@${activeAccount.igUsername}` : "پیجی متصل نیست"}
           </Typography>
         </Box>
         {activeAccount ? (
-          <Box aria-label="پیج فعال" sx={{ width: 24, height: 24, display: "grid", placeItems: "center", color: "#16A34A", flexShrink: 0 }}>
+          <Box aria-label="پیج فعال" sx={{ width: 24, height: 24, display: "grid", placeItems: "center", color: "var(--daira-publishing-completed)", flexShrink: 0 }}>
             <Check size={16} strokeWidth={2.4} />
           </Box>
         ) : null}
@@ -148,7 +148,7 @@ function Navigation({ onNavigate, mobile = false }: { onNavigate?: () => void; m
               component="span"
               dir="rtl"
               sx={{
-                color: "#94A3B8",
+                color: "var(--daira-text-disabled)",
                 fontSize: 10,
                 fontWeight: 700,
                 lineHeight: 1.5,
@@ -164,7 +164,7 @@ function Navigation({ onNavigate, mobile = false }: { onNavigate?: () => void; m
               const fullRowOnMobile = href === "/dashboard/auto-replies";
               return (
                 <ListItemButton key={href} component={Link} href={href} onClick={onNavigate} selected={active} dir="rtl"
-                  sx={{ gridColumn: mobile && fullRowOnMobile ? "1 / -1" : "auto", minHeight: { xs: 46, sm: 50, lg: 34 }, display: "flex", flexDirection: "row", alignItems: "center", columnGap: { xs: 0.6, sm: 0.7, lg: 0.75 }, borderRadius: 2, px: { xs: 1.25, lg: 0.85 }, color: active ? "#2563EB" : "#475569", "&.Mui-selected": { bgcolor: "#EFF6FF", color: "#2563EB" }, "&.Mui-selected:hover": { bgcolor: "#EFF6FF" }, "&:hover": { bgcolor: "#F8FAFC", color: "#1D4ED8" } }}>
+                  sx={{ gridColumn: mobile && fullRowOnMobile ? "1 / -1" : "auto", minHeight: { xs: 46, sm: 50, lg: 34 }, display: "flex", flexDirection: "row", alignItems: "center", columnGap: { xs: 0.6, sm: 0.7, lg: 0.75 }, borderRadius: 2, px: { xs: 1.25, lg: 0.85 }, color: active ? "var(--daira-primary)" : "var(--daira-text-secondary)", "&.Mui-selected": { bgcolor: "var(--daira-outline-hover-bg)", color: "var(--daira-primary)" }, "&.Mui-selected:hover": { bgcolor: "var(--daira-outline-hover-bg)" }, "&:hover": { bgcolor: "var(--daira-surface-hover)", color: "var(--daira-primary-hover)" } }}>
                   <ListItemIcon sx={{ minWidth: 0, width: { xs: 24, lg: 17 }, flex: { xs: "0 0 24px", lg: "0 0 17px" }, color: "inherit", display: "flex", justifyContent: "center", alignItems: "center", m: 0 }}>
                     <Icon size={19} strokeWidth={1.9} />
                   </ListItemIcon>
@@ -189,10 +189,10 @@ function SidebarContent({
   instagramAccounts: InstagramAccount[];
 }) {
   return (
-    <Box dir="rtl" sx={{ height: "100%", display: "flex", flexDirection: "column", bgcolor: "#FFFFFF", position: "relative" }}>
+    <Box dir="rtl" sx={{ height: "100%", display: "flex", flexDirection: "column", bgcolor: "var(--daira-surface)", position: "relative" }}>
       {mobile ? (
         <Box sx={{ display: "flex", justifyContent: "flex-end", px: 0.8, pt: 0.7, pb: 0, flexShrink: 0 }}>
-          <IconButton size="small" onClick={onClose} aria-label="بستن منو" sx={{ color: "#64748B", width: 32, height: 32 }}>
+          <IconButton size="small" onClick={onClose} aria-label="بستن منو" sx={{ color: "var(--daira-text-secondary)", width: 32, height: 32 }}>
             <X size={18} strokeWidth={2} />
           </IconButton>
         </Box>
@@ -201,15 +201,15 @@ function SidebarContent({
         <Navigation onNavigate={onClose} mobile={mobile} />
       </Box>
       <Box sx={{ display: { xs: "none", lg: "block" } }}>
-        <Divider sx={{ mx: 1.25, borderColor: "#E2E8F0" }} />
+        <Divider sx={{ mx: 1.25, borderColor: "var(--daira-border)" }} />
         <Box sx={{ flexShrink: 0 }}>
           <AccountSection instagramAccounts={instagramAccounts} />
         </Box>
       </Box>
-      <Divider sx={{ borderColor: "#E2E8F0", display: { xs: "block", lg: "block" } }} />
+      <Divider sx={{ borderColor: "var(--daira-border)", display: { xs: "block", lg: "block" } }} />
       <Box sx={{ p: { xs: 1.5, lg: 1.25 } }}>
         <Box component="button" type="button" onClick={() => void signOut({ callbackUrl: "/login" })}
-          sx={{ width: "100%", display: "flex", alignItems: "center", gap: 1.4, border: 0, borderRadius: 2, bgcolor: "transparent", color: "#DC2626", px: 1.25, py: 1.25, cursor: "pointer", fontFamily: "inherit", textAlign: "right", "&:hover": { bgcolor: "#FEF2F2", color: "#B91C1C" } }}>
+          sx={{ width: "100%", display: "flex", alignItems: "center", gap: 1.4, border: 0, borderRadius: 2, bgcolor: "transparent", color: "var(--daira-error-text)", px: 1.25, py: 1.25, cursor: "pointer", fontFamily: "inherit", textAlign: "right", "&:hover": { bgcolor: "var(--daira-error-background)", color: "var(--daira-error-text)" } }}>
           <LogOut size={20} strokeWidth={1.9} />
           <Typography component="span" fontSize={12.5} fontWeight={600}>خروج از حساب</Typography>
         </Box>
@@ -225,7 +225,7 @@ export default function DashboardSidebar({
 }: DashboardSidebarProps) {
   return (
     <>
-      <Drawer variant="permanent" anchor="left" sx={{ display: { xs: "none", lg: "block" }, width: 196, flexShrink: 0, "& .MuiDrawer-paper": { width: 196, boxSizing: "border-box", borderLeft: "1px solid #E2E8F0", borderRight: 0, direction: "rtl" } }}>
+      <Drawer variant="permanent" anchor="left" sx={{ display: { xs: "none", lg: "block" }, width: 196, flexShrink: 0, "& .MuiDrawer-paper": { width: 196, boxSizing: "border-box", borderLeft: "1px solid var(--daira-border)", borderRight: 0, direction: "rtl" } }}>
         <SidebarContent instagramAccounts={instagramAccounts} />
       </Drawer>
       <Drawer variant="temporary" anchor="left" open={mobileOpen} onClose={onMobileClose} ModalProps={{ keepMounted: true }}
@@ -239,7 +239,7 @@ export default function DashboardSidebar({
             bottom: { xs: 78, sm: 82 },
             left: { xs: 12, sm: 12 },
             boxSizing: "border-box",
-            border: "1px solid #E2E8F0",
+            border: "1px solid var(--daira-border)",
             borderRadius: 3,
             direction: "rtl",
             overflow: "hidden",
@@ -445,7 +445,7 @@ export function DashboardInstagramIsland({
             mx: "auto",
             transform: accountMenuOpen ? "translateY(0)" : "translateY(8px)",
             boxSizing: "border-box",
-            border: "1px solid #E2E8F0",
+            border: "1px solid var(--daira-border)",
             borderRadius: 3,
             bgcolor: "rgba(255,255,255,0.97)",
             boxShadow: "0 8px 24px rgba(15,23,42,0.08)",
@@ -466,8 +466,8 @@ export function DashboardInstagramIsland({
               flexDirection: "row",
               alignItems: "stretch",
               direction: "ltr",
-              bgcolor: "#F8FAFC",
-              borderBottom: "1px solid #E2E8F0",
+              bgcolor: "var(--daira-surface-hover)",
+              borderBottom: "1px solid var(--daira-border)",
             }}
           >
             <Box
@@ -481,7 +481,7 @@ export function DashboardInstagramIsland({
                 alignItems: "center",
                 direction: "ltr",
                 textDecoration: "none",
-                color: "#0F172A",
+                color: "var(--daira-heading)",
               }}
             >
               <Box
@@ -496,7 +496,7 @@ export function DashboardInstagramIsland({
                 <Avatar
                   src={activeAccount?.profilePictureUrl || undefined}
                   alt={activeAccount?.igUsername || "Instagram"}
-                  sx={{ width: 34, height: 34, flexShrink: 0, bgcolor: "#E2E8F0", color: "#64748B" }}
+                  sx={{ width: 34, height: 34, flexShrink: 0, bgcolor: "var(--daira-border)", color: "var(--daira-text-secondary)" }}
                 >
                   {!activeAccount?.profilePictureUrl ? <UserRound size={15} /> : null}
                 </Avatar>
@@ -530,10 +530,10 @@ export function DashboardInstagramIsland({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                borderLeft: "1px solid #E2E8F0",
+                borderLeft: "1px solid var(--daira-border)",
               }}
             >
-              {activeAccount ? <Check size={17} color="#16A34A" strokeWidth={2.4} /> : null}
+              {activeAccount ? <Check size={17} color="var(--daira-publishing-completed)" strokeWidth={2.4} /> : null}
             </Box>
           </Box>
 
@@ -549,9 +549,9 @@ export function DashboardInstagramIsland({
               direction: "ltr",
               gap: 0.6,
               px: 1,
-              color: "#2563EB",
+              color: "var(--daira-primary)",
               textDecoration: "none",
-              "&:hover": { bgcolor: "#EFF6FF" },
+              "&:hover": { bgcolor: "var(--daira-outline-hover-bg)" },
             }}
           >
             <Plus size={17} strokeWidth={2.3} />
@@ -582,10 +582,10 @@ export function DashboardInstagramIsland({
             height: 48,
             mx: "auto",
             p: 0,
-            border: "1px solid #E2E8F0",
+            border: "1px solid var(--daira-border)",
             borderRadius: 999,
             bgcolor: "rgba(255,255,255,0.985)",
-            color: accountMenuOpen ? "#2563EB" : "#475569",
+            color: accountMenuOpen ? "var(--daira-primary)" : "var(--daira-text-secondary)",
             boxShadow: "0 6px 18px rgba(15,23,42,0.07)",
             backdropFilter: "blur(12px)",
             display: "flex",
@@ -598,8 +598,8 @@ export function DashboardInstagramIsland({
             pointerEvents: "auto",
             transition: "width 360ms cubic-bezier(0.22, 1, 0.36, 1), min-width 360ms cubic-bezier(0.22, 1, 0.36, 1), padding 320ms cubic-bezier(0.22, 1, 0.36, 1), gap 320ms cubic-bezier(0.22, 1, 0.36, 1), color 180ms ease, background-color 180ms ease, box-shadow 220ms ease, transform 220ms ease",
             "&:hover": {
-              bgcolor: "#FFFFFF",
-              color: "#2563EB",
+              bgcolor: "var(--daira-surface)",
+              color: "var(--daira-primary)",
               boxShadow: "0 7px 20px rgba(15,23,42,0.08)",
             },
             "&:active": { transform: "scale(0.985)" },
@@ -633,8 +633,8 @@ export function DashboardInstagramIsland({
               boxSizing: "border-box",
               flex: "0 0 26px",
               borderRadius: "50%",
-              bgcolor: accountMenuOpen ? "#EFF6FF" : "#F8FAFC",
-              color: accountMenuOpen ? "#2563EB" : "#64748B",
+              bgcolor: accountMenuOpen ? "var(--daira-outline-hover-bg)" : "var(--daira-surface-hover)",
+              color: accountMenuOpen ? "var(--daira-primary)" : "var(--daira-text-secondary)",
               display: "grid",
               placeItems: "center",
               transition: "background-color 180ms ease, color 180ms ease, transform 260ms cubic-bezier(0.22, 1, 0.36, 1)",

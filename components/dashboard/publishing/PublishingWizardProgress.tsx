@@ -37,17 +37,17 @@ export default function PublishingWizardProgress({
               <button type="button" onClick={() => onNavigate(number)} disabled={!available}
                 aria-current={current?"step":undefined}
                 aria-label={(current?"مرحله فعلی: ":done?"ویرایش مرحله تکمیل‌شده: ":"انتخاب مرحله: ")+labels[number-1]}
-                className={"relative flex min-h-[77px] w-full flex-col items-center justify-center gap-2 rounded-2xl border px-1.5 py-2 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2F61FD] disabled:cursor-default "+
-                  (current?"bg-[#EDF3FF]":done?"bg-[#EAF8EF]":"bg-white")}
+                className={"relative flex min-h-[77px] w-full flex-col items-center justify-center gap-2 rounded-2xl border px-1.5 py-2 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--daira-primary)] disabled:cursor-default "+
+                  (current?"bg-[var(--daira-publishing-selected)]":done?"bg-[#EAF8EF]":"bg-white")}
                 style={{borderColor:current?theme.selectedBorder:done?theme.completedBorder:theme.border,
                   boxShadow:current?"0 0 0 2px "+theme.pulseGlow:undefined}}>
-                {current && <span className="pointer-events-none absolute inset-[2px] rounded-[13px] border-2 border-[#2F61FD]/35 motion-safe:animate-pulse" aria-hidden="true" />}
-                <span className={"relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-extrabold "+(current?"bg-[#2F61FD] text-white motion-safe:animate-pulse":done?"bg-[#16A34A] text-white":"bg-[#E8EDF5] text-[#71819B]")}>
+                {current && <span className="pointer-events-none absolute inset-[2px] rounded-[13px] border-2 border-[var(--daira-primary)]/35 motion-safe:animate-pulse" aria-hidden="true" />}
+                <span className={"relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-extrabold "+(current?"bg-[var(--daira-primary)] text-white motion-safe:animate-pulse":done?"bg-[var(--daira-publishing-completed)] text-white":"bg-[#E8EDF5] text-[#71819B]")}>
                   {done?<Check size={19} strokeWidth={3.2}/>:Number(index+1).toLocaleString("fa-IR")}
                 </span>
-                <span className={"relative truncate text-[11px] font-bold sm:text-xs "+(current?"text-[#2F61FD]":done?"text-[#15803D]":"text-[#52647F]")}>{labels[number-1]}</span>
+                <span className={"relative truncate text-[11px] font-bold sm:text-xs "+(current?"text-[var(--daira-primary)]":done?"text-[var(--daira-chart-increase)]":"text-[#52647F]")}>{labels[number-1]}</span>
               </button>
-              {done && summaries[number-1] && <p className="mt-1 hidden truncate text-center text-[10px] text-[#5A6B87] sm:block">{summaries[number-1]}</p>}
+              {done && summaries[number-1] && <p className="mt-1 hidden truncate text-center text-[10px] text-[var(--daira-text-secondary)] sm:block">{summaries[number-1]}</p>}
             </li>
           );
         })}

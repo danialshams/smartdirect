@@ -76,7 +76,7 @@ export default function SmartRemindersList() {
   if (loading) return <SmartReminderSkeleton />;
   if (error) return <div dir="rtl" className="mx-auto flex min-h-[45vh] max-w-4xl flex-col items-center justify-center gap-4 px-4">
     <p role="alert" className="w-full rounded-xl border border-red-200 bg-red-50 p-4 text-center text-sm text-red-700">{error}</p>
-    <button onClick={() => setRefresh(v => v + 1)} className="flex min-h-11 items-center gap-2 rounded-xl bg-[#2563EB] px-5 text-sm font-bold text-white"><RefreshCw size={16}/> تلاش دوباره</button>
+    <button onClick={() => setRefresh(v => v + 1)} className="flex min-h-11 items-center gap-2 rounded-xl bg-[var(--daira-primary)] px-5 text-sm font-bold text-white"><RefreshCw size={16}/> تلاش دوباره</button>
   </div>;
 
   return <div dir="rtl" className="mx-auto w-full max-w-4xl space-y-4 py-3">
@@ -84,41 +84,41 @@ export default function SmartRemindersList() {
       dir="rtl" className="flex min-h-[54px] w-full flex-row-reverse items-center justify-center gap-2 rounded-full text-base font-bold text-white shadow-sm transition hover:brightness-95"
       style={{ background: dairaPalette.primary.main }}><span>ایجاد یادآوری جدید</span><Plus size={20} aria-hidden="true"/></button>
     <label className="relative block">
-      <Search size={18} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#94A3B8]"/>
+      <Search size={18} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[var(--daira-text-disabled)]"/>
       <input value={search} onChange={e => setSearch(e.target.value)} placeholder="جستجو در یادآوری‌ها..." aria-label="جستجوی یادآوری‌ها"
-        className="min-h-12 w-full rounded-xl border border-[#DBE2ED] bg-white py-3 pl-4 pr-10 text-base outline-none focus:border-[#2563EB]"/>
+        className="min-h-12 w-full rounded-xl border border-[#DBE2ED] bg-white py-3 pl-4 pr-10 text-base outline-none focus:border-[var(--daira-primary)]"/>
     </label>
     {actionError && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-700">{actionError}</p>}
     {filtered.length ? <div className="grid gap-3 sm:grid-cols-2">
-      {filtered.map(rule => <article key={rule.id} className="space-y-3 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-[0_3px_12px_rgba(24,35,60,0.025)]">
+      {filtered.map(rule => <article key={rule.id} className="space-y-3 rounded-2xl border border-[var(--daira-border)] bg-white p-4 shadow-[0_3px_12px_rgba(24,35,60,0.025)]">
         <div className="flex items-center gap-2">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB]"><Clock3 size={18}/></span>
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]"><Clock3 size={18}/></span>
           <div className="min-w-0 flex-1">
-            <h3 className="truncate text-sm font-bold text-[#0F172A]">{smartReminderOptionName(rule.automation)}</h3>
-            <p className="mt-0.5 text-[11px] text-[#64748B]">ارسال پس از {duration(rule.delayMinutes)} بدون پاسخ</p>
+            <h3 className="truncate text-sm font-bold text-[var(--daira-heading)]">{smartReminderOptionName(rule.automation)}</h3>
+            <p className="mt-0.5 text-[11px] text-[var(--daira-text-secondary)]">ارسال پس از {duration(rule.delayMinutes)} بدون پاسخ</p>
           </div>
         </div>
-        <p className="line-clamp-3 min-h-12 text-xs leading-6 text-[#475569]">{rule.text}</p>
-        <div className="flex flex-wrap gap-2 text-[11px] text-[#64748B]">
-          <span className="rounded-lg bg-[#F1F5F9] px-2.5 py-1">ارسال‌شده: {new Intl.NumberFormat("fa-IR").format(rule._count?.deliveries || 0)}</span>
+        <p className="line-clamp-3 min-h-12 text-xs leading-6 text-[var(--daira-text-secondary)]">{rule.text}</p>
+        <div className="flex flex-wrap gap-2 text-[11px] text-[var(--daira-text-secondary)]">
+          <span className="rounded-lg bg-[var(--daira-neutral-bg)] px-2.5 py-1">ارسال‌شده: {new Intl.NumberFormat("fa-IR").format(rule._count?.deliveries || 0)}</span>
         </div>
-        <div className="flex gap-2 border-t border-[#F1F5F9] pt-3">
-          <button onClick={() => router.push("/dashboard/reminders/" + rule.id)} className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-[#EFF6FF] text-xs font-bold text-[#1D4ED8]"><Pencil size={15}/> ویرایش</button>
-          <button onClick={() => { setActionError(""); setDeleteTarget(rule); }} className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl border border-[#FECACA] bg-white text-xs font-bold text-[#DC2626]"><Trash2 size={15}/> حذف</button>
+        <div className="flex gap-2 border-t border-[var(--daira-neutral-bg)] pt-3">
+          <button onClick={() => router.push("/dashboard/reminders/" + rule.id)} className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-[var(--daira-outline-hover-bg)] text-xs font-bold text-[var(--daira-primary-hover)]"><Pencil size={15}/> ویرایش</button>
+          <button onClick={() => { setActionError(""); setDeleteTarget(rule); }} className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl border border-[var(--daira-error-border)] bg-white text-xs font-bold text-[var(--daira-error-text)]"><Trash2 size={15}/> حذف</button>
         </div>
       </article>)}
-    </div> : <div className="space-y-3 rounded-2xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] px-4 py-14 text-center">
-      <MessageSquare size={30} className="mx-auto text-[#94A3B8]"/>
-      <p className="text-sm font-semibold text-[#475569]">{search ? "یادآوری‌ای با این عبارت پیدا نشد." : "هنوز یادآوری هوشمندی ساخته نشده است."}</p>
-      {!search && <p className="mx-auto max-w-md text-xs leading-6 text-[#64748B]">یک پاسخ خودکار را انتخاب کن، زمان انتظار و متن یادآوری را مشخص کن؛ اگر کاربر پاسخی ندهد و پنجره مجاز باشد، پیام ارسال می‌شود.</p>}
+    </div> : <div className="space-y-3 rounded-2xl border border-dashed border-[var(--daira-outline)] bg-[var(--daira-surface-hover)] px-4 py-14 text-center">
+      <MessageSquare size={30} className="mx-auto text-[var(--daira-text-disabled)]"/>
+      <p className="text-sm font-semibold text-[var(--daira-text-secondary)]">{search ? "یادآوری‌ای با این عبارت پیدا نشد." : "هنوز یادآوری هوشمندی ساخته نشده است."}</p>
+      {!search && <p className="mx-auto max-w-md text-xs leading-6 text-[var(--daira-text-secondary)]">یک پاسخ خودکار را انتخاب کن، زمان انتظار و متن یادآوری را مشخص کن؛ اگر کاربر پاسخی ندهد و پنجره مجاز باشد، پیام ارسال می‌شود.</p>}
     </div>}
-    {deleteTarget && <div className="fixed inset-0 z-[2500] flex items-center justify-center bg-[#18233C]/40 p-4">
+    {deleteTarget && <div className="fixed inset-0 z-[2500] flex items-center justify-center bg-[var(--daira-heading)]/40 p-4">
       <div role="dialog" aria-modal="true" aria-label="حذف یادآوری" className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
-        <div className="flex items-center justify-between"><strong className="text-base text-[#18233C]">حذف یادآوری</strong><button onClick={() => setDeleteTarget(null)} disabled={Boolean(busy)} aria-label="بستن"><X size={20}/></button></div>
-        <p className="my-4 text-sm leading-7 text-[#64748B]">این یادآوری حذف می‌شود و یادآوری‌های زمان‌بندی‌شدهٔ آن دیگر ارسال نخواهند شد.</p>
+        <div className="flex items-center justify-between"><strong className="text-base text-[var(--daira-heading)]">حذف یادآوری</strong><button onClick={() => setDeleteTarget(null)} disabled={Boolean(busy)} aria-label="بستن"><X size={20}/></button></div>
+        <p className="my-4 text-sm leading-7 text-[var(--daira-text-secondary)]">این یادآوری حذف می‌شود و یادآوری‌های زمان‌بندی‌شدهٔ آن دیگر ارسال نخواهند شد.</p>
         {actionError && <p role="alert" className="mb-3 text-xs text-red-600">{actionError}</p>}
-        <div className="flex gap-2"><button onClick={() => setDeleteTarget(null)} disabled={Boolean(busy)} className="min-h-11 flex-1 rounded-xl border border-[#E2E8F0] text-sm font-bold">انصراف</button>
-          <button onClick={() => void remove()} disabled={Boolean(busy)} className="min-h-11 flex-1 rounded-xl bg-[#DC2626] text-sm font-bold text-white">{busy ? "در حال حذف..." : "حذف"}</button></div>
+        <div className="flex gap-2"><button onClick={() => setDeleteTarget(null)} disabled={Boolean(busy)} className="min-h-11 flex-1 rounded-xl border border-[var(--daira-border)] text-sm font-bold">انصراف</button>
+          <button onClick={() => void remove()} disabled={Boolean(busy)} className="min-h-11 flex-1 rounded-xl bg-[var(--daira-error-text)] text-sm font-bold text-white">{busy ? "در حال حذف..." : "حذف"}</button></div>
       </div>
     </div>}
   </div>;

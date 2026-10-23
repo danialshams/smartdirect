@@ -17,16 +17,7 @@ import {
 import { DayPicker, faIR } from "@daypicker/persian";
 import { getDefaultClassNames, type DayPickerProps, type DropdownProps, useDayPicker } from "@daypicker/react";
 import { ChevronDown } from "lucide-react";
-
-const COLORS = {
-  primary: "#2563EB",
-  primaryDark: "#1D4ED8",
-  text: "#0F172A",
-  secondary: "#64748B",
-  border: "#E2E8F0",
-  background: "#F8FAFC",
-  surface: "#FFFFFF",
-};
+import { dairaPalette } from "../../lib/design-system/palette";
 
 function classNameValue(value?: string) {
   return value || "";
@@ -139,7 +130,7 @@ function PersianCalendarDropdown({
           border: 0,
           outline: 0,
           background: "transparent",
-          color: COLORS.text,
+          color: dairaPalette.text.heading,
           fontFamily: '"Vazirmatn", Arial, sans-serif',
           fontSize: 12,
           fontWeight: 600,
@@ -156,7 +147,7 @@ function PersianCalendarDropdown({
               key={option.value}
               value={String(option.value)}
               disabled={disabled}
-              style={{ color: disabled ? "#94A3B8" : COLORS.text }}
+              style={{ color: disabled ? "var(--daira-text-disabled)" : dairaPalette.text.heading }}
             >
               {option.label}
             </option>
@@ -173,7 +164,7 @@ function PersianCalendarDropdown({
           top: "50%",
           transform: "translateY(-50%)",
           pointerEvents: "none",
-          color: COLORS.secondary,
+          color: dairaPalette.text.secondary,
         }}
       />
     </Box>
@@ -216,44 +207,44 @@ export function Button({
     borderRadius: 2,
     boxShadow: "none",
     ...(variant === "default" ? {
-      bgcolor: COLORS.primary,
-      color: "#FFFFFF",
-      "&:hover": { bgcolor: COLORS.primaryDark },
+      bgcolor: dairaPalette.primary.main,
+      color: "var(--daira-surface)",
+      "&:hover": { bgcolor: dairaPalette.primary.hover },
     } : {}),
     ...(variant === "destructive" ? {
-      bgcolor: "#FFFFFF",
-      color: "#DC2626",
-      border: "1px solid #DC2626",
-      "&:hover": { bgcolor: "#FFFFFF", borderColor: "#B91C1C", color: "#B91C1C" },
+      bgcolor: "var(--daira-surface)",
+      color: "var(--daira-error-text)",
+      border: "1px solid var(--daira-error-text)",
+      "&:hover": { bgcolor: "var(--daira-surface)", borderColor: "var(--daira-error-text)", color: "var(--daira-error-text)" },
     } : {}),
     ...(variant === "outline" ? {
-      bgcolor: COLORS.surface,
-      color: COLORS.text,
-      border: "1px solid " + COLORS.border,
-      "&:hover": { bgcolor: COLORS.background, borderColor: "#94A3B8" },
+      bgcolor: dairaPalette.background.surface,
+      color: dairaPalette.text.heading,
+      border: "1px solid " + dairaPalette.border,
+      "&:hover": { bgcolor: dairaPalette.background.page, borderColor: "var(--daira-text-disabled)" },
     } : {}),
     ...(variant === "secondary" ? {
-      bgcolor: "#F1F5F9",
-      color: COLORS.text,
-      "&:hover": { bgcolor: "#E2E8F0" },
+      bgcolor: "var(--daira-neutral-bg)",
+      color: dairaPalette.text.heading,
+      "&:hover": { bgcolor: "var(--daira-border)" },
     } : {}),
     ...(variant === "ghost" ? {
       bgcolor: "transparent",
-      color: COLORS.secondary,
-      "&:hover": { bgcolor: COLORS.background, color: COLORS.text },
+      color: dairaPalette.text.secondary,
+      "&:hover": { bgcolor: dairaPalette.background.page, color: dairaPalette.text.heading },
     } : {}),
     ...(variant === "link" ? {
       bgcolor: "transparent",
-      color: COLORS.primary,
+      color: dairaPalette.primary.main,
       textDecoration: "underline",
-      "&:hover": { bgcolor: "transparent", color: COLORS.primaryDark },
+      "&:hover": { bgcolor: "transparent", color: dairaPalette.primary.hover },
     } : {}),
     ...(variant === "icon" ? {
       bgcolor: "transparent",
-      color: COLORS.secondary,
+      color: dairaPalette.text.secondary,
       minWidth: 0,
       px: 0,
-      "&:hover": { bgcolor: "transparent", color: COLORS.text },
+      "&:hover": { bgcolor: "transparent", color: dairaPalette.text.heading },
       "&.Mui-disabled": { bgcolor: "transparent" },
     } : {}),
   } as const;
@@ -315,7 +306,7 @@ export const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"in
         sx={{
           "& .MuiOutlinedInput-root": {
             borderRadius: 2,
-            bgcolor: COLORS.surface,
+            bgcolor: dairaPalette.background.surface,
           },
           "& .MuiOutlinedInput-input": {
             fontFamily: '"Vazirmatn", Arial, sans-serif',
@@ -350,7 +341,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, React.ComponentPro
         sx={{
           "& .MuiOutlinedInput-root": {
             borderRadius: 2,
-            bgcolor: COLORS.surface,
+            bgcolor: dairaPalette.background.surface,
             alignItems: "flex-start",
           },
           "& textarea": {
@@ -396,7 +387,7 @@ export function Select({
         IconComponent={ChevronDown}
         sx={{
           borderRadius: 2,
-          bgcolor: COLORS.surface,
+          bgcolor: dairaPalette.background.surface,
           fontFamily: '"Vazirmatn", Arial, sans-serif',
           fontSize: 13,
           "& .MuiSelect-select": { py: 1.05 },
@@ -437,8 +428,8 @@ export function Checkbox({
       {...props}
       sx={{
         p: 0.5,
-        color: "#CBD5E1",
-        "&.Mui-checked": { color: COLORS.primary },
+        color: "var(--daira-outline)",
+        "&.Mui-checked": { color: dairaPalette.primary.main },
       }}
     />
   );
@@ -464,7 +455,7 @@ export function Skeleton({ className, ...props }: React.HTMLAttributes<HTMLDivEl
       animation="pulse"
       {...props}
       sx={{
-        bgcolor: "#E2E8F0",
+        bgcolor: "var(--daira-border)",
         borderRadius: 2,
       }}
     />
@@ -541,7 +532,7 @@ export function PopoverContent({
           sx: {
             mt: sideOffset / 8,
             p: 0,
-            border: "1px solid " + COLORS.border,
+            border: "1px solid " + dairaPalette.border,
             borderRadius: 2,
             boxShadow: "0 18px 50px rgba(15,23,42,0.12)",
             overflow: "hidden",
@@ -567,7 +558,7 @@ export function Calendar({ className, ...props }: DashboardCalendarProps) {
         width: props.numberOfMonths && props.numberOfMonths > 1 ? "704px" : "352px",
         maxWidth: "calc(100vw - 24px)",
         boxSizing: "border-box",
-        bgcolor: COLORS.surface,
+        bgcolor: dairaPalette.background.surface,
         fontFamily: '"Vazirmatn", Arial, sans-serif',
         direction: "rtl",
         "& .rdp-root": { "--cell-size": "42px", width: "100%", maxWidth: "100%" },
@@ -600,13 +591,13 @@ export function Calendar({ className, ...props }: DashboardCalendarProps) {
           width: "auto",
           maxWidth: "none",
           height: 32,
-          border: "1px solid " + COLORS.border,
+          border: "1px solid " + dairaPalette.border,
           borderRadius: 1.5,
           overflow: "hidden",
           display: "flex",
           alignItems: "center",
           position: "relative",
-          background: COLORS.surface,
+          background: dairaPalette.background.surface,
         },
         "& .rdp-dropdown_root:nth-child(1)": { width: 104, flex: "0 0 104px" },
         "& .rdp-dropdown_root:nth-child(1) select": { width: "104px", maxWidth: "104px" },
@@ -615,12 +606,12 @@ export function Calendar({ className, ...props }: DashboardCalendarProps) {
         "& .rdp-dropdown_root svg, & .rdp-chevron": {
           display: "none",
         },
-        "& .rdp-caption_label": { fontSize: 13, fontWeight: 700, color: COLORS.text },
+        "& .rdp-caption_label": { fontSize: 13, fontWeight: 700, color: dairaPalette.text.heading },
         "& .rdp-weekdays": { display: "flex", width: "100%" },
         "& .rdp-weekday": {
           flex: 1,
           textAlign: "center",
-          color: COLORS.secondary,
+          color: dairaPalette.text.secondary,
           fontSize: 11,
           fontWeight: 600,
           py: 0.75,
@@ -639,20 +630,20 @@ export function Calendar({ className, ...props }: DashboardCalendarProps) {
           border: 0,
           borderRadius: "50%",
           background: "transparent",
-          color: COLORS.text,
+          color: dairaPalette.text.heading,
           fontFamily: '"Vazirmatn", Arial, sans-serif',
           cursor: "pointer",
         },
-        "& .rdp-day_button:hover": { background: "#EFF6FF", color: COLORS.primary },
+        "& .rdp-day_button:hover": { background: "var(--daira-outline-hover-bg)", color: dairaPalette.primary.main },
         "& [data-selected=true] .rdp-day_button": {
-          background: COLORS.primary,
-          color: "#FFFFFF",
+          background: dairaPalette.primary.main,
+          color: "var(--daira-surface)",
         },
         "& [data-today=true] .rdp-day_button": {
-          border: "1px solid " + COLORS.primary,
+          border: "1px solid " + dairaPalette.primary.main,
         },
         "& [data-disabled=true] .rdp-day_button": {
-          color: "#94A3B8",
+          color: "var(--daira-text-disabled)",
           opacity: 0.45,
           cursor: "not-allowed",
         },

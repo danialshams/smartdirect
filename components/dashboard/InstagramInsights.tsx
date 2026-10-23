@@ -679,14 +679,14 @@ export default function InstagramInsights({
                       <XAxis
                         dataKey="date"
                         tickFormatter={formatShortDate}
-                        tick={{ fontSize: 10, fill: "#94a3b8" }}
+                        tick={{ fontSize: 10, fill: "var(--daira-text-disabled)" }}
                         tickLine={false}
                         axisLine={false}
                         minTickGap={28}
                       />
                       <YAxis
                         tickFormatter={(value) => numberFormatter.format(value)}
-                        tick={{ fontSize: 10, fill: "#94a3b8" }}
+                        tick={{ fontSize: 10, fill: "var(--daira-text-disabled)" }}
                         tickLine={false}
                         axisLine={false}
                         width={48}
@@ -700,7 +700,7 @@ export default function InstagramInsights({
                         ]}
                         contentStyle={{
                           borderRadius: 12,
-                          border: "1px solid #e2e8f0",
+                          border: "1px solid var(--daira-border)",
                           boxShadow: "0 12px 30px rgba(15,23,42,0.08)",
                           fontFamily: "Vazirmatn, Arial, sans-serif",
                           fontSize: 11,
@@ -709,7 +709,7 @@ export default function InstagramInsights({
                       <Line
                         type="monotone"
                         dataKey="value"
-                        stroke="#0f172a"
+                        stroke="var(--daira-heading)"
                         strokeWidth={2.5}
                         dot={{ r: 2.5, strokeWidth: 1 }}
                         activeDot={{ r: 5 }}

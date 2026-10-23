@@ -227,8 +227,8 @@ export default function TicketDetailPage() {
         sx={{
           p: { xs: 1.5, sm: 2 },
           borderRadius: 3,
-          borderColor: "#E2E8F0",
-          bgcolor: "#FFFFFF",
+          borderColor: "var(--daira-border)",
+          bgcolor: "var(--daira-surface)",
         }}
       >
         <Box
@@ -248,11 +248,11 @@ export default function TicketDetailPage() {
                 width: 38,
                 height: 38,
                 flexShrink: 0,
-                border: "1px solid #E2E8F0",
+                border: "1px solid var(--daira-border)",
                 borderRadius: 2,
-                color: "#334155",
-                bgcolor: "#F8FAFC",
-                "&:hover": { bgcolor: "#F1F5F9" },
+                color: "var(--daira-input-label)",
+                bgcolor: "var(--daira-surface-hover)",
+                "&:hover": { bgcolor: "var(--daira-neutral-bg)" },
               }}
             >
               <ArrowRight size={19} />
@@ -262,14 +262,14 @@ export default function TicketDetailPage() {
                 sx={{
                   fontSize: { xs: 16, sm: 19 },
                   fontWeight: 800,
-                  color: "#0F172A",
+                  color: "var(--daira-heading)",
                   lineHeight: 1.5,
                   overflowWrap: "anywhere",
                 }}
               >
                 {ticket.subject}
               </Typography>
-              <Typography sx={{ fontSize: 13, color: "#64748B", mt: 0.25, fontWeight: 600 }}>
+              <Typography sx={{ fontSize: 13, color: "var(--daira-text-secondary)", mt: 0.25, fontWeight: 600 }}>
                 کاربر: {ticket.user.name || "کاربر ناشناس"}
               </Typography>
             </Box>
@@ -300,8 +300,8 @@ export default function TicketDetailPage() {
         sx={{
           p: { xs: 1.25, sm: 1.5 },
           borderRadius: 2.5,
-          borderColor: "#E2E8F0",
-          bgcolor: "#FFFFFF",
+          borderColor: "var(--daira-border)",
+          bgcolor: "var(--daira-surface)",
           display: "grid",
           gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
           gap: 1.5,
@@ -345,14 +345,14 @@ export default function TicketDetailPage() {
         variant="outlined"
         sx={{
           borderRadius: 3,
-          borderColor: "#E2E8F0",
+          borderColor: "var(--daira-border)",
           overflow: "hidden",
           display: "flex",
           flexDirection: "column",
           height: { xs: "calc(100dvh - 310px)", sm: "66vh" },
           minHeight: 450,
           maxHeight: 900,
-          bgcolor: "#FFFFFF",
+          bgcolor: "var(--daira-surface)",
         }}
       >
         {/* نوار سربرگ چت */}
@@ -360,11 +360,11 @@ export default function TicketDetailPage() {
           sx={{
             px: { xs: 1.5, sm: 2 },
             py: 1.25,
-            borderBottom: "1px solid #E2E8F0",
+            borderBottom: "1px solid var(--daira-border)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            bgcolor: "#F8FAFC",
+            bgcolor: "var(--daira-surface-hover)",
           }}
         >
           <Stack direction="row" spacing={1} alignItems="center">
@@ -375,20 +375,20 @@ export default function TicketDetailPage() {
                 display: "grid",
                 placeItems: "center",
                 borderRadius: 2,
-                bgcolor: "#EFF6FF",
-                color: "#2563EB",
+                bgcolor: "var(--daira-outline-hover-bg)",
+                color: "var(--daira-primary)",
               }}
             >
               <UserRound size={17} />
             </Box>
             <Box>
-              <Typography sx={{ fontSize: 13, fontWeight: 800, color: "#0F172A" }}>گفتگو با کاربر</Typography>
-              <Typography sx={{ fontSize: 11, color: "#64748B" }}>
+              <Typography sx={{ fontSize: 13, fontWeight: 800, color: "var(--daira-heading)" }}>گفتگو با کاربر</Typography>
+              <Typography sx={{ fontSize: 11, color: "var(--daira-text-secondary)" }}>
                 {ticket.messages.length.toLocaleString("fa-IR")} پیام ثبت‌شده
               </Typography>
             </Box>
           </Stack>
-          <Stack direction="row" spacing={0.5} alignItems="center" sx={{ color: "#16A34A" }}>
+          <Stack direction="row" spacing={0.5} alignItems="center" sx={{ color: "var(--daira-publishing-completed)" }}>
             <ShieldCheck size={16} />
             <Typography sx={{ fontSize: 11.5, fontWeight: 700 }}>پشتیبانی مدیریت</Typography>
           </Stack>
@@ -401,7 +401,7 @@ export default function TicketDetailPage() {
             minHeight: 0,
             overflowY: "auto",
             p: { xs: 1.5, sm: 2 },
-            bgcolor: "#F8FAFC",
+            bgcolor: "var(--daira-surface-hover)",
             display: "flex",
             flexDirection: "column",
             gap: 1.5,
@@ -409,7 +409,7 @@ export default function TicketDetailPage() {
           }}
         >
           {ticket.messages.length === 0 ? (
-            <Box sx={{ m: "auto", textAlign: "center", color: "#64748B", py: 5 }}>
+            <Box sx={{ m: "auto", textAlign: "center", color: "var(--daira-text-secondary)", py: 5 }}>
               <Box
                 sx={{
                   mx: "auto",
@@ -417,10 +417,10 @@ export default function TicketDetailPage() {
                   width: 48,
                   height: 48,
                   borderRadius: 2.5,
-                  bgcolor: "#E2E8F0",
+                  bgcolor: "var(--daira-border)",
                   display: "grid",
                   placeItems: "center",
-                  color: "#475569",
+                  color: "var(--daira-text-secondary)",
                 }}
               >
                 <MessageSquare size={22} />
@@ -450,13 +450,13 @@ export default function TicketDetailPage() {
                     }}
                   >
                     <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 0.35, px: 0.5 }}>
-                      <Typography sx={{ fontSize: 11, fontWeight: 800, color: isAdmin ? "#2563EB" : "#334155" }}>
+                      <Typography sx={{ fontSize: 11, fontWeight: 800, color: isAdmin ? "var(--daira-primary)" : "var(--daira-input-label)" }}>
                         {isAdmin ? "پاسخ پشتیبانی" : m.sender.name || ticket.user.name || "کاربر"}
                       </Typography>
                       <Typography
                         sx={{
                           fontSize: 10,
-                          color: "#94A3B8",
+                          color: "var(--daira-text-disabled)",
                           display: "inline-flex",
                           alignItems: "center",
                           gap: 0.35,
@@ -473,9 +473,9 @@ export default function TicketDetailPage() {
                         borderRadius: 2.5,
                         borderTopRightRadius: isAdmin ? 0.5 : 2.5,
                         borderTopLeftRadius: !isAdmin ? 0.5 : 2.5,
-                        bgcolor: isAdmin ? "#EFF6FF" : "#FFFFFF",
+                        bgcolor: isAdmin ? "var(--daira-outline-hover-bg)" : "var(--daira-surface)",
                         border: "1px solid",
-                        borderColor: isAdmin ? "#BFDBFE" : "#E2E8F0",
+                        borderColor: isAdmin ? "#BFDBFE" : "var(--daira-border)",
                         boxShadow: "0 1px 2px rgba(15, 23, 42, 0.04)",
                       }}
                     >
@@ -483,7 +483,7 @@ export default function TicketDetailPage() {
                         sx={{
                           fontSize: 13,
                           lineHeight: 1.9,
-                          color: "#0F172A",
+                          color: "var(--daira-heading)",
                           whiteSpace: "pre-wrap",
                           overflowWrap: "anywhere",
                           textAlign: "right",
@@ -502,7 +502,7 @@ export default function TicketDetailPage() {
                     </Box>
 
                     {isAdmin && (
-                      <Box sx={{ display: "flex", alignItems: "center", mt: 0.25, px: 0.5, color: "#2563EB" }}>
+                      <Box sx={{ display: "flex", alignItems: "center", mt: 0.25, px: 0.5, color: "var(--daira-primary)" }}>
                         <CheckCheck size={14} />
                       </Box>
                     )}
@@ -521,7 +521,7 @@ export default function TicketDetailPage() {
         )}
 
         {/* فیلد ارسال پاسخ */}
-        <Box sx={{ p: { xs: 1.25, sm: 1.5 }, borderTop: "1px solid #E2E8F0", bgcolor: "#FFFFFF" }}>
+        <Box sx={{ p: { xs: 1.25, sm: 1.5 }, borderTop: "1px solid var(--daira-border)", bgcolor: "var(--daira-surface)" }}>
           <TextField
             fullWidth
             multiline
@@ -551,7 +551,7 @@ export default function TicketDetailPage() {
               mt: 1.25,
             }}
           >
-            <Typography sx={{ fontSize: 11, color: "#94A3B8", textAlign: { xs: "center", sm: "right" } }}>
+            <Typography sx={{ fontSize: 11, color: "var(--daira-text-disabled)", textAlign: { xs: "center", sm: "right" } }}>
               Shift + Enter برای سطر جدید
             </Typography>
             <Button
@@ -565,8 +565,8 @@ export default function TicketDetailPage() {
                 borderRadius: 2,
                 fontWeight: 700,
                 boxShadow: "none",
-                bgcolor: "#2563EB",
-                "&:hover": { bgcolor: "#1D4ED8", boxShadow: "none" },
+                bgcolor: "var(--daira-primary)",
+                "&:hover": { bgcolor: "var(--daira-primary-hover)", boxShadow: "none" },
               }}
             >
               {busy ? "در حال ارسال…" : "ارسال پاسخ"}

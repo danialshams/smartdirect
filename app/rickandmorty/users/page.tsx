@@ -136,7 +136,7 @@ export default function AdminUsersPage() {
         {rows.map((r) => {
           const selected = allFiltered ? !excludedIds.includes(r.id) : selectedIds.includes(r.id);
           return (
-            <Card key={r.id} variant="outlined" sx={{ borderRadius: 3, borderColor: "#E2E8F0", boxShadow: "0 2px 8px rgba(15,23,42,.035)", overflow: "hidden" }}>
+            <Card key={r.id} variant="outlined" sx={{ borderRadius: 3, borderColor: "var(--daira-border)", boxShadow: "0 2px 8px rgba(15,23,42,.035)", overflow: "hidden" }}>
               <CardContent sx={{ p: 1.75, "&:last-child": { pb: 1.75 } }}>
                 <Stack spacing={1.5}>
                   <Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 0 }}>
@@ -145,7 +145,7 @@ export default function AdminUsersPage() {
                       if (allFiltered) setExcludedIds((current) => e.target.checked ? current.filter((id) => id !== r.id) : [...new Set([...current, r.id])]);
                       else setSelectedIds((current) => e.target.checked ? [...new Set([...current, r.id])] : current.filter((id) => id !== r.id));
                     }} inputProps={{ "aria-label": "انتخاب " + r.name }} />
-                    <Avatar sx={{ bgcolor: "#EFF6FF", color: "#2563EB", width: 44, height: 44, flexShrink: 0, fontWeight: 800 }}>{r.name?.trim()?.[0] || "U"}</Avatar>
+                    <Avatar sx={{ bgcolor: "var(--daira-outline-hover-bg)", color: "var(--daira-primary)", width: 44, height: 44, flexShrink: 0, fontWeight: 800 }}>{r.name?.trim()?.[0] || "U"}</Avatar>
                     <Box sx={{ minWidth: 0, flex: 1 }}>
                       <Typography fontWeight={800} sx={{ fontSize: 14.5, lineHeight: 1.7, overflowWrap: "anywhere" }}>{r.name || "بدون نام"}</Typography>
                       <Typography variant="caption" color="text.secondary" sx={{ display: "block", lineHeight: 1.6, overflowWrap: "anywhere", wordBreak: "break-word" }}>{r.email}</Typography>
@@ -153,11 +153,11 @@ export default function AdminUsersPage() {
                   </Stack>
                   <Divider />
                   <Box sx={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: 1.25 }}>
-                    <Box sx={{ minWidth: 0, p: 1.25, borderRadius: 2, bgcolor: "#F8FAFC" }}>
+                    <Box sx={{ minWidth: 0, p: 1.25, borderRadius: 2, bgcolor: "var(--daira-surface-hover)" }}>
                       <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.5 }}>پیج‌های متصل</Typography>
                       <Typography fontWeight={800} sx={{ fontSize: 16 }}>{r.pagesCount.toLocaleString("fa-IR")}</Typography>
                     </Box>
-                    <Box sx={{ minWidth: 0, p: 1.25, borderRadius: 2, bgcolor: "#F8FAFC" }}>
+                    <Box sx={{ minWidth: 0, p: 1.25, borderRadius: 2, bgcolor: "var(--daira-surface-hover)" }}>
                       <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.5 }}>تاریخ انقضا</Typography>
                       <Typography fontWeight={700} sx={{ fontSize: 12.5, lineHeight: 1.7, overflowWrap: "anywhere" }}>{r.subscription ? new Date(r.subscription.expiresAt).toLocaleDateString("fa-IR") : "—"}</Typography>
                     </Box>
@@ -186,12 +186,12 @@ export default function AdminUsersPage() {
           <TableBody>
             {loading ? <TableRow><TableCell colSpan={5} align="center" sx={{ py: 6 }}><CircularProgress size={28} /></TableCell></TableRow> :
             rows.length ? rows.map((r) => <TableRow key={r.id} hover onClick={() => router.push(`/rickandmorty/users/${r.id}`)} sx={{ cursor: "pointer" }}>
-              <TableCell data-label="کاربر"><Stack direction="row" spacing={1} alignItems="center" onClick={(e) => e.stopPropagation()}><Checkbox size="small" checked={allFiltered ? !excludedIds.includes(r.id) : selectedIds.includes(r.id)} onChange={(e) => { setResult(null); if (allFiltered) { setExcludedIds((current) => e.target.checked ? current.filter((id) => id !== r.id) : [...new Set([...current, r.id])]); } else { setSelectedIds((current) => e.target.checked ? [...new Set([...current, r.id])] : current.filter((id) => id !== r.id)); } }} /><Avatar sx={{ bgcolor: "#EFF6FF", color: "#2563EB", width: 38, height: 38 }}>{r.name?.[0] || "U"}</Avatar><Box sx={{ minWidth: 0 }}><Typography variant="body2" fontWeight={600} sx={{ whiteSpace: { xs: "normal", sm: "nowrap" }, overflowWrap: "anywhere" }}>{r.name}</Typography><Typography variant="caption" color="text.secondary" sx={{ whiteSpace: { xs: "normal", sm: "nowrap" }, overflowWrap: "anywhere" }}>{r.email}</Typography></Box></Stack></TableCell>
+              <TableCell data-label="کاربر"><Stack direction="row" spacing={1} alignItems="center" onClick={(e) => e.stopPropagation()}><Checkbox size="small" checked={allFiltered ? !excludedIds.includes(r.id) : selectedIds.includes(r.id)} onChange={(e) => { setResult(null); if (allFiltered) { setExcludedIds((current) => e.target.checked ? current.filter((id) => id !== r.id) : [...new Set([...current, r.id])]); } else { setSelectedIds((current) => e.target.checked ? [...new Set([...current, r.id])] : current.filter((id) => id !== r.id)); } }} /><Avatar sx={{ bgcolor: "var(--daira-outline-hover-bg)", color: "var(--daira-primary)", width: 38, height: 38 }}>{r.name?.[0] || "U"}</Avatar><Box sx={{ minWidth: 0 }}><Typography variant="body2" fontWeight={600} sx={{ whiteSpace: { xs: "normal", sm: "nowrap" }, overflowWrap: "anywhere" }}>{r.name}</Typography><Typography variant="caption" color="text.secondary" sx={{ whiteSpace: { xs: "normal", sm: "nowrap" }, overflowWrap: "anywhere" }}>{r.email}</Typography></Box></Stack></TableCell>
               <TableCell data-label="پیج‌های متصل">{r.pagesCount}</TableCell>
               <TableCell data-label="اشتراک">{r.subscription ? <><Chip size="small" label={r.subscription.planKey} variant="outlined" /> <Chip size="small" label={r.subscription.effectiveStatus ? statusLabels[r.subscription.effectiveStatus] ?? r.subscription.effectiveStatus : "—"} color={r.subscription.effectiveStatus === "ACTIVE" ? "success" : r.subscription.effectiveStatus === "EXPIRED" ? "error" : "warning"} variant="outlined" /></> : <Chip size="small" label="بدون اشتراک" />}</TableCell>
               <TableCell data-label="انقضا">{r.subscription ? new Date(r.subscription.expiresAt).toLocaleDateString("fa-IR") : "—"}</TableCell>
               <TableCell data-label="عملیات" onClick={(e) => e.stopPropagation()}><Stack direction={{ xs: "column", sm: "row" }} spacing={0.75} justifyContent="flex-end"><Button size="small" variant="outlined" endIcon={<Eye size={15} />} onClick={() => router.push(`/rickandmorty/users/${r.id}`)}>مشاهده</Button><Button size="small" variant="contained" endIcon={<Pencil size={15} />} onClick={() => router.push(`/rickandmorty/users/${r.id}#subscription`)}>ویرایش</Button></Stack></TableCell>
-            </TableRow>) : <TableRow><TableCell colSpan={5} align="center"><Stack alignItems="center" spacing={1} sx={{ py: 5 }}><Users size={30} color="#94A3B8" /><Typography variant="body2" color="text.secondary">کاربری پیدا نشد</Typography></Stack></TableCell></TableRow>}
+            </TableRow>) : <TableRow><TableCell colSpan={5} align="center"><Stack alignItems="center" spacing={1} sx={{ py: 5 }}><Users size={30} color="var(--daira-text-disabled)" /><Typography variant="body2" color="text.secondary">کاربری پیدا نشد</Typography></Stack></TableCell></TableRow>}
           </TableBody>
         </Table>
       </TableContainer>

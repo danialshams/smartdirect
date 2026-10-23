@@ -1,73 +1,159 @@
-/** Shared Daira design tokens. Keep these values aligned with app/globals.css. */
-export const dairaPalette = {
-  background: {
-    page: "#F4F7FC", // آبی-خاکستری بسیار روشن؛ پس‌زمینه اصلی صفحه
-    section: "#EEF3FB", // آبی-خاکستری روشن؛ پس‌زمینه بخش‌ها
-    surface: "#FFFFFF", // سفید؛ کارت‌ها و سطوح اصلی
-    surfaceHover: "#F8FAFC", // خاکستری مایل به آبی بسیار روشن؛ حالت هاور سطح
-    surfaceActive: "#F1F5F9", // خاکستری مایل به آبی روشن؛ سطح فعال
-    headerStart: "#EDF3FF", // ابتدای گرادیان ثابت هدر داشبورد
-    headerMiddle: "#F8FAFF", // میانه گرادیان هدر داشبورد
-    headerEnd: "#F2F6FF", // انتهای گرادیان هدر داشبورد
-  },
-  primary: {
-    main: "#2F61FD", // آبی اصلی برند
-    hover: "#1E4BD8", // آبی تیره‌تر؛ حالت هاور
-    active: "#1539A8", // آبی عمیق؛ حالت فعال
-    disabledBackground: "#E2E8F0", // خاکستری روشن؛ پس‌زمینه غیرفعال
-    disabledText: "#94A3B8", // خاکستری متوسط؛ متن غیرفعال
-  },
-  secondary: {
-    outline: "#CBD5E1", // خاکستری مرز دکمه‌های ثانویه
-    hoverBackground: "#EFF6FF", // آبی بسیار روشن؛ پس‌زمینه هاور
-    activeBackground: "#DBEAFE", // آبی روشن؛ پس‌زمینه فعال
-  },
-  text: {
-    heading: "#18233C", // سرمه‌ای؛ تیترها
-    body: "#5A6B87", // آبی-خاکستری؛ متن اصلی
-    muted: "#94A3B8", // خاکستری؛ متن کم‌رنگ و راهنما
-    link: "#2F61FD", // آبی؛ لینک‌ها
-    linkHover: "#1E4BD8", // آبی تیره؛ لینک در حالت هاور
-  },
-  form: {
-    background: "#FFFFFF", // سفید؛ پس‌زمینه پیش‌فرض فیلدهای فرم
-    searchBackground: "#F8FAFC", // خاکستری مایل به آبی بسیار روشن؛ پس‌زمینه فیلد جستجو
-    border: "#E2E8F0", // خاکستری روشن؛ مرز فیلدها
-    borderHover: "#CBD5E1", // خاکستری؛ مرز فیلد در حالت هاور
-    focus: "#2F61FD", // آبی اصلی؛ حالت فوکوس
-    error: "#EF4444", // قرمز؛ خطا
-  },
-  guide: {
-    background: "#FFFBEB", // پس‌زمینه زرد روشن برای راهنمای فرم
-    border: "#FDE68A", // حاشیه زرد ملایم راهنما
-    text: "#92400E", // متن راهنما با کنتراست مناسب
-    icon: "#D97706", // رنگ آیکن چراغ راهنما
-  },
-  status: {
-    accent: "#DB4CF2", // ارغوانی؛ رنگ تأکیدی
-    accentHover: "#C026D3", // ارغوانی تیره؛ تأکید در حالت هاور
-    success: "#10B981", // سبز؛ موفقیت
-    warning: "#F59E0B", // نارنجی؛ هشدار
-    error: "#EF4444", // قرمز؛ آیکن‌ها و وضعیت خطا
-    errorBackground: "#FEF2F2", // پس‌زمینه پیام خطا
-    errorBorder: "#FECACA", // حاشیه پیام خطا
-    errorText: "#B91C1C", // متن پیام خطا با کنتراست بیشتر
-  },
-  publishing: {
-    surface: "#FFFFFF", // سطح اصلی مراحل انتشار
-    soft: "#F6F9FF", // زمینه آرام ناحیه آپلود و پیش نمایش
-    border: "#DFE7F3", // مرز کارت‌های انتشار
-    selectedBackground: "#EDF3FF", // زمینه مرحله جاری
-    selectedBorder: "#2F61FD", // مرز مرحله جاری
-    pulseGlow: "#BAD0FF", // هاله پالس ملایم مرحله جاری
-    completed: "#16A34A", // تیک سبز مراحل تکمیل‌شده
-    completedSoft: "#EAF8EF", // زمینه مرحله تکمیل‌شده
-    completedBorder: "#B8E7C6", // مرز سبز ملایم
-    muted: "#71819B", // متن توضیحات کم اهمیت
-  },
-  border: "#E2E8F0", // خاکستری روشن؛ مرز عمومی
-  heroGlow: "#E0EAFF", // آبی بسیار روشن؛ درخشش تزئینی
-  pinkGlow: "#FCE7F3", // صورتی بسیار روشن؛ درخشش تزئینی
+/** Canonical color source for the entire Daira UI.
+ * Never redeclare a second palette; generated CSS is checked in CI.
+ * User-facing reference: docs/design-system/color-palette.md.
+ */
+export const dairaTokens = {
+  "--daira-brand-50": "#F2F6FF",
+  "--daira-brand-100": "#E9F0FF",
+  "--daira-brand-200": "#D6E4FF",
+  "--daira-brand-300": "#B8CFFF",
+  "--daira-brand-400": "#82A6FF",
+  "--daira-brand-500": "#5280FF",
+  "--daira-brand-600": "#2F61FD",
+  "--daira-brand-700": "#1E4BD8",
+  "--daira-brand-800": "#1539A8",
+  "--daira-brand-900": "#102A78",
+  "--daira-page-bg": "#F4F7FC",
+  "--daira-section-alt": "#EEF3FB",
+  "--daira-page-depth": "#E7EFF9",
+  "--daira-surface": "#FFFFFF",
+  "--daira-surface-hover": "#F8FAFC",
+  "--daira-surface-active": "#F1F5F9",
+  "--daira-primary": "#2F61FD",
+  "--daira-primary-hover": "#1E4BD8",
+  "--daira-primary-active": "#1539A8",
+  "--daira-outline": "#CBD5E1",
+  "--daira-outline-hover-bg": "#EFF6FF",
+  "--daira-outline-active-bg": "#DBEAFE",
+  "--daira-heading": "#18233C",
+  "--daira-text": "#24344D",
+  "--daira-text-secondary": "#52637D",
+  "--daira-muted": "#60718A",
+  "--daira-text-disabled": "#94A3B8",
+  "--daira-inverse-text": "#FFFFFF",
+  "--daira-link": "#2F61FD",
+  "--daira-link-hover": "#1E4BD8",
+  "--daira-icon": "#60718A",
+  "--daira-icon-active": "#2F61FD",
+  "--daira-glass-card": "rgba(255,255,255,0.42)",
+  "--daira-glass-raised": "rgba(255,255,255,0.58)",
+  "--daira-glass-modal": "rgba(255,255,255,0.78)",
+  "--daira-glass-drawer": "rgba(255,255,255,0.84)",
+  "--daira-glass-popover": "rgba(255,255,255,0.90)",
+  "--daira-glass-toast": "rgba(255,255,255,0.85)",
+  "--daira-glass-rim": "rgba(255,255,255,0.94)",
+  "--daira-glass-inner-rim": "rgba(255,255,255,0.58)",
+  "--daira-glass-overlay": "rgba(24,35,60,0.30)",
+  "--daira-border": "#DCE5F2",
+  "--daira-border-hover": "#B9CBE2",
+  "--daira-divider": "#DCE5EF",
+  "--daira-shadow-card": "0 5px 20px rgba(22,54,110,0.065)",
+  "--daira-shadow-card-hover": "0 12px 30px rgba(22,54,110,0.12)",
+  "--daira-shadow-floating": "0 18px 48px rgba(24,35,60,0.16)",
+  "--daira-input-bg": "rgba(255,255,255,0.94)",
+  "--daira-search-bg": "#F8FAFC",
+  "--daira-input-border": "#DCE5F2",
+  "--daira-input-border-hover": "#B9CBE2",
+  "--daira-input-focus": "#2F61FD",
+  "--daira-input-focus-ring": "0 0 0 3px rgba(47,97,253,0.20)",
+  "--daira-input-error-ring": "0 0 0 3px rgba(239,68,68,0.15)",
+  "--daira-input-label": "#334155",
+  "--daira-input-disabled": "#F1F5F9",
+  "--daira-disabled-bg": "#E2E8F0",
+  "--daira-disabled-text": "#94A3B8",
+  "--daira-success": "#10B981",
+  "--daira-success-text": "#166534",
+  "--daira-success-bg": "#E9F8F0",
+  "--daira-success-border": "#BCE8CF",
+  "--daira-warning": "#D97706",
+  "--daira-warning-text": "#92400E",
+  "--daira-warning-bg": "#FFFBEB",
+  "--daira-warning-border": "#FDE68A",
+  "--daira-error": "#EF4444",
+  "--daira-error-text": "#B91C1C",
+  "--daira-error-background": "#FEF2F2",
+  "--daira-error-border": "#FECACA",
+  "--daira-info": "#0284C7",
+  "--daira-info-text": "#075985",
+  "--daira-info-bg": "#EBF7FF",
+  "--daira-info-border": "#BAE6FD",
+  "--daira-processing": "#7C3AED",
+  "--daira-processing-text": "#5B21B6",
+  "--daira-processing-bg": "#F3EEFF",
+  "--daira-processing-border": "#DDD0FE",
+  "--daira-queue": "#2F61FD",
+  "--daira-queue-text": "#1E4BD8",
+  "--daira-queue-bg": "#E9F0FF",
+  "--daira-queue-border": "#BFD1FF",
+  "--daira-neutral": "#64748B",
+  "--daira-neutral-text": "#52637D",
+  "--daira-neutral-bg": "#F1F5F9",
+  "--daira-neutral-border": "#DCE5EF",
+  "--daira-accent": "#DB4CF2",
+  "--daira-accent-hover": "#C026D3",
+  "--daira-special-bg": "#FDF0FF",
+  "--daira-special-text": "#86198F",
+  "--daira-guide-bg": "#FFFBEB",
+  "--daira-guide-border": "#FDE68A",
+  "--daira-guide-text": "#92400E",
+  "--daira-guide-icon": "#D97706",
+  "--daira-badge-unread": "#2F61FD",
+  "--daira-badge-unread-text": "#FFFFFF",
+  "--daira-tooltip-bg": "#24344D",
+  "--daira-tooltip-text": "#FFFFFF",
+  "--daira-tabs-active-bg": "#E9F0FF",
+  "--daira-tabs-active-text": "#1E4BD8",
+  "--daira-row-selected": "rgba(47,97,253,0.08)",
+  "--daira-row-hover": "rgba(255,255,255,0.36)",
+  "--daira-calendar-today": "#2F61FD",
+  "--daira-calendar-selected": "#2F61FD",
+  "--daira-calendar-selected-text": "#FFFFFF",
+  "--daira-upload-bg": "#F6F9FF",
+  "--daira-upload-border": "#C9D8ED",
+  "--daira-upload-active-border": "#2F61FD",
+  "--daira-chat-sent-bg": "#E9F0FF",
+  "--daira-chat-received-bg": "#FFFFFF",
+  "--daira-skeleton-base": "#E5ECF6",
+  "--daira-skeleton-highlight": "#F5F8FF",
+  "--daira-empty-icon-bg": "#EDF3FF",
+  "--daira-scrollbar": "#C9D5E6",
+  "--daira-chart-reach": "#2F61FD",
+  "--daira-chart-views": "#0D9488",
+  "--daira-chart-engagement": "#7C3AED",
+  "--daira-chart-follows": "#D97706",
+  "--daira-chart-profile": "#0284C7",
+  "--daira-chart-additional": "#DB4CF2",
+  "--daira-chart-grid": "#DAE3F0",
+  "--daira-chart-axis": "#52637D",
+  "--daira-chart-increase": "#15803D",
+  "--daira-chart-decrease": "#B91C1C",
+  "--daira-chart-empty": "#CBD5E1",
+  "--daira-publishing-surface": "#FFFFFF",
+  "--daira-publishing-soft": "#F6F9FF",
+  "--daira-publishing-border": "#DFE7F3",
+  "--daira-publishing-selected": "#EDF3FF",
+  "--daira-publishing-pulse": "#BAD0FF",
+  "--daira-publishing-completed": "#16A34A",
+  "--daira-publishing-completed-bg": "#EAF8EF",
+  "--daira-publishing-completed-border": "#B8E7C6",
+  "--daira-publishing-muted": "#71819B",
+  "--daira-hero-glow": "#E0EAFF",
+  "--daira-pink-glow": "#FCE7F3",
+  "--daira-header-start": "#EDF3FF",
+  "--daira-header-middle": "#F8FAFF",
+  "--daira-header-end": "#F2F6FF"
 } as const;
 
+export const dairaPalette = {
+ background: {page:dairaTokens["--daira-page-bg"],section:dairaTokens["--daira-section-alt"],surface:dairaTokens["--daira-surface"],surfaceHover:dairaTokens["--daira-surface-hover"],surfaceActive:dairaTokens["--daira-surface-active"],headerStart:dairaTokens["--daira-header-start"],headerMiddle:dairaTokens["--daira-header-middle"],headerEnd:dairaTokens["--daira-header-end"]},
+ primary: {main:dairaTokens["--daira-primary"],hover:dairaTokens["--daira-primary-hover"],active:dairaTokens["--daira-primary-active"],disabledBackground:dairaTokens["--daira-disabled-bg"],disabledText:dairaTokens["--daira-disabled-text"]},
+ secondary: {outline:dairaTokens["--daira-outline"],hoverBackground:dairaTokens["--daira-outline-hover-bg"],activeBackground:dairaTokens["--daira-outline-active-bg"]},
+ text: {heading:dairaTokens["--daira-heading"],body:dairaTokens["--daira-text"],secondary:dairaTokens["--daira-text-secondary"],muted:dairaTokens["--daira-muted"],link:dairaTokens["--daira-link"],linkHover:dairaTokens["--daira-link-hover"]},
+ form: {background:dairaTokens["--daira-input-bg"],searchBackground:dairaTokens["--daira-search-bg"],border:dairaTokens["--daira-input-border"],borderHover:dairaTokens["--daira-input-border-hover"],focus:dairaTokens["--daira-input-focus"],error:dairaTokens["--daira-error"]},
+ guide: {background:dairaTokens["--daira-guide-bg"],border:dairaTokens["--daira-guide-border"],text:dairaTokens["--daira-guide-text"],icon:dairaTokens["--daira-guide-icon"]},
+ status: {accent:dairaTokens["--daira-accent"],accentHover:dairaTokens["--daira-accent-hover"],success:dairaTokens["--daira-success"],warning:dairaTokens["--daira-warning"],error:dairaTokens["--daira-error"],errorBackground:dairaTokens["--daira-error-background"],errorBorder:dairaTokens["--daira-error-border"],errorText:dairaTokens["--daira-error-text"],info:dairaTokens["--daira-info"],processing:dairaTokens["--daira-processing"],queue:dairaTokens["--daira-queue"]},
+ publishing: {surface:dairaTokens["--daira-publishing-surface"],soft:dairaTokens["--daira-publishing-soft"],border:dairaTokens["--daira-publishing-border"],selectedBackground:dairaTokens["--daira-publishing-selected"],selectedBorder:dairaTokens["--daira-primary"],pulseGlow:dairaTokens["--daira-publishing-pulse"],completed:dairaTokens["--daira-publishing-completed"],completedSoft:dairaTokens["--daira-publishing-completed-bg"],completedBorder:dairaTokens["--daira-publishing-completed-border"],muted:dairaTokens["--daira-publishing-muted"]},
+ border:dairaTokens["--daira-border"],heroGlow:dairaTokens["--daira-hero-glow"],pinkGlow:dairaTokens["--daira-pink-glow"]
+} as const;
 export type DairaPalette = typeof dairaPalette;
+export type DairaTokenName = keyof typeof dairaTokens;

@@ -1614,12 +1614,12 @@ export default function AutomationForm({
                             type="button"
                             onClick={onClose}
                             disabled={saving}
-                            className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs font-semibold text-[#3B82F6] shadow-none transition hover:bg-[#DBEAFE] hover:text-[#2563EB] disabled:opacity-50"
+                            className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-[#BFDBFE] bg-[var(--daira-outline-hover-bg)] px-3 text-xs font-semibold text-[#3B82F6] shadow-none transition hover:bg-[var(--daira-outline-active-bg)] hover:text-[var(--daira-primary)] disabled:opacity-50"
                         >
                             <ArrowRight size={18} />
                             بازگشت
                         </button>
-                        <h1 className="mt-4 text-xl font-bold tracking-tight text-[#0F172A] sm:text-2xl">
+                        <h1 className="mt-4 text-xl font-bold tracking-tight text-[var(--daira-heading)] sm:text-2xl">
                             {isEditing ? "ویرایش پاسخ استوری" : "پاسخ جدید"}
                         </h1>
                     </div>

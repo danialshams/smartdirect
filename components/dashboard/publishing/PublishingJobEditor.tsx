@@ -516,19 +516,19 @@ export default function PublishingJobEditor({
         <div className="mb-5 space-y-3">
 
           {job && (
-            <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
+            <section className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 shadow-sm sm:p-6">
               <div className="flex items-start gap-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2F61FD]/10 text-xs font-bold text-[#2F61FD]">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--daira-primary)]/10 text-xs font-bold text-[var(--daira-primary)]">
                   <Pencil size={15} />
                 </span>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <h1 className="text-sm font-bold text-[#18233C] sm:text-base">
+                    <h1 className="text-sm font-bold text-[var(--daira-heading)] sm:text-base">
                       ویرایش {labels[job.type]}
                     </h1>
 
                   </div>
-                  <p className="mt-1.5 text-xs leading-5 text-[#64748B]">
+                  <p className="mt-1.5 text-xs leading-5 text-[var(--daira-text-secondary)]">
                     جزئیات محتوا و پاسخ خودکار را در همین صفحه مدیریت کنید.
                   </p>
                 </div>
@@ -541,12 +541,12 @@ export default function PublishingJobEditor({
           loading ? (
             <PublishingPageSkeleton view="editor" />
           ) : (
-            <section className="flex min-h-[50vh] items-center justify-center rounded-2xl border border-[#E2E8F0] bg-white shadow-sm">
-              <span className="text-sm text-[#64748B]">محتوا پیدا نشد.</span>
+            <section className="flex min-h-[50vh] items-center justify-center rounded-2xl border border-[var(--daira-border)] bg-white shadow-sm">
+              <span className="text-sm text-[var(--daira-text-secondary)]">محتوا پیدا نشد.</span>
             </section>
           )
         ) : (
-        <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
+        <section className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 shadow-sm sm:p-6">
           {job.media.length > 0 && (
             <div
               className={
@@ -558,7 +558,7 @@ export default function PublishingJobEditor({
               {job.media.map((media) => (
                 <div
                   key={media.id}
-                  className="overflow-hidden rounded-2xl border border-[#E2E8F0] bg-[#F1F5F9]"
+                  className="overflow-hidden rounded-2xl border border-[var(--daira-border)] bg-[var(--daira-neutral-bg)]"
                 >
                   {media.publicUrl ? (
                     <div className="relative">
@@ -591,10 +591,10 @@ export default function PublishingJobEditor({
                         />
                       )}
                       {!loadedMediaIds.has(media.id) && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-[#F8FAFC]">
+                        <div className="absolute inset-0 flex items-center justify-center bg-[var(--daira-surface-hover)]">
                           <Loader2
                             size={20}
-                            className="animate-spin text-[#2F61FD]"
+                            className="animate-spin text-[var(--daira-primary)]"
                           />
                         </div>
                       )}
@@ -603,7 +603,7 @@ export default function PublishingJobEditor({
                     <div className="flex aspect-[4/5] items-center justify-center">
                       <Loader2
                         size={20}
-                        className="animate-spin text-[#2F61FD]"
+                        className="animate-spin text-[var(--daira-primary)]"
                       />
                     </div>
                   )}
@@ -614,18 +614,18 @@ export default function PublishingJobEditor({
 
           {isPublished ? (
             <div className="text-center">
-              <p className="text-xs font-medium text-[#64748B]">
+              <p className="text-xs font-medium text-[var(--daira-text-secondary)]">
                 {formatDate(job.publishedAt)}
               </p>
               {job.caption && (
-                <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-[#334155]">
+                <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-[var(--daira-input-label)]">
                   {job.caption}
                 </p>
               )}
             </div>
           ) : (
             <>
-              <label className="mb-2 block text-sm font-bold text-[#18233C]">
+              <label className="mb-2 block text-sm font-bold text-[var(--daira-heading)]">
                 کپشن
               </label>
               <textarea
@@ -633,7 +633,7 @@ export default function PublishingJobEditor({
                 onChange={(event) => setCaption(event.target.value)}
                 maxLength={2200}
                 rows={6}
-                className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#18233C] outline-none focus:border-[#2F61FD] focus:bg-white focus:ring-2 focus:ring-[#2F61FD]/10"
+                className="w-full resize-y rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3.5 py-3 !text-base leading-7 text-[var(--daira-heading)] outline-none focus:border-[var(--daira-primary)] focus:bg-white focus:ring-2 focus:ring-[var(--daira-primary)]/10"
                 style={{
                   fontSize: "16px",
                   WebkitTextSizeAdjust: "100%",
@@ -648,13 +648,13 @@ export default function PublishingJobEditor({
                 </div>
               )}
 
-              <div className="mt-5 rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-4">
+              <div className="mt-5 rounded-2xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] p-4">
                 <div className="mb-3 flex items-center gap-2">
                   <CalendarClock
                     size={17}
-                    className="text-[#2F61FD]"
+                    className="text-[var(--daira-primary)]"
                   />
-                  <span className="text-sm font-bold text-[#18233C]">
+                  <span className="text-sm font-bold text-[var(--daira-heading)]">
                     زمان انتشار
                   </span>
                 </div>
@@ -687,7 +687,7 @@ export default function PublishingJobEditor({
                 />
 
                 <div className="mt-3 grid grid-cols-2 gap-3">
-                  <label className="text-xs font-semibold text-[#64748B]">
+                  <label className="text-xs font-semibold text-[var(--daira-text-secondary)]">
                     ساعت
                     <input
                       type="number"
@@ -702,11 +702,11 @@ export default function PublishingJobEditor({
                           ),
                         )
                       }
-                      className="mt-1 w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-3 !text-base font-semibold text-[#334155] outline-none focus:border-[#2F61FD]"
+                      className="mt-1 w-full rounded-xl border border-[var(--daira-border)] bg-white px-3 py-3 !text-base font-semibold text-[var(--daira-input-label)] outline-none focus:border-[var(--daira-primary)]"
                       style={{ fontSize: "16px" }}
                     />
                   </label>
-                  <label className="text-xs font-semibold text-[#64748B]">
+                  <label className="text-xs font-semibold text-[var(--daira-text-secondary)]">
                     دقیقه
                     <input
                       type="number"
@@ -721,7 +721,7 @@ export default function PublishingJobEditor({
                           ),
                         )
                       }
-                      className="mt-1 w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-3 !text-base font-semibold text-[#334155] outline-none focus:border-[#2F61FD]"
+                      className="mt-1 w-full rounded-xl border border-[var(--daira-border)] bg-white px-3 py-3 !text-base font-semibold text-[var(--daira-input-label)] outline-none focus:border-[var(--daira-primary)]"
                       style={{ fontSize: "16px" }}
                     />
                   </label>
@@ -731,7 +731,7 @@ export default function PublishingJobEditor({
                   type="button"
                   disabled={!contentDirty || contentSaving || deleting || reelCoverUploading || (job.type === "REEL" && reelOptions.coverMode === "upload" && !reelOptions.coverUrl)}
                   onClick={() => void saveContent()}
-                  className="mt-4 min-h-11 w-full rounded-xl !bg-[#2F61FD] px-4 text-sm font-bold text-white hover:!bg-[#1E4BD8] disabled:cursor-not-allowed disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8]"
+                  className="mt-4 min-h-11 w-full rounded-xl !bg-[var(--daira-primary)] px-4 text-sm font-bold text-white hover:!bg-[var(--daira-primary-hover)] disabled:cursor-not-allowed disabled:!bg-[var(--daira-border)] disabled:!text-[var(--daira-text-disabled)]"
                 >
                   {contentSaving ? (
                     <span className="inline-flex items-center gap-2">
@@ -755,9 +755,9 @@ export default function PublishingJobEditor({
         )}
 
         {job && automationId ? (
-          <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
+          <section className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 shadow-sm sm:p-6">
             <div className="mb-5">
-              <h2 className="text-sm font-bold text-[#18233C]">
+              <h2 className="text-sm font-bold text-[var(--daira-heading)]">
                 {job.type === "STORY"
                   ? "پاسخ خودکار استوری"
                   : "پاسخ خودکار کامنت"}
@@ -765,30 +765,30 @@ export default function PublishingJobEditor({
             </div>
 
             {automationLoading || !automationLoaded ? (
-              <div dir="rtl" role="status" aria-live="polite" className="fixed inset-0 z-40 flex min-h-screen flex-col items-center justify-center gap-3 bg-[#F8FAFC] px-4 text-center">
-                <Loader2 size={30} strokeWidth={1.8} className="animate-spin text-[#2F61FD]" />
-                <p className="text-sm leading-6 text-[#64748B]">{job.type === "STORY" ? "در حال دریافت تنظیمات پاسخ خودکار استوری..." : "در حال دریافت تنظیمات پاسخ خودکار کامنت..."}</p>
+              <div dir="rtl" role="status" aria-live="polite" className="fixed inset-0 z-40 flex min-h-screen flex-col items-center justify-center gap-3 bg-[var(--daira-surface-hover)] px-4 text-center">
+                <Loader2 size={30} strokeWidth={1.8} className="animate-spin text-[var(--daira-primary)]" />
+                <p className="text-sm leading-6 text-[var(--daira-text-secondary)]">{job.type === "STORY" ? "در حال دریافت تنظیمات پاسخ خودکار استوری..." : "در حال دریافت تنظیمات پاسخ خودکار کامنت..."}</p>
               </div>
             ) : automation ? (
               <>
                 {triggerType === "COMMENT_KEYWORD" && (
-                  <div className="mb-6 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4">
-                    <label htmlFor="comment-reply-text" className="mb-2 block text-sm font-bold text-[#18233C]">پاسخ عمومی کامنت</label>
-                    <p className="mb-3 text-xs leading-5 text-[#64748B]">این متن زیر کامنت کاربر ارسال می‌شود و جدا از پاسخ دایرکت قابل ویرایش است.</p>
+                  <div className="mb-6 rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] p-4">
+                    <label htmlFor="comment-reply-text" className="mb-2 block text-sm font-bold text-[var(--daira-heading)]">پاسخ عمومی کامنت</label>
+                    <p className="mb-3 text-xs leading-5 text-[var(--daira-text-secondary)]">این متن زیر کامنت کاربر ارسال می‌شود و جدا از پاسخ دایرکت قابل ویرایش است.</p>
                     <textarea
                       id="comment-reply-text"
                       value={commentReplyText}
                       onChange={(event) => setCommentReplyText(event.target.value)}
                       rows={4}
                       placeholder="متن پاسخ کامنت..."
-                      className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-white px-3.5 py-3 text-base leading-7 text-[#18233C] outline-none focus:border-[#2F61FD]"
+                      className="w-full resize-y rounded-xl border border-[var(--daira-border)] bg-white px-3.5 py-3 text-base leading-7 text-[var(--daira-heading)] outline-none focus:border-[var(--daira-primary)]"
                       style={{ fontSize: "16px", WebkitTextSizeAdjust: "100%" }}
                     />
                     <Button
                       type="button"
                       onClick={() => void saveCommentReply()}
                       disabled={commentReplySaving || commentReplyText === originalCommentReplyText}
-                      className="mt-3 min-h-10 w-full rounded-xl !bg-[#2F61FD] px-4 text-sm font-bold text-white hover:!bg-[#1E4BD8] disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8]"
+                      className="mt-3 min-h-10 w-full rounded-xl !bg-[var(--daira-primary)] px-4 text-sm font-bold text-white hover:!bg-[var(--daira-primary-hover)] disabled:!bg-[var(--daira-border)] disabled:!text-[var(--daira-text-disabled)]"
                     >
                       {commentReplySaving ? "در حال ذخیره..." : "ذخیره پاسخ کامنت"}
                     </Button>
@@ -808,28 +808,28 @@ export default function PublishingJobEditor({
                   optionalSettings={
                     <>
                       {triggerType === "STORY_REPLY_KEYWORD" && (
-                        <div className="rounded-xl border border-[#E2E8F0] bg-white p-3.5">
+                        <div className="rounded-xl border border-[var(--daira-border)] bg-white p-3.5">
                           <label className="flex cursor-pointer items-start gap-3">
-                            <input type="checkbox" checked={likeStoryReply} onChange={(event) => { setLikeStoryReply(event.target.checked); setAutomationDirty(true); }} className="mt-0.5 h-4 w-4 accent-[#2F61FD]" />
+                            <input type="checkbox" checked={likeStoryReply} onChange={(event) => { setLikeStoryReply(event.target.checked); setAutomationDirty(true); }} className="mt-0.5 h-4 w-4 accent-[var(--daira-primary)]" />
                             <span>
-                              <span className="block text-sm font-bold text-[#18233C]">لایک ریپلای <span className="font-medium text-[#2F61FD]">(اختیاری)</span></span>
-                              <span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، Reply استوری کاربر لایک می‌شود.</span>
+                              <span className="block text-sm font-bold text-[var(--daira-heading)]">لایک ریپلای <span className="font-medium text-[var(--daira-primary)]">(اختیاری)</span></span>
+                              <span className="mt-1 block text-xs leading-5 text-[var(--daira-text-secondary)]">در صورت فعال بودن، Reply استوری کاربر لایک می‌شود.</span>
                             </span>
                           </label>
                         </div>
                       )}
-                      <div className="rounded-xl border border-[#E2E8F0] bg-white p-3.5">
+                      <div className="rounded-xl border border-[var(--daira-border)] bg-white p-3.5">
                         <label className="flex cursor-pointer items-start gap-3">
-                          <input type="checkbox" checked={requireFollow} onChange={(event) => { setRequireFollow(event.target.checked); setAutomationDirty(true); }} className="mt-0.5 h-4 w-4 accent-[#2F61FD]" />
+                          <input type="checkbox" checked={requireFollow} onChange={(event) => { setRequireFollow(event.target.checked); setAutomationDirty(true); }} className="mt-0.5 h-4 w-4 accent-[var(--daira-primary)]" />
                           <span>
-                            <span className="block text-sm font-bold text-[#18233C]">اجبار به فالو <span className="font-medium text-[#2F61FD]">(اختیاری)</span></span>
-                            <span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، کاربر باید پیج را فالو کرده باشد تا پاسخ را دریافت کند.</span>
+                            <span className="block text-sm font-bold text-[var(--daira-heading)]">اجبار به فالو <span className="font-medium text-[var(--daira-primary)]">(اختیاری)</span></span>
+                            <span className="mt-1 block text-xs leading-5 text-[var(--daira-text-secondary)]">در صورت فعال بودن، کاربر باید پیج را فالو کرده باشد تا پاسخ را دریافت کند.</span>
                           </span>
                         </label>
                         {requireFollow && (
                           <div className="mt-3">
-                            <label htmlFor="publishing-follow-gate-text" className="mb-2 block text-sm font-bold text-[#18233C]">متن درخواست فالو</label>
-                            <textarea id="publishing-follow-gate-text" value={followGateText} onChange={(event) => { setFollowGateText(event.target.value); setAutomationDirty(true); }} rows={2} maxLength={500} placeholder="مثلاً برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#18233C] outline-none placeholder:text-xs focus:border-[#2F61FD] focus:bg-white focus:ring-2 focus:ring-[#2F61FD]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
+                            <label htmlFor="publishing-follow-gate-text" className="mb-2 block text-sm font-bold text-[var(--daira-heading)]">متن درخواست فالو</label>
+                            <textarea id="publishing-follow-gate-text" value={followGateText} onChange={(event) => { setFollowGateText(event.target.value); setAutomationDirty(true); }} rows={2} maxLength={500} placeholder="مثلاً برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید." className="w-full resize-y rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3.5 py-3 !text-base leading-7 text-[var(--daira-heading)] outline-none placeholder:text-xs focus:border-[var(--daira-primary)] focus:bg-white focus:ring-2 focus:ring-[var(--daira-primary)]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
                           </div>
                         )}
                       </div>
@@ -871,29 +871,29 @@ export default function PublishingJobEditor({
                 />
 
 
-                <div className="mt-5 border-t border-[#E2E8F0] pt-5">
+                <div className="mt-5 border-t border-[var(--daira-border)] pt-5">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => router.back()}
                     disabled={deleting || automationLoading}
-                    className="min-h-11 w-full rounded-xl !border-[#CBD5E1] !bg-[#F8FAFC] px-4 text-sm font-bold !text-[#475569] hover:!bg-[#F1F5F9]"
+                    className="min-h-11 w-full rounded-xl !border-[var(--daira-outline)] !bg-[var(--daira-surface-hover)] px-4 text-sm font-bold !text-[var(--daira-text-secondary)] hover:!bg-[var(--daira-neutral-bg)]"
                   >
                     انصراف
                   </Button>
                 </div>
 
-                <div className="mt-6 border-t border-[#F1F5F9] pt-6">
+                <div className="mt-6 border-t border-[var(--daira-neutral-bg)] pt-6">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setShowDeleteAutomationConfirm(true)}
                     disabled={deleting || automationLoading}
-                    className="min-h-11 w-full rounded-xl !border-[#FECACA] !bg-[#FEF2F2] px-4 text-sm font-bold !text-[#DC2626] hover:!bg-[#FEE2E2]"
+                    className="min-h-11 w-full rounded-xl !border-[var(--daira-error-border)] !bg-[var(--daira-error-background)] px-4 text-sm font-bold !text-[var(--daira-error-text)] hover:!bg-[#FEE2E2]"
                   >
                     <span dir="rtl" className="inline-flex items-center justify-center gap-2">
                       {deleting ? "در حال حذف..." : `حذف پاسخ خودکار ${labels[job.type]}`}
-                      <Trash2 size={17} className="shrink-0 !text-[#DC2626]" />
+                      <Trash2 size={17} className="shrink-0 !text-[var(--daira-error-text)]" />
                     </span>
                   </Button>
                 </div>
@@ -908,7 +908,7 @@ export default function PublishingJobEditor({
             variant="outline"
             onClick={() => void cancelScheduled()}
             disabled={deleting || contentSaving}
-            className="min-h-11 w-full rounded-xl border-[#FECACA] bg-[#FEF2F2] px-4 text-sm font-bold text-[#DC2626] hover:bg-[#FEE2E2]"
+            className="min-h-11 w-full rounded-xl border-[var(--daira-error-border)] bg-[var(--daira-error-background)] px-4 text-sm font-bold text-[var(--daira-error-text)] hover:bg-[#FEE2E2]"
           >
             <Trash2 size={17} />
             {deleting ? "در حال حذف..." : "لغو و حذف محتوا"}
@@ -931,12 +931,12 @@ export default function PublishingJobEditor({
             role="dialog"
             aria-modal="true"
             aria-labelledby="delete-automation-title"
-            className="w-full max-w-sm rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-2xl"
+            className="w-full max-w-sm rounded-2xl border border-[var(--daira-border)] bg-white p-5 shadow-2xl"
           >
-            <h3 id="delete-automation-title" className="text-base font-bold text-[#18233C]">
+            <h3 id="delete-automation-title" className="text-base font-bold text-[var(--daira-heading)]">
               مطمئنی می‌خوای این مورد رو پاک کنی؟
             </h3>
-            <p className="mt-2 text-sm leading-6 text-[#64748B]">
+            <p className="mt-2 text-sm leading-6 text-[var(--daira-text-secondary)]">
               پاسخ خودکار «{labels[job.type]}» حذف می‌شود و دیگر برای این محتوا اجرا نخواهد شد.
             </p>
             <div className="mt-5 flex gap-2">
@@ -945,7 +945,7 @@ export default function PublishingJobEditor({
                 variant="outline"
                 onClick={() => setShowDeleteAutomationConfirm(false)}
                 disabled={deleting}
-                className="h-10 flex-1 rounded-xl border-[#E2E8F0] bg-white text-xs font-semibold text-[#475569] hover:bg-[#F8FAFC]"
+                className="h-10 flex-1 rounded-xl border-[var(--daira-border)] bg-white text-xs font-semibold text-[var(--daira-text-secondary)] hover:bg-[var(--daira-surface-hover)]"
               >
                 انصراف
               </Button>
@@ -954,7 +954,7 @@ export default function PublishingJobEditor({
                 variant="outline"
                 onClick={() => void deleteAutomation()}
                 disabled={deleting}
-                className="h-10 flex-1 rounded-xl border-[#FECACA] bg-[#FEF2F2] text-xs font-semibold text-[#DC2626] hover:bg-[#FEE2E2]"
+                className="h-10 flex-1 rounded-xl border-[var(--daira-error-border)] bg-[var(--daira-error-background)] text-xs font-semibold text-[var(--daira-error-text)] hover:bg-[#FEE2E2]"
               >
                 {deleting ? "در حال حذف..." : "بله، حذف شود"}
               </Button>

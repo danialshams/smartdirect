@@ -109,11 +109,11 @@ export default function ContentSelectionDialog({
         className="flex h-[min(92dvh,720px)] w-full max-w-[760px] flex-col overflow-hidden rounded-t-[28px] border border-[#E3EAF5] bg-white shadow-[0_24px_80px_rgba(15,23,42,.20)] sm:h-[min(86dvh,720px)] sm:rounded-[28px]">
         <header className="flex shrink-0 items-start justify-between gap-3 border-b border-[#E8EDF5] px-4 pb-4 pt-5 sm:px-6">
           <div className="min-w-0">
-            <h2 id="content-dialog-title" className="text-base font-extrabold text-[#18233C]">انتخاب محتوا</h2>
-            <p id="content-dialog-hint" className="mt-1 text-xs leading-5 text-[#64748B]">{mode === "story" ? "استوری موردنظر را انتخاب کنید." : "از جدیدترین محتواهای منتشرشده انتخاب کنید."}</p>
+            <h2 id="content-dialog-title" className="text-base font-extrabold text-[var(--daira-heading)]">انتخاب محتوا</h2>
+            <p id="content-dialog-hint" className="mt-1 text-xs leading-5 text-[var(--daira-text-secondary)]">{mode === "story" ? "استوری موردنظر را انتخاب کنید." : "از جدیدترین محتواهای منتشرشده انتخاب کنید."}</p>
           </div>
           <button ref={closeRef} type="button" onClick={onClose} aria-label="بستن انتخاب محتوا"
-            className="sd-neutral-button flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#E6ECF5] bg-[#F8FAFD] text-[#475569] transition hover:bg-[#EDF3FC] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400">
+            className="sd-neutral-button flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#E6ECF5] bg-[#F8FAFD] text-[var(--daira-text-secondary)] transition hover:bg-[#EDF3FC] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400">
             <X size={19} />
           </button>
         </header>
@@ -121,18 +121,18 @@ export default function ContentSelectionDialog({
           <div role="group" aria-label="فیلتر محتوا" className="flex min-w-0 gap-1.5 rounded-2xl bg-[#F1F5FB] p-1">
             {filters.map((option) => (
               <button key={option.value} type="button" aria-pressed={filter === option.value} onClick={() => setFilter(option.value)}
-                className={"sd-neutral-button min-h-9 rounded-xl px-3.5 text-xs font-bold transition sm:px-5 " + (filter === option.value ? "bg-white text-[#2158DE] shadow-[0_2px_9px_rgba(30,65,120,.10)]" : "text-[#64748B] hover:text-[#1E293B]")}>
+                className={"sd-neutral-button min-h-9 rounded-xl px-3.5 text-xs font-bold transition sm:px-5 " + (filter === option.value ? "bg-white text-[#2158DE] shadow-[0_2px_9px_rgba(30,65,120,.10)]" : "text-[var(--daira-text-secondary)] hover:text-[#1E293B]")}>
                 {option.label}
               </button>
             ))}
           </div>
           <div className="flex items-center gap-2">
-            <span aria-live="polite" className="rounded-full bg-[#EEF4FF] px-3 py-1.5 text-xs font-bold text-[#2563EB]">
+            <span aria-live="polite" className="rounded-full bg-[#EEF4FF] px-3 py-1.5 text-xs font-bold text-[var(--daira-primary)]">
               {number(selectedIds.length)} {maxSelected ? "از " + number(maxSelected) : ""} انتخاب‌شده
             </span>
             {onRefresh && (
               <button type="button" onClick={onRefresh} disabled={refreshing} aria-label="به‌روزرسانی محتوا" title="به‌روزرسانی محتوا"
-                className="sd-neutral-button flex h-9 w-9 items-center justify-center rounded-xl text-[#64748B] transition hover:bg-[#F1F5FB] disabled:opacity-50">
+                className="sd-neutral-button flex h-9 w-9 items-center justify-center rounded-xl text-[var(--daira-text-secondary)] transition hover:bg-[#F1F5FB] disabled:opacity-50">
                 <RefreshCw size={17} className={refreshing ? "animate-spin" : ""} />
               </button>
             )}
@@ -140,11 +140,11 @@ export default function ContentSelectionDialog({
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6">
           {missingIds.length > 0 && !loading && (
-            <div className="mb-4 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3 text-xs leading-6 text-[#64748B]">
+            <div className="mb-4 rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] p-3 text-xs leading-6 text-[var(--daira-text-secondary)]">
               پیش‌نمایش {number(missingIds.length)} محتوای قبلی در دسترس نیست، اما انتخاب آن حفظ شده است.
               <div className="mt-2 flex flex-wrap gap-2">
                 {missingIds.map((id) => (
-                  <button key={id} type="button" onClick={() => onToggle(id)} className="sd-neutral-button inline-flex min-h-9 items-center gap-2 rounded-lg border border-[#DDE6F3] bg-white px-3 text-xs text-[#475569]">
+                  <button key={id} type="button" onClick={() => onToggle(id)} className="sd-neutral-button inline-flex min-h-9 items-center gap-2 rounded-lg border border-[#DDE6F3] bg-white px-3 text-xs text-[var(--daira-text-secondary)]">
                     <span dir="ltr">…{id.slice(-8)}</span><X size={13} />
                   </button>
                 ))}
@@ -156,7 +156,7 @@ export default function ContentSelectionDialog({
               {Array.from({ length: 12 }, (_, i) => <div key={i} className="aspect-square animate-pulse rounded-2xl bg-[#E9EEF7]" />)}
             </div>
           ) : filtered.length === 0 ? (
-            <div className="flex min-h-40 items-center justify-center rounded-2xl border border-dashed border-[#DCE5F2] bg-[#F8FAFC] px-4 text-center text-xs leading-6 text-[#64748B]">
+            <div className="flex min-h-40 items-center justify-center rounded-2xl border border-dashed border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-4 text-center text-xs leading-6 text-[var(--daira-text-secondary)]">
               {error || (items.length ? "محتوایی در این دسته وجود ندارد." : "هنوز محتوایی برای انتخاب دریافت نشده است.")}
             </div>
           ) : (
@@ -170,16 +170,16 @@ export default function ContentSelectionDialog({
                 return (
                   <button key={item.id} type="button" disabled={locked || full} onClick={() => onToggle(item.id)} aria-pressed={selected}
                     aria-label={contentLabel(item) + (locked ? "، قبلاً انتخاب شده" : selected ? "، انتخاب‌شده" : "")}
-                    className={"sd-content-card group relative block aspect-square min-w-0 overflow-hidden rounded-2xl border-2 bg-[#F0F3F9] text-right transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] focus-visible:ring-offset-2 " + (locked ? "cursor-not-allowed opacity-60" : "hover:shadow-md")}
+                    className={"sd-content-card group relative block aspect-square min-w-0 overflow-hidden rounded-2xl border-2 bg-[#F0F3F9] text-right transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--daira-primary)] focus-visible:ring-offset-2 " + (locked ? "cursor-not-allowed opacity-60" : "hover:shadow-md")}
                     style={{ borderColor: selected ? dairaPalette.primary.main : "#E7ECF5" }}>
                     {preview ? <img src={preview} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.035]" /> :
-                      <span className="flex h-full w-full items-center justify-center text-[#94A3B8]">{isVideo ? <Video size={25} /> : <ImageIcon size={25} />}</span>}
+                      <span className="flex h-full w-full items-center justify-center text-[var(--daira-text-disabled)]">{isVideo ? <Video size={25} /> : <ImageIcon size={25} />}</span>}
                     <span className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-black/70 to-transparent" aria-hidden="true" />
                     <span className="absolute bottom-2 right-2 flex items-center gap-1 text-[10px] font-bold text-white drop-shadow-sm">
                       {contentKind(item) === "CAROUSEL" && <Images size={12} />}{contentLabel(item)}
                     </span>
-                    {locked ? <span className="absolute inset-x-1 top-2 rounded-lg bg-white/95 px-1 py-1 text-center text-[10px] font-bold text-[#334155]">قبلاً انتخاب‌شده</span> :
-                      <span className={"absolute left-2 top-2 flex h-6 w-6 items-center justify-center rounded-full border-2 shadow-sm " + (selected ? "border-[#2563EB] bg-[#2563EB] text-white" : "border-white bg-black/25 text-transparent")}>
+                    {locked ? <span className="absolute inset-x-1 top-2 rounded-lg bg-white/95 px-1 py-1 text-center text-[10px] font-bold text-[var(--daira-input-label)]">قبلاً انتخاب‌شده</span> :
+                      <span className={"absolute left-2 top-2 flex h-6 w-6 items-center justify-center rounded-full border-2 shadow-sm " + (selected ? "border-[var(--daira-primary)] bg-[var(--daira-primary)] text-white" : "border-white bg-black/25 text-transparent")}>
                         <Check size={14} strokeWidth={3} />
                       </span>}
                   </button>
@@ -191,8 +191,8 @@ export default function ContentSelectionDialog({
         </div>
         <footer className="flex shrink-0 items-center gap-2 border-t border-[#E8EDF5] bg-white px-4 py-3.5 sm:px-6">
           <button type="button" onClick={onConfirm} disabled={loading}
-            className="min-h-12 flex-1 rounded-xl bg-[#2F61FD] px-4 text-sm font-extrabold text-white transition hover:bg-[#2154E9] disabled:cursor-not-allowed disabled:opacity-50">تأیید انتخاب</button>
-          <button type="button" onClick={onClose} className="sd-neutral-button min-h-12 rounded-xl border border-[#E0E7F2] bg-white px-5 text-sm font-bold text-[#475569] transition hover:bg-[#F7F9FC]">انصراف</button>
+            className="min-h-12 flex-1 rounded-xl bg-[var(--daira-primary)] px-4 text-sm font-extrabold text-white transition hover:bg-[#2154E9] disabled:cursor-not-allowed disabled:opacity-50">تأیید انتخاب</button>
+          <button type="button" onClick={onClose} className="sd-neutral-button min-h-12 rounded-xl border border-[#E0E7F2] bg-white px-5 text-sm font-bold text-[var(--daira-text-secondary)] transition hover:bg-[#F7F9FC]">انصراف</button>
         </footer>
       </section>
     </div>

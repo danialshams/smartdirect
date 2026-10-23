@@ -59,9 +59,9 @@ function AdminNav({ onNavigate }: { onNavigate?: () => void }) {
               minHeight: 44,
               borderRadius: 2,
               px: 1.5,
-              color: isActive ? "#2563EB" : "#475569",
-              "&.Mui-selected": { bgcolor: "#EFF6FF", color: "#2563EB" },
-              "&.Mui-selected:hover": { bgcolor: "#EFF6FF" },
+              color: isActive ? "var(--daira-primary)" : "var(--daira-text-secondary)",
+              "&.Mui-selected": { bgcolor: "var(--daira-outline-hover-bg)", color: "var(--daira-primary)" },
+              "&.Mui-selected:hover": { bgcolor: "var(--daira-outline-hover-bg)" },
             }}
           >
             <ListItemIcon sx={{ minWidth: 36, color: "inherit" }}>
@@ -89,8 +89,8 @@ function Brand({ compact = false }: { compact?: boolean }) {
           display: "grid",
           placeItems: "center",
           borderRadius: 2.5,
-          bgcolor: "#2563EB",
-          color: "#fff",
+          bgcolor: "var(--daira-primary)",
+          color: "var(--daira-surface)",
           fontWeight: 800,
           fontSize: compact ? 12 : 14,
         }}
@@ -101,7 +101,7 @@ function Brand({ compact = false }: { compact?: boolean }) {
         <Typography fontSize={compact ? 14 : 15} fontWeight={800} noWrap>
           SmartDirect
         </Typography>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, color: "#64748B" }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, color: "var(--daira-text-secondary)" }}>
           <ShieldCheck size={12} />
           <Typography fontSize={10.5} noWrap>پنل مدیریت</Typography>
         </Box>
@@ -117,7 +117,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const currentLabel = items.find((item) => item.href === currentKey)?.label ?? "داشبورد";
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "#F8FAFC" }}>
+    <Box sx={{ minHeight: "100vh", bgcolor: "var(--daira-surface-hover)" }}>
       <Drawer
         variant="permanent"
         anchor="left"
@@ -128,19 +128,19 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           "& .MuiDrawer-paper": {
             width: 248,
             boxSizing: "border-box",
-            borderLeft: "1px solid #E2E8F0",
+            borderLeft: "1px solid var(--daira-border)",
             borderRight: 0,
-            bgcolor: "#fff",
+            bgcolor: "var(--daira-surface)",
           },
         }}
       >
-        <Box sx={{ height: 72, display: "flex", alignItems: "center", px: 2.5, borderBottom: "1px solid #E2E8F0" }}>
+        <Box sx={{ height: 72, display: "flex", alignItems: "center", px: 2.5, borderBottom: "1px solid var(--daira-border)" }}>
           <Brand />
         </Box>
         <Box sx={{ px: 1.5, pt: 2 }}><AdminNav /></Box>
-        <Box sx={{ position: "absolute", bottom: 16, left: 16, right: 16, p: 1.5, border: "1px solid #E2E8F0", borderRadius: 2.5, bgcolor: "#F8FAFC" }}>
+        <Box sx={{ position: "absolute", bottom: 16, left: 16, right: 16, p: 1.5, border: "1px solid var(--daira-border)", borderRadius: 2.5, bgcolor: "var(--daira-surface-hover)" }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Box sx={{ width: 32, height: 32, borderRadius: "50%", display: "grid", placeItems: "center", bgcolor: "#0F172A", color: "#fff", fontSize: 12, fontWeight: 700 }}>A</Box>
+            <Box sx={{ width: 32, height: 32, borderRadius: "50%", display: "grid", placeItems: "center", bgcolor: "var(--daira-heading)", color: "var(--daira-surface)", fontSize: 12, fontWeight: 700 }}>A</Box>
             <Box sx={{ minWidth: 0 }}>
               <Typography fontSize={12} fontWeight={700} noWrap>مدیر سیستم</Typography>
               <Typography fontSize={10} color="text.secondary">ADMIN</Typography>
@@ -159,12 +159,12 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           "& .MuiDrawer-paper": {
             width: { xs: "min(82vw, 300px)", sm: 320 },
             boxSizing: "border-box",
-            borderLeft: "1px solid #E2E8F0",
+            borderLeft: "1px solid var(--daira-border)",
             borderRight: 0,
           },
         }}
       >
-        <Box sx={{ height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", px: 2, borderBottom: "1px solid #E2E8F0" }}>
+        <Box sx={{ height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", px: 2, borderBottom: "1px solid var(--daira-border)" }}>
           <Brand compact />
           <IconButton size="small" onClick={() => setMobileOpen(false)} aria-label="بستن منو"><X size={19} /></IconButton>
         </Box>
@@ -177,9 +177,9 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           color="inherit"
           elevation={0}
           sx={{
-            bgcolor: "#fff",
-            borderBottom: "1px solid #E2E8F0",
-            color: "#0F172A",
+            bgcolor: "var(--daira-surface)",
+            borderBottom: "1px solid var(--daira-border)",
+            color: "var(--daira-heading)",
             zIndex: (theme) => theme.zIndex.drawer - 1,
           }}
         >

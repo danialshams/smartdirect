@@ -77,6 +77,12 @@ jobs:
       - name: Install exactly from lockfile
         run: npm ci --no-audit --no-fund
 
+      - name: Verify the single canonical Daira color palette
+        run: npm run theme:check
+
+      - name: Test complete Daira design system
+        run: npx tsx scripts/test-daira-design-system.ts
+
       - name: Build application
         env:
           NODE_ENV: production

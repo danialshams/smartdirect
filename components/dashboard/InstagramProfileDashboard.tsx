@@ -142,9 +142,9 @@ export default function InstagramProfileDashboard({
           sx={{
             width: "100%",
             maxWidth: 560,
-            border: "1px solid #FECACA",
-            bgcolor: "#FEF2F2",
-            color: "#B91C1C",
+            border: "1px solid var(--daira-error-border)",
+            bgcolor: "var(--daira-error-background)",
+            color: "var(--daira-error-text)",
             borderRadius: 2,
             px: 2,
             py: 1.5,
@@ -178,9 +178,9 @@ export default function InstagramProfileDashboard({
               height: "100%",
               minHeight: { xs: 220, sm: 250, lg: 285 },
               p: { xs: 2, sm: 2.5, md: 3, lg: 3.5 },
-              border: "1px solid #E2E8F0",
+              border: "1px solid var(--daira-border)",
               borderRadius: { xs: 3, md: 3.5 },
-              bgcolor: "#FFFFFF",
+              bgcolor: "var(--daira-surface)",
               boxShadow: "0 8px 24px rgba(15,23,42,0.05)",
               display: "flex",
               flexDirection: "column",
@@ -246,21 +246,21 @@ export default function InstagramProfileDashboard({
                 flexShrink: 0,
                 overflow: "hidden",
                 borderRadius: "50%",
-                border: "4px solid #EFF6FF",
-                bgcolor: "#F8FAFC",
+                border: "4px solid var(--daira-outline-hover-bg)",
+                bgcolor: "var(--daira-surface-hover)",
               }}
             >
               {profile.profilePictureUrl ? (
                 <Avatar src={profile.profilePictureUrl} alt={profile.username} sx={{ width: "100%", height: "100%" }} />
               ) : (
-                <Box sx={{ width: "100%", height: "100%", display: "grid", placeItems: "center", color: "#64748B", fontSize: 28, fontWeight: 300 }}>?</Box>
+                <Box sx={{ width: "100%", height: "100%", display: "grid", placeItems: "center", color: "var(--daira-text-secondary)", fontSize: 28, fontWeight: 300 }}>?</Box>
               )}
             </Box>
 
             <Box sx={{ minWidth: 0, width: "100%", position: "relative", zIndex: 1, textAlign: "center" }}>
               <Typography
                 sx={{
-                  color: "#0F172A",
+                  color: "var(--daira-heading)",
                   fontSize: { xs: 18, sm: 21, md: 24 },
                   fontWeight: 700,
                   letterSpacing: "-0.025em",
@@ -268,14 +268,14 @@ export default function InstagramProfileDashboard({
               >
                 {profile.name || `@${profile.username}`}
               </Typography>
-              <Typography dir="ltr" sx={{ mt: 0.45, color: "#64748B", fontSize: { xs: 12.5, sm: 13.5, md: 14 }, fontWeight: 500, textAlign: "center" }}>
+              <Typography dir="ltr" sx={{ mt: 0.45, color: "var(--daira-text-secondary)", fontSize: { xs: 12.5, sm: 13.5, md: 14 }, fontWeight: 500, textAlign: "center" }}>
                 @{profile.username}
               </Typography>
               {profile.biography ? (
                 <Typography
                   sx={{
                     mt: 1.25,
-                    color: "#475569",
+                    color: "var(--daira-text-secondary)",
                     textAlign: "center",
                     fontSize: { xs: 11.5, sm: 12.5 },
                     lineHeight: 1.9,
@@ -316,23 +316,23 @@ export default function InstagramProfileDashboard({
               gap: { xs: 1, sm: 1.5, md: 2 },
             }}
           >
-            <Box sx={{ minWidth: 0, p: { xs: 1.25, sm: 1.75 }, borderRadius: 2.5, bgcolor: "#F0FDF4", border: "1px solid #DCFCE7" }}>
-              <Box sx={{ width: 28, height: 28, mb: 1, borderRadius: 1.5, display: "grid", placeItems: "center", bgcolor: "#16A34A", color: "#FFFFFF" }}>
+            <Box sx={{ minWidth: 0, p: { xs: 1.25, sm: 1.75 }, borderRadius: 2.5, bgcolor: "var(--daira-success-bg)", border: "1px solid #DCFCE7" }}>
+              <Box sx={{ width: 28, height: 28, mb: 1, borderRadius: 1.5, display: "grid", placeItems: "center", bgcolor: "var(--daira-publishing-completed)", color: "var(--daira-surface)" }}>
                 <UserRoundPlus size={15} strokeWidth={2} />
               </Box>
-              <AnimatedProfileStat label="فالووینگ" value={profile.followsCount} visible={visible} countDelay={1150} valueColor="#16A34A" />
+              <AnimatedProfileStat label="فالووینگ" value={profile.followsCount} visible={visible} countDelay={1150} valueColor="var(--daira-publishing-completed)" />
             </Box>
             <Box sx={{ minWidth: 0, p: { xs: 1.25, sm: 1.75 }, borderRadius: 2.5, bgcolor: "#F5F3FF", border: "1px solid #EDE9FE" }}>
-              <Box sx={{ width: 28, height: 28, mb: 1, borderRadius: 1.5, display: "grid", placeItems: "center", bgcolor: "#7C3AED", color: "#FFFFFF" }}>
+              <Box sx={{ width: 28, height: 28, mb: 1, borderRadius: 1.5, display: "grid", placeItems: "center", bgcolor: "var(--daira-processing)", color: "var(--daira-surface)" }}>
                 <UsersRound size={15} strokeWidth={2} />
               </Box>
-              <AnimatedProfileStat label="فالوور" value={profile.followersCount} visible={visible} countDelay={1250} valueColor="#7C3AED" />
+              <AnimatedProfileStat label="فالوور" value={profile.followersCount} visible={visible} countDelay={1250} valueColor="var(--daira-processing)" />
             </Box>
-            <Box sx={{ minWidth: 0, p: { xs: 1.25, sm: 1.75 }, borderRadius: 2.5, bgcolor: "#EFF6FF", border: "1px solid #DBEAFE" }}>
-              <Box sx={{ width: 28, height: 28, mb: 1, borderRadius: 1.5, display: "grid", placeItems: "center", bgcolor: "#2563EB", color: "#FFFFFF" }}>
+            <Box sx={{ minWidth: 0, p: { xs: 1.25, sm: 1.75 }, borderRadius: 2.5, bgcolor: "var(--daira-outline-hover-bg)", border: "1px solid var(--daira-outline-active-bg)" }}>
+              <Box sx={{ width: 28, height: 28, mb: 1, borderRadius: 1.5, display: "grid", placeItems: "center", bgcolor: "var(--daira-primary)", color: "var(--daira-surface)" }}>
                 <Images size={15} strokeWidth={2} />
               </Box>
-              <AnimatedProfileStat label="پست" value={profile.mediaCount} visible={visible} countDelay={1350} valueColor="#2563EB" />
+              <AnimatedProfileStat label="پست" value={profile.mediaCount} visible={visible} countDelay={1350} valueColor="var(--daira-primary)" />
             </Box>
           </Box>
         </Box>
@@ -402,7 +402,7 @@ function AnimatedProfileStat({
       <Typography
         sx={{
           mt: 0.5,
-          color: "#64748B",
+          color: "var(--daira-text-secondary)",
           fontSize: { xs: 11, sm: 12, md: 14 },
         }}
       >
