@@ -756,6 +756,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       const next = [...current];
       const [moved] = next.splice(from, 1);
       next.splice(to, 0, moved);
+      next.forEach((entry, index) => uploadedOrderRef.current.set(entry.storageKey, index));
       return next.map((item, index) => ({ ...item, sortOrder: index }));
     });
     setUploadRows((current) => {
@@ -786,6 +787,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error(result.message || "حذف فایل ناموفق بود.");
       if (type === "CAROUSEL" && currentIndex >= 0) carouselInsertAtRef.current = currentIndex;
+      uploadedOrderRef.current.delete(item.storageKey);
       setUploadRows((current) => current.filter((row) => row.storageKey !== item.storageKey));
       if (type !== "CAROUSEL") setShowUploadedMediaPreview(false);
       setUploadedMedia((current) => current.filter((m) => m.storageKey !== item.storageKey).map((m, i) => ({ ...m, sortOrder: i })));
@@ -829,6 +831,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             if (type === "CAROUSEL") {
               if (carouselInsertAtRef.current !== null) {
                 next.splice(Math.min(carouselInsertAtRef.current, next.length), 0, result);
+                next.forEach((entry, index) => uploadedOrderRef.current.set(entry.storageKey, index));
                 carouselInsertAtRef.current = null;
               } else {
                 next.push(result);
