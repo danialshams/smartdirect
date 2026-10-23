@@ -89,6 +89,9 @@ jobs:
       - name: Verify dashboard create-action alignment, glass cards and safe build parity
         run: npx tsx scripts/test-dashboard-create-actions-glass.ts
 
+      - name: Verify dashboard home badge placement and RTL icon order
+        run: npx tsx scripts/test-dashboard-home-badges.ts
+
       - name: Build application
         env:
           NODE_ENV: production

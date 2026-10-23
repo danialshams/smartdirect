@@ -2,7 +2,7 @@ type SkeletonCardProps = { kind: "quick" | "tool"; index: number; featured?: boo
 
 function SkeletonCard({ kind, index, featured = false }: SkeletonCardProps) {
   const rootClass = kind === "quick"
-    ? "daira-home__quick-card" + (featured ? " daira-home__quick-card--inbox" : "")
+    ? "daira-home__quick-card" + (featured ? " daira-home__quick-card--inbox" : index === 1 ? " daira-home__quick-card--publishing" : "") + (index < 2 ? " daira-home__quick-card--status" : "")
     : "daira-home__tool-card";
 
   return (
@@ -13,8 +13,8 @@ function SkeletonCard({ kind, index, featured = false }: SkeletonCardProps) {
       <span className={kind === "quick" ? "daira-home__quick-copy" : "daira-home__tool-copy"}>
         <span className="daira-home__skeleton-block daira-home__skeleton-title" />
         <span className="daira-home__skeleton-block daira-home__skeleton-description" />
-        {kind === "quick" && index < 2 ? <span className="daira-home__skeleton-block daira-home__status-skeleton" /> : null}
       </span>
+      {kind === "quick" && index < 2 ? <span className="daira-home__skeleton-block daira-home__status-skeleton" /> : null}
     </div>
   );
 }

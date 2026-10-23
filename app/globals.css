@@ -939,3 +939,30 @@ body {
     inset 0 0 0 1px var(--daira-glass-inner-rim),
     inset 0 -1px 0 var(--daira-glass-border-strong),inset 0 1px 1px var(--daira-glass-rim);
 }
+
+/* Dashboard badges: icons lead their labels; quick-action badges float top-left
+   without occluding the text or WebP illustrations on narrow screens. */
+.daira-home__account-connected,
+.daira-home__automation-count,
+.daira-home__status {
+  direction:rtl;
+  flex-direction:row-reverse;
+}
+.daira-home__quick-card--status > :is(.daira-home__status,.daira-home__status-skeleton) {
+  position:absolute;
+  top:10px;
+  left:10px;
+  right:auto;
+  z-index:1;
+  max-width:calc(100% - 20px);
+}
+.daira-home__quick-card--status .daira-home__quick-copy { padding-top:28px; }
+@media(max-width:680px) {
+  .daira-home__quick-card--publishing.daira-home__quick-card--status {
+    padding-top:44px;
+    min-height:232px;
+  }
+  .daira-home__quick-card--publishing.daira-home__quick-card--status .daira-home__quick-copy { padding-top:0; }
+  .daira-home__quick-card--inbox.daira-home__quick-card--status { min-height:162px; }
+  .daira-home__quick-card--inbox.daira-home__quick-card--status .daira-home__quick-copy { padding-top:30px; }
+}

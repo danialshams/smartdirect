@@ -200,22 +200,22 @@ export default function DashboardOverview({ instagramAccounts }: DashboardOvervi
           {quickTools.map((tool) => {
             const status = quickStatus(tool.key);
             return (
-              <Link key={tool.key} className={"daira-home__quick-card daira-home__quick-card--" + tool.key} href={tool.href}>
+              <Link key={tool.key} className={"daira-home__quick-card daira-home__quick-card--" + tool.key + (status || (summaryStatus === "loading" && tool.key !== "insights") ? " daira-home__quick-card--status" : "")} href={tool.href}>
                 <span className="daira-home__quick-art">
                   <Image src={tool.image} alt="" width={192} height={192} sizes="(max-width: 680px) 114px, (max-width: 1000px) 128px, 144px" />
                 </span>
                 <span className="daira-home__quick-copy">
                   <strong>{tool.title}</strong>
                   <span className="daira-home__quick-desc">{tool.description}</span>
-                  {status ? (
-                    <span className={"daira-home__status daira-home__status--" + status.tone} aria-live="polite">
-                      {status.tone === "attention" ? <MessageCircle size={13} aria-hidden="true" /> : status.tone === "queue" ? <Clock3 size={13} aria-hidden="true" /> : <CheckCircle2 size={13} aria-hidden="true" />}
-                      {status.text}
-                    </span>
-                  ) : summaryStatus === "loading" && tool.key !== "insights" ? (
-                    <span className="daira-home__skeleton-block daira-home__status-skeleton" aria-hidden="true" />
-                  ) : null}
                 </span>
+                {status ? (
+                  <span className={"daira-home__status daira-home__status--" + status.tone} aria-live="polite">
+                    {status.tone === "attention" ? <MessageCircle size={13} aria-hidden="true" /> : status.tone === "queue" ? <Clock3 size={13} aria-hidden="true" /> : <CheckCircle2 size={13} aria-hidden="true" />}
+                    <span>{status.text}</span>
+                  </span>
+                ) : summaryStatus === "loading" && tool.key !== "insights" ? (
+                  <span className="daira-home__skeleton-block daira-home__status-skeleton" aria-hidden="true" />
+                ) : null}
               </Link>
             );
           })}
