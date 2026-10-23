@@ -17,15 +17,13 @@ import {
 import { DayPicker, faIR } from "@daypicker/persian";
 import { getDefaultClassNames, type DayPickerProps, type DropdownProps, useDayPicker } from "@daypicker/react";
 import { ChevronDown } from "lucide-react";
+import { dairaPalette } from "../../lib/design-system/palette";
 
 const COLORS = {
-  primary: "#2563EB",
-  primaryDark: "#1D4ED8",
-  text: "#0F172A",
-  secondary: "#64748B",
-  border: "#E2E8F0",
-  background: "#F8FAFC",
-  surface: "#FFFFFF",
+  primary:dairaPalette.primary.main,primaryDark:dairaPalette.primary.hover,
+  text:dairaPalette.text.heading,secondary:dairaPalette.text.secondary,
+  border:dairaPalette.border,background:dairaPalette.background.page,
+  surface:dairaPalette.background.surface,
 };
 
 function classNameValue(value?: string) {

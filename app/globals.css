@@ -1,70 +1,9 @@
 @layer theme, base, mui, components, utilities;
 
 @import "tailwindcss";
+@import "./daira-tokens.css";
 
 @custom-variant dark (&:is(.dark *));
-
-:root {
-  /* Daira shared palette tokens: source of truth for site-wide CSS. */
-  --daira-page-bg: #F4F7FC;
-  --daira-section-alt: #EEF3FB;
-  --daira-surface: #FFFFFF;
-  --daira-surface-hover: #F8FAFC;
-  --daira-surface-active: #F1F5F9;
-  --daira-primary: #2F61FD;
-  --daira-primary-hover: #1E4BD8;
-  --daira-primary-active: #1539A8;
-  --daira-disabled-bg: #E2E8F0;
-  --daira-disabled-text: #94A3B8;
-  --daira-outline: #CBD5E1;
-  --daira-outline-hover-bg: #EFF6FF;
-  --daira-outline-active-bg: #DBEAFE;
-  --daira-heading: #18233C;
-  --daira-text: #5A6B87;
-  --daira-muted: #94A3B8;
-  --daira-link: #2F61FD;
-  --daira-link-hover: #1E4BD8;
-  --daira-input-bg: #FFFFFF;
-  --daira-search-bg: #F8FAFC; /* خاکستری مایل به آبی بسیار روشن؛ پس‌زمینه فیلد جستجو */
-  --daira-input-border: #E2E8F0;
-  --daira-input-border-hover: #CBD5E1;
-  --daira-input-focus: #2F61FD;
-  --daira-accent: #DB4CF2;
-  --daira-accent-hover: #C026D3;
-  --daira-success: #10B981;
-  --daira-warning: #F59E0B;
-  --daira-error: #EF4444;
-  --daira-border: #E2E8F0;
-  --daira-hero-glow: #E0EAFF;
-  --daira-pink-glow: #FCE7F3;
-  --daira-header-start: #EDF3FF;
-  --daira-header-middle: #F8FAFF;
-  --daira-header-end: #F2F6FF;
-  --daira-error-background: #FEF2F2;
-  --daira-error-border: #FECACA;
-  --daira-error-text: #B91C1C;
-
-  --background: hsl(0 0% 100%);
-  --foreground: hsl(0 0% 3.9%);
-  --card: hsl(0 0% 100%);
-  --card-foreground: hsl(0 0% 3.9%);
-  --popover: hsl(0 0% 100%);
-  --popover-foreground: hsl(0 0% 3.9%);
-  --primary: hsl(0 0% 9%);
-  --primary-foreground: hsl(0 0% 98%);
-  --secondary: hsl(0 0% 96.1%);
-  --secondary-foreground: hsl(0 0% 9%);
-  --muted: hsl(0 0% 96.1%);
-  --muted-foreground: hsl(0 0% 45.1%);
-  --accent: hsl(0 0% 96.1%);
-  --accent-foreground: hsl(0 0% 9%);
-  --destructive: hsl(0 84.2% 60.2%);
-  --destructive-foreground: hsl(0 0% 98%);
-  --border: hsl(0 0% 89.8%);
-  --input: hsl(0 0% 89.8%);
-  --ring: hsl(0 0% 3.9%);
-  --radius: 0.6rem;
-}
 
 @theme inline {
   --color-background: var(--background);
@@ -92,28 +31,6 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-}
-
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
 }
 
 @font-face {
@@ -169,26 +86,9 @@ body {
 
 /* Shared dashboard visual tokens and opt-in layout primitives. Inbox, publishing and Insights stay excluded. */
 .dashboard-page-unified {
-  --background: hsl(210 40% 98%); --foreground: hsl(222 47% 11%);
-  --card: hsl(0 0% 100%); --card-foreground: hsl(222 47% 11%);
-  --popover: hsl(0 0% 100%); --popover-foreground: hsl(222 47% 11%);
-  --primary: hsl(221 83% 53%); --primary-foreground: hsl(0 0% 100%);
-  --secondary: hsl(215 16% 47%); --secondary-foreground: hsl(222 47% 11%);
-  --muted: hsl(210 40% 96%); --muted-foreground: hsl(215 16% 47%);
-  --accent: hsl(214 32% 95%); --accent-foreground: hsl(222 47% 11%);
-  --border: hsl(214 32% 91%); --input: hsl(214 32% 91%); --ring: hsl(221 83% 53%);
-  --radius: 0.75rem;
-  --color-background: var(--background); --color-foreground: var(--foreground);
-  --color-card: var(--card); --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover); --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary); --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary); --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted); --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent); --color-accent-foreground: var(--accent-foreground);
-  --color-border: var(--border); --color-input: var(--input); --color-ring: var(--ring);
-  --radius-sm: calc(var(--radius) - 4px); --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius); --radius-xl: calc(var(--radius) + 4px);
-  width: 100%; min-width: 0; color: #0F172A; background: #F8FAFC;
+  width:100%;min-width:0;
+  color:var(--daira-heading);
+  background:transparent;
 }
 .dashboard-page-unified, .dashboard-page-unified * { min-width: 0; }
 .dashboard-page-unified {

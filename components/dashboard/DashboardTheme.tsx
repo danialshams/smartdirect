@@ -26,6 +26,7 @@ const dashboardTheme = createTheme({
     },
     secondary: { main: dairaPalette.text.body },
     success: { main: dairaPalette.status.success },
+    info: { main: dairaPalette.status.info },
     warning: { main: dairaPalette.status.warning },
     error: { main: dairaPalette.status.error },
     background: { default: dairaPalette.background.page, paper: dairaPalette.background.surface },

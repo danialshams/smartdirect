@@ -1,145 +1,182 @@
-# پالت رنگی یکپارچه دایرا (Daira)
+# پالت رسمی و واحد رنگی دایرا — Liquid Glass
 
-این سند مرجع رنگی کل سایت است. در طراحی یا بازطراحی صفحات، کامپوننت‌ها و پنل‌ها از این توکن‌ها استفاده شود؛ از تعریف رنگ‌های مشابه و پراکنده خودداری شود.
+این فایل **مرجع خوانای پالت کل سایت** است. منبع اجرایی و یگانه اعداد رنگی: `lib/design-system/palette.ts`. خروجی خودکار CSS: `app/daira-tokens.css`؛ آن را دستی ویرایش نکنید. `npm run theme:generate` برای تولید و `npm run theme:check` برای کنترل انطباق استفاده می‌شود.
 
-## ۱. پس‌زمینه و سطوح
+## قواعد
 
-| کاربرد | رنگ / مقدار |
-|---|---|
-| پس‌زمینه اصلی سایت | `#F4F7FC` |
-| سکشن‌های متناوب | `#EEF3FB` |
-| کارت، پنل و مدال | `#FFFFFF` |
-| سایه کارت در حالت عادی | `0 4px 20px rgba(22, 54, 110, 0.05)` |
-| پس‌زمینه کارت هنگام هاور | `#F8FAFC` |
-| سایه کارت هنگام هاور | `0 12px 30px rgba(22, 54, 110, 0.12)` |
-| حالت فشرده / فعال | `#F1F5F9` |
+- یک خانواده آبی برند؛ درجات مثبت/منفی/هشدار/اطلاع‌رسانی/درصف/پردازش با معنی ثابت.
+- سطح Glass برای کارت‌های غیرورودی؛ فرم، متن طولانی، تقویم و متن گفتگو سطوح مات‌تر دارند.
+- هدر و داک موجود با لایه‌های اختصاصی و محافظ گوشه حفظ می‌شوند؛ هاله رنگی داخل شیشه ممنوع است.
+- رنگ‌های مستقیم HEX در کامپوننت جدید ممنوع؛ فقط CSS Variable `var(--daira-*)` یا `dairaPalette` استفاده شود.
+- کنتراست متن روی شیشه بر حسب روشن‌ترین/تیره‌ترین محتوای پشت آن باید بررسی شود؛ برای کارهای متنی از سطح تقریباً مات استفاده شود.
+- برای مرورگر بدون Blur و `prefers-reduced-transparency` جایگزین جامد وجود دارد.
 
-## ۲. دکمه‌ها و اکشن‌ها
+## اصلی و خنثی
 
-### دکمه اصلی (Primary)
+| توکن CSS | مقدار | نمونه استفاده |
+|---|---|---|
+| `--daira-brand-50` | `#F2F6FF` | رنگ معنایی |
+| `--daira-brand-100` | `#E9F0FF` | رنگ معنایی |
+| `--daira-brand-200` | `#D6E4FF` | رنگ معنایی |
+| `--daira-brand-300` | `#B8CFFF` | رنگ معنایی |
+| `--daira-brand-400` | `#82A6FF` | رنگ معنایی |
+| `--daira-brand-500` | `#5280FF` | رنگ معنایی |
+| `--daira-brand-600` | `#2F61FD` | رنگ معنایی |
+| `--daira-brand-700` | `#1E4BD8` | رنگ معنایی |
+| `--daira-brand-800` | `#1539A8` | رنگ معنایی |
+| `--daira-brand-900` | `#102A78` | رنگ معنایی |
+| `--daira-page-bg` | `#F4F7FC` | رنگ معنایی |
+| `--daira-section-alt` | `#EEF3FB` | رنگ معنایی |
+| `--daira-page-depth` | `#E7EFF9` | رنگ معنایی |
+| `--daira-surface` | `#FFFFFF` | رنگ معنایی |
+| `--daira-surface-hover` | `#F8FAFC` | رنگ معنایی |
+| `--daira-surface-active` | `#F1F5F9` | رنگ معنایی |
+| `--daira-primary` | `#2F61FD` | رنگ معنایی |
+| `--daira-primary-hover` | `#1E4BD8` | رنگ معنایی |
+| `--daira-primary-active` | `#1539A8` | رنگ معنایی |
+| `--daira-outline` | `#CBD5E1` | رنگ معنایی |
+| `--daira-outline-hover-bg` | `#EFF6FF` | رنگ معنایی |
+| `--daira-outline-active-bg` | `#DBEAFE` | رنگ معنایی |
+| `--daira-heading` | `#18233C` | رنگ معنایی |
+| `--daira-text` | `#24344D` | رنگ متن |
+| `--daira-text-secondary` | `#52637D` | رنگ متن |
+| `--daira-muted` | `#60718A` | رنگ معنایی |
+| `--daira-text-disabled` | `#94A3B8` | رنگ متن |
+| `--daira-inverse-text` | `#FFFFFF` | رنگ متن |
+| `--daira-link` | `#2F61FD` | رنگ معنایی |
+| `--daira-link-hover` | `#1E4BD8` | رنگ معنایی |
+| `--daira-icon` | `#60718A` | رنگ معنایی |
+| `--daira-icon-active` | `#2F61FD` | رنگ معنایی |
+| `--daira-disabled-bg` | `#E2E8F0` | رنگ معنایی |
+| `--daira-disabled-text` | `#94A3B8` | رنگ متن |
 
-| حالت | پس‌زمینه / رنگ |
-|---|---|
-| پیش‌فرض | `#2F61FD` |
-| هاور | `#1E4BD8` |
-| فشرده / فعال | `#1539A8` |
-| غیرفعال: پس‌زمینه | `#E2E8F0` |
-| غیرفعال: متن | `#94A3B8` |
+## شیشه، خط و سایه
 
-### دکمه ثانویه / خطی (Secondary / Outline)
+| توکن CSS | مقدار | نمونه استفاده |
+|---|---|---|
+| `--daira-glass-card` | `rgba(255,255,255,0.42)` | شفافیت و متریال |
+| `--daira-glass-raised` | `rgba(255,255,255,0.58)` | شفافیت و متریال |
+| `--daira-glass-modal` | `rgba(255,255,255,0.78)` | شفافیت و متریال |
+| `--daira-glass-drawer` | `rgba(255,255,255,0.84)` | شفافیت و متریال |
+| `--daira-glass-popover` | `rgba(255,255,255,0.90)` | شفافیت و متریال |
+| `--daira-glass-toast` | `rgba(255,255,255,0.85)` | شفافیت و متریال |
+| `--daira-glass-rim` | `rgba(255,255,255,0.94)` | شفافیت و متریال |
+| `--daira-glass-inner-rim` | `rgba(255,255,255,0.58)` | شفافیت و متریال |
+| `--daira-glass-overlay` | `rgba(24,35,60,0.30)` | شفافیت و متریال |
+| `--daira-border` | `#DCE5F2` | رنگ معنایی |
+| `--daira-border-hover` | `#B9CBE2` | رنگ معنایی |
+| `--daira-divider` | `#DCE5EF` | رنگ معنایی |
+| `--daira-shadow-card` | `0 5px 20px rgba(22,54,110,0.065)` | عمق لایه |
+| `--daira-shadow-card-hover` | `0 12px 30px rgba(22,54,110,0.12)` | عمق لایه |
+| `--daira-shadow-floating` | `0 18px 48px rgba(24,35,60,0.16)` | عمق لایه |
 
-| حالت | پس‌زمینه | کادر | متن |
-|---|---|---|---|
-| پیش‌فرض | `transparent` | `#CBD5E1` | `#18233C` |
-| هاور | `#EFF6FF` | `#2F61FD` | `#2F61FD` |
-| فشرده / فعال | `#DBEAFE` | — | — |
+## فرم و تعامل
 
-## ۳. تایپوگرافی و لینک‌ها
+| توکن CSS | مقدار | نمونه استفاده |
+|---|---|---|
+| `--daira-input-bg` | `rgba(255,255,255,0.94)` | ورودی |
+| `--daira-search-bg` | `#F8FAFC` | رنگ معنایی |
+| `--daira-input-border` | `#DCE5F2` | ورودی |
+| `--daira-input-border-hover` | `#B9CBE2` | ورودی |
+| `--daira-input-focus` | `#2F61FD` | ورودی |
+| `--daira-input-focus-ring` | `0 0 0 3px rgba(47,97,253,0.20)` | ورودی |
+| `--daira-input-error-ring` | `0 0 0 3px rgba(239,68,68,0.15)` | ورودی |
+| `--daira-input-label` | `#334155` | ورودی |
+| `--daira-input-disabled` | `#F1F5F9` | ورودی |
+| `--daira-tabs-active-bg` | `#E9F0FF` | رنگ معنایی |
+| `--daira-tabs-active-text` | `#1E4BD8` | رنگ متن |
+| `--daira-row-selected` | `rgba(47,97,253,0.08)` | رنگ معنایی |
+| `--daira-row-hover` | `rgba(255,255,255,0.36)` | رنگ معنایی |
+| `--daira-calendar-today` | `#2F61FD` | رنگ معنایی |
+| `--daira-calendar-selected` | `#2F61FD` | رنگ معنایی |
+| `--daira-calendar-selected-text` | `#FFFFFF` | رنگ متن |
+| `--daira-upload-bg` | `#F6F9FF` | رنگ معنایی |
+| `--daira-upload-border` | `#C9D8ED` | رنگ معنایی |
+| `--daira-upload-active-border` | `#2F61FD` | رنگ معنایی |
+| `--daira-chat-sent-bg` | `#E9F0FF` | رنگ معنایی |
+| `--daira-chat-received-bg` | `#FFFFFF` | رنگ معنایی |
 
-| کاربرد | رنگ |
-|---|---|
-| تیترهای H1، H2 و H3 | `#18233C` |
-| متن بدنه و توضیحات | `#5A6B87` |
-| متن کم‌اهمیت و Placeholder | `#94A3B8` |
-| لینک | `#2F61FD` |
-| لینک هنگام هاور | `#1E4BD8`؛ همراه با زیرخط |
+## موفقیت، هشدار و بازخورد
 
-## ۴. فرم‌ها و فیلدهای ورودی
+| توکن CSS | مقدار | نمونه استفاده |
+|---|---|---|
+| `--daira-success` | `#10B981` | رنگ معنایی |
+| `--daira-success-text` | `#166534` | رنگ متن |
+| `--daira-success-bg` | `#E9F8F0` | رنگ معنایی |
+| `--daira-success-border` | `#BCE8CF` | رنگ معنایی |
+| `--daira-warning` | `#D97706` | رنگ معنایی |
+| `--daira-warning-text` | `#92400E` | رنگ متن |
+| `--daira-warning-bg` | `#FFFBEB` | رنگ معنایی |
+| `--daira-warning-border` | `#FDE68A` | رنگ معنایی |
+| `--daira-error` | `#EF4444` | رنگ معنایی |
+| `--daira-error-text` | `#B91C1C` | رنگ متن |
+| `--daira-error-background` | `#FEF2F2` | رنگ معنایی |
+| `--daira-error-border` | `#FECACA` | رنگ معنایی |
+| `--daira-info` | `#0284C7` | رنگ معنایی |
+| `--daira-info-text` | `#075985` | رنگ متن |
+| `--daira-info-bg` | `#EBF7FF` | رنگ معنایی |
+| `--daira-info-border` | `#BAE6FD` | رنگ معنایی |
+| `--daira-processing` | `#7C3AED` | رنگ معنایی |
+| `--daira-processing-text` | `#5B21B6` | رنگ متن |
+| `--daira-processing-bg` | `#F3EEFF` | رنگ معنایی |
+| `--daira-processing-border` | `#DDD0FE` | رنگ معنایی |
+| `--daira-queue` | `#2F61FD` | رنگ معنایی |
+| `--daira-queue-text` | `#1E4BD8` | رنگ متن |
+| `--daira-queue-bg` | `#E9F0FF` | رنگ معنایی |
+| `--daira-queue-border` | `#BFD1FF` | رنگ معنایی |
+| `--daira-neutral` | `#64748B` | رنگ معنایی |
+| `--daira-neutral-text` | `#52637D` | رنگ متن |
+| `--daira-neutral-bg` | `#F1F5F9` | رنگ معنایی |
+| `--daira-neutral-border` | `#DCE5EF` | رنگ معنایی |
+| `--daira-accent` | `#DB4CF2` | رنگ معنایی |
+| `--daira-accent-hover` | `#C026D3` | رنگ معنایی |
+| `--daira-special-bg` | `#FDF0FF` | رنگ معنایی |
+| `--daira-special-text` | `#86198F` | رنگ متن |
+| `--daira-guide-bg` | `#FFFBEB` | رنگ معنایی |
+| `--daira-guide-border` | `#FDE68A` | رنگ معنایی |
+| `--daira-guide-text` | `#92400E` | رنگ متن |
+| `--daira-guide-icon` | `#D97706` | رنگ معنایی |
+| `--daira-badge-unread` | `#2F61FD` | بج |
+| `--daira-badge-unread-text` | `#FFFFFF` | رنگ متن |
+| `--daira-tooltip-bg` | `#24344D` | رنگ معنایی |
+| `--daira-tooltip-text` | `#FFFFFF` | رنگ متن |
 
-| حالت | مقدار |
-|---|---|
-| پس‌زمینه ورودی | `#FFFFFF` |
-| کادر عادی | `#E2E8F0` |
-| کادر هنگام هاور | `#CBD5E1` |
-| کادر هنگام فوکوس | `#2F61FD` |
-| هاله فوکوس | `0 0 0 3px rgba(47, 97, 253, 0.20)` |
-| کادر خطا | `#EF4444` |
-| هاله خطا | `0 0 0 3px rgba(239, 68, 68, 0.15)` |
+## نمودار و بارگذاری
 
-## ۵. بج‌ها و وضعیت‌های سیستمی
+| توکن CSS | مقدار | نمونه استفاده |
+|---|---|---|
+| `--daira-skeleton-base` | `#E5ECF6` | بارگذاری |
+| `--daira-skeleton-highlight` | `#F5F8FF` | بارگذاری |
+| `--daira-empty-icon-bg` | `#EDF3FF` | رنگ معنایی |
+| `--daira-scrollbar` | `#C9D5E6` | رنگ معنایی |
+| `--daira-chart-reach` | `#2F61FD` | نمایش داده |
+| `--daira-chart-views` | `#0D9488` | نمایش داده |
+| `--daira-chart-engagement` | `#7C3AED` | نمایش داده |
+| `--daira-chart-follows` | `#D97706` | نمایش داده |
+| `--daira-chart-profile` | `#0284C7` | نمایش داده |
+| `--daira-chart-additional` | `#DB4CF2` | نمایش داده |
+| `--daira-chart-grid` | `#DAE3F0` | نمایش داده |
+| `--daira-chart-axis` | `#52637D` | نمایش داده |
+| `--daira-chart-increase` | `#15803D` | نمایش داده |
+| `--daira-chart-decrease` | `#B91C1C` | نمایش داده |
+| `--daira-chart-empty` | `#CBD5E1` | نمایش داده |
+| `--daira-publishing-surface` | `#FFFFFF` | رنگ معنایی |
+| `--daira-publishing-soft` | `#F6F9FF` | رنگ معنایی |
+| `--daira-publishing-border` | `#DFE7F3` | رنگ معنایی |
+| `--daira-publishing-selected` | `#EDF3FF` | رنگ معنایی |
+| `--daira-publishing-pulse` | `#BAD0FF` | رنگ معنایی |
+| `--daira-publishing-completed` | `#16A34A` | رنگ معنایی |
+| `--daira-publishing-completed-bg` | `#EAF8EF` | رنگ معنایی |
+| `--daira-publishing-completed-border` | `#B8E7C6` | رنگ معنایی |
+| `--daira-publishing-muted` | `#71819B` | رنگ معنایی |
 
-| کاربرد | رنگ |
-|---|---|
-| بج / رنگ تأکیدی مجنتا | `#DB4CF2` |
-| هاور بج مجنتا | `#C026D3` |
-| موفقیت | `#10B981` |
-| هشدار | `#F59E0B` |
-| خطا / حذف | `#EF4444` |
+## سازگاری ظاهر پیشین
 
-## ۶. جداکننده‌ها و هاله‌های نوری
+| توکن CSS | مقدار | نمونه استفاده |
+|---|---|---|
+| `--daira-hero-glow` | `#E0EAFF` | رنگ معنایی |
+| `--daira-pink-glow` | `#FCE7F3` | رنگ معنایی |
+| `--daira-header-start` | `#EDF3FF` | رنگ معنایی |
+| `--daira-header-middle` | `#F8FAFF` | رنگ معنایی |
+| `--daira-header-end` | `#F2F6FF` | رنگ معنایی |
 
-| کاربرد | رنگ |
-|---|---|
-| خطوط جداکننده و کادرهای عمومی | `#E2E8F0` |
-| هاله ملایم پشت سکشن Hero | `#E0EAFF` |
-| هاله صورتی ملایم | `#FCE7F3` |
-
-## توکن‌های CSS
-
-برای استفاده در CSS، متغیرهای زیر مرجع نام‌گذاری توکن‌ها هستند:
-
-```css
-:root {
-  /* Surfaces */
-  --daira-page-bg: #F4F7FC;
-  --daira-section-alt: #EEF3FB;
-  --daira-surface: #FFFFFF;
-  --daira-surface-hover: #F8FAFC;
-  --daira-surface-active: #F1F5F9;
-  --daira-shadow-card: 0 4px 20px rgba(22, 54, 110, 0.05);
-  --daira-shadow-card-hover: 0 12px 30px rgba(22, 54, 110, 0.12);
-
-  /* Primary action */
-  --daira-primary: #2F61FD;
-  --daira-primary-hover: #1E4BD8;
-  --daira-primary-active: #1539A8;
-  --daira-disabled-bg: #E2E8F0;
-  --daira-disabled-text: #94A3B8;
-
-  /* Secondary action */
-  --daira-outline: #CBD5E1;
-  --daira-outline-hover-bg: #EFF6FF;
-  --daira-outline-active-bg: #DBEAFE;
-
-  /* Typography */
-  --daira-heading: #18233C;
-  --daira-text: #5A6B87;
-  --daira-muted: #94A3B8;
-  --daira-link: #2F61FD;
-  --daira-link-hover: #1E4BD8;
-
-  /* Forms */
-  --daira-input-bg: #FFFFFF;
-  --daira-input-border: #E2E8F0;
-  --daira-input-border-hover: #CBD5E1;
-  --daira-input-focus: #2F61FD;
-  --daira-input-focus-ring: 0 0 0 3px rgba(47, 97, 253, 0.20);
-  --daira-error: #EF4444;
-  --daira-error-ring: 0 0 0 3px rgba(239, 68, 68, 0.15);
-
-  /* Status and accent */
-  --daira-accent: #DB4CF2;
-  --daira-accent-hover: #C026D3;
-  --daira-success: #10B981;
-  --daira-warning: #F59E0B;
-
-  /* Borders and ambient glow */
-  --daira-border: #E2E8F0;
-  --daira-hero-glow: #E0EAFF;
-  --daira-pink-glow: #FCE7F3;
-}
-```
-
-## فایل‌های مرجع در پروژه
-
-- ثابت‌های رنگی TypeScript: `lib/design-system/palette.ts` با خروجی `dairaPalette`.
-- متغیرهای CSS سراسری: `app/globals.css` با پیشوند `--daira-*`.
-- اسکلتون مشترک بارگذاری: `components/ui/DairaSkeleton.tsx`؛ برای بارگذاری پیش‌فرض صفحات از `app/loading.tsx` و برای داشبورد از `app/dashboard/loading.tsx` استفاده می‌شود. برای صفحه‌هایی که `loading.tsx` اختصاصی دارند، همین کامپوننت را در فایل همان مسیر به‌کار ببرید.
-
-## قواعد استفاده
-
-- این پالت، مرجع رنگی یکپارچه برای صفحات عمومی، داشبورد، فرم‌ها، مودال‌ها و اجزای تعاملی است.
-- در کامپوننت جدید، رنگ‌ها را مستقیماً از توکن‌های CSS بالا بگیرید؛ رنگ جدید یا مقدار تکراری نسازید مگر اینکه نیاز طراحی مشخصی وجود داشته باشد.
-- حالت‌های هاور، فوکوس، فعال و غیرفعال باید به‌صورت مستقل رعایت شوند.
-- رنگ وضعیت‌ها را فقط برای معنای همان وضعیت به‌کار ببرید: موفقیت، هشدار یا خطا.
-- برای متن‌ها، رنگ تیتر و متن بدنه را از هم جدا نگه دارید تا سلسله‌مراتب بصری و خوانایی حفظ شود.

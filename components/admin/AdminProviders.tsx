@@ -7,20 +7,23 @@ import { prefixer } from "stylis";
 import rtlPlugin from "stylis-plugin-rtl";
 import { CacheProvider } from "@emotion/react";
 import createCache from "@emotion/cache";
+import { dairaPalette, dairaTokens } from "../../lib/design-system/palette";
 
 const cache = createCache({ key: "mui-rtl", stylisPlugins: [prefixer, rtlPlugin] });
 
 const theme = createTheme({
   direction: "rtl",
   palette: {
-    primary: { main: "#2563EB", dark: "#1D4ED8", light: "#EFF6FF" },
-    secondary: { main: "#64748B" },
-    success: { main: "#16A34A" },
-    warning: { main: "#D97706" },
-    error: { main: "#DC2626" },
-    background: { default: "#F8FAFC", paper: "#FFFFFF" },
-    text: { primary: "#0F172A", secondary: "#64748B" },
-    divider: "#E2E8F0",
+    mode: "light",
+    primary: { main:dairaPalette.primary.main,dark:dairaPalette.primary.hover,light:dairaTokens["--daira-brand-100"],contrastText:"#FFFFFF" },
+    secondary: {main:dairaPalette.text.secondary},
+    success: {main:dairaPalette.status.success},
+    warning: {main:dairaPalette.status.warning},
+    error: {main:dairaPalette.status.error},
+    info: {main:dairaPalette.status.info},
+    background: {default:dairaPalette.background.page,paper:dairaPalette.background.surface},
+    text: {primary:dairaPalette.text.heading,secondary:dairaPalette.text.secondary},
+    divider:dairaPalette.border,
   },
   typography: {
     fontFamily: "Vazirmatn, Arial, sans-serif",
