@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import path from "node:path";
-import { execFile } from "node:child_process";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import os from "node:os";
-import { promisify } from "node:util";
-import ffmpegPath from "ffmpeg-static";
 
 import { authOptions } from "@/lib/auth";
 import { Prisma } from "@/generated/prisma/client";
@@ -20,12 +15,13 @@ import {
   proxyInstagramParticipantProfileUrl,
 } from "@/lib/instagram/media-proxy";
 import { getInstagramMessagingWindow } from "@/lib/instagram/messaging-window";
+import { normalizeInstagramAudio } from "@/lib/instagram/audio-normalizer";
+import { normalizeInstagramVideo } from "@/lib/instagram/video-normalizer";
 
 export const dynamic = "force-dynamic";
 
-const MAX_MESSAGE_MEDIA_SIZE = 25 * 1024 * 1024;
-const SAFE_AUDIO_SIZE = 24 * 1024 * 1024;
-const execFileAsync = promisify(execFile);
+const MAX_MESSAGE_IMAGE_SIZE = 8_000_000 - 1;
+const MAX_MESSAGE_MEDIA_SIZE = 25_000_000 - 1;
 
 
 type HandoffState = {
@@ -228,68 +224,26 @@ async function uploadInstagramAttachment({
     throw new Error("فقط فایل‌های عکس، ویدیو و صوت قابل ارسال هستند.");
   }
 
-  if (file.size > MAX_MESSAGE_MEDIA_SIZE) {
-    throw new Error("حجم فایل نمی‌تواند بیشتر از ۲۵ مگابایت باشد.");
+  if (file.size <= 0) throw new Error("فایل خالی است.");
+  const maxSize = attachmentType === "image" ? MAX_MESSAGE_IMAGE_SIZE : MAX_MESSAGE_MEDIA_SIZE;
+  if (file.size > maxSize) {
+    throw new Error(attachmentType === "image" ? "حجم تصویر برای دایرکت باید کمتر از ۸ مگابایت باشد." : "حجم ویدیو یا صدا برای دایرکت باید کمتر از ۲۵ مگابایت باشد.");
   }
-
+  if (attachmentType === "image" && !["image/jpeg", "image/png"].includes(mimeType)) {
+    throw new Error("برای تصویر دایرکت از JPG یا PNG استفاده کن.");
+  }
   let uploadBuffer: Uint8Array<ArrayBufferLike> = new Uint8Array(await file.arrayBuffer());
   let uploadFileName = file.name || "smartdirect-media";
   let uploadContentType = mimeType;
-
   if (attachmentType === "audio") {
-    if (!ffmpegPath) {
-      throw new Error("FFmpeg در سرور برای آماده‌سازی Voice در دسترس نیست.");
-    }
-
-    const tempDir = await mkdtemp(path.join(os.tmpdir(), "smartdirect-inbox-audio-"));
-    const inputPath = path.join(tempDir, "input" + (path.extname(uploadFileName) || ".audio"));
-    const outputPath = path.join(tempDir, "output.m4a");
-
-    try {
-      await writeFile(inputPath, uploadBuffer);
-      let normalized: Uint8Array<ArrayBufferLike> | null = null;
-
-      for (const bitrate of ["96k", "64k", "48k"]) {
-        await rm(outputPath, { force: true });
-        await execFileAsync(
-          ffmpegPath,
-          [
-            "-hide_banner",
-            "-loglevel",
-            "error",
-            "-y",
-            "-i",
-            inputPath,
-            "-vn",
-            "-c:a",
-            "aac",
-            "-b:a",
-            bitrate,
-            "-ar",
-            "44100",
-            "-ac",
-            "2",
-            "-movflags",
-            "+faststart",
-            outputPath,
-          ],
-          { timeout: 120000, maxBuffer: 4 * 1024 * 1024 },
-        );
-
-        normalized = new Uint8Array(await readFile(outputPath));
-        if (normalized.length <= SAFE_AUDIO_SIZE) break;
-      }
-
-      if (!normalized || normalized.length > SAFE_AUDIO_SIZE) {
-        throw new Error("حجم فایل صوتی پس از تبدیل باید حداکثر ۲۴ مگابایت باشد.");
-      }
-
-      uploadBuffer = normalized;
-      uploadFileName = path.basename(uploadFileName, path.extname(uploadFileName)) + ".m4a";
-      uploadContentType = "audio/mp4";
-    } finally {
-      await rm(tempDir, { recursive: true, force: true }).catch(() => undefined);
-    }
+    uploadBuffer = await normalizeInstagramAudio(Buffer.from(uploadBuffer), uploadFileName);
+    uploadFileName = path.basename(uploadFileName, path.extname(uploadFileName)) + ".m4a";
+    uploadContentType = "audio/mp4";
+  }
+  if (attachmentType === "video") {
+    uploadBuffer = await normalizeInstagramVideo(Buffer.from(uploadBuffer), uploadFileName, "MESSAGE");
+    uploadFileName = path.basename(uploadFileName, path.extname(uploadFileName)) + ".mp4";
+    uploadContentType = "video/mp4";
   }
 
   const uploadBody = new FormData();
@@ -323,7 +277,7 @@ async function uploadInstagramAttachment({
     method: "POST",
     accessToken,
     body: uploadBody,
-    timeoutMs: 30_000,
+    timeoutMs: 90_000,
     rateLimit: {
       instagramAccountId,
       tenantId,
