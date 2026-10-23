@@ -6,7 +6,7 @@ import path from "node:path";
 import ffmpegPath from "ffmpeg-static";
 import { normalizeInstagramAudio } from "../src/lib/instagram/audio-normalizer";
 
-const fs = await import("node:fs");
+import fs from "node:fs";
 
 async function main() {
   assert(ffmpegPath, "FFmpeg must be available");
