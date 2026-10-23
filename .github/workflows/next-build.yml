@@ -200,6 +200,9 @@ jobs:
       - name: Test shared posts and story mentions webhook matching
         run: npx tsx scripts/test-share-mention-interactions.ts
 
+      - name: Test audio duration, upload size, and MP4 voice conversion
+        run: npx tsx scripts/test-instagram-voice-limits.ts
+
       - name: Test shared dashboard upload pipeline and audio conversion
         run: npx tsx scripts/test-dashboard-upload-pipeline.ts
 
