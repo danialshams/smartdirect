@@ -40,18 +40,14 @@ export async function isStorageObjectReferenced(input: {
       where: { status: { in: ["DRAFT", "SCHEDULED", "PROCESSING", "PUBLISHING", "FAILED"] }, reelOptions: { path: ["coverStorageKey"], equals: input.storageKey } },
       select: { id: true },
     }),
-    // Saved nested quick-reply destinations may include media outside the top-level mediaUrl.
+    // A nested saved-response branch can reference media without top-level mediaUrl.
     input.publicUrl
       ? prisma.$queryRaw<Array<{ id: string }>>`
           SELECT "id" FROM "SavedAutomationResponse"
-          WHERE "quickReplies"::text LIKE ${"%" + input.publicUrl.replace(/[\\%_]/g, "\\    prisma.instagramPublishJob.findFirst({
-      where: { status: { in: ["DRAFT", "SCHEDULED", "PROCESSING", "PUBLISHING", "FAILED"] }, reelOptions: { path: ["coverStorageKey"], equals: input.storageKey } },
-      select: { id: true },
-    }),") + "%"} ESCAPE '\\'
+          WHERE position(${input.publicUrl} in "quickReplies"::text) > 0
           LIMIT 1
         `
       : Promise.resolve([]),
-
   ]);
 
   return Boolean(publishMedia || automationMessage || showcaseItem || savedResponse || reelCover || nestedSavedResponse.length);
