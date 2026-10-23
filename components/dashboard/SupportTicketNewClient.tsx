@@ -1,56 +1,68 @@
 "use client";
 
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LifeBuoy, Send } from "lucide-react";
+import { ImagePlus, Send, X } from "lucide-react";
+import { SUPPORT_CATEGORY_OPTIONS } from "./support-ui";
 
 export default function SupportTicketNewClient() {
   const router = useRouter();
+  const [category, setCategory] = useState("GENERAL");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
+  const [image, setImage] = useState<File | null>(null);
+  const [preview, setPreview] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-
+  useEffect(() => {
+    if (!image) return;
+    const url = URL.createObjectURL(image);
+    setPreview(url);
+    return () => { URL.revokeObjectURL(url); setPreview(""); };
+  }, [image]);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (busy) return;
-    setError("");
-    setBusy(true);
+    if (busy || subject.trim().length < 5 || body.trim().length < 10) return;
+    setBusy(true); setError("");
+    const form = new FormData();
+    form.set("category", category); form.set("subject", subject.trim()); form.set("body", body.trim());
+    if (image) form.set("image", image);
     try {
-      const res = await fetch("/api/dashboard/tickets", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ subject: subject.trim(), body: body.trim() }),
-      });
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.message || "ثبت درخواست ناموفق بود.");
-      router.replace("/dashboard/tickets/" + encodeURIComponent(result.id));
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "خطا در ثبت درخواست.");
-      setBusy(false);
-    }
+      const response = await fetch("/api/dashboard/tickets", { method: "POST", body: form });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "ثبت درخواست ناموفق بود.");
+      window.dispatchEvent(new Event("support:changed"));
+      router.replace("/dashboard/tickets/" + encodeURIComponent(data.id));
+    } catch (err) { setError(err instanceof Error ? err.message : "ثبت درخواست ناموفق بود."); }
+    finally { setBusy(false); }
   }
-
-  return (
-    <div className="daira-support daira-support--narrow" dir="rtl">
-      <header className="daira-support__header">
-        <div>
-          <span className="daira-support__eyebrow"><LifeBuoy size={16} aria-hidden="true" /> پشتیبانی</span>
-          <h1>درخواست جدید</h1>
-          <p>موضوع و توضیحات درخواست را وارد کنید تا تیم پشتیبانی بررسی کند.</p>
-        </div>
-      </header>
-      <form className="daira-support__form" onSubmit={submit}>
-        <label htmlFor="support-subject">موضوع درخواست</label>
-        <input id="support-subject" name="subject" autoComplete="off" maxLength={140} minLength={5} required value={subject} onChange={e => setSubject(e.target.value)} placeholder="مثلاً مشکل در اتصال پیج" />
-        <label htmlFor="support-body">توضیحات</label>
-        <textarea id="support-body" name="body" rows={7} maxLength={5000} minLength={10} required value={body} onChange={e => setBody(e.target.value)} placeholder="مشکل یا سوال خود را با جزئیات توضیح دهید..." />
-        <span className="daira-support__hint">پاسخ‌های پشتیبانی در همین بخش قابل پیگیری هستند.</span>
-        {error ? <p className="daira-support__error" role="alert">{error}</p> : null}
-        <button className="daira-support__primary daira-support__submit" type="submit" disabled={busy || subject.trim().length < 5 || body.trim().length < 10}>
-          <Send size={17} aria-hidden="true" /> {busy ? "در حال ثبت..." : "ثبت درخواست"}
-        </button>
-      </form>
-    </div>
-  );
+  return <div className="daira-support daira-support--narrow" dir="rtl">
+    <header className="daira-support__header daira-support__header--plain"><div><h1>درخواست جدید</h1><p>مشکل یا سؤال خود را برای تیم پشتیبانی ارسال کنید.</p></div></header>
+    <form onSubmit={submit} className="daira-support__form">
+      <label htmlFor="support-category">دسته‌بندی درخواست</label>
+      <select id="support-category" value={category} onChange={event => setCategory(event.target.value)} disabled={busy}>
+        {SUPPORT_CATEGORY_OPTIONS.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}
+      </select>
+      <label htmlFor="support-subject">موضوع درخواست</label>
+      <input id="support-subject" autoComplete="off" minLength={5} maxLength={140} value={subject} onChange={event => setSubject(event.target.value)} placeholder="مثلاً مشکل در اتصال پیج" required />
+      <label htmlFor="support-body">توضیحات</label>
+      <textarea id="support-body" rows={6} minLength={10} maxLength={5000} value={body} onChange={event => setBody(event.target.value)} placeholder="مشکل را با جزئیات توضیح دهید تا بتوانیم سریع‌تر بررسی کنیم..." required />
+      <div className="daira-support__upload-title">تصویر یا اسکرین‌شات <span>(اختیاری، حداکثر ۲ مگابایت)</span></div>
+      {image ? <div className="daira-support__upload-preview">
+        {preview && <img src={preview} alt="پیش‌نمایش تصویر انتخاب‌شده" />}
+        <span>{image.name}</span>
+        <button type="button" disabled={busy} onClick={() => setImage(null)} aria-label="حذف تصویر"><X size={18}/></button>
+      </div> : <label htmlFor="support-image" className="daira-support__upload"><ImagePlus size={21}/> انتخاب تصویر</label>}
+      <input id="support-image" className="daira-support__file" type="file" accept="image/jpeg,image/png,image/webp" onChange={event => {
+        const file = event.target.files?.[0] || null;
+        if (file && file.size > 2 * 1024 * 1024) { setError("حجم تصویر باید کمتر از ۲ مگابایت باشد."); event.target.value = ""; return; }
+        setError(""); setImage(file);
+      }}/>
+      <p className="daira-support__hint">پاسخ تیم پشتیبانی در همین بخش نمایش داده می‌شود و اعلان دریافت می‌کنید.</p>
+      {error && <p className="daira-support__error" role="alert">{error}</p>}
+      <button type="submit" className="daira-support__primary daira-support__submit" disabled={busy || subject.trim().length < 5 || body.trim().length < 10}>
+        <Send size={17}/>{busy ? "در حال ثبت درخواست..." : "ثبت درخواست"}
+      </button>
+    </form>
+  </div>;
 }

@@ -10,6 +10,7 @@ import DashboardOverview from "./DashboardOverview";
 import DashboardHeader from "./DashboardHeader";
 import { DashboardAccountProvider } from "./DashboardAccountContext";
 import { DashboardBackNavigationProvider } from "./DashboardBackNavigationContext";
+import SupportNotifications, { SupportUnreadBadge } from "./SupportNotifications";
 
 type InstagramAccount = {
   id: string;
@@ -47,6 +48,7 @@ export default function DashboardShell({ user, instagramAccounts, children }: Da
     <DashboardAccountProvider accountId={initialAccountId} accountIds={instagramAccounts.filter((account) => account.isConnected).map((account) => account.id)}>
     <DashboardBackNavigationProvider>
     <DashboardTheme>
+    <SupportNotifications>
       <div dir="rtl" className={`daira-app-shell${isAutomationCreateFlow ? " daira-app-shell--automation-flow" : ""}`}>
         <div className="daira-header-backdrop" aria-hidden="true" />
         <DashboardHeader instagramAccounts={instagramAccounts} showBackButton={!isHome} />
@@ -99,7 +101,7 @@ export default function DashboardShell({ user, instagramAccounts, children }: Da
             const active = href === "/dashboard" ? isHome : pathname === href || pathname.startsWith(href + "/");
             return (
               <Link key={href} href={href} aria-current={active ? "page" : undefined} className={`daira-bottom-nav__item${active ? " is-active" : ""}`}>
-                <span className="daira-bottom-nav__icon"><Icon size={25} strokeWidth={active ? 2.2 : 1.8} /></span>
+                <span className="daira-bottom-nav__icon" style={{ position: "relative" }}><Icon size={25} strokeWidth={active ? 2.2 : 1.8} />{href === "/dashboard/tickets" && <SupportUnreadBadge />}</span>
                 <span className="daira-bottom-nav__label">{title}</span>
               </Link>
             );
@@ -109,6 +111,7 @@ export default function DashboardShell({ user, instagramAccounts, children }: Da
         )}
       </div>
       
+    </SupportNotifications>
     </DashboardTheme>
     </DashboardBackNavigationProvider>
     </DashboardAccountProvider>

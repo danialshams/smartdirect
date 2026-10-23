@@ -16,10 +16,10 @@ export async function GET(_: NextRequest, context: Context) {
     const ticket = await prisma.ticket.findFirst({
       where: { id, userId: session.user.id },
       select: {
-        id: true, subject: true, status: true, createdAt: true, updatedAt: true,
+        id: true, subject: true, category: true, status: true, createdAt: true, updatedAt: true,
         messages: {
           orderBy: { createdAt: "asc" },
-          select: { id: true, body: true, senderUserId: true, createdAt: true, sender: { select: { role: true, name: true } } },
+          select: { id: true, body: true, senderUserId: true, createdAt: true, attachments: { select: { id: true, fileName: true, mimeType: true } }, sender: { select: { role: true, name: true } } },
         },
       },
     });

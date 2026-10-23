@@ -640,6 +640,7 @@ model Ticket {
   id        String         @id @default(cuid())
   userId    String
   subject   String
+  category  String         @default("GENERAL")
   status    TicketStatus   @default(OPEN)
   priority  TicketPriority @default(NORMAL)
   createdAt DateTime       @default(now())
@@ -658,11 +659,26 @@ model TicketMessage {
   senderUserId String
   body         String
   createdAt    DateTime @default(now())
+  readAt       DateTime?
+  attachments  TicketAttachment[]
   ticket       Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
   sender       User     @relation("TicketMessageSender", fields: [senderUserId], references: [id], onDelete: Cascade)
 
   @@index([ticketId, createdAt])
   @@index([senderUserId])
+  @@index([ticketId, readAt])
+}
+
+model TicketAttachment {
+  id              String   @id @default(cuid())
+  ticketMessageId String
+  fileName        String
+  mimeType        String
+  bytes           Bytes
+  createdAt       DateTime @default(now())
+  message         TicketMessage @relation(fields: [ticketMessageId], references: [id], onDelete: Cascade)
+
+  @@index([ticketMessageId])
 }
 
 model Coupon {

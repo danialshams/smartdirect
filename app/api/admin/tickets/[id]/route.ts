@@ -9,7 +9,7 @@ export async function GET(_: Request, context: { params: Promise<{ id: string }>
   const { id } = await context.params;
   const ticket = await prisma.ticket.findUnique({
     where: { id },
-    select: { id: true, subject: true, status: true, priority: true, createdAt: true, updatedAt: true, closedAt: true, user: { select: { id: true, name: true, email: true } }, messages: { orderBy: { createdAt: "asc" }, select: { id: true, body: true, createdAt: true, senderUserId: true, sender: { select: { name: true, role: true } } } } },
+    select: { id: true, subject: true, status: true, priority: true, createdAt: true, updatedAt: true, closedAt: true, user: { select: { id: true, name: true, email: true } }, messages: { orderBy: { createdAt: "asc" }, select: { id: true, body: true, createdAt: true, senderUserId: true, attachments: { select: { id: true, fileName: true, mimeType: true } }, sender: { select: { name: true, role: true } } } } },
   });
   if (!ticket) return NextResponse.json({ message: "تیکت پیدا نشد" }, { status: 404 });
   return NextResponse.json(ticket);

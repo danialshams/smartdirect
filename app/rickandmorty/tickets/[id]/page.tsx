@@ -27,6 +27,7 @@ type TicketMessage = {
   createdAt: string;
   senderUserId: string;
   sender: { name: string | null; role: string };
+  attachments: { id: string; fileName: string; mimeType: string }[];
 };
 
 type TicketData = {
@@ -490,6 +491,14 @@ export default function TicketDetailPage() {
                       >
                         {m.body}
                       </Typography>
+                      {m.attachments?.map(file => (
+                        <Box key={file.id} component="a" href={"/api/dashboard/tickets/attachments/" + encodeURIComponent(file.id)}
+                          target="_blank" rel="noopener noreferrer"
+                          sx={{ display: "block", mt: 1, maxWidth: 240, borderRadius: 2, overflow: "hidden" }}>
+                          <Box component="img" src={"/api/dashboard/tickets/attachments/" + encodeURIComponent(file.id)}
+                            alt={file.fileName} sx={{ display: "block", width: "100%", maxHeight: 250, objectFit: "contain", bgcolor: "#EEF2F8" }} />
+                        </Box>
+                      ))}
                     </Box>
 
                     {isAdmin && (
