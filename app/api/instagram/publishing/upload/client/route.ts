@@ -256,6 +256,10 @@ export async function POST(request: NextRequest) {
             if (!pathname.startsWith(safePathPrefix)) {
               throw new Error("مسیر آپلود معتبر نیست.");
             }
+            const reserved = await prisma.instagramStorageObject.findUnique({ where: { storageKey: pathname } });
+            if (!reserved || reserved.userId !== session.user.id || reserved.deletedAt || reserved.expiresAt <= new Date()) {
+              throw new Error("مجوز آپلود منقضی شده یا متعلق به کاربر نیست.");
+            }
 
             let payload: {
               purpose?: string;
@@ -284,9 +288,8 @@ export async function POST(request: NextRequest) {
             const automation = payload.purpose === "AUTOMATION";
             if (automation && payload.contentType === "image/webp") throw new Error("برای پاسخ خودکار فقط JPG یا PNG مجاز است.");
             if (!automation && payload.contentType.startsWith("audio/")) throw new Error("صوت فقط برای پاسخ خودکار مجاز است.");
-            const maxSize = automation
-              ? payload.contentType.startsWith("image/") ? 8_000_000 - 1 : 25_000_000 - 1
-              : payload.contentType.startsWith("video/") ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE;
+            const kind = payload.contentType.startsWith("image/") ? "IMAGE" : payload.contentType.startsWith("audio/") ? "AUDIO" : "VIDEO";
+            const maxSize = maximumUploadBytes(automation ? "AUTOMATION" : "PUBLISHING", kind);
 
             return {
               pathname,
@@ -321,9 +324,8 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        const maxSize = purpose === "AUTOMATION"
-          ? contentType.startsWith("image/") ? 8_000_000 - 1 : 25_000_000 - 1
-          : contentType.startsWith("video/") ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE;
+        const kind = contentType.startsWith("image/") ? "IMAGE" : contentType.startsWith("audio/") ? "AUDIO" : "VIDEO";
+        const maxSize = maximumUploadBytes(purpose, kind, targetType === "MESSAGE" ? "REEL" : targetType);
         if ((purpose === "AUTOMATION" && contentType === "image/webp") || (purpose !== "AUTOMATION" && contentType.startsWith("audio/"))) {
           return NextResponse.json({ success: false, message: "فرمت فایل برای این بخش مجاز نیست." }, { status: 400 });
         }
@@ -403,9 +405,8 @@ export async function POST(request: NextRequest) {
           (!automation && isAudio)) {
         return NextResponse.json({ success: false, message: "فرمت فایل برای این بخش مجاز نیست." }, { status: 400 });
       }
-      const maxSize = automation
-        ? isImage ? 8_000_000 - 1 : 25_000_000 - 1
-        : isVideo ? MAX_VIDEO_SIZE : isAudio ? MAX_AUDIO_SIZE : MAX_IMAGE_SIZE;
+      const kind = isImage ? "IMAGE" : isVideo ? "VIDEO" : "AUDIO";
+      const maxSize = maximumUploadBytes(automation ? "AUTOMATION" : "PUBLISHING", kind);
 
       if (payload.fileSize <= 0 || payload.fileSize > maxSize) {
         return NextResponse.json(
