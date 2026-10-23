@@ -32,6 +32,11 @@ async function main() {
     const list = source("components/dashboard/SupportTicketsClient.tsx");
     assert.equal((list.match(/href="\/dashboard\/tickets\/new"/g) || []).length, 1, "Exactly one new ticket CTA");
     assert(list.includes('value: "unread"') && list.includes("unreadCount"), "Unread conversation filter missing");
+    const newForm = source("components/dashboard/SupportTicketNewClient.tsx");
+    const styles = source("app/dashboard/tickets/support.css");
+    assert(list.includes('className="daira-support__header-icon"') && newForm.includes('className="daira-support__header-icon"'), "Both support page titles need the matching section icon");
+    assert(styles.includes("background:#EDF3FC") && styles.includes("background:#DDEAFE"), "Support headers should match dashboard subtle heading surfaces");
+    assert(styles.includes("flex-direction:row-reverse;direction:ltr"), "Plus icon should precede create button text visually in RTL");
     const global = source("components/dashboard/SupportNotifications.tsx");
     assert(global.includes("SupportUnreadBadge") && global.includes("setTimeout") && global.includes("EventSource"), "Global notifications missing");
     const shell = source("components/dashboard/DahboardShell.tsx");

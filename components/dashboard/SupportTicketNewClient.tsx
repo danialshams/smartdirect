@@ -2,7 +2,7 @@
 
 import { type FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ImagePlus, Send, X } from "lucide-react";
+import { ImagePlus, Send, SquarePen, X } from "lucide-react";
 import { SUPPORT_CATEGORY_OPTIONS } from "./support-ui";
 
 export default function SupportTicketNewClient() {
@@ -37,7 +37,12 @@ export default function SupportTicketNewClient() {
     finally { setBusy(false); }
   }
   return <div className="daira-support daira-support--narrow" dir="rtl">
-    <header className="daira-support__header daira-support__header--plain"><div><h1>درخواست جدید</h1><p>مشکل یا سؤال خود را برای تیم پشتیبانی ارسال کنید.</p></div></header>
+    <header className="daira-support__header daira-support__header--plain">
+      <div className="daira-support__header-title">
+        <span className="daira-support__header-icon" aria-hidden="true"><SquarePen size={21} strokeWidth={1.9}/></span>
+        <div className="daira-support__header-copy"><h1>درخواست جدید</h1><p>مشکل یا سؤال خود را برای تیم پشتیبانی ارسال کنید.</p></div>
+      </div>
+    </header>
     <form onSubmit={submit} className="daira-support__form">
       <label htmlFor="support-category">دسته‌بندی درخواست</label>
       <select id="support-category" value={category} onChange={event => setCategory(event.target.value)} disabled={busy}>
