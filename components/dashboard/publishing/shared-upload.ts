@@ -60,6 +60,16 @@ function uploadFormDataWithProgress(url: string, formData: FormData, signal: Abo
 }
 
 async function uploadOnce(file: File, type: string, onProgress: UploadProgressCallback, options: UploadOptions = {}): Promise<UploadMediaResult> {
+  // MediaRecorder and mobile browsers often append codec parameters to the MIME type.
+  // Blob Storage accepts normalized media types, while the bytes are unchanged.
+  const rawType = file.type.toLowerCase();
+  const baseType = rawType.split(";")[0].trim();
+  if (baseType && baseType !== rawType) {
+    file = new File([file], file.name, { type: baseType, lastModified: file.lastModified });
+  }
+  if ((!baseType || baseType === "application/octet-stream") && /\\.(heic|heif)$/i.test(file.name)) {
+    file = new File([file], file.name, { type: "image/heic", lastModified: file.lastModified });
+  }
   const purpose = options.purpose ?? "PUBLISHING";
   if (file.size === 0) throw new Error("فایل خالی است.");
   if (purpose === "AUTOMATION") {
