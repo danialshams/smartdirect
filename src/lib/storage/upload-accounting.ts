@@ -37,7 +37,7 @@ export async function reserveUpload(input: {
       _sum: { fileSize: true },
     });
     const quota = getUploadQuota();
-    if (stats._count.id >= quota.maxObjects || (stats._sum.fileSize ?? 0n) + BigInt(input.bytes) > BigInt(quota.maxBytes)) {
+    if (stats._count.id >= quota.maxObjects || (stats._sum.fileSize ?? BigInt(0)) + BigInt(input.bytes) > BigInt(quota.maxBytes)) {
       throw new Error("سهمیه عمومی فضای ذخیره‌سازی این حساب تکمیل شده است. فایل‌های بدون استفاده را حذف کنید.");
     }
     return tx.instagramStorageObject.create({
