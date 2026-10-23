@@ -402,11 +402,11 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
     },
   }), [keywordValid, uploading, slideUploadInProgress, formUploadsInFlight, savingShowcase, formSaving, responseType, message, showcaseSaved, onUpdate, onContinue, onSavedChange, existingShowcaseEdited, showcaseSource, storyCreateMode, storyEditMode, slides, hasValidSlide, selectedShowcase]);
 
-  async function uploadFormMedia(file?: File): Promise<string> {
+  async function uploadFormMedia(file?: File, onProgress: (progress: number) => void = () => undefined): Promise<string> {
     if (!file) return "";
     setFormUploadsInFlight((value) => value + 1);
     try {
-      const result = await uploadFileWithProgress(file, "MESSAGE", () => undefined, { purpose: "AUTOMATION" });
+      const result = await uploadFileWithProgress(file, "MESSAGE", onProgress, { purpose: "AUTOMATION" });
       return result.publicUrl;
     } finally { setFormUploadsInFlight((value) => Math.max(0, value - 1)); }
   }
