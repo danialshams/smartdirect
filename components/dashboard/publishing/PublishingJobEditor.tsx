@@ -1,5 +1,6 @@
 "use client";
 
+import GlassModalPresence from "../GlassModalPresence";
 import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
@@ -916,9 +917,10 @@ export default function PublishingJobEditor({
         )}
       </div>
     </div>
+      <GlassModalPresence open={Boolean(showDeleteAutomationConfirm && automation && job)} onEscape={() => { if (!deleting) setShowDeleteAutomationConfirm(false); }}>
       {showDeleteAutomationConfirm && automation && job && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/30 px-4 backdrop-blur-[2px]"
+          className="daira-glass-overlay fixed inset-0 z-50 flex items-center justify-center px-4"
           role="presentation"
           onMouseDown={(event) => {
             if (event.currentTarget === event.target && !deleting) {
@@ -962,6 +964,7 @@ export default function PublishingJobEditor({
           </div>
         </div>
       )}
+      </GlassModalPresence>
     </>
   );
 }
