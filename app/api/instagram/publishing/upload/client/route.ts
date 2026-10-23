@@ -378,6 +378,7 @@ export async function POST(request: NextRequest) {
         fileName?: string;
         contentType?: string;
         fileSize?: number;
+        purpose?: "AUTOMATION" | "PUBLISHING";
       };
 
       if (
@@ -391,9 +392,17 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const maxSize = payload.contentType.startsWith("video/")
-        ? MAX_VIDEO_SIZE
-        : MAX_IMAGE_SIZE;
+      const automation = payload.purpose === "AUTOMATION";
+      const isImage = payload.contentType.startsWith("image/");
+      const isAudio = payload.contentType.startsWith("audio/");
+      const isVideo = payload.contentType.startsWith("video/");
+      if ((automation && isImage && payload.contentType === "image/webp") ||
+          (!automation && isAudio)) {
+        return NextResponse.json({ success: false, message: "فرمت فایل برای این بخش مجاز نیست." }, { status: 400 });
+      }
+      const maxSize = automation
+        ? isImage ? 8_000_000 - 1 : 25_000_000 - 1
+        : isVideo ? MAX_VIDEO_SIZE : isAudio ? MAX_AUDIO_SIZE : MAX_IMAGE_SIZE;
 
       if (payload.fileSize <= 0 || payload.fileSize > maxSize) {
         return NextResponse.json(
