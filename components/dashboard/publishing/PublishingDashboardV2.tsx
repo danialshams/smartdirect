@@ -411,9 +411,12 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     };
   };
   const uploadQueueRef = useRef<LocalMedia[]>([]);
+  const uploadAbortControllersRef = useRef(new Map<string, AbortController>());
+  const uploadedOrderRef = useRef(new Map<string, number>());
+  const uploadOrderSequenceRef = useRef(0);
   const pendingValidationCountRef = useRef(0);
   const uploadWorkerRunningRef = useRef(false);
-  const activeUploadItemIdRef = useRef<string | null>(null);
+  const activeUploadItemIdsRef = useRef(new Set<string>());
   const carouselInsertAtRef = useRef<number | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [loading, setLoading] = useState(publishingJobsCache === null);
@@ -636,7 +639,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   useEffect(() => { if (selectedAccountId && automationEnabled && type === "STORY") void loadResources(selectedAccountId); }, [selectedAccountId, automationEnabled, type]);
 
   function revokeLocalMedia(items: LocalMedia[]) { items.forEach((item) => URL.revokeObjectURL(item.previewUrl)); }
-  function clearLocalMedia() { uploadQueueRef.current = []; setUploadRows([]); setMedia((current) => { revokeLocalMedia(current); return []; }); }
+  function clearLocalMedia() { for (const c of uploadAbortControllersRef.current.values()) c.abort(); uploadAbortControllersRef.current.clear(); activeUploadItemIdsRef.current.clear(); uploadQueueRef.current = []; setUploadRows([]); setMedia((current) => { revokeLocalMedia(current); return []; }); }
   function resetAutomation() { setAutomationEnabled(false); setStoryResponseSaved(false); setStoryResponseEditing(false); setStoryResponseDirty(false); setKeywords(""); setMessages([createEmptyMessage()]); setCommentReplyText(""); setLikeStoryReply(false); setRequireFollow(false); setFollowGateText("برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید."); setAutomationSetupConfirmed(false); setAutomationKeywordDraft(""); setAutomationKeywords([]); setDirectMessageText(""); setPublishingCommentReplyText(""); }
   function animateStepChange(action: () => void) {
     setStepVisible(false);
@@ -712,7 +715,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       file,
       type: file.type.startsWith("video/") ? "VIDEO" : "IMAGE",
       previewUrl: URL.createObjectURL(file),
-      sortOrder: uploadedMedia.length + media.length + index,
+      sortOrder: uploadOrderSequenceRef.current++,
     }));
 
     setMedia((current) => [...current, ...nextMedia]);
@@ -727,7 +730,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     const item = media[index];
     if (!item) return;
     uploadQueueRef.current = uploadQueueRef.current.filter((queued) => queued.previewUrl !== item.previewUrl);
-    if (activeUploadItemIdRef.current === item.previewUrl) { activeUploadItemIdRef.current = null; activeUploadAbortControllerRef.current?.abort(); }
+    if (activeUploadItemIdsRef.current.has(item.previewUrl)) { activeUploadItemIdsRef.current.delete(item.previewUrl); uploadAbortControllersRef.current.get(item.previewUrl)?.abort(); }
     URL.revokeObjectURL(item.previewUrl);
     setUploadRows((current) => current.filter((row) => row.id !== item.previewUrl));
     setMedia((current) => current.filter((_, i) => i !== index).map((item, i) => ({ ...item, sortOrder: i + uploadedMedia.length })));
@@ -738,7 +741,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   }
   function retryLocalUpload(id: string) {
     const item = media.find((candidate) => candidate.previewUrl === id);
-    if (!item || uploadQueueRef.current.some((queued) => queued.previewUrl === id) || activeUploadItemIdRef.current === id) return;
+    if (!item || uploadQueueRef.current.some((queued) => queued.previewUrl === id) || activeUploadItemIdsRef.current.has(id)) return;
     uploadQueueRef.current.push(item);
     setUploadRows((current) => current.map((row) => row.id === id ? { ...row, status: "queued", progress: 0, error: undefined } : row));
     setError("");
@@ -800,22 +803,27 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     setUploading(true);
     let completedAny = false;
     try {
-      while (uploadQueueRef.current.length) {
+      const processNext = async () => {
+       while (uploadQueueRef.current.length) {
         const item = uploadQueueRef.current.shift();
         if (!item) continue;
-        activeUploadItemIdRef.current = item.previewUrl;
+        activeUploadItemIdsRef.current.add(item.previewUrl);
         setUploadRows((current) => current.map((row) => row.id === item.previewUrl ? { ...row, status: "uploading", progress: Math.max(1, row.progress), error: undefined } : row));
         setUploadProgress(0);
         try {
           const result = await uploadFileWithProgress(item.file, type, (progress) => {
-            if (activeUploadItemIdRef.current !== item.previewUrl) return;
+            if (!activeUploadItemIdsRef.current.has(item.previewUrl)) return;
             setUploadProgress(progress);
             setUploadRows((current) => current.map((row) => row.id === item.previewUrl ? { ...row, status: "uploading", progress: Math.max(row.progress, progress) } : row));
-          }, { onController: (controller) => { activeUploadAbortControllerRef.current = controller; } });
-          if (activeUploadItemIdRef.current !== item.previewUrl) {
+          }, { onController: (controller) => {
+            if (controller) uploadAbortControllersRef.current.set(item.previewUrl, controller);
+            else uploadAbortControllersRef.current.delete(item.previewUrl);
+          } });
+          if (!activeUploadItemIdsRef.current.has(item.previewUrl)) {
             void fetch("/api/instagram/publishing/upload", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ storageKey: result.storageKey }) }).catch(() => undefined);
             continue;
           }
+          uploadedOrderRef.current.set(result.storageKey, item.sortOrder);
           setUploadedMedia((current) => {
             const next = type !== "CAROUSEL" ? [result] : [...current];
             if (type === "CAROUSEL") {
@@ -826,7 +834,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                 next.push(result);
               }
             }
-            return next.map((entry, index) => ({ ...entry, sortOrder: index }));
+            return next.sort((a, b) => (uploadedOrderRef.current.get(a.storageKey) ?? Number.MAX_SAFE_INTEGER) - (uploadedOrderRef.current.get(b.storageKey) ?? Number.MAX_SAFE_INTEGER)).map((entry, index) => ({ ...entry, sortOrder: index }));
           });
           // Preserve the typed username but do not register any tag before media upload.
           setTagDraftByMedia((current) => {
@@ -851,18 +859,22 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
           setError("");
           completedAny = true;
         } catch (error) {
-          if (activeUploadItemIdRef.current !== item.previewUrl) continue;
+          if (!activeUploadItemIdsRef.current.has(item.previewUrl)) continue;
           const message = error instanceof Error ? error.message : "آپلود فایل ناموفق بود.";
           setUploadRows((current) => current.map((row) => row.id === item.previewUrl ? { ...row, status: "failed", error: message } : row));
           setError(message);
           toast.error(`آپلود «${item.file.name}» ناموفق بود: ${message}`);
         } finally {
-          if (activeUploadItemIdRef.current === item.previewUrl) activeUploadItemIdRef.current = null;
+          activeUploadItemIdsRef.current.delete(item.previewUrl);
+          uploadAbortControllersRef.current.delete(item.previewUrl);
         }
-      }
+       }
+      };
+      await Promise.all(Array.from({ length: type === "CAROUSEL" ? 3 : 1 }, () => processNext()));
     } finally {
       uploadWorkerRunningRef.current = false;
       setUploading(false);
+      if (uploadQueueRef.current.length) queueMicrotask(() => { void uploadSelectedMedia(); });
       if (completedAny && type !== "CAROUSEL") {
         setUploadSuccess(true);
         setUploadProgress(100);
