@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Check, Lightbulb, RefreshCw, Share2, AtSign, Search, X, Image as ImageIcon } from "lucide-react";
 import { dairaPalette } from "../../lib/design-system/palette";
@@ -44,7 +44,6 @@ export default function ShareMentionEditor({id}:{id?:string}){
  const [showcaseDraftChanged,setShowcaseDraftChanged]=useState(false);
  const [occupied,setOccupied]=useState<Set<string>>(new Set());
  const responseValid=trigger==="STORY_MENTION"||selected.length>0;
- const selectedSet=useMemo(()=>new Set(selected),[selected]);
  useEffect(()=>{
   const controller=new AbortController();
   setLoading(true);setError("");
@@ -101,6 +100,16 @@ export default function ShareMentionEditor({id}:{id?:string}){
   return ()=>controller.abort();
  },[id,reload]);
 
+ async function refreshMedia(){
+  if(!account)return;
+  try{
+   setMediaError("");
+   const response=await fetch("/api/instagram/media?instagramAccountId="+encodeURIComponent(account.id),{cache:"no-store",credentials:"include"});
+   const payload=await response.json();
+   if(!response.ok||!payload.success)throw new Error(payload.message||"بارگذاری محتوا ناموفق بود.");
+   setMedia((Array.isArray(payload.data)?payload.data:[]).filter((x:InstagramMedia)=>x.media_product_type!=="STORY"));
+  }catch(e){setMediaError(e instanceof Error?e.message:"بارگذاری محتوا ناموفق بود.");}
+ }
  async function save(prepared?:MessageDraft){
   if(saving||!account||!responseValid)return;
   setSaving(true);setError("");
@@ -177,7 +186,7 @@ export default function ShareMentionEditor({id}:{id?:string}){
     <div className="flex shrink-0 items-center justify-between border-b border-[#E2E8F0] px-4 py-4 sm:px-5"><strong className="text-sm font-extrabold text-[#18233C]">انتخاب محتوا</strong><button type="button" onClick={()=>setPickerOpen(false)} aria-label="بستن" className="rounded-lg p-2 text-slate-500"><X size={20}/></button></div>
     <div className="shrink-0 space-y-2 border-b border-[#E2E8F0] p-4">
       <div className="relative"><Search size={17} className="absolute right-3 top-3.5 text-slate-400"/><input value={mediaSearch} onChange={e=>setMediaSearch(e.target.value)} placeholder="جستجو در توضیحات محتوا" aria-label="جستجوی محتوا" className="min-h-11 w-full rounded-xl border border-[#E2E8F0] bg-white pr-10 pl-3 !text-base outline-none focus:border-[#2563EB]" style={{fontSize:"16px",WebkitTextSizeAdjust:"100%"}}/></div>
-      <div className="flex items-center justify-between"><span className="text-xs text-slate-500">{draftSelected.length.toLocaleString("fa-IR")} از ۵۰ انتخاب شده</span><button type="button" onClick={()=>setReload(x=>x+1)} className="flex items-center gap-1 text-xs text-blue-600"><RefreshCw size={14}/>به‌روزرسانی</button></div>
+      <div className="flex items-center justify-between"><span className="text-xs text-slate-500">{draftSelected.length.toLocaleString("fa-IR")} از ۵۰ انتخاب شده</span><button type="button" onClick={()=>void refreshMedia()} className="flex items-center gap-1 text-xs text-blue-600"><RefreshCw size={14}/>به‌روزرسانی</button></div>
     </div>
     <div className="min-h-0 flex-1 overflow-y-auto p-4">
      {media.filter(x=>!mediaSearch.trim()||(x.caption||"").includes(mediaSearch.trim())).length===0&&<p className="py-9 text-center text-sm text-slate-500">{mediaError||"محتوایی پیدا نشد."}</p>}
