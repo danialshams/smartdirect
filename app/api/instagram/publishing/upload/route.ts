@@ -43,7 +43,9 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get("file");
     const targetTypeValue = formData.get("targetType");
-    const purpose = formData.get("purpose") === "AUTOMATION" ? "AUTOMATION" : "PUBLISHING";
+    const purposeValue = formData.get("purpose");
+    const purpose = purposeValue === "AUTOMATION" || purposeValue === "INBOX" ? purposeValue : "PUBLISHING";
+    const mediaPurpose = purpose === "PUBLISHING" ? "PUBLISHING" : "AUTOMATION";
     const targetType = targetTypeValue === "CAROUSEL" || targetTypeValue === "STORY" || targetTypeValue === "REEL"
       ? targetTypeValue
       : "REEL";
@@ -55,7 +57,7 @@ export async function POST(request: NextRequest) {
     const fileExtension = path.extname(file.name).toLowerCase();
     const normalizedInputMime = file.type.toLowerCase();
     const isImage = allowedImageTypes.has(normalizedInputMime);
-    if (purpose === "AUTOMATION" && normalizedInputMime === "image/webp") {
+    if (mediaPurpose === "AUTOMATION" && normalizedInputMime === "image/webp") {
       return NextResponse.json({ success: false, message: "برای پاسخ خودکار، تصویر باید JPG یا PNG باشد." }, { status: 400 });
     }
     // Browsers sometimes send application/octet-stream for valid video files.
@@ -64,13 +66,14 @@ export async function POST(request: NextRequest) {
       (normalizedInputMime.startsWith("video/") && allowedVideoExtensions.has(fileExtension)) ||
       ((!normalizedInputMime || normalizedInputMime === "application/octet-stream") && allowedVideoExtensions.has(fileExtension));
     const isAudio = normalizedInputMime.startsWith("audio/");
+    if (purpose === "AUTOMATION" && isVideo) return NextResponse.json({ success: false, message: "آپلود ویدیو در پاسخ‌های خودکار فعلاً غیرفعال است." }, { status: 400 });
 
     if (!isImage && !isVideo && !isAudio) {
       return NextResponse.json({ success: false, message: "فرمت فایل پشتیبانی نمی‌شود." }, { status: 400 });
     }
 
     const mediaType = isImage ? "IMAGE" : isVideo ? "VIDEO" : "AUDIO";
-    const maxSize = maximumUploadBytes(purpose, mediaType, targetType);
+    const maxSize = maximumUploadBytes(mediaPurpose, mediaType, targetType);
 
     if (file.size > maxSize) {
       if (purpose === "AUTOMATION") {
@@ -86,7 +89,7 @@ export async function POST(request: NextRequest) {
 
     if (isVideo) {
       try {
-        uploadBuffer = await normalizeInstagramVideo(uploadBuffer, file.name, purpose === "AUTOMATION" ? "MESSAGE" : targetType);
+        uploadBuffer = await normalizeInstagramVideo(uploadBuffer, file.name, mediaPurpose === "AUTOMATION" ? "MESSAGE" : targetType);
         uploadFileName = path.basename(file.name, path.extname(file.name)) + ".mp4";
         uploadContentType = "video/mp4";
       } catch (error) {
@@ -109,7 +112,7 @@ export async function POST(request: NextRequest) {
       uploadContentType = "audio/mp4";
     }
 
-    checkMediaOutputSize(purpose, mediaType, uploadBuffer.length);
+    checkMediaOutputSize(mediaPurpose, mediaType, uploadBuffer.length);
     const extension = path.extname(uploadFileName) || (isImage ? ".jpg" : isVideo ? ".mp4" : ".m4a");
     const safeName = sanitizeFileName(path.basename(uploadFileName, extension));
     const key = ["pending", session.user.id, `${crypto.randomUUID()}-${safeName}${extension}`].join("/");
