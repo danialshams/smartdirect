@@ -120,3 +120,11 @@ assert(new Set(Object.values(imageMappings)).size === 11, "Dashboard artwork can
 assert(!dashboardOverviewText.includes('"/photos/'), "Remove old dashboard artwork references");
 
 console.log("DAIRA_BOTTOM_NAV_BREADCRUMB_OK", cases.length, "dashboard artwork: 11");
+
+// Dashboard home artwork should stay visually prominent across desktop and mobile breakpoints.
+assert(styles.includes(".daira-home__tool-art { flex:0 0 90px;max-width:90px;"), "Desktop tool artwork must be enlarged");
+assert(styles.includes(".daira-home__quick-art { display:grid;place-items:center;flex:0 0 42%;"), "Desktop quick artwork must be enlarged");
+assert(styles.includes(".daira-home__tool-art { flex-basis:auto;width:88px;max-width:88px; }"), "Mobile tool artwork must be enlarged");
+assert(styles.includes(".daira-home__quick-art { flex:0 0 auto;width:98px;max-width:98px; }"), "Mobile quick artwork must be enlarged");
+assert(styles.includes(".daira-home__tool-card { flex-direction:column;justify-content:center;gap:5px;min-height:180px;"), "Mobile cards must leave enough room for enlarged artwork");
+assert(overview.includes('description: "پاسخ خودکار به منشن و اشتراک‌گذاری"'), "Share/mention copy must stay short enough to avoid truncation");

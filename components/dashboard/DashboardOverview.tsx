@@ -44,7 +44,7 @@ const automationTools: Tool[] = [
   { key: "comment", title: "پاسخ به کامنت", description: "پاسخ خودکار به کامنت‌ها", image: "/dashboard-art/comment-reply.webp", href: "/dashboard/comment-automation" },
   { key: "story", title: "پاسخ به استوری", description: "پاسخ خودکار به ریپلای استوری", image: "/dashboard-art/story-reply.webp", href: "/dashboard/story-automation" },
   { key: "direct", title: "پاسخ خودکار دایرکت", description: "واکنش به کلمات کلیدی دایرکت", image: "/dashboard-art/direct-automation.webp", href: "/dashboard/direct-automation" },
-  { key: "share-mention", title: "پاسخ به اشتراک‌گذاری و منشن", description: "وقتی کسی پست یا ریلزت را به دایرکت بفرستد یا تو را در استوری منشن کند، پاسخ دلخواهت خودکار اجرا می‌شود.", image: "/dashboard-art/share-mention.webp", href: "/dashboard/share-mention" },
+  { key: "share-mention", title: "پاسخ به اشتراک‌گذاری و منشن", description: "پاسخ خودکار به منشن و اشتراک‌گذاری", image: "/dashboard-art/share-mention.webp", href: "/dashboard/share-mention" },
   { key: "live", title: "پاسخ به لایو", description: "ارسال پاسخ هنگام لایو", image: "/dashboard-art/live-reply.webp", href: "/dashboard/live-automation" },
   { key: "menu", title: "منوی دایرکت", description: "دسترسی سریع مخاطبان به گزینه‌ها", image: "/dashboard-art/direct-menu.webp", href: "/dashboard/persistent-menu" },
   { key: "icebreaker", title: "پیام شروع گفتگو", description: "خوش‌آمدگویی و شروع گفتگو", image: "/dashboard-art/icebreakers.webp", href: "/dashboard/ice-breaker" },
@@ -178,7 +178,7 @@ export default function DashboardOverview({ instagramAccounts }: DashboardOvervi
           {automationTools.map((tool) => (
             <Link className="daira-home__tool-card" href={tool.href} key={tool.key}>
               <span className="daira-home__tool-art">
-                <Image src={tool.image} alt="" width={120} height={120} sizes="(max-width: 680px) 60px, 72px" />
+                <Image src={tool.image} alt="" width={180} height={180} sizes="(max-width: 680px) 88px, 90px" />
               </span>
               <span className="daira-home__tool-copy">
                 <strong>{tool.title}</strong>
@@ -202,7 +202,7 @@ export default function DashboardOverview({ instagramAccounts }: DashboardOvervi
             return (
               <Link key={tool.key} className={"daira-home__quick-card daira-home__quick-card--" + tool.key} href={tool.href}>
                 <span className="daira-home__quick-art">
-                  <Image src={tool.image} alt="" width={144} height={144} sizes="(max-width: 680px) 94px, (max-width: 1000px) 104px, 126px" />
+                  <Image src={tool.image} alt="" width={192} height={192} sizes="(max-width: 680px) 114px, (max-width: 1000px) 128px, 144px" />
                 </span>
                 <span className="daira-home__quick-copy">
                   <strong>{tool.title}</strong>
