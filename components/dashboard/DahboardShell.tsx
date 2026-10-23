@@ -65,22 +65,34 @@ export default function DashboardShell({ user, instagramAccounts, children }: Da
         <div className="daira-bottom-nav-backdrop" aria-hidden="true" />
         <nav className={`daira-bottom-nav${isHome ? "" : " daira-bottom-nav--contextual"}`} aria-label="ناوبری اصلی">
           {bottomItems.map(({ title, href, icon: Icon }) => {
-            if (href === "/dashboard" && !isHome) {
+            if (href === "/dashboard") {
               return (
-                <div key={href} dir="ltr" className="daira-bottom-nav__breadcrumb" role="group" aria-label="مسیر صفحه">
-                  <Link href="/dashboard" className="daira-bottom-nav__home-link" aria-label="خانه">
-                    <Home size={19} strokeWidth={1.9} aria-hidden="true" />
-                    <span>خانه</span>
-                  </Link>
-                  <ChevronRight size={15} className="daira-bottom-nav__separator" aria-hidden="true" />
-                  <span
-                    key={pathname}
-                    className="daira-bottom-nav__current-page"
-                    aria-current="page"
-                    title={currentPageTitle}
+                <div key={href} className="daira-bottom-nav__center">
+                  <Link
+                    href="/dashboard"
+                    aria-current={isHome ? "page" : undefined}
+                    aria-hidden={!isHome}
+                    tabIndex={isHome ? 0 : -1}
+                    className={`daira-bottom-nav__item daira-bottom-nav__center-home${isHome ? " is-active" : ""}`}
                   >
-                    {currentPageTitle}
-                  </span>
+                    <span className="daira-bottom-nav__icon"><Home size={25} strokeWidth={isHome ? 2.2 : 1.8} /></span>
+                    <span className="daira-bottom-nav__label">خانه</span>
+                  </Link>
+                  <div dir="ltr" className="daira-bottom-nav__breadcrumb" role="group" aria-label="مسیر صفحه" aria-hidden={isHome}>
+                    <Link href="/dashboard" className="daira-bottom-nav__home-link" aria-label="خانه" tabIndex={isHome ? -1 : 0}>
+                      <Home size={19} strokeWidth={1.9} aria-hidden="true" />
+                      <span>خانه</span>
+                    </Link>
+                    <ChevronRight size={15} className="daira-bottom-nav__separator" aria-hidden="true" />
+                    <span
+                      key={pathname}
+                      className="daira-bottom-nav__current-page"
+                      aria-current={isHome ? undefined : "page"}
+                      title={currentPageTitle}
+                    >
+                      {currentPageTitle}
+                    </span>
+                  </div>
                 </div>
               );
             }
