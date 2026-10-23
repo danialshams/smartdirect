@@ -2,6 +2,7 @@
 
 import { Button, DashboardLoading } from "@/components/dashboard/DashboardUI";
 import { uploadFileWithProgress, prepareAutomationFile } from "./publishing/shared-upload";
+import { validateVoiceFileForUpload, VOICE_MAX_SECONDS } from "@/lib/instagram/voice-client";
 import { Input } from "@/components/dashboard/DashboardUI";
 import {
   ArrowRight,
@@ -860,13 +861,14 @@ export default function InstagramInbox({
     const optimisticId = addOptimisticMessage({ kind: "FILE", file });
     setSending(true);
     try {
+      if (file.type.startsWith("audio/")) await validateVoiceFileForUpload(file);
       const preparedFile = await prepareAutomationFile(file);
       let response: Response;
       if (preparedFile.size > 3 * 1024 * 1024) {
         // Large browser bodies exceed the serverless request limit on Vercel.
         // Stage directly to object storage, then pass only the authenticated key.
         setMediaUploadProgress(0);
-        const staged = await uploadFileWithProgress(preparedFile, "MESSAGE", setMediaUploadProgress, { purpose: "AUTOMATION" });
+        const staged = await uploadFileWithProgress(preparedFile, "MESSAGE", setMediaUploadProgress, { purpose: "INBOX" });
         response = await fetch("/api/instagram/inbox", {
           method: "POST",
           headers: { "Content-Type": "application/json", Accept: "application/json" },
@@ -1073,7 +1075,13 @@ export default function InstagramInbox({
       setRecordingWaveform(Array.from({ length: 34 }, () => 4));
 
       recordingTimerRef.current = window.setInterval(() => {
-        setRecordingSeconds((current) => current + 1);
+        setRecordingSeconds((current) => {
+          if (current + 1 >= VOICE_MAX_SECONDS) {
+            if (mediaRecorderRef.current?.state === "recording") mediaRecorderRef.current.stop();
+            return VOICE_MAX_SECONDS;
+          }
+          return current + 1;
+        });
       }, 1000);
     } catch (err) {
       recordingStreamRef.current?.getTracks().forEach((track) => track.stop());
