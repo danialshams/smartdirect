@@ -26,7 +26,7 @@ export async function GET() {
       _count: { _all: true },
     }) : [];
     const unreadMap = new Map(unreadRows.map(row => [row.ticketId, row._count._all]));
-    return NextResponse.json({ data: items.map(item => ({ ...item, unreadCount: unreadMap.get(item.id) || 0 })) }, { headers: { "Cache-Control": "private, no-store" } });
+    return NextResponse.json({ userId: session.user.id, data: items.map(item => ({ ...item, unreadCount: unreadMap.get(item.id) || 0 })) }, { headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
     console.error("[Support tickets list]", error);
     return NextResponse.json({ message: "دریافت درخواست‌های پشتیبانی ناموفق بود." }, { status: 500 });
