@@ -42,6 +42,13 @@ assert(shell.includes('href="/dashboard" className="daira-bottom-nav__home-link"
 assert(shell.includes('className="daira-bottom-nav__current-page"'), "Current-page title missing");
 assert(shell.includes('key={pathname}'), "Page transitions must restart the title animation");
 assert(styles.includes("text-overflow:ellipsis"), "Long current-page labels must truncate");
+// Glass must be a reversible visual-only experiment; don't change any navigation logic.
+assert(shell.includes("daira-bottom-nav--liquid") && shell.includes("daira-bottom-nav-backdrop--liquid"), "Glass dock must be enabled on shell and backdrop");
+assert(styles.includes(".daira-bottom-nav--liquid") && styles.includes("backdrop-filter:blur(20px) saturate(170%)"), "Glass dock needs real background refraction");
+assert(styles.includes(".daira-bottom-nav--liquid .daira-bottom-nav__item.is-active"), "Active icon and text need a readable liquid-glass state");
+assert(styles.includes(".daira-bottom-nav--liquid .daira-bottom-nav__breadcrumb"), "Inner-page breadcrumb must match liquid-glass dock");
+assert(styles.includes(".daira-bottom-nav--liquid .daira-support-nav-badge"), "Support unread badges must stay legible on glass");
+assert(styles.includes("@supports not ((backdrop-filter:blur(1px))") && styles.includes("@media(prefers-reduced-transparency:reduce)"), "Glass dock must have transparency accessibility and browser fallbacks");
 assert(styles.includes("@media(prefers-reduced-motion:reduce)"), "Reduced-motion support missing");
 assert(shell.includes("!isAutomationCreateFlow"), "Existing automation action dock must remain unobstructed");
 const overview = readFileSync("components/dashboard/DashboardOverview.tsx", "utf8");
