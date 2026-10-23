@@ -89,11 +89,11 @@ export default function DirectAutomationList() {
           <section className="rounded-[28px] bg-transparent">
             {!error && rules.length > 0 ? (
               <div className="mb-4 px-1">
-                <label className="flex h-11 items-center gap-2.5 rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3.5 text-[var(--daira-text-secondary)] transition focus-within:border-[var(--daira-primary)] focus-within:ring-2 focus-within:ring-[var(--daira-primary)]/10">
+                <label className="daira-search-field flex h-11 items-center gap-2.5 rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3.5 text-[var(--daira-text-secondary)] transition focus-within:border-[var(--daira-primary)] focus-within:ring-2 focus-within:ring-[var(--daira-primary)]/10">
                   <Search size={17} className="shrink-0" aria-hidden="true" />
                   <input type="search" value={search} onChange={event => setSearch(event.target.value)}
                     placeholder="جستجو براساس کلمه کلیدی..." aria-label="جستجو براساس کلمه کلیدی"
-                    className="h-full min-w-0 flex-1 bg-transparent text-base text-[var(--daira-heading)] outline-none placeholder:text-[var(--daira-text-disabled)] sm:text-sm" />
+                    className="daira-search-input h-full min-w-0 flex-1 bg-transparent text-base text-[var(--daira-heading)] outline-none placeholder:text-[var(--daira-text-disabled)] sm:text-sm" />
                 </label>
               </div>
             ) : null}
@@ -103,7 +103,7 @@ export default function DirectAutomationList() {
                 <button type="button" onClick={() => setRefresh(value => value + 1)} aria-label="تلاش دوباره"><RefreshCw size={17} /></button>
               </div>
             ) : filtered.length === 0 ? (
-              <div className="flex min-h-28 items-center justify-center rounded-xl border border-[var(--daira-border)] px-4 text-center text-xs font-medium text-[var(--daira-text-disabled)]">
+              <div className="daira-empty-state flex min-h-28 items-center justify-center rounded-xl border border-[var(--daira-border)] px-4 text-center text-xs font-medium text-[var(--daira-text-disabled)]">
                 {search ? "پاسخی با این کلمه کلیدی پیدا نشد." : "هنوز پاسخ خودکاری برای نمایش وجود ندارد."}
               </div>
             ) : (
@@ -144,10 +144,10 @@ export default function DirectAutomationList() {
         </div>
       </div>
       {target && (
-        <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-[rgba(24,35,60,.36)] px-4 py-6 backdrop-blur-md"
+        <div className="daira-glass-overlay fixed inset-0 z-[9998] flex items-center justify-center bg-[rgba(24,35,60,.36)] px-4 py-6 backdrop-blur-md"
           onMouseDown={event => { if (event.target === event.currentTarget && !deleting) setTarget(null); }}>
           <section role="dialog" aria-modal="true" aria-labelledby="direct-delete-title"
-            className="w-full max-w-sm space-y-4 rounded-[24px] bg-white p-5 shadow-2xl">
+            className="daira-glass-dialog daira-glass-dialog--danger w-full max-w-sm space-y-4 rounded-[24px] p-5">
             <div className="flex items-start justify-between">
               <h2 id="direct-delete-title" className="font-bold text-[var(--daira-heading)]">حذف پاسخ خودکار دایرکت؟</h2>
               <button type="button" disabled={deleting} onClick={() => setTarget(null)} aria-label="بستن"><X size={18} /></button>

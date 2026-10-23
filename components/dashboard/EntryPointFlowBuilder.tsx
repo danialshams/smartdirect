@@ -869,15 +869,15 @@ export default function EntryPointFlowBuilder({
                                 {keywordItems.length > 0 && (
                                     <div className="mb-3 flex flex-wrap gap-2">
                                         {keywordItems.map((item) => (
-                                            <span key={item} className="inline-flex items-center gap-1.5 rounded-full bg-[var(--daira-outline-hover-bg)] px-3 py-1.5 text-xs font-semibold text-[var(--daira-primary)]">
+                                            <span key={item} className="daira-keyword-chip inline-flex items-center gap-1.5 rounded-full bg-[var(--daira-outline-hover-bg)] px-3 py-1.5 text-xs font-semibold text-[var(--daira-primary)]">
                                                 <span>{item}</span>
                                                 <button type="button" onClick={() => { onKeywordChange?.(keywordItems.filter((value) => value !== item).join(",")); onDirtyChange?.(true); }} aria-label={"حذف " + item} className="flex h-4 w-4 items-center justify-center rounded-full hover:bg-white"><X size={12} /></button>
                                             </span>
                                         ))}
                                     </div>
                                 )}
-                                <div className="flex items-center gap-2">
-                                    <input id="edit-publishing-keyword" value={keywordDraft} onChange={(event) => setKeywordDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); addKeyword(); } }} placeholder="مثلاً قیمت، اطلاعات" inputMode="text" className="min-w-0 flex-1 rounded-lg border border-[var(--daira-outline)] bg-white px-3 py-3 !text-base leading-5 text-[var(--daira-heading)] outline-none placeholder:text-xs placeholder:text-[var(--daira-text-disabled)] focus:border-[var(--daira-primary)] focus:ring-2 focus:ring-[var(--daira-primary)]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
+                                <div className="daira-keyword-field flex items-center gap-2">
+                                    <input id="edit-publishing-keyword" value={keywordDraft} onChange={(event) => setKeywordDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); addKeyword(); } }} placeholder="مثلاً قیمت، اطلاعات" inputMode="text" className="daira-keyword-input min-w-0 flex-1 rounded-lg border border-[var(--daira-outline)] bg-white px-3 py-3 !text-base leading-5 text-[var(--daira-heading)] outline-none placeholder:text-xs placeholder:text-[var(--daira-text-disabled)] focus:border-[var(--daira-primary)] focus:ring-2 focus:ring-[var(--daira-primary)]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
                                     <button type="button" onClick={addKeyword} disabled={!keywordDraft.trim() || keywordItems.some((item) => item.toLocaleLowerCase() === keywordDraft.trim().toLocaleLowerCase())} className="min-h-11 shrink-0 rounded-lg !bg-[var(--daira-primary)] px-3.5 text-xs font-semibold text-white hover:!bg-[var(--daira-primary-hover)] disabled:!bg-[var(--daira-border)] disabled:!text-[var(--daira-text-disabled)]">افزودن</button>
                                 </div>
                             </div>

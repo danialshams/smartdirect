@@ -289,7 +289,7 @@ export default function AutomationFlowMessage({
   }
 
   return (
-    <article dir="rtl" className="relative overflow-hidden rounded-[28px] border bg-white" style={{ borderColor: palette.border }}>
+    <article dir="rtl" className="daira-flow-glass relative overflow-hidden rounded-[28px] border bg-white" style={{ borderColor: palette.border }}>
       {instagramAccountId && (
         <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center" style={{ borderColor: palette.border, background: "var(--daira-surface-hover)" }}>
           <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row">
@@ -614,7 +614,7 @@ function QuickReplySection({
   loadingResources?: boolean;
 }) {
   return (
-    <section className="rounded-2xl border p-4 sm:p-5" style={{ borderColor: palette.border, background: palette.muted }}>
+    <section className="daira-flow-glass rounded-2xl border p-4 sm:p-5" style={{ borderColor: palette.border, background: palette.muted }}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-xs font-bold" style={{ color: palette.text }}>
@@ -637,7 +637,7 @@ function QuickReplySection({
       </div>
 
       {replies.length === 0 ? (
-        <div className="mt-4 rounded-xl border border-dashed bg-white px-4 py-7 text-center" style={{ borderColor: palette.border }}>
+        <div className="daira-empty-state mt-4 rounded-xl border border-dashed bg-white px-4 py-7 text-center" style={{ borderColor: palette.border }}>
           <p className="text-xs font-semibold" style={{ color: palette.text }}>هنوز گزینه‌ای وجود ندارد</p>
           <p className="mt-1 text-[10px]" style={{ color: palette.secondary }}>برای شروع یک گزینه پاسخ اضافه کن.</p>
         </div>
@@ -871,7 +871,7 @@ function MediaComposer({
       <ComposerTitle title={labels[kind]} description={kind === "AUDIO" ? "وویس را از دستگاه انتخاب کن یا با میکروفون همین‌جا ضبط و آپلود کن." : `فایل ${labels[kind]} را انتخاب کن تا در این مرحله برای کاربر ارسال شود.`} />
 
       {url ? (
-        <div className="rounded-2xl border p-4" style={{ borderColor: "#BBF7D0", background: "var(--daira-success-bg)" }}>
+        <div className="rounded-2xl border p-4" style={{ borderColor: "var(--daira-success-border)", background: "var(--daira-success-bg)" }}>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: "#DCFCE7", color: palette.success }}>

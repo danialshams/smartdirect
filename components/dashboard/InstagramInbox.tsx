@@ -1467,7 +1467,7 @@ export default function InstagramInbox({
           )}
           </>
         ) : (
-          <div className="px-6 py-16 text-center">
+          <div className="daira-empty-state px-6 py-16 text-center">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
               <MessageCircle size={21} />
             </div>
@@ -1639,7 +1639,7 @@ export default function InstagramInbox({
                 <div ref={messagesEndRef} />
               </div>
             ) : (
-              <div className="flex h-full items-center justify-center p-8 text-center">
+              <div className="daira-empty-state flex h-full items-center justify-center p-8 text-center">
                 <div>
                   <div className="mx-auto grid h-16 w-16 place-items-center rounded-[22px] bg-white text-[var(--daira-text-disabled)] shadow-sm"><MessageCircle size={27}/></div>
                   <h3 className="mt-4 text-sm font-bold text-[var(--daira-heading)]">هنوز پیامی وجود ندارد</h3>

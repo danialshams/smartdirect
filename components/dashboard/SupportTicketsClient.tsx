@@ -60,7 +60,7 @@ export default function SupportTicketsClient() {
     </div>
     {loading ? <div className="daira-support__list" role="status" aria-label="در حال دریافت گفتگوها">
       {Array.from({ length: 4 }, (_, i) => <div key={i} className="daira-support__ticket is-skeleton"><span className="daira-support__avatar daira-support__skeleton"/><div className="daira-support__ticket-main"><i className="daira-support__skeleton w-65"/><i className="daira-support__skeleton w-85"/><i className="daira-support__skeleton w-45"/></div></div>)}
-    </div> : error ? <div className="daira-support__empty"><RefreshCw size={28}/><strong>دریافت گفتگوها ناموفق بود</strong><p>{error}</p><button className="daira-support__secondary" onClick={() => void load()}>تلاش دوباره</button></div> :
+    </div> : error ? <div className="daira-support__empty daira-empty-state"><RefreshCw size={28}/><strong>دریافت گفتگوها ناموفق بود</strong><p>{error}</p><button className="daira-support__secondary" onClick={() => void load()}>تلاش دوباره</button></div> :
       shown.length ? <div className="daira-support__list">
         {shown.map(ticket => {
           const last = ticket.messages[0];
@@ -77,7 +77,7 @@ export default function SupportTicketsClient() {
           </Link>;
         })}
       </div> :
-      <div className="daira-support__empty"><span className="daira-support__empty-icon">{filter === "all" ? <MessageCircle size={27}/> : filter === "unread" ? <CheckCheck size={27}/> : <Inbox size={27}/>}</span>
+      <div className="daira-support__empty daira-empty-state"><span className="daira-support__empty-icon">{filter === "all" ? <MessageCircle size={27}/> : filter === "unread" ? <CheckCheck size={27}/> : <Inbox size={27}/>}</span>
         <strong>{filter === "all" ? "هنوز درخواستی ثبت نکرده‌اید" : filter === "unread" ? "همه پیام‌ها خوانده شده‌اند" : "درخواستی در این بخش وجود ندارد"}</strong>
         <p>{filter === "all" ? "برای دریافت کمک، «درخواست جدید» را در بالای صفحه انتخاب کنید." : "برای مشاهده سایر گفتگوها می‌توانید فیلتر را تغییر دهید."}</p>
       </div>}

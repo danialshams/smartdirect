@@ -5,7 +5,7 @@ type TriggerType = "COMMENT_KEYWORD" | "STORY_REPLY_KEYWORD";
 function GuideSkeleton({ step, width }: { step: string; width: string }) {
   return (
     <div
-      className="mb-2 flex items-start gap-3 rounded-xl border px-3.5 py-3"
+      className="daira-skeleton-glass mb-2 flex items-start gap-3 rounded-xl border px-3.5 py-3"
       style={{
         background: dairaPalette.guide.background,
         borderColor: dairaPalette.guide.border,
@@ -40,7 +40,7 @@ export default function AutomationCreationSkeleton({
       <div className="animate-pulse">
         <section>
           <GuideSkeleton step="۱" width="w-44 max-w-[80%]" />
-          <div className="rounded-2xl border bg-white p-4 sm:p-5" style={{ borderColor: dairaPalette.border }}>
+          <div className="daira-skeleton-glass rounded-2xl border bg-white p-4 sm:p-5" style={{ borderColor: dairaPalette.border }}>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-3">
                 <span className="h-11 w-11 shrink-0 rounded-xl" style={{ background: dairaPalette.background.surfaceActive }} />
@@ -58,7 +58,7 @@ export default function AutomationCreationSkeleton({
           <GuideSkeleton step="۲" width="w-48 max-w-[80%]" />
           <div className="grid grid-cols-2 gap-2">
             {[0, 1].map((item) => (
-              <div key={item} className="flex min-h-[68px] items-start gap-2.5 rounded-xl border bg-white p-3" style={{ borderColor: dairaPalette.form.border }}>
+              <div key={item} className="daira-skeleton-glass flex min-h-[68px] items-start gap-2.5 rounded-xl border bg-white p-3" style={{ borderColor: dairaPalette.form.border }}>
                 <span className="mt-1 h-4 w-4 shrink-0 rounded-full border-2" style={{ borderColor: dairaPalette.form.border }} />
                 <div className="flex min-w-0 flex-1 flex-col gap-2">
                   <SkeletonLine className="h-3 w-28 max-w-full" />
@@ -71,12 +71,12 @@ export default function AutomationCreationSkeleton({
 
         <section className="mt-6">
           <GuideSkeleton step="۳" width="w-52 max-w-[85%]" />
-          <div className="rounded-2xl border bg-white p-4 sm:p-5" style={{ borderColor: dairaPalette.border }}>
+          <div className="daira-skeleton-glass rounded-2xl border bg-white p-4 sm:p-5" style={{ borderColor: dairaPalette.border }}>
             {isComment ? (
               <>
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {[0, 1].map((item) => (
-                    <div key={item} className="flex min-h-[74px] items-start gap-3 rounded-xl border p-3" style={{ borderColor: dairaPalette.form.border, background: dairaPalette.background.surfaceHover }}>
+                    <div key={item} className="daira-skeleton-glass flex min-h-[74px] items-start gap-3 rounded-xl border p-3" style={{ borderColor: dairaPalette.form.border, background: dairaPalette.background.surfaceHover }}>
                       <span className="mt-1 h-4 w-4 shrink-0 rounded-full border-2" style={{ borderColor: dairaPalette.form.border }} />
                       <div className="flex min-w-0 flex-1 flex-col gap-2">
                         <SkeletonLine className="h-3 w-28 max-w-full" />

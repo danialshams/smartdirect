@@ -7,7 +7,7 @@ function Shape({ className = "" }: { className?: string }) {
 
 function GuideSkeleton({ number, titleWidth }: { number: number; titleWidth: string }) {
   return (
-    <div aria-hidden="true" className="mb-2 flex items-start gap-3 rounded-xl border px-3.5 py-3"
+    <div aria-hidden="true" className="daira-skeleton-glass mb-2 flex items-start gap-3 rounded-xl border px-3.5 py-3"
       style={{ background: dairaPalette.guide.background, borderColor: dairaPalette.guide.border }}>
       <Shape className="mt-1 h-[17px] w-[17px] shrink-0 rounded-full" />
       <div className="min-w-0 flex-1">
@@ -27,7 +27,7 @@ function EditorSection({ number, titleWidth, children }: { number: number; title
   return (
     <section>
       <GuideSkeleton number={number} titleWidth={titleWidth} />
-      <div className="space-y-3 rounded-2xl border border-[#E2E8F0] bg-white p-4 sm:p-5">
+      <div className="daira-skeleton-glass space-y-3 rounded-2xl border border-[#E2E8F0] bg-white p-4 sm:p-5">
         {children}
       </div>
     </section>
@@ -40,18 +40,18 @@ export default function LiveAutomationSkeleton({ view = "list" }: { view?: "list
       className="mx-auto w-full max-w-4xl space-y-4 py-3">
       <div aria-hidden="true" className="flex min-h-[54px] w-full animate-pulse items-center justify-center gap-2 rounded-full px-5 shadow-sm"
         style={{ background: dairaPalette.primary.main, opacity: .75 }}>
-        <Shape className="h-5 w-5 rounded-full bg-white/35" />
+        <Shape className="daira-skeleton-glass h-5 w-5 rounded-full bg-white/35" />
         <Shape className="h-4 w-28 bg-white/45" />
       </div>
-      <div aria-hidden="true" className="relative flex min-h-12 items-center gap-3 rounded-xl border border-[#DBE2ED] bg-white px-3">
+      <div aria-hidden="true" className="daira-skeleton-glass relative flex min-h-12 items-center gap-3 rounded-xl border border-[#DBE2ED] bg-white px-3">
         <Shape className="h-[18px] w-[18px] shrink-0 rounded-full" />
         <Shape className="h-3 w-52 max-w-[80%]" />
       </div>
       <div aria-hidden="true" className="grid gap-3 sm:grid-cols-2">
         {Array.from({ length: 4 }, (_, i) => (
-          <article key={i} className="space-y-3 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-[0_3px_12px_rgba(24,35,60,0.025)]">
+          <article key={i} className="daira-skeleton-glass space-y-3 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-[0_3px_12px_rgba(24,35,60,0.025)]">
             <div className="flex items-center gap-2">
-              <Shape className="h-9 w-9 shrink-0 rounded-xl bg-[#EFF6FF]" />
+              <Shape className="daira-skeleton-glass h-9 w-9 shrink-0 rounded-xl bg-[#EFF6FF]" />
               <div className="min-w-0 flex-1 space-y-2">
                 <Shape className="h-3.5 w-28 max-w-full" />
                 <Shape className="h-2.5 w-20 max-w-full" />
@@ -62,8 +62,8 @@ export default function LiveAutomationSkeleton({ view = "list" }: { view?: "list
               <Shape className="h-3 w-7/12" />
             </div>
             <div className="flex gap-2">
-              <Shape className="h-6 w-24 rounded-lg bg-[#F1F5F9]" />
-              <Shape className="h-6 w-20 rounded-lg bg-[#F1F5F9]" />
+              <Shape className="daira-skeleton-glass h-6 w-24 rounded-lg bg-[#F1F5F9]" />
+              <Shape className="daira-skeleton-glass h-6 w-20 rounded-lg bg-[#F1F5F9]" />
             </div>
             <div className="flex gap-2 border-t border-[#F1F5F9] pt-3">
               <div className="flex min-h-10 flex-1 items-center justify-center rounded-xl bg-[#EFF6FF]"><Shape className="h-3 w-12 bg-[#DBEAFE]" /></div>

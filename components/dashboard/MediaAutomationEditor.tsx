@@ -231,8 +231,8 @@ const optionalSettings = (
 
         </section>
         {showDeleteConfirm && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/30 px-4 backdrop-blur-[2px]" role="presentation" onMouseDown={(event) => { if (event.currentTarget === event.target && !deleting) setShowDeleteConfirm(false); }}>
-            <div dir="rtl" role="dialog" aria-modal="true" aria-labelledby="delete-media-automation-title" className="w-full max-w-sm rounded-2xl border border-[var(--daira-border)] bg-white p-5 shadow-2xl">
+          <div className="daira-glass-overlay fixed inset-0 z-50 flex items-center justify-center px-4" role="presentation" onMouseDown={(event) => { if (event.currentTarget === event.target && !deleting) setShowDeleteConfirm(false); }}>
+            <div dir="rtl" role="dialog" aria-modal="true" aria-labelledby="delete-media-automation-title" className="daira-glass-dialog daira-glass-dialog--danger w-full max-w-sm rounded-2xl p-5">
               <h3 id="delete-media-automation-title" className="text-base font-bold text-[var(--daira-heading)]">حذف پاسخ خودکار؟</h3>
               <p className="mt-2 text-sm leading-6 text-[var(--daira-text-secondary)]">این پاسخ خودکار حذف می‌شود و دیگر اجرا نخواهد شد.</p>
               <div className="mt-5 flex gap-2">

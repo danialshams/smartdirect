@@ -17,7 +17,7 @@ assert.ok(editor.includes('setActiveTab("queue")'),"Both publishing modes must m
 assert.ok(editor.includes("max-w-4xl") && editor.includes('className="space-y-5 pb-7"'),"Create form should remain one continuous page");
 assert.ok(!editor.includes("<PublishingWizardProgress") && !editor.includes("goToWizardStep("),"Old wizard navigation must be removed");
 assert.ok(editor.includes('<PublishingSectionGuide number={1}') && editor.includes('<PublishingSectionGuide number={type==="STORY"?3:4}'),"Contextual guide section order missing");
-assert.ok(guide.includes("dairaPalette.guide.background") && guide.includes("Lightbulb"),"Guide should use the shared automation guidance palette");
+assert.ok(guide.includes("daira-guide-glass") && guide.includes("var(--daira-guide-glass)") && guide.includes("Lightbulb"),"Publishing guide should use the canonical yellow glass guide design");
 assert.ok(editor.includes('type!=="STORY" && ('),"Story should omit irrelevant caption/tag section");
 assert.ok(editor.includes('type==="STORY" ?') && editor.includes("storyCreateMode") && storySetup.includes("storyCreateMode ?"),"Story must reuse the modern reply type picker");
 assert.ok(editor.includes("showTags &&") && editor.includes("taggedUsersByMedia[item.storageKey]"),"Optional per-media tagging should work");

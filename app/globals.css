@@ -906,3 +906,36 @@ body {
 @supports not ((mask-image:radial-gradient(circle,#000,transparent)) or (-webkit-mask-image:radial-gradient(circle,#000,transparent))) {
   .daira-liquid-corner-guard { display:none; }
 }
+
+/* The header has FOUR rounded exterior corners, unlike the bottom dock.
+   Its original mask painted only the lower corners. The second, top-only
+   sibling paints the two upper cutouts without reducing glass transparency. */
+.daira-home__header-wrap .daira-liquid-corner-guard--header-top::before,
+.daira-home__header-wrap .daira-liquid-corner-guard--header-top::after {
+  top:0;
+  bottom:auto;
+}
+.daira-home__header-wrap .daira-liquid-corner-guard--header-top::before {
+  -webkit-mask-image:radial-gradient(circle var(--daira-glass-corner) at bottom right,transparent calc(var(--daira-glass-corner) - 1px),#000 var(--daira-glass-corner));
+  mask-image:radial-gradient(circle var(--daira-glass-corner) at bottom right,transparent calc(var(--daira-glass-corner) - 1px),#000 var(--daira-glass-corner));
+}
+.daira-home__header-wrap .daira-liquid-corner-guard--header-top::after {
+  -webkit-mask-image:radial-gradient(circle var(--daira-glass-corner) at bottom left,transparent calc(var(--daira-glass-corner) - 1px),#000 var(--daira-glass-corner));
+  mask-image:radial-gradient(circle var(--daira-glass-corner) at bottom left,transparent calc(var(--daira-glass-corner) - 1px),#000 var(--daira-glass-corner));
+}
+.daira-home__header--liquid {
+  border-color:var(--daira-glass-rim);
+  border-bottom-color:var(--daira-glass-rim);
+  box-shadow:0 12px 30px rgba(31,49,80,.12),0 3px 8px rgba(31,49,80,.035),
+    inset 0 0 0 1px var(--daira-glass-inner-rim),
+    inset 0 -1px 0 var(--daira-glass-rim),inset 0 1px 1px var(--daira-glass-rim);
+}
+
+/* Scroll elevation must not erase the lower WHITE rim. The older scroll-only
+   box-shadow overrides the base shadow by specificity. */
+.daira-home__header--liquid.is-scrolled {
+  border-bottom-color:var(--daira-glass-border-strong);
+  box-shadow:0 15px 34px rgba(31,49,80,.15),0 4px 10px rgba(31,49,80,.045),
+    inset 0 0 0 1px var(--daira-glass-inner-rim),
+    inset 0 -1px 0 var(--daira-glass-border-strong),inset 0 1px 1px var(--daira-glass-rim);
+}

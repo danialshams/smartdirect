@@ -39,10 +39,10 @@ function snapshot(draft: Draft) {
 }
 function Guide({ number, title, hint }: { number: number; title: string; hint?: string }) {
   return (
-    <div className="mb-2 flex items-start gap-3 rounded-xl border px-3.5 py-3" style={{ background: dairaPalette.guide.background, borderColor: dairaPalette.guide.border, color: dairaPalette.guide.text }}>
+    <div className="daira-guide-glass mb-2 flex items-start gap-3 rounded-xl border px-3.5 py-3" style={{ background: dairaPalette.guide.background, borderColor: dairaPalette.guide.border, color: dairaPalette.guide.text }}>
       <Lightbulb size={17} className="mt-1 shrink-0" style={{ color: dairaPalette.guide.icon }} />
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
+        <div className="daira-keyword-field flex items-center gap-2">
           <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white" style={{ background: dairaPalette.guide.icon }}>
             {new Intl.NumberFormat("fa-IR").format(number)}
           </span>
@@ -218,7 +218,7 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
           {!anyComment && keywords.length > 0 && (
             <div className="mb-3 flex flex-wrap gap-2">
               {keywords.map(item => (
-                <span key={item} className="inline-flex items-center gap-1.5 rounded-full bg-[var(--daira-outline-hover-bg)] px-3 py-1.5 text-xs font-semibold text-[var(--daira-primary)]">
+                <span key={item} className="daira-keyword-chip inline-flex items-center gap-1.5 rounded-full bg-[var(--daira-outline-hover-bg)] px-3 py-1.5 text-xs font-semibold text-[var(--daira-primary)]">
                   {item}
                   <button type="button" onClick={() => patch({ keyword: keywords.filter(value => value !== item).join(",") })}
                     className="sd-neutral-button text-[var(--daira-text)] hover:text-[var(--daira-error-text)]" aria-label={"حذف " + item}>×</button>
@@ -231,11 +231,11 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
               <label htmlFor="live-keyword" className="block text-xs text-[var(--daira-text)]">حداکثر {MAX_KEYWORDS} کلمه کلیدی</label>
               <span className="text-[11px] text-[var(--daira-text)]">{keywords.length} از {MAX_KEYWORDS}</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="daira-keyword-field flex items-center gap-2">
               <input id="live-keyword" value={keywordDraft} onChange={e => setKeywordDraft(e.target.value)}
                 onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addKeyword(); } }}
                 placeholder="یک کلمه کلیدی وارد کنید" disabled={keywords.length >= MAX_KEYWORDS}
-                className="min-w-0 flex-1 rounded-lg border border-[var(--daira-outline)] bg-white px-3 py-3 text-base text-[var(--daira-heading)] outline-none focus:border-[var(--daira-input-focus)] focus:ring-2 focus:ring-[color:var(--daira-primary)]/10 disabled:bg-[var(--daira-surface-active)]" style={{ fontSize: "16px" }} />
+                className="daira-keyword-input min-w-0 flex-1 rounded-lg border border-[var(--daira-outline)] bg-white px-3 py-3 text-base text-[var(--daira-heading)] outline-none focus:border-[var(--daira-input-focus)] focus:ring-2 focus:ring-[color:var(--daira-primary)]/10 disabled:bg-[var(--daira-surface-active)]" style={{ fontSize: "16px" }} />
               <button type="button" onClick={addKeyword} disabled={!keywordDraft.trim() || keywords.length >= MAX_KEYWORDS}
                 className="min-h-11 shrink-0 rounded-lg bg-[var(--daira-primary)] px-3.5 text-xs font-semibold text-white transition hover:bg-[var(--daira-primary-hover)] disabled:bg-[var(--daira-disabled-bg)] disabled:text-[var(--daira-disabled-text)]">افزودن</button>
             </div>

@@ -7,7 +7,7 @@ function Bar({ className = "" }: { className?: string }) {
 }
 function GuideSkeleton({ width }: { width: string }) {
   return (
-    <div className="mb-3 flex items-center gap-3 rounded-xl border border-[var(--daira-guide-border,#E2E8F0)] bg-[var(--daira-surface-hover,#F8FAFC)] px-3.5 py-3">
+    <div className="daira-skeleton-glass mb-3 flex items-center gap-3 rounded-xl border border-[var(--daira-guide-border,#E2E8F0)] bg-[var(--daira-surface-hover,#F8FAFC)] px-3.5 py-3">
       <Bar className="h-5 w-5 shrink-0 rounded-full" />
       <div className="flex-1 space-y-2"><Bar className={"h-4 " + width} /><Bar className="h-3 w-4/5" /></div>
     </div>
@@ -24,7 +24,7 @@ export default function DirectAutomationSkeleton({ view = "list" }: { view?: "li
       <span className="sr-only">در حال بارگذاری فرم پاسخ خودکار دایرکت...</span>
       <section>
         <GuideSkeleton width="w-44" />
-        <div className="space-y-3 rounded-2xl border border-[var(--daira-border,#E2E8F0)] bg-white p-4 sm:p-5">
+        <div className="daira-skeleton-glass space-y-3 rounded-2xl border border-[var(--daira-border,#E2E8F0)] bg-white p-4 sm:p-5">
           <div className="flex flex-wrap gap-2">
             <Bar className="h-8 w-20 rounded-full" /><Bar className="h-8 w-24 rounded-full" />
             <Bar className="h-8 w-16 rounded-full" />
@@ -35,11 +35,11 @@ export default function DirectAutomationSkeleton({ view = "list" }: { view?: "li
       </section>
       <section>
         <GuideSkeleton width="w-40" />
-        <div className="space-y-4 rounded-2xl border border-[var(--daira-border,#E2E8F0)] bg-white p-4 sm:p-5">
+        <div className="daira-skeleton-glass space-y-4 rounded-2xl border border-[var(--daira-border,#E2E8F0)] bg-white p-4 sm:p-5">
           <Bar className="h-4 w-40" />
           <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
             {Array.from({ length: 6 }, (_, index) =>
-              <div key={index} className="space-y-3 rounded-xl border border-[var(--daira-border,#E2E8F0)] p-3">
+              <div key={index} className="daira-skeleton-glass space-y-3 rounded-xl border border-[var(--daira-border,#E2E8F0)] p-3">
                 <Bar className="mx-auto h-9 w-9 rounded-xl" />
                 <Bar className="mx-auto h-3 w-14" />
               </div>)}

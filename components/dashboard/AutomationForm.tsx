@@ -1534,7 +1534,7 @@ export default function AutomationForm({
                         <DashboardLoading label="در حال دریافت Flow..." className="min-h-32" />
                     </div>
                 ) : messages.length === 0 ? (
-                    <div className="mt-5 rounded-2xl border border-dashed border-border bg-muted px-5 py-10 text-center">
+                    <div className="daira-empty-state mt-5 rounded-2xl border border-dashed border-border bg-muted px-5 py-10 text-center">
                         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-white text-muted-foreground shadow-sm">
                             <MessageSquareText size={21} />
                         </div>
@@ -2011,7 +2011,7 @@ export default function AutomationForm({
                                     </div>
                                 ) : stories.length ===
                                     0 ? (
-                                    <div className="rounded-xl border border-dashed border-border bg-muted px-5 py-8 text-center">
+                                    <div className="daira-empty-state rounded-xl border border-dashed border-border bg-muted px-5 py-8 text-center">
                                         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-white text-muted-foreground shadow-sm">
                                             <MessageSquareText
                                                 size={

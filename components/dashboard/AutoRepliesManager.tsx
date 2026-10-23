@@ -480,7 +480,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
 
           {!error && scopedItems.length > 0 ? (
             <div className="mb-4 px-1">
-              <label className="flex h-11 items-center gap-2.5 rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3.5 text-[var(--daira-text-secondary)] transition focus-within:border-[var(--daira-primary)] focus-within:ring-2 focus-within:ring-[var(--daira-primary)]/10">
+              <label className="daira-search-field flex h-11 items-center gap-2.5 rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3.5 text-[var(--daira-text-secondary)] transition focus-within:border-[var(--daira-primary)] focus-within:ring-2 focus-within:ring-[var(--daira-primary)]/10">
                 <Search size={17} className="shrink-0" aria-hidden="true" />
                 <input
                   type="search"
@@ -488,7 +488,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
                   onChange={(event) => setSearchQuery(event.target.value)}
                   placeholder="جستجو براساس کلمه کلیدی..."
                   aria-label="جستجو براساس کلمه کلیدی"
-                  className="h-full min-w-0 flex-1 bg-transparent text-base text-[var(--daira-heading)] outline-none placeholder:text-[var(--daira-text-disabled)] sm:text-sm"
+                  className="daira-search-input h-full min-w-0 flex-1 bg-transparent text-base text-[var(--daira-heading)] outline-none placeholder:text-[var(--daira-text-disabled)] sm:text-sm"
                 />
               </label>
             </div>
@@ -499,7 +499,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
               {error}
             </div>
           ) : filteredItems.length === 0 ? (
-            <div className="flex min-h-28 items-center justify-center rounded-xl border border-[var(--daira-border)] px-4 text-center text-xs font-medium text-[var(--daira-text-disabled)]">
+            <div className="daira-empty-state flex min-h-28 items-center justify-center rounded-xl border border-[var(--daira-border)] px-4 text-center text-xs font-medium text-[var(--daira-text-disabled)]">
               هنوز پاسخ خودکاری برای نمایش وجود ندارد.
             </div>
           ) : (
@@ -558,7 +558,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
 
       {deleteTarget ? (
         <div
-          className={`fixed inset-0 z-[9998] flex items-center justify-center px-4 py-6 backdrop-blur-md transition-[opacity,background-color] duration-300 ease-out motion-reduce:transition-none ${closingDelete || !deleteModalVisible ? "pointer-events-none opacity-0" : "opacity-100"}`}
+          className={`daira-glass-overlay fixed inset-0 z-[9998] flex items-center justify-center px-4 py-6 backdrop-blur-md transition-[opacity,background-color] duration-300 ease-out motion-reduce:transition-none ${closingDelete || !deleteModalVisible ? "pointer-events-none opacity-0" : "opacity-100"}`}
           style={{ backgroundColor: closingDelete || !deleteModalVisible ? "rgba(24, 35, 60, 0)" : "rgba(24, 35, 60, 0.36)" }}
           onMouseDown={(event) => { if (event.target === event.currentTarget) closeDeleteModal(); }}
         >
@@ -566,8 +566,8 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
             role="dialog"
             aria-modal="true"
             aria-labelledby="delete-reply-title"
-            className={`w-full max-w-sm rounded-[24px] p-5 shadow-2xl transition-[opacity,transform] duration-300 ease-out motion-reduce:transition-none ${closingDelete || !deleteModalVisible ? "translate-y-2 scale-[0.98] opacity-0" : "translate-y-0 scale-100 opacity-100"}`}
-            style={{ backgroundColor: dairaPalette.background.surface, border: `1px solid ${dairaPalette.border}`, zIndex: 9999 }}
+            className={`daira-glass-dialog daira-glass-dialog--danger w-full max-w-sm rounded-[24px] p-5 transition-[opacity,transform] duration-300 ease-out motion-reduce:transition-none ${closingDelete || !deleteModalVisible ? "translate-y-2 scale-[0.98] opacity-0" : "translate-y-0 scale-100 opacity-100"}`}
+            style={{ zIndex: 9999 }}
           >
             <div className="mb-4 flex items-start gap-3">
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl" style={{ color: dairaPalette.status.error, backgroundColor: `${dairaPalette.status.error}12` }}>

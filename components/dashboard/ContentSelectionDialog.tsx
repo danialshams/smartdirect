@@ -103,22 +103,22 @@ export default function ContentSelectionDialog({
   }, []);
 
   return (
-    <div className="fixed inset-0 z-[2500] flex items-end justify-center bg-[#101A32]/55 p-0 backdrop-blur-[3px] sm:items-center sm:p-5"
+    <div className="daira-glass-overlay fixed inset-0 z-[2500] flex items-center justify-center p-4 sm:p-6"
       onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       <section ref={dialogRef} dir="rtl" role="dialog" aria-modal="true" aria-labelledby="content-dialog-title" aria-describedby="content-dialog-hint"
-        className="flex h-[min(92dvh,720px)] w-full max-w-[760px] flex-col overflow-hidden rounded-t-[28px] border border-[#E3EAF5] bg-white shadow-[0_24px_80px_rgba(15,23,42,.20)] sm:h-[min(86dvh,720px)] sm:rounded-[28px]">
-        <header className="flex shrink-0 items-start justify-between gap-3 border-b border-[#E8EDF5] px-4 pb-4 pt-5 sm:px-6">
+        className="daira-glass-dialog daira-glass-dialog--content flex h-[min(82dvh,720px)] w-full max-w-[760px] flex-col overflow-hidden rounded-[26px] sm:h-[min(82dvh,720px)]">
+        <header className="daira-glass-dialog__header flex shrink-0 items-start justify-between gap-3 border-b px-4 pb-4 pt-5 sm:px-6">
           <div className="min-w-0">
             <h2 id="content-dialog-title" className="text-base font-extrabold text-[var(--daira-heading)]">انتخاب محتوا</h2>
             <p id="content-dialog-hint" className="mt-1 text-xs leading-5 text-[var(--daira-text-secondary)]">{mode === "story" ? "استوری موردنظر را انتخاب کنید." : "از جدیدترین محتواهای منتشرشده انتخاب کنید."}</p>
           </div>
           <button ref={closeRef} type="button" onClick={onClose} aria-label="بستن انتخاب محتوا"
-            className="sd-neutral-button flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#E6ECF5] bg-[#F8FAFD] text-[var(--daira-text-secondary)] transition hover:bg-[#EDF3FC] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400">
+            className="daira-glass-dialog__close sd-neutral-button flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#E6ECF5] bg-[#F8FAFD] text-[var(--daira-text-secondary)] transition hover:bg-[#EDF3FC] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400">
             <X size={19} />
           </button>
         </header>
-        <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-[#EDF1F7] px-4 py-3 sm:px-6">
-          <div role="group" aria-label="فیلتر محتوا" className="flex min-w-0 gap-1.5 rounded-2xl bg-[#F1F5FB] p-1">
+        <div className="daira-glass-dialog__filters flex shrink-0 flex-wrap items-center justify-between gap-3 border-b px-4 py-3 sm:px-6">
+          <div role="group" aria-label="فیلتر محتوا" className="daira-glass-tabs flex min-w-0 gap-1.5 rounded-2xl p-1">
             {filters.map((option) => (
               <button key={option.value} type="button" aria-pressed={filter === option.value} onClick={() => setFilter(option.value)}
                 className={"sd-neutral-button min-h-9 rounded-xl px-3.5 text-xs font-bold transition sm:px-5 " + (filter === option.value ? "bg-white text-[#2158DE] shadow-[0_2px_9px_rgba(30,65,120,.10)]" : "text-[var(--daira-text-secondary)] hover:text-[#1E293B]")}>
@@ -138,7 +138,7 @@ export default function ContentSelectionDialog({
             )}
           </div>
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6">
+        <div className="daira-glass-dialog__scroll min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6">
           {missingIds.length > 0 && !loading && (
             <div className="mb-4 rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] p-3 text-xs leading-6 text-[var(--daira-text-secondary)]">
               پیش‌نمایش {number(missingIds.length)} محتوای قبلی در دسترس نیست، اما انتخاب آن حفظ شده است.
@@ -156,7 +156,7 @@ export default function ContentSelectionDialog({
               {Array.from({ length: 12 }, (_, i) => <div key={i} className="aspect-square animate-pulse rounded-2xl bg-[#E9EEF7]" />)}
             </div>
           ) : filtered.length === 0 ? (
-            <div className="flex min-h-40 items-center justify-center rounded-2xl border border-dashed border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-4 text-center text-xs leading-6 text-[var(--daira-text-secondary)]">
+            <div className="daira-empty-state flex min-h-40 items-center justify-center rounded-2xl border border-dashed border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-4 text-center text-xs leading-6 text-[var(--daira-text-secondary)]">
               {error || (items.length ? "محتوایی در این دسته وجود ندارد." : "هنوز محتوایی برای انتخاب دریافت نشده است.")}
             </div>
           ) : (
@@ -189,10 +189,10 @@ export default function ContentSelectionDialog({
           )}
           {error && filtered.length > 0 && <p role="alert" className="mt-3 text-xs text-red-600">{error}</p>}
         </div>
-        <footer className="flex shrink-0 items-center gap-2 border-t border-[#E8EDF5] bg-white px-4 py-3.5 sm:px-6">
+        <footer className="daira-glass-dialog__footer flex shrink-0 items-center gap-2 border-t px-4 py-3.5 sm:px-6">
           <button type="button" onClick={onConfirm} disabled={loading}
-            className="min-h-12 flex-1 rounded-xl bg-[var(--daira-primary)] px-4 text-sm font-extrabold text-white transition hover:bg-[#2154E9] disabled:cursor-not-allowed disabled:opacity-50">تأیید انتخاب</button>
-          <button type="button" onClick={onClose} className="sd-neutral-button min-h-12 rounded-xl border border-[#E0E7F2] bg-white px-5 text-sm font-bold text-[var(--daira-text-secondary)] transition hover:bg-[#F7F9FC]">انصراف</button>
+            className="daira-glass-dialog__primary min-h-12 flex-1 rounded-xl bg-[var(--daira-primary)] px-4 text-sm font-extrabold text-white transition hover:bg-[#2154E9] disabled:cursor-not-allowed disabled:opacity-50">تأیید انتخاب</button>
+          <button type="button" onClick={onClose} className="daira-glass-dialog__secondary sd-neutral-button min-h-12 rounded-xl border border-[#E0E7F2] bg-white px-5 text-sm font-bold text-[var(--daira-text-secondary)] transition hover:bg-[#F7F9FC]">انصراف</button>
         </footer>
       </section>
     </div>

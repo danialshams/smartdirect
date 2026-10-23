@@ -176,3 +176,222 @@
   .daira-app-shell :is(.daira-home__account-panel,.daira-home__tool-card,
     .daira-home__quick-card,.daira-support__ticket) { transition:none; }
 }
+
+/* Daira shared modal / picker base; use with any dashboard portal. */
+.daira-glass-overlay {
+  background:var(--daira-glass-modal-dim);
+  -webkit-backdrop-filter:blur(3px);
+  backdrop-filter:blur(3px);
+  padding-top:max(16px,env(safe-area-inset-top,0px));
+  padding-bottom:max(16px,env(safe-area-inset-bottom,0px));
+}
+.daira-glass-dialog {
+  border:1.5px solid var(--daira-glass-border-strong);
+  border-radius:26px;
+  background:var(--daira-glass-modal-balanced);
+  -webkit-backdrop-filter:blur(18px) saturate(116%);
+  backdrop-filter:blur(18px) saturate(116%);
+  box-shadow:0 25px 65px rgba(22,44,86,.23),inset 0 1px 0 var(--daira-glass-rim),
+    inset 0 -1px 0 var(--daira-glass-border-strong);
+  color:var(--daira-heading);
+}
+.daira-glass-dialog__header,
+.daira-glass-dialog__filters {
+  border-color:var(--daira-glass-inner-rim);
+  background:var(--daira-glass-modal-header);
+}
+.daira-glass-dialog__footer {
+  border-color:var(--daira-glass-inner-rim);
+  background:var(--daira-glass-modal-footer);
+}
+.daira-glass-dialog__close,
+.daira-glass-dialog__secondary {
+  border-color:var(--daira-glass-rim);
+  background:var(--daira-glass-raised);
+  color:var(--daira-text-secondary);
+}
+.daira-glass-dialog__primary { background:var(--daira-primary);color:var(--daira-inverse-text); }
+.daira-glass-dialog--danger { max-width:410px; }
+.daira-glass-dialog--content { max-height:min(82dvh,720px); }
+.daira-glass-tabs { background:var(--daira-queue-bg);border:1px solid var(--daira-glass-inner-rim); }
+.daira-glass-dialog .sd-content-card,
+.daira-glass-dialog .daira-content-thumbnail {
+  border-color:var(--daira-glass-rim);
+  background:var(--daira-surface-hover);
+}
+.daira-glass-dialog .daira-content-thumbnail[aria-pressed="true"] {
+  border-color:var(--daira-primary)!important;
+  box-shadow:0 0 0 1px var(--daira-glass-rim),0 3px 12px rgba(47,97,253,.20);
+}
+.daira-app-shell .daira-account-modal {
+  background:var(--daira-glass-modal-balanced);
+  border-color:var(--daira-glass-border-strong);
+  box-shadow:0 25px 65px rgba(22,44,86,.23),inset 0 1px 0 var(--daira-glass-rim),
+    inset 0 -1px 0 var(--daira-glass-border-strong);
+}
+@media(max-width:600px) {
+ .daira-glass-dialog--content { width:calc(100vw - 32px);max-height:82dvh; }
+}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
+  .daira-glass-dialog,.daira-app-shell .daira-account-modal { background:var(--daira-surface); }
+}
+@media(prefers-reduced-transparency:reduce) {
+ .daira-glass-dialog,.daira-app-shell .daira-account-modal {
+    background:var(--daira-surface)!important;backdrop-filter:none!important;
+    -webkit-backdrop-filter:none!important;
+ }
+}
+
+/* Shared input search pattern. Near-opaque white is intentional: a translucent
+   search field on a glass card lowers contrast and causes iOS text zoom. */
+.daira-search-field {
+  background:var(--daira-search-surface)!important;
+  border:1px solid var(--daira-search-border)!important;
+  color:var(--daira-text-secondary);
+  border-radius:14px!important;
+  box-shadow:inset 0 1px 0 var(--daira-glass-inner-rim),0 2px 8px rgba(24,35,60,.025);
+  min-height:46px;
+}
+.daira-search-field:focus-within {
+  border-color:var(--daira-search-focus)!important;
+  box-shadow:var(--daira-input-focus-ring),inset 0 1px 0 var(--daira-glass-rim);
+}
+.daira-search-field .daira-search-input,
+.daira-search-field input {
+  font-size:16px!important;
+  -webkit-text-size-adjust:100%;
+  color:var(--daira-heading);
+  background:transparent!important;
+}
+.daira-search-field input::placeholder {color:var(--daira-search-placeholder)}
+.daira-search-field--floating {background:transparent!important;border:0!important;box-shadow:none}
+.daira-search-field--floating input {
+  background:var(--daira-search-surface)!important;
+  border:1px solid var(--daira-search-border)!important;
+  border-radius:14px!important;
+}
+.daira-search-field--floating input:focus-visible {border-color:var(--daira-search-focus)!important;box-shadow:var(--daira-input-focus-ring)}
+/* Same empty-state for automation lists, inbox empty views and pickers. */
+.daira-empty-state {
+  border:1px dashed var(--daira-empty-border)!important;
+  border-radius:20px!important;
+  background:var(--daira-empty-bg)!important;
+  color:var(--daira-empty-description)!important;
+  min-height:142px;
+  padding:24px 16px!important;
+  box-shadow:inset 0 1px 0 var(--daira-glass-inner-rim);
+  text-align:center;
+}
+.daira-empty-state > :is(svg,[data-empty-icon]) {color:var(--daira-primary);margin-inline:auto}
+.daira-empty-state :is(h2,h3,strong) {color:var(--daira-empty-title)}
+.daira-empty-state :is(p,small) {color:var(--daira-empty-description)}
+/* Shared flow and keyword editor material; keep input text fully legible. */
+.daira-keyword-field {gap:8px}
+.daira-keyword-input {
+  background:var(--daira-keyword-input-bg)!important;
+  border:1px solid var(--daira-keyword-border)!important;
+  border-radius:12px!important;
+  min-height:44px;
+  font-size:16px!important;
+  -webkit-text-size-adjust:100%;
+}
+.daira-keyword-input:focus-visible {
+  border-color:var(--daira-input-focus)!important;
+  box-shadow:var(--daira-input-focus-ring)!important;
+}
+.daira-keyword-chip {
+  background:var(--daira-keyword-chip-bg)!important;
+  color:var(--daira-keyword-chip-text)!important;
+  border:1px solid var(--daira-glass-rim);
+}
+.daira-guide-glass {
+  background:var(--daira-guide-glass)!important;
+  border:1px solid var(--daira-guide-glass-rim)!important;
+  color:var(--daira-guide-text)!important;
+  border-radius:18px!important;
+  box-shadow:var(--daira-shadow-card),inset 0 1px 0 var(--daira-glass-inner-rim);
+}
+.daira-flow-glass {
+  border-color:var(--daira-glass-rim)!important;
+  background:var(--daira-flow-card-glass)!important;
+  box-shadow:var(--daira-shadow-card),inset 0 1px 0 var(--daira-glass-inner-rim);
+}
+/* Delete dialogs include their own actions; structural style is identical
+   to the account picker, but the destructive action retains a red cue. */
+.daira-glass-dialog--danger {
+  background:var(--daira-delete-modal)!important;
+  border-radius:24px!important;
+}
+.daira-glass-dialog--danger button {touch-action:manipulation}
+.daira-app-shell .daira-skeleton-glass {
+  background:var(--daira-skeleton-surface);
+  border:1px solid var(--daira-glass-rim);
+  border-radius:20px;
+}
+/* Cross-module inputs by intention: search field may be wrapped by MUI or
+   written directly as a native input, including pages outside the shell. */
+.daira-app-shell input:is([type="search"],[aria-label*="جستجو"],[placeholder*="جستجو"],[placeholder*="جست‌"]) {
+  background:var(--daira-search-surface);
+  border-color:var(--daira-search-border);
+  border-radius:14px;
+  color:var(--daira-heading);
+  font-size:16px!important;
+  -webkit-text-size-adjust:100%;
+}
+.daira-app-shell input:is([type="search"],[aria-label*="جستجو"],[placeholder*="جستجو"],[placeholder*="جست‌"]):focus-visible {
+  border-color:var(--daira-search-focus);
+  box-shadow:var(--daira-input-focus-ring);
+}
+@media(prefers-reduced-transparency:reduce) {
+ .daira-empty-state,.daira-flow-glass,.daira-guide-glass,.daira-glass-dialog--danger {
+   background:var(--daira-surface)!important;backdrop-filter:none!important
+ }
+ .daira-guide-glass {background:var(--daira-warning-bg)!important}
+}
+
+/* The same interactive focus treatment must be visible on all glass modals. */
+.daira-glass-dialog :is(button,a,input,select,textarea):focus-visible {
+  outline:2px solid var(--daira-primary);
+  outline-offset:2px;
+}
+.daira-glass-dialog button:disabled {cursor:not-allowed;opacity:.6}
+.daira-glass-dialog--danger button[class*="bg-red"],
+.daira-glass-dialog--danger button[class*="daira-error"] {
+  background:var(--daira-delete-emphasis);
+  color:var(--daira-inverse-text);
+}
+.daira-app-shell .daira-keyword-field .daira-keyword-input::placeholder {
+  color:var(--daira-search-placeholder);
+}
+.daira-app-shell :is(.daira-flow-glass,.daira-guide-glass,.daira-empty-state) {
+  -webkit-backdrop-filter:blur(9px) saturate(110%);
+  backdrop-filter:blur(9px) saturate(110%);
+}
+.daira-app-shell .daira-keyword-field button:not(:disabled) {
+  border-radius:12px;
+}
+@media(prefers-reduced-transparency:reduce) {
+ .daira-app-shell :is(.daira-flow-glass,.daira-guide-glass,.daira-empty-state) {
+  -webkit-backdrop-filter:none;backdrop-filter:none;
+ }
+}
+
+/* Readable empty-state headings and consistent icon wells, even on older
+   modules whose detail styles were authored before design tokens existed. */
+.daira-app-shell .daira-support__empty {
+  border-color:var(--daira-empty-border);
+  background:var(--daira-empty-bg);
+  color:var(--daira-empty-description);
+}
+.daira-app-shell .daira-support__empty-icon {
+  background:var(--daira-empty-icon-surface);color:var(--daira-primary);
+}
+.daira-app-shell .daira-support__empty strong {color:var(--daira-empty-title)}
+.daira-app-shell .daira-empty-state p {max-width:440px;margin-inline:auto}
+/* All mobile search fields use system-safe text size, even when nested in a
+   fullscreen inbox overlay rather than a standard dashboard list. */
+.daira-app-shell .daira-search-input {
+  font-size:16px!important;
+  -webkit-text-size-adjust:100%;
+  color:var(--daira-heading);
+}

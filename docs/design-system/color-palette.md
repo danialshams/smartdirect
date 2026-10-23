@@ -180,3 +180,48 @@
 | `--daira-header-middle` | `#F8FAFF` | رنگ معنایی |
 | `--daira-header-end` | `#F2F6FF` | رنگ معنایی |
 
+
+## تکمیل یکپارچگی مدال، جستجو، حالت خالی، حذف، کلمه کلیدی و فلو
+
+| توکن CSS | مقدار | کاربرد |
+|---|---|---|
+| `--daira-glass-modal-balanced` | `rgba(255,255,255,0.74)` | daira glass |
+| `--daira-glass-modal-ice` | `rgba(238,246,255,0.74)` | daira glass |
+| `--daira-glass-modal-crystal` | `rgba(255,255,255,0.51)` | daira glass |
+| `--daira-glass-modal-frost` | `rgba(255,255,255,0.89)` | daira glass |
+| `--daira-glass-border-strong` | `rgba(255,255,255,0.97)` | daira glass |
+| `--daira-glass-modal-dim` | `rgba(24,35,60,0.29)` | daira glass |
+| `--daira-glass-modal-header` | `rgba(255,255,255,0.32)` | daira glass |
+| `--daira-glass-modal-footer` | `rgba(255,255,255,0.20)` | daira glass |
+| `--daira-search-surface` | `rgba(255,255,255,0.94)` | daira search |
+| `--daira-search-border` | `#DCE5F2` | daira search |
+| `--daira-search-focus` | `#2F61FD` | daira search |
+| `--daira-search-placeholder` | `#60718A` | daira search |
+| `--daira-empty-bg` | `rgba(255,255,255,0.42)` | daira empty |
+| `--daira-empty-border` | `rgba(255,255,255,0.94)` | daira empty |
+| `--daira-empty-title` | `#24344D` | daira empty |
+| `--daira-empty-description` | `#52637D` | daira empty |
+| `--daira-empty-icon-surface` | `#DDEAFE` | daira empty |
+| `--daira-keyword-container` | `rgba(255,255,255,0.42)` | daira keyword |
+| `--daira-keyword-chip-bg` | `#E9F0FF` | daira keyword |
+| `--daira-keyword-chip-text` | `#1E4BD8` | daira keyword |
+| `--daira-keyword-input-bg` | `rgba(255,255,255,0.94)` | daira keyword |
+| `--daira-keyword-border` | `#DCE5F2` | daira keyword |
+| `--daira-delete-modal` | `rgba(255,255,255,0.78)` | daira delete |
+| `--daira-delete-emphasis` | `#B91C1C` | daira delete |
+| `--daira-delete-soft` | `#FEF2F2` | daira delete |
+| `--daira-guide-glass` | `rgba(255,251,235,0.80)` | daira guide |
+| `--daira-guide-glass-rim` | `rgba(255,255,255,0.94)` | daira guide |
+| `--daira-flow-card-glass` | `rgba(255,255,255,0.58)` | daira flow |
+| `--daira-flow-selection` | `#E9F0FF` | daira flow |
+| `--daira-skeleton-surface` | `rgba(255,255,255,0.42)` | daira skeleton |
+
+### استانداردهای کامپوننت
+
+- **Modal / Content Picker:** همه مدال‌ها شناور، چهار گوشه گرد، حداقل ۱۶px فاصله موبایل و حداکثر ۸۲dvh برای لیست‌های محتوا؛ فقط بخش نتایج اسکرول می‌شود، نه هدر و دکمه‌ها. پایه `.daira-glass-dialog` و `.daira-glass-overlay`.
+- **Search:** زمینه سفید صدفی ۹۴٪ روی پنل شیشه‌ای؛ حداقل فونت 16px در موبایل برای جلوگیری از زوم Safari؛ فیلد یکسان با کلاس `.daira-search-field`.
+- **Empty State:** آیکن و متن مرکزی، فاصله و جنس مشترک با `.daira-empty-state`؛ حالت خالی جستجو باید از حالت نبود هیچ آیتمی متمایز بماند.
+- **Delete Confirmation:** پنجره شیشه‌ای با دکمه مخرب قرمز و دکمه انصراف مجزا، `.daira-glass-dialog--danger`.
+- **Keyword Editor:** فیلد 16px، چیپ‌های ثابت، کلید Enter و دکمه افزودن دارای همان ساختار `.daira-keyword-field` و `.daira-keyword-chip`.
+- **Guide:** `.daira-guide-glass` با رنگ هشدار زرد کم‌رنگ و لبه سفید؛ عنوان و توضیحات با توکن‌های معنایی راهنما.
+- **Flow & Loading:** سطوح و انتخاب‌های فلو با `.daira-flow-glass` و Skeleton با `.daira-skeleton-glass`؛ تصویر/ویدیو و ورودی متن با وضوح کامل باقی می‌مانند.
