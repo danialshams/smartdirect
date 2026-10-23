@@ -197,6 +197,13 @@ jobs:
           DIRECT_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
         run: npx tsx scripts/test-share-mention-account-isolation.ts
 
+      - name: Test redesigned support center, unread isolation and attachment persistence
+        env:
+          DATABASE_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
+          DIRECT_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
+          NODE_ENV: test
+        run: npx tsx scripts/test-support-center.ts
+
       - name: Test shared posts and story mentions webhook matching
         run: npx tsx scripts/test-share-mention-interactions.ts
 
