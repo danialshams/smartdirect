@@ -181,6 +181,9 @@ jobs:
       - name: Test shared dashboard upload pipeline and audio conversion
         run: npx tsx scripts/test-dashboard-upload-pipeline.ts
 
+      - name: Test contextual Daira bottom navigation
+        run: npx tsx scripts/test-dashboard-bottom-nav.ts
+
       - name: Test Daira publishing UX and data integrity
         run: npx tsx scripts/test-publishing-daira.ts
 
