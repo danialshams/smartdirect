@@ -37,7 +37,7 @@ export async function getSupportPayload(request: Request) {
 }
 
 export function supportAttachmentCreate(image: SupportImage | null) {
-  return image ? { create: { fileName: image.fileName, mimeType: image.mimeType, bytes: image.bytes } } : undefined;
+  return image ? { create: { fileName: image.fileName, mimeType: image.mimeType, bytes: Uint8Array.from(image.bytes) } } : undefined;
 }
 
 export function supportRealtimeEnabled() {
