@@ -29,7 +29,7 @@ const chatHeaderStart = component.indexOf('<header className="inbox-chat-header'
 const chatHeaderEnd = component.indexOf("</header>", chatHeaderStart);
 assert.ok(chatHeaderStart >= 0 && chatSearchAnchor > chatHeaderStart && chatSearchAnchor < chatHeaderEnd,
   "Search must be layered within the fixed-height chat header, not added to the message layout");
-assert.ok(component.includes('role="search" className="absolute top-full right-0 left-0 z-40'),
+assert.ok(component.includes('role="search" className="inbox-chat-search-panel absolute top-full right-0 left-0 z-40'),
   "Expanding in-chat search must overlay messages without changing their height");
 assert.ok(component.includes('touch-manipulation') && component.includes('aria-controls="inbox-conversation-search"'),
   "Search controls must prevent iOS double-tap zoom and expose their panel");

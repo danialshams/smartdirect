@@ -32,7 +32,7 @@ for(const p of ["AutomationCreationFlow","LiveAutomationEditor","EntryPointFlowB
 for(const p of ["AutomationCreationFlow","LiveAutomationEditor","DirectAutomationEditor","SmartReminderEditor"]){
   assert(src("components/dashboard/"+p+".tsx").includes("daira-guide-glass"),p+" missing shared yellow glass guide");
 }
-assert(src("components/dashboard/LiveAutomationList.tsx").includes('w-full flex-row-reverse items-center'),"Live reply create plus must appear visually before the label in RTL");
+assert(src("components/dashboard/LiveAutomationList.tsx").includes('w-full flex-row items-center'),"Live reply plus must visibly precede its label in RTL");
 assert(css.includes("font-size:16px!important") && css.includes("prefers-reduced-transparency:reduce"),"Mobile search and accessibility fallbacks must be preserved");
 
 const presence = src("components/dashboard/GlassModalPresence.tsx");

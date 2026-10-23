@@ -114,7 +114,7 @@ export default function LiveAutomationList() {
   return (
     <div dir="rtl" className="mx-auto w-full max-w-4xl space-y-4 py-3">
       <button type="button" onClick={() => router.push("/dashboard/live-automation/new")}
-        className="flex min-h-[54px] w-full flex-row-reverse items-center justify-center gap-2 rounded-full text-base font-bold text-white shadow-sm transition hover:brightness-95"
+        className="daira-create-action flex min-h-[54px] w-full flex-row items-center justify-center gap-2 rounded-full text-base font-bold text-white shadow-sm transition hover:brightness-95"
         style={{ background: dairaPalette.primary.main }}>
         <Plus size={20} /> ایجاد پاسخ جدید
       </button>
