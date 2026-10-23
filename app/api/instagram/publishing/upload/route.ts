@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import path from "node:path";
+import { createHash } from "node:crypto";
 
 import { authOptions } from "@/lib/auth";
 import { getStorageProvider, getStorageProviderForObject } from "@/lib/storage/provider";
@@ -113,6 +114,25 @@ export async function POST(request: NextRequest) {
     const safeName = sanitizeFileName(path.basename(uploadFileName, extension));
     const key = ["pending", session.user.id, `${crypto.randomUUID()}-${safeName}${extension}`].join("/");
 
+    const checksum = createHash("sha256").update(uploadBuffer).digest("hex");
+    if (purpose === "AUTOMATION") {
+      const duplicate = await prisma.instagramStorageObject.findFirst({
+        where: { userId: session.user.id, purpose: "AUTOMATION", checksum, deletedAt: null, publicUrl: { not: null } },
+        select: { storageKey: true, publicUrl: true },
+      });
+      if (duplicate?.publicUrl && await isStorageObjectReferenced({
+        storageKey: duplicate.storageKey, publicUrl: duplicate.publicUrl,
+      })) {
+        const oldProvider = getStorageProviderForObject(duplicate.storageKey, duplicate.publicUrl);
+        if (await oldProvider.exists(duplicate.storageKey).catch(() => false)) {
+          return NextResponse.json({ success: true, reused: true, data: {
+            storageKey: duplicate.storageKey, publicUrl: duplicate.publicUrl,
+            type: mediaType, fileName: uploadFileName,
+            mimeType: uploadContentType, fileSize: uploadBuffer.length,
+          } });
+        }
+      }
+    }
     const provider = getStorageProvider();
     await reserveUpload({ userId: session.user.id, storageKey: key, bytes: uploadBuffer.length, purpose });
     let result: Awaited<ReturnType<typeof provider.upload>>;
@@ -124,6 +144,7 @@ export async function POST(request: NextRequest) {
           storageKey: result.storageKey,
           publicUrl: result.publicUrl,
           fileSize: BigInt(uploadBuffer.length),
+          checksum,
           expiresAt: getUnlinkedUploadExpiry(),
         },
       });
