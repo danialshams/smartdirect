@@ -7,7 +7,7 @@ import { requestStorageCleanupByPublicUrl, useStorageUploadLease } from "./useSt
 
 type Props = {
   instagramAccountId: string;
-  onUploadMedia: (file?: File) => Promise<string>;
+  onUploadMedia: (file?: File, onProgress?: (progress: number) => void) => Promise<string>;
   onCreated: (id: string, title: string) => void;
 };
 
@@ -52,7 +52,7 @@ export default function StoryReplyShowcaseCreator({ instagramAccountId, onUpload
     // disables final automation save.
     const previousUrl = slides.find((slide) => slide.id === id)?.imageUrl;
     try {
-      const nextUrl = await onUploadMedia(file);
+      const nextUrl = await onUploadMedia(file, (progress) => setUploadProgress((current) => ({ ...current, [id]: progress })));
       if (!nextUrl) throw new Error("آپلود تصویر ناموفق بود.");
       patchSlide(id, { imageUrl: nextUrl, previewUrl: nextUrl });
       setRetryFiles((current) => ({ ...current, [id]: null }));
