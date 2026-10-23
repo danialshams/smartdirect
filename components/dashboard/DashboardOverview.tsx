@@ -44,6 +44,7 @@ const automationTools: Tool[] = [
   { key: "comment", title: "پاسخ به کامنت", description: "پاسخ خودکار به کامنت‌ها", image: "/photos/01-comment.webp", href: "/dashboard/comment-automation" },
   { key: "story", title: "پاسخ به استوری", description: "پاسخ خودکار به ریپلای استوری", image: "/photos/02-story.webp", href: "/dashboard/story-automation" },
   { key: "direct", title: "پاسخ خودکار دایرکت", description: "واکنش به کلمات کلیدی دایرکت", image: "/photos/08-direct-auto.webp", href: "/dashboard/direct-automation" },
+  { key: "share-mention", title: "پاسخ به اشتراک‌گذاری و منشن", description: "وقتی کسی پست یا ریلزت را به دایرکت بفرستد یا تو را در استوری منشن کند، پاسخ دلخواهت خودکار اجرا می‌شود.", image: "/photos/08-direct-auto.webp", href: "/dashboard/share-mention" },
   { key: "live", title: "پاسخ به لایو", description: "ارسال پاسخ هنگام لایو", image: "/photos/03-live.webp", href: "/dashboard/live-automation" },
   { key: "menu", title: "منوی دایرکت", description: "دسترسی سریع مخاطبان به گزینه‌ها", image: "/photos/07-direct-menu.webp", href: "/dashboard/persistent-menu" },
   { key: "icebreaker", title: "پیام شروع گفتگو", description: "خوش‌آمدگویی و شروع گفتگو", image: "/photos/09-icebreaker.webp", href: "/dashboard/ice-breaker" },
