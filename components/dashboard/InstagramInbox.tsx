@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, DashboardLoading } from "@/components/dashboard/DashboardUI";
-import { uploadFileWithProgress } from "./publishing/shared-upload";
+import { uploadFileWithProgress, prepareAutomationFile } from "./publishing/shared-upload";
 import { Input } from "@/components/dashboard/DashboardUI";
 import {
   ArrowRight,
@@ -860,12 +860,13 @@ export default function InstagramInbox({
     const optimisticId = addOptimisticMessage({ kind: "FILE", file });
     setSending(true);
     try {
+      const preparedFile = await prepareAutomationFile(file);
       let response: Response;
-      if (file.size > 3 * 1024 * 1024) {
+      if (preparedFile.size > 3 * 1024 * 1024) {
         // Large browser bodies exceed the serverless request limit on Vercel.
         // Stage directly to object storage, then pass only the authenticated key.
         setMediaUploadProgress(0);
-        const staged = await uploadFileWithProgress(file, "MESSAGE", setMediaUploadProgress, { purpose: "AUTOMATION" });
+        const staged = await uploadFileWithProgress(preparedFile, "MESSAGE", setMediaUploadProgress, { purpose: "AUTOMATION" });
         response = await fetch("/api/instagram/inbox", {
           method: "POST",
           headers: { "Content-Type": "application/json", Accept: "application/json" },
@@ -875,7 +876,7 @@ export default function InstagramInbox({
         const form = new FormData();
         form.append("accountId", accountId);
         form.append("conversationId", selectedId);
-        form.append("file", file);
+        form.append("file", preparedFile);
         response = await fetch("/api/instagram/inbox", {
           method: "POST", body: form, headers: { Accept: "application/json" },
         });
