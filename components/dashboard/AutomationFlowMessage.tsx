@@ -115,7 +115,6 @@ const typeOptions: Array<{
 }> = [
   { value: "TEXT", label: "متن", Icon: MessageSquareText, color: palette.primary, softColor: "#EFF6FF" },
   { value: "IMAGE", label: "تصویر", Icon: ImagePlus, color: palette.automation, softColor: "#F5F3FF" },
-  { value: "VIDEO", label: "ویدیو", Icon: Video, color: palette.success, softColor: "#F0FDF4" },
   { value: "AUDIO", label: "وویس", Icon: Mic, color: palette.warning, softColor: "#FFF7ED" },
 ];
 
@@ -258,6 +257,7 @@ export default function AutomationFlowMessage({
   }, [triggerType, message.messageType, onUpdate]);
 
   async function handleMedia(file?: File): Promise<boolean> {
+    if (file?.type.startsWith("video/")) { setError("آپلود ویدیو برای پاسخ‌های خودکار فعلاً غیرفعال است."); return false; }
     if (!file) return false;
     setError("");
     setMediaUploading(true);
@@ -686,7 +686,6 @@ function ReplyCard({
     ["FORM", "سؤال بعدی"],
     ["SHOWCASE", "ویترین"],
     ["IMAGE", "تصویر"],
-    ["VIDEO", "ویدیو"],
     ["AUDIO", "وویس"],
   ];
 

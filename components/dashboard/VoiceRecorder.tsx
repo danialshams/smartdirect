@@ -2,6 +2,7 @@
 
 import { Mic, Pause, Play, RotateCcw, Square, Upload, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { VOICE_MAX_SECONDS, validateVoiceFileForUpload } from "@/lib/instagram/voice-client";
 
 type Props = {
   onRecorded: (file: File) => boolean | void | Promise<boolean | void>;
@@ -144,7 +145,9 @@ export default function VoiceRecorder({ onRecorded, disabled = false }: Props) {
       setPaused(false);
 
       timerRef.current = window.setInterval(() => {
-        setDuration(Math.max(0, Math.floor((Date.now() - startedAtRef.current) / 1000)));
+        const seconds = Math.max(0, Math.floor((Date.now() - startedAtRef.current) / 1000));
+        setDuration(Math.min(seconds, VOICE_MAX_SECONDS));
+        if (seconds >= VOICE_MAX_SECONDS && recorder.state !== "inactive") recorder.stop();
       }, 250);
     } catch (recordingError) {
       stopTracks();
@@ -180,6 +183,7 @@ export default function VoiceRecorder({ onRecorded, disabled = false }: Props) {
     setError("");
     setProcessing(true);
     try {
+      await validateVoiceFileForUpload(recordedFile);
       const result = await onRecorded(recordedFile);
       if (result === false) {
         setProcessing(false);

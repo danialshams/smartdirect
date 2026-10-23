@@ -1,12 +1,13 @@
 "use client";
 
 import { upload as uploadToBlob } from "@vercel/blob/client";
+import { validateVoiceFileForUpload } from "@/lib/instagram/voice-client";
 
 type UploadProgressCallback = (progress: number) => void;
 export type UploadMediaResult = { type: "IMAGE" | "VIDEO" | "AUDIO"; storageKey: string; publicUrl: string; fileName: string; mimeType: string; fileSize: number; sortOrder: number };
 type UploadedMedia = UploadMediaResult;
 type UploadApiResult = { success?: boolean; message?: string; data?: unknown };
-type UploadOptions = { purpose?: "PUBLISHING" | "AUTOMATION"; onController?: (controller: AbortController | null) => void };
+type UploadOptions = { purpose?: "PUBLISHING" | "AUTOMATION" | "INBOX"; onController?: (controller: AbortController | null) => void };
 
 export type PublishingUploadResult = Omit<UploadMediaResult, "type"> & { type: "IMAGE" | "VIDEO" };
 
@@ -78,7 +79,9 @@ function uploadFormDataWithProgress(url: string, formData: FormData, signal: Abo
 
 async function uploadOnce(file: File, type: string, onProgress: UploadProgressCallback, options: UploadOptions = {}): Promise<UploadMediaResult> {
   const purpose = options.purpose ?? "PUBLISHING";
-  if (purpose === "AUTOMATION") file = await prepareAutomationFile(file);
+  if (purpose === "AUTOMATION" && file.type.startsWith("video/")) throw new Error("آپلود ویدیو برای پاسخ خودکار فعلاً غیرفعال است.");
+  if (purpose === "AUTOMATION" || purpose === "INBOX") file = await prepareAutomationFile(file);
+  if (file.type.startsWith("audio/")) await validateVoiceFileForUpload(file);
   if (file.size === 0) throw new Error("فایل خالی است.");
   const prepareStartedAt = performance.now();
   const prepareResponse = await fetch("/api/instagram/publishing/upload/client", {
@@ -266,7 +269,7 @@ async function uploadOnce(file: File, type: string, onProgress: UploadProgressCa
 }
 
 export function uploadFileWithProgress(file: File, type: string, onProgress: UploadProgressCallback, options?: Omit<UploadOptions, "purpose"> & { purpose?: "PUBLISHING" }): Promise<PublishingUploadResult>;
-export function uploadFileWithProgress(file: File, type: string, onProgress: UploadProgressCallback, options: UploadOptions & { purpose: "AUTOMATION" }): Promise<UploadMediaResult>;
+export function uploadFileWithProgress(file: File, type: string, onProgress: UploadProgressCallback, options: UploadOptions & { purpose: "AUTOMATION" | "INBOX" }): Promise<UploadMediaResult>;
 export async function uploadFileWithProgress(file: File, type: string, onProgress: UploadProgressCallback, options: UploadOptions = {}): Promise<UploadMediaResult> {
   // Retry a dropped connection once. Do not retry cancellations or validation/Meta errors.
   for (let attempt = 0; attempt < 2; attempt++) {

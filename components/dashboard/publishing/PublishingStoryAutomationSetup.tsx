@@ -95,7 +95,7 @@ function createSlide(): ShowcaseSlide {
   return { id: `slide_${crypto.randomUUID()}`, title: "", description: "", imageUrl: "", previewUrl: "", price: "", originalPrice: "", linkUrl: "", buttonText: "", isActive: true };
 }
 
-const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetupHandle, Props>(function PublishingStoryAutomationSetup({ message, showcases, forms, formTemplates = [], loadingResources, instagramAccountId, onUpdate, onSavedChange, keywordValid, onContinue, disabled, hideVideo = false, hideForm = false, textOnly = false, storyCreateMode = false, storyEditMode = false, onDraftChange, extraSettings, finalActions, responseTypeTitle = "نوع پاسخ خودکار", responseTypeDescription = "نوع پاسخی را که می‌خواهید برای این محتوا ارسال شود انتخاب کنید.", textPlaceholder = "متنی که به‌عنوان پاسخ پیام شروع گفتگو برای کاربر ارسال می‌شود...", showFinalSave = false, finalSaveLabel = "ساخت پیام شروع گفتگو", usePublishingSaveLabel = false, finalSaveLoadingLabel = "در حال ساخت پیام شروع گفتگو...", finalSaveDisabled = false }: Props, ref) {
+const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetupHandle, Props>(function PublishingStoryAutomationSetup({ message, showcases, forms, formTemplates = [], loadingResources, instagramAccountId, onUpdate, onSavedChange, keywordValid, onContinue, disabled, hideVideo = true, hideForm = false, textOnly = false, storyCreateMode = false, storyEditMode = false, onDraftChange, extraSettings, finalActions, responseTypeTitle = "نوع پاسخ خودکار", responseTypeDescription = "نوع پاسخی را که می‌خواهید برای این محتوا ارسال شود انتخاب کنید.", textPlaceholder = "متنی که به‌عنوان پاسخ پیام شروع گفتگو برای کاربر ارسال می‌شود...", showFinalSave = false, finalSaveLabel = "ساخت پیام شروع گفتگو", usePublishingSaveLabel = false, finalSaveLoadingLabel = "در حال ساخت پیام شروع گفتگو...", finalSaveDisabled = false }: Props, ref) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [retryFile, setRetryFile] = useState<File | null>(null);
@@ -160,6 +160,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
   }
 
   async function uploadMedia(file?: File): Promise<boolean> {
+    if (file?.type.startsWith("video/")) { setError("آپلود ویدیو برای پاسخ‌های خودکار فعلاً غیرفعال است."); return false; }
     if (!file) return false;
     setError(""); setUploading(true); setProgress(0); setRetryFile(file);
     try {
@@ -403,6 +404,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
   }), [keywordValid, uploading, slideUploadInProgress, formUploadsInFlight, savingShowcase, formSaving, responseType, message, showcaseSaved, onUpdate, onContinue, onSavedChange, existingShowcaseEdited, showcaseSource, storyCreateMode, storyEditMode, slides, hasValidSlide, selectedShowcase]);
 
   async function uploadFormMedia(file?: File, onProgress: (progress: number) => void = () => undefined): Promise<string> {
+    if (file?.type.startsWith("video/")) throw new Error("آپلود ویدیو برای پاسخ‌های خودکار فعلاً غیرفعال است.");
     if (!file) return "";
     setFormUploadsInFlight((value) => value + 1);
     try {
