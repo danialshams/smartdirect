@@ -17,6 +17,7 @@ import {
 import { getInstagramMessagingWindow } from "@/lib/instagram/messaging-window";
 import { normalizeInstagramAudio } from "@/lib/instagram/audio-normalizer";
 import { normalizeInstagramVideo } from "@/lib/instagram/video-normalizer";
+import { getStorageProvider } from "@/lib/storage/provider";
 
 export const dynamic = "force-dynamic";
 
@@ -203,12 +204,14 @@ async function uploadInstagramAttachment({
   igUserId,
   accessToken,
   file,
+  alreadyNormalized = false,
 }: {
   instagramAccountId: string;
   tenantId: string;
   igUserId: string;
   accessToken: string;
   file: File;
+  alreadyNormalized?: boolean;
 }) {
   const mimeType = file.type.toLowerCase();
 
@@ -235,12 +238,12 @@ async function uploadInstagramAttachment({
   let uploadBuffer: Uint8Array<ArrayBufferLike> = new Uint8Array(await file.arrayBuffer());
   let uploadFileName = file.name || "smartdirect-media";
   let uploadContentType = mimeType;
-  if (attachmentType === "audio") {
+  if (attachmentType === "audio" && !alreadyNormalized) {
     uploadBuffer = await normalizeInstagramAudio(Buffer.from(uploadBuffer), uploadFileName);
     uploadFileName = path.basename(uploadFileName, path.extname(uploadFileName)) + ".m4a";
     uploadContentType = "audio/mp4";
   }
-  if (attachmentType === "video") {
+  if (attachmentType === "video" && !alreadyNormalized) {
     uploadBuffer = await normalizeInstagramVideo(Buffer.from(uploadBuffer), uploadFileName, "MESSAGE");
     uploadFileName = path.basename(uploadFileName, path.extname(uploadFileName)) + ".mp4";
     uploadContentType = "video/mp4";
@@ -746,6 +749,40 @@ export async function GET(request: NextRequest) {
   }
 }
 
+/** Fetch only a pending upload owned by the authenticated dashboard user. */
+async function loadStagedInboxMedia(userId: string, storageKey: string) {
+  if (!storageKey.startsWith("pending/" + userId + "/")) throw new Error("فایل متعلق به این کاربر نیست.");
+  const item = await prisma.instagramStorageObject.findFirst({
+    where: { userId, storageKey, deletedAt: null },
+    select: { publicUrl: true },
+  });
+  if (!item?.publicUrl) throw new Error("فایل موقت برای ارسال پیدا نشد.");
+  const url = new URL(item.publicUrl);
+  const allowed = [process.env.S3_PUBLIC_BASE_URL, process.env.LOCAL_STORAGE_PUBLIC_URL]
+    .filter((value): value is string => Boolean(value))
+    .some((value) => { try { const base = new URL(value); return base.origin === url.origin && url.pathname.startsWith(base.pathname.replace(/\\/$/, "") + "/"); } catch { return false; } });
+  const vercelHost = url.hostname.endsWith(".public.blob.vercel-storage.com");
+  if (url.protocol !== "https:" || url.username || url.password || (!vercelHost && !allowed)) {
+    throw new Error("آدرس فایل برای ارسال معتبر نیست.");
+  }
+  const response = await fetch(url, { cache: "no-store", redirect: "error", signal: AbortSignal.timeout(90_000) });
+  if (!response.ok) throw new Error("دریافت فایل آپلودشده ناموفق بود.");
+  const declared = Number(response.headers.get("content-length") || 0);
+  if (declared > MAX_MESSAGE_MEDIA_SIZE) throw new Error("حجم فایل بیش از حد مجاز است.");
+  const data = await response.arrayBuffer();
+  if (!data.byteLength || data.byteLength > MAX_MESSAGE_MEDIA_SIZE) throw new Error("حجم فایل معتبر نیست.");
+  const name = storageKey.split("/").at(-1) || "inbox-media";
+  const normalizedAudio = name.endsWith(".normalized.m4a");
+  const normalizedVideo = name.endsWith(".normalized.mp4");
+  const fallbackType = normalizedAudio ? "audio/mp4" : normalizedVideo ? "video/mp4" : "";
+  const receivedType = response.headers.get("content-type")?.split(";")[0] || "";
+  const type = fallbackType || receivedType;
+  if (!/^(image\\/(jpeg|png)|video\\/(mp4|quicktime)|audio\\/(mp4|mpeg|webm|ogg|wav|x-wav|aac))$/.test(type)) {
+    throw new Error("فرمت فایل آپلودشده برای دایرکت مجاز نیست.");
+  }
+  return { file: new File([data], name, { type }), alreadyNormalized: normalizedAudio || normalizedVideo };
+}
+
 export async function POST(request: NextRequest) {
   const debugId = `inbox-send-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
@@ -788,6 +825,7 @@ export async function POST(request: NextRequest) {
     const conversationId =
       typeof body.conversationId === "string" ? body.conversationId : "";
 
+    const stagedStorageKey = typeof body.stagedStorageKey === "string" ? body.stagedStorageKey : "";
     const text = typeof body.text === "string" ? body.text.trim() : "";
     const action = typeof body.action === "string" ? body.action : "";
 
@@ -816,7 +854,7 @@ export async function POST(request: NextRequest) {
       return jsonError("accountId و conversationId الزامی هستند.");
     }
 
-    if (action !== "mark_seen" && !text && !file) {
+    if (action !== "mark_seen" && !text && !file && !stagedStorageKey) {
       return jsonError("متن یا فایل پیام الزامی است.");
     }
 
@@ -966,12 +1004,19 @@ export async function POST(request: NextRequest) {
           }),
     };
 
-    if (file) {
+    let attachmentFile = file;
+    let alreadyNormalized = false;
+    if (!attachmentFile && stagedStorageKey) {
+      const staged = await loadStagedInboxMedia(session.user.id, stagedStorageKey);
+      attachmentFile = staged.file;
+      alreadyNormalized = staged.alreadyNormalized;
+    }
+    if (attachmentFile) {
       console.info("[INBOX_SEND_DEBUG] attachment-upload-start", {
         debugId,
-        attachmentType: file.type,
-        fileName: file.name,
-        fileSize: file.size,
+        attachmentType: attachmentFile.type,
+        fileName: attachmentFile.name,
+        fileSize: attachmentFile.size,
       });
 
       const uploaded = await uploadInstagramAttachment({
@@ -979,7 +1024,8 @@ export async function POST(request: NextRequest) {
         tenantId: session.user.id,
         igUserId: account.igUserId,
         accessToken,
-        file,
+        file: attachmentFile,
+        alreadyNormalized,
       });
 
       console.info("[INBOX_SEND_DEBUG] attachment-upload-success", {
@@ -1034,7 +1080,7 @@ export async function POST(request: NextRequest) {
           rateLimit: {
             instagramAccountId: account.id,
             tenantId: session.user.id,
-            operation: file ? "MESSAGE_MEDIA" : "MESSAGE_TEXT",
+            operation: attachmentFile ? "MESSAGE_MEDIA" : "MESSAGE_TEXT",
           },
         },
       );
