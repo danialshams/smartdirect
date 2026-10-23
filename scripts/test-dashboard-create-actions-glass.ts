@@ -14,3 +14,5 @@ for (const name of cardFiles) assert(read("components/dashboard/"+name).includes
 const publishing = read("components/dashboard/publishing/PublishingDashboardV2.tsx");
 assert.equal(publishing.match(/daira-leading-action/g)?.length,2,"Upload and publish/schedule buttons should share icon alignment");
 console.log("DASHBOARD_CREATE_ACTIONS_GLASS_AND_BUILD_PARITY_OK");
+
+assert(read("components/dashboard/SupportTicketsClient.tsx").includes('daira-support__primary daira-leading-action'), "New support requests must share RTL creation icon order");
