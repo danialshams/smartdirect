@@ -62,4 +62,42 @@ for(const component of ["DirectAutomationList","LiveAutomationList","SmartRemind
 }
 assert(css.includes("prefers-reduced-motion:reduce"),"Modal transitions need a reduced-motion fallback");
 
+
+// Page-specific Liquid Glass adoption and the shared content picker must stay
+// wired to the canonical palette rather than regressing to independent whites.
+for (const key of [
+  "inbox-frame-glass","inbox-sidebar-glass","inbox-composer-glass",
+  "inbox-received-bubble","calendar-glass","calendar-field-glass",
+  "publishing-glass","publishing-control-glass",
+  "content-select-panel","content-select-button","content-select-button-hover",
+]) {
+  assert(dairaTokens[("--daira-" + key) as keyof typeof dairaTokens],
+    "Missing page-level semantic glass token: " + key);
+}
+const inboxUi = src("components/dashboard/InstagramInbox.tsx");
+assert(inboxUi.includes("daira-inbox-glass") && inboxUi.includes("inbox-thread-list")
+  && inboxUi.includes("inbox-chat-scroll") && inboxUi.includes("inbox-composer"),
+  "Inbox message, list, and composer surfaces must use shared glass wrappers");
+assert(!inboxUi.includes("<Input") && inboxUi.includes('role="search" className="inbox-chat-search-panel'),
+  "Inbox searches must not reintroduce MUI's nested double border");
+const insightsUi = src("app/dashboard/insights/InsightsDashboard.tsx");
+assert(insightsUi.includes("daira-insights-calendar-dialog")
+  && insightsUi.includes("visibleCalendarField") && insightsUi.includes('data-phase={calendarOpen ? "open" : "closing"}'),
+  "Insights calendar needs a glass dialog with a mounted exit transition");
+const publishingUi = src("components/dashboard/publishing/PublishingDashboardV2.tsx");
+const publishingEditor = src("components/dashboard/publishing/PublishingJobEditor.tsx");
+const publishingQueue = src("components/dashboard/publishing/PublishingQueue.tsx");
+assert(publishingUi.includes("daira-publishing-glass") && publishingEditor.includes("daira-publishing-glass")
+  && publishingQueue.includes("daira-publishing-queue-item") && publishingQueue.includes("<GlassModalPresence"),
+  "Publishing create, edit, queue, and cancel modal must share glass material");
+const flowUi = src("components/dashboard/AutomationCreationFlow.tsx");
+assert((flowUi.match(/daira-content-select-panel/g) || []).length >= 2
+  && (flowUi.match(/daira-content-select-button/g) || []).length >= 2
+  && flowUi.includes("<ContentSelectionDialog"),
+  "Story and comment reply create/edit must reuse the same content selection panel, button and dialog");
+assert(src("components/dashboard/SmartRemindersList.tsx").includes('<Plus size={20} aria-hidden="true" className="shrink-0"/><span>ایجاد یادآوری جدید</span>'),
+  "Reminder create icon must be before text in RTL");
+assert(css.includes(".daira-insights-calendar-dialog") && css.includes(".daira-publishing-queue-item"),
+  "Page-level glass surfaces must be defined centrally");
+
 console.log("DAIRA_GLASS_COVERAGE_OK");
