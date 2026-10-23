@@ -311,6 +311,18 @@ export default function InsightsDashboard() {
   const [draftFrom, setDraftFrom] = useState<Date | undefined>();
   const [draftTo, setDraftTo] = useState<Date | undefined>();
   const [calendarOpen, setCalendarOpen] = useState<"from" | "to" | null>(null);
+  // Keep the calendar Portal mounted for the 220ms exit transition.
+  const [visibleCalendarField, setVisibleCalendarField] = useState<"from" | "to" | null>(null);
+  useEffect(() => {
+    if (calendarOpen) {
+      setVisibleCalendarField(calendarOpen);
+      return;
+    }
+    if (!visibleCalendarField) return;
+    const timeout = window.setTimeout(() => setVisibleCalendarField(null), 220);
+    return () => window.clearTimeout(timeout);
+  }, [calendarOpen, visibleCalendarField]);
+
   const [today] = useState(() => startOfDay(new Date()));
   const [data, setData] = useState<InsightsData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -589,15 +601,15 @@ export default function InsightsDashboard() {
         </div>
       ) : null}
 
-      {calendarOpen && typeof document !== "undefined" && createPortal(
-        <div data-insights-calendar-popup className="daira-glass-overlay daira-insights-calendar-overlay fixed inset-0 z-[3000] flex items-center justify-center px-3 py-4"
+      {visibleCalendarField && typeof document !== "undefined" && createPortal(
+        <div data-insights-calendar-popup data-phase={calendarOpen ? "open" : "closing"} className="daira-glass-overlay daira-insights-calendar-overlay fixed inset-0 z-[3000] flex items-center justify-center px-3 py-4"
           onMouseDown={(event) => { if (event.target === event.currentTarget) setCalendarOpen(null); }}>
           <section dir="rtl" role="dialog" aria-modal="true"
-            aria-label={calendarOpen === "from" ? "انتخاب تاریخ شروع" : "انتخاب تاریخ پایان"}
+            aria-label={visibleCalendarField === "from" ? "انتخاب تاریخ شروع" : "انتخاب تاریخ پایان"}
             className="daira-glass-dialog daira-insights-calendar-dialog flex max-h-[min(90dvh,670px)] w-fit max-w-full flex-col overflow-hidden rounded-[24px]">
             <div className="flex items-center justify-between gap-2 border-b border-[var(--daira-border)] px-4 py-3">
               <div className="text-sm font-extrabold text-[var(--daira-heading)]">
-                {calendarOpen === "from" ? "انتخاب تاریخ شروع" : "انتخاب تاریخ پایان"}
+                {visibleCalendarField === "from" ? "انتخاب تاریخ شروع" : "انتخاب تاریخ پایان"}
               </div>
               <button type="button" aria-label="بستن تقویم" onClick={() => setCalendarOpen(null)}
                 className="grid h-10 w-10 place-items-center rounded-xl text-[var(--daira-text)] hover:bg-[var(--daira-surface-hover)]">
@@ -606,13 +618,13 @@ export default function InsightsDashboard() {
             </div>
             <div className="daira-insights-calendar-body min-h-0 overflow-y-auto overscroll-contain">
               <Calendar className="daira-insights-calendar-grid" key={calendarOpen} mode="single" numberOfMonths={1}
-                selected={calendarOpen === "from" ? draftFrom : draftTo}
+                selected={visibleCalendarField === "from" ? draftFrom : draftTo}
                 onSelect={pickDate}
-                defaultMonth={(calendarOpen === "from" ? draftFrom : draftTo) ?? today}
-                startMonth={calendarOpen === "to" ? (draftFrom ?? minDate) : minDate}
+                defaultMonth={(visibleCalendarField === "from" ? draftFrom : draftTo) ?? today}
+                startMonth={visibleCalendarField === "to" ? (draftFrom ?? minDate) : minDate}
                 endMonth={today}
                 disabled={{
-                  before: calendarOpen === "to" ? (draftFrom ?? minDate) : minDate,
+                  before: visibleCalendarField === "to" ? (draftFrom ?? minDate) : minDate,
                   after: today,
                 }} />
             </div>

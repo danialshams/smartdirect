@@ -264,3 +264,6 @@
 - **انتشار:** `.daira-publishing-glass` و پنل‌های دارای حاشیه با شیشه؛ فرم، متن، پیش‌نمایش عکس/ویدیو و آپلود با زمینه خوانا باقی می‌مانند.
 - **انتخاب محتوا:** `.daira-content-select-panel` و `.daira-content-select-button` در حالت ایجاد و ویرایش فلو؛ مدال واحد `ContentSelectionDialog`؛ ترتیب دکمه در RTL آیکن سپس متن است.
 - **دسترسی‌پذیری:** کم‌کردن شفافیت سیستم یا نبود پشتیبانی backdrop-filter باید به سطح مات برگردد؛ Focus Ring واحد حفظ می‌شود.
+
+- **صف انتشار و ویرایش:** کارت‌های صف نیز از `--daira-publishing-glass`، تب‌ها از `--daira-glass-raised` و تأیید لغو از `GlassModalPresence` با `daira-glass-dialog--danger` استفاده می‌کنند.
+- **حرکت تقویم:** هنگام خروج، Portal تقویم به مدت ۲۲۰ میلی‌ثانیه برای انیمیشن معکوس در DOM حفظ می‌شود.

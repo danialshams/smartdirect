@@ -511,7 +511,7 @@ export default function PublishingJobEditor({
     <>
     <div
       dir="rtl"
-      className="min-h-full bg-transparent px-1 py-2 pb-24 sm:px-2 sm:py-3 sm:pb-8"
+      className="daira-publishing-glass min-h-full bg-transparent px-1 py-2 pb-24 sm:px-2 sm:py-3 sm:pb-8"
     >
       <div className="mx-auto w-full max-w-3xl space-y-5">
         <div className="mb-5 space-y-3">

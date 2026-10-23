@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import GlassModalPresence from "../GlassModalPresence";
 import Link from "next/link";
 import { CalendarClock, CircleAlert, Image as ImageIcon, LoaderCircle, Pencil, RotateCcw, Trash2, RefreshCw } from "lucide-react";
 import PublishingPageSkeleton from "./PublishingPageSkeleton";
@@ -62,14 +63,14 @@ export default function PublishingQueue({jobs,loading,error,onRetry,onCancel,onR
     finally {setBusy(null);setConfirmCancel(null);}
   }
   if(loading && !jobs.length)return <PublishingPageSkeleton view="queue"/>;
-  return <section className="mx-auto w-full max-w-4xl space-y-4 px-1 py-2 sm:px-2" dir="rtl">
+  return <section className="daira-publishing-queue mx-auto w-full max-w-4xl space-y-4 px-1 py-2 sm:px-2" dir="rtl">
     <div className="flex items-center justify-between gap-3">
       <div><h2 className="text-base font-extrabold" style={{color:dairaPalette.text.heading}}>صف انتشار</h2>
         <p className="mt-1 text-xs" style={{color:dairaPalette.text.body}}>مدیریت محتوای زمان‌بندی‌شده و پیگیری نتیجه انتشار</p></div>
       <button type="button" onClick={()=>void onRefresh()} aria-label="به‌روزرسانی صف انتشار"
         className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[var(--daira-border)] bg-white text-[var(--daira-primary)]"><RefreshCw size={17}/></button>
     </div>
-    <div className="grid grid-cols-2 gap-2 rounded-xl bg-[var(--daira-section-alt)] p-1.5" role="group" aria-label="نمای صف">
+    <div className="daira-publishing-queue-tabs grid grid-cols-2 gap-2 rounded-xl bg-[var(--daira-section-alt)] p-1.5" role="group" aria-label="نمای صف">
       {([{key:false,label:"در انتظار",count:pending.length},{key:true,label:"تاریخچه",count:history.length}] as const).map(option=>
         <button key={option.label} type="button" aria-pressed={showHistory===option.key} onClick={()=>setShowHistory(option.key)}
           className={"min-h-11 rounded-lg px-3 text-sm font-semibold transition "+(showHistory===option.key?"bg-white text-[var(--daira-primary)] shadow-sm":"text-[var(--daira-text-secondary)]")}>
@@ -84,7 +85,7 @@ export default function PublishingQueue({jobs,loading,error,onRetry,onCancel,onR
     </div>:<div className="space-y-2.5">{shown.map(job=>{
       const status=statuses[job.status]||statuses.DRAFT;
       const busyThis=busy===job.id;
-      return <article key={job.id} className="flex min-h-[96px] items-center gap-3 rounded-[22px] border border-[#E8EDF5] bg-white px-3 py-3 shadow-[0_3px_12px_rgba(15,23,42,.025)] sm:px-4">
+      return <article key={job.id} className="daira-publishing-queue-item flex min-h-[96px] items-center gap-3 rounded-[22px] border border-[var(--daira-border)] bg-white px-3 py-3 shadow-sm sm:px-4">
         <Preview job={job}/>
         <div className="min-w-0 flex-1 space-y-1.5">
           <div className="flex flex-wrap items-center gap-2"><p className="text-sm font-bold text-[var(--daira-heading)]">{labels[job.type]}</p>
@@ -100,13 +101,15 @@ export default function PublishingQueue({jobs,loading,error,onRetry,onCancel,onR
         </div>
       </article>;
     })}</div>}
-    {confirmCancel&&<div className="fixed inset-0 z-[9998] flex items-center justify-center bg-[var(--daira-heading)]/40 px-4 backdrop-blur-sm" onMouseDown={e=>{if(e.target===e.currentTarget&&!busy)setConfirmCancel(null);}}>
-      <div role="dialog" aria-modal="true" aria-label="لغو انتشار" className="w-full max-w-sm space-y-4 rounded-[24px] bg-white p-5 shadow-2xl">
+    <GlassModalPresence open={Boolean(confirmCancel)} onEscape={() => { if (!busy) setConfirmCancel(null); }}>
+    {confirmCancel&&<div className="daira-glass-overlay fixed inset-0 z-[9998] flex items-center justify-center px-4" onMouseDown={e=>{if(e.target===e.currentTarget&&!busy)setConfirmCancel(null);}}>
+      <div role="dialog" aria-modal="true" aria-label="لغو انتشار" className="daira-glass-dialog daira-glass-dialog--danger w-full max-w-sm space-y-4 rounded-[24px] p-5">
         <div className="flex items-center gap-2 text-[var(--daira-error-text)]"><CircleAlert size={20}/><h3 className="font-bold">لغو انتشار زمان‌بندی‌شده</h3></div>
         <p className="text-xs leading-7 text-[var(--daira-text-secondary)]">محتوای زمان‌بندی‌شده لغو می‌شود و ممکن است فایل‌های آن طبق سیاست نگهداری حذف شوند.</p>
         <div className="grid grid-cols-2 gap-2"><button disabled={Boolean(busy)} onClick={()=>setConfirmCancel(null)} className="min-h-11 rounded-xl border border-[var(--daira-border)] text-sm font-semibold">انصراف</button>
           <button disabled={Boolean(busy)} onClick={()=>void runAction(confirmCancel,"cancel")} className="min-h-11 rounded-xl bg-[var(--daira-error-text)] text-sm font-semibold text-white">تأیید لغو</button></div>
       </div>
     </div>}
+    </GlassModalPresence>
   </section>;
 }

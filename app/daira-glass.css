@@ -598,7 +598,7 @@
   background:var(--daira-content-select-panel);
   box-shadow:var(--daira-shadow-card),inset 0 1px 0 var(--daira-glass-inner-rim);
 }
-.daira-app-shell .automation-create-flow section[class*="bg-white"][class*="border"] {
+.daira-app-shell .automation-create-flow section[class*="bg-white"][class*="border"]:not(.daira-content-select-panel) {
   background:var(--daira-flow-card-glass);
   border-color:var(--daira-glass-rim);
 }
@@ -652,4 +652,25 @@
 }
 @media(prefers-reduced-motion:reduce) {
   .daira-content-select-button {transition:none}
+}
+
+/* Queue and editor share publication material, including cancel confirmation. */
+.daira-app-shell .daira-publishing-glass .daira-publishing-queue-tabs {
+  border:1px solid var(--daira-glass-rim);
+  background:var(--daira-glass-raised);
+  box-shadow:inset 0 1px 0 var(--daira-glass-inner-rim);
+}
+.daira-app-shell .daira-publishing-glass .daira-publishing-queue-tabs [aria-pressed="true"] {
+  background:var(--daira-glass-popover);
+  color:var(--daira-primary);
+}
+.daira-app-shell .daira-publishing-glass .daira-publishing-queue-item {
+  border-color:var(--daira-glass-rim);
+  background:var(--daira-publishing-glass);
+  box-shadow:var(--daira-shadow-card),inset 0 1px 0 var(--daira-glass-inner-rim);
+}
+@media(prefers-reduced-transparency:reduce) {
+  .daira-app-shell .daira-publishing-glass .daira-publishing-queue-item {
+    background:var(--daira-surface)!important;
+  }
 }
