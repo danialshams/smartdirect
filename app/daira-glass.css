@@ -375,3 +375,23 @@
   -webkit-backdrop-filter:none;backdrop-filter:none;
  }
 }
+
+/* Readable empty-state headings and consistent icon wells, even on older
+   modules whose detail styles were authored before design tokens existed. */
+.daira-app-shell .daira-support__empty {
+  border-color:var(--daira-empty-border);
+  background:var(--daira-empty-bg);
+  color:var(--daira-empty-description);
+}
+.daira-app-shell .daira-support__empty-icon {
+  background:var(--daira-empty-icon-surface);color:var(--daira-primary);
+}
+.daira-app-shell .daira-support__empty strong {color:var(--daira-empty-title)}
+.daira-app-shell .daira-empty-state p {max-width:440px;margin-inline:auto}
+/* All mobile search fields use system-safe text size, even when nested in a
+   fullscreen inbox overlay rather than a standard dashboard list. */
+.daira-app-shell .daira-search-input {
+  font-size:16px!important;
+  -webkit-text-size-adjust:100%;
+  color:var(--daira-heading);
+}
