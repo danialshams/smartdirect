@@ -284,10 +284,6 @@ export async function POST(request: NextRequest) {
             if (!pathname.startsWith(safePathPrefix)) {
               throw new Error("مسیر آپلود معتبر نیست.");
             }
-            const reserved = await prisma.instagramStorageObject.findUnique({ where: { storageKey: pathname } });
-            if (!reserved || reserved.userId !== session.user.id || reserved.deletedAt || reserved.expiresAt <= new Date() || reserved.fileSize !== BigInt(payload.fileSize ?? 0)) {
-              throw new Error("مجوز آپلود منقضی شده یا متعلق به کاربر نیست.");
-            }
 
             let payload: {
               purpose?: string;
@@ -306,6 +302,10 @@ export async function POST(request: NextRequest) {
               }
             }
 
+            const reserved = await prisma.instagramStorageObject.findUnique({ where: { storageKey: pathname } });
+            if (!reserved || reserved.userId !== session.user.id || reserved.deletedAt || reserved.expiresAt <= new Date() || reserved.fileSize !== BigInt(payload.fileSize ?? 0)) {
+              throw new Error("مجوز آپلود منقضی شده یا متعلق به کاربر نیست.");
+            }
             if (
               payload.pathname !== pathname ||
               !payload.contentType ||
