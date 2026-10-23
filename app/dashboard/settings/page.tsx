@@ -1,3 +1,4 @@
+import StorageUsagePanel from "../../../components/dashboard/StorageUsagePanel";
 import DashboardRoute from "../../../components/dashboard/DashboardRoute";
 import { DashboardPageLayout, DashboardPageSection } from "../../../components/dashboard/DashboardPageLayout";
 
@@ -10,6 +11,7 @@ export default function SettingsPage() {
             گزینه‌های تنظیمات حساب در این بخش قرار می‌گیرند.
           </p>
         </DashboardPageSection>
+        <StorageUsagePanel />
       </DashboardPageLayout>
     </DashboardRoute>
   );
