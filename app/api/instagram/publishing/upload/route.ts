@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
     }
     const provider = getStorageProvider();
     await reserveUpload({ userId: session.user.id, storageKey: key, bytes: uploadBuffer.length, purpose });
-    let result: Awaited<ReturnType<typeof provider.upload>>;
+    let result: Awaited<ReturnType<typeof provider.upload>> | null = null;
     try {
       result = await provider.upload({ key, body: uploadBuffer, contentType: uploadContentType });
       await prisma.instagramStorageObject.update({
@@ -149,11 +149,12 @@ export async function POST(request: NextRequest) {
         },
       });
     } catch (error) {
-      if (result!) await provider.delete(result.storageKey).catch(() => undefined);
+      if (result) await provider.delete(result.storageKey).catch(() => undefined);
       await releaseUploadReservation(session.user.id, key).catch(() => undefined);
       throw error;
     }
 
+    if (!result) throw new Error("آپلود فایل تکمیل نشد.");
     return NextResponse.json({
       success: true,
       data: {
