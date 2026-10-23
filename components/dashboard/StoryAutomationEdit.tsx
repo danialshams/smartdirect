@@ -38,8 +38,8 @@ export default function StoryAutomationEdit({ id }: { id: string }) {
   if (!automation && !error) return <AutomationCreationSkeleton triggerType="STORY_REPLY_KEYWORD" />;
   if (!automation) return (
     <div dir="rtl" className="mx-auto flex min-h-[45vh] max-w-2xl flex-col items-center justify-center gap-4 px-4 text-center">
-      <div role="alert" className="w-full rounded-xl border border-[var(--daira-error-border,#FECACA)] bg-[var(--daira-error-background,#FEF2F2)] px-4 py-4 text-sm text-[var(--daira-error-text,#B91C1C)]">{error}</div>
-      <button type="button" onClick={() => setRetry((value) => value + 1)} className="min-h-11 rounded-xl bg-[var(--daira-primary,#2F61FD)] px-5 text-sm font-bold text-white">تلاش دوباره</button>
+      <div role="alert" className="w-full rounded-xl border border-[var(--daira-error-border,var(--daira-error-border))] bg-[var(--daira-error-background,var(--daira-error-background))] px-4 py-4 text-sm text-[var(--daira-error-text,var(--daira-error-text))]">{error}</div>
+      <button type="button" onClick={() => setRetry((value) => value + 1)} className="min-h-11 rounded-xl bg-[var(--daira-primary,var(--daira-primary))] px-5 text-sm font-bold text-white">تلاش دوباره</button>
     </div>
   );
 

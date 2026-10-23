@@ -166,12 +166,12 @@ export default function ShareMentionEditor({id}:{id?:string}){
        const item=media.find(x=>x.id===mid);
        const isVideo=item?.media_product_type==="REELS"||item?.media_type==="VIDEO";
        const preview=item?.thumbnail_url||(!isVideo?item?.media_url:null);
-       return <div key={mid} className="relative min-w-0 overflow-hidden rounded-xl border border-[#E2E8F0] bg-[#F8FAFC]">
+       return <div key={mid} className="relative min-w-0 overflow-hidden rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)]">
         <div className="flex aspect-square items-center justify-center overflow-hidden bg-[#EFF3FA]">
          {preview?<img src={preview} alt={item?.caption||"محتوای انتخاب‌شده"} loading="lazy" className="h-full w-full object-cover"/>:<ImageIcon size={22} className="text-slate-400"/>}
         </div>
-        <button type="button" onClick={()=>setSelected(list=>list.filter(x=>x!==mid))} className="absolute left-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full border border-[#E2E8F0] bg-white/95 text-red-600 shadow-sm transition hover:bg-red-50" aria-label={"حذف "+(item?contentLabel(item):"محتوا")}><X size={16}/></button>
-        <p className="truncate px-2 py-2 text-center text-[11px] font-semibold text-[#475569]">{item?contentLabel(item):"محتوای قبلی"}</p>
+        <button type="button" onClick={()=>setSelected(list=>list.filter(x=>x!==mid))} className="absolute left-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full border border-[var(--daira-border)] bg-white/95 text-red-600 shadow-sm transition hover:bg-red-50" aria-label={"حذف "+(item?contentLabel(item):"محتوا")}><X size={16}/></button>
+        <p className="truncate px-2 py-2 text-center text-[11px] font-semibold text-[var(--daira-text-secondary)]">{item?contentLabel(item):"محتوای قبلی"}</p>
        </div>;
       })}
      </div>}
