@@ -119,8 +119,8 @@ export default function DashboardHeader({
       </div>
 
       {accountModalOpen ? (
-        <div className="daira-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setAccountModalOpen(false); }}>
-          <section ref={accountDialogRef} className="daira-account-modal" role="dialog" aria-modal="true" aria-labelledby="daira-account-title">
+        <div className="daira-modal-backdrop daira-glass-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setAccountModalOpen(false); }}>
+          <section ref={accountDialogRef} className="daira-account-modal daira-glass-dialog" role="dialog" aria-modal="true" aria-labelledby="daira-account-title">
             <button ref={closeModalRef} className="daira-account-modal__close" type="button" aria-label="بستن" onClick={() => setAccountModalOpen(false)}><X size={20} /></button>
             <div className="daira-account-modal__icon"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="2"/><circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="2"/></svg></div>
             <h2 id="daira-account-title">اکانت‌های اینستاگرام</h2>
