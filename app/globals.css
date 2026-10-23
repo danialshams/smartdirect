@@ -930,3 +930,12 @@ body {
     inset 0 0 0 1px var(--daira-glass-inner-rim),
     inset 0 -1px 0 var(--daira-glass-rim),inset 0 1px 1px var(--daira-glass-rim);
 }
+
+/* Scroll elevation must not erase the lower WHITE rim. The older scroll-only
+   box-shadow overrides the base shadow by specificity. */
+.daira-home__header--liquid.is-scrolled {
+  border-bottom-color:var(--daira-glass-border-strong);
+  box-shadow:0 15px 34px rgba(31,49,80,.15),0 4px 10px rgba(31,49,80,.045),
+    inset 0 0 0 1px var(--daira-glass-inner-rim),
+    inset 0 -1px 0 var(--daira-glass-border-strong),inset 0 1px 1px var(--daira-glass-rim);
+}
