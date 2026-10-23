@@ -38,6 +38,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (!body || typeof body !== "object") return NextResponse.json({ success: false, error: "اطلاعات پیام نامعتبر است" }, { status: 400 });
     const { messageType = "TEXT", text, mediaUrl, mediaId, showcaseId, formId, order, linkButtonUrl, linkButtonTitle, linkButtons } = body;
     if (!isValidMessageType(messageType)) return NextResponse.json({ success: false, error: "نوع پیام نامعتبر است" }, { status: 400 });
+    if (messageType === "VIDEO") return NextResponse.json({ success: false, error: "ساخت پاسخ ویدیویی فعلاً غیرفعال است." }, { status: 400 });
     const normalizedText = normalizeOptionalString(text);
     const normalizedMediaUrl = normalizeOptionalString(mediaUrl);
     const normalizedMediaId = normalizeOptionalString(mediaId);
