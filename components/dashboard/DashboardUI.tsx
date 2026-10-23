@@ -154,7 +154,7 @@ function PersianCalendarDropdown({
               key={option.value}
               value={String(option.value)}
               disabled={disabled}
-              style={{ color: disabled ? "#94A3B8" : COLORS.text }}
+              style={{ color: disabled ? "var(--daira-text-disabled)" : COLORS.text }}
             >
               {option.label}
             </option>
@@ -215,25 +215,25 @@ export function Button({
     boxShadow: "none",
     ...(variant === "default" ? {
       bgcolor: COLORS.primary,
-      color: "#FFFFFF",
+      color: "var(--daira-surface)",
       "&:hover": { bgcolor: COLORS.primaryDark },
     } : {}),
     ...(variant === "destructive" ? {
-      bgcolor: "#FFFFFF",
-      color: "#DC2626",
-      border: "1px solid #DC2626",
-      "&:hover": { bgcolor: "#FFFFFF", borderColor: "#B91C1C", color: "#B91C1C" },
+      bgcolor: "var(--daira-surface)",
+      color: "var(--daira-error-text)",
+      border: "1px solid var(--daira-error-text)",
+      "&:hover": { bgcolor: "var(--daira-surface)", borderColor: "var(--daira-error-text)", color: "var(--daira-error-text)" },
     } : {}),
     ...(variant === "outline" ? {
       bgcolor: COLORS.surface,
       color: COLORS.text,
       border: "1px solid " + COLORS.border,
-      "&:hover": { bgcolor: COLORS.background, borderColor: "#94A3B8" },
+      "&:hover": { bgcolor: COLORS.background, borderColor: "var(--daira-text-disabled)" },
     } : {}),
     ...(variant === "secondary" ? {
-      bgcolor: "#F1F5F9",
+      bgcolor: "var(--daira-neutral-bg)",
       color: COLORS.text,
-      "&:hover": { bgcolor: "#E2E8F0" },
+      "&:hover": { bgcolor: "var(--daira-border)" },
     } : {}),
     ...(variant === "ghost" ? {
       bgcolor: "transparent",
@@ -435,7 +435,7 @@ export function Checkbox({
       {...props}
       sx={{
         p: 0.5,
-        color: "#CBD5E1",
+        color: "var(--daira-outline)",
         "&.Mui-checked": { color: COLORS.primary },
       }}
     />
@@ -462,7 +462,7 @@ export function Skeleton({ className, ...props }: React.HTMLAttributes<HTMLDivEl
       animation="pulse"
       {...props}
       sx={{
-        bgcolor: "#E2E8F0",
+        bgcolor: "var(--daira-border)",
         borderRadius: 2,
       }}
     />
@@ -641,16 +641,16 @@ export function Calendar({ className, ...props }: DashboardCalendarProps) {
           fontFamily: '"Vazirmatn", Arial, sans-serif',
           cursor: "pointer",
         },
-        "& .rdp-day_button:hover": { background: "#EFF6FF", color: COLORS.primary },
+        "& .rdp-day_button:hover": { background: "var(--daira-outline-hover-bg)", color: COLORS.primary },
         "& [data-selected=true] .rdp-day_button": {
           background: COLORS.primary,
-          color: "#FFFFFF",
+          color: "var(--daira-surface)",
         },
         "& [data-today=true] .rdp-day_button": {
           border: "1px solid " + COLORS.primary,
         },
         "& [data-disabled=true] .rdp-day_button": {
-          color: "#94A3B8",
+          color: "var(--daira-text-disabled)",
           opacity: 0.45,
           cursor: "not-allowed",
         },
