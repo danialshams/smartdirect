@@ -80,6 +80,9 @@ jobs:
       - name: Verify the single canonical Daira color palette
         run: npm run theme:check
 
+      - name: Test complete Daira design system
+        run: npx tsx scripts/test-daira-design-system.ts
+
       - name: Build application
         env:
           NODE_ENV: production
