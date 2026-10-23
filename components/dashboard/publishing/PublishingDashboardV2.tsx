@@ -296,7 +296,7 @@ type UploadAreaProps = {
 function UploadArea({ id, accept, multiple, disabled, isDragging, setIsDragging, title, onChange, onDrop }: UploadAreaProps) {
   return (
     <div className={"rounded-[20px] border p-4 transition-all sm:p-5 " +
-      (isDragging ? "border-[var(--daira-primary)] bg-[var(--daira-publishing-selected)] ring-2 ring-[#BAD0FF]" : "border-[var(--daira-publishing-border)] bg-[var(--daira-upload-bg)] hover:border-[#BAD0FF]") +
+      (isDragging ? "border-[var(--daira-primary)] bg-[var(--daira-publishing-selected)] ring-2 ring-[var(--daira-brand-300)]" : "border-[var(--daira-publishing-border)] bg-[var(--daira-upload-bg)] hover:border-[var(--daira-brand-300)]") +
       (disabled ? " pointer-events-none opacity-60" : "")}
       onDragOver={event=>{event.preventDefault();if(!disabled)setIsDragging(true);}}
       onDragLeave={()=>setIsDragging(false)}
@@ -1302,7 +1302,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                 {([["POST","پست",ImagePlus],["REEL","ریلز",Clapperboard],["CAROUSEL","پست اسلایدی",Images],["STORY","استوری",Camera]] as const).map(([value,label,Icon])=>{
                   const selected=type===value;
                   return <button key={value} type="button" disabled={uploading||reelCoverUploading||publishing} aria-pressed={selected} onClick={()=>changeContentType(value)}
-                    className={"relative flex min-h-[78px] flex-col items-center justify-center gap-2 rounded-2xl border px-1.5 py-3 text-center transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--daira-primary)] disabled:opacity-50 "+(selected?"border-[var(--daira-primary)] bg-[var(--daira-publishing-selected)] text-[var(--daira-primary)]":"border-[var(--daira-border)] bg-[var(--daira-surface-hover)] text-[var(--daira-text-secondary)] hover:border-[#BAD0FF]")}>
+                    className={"relative flex min-h-[78px] flex-col items-center justify-center gap-2 rounded-2xl border px-1.5 py-3 text-center transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--daira-primary)] disabled:opacity-50 "+(selected?"border-[var(--daira-primary)] bg-[var(--daira-publishing-selected)] text-[var(--daira-primary)]":"border-[var(--daira-border)] bg-[var(--daira-surface-hover)] text-[var(--daira-text-secondary)] hover:border-[var(--daira-brand-300)]")}>
                     <Icon size={22} strokeWidth={1.8}/>
                     <span className="text-[11px] font-bold sm:text-xs">{label}</span>
                     {selected&&<CheckCircle2 size={14} className="absolute left-2 top-2 text-[var(--daira-primary)]"/>}
@@ -1370,7 +1370,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                                 disabled={!isCarouselSlide || row.status !== "success" || Boolean(row.removing)}
                                 className="relative min-w-0 flex-1"
                               >
-                                <div className={["relative flex-1 overflow-hidden rounded-[17px] border px-3 py-3 shadow-[0_2px_10px_rgba(22,54,110,.025)] transition-[border-color,background-color,opacity] duration-150 ease-out", row.removing ? "max-h-0 -translate-y-1 !border-transparent !p-0 opacity-0" : "max-h-36 opacity-100", row.status === "failed" ? "border-[var(--daira-error-border)] bg-[var(--daira-error-background)]" : row.status === "success" && slide ? "border-[var(--daira-publishing-border)] bg-[var(--daira-upload-bg)]" : row.status === "success" ? "border-[#BBF7D0] bg-[var(--daira-success-bg)]" : "border-[var(--daira-border)] bg-white", isCarouselSlide ? "cursor-grab active:cursor-grabbing" : ""].join(" ")}
+                                <div className={["relative flex-1 overflow-hidden rounded-[17px] border px-3 py-3 shadow-[0_2px_10px_rgba(22,54,110,.025)] transition-[border-color,background-color,opacity] duration-150 ease-out", row.removing ? "max-h-0 -translate-y-1 !border-transparent !p-0 opacity-0" : "max-h-36 opacity-100", row.status === "failed" ? "border-[var(--daira-error-border)] bg-[var(--daira-error-background)]" : row.status === "success" && slide ? "border-[var(--daira-publishing-border)] bg-[var(--daira-upload-bg)]" : row.status === "success" ? "border-[var(--daira-success-border)] bg-[var(--daira-success-bg)]" : "border-[var(--daira-border)] bg-white", isCarouselSlide ? "cursor-grab active:cursor-grabbing" : ""].join(" ")}
                                 >
                                 <div className="flex items-center gap-3">
                                   {slide ? (
@@ -1391,7 +1391,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                                       {row.status === "queued" ? "در صف آپلود" : row.status === "uploading" ? `در حال آپلود · ${toPersianDigits(row.progress)}٪` : row.status === "success" ? "آپلود با موفقیت انجام شد · برای جابه‌جایی نگه دار و بکش" : "آپلود ناموفق بود"}
                                     </p>
                                     {(row.status === "queued" || row.status === "uploading" || row.status === "failed") && (
-                                      <div className={["mt-2 h-1.5 overflow-hidden rounded-full", row.status === "failed" ? "bg-[#FEE2E2]" : "bg-[var(--daira-border)]"].join(" ")}>
+                                      <div className={["mt-2 h-1.5 overflow-hidden rounded-full", row.status === "failed" ? "bg-[var(--daira-error-background)]" : "bg-[var(--daira-border)]"].join(" ")}>
                                         <div className={["h-full rounded-full transition-[width] duration-150", row.status === "failed" ? "bg-[var(--daira-error-text)]" : "bg-[var(--daira-primary)]"].join(" ")} style={{ width: `${Math.max(row.status === "failed" ? 3 : 0, Math.min(100, row.progress))}%` }} />
                                       </div>
                                     )}
@@ -1454,7 +1454,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                     placeholder={`کپشن ${typeLabels[type]} را بنویس...`}
                   />
                 </section>
-                <section className="w-full rounded-[22px] border border-[#E8EDF5] bg-white p-4 shadow-sm sm:p-6">
+                <section className="w-full rounded-[22px] border border-[var(--daira-border)] bg-white p-4 shadow-sm sm:p-6">
                   <button type="button" onClick={()=>setShowTags(value=>!value)} aria-expanded={showTags} aria-controls="publishing-tags-panel"
                     className="mb-2 flex w-full items-center justify-between gap-3 rounded-xl p-1 text-right focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--daira-primary)]">
                     <span className="flex items-start gap-3">
@@ -1464,7 +1464,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                     </span>
                     <ChevronDown size={18} className={"shrink-0 text-[var(--daira-text-secondary)] transition-transform "+(showTags?"rotate-180":"")}/>
                   </button>
-                  {showTags && <div id="publishing-tags-panel" className="mt-4 border-t border-[#E8EDF5] pt-4">
+                  {showTags && <div id="publishing-tags-panel" className="mt-4 border-t border-[var(--daira-border)] pt-4">
                   {tagInputError && <p role="alert" className="mb-3 rounded-xl border border-[var(--daira-error-border)] bg-[var(--daira-error-background)] p-3 text-xs text-[var(--daira-error-text)]">{tagInputError}</p>}
                   <div className="space-y-3">
                     {uploadedMedia.length === 0 && (
@@ -1676,10 +1676,10 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
                   {storyResponseSaved && !storyResponseEditing && (
                     <div className="flex items-center justify-center gap-2 border-t border-[var(--daira-border)] pt-4">
-                      <Button type="button" onClick={handleEditStoryResponse} className="min-h-10 flex-1 rounded-xl border border-[#BFDBFE] bg-[var(--daira-outline-hover-bg)] px-4 text-sm font-bold text-[var(--daira-primary)] hover:bg-[var(--daira-outline-active-bg)]">
+                      <Button type="button" onClick={handleEditStoryResponse} className="min-h-10 flex-1 rounded-xl border border-[var(--daira-brand-300)] bg-[var(--daira-outline-hover-bg)] px-4 text-sm font-bold text-[var(--daira-primary)] hover:bg-[var(--daira-outline-active-bg)]">
                         <span dir="ltr" className="inline-flex items-center justify-center gap-1.5"><Pencil size={15} /><span dir="rtl">ویرایش</span></span>
                       </Button>
-                      <Button type="button" variant="destructive" onClick={() => void handleDeleteStoryResponse()} className="min-h-10 flex-1 !rounded-xl !border !border-[var(--daira-error-border)] !bg-[var(--daira-error-background)] !px-4 !text-sm !font-bold !text-[var(--daira-error-text)] hover:!bg-[#FEE2E2]">
+                      <Button type="button" variant="destructive" onClick={() => void handleDeleteStoryResponse()} className="min-h-10 flex-1 !rounded-xl !border !border-[var(--daira-error-border)] !bg-[var(--daira-error-background)] !px-4 !text-sm !font-bold !text-[var(--daira-error-text)] hover:!bg-[var(--daira-error-background)]">
                         <span dir="ltr" className="inline-flex items-center justify-center gap-1.5"><Trash2 size={15} /><span dir="rtl">حذف</span></span>
                       </Button>
                     </div>
@@ -1781,7 +1781,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                                   }
                                   setError("");
                                 }}
-                                className={["relative min-h-24 overflow-hidden rounded-2xl border p-3.5 text-right transition-all", selected ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)] shadow-sm ring-2 ring-[var(--daira-primary)]/10" : "border-[var(--daira-border)] bg-white hover:border-[#BFDBFE] hover:bg-[var(--daira-surface-hover)]"].join(" ")}
+                                className={["relative min-h-24 overflow-hidden rounded-2xl border p-3.5 text-right transition-all", selected ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)] shadow-sm ring-2 ring-[var(--daira-primary)]/10" : "border-[var(--daira-border)] bg-white hover:border-[var(--daira-brand-300)] hover:bg-[var(--daira-surface-hover)]"].join(" ")}
                               >
                                 <span className="absolute right-3.5 top-3.5 text-[11px] font-semibold text-[var(--daira-text-secondary)]">{getJalaliWeekday(date)}</span>
                                 <span className="absolute left-3.5 top-3.5 text-[10px] font-semibold text-[var(--daira-primary)]">{label}</span>
@@ -1855,7 +1855,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   </div>
                 </section>
               </div>
-              {automationEnabled&&!canSubmitAutomation&&<p className="rounded-xl border border-[#FDE68A] bg-[var(--daira-warning-bg)] px-4 py-3 text-xs leading-6 text-[var(--daira-warning-text)]">
+              {automationEnabled&&!canSubmitAutomation&&<p className="rounded-xl border border-[var(--daira-warning-border)] bg-[var(--daira-warning-bg)] px-4 py-3 text-xs leading-6 text-[var(--daira-warning-text)]">
                 {type==="STORY"?"برای انتشار با پاسخ خودکار، ابتدا پاسخ استوری را ذخیره کن.":"برای فعال‌سازی پاسخ خودکار، حداقل یک کلمه کلیدی و متن پاسخ کامنت لازم است."}
               </p>}
               {error&&<p role="alert" className="rounded-xl border border-[var(--daira-error-border)] bg-[var(--daira-error-background)] px-4 py-3 text-xs leading-6 text-[var(--daira-error-text)]">{error}</p>}

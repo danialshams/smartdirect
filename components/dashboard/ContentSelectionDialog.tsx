@@ -208,7 +208,7 @@ export default function ContentSelectionDialog({
               })}
             </div>
           )}
-          {error && filtered.length > 0 && <p role="alert" className="mt-3 text-xs text-red-600">{error}</p>}
+          {error && filtered.length > 0 && <p role="alert" className="mt-3 text-xs text-[var(--daira-error-text)]">{error}</p>}
         </div>
         <footer className="daira-glass-dialog__footer flex shrink-0 items-center gap-2 border-t px-4 py-3.5 sm:px-6">
           <button type="button" onClick={requestConfirm} disabled={loading}

@@ -35,7 +35,7 @@ function formattedDate(date: string | null) {
 }
 function Preview({job}:{job:PublishingQueueJob}){
   const media=job.media?.[0];
-  return <div className="flex h-[70px] w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[#E8EDF5] bg-[var(--daira-surface-hover)]">
+  return <div className="flex h-[70px] w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)]">
     {media?.publicUrl ? (media.type==="IMAGE" ? <img src={media.publicUrl} alt="" loading="lazy" className="h-full w-full object-cover"/> :
       <video src={media.publicUrl} muted playsInline preload="none" className="h-full w-full object-cover" aria-label={"ویدیو "+labels[job.type]}/>)
     : <ImageIcon size={20} color="var(--daira-text-disabled)"/>}
@@ -78,7 +78,7 @@ export default function PublishingQueue({jobs,loading,error,onRetry,onCancel,onR
         </button>)}
     </div>
     {(actionError||error)&&<div role="alert" className="rounded-xl border border-[var(--daira-error-border)] bg-[var(--daira-error-background)] px-4 py-3 text-xs leading-6 text-[var(--daira-error-text)]">{actionError||error}</div>}
-    {!shown.length?<div className="daira-empty-state flex min-h-44 flex-col items-center justify-center gap-2 rounded-[22px] border border-[#E8EDF5] bg-white px-5 text-center">
+    {!shown.length?<div className="daira-empty-state flex min-h-44 flex-col items-center justify-center gap-2 rounded-[22px] border border-[var(--daira-border)] bg-white px-5 text-center">
       <CalendarClock size={26} color="var(--daira-text-disabled)"/>
       <p className="text-sm font-semibold text-[var(--daira-heading)]">{showHistory?"هنوز سابقه انتشاری وجود ندارد.":"فعلاً محتوایی در صف انتشار نیست."}</p>
       <p className="text-xs text-[var(--daira-text-secondary)]">{showHistory?"نتیجه انتشارهای قبلی در این قسمت نمایش داده می‌شود.":"محتواهای زمان‌بندی‌شده و در حال پردازش اینجا قابل پیگیری هستند."}</p>

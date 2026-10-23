@@ -292,7 +292,7 @@ function Panel({ title, icon: Icon, children, help }: { title: string; icon: Ele
 function Stat({ label, value, icon: Icon }: { label: string; value: number | null | undefined; icon: ElementType }) {
   return (
     <div className="group flex min-h-[146px] min-w-0 flex-col items-center justify-center gap-2 px-2 py-4 text-center transition-colors duration-200 hover:bg-[var(--daira-surface-hover)] sm:min-h-[160px]">
-      <span className="grid h-10 w-10 place-items-center rounded-xl bg-blue-50 text-[var(--daira-primary)] transition-transform duration-200 group-hover:-translate-y-0.5">
+      <span className="grid h-10 w-10 place-items-center rounded-xl bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)] transition-transform duration-200 group-hover:-translate-y-0.5">
         <Icon size={19} aria-hidden="true" />
       </span>
       <div className="max-w-full break-words text-[22px] font-extrabold tabular-nums text-[var(--daira-heading)] sm:text-[26px]" dir="auto">
@@ -478,7 +478,7 @@ export default function InsightsDashboard() {
               onClick={() => { setPreset(days); setAppliedRange(null); setDraftFrom(undefined); setDraftTo(undefined); setCalendarOpen(null); }}
               className={"min-h-11 rounded-xl border px-2 text-xs font-bold transition " +
                 (!appliedRange && preset === days
-                  ? "border-blue-300 bg-blue-50 text-[var(--daira-primary)]"
+                  ? "border-[var(--daira-brand-300)] bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]"
                   : "border-[var(--daira-border)] bg-white text-[var(--daira-text)] hover:bg-[var(--daira-surface-hover)]")}>
               {new Intl.NumberFormat("fa-IR").format(days)} روز
             </button>
@@ -490,7 +490,7 @@ export default function InsightsDashboard() {
             <button type="button" key={field} onClick={() => openCalendar(field)}
               aria-haspopup="dialog" aria-label={field === "from" ? "انتخاب تاریخ شروع" : "انتخاب تاریخ پایان"}
               className={"daira-insights-date-field flex min-h-[77px] min-w-0 flex-col gap-2 rounded-xl border p-3 text-right transition " +
-                (appliedRange ? "border-blue-300 bg-blue-50" : "border-[var(--daira-border)] bg-[var(--daira-surface-hover)]")}>
+                (appliedRange ? "border-[var(--daira-brand-300)] bg-[var(--daira-outline-hover-bg)]" : "border-[var(--daira-border)] bg-[var(--daira-surface-hover)]")}>
               <span className="text-[11px] text-[var(--daira-text)]">{field === "from" ? "از تاریخ" : "تا تاریخ"}</span>
               <span className="flex w-full min-w-0 items-center gap-1.5 text-xs font-bold text-[var(--daira-heading)]">
                 <span className="min-w-0 flex-1">{(field === "from" ? draftFrom : draftTo)
@@ -512,7 +512,7 @@ export default function InsightsDashboard() {
       </section>
 
       {error && (
-        <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs leading-6 text-red-700">
+        <div role="alert" className="rounded-xl border border-[var(--daira-error-border)] bg-[var(--daira-error-background)] px-4 py-3 text-xs leading-6 text-[var(--daira-error-text)]">
           {error}
         </div>
       )}
@@ -530,7 +530,7 @@ export default function InsightsDashboard() {
               {tabs.map(({ id, title, icon: Icon }) => (
                 <button type="button" key={id} aria-pressed={metric === id} onClick={() => setMetric(id)}
                   className={"flex min-h-11 items-center justify-center gap-1.5 rounded-xl border px-1 text-[11px] font-bold transition " +
-                    (metric === id ? "border-blue-300 bg-blue-50 text-[var(--daira-primary)]"
+                    (metric === id ? "border-[var(--daira-brand-300)] bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]"
                       : "border-[var(--daira-border)] bg-white text-[var(--daira-text)] hover:bg-[var(--daira-surface-hover)]")}>
                   <Icon size={15} aria-hidden="true" />{title}
                 </button>
@@ -556,7 +556,7 @@ export default function InsightsDashboard() {
 
                 </div>
                 <div className={"mt-2 flex flex-wrap items-center gap-1 text-xl font-extrabold sm:text-2xl " +
-                  (netFollowers == null ? "text-[var(--daira-heading)]" : netFollowers < 0 ? "text-red-600" : "text-emerald-600")}>
+                  (netFollowers == null ? "text-[var(--daira-heading)]" : netFollowers < 0 ? "text-[var(--daira-error-text)]" : "text-emerald-600")}>
                   {netFollowers != null && netFollowers > 0 && <TrendingUp size={19} aria-hidden="true" />}
                   {netFollowers != null && netFollowers < 0 && <TrendingDown size={19} aria-hidden="true" />}
                   {netFollowers != null && netFollowers > 0 ? "+" : ""}

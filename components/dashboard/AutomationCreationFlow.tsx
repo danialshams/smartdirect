@@ -751,19 +751,19 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     <style jsx global>{`
       .automation-create-flow button:not(.sd-neutral-button):not(.sd-destructive-button):not(.sd-content-card):not([aria-pressed="false"]),
       .automation-create-flow button:not(.sd-neutral-button):not(.sd-destructive-button):not(.sd-content-card):not([aria-pressed="false"]) * {
-        color: #fff !important;
+        color: var(--daira-inverse-text) !important;
       }
       .automation-create-flow button:not(.sd-neutral-button):not(.sd-destructive-button):not(.sd-content-card):not([aria-pressed="false"]) {
-        background-color: var(--daira-primary, #2F61FD) !important;
-        border-color: var(--daira-primary, #2F61FD) !important;
+        background-color: var(--daira-primary) !important;
+        border-color: var(--daira-primary) !important;
       }
       .automation-create-flow button:not(.sd-neutral-button):not(.sd-destructive-button):not(.sd-content-card):not([aria-pressed="false"]):hover:not(:disabled) {
-        background-color: var(--daira-primary-hover, #1E4BD8) !important;
-        border-color: var(--daira-primary-hover, #1E4BD8) !important;
+        background-color: var(--daira-primary-hover) !important;
+        border-color: var(--daira-primary-hover) !important;
       }
       .automation-create-flow button:not(.sd-neutral-button):not(.sd-destructive-button):not(.sd-content-card):not([aria-pressed="false"]):disabled {
-        background-color: var(--daira-primary, #2F61FD) !important;
-        border-color: var(--daira-primary, #2F61FD) !important;
+        background-color: var(--daira-primary) !important;
+        border-color: var(--daira-primary) !important;
         opacity: .48;
       }
       .sd-success-ring {
