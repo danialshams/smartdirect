@@ -3,8 +3,9 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, CircleUserRound, Ticket } from "lucide-react";
+import { Home, CircleUserRound, Ticket, ChevronLeft } from "lucide-react";
 import DashboardTheme from "./DashboardTheme";
+import { getDashboardBottomPageTitle } from "./dashboard-bottom-nav-labels";
 import DashboardOverview from "./DashboardOverview";
 import DashboardHeader from "./DashboardHeader";
 import { DashboardAccountProvider } from "./DashboardAccountContext";
@@ -33,6 +34,7 @@ const bottomItems = [
 export default function DashboardShell({ user, instagramAccounts, children }: DashboardShellProps) {
   const pathname = usePathname();
   const isHome = pathname === "/dashboard";
+  const currentPageTitle = getDashboardBottomPageTitle(pathname);
   const isAutomationCreateFlow = [
     "/dashboard/comment-automation/new",
     "/dashboard/story-automation/new",
@@ -61,8 +63,27 @@ export default function DashboardShell({ user, instagramAccounts, children }: Da
         {!isAutomationCreateFlow && (
           <>
         <div className="daira-bottom-nav-backdrop" aria-hidden="true" />
-        <nav className="daira-bottom-nav" aria-label="ناوبری اصلی">
+        <nav className={`daira-bottom-nav${isHome ? "" : " daira-bottom-nav--contextual"}`} aria-label="ناوبری اصلی">
           {bottomItems.map(({ title, href, icon: Icon }) => {
+            if (href === "/dashboard" && !isHome) {
+              return (
+                <div key={href} className="daira-bottom-nav__breadcrumb" role="group" aria-label="مسیر صفحه">
+                  <Link href="/dashboard" className="daira-bottom-nav__home-link" aria-label="خانه">
+                    <Home size={19} strokeWidth={1.9} aria-hidden="true" />
+                    <span>خانه</span>
+                  </Link>
+                  <ChevronLeft size={15} className="daira-bottom-nav__separator" aria-hidden="true" />
+                  <span
+                    key={pathname}
+                    className="daira-bottom-nav__current-page"
+                    aria-current="page"
+                    title={currentPageTitle}
+                  >
+                    {currentPageTitle}
+                  </span>
+                </div>
+              );
+            }
             const active = href === "/dashboard" ? isHome : pathname === href || pathname.startsWith(href + "/");
             return (
               <Link key={href} href={href} aria-current={active ? "page" : undefined} className={`daira-bottom-nav__item${active ? " is-active" : ""}`}>
