@@ -6,7 +6,7 @@ import { dairaPalette } from "../../lib/design-system/palette";
 
 export type ContentMediaItem = {
   id: string;
-  caption?: string;
+  caption?: string | null;
   media_type?: string;
   media_product_type?: string;
   thumbnail_url?: string | null;
