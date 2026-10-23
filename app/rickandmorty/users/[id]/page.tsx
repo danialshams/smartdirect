@@ -106,14 +106,14 @@ export default function UserDetailPage() {
 
       <Grid container spacing={{ xs: 1.5, md: 2 }}>
         <Grid size={{ xs: 12, lg: 5 }}>
-          <Card sx={{ height: "100%", border: "1px solid #E2E8F0", borderRadius: 3, boxShadow: "0 2px 10px rgba(15,23,42,.025)" }}>
+          <Card sx={{ height: "100%", border: "1px solid var(--daira-border)", borderRadius: 3, boxShadow: "0 2px 10px rgba(15,23,42,.025)" }}>
             <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
               <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2.25 }}>
-                <Box sx={{ width: 38, height: 38, borderRadius: 2, display: "grid", placeItems: "center", bgcolor: "#EFF6FF", color: "#2563EB" }}><UserRound size={19} /></Box>
+                <Box sx={{ width: 38, height: 38, borderRadius: 2, display: "grid", placeItems: "center", bgcolor: "var(--daira-outline-hover-bg)", color: "var(--daira-primary)" }}><UserRound size={19} /></Box>
                 <Box><Typography fontWeight={800}>اطلاعات کاربر</Typography><Typography variant="caption" color="text.secondary">مشخصات و اتصال‌های اینستاگرام</Typography><Typography variant="caption" color="text.secondary">عضویت از {faDate(user.createdAt)}</Typography></Box>
               </Stack>
-              <Stack direction="row" spacing={1.5} alignItems="center" sx={{ p: 1.5, bgcolor: "#F8FAFC", borderRadius: 2.5, minWidth: 0 }}>
-                <Avatar sx={{ width: 52, height: 52, bgcolor: "#DBEAFE", color: "#1D4ED8", fontWeight: 800 }}>{user.name?.trim()?.[0] ?? "ک"}</Avatar>
+              <Stack direction="row" spacing={1.5} alignItems="center" sx={{ p: 1.5, bgcolor: "var(--daira-surface-hover)", borderRadius: 2.5, minWidth: 0 }}>
+                <Avatar sx={{ width: 52, height: 52, bgcolor: "var(--daira-outline-active-bg)", color: "var(--daira-primary-hover)", fontWeight: 800 }}>{user.name?.trim()?.[0] ?? "ک"}</Avatar>
                 <Box sx={{ minWidth: 0, flex: 1 }}>
                   <Typography fontWeight={800} sx={{ overflowWrap: "anywhere" }}>{user.name || "نام ثبت نشده"}</Typography>
                   
@@ -127,28 +127,28 @@ export default function UserDetailPage() {
               {user.instagramAccounts.length ? (
                 <Stack spacing={1}>
                   {user.instagramAccounts.map((account) => (
-                    <Box key={account.id} sx={{ p: 1.5, border: "1px solid #E2E8F0", borderRadius: 2.5, minWidth: 0 }}>
+                    <Box key={account.id} sx={{ p: 1.5, border: "1px solid var(--daira-border)", borderRadius: 2.5, minWidth: 0 }}>
                       <Typography fontWeight={700} sx={{ overflowWrap: "anywhere", minWidth: 0, textAlign: "right" }}>@{account.igUsername || "بدون نام کاربری"}</Typography>
                     </Box>
                   ))}
                 </Stack>
-              ) : <Box sx={{ py: 3, px: 1, textAlign: "center", border: "1px dashed #CBD5E1", borderRadius: 2.5 }}><Typography variant="body2" color="text.secondary">هنوز پیجی به حساب متصل نشده است.</Typography></Box>}
+              ) : <Box sx={{ py: 3, px: 1, textAlign: "center", border: "1px dashed var(--daira-outline)", borderRadius: 2.5 }}><Typography variant="body2" color="text.secondary">هنوز پیجی به حساب متصل نشده است.</Typography></Box>}
             </CardContent>
           </Card>
         </Grid>
 
         <Grid size={{ xs: 12, lg: 7 }}>
-          <Card sx={{ height: "100%", border: "1px solid #E2E8F0", borderRadius: 3, boxShadow: "0 2px 10px rgba(15,23,42,.025)" }}>
+          <Card sx={{ height: "100%", border: "1px solid var(--daira-border)", borderRadius: 3, boxShadow: "0 2px 10px rgba(15,23,42,.025)" }}>
             <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
               <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1} sx={{ mb: 2.25 }}>
                 <Stack direction="row" alignItems="center" spacing={1}>
-                  <Box sx={{ width: 38, height: 38, borderRadius: 2, display: "grid", placeItems: "center", bgcolor: "#F0FDF4", color: "#15803D" }}><ShieldCheck size={19} /></Box>
+                  <Box sx={{ width: 38, height: 38, borderRadius: 2, display: "grid", placeItems: "center", bgcolor: "var(--daira-success-bg)", color: "var(--daira-chart-increase)" }}><ShieldCheck size={19} /></Box>
                   <Box><Typography fontWeight={800}>وضعیت اشتراک</Typography><Typography variant="caption" color="text.secondary">وضعیت فعلی و زمان انقضا</Typography></Box>
                 </Stack>
                 <Chip size="small" label={status} color={statusColor as "success" | "warning" | "default"} variant="outlined" />
               </Stack>
               {current ? (
-                <Box sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2.5, bgcolor: "#F8FAFC", border: "1px solid #E2E8F0" }}>
+                <Box sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2.5, bgcolor: "var(--daira-surface-hover)", border: "1px solid var(--daira-border)" }}>
                   <Grid container spacing={1.5}>
                     <Grid size={{ xs: 6 }}><Typography variant="caption" color="text.secondary">پلن فعلی</Typography><Typography fontWeight={700} sx={{ mt: 0.5 }}>{current.planKey === "yearly" ? "سالانه" : current.planKey === "monthly" ? "ماهانه" : current.planKey}</Typography></Grid>
                     <Grid size={{ xs: 6 }}><Typography variant="caption" color="text.secondary">تاریخ انقضا</Typography><Typography fontWeight={700} sx={{ mt: 0.5, overflowWrap: "anywhere" }}>{faDate(current.expiresAt, true)}</Typography></Grid>
@@ -176,7 +176,7 @@ export default function UserDetailPage() {
                       <Grid key={item.value} size={{ xs: 6, sm: 3 }}><Button fullWidth size="small" variant={daysDelta === item.value ? "contained" : "outlined"} color={item.value < 0 ? "error" : "primary"} endIcon={item.icon} onClick={() => setDaysDelta((v) => v + item.value)} sx={{ minHeight: 42, whiteSpace: "nowrap", px: 1 }}>{item.label}</Button></Grid>
                     ))}
                   </Grid>
-                  <Box sx={{ mt: 1.25, p: 1.25, borderRadius: 2, bgcolor: daysDelta ? (daysDelta > 0 ? "#F0FDF4" : "#FEF2F2") : "#F8FAFC", border: "1px solid", borderColor: daysDelta ? (daysDelta > 0 ? "#BBF7D0" : "#FECACA") : "#E2E8F0" }}>
+                  <Box sx={{ mt: 1.25, p: 1.25, borderRadius: 2, bgcolor: daysDelta ? (daysDelta > 0 ? "var(--daira-success-bg)" : "var(--daira-error-background)") : "var(--daira-surface-hover)", border: "1px solid", borderColor: daysDelta ? (daysDelta > 0 ? "#BBF7D0" : "var(--daira-error-border)") : "var(--daira-border)" }}>
                     <Typography variant="body2" fontWeight={700}>
                       {daysDelta === 0 ? "تغییری در مدت اشتراک انتخاب نشده" : daysDelta > 0 ? `افزایش مدت به میزان ${daysDelta.toLocaleString("fa-IR")} روز` : `کاهش مدت به میزان ${Math.abs(daysDelta).toLocaleString("fa-IR")} روز`}
                     </Typography>
@@ -190,10 +190,10 @@ export default function UserDetailPage() {
         </Grid>
       </Grid>
 
-      <Card sx={{ border: "1px solid #E2E8F0", borderRadius: 3, boxShadow: "0 2px 10px rgba(15,23,42,.025)" }}>
+      <Card sx={{ border: "1px solid var(--daira-border)", borderRadius: 3, boxShadow: "0 2px 10px rgba(15,23,42,.025)" }}>
         <CardContent sx={{ p: { xs: 1.5, sm: 2.5 } }}>
           <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
-            <Box sx={{ width: 38, height: 38, borderRadius: 2, display: "grid", placeItems: "center", bgcolor: "#F5F3FF", color: "#7C3AED" }}><Clock3 size={19} /></Box>
+            <Box sx={{ width: 38, height: 38, borderRadius: 2, display: "grid", placeItems: "center", bgcolor: "#F5F3FF", color: "var(--daira-processing)" }}><Clock3 size={19} /></Box>
             <Box><Typography fontWeight={800}>تاریخچه اشتراک</Typography><Typography variant="caption" color="text.secondary">سوابق تغییرات اشتراک کاربر</Typography></Box>
           </Stack>
           {user.subscriptions.length ? <TableContainer sx={{ overflowX: { xs: "visible", sm: "auto" }, minWidth: 0 }}><Table sx={responsiveAdminTableSx}><TableHead><TableRow><TableCell>پلن</TableCell><TableCell>وضعیت</TableCell><TableCell>منبع</TableCell><TableCell>شروع</TableCell><TableCell>انقضا</TableCell><TableCell>یادداشت</TableCell></TableRow></TableHead><TableBody>
@@ -202,10 +202,10 @@ export default function UserDetailPage() {
         </CardContent>
       </Card>
 
-      <Card sx={{ border: "1px solid #E2E8F0", borderRadius: 3, boxShadow: "0 2px 10px rgba(15,23,42,.025)" }}>
+      <Card sx={{ border: "1px solid var(--daira-border)", borderRadius: 3, boxShadow: "0 2px 10px rgba(15,23,42,.025)" }}>
         <CardContent sx={{ p: { xs: 1.5, sm: 2.5 } }}>
           <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
-            <Box sx={{ width: 38, height: 38, borderRadius: 2, display: "grid", placeItems: "center", bgcolor: "#FFF7ED", color: "#C2410C" }}><Ticket size={19} /></Box>
+            <Box sx={{ width: 38, height: 38, borderRadius: 2, display: "grid", placeItems: "center", bgcolor: "var(--daira-warning-bg)", color: "#C2410C" }}><Ticket size={19} /></Box>
             <Box><Typography fontWeight={800}>تیکت‌های اخیر</Typography><Typography variant="caption" color="text.secondary">آخرین درخواست‌های پشتیبانی این کاربر</Typography></Box>
           </Stack>
           {user.tickets.length ? <TableContainer sx={{ overflowX: { xs: "visible", sm: "auto" }, minWidth: 0 }}><Table sx={responsiveAdminTableSx}><TableHead><TableRow><TableCell>عنوان</TableCell><TableCell>وضعیت</TableCell><TableCell>اولویت</TableCell><TableCell>آخرین به‌روزرسانی</TableCell></TableRow></TableHead><TableBody>
@@ -215,7 +215,7 @@ export default function UserDetailPage() {
       </Card>
 
       <Box sx={{ position: { xs: "fixed", sm: "sticky" }, bottom: { xs: 0, sm: 12 }, zIndex: 10, mx: { xs: -1.25, sm: 0 }, px: { xs: 1.25, sm: 0 }, py: { xs: 1.25, sm: 0 }, bgcolor: { xs: "rgba(248,250,252,.96)", sm: "transparent" }, backdropFilter: { xs: "blur(12px)", sm: "none" } }}>
-        <Stack direction="row" spacing={1.25} alignItems="center" justifyContent="space-between" sx={{ p: 1.25, border: "1px solid #E2E8F0", borderRadius: 3, bgcolor: "#FFFFFF", boxShadow: "0 8px 28px rgba(15,23,42,.08)" }}>
+        <Stack direction="row" spacing={1.25} alignItems="center" justifyContent="space-between" sx={{ p: 1.25, border: "1px solid var(--daira-border)", borderRadius: 3, bgcolor: "var(--daira-surface)", boxShadow: "0 8px 28px rgba(15,23,42,.08)" }}>
           <Box sx={{ minWidth: 0, flex: 1 }}>
             <Typography variant="body2" fontWeight={800}>{dirty ? "تغییرات ذخیره‌نشده" : "همه تغییرات ذخیره شده"}</Typography>
             <Typography variant="caption" color="text.secondary" noWrap>{dirty ? "برای اعمال تغییرات، ذخیره را بزنید." : "برای ویرایش پلن یا مدت اشتراک اقدام کنید."}</Typography>
