@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, CircleUserRound, Ticket, ChevronLeft } from "lucide-react";
+import { Home, CircleUserRound, Headset, ChevronRight } from "lucide-react";
 import DashboardTheme from "./DashboardTheme";
 import { getDashboardBottomPageTitle } from "./dashboard-bottom-nav-labels";
 import DashboardOverview from "./DashboardOverview";
@@ -28,7 +28,7 @@ type DashboardShellProps = {
 const bottomItems = [
   { title: "پروفایل", href: "/dashboard/profile", icon: CircleUserRound },
   { title: "خانه", href: "/dashboard", icon: Home },
-  { title: "پشتیبانی", href: "/dashboard/tickets", icon: Ticket },
+  { title: "پشتیبانی", href: "/dashboard/tickets", icon: Headset },
 ];
 
 export default function DashboardShell({ user, instagramAccounts, children }: DashboardShellProps) {
@@ -67,12 +67,12 @@ export default function DashboardShell({ user, instagramAccounts, children }: Da
           {bottomItems.map(({ title, href, icon: Icon }) => {
             if (href === "/dashboard" && !isHome) {
               return (
-                <div key={href} className="daira-bottom-nav__breadcrumb" role="group" aria-label="مسیر صفحه">
+                <div key={href} dir="ltr" className="daira-bottom-nav__breadcrumb" role="group" aria-label="مسیر صفحه">
                   <Link href="/dashboard" className="daira-bottom-nav__home-link" aria-label="خانه">
                     <Home size={19} strokeWidth={1.9} aria-hidden="true" />
                     <span>خانه</span>
                   </Link>
-                  <ChevronLeft size={15} className="daira-bottom-nav__separator" aria-hidden="true" />
+                  <ChevronRight size={15} className="daira-bottom-nav__separator" aria-hidden="true" />
                   <span
                     key={pathname}
                     className="daira-bottom-nav__current-page"
