@@ -23,5 +23,6 @@ assert.equal(extractInboundInteraction({...event({type:"story_mention",payload:{
 assert.equal(extractInboundInteraction({message:{reply_to:{story:{id:"123"}},attachments:[{type:"story_mention",payload:{url:postUrl}}]}}),null);
 assert.equal(extractInboundInteraction(event({type:"image",payload:{url:postUrl}})),null);
 assert.equal(extractInboundInteraction(event({type:"share",payload:{url:"https://phishing.invalid/p/Abcd/"}}))?.kind,"DM_MEDIA_SHARE");
-assert.equal(extractInboundInteraction(event({type:"share",payload:{url:"https://phishing.invalid/p/Abcd/"}}))?.shortcode,null);
+const malicious=extractInboundInteraction(event({type:"share",payload:{url:"https://phishing.invalid/p/Abcd/"}}));
+assert.equal(malicious?.kind==="DM_MEDIA_SHARE"?malicious.shortcode:null,null);
 console.log("SHARE_MENTION_WEBHOOK_TEST_OK");
