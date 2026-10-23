@@ -125,3 +125,5 @@ export default function SupportTicketDetailClient({ id }: { id: string }) {
       </form>}
     {error && <p className="daira-support__error" role="alert">{error}</p>}
   </div>;
+
+}
