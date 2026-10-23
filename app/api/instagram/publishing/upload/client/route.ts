@@ -8,6 +8,9 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getUnlinkedUploadExpiry } from "@/lib/instagram/publishing-media-cleanup";
 import { getStorageProvider } from "@/lib/storage/provider";
+import { reserveUpload, releaseUploadReservation } from "@/lib/storage/upload-accounting";
+import { maximumUploadBytes, checkMediaOutputSize } from "@/lib/instagram/media-limits";
+import { normalizeInstagramPublishImage } from "@/lib/instagram/image-normalizer";
 import { normalizeInstagramVideo, type InstagramVideoTarget } from "@/lib/instagram/video-normalizer";
 import { normalizeInstagramAudio } from "@/lib/instagram/audio-normalizer";
 
