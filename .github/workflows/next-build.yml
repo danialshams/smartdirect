@@ -71,7 +71,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
 
       - name: Install exactly from lockfile
@@ -92,6 +92,8 @@ jobs:
       - name: Build application
         env:
           NODE_ENV: production
+          VERCEL: "1"
+          VERCEL_ENV: production
           NEXTAUTH_URL: https://example.invalid
           NEXTAUTH_SECRET: ci-only-placeholder-secret-with-more-than-32-characters
           CRON_SECRET: ci-only-placeholder-cron-secret-with-more-than-32-characters
