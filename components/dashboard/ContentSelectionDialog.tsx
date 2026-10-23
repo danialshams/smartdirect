@@ -67,7 +67,7 @@ export default function ContentSelectionDialog({
   const onConfirmRef = useRef(onConfirm);
   const [closing,setClosing] = useState(false);
   const closingRef = useRef(false);
-  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const closeTimerRef = useRef<number | null>(null);
   useEffect(() => {
     onCloseRef.current = onClose;
     onConfirmRef.current = onConfirm;
