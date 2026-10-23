@@ -26,7 +26,7 @@ async function normalizeAutomationImage(file: File): Promise<File> {
     ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
     const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob(
       (value) => value ? resolve(value) : reject(new Error("تبدیل تصویر انجام نشد.")), "image/jpeg", 0.85));
-    return new File([blob], file.name.replace(/\\.[^.]+$/, "") + ".jpg", { type: "image/jpeg" });
+    return new File([blob], file.name.replace(/\.[^.]+$/, "") + ".jpg", { type: "image/jpeg" });
   } catch {
     throw new Error("این فرمت تصویر در مرورگر قابل تبدیل نیست. لطفاً JPG یا PNG انتخاب کن.");
   } finally { URL.revokeObjectURL(objectUrl); }
@@ -41,7 +41,7 @@ export async function prepareAutomationFile(file: File): Promise<File> {
   if (baseType && baseType !== rawType) {
     file = new File([file], file.name, { type: baseType, lastModified: file.lastModified });
   }
-  if ((!baseType || baseType === "application/octet-stream") && /\\.(heic|heif)$/i.test(file.name)) {
+  if ((!baseType || baseType === "application/octet-stream") && /\.(heic|heif)$/i.test(file.name)) {
     file = new File([file], file.name, { type: "image/heic", lastModified: file.lastModified });
   }
   file = await normalizeAutomationImage(file);
