@@ -49,7 +49,7 @@ export default function AutomationCreationSkeleton({
                   <SkeletonLine className="h-2.5 w-20" />
                 </div>
               </div>
-              <span className="daira-skeleton-glass h-11 w-28 rounded-xl border" style={{ background: dairaPalette.background.surfaceHover, borderColor: dairaPalette.form.border }} />
+              <span className="h-11 w-28 rounded-xl border" style={{ background: dairaPalette.background.surfaceHover, borderColor: dairaPalette.form.border }} />
             </div>
           </div>
         </section>
@@ -59,7 +59,7 @@ export default function AutomationCreationSkeleton({
           <div className="grid grid-cols-2 gap-2">
             {[0, 1].map((item) => (
               <div key={item} className="daira-skeleton-glass flex min-h-[68px] items-start gap-2.5 rounded-xl border bg-white p-3" style={{ borderColor: dairaPalette.form.border }}>
-                <span className="daira-skeleton-glass mt-1 h-4 w-4 shrink-0 rounded-full border-2" style={{ borderColor: dairaPalette.form.border }} />
+                <span className="mt-1 h-4 w-4 shrink-0 rounded-full border-2" style={{ borderColor: dairaPalette.form.border }} />
                 <div className="flex min-w-0 flex-1 flex-col gap-2">
                   <SkeletonLine className="h-3 w-28 max-w-full" />
                   <SkeletonLine className="h-2.5 w-20 max-w-full" />
@@ -77,7 +77,7 @@ export default function AutomationCreationSkeleton({
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {[0, 1].map((item) => (
                     <div key={item} className="daira-skeleton-glass flex min-h-[74px] items-start gap-3 rounded-xl border p-3" style={{ borderColor: dairaPalette.form.border, background: dairaPalette.background.surfaceHover }}>
-                      <span className="daira-skeleton-glass mt-1 h-4 w-4 shrink-0 rounded-full border-2" style={{ borderColor: dairaPalette.form.border }} />
+                      <span className="mt-1 h-4 w-4 shrink-0 rounded-full border-2" style={{ borderColor: dairaPalette.form.border }} />
                       <div className="flex min-w-0 flex-1 flex-col gap-2">
                         <SkeletonLine className="h-3 w-28 max-w-full" />
                         <SkeletonLine className="h-2.5 w-full max-w-[90%]" />

@@ -83,6 +83,9 @@ jobs:
       - name: Test complete Daira design system
         run: npx tsx scripts/test-daira-design-system.ts
 
+      - name: Test cross-module Daira Liquid Glass coverage
+        run: npx tsx scripts/test-daira-glass-coverage.ts
+
       - name: Build application
         env:
           NODE_ENV: production

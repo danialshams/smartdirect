@@ -871,7 +871,7 @@ function MediaComposer({
       <ComposerTitle title={labels[kind]} description={kind === "AUDIO" ? "وویس را از دستگاه انتخاب کن یا با میکروفون همین‌جا ضبط و آپلود کن." : `فایل ${labels[kind]} را انتخاب کن تا در این مرحله برای کاربر ارسال شود.`} />
 
       {url ? (
-        <div className="daira-flow-glass rounded-2xl border p-4" style={{ borderColor: "#BBF7D0", background: "var(--daira-success-bg)" }}>
+        <div className="rounded-2xl border p-4" style={{ borderColor: "var(--daira-success-border)", background: "var(--daira-success-bg)" }}>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: "#DCFCE7", color: palette.success }}>
