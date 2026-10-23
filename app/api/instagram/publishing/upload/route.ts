@@ -149,6 +149,7 @@ export async function POST(request: NextRequest) {
         },
       });
     } catch (error) {
+      if (result!) await provider.delete(result.storageKey).catch(() => undefined);
       await releaseUploadReservation(session.user.id, key).catch(() => undefined);
       throw error;
     }
