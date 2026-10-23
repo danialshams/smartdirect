@@ -48,7 +48,7 @@ export default function ShareMentionManager(){
  }
  if(loading)return <AutoRepliesSkeleton includeCreateButton />;
  return <div dir="rtl" className="mx-auto w-full max-w-4xl space-y-4 py-3">
-  <Link href="/dashboard/share-mention/new" dir="rtl" className="flex min-h-[54px] w-full flex-row items-center justify-center gap-2 rounded-full px-4 text-sm font-bold text-white" style={{background:dairaPalette.primary.main}}><span className="flex shrink-0 items-center justify-center" aria-hidden="true"><Plus size={20}/></span><span className="whitespace-nowrap">ایجاد پاسخ جدید</span></Link>
+  <Link href="/dashboard/share-mention/new" dir="rtl" className="flex min-h-[54px] w-full flex-row-reverse items-center justify-center gap-2 rounded-full px-4 text-sm font-bold text-white" style={{background:dairaPalette.primary.main}}><span className="flex shrink-0 items-center justify-center" aria-hidden="true"><Plus size={20}/></span><span className="whitespace-nowrap">ایجاد پاسخ جدید</span></Link>
   <>
    <div className="relative"><Search size={17} className="absolute right-3 top-3.5 text-slate-400"/><input className="min-h-11 w-full rounded-xl border bg-white pr-10 pl-3 !text-base outline-none focus:border-blue-500" style={{borderColor:dairaPalette.border,fontSize:"16px",WebkitTextSizeAdjust:"100%"}} value={query} onChange={e=>setQuery(e.target.value)} placeholder="جستجو در پاسخ‌ها"/></div>
    {error&&<p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-700">{error}<button onClick={()=>setReload(x=>x+1)} className="mr-2 underline">تلاش دوباره</button></p>}
