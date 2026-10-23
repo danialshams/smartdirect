@@ -52,10 +52,13 @@ assert(styles.includes(".daira-home__header--liquid") && styles.includes(".daira
 assert(styles.includes(".daira-home__header--liquid::after,") && styles.includes(".daira-bottom-nav--liquid::after"), "Under-glass content must disappear gradually inside both bars");
 assert(styles.includes("rgba(246,249,254,0) 0%") && styles.includes("rgba(246,249,254,.66) 100%"), "Under-glass content should gradually disappear at the LOWER internal edge");
 assert(styles.includes("rgba(255,255,255,.52)") && styles.includes("rgba(249,251,255,.24)"), "Glass overall surface should be slightly clearer");
-assert(shell.includes("daira-liquid-corner-guard--header") && shell.includes("daira-liquid-corner-guard--nav"), "Header and dock need matching exterior rounded-corner guards");
+assert(dashboardHeader.includes('className="daira-home__header-wrap"') && dashboardHeader.includes("daira-liquid-corner-guard--header") && shell.includes("daira-liquid-corner-guard--nav"), "Header guard must share the exact header dimensions and nav guard must remain");
+assert(styles.includes(".daira-home__header-wrap .daira-liquid-corner-guard--header") && styles.includes("height:100%;") && styles.includes("z-index:1600"), "Header guard must track the actual rendered header rather than fixed pixel heights");
+assert(styles.includes("border-bottom-color:rgba(255,255,255,.97)") && styles.includes("inset 0 -1px 0 rgba(255,255,255,.91)"), "Glass dock must retain a white contour all the way around its bottom edge");
+assert(styles.includes("rgba(246,249,254,.82) 100%"), "Header internal lower edge must obscure scrolling cards");
 assert(styles.includes(".daira-liquid-corner-guard::before") && styles.includes(".daira-liquid-corner-guard::after"), "Both lower corners need anti-bleed coverage");
 assert(styles.includes("circle var(--daira-glass-corner) at top right") && styles.includes("circle var(--daira-glass-corner) at top left"), "Guard masks must cover only outside of the rounded corners");
-assert(styles.includes("z-index:1590") && styles.includes("z-index:1495"), "Guards should sit below interactive glass bars and above scrolling content");
+assert(styles.includes("z-index:1495") && styles.includes("z-index:1600"), "Exterior masks should stay behind each bar and above scrolling content");
 assert(styles.includes(".daira-liquid-corner-guard--nav") && styles.includes("--daira-glass-corner:24px"), "Mobile nav corner guard must follow mobile radius");
 assert(styles.includes("height:max(8px,env(safe-area-inset-top,0px))") && styles.includes("height:calc(8px + env(safe-area-inset-bottom,0px))"), "Outside the glass, backdrops must only cover safe-area gaps");
 assert(!styles.includes("radial-gradient(ellipse at 12% -42%"), "Old colored internal glow must be removed");
