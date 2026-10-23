@@ -33,6 +33,23 @@ async function normalizeAutomationImage(file: File): Promise<File> {
 }
 
 
+export async function prepareAutomationFile(file: File): Promise<File> {
+  // MediaRecorder and mobile browsers often append codec parameters to the MIME type.
+  // Blob Storage accepts normalized media types, while the bytes are unchanged.
+  const rawType = file.type.toLowerCase();
+  const baseType = rawType.split(";")[0].trim();
+  if (baseType && baseType !== rawType) {
+    file = new File([file], file.name, { type: baseType, lastModified: file.lastModified });
+  }
+  if ((!baseType || baseType === "application/octet-stream") && /\\.(heic|heif)$/i.test(file.name)) {
+    file = new File([file], file.name, { type: "image/heic", lastModified: file.lastModified });
+  }
+  file = await normalizeAutomationImage(file);
+  const limit = file.type.startsWith("image/") ? 8_000_000 - 1 : 25_000_000 - 1;
+  if (file.size === 0 || file.size > limit) throw new Error("حجم فایل پاسخ خودکار بیش از حد مجاز Meta است.");
+  return file;
+}
+
 function uploadFormDataWithProgress(url: string, formData: FormData, signal: AbortSignal, onProgress: UploadProgressCallback, timeoutMs: number): Promise<{ ok: boolean; result: UploadApiResult | null }> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
@@ -60,23 +77,9 @@ function uploadFormDataWithProgress(url: string, formData: FormData, signal: Abo
 }
 
 async function uploadOnce(file: File, type: string, onProgress: UploadProgressCallback, options: UploadOptions = {}): Promise<UploadMediaResult> {
-  // MediaRecorder and mobile browsers often append codec parameters to the MIME type.
-  // Blob Storage accepts normalized media types, while the bytes are unchanged.
-  const rawType = file.type.toLowerCase();
-  const baseType = rawType.split(";")[0].trim();
-  if (baseType && baseType !== rawType) {
-    file = new File([file], file.name, { type: baseType, lastModified: file.lastModified });
-  }
-  if ((!baseType || baseType === "application/octet-stream") && /\\.(heic|heif)$/i.test(file.name)) {
-    file = new File([file], file.name, { type: "image/heic", lastModified: file.lastModified });
-  }
   const purpose = options.purpose ?? "PUBLISHING";
+  if (purpose === "AUTOMATION") file = await prepareAutomationFile(file);
   if (file.size === 0) throw new Error("فایل خالی است.");
-  if (purpose === "AUTOMATION") {
-    file = await normalizeAutomationImage(file);
-    const limit = file.type.startsWith("image/") ? 8_000_000 - 1 : 25_000_000 - 1;
-    if (file.size > limit) throw new Error("حجم فایل پاسخ خودکار بیش از حد مجاز Meta است.");
-  }
   const prepareStartedAt = performance.now();
   const prepareResponse = await fetch("/api/instagram/publishing/upload/client", {
     method: "POST",
