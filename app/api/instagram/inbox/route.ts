@@ -762,7 +762,8 @@ async function loadStagedInboxMedia(userId: string, storageKey: string) {
     .filter((value): value is string => Boolean(value))
     .some((value) => { try { const base = new URL(value); return base.origin === url.origin && url.pathname.startsWith(base.pathname.replace(/\\/$/, "") + "/"); } catch { return false; } });
   const vercelHost = url.hostname.endsWith(".public.blob.vercel-storage.com");
-  if (url.protocol !== "https:" || url.username || url.password || (!vercelHost && !allowed)) {
+  const localDevelopment = process.env.NODE_ENV !== "production" && url.protocol === "http:" && ["localhost", "127.0.0.1"].includes(url.hostname);
+  if ((!localDevelopment && url.protocol !== "https:") || url.username || url.password || (!vercelHost && !allowed)) {
     throw new Error("آدرس فایل برای ارسال معتبر نیست.");
   }
   const response = await fetch(url, { cache: "no-store", redirect: "error", signal: AbortSignal.timeout(90_000) });
